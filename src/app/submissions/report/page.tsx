@@ -1,8 +1,41 @@
 'use client';
 
-import { Download, FileText, CheckCircle2, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { Download, FileText, CheckCircle2, Share2, Loader2 } from 'lucide-react';
 
 export default function ReportPage() {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = () => {
+    setIsDownloading(true);
+    
+    // Simulate a brief generation delay for PRO feel
+    setTimeout(() => {
+      const reportContent = `
+        RANKPILOT INTELLIGENCE
+        STRATEGIC DIAGNOSTIC SNAPSHOT
+        
+        Firm: TechNova
+        Practice Area: Banking & Finance
+        
+        Optimized Narrative:
+        In Q3 2026, the firm successfully represented TechNova Inc. in a highly complex $450M cross-border acquisition.
+        This transaction involved navigating unprecedented regulatory hurdles in three jurisdictions, showcasing the department's unparalleled expertise in multinational M&A and regulatory compliance.
+      `;
+      
+      const blob = new Blob([reportContent], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'TechNova_Submission_Final.doc';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setIsDownloading(false);
+    }, 1500);
+  };
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', paddingBottom: '4rem' }}>
       
@@ -18,8 +51,19 @@ export default function ReportPage() {
           <button style={{ background: '#ffffff', border: '1px solid #e2e8f0', color: '#475569', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
             <Share2 size={18} /> Share
           </button>
-          <button style={{ background: '#2563eb', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(37,99,235,0.2)' }}>
-            <Download size={18} /> Download .docx
+          <button 
+            onClick={handleDownload}
+            disabled={isDownloading}
+            style={{ 
+              background: isDownloading ? '#93c5fd' : '#2563eb', 
+              color: '#fff', padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', 
+              fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', 
+              cursor: isDownloading ? 'wait' : 'pointer', 
+              boxShadow: '0 4px 6px -1px rgba(37,99,235,0.2)', transition: 'background 0.2s' 
+            }}
+          >
+            {isDownloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            {isDownloading ? 'Generating...' : 'Download .docx'}
           </button>
         </div>
       </div>
@@ -90,6 +134,15 @@ export default function ReportPage() {
         </div>
 
       </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}} />
     </div>
   );
 }

@@ -11,9 +11,11 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+import { useState, useEffect } from 'react';
+
 export default function Sidebar() {
   const pathname = usePathname();
-
+  
   const platformLinks = [
     { name: 'Builder', href: '/submissions', icon: Home },
     { name: 'Matters Assistant', href: '/submissions/matters', icon: Zap },
@@ -21,12 +23,24 @@ export default function Sidebar() {
     { name: 'Dashboard', href: '#', icon: BarChart2 },
   ];
 
-  const recentLinks = [
+  const [recentLinks, setRecentLinks] = useState<{name: string, href: string}[]>([
     { name: 'Chambers Latin Ameri...', href: '#' },
     { name: 'Legal 500 LACCA · M&A', href: '#' },
     { name: 'IFLR 1000 · Finance', href: '#' },
     { name: 'Who\'s Who Legal · Arbi...', href: '#' },
-  ];
+  ]);
+
+  useEffect(() => {
+    // Optionally load dynamic recent links from localStorage if they exist
+    const saved = localStorage.getItem('recent_submissions');
+    if (saved) {
+      try {
+        setRecentLinks(JSON.parse(saved));
+      } catch (e) {
+        // Fallback to static
+      }
+    }
+  }, []);
 
   return (
     <aside style={{
@@ -104,15 +118,16 @@ export default function Sidebar() {
       {/* ACCOUNT SECTION */}
       <div style={{ padding: '1.5rem 1rem 2rem 1rem' }}>
         <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>ACCOUNT</p>
-        <Link href="#" style={{
+        <Link href="/dashboard/admin" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.75rem',
           padding: '0.6rem 1rem',
           borderRadius: '8px',
           textDecoration: 'none',
-          color: '#475569',
-          fontWeight: 500,
+          color: pathname.startsWith('/dashboard/admin') ? '#2563eb' : '#475569',
+          background: pathname.startsWith('/dashboard/admin') ? '#eff6ff' : 'transparent',
+          fontWeight: pathname.startsWith('/dashboard/admin') ? 600 : 500,
           fontSize: '0.9rem',
           transition: 'all 0.2s'
         }}>
