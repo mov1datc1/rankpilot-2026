@@ -180,7 +180,7 @@ export default function AuditRoomPage() {
 
       </div>
 
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes bounce {
           0%, 80%, 100% { transform: scale(0); }
           40% { transform: scale(1); }
@@ -190,7 +190,7 @@ export default function AuditRoomPage() {
           70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
           100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
         }
-      \`}} />
+      `}} />
     </div>
   );
 }
