@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Upload, FileText, Edit3 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, FileText, Edit3, FileCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function SubmissionsPage() {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startUploadAudit = () => {
     // Navigate to processing view
@@ -154,29 +156,64 @@ export default function SubmissionsPage() {
             </div>
             
             <div style={{ padding: '2rem' }}>
-              <div style={{ 
-                border: '2px dashed #cbd5e1', borderRadius: '12px', padding: '3rem 2rem', 
-                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                background: '#f8fafc', cursor: 'pointer'
-              }}>
-                <div style={{ color: '#1e3a8a', marginBottom: '1rem' }}>
-                  <FileText size={48} strokeWidth={1.5} />
-                </div>
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.5rem', margin: 0 }}>Upload Draft</h4>
-                <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '1.5rem' }}>Select a file to begin strategic processing.</p>
-                <p style={{ color: '#475569', fontSize: '0.85rem' }}>Drag & Drop or <span style={{ color: '#2563eb', fontWeight: 500 }}>Click to Browse (.docx)</span></p>
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                style={{ 
+                  border: selectedFileName ? '2px solid #2563eb' : '2px dashed #cbd5e1', 
+                  borderRadius: '12px', padding: '3rem 2rem', 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                  background: selectedFileName ? '#eff6ff' : '#f8fafc', cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => { if (!selectedFileName) e.currentTarget.style.borderColor = '#94a3b8'; }}
+                onMouseOut={(e) => { if (!selectedFileName) e.currentTarget.style.borderColor = '#cbd5e1'; }}
+              >
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  style={{ display: 'none' }} 
+                  accept=".docx,.pdf,.doc"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setSelectedFileName(e.target.files[0].name);
+                    }
+                  }}
+                />
+                
+                {selectedFileName ? (
+                  <>
+                    <div style={{ color: '#2563eb', marginBottom: '1rem' }}>
+                      <FileCheck size={48} strokeWidth={1.5} />
+                    </div>
+                    <h4 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.5rem', margin: 0 }}>Ready to Process</h4>
+                    <p style={{ color: '#2563eb', fontSize: '0.95rem', fontWeight: 500 }}>{selectedFileName}</p>
+                    <p style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '1rem' }}>Click to select a different file</p>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ color: '#1e3a8a', marginBottom: '1rem' }}>
+                      <FileText size={48} strokeWidth={1.5} />
+                    </div>
+                    <h4 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.5rem', margin: 0 }}>Upload Draft</h4>
+                    <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '1.5rem' }}>Select a file to begin strategic processing.</p>
+                    <p style={{ color: '#475569', fontSize: '0.85rem' }}>Drag & Drop or <span style={{ color: '#2563eb', fontWeight: 500 }}>Click to Browse (.docx)</span></p>
+                  </>
+                )}
               </div>
             </div>
 
             <div style={{ padding: '1.5rem 2rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
               <button 
                 onClick={startUploadAudit}
+                disabled={!selectedFileName}
                 style={{ 
-                  background: '#3b82f6', color: '#ffffff', padding: '0.75rem 2rem', 
-                  borderRadius: '8px', fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'background 0.2s'
+                  background: selectedFileName ? '#3b82f6' : '#94a3b8', 
+                  color: '#ffffff', padding: '0.75rem 2rem', 
+                  borderRadius: '8px', fontWeight: 500, border: 'none', 
+                  cursor: selectedFileName ? 'pointer' : 'not-allowed', transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
-                onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
+                onMouseOver={(e) => { if (selectedFileName) e.currentTarget.style.background = '#2563eb'; }}
+                onMouseOut={(e) => { if (selectedFileName) e.currentTarget.style.background = '#3b82f6'; }}
               >
                 Start Upload Audit
               </button>
