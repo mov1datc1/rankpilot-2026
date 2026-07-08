@@ -1,12 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    }
-  }
-});
+import prisma from '@/lib/prisma';
 
 export default async function AdminDashboardPage() {
   const users = await prisma.user.findMany({
