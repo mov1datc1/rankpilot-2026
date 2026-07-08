@@ -36,11 +36,10 @@ En la sección **Build & Development Settings**, no necesitas cambiar nada si es
 
 Vercel está optimizado para Next.js (Node.js). Para el motor de IA (`ai-engine/main.py`), que usa **FastAPI** y requiere compilar LaTeX (`pdflatex`), te recomiendo desplegar esa carpeta en **Render.com**.
 
-### Pasos para Render:
+### Pasos para Render (Usando Docker):
 1. Crea un nuevo **Web Service** en Render conectándolo a tu repositorio de GitHub.
 2. En la configuración de **Root Directory**, escribe `ai-engine`.
-3. **Environment**: Selecciona `Python 3`.
-4. **Build Command**: `pip install -r requirements.txt && apt-get update && apt-get install -y texlive-latex-base` *(Esto es necesario para que el generador de PDF funcione en la nube).*
-5. **Start Command**: `uvicorn main:api --host 0.0.0.0 --port 10000`
+3. **Environment**: Render debería detectar el `Dockerfile` y cambiar automáticamente a **Docker**. Si no lo hace, selecciona "Docker".
+4. *(Ya no necesitas Build Command ni Start Command, el Dockerfile se encarga de instalar `pdflatex` y levantar FastAPI automáticamente).*
 
 Una vez que Render te dé la URL de producción (ej. `https://rankpilot-ai-engine.onrender.com`), vuelve a Vercel, entra a **Settings > Environment Variables** y actualiza el valor de `PYTHON_API_URL`.
