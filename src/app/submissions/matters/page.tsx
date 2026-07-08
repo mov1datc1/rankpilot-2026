@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Search, MoreHorizontal, Sparkles, X, CheckCircle2, Zap, Loader2 } from 'lucide-react';
-import { getMattersBySubmission, createMatter, updateMatterOptimization } from '@/app/actions/matters';
+import { getMattersBySubmission, createMatter, updateMatterOptimization, optimizeMatterWithAI } from '@/app/actions/matters';
 
 type Matter = {
   id: string;
@@ -48,20 +48,49 @@ export default function MattersAssistantPage() {
   }, []);
 
   const handleOptimize = async () => {
+    if (!submissionId) {
+      alert("No active submission found. Please start from the Builder.");
+      return;
+    }
+
     setIsOptimizing(true);
+    let currentMatterId = activeMatterId;
     
-    // Simulate AI delay for now (until Python backend is connected)
-    setTimeout(async () => {
-      const generatedText = "In Q3 2026, the firm successfully represented " + (client || 'the client') + " in a highly complex " + (value || '') + " transaction. This showcased the department's unparalleled expertise.";
-      setOptimizedText(generatedText);
-      
-      if (activeMatterId) {
-        // Save optimization to DB if matter already exists
-        await updateMatterOptimization(activeMatterId, generatedText);
-        setMatters(matters.map(m => m.id === activeMatterId ? { ...m, optimizedText: generatedText, status: 'AI Optimized' } : m));
+    // Auto-save matter if it doesn't exist yet before calling AI
+    if (!currentMatterId) {
+      const res = await createMatter({
+        submissionId,
+        name: matterName || 'New Matter',
+        client: client || 'Pending',
+        value: value || 'Pending',
+        leadPartner: leadPartner || 'Pending',
+        rawNotes: rawNotes
+      });
+      if (res.success && res.data) {
+        currentMatterId = res.data.id;
+        setActiveMatterId(currentMatterId);
+        setMatters([res.data, ...matters]);
+      } else {
+        alert("Error saving matter: " + res.error);
+        setIsOptimizing(false);
+        return;
       }
-      setIsOptimizing(false);
-    }, 2000);
+    }
+    
+    try {
+      const res = await optimizeMatterWithAI(currentMatterId!);
+      if (res.success && res.data) {
+        const generatedText = res.data.optimizedText || "No content generated";
+        setOptimizedText(generatedText);
+        setMatters(prev => prev.map(m => m.id === currentMatterId ? { ...m, optimizedText: generatedText, status: 'AI Optimized' } : m));
+      } else {
+        alert("Error de la IA: " + res.error);
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+    
+    setIsOptimizing(false);
   };
 
   const handleSave = async () => {

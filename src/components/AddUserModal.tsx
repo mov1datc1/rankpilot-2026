@@ -104,7 +104,7 @@ export default function AddUserModal() {
                   fontSize: '0.85rem',
                   background: statusMsg.type === 'error' ? 'rgba(239,68,68,0.1)' : statusMsg.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(56,189,248,0.1)',
                   color: statusMsg.type === 'error' ? '#f87171' : statusMsg.type === 'success' ? '#4ade80' : '#38bdf8',
-                  border: \`1px solid \${statusMsg.type === 'error' ? 'rgba(239,68,68,0.2)' : statusMsg.type === 'success' ? 'rgba(34,197,94,0.2)' : 'rgba(56,189,248,0.2)'}\`
+                  border: `1px solid ${statusMsg.type === 'error' ? 'rgba(239,68,68,0.2)' : statusMsg.type === 'success' ? 'rgba(34,197,94,0.2)' : 'rgba(56,189,248,0.2)'}`
                 }}>
                   {statusMsg.text}
                 </div>
