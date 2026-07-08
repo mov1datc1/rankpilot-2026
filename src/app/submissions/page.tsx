@@ -29,7 +29,7 @@ export default function SubmissionsPage() {
       if (result.success && result.data) {
         // Save the submission context globally or pass via URL
         localStorage.setItem('activeSubmissionId', result.data.id);
-        router.push(\`/submissions/processing?id=\${result.data.id}\`);
+        router.push(`/submissions/processing?id=${result.data.id}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);

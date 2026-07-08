@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
                     gap: '0.3rem',
                     background: user.role === 'SUPERADMIN' ? 'rgba(239, 68, 68, 0.15)' : (user.role === 'ADMIN' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(148, 163, 184, 0.1)'),
                     color: user.role === 'SUPERADMIN' ? '#fca5a5' : (user.role === 'ADMIN' ? '#93c5fd' : '#cbd5e1'),
-                    border: \`1px solid \${user.role === 'SUPERADMIN' ? 'rgba(239,68,68,0.3)' : (user.role === 'ADMIN' ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.1)')}\`
+                    border: `1px solid ${user.role === 'SUPERADMIN' ? 'rgba(239,68,68,0.3)' : (user.role === 'ADMIN' ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.1)')}`
                   }}>
                     {user.role === 'SUPERADMIN' && <Shield size={12} />}
                     {user.role}
