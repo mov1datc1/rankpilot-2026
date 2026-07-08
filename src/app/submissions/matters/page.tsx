@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, Sparkles, X, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Sparkles, X, CheckCircle2, Zap } from 'lucide-react';
 
 type Matter = {
   id: string;
