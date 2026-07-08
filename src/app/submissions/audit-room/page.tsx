@@ -66,7 +66,7 @@ export default function AuditRoomPage() {
               <span style={{ fontSize: '0.9rem', color: '#2563eb', fontWeight: 700 }}>{completeness}%</span>
             </div>
             <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
-              <div style={{ width: \`\${completeness}%\`, height: '100%', background: '#2563eb', transition: 'width 0.3s ease-out' }}></div>
+              <div style={{ width: `${completeness}%`, height: '100%', background: '#2563eb', transition: 'width 0.3s ease-out' }}></div>
             </div>
           </div>
 
