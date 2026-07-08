@@ -1,55 +1,112 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Search, MoreHorizontal, Sparkles, X, CheckCircle2, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Search, MoreHorizontal, Sparkles, X, CheckCircle2, Zap, Loader2 } from 'lucide-react';
+import { getMattersBySubmission, createMatter, updateMatterOptimization } from '@/app/actions/matters';
 
 type Matter = {
   id: string;
   name: string;
   client: string;
   value: string;
-  partner: string;
-  status: 'Draft' | 'AI Optimized';
+  leadPartner: string;
+  status: string;
+  rawNotes?: string;
+  optimizedText?: string;
 };
 
-const MOCK_MATTERS: Matter[] = [
-  { id: '1', name: 'Acquisition of TechNova', client: 'TechNova Inc.', value: '$450M', partner: 'John Doe', status: 'AI Optimized' },
-  { id: '2', name: 'Series B Funding', client: 'HealthStart', value: '$50M', partner: 'Jane Smith', status: 'Draft' },
-];
-
 export default function MattersAssistantPage() {
-  const [matters, setMatters] = useState<Matter[]>(MOCK_MATTERS);
+  const [matters, setMatters] = useState<Matter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [optimizedText, setOptimizedText] = useState('');
+  const [activeMatterId, setActiveMatterId] = useState<string | null>(null);
   
   // Form State
   const [matterName, setMatterName] = useState('');
+  const [client, setClient] = useState('');
+  const [value, setValue] = useState('');
+  const [leadPartner, setLeadPartner] = useState('');
   const [rawNotes, setRawNotes] = useState('');
 
-  const handleOptimize = () => {
+  useEffect(() => {
+    const fetchMatters = async () => {
+      const storedId = localStorage.getItem('activeSubmissionId');
+      if (storedId) {
+        setSubmissionId(storedId);
+        const res = await getMattersBySubmission(storedId);
+        if (res.success && res.data) {
+          setMatters(res.data);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetchMatters();
+  }, []);
+
+  const handleOptimize = async () => {
     setIsOptimizing(true);
-    // Simulate AI delay
-    setTimeout(() => {
-      setOptimizedText("In Q3 2026, the firm successfully represented TechNova Inc. in a highly complex $450M cross-border acquisition. This transaction involved navigating unprecedented regulatory hurdles in three jurisdictions, showcasing the department's unparalleled expertise in multinational M&A and regulatory compliance.");
+    
+    // Simulate AI delay for now (until Python backend is connected)
+    setTimeout(async () => {
+      const generatedText = "In Q3 2026, the firm successfully represented " + (client || 'the client') + " in a highly complex " + (value || '') + " transaction. This showcased the department's unparalleled expertise.";
+      setOptimizedText(generatedText);
+      
+      if (activeMatterId) {
+        // Save optimization to DB if matter already exists
+        await updateMatterOptimization(activeMatterId, generatedText);
+        setMatters(matters.map(m => m.id === activeMatterId ? { ...m, optimizedText: generatedText, status: 'AI Optimized' } : m));
+      }
       setIsOptimizing(false);
     }, 2000);
   };
 
-  const handleSave = () => {
-    const newMatter: Matter = {
-      id: Date.now().toString(),
+  const handleSave = async () => {
+    if (!submissionId) {
+      alert("No active submission found. Please start from the Builder.");
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    // Save to DB
+    const res = await createMatter({
+      submissionId,
       name: matterName || 'New Matter',
-      client: 'Pending',
-      value: 'Pending',
-      partner: 'Pending',
-      status: optimizedText ? 'AI Optimized' : 'Draft'
-    };
-    setMatters([newMatter, ...matters]);
-    setIsModalOpen(false);
-    setMatterName('');
-    setRawNotes('');
-    setOptimizedText('');
+      client: client || 'Pending',
+      value: value || 'Pending',
+      leadPartner: leadPartner || 'Pending',
+      rawNotes: rawNotes
+    });
+
+    if (res.success && res.data) {
+      const savedMatter = res.data;
+      
+      // If we already optimized it during creation, update it immediately
+      if (optimizedText) {
+        await updateMatterOptimization(savedMatter.id, optimizedText);
+        savedMatter.optimizedText = optimizedText;
+        savedMatter.status = 'AI Optimized';
+      }
+      
+      setMatters([savedMatter, ...matters]);
+      setIsModalOpen(false);
+      
+      // Reset form
+      setMatterName('');
+      setClient('');
+      setValue('');
+      setLeadPartner('');
+      setRawNotes('');
+      setOptimizedText('');
+      setActiveMatterId(null);
+    } else {
+      alert('Error saving matter: ' + res.error);
+    }
+    setIsSaving(false);
   };
 
   return (
@@ -92,12 +149,25 @@ export default function MattersAssistantPage() {
             </tr>
           </thead>
           <tbody>
-            {matters.map((matter, idx) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
+                  <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 1rem auto', display: 'block' }} />
+                  Cargando casos...
+                </td>
+              </tr>
+            ) : matters.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
+                  No matters added yet. Click "New Matter" to start.
+                </td>
+              </tr>
+            ) : matters.map((matter, idx) => (
               <tr key={matter.id} style={{ borderBottom: idx === matters.length - 1 ? 'none' : '1px solid #e2e8f0', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f8fafc'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
                 <td style={{ padding: '1rem 1.5rem', fontWeight: 500, color: '#0f172a' }}>{matter.name}</td>
                 <td style={{ padding: '1rem 1.5rem', color: '#475569' }}>{matter.client}</td>
                 <td style={{ padding: '1rem 1.5rem', color: '#475569' }}>{matter.value}</td>
-                <td style={{ padding: '1rem 1.5rem', color: '#475569' }}>{matter.partner}</td>
+                <td style={{ padding: '1rem 1.5rem', color: '#475569' }}>{matter.leadPartner}</td>
                 <td style={{ padding: '1rem 1.5rem' }}>
                   <span style={{ 
                     padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600,
@@ -112,11 +182,6 @@ export default function MattersAssistantPage() {
             ))}
           </tbody>
         </table>
-        {matters.length === 0 && (
-          <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
-            No matters added yet. Click "New Matter" to start.
-          </div>
-        )}
       </div>
 
       {/* PRO Modal */}
@@ -138,6 +203,21 @@ export default function MattersAssistantPage() {
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '0.5rem' }}>Matter Name (Internal)</label>
                 <input value={matterName} onChange={e => setMatterName(e.target.value)} type="text" placeholder="e.g. Project Apollo" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '0.5rem' }}>Client</label>
+                  <input value={client} onChange={e => setClient(e.target.value)} type="text" placeholder="Client Name" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '0.5rem' }}>Value</label>
+                  <input value={value} onChange={e => setValue(e.target.value)} type="text" placeholder="e.g. $450M" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '0.5rem' }}>Lead Partner</label>
+                  <input value={leadPartner} onChange={e => setLeadPartner(e.target.value)} type="text" placeholder="Partner Name" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} />
+                </div>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
@@ -179,13 +259,28 @@ export default function MattersAssistantPage() {
             {/* Modal Footer */}
             <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
               <button onClick={() => setIsModalOpen(false)} style={{ padding: '0.75rem 1.5rem', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleSave} style={{ padding: '0.75rem 2rem', background: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 600, color: '#fff', cursor: 'pointer' }}>Save Matter</button>
+              <button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                style={{ padding: '0.75rem 2rem', background: isSaving ? '#94a3b8' : '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 600, color: '#fff', cursor: isSaving ? 'wait' : 'pointer' }}
+              >
+                {isSaving ? 'Saving...' : 'Save Matter'}
+              </button>
             </div>
 
           </div>
         </div>
       )}
 
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}} />
     </div>
   );
 }

@@ -88,11 +88,11 @@ export default async function AdminDashboardPage() {
           </tbody>
         </table>
       </div>
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         .admin-table-row:hover {
           background: rgba(255,255,255,0.02);
         }
-      \`}} />
+      `}} />
     </div>
   );
 }

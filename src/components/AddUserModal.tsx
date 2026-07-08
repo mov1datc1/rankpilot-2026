@@ -181,12 +181,12 @@ export default function AddUserModal() {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeIn {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
         }
-      \`}} />
+      `}} />
     </>
   );
 }

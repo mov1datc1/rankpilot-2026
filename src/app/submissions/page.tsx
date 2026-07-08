@@ -1,18 +1,43 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, FileText, Edit3, FileCheck } from 'lucide-react';
+import { Upload, FileText, Edit3, FileCheck, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createSubmission } from '@/app/actions/submissions';
 
 export default function SubmissionsPage() {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const startUploadAudit = () => {
-    // Navigate to processing view
-    router.push('/submissions/processing');
+  // Form State
+  const [targetDirectory, setTargetDirectory] = useState('Legal 500');
+  const [guideRegion, setGuideRegion] = useState('Latin America');
+  const [practiceArea, setPracticeArea] = useState('Banking & Finance');
+
+  const startUploadAudit = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await createSubmission({
+        targetDirectory,
+        guideRegion,
+        practiceArea
+      });
+
+      if (result.success && result.data) {
+        // Save the submission context globally or pass via URL
+        localStorage.setItem('activeSubmissionId', result.data.id);
+        router.push(\`/submissions/processing?id=\${result.data.id}\`);
+      } else {
+        alert('Error creating submission: ' + result.error);
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error(error);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -38,7 +63,7 @@ export default function SubmissionsPage() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Target Directory</label>
-            <select style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
+            <select value={targetDirectory} onChange={e => setTargetDirectory(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
               <option>Legal 500</option>
               <option>Chambers</option>
               <option>IFLR 1000</option>
@@ -47,7 +72,7 @@ export default function SubmissionsPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Guide / Region</label>
-            <select style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
+            <select value={guideRegion} onChange={e => setGuideRegion(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
               <option>Latin America</option>
               <option>Global</option>
             </select>
@@ -55,7 +80,7 @@ export default function SubmissionsPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Practice Area</label>
-            <select style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
+            <select value={practiceArea} onChange={e => setPracticeArea(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
               <option>Banking & Finance</option>
               <option>Corporate and M&A</option>
               <option>Dispute Resolution</option>
@@ -205,17 +230,17 @@ export default function SubmissionsPage() {
             <div style={{ padding: '1.5rem 2rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
               <button 
                 onClick={startUploadAudit}
-                disabled={!selectedFileName}
+                disabled={!selectedFileName || isSubmitting}
                 style={{ 
-                  background: selectedFileName ? '#3b82f6' : '#94a3b8', 
+                  background: selectedFileName && !isSubmitting ? '#3b82f6' : '#94a3b8', 
                   color: '#ffffff', padding: '0.75rem 2rem', 
-                  borderRadius: '8px', fontWeight: 500, border: 'none', 
-                  cursor: selectedFileName ? 'pointer' : 'not-allowed', transition: 'background 0.2s'
+                  borderRadius: '8px', fontWeight: 500, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  cursor: selectedFileName && !isSubmitting ? 'pointer' : 'not-allowed', transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => { if (selectedFileName) e.currentTarget.style.background = '#2563eb'; }}
-                onMouseOut={(e) => { if (selectedFileName) e.currentTarget.style.background = '#3b82f6'; }}
+                onMouseOver={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#2563eb'; }}
+                onMouseOut={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#3b82f6'; }}
               >
-                Start Upload Audit
+                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Creando Proyecto...</> : 'Start Upload Audit'}
               </button>
             </div>
           </div>
@@ -226,6 +251,13 @@ export default function SubmissionsPage() {
         @keyframes scale-in {
           0% { transform: scale(0.95); opacity: 0; }
           100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}} />
     </div>
