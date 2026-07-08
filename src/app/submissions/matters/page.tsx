@@ -11,8 +11,8 @@ type Matter = {
   value: string;
   leadPartner: string;
   status: string;
-  rawNotes?: string;
-  optimizedText?: string;
+  rawNotes?: string | null;
+  optimizedText?: string | null;
 };
 
 export default function MattersAssistantPage() {
