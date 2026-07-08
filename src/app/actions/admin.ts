@@ -40,7 +40,7 @@ export async function createUser(data: { email: string; password?: string; role:
         user_metadata: { role }
       });
 
-      if (authError) throw new Error(\`Error en Supabase Auth: \${authError.message}\`);
+      if (authError) throw new Error(`Error en Supabase Auth: ${authError.message}`);
       authUserId = authData.user.id;
     } else {
       // Flujo Alternativo: No hay Service Role. Solo guardamos en Prisma.
