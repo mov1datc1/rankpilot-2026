@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+import { submitWizardData } from '@/app/actions/submitWizard';
 
 const STEPS = [
   { id: 1, title: 'Preliminar' },
@@ -12,6 +13,8 @@ const STEPS = [
 
 export default function Wizard() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isPending, startTransition] = useTransition();
+  const [result, setResult] = useState<{ success: boolean; pdf_url?: string; error?: string } | null>(null);
   const [formData, setFormData] = useState({
     // Step 1
     firmName: '',
@@ -48,10 +51,31 @@ export default function Wizard() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Formulario enviado:', formData);
-    // Here we will call the Python API later
-    alert('Submission preparada para IA (Mock)');
+    startTransition(async () => {
+      const res = await submitWizardData(formData);
+      if (res.success) {
+        setResult({ success: true, pdf_url: res.data?.data?.pdf_url });
+      } else {
+        setResult({ success: false, error: res.error });
+      }
+    });
   };
+
+  if (result?.success) {
+    return (
+      <div className="glass-panel animate-fade-in" style={{ maxWidth: '600px', width: '100%', margin: '0 auto', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', color: '#4ade80' }}>¡Submission Generada Exitosamente!</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>La Inteligencia Artificial ha procesado tu información.</p>
+        {result.pdf_url ? (
+          <a href={result.pdf_url} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ background: 'var(--accent-primary)', color: '#fff' }}>
+            Descargar Reporte (PDF)
+          </a>
+        ) : (
+          <p style={{ color: 'var(--text-muted)' }}>El archivo PDF se está compilando. Recibirás una notificación cuando esté listo.</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="glass-panel animate-fade-in" style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
@@ -168,20 +192,26 @@ export default function Wizard() {
 
         {/* Navigation Buttons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-subtle)' }}>
-          <button type="button" className="btn-secondary" onClick={prevStep} style={{ visibility: currentStep === 1 ? 'hidden' : 'visible' }}>
+          <button type="button" className="btn-secondary" onClick={prevStep} style={{ visibility: currentStep === 1 ? 'hidden' : 'visible' }} disabled={isPending}>
             Atrás
           </button>
           
           {currentStep < 5 ? (
-            <button type="button" className="btn-primary" onClick={nextStep}>
+            <button type="button" className="btn-primary" onClick={nextStep} disabled={isPending}>
               Siguiente Paso
             </button>
           ) : (
-            <button type="submit" className="btn-primary" style={{ background: 'var(--accent-primary)', color: '#fff' }}>
-              Completar y Generar
+            <button type="submit" className="btn-primary" style={{ background: 'var(--accent-primary)', color: '#fff', opacity: isPending ? 0.7 : 1 }} disabled={isPending}>
+              {isPending ? 'Procesando con IA...' : 'Completar y Generar'}
             </button>
           )}
         </div>
+        
+        {result?.error && (
+          <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '6px', color: '#ef4444', textAlign: 'center' }}>
+            Error: {result.error}
+          </div>
+        )}
       </form>
     </div>
   );
