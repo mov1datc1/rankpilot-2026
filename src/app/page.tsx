@@ -1,40 +1,145 @@
 import './globals.css';
 import Link from 'next/link';
+import { BarChart2, Check, ArrowRight, Shield } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
+      color: '#ffffff',
+      display: 'flex',
+      flexDirection: 'column',
+      fontFamily: 'var(--font-sans)',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Decorative Background Elements */}
+      <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
       
-      <div className="glass-panel animate-fade-in" style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
-        
-        <h1 className="text-gradient" style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '1rem', letterSpacing: '-0.03em' }}>
-          RankPilot
-        </h1>
-        
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-          La plataforma definitiva para gestionar, analizar y automatizar tus submissions legales con el poder de la Inteligencia Artificial.
-        </p>
-
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/wizard" className="btn-primary">
-            <span>Iniciar Submission</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </Link>
-          
-          <Link href="/dashboard/admin" className="btn-secondary">
-            Panel Admin
+      {/* Navbar */}
+      <header style={{ padding: '1.5rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '8px' }}>
+            <BarChart2 size={24} color="#ffffff" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, lineHeight: 1 }}>RankPilot</h2>
+            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Legal Rankings. Simplified</span>
+          </div>
+        </div>
+        <div>
+          <Link href="/login" style={{ 
+            color: '#fff', 
+            textDecoration: 'none', 
+            fontWeight: 500, 
+            fontSize: '0.9rem',
+            padding: '0.5rem 1rem',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '9999px',
+            transition: 'background 0.2s'
+          }} className="hover-bg-glass">
+            Iniciar Sesión
           </Link>
         </div>
+      </header>
 
-      </div>
+      {/* Hero Section */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 2rem', zIndex: 10, textAlign: 'center' }} className="animate-fade-in">
+        
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {['MULTI-USER', 'MULTILINGUAL', '100% LEGALTECH'].map(badge => (
+            <span key={badge} style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '9999px',
+              padding: '0.35rem 1rem',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              color: '#60a5fa'
+            }}>
+              {badge}
+            </span>
+          ))}
+        </div>
 
-      <div className="animate-fade-in" style={{ marginTop: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem', animationDelay: '0.2s', opacity: 0, animationFillMode: 'forwards' }}>
-        Next.js + Supabase + RankPilot Core AI
-      </div>
+        <h1 style={{ fontSize: '4.5rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '1.5rem', maxWidth: '800px', letterSpacing: '-0.02em' }}>
+          Automate your submissions.<br/>Accelerate your <span style={{ color: '#60a5fa' }}>rankings.</span>
+        </h1>
+        
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.25rem', marginBottom: '3rem', maxWidth: '600px', lineHeight: 1.6 }}>
+          The first AI-powered platform specialized in legal rankings for Latin America and the world. Increase your firm's visibility effortlessly.
+        </p>
 
+        {/* CTA to Stripe */}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+          <Link href="#" style={{
+            background: '#ffffff',
+            color: '#0f172a',
+            padding: '1rem 2.5rem',
+            borderRadius: '9999px',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            boxShadow: '0 10px 25px -5px rgba(255, 255, 255, 0.2)',
+            transition: 'transform 0.2s'
+          }}>
+            Suscribirse Ahora <ArrowRight size={20} />
+          </Link>
+          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Shield size={14} /> Pago seguro vía Stripe
+          </span>
+        </div>
+
+        {/* Value Proposition Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          maxWidth: '1000px',
+          width: '100%',
+          marginTop: '5rem',
+          textAlign: 'left'
+        }}>
+          {[
+            {
+              title: 'Reduce up to 70% of work time',
+              desc: 'Automate repetitive tasks and let RankPilot handle the initial drafts and formatting.'
+            },
+            {
+              title: 'Legal AI Specialization',
+              desc: 'AI-assisted writing specifically trained in legal language and industry standards.'
+            },
+            {
+              title: 'Native Export Formats',
+              desc: 'Guided input with 1-click Word exports specifically formatted for Chambers, Legal 500, and IFLR.'
+            }
+          ].map((card, i) => (
+            <div key={i} style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '2rem',
+              transition: 'background 0.2s'
+            }}>
+              <div style={{ background: 'rgba(96, 165, 250, 0.2)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                <Check size={20} color="#60a5fa" />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.75rem' }}>{card.title}</h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: 1.5 }}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <footer style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', zIndex: 10 }}>
+        © {new Date().getFullYear()} RankPilot. Todos los derechos reservados.
+      </footer>
     </div>
   );
 }
