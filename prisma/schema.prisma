@@ -19,5 +19,39 @@ model User {
   stripeCustomerId String?
   subscriptionId   String?
   status           String   @default("ACTIVE")
-  createdAt        DateTime @default(now())
+  submissions      Submission[]
+}
+
+model Submission {
+  id                String   @id @default(uuid())
+  userId            String
+  targetDirectory   String
+  guideRegion       String
+  practiceArea      String
+  currentBand       String
+  deadline          DateTime?
+  status            String   @default("Draft")
+  completenessScore Int      @default(0)
+  documentUrl       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matters           Matter[]
+}
+
+model Matter {
+  id             String   @id @default(uuid())
+  submissionId   String
+  name           String
+  client         String
+  value          String
+  leadPartner    String
+  rawNotes       String?  @db.Text
+  optimizedText  String?  @db.Text
+  status         String   @default("Draft")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 }
