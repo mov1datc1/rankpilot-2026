@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  role             Role     @default(USER)
+  stripeCustomerId String?
+  subscriptionId   String?
+  status           String   @default("ACTIVE")
+  createdAt        DateTime @default(now())
+}
