@@ -46,7 +46,7 @@ export default function AuditRoomPage() {
   };
 
   const handleFinish = () => {
-    router.push('/submissions/report');
+    router.push('/reports');
   };
 
   return (

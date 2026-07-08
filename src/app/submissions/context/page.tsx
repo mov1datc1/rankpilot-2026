@@ -132,7 +132,7 @@ export default function ContextPage() {
           Enter the Audit Room <ArrowRight size={18} />
         </button>
         <button 
-          onClick={() => router.push('/submissions/report')}
+          onClick={() => router.push('/reports')}
           style={{ padding: '1rem 2rem', background: '#ffffff', color: '#475569', fontWeight: 600, borderRadius: '8px', border: '1px solid #cbd5e1', cursor: 'pointer', fontSize: '1rem' }}
         >
           Saltar y generar ya
