@@ -1,0 +1,27 @@
+name: Deploy via SSH
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  build:
+    name: Deploy Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Execute remote SSH commands using password
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          # key: ${{ secrets.SSH_KEY }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |            
+            cd ${{ secrets.APP_DIR }}
+            git checkout develop
+            git pull origin develop
+            cd ${{ secrets.APP_DIR_BASE }}
+            sudo docker-compose -f ${{ secrets.COMPOSEFILE }} down
+            sudo docker-compose -f ${{ secrets.COMPOSEFILE }} up -d --build

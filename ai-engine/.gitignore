@@ -1,0 +1,34 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+build/
+dist/
+
+# --- Environment & Security ---
+.env
+.flaskenv
+
+# --- LaTeX Temporary Files ---
+*.aux
+*.log
+*.toc
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.pdf
+# (Opcional: puedes ignorar la carpeta outputs si no quieres subir los reportes generados)
+outputs/
+
+# --- IDEs ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- Jupyter ---
+.ipynb_checkpoints
