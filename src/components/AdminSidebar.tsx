@@ -87,7 +87,7 @@ export default function AdminSidebar({ userEmail, userRole }: AdminSidebarProps)
 
       <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
         <p style={{ fontSize: '0.75rem', color: '#cbd5e1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userEmail}</p>
-        <p style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: userRole === 'SUPERADMIN' ? '#f87171' : '#38bdf8' }}>
+        <p style={{ fontSize: '0.65rem', marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, color: userRole === 'SUPERADMIN' ? '#f87171' : '#38bdf8' }}>
           {userRole}
         </p>
       </div>
