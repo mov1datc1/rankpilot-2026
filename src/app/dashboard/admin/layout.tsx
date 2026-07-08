@@ -16,8 +16,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   });
 
   if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPERADMIN')) {
-    // Si no es admin, lo mandamos al dashboard normal o al wizard
-    redirect('/wizard');
+    // Si no es admin, lo mandamos al dashboard normal (submissions)
+    redirect('/submissions');
   }
 
   return (
