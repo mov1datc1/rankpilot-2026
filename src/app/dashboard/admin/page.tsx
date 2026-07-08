@@ -4,7 +4,7 @@ import { Shield, CheckCircle, Clock } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { email: 'asc' }
   });
 
   return (
