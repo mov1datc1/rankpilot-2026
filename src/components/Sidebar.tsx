@@ -20,7 +20,7 @@ export default function Sidebar() {
     { name: 'Builder', href: '/submissions', icon: Home },
     { name: 'Matters Assistant', href: '/submissions/matters', icon: Zap },
     { name: 'Report', href: '/reports', icon: FileText },
-    { name: 'Dashboard', href: '#', icon: BarChart2 },
+    { name: 'Dashboard', href: '/dashboard-analytics', icon: BarChart2 },
   ];
 
   const [recentLinks, setRecentLinks] = useState<{name: string, href: string}[]>([

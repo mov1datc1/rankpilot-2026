@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Download, CheckCircle, Clock, ChevronRight, FileDown, Layers, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, CheckCircle2, Clock, FileDown, Layers, ArrowUpRight } from 'lucide-react';
 import { getUserSubmissionsWithMatters } from '@/app/actions/reports';
 
 type Matter = {
@@ -37,26 +37,21 @@ export default function ReportsPage() {
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
     setDownloadingId(`${subId}-${format}`);
-    // Simulate generation time
     setTimeout(() => {
       setDownloadingId(null);
-      // In a real scenario, here we'd trigger a blob download from the Python API
-      alert(`Tu reporte final en formato .${format} está listo y descargado.`);
+      alert(`Your final report in .${format} format is ready.`);
     }, 2500);
   };
 
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <div style={{ color: '#38bdf8', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-          <Layers size={40} className="animate-pulse" />
-          <span style={{ color: '#94a3b8', fontWeight: 600 }}>Cargando tus reportes...</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <Layers size={40} color="#2563eb" className="animate-pulse" />
+          <span style={{ color: '#64748b', fontWeight: 600 }}>Loading deliverables...</span>
         </div>
         <style dangerouslySetInnerHTML={{__html: `
-          @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: .5; transform: scale(0.95); }
-          }
+          @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.95); } }
           .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         `}} />
       </div>
@@ -64,38 +59,25 @@ export default function ReportsPage() {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
-      {/* Header Premium */}
-      <div style={{ 
-        marginBottom: '3rem', 
-        padding: '2.5rem', 
-        borderRadius: '24px',
-        background: 'linear-gradient(135deg, rgba(15,23,42,0.9), rgba(2,6,23,0.95))',
-        border: '1px solid rgba(255,255,255,0.05)',
-        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Decorative elements */}
-        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: '#38bdf8', filter: 'blur(100px)', opacity: 0.15, borderRadius: '50%' }} />
-        
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <FileText size={36} color="#38bdf8" />
-          Deliverables
+    <div style={{ maxWidth: '1100px' }}>
+      {/* Header — same style as Builder */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          RankPilot: <span style={{ color: '#2563eb' }}>Deliverables</span>
         </h1>
-        <p style={{ fontSize: '1.15rem', color: '#94a3b8', margin: 0, maxWidth: '600px' }}>
-          Descarga tus reportes finales listos para enviar a {submissions.length > 0 ? submissions[0].targetDirectory : 'los directorios'}. Todos los casos optimizados compilados en un solo documento.
+        <p style={{ fontSize: '1.1rem', color: '#64748b', marginTop: '0.25rem' }}>
+          Download your final reports ready for submission to the directories.
         </p>
       </div>
 
       {submissions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem', background: '#1e293b', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-          <FileDown size={48} color="#475569" style={{ margin: '0 auto 1rem auto' }} />
-          <h3 style={{ color: '#f8fafc', fontSize: '1.25rem', marginBottom: '0.5rem' }}>No tienes reportes aún</h3>
-          <p style={{ color: '#94a3b8' }}>Ve al Builder y procesa tus casos para generar el primer reporte.</p>
+        <div style={{ textAlign: 'center', padding: '4rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <FileDown size={48} color="#94a3b8" style={{ margin: '0 auto 1rem auto' }} />
+          <h3 style={{ color: '#0f172a', fontSize: '1.25rem', marginBottom: '0.5rem' }}>No reports yet</h3>
+          <p style={{ color: '#64748b' }}>Go to the Builder and process your matters to generate the first report.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {submissions.map((sub) => {
             const total = sub.matters.length;
             const optimized = sub.matters.filter(m => m.status === 'AI Optimized').length;
@@ -104,78 +86,80 @@ export default function ReportsPage() {
 
             return (
               <div key={sub.id} style={{
-                background: 'rgba(30,41,59,0.5)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '20px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
                 padding: '2rem',
                 transition: 'all 0.3s ease',
                 position: 'relative',
                 overflow: 'hidden',
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)'
+                boxShadow: '0 2px 4px -1px rgba(0,0,0,0.03)'
               }}
-              className="report-card"
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.border = '1px solid rgba(56,189,248,0.2)';
-                e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.5), 0 0 30px rgba(56,189,248,0.1)';
+                e.currentTarget.style.borderColor = '#2563eb';
+                e.currentTarget.style.boxShadow = '0 4px 12px -2px rgba(37,99,235,0.1)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.05)';
-                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.3)';
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.boxShadow = '0 2px 4px -1px rgba(0,0,0,0.03)';
               }}
               >
-                {/* Ribbon if ready */}
+                {/* Ready ribbon */}
                 {isReady && (
-                  <div style={{ position: 'absolute', top: '1.5rem', right: '-2rem', background: '#10b981', color: '#fff', padding: '0.25rem 3rem', transform: 'rotate(45deg)', fontSize: '0.75rem', fontWeight: 700, boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                  <div style={{ position: 'absolute', top: '1rem', right: '-2rem', background: '#16a34a', color: '#fff', padding: '0.2rem 3rem', transform: 'rotate(45deg)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em' }}>
                     READY
                   </div>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                   <div>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: '#f8fafc', margin: '0 0 0.25rem 0' }}>{sub.targetDirectory}</h2>
-                    <p style={{ fontSize: '0.9rem', color: '#94a3b8', margin: 0 }}>{sub.practiceArea} • {sub.guideRegion}</p>
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem 0' }}>{sub.targetDirectory}</h2>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>{sub.practiceArea} · {sub.guideRegion}</p>
                   </div>
-                  <div style={{ 
-                    background: isReady ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                    color: isReady ? '#34d399' : '#fbbf24',
-                    padding: '0.5rem',
-                    borderRadius: '50%'
+                  <div style={{
+                    background: isReady ? '#dcfce7' : '#fef3c7',
+                    color: isReady ? '#15803d' : '#92400e',
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
                   }}>
-                    {isReady ? <CheckCircle2 size={24} /> : <Clock size={24} />}
+                    {isReady ? <CheckCircle2 size={14} /> : <Clock size={14} />}
+                    {isReady ? 'Complete' : 'In Progress'}
                   </div>
                 </div>
 
                 {/* Progress Bar */}
-                <div style={{ marginBottom: '2rem' }}>
+                <div style={{ marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                    <span style={{ color: '#cbd5e1', fontWeight: 500 }}>Progreso de Casos ({optimized}/{total})</span>
-                    <span style={{ color: isReady ? '#34d399' : '#38bdf8', fontWeight: 700 }}>{progress}%</span>
+                    <span style={{ color: '#475569', fontWeight: 500 }}>Matters Progress ({optimized}/{total})</span>
+                    <span style={{ color: '#2563eb', fontWeight: 700 }}>{progress}%</span>
                   </div>
-                  <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      height: '100%', 
+                  <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
                       width: `${progress}%`,
-                      background: isReady ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #2563eb, #38bdf8)',
+                      background: isReady ? '#16a34a' : '#2563eb',
                       borderRadius: '999px',
                       transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
                     }} />
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Download Actions */}
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button 
+                  <button
                     disabled={!isReady || downloadingId === `${sub.id}-docx`}
                     onClick={() => handleDownload(sub.id, 'docx')}
                     style={{
                       flex: 1,
-                      padding: '0.8rem',
-                      borderRadius: '12px',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
                       border: 'none',
-                      background: isReady ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#334155',
+                      background: isReady ? '#2563eb' : '#f1f5f9',
                       color: isReady ? '#fff' : '#94a3b8',
                       fontWeight: 600,
                       display: 'flex',
@@ -184,30 +168,28 @@ export default function ReportsPage() {
                       gap: '0.5rem',
                       cursor: isReady ? 'pointer' : 'not-allowed',
                       opacity: downloadingId === `${sub.id}-docx` ? 0.7 : 1,
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      fontSize: '0.9rem'
                     }}
                   >
                     {downloadingId === `${sub.id}-docx` ? (
-                      <div className="spinner" style={{ width: '20px', height: '20px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%' }} />
+                      <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%' }} />
                     ) : (
-                      <>
-                        <Download size={18} />
-                        .DOCX
-                      </>
+                      <><Download size={16} /> Download .DOCX</>
                     )}
                   </button>
-                  
-                  <button 
+
+                  <button
                     disabled={!isReady || downloadingId === `${sub.id}-pdf`}
                     onClick={() => handleDownload(sub.id, 'pdf')}
                     style={{
                       flex: 1,
-                      padding: '0.8rem',
-                      borderRadius: '12px',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
                       border: '1px solid',
-                      borderColor: isReady ? 'rgba(56,189,248,0.3)' : 'transparent',
-                      background: isReady ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.02)',
-                      color: isReady ? '#38bdf8' : '#64748b',
+                      borderColor: isReady ? '#2563eb' : '#e2e8f0',
+                      background: isReady ? '#eff6ff' : '#fafafa',
+                      color: isReady ? '#2563eb' : '#94a3b8',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
@@ -215,16 +197,14 @@ export default function ReportsPage() {
                       gap: '0.5rem',
                       cursor: isReady ? 'pointer' : 'not-allowed',
                       opacity: downloadingId === `${sub.id}-pdf` ? 0.7 : 1,
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      fontSize: '0.9rem'
                     }}
                   >
                     {downloadingId === `${sub.id}-pdf` ? (
-                      <div className="spinner" style={{ width: '20px', height: '20px', border: '2px solid #38bdf8', borderTopColor: 'transparent', borderRadius: '50%' }} />
+                      <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%' }} />
                     ) : (
-                      <>
-                        <Download size={18} />
-                        .PDF
-                      </>
+                      <><Download size={16} /> Download .PDF</>
                     )}
                   </button>
                 </div>
@@ -235,12 +215,8 @@ export default function ReportsPage() {
       )}
 
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        .spinner {
-          animation: spin 1s linear infinite;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; }
       `}} />
     </div>
   );
