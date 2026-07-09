@@ -9,10 +9,26 @@ export async function submitWizardData(formData: any) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Resolve user ID by email to handle Supabase/Prisma ID mismatch
+    let resolvedUserId = user.id;
+    if (user.email) {
+      const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+      if (existingByEmail) {
+        resolvedUserId = existingByEmail.id;
+      } else {
+        // Auto-sync if user doesn't exist in Prisma yet
+        await prisma.user.upsert({
+          where: { id: user.id },
+          update: {},
+          create: { id: user.id, email: user.email, role: 'USER', status: 'ACTIVE' }
+        });
+      }
+    }
+
     // 1. Create a real Submission in the DB
     const newSubmission = await prisma.submission.create({
       data: {
-        userId: user.id,
+        userId: resolvedUserId,
         targetDirectory: formData.practice || 'Chambers',
         practiceArea: formData.practice || 'General',
         guideRegion: formData.jurisdiction || 'Global',
@@ -100,6 +116,24 @@ export async function submitWizardData(formData: any) {
     }
 
     const data = await response.json();
+
+    // Persist AI analysis and strategic_context back into chambersData
+    const aiAnalysis = data?.data?.analysis || {};
+    const aiStrategicContext = data?.data?.strategic_context || {};
+    const aiMatters = data?.data?.matters || [];
+
+    await prisma.submission.update({
+      where: { id: newSubmission.id },
+      data: {
+        chambersData: {
+          ...formData,
+          analysis: aiAnalysis,
+          strategicContext: aiStrategicContext
+        },
+        status: 'Submitted'
+      }
+    });
+
     return { success: true, data, submissionId: newSubmission.id };
   } catch (error: any) {
     console.error('Error in submitWizardData:', error);

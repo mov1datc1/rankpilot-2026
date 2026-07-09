@@ -62,18 +62,16 @@ export async function POST(request: NextRequest) {
       throw new Error(`Python API Error: ${rawText}`);
     }
     
-    // El motor Python debe retornar la data estructurada. Vamos a parsear la respuesta.
-    // Si langgraph devuelve el output, estará en pyData.data.response o pyData directly
+    // El motor Python debe retornar la data estructurada.
     const extractedData = pyData.metadata || pyData.data?.metadata;
     const extractedMatters = pyData.matters || pyData.data?.matters;
-    const analysisData = pyData.data?.analysis;
-    const strategicContext = pyData.data?.strategic_context;
+    const analysisData = pyData.data?.analysis || pyData.analysis;
+    const strategicContext = pyData.data?.strategic_context || pyData.strategic_context;
 
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
     if (extractedMatters && Array.isArray(extractedMatters)) {
       for (const m of extractedMatters) {
-        // En el nuevo pipeline, optimization_node asigna 'optimized_text' y 'status'='AI Optimized'
         const isOptimized = m.status === 'AI Optimized' || m.optimized_text;
         
         await prisma.matter.create({
@@ -92,19 +90,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Actualizamos el submission con metadata extraída y análisis estratégico
-    if (extractedData || analysisData) {
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: { 
-          chambersData: {
-            metadata: extractedData,
-            analysis: analysisData,
-            strategicContext: strategicContext
-          }
-        }
-      });
-    }
+    // ALWAYS persist analysis and strategicContext into chambersData
+    const existingChambersData = (submission.chambersData as any) || {};
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: { 
+        chambersData: {
+          ...existingChambersData,
+          metadata: extractedData || existingChambersData.metadata,
+          analysis: analysisData || existingChambersData.analysis,
+          strategicContext: strategicContext || existingChambersData.strategicContext
+        },
+        status: 'Submitted'
+      }
+    });
 
     // Log the AI interaction for traceability
     await prisma.aILog.create({

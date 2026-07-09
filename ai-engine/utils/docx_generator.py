@@ -19,11 +19,11 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
         title_run.font.color.rgb = RGBColor(26, 35, 126) # Brand Navy
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
-    firm_name = structured_data.get('firm_metadata', {}).get('firm_name', 'Professional Law Firm')
-    practice_area = structured_data.get('firm_metadata', {}).get('practice_area', 'General Practice')
-    
     # Extraer los datos estratégicos de la sesión
     chambers_data = structured_data.get('chambersData', {})
+    
+    firm_name = structured_data.get('firm_metadata', {}).get('firm_name', '') or chambers_data.get('firmName', 'Professional Law Firm')
+    practice_area = structured_data.get('firm_metadata', {}).get('practice_area', '') or chambers_data.get('practice', 'General Practice')
     analysis = chambers_data.get('analysis', {})
     context = chambers_data.get('strategicContext', {})
     letter = analysis.get('audit_letter', {})
@@ -117,7 +117,7 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
             p.add_run(f"{matter.get('value', 'N/A')}\n")
             
             p.add_run('Lead Partner: ').bold = True
-            p.add_run(f"{matter.get('lead_partner', 'N/A')}\n")
+            p.add_run(f"{matter.get('lead_partner') or matter.get('leadPartner', 'N/A')}\n")
             
             doc.add_paragraph().add_run('Matter Summary (Publishable):').bold = True
             doc.add_paragraph(matter.get('optimizedText') or matter.get('optimized_text') or matter.get('description') or matter.get('rawNotes') or '')

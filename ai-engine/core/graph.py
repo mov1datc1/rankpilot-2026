@@ -5,6 +5,7 @@ from agents.nodes import (
     extraction_node, 
     context_engine_node,
     analysis_node, 
+    optimization_node,
     interrogator_node, 
     writer_node
 )
@@ -25,6 +26,7 @@ def create_rankpilot_graph():
     workflow.add_node("extraction", extraction_node)
     workflow.add_node("context_engine", context_engine_node)
     workflow.add_node("analysis", analysis_node)
+    workflow.add_node("optimization", optimization_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
 
@@ -50,10 +52,13 @@ def create_rankpilot_graph():
         "analysis",
         route_based_on_confidence,
         {
-            "writing": "writing",
+            "writing": "optimization",
             "interrogation": "interrogation"
         }
     )
+
+    # 5. Optimization always flows to Writing
+    workflow.add_edge("optimization", "writing")
 
     # 5. Define the Loopback
     # After the Interrogator speaks, the graph pauses for user input.
