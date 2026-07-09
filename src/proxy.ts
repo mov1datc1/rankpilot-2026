@@ -56,18 +56,18 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect /wizard and /dashboard routes
-  if (
-    !user && 
-    (request.nextUrl.pathname.startsWith('/wizard') || 
-     request.nextUrl.pathname.startsWith('/dashboard'))
-  ) {
+  const publicPaths = ['/login', '/api', '/favicon.ico']
+  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path))
+  const isRootPath = request.nextUrl.pathname === '/'
+
+  // Protect all non-public routes
+  if (!user && !isPublicPath && !isRootPath) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect to dashboard if logged in and trying to access /login
-  if (user && request.nextUrl.pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/wizard', request.url))
+  // Redirect to submissions if logged in and trying to access /login
+  if (user && request.nextUrl.pathname === '/login') {
+    return NextResponse.redirect(new URL('/submissions', request.url))
   }
 
   return response
@@ -75,13 +75,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - api (API routes can have their own auth logic)
-     */
     '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
