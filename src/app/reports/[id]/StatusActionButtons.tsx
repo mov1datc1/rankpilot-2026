@@ -25,16 +25,16 @@ export default function StatusActionButtons({
   };
 
   return (
-    <div className="flex items-center space-x-2">
-      <span className="text-sm font-medium text-gray-500 mr-2">Status: <strong className="text-gray-800">{currentStatus}</strong></span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b', marginRight: '0.5rem' }}>Status: <strong style={{ color: '#1e293b' }}>{currentStatus}</strong></span>
       
       {currentStatus !== 'Submitted' && (
         <button 
           onClick={() => handleStatusChange('Submitted')}
           disabled={isPending}
-          className="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors disabled:opacity-50"
+          style={{ background: '#eff6ff', color: '#2563eb', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s', opacity: isPending ? 0.5 : 1, cursor: isPending ? 'not-allowed' : 'pointer', border: 'none' }}
         >
-          <Send className="h-4 w-4 mr-1.5" />
+          <Send style={{ width: '16px', height: '16px', marginRight: '0.375rem' }} />
           Mark as Sent
         </button>
       )}
@@ -43,9 +43,9 @@ export default function StatusActionButtons({
         <button 
           onClick={() => handleStatusChange('Accepted')}
           disabled={isPending}
-          className="bg-green-50 text-green-600 hover:bg-green-100 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors disabled:opacity-50"
+          style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s', opacity: isPending ? 0.5 : 1, cursor: isPending ? 'not-allowed' : 'pointer', border: 'none' }}
         >
-          <CheckCircle2 className="h-4 w-4 mr-1.5" />
+          <CheckCircle2 style={{ width: '16px', height: '16px', marginRight: '0.375rem' }} />
           Mark Accepted
         </button>
       )}
@@ -54,9 +54,9 @@ export default function StatusActionButtons({
         <button 
           onClick={() => handleStatusChange('Rejected')}
           disabled={isPending}
-          className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors disabled:opacity-50"
+          style={{ background: '#fef2f2', color: '#dc2626', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s', opacity: isPending ? 0.5 : 1, cursor: isPending ? 'not-allowed' : 'pointer', border: 'none' }}
         >
-          <XCircle className="h-4 w-4 mr-1.5" />
+          <XCircle style={{ width: '16px', height: '16px', marginRight: '0.375rem' }} />
           Mark Rejected
         </button>
       )}

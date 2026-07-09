@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { ChevronLeft, Download, Printer, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 import StatusActionButtons from "./StatusActionButtons";
@@ -61,152 +61,156 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   });
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc', paddingBottom: '5rem' }}>
       {/* Top Navigation */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 print-hidden">
-        <div className="flex items-center space-x-4">
+      <div className="print-hidden" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link 
             href="/reports"
-            className="text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors hover:bg-gray-100"
+            style={{ color: '#64748b', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s' }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft style={{ width: '16px', height: '16px', marginRight: '0.25rem' }} />
             Back to Reports
           </Link>
-          <div className="h-6 w-px bg-gray-200"></div>
+          <div style={{ height: '24px', width: '1px', background: '#e2e8f0' }}></div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">RankPilot: Strategic Audit</h1>
-            <p className="text-sm text-gray-500">{submission.targetDirectory} | {submission.practiceArea}</p>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>RankPilot: Strategic Audit</h1>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>{submission.targetDirectory} | {submission.practiceArea}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
-          <div className="h-6 w-px bg-gray-200 mx-1"></div>
+          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.25rem' }}></div>
           <PrintButton />
           <a 
             href={`/api/generate-docx?id=${submission.id}`} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="bg-[#1A237E] hover:bg-[#121858] text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors"
+            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s' }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#121858'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#1A237E'}
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
             Download Submission DOCX
           </a>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto w-full px-8 mt-8 space-y-6 print-area">
+      <div className="print-area" style={{ maxWidth: '64rem', margin: '2rem auto 0', width: '100%', padding: '0 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Top Metric Cards */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Risk Level</h3>
-            <p className={`text-xl font-semibold ${riskLevel === 'Low' ? 'text-green-600' : riskLevel === 'High' ? 'text-red-600' : 'text-amber-600'}`}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '1rem' }}>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Risk Level</h3>
+            <p style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : '#d97706' }}>
               {riskLevel}
             </p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Archetype</h3>
-            <p className="text-lg font-semibold text-gray-900 line-clamp-2">{archetype}</p>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Archetype</h3>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{archetype}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Detected Tier</h3>
-            <p className="text-lg font-semibold text-gray-900">{detectedTier}</p>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Detected Tier</h3>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>{detectedTier}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Target</h3>
-            <p className="text-lg font-semibold text-[#1A237E]">{target}</p>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Target</h3>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1A237E', margin: 0 }}>{target}</p>
           </div>
         </div>
 
         {/* The Audit Letter Paper */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
           {/* Header Line */}
-          <div className="h-1 w-full bg-gradient-to-r from-amber-400 to-amber-500"></div>
+          <div style={{ height: '4px', width: '100%', background: 'linear-gradient(to right, #fbbf24, #f59e0b)' }}></div>
           
-          <div className="p-12">
-            <div className="mb-10">
-              <h2 className="text-3xl font-bold text-[#1A237E] mb-6">Strategic Audit Letter</h2>
-              <div className="space-y-1 text-sm text-gray-600">
-                <p><strong>To:</strong> The Board of Directors at the Firm</p>
-                <p><strong>From:</strong> RankPilot Consulting</p>
-                <p><strong>Date:</strong> {dateStr}</p>
+          <div style={{ padding: '3rem' }}>
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#1A237E', marginBottom: '1.5rem' }}>Strategic Audit Letter</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem', color: '#475569' }}>
+                <p style={{ margin: 0 }}><strong>To:</strong> The Board of Directors at the Firm</p>
+                <p style={{ margin: 0 }}><strong>From:</strong> RankPilot Consulting</p>
+                <p style={{ margin: 0 }}><strong>Date:</strong> {dateStr}</p>
               </div>
             </div>
 
-            <div className="space-y-10 text-gray-800 leading-relaxed">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', color: '#1e293b', lineHeight: 1.6 }}>
               
               {/* Executive Summary */}
               <div>
-                <p className="text-lg text-gray-600 italic">
+                <p style={{ fontSize: '1.125rem', color: '#475569', fontStyle: 'italic', margin: 0 }}>
                   {analysis.summary ? String(analysis.summary) : "Pending analysis generation."}
                 </p>
               </div>
 
               {/* State of Play */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">The State of Play</h3>
-                <p>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The State of Play</h3>
+                <p style={{ margin: 0 }}>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
               </div>
 
               {/* Unfair Advantage */}
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">The Unfair Advantage</h3>
-                <p>{letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}</p>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The Unfair Advantage</h3>
+                <p style={{ margin: 0 }}>{letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}</p>
               </div>
 
               {/* Reality Check */}
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">The Reality Check</h3>
-                <p className="mb-4 text-gray-600">The submission is currently held back by avoidable defects:</p>
-                <ul className="space-y-3">
+              <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The Reality Check</h3>
+                <p style={{ marginBottom: '1rem', color: '#475569' }}>The submission is currently held back by avoidable defects:</p>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0, listStyleType: 'none' }}>
                   {realityCheck.length > 0 ? realityCheck.map((point: any, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-amber-500 mr-2 mt-1">•</span>
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <span style={{ color: '#f59e0b', marginRight: '0.5rem', marginTop: '0.1rem' }}>•</span>
                       <span>{typeof point === 'object' ? JSON.stringify(point) : String(point)}</span>
                     </li>
                   )) : (
-                    <li className="text-gray-500 italic">No defects identified.</li>
+                    <li style={{ color: '#64748b', fontStyle: 'italic' }}>No defects identified.</li>
                   )}
                 </ul>
               </div>
 
               {/* Path to Dominance */}
               <div>
-                <h3 className="text-xl font-bold text-[#1A237E] mb-6">The Path to Dominance</h3>
-                <div className="space-y-6">
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '1.5rem' }}>The Path to Dominance</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {pathToDominance.length > 0 ? pathToDominance.map((step: any, i: number) => (
-                    <div key={i} className="flex flex-col md:flex-row md:items-start justify-between bg-white border border-gray-200 p-5 rounded-lg shadow-sm">
-                      <div className="flex-1 pr-4">
-                        <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
-                        <p className="text-gray-600">{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
+                    <div key={i} style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', background: '#ffffff', border: '1px solid #e2e8f0', padding: '1.25rem', borderRadius: '8px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                      <div style={{ flex: 1, paddingRight: '1rem' }}>
+                        <h4 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', margin: 0 }}>STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
+                        <p style={{ color: '#475569', margin: 0 }}>{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
                       </div>
-                      <div className="mt-4 md:mt-0 flex-shrink-0">
-                        <button disabled className="bg-gray-100 text-gray-500 cursor-not-allowed px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <div style={{ flexShrink: 0 }}>
+                        <button disabled style={{ background: '#f1f5f9', color: '#64748b', cursor: 'not-allowed', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: 'none' }}>
+                          <CheckCircle2 style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
                           Apply Fix (v3)
                         </button>
                       </div>
                     </div>
                   )) : (
-                    <p className="text-gray-500 italic">Strategic path is being formulated.</p>
+                    <p style={{ color: '#64748b', fontStyle: 'italic', margin: 0 }}>Strategic path is being formulated.</p>
                   )}
                 </div>
               </div>
 
               {/* Execution Layer Actions */}
-              <div className="mt-12 pt-8 border-t border-gray-200 print-hidden">
-                <div className="flex items-center justify-between">
+              <div className="print-hidden" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">Execution Engine</h3>
-                    <p className="text-gray-500 text-sm">Automatically resolve structural defects and optimize your matters.</p>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>Execution Engine</h3>
+                    <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>Automatically resolve structural defects and optimize your matters.</p>
                   </div>
-                  <div className="flex space-x-3">
-                    <button disabled className="bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200 px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button disabled style={{ background: '#f1f5f9', color: '#64748b', cursor: 'not-allowed', border: '1px solid #e2e8f0', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>
+                      <RefreshCw style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
                       Rewrite Matters (v3)
                     </button>
-                    <button disabled className="bg-[#1A237E] opacity-50 cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
-                      <Zap className="h-4 w-4 mr-2" />
+                    <button disabled style={{ background: '#1A237E', opacity: 0.5, cursor: 'not-allowed', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>
+                      <Zap style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
                       Generate Improved Version (v3)
                     </button>
                   </div>
