@@ -40,12 +40,10 @@ export default function ReportsPage() {
       window.open(`/api/generate-pdf?id=${subId}`, '_blank');
       return;
     }
-    
-    setDownloadingId(`${subId}-${format}`);
-    setTimeout(() => {
-      setDownloadingId(null);
-      alert(`Your final report in .${format} format is ready.`);
-    }, 2500);
+    if (format === 'docx') {
+      window.open(`/api/generate-docx?id=${subId}`, '_blank');
+      return;
+    }
   };
 
   if (isLoading) {

@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from core.graph import app as graph_app 
 from langchain_core.messages import HumanMessage
 from agents.nodes import writer_node
+from utils.docx_generator import generate_docx_report
 
 # 1. Instancia de la API para comunicación con el Backend
 api = FastAPI(title="RankPilot AI Core", version="1.0.0")
@@ -106,11 +107,39 @@ async def generate_report_endpoint(request: Request):
         "latex_code": result.get("latex_code")
     }
 
+@api.post("/generate-docx")
+async def generate_docx_endpoint(request: Request):
+    """
+    Genera un archivo DOCX directamente usando python-docx.
+    """
+    data = await request.json()
+    thread_id = data.get("submission_id", str(uuid.uuid4()))
+    
+    structured_data = {
+        "firm_metadata": data.get("metadata", {}),
+        "matters": data.get("matters", [])
+    }
+    
+    # Generate the docx
+    filename = f"report_{thread_id}"
+    try:
+        file_path = generate_docx_report(structured_data, filename)
+        return {
+            "success": True,
+            "docx_url": os.path.abspath(file_path)
+        }
+    except Exception as e:
+        print(f"Error generating DOCX: {e}")
+        return {"success": False, "error": str(e)}
+
 @api.get("/download")
-async def download_pdf(filepath: str):
+async def download_file(filepath: str):
     """
-    Permite descargar el archivo PDF generado físicamente.
+    Permite descargar el archivo PDF o DOCX generado físicamente.
     """
-    if os.path.exists(filepath) and filepath.endswith('.pdf'):
-        return FileResponse(filepath, media_type='application/pdf', filename=os.path.basename(filepath))
+    if os.path.exists(filepath):
+        if filepath.endswith('.pdf'):
+            return FileResponse(filepath, media_type='application/pdf', filename=os.path.basename(filepath))
+        elif filepath.endswith('.docx'):
+            return FileResponse(filepath, media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document', filename=os.path.basename(filepath))
     return {"error": "File not found"}
