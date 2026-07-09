@@ -152,6 +152,61 @@ export async function updateMatterOptimization(id: string, optimizedText: string
   }
 }
 
+// ── Delete Matter ──
+export async function deleteMatter(id: string) {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const matter = await prisma.matter.findUnique({
+      where: { id },
+      include: { submission: true }
+    });
+
+    if (!matter || matter.submission.userId !== user.id) {
+      throw new Error('No tienes permiso para eliminar este caso.');
+    }
+
+    await prisma.matter.delete({
+      where: { id }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting matter:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ── Update Matter Inline ──
+export async function updateMatterInline(id: string, data: { name?: string; client?: string; value?: string }) {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const matter = await prisma.matter.findUnique({
+      where: { id },
+      include: { submission: true }
+    });
+
+    if (!matter || matter.submission.userId !== user.id) {
+      throw new Error('No tienes permiso para editar este caso.');
+    }
+
+    const updated = await prisma.matter.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.client !== undefined && { client: data.client }),
+        ...(data.value !== undefined && { value: data.value }),
+      }
+    });
+
+    return { success: true, data: updated };
+  } catch (error: any) {
+    console.error('Error updating matter inline:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ── Optimize Matter with AI (with logging + rate limiting + thread persistence) ──
 export async function optimizeMatterWithAI(matterId: string) {
   try {

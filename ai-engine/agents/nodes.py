@@ -278,12 +278,68 @@ def optimization_node(state: AgentState) -> Dict:
 
 # 6. WRITER NODE
 def writer_node(state: AgentState, config: RunnableConfig) -> Dict:
-    """
-    Bypasses legacy LaTeX PDF generation.
-    Marks the LangGraph execution as complete.
-    Next.js will handle the Strategic Audit UI rendering.
-    """
+    print("--- GENERATING PDF REPORT ---")
+    analysis = state.get("analysis", {})
+    metadata = state.get("metadata", {})
+    matters = state.get("matters", [])
+    
+    # 1. Load LaTeX Template
+    try:
+        with open("templates/report_template.tex", "r") as f:
+            template_content = f.read()
+    except Exception as e:
+        print(f"Template not found: {e}")
+        return {"is_complete": True, "pdf_url": ""}
+
+    # 2. Format Matters for LaTeX
+    matter_list_latex = ""
+    for m in matters:
+        name = m.get("name") or m.get("title") or "Unnamed Matter"
+        val = m.get("value", "N/A")
+        client = m.get("client", "N/A")
+        summary = m.get("optimizedText") or m.get("optimized_text") or m.get("rawNotes") or m.get("summary") or "No description."
+        matter_list_latex += f"\\item \\textbf{{{name}}} (Client: {client} | Value: {val})\\\\ {summary}\n"
+
+    if not matter_list_latex:
+        matter_list_latex = "\\item \\textit{No matters associated.}"
+
+    # 3. Format Evolution Steps
+    evo_steps = analysis.get("recommendations", [])
+    if isinstance(evo_steps, list):
+        evo_latex = "\n".join([f"\\item {step}" for step in evo_steps])
+    else:
+        evo_latex = f"\\item {evo_steps}"
+        
+    if not evo_latex.strip():
+        evo_latex = "\\item Maintain current strategy."
+
+    # 4. Replace Placeholders
+    latex_code = template_content
+    latex_code = latex_code.replace("{{FIRM_NAME}}", str(metadata.get("firm_name", "Unknown Firm")))
+    latex_code = latex_code.replace("{{PRACTICE_AREA}}", str(metadata.get("practice_area", "General Practice")))
+    latex_code = latex_code.replace("{{MODEL_NAME}}", str(analysis.get("practice_model", "Standard")))
+    latex_code = latex_code.replace("{{TIER}}", str(analysis.get("current_tier_assessment", "Unranked / New Entry")))
+    latex_code = latex_code.replace("{{CONFIDENCE}}", str(state.get("confidence_score", 80)))
+    latex_code = latex_code.replace("{{ADVANTAGE}}", str(analysis.get("competitive_edge", "Standard Market Offerings")))
+    latex_code = latex_code.replace("{{MATTER_LIST}}", matter_list_latex)
+    latex_code = latex_code.replace("{{EVOLUTION_STEPS}}", evo_latex)
+
+    # Sanitize LaTeX (basic escape for &, %, $, #, _)
+    for char in ['&', '%', '$', '#', '_']:
+        if char in latex_code:
+            # We skip proper escaping for this prototype to avoid breaking actual latex commands
+            pass
+
+    # 5. Compile PDF
+    output_filename = f"report_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    pdf_path = compile_latex_to_pdf(latex_code, output_filename)
+    
+    # 6. Return the URL (For local dev, we assume the python API serves the root or we return relative path)
+    # In production with Vercel, we would upload to Supabase Storage here.
+    # For now, we return the path which the FastAPI can serve.
+    pdf_url = f"/api/download/{pdf_path}" if pdf_path else ""
+
     return {
         "is_complete": True,
-        "pdf_url": ""
+        "pdf_url": pdf_url
     }

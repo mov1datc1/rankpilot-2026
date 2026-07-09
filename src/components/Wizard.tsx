@@ -8,13 +8,17 @@ const STEPS = [
   { id: 2, title: 'Departamento' },
   { id: 3, title: 'Fortalezas' },
   { id: 4, title: 'Feedback' },
-  { id: 5, title: 'Casos' }
+  { id: 5, title: 'Casos' },
+  { id: 6, title: 'Matters' }
 ];
+
+import { getAllUserMatters } from '@/app/actions/matters';
 
 export default function Wizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<{ success: boolean; pdf_url?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{ success: boolean; pdf_url?: string; submissionId?: string; error?: string } | null>(null);
+  const [userMatters, setUserMatters] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     // Step 1
     firmName: '',
@@ -34,15 +38,28 @@ export default function Wizard() {
     strategicFocus: '',
     // Step 5
     clients: '',
-    caseDescriptions: ''
+    caseDescriptions: '',
+    // Step 6
+    associatedMatterIds: [] as string[]
   });
+
+  import { useEffect } from 'react';
+  useEffect(() => {
+    async function load() {
+      const res = await getAllUserMatters();
+      if (res.success && res.data) {
+        setUserMatters(res.data);
+      }
+    }
+    load();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(prev => prev + 1);
+    if (currentStep < 6) setCurrentStep(prev => prev + 1);
   };
 
   const prevStep = () => {
@@ -54,7 +71,7 @@ export default function Wizard() {
     startTransition(async () => {
       const res = await submitWizardData(formData);
       if (res.success) {
-        setResult({ success: true, pdf_url: res.data?.data?.pdf_url });
+        setResult({ success: true, pdf_url: res.data?.data?.pdf_url, submissionId: res.submissionId });
       } else {
         setResult({ success: false, error: res.error });
       }
@@ -69,9 +86,9 @@ export default function Wizard() {
         </div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', color: '#15803d' }}>¡Submission Generada Exitosamente!</h2>
         <p style={{ color: '#475569', marginBottom: '2rem' }}>La Inteligencia Artificial ha procesado tu información y ha redactado el documento.</p>
-        {result.pdf_url ? (
-          <a href={result.pdf_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: '#2563eb', color: '#fff', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 500, textDecoration: 'none', transition: 'background 0.2s' }}>
-            Descargar Reporte (PDF)
+        {result.submissionId ? (
+          <a href={`/reports/${result.submissionId}`} style={{ display: 'inline-block', background: '#2563eb', color: '#fff', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 500, textDecoration: 'none', transition: 'background 0.2s' }}>
+            Ver Auditoría Estratégica
           </a>
         ) : (
           <p style={{ color: '#64748b', fontSize: '0.9rem' }}>El archivo PDF se está compilando en los servidores. Recibirás una notificación cuando esté listo.</p>
@@ -198,13 +215,50 @@ export default function Wizard() {
           </div>
         )}
 
+        {/* Step 6 */}
+        {currentStep === 6 && (
+          <div className="animate-fade-in">
+            <h3 style={{ marginBottom: '1.5rem', color: '#334155', fontSize: '1.25rem', fontWeight: 600 }}>6. Asociar Matters Existentes</h3>
+            <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              Opcional: Selecciona matters que ya tengas en tu repositorio para incluirlos automáticamente en esta submission.
+            </p>
+            
+            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', background: '#f8fafc' }}>
+              {userMatters.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#94a3b8', margin: '2rem 0' }}>No tienes matters guardados en tu repositorio.</p>
+              ) : (
+                userMatters.map(m => (
+                  <label key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem', borderBottom: '1px solid #e2e8f0', cursor: 'pointer', background: formData.associatedMatterIds.includes(m.id) ? '#eff6ff' : '#ffffff', borderRadius: '4px', marginBottom: '0.5rem', transition: 'background 0.2s' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={formData.associatedMatterIds.includes(m.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({ ...prev, associatedMatterIds: [...prev.associatedMatterIds, m.id] }));
+                        } else {
+                          setFormData(prev => ({ ...prev, associatedMatterIds: prev.associatedMatterIds.filter(id => id !== m.id) }));
+                        }
+                      }}
+                      style={{ marginTop: '0.25rem', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#0f172a' }}>{m.name}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Cliente: {m.client} | Valor: {m.value}</div>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Navigation Buttons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}>
           <button type="button" onClick={prevStep} style={{ visibility: currentStep === 1 ? 'hidden' : 'visible', padding: '0.75rem 1.5rem', borderRadius: '8px', background: '#f1f5f9', color: '#475569', fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'background 0.2s' }} disabled={isPending}>
             Atrás
           </button>
           
-          {currentStep < 5 ? (
+          {currentStep < 6 ? (
             <button type="button" onClick={nextStep} disabled={isPending} style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: '#2563eb', color: '#ffffff', fontWeight: 500, border: 'none', cursor: 'pointer', transition: 'background 0.2s' }}>
               Siguiente Paso
             </button>
