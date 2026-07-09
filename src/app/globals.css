@@ -236,3 +236,31 @@ button {
   border-color: var(--text-primary);
   color: var(--bg-primary);
 }
+
+/* --- Print Styles --- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Make the main report container visible */
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide print buttons and back buttons inside the print area */
+  .print-hidden, .print-hidden * {
+    display: none !important;
+  }
+}

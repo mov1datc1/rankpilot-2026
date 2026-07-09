@@ -62,7 +62,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 pb-20">
       {/* Top Navigation */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 print-hidden">
         <div className="flex items-center space-x-4">
           <Link 
             href="/reports"
@@ -91,7 +91,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto w-full px-8 mt-8 space-y-6">
+      <div className="max-w-5xl mx-auto w-full px-8 mt-8 space-y-6 print-area">
         
         {/* Top Metric Cards */}
         <div className="grid grid-cols-4 gap-4">
@@ -191,7 +191,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               </div>
 
               {/* Execution Layer Actions */}
-              <div className="mt-12 pt-8 border-t border-gray-200">
+              <div className="mt-12 pt-8 border-t border-gray-200 print-hidden">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">Execution Engine</h3>
