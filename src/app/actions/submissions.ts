@@ -8,6 +8,19 @@ async function getAuthenticatedUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
+
+  // Auto-sync Supabase Auth user to Prisma User table to avoid FK constraints
+  await prisma.user.upsert({
+    where: { id: user.id },
+    update: {},
+    create: {
+      id: user.id,
+      email: user.email || 'unknown@email.com',
+      role: 'USER',
+      status: 'ACTIVE'
+    }
+  });
+
   return user;
 }
 
