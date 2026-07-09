@@ -54,8 +54,7 @@ export default function ReportsPage() {
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
     if (format === 'pdf') {
-      // Directs to the Strategic Audit Letter view instead of backend generation
-      window.open(`/reports/${subId}`, '_blank');
+      window.location.href = `/reports/${subId}`;
       return;
     }
     if (format === 'docx') {
@@ -316,18 +315,14 @@ export default function ReportsPage() {
 
                         <button
                           title="View Strategic Audit Letter"
-                          disabled={!isReady}
                           onClick={() => handleDownload(sub.id, 'pdf')}
                           style={{
-                            padding: '0.5rem', borderRadius: '8px', border: '1px solid',
-                            borderColor: isReady ? '#e2e8f0' : '#e2e8f0', // Neutral color for PDF to distinguish from primary DOCX
-                            background: isReady ? '#fff' : '#fafafa',
-                            color: isReady ? '#475569' : '#94a3b8',
-                            cursor: isReady ? 'pointer' : 'not-allowed',
+                            padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0',
+                            background: '#fff',
+                            color: '#475569',
+                            cursor: 'pointer',
                             transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}
-                          onMouseOver={(e) => { if(isReady) { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; } }}
-                          onMouseOut={(e) => { if(isReady) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; } }}
                         >
                           <Download size={18} />
                         </button>

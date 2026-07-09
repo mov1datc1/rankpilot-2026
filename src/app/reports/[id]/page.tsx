@@ -78,28 +78,28 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>{submission.targetDirectory} | {submission.practiceArea}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.25rem' }}></div>
+          
+          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.375rem' }}></div>
+          
           <PrintButton />
+          
+          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.375rem' }}></div>
           
           <a 
             href={`/api/generate-docx?id=${submission.id}&type=audit`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1' }}
+            style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', whiteSpace: 'nowrap' }}
           >
-            <Download style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
+            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
             Audit DOCX
           </a>
 
           <a 
             href={`/api/generate-docx?id=${submission.id}&type=submission`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
+            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
           >
-            <Download style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
+            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
             Chambers DOCX
           </a>
         </div>
