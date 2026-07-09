@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FileText, Download, CheckCircle2, Clock, FileDown, Layers, ArrowUpRight } from 'lucide-react';
-import { getUserSubmissionsWithMatters } from '@/app/actions/reports';
+import { useState, useEffect, useMemo } from 'react';
+import { 
+  FileText, Download, CheckCircle2, Clock, FileDown, Layers, 
+  Trash2, Search, Calendar, ChevronDown, Filter, AlertTriangle 
+} from 'lucide-react';
+import { getUserSubmissionsWithMatters, deleteSubmission } from '@/app/actions/reports';
 
 type Matter = {
   id: string;
@@ -23,17 +26,30 @@ export default function ReportsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // Filters state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('All Time');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+
+  // Delete state
+  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
-      const res = await getUserSubmissionsWithMatters();
-      if (res.success && res.data) {
-        setSubmissions(res.data);
-      }
-      setIsLoading(false);
-    }
     loadData();
   }, []);
+
+  async function loadData() {
+    setIsLoading(true);
+    const res = await getUserSubmissionsWithMatters();
+    if (res.success && res.data) {
+      setSubmissions(res.data);
+    }
+    setIsLoading(false);
+  }
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
     if (format === 'pdf') {
@@ -45,6 +61,59 @@ export default function ReportsPage() {
       return;
     }
   };
+
+  const handleDeleteConfirm = async () => {
+    if (!submissionToDelete) return;
+    setIsDeleting(true);
+    const res = await deleteSubmission(submissionToDelete);
+    if (res.success) {
+      setSubmissions(prev => prev.filter(s => s.id !== submissionToDelete));
+      setSubmissionToDelete(null);
+    } else {
+      alert('Error deleting submission: ' + res.error);
+    }
+    setIsDeleting(false);
+  };
+
+  // Filter Logic
+  const filteredSubmissions = useMemo(() => {
+    return submissions.filter(sub => {
+      // 1. Search Filter (by targetDirectory, practiceArea, guideRegion)
+      const searchStr = `${sub.targetDirectory} ${sub.practiceArea} ${sub.guideRegion}`.toLowerCase();
+      if (searchTerm && !searchStr.includes(searchTerm.toLowerCase())) return false;
+
+      // 2. Date Filter
+      const createdDate = new Date(sub.createdAt);
+      const now = new Date();
+      
+      if (dateFilter === 'Last 7 Days') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        if (createdDate < sevenDaysAgo) return false;
+      } 
+      else if (dateFilter === 'This Month') {
+        if (createdDate.getMonth() !== now.getMonth() || createdDate.getFullYear() !== now.getFullYear()) return false;
+      }
+      else if (dateFilter === 'Last 3 Months') {
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        if (createdDate < threeMonthsAgo) return false;
+      }
+      else if (dateFilter === 'Last 6 Months') {
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(now.getMonth() - 6);
+        if (createdDate < sixMonthsAgo) return false;
+      }
+      else if (dateFilter === 'Custom' && customStart && customEnd) {
+        const start = new Date(customStart);
+        const end = new Date(customEnd);
+        end.setHours(23, 59, 59); // include the end day fully
+        if (createdDate < start || createdDate > end) return false;
+      }
+
+      return true;
+    });
+  }, [submissions, searchTerm, dateFilter, customStart, customEnd]);
 
   if (isLoading) {
     return (
@@ -62,165 +131,257 @@ export default function ReportsPage() {
   }
 
   return (
-    <div style={{ maxWidth: '1100px' }}>
-      {/* Header — same style as Builder */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RankPilot: <span style={{ color: '#2563eb' }}>Deliverables</span>
-        </h1>
-        <p style={{ fontSize: '1.1rem', color: '#64748b', marginTop: '0.25rem' }}>
-          Download your final reports ready for submission to the directories.
-        </p>
+    <div style={{ maxWidth: '1200px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            RankPilot: <span style={{ color: '#2563eb' }}>Deliverables</span>
+          </h1>
+          <p style={{ fontSize: '1.1rem', color: '#64748b', marginTop: '0.25rem' }}>
+            Manage and download your final directory submissions.
+          </p>
+        </div>
       </div>
 
-      {submissions.length === 0 ? (
+      {/* Filters Bar */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '1rem', 
+        marginBottom: '1.5rem', 
+        background: '#fff', 
+        padding: '1rem', 
+        borderRadius: '12px', 
+        border: '1px solid #e2e8f0',
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }}>
+        {/* Search */}
+        <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+          <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Search by directory or practice area..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ 
+              width: '100%', 
+              padding: '0.6rem 1rem 0.6rem 2.5rem', 
+              borderRadius: '8px', 
+              border: '1px solid #cbd5e1',
+              outline: 'none',
+              fontSize: '0.95rem'
+            }} 
+          />
+        </div>
+
+        {/* Date Presets */}
+        <div style={{ position: 'relative' }}>
+          <div 
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: '0.5rem', 
+              padding: '0.6rem 1rem', background: '#f8fafc', 
+              border: '1px solid #cbd5e1', borderRadius: '8px',
+              cursor: 'pointer', fontSize: '0.95rem', color: '#334155',
+              userSelect: 'none'
+            }}
+          >
+            <Calendar size={16} color="#64748b" />
+            <span>{dateFilter}</span>
+            <ChevronDown size={16} color="#64748b" />
+          </div>
+
+          {/* Dropdown */}
+          {showDatePicker && (
+            <div style={{ 
+              position: 'absolute', top: 'calc(100% + 5px)', right: 0, 
+              background: '#fff', border: '1px solid #e2e8f0', 
+              borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+              zIndex: 50, minWidth: '200px', overflow: 'hidden'
+            }}>
+              {['All Time', 'Last 7 Days', 'This Month', 'Last 3 Months', 'Last 6 Months', 'Custom'].map(opt => (
+                <div 
+                  key={opt}
+                  onClick={() => { setDateFilter(opt); if (opt !== 'Custom') setShowDatePicker(false); }}
+                  style={{ 
+                    padding: '0.75rem 1rem', cursor: 'pointer', 
+                    background: dateFilter === opt ? '#eff6ff' : '#fff',
+                    color: dateFilter === opt ? '#2563eb' : '#334155',
+                    fontSize: '0.9rem', fontWeight: dateFilter === opt ? 600 : 400
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = dateFilter === opt ? '#eff6ff' : '#f8fafc'}
+                  onMouseOut={(e) => e.currentTarget.style.background = dateFilter === opt ? '#eff6ff' : '#fff'}
+                >
+                  {opt}
+                </div>
+              ))}
+              
+              {/* Custom Date Inputs */}
+              {dateFilter === 'Custom' && (
+                <div style={{ padding: '1rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>From Date</label>
+                    <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>To Date</label>
+                    <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                    <button 
+                      onClick={() => setShowDatePicker(false)}
+                      style={{ marginTop: '0.5rem', background: '#0f172a', color: '#fff', padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Apply Custom Range
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Data Table */}
+      {filteredSubmissions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <FileDown size={48} color="#94a3b8" style={{ margin: '0 auto 1rem auto' }} />
-          <h3 style={{ color: '#0f172a', fontSize: '1.25rem', marginBottom: '0.5rem' }}>No reports yet</h3>
-          <p style={{ color: '#64748b' }}>Go to the Builder and process your matters to generate the first report.</p>
+          <Filter size={48} color="#94a3b8" style={{ margin: '0 auto 1rem auto' }} />
+          <h3 style={{ color: '#0f172a', fontSize: '1.25rem', marginBottom: '0.5rem' }}>No reports found</h3>
+          <p style={{ color: '#64748b' }}>Try adjusting your search or date filters.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {submissions.map((sub) => {
-            const total = sub.matters.length;
-            const optimized = sub.matters.filter(m => m.status === 'AI Optimized').length;
-            const progress = total > 0 ? Math.round((optimized / total) * 100) : 0;
-            const isReady = total > 0 && progress === 100;
+        <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Target & Region</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Created</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Status</th>
+                <th style={{ padding: '1rem 1.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#64748b', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredSubmissions.map((sub) => {
+                const total = sub.matters.length;
+                const optimized = sub.matters.filter(m => m.status === 'AI Optimized').length;
+                const isReady = total > 0 && optimized === total;
 
-            return (
-              <div key={sub.id} style={{
-                background: '#ffffff',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
-                padding: '2rem',
-                transition: 'all 0.3s ease',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 2px 4px -1px rgba(0,0,0,0.03)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = '#2563eb';
-                e.currentTarget.style.boxShadow = '0 4px 12px -2px rgba(37,99,235,0.1)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = '#e2e8f0';
-                e.currentTarget.style.boxShadow = '0 2px 4px -1px rgba(0,0,0,0.03)';
-              }}
-              >
-                {/* Ready ribbon */}
-                {isReady && (
-                  <div style={{ position: 'absolute', top: '1rem', right: '-2rem', background: '#16a34a', color: '#fff', padding: '0.2rem 3rem', transform: 'rotate(45deg)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    READY
-                  </div>
-                )}
+                return (
+                  <tr key={sub.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s' }} onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '1rem', marginBottom: '0.2rem' }}>{sub.targetDirectory}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{sub.practiceArea} · {sub.guideRegion}</div>
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem' }}>
+                      {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      {isReady ? (
+                        <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CheckCircle2 size={14} /> Completed
+                        </span>
+                      ) : (
+                        <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Clock size={14} /> In Progress ({optimized}/{total})
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        <button
+                          title="Download Word (.docx)"
+                          disabled={!isReady}
+                          onClick={() => handleDownload(sub.id, 'docx')}
+                          style={{
+                            padding: '0.5rem', borderRadius: '8px', border: '1px solid',
+                            borderColor: isReady ? '#2563eb' : '#e2e8f0',
+                            background: isReady ? '#eff6ff' : '#fafafa',
+                            color: isReady ? '#2563eb' : '#94a3b8',
+                            cursor: isReady ? 'pointer' : 'not-allowed',
+                            transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                          onMouseOver={(e) => { if(isReady) { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; } }}
+                          onMouseOut={(e) => { if(isReady) { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#2563eb'; } }}
+                        >
+                          <FileText size={18} />
+                        </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.3rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem 0' }}>{sub.targetDirectory}</h2>
-                    <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>{sub.practiceArea} · {sub.guideRegion}</p>
-                  </div>
-                  <div style={{
-                    background: isReady ? '#dcfce7' : '#fef3c7',
-                    color: isReady ? '#15803d' : '#92400e',
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: '9999px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem'
-                  }}>
-                    {isReady ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-                    {isReady ? 'Complete' : 'In Progress'}
-                  </div>
-                </div>
+                        <button
+                          title="Download PDF"
+                          disabled={!isReady}
+                          onClick={() => handleDownload(sub.id, 'pdf')}
+                          style={{
+                            padding: '0.5rem', borderRadius: '8px', border: '1px solid',
+                            borderColor: isReady ? '#e2e8f0' : '#e2e8f0', // Neutral color for PDF to distinguish from primary DOCX
+                            background: isReady ? '#fff' : '#fafafa',
+                            color: isReady ? '#475569' : '#94a3b8',
+                            cursor: isReady ? 'pointer' : 'not-allowed',
+                            transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                          onMouseOver={(e) => { if(isReady) { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; } }}
+                          onMouseOut={(e) => { if(isReady) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#fff'; } }}
+                        >
+                          <Download size={18} />
+                        </button>
 
-                {/* Progress Bar */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                    <span style={{ color: '#475569', fontWeight: 500 }}>Matters Progress ({optimized}/{total})</span>
-                    <span style={{ color: '#2563eb', fontWeight: 700 }}>{progress}%</span>
-                  </div>
-                  <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${progress}%`,
-                      background: isReady ? '#16a34a' : '#2563eb',
-                      borderRadius: '999px',
-                      transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
-                    }} />
-                  </div>
-                </div>
-
-                {/* Download Actions */}
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button
-                    disabled={!isReady || downloadingId === `${sub.id}-docx`}
-                    onClick={() => handleDownload(sub.id, 'docx')}
-                    style={{
-                      flex: 1,
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: 'none',
-                      background: isReady ? '#2563eb' : '#f1f5f9',
-                      color: isReady ? '#fff' : '#94a3b8',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      cursor: isReady ? 'pointer' : 'not-allowed',
-                      opacity: downloadingId === `${sub.id}-docx` ? 0.7 : 1,
-                      transition: 'all 0.2s',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    {downloadingId === `${sub.id}-docx` ? (
-                      <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%' }} />
-                    ) : (
-                      <><Download size={16} /> Download .DOCX</>
-                    )}
-                  </button>
-
-                  <button
-                    disabled={!isReady || downloadingId === `${sub.id}-pdf`}
-                    onClick={() => handleDownload(sub.id, 'pdf')}
-                    style={{
-                      flex: 1,
-                      padding: '0.75rem',
-                      borderRadius: '8px',
-                      border: '1px solid',
-                      borderColor: isReady ? '#2563eb' : '#e2e8f0',
-                      background: isReady ? '#eff6ff' : '#fafafa',
-                      color: isReady ? '#2563eb' : '#94a3b8',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      cursor: isReady ? 'pointer' : 'not-allowed',
-                      opacity: downloadingId === `${sub.id}-pdf` ? 0.7 : 1,
-                      transition: 'all 0.2s',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    {downloadingId === `${sub.id}-pdf` ? (
-                      <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #2563eb', borderTopColor: 'transparent', borderRadius: '50%' }} />
-                    ) : (
-                      <><Download size={16} /> Download .PDF</>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                        <button
+                          title="Delete Report"
+                          onClick={() => setSubmissionToDelete(sub.id)}
+                          style={{
+                            padding: '0.5rem', borderRadius: '8px', border: '1px solid #fee2e2',
+                            background: '#fff', color: '#ef4444',
+                            cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.background = '#fff'; }}
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { animation: spin 1s linear infinite; }
-      `}} />
+      {/* Delete Confirmation Modal */}
+      {submissionToDelete && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
+          <div style={{ background: '#fff', padding: '2rem', borderRadius: '16px', maxWidth: '400px', width: '90%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', animation: 'scaleIn 0.2s ease-out' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={24} color="#ef4444" />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: '0 0 0.25rem 0' }}>Delete Report?</h3>
+                <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>This action cannot be undone.</p>
+              </div>
+            </div>
+            <p style={{ color: '#475569', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: '1.5' }}>
+              Are you sure you want to permanently delete this report? All associated matters and AI-optimized texts will be lost forever.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setSubmissionToDelete(null)}
+                disabled={isDeleting}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete Report'}
+              </button>
+            </div>
+          </div>
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+          `}} />
+        </div>
+      )}
     </div>
   );
 }

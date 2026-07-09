@@ -34,3 +34,38 @@ export async function getUserSubmissionsWithMatters() {
     return { success: false, error: error.message };
   }
 }
+export async function deleteSubmission(id: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    let resolvedUserId = user.id;
+    if (user.email) {
+      const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+      if (existingByEmail) {
+        resolvedUserId = existingByEmail.id;
+      }
+    }
+
+    const existing = await prisma.submission.findUnique({
+      where: { id }
+    });
+
+    if (!existing || existing.userId !== resolvedUserId) {
+      return { success: false, error: 'Unauthorized to delete this submission' };
+    }
+
+    await prisma.submission.delete({
+      where: { id }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting submission:', error);
+    return { success: false, error: error.message };
+  }
+}
