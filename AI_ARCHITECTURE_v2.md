@@ -2,6 +2,8 @@
 
 This document illustrates the complete end-to-end flow of the RankPilot AI Engine, incorporating the Next.js Frontend, the FastAPI Backend, the LangGraph State Machine, and the new RAG (Retrieval-Augmented Generation) system.
 
+![RankPilot AI Engine Architecture](/Users/jonathanpalacios/.gemini/antigravity/brain/b7b2aa3a-9103-4367-b996-edae89ba5168/ai_architecture_diagram_1783613561047.png)
+
 ## High-Level Architecture Diagram
 
 ```mermaid

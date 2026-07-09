@@ -43,8 +43,8 @@ function ProcessingContent() {
         setProgress(100);
         setStep(4);
         
-        // Finalizamos redirigiendo directamente al asistente de Matters, donde verán sus datos ordenados
-        setTimeout(() => router.push('/submissions/matters'), 1500);
+        // Finalizamos redirigiendo directamente al Reporte Estratégico, para impacto visual "WOW"
+        setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
 
       } catch (err: any) {
         console.error(err);
