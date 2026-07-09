@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
 import { ChevronLeft, Download, Printer } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+
 
 export default async function ReportDetail({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -54,10 +54,10 @@ export default async function ReportDetail({ params }: { params: { id: string } 
       <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-4">
           <Link href="/reports">
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
+            <button className="text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors hover:bg-gray-100">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Back to Reports
-            </Button>
+            </button>
           </Link>
           <div className="h-6 w-px bg-gray-200"></div>
           <div>
@@ -66,15 +66,15 @@ export default async function ReportDetail({ params }: { params: { id: string } 
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" onClick={() => {}} className="print:hidden hidden">
+          <button onClick={() => window.print()} className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors">
             <Printer className="h-4 w-4 mr-2" />
             Print PDF
-          </Button>
+          </button>
           <a href={`/api/generate-docx?id=${submission.id}`} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="bg-[#1A237E] hover:bg-[#121858]">
+            <button className="bg-[#1A237E] hover:bg-[#121858] text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors">
               <Download className="h-4 w-4 mr-2" />
               Download Submission DOCX
-            </Button>
+            </button>
           </a>
         </div>
       </div>

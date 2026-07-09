@@ -1,0 +1,245 @@
+🧠 Multi-ranking intelligence layer
+Porque:
+Chambers
+Legal 500
+Leaders League
+IFLR
+…leen disputes de forma distinta.
+Y eso es oro para RankPilot.
+
+🔥 PRINCIPIO FUNDAMENTAL
+El mismo matter puede ser:
+🔥 excelente para Chambers
+😐 mediocre para Legal 500
+🚫 irrelevante para IFLR
+⭐ muy fuerte para Leaders League
+
+Entonces:
+la RAG debe tener una capa:
+Ranking Body Logic
+Es decir:
+IF guide = Chambers
+→ apply Chambers weighting
+
+IF guide = Legal 500
+→ apply Legal 500 logic
+
+IF guide = IFLR
+→ prioritize finance-linked disputes
+
+IF guide = Leaders League
+→ prioritize visibility / market perception / sector reputation
+
+🧠 DISPUTES RAG — LEGAL 500
+Diferencia clave vs Chambers
+Legal 500 suele ser:
+más narrativa
+más inclusiva
+menos rígida en taxonomía
+más receptiva a “full service disputes”
+más abierta a mixed submissions
+Mientras Chambers:
+segmenta más agresivamente
+penaliza category mismatch más fuerte
+
+Entonces el RAG Legal 500 debe:
+Ser MENOS excluyente
+Ejemplo:
+Chambers:
+Arbitration in Commercial Litigation = weighting risk
+Legal 500:
+Arbitration may still reinforce broader disputes capability
+
+Legal 500 privilegia más:
+🟢 Breadth of practice
+litigation
+arbitration
+investigations
+mediation
+cross-border disputes
+…pueden convivir mejor.
+
+Legal 500 privilegia:
+🟢 Client relationship depth
+🟢 Team depth
+🟢 Responsiveness
+🟢 Commerciality
+🟢 Sector integration
+Mucho más que Chambers.
+
+Entonces el RAG debe detectar:
+- client intimacy
+- cross-practice collaboration
+- long-term client mandates
+- responsiveness indicators
+- practical/commercial approach
+
+Legal 500 — lógica disputes
+Más flexible:
+IF dispute work is commercially coherent
+→ may still strengthen general disputes positioning
+
+🚨 Pero igual necesita exclusiones
+Ejemplo:
+Pure employment litigation
+→ should still go to Employment
+
+🧠 DISPUTES RAG — LEADERS LEAGUE
+Aquí cambia TODO.
+Porque Leaders League es muchísimo más:
+🟣 Market perception driven
+
+Privilegian:
+visibility
+prestige
+market notoriety
+major mandates
+sector dominance
+international footprint
+reputation among peers
+Menos:
+taxonomía hiper estricta
+
+Entonces el RAG debe detectar:
+🟢 Market signals
+high-profile disputes
+media visibility
+strategic clients
+landmark mandates
+sector leadership
+repeat institutional clients
+regional influence
+
+Leaders League tolera mucho más:
+mixed disputes portfolios
+
+Entonces:
+Chambers pregunta:
+Does this belong here?
+Leaders League pregunta:
+Does this firm dominate this market?
+
+🔥 Esto es ENORME
+Porque significa que:
+un mismo submission debe evaluarse distinto.
+
+Ejemplo REAL
+Mixed disputes practice:
+arbitration
+litigation
+investigations
+civil fraud
+banking disputes
+
+Chambers:
+⚠️ “too diffuse”
+
+Legal 500:
+🟢 “full-service disputes capability”
+
+Leaders League:
+🟢 “market-leading disputes platform”
+
+🧠 DISPUTES RAG — IFLR
+Aquí el cambio es MÁS radical aún.
+Porque IFLR NO es realmente “general disputes”.
+IFLR vive alrededor de:
+🔵 Financial & corporate transactional sophistication
+
+Entonces disputes solo importa cuando toca:
+banking
+restructuring
+capital markets
+financial institutions
+insolvency
+shareholder/corporate governance
+regulatory finance
+project finance disputes
+financial fraud exposure
+
+Entonces:
+Un commercial dispute normal:
+🚫 probablemente irrelevante para IFLR
+
+Pero esto:
+restructuring litigation
+shareholder governance dispute
+banking enforcement
+bondholder litigation
+financial fraud
+insolvency disputes
+→ sí puede importar muchísimo.
+
+Entonces el RAG IFLR debe:
+Penalizar:
+general commercial litigation
+claimant work
+consumer disputes
+ordinary litigation
+employment disputes
+local court disputes
+
+Y privilegiar:
+🟢 Financial complexity
+structured finance disputes
+restructuring conflicts
+banking litigation
+securities disputes
+distressed asset disputes
+regulatory banking exposure
+insolvency proceedings
+cross-border financial enforcement
+
+🔥 ENTONCES:
+La misma disputa cambia completamente según la guía
+
+Ejemplo
+Shareholder dispute after failed acquisition
+Chambers:
+🟢 Commercial Litigation
+Legal 500:
+🟢 Commercial Disputes
+Leaders League:
+🟢 High-profile corporate dispute
+IFLR:
+🟢 ONLY if linked to governance / capital markets / financial structure
+
+🧠 Arquitectura recomendada
+Tu RAG debería tener:
+Layer 1
+Practice taxonomy
+litigation
+arbitration
+fraud
+white collar
+etc
+
+Layer 2
+Ranking-body logic
+Chambers
+Legal500
+LeadersLeague
+IFLR
+
+Layer 3
+Jurisdiction logic
+UK
+Brazil
+LatAm
+USA
+Europe
+
+Layer 4
+Weighting engine
+core
+secondary
+peripheral
+misclassified
+
+Layer 5
+Narrative intelligence
+coherent practice story?
+market leadership?
+specialisation?
+cross-border capability?
+financial sophistication?

@@ -1,0 +1,192 @@
+Matter Reconstruction Assistant
+1. Problema identificado
+Las firmas no tienen el problema solo al “redactar” submissions. El problema empieza antes: no tienen una forma eficiente, estructurada y estratégica de reconstruir los matters ocurridos 8-12 meses atrás.
+La información existe, pero está dispersa en:
+cadenas de correos,
+documentos adjuntos,
+closing emails,
+versiones de contratos,
+minutas,
+facturación,
+memoria de socios/asociados.
+El resultado: el equipo prepara submissions con información incompleta, recordada tarde, sin contexto y sin jerarquización estratégica.
+2. Objetivo de esta capa
+El Matter Reconstruction Assistant no busca escribir el submission final.
+Su objetivo es anterior:
+convertir evidencia documental dispersa en una ficha inteligente del matter.
+Debe responder:
+¿Qué ocurrió?
+¿Quién participó?
+¿Cuál era el problema del cliente?
+¿Qué hizo la firma?
+¿Cuál fue la complejidad real?
+¿Qué resultado se obtuvo?
+¿Qué señales reputacionales tiene?
+¿Por qué podría importar para Chambers / Legal 500 / rankings?
+El output ideal sería una Matter Intelligence Card.
+Ejemplo:
+Matter: Financiamiento transfronterizo para X cliente
+
+Resumen:
+La firma asesoró a [cliente] en [tipo de operación], involucrando [jurisdicciones], [partes] y [estructura].
+
+Señales de complejidad:
+- Coordinación multijurisdiccional
+- Negociación con múltiples acreedores
+- Elementos regulatorios
+- Timeline acelerado
+- Alta sensibilidad comercial
+
+Potencial ranking:
+Alto / Medio / Bajo
+
+Categoría sugerida:
+Banking & Finance / Corporate / Projects
+
+Ángulo narrativo:
+Este matter demuestra capacidad de la firma para manejar operaciones sofisticadas, transfronterizas y estratégicas para clientes institucionales.
+3. Lo importante: no hay que reinventar la rueda
+Esto no requiere construir “otro Copilot” ni un sistema masivo desde cero.
+La capa puede apoyarse en capacidades ya existentes:
+extracción de texto de emails, PDFs y Word;
+embeddings;
+búsqueda semántica;
+clasificación;
+resumen estructurado;
+RAG;
+prompts especializados;
+modelos LLM existentes;
+storage documental básico.
+La diferenciación no está en “leer emails”.
+La diferenciación está en qué preguntas le haces a esa información.
+Copilot puede resumir una cadena de correos.
+RankPilot debe traducir esa cadena en:
+valor reputacional rankeable.
+Ese es el hilo negro. No técnico. Estratégico.
+4. Cómo estructuraría el RAG
+La arquitectura RAG debería tener 4 bloques.
+
+A. Ingestion Layer
+Entrada de documentos:
+emails exportados;
+PDFs;
+Word docs;
+texto copiado;
+closing summaries;
+deal lists;
+submissions anteriores.
+Primera versión: upload manual.
+ No Outlook integration todavía.
+Objetivo: evitar fricción técnica inicial.
+
+B. Document Processing Layer
+El sistema limpia y estructura la información:
+Documento
+↓
+Extracción de texto
+↓
+Chunking
+↓
+Metadata tagging
+↓
+Embeddings
+↓
+Vector database
+Metadata mínima por chunk:
+matter_id
+document_type
+date
+sender
+recipient
+client
+practice_area
+jurisdiction
+source_file
+confidentiality_level
+
+C. Retrieval Layer
+El RAG no debe buscar “todo”.
+Debe buscar por preguntas estratégicas.
+Ejemplos de queries internas:
+¿Qué problema legal o comercial enfrentaba el cliente?
+
+¿Qué hizo específicamente la firma?
+
+¿Qué partes participaron?
+
+¿Qué jurisdicciones aparecen?
+
+¿Qué fechas clave existen?
+
+¿Qué señales de complejidad hay?
+
+¿Qué evidencia demuestra sofisticación?
+
+¿Qué resultado se obtuvo?
+
+¿Hay montos, industrias, reguladores o contrapartes relevantes?
+Aquí el sistema recupera evidencia desde los documentos y la organiza por temas.
+
+D. Reasoning / Ranking Layer
+Esta es la capa diferencial.
+El modelo no solo resume. Evalúa.
+Toma la evidencia recuperada y la cruza con una matriz tipo:
+Ranking value signals:
+- cross-border complexity
+- high-value transaction
+- novel legal issue
+- regulatory sophistication
+- strategic client importance
+- market impact
+- multi-party negotiation
+- sector relevance
+- precedent-setting nature
+- urgency / crisis management
+Y devuelve:
+Matter reconstruction
+Complexity signals
+Evidence found
+Missing information
+Ranking relevance
+Suggested narrative angle
+Draft starter
+5. Output MVP
+El MVP no debería prometer “submission listo”.
+Debe prometer:
+“Sube los documentos de un matter y RankPilot te devuelve una ficha estratégica lista para alimentar tu submission.”
+Output sugerido:
+1. Matter Summary
+2. Key Facts Extracted
+3. Timeline
+4. Parties / Jurisdictions
+5. Complexity Signals
+6. Missing Information
+7. Ranking Relevance Score
+8. Suggested Chambers Category
+9. Narrative Angle
+10. Draft Matter Description
+6. Garantía estratégica
+La garantía no es “la IA sabe todo”.
+La garantía debe ser:
+RankPilot no inventa el matter; reconstruye desde evidencia y marca los vacíos.
+Eso es clave.
+Cada conclusión debería tener:
+Evidencia encontrada
+Nivel de confianza
+Información faltante
+Ejemplo:
+Conclusión:
+El matter tuvo componente transfronterizo.
+
+Evidencia:
+Se mencionan México, Nueva York y documentación bajo derecho extranjero.
+
+Confianza:
+Alta.
+
+Falta confirmar:
+Monto de la operación y rol exacto de counsel extranjero.
+7. Definición simple del producto
+Yo lo definiría así:
+Matter Reconstruction Assistant es la capa de RankPilot que transforma correos, documentos y memoria dispersa de una firma en inteligencia estructurada de matters, identificando hechos clave, señales de complejidad y potencial reputacional para rankings legales.
+Ese es el corazón.

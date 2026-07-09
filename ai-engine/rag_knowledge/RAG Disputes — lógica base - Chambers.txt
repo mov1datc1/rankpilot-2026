@@ -1,0 +1,404 @@
+RAG Disputes — lógica base
+1. Primero: identificar la categoría exacta
+El sistema debe preguntar o inferir:
+País / guía
+ UK, Europe, USA, Latin America, Brazil, Global.
+Categoría Chambers
+ No basta con “Disputes”. Debe distinguir entre:
+Commercial / Corporate Litigation
+Litigation regional
+Dispute Resolution
+Arbitration
+International Arbitration
+Investor-State Arbitration
+Group Litigation
+Civil Fraud
+Banking Litigation
+Financial Crime / White-Collar Crime
+Corporate Crime & Investigations
+Product Liability
+Securities Litigation
+Real Estate Litigation
+Tax Litigation
+Labour Litigation
+Competition Litigation
+Professional Discipline
+Mediators
+Most in Demand Arbitrators
+2. Regla crítica de clasificación
+No todo litigio entra en Dispute Resolution general.
+El RAG debe aplicar esta regla:
+Si existe una categoría específica para el tipo de disputa, el asunto debe ir allí antes que a Litigation / Dispute Resolution general.
+Ejemplos:
+IP dispute → Intellectual Property
+Tax dispute → Tax Litigation
+Labour dispute → Labour & Employment
+Competition damages/cartel → Competition Litigation
+Real estate possession/lease/development dispute → Real Estate Litigation
+Financial crime/criminal investigation → Financial Crime / White-Collar Crime
+Civil fraud/freezing orders/asset tracing → Fraud: Civil
+Arbitration internacional → International Arbitration / Arbitration
+Claimant mass action → Group Litigation / Mass Torts / Class Actions. 
+Si no existe una categoría específica, el sistema debe hacer esto:
+Regla complementaria
+Si no existe una categoría más específica en esa guía / jurisdicción, el matter puede entrar en Litigation / Dispute Resolution general, siempre que sea una disputa relevante, sofisticada y suficientemente conectada con el core de esa categoría.
+Pero con una condición importante:
+El sistema debe dejar constancia de que revisó la posibilidad de una categoría específica y no encontró una mejor opción.
+Es decir, no debe asumir “general disputes” por default. Debe llegar ahí por descarte razonado.
+Lógica RAG
+IF specific category exists
+→ route matter to specific category
+
+ELSE IF dispute is commercial / civil / corporate / arbitration / white-collar within the accepted scope of the jurisdiction
+→ allow in Dispute Resolution / Litigation general
+
+ELSE
+→ flag as low-fit or out-of-scope
+Ejemplo
+País A no tiene Tax Litigation
+Un litigio tributario relevante podría entrar en Dispute Resolution general, pero el sistema debería marcar:
+Category fit: Acceptable by absence of specific Tax Litigation category.
+Weighting risk: Medium. Tax disputes may be treated as peripheral unless the jurisdiction’s Dispute Resolution table regularly accepts them.
+País B sí tiene Tax Litigation
+Ese mismo matter debería decir:
+Category fit: Weak for Dispute Resolution general.
+Better category: Tax Litigation.
+Risk: Submission dilution / misclassification.
+Entonces la regla completa sería
+Primero buscar categoría específica.
+ Si existe, priorizarla.
+ Si no existe, evaluar si el asunto cae razonablemente dentro del paraguas general de Litigation / Dispute Resolution.
+ Si cae, aceptarlo con nota de weighting risk.
+ Si no cae, excluirlo.
+Esto es importantísimo porque evita que RankPilot sea rígido. No puede decir “Tax nunca entra en Disputes”. Debe decir: “Tax entra en Disputes solo si Chambers no ofrece una vía más específica y si el mercado lo trata como parte del disputes practice.”
+3. Señales positivas por categoría
+Commercial / Corporate Litigation
+Debe privilegiar:
+Contractual disputes
+Corporate control disputes
+Shareholder disputes
+JV disputes
+Post-M&A disputes
+Boardroom disputes
+Courtroom litigation
+Business / HNW clients in commercial context
+Debe penalizar o excluir:
+Arbitration
+Mediation
+Criminal investigations
+Regulatory enforcement
+Public law
+Probate / private wealth disputes
+Tax / real estate / banking / fraud si tienen categoría propia
+International Arbitration
+Debe privilegiar:
+ICC, ICSID, LCIA, UNCITRAL, SIAC
+Commercial arbitration
+Investor-State arbitration
+Cross-border contracts
+BIT / treaty claims
+Sovereign state vs investor disputes
+Enforcement of arbitral awards
+Debe excluir o bajar peso:
+Domestic court litigation
+Purely local arbitration si la categoría exige internacionalidad
+Corporate disputes resueltos en tribunales ordinarios
+Dispute Resolution general
+Debe privilegiar:
+Full dispute lifecycle
+Litigation
+Arbitration
+White-collar crime, solo si esa guía lo incluye
+Commercial disputes
+Enforcement proceedings
+Appeals
+Settlement strategy if tied to actual proceedings
+Debe penalizar:
+Advisory-only work
+Preparatory work with no proceeding
+Sector disputes covered elsewhere
+Group Litigation / Claimant
+Debe privilegiar:
+Large claimant groups
+Collective actions
+Representative actions
+GLOs
+Consumer claims
+Data breach mass claims
+Environmental/product liability claimant work
+Debe excluir:
+Defence work
+One-off commercial claims
+Financial Crime / White-Collar Crime
+Debe privilegiar:
+Fraud
+Bribery
+Money laundering
+Corruption
+Criminal investigations
+Corporate criminal liability
+Internal investigations with criminal/regulatory exposure
+Debe excluir:
+Civil fraud claims
+Pure commercial fraud litigation without criminal element
+4. Inputs mínimos que RankPilot debe pedir
+Para evitar “opinión a ciegas”, antes de analizar un submission de Disputes debe capturar:
+Jurisdicción
+Guía Chambers
+Categoría exacta
+Subtabla, si aplica
+Tipo de firma: full-service, boutique disputes, claimant, defence, arbitration specialist
+Cliente típico
+Forum: court, arbitration, regulatory authority, criminal court, mediation
+Parte representada: claimant, defendant, investor, state, corporate, individual
+Tipo de disputa
+Existencia de categoría más específica
+Banda actual
+Competidores directos
+5. Prompt RAG sugerido
+You are evaluating a Chambers submission in a disputes-related category.
+
+Before scoring or diagnosing, identify:
+1. Jurisdiction
+2. Chambers guide
+3. Exact practice area / subtable
+4. Whether the matter belongs in this category or a more specific disputes category
+5. The forum: court, arbitration, regulatory, criminal, mediation
+6. The client type and party position
+7. The type of dispute
+8. The weighting rules for this category
+9. Exclusion rules
+10. Any category mismatch risks
+
+Do not give a diagnostic until category fit has been validated.
+6. Red flag principal
+El mayor riesgo en Disputes es que RankPilot diga:
+“Buen caso de disputes”
+cuando en realidad Chambers lo leería como:
+“Esto no va aquí.”
+Esa debe ser una alerta obligatoria del sistema.
+🧠 RAG DISPUTES — CAPA 2
+“Matter Qualification Engine”
+Lo que RankPilot debería decidir automáticamente
+Para cada matter:
+1. ¿Pertenece a esta categoría?
+Ejemplo:
+Caso:
+“Represented company in ICC arbitration regarding JV termination.”
+El sistema debería pensar:
+→ Arbitration
+→ International
+→ Commercial
+→ NOT Commercial Litigation
+
+Caso:
+“Defended executive in FCA investigation.”
+→ Financial Services Regulatory
+→ Possibly Financial Crime
+→ NOT Commercial Litigation
+
+Caso:
+“Represented shareholders in High Court dispute after acquisition.”
+→ Commercial & Corporate Litigation
+→ Post-M&A
+→ Shareholder dispute
+→ Strong fit
+
+🧩 Entonces el RAG necesita una lógica así:
+STEP 1 — Detect dispute type
+Clasificar:
+Commercial litigation
+Corporate litigation
+Arbitration
+Investor-state
+Banking litigation
+Civil fraud
+White-collar
+Regulatory
+Competition litigation
+Employment litigation
+IP litigation
+Construction dispute
+Real estate dispute
+Tax litigation
+Product liability
+Group action
+Mediation
+Enforcement
+
+STEP 2 — Detect forum
+MUY importante para Chambers.
+Court litigation
+High Court
+Supreme Court
+Commercial Court
+Appeals
+Arbitration
+ICC
+LCIA
+ICSID
+UNCITRAL
+SIAC
+Regulatory
+FCA
+PRA
+CMA
+SEC
+DOJ
+CADE
+Criminal
+prosecution
+criminal investigation
+dawn raid
+indictment
+
+STEP 3 — Detect category fit
+Ejemplo de lógica:
+IF arbitration = TRUE
+AND international = TRUE
+THEN prioritize International Arbitration
+
+IF criminal investigation = TRUE
+THEN exclude from Commercial Litigation
+
+IF claimant_group = TRUE
+THEN prioritize Group Litigation
+
+IF IP dispute = TRUE
+THEN downgrade relevance for general litigation
+
+STEP 4 — Detect sophistication
+Esto es CRÍTICO.
+Porque no todo litigio rankea.
+
+Chambers privilegia:
+Complexity
+multi-jurisdiction
+novel issues
+high procedural complexity
+appellate significance
+Financial exposure
+claim value
+damages
+transaction size
+Strategic importance
+precedential value
+industry impact
+reputational risk
+Procedural sophistication
+injunctions
+freezing orders
+enforcement
+emergency arbitration
+cross-border discovery
+Market visibility
+major corporates
+financial institutions
+sovereigns
+listed companies
+
+STEP 5 — Detect weighting risks
+Ejemplo:
+UK Commercial Litigation
+Chambers explícitamente dice:
+arbitration gets less/no weight
+Entonces:
+IF arbitration-heavy submission
+→ warning: weak category alignment
+
+Fraud
+IF criminal fraud
+→ move to Financial Crime
+ELSE
+→ Fraud: Civil
+
+Litigation regional
+IF London-based commercial litigation
+→ should probably be Commercial & Corporate Litigation
+NOT regional Litigation
+
+🚨 ESTO ES FUNDAMENTAL:
+“Negative Intelligence”
+RankPilot no solo debe decir:
+✅ “esto es fuerte”
+Debe decir:
+❌ “esto NO pertenece aquí”
+Eso es exactamente lo que hace un consultor senior.
+
+🧠 Nueva capa de producto
+Ya no sería:
+Upload submission → AI feedback
+Ahora sería:
+1. Context intake
+2. Matter classification
+3. Category-fit validation
+4. Sophistication scoring
+5. Chambers weighting analysis
+6. Submission strategy recommendations
+
+🔥 Aquí aparece el verdadero moat
+Porque la mayoría de herramientas AI hacen:
+semantic summarization
+Pero tú estás empezando a construir:
+ranking intelligence infrastructure
+Y eso es MUCHO más difícil de copiar.
+
+El siguiente paso lógico
+Ahora deberías construir:
+🧱 “Disputes Taxonomy Matrix”
+Una matriz tipo:
+Eso sería brutal para el motor RAG.
+“Category availability map”
+El RAG debe saber qué categorías existen por país/guía.
+No basta con saber que “Tax Litigation” existe en abstracto. Debe saber si existe en esa jurisdicción Chambers.
+IF specific category exists in this guide
+→ route there
+
+IF specific category does not exist
+→ test against general Dispute Resolution / Litigation
+
+2. “Forum hierarchy”
+El foro manda mucho:
+Court → Litigation / Commercial Litigation
+Arbitration → Arbitration / International Arbitration
+Regulator → Financial Services / Competition / Compliance
+Criminal court / prosecutor → Financial Crime / White-Collar Crime
+Mediation only → usually weak unless Mediators category
+3. “Client-side rule”
+Muy importante para algunas tablas:
+Claimant group → Group Litigation / Mass Torts
+Defendant group → usually Litigation / sector-specific table
+Investor vs State → Investor-State Arbitration
+State-side arbitration → Investor-State Arbitration
+Corporate victim of fraud → Fraud: Civil
+Individual accused of fraud → Financial Crime: Individuals
+Corporate accused of crime → Corporate Crime / WCC
+4. “Weighting risk score”
+No todos los matters aceptables pesan igual.
+RankPilot debería etiquetar cada matter como:
+Core / Strong fit
+Acceptable / Secondary fit
+Peripheral / Low weight
+Misclassified / Do not submit
+Ejemplo:
+Commercial contract High Court dispute → Core
+Civil fraud freezing order in Commercial Litigation → Secondary
+Employment dispute in Dispute Resolution general where Employment exists → Misclassified
+Mediation-only mandate → Low weight
+5. “Submission dilution detector”
+Esta es brutal.
+El sistema debe alertar cuando un submission mezcla demasiadas cosas:
+3 arbitrations
+2 regulatory investigations
+1 tax dispute
+1 employment dispute
+1 commercial litigation
+Diagnóstico:
+“This submission does not evidence a coherent Commercial Litigation practice. It reads as a general disputes dump.”
+Ese detector puede ser uno de los grandes diferenciales del producto.
+En una frase
+La RAG Disputes no debe responder solo:
+“¿Este asunto es disputes?”
+Debe responder:
+“¿Este asunto pertenece a esta categoría, en esta guía, con este peso, y fortalece o diluye la narrativa del ranking?”
+Esa es la clave.

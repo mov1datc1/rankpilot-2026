@@ -1,0 +1,296 @@
+🧠 RAG MASTER — INTELLECTUAL PROPERTY / INNOVATION / AI
+I. PRINCIPIO FUNDAMENTAL DEL SISTEMA
+Intellectual Property NO es una práctica aislada.
+Es un ecosistema híbrido entre:
+innovación
+regulación
+litigio
+monetización
+tecnología
+ciencia
+branding
+governance
+Por tanto:
+🚨 El sistema NO debe clasificar asuntos únicamente por etiquetas jurídicas.
+Debe entender:
+tecnología subyacente
+industria
+tipo de activo intangible
+dimensión regulatoria
+nivel de innovación
+impacto comercial
+riesgo reputacional
+complejidad científica/técnica
+frontera entre categorías Chambers
+
+II. OBJETIVO DEL RAG
+El sistema debe ser capaz de:
+1. Identificar correctamente la subespecialidad IP
+2. Determinar la categoría óptima de ranking
+3. Medir sofisticación técnica y comercial
+4. Detectar innovación real vs trabajo commodity
+5. Construir narrativa editorial adecuada
+6. Comprender overlaps regulatorios y tecnológicos
+7. Diferenciar:
+PI litigiosa
+PI comercial
+PI regulatoria
+PI tecnológica
+PI científica
+PI digital
+
+III. CORE TAXONOMY — MASTER PI STRUCTURE
+A. PATENTS
+Subcategorías
+Patent Litigation
+infringement
+invalidity
+injunctions
+appellate proceedings
+SEP disputes
+FRAND disputes
+Patent Prosecution
+filings
+prosecution
+office actions
+portfolio development
+Patent Commercialization
+licensing
+monetization
+assignments
+technology transfer
+Scientific/Technical Areas
+biotech
+pharma
+AI
+semiconductors
+telecom
+medtech
+chemicals
+software
+
+B. TRADEMARKS
+Incluye:
+infringement
+portfolio management
+anti-counterfeiting
+TTAB proceedings
+domain disputes
+brand enforcement
+licensing
+global trademark strategy
+Factores críticos:
+notoriedad de marcas
+alcance internacional
+impacto reputacional
+enforcement sophistication
+
+C. COPYRIGHT
+Incluye:
+software
+media
+entertainment
+databases
+AI-generated content
+training data disputes
+digital platforms
+streaming/content ecosystems
+El sistema debe detectar:
+contenido digital
+plataformas
+scraping
+generative AI overlap
+licensing frameworks
+
+D. TRADE SECRETS
+Incluye:
+employee mobility
+theft
+injunctions
+internal investigations
+cyber-related misappropriation
+confidential information protocols
+Indicadores de sofisticación:
+cross-border theft
+emergency injunctions
+forensic investigations
+competitor movement
+algorithm theft
+source code disputes
+
+E. AI & EMERGING TECHNOLOGY
+🚨 Esta debe ser una capa autónoma.
+NO simplemente “IP moderna”.
+Incluye:
+AI governance
+AI regulation
+training data
+copyright overlap
+algorithm liability
+AI ethics
+AI commercialization
+generative AI disputes
+model governance
+autonomous systems
+synthetic media
+deepfakes
+El sistema debe identificar:
+frontier legal issues
+regulatory uncertainty
+absence of precedent
+cross-disciplinary complexity
+
+F. DATA PROTECTION & DIGITAL RIGHTS
+Incluye:
+privacy compliance
+cybersecurity
+cross-border transfers
+platform governance
+data monetization
+consent structures
+breach response
+digital consumer protection
+Overlaps frecuentes:
+AI
+TMT
+fintech
+healthcare
+advertising tech
+
+G. LIFE SCIENCES & BIOTECH
+🚨 IMPORTANTÍSIMO
+Life Sciences NO es simplemente IP.
+Es:
+regulatory-heavy
+science-heavy
+product lifecycle-heavy
+Incluye:
+clinical trials
+approvals
+exclusivities
+biotech innovation
+pharma patent litigation
+regulatory strategy
+product liability overlap
+El sistema debe diferenciar:
+patent-centric matter
+ vs
+regulatory-centric matter
+Porque Chambers los rankea distinto.
+
+H. ADVERTISING & BRAND ECONOMY
+Incluye:
+misleading advertising
+influencer compliance
+sponsorships
+digital campaigns
+consumer protection
+platform advertising
+labeling
+e-commerce compliance
+Aquí el sistema debe entender:
+reputational risk
+consumer impact
+regulatory exposure
+online ecosystem sophistication
+
+IV. CATEGORY RESOLUTION ENGINE
+🚨 CRÍTICO
+El sistema debe resolver:
+“¿Dónde debería rankear esto?”
+NO:
+“¿qué área jurídica parece?”
+
+Ejemplos
+
+V. SOPHISTICATION SCORING MODEL
+El sistema debe puntuar:
+
+VI. INDUSTRY AWARENESS LAYER
+El sistema debe identificar industria automáticamente.
+Porque PI cambia radicalmente por industria.
+
+VII. NARRATIVE INTELLIGENCE
+El storytelling cambia completamente.
+
+Patent Litigation Narrative
+technical mastery
+scientific sophistication
+precedent value
+
+Trademark Narrative
+brand protection
+enforcement reach
+commercial defense
+
+AI Narrative
+frontier issues
+novel regulation
+governance leadership
+
+Life Sciences Narrative
+patient impact
+regulatory navigation
+innovation lifecycle
+
+Data Protection Narrative
+global compliance
+governance sophistication
+crisis mitigation
+
+VIII. LAWYER LEADERSHIP MODEL
+PI depende MUCHÍSIMO de individuos elite.
+El sistema debe detectar:
+technical authority
+scientific credentials
+engineering background
+regulatory influence
+speaking engagements
+authorship
+thought leadership
+landmark cases
+specialist reputation
+
+IX. RED FLAGS (MUY IMPORTANTES)
+El sistema debe penalizar:
+Commodity work disfrazado de sofisticado
+Ejemplo:
+trademark filing routine
+low-level prosecution
+generic compliance
+standard licensing
+Sin:
+complejidad
+impacto
+innovación
+estrategia
+precedentes
+coordinación sofisticada
+
+X. META-INTELIGENCIA DEL SISTEMA
+🚨 Este punto es brutalmente importante.
+RankPilot debe entender que:
+PI es una práctica “de convergencia”.
+Donde:
+tecnología
+regulación
+innovación
+comercio
+ciencia
+reputación
+datos
+contenido
+se mezclan constantemente.
+Y por tanto:
+👉 las fronteras de clasificación son dinámicas.
+
+XI. CONCLUSIÓN ESTRATÉGICA
+Si RankPilot logra modelar PI correctamente:
+✅ puede modelar AI
+ ✅ puede modelar Life Sciences
+ ✅ puede modelar Data Protection
+ ✅ puede modelar Innovation Economy
+ ✅ puede modelar Digital Regulation
+ ✅ puede modelar Technology Transactions
+Porque PI es, en realidad:
+un “microcosmos” de la economía jurídica moderna.

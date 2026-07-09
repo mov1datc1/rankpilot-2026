@@ -16,6 +16,7 @@ from agents.prompts import (
     LATEX_WRITER_PROMPT
 )
 from utils.pdf_generator import compile_latex_to_pdf
+from utils.rag_router import RAGRouter
 
 load_dotenv()
 
@@ -170,10 +171,22 @@ def context_engine_node(state: AgentState) -> Dict:
 def analysis_node(state: AgentState) -> Dict:
     llm = get_model()
     
+    # 1. Recuperar contexto para el RAG
+    submission_context = state.get("submission_context", {})
+    jurisdiction = submission_context.get("jurisdiction", "")
+    practice_area = submission_context.get("practice_area", "")
+    directory = submission_context.get("directory", "")
+    
+    # 2. Inicializar RAG Router y extraer guías
+    router = RAGRouter()
+    rag_knowledge = router.get_rag_context(practice_area, directory)
+    
+    # 3. Preparar datos inyectando el conocimiento RAG
     input_data = {
         "metadata": state.get("metadata", {}),
         "matters": state.get("matters", []),
-        "strategic_context": state.get("strategic_context", {})
+        "strategic_context": state.get("strategic_context", {}),
+        "RAG_KNOWLEDGE": rag_knowledge
     }
     
     prompt = ChatPromptTemplate.from_messages([

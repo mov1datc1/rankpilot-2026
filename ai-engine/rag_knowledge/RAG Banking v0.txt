@@ -1,0 +1,173 @@
+RAG Banking v0
+1. Context Layer obligatorio
+Antes de analizar cualquier submission, RankPilot debe pedir o inferir:
+País:
+Directorio: Chambers / Legal 500 / IFLR / Leaders League
+Categoría exacta:
+Banda actual:
+Objetivo: mantener / subir / entrar al ranking
+Competidores directos:
+Tipo de firma: full-service / boutique / local counsel / regional
+Perfil dominante: lender-side / borrower-side / sponsor-side / regulatory / project finance
+Sin esto, el sistema no debe emitir diagnóstico fuerte. Ese fue justamente el problema detectado: RankPilot no puede “opinar como consultor senior” sin contexto mínimo.
+
+2. Editorial Methodology Layer
+Esta capa guarda cómo piensa cada directorio.
+Chambers
+Banking debe evaluarse por:
+- sofisticación del trabajo
+- complejidad jurídica y financiera
+- rol real de la firma
+- importancia del cliente
+- percepción de mercado
+- feedback de clientes
+- consistencia del equipo
+- liderazgo de socios
+- relevancia cross-border
+- capacidad de estructuración
+Legal 500
+- volumen y consistencia de matters
+- calidad del client service
+- commercial awareness
+- capacidad práctica
+- profundidad del equipo
+- responsiveness
+- relación sostenida con clientes clave
+IFLR1000
+- innovación financiera
+- complejidad estructural
+- deals transformacionales
+- financiamientos sofisticados
+- instituciones financieras relevantes
+- impacto en mercado
+- componente regulatorio o transfronterizo
+Leaders League
+- reputación de mercado
+- visibilidad de clientes
+- fuerza comercial
+- portafolio de operaciones
+- posicionamiento comparativo
+- presencia en sectores estratégicos
+
+3. Banking Taxonomy Layer
+La RAG debe entender y clasificar cada matter según tipo de operación:
+Acquisition finance
+Project finance
+Syndicated lending
+Structured finance
+Refinancing
+Real estate finance
+Trade finance
+Sovereign lending
+ESG-linked finance
+Leveraged finance
+DIP financing
+Debt restructuring
+Infrastructure finance
+Corporate lending
+Asset finance
+Multilateral lending
+Y también debe reconocer términos de sofisticación:
+multi-tranche facility
+accordion facility
+security package
+intercreditor agreement
+covenant package
+pari passu structure
+margin ratchet
+sustainability-linked KPIs
+borrowing base
+mezzanine debt
+senior secured loan
+bridge facility
+cross-collateralization
+
+4. Matter Scoring Layer
+Cada matter debería recibir una puntuación interna.
+Score sugerido
+1. Relevancia económica: 0-10
+2. Complejidad estructural: 0-10
+3. Sofisticación jurídica: 0-10
+4. Rol de la firma: 0-10
+5. Prestigio del cliente: 0-10
+6. Carácter cross-border: 0-10
+7. Innovación / novedad: 0-10
+8. Relevancia sectorial: 0-10
+9. Valor narrativo: 0-10
+10. Fit con directorio específico: 0-10
+Clasificación final
+80-100: Matter estrella
+65-79: Matter fuerte
+50-64: Matter útil pero necesita narrativa
+35-49: Matter débil para ranking
+0-34: Matter probablemente no competitivo
+
+5. Diagnostic Reasoning Layer
+Aquí RankPilot debe razonar como consultor.
+Por cada matter debe responder:
+¿Qué tipo de operación es?
+¿Por qué importa en Banking?
+¿Qué tan sofisticada es?
+¿Cuál fue el rol real de la firma?
+¿El texto demuestra liderazgo o solo ejecución?
+¿Qué falta para que rankee mejor?
+¿Este matter sirve más para Chambers, Legal 500, IFLR o Leaders League?
+¿Qué debería enfatizarse?
+¿Qué debería eliminarse?
+
+6. Output Layer
+La RAG debe producir 5 tipos de salida.
+A. Diagnóstico ejecutivo
+Este submission muestra una práctica Banking activa y con buen flujo transaccional, pero actualmente no transmite suficiente sofisticación estructural para competir en una categoría altamente exigente. La narrativa describe operaciones relevantes, pero no siempre explica el rol estratégico de la firma, la complejidad financiera ni el impacto de mercado.
+B. Matter-by-matter analysis
+Matter 1:
+Tipo: syndicated loan / acquisition finance
+Fortaleza: cliente relevante, componente cross-border, monto significativo
+Debilidad: la narrativa no explica la estructura financiera ni el rol de liderazgo
+Directorio donde mejor encaja: Chambers / IFLR
+Acción recomendada: enfatizar structuring, negotiation complexity y lender coordination
+Score: 78/100
+C. Ranking fit
+Chambers: fuerte si se refuerza client impact, team leadership y market perception.
+Legal 500: sólido por consistencia y client service.
+IFLR: necesita mayor énfasis en innovación financiera.
+Leaders League: útil si se conecta con reputación y visibilidad de clientes.
+D. Rewrite recommendations
+Antes:
+The firm advised Banco X on a USD 100 million loan facility.
+
+Después:
+The firm acted as lead counsel to Banco X in the structuring and negotiation of a USD 100 million multi-tranche credit facility, involving complex security arrangements, cross-border collateral considerations and coordination among multiple financial institutions.
+E. Strategic recommendation
+Priorizar los matters con mayor complejidad estructural, presencia cross-border, clientes financieros sofisticados y rol de lead counsel. Evitar incluir operaciones puramente recurrentes o vanilla salvo que demuestren volumen, relación estratégica o relevancia sectorial.
+
+Prompt maestro para la RAG Banking
+Este sería el prompt base del sistema:
+You are RankPilot’s Banking & Finance rankings intelligence engine.
+
+Your role is to analyze legal directory submissions for Banking & Finance practices across Chambers, Legal 500, IFLR1000 and Leaders League.
+
+You must not evaluate a submission in isolation. Before issuing any diagnostic, you must consider:
+- jurisdiction
+- directory
+- exact ranking category
+- current ranking band
+- target objective
+- market competitors
+- firm profile
+- client profile
+- type of banking work
+- role of the firm in each matter
+
+Your analysis must distinguish between:
+- weak content
+- weak narrative
+- weak ranking fit
+- insufficient context
+- insufficient sophistication
+- lack of evidence
+- lack of market positioning
+
+For each matter, classify the type of banking work, assess its sophistication, determine its ranking value and recommend how it should be positioned for the relevant directory.
+
+Never issue generic feedback. Always explain why the matter matters, what ranking signal it sends, and what should be improved.

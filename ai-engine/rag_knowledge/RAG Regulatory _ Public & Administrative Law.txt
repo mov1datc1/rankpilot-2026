@@ -1,0 +1,377 @@
+RAG Regulatory / Public & Administrative Law
+1. Purpose
+This RAG helps RankPilot evaluate, classify and improve submissions involving regulatory, administrative, public law, government-facing, constitutional, procurement, concessions, public affairs, licensing, enforcement and sector-specific regulatory work.
+Its core purpose is to determine whether a matter belongs in:
+Public Law / Administrative & Public Law
+Public Procurement
+Government / Government Relations
+Political / Electoral Law
+Public International Law
+Environmental Regulatory
+Sector-specific regulatory categories
+Or another more precise practice area such as Energy, Life Sciences, TMT, Data Protection, Competition, Labour, Tax, Healthcare, Infrastructure, Planning, Urban Law, etc.
+2. Foundational Principle
+Regulatory work is not a single practice area.
+It is a cross-practice dimension that appears across many rankings, sectors and jurisdictions.
+RankPilot must never classify a matter as Public Law / Administrative Law merely because a public authority, licence, regulator, sanction, tender, permit or statute is involved.
+The system must first identify the regulatory centre of gravity.
+3. Mandatory Classification Rule
+Before assigning a matter to Public Law / Administrative & Public Law, RankPilot must ask:
+Is there a more specific ranking category that better captures the matter’s sector, regulator, legal issue or commercial context?
+If yes, the matter should be routed to that more specific category.
+Public Law / Administrative Law should function as a sophisticated residual category, not as a generic container for anything involving the State.
+4. Regulatory Centre of Gravity Test
+For each matter, RankPilot must identify the dominant regulatory axis:
+A. Government power / administrative action
+Use Public Law / Administrative Law when the issue concerns:
+powers of central or local government;
+administrative acts;
+judicial review;
+statutory appeals;
+constitutional challenges;
+government decision-making;
+administrative proceedings;
+public authority duties;
+state liability;
+public policy implementation;
+disciplinary proceedings;
+interaction between private parties and the State.
+B. Public procurement / tenders
+Use Public Procurement when the matter concerns:
+acquisition of goods or services by public entities;
+tender design;
+tender participation;
+procurement challenges;
+bid protests;
+award disputes;
+procurement compliance;
+public buyer/supplier relationships.
+If the issue is not simply procurement but a broader concession, infrastructure project, PPP or privatization, consider Public Law, Projects, Infrastructure, Energy, Transport or sector-specific categories.
+C. Concessions / PPPs / privatizations
+Use Public Law, Projects or Infrastructure depending on the guide and country when the matter concerns:
+public-private partnerships;
+concessions;
+privatizations;
+regulated public services;
+long-term operation of public assets;
+concession bidding;
+concession amendments;
+disputes with granting authorities;
+regulatory economics of public infrastructure.
+D. Sector-specific regulation
+Route to the relevant sector-specific practice when the core issue is tied to a specific regulated industry.
+Examples:
+Energy regulator / power generation / transmission / renewables → Energy & Natural Resources.
+Telecom regulator / spectrum / connectivity / telecom licensing → Telecommunications.
+Healthcare regulator / hospitals / health insurance / medical services → Healthcare Regulatory.
+Life sciences / pharma / medical devices / ANVISA-style issues → Life Sciences.
+Data privacy authority / GDPR / LGPD / data processing → Data Protection.
+Environmental licensing / pollution / waste / water / emissions → Environment.
+Food labelling / additives / pesticides / consumer safety → Regulatory: Agro/Food.
+Gambling licences / betting rules → Gambling & Betting.
+Aviation authority / airport slots / safety rules → Aviation.
+Urban zoning / land use / planning permissions → Planning / Urban Law.
+Financial services regulator → Banking & Finance / Financial Services Regulation.
+Antitrust authority / merger control / cartel / dominance → Competition.
+Tax authority / assessments / tax litigation → Tax.
+Labour inspectorate / employment enforcement → Labour & Employment.
+5. Core Negative Rule
+Do not classify a matter as Public Law merely because:
+a regulator was involved;
+a licence was required;
+the client operates in a regulated industry;
+the matter involved compliance;
+a government agency was consulted;
+public policy was indirectly relevant;
+the matter required an administrative filing.
+Those facts are indicators, not determinative.
+RankPilot must classify based on the main legal and strategic issue.
+6. Public Law / Administrative Law — Positive Indicators
+A matter belongs in Public Law / Administrative Law when it substantially involves:
+judicial review;
+constitutional litigation;
+administrative litigation;
+statutory appeals;
+public authority powers;
+legality of government action;
+human rights or civil liberties in relation to state action;
+government decision-making;
+public tenders, if no separate Public Procurement category is more appropriate;
+concessions, PPPs or privatizations, if treated within Public Law in that jurisdiction;
+regulatory advice not already captured by a specific practice area;
+representation before constitutional courts or administrative tribunals;
+relationship between individuals/private entities and government bodies.
+7. Public Procurement — Positive Indicators
+A matter belongs in Public Procurement when it substantially involves:
+government acquisition of goods or services;
+public tenders;
+procurement structuring;
+procurement disputes;
+bid protests;
+award challenges;
+tender compliance;
+public buyer/vendor advice;
+procurement in education, healthcare, transport, housing, infrastructure or technology.
+Related areas to check:
+Projects;
+Infrastructure;
+Transport;
+Healthcare;
+Education;
+IT;
+Public Law;
+Construction.
+8. Government Relations / Public Affairs / Political Law
+Use this branch when the matter involves:
+lobbying;
+legislative advocacy;
+regulatory change;
+public affairs strategy;
+appropriations;
+government relations;
+policy influence;
+advice to embassies, governments, NGOs or corporations seeking regulatory change;
+political campaign rules;
+campaign finance;
+election advertising;
+party registration;
+voting rights;
+election disputes;
+candidate eligibility;
+electoral litigation.
+In Brazil, for example, Electoral Law should be treated separately from generic Public Law when the issue concerns campaign finance, political parties, electoral advertising, voting rights or proceedings before electoral courts.
+9. Public International Law
+Use Public International Law when the matter involves:
+state-to-state disputes;
+sovereign immunity;
+sanctions;
+boundary rights;
+international humanitarian law;
+international courts or tribunals;
+disputes before the ICJ, ITLOS or ICC;
+public international obligations of states.
+Do not include investment arbitration here if the guide expressly places it under International Arbitration.
+10. Environmental Regulatory
+Use Environment or Regulatory: Environment when the matter involves:
+environmental compliance;
+environmental permitting;
+pollution;
+waste;
+water;
+wetlands;
+endangered species;
+emissions;
+contaminated land;
+environmental enforcement;
+REACH/RoHS/WEEE-style regulation;
+biocides;
+chemicals;
+single-use plastics;
+environmental aspects of M&A or financing.
+If the matter is about construction of energy plants, check Energy.
+ If it is about planning permissions or zoning, check Planning / Urban Law.
+ If it is about broader constitutional or administrative legality, check Public Law.
+11. Country-Specific Sensitivity
+RankPilot must not assume that one country’s category map applies globally.
+For every analysis, it must first identify:
+guide;
+country;
+exact category name;
+neighbouring categories;
+exclusions;
+related sections;
+regulator(s);
+whether the guide treats the work as standalone or sector-specific.
+Examples:
+Brazil
+Brazil requires high sensitivity because regulatory work is heavily fragmented across:
+Public Law;
+Electoral Law;
+Environment;
+Energy;
+Telecommunications;
+Data Protection;
+Life Sciences;
+Healthcare;
+Gambling;
+Urban Law;
+Infrastructure;
+Competition;
+Tax;
+Labour.
+Public Law in Brazil may include procurement, privatizations, concessions and PPPs, but excludes regulatory work already captured by specific practice areas.
+UK
+UK Administrative & Public Law may include judicial review, statutory appeals, disciplinary proceedings, public authority powers, procurement, environmental issues and discrimination/employment issues.
+But RankPilot must check related categories:
+Civil Liberties & Human Rights;
+Local Government;
+Parliamentary & Public Affairs;
+Public Inquiries;
+Public Procurement;
+Planning.
+USA
+USA Government may split into:
+Government Contracts;
+Government Relations;
+Political Law.
+The system must distinguish federal contracting/bid protests from lobbying and political law.
+Europe
+Europe may separate:
+Public Law;
+Public Procurement;
+Public Law: Planning and Environment;
+Regulatory: Agro/Food;
+Regulatory: Environment;
+Regulatory: Government & Public Affairs;
+sector-specific regulatory practices.
+Latin America
+Latin America Public Law generally covers constitutional and administrative matters, public procurement and general regulatory advice, but excludes regulatory work related to specific practice areas such as Competition, Energy, Labour, Life Sciences, Tax, TMT and IP.
+12. Matter Sophistication Scoring
+RankPilot should score regulatory/public law matters higher when they include:
+high economic value;
+high public impact;
+politically sensitive context;
+strategic interaction with regulators;
+novel legal issue;
+lack of precedent;
+constitutional dimension;
+market-changing implications;
+emergency or crisis context;
+multi-agency coordination;
+cross-border regulatory impact;
+enforcement risk;
+licence-critical issue;
+concession/PPP complexity;
+public procurement challenge;
+litigation before constitutional or administrative courts;
+reputational exposure;
+involvement of senior lawyers;
+successful outcome despite regulatory uncertainty.
+13. Lower-Value Indicators
+A matter may be less rankable if it is:
+routine licence renewal;
+standard regulatory filing;
+generic compliance memo;
+low-stakes administrative advice;
+ordinary procurement support;
+basic due diligence;
+internal policy review;
+regulatory monitoring without strategic impact;
+isolated filing with no complexity;
+descriptive rather than strategic.
+However, RankPilot must not dismiss a matter only because it appears routine. It should ask whether the submission failed to explain:
+what was at stake;
+why the authority mattered;
+what risk existed;
+what made the strategy sophisticated;
+what outcome was achieved.
+14. Narrative Requirements for Strong Submissions
+A strong Regulatory/Public Law matter should explain:
+who the client was;
+which authority/regulator was involved;
+what decision, licence, sanction, tender, regulation or public act was at issue;
+what was commercially or institutionally at stake;
+why the issue was legally difficult;
+whether there was regulatory uncertainty;
+whether the matter had political/public sensitivity;
+what strategy the firm designed;
+what role senior lawyers played;
+what result was achieved;
+why this matter shows market-leading capability.
+15. Diagnostic Questions
+For each matter, RankPilot should ask:
+What is the relevant jurisdiction?
+What is the exact ranking category?
+Is this public law general or sector-specific regulation?
+Which regulator or public authority is central?
+Is the client public, private, claimant, concessionaire, bidder, regulated company, NGO or political actor?
+Is the issue contentious, advisory, transactional, licensing, lobbying, procurement or enforcement?
+Is there a more specific category than Public Law?
+Does the matter involve constitutional or administrative legality?
+Does it involve procurement, concession, PPP or privatization?
+Does it involve a regulated industry?
+What was at stake?
+What made the work complex?
+What outcome was achieved?
+Which lawyers led the strategy?
+Why would a ranking researcher care?
+16. Red Flags in Submissions
+RankPilot should flag when:
+the country is missing;
+the category is unclear;
+the regulator is not identified;
+the matter says “regulatory advice” without explaining the regulatory issue;
+the submission does not clarify whether the work is Public Law or sector-specific;
+procurement, concession and PPP work are mixed without distinction;
+there is no outcome;
+there is no explanation of strategic complexity;
+the matter reads like routine compliance;
+the public authority’s role is vague;
+the client’s risk is unclear;
+the firm’s role is described passively;
+the matter lacks lawyer leadership;
+the matter is potentially better suited to another practice area.
+17. Output Format Required
+For every matter, RankPilot should return:
+A. Suggested classification
+Primary category:
+ Alternative category:
+ Rejected categories:
+B. Reasoning
+Why this matter belongs in the suggested category.
+C. Regulatory centre of gravity
+Government power / procurement / sector regulation / enforcement / lobbying / constitutional / concessions / environmental / electoral / public international.
+D. Sophistication level
+Low / Medium / High / Exceptional.
+E. Ranking strength
+Weak / Usable / Strong / Flagship.
+F. Narrative gaps
+What is missing from the matter description.
+G. Rewrite recommendation
+How the firm should frame the matter for ranking purposes.
+18. Example Logic
+Example 1
+Matter: Advice to a telecom company on spectrum licence renewal before the national telecom regulator.
+Classification: Telecommunications.
+ Not Public Law.
+ Reason: sector-specific regulator and licence issue dominate.
+Example 2
+Matter: Judicial review of a government decision cancelling a concession.
+Classification: Public Law / Administrative Law or Projects/Infrastructure, depending on guide.
+ Reason: administrative legality + concession/public asset issue.
+Example 3
+Matter: Challenge to award of a hospital services tender.
+Classification: Public Procurement.
+ Alternative: Healthcare, if the guide treats healthcare procurement separately.
+ Reason: tender award challenge dominates.
+Example 4
+Matter: Advice to food company on EU labelling, additives and packaging rules.
+Classification: Regulatory: Agro/Food.
+ Reason: sector-specific food regulation.
+Example 5
+Matter: Representation of political party in campaign finance dispute before electoral court.
+Classification: Electoral Law / Political Law.
+ Not Public Law general.
+ Reason: electoral system and campaign finance dominate.
+Example 6
+Matter: Constitutional challenge to a new tax imposed by government.
+Classification: Tax Litigation or Constitutional/Public Law depending on guide.
+ Decision rule: if tax liability is the commercial centre, use Tax. If legality of state power is the centre, consider Public Law.
+19. Core Instruction for the Model
+RankPilot must behave like a senior rankings consultant.
+It should not merely detect keywords such as “regulator,” “government,” “licence,” “public authority” or “compliance.”
+It must classify the matter by asking:
+What is the legal, commercial and institutional centre of gravity of this work?
+Then it must determine whether the matter is best positioned as:
+Public Law;
+Administrative Law;
+Public Procurement;
+Government Relations;
+Political / Electoral Law;
+Public International Law;
+Environment;
+or a sector-specific regulatory category.
+20. Golden Rule
+Public Law is not the default home for regulatory work.
+It is the right category only when the matter’s real value lies in the relationship between the client and the State, the legality of government action, public authority powers, administrative/constitutional proceedings, procurement, concessions, PPPs or non-sector-specific regulatory advice.
+For everything else, RankPilot must search for the more precise regulatory home.

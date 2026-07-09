@@ -1,0 +1,104 @@
+RAG Legal 500
+Pero no como copia del de Chambers.
+La diferencia clave es esta:
+Chambers = ranking por percepción de mercado + referencias
+Legal 500 = evidencia editorial más granular + client feedback + work highlights + team depth
+Entonces el RAG para Legal 500 debe tener otra lógica.
+Legal 500 RAG — V1
+Objetivo
+Evaluar si una submission responde a lo que Legal 500 suele valorar:
+profundidad del equipo
+experiencia reciente
+clientes representativos
+work highlights claros
+diferenciadores
+liderazgo de socios
+next generation / rising stars
+testimonials útiles
+cobertura por práctica y jurisdicción
+
+Diferencia estructural con Chambers
+En Chambers, RankPilot debe preguntar:
+¿Esta firma merece subir o mantenerse en el ranking?
+En Legal 500 debe preguntar:
+¿Esta firma le está dando suficiente evidencia editorial al researcher para escribir una reseña convincente y justificar el tier?
+
+Legal 500 RAG necesita 5 capas
+1. Practice Area Scope Layer
+Qué cubre cada práctica según jurisdicción.
+Ejemplo:
+{
+ "directory": "Legal 500",
+ "jurisdiction": "Mexico",
+ "practice_area": "Competition/Antitrust",
+ "scope": [
+   "merger control",
+   "cartel investigations",
+   "abuse of dominance",
+   "regulatory investigations",
+   "competition litigation"
+ ]
+}
+2. Editorial Evidence Layer
+Qué necesita el researcher para escribir bien:
+{
+ "evidence_signals": [
+   "representative clients",
+   "recent mandates",
+   "deal/matter significance",
+   "team roles",
+   "partner leadership",
+   "sector expertise",
+   "cross-border work",
+   "client testimonials"
+ ]
+}
+3. Team Depth Layer
+Legal 500 suele mirar mucho:
+lead partners
+next generation partners
+rising stars
+associates destacados
+cambios de equipo
+lateral hires
+promociones
+sucesión generacional
+4. Testimonial Intelligence Layer
+Aquí el RAG debe evaluar si los quotes:
+son específicos
+respaldan diferenciadores
+hablan de servicio
+hablan de expertise
+nombran abogados
+no son genéricos
+5. Editorial Output Layer
+Legal 500 produce reseñas narrativas. Entonces el RAG debe preguntar:
+¿Con esta información se puede escribir una reseña fuerte?
+
+Pipeline Legal 500
+Submission
+ ↓
+Identify jurisdiction + practice
+ ↓
+Retrieve Legal 500 scope
+ ↓
+Classify work highlights
+ ↓
+Assess editorial evidence
+ ↓
+Assess team depth
+ ↓
+Assess testimonial strength
+ ↓
+Generate tier-readiness diagnosis
+
+El gran cambio de lógica
+Para Chambers:
+Ranking competitiveness
+Para Legal 500:
+Editorial defensibility
+Esa es la frase clave.
+Legal 500 RAG V1 — nombre interno
+Editorial Evidence RAG
+Función:
+Determinar si la submission contiene suficiente evidencia concreta, diferenciada y editorialmente útil para sostener o mejorar un tier en Legal 500.

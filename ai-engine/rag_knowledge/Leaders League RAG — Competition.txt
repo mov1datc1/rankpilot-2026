@@ -1,0 +1,96 @@
+Leaders League RAG — V1
+Diferencia clave
+Chambers
+Evalúa ranking competitiveness.
+Legal 500
+Evalúa editorial defensibility.
+Leaders League
+Evalúa market mapping + reputational positioning por práctica/industria.
+Leaders League dice que su research usa un ciclo de cuatro meses, con tres meses de recolección de datos y un mes para procesarlos, y se basa en varias fuentes y criterios para crear o actualizar rankings.
+
+Leaders League Competition RAG — lógica base
+Objetivo
+Responder:
+¿La firma está suficientemente bien posicionada dentro del mapa competitivo de Leaders League para su práctica, país y categoría?
+No solo:
+¿El submission está bien armado?
+
+Capas del RAG
+1. Practice Scope Layer
+Para Competition/Antitrust, Leaders League lo define de forma amplia: carteles, abuso de dominancia, investigaciones internacionales, compliance y litigation support en investigaciones por prácticas anticompetitivas.
+Metadata:
+{
+ "directory": "Leaders League",
+ "practice": "Competition & Antitrust",
+ "scope": [
+   "Cartels",
+   "Abuse of dominance",
+   "International investigations",
+   "Compliance",
+   "Antitrust litigation support",
+   "Regulatory investigations"
+ ]
+}
+
+2. Ranking Table Layer
+Leaders League no piensa solo en “ranked / unranked”.
+Piensa en clusters de mercado, por ejemplo:
+{
+ "ranking_bands": [
+   "Leading",
+   "Excellent",
+   "Highly Recommended",
+   "Recommended",
+   "Valuable Practice"
+ ]
+}
+Entonces el RAG debe evaluar:
+¿La evidencia presentada sostiene el cluster actual o permite aspirar al siguiente?
+
+3. Market Presence Layer
+Aquí importa mucho:
+visibilidad de la firma
+presencia pública
+volumen de asuntos
+clientes representativos
+reputación de socios
+cobertura sectorial
+consistencia en el mercado
+comparabilidad con firmas del mismo cluster
+
+4. Submission Evidence Layer
+El RAG debe mirar si la firma prueba:
+asuntos recientes
+clientes relevantes
+tipo de intervención
+complejidad
+resultado
+rol de los socios
+diferenciador de práctica
+capacidad del equipo
+
+5. Positioning Diagnosis Layer
+El output debería decir algo como:
+“La firma muestra una práctica sólida en merger control y compliance, pero todavía no demuestra suficiente enforcement exposure para justificar una posición superior en Competition & Antitrust frente a firmas con mayor visibilidad en carteles, abuso de dominancia e investigaciones regulatorias.”
+
+Pipeline Leaders League
+Submission
+ ↓
+Identify country + practice + ranking table
+ ↓
+Retrieve Leaders League scope
+ ↓
+Map current cluster / target cluster
+ ↓
+Classify matters by competition signal
+ ↓
+Assess market visibility + team credibility
+ ↓
+Compare against expected cluster strength
+ ↓
+Generate positioning diagnosis
+
+Nombre interno
+Leaders League RAG V1 — Market Positioning RAG
+Función:
+Determinar si la evidencia de la firma sostiene su posición dentro del mapa competitivo de Leaders League y qué señales faltan para subir de cluster.

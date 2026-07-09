@@ -1,0 +1,283 @@
+RankPilot no debe limitarse a identificar “quién aparece en el submission”. Debe evaluar si cada abogado/a tiene suficiente evidencia para sostener una candidatura individual, mantener su posición, subir, bajar o simplemente aparecer como parte relevante del equipo.
+Pero además —y esto es extremadamente importante— el sistema debe entender que los rankings individuales afectan directamente el ranking institucional de la firma.
+Las firmas NO son evaluadas aisladas de sus abogados.
+Las firmas SON la suma de sus abogados.
+Y Chambers, Legal 500, IFLR y Leaders League utilizan la fortaleza individual del equipo (“bench strength”) como una de las señales más importantes para determinar:
+promociones,
+mantenimiento,
+degradaciones,
+estabilidad,
+sofisticación,
+profundidad institucional,
+y sostenibilidad de la práctica.
+Esto cambia muchísimo la lógica del producto.
+No basta con detectar:
+buenos matters,
+buenos clientes,
+o buen lenguaje.
+El sistema debe entender:
+cómo se distribuye el liderazgo,
+quién genera capital reputacional,
+si existe profundidad de equipo,
+si hay segunda línea,
+si hay asociados/counsels visibles,
+si existe sucesión,
+y si la práctica parece institucionalmente sólida.
+Una firma con:
+un solo socio estrella,
+pero sin bench depth,
+sin asociados visibles,
+sin liderazgo distribuido,
+ni nueva generación,
+puede verse MÁS débil que una firma con:
+varios socios sólidos,
+counsel visibles,
+rising stars,
+y narrativa de equipo consistente.
+Porque la segunda parece una plataforma institucional real.
+La primera parece un “one-man show”.
+Y eso afecta muchísimo la percepción del researcher.
+Por eso RankPilot debe pensar simultáneamente en dos capas:
+la candidatura institucional de la firma;
+la candidatura individual de sus abogados.
+La lógica debe ser distinta según la guía, pero hay criterios comunes.
+Chambers evalúa abogados con base en elementos como capacidad técnica, conducta profesional, servicio al cliente, visión comercial, diligencia, compromiso y otros factores relevantes para los clientes. Legal 500 combina análisis cualitativo y cuantitativo, con información aportada por firmas, trabajo reciente y feedback de clientes. IFLR1000 se enfoca principalmente en trabajo financiero y corporativo transaccional. Leaders League valora naturaleza, complejidad, tamaño, volumen, innovación y calidad de los matters, además de reputación, equipo, trayectoria de socios y prestigio/diversidad de clientes.
+
+CRITERIO BASE PARA CUALQUIER RANKING INDIVIDUAL
+
+El sistema debe evaluar a cada abogado/a bajo cinco dimensiones:
+A. Evidencia transaccional o técnica
+El abogado debe estar asociado a matters concretos y relevantes. No basta decir que “tiene experiencia”. El sistema debe detectar:
+en cuántos matters aparece;
+qué rol tuvo;
+si lideró, estructuró, negoció, coordinó o solo participó;
+si los asuntos son sofisticados;
+si los clientes son relevantes;
+si hay evidencia de complejidad técnica;
+si el trabajo corresponde realmente al área de práctica.
+Para RankPilot, esta es la capa más importante.
+B. Rol real dentro del matter
+No todos los abogados que aparecen en un asunto tienen el mismo peso.
+El sistema debe distinguir entre:
+Lead partner: máxima relevancia.
+Co-lead / strategic partner: muy relevante.
+Key supporting partner: relevante si hay evidencia concreta.
+Senior associate / counsel con rol sustantivo: potencial para Associate to Watch, Rising Star o Next Generation.
+Nombre listado sin rol claro: baja evidencia.
+La descripción del matter debe reforzar la candidatura individual.
+Ejemplo:
+“Fernando Eraña led the structuring of the collateral package…”
+es mucho más útil que:
+“The team advised…”
+Porque además del ranking individual, esto fortalece el bench strength institucional de la práctica.
+C. Reputación y validación externa
+El sistema debe valorar si el abogado tiene:
+ranking actual;
+historial de rankings;
+menciones en directorios;
+premios;
+feedback de clientes;
+reconocimiento de pares;
+publicaciones o visibilidad técnica;
+liderazgo institucional.
+Pero esto no debe sustituir la evidencia de trabajo. Debe complementarla.
+D. Coherencia entre perfil y matters
+El sistema debe verificar que el perfil del abogado dialogue con los asuntos.
+Ejemplo:
+Si Jorge Labastida se presenta como experto en structured finance, asset-backed lending y collateral packages, el sistema debe asignarle matters que prueben exactamente eso.
+Si Fernando Eraña se presenta como fuerte en fintech, venture finance, secured lending o innovative debt structures, los matters seleccionados deben reforzar esa narrativa.
+Si Emilio Carrillo aparece como banking/finance + regulatory + restructuring, debe tener asuntos que prueben esa combinación.
+Si Eduardo Yrigoyen es candidato a Associate to Watch, el sistema debe mostrar que tuvo intervención sustantiva y recurrente, no meramente administrativa.
+E. Seniority y categoría posible
+El sistema debe sugerir una categoría realista:
+Band ranking: socios con liderazgo probado, matters relevantes y reputación.
+Up and Coming / Next Generation / Rising Star: abogados más jóvenes o en ascenso con evidencia fuerte.
+Associate to Watch / Rising Star Associate: asociados sénior o counsel con participación visible en matters relevantes.
+No candidate yet: si hay poca evidencia o si el rol no está claro.
+
+CHAMBERS: LÓGICA ESPECÍFICA
+
+Chambers suele ser la guía donde el ranking individual pesa más.
+Para Chambers, RankPilot debe evaluar:
+liderazgo real en matters;
+reputación de mercado;
+feedback de clientes/referees;
+capacidad técnica;
+client service;
+commercial awareness;
+consistencia anual;
+calidad de los clientes;
+posición frente a competidores;
+si el abogado es reconocido como referente en esa práctica.
+La pregunta clave no es solo:
+“¿Este abogado trabajó en buenos matters?”
+Sino:
+“¿Hay suficiente evidencia para que un researcher pueda defender que esta persona merece ser reconocida individualmente?”
+Y simultáneamente:
+“¿Qué dice este abogado sobre la profundidad y estabilidad institucional de la práctica?”
+Porque Chambers mira muchísimo:
+bench depth,
+succession planning,
+team breadth,
+consistency of delivery.
+Una práctica fuerte no puede parecer:
+frágil,
+dependiente de una sola persona,
+ni sin segunda línea visible.
+Para Chambers, RankPilot debería penalizar perfiles con:
+pocos matters;
+rol ambiguo;
+falta de referee strategy;
+matters que no corresponden al área;
+narrativa demasiado biográfica;
+ausencia de liderazgo claro.
+Y debería promover perfiles con:
+varios matters fuertes;
+rol claro;
+clientes institucionales;
+complejidad técnica;
+liderazgo repetido;
+buen fit con la categoría;
+potencial de validación por clientes.
+
+LEGAL 500: LÓGICA ESPECÍFICA
+
+Legal 500 es más editorial y permite más matices de equipo.
+Aquí RankPilot debe evaluar:
+si el abogado lidera un área o subárea;
+si tiene client following;
+si aparece en matters estratégicos;
+si tiene reputación técnica;
+si hay evidencia para Leading Individual, Next Generation Partner, Rising Star o Key Lawyer.
+Legal 500 permite destacar más abogados dentro del texto editorial, incluso si no todos son rankeables al máximo nivel.
+Por eso, RankPilot debería distinguir:
+abogados que merecen candidatura formal;
+abogados que deben aparecer como key lawyers;
+abogados que deben ser reforzados en la narrativa del equipo;
+abogados que todavía no tienen suficiente evidencia.
+Legal 500 valora muchísimo la narrativa colectiva del equipo.
+Las categorías:
+Hall of Fame,
+Leading Individuals,
+Next Generation Partners,
+Rising Stars,
+Key Lawyers,
+también ayudan a construir la percepción institucional de la práctica.
+
+IFLR1000: LÓGICA ESPECÍFICA
+
+IFLR es más transaccional y financiero.
+El sistema debe ser más estricto: solo tiene sentido promover abogados cuando hay evidencia fuerte en áreas como:
+Banking;
+Capital Markets;
+M&A;
+Project Finance;
+Restructuring;
+Private Equity;
+Financial Services Regulatory, cuando aplique.
+Para IFLR, el abogado debe estar vinculado a operaciones:
+de alto valor;
+complejas;
+cross-border;
+innovadoras;
+con clientes sofisticados;
+con rol transaccional claro.
+Un perfil muy regulatorio, laboral, litigioso o generalista no debería ser promovido agresivamente en IFLR salvo que la categoría lo permita.
+La pregunta de RankPilot para IFLR debería ser:
+“¿Este abogado lideró transacciones financieras/corporativas suficientemente sofisticadas como para justificar una mención individual?”
+Pero también:
+“¿Este equipo parece tener capacidad institucional real para ejecutar transacciones sofisticadas de forma consistente?”
+
+LEADERS LEAGUE: LÓGICA ESPECÍFICA
+
+Leaders League tiende a valorar más la combinación entre:
+equipo;
+reputación;
+volumen;
+complejidad;
+clientes;
+trayectoria de socios;
+expansión del área;
+visibilidad en el mercado.
+Aquí el ranking individual suele estar más conectado con la posición del equipo.
+RankPilot debería identificar:
+socios líderes;
+socios emergentes;
+especialistas técnicos;
+abogados con client relationship importante;
+abogados que fortalecen la percepción de profundidad del equipo.
+En Leaders League, no todo se trata del “superstar partner”.
+También importa muchísimo demostrar:
+bench strength,
+estructura,
+continuidad,
+y profundidad institucional.
+
+REGLA FUNCIONAL PARA RANKPILOT
+
+El sistema debería construir para cada abogado/a una ficha interna con este scoring:
+Individual Ranking Readiness Score
+Matter strength
+Qué tan fuertes son los asuntos asociados.
+Role clarity
+Qué tan claro es su papel en cada matter.
+Practice fit
+Qué tan alineado está su trabajo con la categoría.
+Client prestige
+Qué tan relevantes son los clientes.
+Technical sophistication
+Qué tan sofisticada es la labor jurídica.
+Market visibility
+Si hay rankings previos, menciones, premios, publicaciones o reconocimiento.
+Referee potential
+Si hay clientes que puedan validar su trabajo.
+Narrative consistency
+Si el perfil, los matters y la candidatura cuentan una historia coherente.
+Comparative position
+Si, frente al mercado, tiene una candidatura realista.
+Risk of overclaiming
+Si la candidatura parece demasiado agresiva para la evidencia disponible.
+Institutional contribution
+Qué tanto fortalece este abogado la percepción institucional y el bench strength de la práctica.
+
+QUÉ DEBE PRODUCIR RANKPILOT
+
+Idealmente, el sistema debería entregar una recomendación así:
+Jorge Labastida
+Recommended action:
+Promote cautiously / Band 5 candidate
+Rationale:
+Strong evidence in secured lending, structured finance and collateral-heavy transactions. Appears repeatedly in high-value Banking matters. Needs clearer leadership language and stronger client/referee support. Institutional value: reinforces senior structured finance capability and transactional depth within the practice.
+Fernando Eraña
+Recommended action:
+Strong candidate, but refine category positioning
+Rationale:
+Good evidence in fintech, secured lending, venture finance and impact finance. Needs careful positioning to avoid looking too broad or insufficiently banking-focused. Institutional value: adds differentiation through fintech, impact finance and innovative financing structures.
+Emilio Carrillo
+Recommended action:
+Support as key partner / possible lower-band candidate
+Rationale:
+Senior profile and regulatory/restructuring credentials, but needs stronger matter evidence directly tied to Banking & Finance. Institutional value: contributes seniority, restructuring depth and regulatory sophistication to the broader practice.
+Eduardo Yrigoyen
+Recommended action:
+Associate to Watch / Rising Star style candidate
+Rationale:
+Appears consistently across matters, but the submission must describe his role more actively and specifically. Institutional value: strengthens succession narrative and demonstrates emerging bench depth.
+
+REGLA CRÍTICA
+
+RankPilot debe evitar que los abogados desaparezcan dentro de la narrativa institucional.
+Cada matter debería responder:
+¿Quién lideró?
+¿Qué hizo exactamente?
+¿Qué prueba este matter sobre esa persona?
+¿A qué candidatura individual ayuda?
+¿Cómo fortalece el bench strength del equipo?
+¿Debe este matter reforzar a un socio, a un asociado, o a ambos?
+Porque si el sistema solo mejora los matters pero no construye capital individual y profundidad institucional:
+→ está dejando fuera una parte esencial del valor de Chambers, Legal 500, IFLR y Leaders League.
+En resumen:
+RankPilot debe pensar cada submission en dos capas simultáneas:
+la candidatura institucional de la firma;
+y la candidatura individual de sus abogados.
+Porque, al final del día, el ranking institucional depende directamente de la calidad, profundidad y visibilidad del equipo que compone esa práctica.

@@ -1,0 +1,361 @@
+RAG — Legal 500 Regulatory / Public & Administrative Law
+1. Purpose
+This RAG helps RankPilot evaluate, classify and improve Legal 500 submissions involving:
+Public Law
+Administrative Law
+Public Procurement
+Planning
+Environment
+Local Government
+Government Affairs
+Parliamentary/Public Affairs
+Regulatory work
+Constitutional matters
+Judicial review
+Sector-specific regulatory practices
+The system must understand that Legal 500 evaluates regulatory work through a combination of:
+legal sophistication;
+market visibility;
+strength of team;
+client roster;
+consistency of practice;
+commercial impact;
+strategic positioning.
+2. Foundational Principle
+Legal 500 does not treat “regulatory” as one unified category.
+Regulatory work is distributed across:
+standalone public law sections;
+procurement;
+planning/environment;
+sector-specific practices;
+government relations;
+regulated industries.
+RankPilot must therefore determine:
+the regulatory centre of gravity;
+the correct Legal 500 category;
+whether the matter demonstrates market-leading capability.
+3. Core Classification Rule
+Before assigning a matter to Public Law or Administrative Law, RankPilot must ask:
+Is the regulatory issue fundamentally sectoral, transactional, constitutional, procurement-related or governmental?
+If yes, the system must route the matter to the more appropriate Legal 500 category.
+Examples:
+telecom regulation → TMT/Telecoms;
+energy permits → Energy;
+environmental licensing → Environment;
+health regulator issue → Healthcare/Life Sciences;
+financial regulator issue → Banking/Financial Services;
+sanctions/export controls → International Trade;
+procurement challenge → Public Procurement;
+lobbying/public affairs → Parliamentary & Public Affairs.
+4. Legal 500 — What Researchers Usually Care About
+Legal 500 researchers typically care about:
+sophistication of advice;
+visibility in major public/regulatory matters;
+consistency of mandates;
+reputation among peers and clients;
+ability to handle contentious + advisory work;
+relationship with regulators and public authorities;
+strategic role in sensitive matters;
+cross-disciplinary capability;
+commercial relevance of the work;
+depth and cohesion of the team.
+Unlike Chambers, Legal 500 often places greater weight on:
+breadth of practice;
+client service;
+team structure;
+market consistency;
+visible institutional positioning.
+5. Public Law / Administrative Law — Positive Indicators
+A matter belongs here when it substantially involves:
+judicial review;
+constitutional litigation;
+administrative litigation;
+legality of government action;
+powers of public authorities;
+administrative appeals;
+public authority investigations;
+statutory interpretation involving government powers;
+constitutional rights;
+public sector governance;
+public policy implementation;
+disciplinary proceedings;
+state liability;
+public authority decision-making.
+6. Public Procurement — Positive Indicators
+Use Public Procurement when the core issue involves:
+government acquisition processes;
+public tenders;
+procurement structuring;
+procurement litigation;
+bid challenges;
+tender strategy;
+framework agreements;
+procurement compliance;
+public purchasing rules.
+Legal 500 often treats procurement as:
+highly technical;
+process-sensitive;
+strategically important for infrastructure and public services.
+7. Planning / Environment
+Planning and Environment should be treated separately when:
+zoning dominates;
+planning permission dominates;
+land use dominates;
+environmental compliance dominates;
+environmental permitting dominates;
+environmental litigation dominates.
+If the issue instead concerns:
+constitutional legality;
+government powers;
+procurement;
+concessions;
+administrative authority;
+ then Public Law may still be more appropriate.
+8. Sector-Specific Regulatory Rule
+If a regulator is tied to a specific industry, RankPilot must prioritise the sector practice.
+Examples:
+telecom authority → Telecoms/TMT;
+energy regulator → Energy;
+financial regulator → Banking/Financial Services;
+health regulator → Healthcare/Life Sciences;
+aviation authority → Aviation;
+environmental agency → Environment;
+competition authority → Competition;
+labour inspectorate → Employment;
+tax authority → Tax.
+9. Sophistication Indicators
+A strong Legal 500 regulatory matter usually includes:
+high-profile public issue;
+economically significant project;
+constitutional dimension;
+politically sensitive issue;
+strategic government interaction;
+novel legal issue;
+public impact;
+multi-agency complexity;
+major infrastructure or concession element;
+cross-border regulatory coordination;
+litigation + advisory overlap;
+successful regulatory approval;
+strategic procurement challenge;
+major compliance transformation;
+market-changing implications.
+10. Team Assessment Logic
+Legal 500 heavily evaluates the practice as a team, not only isolated matters.
+RankPilot should therefore assess:
+depth of partner bench;
+consistency of mandates;
+visible leadership;
+specialist sub-teams;
+cross-practice integration;
+institutional clients;
+recurring instructions;
+public visibility;
+market reputation.
+11. Submission Weaknesses
+RankPilot should flag:
+matters described as generic “regulatory advice”;
+missing regulator names;
+missing explanation of government interaction;
+lack of public impact;
+lack of constitutional/administrative complexity;
+routine compliance framed as flagship work;
+unclear role of the firm;
+absence of strategic narrative;
+no evidence of team depth;
+no institutional positioning.
+12. Legal 500 Narrative Guidance
+A strong submission should explain:
+what authority/regulator was involved;
+what was at stake;
+why the issue mattered commercially or publicly;
+what made the issue difficult;
+what strategy the team designed;
+why the client selected the firm;
+what the outcome was;
+why this demonstrates market leadership.
+13. Legal 500 — Output Structure
+For each matter, RankPilot should return:
+A. Suggested category
+Primary category
+ Alternative category
+ Rejected categories
+B. Why this fits Legal 500
+C. Public/Regulatory sophistication level
+D. Team-strength relevance
+E. Submission weaknesses
+F. Rewrite recommendations
+
+RAG — Leaders League Public Law / Regulatory / Government Affairs
+1. Purpose
+This RAG helps RankPilot classify and optimise Leaders League submissions involving:
+Public Law
+Government Affairs
+Regulatory practices
+Procurement
+Infrastructure concessions
+Environment
+Public sector regulation
+Government-facing strategy
+2. Foundational Principle
+Leaders League is more commercially and market-positioning driven than Chambers.
+The system must therefore evaluate:
+market authority;
+visible positioning;
+client prestige;
+business relevance;
+recognised expertise;
+differentiation versus competitors.
+3. Core Rule
+Leaders League rewards firms that are visibly recognised by the market as:
+go-to advisers;
+institutional references;
+sector specialists;
+strategic advisers.
+Classification alone is insufficient.
+The system must determine whether the submission demonstrates:
+recognisable market authority in a defined regulatory vertical.
+4. Classification Logic
+Public Law
+Use when:
+constitutional matters;
+government powers;
+administrative litigation;
+judicial review;
+concessions;
+PPPs;
+public authority interaction;
+procurement;
+administrative strategy.
+Government Affairs / Public Affairs
+Use when:
+lobbying;
+policy strategy;
+legislative advocacy;
+regulatory change;
+stakeholder management;
+political interface.
+Sector Regulatory
+Route to vertical categories whenever:
+industry expertise dominates;
+the regulator is sector-specific;
+the practice is commercially specialised.
+5. Leaders League — What Matters Most
+The system should evaluate:
+market reputation;
+recognisable clients;
+recurring mandates;
+institutional visibility;
+business sophistication;
+strategic impact;
+influence in regulated sectors;
+prominence of lawyers;
+visibility of leadership.
+6. Sophistication Indicators
+Strong Leaders League matters usually involve:
+major concessions;
+infrastructure projects;
+regulatory crises;
+politically sensitive issues;
+strategic government negotiations;
+public policy impact;
+sector dominance;
+national visibility;
+large institutional clients;
+landmark procurement work.
+7. Weakness Indicators
+Flag when:
+matters are overly academic;
+no commercial impact is shown;
+the client significance is unclear;
+no market positioning emerges;
+no differentiation from competitors exists;
+the work appears routine.
+8. Output Structure
+A. Suggested Leaders League category
+B. Market positioning assessment
+C. Regulatory vertical identified
+D. Competitive strength level
+E. Market differentiation gaps
+F. Recommended narrative angle
+
+RAG — IFLR Regulatory Overlay
+1. Purpose
+This RAG helps RankPilot identify when regulatory issues are relevant within IFLR1000 submissions.
+IFLR is not a general Public Law ranking guide.
+Regulatory work should only be evaluated when connected to:
+finance;
+banking;
+capital markets;
+investment funds;
+restructuring;
+infrastructure;
+project finance;
+energy;
+transactions.
+2. Foundational Principle
+IFLR treats regulatory issues as:
+transactional and financial overlays.
+The system must therefore ask:
+Does the regulatory issue materially affect the financing, transaction, project or financial structure?
+If not, the matter likely does not belong in IFLR.
+3. Positive Indicators
+Relevant IFLR regulatory matters include:
+banking regulation;
+licensing of financial institutions;
+fintech regulation;
+capital markets approvals;
+securities regulation;
+financial regulator investigations;
+insurance regulation;
+investment fund regulation;
+financial sector M&A approvals;
+infrastructure concessions tied to financing;
+energy regulatory approvals tied to projects;
+PPP financing;
+regulatory aspects of structured finance;
+sanctions/export control affecting transactions.
+4. Negative Rule
+Do not treat the following as core IFLR matters unless materially tied to finance or transactions:
+generic constitutional litigation;
+ordinary public law disputes;
+judicial review unrelated to transactions;
+general procurement;
+routine compliance;
+public affairs/lobbying;
+electoral matters;
+purely administrative disputes.
+5. IFLR Sophistication Indicators
+High-value IFLR regulatory matters usually involve:
+financial complexity;
+transactional risk;
+cross-border financing;
+project finance;
+infrastructure investment;
+capital markets implications;
+regulator approvals essential to closing;
+complex licensing structures;
+innovative financial products;
+systemic financial relevance.
+6. Team Evaluation
+RankPilot should evaluate:
+integration between regulatory and transactional teams;
+cross-border capability;
+sophistication of financial structuring;
+relationship with regulators;
+prominence in the financial market.
+7. Submission Weaknesses
+Flag when:
+the regulatory issue is disconnected from finance;
+no transactional relevance exists;
+the regulator is mentioned superficially;
+the financing structure is unclear;
+no deal impact is shown;
+the matter looks like ordinary administrative work.
+8. Output Structure
+A. Relevant IFLR category
+B. Transactional relevance assessment
+C. Regulatory overlay identified
+D. Financial sophistication level
+E. Deal-criticality analysis
+F. Narrative optimisation recommendations

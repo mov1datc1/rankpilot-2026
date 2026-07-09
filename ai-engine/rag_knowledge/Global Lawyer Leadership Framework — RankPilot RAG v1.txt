@@ -1,0 +1,313 @@
+Global Lawyer Leadership Framework — RankPilot RAG v1
+Purpose
+This framework introduces a transversal human-capital and leadership layer applicable to all RankPilot practice-area RAGs.
+The objective is to ensure that RankPilot does not evaluate only:
+transactions,
+matters,
+structures,
+complexity,
+categories.
+It must also evaluate:
+lawyer visibility,
+institutional trust,
+client relationships,
+negotiation leadership,
+succession depth,
+market perception,
+team structure,
+reputation continuity.
+This layer should apply across:
+Banking & Finance
+Corporate/M&A
+Disputes
+Tax
+Fintech
+Projects
+Arbitration
+Employment
+Capital Markets
+Restructuring
+all future practice-area RAGs.
+
+1. Core principle
+Legal rankings are not purely transaction-based systems.
+They are systems of:
+trust,
+reputation,
+visibility,
+relationship continuity,
+perceived leadership,
+market influence.
+A technically strong matter may still underperform if:
+lawyer visibility is weak,
+the practice appears overdependent on one partner,
+succession is unclear,
+relationship ownership is invisible,
+leadership roles are not surfaced.
+RankPilot must therefore evaluate both:
+Matter strength
+and
+Human leadership strength
+simultaneously.
+
+2. Lawyer leadership dimensions
+A. Relationship Leadership
+Questions RankPilot should ask:
+Who owns the client relationship?
+Is the relationship institutional or individual?
+Is the client recurring?
+Is the lawyer trusted by institutional clients?
+Does the matter reinforce long-term client continuity?
+Strong indicators:
+repeat mandates
+long-term lender/sponsor/client relationships
+recurring institutional engagements
+repeat cross-border coordination
+visible relationship partner
+Weak indicators:
+one-off engagement
+unclear relationship ownership
+no continuity narrative
+
+B. Negotiation Leadership
+Questions:
+Who led negotiations?
+Who coordinated counterparties?
+Who managed execution pressure?
+Who solved strategic issues?
+Strong indicators:
+lead negotiator
+coordinating counsel
+strategic deal architect
+partner-led negotiations
+multi-party coordination
+Weak indicators:
+generic “firm advised” wording
+no visible leadership
+no distinction between execution and strategy
+
+C. Technical Leadership
+Questions:
+Which lawyers handled the most complex aspects?
+Was specialist expertise visible?
+Did the team solve technically difficult issues?
+Strong indicators:
+specialist structuring role
+governance leadership
+financing architecture
+regulatory strategy
+litigation strategy
+tax structuring leadership
+Weak indicators:
+no identified specialist expertise
+generic matter description
+
+D. Market Visibility
+Questions:
+Are lawyers recognised in the market?
+Are they visible beyond the submission?
+Are they perceived as market leaders?
+Strong indicators:
+market-facing partners
+visible leadership positions
+highly recognised practitioners
+recurring presence in sophisticated mandates
+visible strategic clients
+Weak indicators:
+invisible leadership team
+no identified stars
+weak differentiation from competitors
+
+E. Succession Depth
+Questions:
+Does the practice depend on one rainmaker?
+Is the next generation visible?
+Are senior associates or junior partners surfaced?
+Strong indicators:
+visible next-generation partners
+succession planning
+multiple client-facing lawyers
+distributed leadership
+team continuity
+Weak indicators:
+founder dependency
+single-partner concentration
+no visible bench strength
+invisible senior associates
+
+F. Institutionalization
+Questions:
+Is the practice institutionalized?
+Does the client trust the platform or only the individual?
+Is there integrated team execution?
+Strong indicators:
+multi-partner involvement
+coordinated teams
+integrated cross-practice work
+repeat institutional mandates
+Weak indicators:
+isolated rainmaker model
+fragmented execution
+no evidence of coordinated team structure
+
+3. Partner archetypes
+RankPilot should identify partner profiles.
+Rainmaker
+Characteristics:
+strong client relationships
+business generation
+market visibility
+strategic mandates
+institutional trust
+Technical Specialist
+Characteristics:
+highly sophisticated expertise
+structuring leadership
+complex legal problem-solving
+respected technical profile
+Strategic Negotiator
+Characteristics:
+negotiation leadership
+transaction management
+dispute resolution capability
+crisis management
+Institutional Relationship Partner
+Characteristics:
+recurring institutional mandates
+client continuity
+board-level relationships
+cross-border coordination
+Execution Leader
+Characteristics:
+operational transaction management
+process coordination
+execution discipline
+closing management
+Next-Generation Star
+Characteristics:
+increasing visibility
+client-facing role
+leadership trajectory
+high-quality sophisticated work
+
+4. Team dynamics archetypes
+Founder-centric practice
+Characteristics:
+heavily dependent on one partner
+strong individual visibility
+weak succession depth
+Risk:
+ranking fragility
+
+Institutionalized platform
+Characteristics:
+distributed leadership
+deep bench
+multiple visible partners
+stable client continuity
+Strong ranking signal.
+
+Boutique specialist
+Characteristics:
+niche sophistication
+concentrated expertise
+elite specialist profile
+
+Lateral-growth-driven platform
+Characteristics:
+recent strategic hires
+rapid expansion
+evolving market position
+Important ranking signal when connected to:
+new clients
+new mandates
+expanded capability
+
+5. Ranking risks RankPilot should detect
+Overdependence risk
+Example:
+“The practice appears heavily dependent on one senior partner, with limited visibility of the next generation.”
+
+Weak succession visibility
+Example:
+“The submission demonstrates strong partner leadership but insufficient visibility of supporting senior lawyers.”
+
+Relationship concentration risk
+Example:
+“Most significant matters appear tied to a single institutional relationship.”
+
+Weak institutionalization
+Example:
+“The practice narrative focuses on individuals rather than a coordinated team platform.”
+
+6. Mandatory integration into Banking RAG
+The Banking RAG must incorporate:
+New scoring category
+Lawyer Leadership & Relationship Strength — 10 points
+Evaluate:
+lender relationship continuity
+sponsor trust
+institutional visibility
+negotiation leadership
+execution leadership
+next-generation visibility
+cross-border coordination leadership
+team depth
+
+Banking rewrite rule
+Weak:
+“The firm advised the lender.”
+Strong:
+“Partner X led the lender-side negotiations, supported by Partner Y on collateral structuring and Senior Associate Z on multi-jurisdictional coordination.”
+
+Banking strong matter requirement
+Every strong Banking matter should ideally identify:
+lead partner
+execution partner
+specialist support
+relationship significance
+repeat institutional mandates where relevant
+
+7. Mandatory integration into Corporate/M&A RAG
+The Corporate/M&A RAG must incorporate:
+New scoring category
+Lawyer Leadership & Team Visibility — 10 points
+Evaluate:
+lead negotiator visibility
+strategic relationship partner
+governance leadership
+next-generation visibility
+sponsor/client continuity
+execution management
+multi-partner coordination
+
+Corporate rewrite rule
+Weak:
+“The firm advised the buyer.”
+Strong:
+“Partner X led negotiations for the buyer, supported by Partner Y on governance matters and Senior Associate Z on transaction management and closing coordination.”
+
+Corporate strong matter requirement
+Every strong Corporate/M&A matter should ideally identify:
+transaction lead
+strategic partner
+specialist contributors
+coordination structure
+leadership visibility
+
+8. Global RankPilot instruction
+RankPilot should not evaluate:
+ONLY:
+deal lists,
+structures,
+values,
+categories.
+It must also evaluate:
+who leads,
+who clients trust,
+who negotiates,
+who coordinates,
+who is becoming visible,
+how institutionalized the practice is,
+whether the team structure supports long-term ranking sustainability.
+The human-capital layer is a core component of ranking intelligence, not a secondary consideration.
