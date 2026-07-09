@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     // Log the AI interaction for traceability
     await prisma.aILog.create({
       data: {
-        userId: user.id,
+        userId: resolvedUserId,
         prompt: `Process Document: ${documentUrl}`,
         response: typeof pyData === 'string' ? pyData : JSON.stringify(pyData).substring(0, 5000), // Limit size for DB text column if huge
         durationMs: 0
