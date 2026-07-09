@@ -45,18 +45,37 @@ def run_rankpilot(user_input: str, thread_id: str, is_file: bool = False):
     return output
 
 @api.post("/process")
-async def process_request(request: Request):
+async def process_document(request: Request):
     """
-    Recibe JSON con user_input, thread_id e is_file.
-    Retorna el estado de la generación y el link al recurso si está listo.
+    Endpoint principal para procesar documentos de submissions y pasarlos por el pipeline completo.
+    Ahora recibe un 'context' obligatorio con: directory, jurisdiction, practice_area, current_status.
     """
     data = await request.json()
-    
     user_input = data.get("user_input")
-    thread_id = data.get("thread_id", str(uuid.uuid4()))
+    thread_id = data.get("thread_id")
     is_file = data.get("is_file", False)
+    context = data.get("context", {})
+
+    if not user_input or not thread_id:
+        return {"error": "Missing user_input or thread_id"}
+
+    config = {"configurable": {"thread_id": thread_id}}
+
+    initial_state = {
+        "file_path": user_input if is_file else "",
+        "doc_text": user_input if not is_file else "",
+        "messages": [HumanMessage(content="Please process this submission document.")],
+        "metadata": {},
+        "matters": [],
+        "analysis": {},
+        "latex_code": "",
+        "confidence_score": 0.0,
+        "is_complete": False,
+        "submission_context": context,
+        "strategic_context": {}
+    }
     
-    result = run_rankpilot(user_input, thread_id, is_file)
+    result = graph_app.invoke(initial_state, config)
     
     # Safely extract the last message text
     messages = result.get("messages", [])
@@ -78,7 +97,9 @@ async def process_request(request: Request):
             "is_complete": result.get("is_complete", False),
             "response": response_text,
             "metadata": result.get("metadata", {}),
-            "matters": result.get("matters", [])
+            "matters": result.get("matters", []),
+            "analysis": result.get("analysis", {}),
+            "strategic_context": result.get("strategic_context", {})
         }
     }
 

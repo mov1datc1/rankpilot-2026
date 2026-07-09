@@ -5,24 +5,24 @@ import os
 
 def generate_docx_report(structured_data: dict, output_filename: str) -> str:
     """
-    Generates a professional DOCX report using python-docx.
+    Generates a professional DOCX report using python-docx by appending to the official template.
     """
-    doc = Document()
+    template_path = os.path.join(os.path.dirname(__file__), '..', 'templates', 'chambers_template.docx')
     
-    # 1. Styling the Title
-    title = doc.add_heading(level=0)
-    title_run = title.add_run('RANKPILOT INTELLIGENCE\nSTRATEGIC DIAGNOSTIC SNAPSHOT™')
-    title_run.font.color.rgb = RGBColor(26, 35, 126) # Brand Navy
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    
+    if os.path.exists(template_path):
+        doc = Document(template_path)
+    else:
+        doc = Document()
+        title = doc.add_heading(level=0)
+        title_run = title.add_run('RANKPILOT OFFICIAL SUBMISSION')
+        title_run.font.color.rgb = RGBColor(26, 35, 126) # Brand Navy
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
     firm_name = structured_data.get('firm_metadata', {}).get('firm_name', 'Professional Law Firm')
     practice_area = structured_data.get('firm_metadata', {}).get('practice_area', 'General Practice')
     
-    doc.add_paragraph(f"Firm: {firm_name}").alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph(f"Practice Area: {practice_area}").alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # Append the matters at the end of the template
     doc.add_page_break()
-
-    # 2. Add Matters
     doc.add_heading('Optimized Matters for Submission', level=1)
     
     matters = structured_data.get('matters', [])

@@ -76,17 +76,105 @@ def extraction_node(state: AgentState) -> Dict:
             "narrative": data_dict.get("narrative_overview")
         },
         "matters": data_dict.get("matters", []),
+        "current_step": "context"
+    }
+
+# 2.5 CONTEXT ENGINE NODE (8-Layer Methodology)
+def context_engine_node(state: AgentState) -> Dict:
+    submission_context = state.get("submission_context", {})
+    jurisdiction = submission_context.get("jurisdiction", "")
+    practice_area = submission_context.get("practice_area", "")
+    directory = submission_context.get("directory", "")
+    current_status = submission_context.get("current_status", "")
+    
+    # Capa 2: Clasificación del punto de partida
+    starting_position = "Unknown"
+    status_lower = str(current_status).lower()
+    if "unranked" in status_lower or not status_lower:
+        starting_position = "Entry Candidate"
+    elif "5" in status_lower or "4" in status_lower:
+        starting_position = "Lower Tier Consolidation"
+    elif "3" in status_lower or "2" in status_lower:
+        starting_position = "Upper Tier Push"
+    elif "1" in status_lower:
+        starting_position = "Defensive Leadership"
+
+    # LLM extraction for Capa 3, 4, 5, 8
+    llm = get_model()
+    from core.schema import ContextEngineOutput
+    structured_llm = llm.with_structured_output(ContextEngineOutput)
+    
+    input_data = {
+        "metadata": state.get("metadata", {}),
+        "matters": state.get("matters", [])
+    }
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are the RankPilot Context Engine. Analyze the firm's evidence and extract exactly the requested fields."),
+        ("human", "Firm Data: {data}")
+    ])
+    
+    chain = prompt | structured_llm
+    
+    try:
+        context_output = chain.invoke({"data": json.dumps(input_data)})
+        if hasattr(context_output, "model_dump"):
+            context_dict = context_output.model_dump()
+        else:
+            context_dict = dict(context_output)
+    except Exception as e:
+        print(f"Error in Context Engine LLM: {e}")
+        context_dict = {
+            "practice_type": "mixed",
+            "archetype": "General Practice",
+            "complexity_profile": "Standard domestic work",
+            "client_type": "Mixed clients",
+            "identity_adn": "General full-service practice"
+        }
+
+    # Capa 6: Benchmark Relativo (Hardcoded V1)
+    benchmark = "Standard regional baseline requirements apply."
+    if "mexico" in str(jurisdiction).lower() and "banking" in str(practice_area).lower():
+        benchmark = "Entry: mid-market deals, some cross-border. Band 3: strong deal flow, repeat clients. Band 1: flagship deals, complex structuring."
+    
+    # Capa 7: Evaluación de viabilidad
+    target_realistic = "Viability assessment pending."
+    if starting_position == "Entry Candidate":
+        if "cross-border" in str(context_dict.get("complexity_profile", "")).lower() or "institutional" in str(context_dict.get("client_type", "")).lower():
+            target_realistic = "Band 4-5 viable"
+        else:
+            target_realistic = "Below ranking threshold"
+    elif starting_position == "Upper Tier Push":
+        target_realistic = "Consolidation needed to break into top tiers"
+    elif starting_position == "Lower Tier Consolidation":
+        target_realistic = "Path to Band 3 viable with flagship mandates"
+    else:
+        target_realistic = "Maintain defensible track record"
+
+    strategic_context = {
+        "starting_position": starting_position,
+        "practice_type": context_dict.get("practice_type"),
+        "archetype": context_dict.get("archetype"),
+        "complexity_profile": context_dict.get("complexity_profile"),
+        "client_type": context_dict.get("client_type"),
+        "identity_adn": context_dict.get("identity_adn"),
+        "benchmark_reference": benchmark,
+        "target_realistic": target_realistic
+    }
+
+    return {
+        "strategic_context": strategic_context,
         "current_step": "analysis"
     }
 # 3. ANALYSIS NODE
 def analysis_node(state: AgentState) -> Dict:
     llm = get_model()
     
-    # Preparamos los datos para el analista
     input_data = {
-    "metadata": state.get("metadata", {}),
-    "matters": state.get("matters", [])
-}
+        "metadata": state.get("metadata", {}),
+        "matters": state.get("matters", []),
+        "strategic_context": state.get("strategic_context", {})
+    }
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", STRATEGIC_ANALYSIS_PROMPT),
@@ -100,9 +188,11 @@ def analysis_node(state: AgentState) -> Dict:
         res_json = json.loads(response.content.replace("```json", "").replace("```", ""))
         return {
             "analysis": res_json,
-            "confidence_score": float(res_json.get("confidence_score", 0))
+            "confidence_score": float(res_json.get("confidence_score", 100)),
+            "current_step": "writing" # Bypass interrogation for now since we want the audit letter
         }
-    except:
+    except Exception as e:
+        print(f"Error parsing analysis JSON: {e}")
         return {"confidence_score": 0}
 
 # 4. INTERROGATOR NODE
@@ -127,145 +217,11 @@ def interrogator_node(state: AgentState) -> Dict:
 # 5. WRITER NODE
 def writer_node(state: AgentState, config: RunnableConfig) -> Dict:
     """
-    Generates a professional LaTeX report and compiles it to PDF.
-    Aligned with IBM-grade error handling and state management.
+    Bypasses legacy LaTeX PDF generation.
+    Marks the LangGraph execution as complete.
+    Next.js will handle the Strategic Audit UI rendering.
     """
-# 1. EXTRAER EL ID DE LA CONVERSACIÓN
-    # Accedemos a la configuración para obtener el identificador único del hilo
-    thread_id = config.get("configurable", {}).get("thread_id", "UNKNOWN")
-
-    # 2. CREAR EL IDENTIFICADOR DEL REPORTE
-    # Usamos el thread_id + la fecha para el nombre del archivo
-    date_str = datetime.now().strftime('%Y%m%d')
-    report_id = f"RP-{thread_id}-{date_str}"
-    # 1. INITIALIZATION & DATA NORMALIZATION
-    # Recuperamos el modelo configurado en tu archivo de nodos
-    llm = get_model() 
-    
-    # Sincronizamos con las llaves reales de tu AgentState
-    metadata = state.get("metadata", {})
-    matters = state.get("matters", [])
-    analysis_results = state.get("analysis", {})
-
-    structured_data = {
-        "firm_metadata": metadata,
-        "matters": matters
+    return {
+        "is_complete": True,
+        "pdf_url": ""
     }
-
-    # Valores por defecto para evitar que el string interpolation falle
-    firm_name = metadata.get('firm_name', 'Professional Law Firm')
-    practice_area = metadata.get('practice_area', 'General Practice')
-    
-    # 2. LATEX ARCHITECTURE: PREAMBLE & FRONT PAGE
-    # Usamos f-strings para limpieza, pero escapamos las llaves de LaTeX {{ }}
-    PREAMBLE_AND_FRONT_PAGE = r"""
-    \documentclass[11pt,a4paper]{article}
-    \usepackage[utf8]{inputenc}
-    \usepackage[margin=1in]{geometry}
-    \usepackage{xcolor}
-    \usepackage{titlesec}
-    \usepackage{tcolorbox}
-    \usepackage{tikz}
-    \usepackage{helvet}
-    \renewcommand{\familydefault}{\sfdefault}
-    \usepackage{fancyhdr}
-    \pagestyle{fancy}
-    \fancyhf{}
-    \renewcommand{\headrulewidth}{0pt}
-    \fancyfoot[L]{\color{gray}\small """ + firm_name + r""" | Confidential}
-    \fancyfoot[R]{\color{gray}\small Page \thepage}
-
-    \definecolor{brandnavy}{HTML}{1A237E}
-    \definecolor{lightgray}{HTML}{F5F5F5}
-
-    \begin{document}
-
-    \begin{titlepage}
-        \begin{tikzpicture}[remember picture,overlay]
-            \fill[brandnavy] (current page.north west) rectangle ([yshift=-8cm]current page.north east);
-        \end{tikzpicture}
-        
-        \vspace*{1cm}
-        \begin{center}
-            \color{white}
-            {\huge \textbf{RANKPILOT INTELLIGENCE}} \\[0.5cm]
-            {\Large \textbf{STRATEGIC DIAGNOSTIC SNAPSHOT™}} \\[2.5cm]
-            
-            \begin{tcolorbox}[colback=white, colframe=brandnavy, arc=5pt, width=0.8\textwidth, center]
-                \centering
-                \color{brandnavy}
-                \vspace{0.3cm}
-                {\Large \textbf{FIRM: """ + firm_name + r"""}} \\[0.4cm]
-                {\large Practice Area: """ + practice_area + r"""}
-                \vspace{0.3cm}
-            \end{tcolorbox}
-        \end{center}
-        
-        \vfill
-        \begin{center}
-            \color{brandnavy}
-            \textbf{CONFIDENTIAL STRATEGIC ASSESSMENT} \\
-            \small Generated on: \today
-        \end{center}
-    \end{titlepage}
-    \newpage
-    """
-
-    CONTENT_HEADER = r"""
-    \begin{center}
-        {\color{brandnavy}\rule{\linewidth}{2pt}} \\
-        \vspace{0.2cm}
-        {\Large \textbf{""" + firm_name + r"""}} \\
-        {\large \textit{Diagnostic Report | """ + practice_area + r"""}} \\
-        \vspace{0.1cm}
-        {\color{brandnavy}\rule{\linewidth}{0.8pt}}
-    \end{center}
-    \vspace{0.5cm}
-    """
-
-    # 3. AI GENERATION (The "Dynamic" Body)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", LATEX_WRITER_PROMPT),
-        ("human", "Generate the report using this Data: {data} and this Analysis: {analysis}")
-    ])
-    
-    chain = prompt | llm
-    # Enviamos los datos reales al LLM
-    response = chain.invoke({
-        "data": json.dumps(structured_data, indent=2), # Esto llena {data}
-        "analysis": json.dumps(analysis_results, indent=2) # Esto llena {analysis}
-    })
-    
-    content = response.content.replace("```latex", "").replace("```", "").strip()
-    
-    # Sanitización: Evitar duplicación de preámbulos si el LLM se excede
-    if r"\begin{document}" in content:
-        content = content.split(r"\begin{document}")[1]
-    if r"\end{document}" in content:
-        content = content.split(r"\end{document}")[0]
-
-    # 4. FINAL ASSEMBLY & COMPILATION
-    final_latex = PREAMBLE_AND_FRONT_PAGE + CONTENT_HEADER + content + r"\end{document}"
-
-    # Creamos el nombre del archivo sanitizado
-    safe_name = state.get("metadata", {}).get('firm_name', 'Firm').replace(" ", "_").replace("/", "-")
-    
-    try:
-        # 1. Generamos el nombre del archivo
-        filename_to_save = f"report_{safe_name}_{report_id}"
-        
-        # 2. Llamada a la utilidad (Asegúrate de que devuelva el string de la ruta)
-        generated_path = compile_latex_to_pdf(final_latex, filename_to_save)
-        
-        # DEBUG LOCAL: Si esto imprime None, el fallo está dentro de compile_latex_to_pdf
-        print(f"DEBUG NODES: Path generado es -> {generated_path}")
-
-        # 3. Retorno explícito al AgentState
-        return {
-            "latex_code": final_latex,
-            "pdf_url": str(generated_path) if generated_path else f"outputs/{filename_to_save}.pdf",
-            "is_complete": True
-        }
-    except Exception as e:
-        print(f"Error en compilación: {e}")
-        return {"is_complete": False, "messages": [("assistant", "Fallo la generación del PDF.")]}

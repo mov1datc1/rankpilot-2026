@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class Matter(BaseModel):
     """Represents a specific legal case or 'matter' from the submission."""
@@ -12,9 +12,12 @@ class Matter(BaseModel):
 
 class SubmissionSchema(BaseModel):
     """The full structured representation of a law firm's practice submission."""
-    firm_id: str = Field(description="The unique identifier from the database/conversation.")
-    firm_name: str = Field(description="The formal name of the law firm.")
-    practice_area: str = Field(description="The specific legal department or practice area.")
-    location: str
-    narrative_overview: str
-    matters: List[Matter]
+    metadata: Dict[str, str] = Field(description="Key-value pairs of firm details, practice area, etc.")
+    matters: List[Matter] = Field(description="List of distinct legal matters found in the text.")
+
+class ContextEngineOutput(BaseModel):
+    practice_type: str = Field(description="One of: transactional, disputes, regulatory, mixed.")
+    archetype: str = Field(description="The strategic archetype of the firm (e.g. Lender-driven finance, Elite arbitration boutique).")
+    complexity_profile: str = Field(description="Summary of complexity patterns (cross-border, multi-jurisdiction, etc.).")
+    client_type: str = Field(description="Summary of institutional vs one-off client relationships.")
+    identity_adn: str = Field(description="Capa 8 Synthesis combining archetype, complexity, client, and work type.")

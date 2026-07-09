@@ -3,6 +3,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from agents.nodes import (
     ingestion_node, 
     extraction_node, 
+    context_engine_node,
     analysis_node, 
     interrogator_node, 
     writer_node
@@ -22,6 +23,7 @@ def create_rankpilot_graph():
     # 2. Add the Functional Nodes
     workflow.add_node("ingestion", ingestion_node)
     workflow.add_node("extraction", extraction_node)
+    workflow.add_node("context_engine", context_engine_node)
     workflow.add_node("analysis", analysis_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
@@ -30,7 +32,8 @@ def create_rankpilot_graph():
     # Every new file or first interaction starts here
     workflow.set_entry_point("ingestion")
     workflow.add_edge("ingestion", "extraction")
-    workflow.add_edge("extraction", "analysis")
+    workflow.add_edge("extraction", "context_engine")
+    workflow.add_edge("context_engine", "analysis")
 
     # 4. Define the Dialectic Gate (Conditional Logic)
     def route_based_on_confidence(state: AgentState):

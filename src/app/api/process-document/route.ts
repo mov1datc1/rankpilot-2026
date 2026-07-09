@@ -38,7 +38,13 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         user_input: documentUrl,
         thread_id: submissionId,
-        is_file: true
+        is_file: true,
+        context: {
+          directory: submission.targetDirectory,
+          jurisdiction: submission.guideRegion,
+          practice_area: submission.practiceArea,
+          current_status: submission.currentBand
+        }
       })
     });
 
@@ -52,6 +58,8 @@ export async function POST(request: NextRequest) {
     // Si langgraph devuelve el output, estará en pyData.data.response o pyData directly
     const extractedData = pyData.metadata || pyData.data?.metadata;
     const extractedMatters = pyData.matters || pyData.data?.matters;
+    const analysisData = pyData.data?.analysis;
+    const strategicContext = pyData.data?.strategic_context;
 
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
@@ -72,11 +80,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Actualizamos el submission con metadata extraída
-    if (extractedData) {
+    // Actualizamos el submission con metadata extraída y análisis estratégico
+    if (extractedData || analysisData) {
       await prisma.submission.update({
         where: { id: submissionId },
-        data: { chambersData: extractedData }
+        data: { 
+          chambersData: {
+            metadata: extractedData,
+            analysis: analysisData,
+            strategicContext: strategicContext
+          }
+        }
       });
     }
 

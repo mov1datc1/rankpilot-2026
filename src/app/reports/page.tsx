@@ -53,7 +53,8 @@ export default function ReportsPage() {
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
     if (format === 'pdf') {
-      window.open(`/api/generate-pdf?id=${subId}`, '_blank');
+      // Directs to the Strategic Audit Letter view instead of backend generation
+      window.open(`/reports/${subId}`, '_blank');
       return;
     }
     if (format === 'docx') {
@@ -304,7 +305,7 @@ export default function ReportsPage() {
                         </button>
 
                         <button
-                          title="Download PDF"
+                          title="View Strategic Audit Letter"
                           disabled={!isReady}
                           onClick={() => handleDownload(sub.id, 'pdf')}
                           style={{

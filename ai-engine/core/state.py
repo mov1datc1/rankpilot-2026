@@ -17,3 +17,7 @@ class AgentState(TypedDict):
     confidence_score: float
     is_complete: bool
     pdf_url: str
+    
+    # 8-Layer Context Engine Data
+    submission_context: Dict  # inputs from Next.js (directory, practice, region, status)
+    strategic_context: Dict   # computed outputs from the context engine
