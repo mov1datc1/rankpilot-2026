@@ -48,12 +48,19 @@ export async function POST(request: NextRequest) {
       })
     });
 
-    const pyData = await pyResponse.json();
+    let pyData: any = {};
+    const rawText = await pyResponse.text();
+    try:
+      pyData = JSON.parse(rawText);
+    } catch (e) {
+      console.error("Non-JSON response from Python:", rawText);
+      pyData = { error: rawText || pyResponse.statusText };
+    }
 
     if (!pyResponse.ok) {
       const errorDetail = pyData.traceback || pyData.error || pyResponse.statusText;
       console.error(`Python API Error Traceback:\n${errorDetail}`);
-      throw new Error(`Python API Error: ${pyData.error || pyResponse.statusText} - See Server Logs for Traceback`);
+      throw new Error(`Python API Error: ${pyData.error || pyResponse.statusText}`);
     }
     
     // El motor Python debe retornar la data estructurada. Vamos a parsear la respuesta.
