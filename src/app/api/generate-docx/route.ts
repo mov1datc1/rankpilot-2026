@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const submissionId = searchParams.get('id');
+    const docType = searchParams.get('type') || 'audit'; // 'audit' or 'submission'
 
     if (!submissionId) {
       return NextResponse.json({ error: 'Missing submission ID' }, { status: 400 });
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
         submission_id: submission.id,
         metadata,
         matters,
-        chambersData: submission.chambersData
+        chambersData: submission.chambersData,
+        doc_type: docType
       })
     });
 
@@ -83,10 +85,12 @@ export async function GET(request: NextRequest) {
 
     const docxBuffer = await downloadRes.arrayBuffer();
 
+    const prefix = docType === 'submission' ? 'Submission_Form' : 'Strategic_Audit';
+    
     return new NextResponse(docxBuffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="RankPilot_Report_${submission.practiceArea.replace(/\s+/g, '_')}.docx"`,
+        'Content-Disposition': `attachment; filename="RankPilot_${prefix}_${submission.practiceArea.replace(/\s+/g, '_')}.docx"`,
       },
     });
 

@@ -146,13 +146,16 @@ async def generate_docx_endpoint(request: Request):
     
     structured_data = {
         "firm_metadata": data.get("metadata", {}),
-        "matters": data.get("matters", [])
+        "matters": data.get("matters", []),
+        "chambersData": data.get("chambersData", {})
     }
     
+    doc_type = data.get("doc_type", "audit")
+    
     # Generate the docx
-    filename = f"report_{thread_id}"
+    filename = f"report_{thread_id}_{doc_type}"
     try:
-        file_path = generate_docx_report(structured_data, filename)
+        file_path = generate_docx_report(structured_data, filename, doc_type)
         return {
             "success": True,
             "docx_url": os.path.abspath(file_path)
