@@ -274,9 +274,18 @@ export default function ReportsPage() {
                       {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
-                      {isReady ? (
-                        <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <CheckCircle2 size={14} /> Completed
+                      {['Submitted', 'Accepted', 'Rejected'].includes(sub.status) ? (
+                        <span style={{ 
+                          background: sub.status === 'Accepted' ? '#dcfce7' : sub.status === 'Rejected' ? '#fee2e2' : '#eff6ff', 
+                          color: sub.status === 'Accepted' ? '#15803d' : sub.status === 'Rejected' ? '#b91c1c' : '#1d4ed8', 
+                          padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' 
+                        }}>
+                          {sub.status === 'Accepted' ? <CheckCircle2 size={14} /> : sub.status === 'Rejected' ? <AlertTriangle size={14} /> : <FileText size={14} />}
+                          {sub.status}
+                        </span>
+                      ) : isReady ? (
+                        <span style={{ background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <CheckCircle2 size={14} /> Ready to Review
                         </span>
                       ) : (
                         <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>

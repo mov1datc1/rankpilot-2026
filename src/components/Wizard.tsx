@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { submitWizardData } from '@/app/actions/submitWizard';
 
 const STEPS = [
@@ -19,6 +19,7 @@ export default function Wizard() {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ success: boolean; pdf_url?: string; submissionId?: string; error?: string } | null>(null);
   const [userMatters, setUserMatters] = useState<any[]>([]);
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1
     firmName: '',
@@ -43,7 +44,6 @@ export default function Wizard() {
     associatedMatterIds: [] as string[]
   });
 
-  import { useEffect } from 'react';
   useEffect(() => {
     async function load() {
       const res = await getAllUserMatters();
@@ -59,11 +59,19 @@ export default function Wizard() {
   };
 
   const nextStep = () => {
-    if (currentStep < 6) setCurrentStep(prev => prev + 1);
+    if (currentStep === 1 && !isAdvancedMode) {
+      setCurrentStep(6);
+    } else if (currentStep < 6) {
+      setCurrentStep(prev => prev + 1);
+    }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(prev => prev - 1);
+    if (currentStep === 6 && !isAdvancedMode) {
+      setCurrentStep(1);
+    } else if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -104,7 +112,7 @@ export default function Wizard() {
       {/* Stepper */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3rem', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '50%', left: '0', right: '0', height: '2px', background: '#e2e8f0', transform: 'translateY(-50%)', zIndex: 1 }}></div>
-        {STEPS.map((step) => (
+        {STEPS.filter(step => isAdvancedMode || step.id === 1 || step.id === 6).map((step) => (
           <div key={step.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, background: '#ffffff', padding: '0 0.5rem' }}>
             <div style={{ 
               width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 600, transition: 'all 0.2s',
@@ -141,6 +149,19 @@ export default function Wizard() {
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Periodo (Ej. 2025-2026)</label>
                 <input type="text" name="period" value={formData.period} onChange={handleChange} required style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: '1rem', transition: 'border-color 0.2s' }} />
               </div>
+            </div>
+            
+            <div style={{ marginTop: '2rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <strong style={{ display: 'block', color: '#0f172a', fontSize: '0.95rem' }}>Modo Avanzado (Formulario Completo Chambers)</strong>
+                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>Si se desactiva, saltarás directo a la selección de matters.</span>
+              </div>
+              <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                <input type="checkbox" checked={isAdvancedMode} onChange={(e) => setIsAdvancedMode(e.target.checked)} style={{ opacity: 0, width: 0, height: 0 }} />
+                <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isAdvancedMode ? '#2563eb' : '#cbd5e1', transition: '.4s', borderRadius: '24px' }}>
+                  <span style={{ position: 'absolute', content: '""', height: '18px', width: '18px', left: isAdvancedMode ? '22px' : '3px', bottom: '3px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%' }}></span>
+                </span>
+              </label>
             </div>
           </div>
         )}

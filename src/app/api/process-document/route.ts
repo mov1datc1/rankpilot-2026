@@ -106,6 +106,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Log the AI interaction for traceability
+    await prisma.aILog.create({
+      data: {
+        userId: user.id,
+        prompt: `Process Document: ${documentUrl}`,
+        response: typeof pyData === 'string' ? pyData : JSON.stringify(pyData).substring(0, 5000), // Limit size for DB text column if huge
+        durationMs: 0
+      }
+    });
+
     return NextResponse.json({ success: true, createdCount, raw: pyData });
   } catch (error: any) {
     console.error('Error processing document in Next API:', error);

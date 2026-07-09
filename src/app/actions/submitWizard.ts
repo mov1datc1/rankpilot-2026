@@ -17,7 +17,8 @@ export async function submitWizardData(formData: any) {
         practiceArea: formData.practice || 'General',
         guideRegion: formData.jurisdiction || 'Global',
         currentBand: 'N/A',
-        status: 'In Progress'
+        status: 'In Progress',
+        chambersData: formData
       }
     });
 

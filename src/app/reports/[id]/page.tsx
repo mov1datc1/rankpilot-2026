@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { ChevronLeft, Download, Printer, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
+import StatusActionButtons from "./StatusActionButtons";
 
 
 export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -78,6 +79,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </div>
         </div>
         <div className="flex items-center space-x-3">
+          <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
+          <div className="h-6 w-px bg-gray-200 mx-1"></div>
           <PrintButton />
           <a 
             href={`/api/generate-docx?id=${submission.id}`} 
