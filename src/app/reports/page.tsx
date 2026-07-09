@@ -18,6 +18,7 @@ type Submission = {
   targetDirectory: string;
   practiceArea: string;
   guideRegion: string;
+  status: string;
   createdAt: Date | string;
   matters: Matter[];
 };
