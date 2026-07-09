@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
     let createdCount = 0;
     if (extractedMatters && Array.isArray(extractedMatters)) {
       for (const m of extractedMatters) {
+        // En el nuevo pipeline, optimization_node asigna 'optimized_text' y 'status'='AI Optimized'
+        const isOptimized = m.status === 'AI Optimized' || m.optimized_text;
+        
         await prisma.matter.create({
           data: {
             submissionId,
@@ -81,7 +84,8 @@ export async function POST(request: NextRequest) {
             value: m.value || 'N/A',
             leadPartner: m.lead_partner || m.partner || 'Unknown',
             rawNotes: [m.summary, m.significance].filter(Boolean).join('\n\n') || m.description || m.notes || 'No description extracted',
-            status: 'Draft'
+            optimizedText: m.optimized_text || null,
+            status: isOptimized ? 'AI Optimized' : 'Draft'
           }
         });
         createdCount++;

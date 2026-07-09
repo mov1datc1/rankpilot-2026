@@ -18,7 +18,7 @@ export default function Sidebar() {
   
   const platformLinks = [
     { name: 'Builder', href: '/submissions', icon: Home },
-    { name: 'Matters Assistant', href: '/submissions/matters', icon: Zap },
+    { name: 'Matters Assistant', href: '/matters-assistant', icon: Zap },
     { name: 'Report', href: '/reports', icon: FileText },
     { name: 'Dashboard', href: '/dashboard-analytics', icon: BarChart2 },
   ];

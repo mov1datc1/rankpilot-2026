@@ -8,12 +8,14 @@ from chains.extraction_chain import get_extraction_chain
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import SystemMessage, HumanMessage
 
 from core.state import AgentState
 from agents.prompts import ( 
     STRATEGIC_ANALYSIS_PROMPT, 
     EDITORIAL_INTERROGATOR_PROMPT,
-    LATEX_WRITER_PROMPT
+    LATEX_WRITER_PROMPT,
+    MATTER_OPTIMIZER_PROMPT
 )
 from utils.pdf_generator import compile_latex_to_pdf
 from utils.rag_router import RAGRouter
@@ -238,7 +240,43 @@ def interrogator_node(state: AgentState) -> Dict:
     
     return {"messages": [response]}
 
-# 5. WRITER NODE
+# 5. OPTIMIZATION NODE
+def optimization_node(state: AgentState) -> Dict:
+    print("--- OPTIMIZING MATTERS ---")
+    matters = state.get("matters", [])
+    
+    if not matters:
+        return state
+
+    llm = get_model()
+    # Require JSON output with 'optimized_text' key
+    llm = llm.bind(response_format={"type": "json_object"})
+    
+    optimized_matters = []
+    for matter in matters:
+        # Construct the raw matter text to feed to the optimizer
+        raw_text = f"Title: {matter.get('title', '')}\nClient: {matter.get('client', '')}\nValue: {matter.get('value', '')}\nSummary: {matter.get('summary', '')}\nSignificance: {matter.get('significance', '')}\nLead Partner: {matter.get('lead_partner', '')}"
+        
+        messages = [
+            SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
+            HumanMessage(content=f"Optimize this raw matter:\n\n{raw_text}")
+        ]
+        
+        try:
+            response = llm.invoke(messages)
+            result = json.loads(response.content)
+            matter['optimized_text'] = result.get('optimized_text', matter.get('summary'))
+            matter['status'] = 'AI Optimized'
+        except Exception as e:
+            print(f"Error optimizing matter: {e}")
+            matter['optimized_text'] = matter.get('summary', '')
+            matter['status'] = 'Optimization Failed'
+            
+        optimized_matters.append(matter)
+        
+    return {"matters": optimized_matters}
+
+# 6. WRITER NODE
 def writer_node(state: AgentState, config: RunnableConfig) -> Dict:
     """
     Bypasses legacy LaTeX PDF generation.

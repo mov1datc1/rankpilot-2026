@@ -97,6 +97,35 @@ export async function getMattersBySubmission(submissionId: string) {
   }
 }
 
+// ── Get All Matters for User ──
+export async function getAllUserMatters() {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const matters = await prisma.matter.findMany({
+      where: {
+        submission: {
+          userId: user.id
+        }
+      },
+      include: {
+        submission: {
+          select: {
+            targetDirectory: true,
+            practiceArea: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return { success: true, data: matters };
+  } catch (error: any) {
+    console.error('Error fetching all user matters:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ── Update Matter Optimization (with ownership check) ──
 export async function updateMatterOptimization(id: string, optimizedText: string) {
   try {
