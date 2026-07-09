@@ -48,11 +48,13 @@ export async function POST(request: NextRequest) {
       })
     });
 
-    if (!pyResponse.ok) {
-      throw new Error(`Python API Error: ${pyResponse.statusText}`);
-    }
-
     const pyData = await pyResponse.json();
+
+    if (!pyResponse.ok) {
+      const errorDetail = pyData.traceback || pyData.error || pyResponse.statusText;
+      console.error(`Python API Error Traceback:\n${errorDetail}`);
+      throw new Error(`Python API Error: ${pyData.error || pyResponse.statusText} - See Server Logs for Traceback`);
+    }
     
     // El motor Python debe retornar la data estructurada. Vamos a parsear la respuesta.
     // Si langgraph devuelve el output, estará en pyData.data.response o pyData directly

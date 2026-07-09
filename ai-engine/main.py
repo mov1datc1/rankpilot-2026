@@ -75,7 +75,15 @@ async def process_document(request: Request):
         "strategic_context": {}
     }
     
-    result = graph_app.invoke(initial_state, config)
+    try:
+        result = graph_app.invoke(initial_state, config)
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        print("ERROR IN LANGGRAPH:")
+        print(error_msg)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=500, content={"error": "LangGraph execution failed", "traceback": error_msg})
     
     # Safely extract the last message text
     messages = result.get("messages", [])
