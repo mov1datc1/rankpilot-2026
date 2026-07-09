@@ -17,8 +17,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    let resolvedUserId = user.id;
+    if (user.email) {
+      const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+      if (existingByEmail) {
+        resolvedUserId = existingByEmail.id;
+      }
+    }
+
     const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
-    if (!submission || submission.userId !== user.id) {
+    if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

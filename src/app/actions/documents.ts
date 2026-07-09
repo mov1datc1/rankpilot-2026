@@ -10,8 +10,16 @@ export async function updateSubmissionDocumentUrl(submissionId: string, url: str
 
     if (!user) throw new Error('Not authenticated');
 
+    let resolvedUserId = user.id;
+    if (user.email) {
+      const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+      if (existingByEmail) {
+        resolvedUserId = existingByEmail.id;
+      }
+    }
+
     const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
-    if (!submission || submission.userId !== user.id) {
+    if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
       throw new Error('Unauthorized');
     }
 

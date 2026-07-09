@@ -9,7 +9,15 @@ async function getAuthenticatedUser() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  // Auto-sync Supabase Auth user to Prisma User table to avoid FK constraints
+  // Si existe en Prisma por email pero con otro ID (para evitar errores de UNIQUE constraint)
+  if (user.email) {
+    const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+    if (existingByEmail && existingByEmail.id !== user.id) {
+      return { ...user, id: existingByEmail.id };
+    }
+  }
+
+  // Auto-sync Supabase Auth user to Prisma User table
   await prisma.user.upsert({
     where: { id: user.id },
     update: {},
