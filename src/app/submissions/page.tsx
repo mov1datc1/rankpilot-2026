@@ -4,13 +4,16 @@ import { useState, useRef } from 'react';
 import { Upload, FileText, Edit3, FileCheck, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSubmission } from '@/app/actions/submissions';
+import { createClient } from '@/utils/supabase/client';
 
 export default function SubmissionsPage() {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   // Form State
   const [targetDirectory, setTargetDirectory] = useState('Legal 500');
@@ -20,6 +23,27 @@ export default function SubmissionsPage() {
   const startUploadAudit = async () => {
     setIsSubmitting(true);
     try {
+      let documentUrl = undefined;
+      
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(`submissions/${fileName}`, selectedFile);
+          
+        if (uploadError) {
+          throw new Error('Failed to upload file to Supabase Storage: ' + uploadError.message);
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('documents')
+          .getPublicUrl(`submissions/${fileName}`);
+          
+        documentUrl = publicUrl;
+      }
+
       const result = await createSubmission({
         targetDirectory,
         guideRegion,
@@ -27,15 +51,24 @@ export default function SubmissionsPage() {
       });
 
       if (result.success && result.data) {
+        if (documentUrl) {
+          // Si hay document URL, hacemos la actualizacion
+          await fetch('/api/update-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: result.data.id, url: documentUrl })
+          }).catch(e => console.error("Error saving doc url:", e));
+        }
+
         // Save the submission context globally or pass via URL
         localStorage.setItem('activeSubmissionId', result.data.id);
-        router.push(`/submissions/processing?id=${result.data.id}`);
+        router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      alert(error.message);
       setIsSubmitting(false);
     }
   };
@@ -200,6 +233,7 @@ export default function SubmissionsPage() {
                   accept=".docx,.pdf,.doc"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
+                      setSelectedFile(e.target.files[0]);
                       setSelectedFileName(e.target.files[0].name);
                     }
                   }}

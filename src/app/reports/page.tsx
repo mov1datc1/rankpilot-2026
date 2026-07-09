@@ -36,6 +36,11 @@ export default function ReportsPage() {
   }, []);
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
+    if (format === 'pdf') {
+      window.open(`/api/generate-pdf?id=${subId}`, '_blank');
+      return;
+    }
+    
     setDownloadingId(`${subId}-${format}`);
     setTimeout(() => {
       setDownloadingId(null);

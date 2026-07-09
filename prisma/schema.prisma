@@ -12,6 +12,14 @@ enum Role {
   SUPERADMIN
 }
 
+enum SubmissionStatus {
+  DRAFT
+  IN_REVIEW
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+}
+
 model User {
   id               String   @id @default(uuid())
   email            String   @unique
@@ -20,23 +28,28 @@ model User {
   subscriptionId   String?
   status           String   @default("ACTIVE")
   submissions      Submission[]
+  aiLogs           AILog[]
 }
 
 model Submission {
-  id                String   @id @default(uuid())
+  id                String           @id @default(uuid())
   userId            String
   targetDirectory   String
   guideRegion       String
   practiceArea      String
   currentBand       String
   deadline          DateTime?
-  status            String   @default("Draft")
-  completenessScore Int      @default(0)
+  status            String           @default("Draft")
+  completenessScore Int              @default(0)
   documentUrl       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  chambersData      Json?
+  submittedAt       DateTime?
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   matters           Matter[]
 }
 
@@ -50,8 +63,23 @@ model Matter {
   rawNotes       String?  @db.Text
   optimizedText  String?  @db.Text
   status         String   @default("Draft")
+  threadId       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  aiLogs         AILog[]
+}
+
+model AILog {
+  id          String   @id @default(uuid())
+  userId      String
+  matterId    String?
+  prompt      String   @db.Text
+  response    String   @db.Text
+  durationMs  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matter      Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
 }

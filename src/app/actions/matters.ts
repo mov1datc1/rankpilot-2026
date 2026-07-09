@@ -3,6 +3,15 @@
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
+// ── Helper: Get authenticated user or throw ──
+async function getAuthenticatedUser() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user;
+}
+
+// ── Create Matter ──
 export async function createMatter(data: {
   submissionId: string;
   name: string;
@@ -12,14 +21,8 @@ export async function createMatter(data: {
   rawNotes?: string;
 }) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser();
 
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
-
-    // Opcional: Validar que la submission pertenezca al usuario
     const submission = await prisma.submission.findUnique({
       where: { id: data.submissionId }
     });
@@ -47,13 +50,18 @@ export async function createMatter(data: {
   }
 }
 
+// ── Get Matters by Submission ──
 export async function getMattersBySubmission(submissionId: string) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser();
 
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
+    // Validate ownership
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId }
+    });
+
+    if (!submission || submission.userId !== user.id) {
+      return { success: false, error: 'No tienes permiso para ver estos casos.' };
     }
 
     const matters = await prisma.matter.findMany({
@@ -68,29 +76,39 @@ export async function getMattersBySubmission(submissionId: string) {
   }
 }
 
+// ── Update Matter Optimization (with ownership check) ──
 export async function updateMatterOptimization(id: string, optimizedText: string) {
   try {
-    const matter = await prisma.matter.update({
+    const user = await getAuthenticatedUser();
+
+    // Validate ownership through submission chain
+    const matter = await prisma.matter.findUnique({
+      where: { id },
+      include: { submission: true }
+    });
+
+    if (!matter || matter.submission.userId !== user.id) {
+      throw new Error('No tienes permiso para modificar este caso.');
+    }
+
+    const updated = await prisma.matter.update({
       where: { id },
       data: { optimizedText, status: 'AI Optimized' }
     });
-    return { success: true, data: matter };
+    return { success: true, data: updated };
   } catch (error: any) {
     console.error('Error updating matter:', error);
     return { success: false, error: error.message };
   }
 }
 
+// ── Optimize Matter with AI (with logging + rate limiting + thread persistence) ──
 export async function optimizeMatterWithAI(matterId: string) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser();
+    const startTime = Date.now();
 
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
-
-    // 1. Fetch the matter
+    // 1. Fetch the matter with ownership validation
     const matter = await prisma.matter.findUnique({
       where: { id: matterId },
       include: { submission: true }
@@ -104,32 +122,43 @@ export async function optimizeMatterWithAI(matterId: string) {
       throw new Error('No hay notas crudas para optimizar.');
     }
 
-    // 2. Setup Python API URL
+    // 2. Rate limiting: Check if this matter was optimized in the last 30 seconds
+    const recentLog = await prisma.aILog.findFirst({
+      where: {
+        matterId: matterId,
+        createdAt: { gte: new Date(Date.now() - 30000) }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (recentLog) {
+      throw new Error('Por favor espera 30 segundos antes de optimizar este caso nuevamente.');
+    }
+
+    // 3. Setup Python API URL
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000/process';
 
-    // 3. Construct the prompt for the Python LangChain orchestrator
+    // 4. Construct the prompt
     const userPrompt = `
 Eres un consultor experto en directorios legales (Chambers/Legal 500).
 Por favor optimiza el siguiente caso para un formulario de submission:
 - Nombre del Proyecto: ${matter.name}
 - Cliente: ${matter.client}
 - Valor: ${matter.value}
-- Socio Líder: ${matter.leadPartner}
+- Socio Lider: ${matter.leadPartner}
 
 Notas Crudas del Abogado:
 ${matter.rawNotes}
 
-Escribe un solo párrafo profesional y objetivo (aprox 100-150 palabras) enfocado en complejidad e innovación. No incluyas corchetes ni placeholders, solo el texto final.`;
+Escribe un solo parrafo profesional y objetivo (aprox 100-150 palabras) enfocado en complejidad e innovacion. No incluyas corchetes ni placeholders, solo el texto final.`;
 
-    // 4. Call Python Backend API
+    // 5. Call Python Backend API
     const response = await fetch(pythonApiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_input: userPrompt,
-        thread_id: matterId, // Usamos el ID del matter como thread de conversacion
+        thread_id: matter.threadId || matterId,
         is_file: false
       })
     });
@@ -139,19 +168,34 @@ Escribe un solo párrafo profesional y objetivo (aprox 100-150 palabras) enfocad
     }
 
     const data = await response.json();
-    
-    // El backend de Python retorna data.data.response con el contenido final
-    let generatedText = "Error: El servidor Python no devolvió texto.";
+    const durationMs = Date.now() - startTime;
+
+    let generatedText = "Error: El servidor Python no devolvio texto.";
     if (data && data.data && data.data.response) {
       generatedText = data.data.response.trim();
     }
 
-    // 5. Save the optimized text
+    // 6. Persist thread_id from Python for future conversations
+    const returnedThreadId = data.thread_id || matterId;
+
+    // 7. Save the optimized text + thread_id
     const updatedMatter = await prisma.matter.update({
       where: { id: matterId },
-      data: { 
+      data: {
         optimizedText: generatedText,
-        status: 'AI Optimized'
+        status: 'AI Optimized',
+        threadId: returnedThreadId
+      }
+    });
+
+    // 8. Log the AI interaction for traceability
+    await prisma.aILog.create({
+      data: {
+        userId: user.id,
+        matterId: matterId,
+        prompt: userPrompt,
+        response: generatedText,
+        durationMs: durationMs
       }
     });
 

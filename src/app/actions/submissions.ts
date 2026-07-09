@@ -3,18 +3,21 @@
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
+// ── Helper: Get authenticated user or throw ──
+async function getAuthenticatedUser() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user;
+}
+
 export async function createSubmission(data: {
   targetDirectory: string;
   practiceArea: string;
   guideRegion: string;
 }) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new Error('Not authenticated');
-    }
+    const user = await getAuthenticatedUser();
 
     const submission = await prisma.submission.create({
       data: {
@@ -36,12 +39,7 @@ export async function createSubmission(data: {
 
 export async function getUserSubmissions() {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: 'Not authenticated' };
-    }
+    const user = await getAuthenticatedUser();
 
     const submissions = await prisma.submission.findMany({
       where: { userId: user.id },
@@ -55,11 +53,32 @@ export async function getUserSubmissions() {
   }
 }
 
-export async function updateSubmissionStatus(id: string, status: string, score: number) {
+export async function updateSubmissionStatus(id: string, status: string, score?: number) {
   try {
+    const user = await getAuthenticatedUser();
+
+    // Validar ownership
+    const existing = await prisma.submission.findUnique({
+      where: { id }
+    });
+
+    if (!existing || existing.userId !== user.id) {
+      throw new Error('No tienes permiso para actualizar este submission.');
+    }
+
+    const dataToUpdate: any = { status };
+    if (score !== undefined) {
+      dataToUpdate.completenessScore = score;
+    }
+    
+    // Status tracking
+    if (status === 'Submitted' && !existing.submittedAt) dataToUpdate.submittedAt = new Date();
+    if (status === 'Accepted' && !existing.acceptedAt) dataToUpdate.acceptedAt = new Date();
+    if (status === 'Rejected' && !existing.rejectedAt) dataToUpdate.rejectedAt = new Date();
+
     const submission = await prisma.submission.update({
       where: { id },
-      data: { status, completenessScore: score }
+      data: dataToUpdate
     });
     return { success: true, data: submission };
   } catch (error: any) {
