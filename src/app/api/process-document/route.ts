@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             client: m.client || 'Unknown Client',
             value: m.value || 'N/A',
             leadPartner: m.lead_partner || m.partner || 'Unknown',
-            rawNotes: m.description || m.notes || 'No description extracted',
+            rawNotes: [m.summary, m.significance].filter(Boolean).join('\n\n') || m.description || m.notes || 'No description extracted',
             status: 'Draft'
           }
         });

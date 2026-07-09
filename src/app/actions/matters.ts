@@ -157,7 +157,8 @@ export async function optimizeMatterWithAI(matterId: string) {
     }
 
     // 3. Setup Python API URL
-    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000/process';
+    const pythonBaseUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
+    const pythonApiUrl = `${pythonBaseUrl.replace(/\/$/, '')}/process`;
 
     // 4. Construct the prompt
     const userPrompt = `
