@@ -12,8 +12,16 @@ export async function getUserSubmissionsWithMatters() {
       return { success: false, error: 'Not authenticated' };
     }
 
+    let resolvedUserId = user.id;
+    if (user.email) {
+      const existingByEmail = await prisma.user.findUnique({ where: { email: user.email } });
+      if (existingByEmail) {
+        resolvedUserId = existingByEmail.id;
+      }
+    }
+
     const submissions = await prisma.submission.findMany({
-      where: { userId: user.id },
+      where: { userId: resolvedUserId },
       include: {
         matters: true
       },
