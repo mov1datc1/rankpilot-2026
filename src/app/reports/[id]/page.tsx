@@ -36,10 +36,19 @@ export default async function ReportDetail({ params }: { params: { id: string } 
   const letter = analysis.audit_letter || {};
 
   const score = analysis.score || 0;
-  const riskLevel = analysis.risk_level || "Pending";
-  const archetype = context.archetype || "Strategic model pending";
-  const detectedTier = context.starting_position || "Not classified";
-  const target = context.target_realistic || "Target pending";
+  const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
+  const archetype = context.archetype ? String(context.archetype) : "Strategic model pending";
+  const detectedTier = context.starting_position ? String(context.starting_position) : "Not classified";
+  const target = context.target_realistic ? String(context.target_realistic) : "Target pending";
+
+  // Safely parse arrays that AI might hallucinate as strings
+  const realityCheck = Array.isArray(letter.the_reality_check) 
+    ? letter.the_reality_check 
+    : (typeof letter.the_reality_check === 'string' ? [letter.the_reality_check] : []);
+    
+  const pathToDominance = Array.isArray(letter.the_path_to_dominance)
+    ? letter.the_path_to_dominance
+    : [];
   
   // Format Date
   const dateStr = submission.createdAt.toLocaleDateString('en-GB', {
@@ -123,20 +132,20 @@ export default async function ReportDetail({ params }: { params: { id: string } 
               {/* Executive Summary */}
               <div>
                 <p className="text-lg text-gray-600 italic">
-                  {analysis.summary || "Pending analysis generation."}
+                  {analysis.summary ? String(analysis.summary) : "Pending analysis generation."}
                 </p>
               </div>
 
               {/* State of Play */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">The State of Play</h3>
-                <p>{letter.the_state_of_play || "Pending."}</p>
+                <p>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
               </div>
 
               {/* Unfair Advantage */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">The Unfair Advantage</h3>
-                <p>{letter.the_unfair_advantage || "Pending."}</p>
+                <p>{letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}</p>
               </div>
 
               {/* Reality Check */}
@@ -144,12 +153,14 @@ export default async function ReportDetail({ params }: { params: { id: string } 
                 <h3 className="text-xl font-bold text-gray-900 mb-4">The Reality Check</h3>
                 <p className="mb-4 text-gray-600">The submission is currently held back by avoidable defects:</p>
                 <ul className="space-y-3">
-                  {(letter.the_reality_check || []).map((point: string, i: number) => (
+                  {realityCheck.length > 0 ? realityCheck.map((point: string, i: number) => (
                     <li key={i} className="flex items-start">
                       <span className="text-amber-500 mr-2 mt-1">•</span>
                       <span>{point}</span>
                     </li>
-                  ))}
+                  )) : (
+                    <li className="text-gray-500 italic">No defects identified.</li>
+                  )}
                 </ul>
               </div>
 
@@ -157,12 +168,14 @@ export default async function ReportDetail({ params }: { params: { id: string } 
               <div>
                 <h3 className="text-xl font-bold text-[#1A237E] mb-6">The Path to Dominance</h3>
                 <div className="space-y-6">
-                  {(letter.the_path_to_dominance || []).map((step: any, i: number) => (
+                  {pathToDominance.length > 0 ? pathToDominance.map((step: any, i: number) => (
                     <div key={i}>
-                      <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {step.title}</h4>
-                      <p className="text-gray-600">{step.description}</p>
+                      <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {step?.title || "Strategic Step"}</h4>
+                      <p className="text-gray-600">{step?.description || step || ""}</p>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-gray-500 italic">Strategic path is being formulated.</p>
+                  )}
                 </div>
               </div>
 
