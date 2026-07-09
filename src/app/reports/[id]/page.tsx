@@ -67,9 +67,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link 
             href="/reports"
-            style={{ color: '#64748b', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            style={{ color: '#64748b', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
           >
             <ChevronLeft style={{ width: '16px', height: '16px', marginRight: '0.25rem' }} />
             Back to Reports
@@ -89,9 +87,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             href={`/api/generate-docx?id=${submission.id}&type=audit`} 
             target="_blank" 
             rel="noopener noreferrer"
-            style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', transition: 'background 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#f1f5f9'}
+            style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1' }}
           >
             <Download style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
             Audit DOCX
@@ -101,9 +97,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             href={`/api/generate-docx?id=${submission.id}&type=submission`} 
             target="_blank" 
             rel="noopener noreferrer"
-            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', transition: 'background 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#121858'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#1A237E'}
+            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
           >
             <Download style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
             Chambers DOCX
