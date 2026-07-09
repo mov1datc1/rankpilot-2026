@@ -57,13 +57,27 @@ async def process_request(request: Request):
     
     result = run_rankpilot(user_input, thread_id, is_file)
     
+    # Safely extract the last message text
+    messages = result.get("messages", [])
+    response_text = "No response generated."
+    if messages:
+        last_msg = messages[-1]
+        if hasattr(last_msg, "content"):
+            response_text = last_msg.content
+        elif isinstance(last_msg, tuple) and len(last_msg) > 1:
+            response_text = str(last_msg[1])
+        else:
+            response_text = str(last_msg)
+    
     return {
         "status": "completed" if result.get("is_complete") else "interrogating",
         "thread_id": thread_id,
         "data": {
             "pdf_url": result.get("pdf_url"),
             "is_complete": result.get("is_complete", False),
-            "response": result["messages"][-1].content if result.get("messages") else "No response generated."
+            "response": response_text,
+            "metadata": result.get("metadata", {}),
+            "matters": result.get("matters", [])
         }
     }
 
