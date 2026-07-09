@@ -107,25 +107,52 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
 
       <div className="print-area" style={{ maxWidth: '64rem', margin: '2rem auto 0', width: '100%', padding: '0 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
+        {/* Evaluation Context Banner */}
+        <div style={{ background: '#f0f4ff', borderRadius: '12px', border: '1px solid #c7d2fe', padding: '1rem 1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Directory</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.targetDirectory || 'N/A'}</span>
+          </div>
+          <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Practice</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.practiceArea || 'N/A'}</span>
+          </div>
+          <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Jurisdiction</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.guideRegion || 'N/A'}</span>
+          </div>
+          <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Band</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.currentBand || 'Unranked'}</span>
+          </div>
+        </div>
+
         {/* Top Metric Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '1rem' }}>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Risk Level</h3>
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : '#d97706' }}>
+            <p style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : riskLevel === 'Pending' ? '#94a3b8' : '#d97706' }}>
               {riskLevel}
             </p>
+            {riskLevel === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Awaiting AI analysis</p>}
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Archetype</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{archetype}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: archetype === 'Pending' ? '#94a3b8' : '#0f172a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{archetype}</p>
+            {archetype === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Context Engine not yet run</p>}
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Detected Tier</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>{detectedTier}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: detectedTier === 'Unknown' ? '#94a3b8' : '#0f172a', margin: 0 }}>{detectedTier}</p>
+            {detectedTier === 'Unknown' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Insufficient data to determine</p>}
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Target</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1A237E', margin: 0 }}>{target}</p>
+            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: target === 'Pending' ? '#94a3b8' : '#1A237E', margin: 0 }}>{target}</p>
+            {target === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Run analysis to calculate</p>}
           </div>
         </div>
 

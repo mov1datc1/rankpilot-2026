@@ -229,6 +229,8 @@ export default function MattersAssistantPage() {
                 >
                   <option>Chambers</option>
                   <option>Legal 500</option>
+                  <option>IFLR1000</option>
+                  <option>Leaders League</option>
                 </select>
               </div>
               <div>
@@ -240,15 +242,48 @@ export default function MattersAssistantPage() {
                   <option>Banking & Finance</option>
                   <option>Corporate / M&A</option>
                   <option>Dispute Resolution</option>
+                  <option>Tax</option>
+                  <option>Labour & Employment</option>
+                  <option>Competition / Antitrust</option>
+                  <option>Intellectual Property</option>
+                  <option>Regulatory / Public Law</option>
+                  <option>Capital Markets</option>
+                  <option>Real Estate</option>
+                  <option>Energy & Natural Resources</option>
+                  <option>TMT / Technology</option>
                 </select>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>Jurisdiction</label>
-                <input 
-                  type="text" 
+                <select 
                   style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', outline: 'none' }}
                   value={jurisdiction} onChange={e => setJurisdiction(e.target.value)}
-                />
+                >
+                  <option>Mexico</option>
+                  <option>Brazil</option>
+                  <option>Argentina</option>
+                  <option>Chile</option>
+                  <option>Colombia</option>
+                  <option>Peru</option>
+                  <option>Venezuela</option>
+                  <option>Ecuador</option>
+                  <option>Panama</option>
+                  <option>Costa Rica</option>
+                  <option>Guatemala</option>
+                  <option>Dominican Republic</option>
+                  <option>Uruguay</option>
+                  <option>Paraguay</option>
+                  <option>Bolivia</option>
+                  <option>Honduras</option>
+                  <option>El Salvador</option>
+                  <option>Nicaragua</option>
+                  <option>Puerto Rico</option>
+                  <option>Cuba</option>
+                  <option>United States</option>
+                  <option>United Kingdom</option>
+                  <option>Spain</option>
+                  <option>Global</option>
+                </select>
               </div>
             </div>
 

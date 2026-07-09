@@ -4,10 +4,12 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { submissionId, documentUrl } = await request.json();
+    const body = await request.json();
+    const { documentUrl, text, context } = body;
+    let { submissionId } = body;
 
-    if (!submissionId || !documentUrl) {
-      return NextResponse.json({ error: 'Missing submissionId or documentUrl' }, { status: 400 });
+    if (!submissionId && !documentUrl && !text) {
+      return NextResponse.json({ error: 'Missing submissionId, documentUrl, or text' }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -25,20 +27,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
-    if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    // Auto-create submission if Matter Assistant calls without one
+    let submission;
+    if (submissionId) {
+      submission = await prisma.submission.findUnique({ where: { id: submissionId } });
+      if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+    } else {
+      // Create a temporary submission from Matter Assistant context
+      submission = await prisma.submission.create({
+        data: {
+          userId: resolvedUserId,
+          targetDirectory: context?.directory || 'Chambers',
+          practiceArea: context?.practiceArea || 'General',
+          guideRegion: context?.jurisdiction || 'Global',
+          currentBand: context?.currentBand || 'Unranked',
+          status: 'Draft',
+          chambersData: context || {}
+        }
+      });
+      submissionId = submission.id;
     }
 
     // Call Python backend
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
+    const userInput = documentUrl || text || '';
     const pyResponse = await fetch(`${pythonApiUrl}/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_input: documentUrl,
+        user_input: userInput,
         thread_id: submissionId,
-        is_file: true,
+        is_file: !!documentUrl,
         context: {
           directory: submission.targetDirectory,
           jurisdiction: submission.guideRegion,
