@@ -6,7 +6,8 @@ import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 
 
-export default async function ReportDetail({ params }: { params: { id: string } }) {
+export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -23,7 +24,7 @@ export default async function ReportDetail({ params }: { params: { id: string } 
   }
 
   const submission = await prisma.submission.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: { matters: true }
   });
 
