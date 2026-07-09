@@ -1,29 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles, FileText, CheckCircle2 } from 'lucide-react';
 
-export default function ProcessingPage() {
+function ProcessingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const submissionId = searchParams.get('id');
+  const documentUrl = searchParams.get('url');
+
   const [progress, setProgress] = useState(0);
-  const [step, setStep] = useState(1); // 0: Upload, 1: Extraction, 2: Analysis, 3: Classification, 4: Ready
+  const [step, setStep] = useState(1); 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
-    // Simulate the extraction and processing phase
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => router.push('/submissions/context'), 1000);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 200); // Fast simulation
+    if (!submissionId || !documentUrl || hasStarted) return;
+    setHasStarted(true);
+    
+    // Iniciar el procesamiento real
+    const processDocument = async () => {
+      try {
+        setStep(1);
+        setProgress(20);
+        
+        const res = await fetch('/api/process-document', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submissionId, documentUrl })
+        });
+        
+        setProgress(75);
+        setStep(3);
 
-    return () => clearInterval(interval);
-  }, [router]);
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Fallo en la extracción de la IA');
+        }
+
+        setProgress(100);
+        setStep(4);
+        
+        // Finalizamos redirigiendo directamente al asistente de Matters, donde verán sus datos ordenados
+        setTimeout(() => router.push('/submissions/matters'), 1500);
+
+      } catch (err: any) {
+        console.error(err);
+        setErrorMsg(err.message);
+      }
+    };
+
+    processDocument();
+  }, [submissionId, documentUrl, router, hasStarted]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 0' }}>
@@ -99,9 +129,9 @@ export default function ProcessingPage() {
         {/* Backend Status Box */}
         <div style={{ padding: '1rem 1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '3rem' }}>
           <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.25rem 0' }}>
-            <span style={{ fontWeight: 600, color: '#334155' }}>Backend status:</span> processing · <span style={{ fontWeight: 600, color: '#334155' }}>message:</span> Mapping raw data to universal schema...
+            <span style={{ fontWeight: 600, color: '#334155' }}>Backend status:</span> {errorMsg ? <span style={{color: 'red'}}>{errorMsg}</span> : 'processing'} · <span style={{ fontWeight: 600, color: '#334155' }}>message:</span> {step === 4 ? 'Complete! Matters extracted.' : 'Mapping raw data to universal schema...'}
           </p>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Metadata detected</p>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Metadata and matters detection in progress</p>
         </div>
 
         {/* Stepper Footer */}
@@ -146,4 +176,12 @@ export default function ProcessingPage() {
       `}} />
     </div>
   );
+}
+
+export default function ProcessingPage() {
+  return (
+    <Suspense fallback={<div style={{padding: '3rem', textAlign: 'center'}}>Loading...</div>}>
+      <ProcessingContent />
+    </Suspense>
+  )
 }
