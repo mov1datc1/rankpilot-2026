@@ -32,6 +32,28 @@ export default function MattersAssistantPage() {
   const [leadPartner, setLeadPartner] = useState('');
   const [rawNotes, setRawNotes] = useState('');
 
+  const handleNewMatter = () => {
+    setActiveMatterId(null);
+    setMatterName('');
+    setClient('');
+    setValue('');
+    setLeadPartner('');
+    setRawNotes('');
+    setOptimizedText('');
+    setIsModalOpen(true);
+  };
+
+  const handleEditMatter = (matter: Matter) => {
+    setActiveMatterId(matter.id);
+    setMatterName(matter.name);
+    setClient(matter.client);
+    setValue(matter.value);
+    setLeadPartner(matter.leadPartner);
+    setRawNotes(matter.rawNotes || '');
+    setOptimizedText(matter.optimizedText || '');
+    setIsModalOpen(true);
+  };
+
   useEffect(() => {
     const fetchMatters = async () => {
       const storedId = localStorage.getItem('activeSubmissionId');
@@ -148,7 +170,7 @@ export default function MattersAssistantPage() {
           <p style={{ fontSize: '1.1rem', color: '#64748b', margin: 0 }}>Manage and AI-optimize your key cases for the submission.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleNewMatter}
           style={{ background: '#2563eb', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
         >
           <Plus size={18} /> New Matter
@@ -206,7 +228,9 @@ export default function MattersAssistantPage() {
                     {matter.status}
                   </span>
                 </td>
-                <td style={{ padding: '1rem 1.5rem', color: '#94a3b8', cursor: 'pointer' }}><MoreHorizontal size={18} /></td>
+                <td style={{ padding: '1rem 1.5rem', color: '#94a3b8', cursor: 'pointer' }} onClick={() => handleEditMatter(matter)}>
+                  <MoreHorizontal size={18} />
+                </td>
               </tr>
             ))}
           </tbody>
