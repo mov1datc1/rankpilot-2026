@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
 import { ChevronLeft, Download, Printer } from "lucide-react";
 import Link from "next/link";
+import PrintButton from "@/components/PrintButton";
 
 
 export default async function ReportDetail({ params }: { params: { id: string } }) {
@@ -75,10 +76,7 @@ export default async function ReportDetail({ params }: { params: { id: string } 
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <button onClick={() => window.print()} className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors">
-            <Printer className="h-4 w-4 mr-2" />
-            Print PDF
-          </button>
+          <PrintButton />
           <a href={`/api/generate-docx?id=${submission.id}`} target="_blank" rel="noopener noreferrer">
             <button className="bg-[#1A237E] hover:bg-[#121858] text-white px-3 py-1.5 rounded-md text-sm font-medium inline-flex items-center transition-colors">
               <Download className="h-4 w-4 mr-2" />
