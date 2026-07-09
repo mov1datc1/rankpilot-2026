@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     let pyData: any = {};
     const rawText = await pyResponse.text();
-    try:
+    try {
       pyData = JSON.parse(rawText);
     } catch (e) {
       console.error("Non-JSON response from Python:", rawText);
