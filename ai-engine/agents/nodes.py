@@ -65,16 +65,23 @@ def extraction_node(state: AgentState) -> Dict:
     
     if hasattr(structured_data, "model_dump"):
         data_dict = structured_data.model_dump()
+    elif isinstance(structured_data, dict):
+        data_dict = structured_data
     else:
-        data_dict = structured_data # Ya es un dict
+        data_dict = {"metadata": {}, "matters": []}
+
+    # Extract metadata correctly
+    ext_meta = data_dict.get("metadata", {})
+    if not isinstance(ext_meta, dict):
+        ext_meta = {}
 
     # Sincronizamos con las llaves exactas de state.py
     return {
         "metadata": {
-            "firm_name": data_dict.get("firm_name"),
-            "practice_area": data_dict.get("practice_area"),
-            "location": data_dict.get("location"),
-            "narrative": data_dict.get("narrative_overview")
+            "firm_name": ext_meta.get("firm_name", ""),
+            "practice_area": ext_meta.get("practice_area", ""),
+            "location": ext_meta.get("location", ""),
+            "narrative": ext_meta.get("narrative_overview", "")
         },
         "matters": data_dict.get("matters", []),
         "current_step": "context"
