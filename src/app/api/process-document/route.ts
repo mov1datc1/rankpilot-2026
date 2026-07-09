@@ -58,9 +58,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!pyResponse.ok) {
-      const errorDetail = pyData.traceback || pyData.error || pyResponse.statusText;
-      console.error(`Python API Error Traceback:\n${errorDetail}`);
-      throw new Error(`Python API Error: ${pyData.error || pyResponse.statusText}`);
+      console.error(`Python API Error Raw Text:\n${rawText}`);
+      throw new Error(`Python API Error: ${rawText}`);
     }
     
     // El motor Python debe retornar la data estructurada. Vamos a parsear la respuesta.
