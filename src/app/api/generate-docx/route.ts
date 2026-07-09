@@ -42,14 +42,12 @@ export async function GET(request: NextRequest) {
       location: submission.guideRegion
     };
 
-    const matters = submission.matters
-      .filter(m => m.status === 'AI Optimized' && m.optimizedText)
-      .map(m => ({
+    const matters = submission.matters.map(m => ({
         name: m.name,
         client: m.client,
         value: m.value,
         lead_partner: m.leadPartner,
-        description: m.optimizedText
+        description: m.optimizedText || m.rawNotes
       }));
 
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
@@ -61,7 +59,8 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify({
         submission_id: submission.id,
         metadata,
-        matters
+        matters,
+        chambersData: submission.chambersData
       })
     });
 

@@ -160,6 +160,10 @@ def context_engine_node(state: AgentState) -> Dict:
         target_realistic = "Maintain defensible track record"
 
     strategic_context = {
+        "directory": directory,
+        "jurisdiction": jurisdiction,
+        "practice_area": practice_area,
+        "current_status": current_status,
         "starting_position": starting_position,
         "practice_type": context_dict.get("practice_type"),
         "archetype": context_dict.get("archetype"),

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { ChevronLeft, Download, Printer } from "lucide-react";
+import { ChevronLeft, Download, Printer, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 
@@ -167,13 +167,41 @@ export default async function ReportDetail({ params }: { params: { id: string } 
                 <h3 className="text-xl font-bold text-[#1A237E] mb-6">The Path to Dominance</h3>
                 <div className="space-y-6">
                   {pathToDominance.length > 0 ? pathToDominance.map((step: any, i: number) => (
-                    <div key={i}>
-                      <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
-                      <p className="text-gray-600">{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
+                    <div key={i} className="flex flex-col md:flex-row md:items-start justify-between bg-white border border-gray-200 p-5 rounded-lg shadow-sm">
+                      <div className="flex-1 pr-4">
+                        <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
+                        <p className="text-gray-600">{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
+                      </div>
+                      <div className="mt-4 md:mt-0 flex-shrink-0">
+                        <button disabled className="bg-gray-100 text-gray-500 cursor-not-allowed px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Apply Fix (v3)
+                        </button>
+                      </div>
                     </div>
                   )) : (
                     <p className="text-gray-500 italic">Strategic path is being formulated.</p>
                   )}
+                </div>
+              </div>
+
+              {/* Execution Layer Actions */}
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Execution Engine</h3>
+                    <p className="text-gray-500 text-sm">Automatically resolve structural defects and optimize your matters.</p>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button disabled className="bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200 px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Rewrite Matters (v3)
+                    </button>
+                    <button disabled className="bg-[#1A237E] opacity-50 cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium inline-flex items-center">
+                      <Zap className="h-4 w-4 mr-2" />
+                      Generate Improved Version (v3)
+                    </button>
+                  </div>
                 </div>
               </div>
 
