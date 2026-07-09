@@ -153,10 +153,10 @@ export default async function ReportDetail({ params }: { params: { id: string } 
                 <h3 className="text-xl font-bold text-gray-900 mb-4">The Reality Check</h3>
                 <p className="mb-4 text-gray-600">The submission is currently held back by avoidable defects:</p>
                 <ul className="space-y-3">
-                  {realityCheck.length > 0 ? realityCheck.map((point: string, i: number) => (
+                  {realityCheck.length > 0 ? realityCheck.map((point: any, i: number) => (
                     <li key={i} className="flex items-start">
                       <span className="text-amber-500 mr-2 mt-1">•</span>
-                      <span>{point}</span>
+                      <span>{typeof point === 'object' ? JSON.stringify(point) : String(point)}</span>
                     </li>
                   )) : (
                     <li className="text-gray-500 italic">No defects identified.</li>
@@ -170,8 +170,8 @@ export default async function ReportDetail({ params }: { params: { id: string } 
                 <div className="space-y-6">
                   {pathToDominance.length > 0 ? pathToDominance.map((step: any, i: number) => (
                     <div key={i}>
-                      <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {step?.title || "Strategic Step"}</h4>
-                      <p className="text-gray-600">{step?.description || step || ""}</p>
+                      <h4 className="font-bold text-gray-900 mb-2">STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
+                      <p className="text-gray-600">{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
                     </div>
                   )) : (
                     <p className="text-gray-500 italic">Strategic path is being formulated.</p>
