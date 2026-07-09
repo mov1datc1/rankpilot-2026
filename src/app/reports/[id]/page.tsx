@@ -37,6 +37,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const analysis = chambersData.analysis || {};
   const context = chambersData.strategicContext || {};
   const letter = analysis.audit_letter || {};
+  const firmName = chambersData.firm_name || chambersData.firmName || context.firm_name || submission.practiceArea || 'The Firm';
 
   const score = analysis.score || 0;
   const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
@@ -165,8 +166,9 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             <div style={{ marginBottom: '2.5rem' }}>
               <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#1A237E', marginBottom: '1.5rem' }}>Strategic Audit Letter</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem', color: '#475569' }}>
-                <p style={{ margin: 0 }}><strong>To:</strong> The Board of Directors at the Firm</p>
+                <p style={{ margin: 0 }}><strong>To:</strong> The Board of Directors — {firmName}</p>
                 <p style={{ margin: 0 }}><strong>From:</strong> RankPilot Consulting</p>
+                <p style={{ margin: 0 }}><strong>Re:</strong> {submission.targetDirectory} · {submission.practiceArea} · {submission.guideRegion}</p>
                 <p style={{ margin: 0 }}><strong>Date:</strong> {dateStr}</p>
               </div>
             </div>
@@ -218,12 +220,6 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                         <h4 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', margin: 0 }}>STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
                         <p style={{ color: '#475569', margin: 0 }}>{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
                       </div>
-                      <div style={{ flexShrink: 0 }}>
-                        <button disabled style={{ background: '#f1f5f9', color: '#64748b', cursor: 'not-allowed', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: 'none' }}>
-                          <CheckCircle2 style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
-                          Apply Fix (v3)
-                        </button>
-                      </div>
                     </div>
                   )) : (
                     <p style={{ color: '#64748b', fontStyle: 'italic', margin: 0 }}>Strategic path is being formulated.</p>
@@ -236,17 +232,23 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem' }}>Execution Engine</h3>
-                    <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>Automatically resolve structural defects and optimize your matters.</p>
+                    <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>Take action: optimize matters or download the improved submission.</p>
                   </div>
                   <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button disabled style={{ background: '#f1f5f9', color: '#64748b', cursor: 'not-allowed', border: '1px solid #e2e8f0', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>
+                    <Link
+                      href="/submissions/matters"
+                      style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', border: '1px solid #e2e8f0', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
+                    >
                       <RefreshCw style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
-                      Rewrite Matters (v3)
-                    </button>
-                    <button disabled style={{ background: '#1A237E', opacity: 0.5, cursor: 'not-allowed', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>
+                      Rewrite Matters
+                    </Link>
+                    <a
+                      href={`/api/generate-docx?id=${submission.id}&type=submission`}
+                      style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
+                    >
                       <Zap style={{ width: '16px', height: '16px', marginRight: '0.5rem' }} />
-                      Generate Improved Version (v3)
-                    </button>
+                      Download Submission
+                    </a>
                   </div>
                 </div>
               </div>
