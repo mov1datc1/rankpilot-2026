@@ -57,9 +57,10 @@ export async function GET(request: NextRequest) {
     }
 
     const buffer = await Packer.toBuffer(doc);
+    const uint8 = new Uint8Array(buffer);
 
     const prefix = docType === 'submission' ? 'Submission_Form' : 'Strategic_Audit';
-    return new NextResponse(buffer, {
+    return new NextResponse(uint8, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="RankPilot_${prefix}_${practiceArea.replace(/\s+/g, '_')}.docx"`,
