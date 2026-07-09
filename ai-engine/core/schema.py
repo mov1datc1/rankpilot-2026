@@ -10,9 +10,16 @@ class Matter(BaseModel):
     lead_partner: str = Field(description="The primary partner in charge of this matter.")
     is_cross_border: bool = Field(description="True if the matter involves multiple jurisdictions.")
 
+class FirmMetadata(BaseModel):
+    """Core details about the law firm and the submission."""
+    firm_name: str = Field(description="The name of the law firm.")
+    practice_area: str = Field(description="The practice area being submitted for (e.g. Banking & Finance).")
+    location: str = Field(description="The jurisdiction or location of the firm.")
+    narrative_overview: str = Field(description="A brief summary of the firm's narrative or intro.")
+
 class SubmissionSchema(BaseModel):
     """The full structured representation of a law firm's practice submission."""
-    metadata: Dict[str, str] = Field(description="Key-value pairs of firm details, practice area, etc.")
+    metadata: FirmMetadata = Field(description="Core details about the law firm.")
     matters: List[Matter] = Field(description="List of distinct legal matters found in the text.")
 
 class ContextEngineOutput(BaseModel):
