@@ -327,6 +327,22 @@ export default function ReportsPage() {
                           <Download size={18} />
                         </button>
 
+                        <a
+                          title="Download Chambers Submission DOCX"
+                          href={`/api/generate-docx?id=${sub.id}&type=submission`}
+                          style={{
+                            padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #c7d2fe',
+                            background: '#eef2ff',
+                            color: '#4338ca',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            gap: '0.375rem', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 600
+                          }}
+                        >
+                          <FileText size={14} />
+                          DOCX
+                        </a>
+
                         <button
                           title="Delete Report"
                           onClick={() => setSubmissionToDelete(sub.id)}
