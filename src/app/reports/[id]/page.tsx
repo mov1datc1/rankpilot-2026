@@ -53,6 +53,13 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const pathToDominance = Array.isArray(letter.the_path_to_dominance)
     ? letter.the_path_to_dominance
     : [];
+
+  const recommendedRewrites = Array.isArray(letter.recommended_rewrites)
+    ? letter.recommended_rewrites
+    : [];
+
+  const competitiveContext = letter.competitive_context ? String(letter.competitive_context) : '';
+  const positioningText = letter.competitive_positioning_text ? String(letter.competitive_positioning_text) : '';
   
   // Format Date
   const dateStr = submission.createdAt.toLocaleDateString('en-GB', {
@@ -175,33 +182,59 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', color: '#1e293b', lineHeight: 1.6 }}>
               
-              {/* Executive Summary */}
-              <div>
-                <p style={{ fontSize: '1.125rem', color: '#475569', fontStyle: 'italic', margin: 0 }}>
-                  {analysis.summary ? String(analysis.summary) : "Pending analysis generation."}
-                </p>
+              {/* Score Circle + Executive Summary */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
+                <div style={{ flexShrink: 0, width: '80px', height: '80px', borderRadius: '50%', background: `conic-gradient(${score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'} ${score * 3.6}deg, #f1f5f9 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.25rem', color: '#0f172a' }}>
+                    {score}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '1.125rem', color: '#475569', fontStyle: 'italic', margin: 0 }}>
+                    {analysis.summary ? String(analysis.summary) : "Pending analysis generation."}
+                  </p>
+                </div>
               </div>
+
+              {/* Narrative Strategy */}
+              {letter.narrative_strategy && Array.isArray(letter.narrative_strategy) && letter.narrative_strategy.length > 0 && (
+                <div style={{ background: '#fefce8', borderRadius: '8px', padding: '1.5rem', border: '1px solid #fef08a' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#854d0e', marginBottom: '1rem' }}>Narrative Strategy</h3>
+                  <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0, listStyleType: 'none' }}>
+                    {letter.narrative_strategy.map((bullet: any, i: number) => (
+                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                        <span style={{ color: '#d97706', marginRight: '0.75rem', marginTop: '0.1rem', fontWeight: 700 }}>→</span>
+                        <span style={{ color: '#78350f' }}>{typeof bullet === 'string' ? bullet : JSON.stringify(bullet)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* State of Play */}
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The State of Play</h3>
-                <p style={{ margin: 0 }}>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>THE STATE OF PLAY</h3>
+                <div style={{ whiteSpace: 'pre-line' }}>
+                  <p style={{ margin: 0 }}>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
+                </div>
               </div>
 
-              {/* Unfair Advantage */}
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The Unfair Advantage</h3>
-                <p style={{ margin: 0 }}>{letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}</p>
+              {/* Unfair Advantage — THE WEAPON */}
+              <div style={{ background: '#eef2ff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #c7d2fe' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '1rem' }}>THE UNFAIR ADVANTAGE <span style={{ fontWeight: 400, color: '#6366f1' }}>(THE WEAPON)</span></h3>
+                <div style={{ whiteSpace: 'pre-line' }}>
+                  <p style={{ margin: 0 }}>{letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}</p>
+                </div>
               </div>
 
-              {/* Reality Check */}
-              <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>The Reality Check</h3>
-                <p style={{ marginBottom: '1rem', color: '#475569' }}>The submission is currently held back by avoidable defects:</p>
+              {/* Reality Check — VOICE OF TRUTH */}
+              <div style={{ background: '#fef2f2', borderRadius: '8px', padding: '1.5rem', border: '1px solid #fecaca' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#991b1b', marginBottom: '0.5rem' }}>THE REALITY CHECK <span style={{ fontWeight: 400, color: '#dc2626' }}>(VOICE OF TRUTH)</span></h3>
+                <p style={{ marginBottom: '1rem', color: '#7f1d1d', fontSize: '0.9rem' }}>The Board must accept the hard truth: rank movement requires the following to be addressed.</p>
                 <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: 0, margin: 0, listStyleType: 'none' }}>
                   {realityCheck.length > 0 ? realityCheck.map((point: any, i: number) => (
                     <li key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <span style={{ color: '#f59e0b', marginRight: '0.5rem', marginTop: '0.1rem' }}>•</span>
+                      <span style={{ color: '#dc2626', marginRight: '0.75rem', marginTop: '0.1rem', fontWeight: 700 }}>⚠</span>
                       <span>{typeof point === 'object' ? JSON.stringify(point) : String(point)}</span>
                     </li>
                   )) : (
@@ -210,22 +243,125 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                 </ul>
               </div>
 
-              {/* Path to Dominance */}
+              {/* Path to Dominance — Milestones */}
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '1.5rem' }}>The Path to Dominance</h3>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '1.5rem' }}>THE PATH TO DOMINANCE</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {pathToDominance.length > 0 ? pathToDominance.map((step: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', background: '#ffffff', border: '1px solid #e2e8f0', padding: '1.25rem', borderRadius: '8px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-                      <div style={{ flex: 1, paddingRight: '1rem' }}>
-                        <h4 style={{ fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', margin: 0 }}>STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}</h4>
-                        <p style={{ color: '#475569', margin: 0 }}>{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
+                    <div key={i} style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <span style={{ background: '#1A237E', color: '#fff', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>
+                          {i + 1}
+                        </span>
+                        <h4 style={{ fontWeight: 700, color: '#0f172a', margin: 0, fontSize: '1rem' }}>
+                          STEP {i + 1}: {typeof step === 'object' ? (step?.title ? String(step.title) : "Strategic Step") : "Strategic Step"}
+                        </h4>
+                        {typeof step === 'object' && step?.deadline && (
+                          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600, color: '#d97706', background: '#fef3c7', padding: '0.25rem 0.75rem', borderRadius: '999px' }}>
+                            {step.deadline}
+                          </span>
+                        )}
                       </div>
+                      {typeof step === 'object' && step?.why && (
+                        <p style={{ color: '#6366f1', fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.5rem' }}>Why: <span style={{ fontWeight: 400, color: '#475569' }}>{step.why}</span></p>
+                      )}
+                      {typeof step === 'object' && step?.what_must_be_delivered && (
+                        <p style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.5rem' }}>What must be delivered: <span style={{ fontWeight: 400, color: '#475569' }}>{step.what_must_be_delivered}</span></p>
+                      )}
+                      <p style={{ color: '#475569', margin: 0, lineHeight: 1.6 }}>{typeof step === 'object' ? (step?.description ? String(step.description) : JSON.stringify(step)) : String(step)}</p>
                     </div>
                   )) : (
                     <p style={{ color: '#64748b', fontStyle: 'italic', margin: 0 }}>Strategic path is being formulated.</p>
                   )}
                 </div>
               </div>
+
+              {/* Matter Evaluations / Case Evaluation */}
+              {letter.matter_evaluations && Array.isArray(letter.matter_evaluations) && letter.matter_evaluations.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>Case Evaluation / Matters</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                    {letter.matter_evaluations.map((ev: any, i: number) => {
+                      const mScore = typeof ev.score === 'number' ? ev.score : 0;
+                      const labelColor = ev.quality_label?.includes('Strong') || ev.quality_label?.includes('Flagship') ? '#16a34a'
+                        : ev.quality_label?.includes('Good') ? '#d97706'
+                        : '#dc2626';
+                      return (
+                        <div key={i} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)' }}>
+                          <h4 style={{ fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem', fontSize: '0.95rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{ev.matter_name || `Matter ${i + 1}`}</h4>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: ev.type === 'confidential' ? '#dc2626' : '#2563eb', textTransform: 'uppercase' as const }}>Type: {ev.type || 'publishable'}</span>
+                          </div>
+                          <p style={{ color: labelColor, fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.5rem' }}>{ev.quality_label || 'Pending evaluation'}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: mScore >= 70 ? '#16a34a' : mScore >= 40 ? '#d97706' : '#dc2626' }}>{mScore}</span>
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>/100</span>
+                          </div>
+                          {ev.improvement_note && (
+                            <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0, fontStyle: 'italic' }}>{ev.improvement_note}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Competitive Positioning */}
+              {competitiveContext && (
+                <div style={{ background: '#f0fdf4', borderRadius: '8px', padding: '1.5rem', border: '1px solid #bbf7d0' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534', marginBottom: '1rem' }}>Competitive Positioning</h3>
+                  <p style={{ color: '#1e293b', lineHeight: 1.7, margin: 0 }}>{competitiveContext}</p>
+                </div>
+              )}
+
+              {/* AI-Recommended Matter Rewrites */}
+              {recommendedRewrites.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '0.5rem' }}>AI-Recommended Matter Rewrites</h3>
+                  <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1.5rem' }}>The following matters have been identified as strategically weak. Below are AI-generated Chambers-grade improved versions (220-260 words each):</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {recommendedRewrites.map((rw: any, i: number) => (
+                      <div key={i} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)' }}>
+                        <div style={{ padding: '1.25rem', borderBottom: '1px solid #f1f5f9' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Original (Weak)</span>
+                          <p style={{ color: '#6b7280', margin: '0.5rem 0 0', fontSize: '0.9rem', fontStyle: 'italic' }}>{typeof rw === 'object' ? (rw.original || 'N/A') : String(rw)}</p>
+                        </div>
+                        <div style={{ padding: '1.25rem', background: '#f0fdf4', borderBottom: '1px solid #bbf7d0' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI-Improved Version</span>
+                          <p style={{ color: '#1e293b', margin: '0.5rem 0 0', fontSize: '0.9rem', lineHeight: 1.6 }}>{typeof rw === 'object' ? (rw.improved || 'N/A') : ''}</p>
+                        </div>
+                        {typeof rw === 'object' && rw.rationale && (
+                          <div style={{ padding: '1rem 1.25rem', background: '#fefce8', borderTop: '1px solid #fef08a' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a16207' }}>Rationale: </span>
+                            <span style={{ fontSize: '0.85rem', color: '#78716c' }}>{rw.rationale}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Ready-to-Use Positioning Text */}
+              {positioningText && (
+                <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #bfdbfe' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e40af', marginBottom: '0.5rem' }}>Ready-to-Use Positioning Text (B7/C2)</h3>
+                  <p style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '1rem' }}>AI-generated paragraph ready to copy-paste into your Chambers submission:</p>
+                  <div style={{ background: '#ffffff', border: '1px solid #dbeafe', borderRadius: '8px', padding: '1.25rem' }}>
+                    <p style={{ color: '#1e293b', lineHeight: 1.7, margin: 0, fontSize: '0.95rem' }}>{positioningText}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Closing */}
+              {letter.closing && (
+                <div style={{ borderTop: '2px solid #1A237E', paddingTop: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1A237E', marginBottom: '1rem' }}>CLOSING</h3>
+                  <p style={{ color: '#1e293b', lineHeight: 1.7, margin: '0 0 1rem' }}>{String(letter.closing)}</p>
+                  <p style={{ color: '#64748b', fontStyle: 'italic', margin: 0 }}>Respectfully,<br />RankPilot Consulting</p>
+                </div>
+              )}
 
               {/* Execution Layer Actions */}
               <div className="print-hidden" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid #e2e8f0' }}>

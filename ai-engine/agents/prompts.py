@@ -94,15 +94,34 @@ Do NOT present matter count as a hard rule. Instead: "Build the narrative around
 
 ### STRATEGIC AUDIT LETTER STRUCTURE:
 You must output a highly structured JSON that powers the Next.js frontend UI.
+This report should be as deep and actionable as a senior consulting engagement.
 
 1. "risk_level": "Low" | "Moderate" | "High"
 2. "score": integer 0-100 based on how well the evidence meets the realistic target
 3. "summary": A brutal, 3-sentence executive summary of their position and what holds them back (relative to their target).
-4. "the_state_of_play": A paragraph analyzing their current footprint based on the context.
-5. "the_unfair_advantage": A paragraph highlighting their core differentiator (based on Archetype and Complexity).
-6. "the_reality_check": 3-4 bullet points detailing avoidable defects in their submission.
-7. "the_path_to_dominance": 2 concrete strategic steps to reach the Target Realistic.
-8. "competitive_context": A paragraph comparing this firm against the typical profile of firms in the target band for this specific directory/practice/jurisdiction.
+4. "narrative_strategy": An array of exactly 3 strategic narrative guidance bullets. Each bullet should tell the firm HOW to frame their submission narrative. Example: "Center the narrative on execution-grade banking/regulatory advisory that enables deals." These must be specific to the firm's practice and jurisdiction.
+5. "the_state_of_play": 2-3 paragraphs analyzing their current footprint. Be specific about what they DO well and where the structural ceiling sits. Reference specific matters and clients.
+6. "the_unfair_advantage": Title this "THE WEAPON". 2-3 paragraphs explaining their core differentiator with numbered examples from their matters. Explain why this matters competitively. End with "This is your Weapon."
+7. "the_reality_check": Title this "VOICE OF TRUTH". 3-5 bullet points detailing avoidable defects. Be specific: name the matters, the missing elements, the structural gaps.
+8. "the_path_to_dominance": 3-5 concrete strategic MILESTONES. Each must include:
+   - "title": step name (e.g., "Transaction mechanic extraction from evidence")
+   - "why": Why this step matters for rank movement
+   - "what_must_be_delivered": Specific deliverables the firm must produce
+   - "deadline": Suggested deadline (e.g., "Complete by [date + 7 days]")
+   - "description": Full detailed paragraph combining all the above
+9. "competitive_context": A paragraph comparing this firm against the typical profile of firms in the target band.
+10. "matter_evaluations": For EVERY matter in the submission, provide a quality assessment:
+    - "matter_name": client name or matter title
+    - "type": "publishable" | "confidential"  
+    - "quality_label": "Strong Chambers matter" | "Good but underdeveloped matter" | "Low-value or wrong-fit matter" | "Flagship matter"
+    - "score": integer 0-100
+    - "improvement_note": 1-2 sentences on what would make this matter score higher
+11. "recommended_rewrites": For the 2-3 WEAKEST matters, provide complete rewritten versions:
+    - "original": the original weak text
+    - "improved": AI-rewritten Chambers-grade version (220-260 words, with transaction mechanics, role framing, deliverables)
+    - "rationale": why this rewrite is more rankable
+12. "competitive_positioning_text": A 200-300 word paragraph ready to copy-paste into Section B7 or C2.
+13. "closing": A decisive 3-4 sentence closing paragraph. Summarize the core message, name the milestones, and end with a strong call to action.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
 {{
@@ -110,19 +129,35 @@ You must output a highly structured JSON that powers the Next.js frontend UI.
   "score": "integer",
   "summary": "string",
   "audit_letter": {{
+    "narrative_strategy": ["string", "string", "string"],
     "the_state_of_play": "string",
     "the_unfair_advantage": "string",
-    "the_reality_check": ["string", "string"],
+    "the_reality_check": ["string", "string", "string"],
     "the_path_to_dominance": [
-      {{ "title": "string", "description": "string" }}
+      {{ "title": "string", "why": "string", "what_must_be_delivered": "string", "deadline": "string", "description": "string" }}
     ],
-    "competitive_context": "string"
+    "competitive_context": "string",
+    "matter_evaluations": [
+      {{ "matter_name": "string", "type": "string", "quality_label": "string", "score": "integer", "improvement_note": "string" }}
+    ],
+    "recommended_rewrites": [
+      {{
+        "original": "the original weak matter text",
+        "improved": "the AI-rewritten stronger version",
+        "rationale": "why this rewrite is more rankable"
+      }}
+    ],
+    "competitive_positioning_text": "string",
+    "closing": "string"
   }},
   "confidence_score": 100
 }}
 
 ### CONSTRAINTS:
 - The output must be ACTIONABLE. If it doesn't change decisions, it's useless.
+- Each path_to_dominance step MUST include specific deliverables, not generic advice.
+- matter_evaluations MUST cover EVERY matter — do not skip any.
+- recommended_rewrites must be FULL 220-260 word rewrites, not summaries.
 - CRITICAL DIRECTIVE: You MUST output all text in the language specified by the user context. Default: English.
 """
 
