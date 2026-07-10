@@ -16,12 +16,13 @@ type Matter = {
   client: string;
   value: string;
   status: string;
-  leadPartner?: string;
-  rawNotes?: string;
-  optimizedText?: string;
-  threadId?: string;
+  leadPartner: string;
+  rawNotes: string | null;
+  optimizedText: string | null;
+  threadId: string | null;
   createdAt: Date | string;
-  updatedAt?: Date | string;
+  updatedAt: Date | string;
+  submissionId: string;
   submission?: {
     targetDirectory: string;
     practiceArea: string;
