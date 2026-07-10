@@ -55,12 +55,8 @@ export default function Sidebar() {
       overflowY: 'auto'
     }}>
       {/* Logo */}
-      <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        {/* Placeholder for Logo, since we don't have the exact image asset, we use text styling similar to logo */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ fontSize: '1.5rem', fontWeight: 300, color: '#0f172a' }}>RANK</span>
-          <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>PILOT</span>
-        </div>
+      <div style={{ padding: '1.25rem 1rem', display: 'flex', alignItems: 'center' }}>
+        <img src="/logo-rankpilot.png" alt="RankPilot" style={{ height: '36px', width: 'auto' }} />
       </div>
 
       {/* PLATFORM SECTION */}
