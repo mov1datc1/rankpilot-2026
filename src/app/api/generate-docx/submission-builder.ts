@@ -141,11 +141,8 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
   const elements: (Paragraph | Table)[] = [];
   const guideRegion = submission.guideRegion || chambersData.jurisdiction || 'Mexico';
   const matters = submission.matters || [];
-  const publishableMatters = matters.filter((m: any) => !m.isConfidential);
-  const confidentialMatters = matters.filter((m: any) => m.isConfidential);
-  // If none marked confidential, treat all as publishable
-  const pubMatters = publishableMatters.length > 0 ? publishableMatters : matters;
-  const confMatters = confidentialMatters;
+  const pubMatters = matters.filter((m: any) => !m.isConfidential);
+  const confMatters = matters.filter((m: any) => m.isConfidential);
 
   // ═══ TITLE PAGE ═══
   elements.push(
@@ -334,15 +331,15 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
   // ═══ SECTION E ═══
   elements.push(new Paragraph({ children: [new PageBreak()] }));
   elements.push(para('E. CONFIDENTIAL INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
-  elements.push(para("All information in section 'E' is considered CONFIDENTIAL and NOT FOR PUBLICATION. Information in this section will only be used for our internal ranking purposes.", { italics: true, size: 16, spacing: { after: 200 } }));
+  elements.push(para("All information in section 'E' is considered CONFIDENTIAL and NOT FOR PUBLICATION. Information in this section will only be used for our internal ranking purposes. If any part of a matter is confidential it should be included in this section 'E' not section 'D'.", { italics: true, size: 16, spacing: { after: 200 } }));
 
   // E0 Confidential Clients
   const confClients = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
   const e0Rows = confClients.length > 0
     ? confClients.map((c, i) => [String(i + 1), String(c), 'No'])
     : [['', '', '']];
-  while (e0Rows.length < 4) e0Rows.push(['', '', '']);
-  elements.push(dataTable("CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months).", ['', 'Name of Client', 'New Client (Y/N)'], e0Rows, { labelPrefix: 'E0 –' }));
+  while (e0Rows.length < 8) e0Rows.push(['', '', '']);
+  elements.push(dataTable("CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.", ['', 'Name of Client', 'New Client (Y/N)'], e0Rows, { labelPrefix: 'E0 –' }));
 
   // E matters
   for (let i = 0; i < confMatters.length; i++) {
