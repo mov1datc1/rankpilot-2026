@@ -9,6 +9,7 @@ function ProcessingContent() {
   const searchParams = useSearchParams();
   const submissionId = searchParams.get('id');
   const documentUrl = searchParams.get('url');
+  const rawText = searchParams.get('text');
 
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(1); 
@@ -16,7 +17,9 @@ function ProcessingContent() {
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
-    if (!submissionId || !documentUrl || hasStarted) return;
+    if (!submissionId || hasStarted) return;
+    // Need either a documentUrl or raw text to process
+    if (!documentUrl && !rawText) return;
     setHasStarted(true);
     
     // Iniciar el procesamiento real
@@ -25,10 +28,19 @@ function ProcessingContent() {
         setStep(1);
         setProgress(20);
         
+        const body: any = { submissionId };
+        if (documentUrl) {
+          body.documentUrl = documentUrl;
+        }
+        if (rawText) {
+          body.text = rawText;
+          body.is_text = true;
+        }
+
         const res = await fetch('/api/process-document', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ submissionId, documentUrl })
+          body: JSON.stringify(body)
         });
         
         setProgress(75);
@@ -53,7 +65,7 @@ function ProcessingContent() {
     };
 
     processDocument();
-  }, [submissionId, documentUrl, router, hasStarted]);
+  }, [submissionId, documentUrl, rawText, router, hasStarted]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 0' }}>

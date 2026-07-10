@@ -9,6 +9,8 @@ import { createClient } from '@/utils/supabase/client';
 export default function SubmissionsPage() {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [pasteText, setPasteText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +65,54 @@ export default function SubmissionsPage() {
         // Save the submission context globally or pass via URL
         localStorage.setItem('activeSubmissionId', result.data.id);
         router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}`);
+      } else {
+        alert('Error creating submission: ' + result.error);
+        setIsSubmitting(false);
+      }
+    } catch (error: any) {
+      alert(error.message);
+      setIsSubmitting(false);
+    }
+  };
+
+  const startPasteTextAudit = async () => {
+    if (!pasteText.trim()) {
+      alert('Please paste some text before proceeding.');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const result = await createSubmission({
+        targetDirectory,
+        guideRegion,
+        practiceArea
+      });
+
+      if (result.success && result.data) {
+        localStorage.setItem('activeSubmissionId', result.data.id);
+        router.push(`/submissions/processing?id=${result.data.id}&text=${encodeURIComponent(pasteText)}`);
+      } else {
+        alert('Error creating submission: ' + result.error);
+        setIsSubmitting(false);
+      }
+    } catch (error: any) {
+      alert(error.message);
+      setIsSubmitting(false);
+    }
+  };
+
+  const startFromScratch = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await createSubmission({
+        targetDirectory,
+        guideRegion,
+        practiceArea
+      });
+
+      if (result.success && result.data) {
+        localStorage.setItem('activeSubmissionId', result.data.id);
+        router.push(`/submissions/builder?id=${result.data.id}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);
@@ -165,6 +215,7 @@ export default function SubmissionsPage() {
 
         {/* Paste Raw Text Card */}
         <button 
+          onClick={() => setShowPasteModal(true)}
           style={{ 
             background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '3rem 2rem', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
@@ -181,18 +232,21 @@ export default function SubmissionsPage() {
 
         {/* Start from Scratch Card */}
         <button 
+          onClick={startFromScratch}
+          disabled={isSubmitting}
           style={{ 
             background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '3rem 2rem', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
-            cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+            cursor: isSubmitting ? 'wait' : 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            opacity: isSubmitting ? 0.6 : 1
           }}
           onMouseOver={(e) => e.currentTarget.style.borderColor = '#2563eb'}
           onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
         >
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-            <Edit3 size={24} />
+            {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Edit3 size={24} />}
           </div>
-          <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#334155' }}>Start from Scratch</span>
+          <span style={{ fontSize: '1.1rem', fontWeight: 600, color: '#334155' }}>{isSubmitting ? 'Creating...' : 'Start from Scratch'}</span>
         </button>
 
       </div>
@@ -275,6 +329,64 @@ export default function SubmissionsPage() {
                 onMouseOut={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#3b82f6'; }}
               >
                 {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Creando Proyecto...</> : 'Start Upload Audit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paste Raw Text Modal */}
+      {showPasteModal && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 
+        }}>
+          <div style={{ 
+            background: '#ffffff', borderRadius: '16px', width: '100%', maxWidth: '700px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', overflow: 'hidden', animation: 'scale-in 0.2s ease-out'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem', borderBottom: '1px solid #e2e8f0' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Paste Raw Submission Text</h3>
+              <button onClick={() => { setShowPasteModal(false); setPasteText(''); }} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#94a3b8', cursor: 'pointer' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '2rem' }}>
+              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Paste your raw submission text, matter notes, or any unstructured content below. The AI engine will extract, structure, and analyze it.</p>
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Paste your submission text here...&#10;&#10;Example: The firm advised JP Morgan Chase on a complex cross-border restructuring involving Venezuelan regulatory constraints...&#10;&#10;You can paste entire submission drafts, matter descriptions, firm narratives, or raw notes."
+                style={{ 
+                  width: '100%', minHeight: '250px', padding: '1rem', borderRadius: '8px', 
+                  border: '1px solid #cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, 
+                  resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+                  color: '#1e293b', background: '#f8fafc'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{pasteText.length} characters</span>
+              </div>
+            </div>
+
+            <div style={{ padding: '1.5rem 2rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button 
+                onClick={() => { setShowPasteModal(false); setPasteText(''); }}
+                style={{ background: '#f1f5f9', color: '#475569', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 500, border: '1px solid #e2e8f0', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={startPasteTextAudit}
+                disabled={!pasteText.trim() || isSubmitting}
+                style={{ 
+                  background: pasteText.trim() && !isSubmitting ? '#3b82f6' : '#94a3b8', 
+                  color: '#ffffff', padding: '0.75rem 2rem', 
+                  borderRadius: '8px', fontWeight: 500, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  cursor: pasteText.trim() && !isSubmitting ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Processing...</> : 'Process with AI'}
               </button>
             </div>
           </div>

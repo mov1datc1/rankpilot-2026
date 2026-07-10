@@ -21,6 +21,7 @@ type Submission = {
   status: string;
   createdAt: Date | string;
   matters: Matter[];
+  chambersData?: any;
 };
 
 export default function ReportsPage() {
@@ -267,7 +268,13 @@ export default function ReportsPage() {
                 return (
                   <tr key={sub.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '1.25rem 1.5rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>
-                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '1rem', marginBottom: '0.2rem' }}>{sub.targetDirectory}</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '1rem', marginBottom: '0.2rem' }}>
+                        {(() => {
+                          const cd = sub.chambersData as any;
+                          const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || '';
+                          return firmName ? `${firmName} — ${sub.targetDirectory}` : sub.targetDirectory;
+                        })()}
+                      </div>
                       <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{sub.practiceArea} · {sub.guideRegion}</div>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>

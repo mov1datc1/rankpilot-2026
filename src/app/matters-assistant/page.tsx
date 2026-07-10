@@ -16,7 +16,12 @@ type Matter = {
   client: string;
   value: string;
   status: string;
+  leadPartner?: string;
+  rawNotes?: string;
+  optimizedText?: string;
+  threadId?: string;
   createdAt: Date | string;
+  updatedAt?: Date | string;
   submission?: {
     targetDirectory: string;
     practiceArea: string;
@@ -37,6 +42,7 @@ export default function MattersAssistantPage() {
   const [editForm, setEditForm] = useState({ name: '', client: '', value: '' });
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState<string | null>(null);
+  const [expandedMatterId, setExpandedMatterId] = useState<string | null>(null);
 
   // Form State for Assistant
   const [directory, setDirectory] = useState('Chambers');
@@ -431,10 +437,11 @@ export default function MattersAssistantPage() {
                   </thead>
                   <tbody>
                     {filteredMatters.map((m) => (
-                      <tr key={m.id} style={{ borderBottom: '1px solid #E5E7EB', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                      <>
+                      <tr key={m.id} style={{ borderBottom: expandedMatterId === m.id ? 'none' : '1px solid #E5E7EB', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = expandedMatterId === m.id ? '#F8FAFF' : 'transparent'} onClick={() => setExpandedMatterId(expandedMatterId === m.id ? null : m.id)}>
                         <td style={{ padding: '1rem 1.5rem' }}>
                           {editingMatterId === m.id ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
                               <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} style={{ width: '100%', padding: '0.25rem 0.5rem', border: '1px solid #D1D5DB', borderRadius: '0.25rem', fontSize: '0.875rem', fontWeight: 'bold' }} />
                               <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input type="text" value={editForm.client} onChange={e => setEditForm({...editForm, client: e.target.value})} placeholder="Client" style={{ width: '50%', padding: '0.25rem 0.5rem', border: '1px solid #D1D5DB', borderRadius: '0.25rem', fontSize: '0.75rem' }} />
@@ -442,10 +449,13 @@ export default function MattersAssistantPage() {
                               </div>
                             </div>
                           ) : (
-                            <>
-                              <div style={{ fontWeight: 'bold', color: '#1A237E' }}>{m.name}</div>
-                              <div style={{ fontSize: '0.875rem', color: '#6B7280', marginTop: '0.25rem' }}>Client: {m.client} | Value: {m.value}</div>
-                            </>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <ChevronRight size={14} style={{ color: '#9CA3AF', transition: 'transform 0.2s', transform: expandedMatterId === m.id ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+                              <div>
+                                <div style={{ fontWeight: 'bold', color: '#1A237E' }}>{m.name}</div>
+                                <div style={{ fontSize: '0.875rem', color: '#6B7280', marginTop: '0.25rem' }}>Client: {m.client} | Value: {m.value}</div>
+                              </div>
+                            </div>
                           )}
                         </td>
                         <td style={{ padding: '1rem 1.5rem' }}>
@@ -472,7 +482,7 @@ export default function MattersAssistantPage() {
                             </span>
                           )}
                         </td>
-                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                             {editingMatterId === m.id ? (
                               <>
@@ -499,6 +509,79 @@ export default function MattersAssistantPage() {
                           </div>
                         </td>
                       </tr>
+                      {/* Expanded Detail Panel */}
+                      {expandedMatterId === m.id && (
+                        <tr key={`${m.id}-detail`}>
+                          <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid #E5E7EB' }}>
+                            <div style={{ background: '#F8FAFF', padding: '1.5rem 2rem', borderTop: '2px solid #1A237E', animation: 'fadeIn 0.2s ease-in' }}>
+                              {/* Header row */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                                <div style={{ flex: 1, minWidth: '200px' }}>
+                                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', margin: '0 0 0.25rem' }}>{m.name}</h3>
+                                  <p style={{ fontSize: '0.85rem', color: '#6B7280', margin: 0 }}>
+                                    {m.submission?.targetDirectory} · {m.submission?.practiceArea}
+                                  </p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Client</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827' }}>{m.client || 'N/A'}</div>
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Value</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827' }}>{m.value || 'N/A'}</div>
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Lead Partner</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#111827' }}>{m.leadPartner || 'N/A'}</div>
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Status</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: m.status === 'AI Optimized' ? '#16a34a' : '#d97706' }}>{m.status}</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Content Grid: Raw Notes vs Optimized Text */}
+                              <div style={{ display: 'grid', gridTemplateColumns: m.optimizedText ? '1fr 1fr' : '1fr', gap: '1rem' }}>
+                                {/* Raw Notes */}
+                                <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <FileText size={14} style={{ color: '#6B7280' }} />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Raw Notes / Input</span>
+                                  </div>
+                                  <p style={{ fontSize: '0.875rem', color: '#374151', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                                    {m.rawNotes || 'No raw notes available for this matter.'}
+                                  </p>
+                                </div>
+
+                                {/* Optimized Text */}
+                                {m.optimizedText && (
+                                  <div style={{ background: '#F0FDF4', borderRadius: '8px', border: '1px solid #BBF7D0', padding: '1.25rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                      <Sparkles size={14} style={{ color: '#16a34a' }} />
+                                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>AI Optimized Version</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.875rem', color: '#1e293b', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                                      {m.optimizedText}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Footer metadata */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #E5E7EB' }}>
+                                <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
+                                  Created: {new Date(m.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  {m.updatedAt && ` · Updated: ${new Date(m.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>ID: {m.id.slice(0, 8)}...</span>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </>
                     ))}
                   </tbody>
                 </table>
