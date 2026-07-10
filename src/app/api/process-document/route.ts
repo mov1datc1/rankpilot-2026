@@ -89,6 +89,11 @@ export async function POST(request: NextRequest) {
     const analysisData = pyData.data?.analysis || pyData.analysis;
     const strategicContext = pyData.data?.strategic_context || pyData.strategic_context;
 
+    // Extract department/lawyers/contacts from AI metadata (new structured fields)
+    const extractedDept = extractedData?.department || {};
+    const extractedLawyers = extractedData?.lawyers || [];
+    const extractedContacts = extractedData?.contacts || [];
+
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
     if (extractedMatters && Array.isArray(extractedMatters)) {
@@ -100,18 +105,26 @@ export async function POST(request: NextRequest) {
             submissionId,
             name: m.name || m.title || 'Extracted Matter',
             client: m.client || 'Unknown Client',
-            value: m.value || 'N/A',
+            value: m.matter_value || m.value || 'N/A',
             leadPartner: m.lead_partner || m.partner || 'Unknown',
             rawNotes: [m.summary, m.significance].filter(Boolean).join('\n\n') || m.description || m.notes || 'No description extracted',
             optimizedText: m.optimized_text || null,
-            status: isOptimized ? 'AI Optimized' : 'Draft'
+            status: isOptimized ? 'AI Optimized' : 'Draft',
+            // New Chambers-specific fields
+            isConfidential: m.is_confidential || false,
+            crossBorder: m.is_cross_border ? (m.cross_border_jurisdictions || 'Yes') : '',
+            teamMembers: m.team_members || '',
+            otherFirms: m.other_firms || '',
+            completionDate: m.completion_date || '',
+            otherInfo: '',
+            isNewClient: m.is_new_client || false,
           }
         });
         createdCount++;
       }
     }
 
-    // ALWAYS persist analysis and strategicContext into chambersData
+    // ALWAYS persist analysis, strategicContext, AND department/lawyer data into chambersData
     const existingChambersData = (submission.chambersData as any) || {};
     await prisma.submission.update({
       where: { id: submissionId },
@@ -120,7 +133,23 @@ export async function POST(request: NextRequest) {
           ...existingChambersData,
           metadata: extractedData || existingChambersData.metadata,
           analysis: analysisData || existingChambersData.analysis,
-          strategicContext: strategicContext || existingChambersData.strategicContext
+          strategicContext: strategicContext || existingChambersData.strategicContext,
+          // New: persist department/lawyer/contact data from AI extraction
+          ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
+          ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),
+          ...(extractedDept.num_lawyers ? { numLawyers: extractedDept.num_lawyers } : {}),
+          ...(extractedDept.department_heads?.length ? { departmentHeads: extractedDept.department_heads } : {}),
+          ...(extractedDept.hires_departures?.length ? { hires: extractedDept.hires_departures } : {}),
+          ...(extractedDept.department_description ? { departmentDesc: extractedDept.department_description } : {}),
+          ...(extractedLawyers.length ? {
+            lawyers: extractedLawyers.map((l: any) => ({
+              name: l.name, url: l.url || '', currentRank: l.current_ranking || 'Not Ranked',
+              suggestedRank: l.suggested_ranking || '', focus: l.key_focus || '',
+              bio: l.bio || '', standoutWork: l.standout_work || '',
+              isPartner: l.is_partner || false, isRanked: l.is_ranked || false,
+            }))
+          } : {}),
+          ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
         },
         status: 'Submitted'
       }

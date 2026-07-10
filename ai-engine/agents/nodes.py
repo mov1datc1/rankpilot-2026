@@ -70,12 +70,17 @@ def extraction_node(state: AgentState) -> Dict:
     elif isinstance(structured_data, dict):
         data_dict = structured_data
     else:
-        data_dict = {"metadata": {}, "matters": []}
+        data_dict = {"metadata": {}, "matters": [], "department": {}, "lawyers": [], "contacts": []}
 
     # Extract metadata correctly
     ext_meta = data_dict.get("metadata", {})
     if not isinstance(ext_meta, dict):
         ext_meta = {}
+
+    # Extract new structured fields
+    ext_dept = data_dict.get("department", {})
+    ext_lawyers = data_dict.get("lawyers", [])
+    ext_contacts = data_dict.get("contacts", [])
 
     # Sincronizamos con las llaves exactas de state.py
     return {
@@ -83,7 +88,11 @@ def extraction_node(state: AgentState) -> Dict:
             "firm_name": ext_meta.get("firm_name", ""),
             "practice_area": ext_meta.get("practice_area", ""),
             "location": ext_meta.get("location", ""),
-            "narrative": ext_meta.get("narrative_overview", "")
+            "narrative": ext_meta.get("narrative_overview", ""),
+            # New structured fields for chambersData
+            "department": ext_dept,
+            "lawyers": ext_lawyers,
+            "contacts": ext_contacts,
         },
         "matters": data_dict.get("matters", []),
         "current_step": "context"

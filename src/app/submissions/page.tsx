@@ -112,7 +112,7 @@ export default function SubmissionsPage() {
 
       if (result.success && result.data) {
         localStorage.setItem('activeSubmissionId', result.data.id);
-        router.push(`/submissions/builder?id=${result.data.id}`);
+        router.push(`/submissions/department?id=${result.data.id}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);

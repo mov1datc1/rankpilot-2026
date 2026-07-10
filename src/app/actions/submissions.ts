@@ -107,3 +107,53 @@ export async function updateSubmissionStatus(id: string, status: string, score?:
     return { success: false, error: error.message };
   }
 }
+
+// ── Update Submission Department Data (Chambers Sections A4, B, C) ──
+export async function updateSubmissionDepartment(submissionId: string, deptData: {
+  contacts: { name: string; email: string; phone: string }[];
+  departmentName: string;
+  numPartners: number;
+  numLawyers: number;
+  departmentHeads: { name: string; email: string; phone: string }[];
+  hires: { name: string; status: string; firm: string }[];
+  lawyers: {
+    name: string; url: string; currentRank: string; suggestedRank: string;
+    focus: string; bio: string; standoutWork: string; isPartner: boolean; isRanked: boolean;
+  }[];
+  departmentDesc: string;
+  feedback: string;
+}) {
+  try {
+    const user = await getAuthenticatedUser();
+    const existing = await prisma.submission.findUnique({ where: { id: submissionId } });
+
+    if (!existing || existing.userId !== user.id) {
+      throw new Error('No tienes permiso para actualizar este submission.');
+    }
+
+    const existingData = (existing.chambersData as any) || {};
+
+    const submission = await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        chambersData: {
+          ...existingData,
+          contacts: deptData.contacts,
+          departmentName: deptData.departmentName,
+          numPartners: deptData.numPartners,
+          numLawyers: deptData.numLawyers,
+          departmentHeads: deptData.departmentHeads,
+          hires: deptData.hires,
+          lawyers: deptData.lawyers,
+          departmentDesc: deptData.departmentDesc,
+          feedback: deptData.feedback,
+        }
+      }
+    });
+
+    return { success: true, data: submission };
+  } catch (error: any) {
+    console.error('Error updating department data:', error);
+    return { success: false, error: error.message };
+  }
+}

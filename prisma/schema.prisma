@@ -64,6 +64,13 @@ model Matter {
   optimizedText  String?  @db.Text
   status         String   @default("Draft")
   threadId       String?
+  isConfidential Boolean  @default(false)
+  crossBorder    String?
+  teamMembers    String?
+  otherFirms     String?
+  completionDate String?
+  otherInfo      String?
+  isNewClient    Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

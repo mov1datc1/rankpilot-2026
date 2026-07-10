@@ -40,6 +40,13 @@ export async function createMatter(data: {
   value: string;
   leadPartner: string;
   rawNotes?: string;
+  isConfidential?: boolean;
+  crossBorder?: string;
+  teamMembers?: string;
+  otherFirms?: string;
+  completionDate?: string;
+  otherInfo?: string;
+  isNewClient?: boolean;
 }) {
   try {
     const user = await getAuthenticatedUser();
@@ -60,7 +67,14 @@ export async function createMatter(data: {
         value: data.value,
         leadPartner: data.leadPartner,
         rawNotes: data.rawNotes,
-        status: 'Draft'
+        status: 'Draft',
+        isConfidential: data.isConfidential || false,
+        crossBorder: data.crossBorder || '',
+        teamMembers: data.teamMembers || '',
+        otherFirms: data.otherFirms || '',
+        completionDate: data.completionDate || '',
+        otherInfo: data.otherInfo || '',
+        isNewClient: data.isNewClient || false,
       }
     });
 

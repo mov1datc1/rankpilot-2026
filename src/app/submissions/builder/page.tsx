@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Save, Trash2, Sparkles, Loader2, ArrowRight, FileText } from 'lucide-react';
+import { Plus, Save, Trash2, Sparkles, Loader2, ArrowRight, FileText, Shield, Globe } from 'lucide-react';
 import { createMatter } from '@/app/actions/matters';
 
 type MatterDraft = {
@@ -12,6 +12,13 @@ type MatterDraft = {
   value: string;
   leadPartner: string;
   rawNotes: string;
+  isConfidential: boolean;
+  crossBorder: string;
+  teamMembers: string;
+  otherFirms: string;
+  completionDate: string;
+  otherInfo: string;
+  isNewClient: boolean;
   saved: boolean;
 };
 
@@ -48,11 +55,18 @@ function BuilderContent() {
       value: '',
       leadPartner: '',
       rawNotes: '',
+      isConfidential: false,
+      crossBorder: '',
+      teamMembers: '',
+      otherFirms: '',
+      completionDate: '',
+      otherInfo: '',
+      isNewClient: false,
       saved: false,
     }]);
   };
 
-  const updateMatter = (id: string, field: keyof MatterDraft, value: string) => {
+  const updateMatter = (id: string, field: keyof MatterDraft, value: any) => {
     setMatters(prev => prev.map(m => m.id === id ? { ...m, [field]: value, saved: false } : m));
   };
 
@@ -73,6 +87,13 @@ function BuilderContent() {
       value: draft.value,
       leadPartner: draft.leadPartner,
       rawNotes: draft.rawNotes,
+      isConfidential: draft.isConfidential,
+      crossBorder: draft.crossBorder,
+      teamMembers: draft.teamMembers,
+      otherFirms: draft.otherFirms,
+      completionDate: draft.completionDate,
+      otherInfo: draft.otherInfo,
+      isNewClient: draft.isNewClient,
     });
     if (result.success) {
       setMatters(prev => prev.map(m => m.id === draft.id ? { ...m, saved: true } : m));
@@ -96,6 +117,16 @@ function BuilderContent() {
     router.push(`/submissions/processing?id=${submissionId}`);
   };
 
+  // Shared input style
+  const inputStyle = (disabled: boolean) => ({
+    padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB',
+    fontSize: '0.875rem', background: disabled ? '#f0fdf4' : '#fff', width: '100%',
+  });
+
+  const labelStyle = {
+    fontSize: '0.75rem', fontWeight: 600 as const, color: '#6B7280', textTransform: 'uppercase' as const,
+  };
+
   return (
     <div style={{ maxWidth: '900px' }}>
       <div style={{ marginBottom: '2rem' }}>
@@ -103,7 +134,7 @@ function BuilderContent() {
           <FileText size={28} style={{ color: '#2563eb' }} /> Build Submission
         </h1>
         <p style={{ fontSize: '1rem', color: '#64748b', marginTop: '0.25rem' }}>
-          Manually add matters to your submission. Each matter will be processed and optimized by AI.
+          Add matters with all Chambers-required fields. Each matter will be processed and optimized by AI.
         </p>
       </div>
 
@@ -121,12 +152,29 @@ function BuilderContent() {
               transition: 'all 0.2s',
             }}
           >
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#1A237E', margin: 0 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#1A237E', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 Matter #{idx + 1}
-                {m.saved && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#16a34a', fontWeight: 500 }}>✓ Saved</span>}
+                {m.saved && <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 500 }}>✓ Saved</span>}
+                {m.isConfidential && (
+                  <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontWeight: 600 }}>
+                    <Shield size={10} style={{ marginRight: '3px', verticalAlign: 'middle' }} />CONFIDENTIAL
+                  </span>
+                )}
               </h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {/* Confidential Toggle */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: m.isConfidential ? '#92400e' : '#64748b', fontWeight: 600, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={m.isConfidential}
+                    onChange={e => updateMatter(m.id, 'isConfidential', e.target.checked)}
+                    disabled={m.saved}
+                    style={{ accentColor: '#f59e0b' }}
+                  />
+                  Confidential (Section E)
+                </label>
                 {!m.saved && (
                   <button
                     onClick={() => saveMatter(m)}
@@ -147,61 +195,72 @@ function BuilderContent() {
               </div>
             </div>
 
+            {/* Row 1: Core Fields */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const }}>Matter Name *</label>
-                <input
-                  type="text"
-                  value={m.name}
-                  onChange={e => updateMatter(m.id, 'name', e.target.value)}
-                  placeholder="e.g., Cross-Border Acquisition of TechCorp"
-                  disabled={m.saved}
-                  style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', background: m.saved ? '#f0fdf4' : '#fff' }}
-                />
+                <label style={labelStyle}>Matter Name *</label>
+                <input type="text" value={m.name} onChange={e => updateMatter(m.id, 'name', e.target.value)} placeholder="e.g., Cross-Border Acquisition of TechCorp" disabled={m.saved} style={inputStyle(m.saved)} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const }}>Client</label>
-                <input
-                  type="text"
-                  value={m.client}
-                  onChange={e => updateMatter(m.id, 'client', e.target.value)}
-                  placeholder="e.g., JP Morgan Chase"
-                  disabled={m.saved}
-                  style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', background: m.saved ? '#f0fdf4' : '#fff' }}
-                />
+                <label style={labelStyle}>Client</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input type="text" value={m.client} onChange={e => updateMatter(m.id, 'client', e.target.value)} placeholder="e.g., JP Morgan Chase" disabled={m.saved} style={{ ...inputStyle(m.saved), flex: 1 }} />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                    <input type="checkbox" checked={m.isNewClient} onChange={e => updateMatter(m.id, 'isNewClient', e.target.checked)} disabled={m.saved} />
+                    New
+                  </label>
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const }}>Deal Value</label>
-                <input
-                  type="text"
-                  value={m.value}
-                  onChange={e => updateMatter(m.id, 'value', e.target.value)}
-                  placeholder="e.g., USD 150M"
-                  disabled={m.saved}
-                  style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', background: m.saved ? '#f0fdf4' : '#fff' }}
-                />
+                <label style={labelStyle}>Deal Value (currency + amount)</label>
+                <input type="text" value={m.value} onChange={e => updateMatter(m.id, 'value', e.target.value)} placeholder="e.g., USD 150M" disabled={m.saved} style={inputStyle(m.saved)} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const }}>Lead Partner</label>
-                <input
-                  type="text"
-                  value={m.leadPartner}
-                  onChange={e => updateMatter(m.id, 'leadPartner', e.target.value)}
-                  placeholder="e.g., Carlos Pérez"
-                  disabled={m.saved}
-                  style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', background: m.saved ? '#f0fdf4' : '#fff' }}
-                />
+                <label style={labelStyle}>Lead Partner</label>
+                <input type="text" value={m.leadPartner} onChange={e => updateMatter(m.id, 'leadPartner', e.target.value)} placeholder="e.g., Carlos Pérez" disabled={m.saved} style={inputStyle(m.saved)} />
               </div>
             </div>
 
+            {/* Row 2: Extended Chambers Fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={labelStyle}>
+                  <Globe size={10} style={{ marginRight: '3px', verticalAlign: 'middle' }} />
+                  Cross-border jurisdictions
+                </label>
+                <input type="text" value={m.crossBorder} onChange={e => updateMatter(m.id, 'crossBorder', e.target.value)} placeholder="e.g., USA, Mexico, Chile" disabled={m.saved} style={inputStyle(m.saved)} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={labelStyle}>Other Team Members</label>
+                <input type="text" value={m.teamMembers} onChange={e => updateMatter(m.id, 'teamMembers', e.target.value)} placeholder="e.g., Ana López, Juan Díaz" disabled={m.saved} style={inputStyle(m.saved)} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={labelStyle}>Other Firms Advising</label>
+                <input type="text" value={m.otherFirms} onChange={e => updateMatter(m.id, 'otherFirms', e.target.value)} placeholder="e.g., Simpson Thacher (NY counsel)" disabled={m.saved} style={inputStyle(m.saved)} />
+              </div>
+            </div>
+
+            {/* Row 3: Completion + Other Info */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={labelStyle}>Completion Date / Status</label>
+                <input type="text" value={m.completionDate} onChange={e => updateMatter(m.id, 'completionDate', e.target.value)} placeholder="e.g., Completed June 2026" disabled={m.saved} style={inputStyle(m.saved)} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={labelStyle}>Other Info (press coverage, links)</label>
+                <input type="text" value={m.otherInfo} onChange={e => updateMatter(m.id, 'otherInfo', e.target.value)} placeholder="e.g., Featured in Latin Lawyer: https://..." disabled={m.saved} style={inputStyle(m.saved)} />
+              </div>
+            </div>
+
+            {/* Raw Notes */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const }}>Raw Notes / Description</label>
+              <label style={labelStyle}>Raw Notes / Description (AI will optimize this)</label>
               <textarea
                 value={m.rawNotes}
                 onChange={e => updateMatter(m.id, 'rawNotes', e.target.value)}
                 placeholder="Describe the matter: complexity, cross-border elements, transaction mechanics, who did what, and why it matters competitively..."
                 disabled={m.saved}
-                style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', minHeight: '100px', resize: 'vertical', lineHeight: 1.5, background: m.saved ? '#f0fdf4' : '#fff', fontFamily: 'inherit' }}
+                style={{ padding: '0.6rem', borderRadius: '6px', border: '1px solid #D1D5DB', fontSize: '0.875rem', minHeight: '100px', resize: 'vertical', lineHeight: 1.5, background: m.saved ? '#f0fdf4' : '#fff', fontFamily: 'inherit', width: '100%' }}
               />
             </div>
           </div>
