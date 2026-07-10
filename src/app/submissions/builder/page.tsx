@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Save, Trash2, Sparkles, Loader2, ArrowRight, FileText } from 'lucide-react';
 import { createMatter } from '@/app/actions/matters';
@@ -16,6 +16,14 @@ type MatterDraft = {
 };
 
 export default function SubmissionBuilderPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading builder...</div>}>
+      <BuilderContent />
+    </Suspense>
+  );
+}
+
+function BuilderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const submissionId = searchParams.get('id') || '';
