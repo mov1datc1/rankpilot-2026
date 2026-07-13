@@ -189,7 +189,7 @@ def context_engine_node(state: AgentState) -> Dict:
         "strategic_context": strategic_context,
         "current_step": "analysis"
     }
-# 3. ANALYSIS NODE
+# 3. ANALYSIS NODE (Now thesis-driven via Editorial Reasoning Engine)
 def analysis_node(state: AgentState) -> Dict:
     llm = get_model()
     
@@ -203,12 +203,18 @@ def analysis_node(state: AgentState) -> Dict:
     router = RAGRouter()
     rag_knowledge = router.get_rag_context(practice_area, directory)
     
-    # 3. Preparar datos inyectando el conocimiento RAG
+    # 3. Preparar datos — NOW ENRICHED with Editorial Reasoning outputs
     input_data = {
         "metadata": state.get("metadata", {}),
         "matters": state.get("matters", []),
         "strategic_context": state.get("strategic_context", {}),
-        "RAG_KNOWLEDGE": rag_knowledge
+        "RAG_KNOWLEDGE": rag_knowledge,
+        # Editorial Reasoning Engine context (NEW)
+        "narrative_architecture": state.get("narrative_architecture", {}),
+        "competitive_identity": state.get("competitive_identity", {}),
+        "editorial_confidence": state.get("editorial_confidence", {}),
+        "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
+        "comparative_analysis_summary": state.get("comparative_analysis", {}).get("market_position_summary", ""),
     }
     
     prompt = ChatPromptTemplate.from_messages([
@@ -217,14 +223,14 @@ def analysis_node(state: AgentState) -> Dict:
     ])
     
     chain = prompt | llm
-    response = chain.invoke({"data": json.dumps(input_data, indent=2)})
+    response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str)})
     
     try:
         res_json = json.loads(response.content.replace("```json", "").replace("```", ""))
         return {
             "analysis": res_json,
             "confidence_score": float(res_json.get("confidence_score", 100)),
-            "current_step": "writing" # Bypass interrogation for now since we want the audit letter
+            "current_step": "writing"
         }
     except Exception as e:
         print(f"Error parsing analysis JSON: {e}")

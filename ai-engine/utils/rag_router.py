@@ -54,7 +54,9 @@ class RAGRouter:
         # Global documents to ALWAYS include
         global_files = [
             "global lawyer leadership framework — rankpilot rag v1.txt",
-            "¿cómo rankeamos abogado_as__.txt"
+            "¿cómo rankeamos abogado_as__.txt",
+            "volume_0_first_principles.txt",
+            "volume_ii_editorial_reasoning_engine.txt"
         ]
         
         selected_files = []

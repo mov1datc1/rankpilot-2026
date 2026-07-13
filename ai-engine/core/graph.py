@@ -9,19 +9,56 @@ from agents.nodes import (
     interrogator_node, 
     writer_node
 )
+from agents.editorial_nodes import (
+    comprehension_node,
+    identity_discovery_node,
+    hypothesis_construction_node,
+    refutation_engine_node,
+    comparative_analysis_node,
+    editorial_confidence_node,
+    narrative_architecture_node,
+)
 from core.state import AgentState
 
 def create_rankpilot_graph():
     """
-    Constructs the LangGraph state machine with a persistent dialectic loop.
-    The graph ensures a 'Senior Consultant' experience by gating the final
-    report behind a 65% structural confidence threshold.
+    Constructs the RankPilot Editorial Reasoning Engine graph.
+    
+    This is a 14-node pipeline that reproduces the reasoning of a senior 
+    rankings consultant before writing a single word.
+    
+    Pipeline Architecture:
+    
+    ingestion → extraction → context_engine → comprehension
+                                                    ↓
+                                              [thesis exists?]
+                                              YES → identity_discovery
+                                              NO  → interrogation → END
+                                                    ↓
+                                              hypothesis_construction
+                                                    ↓
+                                              refutation_engine
+                                                    ↓
+                                              comparative_analysis
+                                                    ↓
+                                              editorial_confidence
+                                                    ↓
+                                              [defensible?]
+                                              YES → narrative_architecture
+                                              NO  → interrogation → END
+                                                    ↓
+                                              analysis (now thesis-driven)
+                                                    ↓
+                                              optimization
+                                                    ↓
+                                              writing → END
     """
     
-    # 1. Initialize the StateGraph with our custom AgentState
+    # 1. Initialize the StateGraph
     workflow = StateGraph(AgentState)
 
-    # 2. Add the Functional Nodes
+    # 2. Register ALL nodes (original + editorial reasoning)
+    # --- Original pipeline nodes ---
     workflow.add_node("ingestion", ingestion_node)
     workflow.add_node("extraction", extraction_node)
     workflow.add_node("context_engine", context_engine_node)
@@ -29,49 +66,81 @@ def create_rankpilot_graph():
     workflow.add_node("optimization", optimization_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
+    
+    # --- Editorial Reasoning Engine nodes (NEW) ---
+    workflow.add_node("comprehension", comprehension_node)
+    workflow.add_node("identity_discovery", identity_discovery_node)
+    workflow.add_node("hypothesis_construction", hypothesis_construction_node)
+    workflow.add_node("refutation_engine", refutation_engine_node)
+    workflow.add_node("comparative_analysis", comparative_analysis_node)
+    workflow.add_node("editorial_confidence", editorial_confidence_node)
+    workflow.add_node("narrative_architecture", narrative_architecture_node)
 
-    # 3. Define the Fixed Entry Sequence
-    # Every new file or first interaction starts here
+    # 3. Entry sequence (unchanged start)
     workflow.set_entry_point("ingestion")
     workflow.add_edge("ingestion", "extraction")
     workflow.add_edge("extraction", "context_engine")
-    workflow.add_edge("context_engine", "analysis")
+    
+    # 4. After context engine → comprehension (NEW: replaces direct-to-analysis)
+    workflow.add_edge("context_engine", "comprehension")
 
-    # 4. Define the Dialectic Gate (Conditional Logic)
-    def route_based_on_confidence(state: AgentState):
-        """
-        Internal router that hides the mathematical threshold from the user.
-        If confidence < 65%, we gather more strategic info.
-        If confidence >= 65%, we proceed to the Institutional Standard output.
-        """
-        if state.get("confidence_score", 0) >= 65:
-            return "writing"
+    # 5. Comprehension Gate: Does a thesis exist with sufficient evidence?
+    def route_after_comprehension(state: AgentState):
+        """Chapter 1 gate: the system must understand before it analyzes."""
+        comprehension = state.get("comprehension", {})
+        thesis_exists = comprehension.get("thesis_exists", False)
+        evidence_sufficient = comprehension.get("evidence_sufficient", False)
+        confidence = comprehension.get("comprehension_confidence", 0)
+        
+        if thesis_exists and evidence_sufficient and confidence >= 0.4:
+            return "identity_discovery"
         return "interrogation"
 
     workflow.add_conditional_edges(
-        "analysis",
-        route_based_on_confidence,
+        "comprehension",
+        route_after_comprehension,
         {
-            "writing": "optimization",
+            "identity_discovery": "identity_discovery",
             "interrogation": "interrogation"
         }
     )
 
-    # 5. Optimization always flows to Writing
+    # 6. Editorial Reasoning chain (sequential)
+    workflow.add_edge("identity_discovery", "hypothesis_construction")
+    workflow.add_edge("hypothesis_construction", "refutation_engine")
+    workflow.add_edge("refutation_engine", "comparative_analysis")
+    workflow.add_edge("comparative_analysis", "editorial_confidence")
+
+    # 7. Editorial Confidence Gate: Is the recommendation defensible?
+    def route_after_confidence(state: AgentState):
+        """Chapter 4 gate: seek the most defensible conclusion, not the most optimistic."""
+        confidence = state.get("editorial_confidence", {})
+        passes = confidence.get("passes_defensibility_test", False)
+        recommendation = confidence.get("recommendation", "needs_investigation")
+        
+        if passes or recommendation in ("proceed", "proceed_with_caveats"):
+            return "narrative_architecture"
+        return "interrogation"
+
+    workflow.add_conditional_edges(
+        "editorial_confidence",
+        route_after_confidence,
+        {
+            "narrative_architecture": "narrative_architecture",
+            "interrogation": "interrogation"
+        }
+    )
+
+    # 8. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
+    workflow.add_edge("narrative_architecture", "analysis")
+    workflow.add_edge("analysis", "optimization")
     workflow.add_edge("optimization", "writing")
 
-    # 5. Define the Loopback
-    # After the Interrogator speaks, the graph pauses for user input.
-    # Once the user replies, we route back to 'extraction' to update 
-    # the structured JSON with the new strategic details.
-    workflow.add_edge("interrogation", END) 
-
-# 6. Final Exit
+    # 9. Terminal edges
+    workflow.add_edge("interrogation", END)
     workflow.add_edge("writing", END)
 
-    # 7. Persistence Layer (The "Memory" for Laravel's session_id)
-    # MemorySaver keeps the state in-memory. 
-    # For production with multiple workers, swap for SqliteSaver or PostgresSaver.
+    # 10. Persistence Layer
     checkpointer = MemorySaver()
 
     return workflow.compile(checkpointer=checkpointer)

@@ -71,8 +71,20 @@ async def process_document(request: Request):
         "latex_code": "",
         "confidence_score": 0.0,
         "is_complete": False,
+        "pdf_url": "",
         "submission_context": context,
-        "strategic_context": {}
+        "strategic_context": {},
+        # Editorial Reasoning Engine — initial empty state
+        "comprehension": {},
+        "competitive_identity": {},
+        "hypotheses": [],
+        "refutation_results": {},
+        "comparative_analysis": {},
+        "editorial_confidence": {},
+        "narrative_architecture": {},
+        "evidence_map": {},
+        "reasoning_trace": [],
+        "current_step": "ingestion",
     }
     
     try:
@@ -107,7 +119,16 @@ async def process_document(request: Request):
             "metadata": result.get("metadata", {}),
             "matters": result.get("matters", []),
             "analysis": result.get("analysis", {}),
-            "strategic_context": result.get("strategic_context", {})
+            "strategic_context": result.get("strategic_context", {}),
+            # Editorial Reasoning Engine outputs
+            "comprehension": result.get("comprehension", {}),
+            "competitive_identity": result.get("competitive_identity", {}),
+            "hypotheses": result.get("hypotheses", []),
+            "refutation_results": result.get("refutation_results", {}),
+            "comparative_analysis": result.get("comparative_analysis", {}),
+            "editorial_confidence": result.get("editorial_confidence", {}),
+            "narrative_architecture": result.get("narrative_architecture", {}),
+            "reasoning_trace": result.get("reasoning_trace", []),
         }
     }
 
