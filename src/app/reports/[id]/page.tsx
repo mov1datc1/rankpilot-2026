@@ -39,11 +39,28 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const letter = analysis.audit_letter || {};
   const firmName = chambersData.firm_name || chambersData.firmName || context.firm_name || submission.practiceArea || 'The Firm';
 
+  // Editorial Reasoning Engine data
+  const competitiveIdentity = chambersData.competitive_identity || {};
+  const editorialConfidence = chambersData.editorial_confidence || {};
+  const narrativeArch = chambersData.narrative_architecture || {};
+  const comparativeAnalysis = chambersData.comparative_analysis || {};
+  const reasoningTrace = chambersData.reasoning_trace || [];
+  const comprehension = chambersData.comprehension || {};
+
   const score = analysis.score || 0;
   const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
   const archetype = context.archetype ? String(context.archetype) : "Strategic model pending";
   const detectedTier = context.starting_position ? String(context.starting_position) : "Not classified";
   const target = context.target_realistic ? String(context.target_realistic) : "Target pending";
+
+  // Editorial Intelligence metrics
+  const identityStatement = competitiveIdentity.identity_statement || '';
+  const identityCoherence = competitiveIdentity.identity_coherence || '';
+  const confidence = editorialConfidence.overall_confidence || '';
+  const passesDefensibility = editorialConfidence.passes_defensibility_test || false;
+  const thesis = narrativeArch.thesis_statement || '';
+  const heroMatter = narrativeArch.hero_matter || '';
+  const bandAlignment = comparativeAnalysis.band_alignment || '';
 
   // Safely parse arrays that AI might hallucinate as strings
   const realityCheck = Array.isArray(letter.the_reality_check) 
@@ -138,31 +155,67 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Top Metric Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '1rem' }}>
-          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Risk Level</h3>
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : riskLevel === 'Pending' ? '#94a3b8' : '#d97706' }}>
-              {riskLevel}
+        {/* Competitive Identity Banner */}
+        {identityStatement && (
+          <div style={{ background: 'linear-gradient(135deg, #1A237E 0%, #283593 50%, #3949AB 100%)', borderRadius: '12px', padding: '1.5rem 2rem', color: '#ffffff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: identityCoherence === 'coherent' ? '#4ade80' : identityCoherence === 'emerging' ? '#fbbf24' : '#f87171' }}></div>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)' }}>Competitive Identity · {identityCoherence || 'Pending'}</span>
+            </div>
+            <p style={{ fontSize: '1.15rem', fontWeight: 600, lineHeight: 1.5, margin: 0 }}>{identityStatement}</p>
+            {competitiveIdentity.sub_specialization && (
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)', margin: '0.75rem 0 0', fontStyle: 'italic' }}>Sub-specialization: {competitiveIdentity.sub_specialization}</p>
+            )}
+          </div>
+        )}
+
+        {/* Editorial Intelligence Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.75rem' }}>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Editorial Confidence</h3>
+            <p style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: confidence === 'high' ? '#16a34a' : confidence === 'moderate' ? '#d97706' : confidence === 'low' ? '#dc2626' : '#94a3b8' }}>
+              {confidence ? confidence.charAt(0).toUpperCase() + confidence.slice(1) : 'Pending'}
             </p>
-            {riskLevel === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Awaiting AI analysis</p>}
+            {passesDefensibility && <p style={{ fontSize: '0.65rem', color: '#16a34a', margin: '0.25rem 0 0', fontWeight: 600 }}>✓ Defensible</p>}
           </div>
-          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Archetype</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: archetype === 'Pending' ? '#94a3b8' : '#0f172a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{archetype}</p>
-            {archetype === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Context Engine not yet run</p>}
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Band Alignment</h3>
+            <p style={{ fontSize: '1rem', fontWeight: 600, color: bandAlignment ? '#0f172a' : '#94a3b8', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{bandAlignment || detectedTier}</p>
           </div>
-          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Detected Tier</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: detectedTier === 'Unknown' ? '#94a3b8' : '#0f172a', margin: 0 }}>{detectedTier}</p>
-            {detectedTier === 'Unknown' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Insufficient data to determine</p>}
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Risk Level</h3>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : riskLevel === 'Pending' ? '#94a3b8' : '#d97706' }}>{riskLevel}</p>
           </div>
-          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-            <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Target</h3>
-            <p style={{ fontSize: '1.125rem', fontWeight: 600, color: target === 'Pending' ? '#94a3b8' : '#1A237E', margin: 0 }}>{target}</p>
-            {target === 'Pending' && <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.25rem 0 0' }}>Run analysis to calculate</p>}
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Archetype</h3>
+            <p style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{archetype}</p>
+          </div>
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Target</h3>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: target === 'Pending' ? '#94a3b8' : '#1A237E', margin: 0 }}>{target}</p>
           </div>
         </div>
+
+        {/* Thesis & Hero Matter */}
+        {(thesis || heroMatter) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {thesis && (
+              <div style={{ background: '#fefce8', borderRadius: '12px', border: '1px solid #fef08a', padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#a16207', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Editorial Thesis</h3>
+                <p style={{ fontSize: '0.95rem', color: '#78350f', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{thesis}</p>
+              </div>
+            )}
+            {heroMatter && (
+              <div style={{ background: '#eff6ff', borderRadius: '12px', border: '1px solid #bfdbfe', padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Hero Matter</h3>
+                <p style={{ fontSize: '0.95rem', color: '#1e3a8a', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{heroMatter}</p>
+                {narrativeArch.hero_matter_rationale && (
+                  <p style={{ fontSize: '0.8rem', color: '#3b82f6', margin: '0.5rem 0 0', fontStyle: 'italic' }}>{narrativeArch.hero_matter_rationale}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* The Audit Letter Paper */}
         <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>

@@ -62,12 +62,14 @@ export async function createMatter(data: {
     const matter = await prisma.matter.create({
       data: {
         submissionId: data.submissionId,
+        userId: user.id,
         name: data.name,
         client: data.client,
         value: data.value,
         leadPartner: data.leadPartner,
         rawNotes: data.rawNotes,
         status: 'Draft',
+        source: 'builder',
         isConfidential: data.isConfidential || false,
         crossBorder: data.crossBorder || '',
         teamMembers: data.teamMembers || '',
@@ -117,16 +119,25 @@ export async function getAllUserMatters() {
     const user = await getAuthenticatedUser();
 
     const matters = await prisma.matter.findMany({
-      where: {
-        submission: {
-          userId: user.id
-        }
-      },
+      where: { userId: user.id },
       include: {
         submission: {
           select: {
             targetDirectory: true,
             practiceArea: true
+          }
+        },
+        firm: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        sources: {
+          select: {
+            id: true,
+            fileName: true,
+            fileType: true
           }
         }
       },
@@ -151,7 +162,7 @@ export async function updateMatterOptimization(id: string, optimizedText: string
       include: { submission: true }
     });
 
-    if (!matter || matter.submission.userId !== user.id) {
+    if (!matter || matter.userId !== user.id) {
       throw new Error('No tienes permiso para modificar este caso.');
     }
 
@@ -176,7 +187,7 @@ export async function deleteMatter(id: string) {
       include: { submission: true }
     });
 
-    if (!matter || matter.submission.userId !== user.id) {
+    if (!matter || matter.userId !== user.id) {
       throw new Error('No tienes permiso para eliminar este caso.');
     }
 
@@ -201,7 +212,7 @@ export async function updateMatterInline(id: string, data: { name?: string; clie
       include: { submission: true }
     });
 
-    if (!matter || matter.submission.userId !== user.id) {
+    if (!matter || matter.userId !== user.id) {
       throw new Error('No tienes permiso para editar este caso.');
     }
 
@@ -233,7 +244,7 @@ export async function optimizeMatterWithAI(matterId: string) {
       include: { submission: true }
     });
 
-    if (!matter || matter.submission.userId !== user.id) {
+    if (!matter || matter.userId !== user.id) {
       throw new Error('No tienes permiso para optimizar este caso.');
     }
 

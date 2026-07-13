@@ -22,11 +22,27 @@ type Matter = {
   threadId: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
-  submissionId: string;
+  submissionId: string | null;
+  userId: string;
+  firmId: string | null;
+  source: string;
+  practiceArea: string | null;
+  jurisdiction: string | null;
+  description: string | null;
+  tags: string | null;
   submission?: {
     targetDirectory: string;
     practiceArea: string;
-  };
+  } | null;
+  firm?: {
+    id: string;
+    name: string;
+  } | null;
+  sources?: {
+    id: string;
+    fileName: string;
+    fileType: string;
+  }[];
 };
 
 export default function MattersAssistantPage() {

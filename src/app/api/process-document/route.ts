@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
         await prisma.matter.create({
           data: {
             submissionId,
+            userId: resolvedUserId,
             name: m.name || m.title || 'Extracted Matter',
             client: m.client || 'Unknown Client',
             value: m.matter_value || m.value || 'N/A',
@@ -110,7 +111,10 @@ export async function POST(request: NextRequest) {
             rawNotes: [m.summary, m.significance].filter(Boolean).join('\n\n') || m.description || m.notes || 'No description extracted',
             optimizedText: m.optimized_text || null,
             status: isOptimized ? 'AI Optimized' : 'Draft',
-            // New Chambers-specific fields
+            source: 'builder',
+            practiceArea: submission.practiceArea,
+            jurisdiction: submission.guideRegion,
+            // Chambers-specific fields
             isConfidential: m.is_confidential || false,
             crossBorder: m.is_cross_border ? (m.cross_border_jurisdictions || 'Yes') : '',
             teamMembers: m.team_members || '',
@@ -124,7 +128,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ALWAYS persist analysis, strategicContext, AND department/lawyer data into chambersData
+    // ALWAYS persist analysis, strategicContext, editorial reasoning, AND department/lawyer data into chambersData
     const existingChambersData = (submission.chambersData as any) || {};
     await prisma.submission.update({
       where: { id: submissionId },
@@ -134,7 +138,16 @@ export async function POST(request: NextRequest) {
           metadata: extractedData || existingChambersData.metadata,
           analysis: analysisData || existingChambersData.analysis,
           strategicContext: strategicContext || existingChambersData.strategicContext,
-          // New: persist department/lawyer/contact data from AI extraction
+          // Editorial Reasoning Engine outputs
+          comprehension: pyData.data?.comprehension || existingChambersData.comprehension,
+          competitive_identity: pyData.data?.competitive_identity || existingChambersData.competitive_identity,
+          hypotheses: pyData.data?.hypotheses || existingChambersData.hypotheses,
+          refutation_results: pyData.data?.refutation_results || existingChambersData.refutation_results,
+          comparative_analysis: pyData.data?.comparative_analysis || existingChambersData.comparative_analysis,
+          editorial_confidence: pyData.data?.editorial_confidence || existingChambersData.editorial_confidence,
+          narrative_architecture: pyData.data?.narrative_architecture || existingChambersData.narrative_architecture,
+          reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
+          // Department/lawyer/contact data from AI extraction
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
           ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),
           ...(extractedDept.num_lawyers ? { numLawyers: extractedDept.num_lawyers } : {}),

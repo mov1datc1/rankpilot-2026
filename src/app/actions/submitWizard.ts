@@ -41,13 +41,14 @@ export async function submitWizardData(formData: any) {
     // 2. Clone associated matters (if any) to this new submission
     if (formData.associatedMatterIds && formData.associatedMatterIds.length > 0) {
       const mattersToClone = await prisma.matter.findMany({
-        where: { id: { in: formData.associatedMatterIds }, submission: { userId: user.id } }
+        where: { id: { in: formData.associatedMatterIds }, userId: resolvedUserId }
       });
       
       for (const m of mattersToClone) {
         await prisma.matter.create({
           data: {
             submissionId: newSubmission.id,
+            userId: resolvedUserId,
             name: m.name,
             client: m.client,
             value: m.value,
@@ -55,7 +56,8 @@ export async function submitWizardData(formData: any) {
             rawNotes: m.rawNotes,
             optimizedText: m.optimizedText,
             status: m.status,
-            threadId: m.threadId
+            threadId: m.threadId,
+            source: 'builder',
           }
         });
       }

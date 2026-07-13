@@ -29,6 +29,27 @@ model User {
   status           String   @default("ACTIVE")
   submissions      Submission[]
   aiLogs           AILog[]
+  matters          Matter[]
+  firms            Firm[]
+}
+
+// =====================================================
+// FIRM MODEL — Normalized firm entity for Matter Library
+// Enables autocomplete and structured firm management
+// =====================================================
+model Firm {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  country     String?
+  city        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matters     Matter[]
+
+  @@unique([userId, name])
 }
 
 model Submission {
@@ -55,7 +76,9 @@ model Submission {
 
 model Matter {
   id             String   @id @default(uuid())
-  submissionId   String
+  submissionId   String?
+  userId         String
+  firmId         String?
   name           String
   client         String
   value          String
@@ -71,11 +94,39 @@ model Matter {
   completionDate String?
   otherInfo      String?
   isNewClient    Boolean  @default(false)
+
+  // Library-specific fields
+  source         String   @default("builder")   // "builder" | "assistant" | "manual"
+  practiceArea   String?
+  jurisdiction   String?
+  description    String?  @db.Text
+  tags           String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  submission     Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submission     Submission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firm           Firm?       @relation(fields: [firmId], references: [id], onDelete: SetNull)
   aiLogs         AILog[]
+  sources        MatterSource[]
+}
+
+// =====================================================
+// MATTER SOURCE — Multiple files/documents per matter
+// Supports emails, contracts, notes, PDFs per matter
+// =====================================================
+model MatterSource {
+  id          String   @id @default(uuid())
+  matterId    String
+  fileName    String
+  fileUrl     String
+  fileType    String            // "pdf" | "docx" | "txt" | "email" | "notes"
+  fileSize    Int       @default(0)
+  rawText     String?   @db.Text   // Extracted text content from the file
+  createdAt   DateTime  @default(now())
+
+  matter      Matter    @relation(fields: [matterId], references: [id], onDelete: Cascade)
 }
 
 model AILog {
