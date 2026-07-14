@@ -32,6 +32,7 @@ export default function SubmissionsPage() {
   const [libraryMatters, setLibraryMatters] = useState<LibMatter[]>([]);
   const [selectedMatterIds, setSelectedMatterIds] = useState<Set<string>>(new Set());
   const [libraryExpanded, setLibraryExpanded] = useState(true);
+  const [librarySearch, setLibrarySearch] = useState('');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickFile, setQuickFile] = useState<File | null>(null);
   const [quickNotes, setQuickNotes] = useState('');
@@ -291,7 +292,24 @@ export default function SubmissionsPage() {
                   The AI engine will use them to build a stronger, more defensible audit letter. You can also add new matters below.
                 </p>
               </div>
-              {libraryMatters.map(m => {
+
+              {/* Library search */}
+              <input
+                type="text"
+                placeholder="Filter matters by name, client, or firm..."
+                value={librarySearch}
+                onChange={e => setLibrarySearch(e.target.value)}
+                onClick={e => e.stopPropagation()}
+                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1.5px solid #e2e8f0', fontSize: '0.8rem', outline: 'none', marginBottom: '0.5rem' }}
+              />
+
+              {libraryMatters
+                .filter(m => {
+                  if (!librarySearch) return true;
+                  const q = librarySearch.toLowerCase();
+                  return `${m.name} ${m.client} ${m.firm?.name || ''}`.toLowerCase().includes(q);
+                })
+                .map(m => {
                 const isSelected = selectedMatterIds.has(m.id);
                 return (
                   <div

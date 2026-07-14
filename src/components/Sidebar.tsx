@@ -7,39 +7,37 @@ import {
   Zap, 
   FileText, 
   BarChart2, 
-  Settings 
+  Settings,
+  BookOpen
 } from 'lucide-react';
-import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
+
+type RecentItem = { name: string; href: string; directory: string };
 
 export default function Sidebar() {
   const pathname = usePathname();
   
+  // Reordered: Matter Assistant → Builder → Reports → Dashboard
   const platformLinks = [
+    { name: 'Matters Assistant', href: '/matters-assistant', icon: BookOpen },
     { name: 'Builder', href: '/submissions', icon: Home },
-    { name: 'Matters Assistant', href: '/matters-assistant', icon: Zap },
-    { name: 'Report', href: '/reports', icon: FileText },
+    { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Dashboard', href: '/dashboard-analytics', icon: BarChart2 },
   ];
 
-  const [recentLinks, setRecentLinks] = useState<{name: string, href: string}[]>([
-    { name: 'Chambers Latin Ameri...', href: '#' },
-    { name: 'Legal 500 LACCA · M&A', href: '#' },
-    { name: 'IFLR 1000 · Finance', href: '#' },
-    { name: 'Who\'s Who Legal · Arbi...', href: '#' },
-  ]);
+  const [recentLinks, setRecentLinks] = useState<RecentItem[]>([]);
 
   useEffect(() => {
-    // Optionally load dynamic recent links from localStorage if they exist
-    const saved = localStorage.getItem('recent_submissions');
-    if (saved) {
-      try {
-        setRecentLinks(JSON.parse(saved));
-      } catch (e) {
-        // Fallback to static
-      }
-    }
+    // Fetch real recent submissions
+    fetch('/api/recent-submissions')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.items) {
+          setRecentLinks(data.items);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -88,26 +86,31 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* RECENT SECTION */}
-      <div style={{ padding: '1.5rem 1rem 0.5rem 1rem' }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>RECENT</p>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {recentLinks.map((link, idx) => (
-            <Link key={idx} href={link.href} style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0.4rem 1rem',
-              textDecoration: 'none',
-              color: '#64748b',
-              fontSize: '0.85rem',
-              transition: 'color 0.2s'
-            }}>
-              <span style={{ marginRight: '0.5rem', color: '#94a3b8', fontSize: '1.2rem', lineHeight: 1 }}>·</span>
-              {link.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      {/* RECENT SECTION — real data */}
+      {recentLinks.length > 0 && (
+        <div style={{ padding: '1.5rem 1rem 0.5rem 1rem' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>RECENT</p>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {recentLinks.map((link, idx) => (
+              <Link key={idx} href={link.href} style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.4rem 1rem',
+                textDecoration: 'none',
+                color: '#64748b',
+                fontSize: '0.8rem',
+                transition: 'color 0.2s',
+                borderRadius: '6px',
+              }}>
+                <span style={{ marginRight: '0.5rem', color: '#94a3b8', fontSize: '1.2rem', lineHeight: 1 }}>·</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {link.name}
+                </span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+      )}
 
       <div style={{ flex: 1 }}></div>
 
