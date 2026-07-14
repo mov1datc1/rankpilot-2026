@@ -5,6 +5,8 @@ import { Upload, FileText, Edit3, FileCheck, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createSubmission } from '@/app/actions/submissions';
 import { createClient } from '@/utils/supabase/client';
+import PremiumSelect from '@/components/PremiumSelect';
+import { DIRECTORIES, REGIONS, PRACTICE_AREAS, BANDS, JURISDICTIONS } from '@/lib/constants';
 
 export default function SubmissionsPage() {
   const router = useRouter();
@@ -18,9 +20,11 @@ export default function SubmissionsPage() {
   const supabase = createClient();
 
   // Form State
-  const [targetDirectory, setTargetDirectory] = useState('Legal 500');
+  const [targetDirectory, setTargetDirectory] = useState('Chambers & Partners');
   const [guideRegion, setGuideRegion] = useState('Latin America');
   const [practiceArea, setPracticeArea] = useState('Banking & Finance');
+  const [currentBand, setCurrentBand] = useState('Unranked');
+  const [deadline, setDeadline] = useState('2026-07-30');
 
   const startUploadAudit = async () => {
     setIsSubmitting(true);
@@ -54,7 +58,6 @@ export default function SubmissionsPage() {
 
       if (result.success && result.data) {
         if (documentUrl) {
-          // Si hay document URL, hacemos la actualizacion
           await fetch('/api/update-document', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -62,7 +65,6 @@ export default function SubmissionsPage() {
           }).catch(e => console.error("Error saving doc url:", e));
         }
 
-        // Save the submission context globally or pass via URL
         localStorage.setItem('activeSubmissionId', result.data.id);
         router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}`);
       } else {
@@ -129,7 +131,7 @@ export default function SubmissionsPage() {
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RankPilot: <span style={{ color: '#2563eb' }}>Legal Directory Portal</span>
+          RankPilot: <span style={{ color: '#1A237E' }}>Legal Directory Portal</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: '#64748b', marginTop: '0.25rem' }}>Setup Wizard</p>
       </div>
@@ -142,54 +144,55 @@ export default function SubmissionsPage() {
         border: '1px solid #e2e8f0',
         marginBottom: '2rem'
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Target Directory</label>
-            <select value={targetDirectory} onChange={e => setTargetDirectory(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
-              <option>Legal 500</option>
-              <option>Chambers</option>
-              <option>IFLR 1000</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Guide / Region</label>
-            <select value={guideRegion} onChange={e => setGuideRegion(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
-              <option>Latin America</option>
-              <option>Global</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Practice Area</label>
-            <select value={practiceArea} onChange={e => setPracticeArea(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
-              <option>Banking & Finance</option>
-              <option>Corporate and M&A</option>
-              <option>Dispute Resolution</option>
-            </select>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <PremiumSelect
+            label="Target Directory"
+            value={targetDirectory}
+            options={DIRECTORIES}
+            onChange={setTargetDirectory}
+            id="builder-directory"
+          />
+          <PremiumSelect
+            label="Guide / Region"
+            value={guideRegion}
+            options={REGIONS}
+            onChange={setGuideRegion}
+            id="builder-region"
+          />
+          <PremiumSelect
+            label="Practice Area"
+            value={practiceArea}
+            options={PRACTICE_AREAS}
+            onChange={setPracticeArea}
+            id="builder-practice"
+          />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem' }}>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Current Band</label>
-            <select style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }}>
-              <option>Unranked</option>
-              <option>Band 1</option>
-              <option>Band 2</option>
-              <option>Band 3</option>
-              <option>Band 4</option>
-              <option>Band 5</option>
-            </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+          <PremiumSelect
+            label="Current Band"
+            value={currentBand}
+            options={BANDS}
+            onChange={setCurrentBand}
+            searchable={false}
+            id="builder-band"
+          />
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Submission Deadline
+            </label>
+            <input 
+              type="date" 
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
+              style={{ 
+                width: '100%', padding: '0.7rem 1rem', borderRadius: '10px', 
+                border: '1.5px solid #cbd5e1', color: '#0f172a', background: '#fff', 
+                fontSize: '0.9rem', fontWeight: 500, outline: 'none',
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              }} 
+            />
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Submission Deadline</label>
-            <input type="date" defaultValue="2026-07-30" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#0f172a', background: '#fff', fontSize: '0.9rem', outline: 'none' }} />
-          </div>
-
         </div>
       </div>
 

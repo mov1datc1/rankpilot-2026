@@ -1,0 +1,100 @@
+/**
+ * RankPilot — Shared Dropdown Options
+ * Single source of truth for all filter values across Builder and Matter Assistant.
+ */
+
+export const DIRECTORIES = [
+  'Chambers & Partners',
+  'Legal 500',
+  'IFLR1000',
+  'Leaders League',
+  "Who's Who Legal",
+  'Benchmark Litigation',
+  'Latin Lawyer',
+  'Best Lawyers',
+] as const;
+
+export const REGIONS = [
+  'Latin America',
+  'Global',
+  'Europe',
+  'Asia Pacific',
+  'North America',
+  'Middle East & Africa',
+  'Central America & Caribbean',
+] as const;
+
+export const PRACTICE_AREAS = [
+  'Banking & Finance',
+  'Capital Markets',
+  'Competition / Antitrust',
+  'Construction',
+  'Corporate / M&A',
+  'Data Protection & Privacy',
+  'Dispute Resolution',
+  'Employment & Labour',
+  'Energy & Natural Resources',
+  'Environment',
+  'FinTech',
+  'Insurance',
+  'Intellectual Property',
+  'International Arbitration',
+  'International Trade',
+  'Investment Funds',
+  'Life Sciences / Healthcare',
+  'Private Equity',
+  'Projects & Infrastructure',
+  'Real Estate',
+  'Regulatory / Public Law',
+  'Restructuring & Insolvency',
+  'Shipping & Maritime',
+  'Tax',
+  'Technology, Media & Telecommunications',
+  'White Collar Crime',
+] as const;
+
+export const JURISDICTIONS = [
+  'Argentina',
+  'Bolivia',
+  'Brazil',
+  'Chile',
+  'Colombia',
+  'Costa Rica',
+  'Cuba',
+  'Dominican Republic',
+  'Ecuador',
+  'El Salvador',
+  'Global',
+  'Guatemala',
+  'Honduras',
+  'Mexico',
+  'Nicaragua',
+  'Panama',
+  'Paraguay',
+  'Peru',
+  'Puerto Rico',
+  'Spain',
+  'United Kingdom',
+  'United States',
+  'Uruguay',
+  'Venezuela',
+] as const;
+
+export const BANDS = [
+  'Unranked',
+  'Band 1',
+  'Band 2',
+  'Band 3',
+  'Band 4',
+  'Band 5',
+  'Band 6',
+  'Tier 1',
+  'Tier 2',
+  'Tier 3',
+  'Tier 4',
+  'Tier 5',
+  'Star Individual',
+  'Senior Statesperson',
+  'Up and Coming',
+  'Associates to Watch',
+] as const;

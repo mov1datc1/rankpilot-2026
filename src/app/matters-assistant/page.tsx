@@ -9,6 +9,8 @@ import {
 import { getAllUserMatters, deleteMatter, updateMatterInline, optimizeMatterWithAI } from '@/app/actions/matters';
 import { createClient } from '@/utils/supabase/client';
 import { useRef } from 'react';
+import PremiumSelect from '@/components/PremiumSelect';
+import { DIRECTORIES, REGIONS, PRACTICE_AREAS, JURISDICTIONS } from '@/lib/constants';
 
 type Matter = {
   id: string;
@@ -62,8 +64,8 @@ export default function MattersAssistantPage() {
   const [expandedMatterId, setExpandedMatterId] = useState<string | null>(null);
 
   // Form State for Assistant
-  const [directory, setDirectory] = useState('Chambers');
-  const [guideRegion, setGuideRegion] = useState('');
+  const [directory, setDirectory] = useState('Chambers & Partners');
+  const [guideRegion, setGuideRegion] = useState('Latin America');
   const [practiceArea, setPracticeArea] = useState('Banking & Finance');
   const [jurisdiction, setJurisdiction] = useState('Mexico');
   const [looseNotes, setLooseNotes] = useState('');
@@ -242,72 +244,36 @@ export default function MattersAssistantPage() {
               </div>
             </div>
 
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: '0 0 1rem 0' }}>Matter Context</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>Directory</label>
-                <select 
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', outline: 'none' }}
-                  value={directory} onChange={e => setDirectory(e.target.value)}
-                >
-                  <option>Chambers</option>
-                  <option>Legal 500</option>
-                  <option>IFLR1000</option>
-                  <option>Leaders League</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>Practice Area</label>
-                <select 
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', outline: 'none' }}
-                  value={practiceArea} onChange={e => setPracticeArea(e.target.value)}
-                >
-                  <option>Banking & Finance</option>
-                  <option>Corporate / M&A</option>
-                  <option>Dispute Resolution</option>
-                  <option>Tax</option>
-                  <option>Labour & Employment</option>
-                  <option>Competition / Antitrust</option>
-                  <option>Intellectual Property</option>
-                  <option>Regulatory / Public Law</option>
-                  <option>Capital Markets</option>
-                  <option>Real Estate</option>
-                  <option>Energy & Natural Resources</option>
-                  <option>TMT / Technology</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>Jurisdiction</label>
-                <select 
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', outline: 'none' }}
-                  value={jurisdiction} onChange={e => setJurisdiction(e.target.value)}
-                >
-                  <option>Mexico</option>
-                  <option>Brazil</option>
-                  <option>Argentina</option>
-                  <option>Chile</option>
-                  <option>Colombia</option>
-                  <option>Peru</option>
-                  <option>Venezuela</option>
-                  <option>Ecuador</option>
-                  <option>Panama</option>
-                  <option>Costa Rica</option>
-                  <option>Guatemala</option>
-                  <option>Dominican Republic</option>
-                  <option>Uruguay</option>
-                  <option>Paraguay</option>
-                  <option>Bolivia</option>
-                  <option>Honduras</option>
-                  <option>El Salvador</option>
-                  <option>Nicaragua</option>
-                  <option>Puerto Rico</option>
-                  <option>Cuba</option>
-                  <option>United States</option>
-                  <option>United Kingdom</option>
-                  <option>Spain</option>
-                  <option>Global</option>
-                </select>
-              </div>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: '0 0 1rem 0' }}>Matter Context</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+              <PremiumSelect
+                label="Directory"
+                value={directory}
+                options={DIRECTORIES}
+                onChange={setDirectory}
+                id="assistant-directory"
+              />
+              <PremiumSelect
+                label="Practice Area"
+                value={practiceArea}
+                options={PRACTICE_AREAS}
+                onChange={setPracticeArea}
+                id="assistant-practice"
+              />
+              <PremiumSelect
+                label="Guide / Region"
+                value={guideRegion}
+                options={REGIONS}
+                onChange={setGuideRegion}
+                id="assistant-region"
+              />
+              <PremiumSelect
+                label="Jurisdiction"
+                value={jurisdiction}
+                options={JURISDICTIONS}
+                onChange={setJurisdiction}
+                id="assistant-jurisdiction"
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
