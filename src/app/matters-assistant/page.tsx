@@ -62,6 +62,8 @@ export default function MattersAssistantPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState<string | null>(null);
   const [expandedMatterId, setExpandedMatterId] = useState<string | null>(null);
+  const [repoSearch, setRepoSearch] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'builder' | 'assistant' | 'manual'>('all');
 
   // Form State for Assistant
   const [directory, setDirectory] = useState('Chambers & Partners');
@@ -175,11 +177,13 @@ export default function MattersAssistantPage() {
   const filteredMatters = matters.filter(m => {
     let pass = true;
     const mDate = new Date(m.createdAt).getTime();
-    if (dateFilterStart) {
-      if (mDate < new Date(dateFilterStart).getTime()) pass = false;
-    }
-    if (dateFilterEnd) {
-      if (mDate > new Date(dateFilterEnd).getTime() + 86400000) pass = false;
+    if (dateFilterStart && mDate < new Date(dateFilterStart).getTime()) pass = false;
+    if (dateFilterEnd && mDate > new Date(dateFilterEnd).getTime() + 86400000) pass = false;
+    if (sourceFilter !== 'all' && m.source !== sourceFilter) pass = false;
+    if (repoSearch) {
+      const q = repoSearch.toLowerCase();
+      const searchable = `${m.name} ${m.client} ${m.firm?.name || ''} ${m.submission?.practiceArea || ''}`.toLowerCase();
+      if (!searchable.includes(q)) pass = false;
     }
     return pass;
   });
@@ -377,25 +381,58 @@ export default function MattersAssistantPage() {
       {activeTab === 'repository' && (
         <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
           <div style={{ background: '#ffffff', borderRadius: '0.75rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.25rem 0' }}>Portfolio & Extracted Matters</h2>
-                <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Review, edit, and optimize all your extracted matters.</p>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid #E5E7EB' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem 0' }}>Matter Library</h2>
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>
+                    {matters.length} matter{matters.length !== 1 ? 's' : ''} · {filteredMatters.length} shown
+                  </p>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '0.25rem' }}>From</label>
-                  <input type="date" value={dateFilterStart} onChange={e => setDateFilterStart(e.target.value)} style={{ padding: '0.375rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', fontSize: '0.875rem', outline: 'none' }} />
+
+              {/* Search + Source Filters */}
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Search by matter, client, or firm..."
+                    value={repoSearch}
+                    onChange={e => setRepoSearch(e.target.value)}
+                    style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.25rem', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', background: '#fff' }}
+                  />
+                  <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem' }}>🔍</span>
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: '#6B7280', display: 'block', marginBottom: '0.25rem' }}>To</label>
-                  <input type="date" value={dateFilterEnd} onChange={e => setDateFilterEnd(e.target.value)} style={{ padding: '0.375rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', fontSize: '0.875rem', outline: 'none' }} />
+
+                {/* Source filter pills */}
+                <div style={{ display: 'flex', gap: '0.375rem' }}>
+                  {(['all', 'builder', 'assistant', 'manual'] as const).map(src => (
+                    <button
+                      key={src}
+                      onClick={() => setSourceFilter(src)}
+                      style={{
+                        padding: '0.4rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, border: 'none', cursor: 'pointer',
+                        background: sourceFilter === src ? '#1A237E' : '#f1f5f9',
+                        color: sourceFilter === src ? '#fff' : '#64748b',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {src === 'all' ? 'All' : src.charAt(0).toUpperCase() + src.slice(1)}
+                    </button>
+                  ))}
                 </div>
-                {(dateFilterStart || dateFilterEnd) && (
-                  <button onClick={() => { setDateFilterStart(''); setDateFilterEnd(''); }} style={{ marginTop: '1.25rem', padding: '0.375rem 0.75rem', fontSize: '0.875rem', color: '#EF4444', background: '#FEE2E2', border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 500 }}>
-                    Clear
-                  </button>
-                )}
+
+                {/* Date range */}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <input type="date" value={dateFilterStart} onChange={e => setDateFilterStart(e.target.value)} style={{ padding: '0.4rem 0.5rem', border: '1.5px solid #cbd5e1', borderRadius: '8px', fontSize: '0.8rem', outline: 'none', color: dateFilterStart ? '#0f172a' : '#94a3b8' }} />
+                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>to</span>
+                  <input type="date" value={dateFilterEnd} onChange={e => setDateFilterEnd(e.target.value)} style={{ padding: '0.4rem 0.5rem', border: '1.5px solid #cbd5e1', borderRadius: '8px', fontSize: '0.8rem', outline: 'none', color: dateFilterEnd ? '#0f172a' : '#94a3b8' }} />
+                  {(dateFilterStart || dateFilterEnd || repoSearch) && (
+                    <button onClick={() => { setDateFilterStart(''); setDateFilterEnd(''); setRepoSearch(''); setSourceFilter('all'); }} style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -411,11 +448,11 @@ export default function MattersAssistantPage() {
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                      <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Matter Details</th>
-                      <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Builder Reference</th>
-                      <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
-                      <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-                      <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
+                      <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Matter Details</th>
+                      <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Firm · Source</th>
+                      <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date</th>
+                      <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                      <th style={{ padding: '0.75rem 1.5rem', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -441,15 +478,25 @@ export default function MattersAssistantPage() {
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: '1rem 1.5rem' }}>
-                          {m.submission ? (
-                            <div>
-                              <div style={{ fontWeight: 500, color: '#111827' }}>{m.submission.targetDirectory}</div>
-                              <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>{m.submission.practiceArea}</div>
+                        <td style={{ padding: '0.75rem 1.5rem' }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
+                              {m.firm?.name || m.submission?.targetDirectory || '—'}
                             </div>
-                          ) : (
-                            <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Independent</span>
-                          )}
+                            <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.25rem', alignItems: 'center' }}>
+                              <span style={{
+                                display: 'inline-block', padding: '0.125rem 0.5rem', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.03em',
+                                background: m.source === 'builder' ? '#EEF2FF' : m.source === 'assistant' ? '#ECFDF5' : '#FFFBEB',
+                                color: m.source === 'builder' ? '#3730A3' : m.source === 'assistant' ? '#065F46' : '#92400E',
+                                border: `1px solid ${m.source === 'builder' ? '#C7D2FE' : m.source === 'assistant' ? '#A7F3D0' : '#FDE68A'}`,
+                              }}>
+                                {m.source || 'builder'}
+                              </span>
+                              {m.submission?.practiceArea && (
+                                <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{m.submission.practiceArea}</span>
+                              )}
+                            </div>
+                          </div>
                         </td>
                         <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: '#4B5563' }}>
                           {new Date(m.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

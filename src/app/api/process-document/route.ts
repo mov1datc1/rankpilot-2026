@@ -94,6 +94,21 @@ export async function POST(request: NextRequest) {
     const extractedLawyers = extractedData?.lawyers || [];
     const extractedContacts = extractedData?.contacts || [];
 
+    // Auto-create or find Firm for library organization
+    const firmName = (submission.chambersData as any)?.firmName
+      || strategicContext?.firm_name
+      || extractedData?.firm_name
+      || '';
+    let firmId: string | null = null;
+    if (firmName && resolvedUserId) {
+      const firm = await prisma.firm.upsert({
+        where: { userId_name: { userId: resolvedUserId, name: firmName } },
+        update: {},
+        create: { userId: resolvedUserId, name: firmName },
+      });
+      firmId = firm.id;
+    }
+
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
     if (extractedMatters && Array.isArray(extractedMatters)) {
@@ -104,6 +119,7 @@ export async function POST(request: NextRequest) {
           data: {
             submissionId,
             userId: resolvedUserId,
+            firmId,
             name: m.name || m.title || 'Extracted Matter',
             client: m.client || 'Unknown Client',
             value: m.matter_value || m.value || 'N/A',
