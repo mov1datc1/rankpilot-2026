@@ -24,7 +24,7 @@ export default function SubmissionsPage() {
   const [guideRegion, setGuideRegion] = useState('Latin America');
   const [practiceArea, setPracticeArea] = useState('Banking & Finance');
   const [currentBand, setCurrentBand] = useState('Unranked');
-  const [deadline, setDeadline] = useState('2026-07-30');
+  const [deadline, setDeadline] = useState('');
 
   const startUploadAudit = async () => {
     setIsSubmitting(true);
@@ -174,7 +174,7 @@ export default function SubmissionsPage() {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           <PremiumSelect
             label="Current Band"
             value={currentBand}
@@ -185,7 +185,7 @@ export default function SubmissionsPage() {
           />
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Submission Deadline
+              Deadline <span style={{ fontWeight: 400, textTransform: 'none', color: '#94a3b8', letterSpacing: 0 }}>· optional</span>
             </label>
             <input 
               type="date" 
@@ -193,11 +193,12 @@ export default function SubmissionsPage() {
               onChange={e => setDeadline(e.target.value)}
               style={{ 
                 width: '100%', padding: '0.7rem 1rem', borderRadius: '10px', 
-                border: '1.5px solid #cbd5e1', color: '#0f172a', background: '#fff', 
+                border: '1.5px solid #cbd5e1', color: deadline ? '#0f172a' : '#94a3b8', background: '#fff', 
                 fontSize: '0.9rem', fontWeight: 500, outline: 'none',
                 boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
               }} 
             />
+            <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.35rem 0 0', fontStyle: 'italic' }}>For your own tracking — does not affect AI analysis.</p>
           </div>
         </div>
       </div>
