@@ -112,22 +112,20 @@ def create_rankpilot_graph():
     workflow.add_edge("comparative_analysis", "editorial_confidence")
 
     # 7. Editorial Confidence Gate: Is the recommendation defensible?
+    # IMPORTANT: We ALWAYS proceed to narrative_architecture now.
+    # When confidence is insufficient, the narrative includes caveats and
+    # the report page shows a clear "needs more evidence" banner.
+    # The old behavior (routing to interrogation → END) produced empty reports.
     def route_after_confidence(state: AgentState):
-        """Chapter 4 gate: seek the most defensible conclusion, not the most optimistic."""
-        confidence = state.get("editorial_confidence", {})
-        passes = confidence.get("passes_defensibility_test", False)
-        recommendation = confidence.get("recommendation", "needs_investigation")
-        
-        if passes or recommendation in ("proceed", "proceed_with_caveats"):
-            return "narrative_architecture"
-        return "interrogation"
+        """Chapter 4 gate: seek the most defensible conclusion, not the most optimistic.
+        Always proceeds to narrative — insufficient confidence is communicated, not hidden."""
+        return "narrative_architecture"
 
     workflow.add_conditional_edges(
         "editorial_confidence",
         route_after_confidence,
         {
             "narrative_architecture": "narrative_architecture",
-            "interrogation": "interrogation"
         }
     )
 

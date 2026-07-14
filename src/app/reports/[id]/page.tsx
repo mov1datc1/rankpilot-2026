@@ -217,6 +217,36 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </div>
         )}
 
+        {/* Insufficient Evidence Warning Banner */}
+        {(confidence === 'insufficient' || confidence === 'low') && (
+          <div style={{ background: '#FFF7ED', borderRadius: '12px', border: '1px solid #FED7AA', padding: '1.5rem 2rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.25rem' }}>⚠️</div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#9A3412', margin: '0 0 0.5rem' }}>
+                Insufficient Evidence for Full Analysis
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: '#C2410C', lineHeight: 1.6, margin: '0 0 0.75rem' }}>
+                The Editorial Reasoning Engine determined that the submitted document does not contain enough evidence to produce a fully defensible audit letter. The analysis below is preliminary and should be treated as a draft requiring supplemental information.
+              </p>
+              {editorialConfidence.defensibility_summary && (
+                <p style={{ fontSize: '0.85rem', color: '#7C2D12', margin: '0 0 0.75rem', fontStyle: 'italic' }}>
+                  "{editorialConfidence.defensibility_summary}"
+                </p>
+              )}
+              {comprehension.missing_information && Array.isArray(comprehension.missing_information) && comprehension.missing_information.length > 0 && (
+                <div style={{ background: '#FFFFFF', borderRadius: '8px', border: '1px solid #FED7AA', padding: '1rem', marginTop: '0.5rem' }}>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.5rem' }}>What's needed to complete the analysis:</h4>
+                  <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: '#7C2D12', lineHeight: 1.8 }}>
+                    {comprehension.missing_information.map((item: string, i: number) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* The Audit Letter Paper */}
         <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
           {/* Header Line */}
