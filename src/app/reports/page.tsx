@@ -80,8 +80,10 @@ export default function ReportsPage() {
   // Filter Logic
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(sub => {
-      // 1. Search Filter (by targetDirectory, practiceArea, guideRegion)
-      const searchStr = `${sub.targetDirectory} ${sub.practiceArea} ${sub.guideRegion}`.toLowerCase();
+      // 1. Search Filter (by targetDirectory, practiceArea, guideRegion, firm name)
+      const cd = sub.chambersData as any;
+      const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || '';
+      const searchStr = `${sub.targetDirectory} ${sub.practiceArea} ${sub.guideRegion} ${firmName}`.toLowerCase();
       if (searchTerm && !searchStr.includes(searchTerm.toLowerCase())) return false;
 
       // 2. Date Filter
@@ -264,41 +266,48 @@ export default function ReportsPage() {
                 const total = sub.matters.length;
                 const optimized = sub.matters.filter(m => m.status === 'AI Optimized').length;
                 const isReady = total > 0 && optimized === total;
+                const cd = sub.chambersData as any;
+                const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || '';
+                const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
+                const needsEvidence = editorialConf === 'insufficient' || editorialConf === 'low';
+
+                // Derive display status
+                let displayStatus = sub.status;
+                let statusBg = '#eff6ff';
+                let statusColor = '#1d4ed8';
+                let StatusIcon = FileText;
+                if (sub.status === 'Accepted') {
+                  statusBg = '#dcfce7'; statusColor = '#15803d'; StatusIcon = CheckCircle2; displayStatus = 'Accepted';
+                } else if (sub.status === 'Rejected') {
+                  statusBg = '#fee2e2'; statusColor = '#b91c1c'; StatusIcon = AlertTriangle; displayStatus = 'Rejected';
+                } else if (needsEvidence) {
+                  statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle; displayStatus = 'Needs Evidence';
+                } else if (sub.status === 'Submitted' && !needsEvidence) {
+                  statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
+                } else if (sub.status === 'Draft') {
+                  statusBg = '#F1F5F9'; statusColor = '#475569'; StatusIcon = Clock; displayStatus = 'Draft';
+                }
 
                 return (
                   <tr key={sub.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '1.25rem 1.5rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>
                       <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '1rem', marginBottom: '0.2rem' }}>
-                        {(() => {
-                          const cd = sub.chambersData as any;
-                          const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || '';
-                          return firmName ? `${firmName} — ${sub.targetDirectory}` : sub.targetDirectory;
-                        })()}
+                        {firmName ? `${firmName}` : sub.targetDirectory}
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{sub.practiceArea} · {sub.guideRegion}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{sub.targetDirectory} · {sub.practiceArea} · {sub.guideRegion}</div>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>
                       {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
-                      {['Submitted', 'Accepted', 'Rejected'].includes(sub.status) ? (
-                        <span style={{ 
-                          background: sub.status === 'Accepted' ? '#dcfce7' : sub.status === 'Rejected' ? '#fee2e2' : '#eff6ff', 
-                          color: sub.status === 'Accepted' ? '#15803d' : sub.status === 'Rejected' ? '#b91c1c' : '#1d4ed8', 
-                          padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' 
-                        }}>
-                          {sub.status === 'Accepted' ? <CheckCircle2 size={14} /> : sub.status === 'Rejected' ? <AlertTriangle size={14} /> : <FileText size={14} />}
-                          {sub.status}
-                        </span>
-                      ) : isReady ? (
-                        <span style={{ background: '#f8fafc', color: '#475569', border: '1px solid #cbd5e1', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <CheckCircle2 size={14} /> Ready to Review
-                        </span>
-                      ) : (
-                        <span style={{ background: '#fef3c7', color: '#92400e', padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <Clock size={14} /> In Progress ({optimized}/{total})
-                        </span>
-                      )}
+                      <span style={{ 
+                        background: statusBg, color: statusColor,
+                        padding: '0.35rem 0.75rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: 600, 
+                        display: 'inline-flex', alignItems: 'center', gap: '0.3rem' 
+                      }}>
+                        <StatusIcon size={14} />
+                        {displayStatus}
+                      </span>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
