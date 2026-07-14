@@ -230,12 +230,12 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               </p>
               {editorialConfidence.defensibility_summary && (
                 <p style={{ fontSize: '0.85rem', color: '#7C2D12', margin: '0 0 0.75rem', fontStyle: 'italic' }}>
-                  "{editorialConfidence.defensibility_summary}"
+                  &quot;{editorialConfidence.defensibility_summary}&quot;
                 </p>
               )}
               {comprehension.missing_information && Array.isArray(comprehension.missing_information) && comprehension.missing_information.length > 0 && (
                 <div style={{ background: '#FFFFFF', borderRadius: '8px', border: '1px solid #FED7AA', padding: '1rem', marginTop: '0.5rem' }}>
-                  <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.5rem' }}>What's needed to complete the analysis:</h4>
+                  <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.5rem' }}>What&apos;s needed to complete the analysis:</h4>
                   <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: '#7C2D12', lineHeight: 1.8 }}>
                     {comprehension.missing_information.map((item: string, i: number) => (
                       <li key={i}>{item}</li>
@@ -243,6 +243,36 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                   </ul>
                 </div>
               )}
+
+              {/* CTA Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+                <a
+                  href="/matters-assistant"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.65rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700,
+                    background: 'linear-gradient(135deg, #1A237E 0%, #283593 100%)', color: '#ffffff',
+                    textDecoration: 'none', cursor: 'pointer', border: 'none',
+                    boxShadow: '0 2px 6px rgba(26, 35, 126, 0.3)',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  }}
+                >
+                  📎 Upload Supplemental Evidence
+                </a>
+                <a
+                  href="/submissions"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.65rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600,
+                    background: '#FFFFFF', color: '#9A3412',
+                    textDecoration: 'none', cursor: 'pointer',
+                    border: '1.5px solid #FED7AA',
+                    transition: 'background 0.15s ease',
+                  }}
+                >
+                  🔄 Start New Submission
+                </a>
+              </div>
             </div>
           </div>
         )}
