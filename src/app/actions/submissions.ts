@@ -36,6 +36,8 @@ export async function createSubmission(data: {
   targetDirectory: string;
   practiceArea: string;
   guideRegion: string;
+  currentBand?: string;
+  deadline?: string;
 }) {
   try {
     const user = await getAuthenticatedUser();
@@ -46,7 +48,8 @@ export async function createSubmission(data: {
         targetDirectory: data.targetDirectory,
         practiceArea: data.practiceArea,
         guideRegion: data.guideRegion,
-        currentBand: 'N/A',
+        currentBand: data.currentBand || 'Unranked',
+        deadline: data.deadline ? new Date(data.deadline) : null,
         status: 'Draft'
       }
     });

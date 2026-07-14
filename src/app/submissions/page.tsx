@@ -53,7 +53,9 @@ export default function SubmissionsPage() {
       const result = await createSubmission({
         targetDirectory,
         guideRegion,
-        practiceArea
+        practiceArea,
+        currentBand,
+        deadline,
       });
 
       if (result.success && result.data) {
@@ -87,7 +89,9 @@ export default function SubmissionsPage() {
       const result = await createSubmission({
         targetDirectory,
         guideRegion,
-        practiceArea
+        practiceArea,
+        currentBand,
+        deadline,
       });
 
       if (result.success && result.data) {
@@ -109,7 +113,9 @@ export default function SubmissionsPage() {
       const result = await createSubmission({
         targetDirectory,
         guideRegion,
-        practiceArea
+        practiceArea,
+        currentBand,
+        deadline,
       });
 
       if (result.success && result.data) {
