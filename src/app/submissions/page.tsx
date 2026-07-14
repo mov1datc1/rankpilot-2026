@@ -31,7 +31,7 @@ export default function SubmissionsPage() {
   type LibMatter = { id: string; name: string; client: string; value: string; status: string; firm?: { name: string } | null; practiceArea?: string | null };
   const [libraryMatters, setLibraryMatters] = useState<LibMatter[]>([]);
   const [selectedMatterIds, setSelectedMatterIds] = useState<Set<string>>(new Set());
-  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryExpanded, setLibraryExpanded] = useState(true);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickFile, setQuickFile] = useState<File | null>(null);
   const [quickNotes, setQuickNotes] = useState('');
@@ -42,7 +42,6 @@ export default function SubmissionsPage() {
     getLibraryMatters({ practiceArea }).then(res => {
       if (res.success && res.data) {
         setLibraryMatters(res.data as LibMatter[]);
-        if (res.data.length > 0) setShowLibrary(true);
       }
     });
   }, [practiceArea]);
@@ -266,11 +265,11 @@ export default function SubmissionsPage() {
       </div>
 
       {/* Library Enrichment Section */}
-      {showLibrary && libraryMatters.length > 0 && (
+      {libraryMatters.length > 0 && (
         <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '2rem' }}>
           <div
             style={{ padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: selectedMatterIds.size > 0 ? '#EEF2FF' : '#F8FAFC' }}
-            onClick={() => setShowLibrary(prev => !prev)}
+            onClick={() => setLibraryExpanded(prev => !prev)}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <BookOpen size={18} style={{ color: '#1A237E' }} />
@@ -281,14 +280,17 @@ export default function SubmissionsPage() {
                 </span>
               </div>
             </div>
-            <span style={{ fontSize: '0.75rem', color: '#1A237E', fontWeight: 600 }}>{showLibrary ? '▲ Collapse' : '▼ Expand'}</span>
+            <span style={{ fontSize: '0.75rem', color: '#1A237E', fontWeight: 600 }}>{libraryExpanded ? '▲ Collapse' : '▼ Expand'}</span>
           </div>
 
-          {showLibrary && (
-            <div style={{ padding: '0 1.5rem 1.25rem', maxHeight: '260px', overflowY: 'auto' }}>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 0.75rem', fontStyle: 'italic' }}>
-                Select existing matters to include in this submission for a stronger analysis.
-              </p>
+          {libraryExpanded && (
+            <div style={{ padding: '0 1.5rem 1.25rem', maxHeight: '300px', overflowY: 'auto' }}>
+              <div style={{ background: '#F0F9FF', borderRadius: '8px', padding: '0.75rem 1rem', margin: '0 0 0.75rem', border: '1px solid #BAE6FD' }}>
+                <p style={{ fontSize: '0.8rem', color: '#0369A1', margin: 0, lineHeight: 1.5 }}>
+                  <strong>💡 How it works:</strong> Select matters from your library to include as supporting evidence for this submission. 
+                  The AI engine will use them to build a stronger, more defensible audit letter. You can also add new matters below.
+                </p>
+              </div>
               {libraryMatters.map(m => {
                 const isSelected = selectedMatterIds.has(m.id);
                 return (

@@ -5,6 +5,7 @@ import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2 } from "lucide-reac
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 import StatusActionButtons from "./StatusActionButtons";
+import SupplementalUpload from "./SupplementalUpload";
 
 
 export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -245,20 +246,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               )}
 
               {/* CTA Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-                <a
-                  href="/matters-assistant"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.65rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700,
-                    background: 'linear-gradient(135deg, #1A237E 0%, #283593 100%)', color: '#ffffff',
-                    textDecoration: 'none', cursor: 'pointer', border: 'none',
-                    boxShadow: '0 2px 6px rgba(26, 35, 126, 0.3)',
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  }}
-                >
-                  📎 Upload Supplemental Evidence
-                </a>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <SupplementalUpload submissionId={id} />
                 <a
                   href="/submissions"
                   style={{
@@ -267,7 +256,6 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                     background: '#FFFFFF', color: '#9A3412',
                     textDecoration: 'none', cursor: 'pointer',
                     border: '1.5px solid #FED7AA',
-                    transition: 'background 0.15s ease',
                   }}
                 >
                   🔄 Start New Submission
