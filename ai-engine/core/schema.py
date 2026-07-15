@@ -202,6 +202,85 @@ class EditorialConfidenceOutput(BaseModel):
     defensibility_summary: str = Field(description="2-3 sentence summary of why the recommendation is or is not defensible.")
 
 
+# =====================================================
+# SUBMISSION BLUEPRINT — Vol. VI, Chapter 15
+# The structured planning object generated BEFORE writing.
+# "The AI should not start writing. It should start DESIGNING."
+# =====================================================
+
+class MatterDisposition(BaseModel):
+    """Decision about a single matter: include, exclude, or reposition."""
+    matter_title: str = Field(description="Title of the matter.")
+    disposition: str = Field(description="One of: 'include_as_hero', 'include_as_supporting', 'include_as_depth', 'exclude', 'reposition_to_other_practice'.")
+    rationale: str = Field(description="Why this disposition was chosen — references Decision Rules 5, 6, 11.")
+    proves_what: str = Field(default="", description="What this matter proves for the thesis that no other matter already proves.")
+    redundant_with: str = Field(default="", description="If excluded for redundancy, which included matter already proves the same thing.")
+
+class EditorialCoherenceCheck(BaseModel):
+    """Vol. VI Ch. 14: 10-question self-check before finalizing."""
+    thesis_identifiable: bool = Field(description="Is there a single, clear thesis?")
+    all_matters_contribute: bool = Field(description="Do ALL included matters contribute to the thesis?")
+    hero_demonstrates_thesis: bool = Field(description="Does the Hero Matter directly demonstrate the thesis?")
+    supporting_confirm_pattern: bool = Field(description="Do supporting matters confirm a pattern (not just add volume)?")
+    narrative_thread_continuous: bool = Field(description="Is there a continuous narrative thread?")
+    evidence_distribution_balanced: bool = Field(description="Is evidence distribution balanced across dimensions?")
+    narrative_matches_positioning: bool = Field(description="Does the narrative match the discovered positioning?")
+    cognitive_load_minimized: bool = Field(description="Does the architecture minimize cognitive load for the researcher?")
+    conclusions_supported: bool = Field(description="Are conclusions backed by sufficient evidence?")
+    impression_memorable: bool = Field(description="Does the document leave a clear, memorable impression?")
+    passes_coherence: bool = Field(description="True if 8+ of the above are true.")
+    redesign_notes: str = Field(default="", description="If coherence fails, what must change.")
+
+class SubmissionBlueprintOutput(BaseModel):
+    """Vol. VI, Chapter 15: The Submission Blueprint Object.
+    Generated BETWEEN editorial_confidence and narrative_architecture.
+    'The AI should not start writing. It should start DESIGNING.'
+    This is the bridge between reasoning and writing."""
+    
+    # Core thesis
+    thesis: str = Field(description="The ONE specific argument this submission will prove. Not 'we do banking' but 'we have established dominance in lender-side restructurings for institutional creditors.'")
+    
+    # Matter architecture
+    hero_matter: str = Field(description="The single matter that best demonstrates the thesis. Chosen by demonstrative power, NOT by deal value (Decision Rule 6).")
+    hero_rationale: str = Field(description="Why this matter was chosen — what makes it the strongest proof.")
+    supporting_matters: List[str] = Field(description="Matters that prove the Hero wasn't an exception. Each must prove something NEW (Ch. 4).")
+    matters_to_exclude: List[MatterDisposition] = Field(default_factory=list, description="Matters actively excluded and why (Decision Rule 5: redundancy, contradiction, wrong practice, dilution).")
+    
+    # Strategic intelligence
+    editorial_risks: List[str] = Field(description="Top 3-5 risks: single-client dependency, wording dependency, positioning gaps.")
+    primary_pattern: str = Field(description="The dominant pattern across all evidence (e.g., 'institutional lender representation in distressed debt').")
+    secondary_pattern: str = Field(default="", description="A secondary reinforcing pattern, if one exists.")
+    practice_identity: str = Field(description="The competitive identity in ONE sentence — what the researcher should remember.")
+    
+    # Target perception
+    target_impression: str = Field(description="What the researcher should think after finishing: [exact sentence].")
+    three_key_messages: List[str] = Field(description="Exactly 3 ideas the researcher should remember one week later (Memory Engineering, Ch. 11).")
+    
+    # Architecture
+    evidence_hierarchy: List[str] = Field(description="Ordered list of evidence points by probative strength (Pyramid Principle, Ch. 2). Strongest first.")
+    narrative_sequence: List[str] = Field(description="The planned flow of the submission: which matter/section comes first, second, etc. Must create a persuasion curve (Ch. 12).")
+    
+    # Team & market
+    lawyer_distribution: List[str] = Field(description="How lawyers are distributed across matters — demonstrates institutional depth, not just one partner.")
+    bench_strength_signals: List[str] = Field(description="Specific evidence of bench strength and institutional capability.")
+    client_diversity: List[str] = Field(description="Range of client types demonstrated (institutional, corporate, PE, sovereign, etc.).")
+    sector_distribution: List[str] = Field(description="Industries/sectors covered — diversity vs. specialization balance.")
+    complexity_distribution: List[str] = Field(description="Types of complexity demonstrated (cross-border, multi-party, regulatory, novel, etc.).")
+    
+    # Closing & validation
+    closing_message: str = Field(description="The final impression to leave — consolidates identity, does NOT summarize (Ch. 13).")
+    open_questions: List[str] = Field(default_factory=list, description="Questions the system cannot answer with current evidence.")
+    confidence_level: str = Field(description="One of: 'high', 'moderate', 'low'. Based on how well the blueprint can be executed.")
+    
+    # Self-check
+    coherence_check: EditorialCoherenceCheck = Field(description="Vol. VI Ch. 14: 10-question coherence validation.")
+    
+    # Decision audit
+    positioning_change_recommended: bool = Field(default=False, description="Decision Rule 7: True if evidence contradicts the client's proposed narrative and repositioning is needed.")
+    promotion_not_recommended: bool = Field(default=False, description="Decision Rule 8: True if evidence doesn't yet clearly surpass the threshold — recommend waiting.")
+    practice_change_recommended: str = Field(default="", description="Decision Rule 10: If the firm should present in a different practice area, specify which one.")
+
+
 class MatterInHierarchy(BaseModel):
     """A single matter's role within the narrative architecture."""
     matter_title: str = Field(description="Title or name of the matter.")

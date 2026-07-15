@@ -55,6 +55,11 @@ class AgentState(TypedDict):
     # 8-question test determining if recommendations are editorially defensible
     editorial_confidence: Dict
 
+    # Vol. VI Ch. 15: Submission Blueprint — the structured planning object
+    # Generated BETWEEN editorial_confidence and narrative_architecture
+    # "The AI should not start writing. It should start DESIGNING."
+    submission_blueprint: Dict
+
     # Pre-writing blueprint: thesis, hero matter, hierarchy, narrative arc
     narrative_architecture: Dict
 

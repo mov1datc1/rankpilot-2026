@@ -16,6 +16,7 @@ from agents.editorial_nodes import (
     refutation_engine_node,
     comparative_analysis_node,
     editorial_confidence_node,
+    submission_blueprint_node,
     narrative_architecture_node,
 )
 from core.state import AgentState
@@ -24,10 +25,10 @@ def create_rankpilot_graph():
     """
     Constructs the RankPilot Editorial Reasoning Engine graph.
     
-    This is a 14-node pipeline that reproduces the reasoning of a senior 
+    This is a 15-node pipeline that reproduces the reasoning of a senior 
     rankings consultant before writing a single word.
     
-    Pipeline Architecture:
+    Pipeline Architecture (Vol. 0-VII integrated):
     
     ingestion → extraction → context_engine → comprehension
                                                     ↓
@@ -37,15 +38,15 @@ def create_rankpilot_graph():
                                                     ↓
                                               hypothesis_construction
                                                     ↓
-                                              refutation_engine
+                                              refutation_engine (+ Decision Rules 5-7, 11)
                                                     ↓
                                               comparative_analysis
                                                     ↓
-                                              editorial_confidence
+                                              editorial_confidence (+ Decision Rules 8-10)
                                                     ↓
-                                              [defensible?]
-                                              YES → narrative_architecture
-                                              NO  → interrogation → END
+                                              submission_blueprint (NEW: Vol. VI Ch. 15)
+                                                    ↓
+                                              narrative_architecture (executes blueprint)
                                                     ↓
                                               analysis (now thesis-driven)
                                                     ↓
@@ -67,13 +68,14 @@ def create_rankpilot_graph():
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
     
-    # --- Editorial Reasoning Engine nodes (NEW) ---
+    # --- Editorial Reasoning Engine nodes ---
     workflow.add_node("comprehension", comprehension_node)
     workflow.add_node("identity_discovery", identity_discovery_node)
     workflow.add_node("hypothesis_construction", hypothesis_construction_node)
     workflow.add_node("refutation_engine", refutation_engine_node)
     workflow.add_node("comparative_analysis", comparative_analysis_node)
     workflow.add_node("editorial_confidence", editorial_confidence_node)
+    workflow.add_node("submission_blueprint", submission_blueprint_node)
     workflow.add_node("narrative_architecture", narrative_architecture_node)
 
     # 3. Entry sequence (unchanged start)
@@ -111,23 +113,10 @@ def create_rankpilot_graph():
     workflow.add_edge("refutation_engine", "comparative_analysis")
     workflow.add_edge("comparative_analysis", "editorial_confidence")
 
-    # 7. Editorial Confidence Gate: Is the recommendation defensible?
-    # IMPORTANT: We ALWAYS proceed to narrative_architecture now.
-    # When confidence is insufficient, the narrative includes caveats and
-    # the report page shows a clear "needs more evidence" banner.
-    # The old behavior (routing to interrogation → END) produced empty reports.
-    def route_after_confidence(state: AgentState):
-        """Chapter 4 gate: seek the most defensible conclusion, not the most optimistic.
-        Always proceeds to narrative — insufficient confidence is communicated, not hidden."""
-        return "narrative_architecture"
-
-    workflow.add_conditional_edges(
-        "editorial_confidence",
-        route_after_confidence,
-        {
-            "narrative_architecture": "narrative_architecture",
-        }
-    )
+    # 7. Editorial Confidence → Submission Blueprint → Narrative Architecture
+    # ALWAYS proceeds: insufficient confidence is communicated, not hidden.
+    workflow.add_edge("editorial_confidence", "submission_blueprint")
+    workflow.add_edge("submission_blueprint", "narrative_architecture")
 
     # 8. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
     workflow.add_edge("narrative_architecture", "analysis")

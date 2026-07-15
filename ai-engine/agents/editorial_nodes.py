@@ -25,6 +25,7 @@ from core.schema import (
     RefutationSetOutput,
     ComparativeAnalysisOutput,
     EditorialConfidenceOutput,
+    SubmissionBlueprintOutput,
     NarrativeArchitectureOutput,
 )
 from agents.prompts import (
@@ -34,6 +35,7 @@ from agents.prompts import (
     REFUTATION_ENGINE_PROMPT,
     COMPARATIVE_ANALYSIS_PROMPT,
     EDITORIAL_CONFIDENCE_PROMPT,
+    SUBMISSION_BLUEPRINT_PROMPT,
     NARRATIVE_ARCHITECTURE_PROMPT,
 )
 from utils.rag_router import RAGRouter
@@ -431,17 +433,99 @@ def editorial_confidence_node(state: AgentState) -> Dict:
 
 
 # ─────────────────────────────────────────────
-# NODE 7: NARRATIVE ARCHITECTURE (Pre-writing)
+# NODE 7: SUBMISSION BLUEPRINT (Vol. VI, Ch. 15)
+# "The AI does not start writing. It starts DESIGNING."
+# ─────────────────────────────────────────────
+def submission_blueprint_node(state: AgentState) -> Dict:
+    """Generates the Submission Blueprint Object — the complete design of the
+    submission before any writing begins. This is the bridge between reasoning
+    and execution, introduced by Vol. VI Chapter 15."""
+    print("--- SUBMISSION BLUEPRINT: Designing before writing ---")
+    
+    llm = get_model()
+    structured_llm = llm.with_structured_output(SubmissionBlueprintOutput)
+    
+    input_data = {
+        "comprehension": state.get("comprehension", {}),
+        "competitive_identity": state.get("competitive_identity", {}),
+        "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
+        "strongest_hypothesis": state.get("refutation_results", {}).get("strongest_surviving", ""),
+        "comparative_analysis": state.get("comparative_analysis", {}),
+        "editorial_confidence": state.get("editorial_confidence", {}),
+        "matters": state.get("matters", []),
+        "metadata": state.get("metadata", {}),
+        "strategic_context": state.get("strategic_context", {}),
+    }
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", SUBMISSION_BLUEPRINT_PROMPT),
+        ("human", "Design the complete Submission Blueprint for this submission: {data}")
+    ])
+    
+    chain = prompt | structured_llm
+    
+    try:
+        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        blueprint = _safe_dump(result)
+    except Exception as e:
+        print(f"Error in Submission Blueprint Node: {e}")
+        blueprint = {
+            "thesis": state.get("comprehension", {}).get("apparent_thesis", "Unable to construct thesis"),
+            "hero_matter": "",
+            "hero_rationale": "",
+            "supporting_matters": [],
+            "matters_to_exclude": [],
+            "editorial_risks": [f"Blueprint generation failed: {str(e)}"],
+            "primary_pattern": "",
+            "practice_identity": "",
+            "target_impression": "",
+            "three_key_messages": [],
+            "evidence_hierarchy": [],
+            "narrative_sequence": [],
+            "lawyer_distribution": [],
+            "bench_strength_signals": [],
+            "client_diversity": [],
+            "sector_distribution": [],
+            "complexity_distribution": [],
+            "closing_message": "",
+            "open_questions": [],
+            "confidence_level": "low",
+            "coherence_check": {"passes_coherence": False, "redesign_notes": str(e)},
+            "positioning_change_recommended": False,
+            "promotion_not_recommended": False,
+            "practice_change_recommended": "",
+        }
+    
+    trace = state.get("reasoning_trace", [])
+    trace.append(_build_trace_entry(
+        stage="submission_blueprint",
+        decision=f"Thesis: {blueprint.get('thesis', '')} | Hero: {blueprint.get('hero_matter', '')} | Confidence: {blueprint.get('confidence_level', '')}",
+        evidence=blueprint.get("three_key_messages", []),
+        confidence=0.85 if blueprint.get("confidence_level") == "high" else 0.5,
+        principle="Vol. VI Ch. 15: Design Before Writing"
+    ))
+    
+    return {
+        "submission_blueprint": blueprint,
+        "reasoning_trace": trace,
+        "current_step": "narrative"
+    }
+
+
+# ─────────────────────────────────────────────
+# NODE 8: NARRATIVE ARCHITECTURE (Pre-writing)
+# Now EXECUTES the Submission Blueprint
 # ─────────────────────────────────────────────
 def narrative_architecture_node(state: AgentState) -> Dict:
-    """Plans the editorial story BEFORE any writing begins. 
-    This is the bridge between reasoning and execution."""
-    print("--- NARRATIVE ARCHITECTURE: Planning the editorial story ---")
+    """Executes the Submission Blueprint into a concrete editorial plan.
+    This is the bridge between the design (blueprint) and the writing."""
+    print("--- NARRATIVE ARCHITECTURE: Executing the blueprint ---")
     
     llm = get_model()
     structured_llm = llm.with_structured_output(NarrativeArchitectureOutput)
     
     input_data = {
+        "submission_blueprint": state.get("submission_blueprint", {}),
         "comprehension": state.get("comprehension", {}),
         "competitive_identity": state.get("competitive_identity", {}),
         "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
@@ -454,7 +538,7 @@ def narrative_architecture_node(state: AgentState) -> Dict:
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", NARRATIVE_ARCHITECTURE_PROMPT),
-        ("human", "Design the narrative architecture for this submission: {data}")
+        ("human", "Execute the Submission Blueprint into a narrative architecture: {data}")
     ])
     
     chain = prompt | structured_llm
