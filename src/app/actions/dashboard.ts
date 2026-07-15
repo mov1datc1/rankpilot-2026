@@ -14,7 +14,8 @@ export async function getDashboardStats() {
 
     const submissions = await prisma.submission.findMany({
       where: { userId: user.id },
-      include: { matters: true }
+      include: { matters: true },
+      orderBy: { createdAt: 'desc' },
     });
 
     const totalSubmissions = submissions.length;
@@ -33,7 +34,8 @@ export async function getDashboardStats() {
       guideRegion: s.guideRegion,
       mattersCount: s.matters.length,
       optimizedCount: s.matters.filter(m => m.status === 'AI Optimized').length,
-      createdAt: s.createdAt
+      createdAt: s.createdAt,
+      chambersData: s.chambersData,
     }));
 
     return {

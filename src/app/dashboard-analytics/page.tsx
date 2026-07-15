@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart2, FileText, Zap, CheckCircle2, Clock, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { BarChart2, FileText, Zap, CheckCircle2, Clock, TrendingUp, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { getDashboardStats } from '@/app/actions/dashboard';
 import Link from 'next/link';
 
@@ -13,6 +13,7 @@ type RecentSub = {
   mattersCount: number;
   optimizedCount: number;
   createdAt: Date | string;
+  chambersData?: any;
 };
 
 export default function DashboardAnalyticsPage() {
@@ -100,7 +101,7 @@ export default function DashboardAnalyticsPage() {
       }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>Recent Submissions</h2>
-          <Link href="/submissions" style={{
+          <Link href="/reports" style={{
             color: '#2563eb', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600,
             display: 'flex', alignItems: 'center', gap: '0.25rem'
           }}>
@@ -116,8 +117,8 @@ export default function DashboardAnalyticsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#fafafa' }}>
-                <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Directory</th>
-                <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Practice Area</th>
+                <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Submission</th>
+                <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Details</th>
                 <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Progress</th>
                 <th style={{ padding: '1rem 1.5rem', color: '#64748b', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
               </tr>
@@ -126,10 +127,35 @@ export default function DashboardAnalyticsPage() {
               {stats.recentSubmissions.map((sub) => {
                 const progress = sub.mattersCount > 0 ? Math.round((sub.optimizedCount / sub.mattersCount) * 100) : 0;
                 const isReady = sub.mattersCount > 0 && progress === 100;
+                const cd = sub.chambersData as any;
+                const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || '';
+                const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
+                const needsEvidence = editorialConf === 'insufficient' || editorialConf === 'low';
+
+                let statusLabel = isReady ? 'Analyzed' : 'In Progress';
+                let statusBg = isReady ? '#ECFDF5' : '#FEF3C7';
+                let statusColor = isReady ? '#065F46' : '#92400E';
+                let StatusIcon = isReady ? CheckCircle2 : Clock;
+                if (needsEvidence) {
+                  statusLabel = 'Needs Evidence'; statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
+                }
+
                 return (
-                  <tr key={sub.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
-                    <td style={{ padding: '1rem 1.5rem', fontWeight: 500, color: '#0f172a' }}>{sub.targetDirectory}</td>
-                    <td style={{ padding: '1rem 1.5rem', color: '#475569', fontSize: '0.9rem' }}>{sub.practiceArea} · {sub.guideRegion}</td>
+                  <tr
+                    key={sub.id}
+                    onClick={() => window.location.href = `/reports/${sub.id}`}
+                    style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s', cursor: 'pointer' }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.95rem' }}>{firmName || sub.targetDirectory}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.15rem' }}>{new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', color: '#475569', fontSize: '0.85rem' }}>
+                      <div>{sub.practiceArea}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{sub.targetDirectory} · {sub.guideRegion}</div>
+                    </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{ flex: 1, height: '6px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', maxWidth: '120px' }}>
@@ -141,12 +167,11 @@ export default function DashboardAnalyticsPage() {
                     <td style={{ padding: '1rem 1.5rem' }}>
                       <span style={{
                         padding: '0.3rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600,
-                        background: isReady ? '#dcfce7' : '#fef3c7',
-                        color: isReady ? '#15803d' : '#92400e',
+                        background: statusBg, color: statusColor,
                         display: 'inline-flex', alignItems: 'center', gap: '0.25rem'
                       }}>
-                        {isReady ? <CheckCircle2 size={12} /> : <Clock size={12} />}
-                        {isReady ? 'Ready' : 'In Progress'}
+                        <StatusIcon size={12} />
+                        {statusLabel}
                       </span>
                     </td>
                   </tr>
