@@ -2,6 +2,51 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
+// Sanitize text to remove problematic Unicode characters
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  // Remove null bytes and control characters
+  return text
+    .replace(/\x00/g, '')
+    .replace(/[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+    // Remove lone surrogates
+    .replace(/[\uD800-\uDFFF]/g, '');
+}
+
+// Safe JSON parse with multiple fallback strategies
+function safeJsonParse(text: string, fallback: any = {}): any {
+  if (!text) return fallback;
+  const cleaned = text.trim();
+  
+  // Strategy 1: Direct parse
+  try { return JSON.parse(cleaned); } catch {}
+  
+  // Strategy 2: Sanitize then parse
+  try { return JSON.parse(sanitizeText(cleaned)); } catch {}
+  
+  // Strategy 3: Remove BOM and retry
+  try { return JSON.parse(cleaned.replace(/^\uFEFF/, '')); } catch {}
+  
+  // Strategy 4: Extract JSON object
+  try {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+  } catch {}
+  
+  console.error('[safeJsonParse] All strategies failed. First 300 chars:', cleaned.substring(0, 300));
+  return fallback;
+}
+
+function createErrorResponse(errorCode: string, userMessage: string, technicalDetails: string, status: number = 500) {
+  return NextResponse.json({
+    error: userMessage,
+    errorCode,
+    details: technicalDetails,
+    supportMessage: 'Si el problema persiste, por favor reporta este error al equipo de soporte con el c\u00f3digo de error.',
+    timestamp: new Date().toISOString(),
+  }, { status });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -71,16 +116,20 @@ export async function POST(request: NextRequest) {
 
     let pyData: any = {};
     const rawText = await pyResponse.text();
-    try {
-      pyData = JSON.parse(rawText);
-    } catch (e) {
-      console.error("Non-JSON response from Python:", rawText);
-      pyData = { error: rawText || pyResponse.statusText };
-    }
+    pyData = safeJsonParse(rawText, { error: rawText || pyResponse.statusText });
 
     if (!pyResponse.ok) {
-      console.error(`Python API Error Raw Text:\n${rawText}`);
-      throw new Error(`Python API Error: ${rawText}`);
+      console.error(`[PYTHON API ERROR] Status: ${pyResponse.status}, Thread: ${submissionId}`);
+      console.error(`[PYTHON API ERROR] Raw response (first 500 chars): ${rawText.substring(0, 500)}`);
+      
+      const errorCode = pyData.error_code || 'PIPELINE_ERROR';
+      const userMsg = pyData.error || 'El motor de IA encontr\u00f3 un error al procesar tu documento.';
+      
+      return createErrorResponse(
+        errorCode,
+        userMsg,
+        `Python API responded with status ${pyResponse.status}`,
+      );
     }
     
     // El motor Python debe retornar la data estructurada.
@@ -196,7 +245,23 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, createdCount, raw: pyData });
   } catch (error: any) {
-    console.error('Error processing document in Next API:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[PROCESS DOCUMENT ERROR]', error);
+    
+    // Categorize error for user-facing message
+    let errorCode = 'UNKNOWN_ERROR';
+    let userMessage = 'Ocurri\u00f3 un error inesperado al procesar tu documento.';
+    
+    if (error.message?.includes('Unicode') || error.message?.includes('unicode')) {
+      errorCode = 'UNICODE_ERROR';
+      userMessage = 'El documento contiene caracteres especiales que no pudieron ser procesados. Intenta guardar el documento como UTF-8 y s\u00fabelo de nuevo.';
+    } else if (error.message?.includes('fetch') || error.message?.includes('ECONNREFUSED')) {
+      errorCode = 'AI_ENGINE_OFFLINE';
+      userMessage = 'El motor de IA no est\u00e1 disponible en este momento. Por favor, intenta de nuevo en unos minutos.';
+    } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
+      errorCode = 'TIMEOUT';
+      userMessage = 'El procesamiento del documento tard\u00f3 demasiado. Intenta con un documento m\u00e1s peque\u00f1o o int\u00e9ntalo de nuevo.';
+    }
+    
+    return createErrorResponse(errorCode, userMessage, error.message);
   }
 }

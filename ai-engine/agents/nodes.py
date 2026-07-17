@@ -1,4 +1,5 @@
 import json
+import re
 import os
 from datetime import datetime
 from typing import Dict
@@ -24,6 +25,45 @@ load_dotenv()
 
 # --- UTILIDADES DE NODOS ---
 
+def sanitize_text(text: str) -> str:
+    """Remove problematic Unicode and control characters from text."""
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    text = text.replace('\x00', '')
+    text = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    text = text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+    return text
+
+def safe_json_loads(text: str, fallback=None):
+    """Parse JSON with multiple fallback strategies."""
+    if not text:
+        return fallback or {}
+    cleaned = text.strip()
+    if cleaned.startswith('```json'):
+        cleaned = cleaned[7:]
+    if cleaned.startswith('```'):
+        cleaned = cleaned[3:]
+    if cleaned.endswith('```'):
+        cleaned = cleaned[:-3]
+    cleaned = cleaned.strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+    try:
+        safe_text = cleaned.encode('ascii', errors='replace').decode('ascii')
+        return json.loads(safe_text)
+    except (json.JSONDecodeError, UnicodeError):
+        pass
+    try:
+        match = re.search(r'\{[\s\S]*\}', cleaned)
+        if match:
+            return json.loads(match.group())
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    print(f"[SAFE_JSON_LOADS] Failed to parse. First 200 chars: {cleaned[:200]}")
+    return fallback or {}
+
 def get_model():
     """
     Configuración para OpenAI Directo (GPT-4o o GPT-4o-mini).
@@ -40,30 +80,38 @@ def ingestion_node(state: AgentState) -> Dict:
     file_path = state.get("file_path")
     if not file_path:
         return {"messages": [("assistant", "No file provided.")]}
-    
-    from utils.doc_parser import DocumentParser
-    text = DocumentParser.parse(file_path)
-    
+    try:
+        from utils.doc_parser import DocumentParser
+        text = DocumentParser.parse(file_path)
+        text = sanitize_text(text)
+    except Exception as e:
+        print(f"[INGESTION ERROR] Failed to parse document: {e}")
+        return {
+            "doc_text": "",
+            "messages": [("assistant", f"Error al leer el documento: {str(e)}")]
+        }
     return {
         "doc_text": text,
-        "messages": [("assistant", f"Document ingested. Analyzing structural signals...")]
+        "messages": [("assistant", "Document ingested. Analyzing structural signals...")]
     }
 
 # 2. EXTRACTION NODE (Sincronizado con AgentState)
 # 2. EXTRACTION NODE (CORREGIDO)
 def extraction_node(state: AgentState) -> Dict:
-    doc_text = state.get("doc_text", "")
-    # Capturamos mensajes para el "Hybrid Extractor"
-    chat_history = "\n".join([msg.content for msg in state["messages"] if hasattr(msg, 'content')])
+    doc_text = sanitize_text(state.get("doc_text", ""))
+    chat_history = "\n".join([sanitize_text(msg.content) for msg in state["messages"] if hasattr(msg, 'content')])
     full_input = f"{doc_text}\n\nUpdates from chat:\n{chat_history}"
 
-    chain = get_extraction_chain()
-    # La chain devuelve un objeto estructurado (SubmissionSchema)
-    structured_data = chain.invoke({"text": full_input})
-    
-    # IMPORTANTE: Si structured_data es un dict, usamos ['key']. 
-    # Si es Pydantic, usamos .attribute. 
-    # Para asegurar CERO ERRORES, usamos model_dump() si es Pydantic:
+    try:
+        chain = get_extraction_chain()
+        structured_data = chain.invoke({"text": full_input})
+    except Exception as e:
+        print(f"[EXTRACTION ERROR] Chain failed: {e}")
+        return {
+            "metadata": {"firm_name": "", "practice_area": "", "location": "", "narrative": ""},
+            "matters": [],
+            "current_step": "context"
+        }
     
     if hasattr(structured_data, "model_dump"):
         data_dict = structured_data.model_dump()
@@ -72,24 +120,20 @@ def extraction_node(state: AgentState) -> Dict:
     else:
         data_dict = {"metadata": {}, "matters": [], "department": {}, "lawyers": [], "contacts": []}
 
-    # Extract metadata correctly
     ext_meta = data_dict.get("metadata", {})
     if not isinstance(ext_meta, dict):
         ext_meta = {}
 
-    # Extract new structured fields
     ext_dept = data_dict.get("department", {})
     ext_lawyers = data_dict.get("lawyers", [])
     ext_contacts = data_dict.get("contacts", [])
 
-    # Sincronizamos con las llaves exactas de state.py
     return {
         "metadata": {
             "firm_name": ext_meta.get("firm_name", ""),
             "practice_area": ext_meta.get("practice_area", ""),
             "location": ext_meta.get("location", ""),
             "narrative": ext_meta.get("narrative_overview", ""),
-            # New structured fields for chambersData
             "department": ext_dept,
             "lawyers": ext_lawyers,
             "contacts": ext_contacts,
@@ -223,18 +267,18 @@ def analysis_node(state: AgentState) -> Dict:
     ])
     
     chain = prompt | llm
-    response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str)})
+    response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str, ensure_ascii=True)})
     
     try:
-        res_json = json.loads(response.content.replace("```json", "").replace("```", ""))
+        res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
         return {
             "analysis": res_json,
             "confidence_score": float(res_json.get("confidence_score", 100)),
             "current_step": "writing"
         }
     except Exception as e:
-        print(f"Error parsing analysis JSON: {e}")
-        return {"confidence_score": 0}
+        print(f"[ANALYSIS PARSE ERROR] {e}")
+        return {"confidence_score": 0, "analysis": {"error": "Analysis parsing failed"}}
 
 # 4. INTERROGATOR NODE
 def interrogator_node(state: AgentState) -> Dict:

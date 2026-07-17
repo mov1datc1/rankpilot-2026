@@ -14,6 +14,8 @@ function ProcessingContent() {
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(1); 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [supportMsg, setSupportMsg] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
@@ -49,13 +51,14 @@ function ProcessingContent() {
         const data = await res.json();
         
         if (!res.ok) {
+          setErrorCode(data.errorCode || 'UNKNOWN');
+          setSupportMsg(data.supportMessage || null);
           throw new Error(data.error || 'Fallo en la extracción de la IA');
         }
 
         setProgress(100);
         setStep(4);
         
-        // Finalizamos redirigiendo directamente al Reporte Estratégico, para impacto visual "WOW"
         setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
 
       } catch (err: any) {
@@ -138,13 +141,47 @@ function ProcessingContent() {
           </div>
         </div>
 
-        {/* Backend Status Box */}
-        <div style={{ padding: '1rem 1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '3rem' }}>
-          <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.25rem 0' }}>
-            <span style={{ fontWeight: 600, color: '#334155' }}>Backend status:</span> {errorMsg ? <span style={{color: 'red'}}>{errorMsg}</span> : 'processing'} · <span style={{ fontWeight: 600, color: '#334155' }}>message:</span> {step === 4 ? 'Complete! Matters extracted.' : 'Mapping raw data to universal schema...'}
-          </p>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Metadata and matters detection in progress</p>
-        </div>
+        {/* Backend Status / Error Box */}
+        {errorMsg ? (
+          <div style={{ padding: '1.5rem', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca', marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>Error en el procesamiento</h3>
+              {errorCode && (
+                <span style={{ padding: '0.25rem 0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 600 }}>
+                  {errorCode}
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>{errorMsg}</p>
+            {supportMsg && (
+              <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem 0', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                💡 {supportMsg}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => { setErrorMsg(null); setErrorCode(null); setSupportMsg(null); setHasStarted(false); setProgress(0); setStep(1); }}
+                style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                🔄 Reintentar
+              </button>
+              <button
+                onClick={() => router.push('/submissions')}
+                style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
+              >
+                ← Volver a Submissions
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: '1rem 1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '3rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.25rem 0' }}>
+              <span style={{ fontWeight: 600, color: '#334155' }}>Backend status:</span> processing · <span style={{ fontWeight: 600, color: '#334155' }}>message:</span> {step === 4 ? 'Complete! Matters extracted.' : 'Mapping raw data to universal schema...'}
+            </p>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Metadata and matters detection in progress</p>
+          </div>
+        )}
 
         {/* Stepper Footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '2rem' }}>

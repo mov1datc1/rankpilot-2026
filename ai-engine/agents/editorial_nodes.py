@@ -99,7 +99,7 @@ def comprehension_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         comprehension = _safe_dump(result)
     except Exception as e:
         print(f"Error in Comprehension Node: {e}")
@@ -157,7 +157,7 @@ def identity_discovery_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         identity = _safe_dump(result)
     except Exception as e:
         print(f"Error in Identity Discovery Node: {e}")
@@ -226,7 +226,7 @@ def hypothesis_construction_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         hypothesis_set = _safe_dump(result)
     except Exception as e:
         print(f"Error in Hypothesis Construction Node: {e}")
@@ -285,7 +285,7 @@ def refutation_engine_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         refutation = _safe_dump(result)
     except Exception as e:
         print(f"Error in Refutation Engine Node: {e}")
@@ -346,7 +346,7 @@ def comparative_analysis_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         comparison = _safe_dump(result)
     except Exception as e:
         print(f"Error in Comparative Analysis Node: {e}")
@@ -398,7 +398,7 @@ def editorial_confidence_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         confidence = _safe_dump(result)
     except Exception as e:
         print(f"Error in Editorial Confidence Node: {e}")
@@ -465,7 +465,7 @@ def submission_blueprint_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         blueprint = _safe_dump(result)
     except Exception as e:
         print(f"Error in Submission Blueprint Node: {e}")
@@ -544,7 +544,7 @@ def narrative_architecture_node(state: AgentState) -> Dict:
     chain = prompt | structured_llm
     
     try:
-        result = chain.invoke({"data": json.dumps(input_data, default=str)})
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         architecture = _safe_dump(result)
     except Exception as e:
         print(f"Error in Narrative Architecture Node: {e}")
