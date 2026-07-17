@@ -1,6 +1,7 @@
 import './globals.css';
 import Link from 'next/link';
 import { BarChart2, Check, ArrowRight, Shield } from 'lucide-react';
+import SubscribeButton from './SubscribeButton';
 
 export default function Home() {
   return (
@@ -69,27 +70,12 @@ export default function Home() {
         </h1>
         
         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.25rem', marginBottom: '3rem', maxWidth: '600px', lineHeight: 1.6 }}>
-          The first AI-powered platform specialized in legal rankings for Latin America and the world. Increase your firm's visibility effortlessly.
+          The first AI-powered platform specialized in legal rankings for Latin America and the world. Increase your firm&apos;s visibility effortlessly.
         </p>
 
-        {/* CTA to Stripe */}
+        {/* CTA to Stripe Checkout */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-          <Link href="#" style={{
-            background: '#ffffff',
-            color: '#0f172a',
-            padding: '1rem 2.5rem',
-            borderRadius: '9999px',
-            fontSize: '1.1rem',
-            fontWeight: 700,
-            textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            boxShadow: '0 10px 25px -5px rgba(255, 255, 255, 0.2)',
-            transition: 'transform 0.2s'
-          }}>
-            Suscribirse Ahora <ArrowRight size={20} />
-          </Link>
+          <SubscribeButton />
           <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Shield size={14} /> Pago seguro vía Stripe
           </span>

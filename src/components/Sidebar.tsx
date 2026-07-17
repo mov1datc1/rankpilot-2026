@@ -4,18 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Home, 
-  Zap, 
   FileText, 
   BarChart2, 
   Settings,
-  BookOpen
+  BookOpen,
+  LogOut
 } from 'lucide-react';
 
 import { useState, useEffect } from 'react';
 
 type RecentItem = { name: string; href: string; directory: string };
 
-export default function Sidebar() {
+interface SidebarProps {
+  userRole?: string;
+}
+
+export default function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
   
   // Reordered: Matter Assistant → Builder → Reports → Dashboard
@@ -39,6 +43,8 @@ export default function Sidebar() {
       })
       .catch(() => {});
   }, []);
+
+  const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
 
   return (
     <aside style={{
@@ -117,24 +123,57 @@ export default function Sidebar() {
       {/* ACCOUNT SECTION */}
       <div style={{ padding: '1.5rem 1rem 2rem 1rem' }}>
         <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>ACCOUNT</p>
-        <Link href="/dashboard/admin" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          padding: '0.6rem 1rem',
-          borderRadius: '8px',
-          textDecoration: 'none',
-          color: pathname.startsWith('/dashboard/admin') ? '#2563eb' : '#475569',
-          background: pathname.startsWith('/dashboard/admin') ? '#eff6ff' : 'transparent',
-          fontWeight: pathname.startsWith('/dashboard/admin') ? 600 : 500,
-          fontSize: '0.9rem',
-          transition: 'all 0.2s'
-        }}>
-          <Settings size={18} />
-          Settings
-        </Link>
+        
+        {isAdmin && (
+          <Link href="/dashboard/admin" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.6rem 1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: pathname.startsWith('/dashboard/admin') ? '#2563eb' : '#475569',
+            background: pathname.startsWith('/dashboard/admin') ? '#eff6ff' : 'transparent',
+            fontWeight: pathname.startsWith('/dashboard/admin') ? 600 : 500,
+            fontSize: '0.9rem',
+            transition: 'all 0.2s'
+          }}>
+            <Settings size={18} />
+            Admin Panel
+          </Link>
+        )}
+
+        <button 
+          onClick={() => {
+            // Logout via Supabase
+            fetch('/api/auth/logout', { method: 'POST' }).then(() => {
+              window.location.href = '/login';
+            });
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.6rem 1rem',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: '#94a3b8',
+            background: 'transparent',
+            fontWeight: 500,
+            fontSize: '0.9rem',
+            transition: 'all 0.2s',
+            width: '100%',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '0.25rem',
+          }}
+        >
+          <LogOut size={18} />
+          Cerrar Sesión
+        </button>
       </div>
 
     </aside>
   );
 }
+

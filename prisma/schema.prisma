@@ -12,6 +12,11 @@ enum Role {
   SUPERADMIN
 }
 
+enum AccountType {
+  INDIVIDUAL
+  CORPORATE
+}
+
 enum SubmissionStatus {
   DRAFT
   IN_REVIEW
@@ -21,16 +26,48 @@ enum SubmissionStatus {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  role             Role     @default(USER)
+  id               String      @id @default(uuid())
+  email            String      @unique
+  name             String?
+  role             Role        @default(USER)
+  accountType      AccountType @default(INDIVIDUAL)
   stripeCustomerId String?
   subscriptionId   String?
-  status           String   @default("ACTIVE")
+  status           String      @default("ACTIVE")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @default(now()) @updatedAt
   submissions      Submission[]
   aiLogs           AILog[]
   matters          Matter[]
   firms            Firm[]
+}
+
+// =====================================================
+// SYSTEM CONFIG — Global platform settings (singleton)
+// Stores GTM, GA4, Stripe, Resend configs
+// =====================================================
+model SystemConfig {
+  id                     String   @id @default("global")
+  gaMeasurementId        String?
+  gtmContainerId         String?
+  resendApiKey           String?
+  resendFromEmail        String?
+  stripeTestMode         Boolean  @default(true)
+  maintenanceModeEnabled Boolean  @default(false)
+  updatedAt              DateTime @updatedAt
+}
+
+// =====================================================
+// EMAIL TEMPLATE — Dynamic email templates (SMTP)
+// Types: WELCOME, DUNNING, REMINDER
+// =====================================================
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  type      String   @unique
+  subject   String
+  htmlBody  String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // =====================================================
