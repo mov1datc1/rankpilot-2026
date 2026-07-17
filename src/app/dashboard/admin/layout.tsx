@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import AdminTabs from '@/components/AdminTabs';
 
 // Auto-upgrade emails to SUPERADMIN (transitional mechanism)
-const SUPERADMIN_EMAILS = ['palacios.jenrique@gmail.com'];
+const SUPERADMIN_EMAILS = ['palacios.jenrique@gmail.com', 'jonathan@movidatci.com'];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
