@@ -1,7 +1,7 @@
-# RankPilot — Documentación Técnica v4.0
+# RankPilot — Documentación Técnica v5.0
 
-> **Última actualización:** Julio 15, 2026
-> **Versión:** 4.0 — Integra Editorial Playbook Vol. V-VII
+> **Última actualización:** Julio 17, 2026
+> **Versión:** 5.0 — Módulo Admin, SaaS/Stripe, Error Hardening
 
 ---
 
@@ -17,6 +17,8 @@
 | Autenticación | Supabase Auth |
 | Backend de IA | Python FastAPI + LangChain + **LangGraph** (OpenAI GPT-4o) |
 | Generación DOCX | npm `docx` — template Chambers pixel-perfect |
+| SaaS Payments | **Stripe Checkout** + Webhooks |
+| Email Transaccional | **Resend** (plantillas dinámicas) |
 | Despliegue Web | Vercel (auto-deploy desde `dev` y `main`) |
 | Despliegue IA | Render (Docker Python API) |
 
@@ -231,6 +233,9 @@ matter_title → disposition (include_as_hero | include_as_supporting | exclude 
 | Next.js | `/api/process-document` | POST | Bridge → Python AI engine |
 | Next.js | `/api/generate-docx` | POST | Generar DOCX formato Chambers |
 | Next.js | `/api/recent-submissions` | GET | Datos dinámicos para sidebar |
+| Next.js | `/api/checkout` | POST | Crear Stripe Checkout Session |
+| Next.js | `/api/webhooks/stripe` | POST | Webhook: user creation, dunning, deactivation |
+| Next.js | `/api/auth/logout` | POST | Cerrar sesión Supabase Auth |
 | Python | `/health` | GET | Health check |
 | Python | `/process` | POST | Pipeline completo de 15 nodos |
 | Python | `/optimize-matter` | POST | Optimización de un solo matter |
@@ -246,7 +251,9 @@ matter_title → disposition (include_as_hero | include_as_supporting | exclude 
 | Library | `library.ts` | `getLibraryMatters`, `createLibraryMatter`, folder CRUD |
 | Reports | `reports.ts` | `getReports`, `getReportById` |
 | Dashboard | `dashboard.ts` | `getDashboardStats` (KPIs + recientes con chambersData) |
-| Admin | `admin.ts` | User CRUD (RBAC-protected) |
+| Admin | `admin.ts` | `createUser`, `toggleUserStatus`, `deleteUser`, `getAdminDashboardMetrics` |
+| Settings | `settings.ts` | `getSystemConfig`, `saveSystemConfig`, `saveGTMConfig`, `saveGAConfig` |
+| SMTP | `smtp.ts` | `getEmailTemplates`, `saveEmailTemplate`, `testResendConnection`, `saveResendConfig` |
 
 ---
 
@@ -267,6 +274,11 @@ matter_title → disposition (include_as_hero | include_as_supporting | exclude 
 | `SUPABASE_SERVICE_ROLE_KEY` | Llave maestra (admin) |
 | `PYTHON_API_URL` | Backend IA en Render |
 | `OPENAI_API_KEY` | Acceso a GPT-4o |
+| `STRIPE_SECRET_KEY` | Stripe API (sandbox/prod) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe public key |
+| `STRIPE_PRICE_ID` | Product price ID |
+| `STRIPE_WEBHOOK_SECRET` | Webhook signing secret |
+| `RESEND_API_KEY` | API key para correos transaccionales |
 
 ---
 
@@ -295,10 +307,78 @@ rankpilot-new-repo/
 │   ├── dashboard-analytics/         # KPIs + Recientes
 │   ├── api/                         # 5 API routes
 │   └── actions/                     # 8 archivos de Server Actions
-└── src/components/                  # Sidebar, Topbar (⌘K+🔔), Wizard
+└── src/components/                  # Sidebar, Topbar (⌘K+🔔), AdminTabs, AddUserModal
 ```
 
 ---
 
-*Documento actualizado v4.0 — RankPilot 2026. Julio 15, 2026.*
-*Integra Vol. V-VII: Constitución (20 Artículos), Submission Architecture (15 Capítulos), Decision Rules (12 Reglas).*
+## 12. Módulo de Administración SaaS (v5.0)
+
+### 12.1 Tabs y Rutas
+
+| Tab | Ruta | Acceso | Funcionalidad |
+|-----|------|--------|---------------|
+| 📊 Dashboard | `/dashboard/admin` | ADMIN+ | KPIs: total usuarios, activos, SaaS, revenue |
+| 👥 Control de Usuarios | `/dashboard/admin/users` | ADMIN+ | 3 sub-tabs: SaaS (Stripe), Manuales, Administradores |
+| ⚙️ Configuración de Sistema | `/dashboard/admin/settings` | SUPERADMIN | Stripe keys, mantenimiento, Resend API key |
+| 📡 Marketing y Tracking | `/dashboard/admin/marketing` | SUPERADMIN | GTM Container ID, GA4 Measurement ID |
+| 📧 Resend y Correos | `/dashboard/admin/smtp` | SUPERADMIN | Plantillas dinámicas (Welcome, Dunning, Reminder), test connection |
+
+### 12.2 Modelos de Base de Datos (Admin)
+
+| Modelo | Tipo | Campos clave |
+|--------|------|--------------|
+| `SystemConfig` | Singleton | gtmId, gaId, resendApiKey, stripeMode, maintenanceMode |
+| `EmailTemplate` | Dinamico | type (WELCOME/DUNNING/REMINDER), subject, htmlContent |
+| `User.accountType` | Enum | INDIVIDUAL, CORPORATE |
+
+### 12.3 Flujo SaaS (Stripe)
+
+```
+Landing → Clic "Suscribirse" → /api/checkout → Stripe Checkout
+                                                    ↓
+                                      Stripe Webhook (checkout.session.completed)
+                                                    ↓
+                              /api/webhooks/stripe → Crea user en Supabase Auth + Prisma
+                                                    ↓
+                                   Envía email Welcome vía Resend
+                                                    ↓
+                                  Usuario recibe credenciales ✅
+```
+
+**Eventos Stripe manejados:**
+- `checkout.session.completed` → Crear cuenta + email bienvenida
+- `invoice.payment_failed` → Email dunning
+- `customer.subscription.deleted` → Desactivar cuenta
+
+---
+
+## 13. Error Hardening (v5.0)
+
+### 13.1 Capas de Protección
+
+| Capa | Ubicación | Estrategia |
+|------|-----------|------------|
+| **Ingestion** | `nodes.py` - `ingestion_node` | `sanitize_text()` elimina null bytes, control chars, surrogates inválidos |
+| **Extraction** | `nodes.py` - `extraction_node` | try/catch con fallback a metadata vacía |
+| **JSON Serialization** | `nodes.py` + `editorial_nodes.py` | `ensure_ascii=True` en todos los `json.dumps()` |
+| **JSON Parsing (Python)** | `nodes.py` - `safe_json_loads()` | 4 estrategias: direct, ASCII, regex extract, fallback |
+| **JSON Parsing (Next.js)** | `process-document/route.ts` - `safeJsonParse()` | 4 estrategias: direct, sanitize, BOM strip, regex |
+| **Python API Response** | `main.py` | Pre-validación de serialización antes de responder |
+| **Error Categorization** | `process-document/route.ts` | Códigos: UNICODE_ERROR, AI_ENGINE_OFFLINE, TIMEOUT, PIPELINE_ERROR |
+| **User-Facing UI** | `processing/page.tsx` | Card premium con código de error, botón reintentar, prompt de soporte |
+
+### 13.2 Códigos de Error
+
+| Código | Causa | Mensaje al Usuario |
+|--------|-------|--------------------|
+| `UNICODE_ERROR` | Caracteres especiales en documento | "Intenta guardar el documento como UTF-8" |
+| `AI_ENGINE_OFFLINE` | Python backend no disponible | "El motor de IA no está disponible" |
+| `TIMEOUT` | Procesamiento demasiado largo | "Intenta con un documento más pequeño" |
+| `PIPELINE_ERROR` | Fallo en LangGraph | "Error al procesar, contacta soporte" |
+| `INVALID_REQUEST` | JSON mal formado en request | "Solicitud inválida" |
+
+---
+
+*Documento actualizado v5.0 — RankPilot 2026. Julio 17, 2026.*
+*Integra: Módulo Admin (5 tabs), SaaS/Stripe, Resend, Error Hardening, RBAC (3 roles), Vol. V-VII.*
