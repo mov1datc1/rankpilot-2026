@@ -139,6 +139,9 @@ export default function DashboardAnalyticsPage() {
                 if (needsEvidence) {
                   statusLabel = 'Needs Evidence'; statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
                 }
+                if (sub.chambersData && (sub.chambersData as any)._pipeline_error) {
+                  statusLabel = 'Error'; statusBg = '#fee2e2'; statusColor = '#dc2626'; StatusIcon = AlertTriangle;
+                }
 
                 return (
                   <tr

@@ -286,6 +286,8 @@ export default function ReportsPage() {
                   statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
                 } else if (sub.status === 'Draft') {
                   statusBg = '#F1F5F9'; statusColor = '#475569'; StatusIcon = Clock; displayStatus = 'Draft';
+                } else if (sub.status === 'Error') {
+                  statusBg = '#fee2e2'; statusColor = '#dc2626'; StatusIcon = AlertTriangle; displayStatus = 'Error';
                 }
 
                 return (

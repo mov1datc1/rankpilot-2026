@@ -47,6 +47,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const comparativeAnalysis = chambersData.comparative_analysis || {};
   const reasoningTrace = chambersData.reasoning_trace || [];
   const comprehension = chambersData.comprehension || {};
+  const pipelineError = chambersData._pipeline_error || null;
+  const isEmptyAnalysis = !analysis.score && !analysis.summary && !letter.the_state_of_play;
 
   const score = analysis.score || 0;
   const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
@@ -155,6 +157,50 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.currentBand || 'Unranked'}</span>
           </div>
         </div>
+
+        {/* Pipeline Error / Empty Analysis Banner */}
+        {(pipelineError || (isEmptyAnalysis && submission.status !== 'Submitted')) && (
+          <div style={{ background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca', padding: '1.5rem 2rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.25rem' }}>⚠️</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>
+                  {pipelineError ? 'El procesamiento de IA encontró un error' : 'Análisis pendiente de generación'}
+                </h3>
+                {pipelineError?.code && (
+                  <span style={{ padding: '0.2rem 0.6rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 600 }}>
+                    {pipelineError.code}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
+                {pipelineError?.message || 'El motor de IA no pudo completar el análisis de este documento. Los datos que se lograron extraer se muestran abajo como vista parcial.'}
+              </p>
+              {pipelineError?.details && (
+                <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                  💡 Detalle técnico: {pipelineError.details}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <a
+                  href={`/submissions/processing?submissionId=${submission.id}`}
+                  style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
+                >
+                  🔄 Reprocesar documento
+                </a>
+                <a
+                  href="/submissions"
+                  style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}
+                >
+                  ← Volver a Submissions
+                </a>
+              </div>
+              {pipelineError?.timestamp && (
+                <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.75rem 0 0' }}>Error registrado: {new Date(pipelineError.timestamp).toLocaleString()}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Competitive Identity Banner */}
         {identityStatement && (

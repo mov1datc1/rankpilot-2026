@@ -48,10 +48,13 @@ function createErrorResponse(errorCode: string, userMessage: string, technicalDe
 }
 
 export async function POST(request: NextRequest) {
+  let submissionId: string = '';
+  let submission: any = null;
+  
   try {
     const body = await request.json();
     const { documentUrl, text, context } = body;
-    let { submissionId } = body;
+    submissionId = body.submissionId || '';
 
     if (!submissionId && !documentUrl && !text) {
       return NextResponse.json({ error: 'Missing submissionId, documentUrl, or text' }, { status: 400 });
@@ -73,7 +76,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-create submission if Matter Assistant calls without one
-    let submission;
     if (submissionId) {
       submission = await prisma.submission.findUnique({ where: { id: submissionId } });
       if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
@@ -124,6 +126,42 @@ export async function POST(request: NextRequest) {
       
       const errorCode = pyData.error_code || 'PIPELINE_ERROR';
       const userMsg = pyData.error || 'El motor de IA encontr\u00f3 un error al procesar tu documento.';
+      
+      // CRITICAL: Save partial data even on error so the report shows something useful
+      try {
+        const partialData = pyData.data || {};
+        const existingCD = (submission.chambersData as any) || {};
+        await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            status: 'Error',
+            chambersData: {
+              ...existingCD,
+              // Save whatever the pipeline managed to extract before failing
+              ...(partialData.metadata ? { metadata: partialData.metadata } : {}),
+              ...(partialData.analysis ? { analysis: partialData.analysis } : {}),
+              ...(partialData.strategic_context ? { strategicContext: partialData.strategic_context } : {}),
+              ...(partialData.comprehension ? { comprehension: partialData.comprehension } : {}),
+              ...(partialData.competitive_identity ? { competitive_identity: partialData.competitive_identity } : {}),
+              ...(partialData.hypotheses ? { hypotheses: partialData.hypotheses } : {}),
+              ...(partialData.refutation_results ? { refutation_results: partialData.refutation_results } : {}),
+              ...(partialData.comparative_analysis ? { comparative_analysis: partialData.comparative_analysis } : {}),
+              ...(partialData.editorial_confidence ? { editorial_confidence: partialData.editorial_confidence } : {}),
+              ...(partialData.narrative_architecture ? { narrative_architecture: partialData.narrative_architecture } : {}),
+              ...(partialData.reasoning_trace ? { reasoning_trace: partialData.reasoning_trace } : {}),
+              // Store the error for the report page to display
+              _pipeline_error: {
+                code: errorCode,
+                message: userMsg,
+                details: pyData.details || '',
+                timestamp: new Date().toISOString(),
+              }
+            }
+          }
+        });
+      } catch (saveErr) {
+        console.error('[PARTIAL SAVE ERROR]', saveErr);
+      }
       
       return createErrorResponse(
         errorCode,
@@ -246,6 +284,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, createdCount, raw: pyData });
   } catch (error: any) {
     console.error('[PROCESS DOCUMENT ERROR]', error);
+    
+    // Save error state to DB so the report page shows an error instead of blank
+    try {
+      if (submissionId) {
+        const existingCD = (submission?.chambersData as any) || {};
+        await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            status: 'Error',
+            chambersData: {
+              ...existingCD,
+              _pipeline_error: {
+                code: 'SYSTEM_ERROR',
+                message: error.message || 'Error inesperado en el procesamiento',
+                timestamp: new Date().toISOString(),
+              }
+            }
+          }
+        });
+      }
+    } catch (saveErr) {
+      console.error('[ERROR STATE SAVE FAILED]', saveErr);
+    }
     
     // Categorize error for user-facing message
     let errorCode = 'UNKNOWN_ERROR';
