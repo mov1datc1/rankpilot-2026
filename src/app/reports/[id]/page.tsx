@@ -124,11 +124,19 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </a>
 
           <a 
-            href={`/api/generate-docx?id=${submission.id}&type=submission`} 
+            href={`/api/generate-docx?id=${submission.id}&type=submission&mode=optimized`} 
             style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
           >
             <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            Chambers DOCX
+            Chambers DOCX (AI)
+          </a>
+          
+          <a 
+            href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`} 
+            style={{ background: '#f1f5f9', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', whiteSpace: 'nowrap' }}
+          >
+            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
+            Chambers DOCX (Original)
           </a>
         </div>
       </div>
@@ -243,6 +251,33 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
+        {/* v6.0: Decomposed Editorial Confidence Radar */}
+        {(editorialConfidence.evidence_completeness_score > 0 || editorialConfidence.matter_quality_score > 0) && (
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.5rem 2rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1A237E', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '1rem' }}>Editorial Confidence Breakdown</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              {[
+                { label: 'Evidence Completeness', score: editorialConfidence.evidence_completeness_score || 0, color: '#6366f1' },
+                { label: 'Matter Quality', score: editorialConfidence.matter_quality_score || 0, color: '#8b5cf6' },
+                { label: 'Leadership Visibility', score: editorialConfidence.leadership_visibility_score || 0, color: '#a855f7' },
+                { label: 'Narrative Cohesion', score: editorialConfidence.narrative_cohesion_score || 0, color: '#d946ef' },
+                { label: 'Differentiation', score: editorialConfidence.differentiation_score || 0, color: '#ec4899' },
+                { label: 'Institutional Depth', score: editorialConfidence.institutional_depth_score || 0, color: '#f43f5e' },
+              ].map((dim, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#475569' }}>{dim.label}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: dim.score >= 70 ? '#16a34a' : dim.score >= 40 ? '#d97706' : '#dc2626' }}>{dim.score}%</span>
+                  </div>
+                  <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${dim.score}%`, background: dim.color, borderRadius: '9999px', transition: 'width 0.6s ease' }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Thesis & Hero Matter */}
         {(thesis || heroMatter) && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -258,6 +293,13 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                 <p style={{ fontSize: '0.95rem', color: '#1e3a8a', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{heroMatter}</p>
                 {narrativeArch.hero_matter_rationale && (
                   <p style={{ fontSize: '0.8rem', color: '#3b82f6', margin: '0.5rem 0 0', fontStyle: 'italic' }}>{narrativeArch.hero_matter_rationale}</p>
+                )}
+                {/* v6.0: Why this matter? */}
+                {(chambersData.submission_blueprint?.hero_selection_reasoning) && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#dbeafe', borderRadius: '8px', border: '1px solid #93c5fd' }}>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1e40af', margin: '0 0 0.25rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Why This Matter?</p>
+                    <p style={{ fontSize: '0.8rem', color: '#1e3a8a', margin: 0, lineHeight: 1.5 }}>{chambersData.submission_blueprint.hero_selection_reasoning}</p>
+                  </div>
                 )}
               </div>
             )}

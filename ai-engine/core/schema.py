@@ -200,6 +200,13 @@ class EditorialConfidenceOutput(BaseModel):
     passes_defensibility_test: bool = Field(description="True if the recommendation is editorially defensible.")
     recommendation: str = Field(description="One of: 'proceed' (confident), 'proceed_with_caveats' (moderate), 'downgrade_recommendation', 'needs_investigation' (insufficient).")
     defensibility_summary: str = Field(description="2-3 sentence summary of why the recommendation is or is not defensible.")
+    # v6.0: Decomposed confidence dimensions (0-100 each)
+    evidence_completeness_score: int = Field(default=0, description="0-100: How complete is the evidence base for the target band?")
+    matter_quality_score: int = Field(default=0, description="0-100: Quality of individual matters for Chambers ranking purposes.")
+    leadership_visibility_score: int = Field(default=0, description="0-100: How visible is partner/team leadership in the evidence?")
+    narrative_cohesion_score: int = Field(default=0, description="0-100: How coherent and thesis-driven is the submission narrative?")
+    differentiation_score: int = Field(default=0, description="0-100: How differentiated is this firm vs competitors in the same space?")
+    institutional_depth_score: int = Field(default=0, description="0-100: Evidence of institutional (not individual) capability and bench strength.")
 
 
 # =====================================================
@@ -241,10 +248,11 @@ class SubmissionBlueprintOutput(BaseModel):
     thesis: str = Field(description="The ONE specific argument this submission will prove. Not 'we do banking' but 'we have established dominance in lender-side restructurings for institutional creditors.'")
     
     # Matter architecture
-    hero_matter: str = Field(description="The single matter that best demonstrates the thesis. Chosen by demonstrative power, NOT by deal value (Decision Rule 6).")
-    hero_rationale: str = Field(description="Why this matter was chosen — what makes it the strongest proof.")
+    hero_matter: str = Field(description="The single matter that best demonstrates the thesis. Chosen by 7-criteria editorial selection (thesis embodiment, client importance, economic impact, Chambers relevance, demonstrative capacity, differentiation, strategic position) — NOT by deal value or word count.")
+    hero_rationale: str = Field(description="Why this matter was chosen — must reference multiple selection criteria, not just one dimension.")
+    hero_selection_reasoning: str = Field(default="", description="Detailed explanation of 'Why this matter?' — how it embodies the editorial thesis and why alternatives were rejected.")
     supporting_matters: List[str] = Field(description="Matters that prove the Hero wasn't an exception. Each must prove something NEW (Ch. 4).")
-    matters_to_exclude: List[MatterDisposition] = Field(default_factory=list, description="Matters actively excluded and why (Decision Rule 5: redundancy, contradiction, wrong practice, dilution).")
+    matters_to_exclude: List[MatterDisposition] = Field(default_factory=list, description="Matters to DE-EMPHASIZE narratively (NOT to remove from submission). Every client matter must still appear in DOCX export.")
     
     # Strategic intelligence
     editorial_risks: List[str] = Field(description="Top 3-5 risks: single-client dependency, wording dependency, positioning gaps.")

@@ -87,7 +87,7 @@ function dataTable(headerLabel: string, columns: string[], rows: string[][], opt
 }
 
 // 20-row matter table matching Chambers template exactly
-function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any): Table {
+function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any, exportMode: string): Table {
   const isConf = prefix === 'E';
   const clientLabel = isConf
     ? `${prefix}1 Name of client (for ranking purposes only)`
@@ -96,7 +96,7 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
 
   const fields: [string, string][] = [
     [clientLabel, matter.client || ''],
-    [summaryLabel, matter.optimizedText || matter.rawNotes || ''],
+    [summaryLabel, exportMode === 'original' ? (matter.rawNotes || matter.optimizedText || '') : (matter.optimizedText || matter.rawNotes || '')],
     [`${prefix}3 Matter value – include currency and amount in figures`, matter.value || 'N/A'],
     [`${prefix}4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.`, matter.crossBorder || ''],
     [`${prefix}5 Lead partner`, matter.leadPartner || ''],
@@ -137,10 +137,20 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
   });
 }
 
-export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission: any): Document {
+export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
   const guideRegion = submission.guideRegion || chambersData.jurisdiction || 'Mexico';
-  const matters = submission.matters || [];
+  const allMatters = submission.matters || [];
+  
+  // Deduplicate matters by title to prevent multiplication (e.g., Rivoli 4x bug)
+  const seenTitles = new Set<string>();
+  const matters = allMatters.filter((m: any) => {
+    const key = (m.title || m.client || '').trim().toLowerCase();
+    if (!key) return true; // keep untitled matters
+    if (seenTitles.has(key)) return false; // skip duplicate
+    seenTitles.add(key);
+    return true;
+  });
   const pubMatters = matters.filter((m: any) => !m.isConfidential);
   const confMatters = matters.filter((m: any) => m.isConfidential);
 
@@ -324,7 +334,7 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
   // D matters
   for (let i = 0; i < pubMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i]));
+    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode));
     elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 
@@ -344,7 +354,7 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
   // E matters
   for (let i = 0; i < confMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i]));
+    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode));
     elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 

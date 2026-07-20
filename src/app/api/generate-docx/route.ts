@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const submissionId = searchParams.get('id');
     const docType = searchParams.get('type') || 'audit';
+    const exportMode = searchParams.get('mode') || 'optimized'; // 'original' | 'optimized'
 
     if (!submissionId) {
       return NextResponse.json({ error: 'Missing submission ID' }, { status: 400 });
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     let doc: Document;
     if (docType === 'submission') {
-      doc = buildSubmissionDoc(firmName, practiceArea, chambersData, submission);
+      doc = buildSubmissionDoc(firmName, practiceArea, chambersData, submission, exportMode);
     } else {
       doc = buildAuditDoc(firmName, practiceArea, analysis, context, letter, submission);
     }
