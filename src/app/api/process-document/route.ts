@@ -197,6 +197,32 @@ export async function POST(request: NextRequest) {
       firmId = firm.id;
     }
 
+    // v7.1: AUTO-CORRECT practiceArea and firmName from extracted metadata
+    // The user may have selected a wrong practice area in the Builder wizard.
+    // If the AI extracted a different practice area from the document, trust the document.
+    const extractedPracticeArea = extractedData?.practice_area || extractedData?.firm_metadata?.practice_area;
+    const submissionUpdates: Record<string, any> = {};
+    if (extractedPracticeArea && extractedPracticeArea !== submission.practiceArea) {
+      console.log(`[PRACTICE_AREA_CORRECTION] "${submission.practiceArea}" → "${extractedPracticeArea}" (from document extraction)`);
+      submissionUpdates.practiceArea = extractedPracticeArea;
+    }
+    if (firmName && firmName !== (submission.chambersData as any)?.firmName) {
+      submissionUpdates.chambersData = {
+        ...((submission.chambersData as any) || {}),
+        firmName: firmName,
+      };
+    }
+    if (Object.keys(submissionUpdates).length > 0) {
+      await prisma.submission.update({
+        where: { id: submissionId },
+        data: submissionUpdates,
+      });
+      // Refresh submission object for downstream use
+      if (submissionUpdates.practiceArea) {
+        (submission as any).practiceArea = submissionUpdates.practiceArea;
+      }
+    }
+
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
     if (extractedMatters && Array.isArray(extractedMatters)) {

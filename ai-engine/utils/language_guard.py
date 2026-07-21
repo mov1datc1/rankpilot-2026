@@ -20,6 +20,28 @@ from typing import Any, Dict, List, Union
 # ─────────────────────────────────────────────
 
 EPISTEMIC_REPLACEMENTS = [
+    # ═══ PROHIBITED EDITORIAL TERMS (v7.1) ═══
+    # These terms are banned across ALL prompts but may still leak
+    ("high-sophistication firm", "a sophisticated practice"),
+    ("High-sophistication firm", "A sophisticated practice"),
+    ("a high-sophistication firm", "a firm with a sophisticated practice"),
+    ("strategic plan", "editorial strategy"),
+    ("market expansion", "editorial positioning"),
+    ("operational excellence", "institutional capability"),
+    ("value proposition", "competitive positioning"),
+    ("leverage synergies", "build on institutional strengths"),
+    ("optimize portfolio", "strengthen the submission narrative"),
+    ("scalable model", "sustainable practice trajectory"),
+    ("diversification", "practice breadth"),
+    ("broaden client base", "demonstrate range beyond anchor clients"),
+    ("Diversify your client base", "Demonstrate range beyond anchor clients in the submission"),
+    ("diversify your client base", "demonstrate range beyond anchor clients in the submission"),
+    ("Broaden your market presence", "Strengthen editorial positioning through evidence depth"),
+    ("broaden your market presence", "strengthen editorial positioning through evidence depth"),
+    ("Develop a strategic plan", "Develop an editorial positioning strategy"),
+    ("develop a strategic plan", "develop an editorial positioning strategy"),
+
+    # ═══ EPISTEMIC VIOLATIONS — Firm-wide claims ═══
     # Specific compound phrases first
     ("lacks client diversity", "does not yet demonstrate sufficient client diversity in the submission"),
     ("lacks matter diversity", "does not yet demonstrate sufficient matter diversity in the submission"),
@@ -27,6 +49,12 @@ EPISTEMIC_REPLACEMENTS = [
     ("lacks bench strength", "does not yet demonstrate sufficient bench strength in the submission"),
     ("lacks differentiation", "does not yet demonstrate sufficient differentiation in the submission"),
     ("lacks evidence", "does not yet present sufficient evidence in the submission"),
+    ("lacking broader", "not yet demonstrating broader"),
+    ("Lacking broader", "Not yet demonstrating broader"),
+    ("the lack of broader", "the absence of demonstrated broader"),
+    ("The lack of broader", "The absence of demonstrated broader"),
+    ("the lack of", "the absence of demonstrated"),
+    ("The lack of", "The absence of demonstrated"),
     
     # "The firm lacks..."
     ("The firm lacks", "The submission does not yet demonstrate sufficient"),
