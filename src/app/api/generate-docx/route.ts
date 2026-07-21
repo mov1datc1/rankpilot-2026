@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import {
   Document, Packer, Paragraph, TextRun,
   AlignmentType, BorderStyle, Table, TableRow, TableCell,
-  WidthType, ShadingType, VerticalAlign
+  WidthType, ShadingType, VerticalAlign, TableLayoutType
 } from 'docx';
 import { buildSubmissionDoc } from './submission-builder';
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
     const letter = analysis.audit_letter || {};
-    const firmName = chambersData.firm_name || chambersData.firmName || context.firm_name || submission.practiceArea || 'The Firm';
+    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || submission.practiceArea || 'The Firm';
     const practiceArea = submission.practiceArea || 'General Practice';
 
     let doc: Document;
@@ -145,6 +145,7 @@ function makeTable(headers: string[], rows: string[][]): Table {
   return new Table({
     rows: [new TableRow({ children: headerCells }), ...dataRows],
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
   });
 }
 
@@ -269,6 +270,29 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     sections.push(p(String(letter.competitive_positioning_text), { spacing: { after: 300 } }));
   }
 
-  return new Document({ sections: [{ children: sections }] });
+  return new Document({
+    title: `RankPilot Strategic Audit - ${firmName} - ${practiceArea}`,
+    creator: 'RankPilot 2026',
+    description: `Strategic audit letter for ${firmName} in ${practiceArea}`,
+    styles: {
+      paragraphStyles: [
+        {
+          id: 'Normal',
+          name: 'Normal',
+          run: { font: 'Calibri', size: 22 },
+          paragraph: { spacing: { after: 60 } },
+        },
+        {
+          id: 'Heading1',
+          name: 'Heading 1',
+          basedOn: 'Normal',
+          next: 'Normal',
+          run: { font: 'Calibri', size: 28, bold: true, color: NAVY },
+          paragraph: { spacing: { before: 400, after: 200 } },
+        },
+      ],
+    },
+    sections: [{ children: sections }],
+  });
 }
 

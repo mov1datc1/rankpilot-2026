@@ -223,6 +223,25 @@ class MatterDisposition(BaseModel):
     proves_what: str = Field(default="", description="What this matter proves for the thesis that no other matter already proves.")
     redundant_with: str = Field(default="", description="If excluded for redundancy, which included matter already proves the same thing.")
 
+
+class TransformationLogEntry(BaseModel):
+    """v7.0: Documents every transformation the AI makes to client evidence."""
+    matter_title: str = Field(description="Title of the matter that was transformed.")
+    action: str = Field(description="One of: 'preserved_as_is', 'restructured', 'condensed', 'de_emphasized', 'repositioned', 'enhanced'.")
+    rationale: str = Field(description="Why this transformation was applied.")
+    what_was_changed: str = Field(default="", description="Specific elements that were modified.")
+    what_was_preserved: str = Field(default="", description="Specific elements that were kept intact.")
+
+
+class TransformationLog(BaseModel):
+    """v7.0: Complete audit trail of how the AI transformed client evidence."""
+    total_matters_received: int = Field(description="Number of matters the client submitted.")
+    total_matters_evaluated: int = Field(description="Number of matters the AI evaluated. MUST equal total_matters_received.")
+    total_matters_in_docx: int = Field(description="Number of matters that will appear in the DOCX export. MUST equal total_matters_received.")
+    transformations: List[TransformationLogEntry] = Field(default_factory=list, description="Transformation details for each matter.")
+    matters_accountability_passes: bool = Field(default=False, description="True if received == evaluated == docx. False triggers a warning.")
+
+
 class EditorialCoherenceCheck(BaseModel):
     """Vol. VI Ch. 14: 10-question self-check before finalizing."""
     thesis_identifiable: bool = Field(description="Is there a single, clear thesis?")
@@ -242,7 +261,9 @@ class SubmissionBlueprintOutput(BaseModel):
     """Vol. VI, Chapter 15: The Submission Blueprint Object.
     Generated BETWEEN editorial_confidence and narrative_architecture.
     'The AI should not start writing. It should start DESIGNING.'
-    This is the bridge between reasoning and writing."""
+    This is the bridge between reasoning and writing.
+    
+    v7.0: Now includes full matter accountability — every matter must have a disposition."""
     
     # Core thesis
     thesis: str = Field(description="The ONE specific argument this submission will prove. Not 'we do banking' but 'we have established dominance in lender-side restructurings for institutional creditors.'")
@@ -253,6 +274,10 @@ class SubmissionBlueprintOutput(BaseModel):
     hero_selection_reasoning: str = Field(default="", description="Detailed explanation of 'Why this matter?' — how it embodies the editorial thesis and why alternatives were rejected.")
     supporting_matters: List[str] = Field(description="Matters that prove the Hero wasn't an exception. Each must prove something NEW (Ch. 4).")
     matters_to_exclude: List[MatterDisposition] = Field(default_factory=list, description="Matters to DE-EMPHASIZE narratively (NOT to remove from submission). Every client matter must still appear in DOCX export.")
+    
+    # v7.0: Full matter accountability
+    all_matter_dispositions: List[MatterDisposition] = Field(default_factory=list, description="Disposition for EVERY matter received. count(all_matter_dispositions) MUST equal count(input_matters). This field tracks every matter's role.")
+    transformation_summary: str = Field(default="", description="Human-readable summary of what the blueprint did to the matters and WHY. Explains any condensing, re-ordering, or de-emphasis decisions transparently.")
     
     # Strategic intelligence
     editorial_risks: List[str] = Field(description="Top 3-5 risks: single-client dependency, wording dependency, positioning gaps.")
@@ -327,3 +352,30 @@ class ReasoningTraceEntry(BaseModel):
     alternatives_considered: List[str] = Field(default_factory=list, description="Alternative interpretations that were considered and why they were rejected.")
     confidence: float = Field(description="0-1 confidence in this decision.")
     principle_applied: str = Field(default="", description="Which First Principle was most relevant to this decision.")
+
+
+# =====================================================
+# EDITORIAL MEMORY — v7.0 Continuous Learning System
+# Stores editorial decisions and lessons from past submissions
+# to improve reasoning quality over time.
+# =====================================================
+
+class EditorialMemoryEntry(BaseModel):
+    """A single editorial lesson learned from processing a submission."""
+    practice_area: str = Field(description="The practice area this lesson applies to.")
+    jurisdiction: str = Field(description="The jurisdiction this lesson applies to.")
+    lesson_type: str = Field(description="One of: 'inference_pattern', 'common_error', 'successful_thesis', 'client_diversity_pattern', 'matter_quality_signal'.")
+    lesson: str = Field(description="The specific editorial insight learned.")
+    source_firm: str = Field(default="", description="Anonymized identifier for the firm that generated this lesson.")
+    confidence: float = Field(default=0.7, description="0-1 confidence in this lesson's applicability.")
+    timestamp: str = Field(default="", description="When this lesson was learned.")
+
+
+class EditorialMemoryBank(BaseModel):
+    """Accumulated editorial intelligence from past submissions.
+    This bank grows with each processed submission, making the AI
+    progressively smarter about specific practice areas and jurisdictions."""
+    entries: List[EditorialMemoryEntry] = Field(default_factory=list, description="All accumulated editorial lessons.")
+    total_submissions_processed: int = Field(default=0, description="Total number of submissions that contributed to this memory bank.")
+    practice_areas_covered: List[str] = Field(default_factory=list, description="Unique practice areas seen so far.")
+    jurisdictions_covered: List[str] = Field(default_factory=list, description="Unique jurisdictions seen so far.")

@@ -259,6 +259,9 @@ def analysis_node(state: AgentState) -> Dict:
         "editorial_confidence": state.get("editorial_confidence", {}),
         "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
         "comparative_analysis_summary": state.get("comparative_analysis", {}).get("market_position_summary", ""),
+        # v7.0: Matter accountability + blueprint context
+        "submission_blueprint": state.get("submission_blueprint", {}),
+        "total_matters_submitted": len(state.get("matters", [])),
     }
     
     prompt = ChatPromptTemplate.from_messages([

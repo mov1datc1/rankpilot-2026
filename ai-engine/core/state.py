@@ -70,5 +70,9 @@ class AgentState(TypedDict):
     # Every conclusion traces back to evidence, hypotheses, and comparisons
     reasoning_trace: List[Dict]
 
+    # v7.0: Editorial Memory — accumulated intelligence from past submissions
+    # Injected as context so the AI learns from previous analyses
+    editorial_memory: str
+
     # Flow control for the new pipeline
     current_step: str

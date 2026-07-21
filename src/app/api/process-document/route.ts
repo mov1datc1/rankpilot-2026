@@ -148,6 +148,7 @@ export async function POST(request: NextRequest) {
               ...(partialData.comparative_analysis ? { comparative_analysis: partialData.comparative_analysis } : {}),
               ...(partialData.editorial_confidence ? { editorial_confidence: partialData.editorial_confidence } : {}),
               ...(partialData.narrative_architecture ? { narrative_architecture: partialData.narrative_architecture } : {}),
+              ...(partialData.submission_blueprint ? { submission_blueprint: partialData.submission_blueprint } : {}),
               ...(partialData.reasoning_trace ? { reasoning_trace: partialData.reasoning_trace } : {}),
               // Store the error for the report page to display
               _pipeline_error: {
@@ -249,6 +250,7 @@ export async function POST(request: NextRequest) {
           comparative_analysis: pyData.data?.comparative_analysis || existingChambersData.comparative_analysis,
           editorial_confidence: pyData.data?.editorial_confidence || existingChambersData.editorial_confidence,
           narrative_architecture: pyData.data?.narrative_architecture || existingChambersData.narrative_architecture,
+          submission_blueprint: pyData.data?.submission_blueprint || existingChambersData.submission_blueprint,
           reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
           // Department/lawyer/contact data from AI extraction
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),

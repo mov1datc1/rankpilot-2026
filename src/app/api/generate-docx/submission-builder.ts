@@ -54,6 +54,7 @@ function fieldTable(label: string, value: string, labelPrefix?: string): Table {
       new TableRow({ children: [yellowCell([para(value || '', { size: 20 })])] }),
     ],
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
   });
 }
 
@@ -83,6 +84,7 @@ function dataTable(headerLabel: string, columns: string[], rows: string[][], opt
   return new Table({
     rows: [headerRow, colHeaderRow, ...dataRows],
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
   });
 }
 
@@ -134,6 +136,7 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
   return new Table({
     rows,
     width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
   });
 }
 
@@ -358,8 +361,29 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
     elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 
-  // Build document with header/footer
+  // Build document with header/footer and cross-platform compatibility (v7.0)
   return new Document({
+    title: `Chambers Submission - ${firmName} - ${practiceArea}`,
+    creator: 'RankPilot 2026',
+    description: `Chambers & Partners submission form for ${firmName} in ${practiceArea}`,
+    styles: {
+      paragraphStyles: [
+        {
+          id: 'Normal',
+          name: 'Normal',
+          run: { font: FONT, size: 20 },
+          paragraph: { spacing: { after: 80 } },
+        },
+        {
+          id: 'Heading1',
+          name: 'Heading 1',
+          basedOn: 'Normal',
+          next: 'Normal',
+          run: { font: FONT, size: 28, bold: true },
+          paragraph: { spacing: { before: 300, after: 200 } },
+        },
+      ],
+    },
     sections: [{
       properties: {
         page: { margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } },

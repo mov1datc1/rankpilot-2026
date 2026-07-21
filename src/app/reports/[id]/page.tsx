@@ -38,7 +38,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const analysis = chambersData.analysis || {};
   const context = chambersData.strategicContext || {};
   const letter = analysis.audit_letter || {};
-  const firmName = chambersData.firm_name || chambersData.firmName || context.firm_name || submission.practiceArea || 'The Firm';
+  const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || submission.practiceArea || 'The Firm';
 
   // Editorial Reasoning Engine data
   const competitiveIdentity = chambersData.competitive_identity || {};
@@ -49,6 +49,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const comprehension = chambersData.comprehension || {};
   const pipelineError = chambersData._pipeline_error || null;
   const isEmptyAnalysis = !analysis.score && !analysis.summary && !letter.the_state_of_play;
+  const submissionBlueprint = chambersData.submission_blueprint || {};
 
   const score = analysis.score || 0;
   const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
@@ -581,6 +582,88 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             </div>
           </div>
         </div>
+
+        {/* v7.0: Editorial Reasoning Trace Panel */}
+        {reasoningTrace.length > 0 && (
+          <div className="print-hidden" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '2rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1rem' }}>🔍</div>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#1A237E', margin: 0 }}>Editorial Reasoning Trace</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>Why the AI made each editorial decision — full transparency</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {reasoningTrace.map((entry: any, i: number) => (
+                <details key={i} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                  <summary style={{ padding: '0.75rem 1rem', cursor: 'pointer', background: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>
+                    <span style={{ padding: '0.15rem 0.5rem', background: '#e0e7ff', color: '#4338ca', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase' as const }}>{entry.stage || 'unknown'}</span>
+                    <span style={{ flex: 1 }}>{entry.decision ? (typeof entry.decision === 'string' ? entry.decision.substring(0, 120) + (entry.decision.length > 120 ? '...' : '') : 'Decision recorded') : 'Decision recorded'}</span>
+                    <span style={{ fontSize: '0.7rem', color: entry.confidence >= 0.7 ? '#16a34a' : entry.confidence >= 0.4 ? '#d97706' : '#dc2626', fontWeight: 700 }}>
+                      {entry.confidence ? `${Math.round(entry.confidence * 100)}%` : ''}
+                    </span>
+                  </summary>
+                  <div style={{ padding: '1rem', borderTop: '1px solid #e2e8f0', fontSize: '0.85rem', color: '#475569', lineHeight: 1.6 }}>
+                    {entry.decision && <p style={{ margin: '0 0 0.5rem' }}><strong>Decision:</strong> {typeof entry.decision === 'string' ? entry.decision : JSON.stringify(entry.decision)}</p>}
+                    {entry.evidence_used && Array.isArray(entry.evidence_used) && entry.evidence_used.length > 0 && (
+                      <div style={{ margin: '0 0 0.5rem' }}>
+                        <strong>Evidence Used:</strong>
+                        <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                          {entry.evidence_used.map((e: string, j: number) => <li key={j}>{e}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {entry.alternatives_considered && Array.isArray(entry.alternatives_considered) && entry.alternatives_considered.length > 0 && (
+                      <div style={{ margin: '0 0 0.5rem' }}>
+                        <strong>Alternatives Considered:</strong>
+                        <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                          {entry.alternatives_considered.map((a: string, j: number) => <li key={j} style={{ color: '#94a3b8' }}>{a}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {entry.principle_applied && <p style={{ margin: 0, fontStyle: 'italic', color: '#6366f1' }}>Principle: {entry.principle_applied}</p>}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* v7.0: Matter Accountability Panel */}
+        {(submissionBlueprint.all_matter_dispositions || submissionBlueprint.transformation_summary) && (
+          <div className="print-hidden" style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '2rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #059669, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1rem' }}>📋</div>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#065f46', margin: 0 }}>Matter Accountability</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>Every matter submitted is tracked — zero loss guarantee</p>
+              </div>
+              <div style={{ marginLeft: 'auto', padding: '0.25rem 0.75rem', background: submission.matters.length > 0 ? '#dcfce7' : '#fef9c3', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, color: submission.matters.length > 0 ? '#166534' : '#854d0e' }}>
+                {submission.matters.length} matters tracked
+              </div>
+            </div>
+            {submissionBlueprint.transformation_summary && (
+              <div style={{ background: '#f0fdf4', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', border: '1px solid #bbf7d0' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#166534', margin: '0 0 0.25rem' }}>Transformation Summary</p>
+                <p style={{ fontSize: '0.85rem', color: '#1e293b', margin: 0, lineHeight: 1.6 }}>{submissionBlueprint.transformation_summary}</p>
+              </div>
+            )}
+            {Array.isArray(submissionBlueprint.all_matter_dispositions) && submissionBlueprint.all_matter_dispositions.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {submissionBlueprint.all_matter_dispositions.map((disp: any, i: number) => {
+                  const dispColor = disp.disposition === 'include_as_hero' ? '#6366f1' : disp.disposition === 'include_as_supporting' ? '#16a34a' : disp.disposition === 'include_as_depth' ? '#0284c7' : disp.disposition === 'exclude' ? '#dc2626' : '#d97706';
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <span style={{ padding: '0.15rem 0.5rem', background: `${dispColor}15`, color: dispColor, borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const }}>{(disp.disposition || 'tracked').replace(/_/g, ' ')}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b', flex: 1 }}>{disp.matter_title}</span>
+                      {disp.rationale && <span style={{ fontSize: '0.75rem', color: '#64748b', maxWidth: '40%' }}>{disp.rationale}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>

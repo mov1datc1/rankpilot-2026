@@ -9,6 +9,10 @@ from core.graph import app as graph_app
 from langchain_core.messages import HumanMessage
 from agents.nodes import writer_node
 from utils.docx_generator import generate_docx_report
+from utils.language_guard import filter_pipeline_output
+from utils.editorial_memory import (
+    load_memory, save_memory, extract_lessons_from_result, format_memory_for_prompt
+)
 
 
 def sanitize_unicode(text: str) -> str:
@@ -120,10 +124,25 @@ async def process_document(request: Request):
         "comparative_analysis": {},
         "editorial_confidence": {},
         "narrative_architecture": {},
+        "submission_blueprint": {},
         "evidence_map": {},
         "reasoning_trace": [],
         "current_step": "ingestion",
     }
+
+    # v7.0: Load editorial memory for this practice area + jurisdiction
+    editorial_memory_context = ""
+    try:
+        practice_area = context.get("practice_area", "")
+        jurisdiction = context.get("jurisdiction", "")
+        if practice_area and jurisdiction:
+            memory_bank = load_memory(practice_area, jurisdiction)
+            editorial_memory_context = format_memory_for_prompt(memory_bank)
+            if editorial_memory_context:
+                initial_state["editorial_memory"] = editorial_memory_context
+                print(f"[EDITORIAL MEMORY] Loaded {memory_bank.total_submissions_processed} past submissions for {practice_area}/{jurisdiction}")
+    except Exception as e:
+        print(f"[EDITORIAL MEMORY] Warning: Could not load memory: {e}")
     
     try:
         result = graph_app.invoke(initial_state, config)
@@ -175,9 +194,25 @@ async def process_document(request: Request):
                 "comparative_analysis": result.get("comparative_analysis", {}),
                 "editorial_confidence": result.get("editorial_confidence", {}),
                 "narrative_architecture": result.get("narrative_architecture", {}),
+                "submission_blueprint": result.get("submission_blueprint", {}),
                 "reasoning_trace": result.get("reasoning_trace", []),
             }
         }
+
+        # v7.0: Apply epistemic language guard to ALL AI output
+        response_data["data"] = filter_pipeline_output(response_data["data"])
+
+        # v7.0: Save editorial memory (lessons learned from this submission)
+        try:
+            practice_area = context.get("practice_area", "")
+            jurisdiction = context.get("jurisdiction", "")
+            if practice_area and jurisdiction:
+                lessons = extract_lessons_from_result(response_data["data"], practice_area, jurisdiction)
+                if lessons:
+                    save_memory(practice_area, jurisdiction, lessons)
+        except Exception as mem_err:
+            print(f"[EDITORIAL MEMORY] Warning: Could not save memory: {mem_err}")
+
         # Validate serialization before returning
         json.dumps(response_data, default=str, ensure_ascii=False)
         return response_data

@@ -40,6 +40,13 @@ from agents.prompts import (
 )
 from utils.rag_router import RAGRouter
 
+# v7.0: Import editorial memory for continuous learning
+try:
+    from utils.editorial_memory import load_memory, format_memory_for_prompt
+except ImportError:
+    load_memory = None
+    format_memory_for_prompt = None
+
 load_dotenv()
 
 
@@ -217,6 +224,11 @@ def hypothesis_construction_node(state: AgentState) -> Dict:
         "comprehension": state.get("comprehension", {}),
         "RAG_KNOWLEDGE": rag_knowledge,
     }
+
+    # v7.0: Inject editorial memory for continuous learning
+    editorial_memory = state.get("editorial_memory", "")
+    if editorial_memory:
+        input_data["EDITORIAL_MEMORY"] = editorial_memory
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", HYPOTHESIS_CONSTRUCTION_PROMPT),
@@ -337,6 +349,11 @@ def comparative_analysis_node(state: AgentState) -> Dict:
         "metadata": state.get("metadata", {}),
         "RAG_KNOWLEDGE": rag_knowledge,
     }
+
+    # v7.0: Inject editorial memory for continuous learning
+    editorial_memory = state.get("editorial_memory", "")
+    if editorial_memory:
+        input_data["EDITORIAL_MEMORY"] = editorial_memory
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", COMPARATIVE_ANALYSIS_PROMPT),
@@ -504,6 +521,25 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         confidence=0.85 if blueprint.get("confidence_level") == "high" else 0.5,
         principle="Vol. VI Ch. 15: Design Before Writing"
     ))
+
+    # v7.0: Matter accountability validation
+    input_count = len(state.get("matters", []))
+    disposition_count = len(blueprint.get("all_matter_dispositions", []))
+    supporting_count = len(blueprint.get("supporting_matters", []))
+    hero = 1 if blueprint.get("hero_matter") else 0
+    accounted = disposition_count or (supporting_count + hero)
+    
+    if input_count > 0 and accounted < input_count:
+        print(f"\u26a0\ufe0f MATTER ACCOUNTABILITY WARNING: {input_count} matters received, only {accounted} accounted for")
+        trace.append(_build_trace_entry(
+            stage="submission_blueprint_validation",
+            decision=f"MATTER ACCOUNTABILITY VIOLATION: {input_count} in, {accounted} tracked. {input_count - accounted} matters unaccounted.",
+            evidence=[f"Input: {input_count}", f"Dispositions: {disposition_count}", f"Supporting: {supporting_count}"],
+            confidence=0.3,
+            principle="v7.0: Zero-Loss Rule"
+        ))
+    else:
+        print(f"\u2705 MATTER ACCOUNTABILITY PASSES: {input_count} in, {accounted} accounted for")
     
     return {
         "submission_blueprint": blueprint,
