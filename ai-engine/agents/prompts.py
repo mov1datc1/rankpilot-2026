@@ -272,34 +272,34 @@ This report should be as deep and actionable as a senior editorial briefing.
 13. "closing": A decisive 3-4 sentence closing paragraph in Chambers editorial voice.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
-{{
+{{{{
   "risk_level": "string",
   "score": "integer",
   "summary": "string",
-  "audit_letter": {{
+  "audit_letter": {{{{
     "narrative_strategy": ["string", "string", "string"],
     "the_state_of_play": "string",
     "the_unfair_advantage": "string",
     "the_reality_check": ["string", "string", "string"],
     "the_path_to_dominance": [
-      {{ "title": "string", "why": "string", "what_must_be_delivered": "string", "deadline": "string", "description": "string" }}
+      {{{{ "title": "string", "why": "string", "what_must_be_delivered": "string", "deadline": "string", "description": "string" }}}}
     ],
     "competitive_context": "string",
     "matter_evaluations": [
-      {{ "matter_name": "string", "type": "string", "quality_label": "string", "score": "integer", "improvement_note": "string" }}
+      {{{{ "matter_name": "string", "type": "string", "quality_label": "string", "score": "integer", "improvement_note": "string" }}}}
     ],
     "recommended_rewrites": [
-      {{
+      {{{{
         "original": "the original weak matter text",
         "improved": "the AI-rewritten stronger version",
         "rationale": "why this rewrite is more rankable"
-      }}
+      }}}}
     ],
     "competitive_positioning_text": "string",
     "closing": "string"
-  }},
+  }}}},
   "confidence_score": 100
-}}
+}}}}
 
 ### CONSTRAINTS:
 - The output must be ACTIONABLE. If it doesn't change decisions, it's useless.
