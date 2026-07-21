@@ -127,6 +127,7 @@ async def process_document(request: Request):
         "submission_blueprint": {},
         "evidence_map": {},
         "reasoning_trace": [],
+        "editorial_memory": "",
         "current_step": "ingestion",
     }
 
