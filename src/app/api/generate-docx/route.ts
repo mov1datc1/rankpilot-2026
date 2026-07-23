@@ -218,7 +218,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   if (realityCheck.length > 0) {
     sections.push(
       sectionTitle('The Reality Check'),
-      p('The submission is currently held back by avoidable defects:', { color: GRAY, spacing: { after: 100 } })
+      p('Editorial observations on the submission\'s competitive positioning:', { color: GRAY, spacing: { after: 100 } })
     );
     for (const item of realityCheck) {
       sections.push(new Paragraph({

@@ -55,7 +55,7 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
         reality = letter.get('the_reality_check', [])
         if reality and isinstance(reality, list):
             doc.add_heading('The Reality Check', level=2)
-            doc.add_paragraph('The submission is currently held back by avoidable defects:')
+            doc.add_paragraph('Editorial observations on the submission\'s competitive positioning:')
             for item in reality:
                 doc.add_paragraph(str(item), style='List Bullet')
 

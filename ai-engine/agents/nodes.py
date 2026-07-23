@@ -327,8 +327,72 @@ def optimization_node(state: AgentState) -> Dict:
         try:
             response = llm.invoke(messages)
             result = json.loads(response.content)
-            matter['optimized_text'] = result.get('optimized_text', matter.get('summary'))
+            optimized_text = result.get('optimized_text', matter.get('summary'))
+            
+            # ═══ v8.0: PROBATIVE PRESERVATION VALIDATOR (Constitutional Article V) ═══
+            original_word_count = len(raw_text.split())
+            optimized_word_count = len(optimized_text.split()) if optimized_text else 0
+            ratio = optimized_word_count / max(original_word_count, 1)
+            
+            # Check 1: Word count ratio — optimized should be >= 75% of original
+            needs_reoptimization = ratio < 0.75
+            
+            # Check 2: Key evidence element preservation
+            import re as _re
+            # Extract key elements from original
+            original_lower = raw_text.lower()
+            optimized_lower = (optimized_text or '').lower()
+            
+            # Check client name preservation
+            client_name = matter.get('client', '').lower().strip()
+            if client_name and len(client_name) > 2 and client_name not in optimized_lower:
+                needs_reoptimization = True
+                print(f"  [PROBATIVE] Client name '{matter.get('client')}' missing from optimized text")
+            
+            # Check monetary value preservation
+            value_str = matter.get('value', '').strip()
+            if value_str and value_str != 'N/A':
+                # Extract numeric portions for comparison
+                original_numbers = set(_re.findall(r'\d[\d,\.]+', value_str))
+                for num in original_numbers:
+                    if num not in (optimized_text or ''):
+                        needs_reoptimization = True
+                        print(f"  [PROBATIVE] Value '{num}' missing from optimized text")
+                        break
+            
+            if needs_reoptimization:
+                print(f"  [PROBATIVE] Re-optimizing matter '{matter.get('title', 'unknown')}' — ratio: {ratio:.2f}")
+                preservation_prompt = (
+                    "CRITICAL RE-OPTIMIZATION REQUIRED.\n"
+                    "The previous optimization LOST probative evidence (Constitutional Article V violation).\n"
+                    "You MUST preserve ALL of the following from the original:\n"
+                    "- Client name exactly as written\n"
+                    "- All monetary values with currency\n"
+                    "- All jurisdictions mentioned\n"
+                    "- The firm's specific role (not generic 'advised')\n"
+                    "- All team members mentioned\n"
+                    "- The outcome or result\n"
+                    "RESTRUCTURE for editorial impact but do NOT compress or summarize away evidence.\n"
+                    "The optimized version MUST be at least 75% of the original word count.\n\n"
+                    f"Original text:\n{raw_text}\n\n"
+                    f"Previous (rejected) optimization:\n{optimized_text}\n\n"
+                    "Provide a corrected optimization that preserves ALL probative elements."
+                )
+                try:
+                    retry_messages = [
+                        SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
+                        HumanMessage(content=preservation_prompt)
+                    ]
+                    retry_response = llm.invoke(retry_messages)
+                    retry_result = json.loads(retry_response.content)
+                    optimized_text = retry_result.get('optimized_text', optimized_text)
+                    print(f"  [PROBATIVE] Re-optimization complete. New word count: {len(optimized_text.split())}")
+                except Exception as retry_err:
+                    print(f"  [PROBATIVE] Re-optimization failed: {retry_err}. Keeping original optimization.")
+            
+            matter['optimized_text'] = optimized_text
             matter['status'] = 'AI Optimized'
+            
         except Exception as e:
             print(f"Error optimizing matter: {e}")
             matter['optimized_text'] = matter.get('summary', '')
