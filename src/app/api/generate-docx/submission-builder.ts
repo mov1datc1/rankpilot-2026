@@ -9,6 +9,10 @@ const FONT = 'Times New Roman';
 const BORDER = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
 const BORDERS = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER };
 
+// ═══ v8.1: Google Docs Compatibility — ALL widths in DXA (twips) ═══
+// Letter page = 8.5" × 1440 DXA/in = 12240. Margins = 1" × 2 = 2880. Content = 9360 DXA.
+const PAGE_WIDTH_DXA = 9360;
+
 function txt(text: string, opts: { bold?: boolean; size?: number; italics?: boolean; color?: string; font?: string } = {}): TextRun {
   return new TextRun({ text, bold: opts.bold, size: opts.size || 20, italics: opts.italics, color: opts.color, font: opts.font || FONT });
 }
@@ -27,7 +31,7 @@ function yellowCell(children: Paragraph[], opts: { width?: number; columnSpan?: 
     shading: { type: ShadingType.SOLID, color: YELLOW },
     borders: BORDERS,
     verticalAlign: VerticalAlign.TOP,
-    ...(opts.width ? { width: { size: opts.width, type: WidthType.DXA } } : {}),
+    width: { size: opts.width || PAGE_WIDTH_DXA, type: WidthType.DXA },
     ...(opts.columnSpan ? { columnSpan: opts.columnSpan } : {}),
     ...(opts.rowSpan ? { rowSpan: opts.rowSpan } : {}),
   });
@@ -38,57 +42,65 @@ function labelCell(children: Paragraph[], opts: { width?: number; columnSpan?: n
     children,
     borders: BORDERS,
     verticalAlign: VerticalAlign.TOP,
-    ...(opts.width ? { width: { size: opts.width, type: WidthType.DXA } } : {}),
+    width: { size: opts.width || PAGE_WIDTH_DXA, type: WidthType.DXA },
     ...(opts.columnSpan ? { columnSpan: opts.columnSpan } : {}),
   });
 }
 
-// Simple 2-row table: label on top, yellow value below
+// Simple 2-row table: label on top, yellow value below (single column = full width)
 function fieldTable(label: string, value: string, labelPrefix?: string): Table {
   const labelChildren = labelPrefix
     ? [new Paragraph({ children: [txt(labelPrefix, { size: 14 }), txt(' ', { size: 14 }), txt(label, { bold: true, size: 14 })] })]
     : [new Paragraph({ children: [txt(label, { bold: true, size: 14 })] })];
   return new Table({
     rows: [
-      new TableRow({ children: [labelCell(labelChildren)] }),
-      new TableRow({ children: [yellowCell([para(value || '', { size: 20 })])] }),
+      new TableRow({ children: [labelCell(labelChildren, { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell([para(value || '', { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
     ],
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.AUTOFIT,
+    width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [PAGE_WIDTH_DXA],
   });
 }
 
 // Multi-column table with header row and data rows (yellow)
 function dataTable(headerLabel: string, columns: string[], rows: string[][], opts: { labelPrefix?: string } = {}): Table {
+  const colCount = columns.length;
+  const colWidth = Math.floor(PAGE_WIDTH_DXA / colCount);
+  const colWidths = Array(colCount).fill(colWidth);
+  // Adjust last column to absorb rounding remainder
+  colWidths[colCount - 1] = PAGE_WIDTH_DXA - colWidth * (colCount - 1);
+
   const headerRow = new TableRow({
     children: [labelCell(
       [new Paragraph({ children: [
         ...(opts.labelPrefix ? [txt(opts.labelPrefix, { size: 14 }), txt(' ', { size: 14 })] : []),
         txt(headerLabel, { bold: true, size: 14 }),
       ] })],
-      { columnSpan: columns.length }
+      { columnSpan: colCount, width: PAGE_WIDTH_DXA }
     )],
   });
   const colHeaderRow = new TableRow({
-    children: columns.map(c => labelCell([para(c, { bold: true, size: 18 })])),
+    children: columns.map((c, i) => labelCell([para(c, { bold: true, size: 18 })], { width: colWidths[i] })),
   });
   const dataRows = rows.map(row => new TableRow({
-    children: row.map(cell => yellowCell([para(cell || '', { size: 20 })])),
+    children: row.map((cell, i) => yellowCell([para(cell || '', { size: 20 })], { width: colWidths[i] })),
   }));
-  // Add empty rows to reach at least 3 data rows
+  // Add empty rows to reach at least 1 data row
   while (dataRows.length < 1) {
     dataRows.push(new TableRow({
-      children: columns.map(() => yellowCell([para('', { size: 20 })])),
+      children: columns.map((_, i) => yellowCell([para('', { size: 20 })], { width: colWidths[i] })),
     }));
   }
   return new Table({
     rows: [headerRow, colHeaderRow, ...dataRows],
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    layout: TableLayoutType.AUTOFIT,
+    width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
+    layout: TableLayoutType.FIXED,
+    columnWidths: colWidths,
   });
 }
 
-// 20-row matter table matching Chambers template exactly
+// 20-row matter table matching Chambers template exactly (single-column with full width)
 function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any, exportMode: string): Table {
   const isConf = prefix === 'E';
   const clientLabel = isConf
@@ -113,14 +125,14 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
     new TableRow({
       children: [labelCell(
         [para(`${type} Work Highlights in last 12 months`, { bold: true, size: 22 })],
-        { columnSpan: 2 }
+        { width: PAGE_WIDTH_DXA }
       )],
     }),
     // Row 1: Matter number
     new TableRow({
       children: [yellowCell(
         [para(`${type} Matter ${matterNum}`, { bold: true, size: 22 })],
-        { columnSpan: 2 }
+        { width: PAGE_WIDTH_DXA }
       )],
     }),
   ];
@@ -128,15 +140,16 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
   // Rows 2-19: label/value pairs (9 fields x 2 rows each = 18 rows)
   for (const [label, value] of fields) {
     rows.push(
-      new TableRow({ children: [labelCell([para(label, { size: 18 })], { columnSpan: 2 })] }),
-      new TableRow({ children: [yellowCell([para(value, { size: 20 })], { columnSpan: 2 })] }),
+      new TableRow({ children: [labelCell([para(label, { size: 18 })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell([para(value, { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
     );
   }
 
   return new Table({
     rows,
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
     layout: TableLayoutType.FIXED,
+    columnWidths: [PAGE_WIDTH_DXA],
   });
 }
 
@@ -198,17 +211,19 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
   elements.push(fieldTable('Department name (used by firm)', chambersData.departmentName || '', 'B1'));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B2+B3 combined table
+  // B2+B3 combined table (single column, full width)
   const numPartners = String(chambersData.numPartners || '');
   const numLawyers = String(chambersData.numLawyers || '');
   elements.push(new Table({
     rows: [
-      new TableRow({ children: [labelCell([new Paragraph({ children: [txt('B2', { size: 14 }), txt(' ', { size: 14 }), txt('Number of partners in the department', { bold: true, size: 14 })] })])] }),
-      new TableRow({ children: [yellowCell([para(numPartners, { size: 20 })])] }),
-      new TableRow({ children: [labelCell([new Paragraph({ children: [txt('B3', { size: 14 }), txt(' ', { size: 14 }), txt('Number of other qualified lawyers', { bold: true, size: 14 })] })])] }),
-      new TableRow({ children: [yellowCell([para(numLawyers, { size: 20 })])] }),
+      new TableRow({ children: [labelCell([new Paragraph({ children: [txt('B2', { size: 14 }), txt(' ', { size: 14 }), txt('Number of partners in the department', { bold: true, size: 14 })] })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell([para(numPartners, { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [labelCell([new Paragraph({ children: [txt('B3', { size: 14 }), txt(' ', { size: 14 }), txt('Number of other qualified lawyers', { bold: true, size: 14 })] })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell([para(numLawyers, { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
     ],
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
+    layout: TableLayoutType.FIXED,
+    columnWidths: [PAGE_WIDTH_DXA],
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
@@ -229,23 +244,25 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
     : [['', '', ''], ['', '', ''], ['', '', '']];
   elements.push(dataTable('Hires / Departures of partners in last 12 months \n(state if they joined or left, and name of the other firm)', ['Name', 'Joined / Departed', 'Joined From / Destination (firm)'], hireRows, { labelPrefix: 'B5' }));
 
-  // B6 Lawyer bios table
+  // B6 Lawyer bios table — 5 columns with explicit DXA widths for Google Docs
   elements.push(new Paragraph({ children: [new PageBreak()] }));
   const lawyers = chambersData.lawyers || [];
+  // Column widths: Name(1500) + Comments(4260) + Partner(1000) + Ranked(1000) + Leave(1600) = 9360
+  const b6ColWidths = [1500, 4260, 1000, 1000, 1600];
   const b6HeaderRow = new TableRow({
     children: [labelCell([new Paragraph({ children: [
       txt('B6', { size: 14 }), txt(' ', { size: 14 }),
       txt('Information regarding Ranked and Unranked lawyers (including associates) in this practice area.', { bold: true, size: 14 }),
       txt('\nPlease do not repeat additional biographical information which is available on your website or via other sources. You may include a link to these biographies.', { italics: true, size: 14 }),
-    ] })], { columnSpan: 5 })],
+    ] })], { columnSpan: 5, width: PAGE_WIDTH_DXA })],
   });
   const b6ColRow = new TableRow({
     children: [
-      labelCell([para('Name', { bold: true, size: 18 })]),
-      labelCell([para('Comments or Web Link', { bold: true, size: 18 })]),
-      labelCell([para('Partner\nY/N', { bold: true, size: 18, alignment: AlignmentType.CENTER })]),
-      labelCell([para('Ranked\nY/N', { bold: true, size: 18, alignment: AlignmentType.CENTER })]),
-      labelCell([new Paragraph({ children: [txt('Current/recent parental leave, significant childcare commitments or other part-time working arrangements, if applicable. For more information, please see our leave policy).', { bold: true, size: 14 })] })]),
+      labelCell([para('Name', { bold: true, size: 18 })], { width: b6ColWidths[0] }),
+      labelCell([para('Comments or Web Link', { bold: true, size: 18 })], { width: b6ColWidths[1] }),
+      labelCell([para('Partner\nY/N', { bold: true, size: 18, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
+      labelCell([para('Ranked\nY/N', { bold: true, size: 18, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+      labelCell([new Paragraph({ children: [txt('Current/recent parental leave, significant childcare commitments or other part-time working arrangements, if applicable. For more information, please see our leave policy).', { bold: true, size: 14 })] })], { width: b6ColWidths[4] }),
     ],
   });
 
@@ -278,11 +295,11 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
 
       b6DataRows.push(new TableRow({
         children: [
-          yellowCell([para(l.name || '', { size: 20 })]),
-          yellowCell(bioParts),
-          yellowCell([para(l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })]),
-          yellowCell([para(l.isRanked ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })]),
-          yellowCell([para('', { size: 20 })]),
+          yellowCell([para(l.name || '', { size: 20 })], { width: b6ColWidths[0] }),
+          yellowCell(bioParts, { width: b6ColWidths[1] }),
+          yellowCell([para(l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
+          yellowCell([para(l.isRanked ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+          yellowCell([para('', { size: 20 })], { width: b6ColWidths[4] }),
         ],
       }));
     }
@@ -291,18 +308,20 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
     for (let i = 0; i < 4; i++) {
       b6DataRows.push(new TableRow({
         children: [
-          yellowCell([para('', { size: 20 })]),
-          yellowCell([para('', { size: 20 })]),
-          yellowCell([para('', { size: 20, alignment: AlignmentType.CENTER })]),
-          yellowCell([para('', { size: 20, alignment: AlignmentType.CENTER })]),
-          yellowCell([para('', { size: 20 })]),
+          yellowCell([para('', { size: 20 })], { width: b6ColWidths[0] }),
+          yellowCell([para('', { size: 20 })], { width: b6ColWidths[1] }),
+          yellowCell([para('', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
+          yellowCell([para('', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+          yellowCell([para('', { size: 20 })], { width: b6ColWidths[4] }),
         ],
       }));
     }
   }
   elements.push(new Table({
     rows: [b6HeaderRow, b6ColRow, ...b6DataRows],
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
+    layout: TableLayoutType.FIXED,
+    columnWidths: b6ColWidths,
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
