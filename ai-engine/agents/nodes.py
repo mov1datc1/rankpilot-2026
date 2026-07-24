@@ -130,24 +130,34 @@ def extraction_node(state: AgentState) -> Dict:
     ext_lawyers = data_dict.get("lawyers", [])
     ext_contacts = data_dict.get("contacts", [])
 
-    # v10.0: CONFIDENTIALITY GUARDRAIL — Deterministic lock
+    # v10.1: CONFIDENTIALITY GUARDRAIL — Calibrated lock
+    # RULE: Respect the source document's classification. Only lock matters that have
+    # EXPLICIT confidential signals. Do NOT default everything to confidential.
+    # - If extraction found is_confidential=True → lock as non_publishable
+    # - If extraction set publish_status to non_publishable/confidential → lock and sync is_confidential
+    # - If NEITHER flag is explicitly set → KEEP the default publish_status ("publishable")
+    # This prevents the bug where all 20 matters end up in Section E with 0 in Section D.
     matters_list = data_dict.get("matters", [])
     for matter in matters_list:
         if isinstance(matter, dict):
-            # If extraction marked it as confidential, LOCK it
-            if matter.get("is_confidential", False):
-                matter["publish_status"] = matter.get("publish_status", "non_publishable")
-                if matter["publish_status"] == "publishable":
-                    matter["publish_status"] = "non_publishable"  # Override: confidential cannot be publishable
-                matter["_confidentiality_locked"] = True
-            # If publish_status is non_publishable or confidential, force is_confidential=True
+            explicitly_confidential = matter.get("is_confidential", False)
             ps = matter.get("publish_status", "publishable")
-            if ps in ("non_publishable", "confidential"):
+            explicitly_non_pub = ps in ("non_publishable", "confidential")
+            
+            if explicitly_confidential and not explicitly_non_pub:
+                # Extraction said confidential but publish_status wasn't set → sync them
+                matter["publish_status"] = "non_publishable"
+                matter["_confidentiality_locked"] = True
+            elif explicitly_non_pub:
+                # Publish status explicitly non-publishable → sync is_confidential
                 matter["is_confidential"] = True
                 matter["_confidentiality_locked"] = True
+            # else: both default → matter stays as publishable, no lock needed
     
-    print(f"[CONFIDENTIALITY GUARDRAIL] Processed {len(matters_list)} matters: "
-          f"{sum(1 for m in matters_list if isinstance(m, dict) and m.get('_confidentiality_locked'))} locked as non-publishable/confidential")
+    locked_count = sum(1 for m in matters_list if isinstance(m, dict) and m.get('_confidentiality_locked'))
+    pub_count = sum(1 for m in matters_list if isinstance(m, dict) and m.get('publish_status') == 'publishable')
+    print(f"[CONFIDENTIALITY GUARDRAIL v10.1] {len(matters_list)} matters: "
+          f"{locked_count} locked as confidential, {pub_count} publishable")
 
     return {
         "metadata": {
@@ -290,33 +300,86 @@ def analysis_node(state: AgentState) -> Dict:
     directory_context_block = get_directory_context_block(directory, practice_area, jurisdiction)
     practice_context_block = get_practice_context_block(practice_area)
     
-    # v10.0: Compute full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
+    # v10.1: Compute full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
+    # ENHANCED: Also scan matter text (summary, significance) for cross-border and sector signals
     all_matters = state.get("matters", [])
     unique_clients = set()
     unique_sectors = set()
     cross_border_count = 0
+    cross_border_matters = []  # Track which matters are cross-border for anti-self-referential
     team_members_set = set()
+    
+    # Country keywords for cross-border text scanning
+    COUNTRY_KEYWORDS = [
+        "usa", "united states", "mexico", "canada", "brazil", "chile", "argentina", "colombia", "peru",
+        "germany", "france", "spain", "italy", "uk", "united kingdom", "netherlands", "switzerland",
+        "china", "japan", "india", "australia", "singapore", "hong kong", "korea",
+        "turkey", "israel", "uae", "saudi arabia"
+    ]
+    
     for m in all_matters:
         if isinstance(m, dict):
             client = m.get("client", "") or m.get("title", "")
             if client:
                 unique_clients.add(client.strip().lower())
+            
+            # Scan ALL text fields for sector and cross-border signals
             sig = str(m.get("significance", "") or "").lower()
             title = str(m.get("title", "") or "").lower()
-            # Simple sector detection from matter content
+            summary = str(m.get("summary", "") or "").lower()
+            cbj = str(m.get("cross_border_jurisdictions", "") or "").lower()
+            all_text = f"{sig} {title} {summary} {cbj}"
+            
+            # Enhanced sector detection from ALL text fields
             for sector in ["automotive", "energy", "infrastructure", "security", "entertainment", 
                           "manufacturing", "retail", "technology", "mining", "telecom",
-                          "real estate", "construction", "agriculture", "pharma", "food"]:
-                if sector in sig or sector in title:
+                          "real estate", "construction", "agriculture", "pharma", "food",
+                          "banking", "finance", "insurance", "tourism", "hospitality",
+                          "logistics", "transportation", "renewable", "solar", "wind",
+                          "gas station", "fuel", "petroleum", "oil"]:
+                if sector in all_text:
                     unique_sectors.add(sector)
-            if m.get("is_cross_border", False) or m.get("cross_border_jurisdictions"):
+            
+            # Enhanced cross-border detection: check boolean, jurisdictions field, AND text content
+            is_cb = m.get("is_cross_border", False)
+            has_cb_jurisdictions = bool(m.get("cross_border_jurisdictions"))
+            
+            # Text-based cross-border detection: count distinct country mentions
+            if not is_cb and not has_cb_jurisdictions:
+                countries_found = set()
+                for country in COUNTRY_KEYWORDS:
+                    if country in all_text:
+                        countries_found.add(country)
+                if len(countries_found) >= 2:
+                    is_cb = True
+                    m["is_cross_border"] = True  # Upgrade the detection
+            
+            if is_cb or has_cb_jurisdictions:
                 cross_border_count += 1
+                cross_border_matters.append(client or title)
+            
             for member_field in ["team_members", "lead_partner"]:
                 member_val = m.get(member_field, "")
                 if member_val:
                     team_members_set.update([n.strip() for n in str(member_val).split(",") if n.strip()])
     
-    # 3. Preparar datos — NOW ENRICHED with Editorial Reasoning outputs + v10.0 universe counts
+    # v10.1: Build MANDATORY_UNIVERSE_FACTS block — Anti-Self-Referential Rule
+    # This block contains HARD FACTS that the AI CANNOT contradict in its analysis
+    universe_facts = []
+    universe_facts.append(f"TOTAL MATTERS SUBMITTED: {len(all_matters)}")
+    universe_facts.append(f"UNIQUE CLIENTS: {len(unique_clients)}")
+    universe_facts.append(f"UNIQUE SECTORS DETECTED: {len(unique_sectors)} ({', '.join(sorted(unique_sectors))})")
+    universe_facts.append(f"CROSS-BORDER MATTERS: {cross_border_count}")
+    if cross_border_matters:
+        universe_facts.append(f"CROSS-BORDER MATTER CLIENTS: {', '.join(cross_border_matters[:10])}")
+    universe_facts.append(f"TEAM MEMBERS INVOLVED: {len(team_members_set)}")
+    
+    universe_facts_block = "\n".join(universe_facts)
+    
+    print(f"[UNIVERSE COUNTS v10.1] Clients={len(unique_clients)}, Sectors={len(unique_sectors)}, "
+          f"CrossBorder={cross_border_count}, Team={len(team_members_set)}")
+    
+    # 3. Preparar datos — NOW ENRICHED with Editorial Reasoning outputs + v10.1 universe counts
     input_data = {
         "metadata": state.get("metadata", {}),
         "matters": all_matters,
@@ -331,17 +394,32 @@ def analysis_node(state: AgentState) -> Dict:
         # v7.0: Matter accountability + blueprint context
         "submission_blueprint": state.get("submission_blueprint", {}),
         "total_matters_submitted": len(all_matters),
-        # v10.0: Full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
+        # v10.1: Full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
         "total_unique_clients": len(unique_clients),
         "total_unique_sectors": len(unique_sectors),
         "total_cross_border_count": cross_border_count,
         "total_team_members": len(team_members_set),
+        # v10.1: MANDATORY FACTS — AI must not contradict these
+        "MANDATORY_UNIVERSE_FACTS": universe_facts_block,
     }
     
-    # v10.0: Inject directory and practice context into the prompt
+    # v10.1: Inject directory, practice, and MANDATORY FACTS context into the prompt
     analysis_prompt = STRATEGIC_ANALYSIS_PROMPT
     analysis_prompt = analysis_prompt.replace("{{directory_context_block}}", directory_context_block)
     analysis_prompt = analysis_prompt.replace("{{practice_context_block}}", practice_context_block)
+    # v10.1: Inject mandatory universe facts if placeholder exists, otherwise append
+    if "{{mandatory_universe_facts}}" in analysis_prompt:
+        analysis_prompt = analysis_prompt.replace("{{mandatory_universe_facts}}", universe_facts_block)
+    else:
+        # Fallback: prepend to the prompt so AI sees facts FIRST
+        analysis_prompt = f"""MANDATORY HARD FACTS — DO NOT CONTRADICT THESE IN YOUR ANALYSIS:
+{universe_facts_block}
+
+If the facts above say CROSS-BORDER MATTERS: 5, you MUST NOT say "no cross-border work presented".
+If the facts above say UNIQUE SECTORS: 10, you MUST NOT say "limited practice breadth".
+Violating these facts is a CRITICAL ERROR.
+
+{analysis_prompt}"""
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", analysis_prompt),

@@ -155,7 +155,16 @@ function makeTable(headers: string[], rows: string[][]): Table {
 
 function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, context: any, letter: any, submission: any): Document {
   const dateStr = new Date(submission.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const sections: Paragraph[] = [];
+  const sections: (Paragraph | Table)[] = [];
+
+  // Extract v6.0-v10.0 data from chambersData
+  const chambersData = (submission.chambersData || submission.chambers_data || {}) as any;
+  const competitiveIdentity = chambersData.competitive_identity || {};
+  const editorialConfidence = chambersData.editorial_confidence || {};
+  const narrativeArch = chambersData.narrative_architecture || {};
+  const reasoningTrace = chambersData.reasoning_trace || [];
+  const submissionBlueprint = chambersData.submission_blueprint || {};
+  const comparativeAnalysis = chambersData.comparative_analysis || {};
 
   // Title
   sections.push(
@@ -180,6 +189,17 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     emptyRow()
   );
 
+  // ═══ NEW §1: Evaluation Context Banner ═══
+  const ctxLine = [
+    `Directory: ${submission.targetDirectory || 'N/A'}`,
+    `Practice: ${submission.practiceArea || 'N/A'}`,
+    `Jurisdiction: ${submission.guideRegion || 'N/A'}`,
+    `Current Band: ${submission.currentBand || 'Unranked'}`
+  ].join('  |  ');
+  sections.push(
+    p(ctxLine, { bold: true, color: '4338CA', size: 20, spacing: { after: 300 } })
+  );
+
   // Score Summary
   const riskLevel = analysis.risk_level || 'Pending';
   const score = analysis.score || 0;
@@ -198,6 +218,93 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     );
   }
 
+  // ═══ NEW §2: Competitive Identity Statement ═══
+  const identityStatement = competitiveIdentity.identity_statement || '';
+  const identityCoherence = competitiveIdentity.identity_coherence || '';
+  if (identityStatement) {
+    sections.push(
+      sectionTitle('Competitive Identity'),
+      p(`Coherence: ${identityCoherence ? identityCoherence.charAt(0).toUpperCase() + identityCoherence.slice(1) : 'Pending'}`, { bold: true, color: '6366F1', spacing: { after: 80 } }),
+      p(String(identityStatement), { size: 24, spacing: { after: 100 } })
+    );
+    if (competitiveIdentity.sub_specialization) {
+      sections.push(p(`Sub-specialization: ${competitiveIdentity.sub_specialization}`, { italics: true, color: GRAY, spacing: { after: 200 } }));
+    }
+  }
+
+  // ═══ NEW §3: Editorial Thesis + Hero Matter ═══
+  const thesis = narrativeArch.thesis_statement || '';
+  const heroMatter = narrativeArch.hero_matter || '';
+  if (thesis || heroMatter) {
+    sections.push(sectionTitle('Editorial Thesis & Hero Matter'));
+    if (thesis) {
+      sections.push(
+        subTitle('Editorial Thesis'),
+        p(String(thesis), { spacing: { after: 200 } })
+      );
+    }
+    if (heroMatter) {
+      sections.push(
+        subTitle('Hero Matter'),
+        p(String(heroMatter), { bold: true, spacing: { after: 80 } })
+      );
+      if (narrativeArch.hero_matter_rationale) {
+        sections.push(p(`Rationale: ${narrativeArch.hero_matter_rationale}`, { italics: true, color: GRAY, spacing: { after: 80 } }));
+      }
+      if (submissionBlueprint.hero_selection_reasoning) {
+        sections.push(p(`Why this matter: ${submissionBlueprint.hero_selection_reasoning}`, { italics: true, color: '4338CA', spacing: { after: 200 } }));
+      }
+    }
+  }
+
+  // ═══ NEW §4: Editorial Confidence Breakdown (6 dimensions) ═══
+  const confDimensions = [
+    { label: 'Evidence Completeness', score: editorialConfidence.evidence_completeness_score || 0 },
+    { label: 'Matter Quality', score: editorialConfidence.matter_quality_score || 0 },
+    { label: 'Leadership Visibility', score: editorialConfidence.leadership_visibility_score || 0 },
+    { label: 'Narrative Cohesion', score: editorialConfidence.narrative_cohesion_score || 0 },
+    { label: 'Differentiation', score: editorialConfidence.differentiation_score || 0 },
+    { label: 'Institutional Depth', score: editorialConfidence.institutional_depth_score || 0 },
+  ];
+  const hasConfScores = confDimensions.some(d => d.score > 0);
+  if (hasConfScores) {
+    sections.push(sectionTitle('Editorial Confidence Breakdown'));
+    const overallConf = editorialConfidence.overall_confidence || 'Pending';
+    const passesDefensibility = editorialConfidence.passes_defensibility_test ? 'Yes' : 'No';
+    sections.push(
+      p(`Overall Confidence: ${overallConf.charAt(0).toUpperCase() + overallConf.slice(1)}  |  Passes Defensibility Test: ${passesDefensibility}`, { bold: true, color: NAVY, spacing: { after: 100 } })
+    );
+    if (editorialConfidence.defensibility_summary) {
+      sections.push(p(String(editorialConfidence.defensibility_summary), { italics: true, color: GRAY, spacing: { after: 100 } }));
+    }
+    // Confidence dimensions as table
+    const confRows = confDimensions.map(d => [d.label, `${d.score}%`, d.score >= 70 ? 'Strong' : d.score >= 40 ? 'Moderate' : 'Weak']);
+    sections.push(makeTable(['Dimension', 'Score', 'Rating'], confRows));
+    sections.push(emptyRow());
+  }
+
+  // Band Alignment from comparative analysis
+  const bandAlignment = comparativeAnalysis.band_alignment || '';
+  if (bandAlignment) {
+    sections.push(
+      p(`Band Alignment: ${bandAlignment}`, { bold: true, color: NAVY, spacing: { after: 200 } })
+    );
+  }
+
+  // ═══ NEW §5: Narrative Strategy ═══
+  const narrativeStrategy = Array.isArray(letter.narrative_strategy) ? letter.narrative_strategy : [];
+  if (narrativeStrategy.length > 0) {
+    sections.push(sectionTitle('Narrative Strategy'));
+    for (const bullet of narrativeStrategy) {
+      sections.push(new Paragraph({
+        children: [new TextRun({ text: `→  ${typeof bullet === 'string' ? bullet : JSON.stringify(bullet)}`, size: 22 })],
+        indent: { left: 400 },
+        spacing: { after: 80 },
+      }));
+    }
+    sections.push(emptyRow());
+  }
+
   // State of Play
   if (letter.the_state_of_play) {
     sections.push(sectionTitle('The State of Play'), p(String(letter.the_state_of_play), { spacing: { after: 300 } }));
@@ -208,7 +315,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     sections.push(sectionTitle('The Unfair Advantage'), p(String(letter.the_unfair_advantage), { spacing: { after: 300 } }));
   }
 
-  // Competitive Context (NEW)
+  // Competitive Context
   if (letter.competitive_context) {
     sections.push(sectionTitle('Competitive Positioning'), p(String(letter.competitive_context), { spacing: { after: 300 } }));
   }
@@ -238,13 +345,37 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
       const title = typeof step === 'object' ? (step.title || 'Strategic Step') : 'Strategic Step';
       const desc = typeof step === 'object' ? (step.description || JSON.stringify(step)) : String(step);
       sections.push(
-        p(`STEP ${i + 1}: ${title}`, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } }),
-        p(desc, { spacing: { after: 200 } })
+        p(`STEP ${i + 1}: ${title}`, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } })
       );
+      if (typeof step === 'object' && step.why) {
+        sections.push(p(`Why: ${step.why}`, { italics: true, color: '6366F1', spacing: { after: 60 } }));
+      }
+      if (typeof step === 'object' && step.what_must_be_delivered) {
+        sections.push(p(`What must be delivered: ${step.what_must_be_delivered}`, { color: '15803D', spacing: { after: 60 } }));
+      }
+      if (typeof step === 'object' && step.deadline) {
+        sections.push(p(`Deadline: ${step.deadline}`, { bold: true, color: 'D97706', spacing: { after: 60 } }));
+      }
+      sections.push(p(desc, { spacing: { after: 200 } }));
     }
   }
 
-  // AI Recommended Rewrites (NEW SECTION)
+  // ═══ NEW §6: Matter Evaluations Table ═══
+  const matterEvals = Array.isArray(letter.matter_evaluations) ? letter.matter_evaluations : [];
+  if (matterEvals.length > 0) {
+    sections.push(sectionTitle('Case Evaluation — Matter Scores'));
+    const evalRows = matterEvals.map((ev: any) => [
+      ev.matter_name || 'Unknown',
+      ev.type || 'publishable',
+      ev.quality_label || 'Pending',
+      `${typeof ev.score === 'number' ? ev.score : 0}/100`,
+      ev.improvement_note || ''
+    ]);
+    sections.push(makeTable(['Matter', 'Type', 'Quality Label', 'Score', 'Improvement Note'], evalRows));
+    sections.push(emptyRow());
+  }
+
+  // AI Recommended Rewrites
   const rewrites = Array.isArray(letter.recommended_rewrites) ? letter.recommended_rewrites : [];
   if (rewrites.length > 0) {
     sections.push(sectionTitle('AI-Recommended Matter Rewrites'));
@@ -263,11 +394,62 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     }
   }
 
-  // AI Competitive Positioning Text (NEW)
+  // AI Competitive Positioning Text
   if (letter.competitive_positioning_text) {
     sections.push(sectionTitle('Ready-to-Use Competitive Positioning'));
     sections.push(p('The following paragraph is AI-generated and ready to be inserted into Section B7 or C2 of your submission:', { italics: true, color: GRAY, spacing: { after: 100 } }));
     sections.push(p(String(letter.competitive_positioning_text), { spacing: { after: 300 } }));
+  }
+
+  // ═══ NEW §7: Editorial Reasoning Trace ═══
+  if (Array.isArray(reasoningTrace) && reasoningTrace.length > 0) {
+    sections.push(sectionTitle('Editorial Reasoning Trace'));
+    sections.push(p('Why the AI made each editorial decision — full transparency:', { italics: true, color: GRAY, spacing: { after: 200 } }));
+    for (let i = 0; i < reasoningTrace.length; i++) {
+      const entry = reasoningTrace[i];
+      if (!entry) continue;
+      const stage = entry.stage || 'unknown';
+      const decision = typeof entry.decision === 'string' ? entry.decision : (entry.decision ? JSON.stringify(entry.decision) : 'Decision recorded');
+      const conf = entry.confidence ? `${Math.round(entry.confidence * 100)}%` : '';
+      sections.push(
+        p(`[${stage.toUpperCase()}] ${decision}${conf ? ` — Confidence: ${conf}` : ''}`, { bold: true, size: 20, spacing: { before: 200, after: 60 } })
+      );
+      if (Array.isArray(entry.evidence_used) && entry.evidence_used.length > 0) {
+        sections.push(p('Evidence used:', { bold: true, size: 18, color: GRAY, spacing: { after: 40 } }));
+        for (const ev of entry.evidence_used) {
+          sections.push(new Paragraph({
+            children: [new TextRun({ text: `  · ${String(ev)}`, size: 18, color: LIGHT_GRAY })],
+            spacing: { after: 30 },
+          }));
+        }
+      }
+      if (entry.principle_applied) {
+        sections.push(p(`Principle: ${entry.principle_applied}`, { italics: true, color: '6366F1', size: 18, spacing: { after: 80 } }));
+      }
+    }
+  }
+
+  // ═══ NEW §8: Matter Accountability Panel ═══
+  const allDispositions = Array.isArray(submissionBlueprint.all_matter_dispositions) ? submissionBlueprint.all_matter_dispositions : [];
+  if (allDispositions.length > 0 || submissionBlueprint.transformation_summary) {
+    sections.push(sectionTitle('Matter Accountability'));
+    sections.push(p(`${submission.matters?.length || allDispositions.length} matters tracked — zero loss guarantee`, { bold: true, color: '065F46', spacing: { after: 100 } }));
+    
+    if (submissionBlueprint.transformation_summary) {
+      sections.push(
+        subTitle('Transformation Summary'),
+        p(String(submissionBlueprint.transformation_summary), { spacing: { after: 200 } })
+      );
+    }
+
+    if (allDispositions.length > 0) {
+      const dispRows = allDispositions.map((disp: any) => [
+        disp.matter_title || 'Unknown',
+        (disp.disposition || 'tracked').replace(/_/g, ' '),
+        disp.rationale || ''
+      ]);
+      sections.push(makeTable(['Matter', 'Disposition', 'Rationale'], dispRows));
+    }
   }
 
   return new Document({

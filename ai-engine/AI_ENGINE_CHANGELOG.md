@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-24** (v10.0 — Directory-Aware Architecture & Evidence Preservation)
+> Last updated: **2026-07-24** (v10.1 — Confidentiality Calibration, Cross-Border Enhancement, Audit DOCX Parity)
 
 ---
 
@@ -47,6 +47,10 @@
 | 34 | Hero Selection Transparency (candidate comparison) | v10.0 | `prompts.py` (shared block + blueprint prompt) | ✅ ACTIVE | 🔴 CRITICAL |
 | 35 | Practice Taxonomy (practice-specific evaluation) | v10.0 | `practice_taxonomy.py`, `nodes.py`, `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 36 | Setup Wizard Filter Pipeline (5-filter context flow) | v10.0 | `submissions/page.tsx`, `process-document/route.ts`, `nodes.py`, `prompts.py`, `submission-builder.ts` | ✅ ACTIVE | 🔴 SUPREME |
+| 37 | Confidentiality Guardrail Calibration — No default-to-confidential | v10.1 | `nodes.py` (extraction_node) | ✅ ACTIVE | 🔴 SUPREME |
+| 38 | Enhanced Cross-Border & Sector Detection (text scanning + country keywords) | v10.1 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 CRITICAL |
+| 39 | MANDATORY_UNIVERSE_FACTS Anti-Self-Referential Injection | v10.1 | `nodes.py` (analysis_node), injected into STRATEGIC_ANALYSIS_PROMPT | ✅ ACTIVE | 🔴 SUPREME |
+| 40 | Audit DOCX Parity — 8 missing sections added to match UI report | v10.1 | `route.ts` (buildAuditDoc) | ✅ ACTIVE | 🔴 CRITICAL |
 
 ---
 
