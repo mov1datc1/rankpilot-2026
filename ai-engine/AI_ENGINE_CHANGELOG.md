@@ -53,6 +53,9 @@
 | 40 | Audit DOCX Parity — 8 missing sections added to match UI report | v10.1 | `route.ts` (buildAuditDoc) | ✅ ACTIVE | 🔴 CRITICAL |
 | 41 | Future Deadline Injection — current_date in MANDATORY_UNIVERSE_FACTS | v10.2 | `nodes.py` (analysis_node), `prompts.py` (deadline instruction) | ✅ ACTIVE | 🟡 HIGH |
 | 42 | De-Emphasize Disposition — replace "exclude" with "de_emphasize" label | v10.2 | `schema.py` (MatterDisposition), `prompts.py`, `page.tsx` (UI colors) | ✅ ACTIVE | 🔴 CRITICAL |
+| 43 | Zero Temperature — temperature=0.0 for deterministic scoring consistency | v10.2 | `nodes.py` (get_llm), `editorial_nodes.py` (get_model) | ✅ ACTIVE | 🔴 SUPREME |
+| 44 | Matter Evaluations Completeness — enforce exact count match with input matters | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 CRITICAL |
+| 45 | Evidence-Based Scoring — current_band is user metadata, score based on evidence only | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 

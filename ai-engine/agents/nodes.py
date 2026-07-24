@@ -72,8 +72,8 @@ def get_model():
     Asegúrate de tener OPENAI_API_KEY en tu archivo .env.
     """
     return ChatOpenAI(
-        model_name="gpt-4o", # O el modelo que prefieras de OpenAI
-        temperature=0.2,     # Baja temperatura para mayor consistencia en LaTeX
+        model_name="gpt-4o",
+        temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency between runs
         openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
@@ -424,6 +424,19 @@ def analysis_node(state: AgentState) -> Dict:
 If the facts above say CROSS-BORDER MATTERS: 5, you MUST NOT say "no cross-border work presented".
 If the facts above say UNIQUE SECTORS: 10, you MUST NOT say "limited practice breadth".
 Violating these facts is a CRITICAL ERROR.
+
+MATTER EVALUATIONS COMPLETENESS RULE (v10.2):
+- The submission contains EXACTLY {len(all_matters)} matters.
+- Your "matter_evaluations" array MUST contain EXACTLY {len(all_matters)} entries — one for EACH matter.
+- If your output contains fewer than {len(all_matters)} matter_evaluations, the output is INVALID.
+- Count your matter_evaluations before finalizing. If count < {len(all_matters)}, you MUST add the missing ones.
+
+EVIDENCE-BASED SCORING RULE (v10.2):
+- The "current_band" (Unranked, Band 5, etc.) is USER-PROVIDED metadata and MAY BE INACCURATE or unknown.
+- Base your score, confidence, and defensibility SOLELY on the EVIDENCE quality in the submission.
+- The same evidence should produce the same score regardless of whether current_band says "Unranked" or "Band 3".
+- Score the SUBMISSION QUALITY, not the firm's current market position.
+- A firm with strong evidence scores HIGH even if marked as "Unranked".
 
 {analysis_prompt}"""
     

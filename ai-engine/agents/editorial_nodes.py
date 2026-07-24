@@ -54,7 +54,7 @@ def get_model():
     """Shared model configuration for editorial reasoning nodes."""
     return ChatOpenAI(
         model_name="gpt-4o",
-        temperature=0.2,
+        temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency
         openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
