@@ -545,7 +545,7 @@ Before ANY modification to the AI engine, verify:
 
 | Date | Commit | Version | Summary |
 |------|--------|---------|---------|
-| 2026-07-24 | `pending` | v9.0 | Owner Observations 24/7/2026: SCR Detection, Evidence vs Prose, Benchmark Quantification, Evidence List Detector, 34 new Language Guard patterns |
+| 2026-07-24 | `4d675d2` | v9.0 | Owner Observations 24/7/2026: SCR Detection, Evidence vs Prose, Benchmark Quantification, Evidence List Detector, 34 new Language Guard patterns |
 | 2026-07-23 | `b2e66df` | v8.1 | DOCX DXA width rewrite for Google Docs compatibility |
 | 2026-07-23 | `eb06331` | v8.0 | Editorial Constitution — 6 surgical changes |
 | 2026-07-21 | `9188aea` | v7.1 | Anti-Exclusion, Thesis Specificity, Practice Area Auto-Correction |
