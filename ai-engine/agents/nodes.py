@@ -448,32 +448,106 @@ EVIDENCE-BASED SCORING RULE (v10.2):
     chain = prompt | llm
     response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str, ensure_ascii=True)})
     
-    try:
-        res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
+    # v10.2: VALIDATION GATE — Programmatic quality filter with auto-retry
+    max_retries = 2
+    attempt = 0
+    last_violations = []
+    
+    while attempt <= max_retries:
+        if attempt > 0:
+            print(f"[VALIDATION GATE] Retry #{attempt}/{max_retries} — violations: {last_violations}")
+            # Re-invoke the chain with the same data
+            response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str, ensure_ascii=True)})
         
-        # v10.0: CONFIDENTIALITY GUARDRAIL — Post-analysis validation
-        matter_evals = res_json.get("matter_evaluations", [])
-        for eval_item in matter_evals:
-            if isinstance(eval_item, dict):
-                # Find the original matter to check locked status
-                matter_name = eval_item.get("matter_name", "").lower()
-                for orig_matter in all_matters:
-                    if isinstance(orig_matter, dict):
-                        orig_name = (orig_matter.get("client", "") or orig_matter.get("title", "")).lower()
-                        if matter_name and orig_name and (matter_name in orig_name or orig_name in matter_name):
-                            if orig_matter.get("_confidentiality_locked"):
-                                # Force the eval type to match the locked status
-                                eval_item["type"] = orig_matter.get("publish_status", "non_publishable")
-                            break
-        
-        return {
-            "analysis": res_json,
-            "confidence_score": float(res_json.get("confidence_score", 100)),
-            "current_step": "writing"
-        }
-    except Exception as e:
-        print(f"[ANALYSIS PARSE ERROR] {e}")
-        return {"confidence_score": 0, "analysis": {"error": "Analysis parsing failed"}}
+        try:
+            res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
+            
+            # v10.0: CONFIDENTIALITY GUARDRAIL — Post-analysis validation
+            matter_evals = res_json.get("matter_evaluations", [])
+            for eval_item in matter_evals:
+                if isinstance(eval_item, dict):
+                    matter_name = eval_item.get("matter_name", "").lower()
+                    for orig_matter in all_matters:
+                        if isinstance(orig_matter, dict):
+                            orig_name = (orig_matter.get("client", "") or orig_matter.get("title", "")).lower()
+                            if matter_name and orig_name and (matter_name in orig_name or orig_name in matter_name):
+                                if orig_matter.get("_confidentiality_locked"):
+                                    eval_item["type"] = orig_matter.get("publish_status", "non_publishable")
+                                break
+            
+            # ═══════════════════════════════════════════════════════
+            # VALIDATION GATE — Hard Rule Checks (NO LLM, pure logic)
+            # ═══════════════════════════════════════════════════════
+            violations = []
+            
+            # CHECK 1: Matter Evaluations Completeness
+            eval_count = len(res_json.get("matter_evaluations", []))
+            expected_count = len(all_matters)
+            if eval_count < expected_count:
+                violations.append(f"EVAL_COUNT: Got {eval_count} matter_evaluations, expected {expected_count}")
+            
+            # CHECK 2: No "exclude" disposition (Rule #42)
+            audit_letter = res_json.get("audit_letter", {})
+            all_disps = audit_letter.get("all_matter_dispositions", []) if isinstance(audit_letter, dict) else []
+            # Also check blueprint-level dispositions
+            blueprint = res_json.get("submission_blueprint", {})
+            bp_disps = blueprint.get("all_matter_dispositions", []) if isinstance(blueprint, dict) else []
+            for disp_list in [all_disps, bp_disps]:
+                for d in disp_list:
+                    if isinstance(d, dict) and d.get("disposition", "").lower() == "exclude":
+                        violations.append(f"EXCLUDE_USED: Matter '{d.get('matter_title', '?')}' has disposition 'exclude' — must use 'de_emphasize'")
+            
+            # CHECK 3: Matter Dispositions Completeness
+            disp_count = max(len(all_disps), len(bp_disps))
+            if disp_count > 0 and disp_count < expected_count:
+                violations.append(f"DISP_COUNT: Got {disp_count} dispositions, expected {expected_count}")
+            
+            # CHECK 4: Future Deadlines (Rule #41)
+            path_steps = audit_letter.get("the_path_to_dominance", []) if isinstance(audit_letter, dict) else []
+            import re as re_module
+            for step in path_steps:
+                if isinstance(step, dict):
+                    deadline = str(step.get("deadline", ""))
+                    # Check for obviously past years (2020-2025)
+                    past_year_match = re_module.search(r'20(2[0-5]|1\d)', deadline)
+                    if past_year_match:
+                        violations.append(f"PAST_DEADLINE: '{deadline}' is in the past")
+            
+            # CHECK 5: Score is present and numeric
+            score = res_json.get("score")
+            if score is None or (isinstance(score, (int, float)) and score == 0):
+                violations.append("MISSING_SCORE: No score or score is 0")
+            
+            # Log results
+            if violations:
+                print(f"[VALIDATION GATE] ❌ FAILED (attempt {attempt + 1}) — {len(violations)} violations:")
+                for v in violations:
+                    print(f"  → {v}")
+                last_violations = violations
+                attempt += 1
+                
+                if attempt > max_retries:
+                    # All retries exhausted — return best effort with warnings
+                    print(f"[VALIDATION GATE] ⚠️ Max retries exhausted. Returning result with {len(violations)} violations.")
+                    res_json["_validation_warnings"] = violations
+                    break
+                continue  # Retry
+            else:
+                print(f"[VALIDATION GATE] ✅ PASSED (attempt {attempt + 1}) — all checks green")
+                break  # Success
+            
+        except Exception as e:
+            print(f"[ANALYSIS PARSE ERROR] {e}")
+            attempt += 1
+            if attempt > max_retries:
+                return {"confidence_score": 0, "analysis": {"error": "Analysis parsing failed after retries"}}
+            continue
+    
+    return {
+        "analysis": res_json,
+        "confidence_score": float(res_json.get("confidence_score", 100)),
+        "current_step": "writing"
+    }
 
 # 4. INTERROGATOR NODE
 def interrogator_node(state: AgentState) -> Dict:

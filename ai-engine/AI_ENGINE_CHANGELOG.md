@@ -56,6 +56,7 @@
 | 43 | Zero Temperature — temperature=0.0 for deterministic scoring consistency | v10.2 | `nodes.py` (get_llm), `editorial_nodes.py` (get_model) | ✅ ACTIVE | 🔴 SUPREME |
 | 44 | Matter Evaluations Completeness — enforce exact count match with input matters | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 CRITICAL |
 | 45 | Evidence-Based Scoring — current_band is user metadata, score based on evidence only | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 SUPREME |
+| 46 | Validation Gate — programmatic post-analysis filter with auto-retry (max 2) | v10.2 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 
