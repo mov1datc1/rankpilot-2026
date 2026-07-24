@@ -360,6 +360,37 @@ def optimization_node(state: AgentState) -> Dict:
                         print(f"  [PROBATIVE] Value '{num}' missing from optimized text")
                         break
             
+            # ═══ v9.0: EVIDENCE LIST DETECTOR (Owner Observation 1 & 6) ═══
+            # Detect if original contains a LIST of sub-matters/contracts/entities
+            # and verify the optimized text preserves them
+            
+            # Check for numeric evidence counts (e.g., "17 asuntos", "300 contratos", "8 years")
+            evidence_numbers = set(_re.findall(r'\b(\d+)\s*(?:matters?|asuntos?|contracts?|contratos?|agreements?|years?|años?|mandates?|projects?|engagements?|providers?|proveedores?|distributors?)', raw_text.lower()))
+            for num in evidence_numbers:
+                if num not in (optimized_text or '').lower():
+                    needs_reoptimization = True
+                    print(f"  [EVIDENCE-LIST] Numeric evidence '{num}' (count of sub-items) missing from optimized text")
+            
+            # Check for Strategic Client Relationship signals
+            scr_signals = ['exclusive external', 'departamento jurídico externo', 'ongoing counsel', 
+                          'institutional counsel', 'retained counsel', 'exclusive counsel',
+                          'external legal department', 'long-term advisory', 'longstanding relationship']
+            original_has_scr = any(signal in raw_text.lower() for signal in scr_signals)
+            if original_has_scr:
+                # If it's a Strategic Client Relationship, the optimized text MUST be at least 90% of original
+                if ratio < 0.90:
+                    needs_reoptimization = True
+                    print(f"  [SCR-DETECT] Strategic Client Relationship detected — ratio {ratio:.2f} is below 90% threshold")
+            
+            # Check for named entity preservation (company names in uppercase or capitalized)
+            original_entities = set(_re.findall(r'\b[A-Z][A-Za-z]{2,}(?:\s+[A-Z][A-Za-z]+)*\b', matter.get('summary', '') or matter.get('significance', '') or ''))
+            if len(original_entities) > 3:  # Multi-entity evidence
+                preserved = sum(1 for e in original_entities if e.lower() in optimized_lower)
+                preservation_ratio = preserved / len(original_entities)
+                if preservation_ratio < 0.70:
+                    needs_reoptimization = True
+                    print(f"  [ENTITY-LOSS] Only {preserved}/{len(original_entities)} named entities preserved ({preservation_ratio:.0%})")
+            
             if needs_reoptimization:
                 print(f"  [PROBATIVE] Re-optimizing matter '{matter.get('title', 'unknown')}' — ratio: {ratio:.2f}")
                 preservation_prompt = (
@@ -372,8 +403,15 @@ def optimization_node(state: AgentState) -> Dict:
                     "- The firm's specific role (not generic 'advised')\n"
                     "- All team members mentioned\n"
                     "- The outcome or result\n"
+                    "- ALL numeric counts (e.g., '17 matters', '300 contracts', '8 years') — NEVER compress to 'various' or 'multiple'\n"
+                    "- ALL named sub-entities (e.g., PUREM, Hutchison, ISOCLIMA) — preserve EVERY name\n"
+                    "- Exclusivity signals (e.g., 'exclusive external counsel') — NEVER drop\n"
+                    "- Duration signals (e.g., 'eight-year relationship') — NEVER drop\n\n"
+                    "EVIDENCE VS PROSE RULE: If the original contains LISTS of matters, contracts, or entities, "
+                    "these are COMPETITIVE EVIDENCE, not prose. Preserve each item individually.\n\n"
                     "RESTRUCTURE for editorial impact but do NOT compress or summarize away evidence.\n"
-                    "The optimized version MUST be at least 75% of the original word count.\n\n"
+                    "The optimized version MUST be at least 75% of the original word count "
+                    "(90% if a Strategic Client Relationship is detected).\n\n"
                     f"Original text:\n{raw_text}\n\n"
                     f"Previous (rejected) optimization:\n{optimized_text}\n\n"
                     "Provide a corrected optimization that preserves ALL probative elements."

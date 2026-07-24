@@ -143,11 +143,91 @@ EDITORIAL_VOICE_DIRECTIVE = """
 You write as a Chambers EDITOR, not a McKinsey consultant.
 PROHIBITED TERMS (never use): "strategic plan", "diversification", "market expansion",
 "high-sophistication firm", "operational excellence", "value proposition", "broaden client base",
-"leverage synergies", "optimize portfolio", "scalable model".
+"leverage synergies", "optimize portfolio", "scalable model",
+"consider broadening", "improve your positioning", "enhance your visibility",
+"expand your reach", "strengthen your brand", "develop a strategy".
 REQUIRED TERMS (use naturally): "institutional reputation", "market perception",
 "editorial positioning", "submission narrative", "evidence", "differentiation",
 "credibility", "demonstrative capacity", "ranking narrative", "editorial identity",
 "bench strength", "practice trajectory".
+"""
+
+# =====================================================
+# v9.0 STRATEGIC CLIENT RELATIONSHIP DETECTION
+# Prevents collapsing multi-matter client relationships
+# into single generic summaries
+# =====================================================
+
+STRATEGIC_CLIENT_RELATIONSHIP_RULE = """
+### STRATEGIC CLIENT RELATIONSHIP DETECTION (v9.0 — ABSOLUTE):
+When a submission entry describes MULTIPLE sub-matters, contracts, or engagements
+for a SINGLE client, this is NOT a "matter" — it is a STRATEGIC CLIENT RELATIONSHIP.
+
+DETECTION SIGNALS (if ANY are present, classify as Strategic Client Relationship):
+- "exclusive external legal department"
+- "more than X contracts" or "X+ agreements"
+- "Y years of advisory" or "longstanding relationship"
+- Multiple named sub-projects, sub-deals, or sub-matters within one entry
+- Words like "ongoing", "continuous", "retained", "institutional counsel"
+
+WHEN DETECTED, you MUST:
+1. PRESERVE the relationship as a multi-dimensional narrative, NOT compress to one sentence
+2. KEEP the count of sub-matters/contracts explicitly (e.g., "17 strategic mandates", "300+ contracts")
+3. PRESERVE the duration of the relationship (e.g., "eight-year advisory")
+4. PRESERVE the exclusivity signal (e.g., "exclusive external counsel")
+5. PRESERVE the breadth indicators (e.g., "covering AML, distribution, logistics, recovery")
+6. Structure the output as: [RELATIONSHIP SCOPE] → [INSTITUTIONAL ROLE] → [EVIDENCE OF DEPTH] → [STRATEGIC SIGNIFICANCE]
+
+EXAMPLE OF WHAT NOT TO DO:
+❌ "DeForest managed Audi's production crisis" (loses 16 of 17 strategic mandates)
+✅ "DeForest serves as the exclusive external legal department for Audi Mexico, managing a portfolio of 17+ strategic mandates including a USD 100M production crisis, supplier negotiations with PUREM, Hutchison, ISOCLIMA, AMMPER, and Hitachi, demonstrating an institutional advisory relationship of exceptional depth."
+
+EXAMPLE OF WHAT NOT TO DO:
+❌ "Advised on dealership network restructuring" (loses 300 contracts, 8 years, AML, logistics)
+✅ "DeForest has served as ongoing strategic counsel to Volkswagen's Mexican distribution network for eight years, negotiating 300+ commercial agreements across nine distributors, managing AML compliance, logistics restructuring, and recovering MXN 131 million in outstanding claims — demonstrating operational dependence at an institutional scale."
+
+The probative value of a Strategic Client Relationship is EXPONENTIALLY higher than any single matter.
+Compressing it to one sentence is the editorial equivalent of converting a 500-page case file to a tweet.
+"""
+
+# =====================================================
+# v9.0 EVIDENCE VS PROSE CLASSIFICATION
+# Prevents compressing competitive evidence as if it were narrative
+# =====================================================
+
+EVIDENCE_VS_PROSE_RULE = """
+### EVIDENCE VS PROSE CLASSIFICATION (v9.0 — SUPREME EDITORIAL RULE):
+"Evidence is never compressed as prose."
+
+BEFORE summarizing ANY passage, you MUST classify it:
+
+TYPE A — NARRATIVE PROSE: Background context, firm descriptions, market commentary, promotional language.
+→ This CAN be restructured, tightened, and optimized for editorial impact.
+
+TYPE B — COMPETITIVE EVIDENCE: Lists of matters, counts of contracts, years of relationship, monetary values,
+jurisdiction lists, client names, team member contributions, regulatory filings, deal structures.
+→ This MUST NEVER be compressed, summarized, or paraphrased. Preserve EVERY element.
+
+CLASSIFICATION TEST (ask before ANY optimization):
+1. "Is this passage telling a STORY, or proving a FACT?"
+   - Story → Type A (optimize freely)
+   - Fact → Type B (preserve exactly)
+2. "If I remove this detail, would a Chambers researcher lose a data point?"
+   - Yes → Type B (preserve)
+   - No → Type A (optimize)
+3. "Does this passage contain NUMBERS (counts, values, years, percentages)?"
+   - Yes → Type B (preserve ALL numbers)
+   - No → Could be either, apply test 1
+
+EXAMPLES:
+- "17 strategic mandates" → TYPE B (evidence) — NEVER compress to "various mandates"
+- "300+ contracts over 8 years" → TYPE B (evidence) — NEVER compress to "longstanding relationship"
+- "MXN 131 million recovery" → TYPE B (evidence) — NEVER omit the number
+- "The firm brings a sophisticated approach to complex matters" → TYPE A (prose) — optimize freely
+- "crisis involving USD 100 million" → TYPE B (evidence) — NEVER omit the value
+- "covering AML, distribution, logistics, and recovery" → TYPE B (evidence) — NEVER compress to "various legal areas"
+
+VIOLATION OF THIS RULE = CONSTITUTIONAL ARTICLE V VIOLATION (Probative Preservation).
 """
 
 # --- EXTRACTION LAYER ---
@@ -210,6 +290,8 @@ You are a Senior Chambers & Partners Editor writing an internal editorial briefi
 {EDITORIAL_VOICE_DIRECTIVE}
 {MATTER_ACCOUNTABILITY}
 {EVIDENCE_CROSS_VALIDATION}
+{STRATEGIC_CLIENT_RELATIONSHIP_RULE}
+{EVIDENCE_VS_PROSE_RULE}
 Your goal is to produce an editorial intelligence document that a researcher would use to prepare for interviews and validate ranking decisions.
 
 ### MANDATORY CONTEXT & RAG KNOWLEDGE:
@@ -296,11 +378,27 @@ This report should be as deep and actionable as a senior editorial briefing.
 7. "the_reality_check": Title this "EDITORIAL OBSERVATIONS". 3-5 editorial observations.
    CRITICAL: These must read as if written by a Chambers EDITOR preparing notes for a ranking meeting.
    Each observation MUST follow this EXACT structure:
-   [EDITORIAL OBSERVATION] → [EVIDENCE from submission] → [BENCHMARK comparison] → [EDITORIAL RECOMMENDATION]
+   [EDITORIAL OBSERVATION] → [EVIDENCE from submission] → [QUANTITATIVE BENCHMARK] → [EDITORIAL RECOMMENDATION]
+   
+   MANDATORY BENCHMARK QUANTIFICATION (v9.0 — EVERY OBSERVATION):
+   Every single observation MUST include a SPECIFIC, QUANTITATIVE benchmark comparison.
+   This is NOT optional. An observation without a benchmark is INVALID.
+   Format: "Firms ranked in Band [X] for [Practice] in [Jurisdiction] typically demonstrate/present [SPECIFIC NUMBER OR RANGE]."
+   Then: "Your submission provides/demonstrates [SPECIFIC NUMBER]."
+   Then: "Therefore, [recommendation]."
+   
+   SELF-CHECK: Before writing each observation, verify it contains:
+   ✅ A specific band or tier reference (Band 1, Band 2, Top Ranked, etc.)
+   ✅ A specific quantity from the benchmark (e.g., "6-8 sectors", "4-6 client relationships", "2-3 cross-border matters")
+   ✅ A specific quantity from the submission (e.g., "3 sectors", "2 clients", "0 cross-border matters")
+   If ANY of these are missing, the observation is INVALID — rewrite it.
    
    BEFORE/AFTER EXAMPLES (STUDY THESE CAREFULLY):
    ❌ CONSULTANT TONE: "The firm should diversify its client base to reduce dependency on a single anchor client."
-   ✅ EDITOR TONE: "The submission concentrates on work for [Client X], which demonstrates a strong institutional relationship. However, firms currently positioned in Band [N] for [Practice] in [Jurisdiction] typically present evidence across 4-6 distinct client relationships. Presenting additional client mandates in the submission would strengthen the editorial narrative."
+   ✅ EDITOR TONE: "The submission concentrates on work for [Client X], which demonstrates a strong institutional relationship. However, firms currently positioned in Band [N] for [Practice] in [Jurisdiction] typically present evidence across 4-6 distinct client relationships. The submission provides detailed evidence for [N] clients. Presenting additional client mandates would strengthen the editorial narrative."
+   
+   ❌ CONSULTANT TONE: "The firm appears highly dependent on the automotive sector."
+   ✅ EDITOR TONE: "The submission emphasizes automotive work more strongly than other sectors, with [X] of [Y] matters in that sector. However, the submission also presents work in energy, real estate, infrastructure, banking, retail, tourism, technology, logistics, and pharmaceuticals. Firms at Band [N] typically demonstrate depth across 6-8 strategic industries. The submission already presents evidence in [N] sectors — the editorial narrative would benefit from giving greater prominence to this breadth."
    
    ❌ CONSULTANT TONE: "The firm lacks cross-border capabilities, which limits its competitive positioning."
    ✅ EDITOR TONE: "The submission does not currently present cross-border work. Band [N] peers in [Practice] typically demonstrate at least 2-3 multi-jurisdiction matters. If the practice handles cross-border mandates, including them would substantially reinforce the submission's positioning."
@@ -308,7 +406,17 @@ This report should be as deep and actionable as a senior editorial briefing.
    ❌ CONSULTANT TONE: "Develop a strategic plan to broaden your market presence."
    ✅ EDITOR TONE: "The evidence in the submission supports a strong [sub-specialization] narrative but does not yet communicate a clear market position. Framing the practice's work around its demonstrable [pattern X] would create a more memorable editorial identity."
    
-   PROHIBITED PHRASING: "Diversify your client base", "Broaden your market presence", "Develop a strategic plan", "avoidable defects", "held back by", "The firm lacks", "The firm should consider".
+   ❌ CONSULTANT TONE: "Consider broadening your market visibility."
+   ✅ EDITOR TONE: "Researchers may struggle to assess the firm's experience outside [dominant sector] because comparatively fewer representative matters are presented in other areas."
+   
+   ❌ CONSULTANT TONE: "Improve your positioning."
+   ✅ EDITOR TONE: "The submission currently provides stronger evidence of sector specialization than of sector diversity."
+   
+   PROHIBITED PHRASING (v9.0 — EXPANDED): "Diversify your client base", "Broaden your market presence", "Develop a strategic plan",
+   "avoidable defects", "held back by", "The firm lacks", "The firm should consider",
+   "Consider broadening", "Improve your positioning", "Enhance your visibility",
+   "appears highly dependent on", "expand your reach", "strengthen your brand",
+   "develop a strategy", "invest in developing", "needs to improve".
    
    Before writing EACH bullet: ask yourself "Am I writing as an editor or a consultant?" If consultant, rewrite.
 8. "the_path_to_dominance": 3-5 concrete editorial MILESTONES. Each must include:
@@ -417,6 +525,8 @@ Your goal is to optimize a raw legal matter into a highly rankable, competitive 
 
 {EDITORIAL_CONSTITUTION}
 {EPISTEMIC_GUARDRAILS}
+{STRATEGIC_CLIENT_RELATIONSHIP_RULE}
+{EVIDENCE_VS_PROSE_RULE}
 
 ### INSTRUCTIONS:
 1. You will receive a raw 'draft' matter (Client, Value, Summary, Significance, Lead Partner).
@@ -868,6 +978,8 @@ You are the RankPilot Submission Blueprint Engine. Your role is to DESIGN the su
 {EPISTEMIC_GUARDRAILS}
 {EDITORIAL_VOICE_DIRECTIVE}
 {MATTER_ACCOUNTABILITY}
+{STRATEGIC_CLIENT_RELATIONSHIP_RULE}
+{EVIDENCE_VS_PROSE_RULE}
 
 This node exists because Vol. VI Chapter 15 specifies: "Before writing a single line, RankPilot must generate a Submission Blueprint."
 The AI does NOT start writing. It starts DESIGNING.
@@ -969,6 +1081,8 @@ You are the RankPilot Narrative Architecture Engine. Your role is to EXECUTE the
 {EDITORIAL_CONSTITUTION}
 {EPISTEMIC_GUARDRAILS}
 {EDITORIAL_VOICE_DIRECTIVE}
+{STRATEGIC_CLIENT_RELATIONSHIP_RULE}
+{EVIDENCE_VS_PROSE_RULE}
 
 You receive the Submission Blueprint (the DESIGN) and must translate it into the specific editorial architecture that the writer will follow.
 

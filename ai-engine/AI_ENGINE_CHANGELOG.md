@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-24**
+> Last updated: **2026-07-24** (v9.0 — Owner Observations 24/7/2026)
 
 ---
 
@@ -17,7 +17,7 @@
 | 4 | Anti-Exclusion Directive | v7.1 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 5 | Evidence Cross-Validation | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 6 | Editorial Voice Directive | v7.1 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
-| 7 | Language Guard (85+ patterns) | v8.0 | `language_guard.py` | ✅ ACTIVE | 🔴 CRITICAL |
+| 7 | Language Guard (131 patterns) | v9.0 | `language_guard.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 8 | Probative Preservation Validator | v8.0 | `nodes.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 9 | Reality Check → Editorial Observations | v8.0 | `prompts.py`, `route.ts`, `docx_generator.py` | ✅ ACTIVE | 🟡 HIGH |
 | 10 | Benchmark-First Enforcement | v8.0 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
@@ -34,6 +34,11 @@
 | 21 | Evidence Inference Rule — Don't ask for existing info | v6.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT) | ✅ ACTIVE | 🟡 HIGH |
 | 22 | State of Play Diagnostic + Narrative Transformations + Confidence Radar | v6.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT) | ✅ ACTIVE | 🟡 HIGH |
 | 23 | Editorial Reasoning Trace Panel | v7.0 | `state.py`, `nodes.py`, frontend components | ✅ ACTIVE | 🟡 HIGH |
+| 24 | Strategic Client Relationship Detection | v9.0 | `prompts.py` (shared block), `nodes.py` (SCR detector) | ✅ ACTIVE | 🔴 SUPREME |
+| 25 | Evidence vs Prose Classification | v9.0 | `prompts.py` (shared block), `nodes.py` (evidence list detector) | ✅ ACTIVE | 🔴 SUPREME |
+| 26 | Benchmark Quantification Enforcement | v9.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT `the_reality_check`) | ✅ ACTIVE | 🔴 CRITICAL |
+| 27 | Evidence List Detector (programmatic) | v9.0 | `nodes.py` (optimization_node validator) | ✅ ACTIVE | 🔴 CRITICAL |
+| 28 | Expanded Consultant-Speak Guard | v9.0 | `language_guard.py`, `prompts.py` (EDITORIAL_VOICE_DIRECTIVE) | ✅ ACTIVE | 🔴 CRITICAL |
 
 ---
 
@@ -391,6 +396,106 @@ This powers the **Reasoning Trace panel** in the frontend report view, which pro
 
 ---
 
+### 24. 🏢 STRATEGIC CLIENT RELATIONSHIP DETECTION (v9.0)
+**Files:** `prompts.py` (shared block `STRATEGIC_CLIENT_RELATIONSHIP_RULE`), `nodes.py` (SCR detector in optimization_node)
+
+**Owner's Observation 1:** The AI was collapsing multi-matter client relationships (Audi = 17 strategic mandates, VW = 300 contracts over 8 years) into single generic summaries like "managed Audi's production crisis."
+
+**Detection signals:**
+- "exclusive external legal department" / "departamento jurídico externo"
+- "more than X contracts" / "X+ agreements"
+- "Y years of advisory" / "longstanding relationship"
+- Multiple named sub-projects/sub-deals within one entry
+- Words: "ongoing", "continuous", "retained", "institutional counsel"
+
+**When detected, the AI MUST:**
+1. Preserve the FULL multi-dimensional narrative
+2. Keep numeric counts explicitly ("17 mandates", "300+ contracts")
+3. Preserve duration ("eight-year advisory")
+4. Preserve exclusivity signals
+5. Preserve breadth indicators ("AML, distribution, logistics, recovery")
+
+**Programmatic enforcement:** `nodes.py` applies 90% word count threshold for SCR entries (vs 75% normal).
+
+**Injected in:** MATTER_OPTIMIZER_PROMPT, STRATEGIC_ANALYSIS_PROMPT, SUBMISSION_BLUEPRINT_PROMPT, NARRATIVE_ARCHITECTURE_PROMPT.
+
+**⚠️ Compressing a Strategic Client Relationship to one sentence = converting a 500-page case file to a tweet.**
+
+---
+
+### 25. 📝 EVIDENCE VS PROSE CLASSIFICATION (v9.0)
+**Files:** `prompts.py` (shared block `EVIDENCE_VS_PROSE_RULE`), `nodes.py` (evidence list detector)
+
+**Owner's Observation 6:** The AI doesn't distinguish between narrative text and competitive evidence. When it finds a long paragraph, it tries to summarize it — but many paragraphs are LISTS OF EVIDENCE, not prose.
+
+**Classification test (BEFORE any optimization):**
+- **Type A (NARRATIVE PROSE):** Background, firm descriptions, market commentary → CAN be restructured
+- **Type B (COMPETITIVE EVIDENCE):** Lists of matters, counts, years, values, jurisdictions, client names → NEVER compress
+
+**Three-question test:**
+1. "Is this passage telling a STORY, or proving a FACT?" → Story = A, Fact = B
+2. "If I remove this detail, would a Chambers researcher lose a data point?" → Yes = B
+3. "Does this passage contain NUMBERS?" → Yes = B (preserve ALL numbers)
+
+**Injected in:** MATTER_OPTIMIZER_PROMPT, STRATEGIC_ANALYSIS_PROMPT, SUBMISSION_BLUEPRINT_PROMPT, NARRATIVE_ARCHITECTURE_PROMPT.
+
+**⚠️ This is the ROOT CAUSE rule. Most evidence compression problems trace back to misclassifying evidence as prose.**
+
+---
+
+### 26. 📊 BENCHMARK QUANTIFICATION ENFORCEMENT (v9.0)
+**File:** `prompts.py` (STRATEGIC_ANALYSIS_PROMPT, `the_reality_check` section)
+
+**Owner's Observation 3:** Recommendations say "Diversify your client portfolio" without comparing to any benchmark. No band reference, no numbers.
+
+**Now EVERY observation in `the_reality_check` MUST include:**
+1. A specific band/tier reference ("Band 1", "Band 2", "Top Ranked")
+2. A specific quantity from the benchmark ("6-8 sectors", "4-6 client relationships")
+3. A specific quantity from the submission ("3 sectors", "2 clients")
+
+**Self-check:** If ANY of these three are missing, the observation is INVALID — rewrite it.
+
+**Format:** "Firms ranked in Band [X] for [Practice] in [Jurisdiction] typically demonstrate [NUMBER]. Your submission provides [NUMBER]. Therefore, [recommendation]."
+
+**⚠️ An observation without a quantitative benchmark is a consultant opinion, not an editorial assessment.**
+
+---
+
+### 27. 🔬 EVIDENCE LIST DETECTOR — Programmatic (v9.0)
+**File:** `nodes.py` (optimization_node, after probative preservation checks)
+
+**Three programmatic checks added:**
+
+1. **Numeric Evidence Count Preservation:** Detects patterns like "17 matters", "300 contracts", "8 years" in the original and verifies the number appears in the optimized text.
+
+2. **Strategic Client Relationship Detector:** Detects exclusivity signals ("exclusive external", "departamento jurídico externo", "institutional counsel", etc.) and raises the word count threshold to 90% (normally 75%).
+
+3. **Named Entity Preservation:** Counts capitalized multi-word entities in the original. If more than 3 exist and fewer than 70% are preserved in the optimized text, triggers re-optimization.
+
+**If any check fails:** The matter is re-optimized with an enhanced preservation prompt that includes Evidence vs Prose and SCR guidance.
+
+**⚠️ This is the POLICE — prompts are the law, this validator enforces it programmatically.**
+
+---
+
+### 28. 🚫 EXPANDED CONSULTANT-SPEAK GUARD (v9.0)
+**Files:** `language_guard.py` (34 new patterns), `prompts.py` (EDITORIAL_VOICE_DIRECTIVE expanded)
+
+**Owner's Observation 4:** Phrases like "Consider broadening your market visibility" and "Improve your positioning" were still leaking through.
+
+**New pattern categories added:**
+- **Dependency language (9 patterns):** "appears highly dependent on" → "emphasizes work in"
+- **Consultant-speak (18 patterns):** "Consider broadening" → "The submission could present a broader range of"
+- **Evidence compression (4 patterns):** "various matters" → "multiple documented matters"
+
+**Also expanded EDITORIAL_VOICE_DIRECTIVE** with 6 new prohibited terms: "consider broadening", "improve your positioning", "enhance your visibility", "expand your reach", "strengthen your brand", "develop a strategy".
+
+**Total Language Guard patterns: 131** (was 85 in v8.0).
+
+**⚠️ Every new consultant-speak variant the owner identifies MUST be added to both language_guard.py AND the EDITORIAL_VOICE_DIRECTIVE.**
+
+---
+
 ## 🔒 RAG KNOWLEDGE BASE — Global Files
 
 These files are ALWAYS loaded for every submission (defined in `rag_router.py` → `global_files`):
@@ -428,6 +533,11 @@ Before ANY modification to the AI engine, verify:
 - [ ] **State of Play diagnostic present?** `the_state_of_play` diagnoses, not summarizes
 - [ ] **Narrative Transformations format?** Before → After rewriting plan (3 items)
 - [ ] **Reasoning Trace flows to frontend?** `reasoning_trace` field in state and response
+- [ ] **Strategic Client Relationship rule injected?** `STRATEGIC_CLIENT_RELATIONSHIP_RULE` in 4 prompts
+- [ ] **Evidence vs Prose rule injected?** `EVIDENCE_VS_PROSE_RULE` in 4 prompts
+- [ ] **Benchmark quantification in reality_check?** Every observation has band + benchmark number + submission number
+- [ ] **Evidence List Detector active?** Numeric counts + SCR signals + entity preservation checks in nodes.py
+- [ ] **Language Guard at 131+ patterns?** Count tuples in `language_guard.py`
 
 ---
 
@@ -435,6 +545,7 @@ Before ANY modification to the AI engine, verify:
 
 | Date | Commit | Version | Summary |
 |------|--------|---------|---------|
+| 2026-07-24 | `pending` | v9.0 | Owner Observations 24/7/2026: SCR Detection, Evidence vs Prose, Benchmark Quantification, Evidence List Detector, 34 new Language Guard patterns |
 | 2026-07-23 | `b2e66df` | v8.1 | DOCX DXA width rewrite for Google Docs compatibility |
 | 2026-07-23 | `eb06331` | v8.0 | Editorial Constitution — 6 surgical changes |
 | 2026-07-21 | `9188aea` | v7.1 | Anti-Exclusion, Thesis Specificity, Practice Area Auto-Correction |

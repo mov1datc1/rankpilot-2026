@@ -149,6 +149,43 @@ EPISTEMIC_REPLACEMENTS = [
     ("la firma depende de", "la evidencia presentada se concentra en"),
     ("falta de diversidad", "ausencia de diversidad demostrada en el submission"),
     ("falta de evidencia", "ausencia de evidencia en el submission"),
+
+    # ═══ v9.0: DEPENDENCY LANGUAGE — Owner Observation 2 ═══
+    ("appears highly dependent on", "emphasizes work in"),
+    ("Appears highly dependent on", "Emphasizes work in"),
+    ("appears dependent on", "emphasizes work in"),
+    ("highly dependent on the", "concentrated in the"),
+    ("Highly dependent on the", "Concentrated in the"),
+    ("heavily reliant on", "concentrated on"),
+    ("Heavily reliant on", "Concentrated on"),
+    ("over-concentration on", "emphasis on"),
+    ("over-concentration in", "emphasis in"),
+    
+    # ═══ v9.0: CONSULTANT-SPEAK — Owner Observation 4 ═══
+    ("Consider broadening", "The submission could present a broader range of"),
+    ("consider broadening", "the submission could present a broader range of"),
+    ("Improve your positioning", "The submission's editorial positioning could be strengthened"),
+    ("improve your positioning", "the submission's editorial positioning could be strengthened"),
+    ("Enhance your visibility", "The submission could present more evidence of"),
+    ("enhance your visibility", "the submission could present more evidence of"),
+    ("expand your reach", "present a wider range of"),
+    ("Expand your reach", "Present a wider range of"),
+    ("strengthen your brand", "strengthen the editorial identity in the submission"),
+    ("Strengthen your brand", "Strengthen the editorial identity in the submission"),
+    ("develop a strategy", "develop the editorial narrative"),
+    ("Develop a strategy", "Develop the editorial narrative"),
+    ("invest in developing", "present evidence of"),
+    ("Invest in developing", "Present evidence of"),
+    ("needs to improve", "the submission would benefit from strengthening"),
+    ("Needs to improve", "The submission would benefit from strengthening"),
+    ("consider investing in", "present evidence of"),
+    ("Consider investing in", "Present evidence of"),
+    
+    # ═══ v9.0: EVIDENCE COMPRESSION — Owner Observation 6 ═══
+    ("various matters", "multiple documented matters"),
+    ("various mandates", "multiple documented mandates"),
+    ("several engagements", "multiple documented engagements"),
+    ("a range of matters", "a documented portfolio of matters"),
 ]
 
 
