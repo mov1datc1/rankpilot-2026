@@ -89,6 +89,11 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
     year: 'numeric'
   });
 
+  // v10.0: Directory-aware button labels
+  const selectedDirectory = (context.directory || chambersData.directory || 'Chambers').toString();
+  const isLegal500 = selectedDirectory.toLowerCase().includes('500') || selectedDirectory.toLowerCase().includes('legal5');
+  const directoryLabel = isLegal500 ? 'Legal 500' : 'Chambers';
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc', paddingBottom: '5rem' }}>
       {/* Top Navigation */}
@@ -129,7 +134,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
           >
             <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            Chambers DOCX (AI)
+            {directoryLabel} DOCX (AI)
           </a>
           
           <a 
@@ -137,7 +142,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             style={{ background: '#f1f5f9', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', whiteSpace: 'nowrap' }}
           >
             <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            Chambers DOCX (Original)
+            {directoryLabel} DOCX (Original)
           </a>
         </div>
       </div>

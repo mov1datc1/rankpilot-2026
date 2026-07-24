@@ -20,6 +20,8 @@ from agents.prompts import (
 )
 from utils.pdf_generator import compile_latex_to_pdf
 from utils.rag_router import RAGRouter
+from utils.directory_config import get_directory_config, get_directory_context_block
+from utils.practice_taxonomy import get_practice_taxonomy, get_practice_context_block
 
 load_dotenv()
 
@@ -128,6 +130,25 @@ def extraction_node(state: AgentState) -> Dict:
     ext_lawyers = data_dict.get("lawyers", [])
     ext_contacts = data_dict.get("contacts", [])
 
+    # v10.0: CONFIDENTIALITY GUARDRAIL — Deterministic lock
+    matters_list = data_dict.get("matters", [])
+    for matter in matters_list:
+        if isinstance(matter, dict):
+            # If extraction marked it as confidential, LOCK it
+            if matter.get("is_confidential", False):
+                matter["publish_status"] = matter.get("publish_status", "non_publishable")
+                if matter["publish_status"] == "publishable":
+                    matter["publish_status"] = "non_publishable"  # Override: confidential cannot be publishable
+                matter["_confidentiality_locked"] = True
+            # If publish_status is non_publishable or confidential, force is_confidential=True
+            ps = matter.get("publish_status", "publishable")
+            if ps in ("non_publishable", "confidential"):
+                matter["is_confidential"] = True
+                matter["_confidentiality_locked"] = True
+    
+    print(f"[CONFIDENTIALITY GUARDRAIL] Processed {len(matters_list)} matters: "
+          f"{sum(1 for m in matters_list if isinstance(m, dict) and m.get('_confidentiality_locked'))} locked as non-publishable/confidential")
+
     return {
         "metadata": {
             "firm_name": ext_meta.get("firm_name", ""),
@@ -138,7 +159,7 @@ def extraction_node(state: AgentState) -> Dict:
             "lawyers": ext_lawyers,
             "contacts": ext_contacts,
         },
-        "matters": data_dict.get("matters", []),
+        "matters": matters_list,
         "current_step": "context"
     }
 
@@ -214,10 +235,24 @@ def context_engine_node(state: AgentState) -> Dict:
     else:
         target_realistic = "Maintain defensible track record"
 
+    # v10.0: Load directory config and inject into strategic_context
+    dir_config = get_directory_config(directory)
+    practice_taxonomy = get_practice_taxonomy(practice_area)
+    
     strategic_context = {
         "directory": directory,
+        "directory_name": dir_config["name"],
+        "directory_short_name": dir_config["short_name"],
+        "ranking_unit": dir_config["ranking_unit"],
+        "ranking_labels": dir_config["ranking_labels"],
+        "wrong_unit": dir_config["wrong_unit"],
+        "matter_label": dir_config["matter_label"],
+        "quality_labels": dir_config["quality_labels"],
+        "lawyer_categories": dir_config["lawyer_categories"],
+        "export_template": dir_config["export_template"],
         "jurisdiction": jurisdiction,
         "practice_area": practice_area,
+        "practice_taxonomy": practice_taxonomy.get("name", "") if practice_taxonomy else "",
         "current_status": current_status,
         "starting_position": starting_position,
         "practice_type": context_dict.get("practice_type"),
@@ -228,6 +263,10 @@ def context_engine_node(state: AgentState) -> Dict:
         "benchmark_reference": benchmark,
         "target_realistic": target_realistic
     }
+    
+    print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")
+    if practice_taxonomy:
+        print(f"[PRACTICE TAXONOMY] Detected: {practice_taxonomy.get('name', 'Generic')} | Value metric: {practice_taxonomy.get('value_is_not', 'standard')}")
 
     return {
         "strategic_context": strategic_context,
@@ -247,13 +286,43 @@ def analysis_node(state: AgentState) -> Dict:
     router = RAGRouter()
     rag_knowledge = router.get_rag_context(practice_area, directory)
     
-    # 3. Preparar datos — NOW ENRICHED with Editorial Reasoning outputs
+    # v10.0: Generate directory and practice context blocks
+    directory_context_block = get_directory_context_block(directory, practice_area, jurisdiction)
+    practice_context_block = get_practice_context_block(practice_area)
+    
+    # v10.0: Compute full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
+    all_matters = state.get("matters", [])
+    unique_clients = set()
+    unique_sectors = set()
+    cross_border_count = 0
+    team_members_set = set()
+    for m in all_matters:
+        if isinstance(m, dict):
+            client = m.get("client", "") or m.get("title", "")
+            if client:
+                unique_clients.add(client.strip().lower())
+            sig = str(m.get("significance", "") or "").lower()
+            title = str(m.get("title", "") or "").lower()
+            # Simple sector detection from matter content
+            for sector in ["automotive", "energy", "infrastructure", "security", "entertainment", 
+                          "manufacturing", "retail", "technology", "mining", "telecom",
+                          "real estate", "construction", "agriculture", "pharma", "food"]:
+                if sector in sig or sector in title:
+                    unique_sectors.add(sector)
+            if m.get("is_cross_border", False) or m.get("cross_border_jurisdictions"):
+                cross_border_count += 1
+            for member_field in ["team_members", "lead_partner"]:
+                member_val = m.get(member_field, "")
+                if member_val:
+                    team_members_set.update([n.strip() for n in str(member_val).split(",") if n.strip()])
+    
+    # 3. Preparar datos — NOW ENRICHED with Editorial Reasoning outputs + v10.0 universe counts
     input_data = {
         "metadata": state.get("metadata", {}),
-        "matters": state.get("matters", []),
+        "matters": all_matters,
         "strategic_context": state.get("strategic_context", {}),
         "RAG_KNOWLEDGE": rag_knowledge,
-        # Editorial Reasoning Engine context (NEW)
+        # Editorial Reasoning Engine context
         "narrative_architecture": state.get("narrative_architecture", {}),
         "competitive_identity": state.get("competitive_identity", {}),
         "editorial_confidence": state.get("editorial_confidence", {}),
@@ -261,11 +330,21 @@ def analysis_node(state: AgentState) -> Dict:
         "comparative_analysis_summary": state.get("comparative_analysis", {}).get("market_position_summary", ""),
         # v7.0: Matter accountability + blueprint context
         "submission_blueprint": state.get("submission_blueprint", {}),
-        "total_matters_submitted": len(state.get("matters", [])),
+        "total_matters_submitted": len(all_matters),
+        # v10.0: Full universe counts for FULL_UNIVERSE_ANALYSIS_RULE
+        "total_unique_clients": len(unique_clients),
+        "total_unique_sectors": len(unique_sectors),
+        "total_cross_border_count": cross_border_count,
+        "total_team_members": len(team_members_set),
     }
     
+    # v10.0: Inject directory and practice context into the prompt
+    analysis_prompt = STRATEGIC_ANALYSIS_PROMPT
+    analysis_prompt = analysis_prompt.replace("{{directory_context_block}}", directory_context_block)
+    analysis_prompt = analysis_prompt.replace("{{practice_context_block}}", practice_context_block)
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", STRATEGIC_ANALYSIS_PROMPT),
+        ("system", analysis_prompt),
         ("human", "Analyze this firm data and return JSON: {data}")
     ])
     
@@ -274,6 +353,22 @@ def analysis_node(state: AgentState) -> Dict:
     
     try:
         res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
+        
+        # v10.0: CONFIDENTIALITY GUARDRAIL — Post-analysis validation
+        matter_evals = res_json.get("matter_evaluations", [])
+        for eval_item in matter_evals:
+            if isinstance(eval_item, dict):
+                # Find the original matter to check locked status
+                matter_name = eval_item.get("matter_name", "").lower()
+                for orig_matter in all_matters:
+                    if isinstance(orig_matter, dict):
+                        orig_name = (orig_matter.get("client", "") or orig_matter.get("title", "")).lower()
+                        if matter_name and orig_name and (matter_name in orig_name or orig_name in matter_name):
+                            if orig_matter.get("_confidentiality_locked"):
+                                # Force the eval type to match the locked status
+                                eval_item["type"] = orig_matter.get("publish_status", "non_publishable")
+                            break
+        
         return {
             "analysis": res_json,
             "confidence_score": float(res_json.get("confidence_score", 100)),

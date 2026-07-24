@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-24** (v9.0 — Owner Observations 24/7/2026)
+> Last updated: **2026-07-24** (v10.0 — Directory-Aware Architecture & Evidence Preservation)
 
 ---
 
@@ -39,6 +39,13 @@
 | 26 | Benchmark Quantification Enforcement | v9.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT `the_reality_check`) | ✅ ACTIVE | 🔴 CRITICAL |
 | 27 | Evidence List Detector (programmatic) | v9.0 | `nodes.py` (optimization_node validator) | ✅ ACTIVE | 🔴 CRITICAL |
 | 28 | Expanded Consultant-Speak Guard | v9.0 | `language_guard.py`, `prompts.py` (EDITORIAL_VOICE_DIRECTIVE) | ✅ ACTIVE | 🔴 CRITICAL |
+| 29 | Directory Router (Chambers vs Legal 500) | v10.0 | `directory_config.py`, `submission-builder.ts`, `nodes.py`, `prompts.py` | ✅ ACTIVE | 🔴 SUPREME |
+| 30 | Confidentiality Guardrail — Immutable Publish Status | v10.0 | `prompts.py` (shared block), `nodes.py` (extraction + analysis), `submission-builder.ts` | ✅ ACTIVE | 🔴 SUPREME |
+| 31 | Full Universe Analysis Rule | v10.0 | `prompts.py` (shared block), `nodes.py` (universe counts injection) | ✅ ACTIVE | 🔴 SUPREME |
+| 32 | Anti-Self-Referential Diagnosis Rule | v10.0 | `prompts.py` (shared block) | ✅ ACTIVE | 🔴 CRITICAL |
+| 33 | Redundancy Detection Fix (multi-dimensional comparison) | v10.0 | `prompts.py` (shared block) | ✅ ACTIVE | 🔴 CRITICAL |
+| 34 | Hero Selection Transparency (candidate comparison) | v10.0 | `prompts.py` (shared block + blueprint prompt) | ✅ ACTIVE | 🔴 CRITICAL |
+| 35 | Practice Taxonomy (practice-specific evaluation) | v10.0 | `practice_taxonomy.py`, `nodes.py`, `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 
 ---
 
@@ -496,6 +503,137 @@ This powers the **Reasoning Trace panel** in the frontend report view, which pro
 
 ---
 
+### 29. 🌐 DIRECTORY ROUTER — Chambers vs Legal 500 (v10.0)
+**Files:** `utils/directory_config.py`, `submission-builder.ts`, `nodes.py`, `prompts.py`
+
+**Root cause fixed:** The system was a "Chambers Monolith" — all terminology, templates, sections, and ranking units were hardcoded to Chambers ("Band", "Section D/E", "Chambers & Partners" title page). When a Legal 500 submission was processed, the DOCX output showed Chambers branding, Chambers headers/footers, and used incorrect ranking terminology.
+
+**Solution:**
+- `directory_config.py`: Contains configuration for all directories (Chambers LatAm, Chambers Global, Legal 500 LatAm, Legal 500 EMEA). Each config includes: name, short_name, ranking_unit ("Band"/"Tier"), ranking_labels, wrong_unit, quality_labels, lawyer_categories, and export_template.
+- `submission-builder.ts`: New `buildSubmissionDoc()` router dispatches to `buildChambersDoc()` or `buildLegal500Doc()` based on `submission.targetDirectory`.
+- `buildLegal500Doc()`: Separate template with Legal 500 title page, correct sections ("What sets your practice apart", "Leading Partners", "Next Generation Partners", "Publishable Work Highlights"), and Legal 500 headers/footers.
+- `nodes.py`: Injects `dir_config` into `strategic_context` so downstream nodes know the correct directory.
+
+**⚠️ NEVER use hardcoded "Chambers" or "Band" in prompts — use dynamic `{{directory_context_block}}` placeholders.**
+
+---
+
+### 30. 🔒 CONFIDENTIALITY GUARDRAIL — Immutable Publish Status (v10.0)
+**Files:** `prompts.py` (shared block `CONFIDENTIALITY_GUARDRAIL_RULE`), `nodes.py` (extraction + analysis), `submission-builder.ts` (validateConfidentiality)
+
+**Root cause fixed:** The AI was reclassifying non-publishable matters as publishable. Matters that the source document placed under "Non-publishable clients" were appearing in Section D (publishable) of the DOCX output.
+
+**Three-layer enforcement:**
+
+1. **Extraction layer (prompts.py):** Rule 6 now REQUIRES extracting `publish_status` and `is_confidential` for every matter, with default-to-non-publishable when uncertain.
+
+2. **Extraction node (nodes.py):** Deterministic lock after extraction:
+   - If `is_confidential=True` AND `publish_status="publishable"` → FORCE to `"non_publishable"`
+   - If `publish_status` is `"non_publishable"` or `"confidential"` → FORCE `is_confidential=True`
+   - Locked matters get `_confidentiality_locked=True` flag
+
+3. **Analysis node (nodes.py):** Post-analysis validator scans `matter_evaluations` and forces `type` to match the locked status from extraction.
+
+4. **DOCX export (submission-builder.ts):** `validateConfidentiality()` function checks `publishStatus`, `publish_status`, and `isConfidential` to deterministically route matters to publishable vs confidential sections.
+
+**⚠️ VIOLATION OF THIS RULE = POTENTIAL LIABILITY. This is the highest-priority rule in the system.**
+
+---
+
+### 31. 📊 FULL UNIVERSE ANALYSIS RULE (v10.0)
+**Files:** `prompts.py` (shared block `FULL_UNIVERSE_ANALYSIS_RULE`), `nodes.py` (universe counts computation)
+
+**Root cause fixed:** The AI was diagnosing weaknesses based on a reduced subset of matters (e.g., the 6 selected for the editorial narrative) instead of the full submission. A firm submitting 23 matters across 14 sectors was diagnosed as having "limited sectoral diversity" because only 6 matters were selected for the narrative.
+
+**Solution:**
+- `nodes.py` computes full universe counts BEFORE analysis: `total_unique_clients`, `total_unique_sectors`, `total_cross_border_count`, `total_team_members`
+- These counts are injected into the analysis prompt as `input_data` fields
+- The `FULL_UNIVERSE_ANALYSIS_RULE` instructs the AI to use THESE numbers for diagnostics, not its own subset
+
+**"INSUFFICIENT EVIDENCE" CALIBRATION:**
+- NEVER use "Insufficient Evidence" for a submission with 15+ matters, multiple sectors, and quantified results
+- Reserve ONLY for submissions with < 5 matters AND no quantified data
+
+**⚠️ The narrative may PRIORITIZE 6 matters, but the DIAGNOSIS must consider ALL submitted matters.**
+
+---
+
+### 32. 🔄 ANTI-SELF-REFERENTIAL DIAGNOSIS RULE (v10.0)
+**File:** `prompts.py` (shared block `ANTI_SELF_REFERENTIAL_RULE`)
+
+**Root cause fixed:** The system was creating a self-referential loop: it would eliminate evidence during processing, then observe the evidence was missing, then recommend adding it.
+
+**Pattern detected and rejected:**
+```
+System eliminates evidence → System observes missing evidence → System recommends adding evidence
+```
+
+**Examples of INVALID recommendations this rule prevents:**
+- ❌ "Showcase Broader Team Strength" — when the submission lists 4 partners + 23 associates + 7 heads of team
+- ❌ "Diversify Matter Portfolio" — when the submission contains 23+ matters across 14 sectors
+- ❌ "Enhance Cross-Border Capabilities" — when the submission includes multinational clients
+
+**Correct reformulation:**
+- ✅ "The submission provides substantial evidence of bench depth. However, the connection between individual lawyer profiles and the strongest work highlights could be made more explicit."
+
+**⚠️ Before EACH recommendation, the AI must verify: "Does the full submission already contain evidence of this?"**
+
+---
+
+### 33. 🔍 REDUNDANCY DETECTION FIX (v10.0)
+**File:** `prompts.py` (shared block `REDUNDANCY_DETECTION_RULE`)
+
+**Root cause fixed:** The AI was declaring matters redundant using superficial criteria (both involve litigation → redundant). True redundancy requires ALL dimensions to overlap: SAME sector + SAME work type + SAME risk + SAME scale + SAME client type.
+
+**6-dimensional comparison required before declaring redundancy:**
+1. SECTOR: automotive ≠ security ≠ energy ≠ retail
+2. WORK TYPE: litigation ≠ advisory ≠ compliance ≠ restructuring
+3. RISK TYPE: strike risk ≠ dismissal risk ≠ regulatory risk
+4. SCALE: 50 employees ≠ 5,000 employees
+5. GEOGRAPHY: Puebla ≠ national ≠ multi-state
+6. UNIQUE DIMENSION: any new dimension = NOT redundant
+
+**Practice-specific value criteria:**
+- In Labour: workforce scale, litigation count, and operational risk > monetary value
+- In Disputes: precedent value, constitutional dimension, and outcome > claim amount
+
+**⚠️ Overrides Ch. 8 Redundancy Elimination when applied too aggressively.**
+
+---
+
+### 34. 🏆 HERO SELECTION TRANSPARENCY (v10.0)
+**File:** `prompts.py` (shared block `HERO_SELECTION_TRANSPARENCY`, also in SUBMISSION_BLUEPRINT_PROMPT)
+
+**Root cause fixed:** The hero_selection_reasoning field was opaque — it stated the chosen matter but didn't explain why alternatives were rejected. The AI was selecting matters based on headline project value (USD 552M) without verifying the firm's actual mandate value (which might be just workforce documentation).
+
+**Now REQUIRED in hero_selection_reasoning:**
+1. ALL candidate matters considered (minimum top 5 by score)
+2. For each candidate: brief score summary across 7 criteria
+3. If project value ≠ mandate value: explicitly state the MANDATE value
+4. Explicit rejection reasoning for each non-selected candidate
+5. Winner must beat challengers on COMBINED criteria, not just one dimension
+
+**⚠️ Updated Hero Matter Selection Criteria #3 from "Deal value" to "Practice-specific value criteria."**
+
+---
+
+### 35. 🧬 PRACTICE TAXONOMY (v10.0)
+**Files:** `utils/practice_taxonomy.py`, `nodes.py` (injection into strategic_context), `prompts.py` (dynamic `{{practice_context_block}}`)
+
+**Root cause fixed:** All practice areas were being evaluated using the same M&A criteria. Labour matters were scored on "deal value" even though Labour's differentiators are workforce scale, litigation volume, and operational risk management. This caused Labour matters with 5,000 employees and 190+ litigations to score lower than M&A matters with a single transaction.
+
+**Taxonomy covers 4+ practice areas:**
+- **Labour & Employment:** Value is NOT deal value → Workforce scale, litigation count, operational risk
+- **Corporate / M&A:** Value IS deal value → Transaction complexity, cross-border elements, financial magnitude
+- **Banking & Finance:** Value IS financial exposure → Loan value, portfolio size, restructuring complexity
+- **Disputes / Litigation:** Value is NOT claim amount → Precedent impact, constitutional dimension, multi-jurisdictional scope
+
+**Each taxonomy includes:** hero_criteria, quality_labels, evaluation_dimensions, what_constitutes_flagship
+
+**⚠️ When adding new practice areas, always add them to `practice_taxonomy.py` with practice-specific evaluation criteria.**
+
+---
+
 ## 🔒 RAG KNOWLEDGE BASE — Global Files
 
 These files are ALWAYS loaded for every submission (defined in `rag_router.py` → `global_files`):
@@ -538,6 +676,16 @@ Before ANY modification to the AI engine, verify:
 - [ ] **Benchmark quantification in reality_check?** Every observation has band + benchmark number + submission number
 - [ ] **Evidence List Detector active?** Numeric counts + SCR signals + entity preservation checks in nodes.py
 - [ ] **Language Guard at 131+ patterns?** Count tuples in `language_guard.py`
+- [ ] **Directory Router intact?** Chambers vs Legal 500 dispatching works in `submission-builder.ts`
+- [ ] **Legal 500 template renders correctly?** Title, sections, headers, footers all say "Legal 500"
+- [ ] **Confidentiality Guardrail enforced at 3 layers?** Extraction prompt + extraction node lock + analysis node validation
+- [ ] **Publish status is immutable?** Non-publishable matters NEVER appear in publishable sections of DOCX
+- [ ] **Full universe counts injected?** `total_unique_clients`, `total_unique_sectors`, `total_cross_border_count`, `total_team_members` in analysis input
+- [ ] **Anti-self-referential check?** AI doesn't recommend what the submission already demonstrates
+- [ ] **Redundancy detection uses 6 dimensions?** Sector + work type + risk + scale + geography + unique dimension
+- [ ] **Hero selection shows ALL candidates?** hero_selection_reasoning includes top 5 candidates + rejection reasons
+- [ ] **Practice taxonomy loaded?** `get_practice_taxonomy()` returns correct taxonomy for the practice area
+- [ ] **Directory context blocks injected?** `{{directory_context_block}}` and `{{practice_context_block}}` replaced in analysis + blueprint prompts
 
 ---
 
@@ -545,6 +693,7 @@ Before ANY modification to the AI engine, verify:
 
 | Date | Commit | Version | Summary |
 |------|--------|---------|---------|
+| 2026-07-24 | `pending` | v10.0 | Directory-Aware Architecture: Directory Router, Confidentiality Guardrail, Full Universe Analysis, Anti-Self-Referential Diagnosis, Redundancy Detection, Hero Selection Transparency, Practice Taxonomy, Legal 500 DOCX template |
 | 2026-07-24 | `4d675d2` | v9.0 | Owner Observations 24/7/2026: SCR Detection, Evidence vs Prose, Benchmark Quantification, Evidence List Detector, 34 new Language Guard patterns |
 | 2026-07-23 | `b2e66df` | v8.1 | DOCX DXA width rewrite for Google Docs compatibility |
 | 2026-07-23 | `eb06331` | v8.0 | Editorial Constitution — 6 surgical changes |

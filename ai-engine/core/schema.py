@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 
 class Matter(BaseModel):
     """Represents a specific legal case or 'matter' from the submission."""
@@ -16,6 +16,11 @@ class Matter(BaseModel):
     completion_date: Optional[str] = Field(default="", description="Date of completion or current status of the matter.")
     is_confidential: bool = Field(default=False, description="True if this matter contains confidential information not for publication.")
     is_new_client: bool = Field(default=False, description="True if the client is new within the last 12 months.")
+    # v10.0: Explicit publish status — DETERMINISTIC and IMMUTABLE
+    publish_status: Literal["publishable", "non_publishable", "confidential"] = Field(
+        default="publishable",
+        description="IMMUTABLE publish status extracted from source document. 'non_publishable' = matter appears in non-publishable/confidential section. 'confidential' = explicitly marked confidential. 'publishable' = safe for publication. The AI CANNOT change this after extraction."
+    )
 
 class LawyerProfile(BaseModel):
     """Profile of a ranked or unranked lawyer in the practice area."""

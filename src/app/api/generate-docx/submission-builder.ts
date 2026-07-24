@@ -154,6 +154,36 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
 }
 
 export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
+  // v10.0: DIRECTORY ROUTER — Route to correct template
+  const targetDirectory = (submission.targetDirectory || 'Chambers').toLowerCase();
+  if (targetDirectory.includes('500') || targetDirectory.includes('legal5')) {
+    return buildLegal500Doc(firmName, practiceArea, chambersData, submission, exportMode);
+  }
+  // Default: Chambers template
+  return buildChambersDoc(firmName, practiceArea, chambersData, submission, exportMode);
+}
+
+// ═══ v10.0: CONFIDENTIALITY VALIDATION — Prevents non-publishable matters leaking ═══
+function validateConfidentiality(matters: any[]): { pubMatters: any[], confMatters: any[] } {
+  const pubMatters: any[] = [];
+  const confMatters: any[] = [];
+  
+  for (const m of matters) {
+    const publishStatus = (m.publishStatus || m.publish_status || '').toLowerCase();
+    const isConfidential = m.isConfidential || m.is_confidential || false;
+    
+    // v10.0: DETERMINISTIC — if source says non-publishable, it STAYS non-publishable
+    if (publishStatus === 'non_publishable' || publishStatus === 'confidential' || isConfidential) {
+      confMatters.push(m);
+    } else {
+      pubMatters.push(m);
+    }
+  }
+  
+  return { pubMatters, confMatters };
+}
+
+function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
   const guideRegion = submission.guideRegion || chambersData.jurisdiction || 'Mexico';
   const allMatters = submission.matters || [];
@@ -167,8 +197,8 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
     seenTitles.add(key);
     return true;
   });
-  const pubMatters = matters.filter((m: any) => !m.isConfidential);
-  const confMatters = matters.filter((m: any) => m.isConfidential);
+  // v10.0: Use deterministic confidentiality validation instead of simple filter
+  const { pubMatters, confMatters } = validateConfidentiality(matters);
 
   // ═══ TITLE PAGE ═══
   elements.push(
@@ -387,7 +417,7 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
     description: `Chambers & Partners submission form for ${firmName} in ${practiceArea}`,
     compatibility: {
       doNotExpandShiftReturn: true,
-      version: 15, // Word 2013+ compatible — improves Google Docs/LibreOffice rendering
+      version: 15,
     },
     styles: {
       paragraphStyles: [
@@ -428,7 +458,212 @@ export function buildSubmissionDoc(firmName: string, practiceArea: string, chamb
         default: new Footer({
           children: [
             para('Please upload completed submissions online at https://myaccount.chambers.com', { bold: true, size: 16, alignment: AlignmentType.CENTER }),
-            para('You will need a username and password to manage your submission and profile. If you do not have an account with Chambers, please onboard here: https://chambers.com/info/onboard-with-chambers', { size: 14, alignment: AlignmentType.CENTER }),
+            para('You will need a username and password to manage your submission and profile.', { size: 14, alignment: AlignmentType.CENTER }),
+          ],
+        }),
+      },
+      children: elements,
+    }],
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// v10.0: LEGAL 500 TEMPLATE — Separate structure, terminology, sections
+// ═══════════════════════════════════════════════════════════════
+function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
+  const elements: (Paragraph | Table)[] = [];
+  const guideRegion = submission.guideRegion || chambersData.jurisdiction || 'Mexico';
+  const allMatters = submission.matters || [];
+  
+  // Deduplicate
+  const seenTitles = new Set<string>();
+  const matters = allMatters.filter((m: any) => {
+    const key = (m.title || m.client || '').trim().toLowerCase();
+    if (!key) return true;
+    if (seenTitles.has(key)) return false;
+    seenTitles.add(key);
+    return true;
+  });
+  const { pubMatters, confMatters } = validateConfidentiality(matters);
+
+  // ═══ LEGAL 500 TITLE PAGE ═══
+  elements.push(
+    para('The Legal 500', { bold: true, size: 40, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 0 } }),
+    para('LATIN AMERICA 2027 EDITION', { bold: true, size: 20, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+    para('SUBMISSION FORM', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+    para('Please complete and return to your researcher. Do not alter this template.', { italics: true, size: 18, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
+  );
+
+  // ═══ FIRM INFORMATION ═══
+  elements.push(para('FIRM INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+  elements.push(fieldTable('Firm name', firmName));
+  elements.push(para('', { spacing: { after: 120 } }));
+  elements.push(fieldTable('Practice Area', practiceArea));
+  elements.push(para('', { spacing: { after: 120 } }));
+  elements.push(fieldTable('Location / Jurisdiction', guideRegion));
+  elements.push(para('', { spacing: { after: 120 } }));
+
+  // Contacts
+  const contacts = chambersData.contacts || [];
+  const contactRows = contacts.length > 0
+    ? contacts.map((c: any) => [c.name || '', c.email || '', c.phone || ''])
+    : [['', '', '']];
+  elements.push(dataTable('Contact person(s)', ['Name', 'Email', 'Telephone number'], contactRows));
+
+  // ═══ DEPARTMENT OVERVIEW ═══
+  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(para('DEPARTMENT OVERVIEW', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+
+  const dept = chambersData.department || {};
+  elements.push(fieldTable('Department name', dept.name || practiceArea));
+  elements.push(para('', { spacing: { after: 120 } }));
+  elements.push(fieldTable('Number of partners', String(dept.numPartners || '')));
+  elements.push(para('', { spacing: { after: 120 } }));
+  elements.push(fieldTable('Number of other qualified lawyers', String(dept.numLawyers || '')));
+  elements.push(para('', { spacing: { after: 120 } }));
+
+  // Department heads
+  const heads = dept.heads || [];
+  const headRows = heads.length > 0
+    ? heads.map((h: any) => [h.name || '', h.email || '', h.phone || ''])
+    : [['', '', '']];
+  elements.push(dataTable('Department Head(s) / Key Partners', ['Name', 'Email', 'Phone'], headRows));
+  elements.push(para('', { spacing: { after: 120 } }));
+
+  // Hires/Departures
+  const hd = dept.hiresDepartures || [];
+  const hdRows = hd.length > 0
+    ? hd.map((h: any) => [h.name || '', h.status || '', h.firm || ''])
+    : [['', '', '']];
+  elements.push(dataTable('Hires / Departures of partners in last 12 months', ['Name', 'Joined / Departed', 'From / To'], hdRows));
+
+  // ═══ WHAT SETS YOUR PRACTICE APART ═══
+  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(para('WHAT SETS YOUR PRACTICE APART', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+  const b7Val = chambersData.b7 || chambersData.departmentDescription || '';
+  elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
+
+  // ═══ LEADING PARTNERS ═══
+  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(para('LEADING PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+  
+  const lawyers = chambersData.lawyers || [];
+  const partners = lawyers.filter((l: any) => l.isPartner);
+  if (partners.length > 0) {
+    const partnerRows = partners.map((l: any) => [
+      l.name || '',
+      l.currentRanking || 'Not Ranked',
+      l.keyFocus || '',
+      l.standoutWork || '',
+    ]);
+    elements.push(dataTable('Information regarding Leading Partners', ['Name', 'Current Ranking', 'Key Focus', 'Standout Work'], partnerRows));
+  }
+
+  // ═══ NEXT GENERATION PARTNERS ═══
+  const nextGen = lawyers.filter((l: any) => l.isPartner && (l.currentRanking || '').toLowerCase().includes('next gen'));
+  if (nextGen.length > 0) {
+    elements.push(para('NEXT GENERATION PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+    const ngRows = nextGen.map((l: any) => [l.name || '', l.keyFocus || '', l.standoutWork || '']);
+    elements.push(dataTable('Next Generation Partners', ['Name', 'Key Focus', 'Standout Work'], ngRows));
+  }
+
+  // ═══ LEADING ASSOCIATES ═══
+  const associates = lawyers.filter((l: any) => !l.isPartner);
+  if (associates.length > 0) {
+    elements.push(para('LEADING ASSOCIATES', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
+    const assocRows = associates.map((l: any) => [l.name || '', l.keyFocus || '', l.standoutWork || '']);
+    elements.push(dataTable('Leading Associates', ['Name', 'Key Focus', 'Standout Work'], assocRows));
+  }
+
+  // ═══ PUBLISHABLE WORK HIGHLIGHTS ═══
+  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(para('PUBLISHABLE WORK HIGHLIGHTS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
+  elements.push(para('All information in this section is considered PUBLISHABLE.', { italics: true, size: 16, spacing: { after: 200 } }));
+
+  // Publishable Clients
+  const pubClients = [...new Set(pubMatters.map((m: any) => m.client).filter(Boolean))];
+  const d0Rows = pubClients.length > 0
+    ? pubClients.map((c) => ['', String(c), 'No'])
+    : [['', '', '']];
+  while (d0Rows.length < 4) d0Rows.push(['', '', '']);
+  elements.push(dataTable('PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], d0Rows));
+
+  // Publishable matters
+  for (let i = 0; i < pubMatters.length; i++) {
+    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(para(`Publishable Work Highlights in last 12 months`, { bold: true, size: 20, spacing: { after: 80 } }));
+    elements.push(para(`Publishable Matter ${i + 1}`, { bold: true, size: 18, color: '333333', spacing: { after: 120 } }));
+    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode));
+    elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
+  }
+
+  // ═══ DETAILED (CONFIDENTIAL) WORK HIGHLIGHTS ═══
+  if (confMatters.length > 0) {
+    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(para('DETAILED (NON-PUBLISHABLE) WORK HIGHLIGHTS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
+    elements.push(para('All information in this section is CONFIDENTIAL and NOT FOR PUBLICATION. This information will only be used for internal ranking purposes.', { italics: true, size: 16, spacing: { after: 200 } }));
+
+    const confClients = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
+    const e0Rows = confClients.length > 0
+      ? confClients.map((c, i) => [String(i + 1), String(c), 'No'])
+      : [['', '', '']];
+    while (e0Rows.length < 4) e0Rows.push(['', '', '']);
+    elements.push(dataTable('NON-PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], e0Rows));
+
+    for (let i = 0; i < confMatters.length; i++) {
+      elements.push(new Paragraph({ children: [new PageBreak()] }));
+      elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode));
+    }
+  }
+
+  // Build Legal 500 document
+  return new Document({
+    title: `Legal 500 Submission - ${firmName} - ${practiceArea}`,
+    creator: 'RankPilot 2026',
+    description: `The Legal 500 submission form for ${firmName} in ${practiceArea}`,
+    compatibility: {
+      doNotExpandShiftReturn: true,
+      version: 15,
+    },
+    styles: {
+      paragraphStyles: [
+        {
+          id: 'Normal',
+          name: 'Normal',
+          run: { font: FONT, size: 20 },
+          paragraph: { spacing: { after: 80 } },
+        },
+        {
+          id: 'Heading1',
+          name: 'Heading 1',
+          basedOn: 'Normal',
+          next: 'Normal',
+          run: { font: FONT, size: 28, bold: true },
+          paragraph: { spacing: { before: 300, after: 200 } },
+        },
+      ],
+      default: {
+        document: {
+          run: {
+            font: FONT,
+            size: 20,
+          },
+        },
+      },
+    },
+    sections: [{
+      properties: {
+        page: { margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } },
+      },
+      headers: {
+        default: new Header({
+          children: [para(`The Legal 500 - ${practiceArea}`, { size: 14, color: '888888', alignment: AlignmentType.RIGHT })],
+        }),
+      },
+      footers: {
+        default: new Footer({
+          children: [
+            para('The Legal 500 - Latin America Edition', { bold: true, size: 16, alignment: AlignmentType.CENTER }),
           ],
         }),
       },
