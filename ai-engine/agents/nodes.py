@@ -374,6 +374,10 @@ def analysis_node(state: AgentState) -> Dict:
         universe_facts.append(f"CROSS-BORDER MATTER CLIENTS: {', '.join(cross_border_matters[:10])}")
     universe_facts.append(f"TEAM MEMBERS INVOLVED: {len(team_members_set)}")
     
+    # v10.2: Inject current date for deadline accuracy
+    current_date = datetime.now().strftime("%d %B %Y")
+    universe_facts.append(f"CURRENT DATE: {current_date}")
+    
     universe_facts_block = "\n".join(universe_facts)
     
     print(f"[UNIVERSE COUNTS v10.1] Clients={len(unique_clients)}, Sectors={len(unique_sectors)}, "
@@ -401,6 +405,8 @@ def analysis_node(state: AgentState) -> Dict:
         "total_team_members": len(team_members_set),
         # v10.1: MANDATORY FACTS — AI must not contradict these
         "MANDATORY_UNIVERSE_FACTS": universe_facts_block,
+        # v10.2: Current date for deadline generation
+        "current_date": current_date,
     }
     
     # v10.1: Inject directory, practice, and MANDATORY FACTS context into the prompt

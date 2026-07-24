@@ -102,16 +102,16 @@ ZERO-LOSS RULE: count(input_matters) == count(output_matter_evaluations)
 If this rule is violated, the output is INVALID.
 The client chose every matter for a reason. Respect that.
 
-ANTI-EXCLUSION DIRECTIVE (v7.1 — OVERRIDES ALL PRIOR RULES):
-- You may assign a MAXIMUM of 2 matters as "exclude" per submission.
-- "exclude" means NARRATIVE DE-EMPHASIS, not physical removal from the DOCX.
-- A matter being in a DIFFERENT SECTOR from the dominant pattern is NOT grounds for exclusion.
+ANTI-EXCLUSION DIRECTIVE (v10.2 — OVERRIDES ALL PRIOR RULES):
+- You may assign a MAXIMUM of 2 matters as "de_emphasize" per submission.
+- "de_emphasize" means NARRATIVE DE-EMPHASIS — reduce prominence but KEEP in DOCX. NEVER use the word "exclude".
+- A matter being in a DIFFERENT SECTOR from the dominant pattern is NOT grounds for de-emphasis.
   In Corporate/M&A, sector diversity is a STRENGTH — it demonstrates breadth.
 - Prestigious clients (Tesla, Mercado Libre, etc.) are CREDIBILITY SIGNALS regardless of sector.
-- A high-value deal ($100M+) should NEVER be excluded solely because it's in a different sector.
-- If a matter doesn't reinforce the thesis, assign it as "depth" or "supporting" — NOT "exclude".
-- BEFORE excluding ANY matter, ask: "Would a Chambers researcher see value in this matter?" If yes → INCLUDE.
-- THE DEFAULT DISPOSITION IS "supporting" — you must JUSTIFY exclusion, not inclusion.
+- A high-value deal ($100M+) should NEVER be de-emphasized solely because it's in a different sector.
+- If a matter doesn't reinforce the thesis, assign it as "depth" or "supporting" — NOT "de_emphasize".
+- BEFORE de-emphasizing ANY matter, ask: "Would a Chambers researcher see value in this matter?" If yes → INCLUDE.
+- THE DEFAULT DISPOSITION IS "supporting" — you must JUSTIFY de-emphasis, not inclusion.
 """
 
 EVIDENCE_CROSS_VALIDATION = """
@@ -614,7 +614,7 @@ This report should be as deep and actionable as a senior editorial briefing.
    - "why": Why this step matters for rank movement
    - "benchmark_anchor": MANDATORY. What firms at the target band typically demonstrate for this dimension. Format: "Firms at Band [X] for [Practice] in [Jurisdiction] typically demonstrate [Y]."
    - "what_must_be_delivered": Specific deliverables the firm must produce for the SUBMISSION
-   - "deadline": Suggested deadline
+   - "deadline": Suggested deadline. MUST be a FUTURE date relative to the CURRENT DATE in MANDATORY_UNIVERSE_FACTS. Use format: "Q[N] [YEAR]" or "Within [N] months". NEVER generate past dates.
    - "description": Full detailed paragraph combining all the above, written in editorial voice. MUST reference the benchmark_anchor explicitly.
 9. "competitive_context": A paragraph comparing this firm against the typical profile of firms in the target band.
 10. "matter_evaluations": For EVERY matter in the submission, provide a quality assessment:
@@ -1236,16 +1236,16 @@ When a firm's matters span multiple sectors (e.g., automotive + energy + real es
 - This is a STRENGTH for Corporate/M&A rankings, not a weakness.
 - Sector diversity demonstrates BREADTH OF CAPABILITY, which Chambers values.
 - Do NOT penalize matters because they're outside the dominant sector cluster.
-- Classify non-dominant-sector matters as "supporting" or "depth" — NOT as "exclude".
+- Classify non-dominant-sector matters as "supporting" or "depth" — NOT as "de_emphasize".
 - Prestigious clients (Tesla, Mercado Libre, etc.) in ANY sector are CREDIBILITY SIGNALS.
-- High-value matters ($100M+) should NEVER be excluded for sector mismatch alone.
-- MAXIMUM of 2 matters may be assigned "exclude" per submission.
-- Default disposition is "supporting" — you must JUSTIFY exclusion, not inclusion.
+- High-value matters ($100M+) should NEVER be de-emphasized for sector mismatch alone.
+- MAXIMUM of 2 matters may be assigned "de_emphasize" per submission.
+- Default disposition is "supporting" — you must JUSTIFY de-emphasis, not inclusion.
 
-ABSOLUTE EVIDENCE PRESERVATION RULE (v6.0):
+ABSOLUTE EVIDENCE PRESERVATION RULE (v10.2):
 - The blueprint may CLASSIFY and PRIORITIZE matters, but may NEVER recommend eliminating them.
 - matters_to_exclude field should be used for narrative de-emphasis decisions, NOT for actual removal.
-- When marking a matter for exclusion, clarify it means "reduce narrative prominence" not "delete from submission."
+- Use disposition "de_emphasize" — this means "reduce narrative prominence", NOT "delete from submission".
 - Every matter the client submitted MUST appear in the DOCX export regardless of the blueprint's recommendations.
 
 EDITORIAL DECISION RULES (Vol. VII):

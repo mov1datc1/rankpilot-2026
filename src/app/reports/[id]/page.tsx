@@ -656,7 +656,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             {Array.isArray(submissionBlueprint.all_matter_dispositions) && submissionBlueprint.all_matter_dispositions.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {submissionBlueprint.all_matter_dispositions.map((disp: any, i: number) => {
-                  const dispColor = disp.disposition === 'include_as_hero' ? '#6366f1' : disp.disposition === 'include_as_supporting' ? '#16a34a' : disp.disposition === 'include_as_depth' ? '#0284c7' : disp.disposition === 'exclude' ? '#dc2626' : '#d97706';
+                  const dispColor = disp.disposition === 'include_as_hero' ? '#6366f1' : disp.disposition === 'include_as_supporting' ? '#16a34a' : disp.disposition === 'include_as_depth' ? '#0284c7' : (disp.disposition === 'de_emphasize' || disp.disposition === 'exclude') ? '#d97706' : '#94a3b8';
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                       <span style={{ padding: '0.15rem 0.5rem', background: `${dispColor}15`, color: dispColor, borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const }}>{(disp.disposition || 'tracked').replace(/_/g, ' ')}</span>

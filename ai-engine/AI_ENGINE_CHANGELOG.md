@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-24** (v10.1 — Confidentiality Calibration, Cross-Border Enhancement, Audit DOCX Parity)
+> Last updated: **2026-07-24** (v10.2 — Future Deadline Injection, De-Emphasize Disposition Fix)
 
 ---
 
@@ -14,7 +14,7 @@
 | 1 | Editorial Constitution (6 Articles) | v8.0 | `prompts.py`, `EDITORIAL_CONSTITUTION.txt`, `rag_router.py` | ✅ ACTIVE | 🔴 SUPREME |
 | 2 | Epistemic Guardrails | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 3 | Matter Accountability Protocol | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
-| 4 | Anti-Exclusion Directive | v7.1 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
+| 4 | Anti-Exclusion Directive (de_emphasize) | v10.2 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 5 | Evidence Cross-Validation | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 6 | Editorial Voice Directive | v7.1 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
 | 7 | Language Guard (131 patterns) | v9.0 | `language_guard.py` | ✅ ACTIVE | 🔴 CRITICAL |
@@ -51,6 +51,8 @@
 | 38 | Enhanced Cross-Border & Sector Detection (text scanning + country keywords) | v10.1 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 CRITICAL |
 | 39 | MANDATORY_UNIVERSE_FACTS Anti-Self-Referential Injection | v10.1 | `nodes.py` (analysis_node), injected into STRATEGIC_ANALYSIS_PROMPT | ✅ ACTIVE | 🔴 SUPREME |
 | 40 | Audit DOCX Parity — 8 missing sections added to match UI report | v10.1 | `route.ts` (buildAuditDoc) | ✅ ACTIVE | 🔴 CRITICAL |
+| 41 | Future Deadline Injection — current_date in MANDATORY_UNIVERSE_FACTS | v10.2 | `nodes.py` (analysis_node), `prompts.py` (deadline instruction) | ✅ ACTIVE | 🟡 HIGH |
+| 42 | De-Emphasize Disposition — replace "exclude" with "de_emphasize" label | v10.2 | `schema.py` (MatterDisposition), `prompts.py`, `page.tsx` (UI colors) | ✅ ACTIVE | 🔴 CRITICAL |
 
 ---
 

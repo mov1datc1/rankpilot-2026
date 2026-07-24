@@ -221,9 +221,9 @@ class EditorialConfidenceOutput(BaseModel):
 # =====================================================
 
 class MatterDisposition(BaseModel):
-    """Decision about a single matter: include, exclude, or reposition."""
+    """Decision about a single matter: include, de-emphasize, or reposition."""
     matter_title: str = Field(description="Title of the matter.")
-    disposition: str = Field(description="One of: 'include_as_hero', 'include_as_supporting', 'include_as_depth', 'exclude', 'reposition_to_other_practice'.")
+    disposition: str = Field(description="One of: 'include_as_hero', 'include_as_supporting', 'include_as_depth', 'de_emphasize', 'reposition_to_other_practice'. NEVER use 'exclude' — Rule #20 forbids eliminating evidence.")
     rationale: str = Field(description="Why this disposition was chosen — references Decision Rules 5, 6, 11.")
     proves_what: str = Field(default="", description="What this matter proves for the thesis that no other matter already proves.")
     redundant_with: str = Field(default="", description="If excluded for redundancy, which included matter already proves the same thing.")
