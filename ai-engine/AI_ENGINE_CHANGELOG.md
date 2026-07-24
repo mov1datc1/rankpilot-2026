@@ -46,6 +46,7 @@
 | 33 | Redundancy Detection Fix (multi-dimensional comparison) | v10.0 | `prompts.py` (shared block) | ✅ ACTIVE | 🔴 CRITICAL |
 | 34 | Hero Selection Transparency (candidate comparison) | v10.0 | `prompts.py` (shared block + blueprint prompt) | ✅ ACTIVE | 🔴 CRITICAL |
 | 35 | Practice Taxonomy (practice-specific evaluation) | v10.0 | `practice_taxonomy.py`, `nodes.py`, `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
+| 36 | Setup Wizard Filter Pipeline (5-filter context flow) | v10.0 | `submissions/page.tsx`, `process-document/route.ts`, `nodes.py`, `prompts.py`, `submission-builder.ts` | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 
@@ -631,6 +632,58 @@ System eliminates evidence → System observes missing evidence → System recom
 **Each taxonomy includes:** hero_criteria, quality_labels, evaluation_dimensions, what_constitutes_flagship
 
 **⚠️ When adding new practice areas, always add them to `practice_taxonomy.py` with practice-specific evaluation criteria.**
+
+---
+
+### 36. 🎛️ SETUP WIZARD FILTER PIPELINE — 5-Filter Context Flow (v10.0)
+**Files:** `submissions/page.tsx`, `actions/submissions.ts`, `process-document/route.ts`, `nodes.py` (context_engine_node + analysis_node), `prompts.py` (dynamic placeholders), `submission-builder.ts` (directory router)
+
+**What this documents:** The complete data flow from the 5 UI filter dropdowns in the Setup Wizard to the AI engine and DOCX export. Every filter the user selects in the Builder page ACTIVELY shapes the AI's behavior.
+
+**The 5 filters and their full pipeline:**
+
+| # | UI Filter | State Variable | Prisma Field | Python Context Key | AI Engine Usage |
+|---|-----------|---------------|-------------|--------------------|-----------------|
+| 1 | **TARGET DIRECTORY** | `targetDirectory` | `submission.targetDirectory` | `context.directory` | → `get_directory_config()` → loads ranking_unit (Band/Tier), terminology, quality_labels, lawyer_categories → `{{directory_context_block}}` injected into analysis + blueprint prompts → DOCX router selects Chambers or Legal 500 template |
+| 2 | **GUIDE / REGION** | `guideRegion` | `submission.guideRegion` | `context.jurisdiction` | → `context_engine_node` uses for benchmark_reference ("Band X for [Practice] in [Jurisdiction]") → injected as `jurisdiction` in `strategic_context` → appears in DOCX Section A3 / Firm Information |
+| 3 | **PRACTICE AREA** | `practiceArea` | `submission.practiceArea` | `context.practice_area` | → `get_practice_taxonomy()` loads practice-specific evaluation criteria → `{{practice_context_block}}` injected into prompts → RAG Router loads practice-specific knowledge files → DOCX Section A2 / Practice Area field |
+| 4 | **CURRENT BAND** | `currentBand` | `submission.currentBand` | `context.current_status` | → `context_engine_node` classifies starting_position (Entry Candidate / Lower Tier / Upper Tier / Established) → determines `target_realistic` → shapes analysis framing ("maintain" vs "push for upgrade") |
+| 5 | **DEADLINE** | `deadline` | `submission.deadline` | _(not sent to AI)_ | → Stored for user tracking only (UI shows "For your own tracking — does not affect AI analysis") |
+
+**Detailed flow (lines 63-116 of process-document/route.ts):**
+```
+UI Dropdown Selection
+  → submissions/page.tsx: state variables (targetDirectory, guideRegion, practiceArea, currentBand)
+    → createSubmission() → Prisma: submission.targetDirectory, .guideRegion, .practiceArea, .currentBand
+      → process-document/route.ts: builds context object:
+          {
+            directory: submission.targetDirectory,     // "Legal 500"
+            jurisdiction: submission.guideRegion,       // "Latin America"
+            practice_area: submission.practiceArea,     // "Labour & Employment"
+            current_status: submission.currentBand      // "Unranked"
+          }
+        → Python API /process: receives as submission_context
+          → context_engine_node: loads directory_config + practice_taxonomy
+          → analysis_node: injects {{directory_context_block}} + {{practice_context_block}}
+          → All prompts receive correct terminology dynamically
+        → DOCX Export: submission.targetDirectory routes to correct template
+```
+
+**How each filter shapes the AI output:**
+
+1. **Directory (Chambers vs Legal 500):** Changes ALL terminology — "Band" vs "Tier", "matter" vs "work highlight", section headers, DOCX template, header/footer branding
+2. **Region (Latin America / Global / EMEA):** Changes benchmark references — "Firms at Band 2 for Corporate in Mexico" vs "...in Brazil" vs "...in Global"
+3. **Practice Area (Labour / Corporate / Banking / Disputes):** Changes evaluation criteria — Labour uses workforce scale, Corporate uses deal value, Banking uses financial exposure
+4. **Current Band (Unranked / Band 5 / Band 1):** Changes strategic framing — "Entry Candidate" gets "path to ranking" advice, "Band 1" gets "maintain dominance" advice
+
+**⚠️ ALL 5 FILTERS ARE ALREADY FUNCTIONAL. If the user selects 'Legal 500' + 'Latin America' + 'Labour & Employment' + 'Unranked', the AI will:**
+- Use "Tier" (not "Band")
+- Reference Latin America benchmarks
+- Evaluate by workforce scale (not deal value)
+- Frame as "Entry Candidate"
+- Generate Legal 500 DOCX template
+
+**⚠️ NEVER add a new filter without tracing the full pipeline: UI → Prisma → Python context → AI usage → DOCX output.**
 
 ---
 
