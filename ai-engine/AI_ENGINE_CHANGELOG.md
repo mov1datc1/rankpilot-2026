@@ -28,6 +28,12 @@
 | 15 | JSON Brace Escaping in f-strings | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 16 | Thesis Specificity Enforcement | v7.1 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
 | 17 | Practice Area Auto-Correction | v7.1 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
+| 18 | DOCX Export Toggle (AI + Original) | v6.0 | `route.ts`, `submission-builder.ts` | ✅ ACTIVE | 🟡 HIGH |
+| 19 | Hero Matter 7-Criteria Selection | v6.0 | `prompts.py` (NARRATIVE_ARCHITECTURE_PROMPT) | ✅ ACTIVE | 🔴 CRITICAL |
+| 20 | Never Eliminate Evidence — Absolute Preservation | v6.0 | `prompts.py` (SUBMISSION_BLUEPRINT_PROMPT) | ✅ ACTIVE | 🔴 CRITICAL |
+| 21 | Evidence Inference Rule — Don't ask for existing info | v6.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT) | ✅ ACTIVE | 🟡 HIGH |
+| 22 | State of Play Diagnostic + Narrative Transformations + Confidence Radar | v6.0 | `prompts.py` (STRATEGIC_ANALYSIS_PROMPT) | ✅ ACTIVE | 🟡 HIGH |
+| 23 | Editorial Reasoning Trace Panel | v7.0 | `state.py`, `nodes.py`, frontend components | ✅ ACTIVE | 🟡 HIGH |
 
 ---
 
@@ -271,6 +277,120 @@ If the submission's content clearly indicates a different practice area than wha
 
 ---
 
+### 18. 🔀 DOCX EXPORT TOGGLE — AI + Original (v6.0)
+**Files:** `route.ts` (line 16), `submission-builder.ts` (lines 104, 113, 156)
+
+Two export modes via `?mode=` URL parameter:
+- `optimized` (default): Uses AI-rewritten matter text (`matter.optimizedText`)
+- `original`: Uses raw client text as submitted (`matter.rawNotes`)
+
+**Logic in `matterTable()`:**
+```typescript
+exportMode === 'original'
+  ? (matter.rawNotes || matter.optimizedText || '')
+  : (matter.optimizedText || matter.rawNotes || '')
+```
+
+**⚠️ The AI NEVER rewrites the original submission without permission. Both versions always available.**
+
+---
+
+### 19. 🏆 HERO MATTER 7-CRITERIA SELECTION (v6.0)
+**File:** `prompts.py` (lines 901-928, inside SUBMISSION_BLUEPRINT_PROMPT)
+
+Hero matter is selected by **editorial merit**, not word count. The 7 criteria in priority order:
+
+1. **EDITORIAL THESIS EMBODIMENT** — Does it demonstrate the submission's thesis?
+2. **CLIENT IMPORTANCE** — Prestige and institutional significance
+3. **ECONOMIC IMPACT** — Deal value, market significance, transformative potential
+4. **CHAMBERS RELEVANCE** — Relevance to the specific practice area and directory
+5. **DEMONSTRATIVE CAPACITY** — Shows the firm's ROLE, not just the transaction
+6. **DIFFERENTIATION** — Shows what competitors CANNOT replicate
+7. **STRATEGIC POSITION** — Reveals the firm's unique market position
+
+**NEVER select based on:** word count, internal scoring, or deal value alone.
+
+The AI MUST populate `hero_selection_reasoning` explaining WHY it chose the hero.
+
+**⚠️ This prevents the AI from picking the longest matter as the hero.**
+
+---
+
+### 20. 🚫 NEVER ELIMINATE EVIDENCE — Absolute Preservation (v6.0)
+**File:** `prompts.py` (lines 930-944, inside SUBMISSION_BLUEPRINT_PROMPT)
+
+**Absolute rule:** The blueprint may CLASSIFY and PRIORITIZE matters, but may **NEVER recommend eliminating them.**
+
+- `matters_to_exclude` = narrative de-emphasis, NOT deletion
+- Every matter the client submitted MUST appear in the DOCX export regardless of blueprint
+- De-emphasis = reduce narrative prominence, not delete from submission
+- Editorial Decision Rule 2: "What should we NOT tell?" — de-emphasize, NEVER delete
+
+**Related rules:** Anti-Exclusion Directive (#4), Matter Accountability (#3).
+
+**⚠️ This is different from #4 (max 2 excludes) — this ensures even "excluded" matters appear in the DOCX.**
+
+---
+
+### 21. 🔍 EVIDENCE INFERENCE RULE — Don't Ask for Existing Info (v6.0)
+**File:** `prompts.py` (lines 228-235, inside STRATEGIC_ANALYSIS_PROMPT)
+
+Before generating ANY recommendation, the AI MUST:
+1. Check if the information already EXISTS in the submission
+2. If the submission demonstrates sector expertise across multiple matters → do NOT recommend "identify sector expertise"
+3. If the submission shows cross-border work → do NOT ask for "cross-border evidence"
+4. Apply filter: "Has the submission already answered this question?"
+   - If YES → acknowledge the strength and suggest how to AMPLIFY it
+   - If NO → recommend gathering this information
+
+**Example:** If submission has 10 matters in automotive sector, don't recommend "identify your core sector."
+
+**⚠️ This prevents embarrassing recommendations that contradict the evidence.**
+
+---
+
+### 22. 📊 STATE OF PLAY + NARRATIVE TRANSFORMATIONS + CONFIDENCE RADAR (v6.0)
+**File:** `prompts.py` (lines 280-321, inside STRATEGIC_ANALYSIS_PROMPT)
+
+Three interconnected report sections:
+
+**A) Confidence Assessment (item 4 in output schema):**
+- `risk_level`: "Low" | "Moderate" | "High"
+- `score`: 0-100 based on evidence vs. target band
+- `summary`: 3-sentence editorial assessment
+- `narrative_strategy`: Array of exactly 3 TRANSFORMATIONS showing **BEFORE → AFTER**
+  - Format: "Current narrative: '[X]' → Target narrative: '[Y]'"
+  - This is a concrete REWRITING PLAN, not a list of recommendations
+
+**B) State of Play (item 5: `the_state_of_play`):**
+- 2-3 paragraphs that DIAGNOSE, not summarize
+- Must answer: "Why hasn't Chambers ranked this firm?" or "Why Band X and not Y?"
+- Diagnostic focus: evidence gap, market perception, structural barriers, positioning problems
+
+**C) Unfair Advantage (item 6: `the_unfair_advantage`):**
+- Title: "THE WEAPON"
+- Core differentiator with numbered examples from matters
+
+**⚠️ State of Play must DIAGNOSE, never merely describe. If it reads like a summary, it's wrong.**
+
+---
+
+### 23. 🔬 EDITORIAL REASONING TRACE PANEL (v7.0)
+**Files:** `core/state.py` (line 71: `reasoning_trace: List[Dict]`), frontend components
+
+The `reasoning_trace` field captures EVERY editorial decision made by the pipeline:
+- Which decision was made
+- What evidence was used
+- What alternatives were considered
+- Why they were rejected
+- Which Constitutional Article/editorial principle was applied
+
+This powers the **Reasoning Trace panel** in the frontend report view, which provides full transparency into the AI's editorial reasoning — from hero matter selection to confidence level.
+
+**⚠️ `reasoning_trace` is also filtered by the Language Guard (Rule #7).**
+
+---
+
 ## 🔒 RAG KNOWLEDGE BASE — Global Files
 
 These files are ALWAYS loaded for every submission (defined in `rag_router.py` → `global_files`):
@@ -302,6 +422,12 @@ Before ANY modification to the AI engine, verify:
 - [ ] **DOCX uses DXA widths?** Zero `WidthType.PERCENTAGE` instances
 - [ ] **Reality Check text synced?** Same intro in `route.ts` AND `docx_generator.py`
 - [ ] **Global RAG files intact?** 5 files in `rag_router.py` → `global_files`
+- [ ] **DOCX Export Toggle intact?** Both `original` and `optimized` modes work via `?mode=` param
+- [ ] **Hero Matter 7-Criteria preserved?** Selection uses editorial thesis, not word count
+- [ ] **Evidence Inference Rule intact?** AI doesn't ask for info already in the submission
+- [ ] **State of Play diagnostic present?** `the_state_of_play` diagnoses, not summarizes
+- [ ] **Narrative Transformations format?** Before → After rewriting plan (3 items)
+- [ ] **Reasoning Trace flows to frontend?** `reasoning_trace` field in state and response
 
 ---
 
