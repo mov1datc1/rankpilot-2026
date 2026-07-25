@@ -431,12 +431,27 @@ MATTER EVALUATIONS COMPLETENESS RULE (v10.2):
 - If your output contains fewer than {len(all_matters)} matter_evaluations, the output is INVALID.
 - Count your matter_evaluations before finalizing. If count < {len(all_matters)}, you MUST add the missing ones.
 
-EVIDENCE-BASED SCORING RULE (v10.2):
+EVIDENCE-BASED SCORING RULE (v10.2 — SUPREME PRIORITY):
 - The "current_band" (Unranked, Band 5, etc.) is USER-PROVIDED metadata and MAY BE INACCURATE or unknown.
-- Base your score, confidence, and defensibility SOLELY on the EVIDENCE quality in the submission.
-- The same evidence should produce the same score regardless of whether current_band says "Unranked" or "Band 3".
-- Score the SUBMISSION QUALITY, not the firm's current market position.
-- A firm with strong evidence scores HIGH even if marked as "Unranked".
+- "Unranked" simply means the firm has NOT BEEN EVALUATED BEFORE — it says NOTHING about evidence quality.
+- An Unranked firm with 20 strong matters and cross-border work is JUST AS STRONG as a Band 3 firm with the same evidence.
+
+ABSOLUTE PROHIBITION — SCORING BIAS FROM CURRENT BAND:
+- NEVER write "due to its unranked status" as a reason for low confidence or low score.
+- NEVER write "the firm is unranked, therefore..." or "as an unranked firm..." in any negative context.
+- NEVER lower the confidence score BECAUSE the firm is currently unranked.
+- NEVER say "the improvement appears circumstantial" based on unranked status.
+- The word "unranked" must ONLY appear in the factual header (Current Band: Unranked), NEVER as a justification for lower scores.
+
+WHAT YOU MUST DO INSTEAD:
+- Evaluate ONLY: matter count, matter quality, cross-border depth, sector breadth, lawyer visibility, narrative coherence.
+- If evidence is strong (15+ quality matters, cross-border work, sector diversity): score MUST be 70+, confidence MUST be Moderate or High.
+- If evidence is weak (few matters, no outcomes, single sector): score can be low — but cite the EVIDENCE weakness, not the band status.
+
+SCORING FLOOR CALIBRATION:
+- 20 matters with automotive + energy + real estate + banking = minimum score 70
+- 5+ cross-border matters = minimum confidence "Moderate"
+- Hero matter with USD 100M+ impact = minimum confidence "Moderate"
 
 {analysis_prompt}"""
     
@@ -517,6 +532,43 @@ EVIDENCE-BASED SCORING RULE (v10.2):
             score = res_json.get("score")
             if score is None or (isinstance(score, (int, float)) and score == 0):
                 violations.append("MISSING_SCORE: No score or score is 0")
+            
+            # CHECK 6: No "unranked status" bias (Rule #47)
+            # Scan key text fields for forbidden phrases
+            bias_phrases = [
+                "due to its unranked status",
+                "due to its unranked position",
+                "because the firm is unranked",
+                "as an unranked firm",
+                "given its unranked status",
+                "its unranked status",
+                "the firm is currently unranked",
+                "being unranked",
+            ]
+            # Check audit_letter narrative fields
+            text_fields_to_scan = []
+            if isinstance(audit_letter, dict):
+                for key in ["editorial_confidence_explanation", "the_state_of_play", "competitive_context", "executive_summary"]:
+                    val = audit_letter.get(key, "")
+                    if isinstance(val, str):
+                        text_fields_to_scan.append(val)
+            # Also check top-level fields
+            for key in ["editorial_confidence_explanation", "the_state_of_play", "competitive_context"]:
+                val = res_json.get(key, "")
+                if isinstance(val, str):
+                    text_fields_to_scan.append(val)
+            
+            full_text_scan = " ".join(text_fields_to_scan).lower()
+            for phrase in bias_phrases:
+                if phrase in full_text_scan:
+                    violations.append(f"UNRANKED_BIAS: Found '{phrase}' — scoring must be evidence-based, not status-based")
+                    break  # One violation is enough
+            
+            # CHECK 7: Scoring Floor Calibration (Rule #47)
+            if isinstance(score, (int, float)) and expected_count >= 15:
+                # With 15+ matters, score should be at least 65
+                if score < 65:
+                    violations.append(f"SCORE_FLOOR: Score {score} is below minimum 65 for a submission with {expected_count} matters")
             
             # Log results
             if violations:

@@ -57,6 +57,7 @@
 | 44 | Matter Evaluations Completeness — enforce exact count match with input matters | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 CRITICAL |
 | 45 | Evidence-Based Scoring — current_band is user metadata, score based on evidence only | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 SUPREME |
 | 46 | Validation Gate — programmatic post-analysis filter with auto-retry (max 2) | v10.2 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 SUPREME |
+| 47 | Anti-Unranked Bias — prohibit using 'unranked status' as negative scoring factor + scoring floor calibration | v10.2 | `nodes.py` (MANDATORY FACTS + Validation Gate CHECKs 6-7) | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 
