@@ -36,6 +36,29 @@ def sanitize_text(text: str) -> str:
     text = text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
     return text
 
+def strip_markdown(text: str) -> str:
+    """v11.0: Remove markdown formatting artifacts from LLM output.
+    The output goes to DOCX/PDF where markdown syntax appears as ugly literal characters."""
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    # Remove bold markers (**text** → text, __text__ → text)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    # Remove italic markers (*text* → text, _text_ → text) — be careful with underscores in names
+    text = re.sub(r'(?<!\w)\*(.+?)\*(?!\w)', r'\1', text)
+    # Remove header markers (## text → text)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # Remove backticks
+    text = re.sub(r'`(.+?)`', r'\1', text)
+    # Remove bullet point markers at start of lines (- text → text)
+    text = re.sub(r'^\s*[-*]\s+', '', text, flags=re.MULTILINE)
+    # Remove numbered list markers (1. text → text)
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    # Clean up excessive whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
 def safe_json_loads(text: str, fallback=None):
     """Parse JSON with multiple fallback strategies."""
     if not text:
@@ -204,9 +227,43 @@ def context_engine_node(state: AgentState) -> Dict:
     }
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are the RankPilot Context Engine. Analyze the firm's evidence and extract exactly the requested fields."),
+        ("system", """You are the RankPilot Context Engine (v11.0). Analyze the firm's evidence and extract exactly the requested fields.
+
+ARCHETYPE CLASSIFICATION (MANDATORY — select the BEST match):
+
+For Corporate/M&A practices:
+- "High-End Corporate/M&A" — star partners, elite market perception, premium institutional clients, high-value transactions, market-defining work
+- "Strong Mid-Market Corporate/M&A" — ex-elite lawyers, sophisticated but lower-ticket matters, agile structure, strong growth potential, niche positioning
+- "Emerging Boutique" — specialist ex-biglaw founders, focused premium expertise, single-practice dominance, strong market momentum
+- "Corporate Generalist" — broad service capability, weaker differentiation, mixed client base, lower strategic positioning
+
+For Banking & Finance:
+- "Lender-Driven Finance" — primarily represents financial institutions, syndicated lending, structured finance
+- "Borrower-Side Finance" — corporate borrower representation, acquisition finance, project finance
+- "Full-Spectrum Finance" — balanced lender/borrower practice, diversified facility types
+
+For Disputes:
+- "Elite Arbitration Boutique" — international arbitration focus, ICC/LCIA/ICSID, cross-border disputes
+- "Full-Service Litigation" — commercial litigation, regulatory disputes, appeals
+- "Specialist Disputes" — sector-specific litigation (banking, IP, competition, tax)
+
+For Labour & Employment:
+- "Employer-Side Labour" — workforce management, restructurings, compliance
+- "Union/Employee-Side Labour" — collective bargaining, worker advocacy, labour board proceedings
+- "Strategic Employment Advisory" — HR frameworks, M&A employment, executive compensation
+
+For other practices, describe the archetype based on evidence patterns.
+
+PRACTICE TYPE must be one of: transactional, disputes, regulatory, mixed.
+
+COMPLEXITY PROFILE: Describe the dominant complexity patterns (e.g., "cross-border multi-jurisdictional with regulatory overlay" or "domestic high-volume litigation with precedent value").
+
+IDENTITY_ADN: Synthesize archetype + complexity + client type + work type into a single strategic identity sentence.
+
+IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose the most specific archetype that fits."""),
         ("human", "Firm Data: {data}")
     ])
+
     
     chain = prompt | structured_llm
     
@@ -746,12 +803,13 @@ def optimization_node(state: AgentState) -> Dict:
                 except Exception as retry_err:
                     print(f"  [PROBATIVE] Re-optimization failed: {retry_err}. Keeping original optimization.")
             
-            matter['optimized_text'] = optimized_text
+            # v11.0: Strip any markdown formatting before storing
+            matter['optimized_text'] = strip_markdown(optimized_text)
             matter['status'] = 'AI Optimized'
             
         except Exception as e:
             print(f"Error optimizing matter: {e}")
-            matter['optimized_text'] = matter.get('summary', '')
+            matter['optimized_text'] = strip_markdown(matter.get('summary', ''))
             matter['status'] = 'Optimization Failed'
             
         optimized_matters.append(matter)

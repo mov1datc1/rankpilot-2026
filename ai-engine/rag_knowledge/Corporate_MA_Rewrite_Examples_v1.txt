@@ -1,0 +1,222 @@
+# Corporate/M&A Rewrite Examples — RankPilot RAG v1
+
+## Purpose
+
+This document teaches RankPilot how to transform weak Corporate/M&A descriptions into directory-ready narratives.
+
+The goal is not exaggeration. The goal is to surface strategic relevance, firm role, complexity and lawyer leadership.
+
+## Rewrite principle
+
+A strong Corporate/M&A matter should answer:
+
+1. Who did the firm act for?
+2. Was the client buyer, seller, target, sponsor, shareholder or JV partner?
+3. What type of transaction was it?
+4. What was the value or relative market significance?
+5. Why was it strategic?
+6. What made execution difficult?
+7. What did the firm specifically do?
+8. Which lawyers led the work?
+9. Why does this matter support ranking?
+
+## Example 1 — Generic acquisition
+
+### Before
+
+The firm advised Company X on the acquisition of Company Y.
+
+### After
+
+The firm advised Company X as buyer in its acquisition of Company Y, a transaction designed to expand the client’s presence in the regional healthcare market. The team negotiated the share purchase agreement, coordinated due diligence and advised on closing conditions.
+
+### Stronger version if facts allow
+
+The firm acted as lead counsel to Company X in its acquisition of Company Y, a strategic transaction that expanded the client’s presence in the regional healthcare market. The matter involved negotiations with multiple selling shareholders, regulatory approval requirements and post-closing governance arrangements. Partner A led the transaction, supported by Partner B on regulatory matters and Senior Associate C on due diligence and closing coordination.
+
+## Example 2 — Disposal
+
+### Before
+
+The firm advised the seller on a business sale.
+
+### After
+
+The firm represented the seller in the divestment of a non-core business unit, including negotiation of the sale agreement, transitional services arrangements and post-closing indemnity package.
+
+### Stronger version if facts allow
+
+The firm represented a multinational seller in the carve-out and sale of a non-core business unit. The transaction required separation of assets, migration of commercial contracts, transitional services arrangements and negotiation of retained liability protections. The matter was strategically important as part of the client’s regional portfolio refocusing strategy.
+
+## Example 3 — Joint venture
+
+### Before
+
+The firm advised on a joint venture agreement.
+
+### After
+
+The firm advised one of the joint venture partners on the creation of a new operating vehicle, including governance rights, capital contribution obligations and exit mechanisms.
+
+### Stronger version if facts allow
+
+The firm advised an international infrastructure operator on the creation of a cross-border joint venture with a local strategic partner. The team negotiated governance rights, reserved matters, deadlock mechanisms, funding obligations and exit rights, enabling the client to enter a regulated market through a locally aligned structure.
+
+## Example 4 — Private equity
+
+### Before
+
+The firm advised a fund on the acquisition of a company.
+
+### After
+
+The firm represented a private equity sponsor in its acquisition of a controlling stake in a target company, including negotiation of acquisition documents and management incentive arrangements.
+
+### Stronger version if facts allow
+
+The firm represented a private equity sponsor in a competitive auction process for the acquisition of a controlling stake in a healthcare services company. The transaction involved leveraged acquisition financing, management rollover arrangements, minority shareholder negotiations and regulatory approvals. The team coordinated corporate, finance, regulatory and employment workstreams through signing and closing.
+
+## Example 5 — Minority investment
+
+### Before
+
+The firm advised a company on an investment round.
+
+### After
+
+The firm advised the company on a minority investment by an institutional investor, including negotiation of shareholder rights and governance protections.
+
+### Stronger version if facts allow
+
+The firm advised a growth-stage technology company on a minority investment by an institutional investor. The team negotiated preferred rights, anti-dilution protections, board appointment rights, veto matters, information rights and founder control protections, balancing investor requirements with the company’s long-term growth strategy.
+
+## Example 6 — Corporate reorganisation
+
+### Before
+
+The firm advised on a corporate reorganisation.
+
+### After
+
+The firm advised the client on a group reorganisation involving the transfer of assets and restructuring of corporate entities.
+
+### Stronger version if facts allow
+
+The firm advised a multinational group on a cross-border corporate reorganisation designed to simplify its regional holding structure ahead of a strategic transaction. The matter involved corporate approvals, asset transfers, governance redesign, tax coordination and implementation across several jurisdictions.
+
+## Example 7 — Distressed M&A
+
+### Before
+
+The firm advised a buyer on an asset acquisition.
+
+### After
+
+The firm advised the buyer on the acquisition of operating assets from a distressed seller.
+
+### Stronger version if facts allow
+
+The firm advised the buyer in the acquisition of distressed operating assets from a company facing insolvency risk. The transaction required accelerated due diligence, creditor negotiations, liability isolation, regulatory approvals and execution within a compressed timetable to preserve asset value.
+
+## Example 8 — Local counsel
+
+### Before
+
+The firm acted as local counsel on a cross-border acquisition.
+
+### After
+
+The firm acted as local counsel on a cross-border acquisition, advising on local corporate approvals, due diligence and closing mechanics.
+
+### Stronger version if facts allow
+
+The firm acted as local counsel in a cross-border acquisition where the local assets were central to the transaction value. The team advised on local regulatory approvals, transfer restrictions, corporate authorisations, employment implications and closing mechanics, coordinating with international lead counsel to ensure timely completion.
+
+## Example 9 — Confidential transaction
+
+### Before
+
+The firm advised a confidential client on a confidential acquisition.
+
+### After
+
+The firm advised a confidential strategic investor on the acquisition of a company in a regulated sector.
+
+### Stronger version if facts allow
+
+The firm advised a confidential strategic investor on the acquisition of a controlling stake in a regulated services company. Although the client and value remain confidential, the transaction was significant due to the target’s market position, the need for regulatory approval and the negotiation of complex shareholder protections with existing owners.
+
+## Example 10 — Competitive shift / lateral hire
+
+### Before
+
+The firm strengthened its Corporate/M&A team with a new partner hire.
+
+### After
+
+The firm strengthened its Corporate/M&A team through the arrival of Partner X, whose integration immediately expanded the practice’s capabilities in private equity and regulated-sector transactions.
+
+### Stronger version if facts allow
+
+The arrival of Partner X materially repositioned the Corporate/M&A practice, adding recognised private equity expertise and immediately generating new sponsor-side mandates. Partner X led two of the firm’s most sophisticated transactions during the research period, including a competitive auction process and a regulated-sector acquisition, demonstrating immediate market impact.
+
+## Rewrite rules
+
+### Always clarify role
+
+Weak:
+
+- advised on the transaction
+
+Strong:
+
+- acted as lead counsel to the buyer
+- represented the seller in negotiations
+- advised the private equity sponsor
+- led transaction structuring
+
+### Always explain strategy
+
+Weak:
+
+- acquisition of a company
+
+Strong:
+
+- acquisition that expanded the client’s presence in a regulated market
+- divestment of a non-core business as part of portfolio refocusing
+- JV designed to enter a new jurisdiction
+
+### Always show complexity
+
+Weak:
+
+- complex transaction
+
+Strong:
+
+- involved multiple selling shareholders, antitrust approval, earn-out mechanics and post-closing governance arrangements
+
+### Always surface lawyer leadership
+
+Weak:
+
+- the firm advised
+
+Strong:
+
+- Partner A led the transaction, Partner B advised on governance and Senior Associate C coordinated closing
+
+### Never invent facts
+
+RankPilot must not invent:
+
+- deal value
+- client names
+- lead counsel status
+- jurisdictions
+- regulatory approvals
+- lawyer names
+- strategic purpose
+
+If facts are missing, RankPilot should ask for them or mark them as required fields.

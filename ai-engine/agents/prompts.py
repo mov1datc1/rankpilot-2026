@@ -253,14 +253,18 @@ RULES:
 6. No matter may appear in a publishable section of the DOCX output unless the source record
    is EXPLICITLY marked as publishable.
 
-DETECTION SIGNALS FOR NON-PUBLISHABLE STATUS:
+DETECTION SIGNALS FOR NON-PUBLISHABLE STATUS (EXPLICIT EVIDENCE REQUIRED):
 - Matter appears under "Non-publishable clients" header
 - Matter appears under "Confidential" section
 - Matter appears under "Section E" (Chambers) or equivalent confidential section
 - Matter is explicitly tagged as "non-publishable", "confidential", or "not for publication"
 - Client name appears in a "non-publishable clients" list
 
-WHEN IN DOUBT: Default to NON-PUBLISHABLE. It is always safer to protect than to expose.
+DEFAULT RULE (v11.0 — CRITICAL FIX):
+- If a matter has NO explicit confidentiality signal from the list above → Default to PUBLISHABLE.
+- ONLY mark as non_publishable when you find EXPLICIT textual evidence (headers, tags, sections) in the source document.
+- The absence of a "publishable" label does NOT make a matter confidential.
+- Most matters in a submission are intended for publication unless explicitly marked otherwise.
 
 VIOLATION OF THIS RULE = POTENTIAL LIABILITY. This is the highest-priority rule in the system.
 """
@@ -426,7 +430,8 @@ Identify and extract 'Structural Signals' regardless of the document's original 
    - If the matter appears in a "confidential" section → is_confidential=true, publish_status="confidential"
    - If the matter appears in a "publishable" section → is_confidential=false, publish_status="publishable"
    - If a CLIENT appears in a "non-publishable clients" list, ALL matters for that client are non_publishable
-   - WHEN IN DOUBT: default to non_publishable (safer to protect than expose)
+   - DEFAULT RULE (v11.0): If there is NO explicit confidentiality signal → default to PUBLISHABLE (is_confidential=false, publish_status="publishable")
+   - ONLY mark as non_publishable when the source document EXPLICITLY places the matter in a confidential/non-publishable section or tags it as such
 
 ### JSON OUTPUT SCHEMA (MANDATORY):
 You must return EXCLUSIVELY a JSON object with the following keys:
@@ -771,14 +776,22 @@ Every optimized matter MUST explain the team's specific role:
 - Why the firm's involvement was determinant to the outcome
 - Do NOT just describe the transaction — describe the firm's ROLE in it
 
-### FORMAT RULES:
+### FORMAT RULES (v11.0 — CRITICAL):
 - Use structured paragraphs, not walls of text
-- Bold key phrases for readability when appropriate
 - Avoid repeating the same examples across different capability categories
+- OUTPUT MUST BE PLAIN TEXT — NO MARKDOWN FORMATTING WHATSOEVER:
+  * Do NOT use ** for bold
+  * Do NOT use * for italics
+  * Do NOT use ## or # for headers
+  * Do NOT use bullet points with - or *
+  * Do NOT use numbered lists with 1. 2. 3.
+  * Do NOT use backticks ` or code blocks
+  * Write in flowing professional prose paragraphs ONLY
+  * The output will be placed directly into a DOCX/PDF document — markdown syntax will appear as literal ugly characters
 
 ### MANDATORY JSON OUTPUT SCHEMA:
 {{{{
-  "optimized_text": "The highly polished, rankable narrative of the matter."
+  "optimized_text": "The highly polished, rankable narrative of the matter in PLAIN TEXT paragraphs. NO markdown."
 }}}}
 
 CRITICAL DIRECTIVE: Output in the language specified by the user context. Default: English.

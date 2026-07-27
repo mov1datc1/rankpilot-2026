@@ -103,27 +103,57 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
             
         doc.add_heading('WORK HIGHLIGHTS AND CLIENTS', level=1)
         doc.add_paragraph("Provide details of up-to a total of 20 work highlights for this area.")
-        doc.add_heading('D. PUBLISHABLE INFORMATION', level=2)
         
         matters = structured_data.get('matters', [])
-        for idx, matter in enumerate(matters, 1):
-            doc.add_heading(f"Matter {idx}: {matter.get('name', 'Untitled')}", level=3)
+        
+        # v11.0: Split matters by publish status
+        publishable_matters = [m for m in matters if m.get('publish_status', 'publishable') == 'publishable' and not m.get('is_confidential', False)]
+        confidential_matters = [m for m in matters if m.get('publish_status', 'publishable') != 'publishable' or m.get('is_confidential', False)]
+        
+        # Section D: Publishable matters
+        doc.add_heading('D. PUBLISHABLE INFORMATION', level=2)
+        
+        if publishable_matters:
+            for idx, matter in enumerate(publishable_matters, 1):
+                doc.add_heading(f"Matter {idx}: {matter.get('name', '') or matter.get('title', 'Untitled')}", level=3)
+                
+                p = doc.add_paragraph()
+                p.add_run('Client: ').bold = True
+                p.add_run(f"{matter.get('client', 'N/A')}\n")
+                
+                p.add_run('Value: ').bold = True
+                p.add_run(f"{matter.get('value', '') or matter.get('matter_value', 'N/A')}\n")
+                
+                p.add_run('Lead Partner: ').bold = True
+                p.add_run(f"{matter.get('lead_partner') or matter.get('leadPartner', 'N/A')}\n")
+                
+                doc.add_paragraph().add_run('Matter Summary (Publishable):').bold = True
+                doc.add_paragraph(matter.get('optimizedText') or matter.get('optimized_text') or matter.get('description') or matter.get('rawNotes') or '')
+                doc.add_paragraph("_" * 50)
+        else:
+            doc.add_paragraph("No publishable matters available. Review Section E for confidential matters that may be reclassified.")
+        
+        # Section E: Non-publishable / Confidential matters (v11.0)
+        if confidential_matters:
+            doc.add_heading('E. NON-PUBLISHABLE / CONFIDENTIAL MATTERS', level=2)
+            doc.add_paragraph("The following matters are marked as confidential or non-publishable. They will NOT appear in the published directory entry.")
             
-            p = doc.add_paragraph()
-            p.add_run('Client: ').bold = True
-            p.add_run(f"{matter.get('client', 'N/A')}\n")
-            
-            p.add_run('Value: ').bold = True
-            p.add_run(f"{matter.get('value', 'N/A')}\n")
-            
-            p.add_run('Lead Partner: ').bold = True
-            p.add_run(f"{matter.get('lead_partner') or matter.get('leadPartner', 'N/A')}\n")
-            
-            doc.add_paragraph().add_run('Matter Summary (Publishable):').bold = True
-            doc.add_paragraph(matter.get('optimizedText') or matter.get('optimized_text') or matter.get('description') or matter.get('rawNotes') or '')
-            doc.add_paragraph("_" * 50)
+            for idx, matter in enumerate(confidential_matters, 1):
+                doc.add_heading(f"Confidential Matter {idx}: {matter.get('name', '') or matter.get('title', 'Untitled')}", level=3)
+                
+                p = doc.add_paragraph()
+                p.add_run('Client: ').bold = True
+                p.add_run(f"{matter.get('client', 'N/A')}\n")
+                
+                p.add_run('Status: ').bold = True
+                p.add_run(f"{matter.get('publish_status', 'non_publishable')}\n")
+                
+                doc.add_paragraph().add_run('Matter Summary (Non-Publishable):').bold = True
+                doc.add_paragraph(matter.get('optimizedText') or matter.get('optimized_text') or matter.get('description') or matter.get('rawNotes') or '')
+                doc.add_paragraph("_" * 50)
         
     # Save the document
     file_path = f"{output_filename}.docx"
     doc.save(file_path)
     return file_path
+

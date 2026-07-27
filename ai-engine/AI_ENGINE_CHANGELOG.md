@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-24** (v10.2 — Future Deadline Injection, De-Emphasize Disposition Fix)
+> Last updated: **2026-07-27** (v11.0 — Full RAG v1 Integration, Archetype Rubric, Section D/E Fix, Markdown Strip)
 
 ---
 
@@ -58,6 +58,12 @@
 | 45 | Evidence-Based Scoring — current_band is user metadata, score based on evidence only | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 SUPREME |
 | 46 | Validation Gate — programmatic post-analysis filter with auto-retry (max 2) | v10.2 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 SUPREME |
 | 47 | Anti-Unranked Bias — prohibit using 'unranked status' as negative scoring factor + scoring floor calibration | v10.2 | `nodes.py` (MANDATORY FACTS + Validation Gate CHECKs 6-7) | ✅ ACTIVE | 🔴 SUPREME |
+| 48 | RAG v1 Full Integration — 19 files from 3 ZIPs converted to .txt | v11.0 | `rag_knowledge/` (Corporate_MA_*_v1.txt, Chambers_Banking_*_v1.txt, Legal500_*, IFLR1000_*, LeadersLeague_*) | ✅ ACTIVE | 🔴 SUPREME |
+| 49 | RAG Router v11.0 — .txt + .md support, top-7 limit (was 3), tiered scoring | v11.0 | `rag_router.py` | ✅ ACTIVE | 🔴 SUPREME |
+| 50 | Archetype Rubric Injection — 4-archetype model per PA in context_engine prompt | v11.0 | `nodes.py` (context_engine_node prompt) | ✅ ACTIVE | 🔴 CRITICAL |
+| 51 | Section D/E Publish Status Split — publishable → D, non_publishable → E | v11.0 | `docx_generator.py`, `prompts.py` (confidentiality guardrail default flipped) | ✅ ACTIVE | 🔴 SUPREME |
+| 52 | Markdown Strip — strip_markdown() post-processor on all optimized text | v11.0 | `nodes.py` (strip_markdown function + optimization_node) | ✅ ACTIVE | 🔴 CRITICAL |
+| 53 | Confidentiality Default Flip — "When in doubt → PUBLISHABLE" (was non_publishable) | v11.0 | `prompts.py` (CONFIDENTIALITY_GUARDRAIL_RULE, EXTRACTION_SYSTEM_PROMPT) | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 
