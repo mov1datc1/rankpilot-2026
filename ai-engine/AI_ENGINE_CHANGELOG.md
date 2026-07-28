@@ -78,6 +78,7 @@
 | 65 | Comprehension Thesis Resilience — inject context_engine output (archetype, identity_adn, practice_type) into comprehension input so thesis can be extracted even when PIL returns defaults | v13.1 | `editorial_nodes.py` (comprehension_node enriched input) | ✅ ACTIVE | 🔴 CRITICAL |
 | 66 | PIL Stop Conditions Recalibrated — §20 changed from ANY-trigger to ALL-THREE-trigger. Unranked/small firms no longer blocked. Added CRITICAL MANDATE requiring non-empty signals/patterns | v13.1 | `prompts.py` (PRACTICE_INTELLIGENCE_PROMPT §20 + CRITICAL MANDATE) | ✅ ACTIVE | 🔴 SUPREME |
 | 67 | Comprehension Context Engine Fallback — COMPREHENSION_PROMPT now explicitly instructs LLM to use context_engine data (archetype, identity_adn) for thesis extraction when PIL is empty | v13.1 | `prompts.py` (COMPREHENSION_PROMPT CONTEXT ENGINE FALLBACK section) | ✅ ACTIVE | 🔴 CRITICAL |
+| 68 | LangChain Curly Brace Escaping — json.dumps of OBJECTIVE_DIRECTIVES produces `{"priorities":...}` which LangChain interprets as template variables. Fix: `.replace("{","{{").replace("}","}}")` in _inject_directives. Without this, ALL nodes crash with 'missing variables {"priorities"}' | v13.1 | `editorial_nodes.py` (_inject_directives brace escaping) | ✅ ACTIVE | 🔴 SUPREME |
 
 
 ---

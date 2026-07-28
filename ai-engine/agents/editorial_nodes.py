@@ -98,7 +98,12 @@ def _inject_directives(prompt_template: str, strategic_context: dict) -> str:
         
     if primary_objective and primary_objective in OBJECTIVE_DIRECTIVES:
         obj_data = OBJECTIVE_DIRECTIVES[primary_objective]
-        injections.append(f"\n### SUBMISSION OBJECTIVE: {primary_objective}\n" + json.dumps(obj_data, indent=2))
+        # v13.1 FIX: Escape curly braces so LangChain ChatPromptTemplate
+        # doesn't interpret JSON braces as template variables.
+        # Without this, {"priorities": [...]} crashes ALL nodes with:
+        # 'Input to ChatPromptTemplate is missing variables {"priorities"}'
+        obj_json = json.dumps(obj_data, indent=2).replace("{", "{{").replace("}", "}}")
+        injections.append(f"\n### SUBMISSION OBJECTIVE: {primary_objective}\n" + obj_json)
         
     if injections:
         return prompt_template + "\n\n" + "\n\n".join(injections)
