@@ -408,6 +408,30 @@ class EditorialMemoryBank(BaseModel):
 # editorial knowledge.
 # =====================================================
 
+# v13.1: Simplified fallback schema for when the full PIL schema fails
+class PracticeIntelligenceLite(BaseModel):
+    """Simplified Practice Intelligence output for LLM fallback.
+    When the full PracticeIntelligenceOutput (30+ fields, nested lists) causes
+    the LLM structured output to fail, this lite schema captures the essential
+    10 fields needed for downstream nodes to function."""
+    
+    practice_main: str = Field(description="Primary practice area identified from evidence.")
+    centre_of_gravity: str = Field(description="The dominant pattern around which evidence organizes.")
+    centre_of_gravity_type: str = Field(default="single", description="One of: 'single', 'dual', 'fragmented'.")
+    hypothesis_primary: str = Field(description="Primary hypothesis about practice identity and positioning.")
+    hypothesis_alternative: str = Field(default="", description="Alternative hypothesis.")
+    hypothesis_conservative: str = Field(default="", description="Conservative interpretation.")
+    hypothesis_confidence: float = Field(default=0.5, description="0-1 confidence in the primary hypothesis.")
+    team_classification: str = Field(default="functional", description="One of: 'dependent', 'functional', 'robust'.")
+    team_classification_rationale: str = Field(default="", description="Why this team classification was assigned.")
+    narrative_coherence_label: str = Field(default="coherent", description="One of: 'overclaim', 'coherent', 'underpositioned'.")
+    narrative_coherence_rationale: str = Field(default="", description="Why this coherence label was assigned.")
+    fit_score: int = Field(default=4, description="Practice Fit Test score 0-8.")
+    top_risks: List[str] = Field(default_factory=list, description="Top 3 practice risks detected.")
+    top_signals: List[str] = Field(default_factory=list, description="Top 5 signals detected, described in plain text.")
+    status: str = Field(default="PROCEED", description="'PROCEED' or 'CLARIFICATION_REQUIRED'.")
+
+
 class PracticeSignal(BaseModel):
     """§10: A single structured signal extracted from evidence.
     10 universal signal types (A-J) with practice-specific expression."""

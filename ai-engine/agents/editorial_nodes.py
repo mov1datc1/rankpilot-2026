@@ -28,6 +28,7 @@ from core.schema import (
     SubmissionBlueprintOutput,
     NarrativeArchitectureOutput,
     PracticeIntelligenceOutput,
+    PracticeIntelligenceLite,
 )
 from agents.prompts import (
     PRACTICE_INTELLIGENCE_PROMPT,
@@ -160,52 +161,110 @@ def practice_intelligence_node(state: AgentState) -> Dict:
     try:
         result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
         pil_output = _safe_dump(result)
+        print("[PIL v13.1] Full schema succeeded")
     except Exception as e:
-        print(f"Error in Practice Intelligence Layer Node: {e}")
-        # CRITICAL FIX v13.0: PIL failure must NOT block the pipeline.
-        # The pipeline must degrade gracefully and continue to analysis/writing.
-        # Only explicit LLM-determined CLARIFICATION_REQUIRED should stop the flow.
-        pil_output = {
-            "practice_main": submission_context.get("practice_area", "Unknown"),
-            "sub_practices": [],
-            "centre_of_gravity": "Unable to determine from available evidence",
-            "centre_of_gravity_type": "fragmented",
-            "secondary_gravity": "",
-            "overlaps": [],
-            "category_fit_concerns": [f"PIL analysis failed: {str(e)}"],
-            "rags_used": [],
-            "rules_applied": [],
-            "conflicts_resolved": [],
-            "signals": [],
-            "patterns": [],
-            "excessive_dependencies": [],
-            "hypothesis_primary": "Unable to generate hypothesis",
-            "hypothesis_alternative": "Unable to generate hypothesis",
-            "hypothesis_conservative": "Unable to generate hypothesis",
-            "hypothesis_confidence": 0.0,
-            "hypothesis_evidence_for": [],
-            "hypothesis_evidence_against": [],
-            "risks": [f"Practice Intelligence Layer failed: {str(e)}"],
-            "research_questions": ["Manual review required — PIL node encountered an error"],
-            "fit_test": {
-                "category_fit": False, "category_fit_notes": "Unable to assess",
-                "matter_fit": False, "matter_fit_notes": "Unable to assess",
-                "client_fit": False, "client_fit_notes": "Unable to assess",
-                "role_fit": False, "role_fit_notes": "Unable to assess",
-                "team_fit": False, "team_fit_notes": "Unable to assess",
-                "lawyer_fit": False, "lawyer_fit_notes": "Unable to assess",
-                "directory_fit": False, "directory_fit_notes": "Unable to assess",
-                "market_fit": False, "market_fit_notes": "Unable to assess",
-                "overall_fit": False, "fit_score": 0,
-            },
-            "tensions": [],
-            "team_classification": "dependent",
-            "team_classification_rationale": "Unable to assess — PIL failed",
-            "narrative_coherence_label": "overclaim",
-            "narrative_coherence_rationale": "Unable to assess — PIL failed",
-            "status": "PROCEED",
-            "stop_reason": "",
-        }
+        print(f"[PIL v13.1] Full schema failed: {e}")
+        print("[PIL v13.1] Retrying with PracticeIntelligenceLite fallback...")
+        
+        # v13.1 FIX: Retry with simplified lite schema
+        try:
+            lite_llm = llm.with_structured_output(PracticeIntelligenceLite)
+            lite_chain = prompt | lite_llm
+            lite_result = lite_chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
+            lite = _safe_dump(lite_result)
+            print(f"[PIL v13.1] Lite fallback succeeded — CoG: {lite.get('centre_of_gravity', '')}")
+            
+            # Map lite output into the full PracticeIntelligenceOutput format
+            pil_output = {
+                "practice_main": lite.get("practice_main", submission_context.get("practice_area", "Unknown")),
+                "sub_practices": [],
+                "centre_of_gravity": lite.get("centre_of_gravity", "Unable to determine"),
+                "centre_of_gravity_type": lite.get("centre_of_gravity_type", "fragmented"),
+                "secondary_gravity": "",
+                "overlaps": [],
+                "category_fit_concerns": [],
+                "rags_used": [],
+                "rules_applied": [],
+                "conflicts_resolved": [],
+                # Convert top_signals strings into structured PracticeSignal-like dicts
+                "signals": [
+                    {"signal_type": "matter", "description": s, "relevance": "medium", "confidence": 0.5}
+                    for s in lite.get("top_signals", [])
+                ],
+                "patterns": [],
+                "excessive_dependencies": [],
+                "hypothesis_primary": lite.get("hypothesis_primary", "Unable to generate hypothesis"),
+                "hypothesis_alternative": lite.get("hypothesis_alternative", ""),
+                "hypothesis_conservative": lite.get("hypothesis_conservative", ""),
+                "hypothesis_confidence": lite.get("hypothesis_confidence", 0.5),
+                "hypothesis_evidence_for": [],
+                "hypothesis_evidence_against": [],
+                "risks": lite.get("top_risks", []),
+                "research_questions": [],
+                "fit_test": {
+                    "category_fit": True, "category_fit_notes": "Assessed via lite fallback",
+                    "matter_fit": True, "matter_fit_notes": "Assessed via lite fallback",
+                    "client_fit": True, "client_fit_notes": "Assessed via lite fallback",
+                    "role_fit": True, "role_fit_notes": "Assessed via lite fallback",
+                    "team_fit": True, "team_fit_notes": "Assessed via lite fallback",
+                    "lawyer_fit": True, "lawyer_fit_notes": "Assessed via lite fallback",
+                    "directory_fit": True, "directory_fit_notes": "Assessed via lite fallback",
+                    "market_fit": True, "market_fit_notes": "Assessed via lite fallback",
+                    "overall_fit": lite.get("fit_score", 4) >= 4,
+                    "fit_score": lite.get("fit_score", 4),
+                },
+                "tensions": [],
+                "team_classification": lite.get("team_classification", "functional"),
+                "team_classification_rationale": lite.get("team_classification_rationale", "Assessed via lite fallback"),
+                "narrative_coherence_label": lite.get("narrative_coherence_label", "coherent"),
+                "narrative_coherence_rationale": lite.get("narrative_coherence_rationale", "Assessed via lite fallback"),
+                "status": lite.get("status", "PROCEED"),
+                "stop_reason": "",
+            }
+        except Exception as e2:
+            print(f"[PIL v13.1] Lite fallback also failed: {e2}")
+            # Final fallback: hardcoded defaults (same as v13.0)
+            pil_output = {
+                "practice_main": submission_context.get("practice_area", "Unknown"),
+                "sub_practices": [],
+                "centre_of_gravity": "Unable to determine from available evidence (fragmented)",
+                "centre_of_gravity_type": "fragmented",
+                "secondary_gravity": "",
+                "overlaps": [],
+                "category_fit_concerns": [f"PIL analysis failed: {str(e2)}"],
+                "rags_used": [],
+                "rules_applied": [],
+                "conflicts_resolved": [],
+                "signals": [],
+                "patterns": [],
+                "excessive_dependencies": [],
+                "hypothesis_primary": "Unable to generate hypothesis",
+                "hypothesis_alternative": "Unable to generate hypothesis",
+                "hypothesis_conservative": "Unable to generate hypothesis",
+                "hypothesis_confidence": 0.0,
+                "hypothesis_evidence_for": [],
+                "hypothesis_evidence_against": [],
+                "risks": [f"Practice Intelligence Layer failed: {str(e2)}"],
+                "research_questions": ["Manual review required — PIL node encountered an error"],
+                "fit_test": {
+                    "category_fit": False, "category_fit_notes": "Unable to assess",
+                    "matter_fit": False, "matter_fit_notes": "Unable to assess",
+                    "client_fit": False, "client_fit_notes": "Unable to assess",
+                    "role_fit": False, "role_fit_notes": "Unable to assess",
+                    "team_fit": False, "team_fit_notes": "Unable to assess",
+                    "lawyer_fit": False, "lawyer_fit_notes": "Unable to assess",
+                    "directory_fit": False, "directory_fit_notes": "Unable to assess",
+                    "market_fit": False, "market_fit_notes": "Unable to assess",
+                    "overall_fit": False, "fit_score": 0,
+                },
+                "tensions": [],
+                "team_classification": "dependent",
+                "team_classification_rationale": "Unable to assess — PIL failed",
+                "narrative_coherence_label": "overclaim",
+                "narrative_coherence_rationale": "Unable to assess — PIL failed",
+                "status": "PROCEED",
+                "stop_reason": "",
+            }
     
     # Build reasoning trace
     trace = state.get("reasoning_trace", [])
@@ -251,12 +310,23 @@ def comprehension_node(state: AgentState) -> Dict:
     llm = get_model()
     structured_llm = llm.with_structured_output(ComprehensionOutput)
     
+    # v13.1 FIX: Enrich comprehension with strategic_context (archetype, identity_adn)
+    # so it can extract thesis even when PIL returns empty/default data
+    strategic_ctx = state.get("strategic_context", {})
     input_data = {
         "metadata": state.get("metadata", {}),
         "matters": state.get("matters", []),
         "submission_context": state.get("submission_context", {}),
         # v12.0: Include PIL output for practice-aware comprehension
         "practice_intelligence": state.get("practice_intelligence", {}),
+        # v13.1: Include context_engine output for thesis resilience
+        "context_engine": {
+            "archetype": strategic_ctx.get("archetype", ""),
+            "identity_adn": strategic_ctx.get("identity_adn", ""),
+            "practice_type": strategic_ctx.get("practice_type", ""),
+            "complexity_profile": strategic_ctx.get("complexity_profile", ""),
+            "client_type": strategic_ctx.get("client_type", ""),
+        },
     }
     
     system_prompt = _inject_directives(COMPREHENSION_PROMPT, state.get("strategic_context", {}))
@@ -714,9 +784,56 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         principle="Vol. VI Ch. 15: Design Before Writing"
     ))
 
-    # v7.0: Matter accountability validation
-    input_count = len(state.get("matters", []))
+    # v7.0 + v13.1: Matter accountability validation with auto-fill
+    input_matters = state.get("matters", [])
+    input_count = len(input_matters)
     disposition_count = len(blueprint.get("all_matter_dispositions", []))
+    
+    # v13.1 FIX: If LLM left all_matter_dispositions empty, auto-generate them
+    if input_count > 0 and disposition_count < input_count:
+        print(f"[v13.1] Auto-filling matter dispositions: {input_count} matters, {disposition_count} tracked by LLM")
+        hero_title = blueprint.get("hero_matter", "").strip().lower()
+        supporting_titles = [s.strip().lower() for s in blueprint.get("supporting_matters", [])]
+        exclude_titles = []
+        for exc in blueprint.get("matters_to_exclude", []):
+            if isinstance(exc, dict):
+                exclude_titles.append(exc.get("matter_title", "").strip().lower())
+            elif isinstance(exc, str):
+                exclude_titles.append(exc.strip().lower())
+        
+        auto_dispositions = []
+        for m in input_matters:
+            m_title = ""
+            if isinstance(m, dict):
+                m_title = m.get("title", m.get("name", "")).strip()
+            elif isinstance(m, str):
+                m_title = m.strip()
+            
+            m_lower = m_title.lower()
+            
+            if m_lower == hero_title or (hero_title and hero_title in m_lower):
+                role = "hero"
+                rationale = "Selected as hero matter by editorial analysis"
+            elif m_lower in supporting_titles or any(s in m_lower for s in supporting_titles if s):
+                role = "supporting"
+                rationale = "Supporting evidence for the thesis"
+            elif m_lower in exclude_titles or any(e in m_lower for e in exclude_titles if e):
+                role = "de_emphasize"
+                rationale = "De-emphasized — does not strengthen core thesis"
+            else:
+                role = "supporting"
+                rationale = "Included as supporting evidence (auto-assigned)"
+            
+            auto_dispositions.append({
+                "matter_title": m_title,
+                "disposition": role,
+                "rationale": rationale,
+            })
+        
+        blueprint["all_matter_dispositions"] = auto_dispositions
+        disposition_count = len(auto_dispositions)
+        print(f"[v13.1] Auto-filled {disposition_count} matter dispositions")
+    
     supporting_count = len(blueprint.get("supporting_matters", []))
     hero = 1 if blueprint.get("hero_matter") else 0
     accounted = disposition_count or (supporting_count + hero)

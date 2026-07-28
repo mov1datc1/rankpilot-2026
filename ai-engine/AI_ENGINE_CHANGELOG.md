@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-28** (v12.0 — Practice Intelligence Layer, Signal Extraction, Practice Fit Test, Tension Detection, Team Classification, Narrative Coherence Label)
+> Last updated: **2026-07-28** (v13.1 — PIL Lite Retry, Matter Accountability Auto-Fill, Comprehension Thesis Resilience)
 
 ---
 
@@ -73,6 +73,10 @@
 | 60 | Submission Objectives Hierarchy — 10 dynamic objectives injected into editorial prompts | v13.0 | `prompts.py` (OBJECTIVE_DIRECTIVES), `editorial_nodes.py` (_inject_directives) | ✅ ACTIVE | 🔴 SUPREME |
 | 61 | Lateral Hire Rule — Hire must demonstrate capability/clients to be evidence | v13.0 | `prompts.py` (LATERAL_HIRE_RULE) | ✅ ACTIVE | 🔴 CRITICAL |
 | 62 | Graceful Degradation — PIL/Comprehension gates NEVER block pipeline; blank reports are unacceptable | v13.0 | `graph.py` (route_after_practice_intelligence, route_after_comprehension), `editorial_nodes.py` (PIL fallback) | ✅ ACTIVE | 🔴 SUPREME |
+| 63 | PIL Lite Retry — when full PracticeIntelligenceOutput (30+ fields) fails, retry with PracticeIntelligenceLite (15 flat fields), then map to full format | v13.1 | `schema.py` (PracticeIntelligenceLite), `editorial_nodes.py` (practice_intelligence_node retry) | ✅ ACTIVE | 🔴 SUPREME |
+| 64 | Matter Accountability Auto-Fill — programmatic disposition generation when LLM leaves all_matter_dispositions empty. Maps hero/supporting/exclude from blueprint fields | v13.1 | `editorial_nodes.py` (submission_blueprint_node auto-fill) | ✅ ACTIVE | 🔴 CRITICAL |
+| 65 | Comprehension Thesis Resilience — inject context_engine output (archetype, identity_adn, practice_type) into comprehension input so thesis can be extracted even when PIL returns defaults | v13.1 | `editorial_nodes.py` (comprehension_node enriched input) | ✅ ACTIVE | 🔴 CRITICAL |
+
 
 ---
 
