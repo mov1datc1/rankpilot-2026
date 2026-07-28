@@ -69,6 +69,9 @@
 | 56 | Tension Detection — 8 structural tension types (Claim-Evidence, Practice-Category, Matter-Team, Firm-Lawyer, Directory, Breadth-Specialisation, Volume-Sophistication, Market-Narrative) | v12.0 | `schema.py` (PracticeTension), `prompts.py` (§15 in PIL prompt) | ✅ ACTIVE | 🔴 CRITICAL |
 | 57 | Team Structure Classification — dependent/functional/robust (Documento Maestro Mod 5) | v12.0 | `schema.py` (PracticeIntelligenceOutput.team_classification), `editorial_nodes.py` (injected into blueprint) | ✅ ACTIVE | 🟡 HIGH |
 | 58 | Narrative Coherence Label — overclaim/coherent/underpositioned (Documento Maestro Mod 4) | v12.0 | `schema.py` (PracticeIntelligenceOutput.narrative_coherence_label), `editorial_nodes.py` (injected into blueprint) | ✅ ACTIVE | 🟡 HIGH |
+| 59 | First Recognition / Market Entry Mode — Objective routing and EntryCaseOutput schema | v13.0 | `nodes.py` (objective routing), `schema.py` (EntryCaseOutput), `prompts.py` (FIRST_RECOGNITION_DIRECTIVE) | ✅ ACTIVE | 🔴 SUPREME |
+| 60 | Submission Objectives Hierarchy — 10 dynamic objectives injected into editorial prompts | v13.0 | `prompts.py` (OBJECTIVE_DIRECTIVES), `editorial_nodes.py` (_inject_directives) | ✅ ACTIVE | 🔴 SUPREME |
+| 61 | Lateral Hire Rule — Hire must demonstrate capability/clients to be evidence | v13.0 | `prompts.py` (LATERAL_HIRE_RULE) | ✅ ACTIVE | 🔴 CRITICAL |
 
 ---
 

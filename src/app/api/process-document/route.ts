@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
           directory: submission.targetDirectory,
           jurisdiction: submission.guideRegion,
           practice_area: submission.practiceArea,
-          current_status: submission.currentBand
+          current_status: submission.currentBand,
+          primary_objective: (submission.chambersData as any)?.primaryObjective || '',
+          secondary_objective: (submission.chambersData as any)?.secondaryObjective || ''
         }
       })
     });

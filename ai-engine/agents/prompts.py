@@ -138,7 +138,110 @@ Before concluding "client concentration" or "limited diversity":
 """
 
 # =====================================================
+# v13.0 OBJECTIVE & ENTRY DIRECTIVES
+# =====================================================
+
+FIRST_RECOGNITION_DIRECTIVE = """
+### FIRST RECOGNITION / MARKET ENTRY MODE (v13.0):
+Because the current status is UNRANKED, RankPilot must evaluate this as a FIRST-TIME RECOGNITION CASE.
+
+ENTRY BENCHMARK:
+Do NOT compare this firm against Band 1 or Band 2 leaders. 
+Compare it against recent new entrants and firms in the lowest ranked tiers (e.g., Band 5, Band 6, or 'Up and Coming').
+
+ENTRY REQUIREMENTS TO ASSESS:
+1. Practice Existence: Is this a dedicated practice or just general corporate work?
+2. Rankable Quality: Are the matters complex enough for Chambers?
+3. Market Presence: Are the clients recognizable or significant?
+4. Competitive Identity: Does the firm have a clear reason to exist in this market?
+5. Identifiable People: Are specific partners driving this work?
+6. External Validation: Is there sufficient referee/market support?
+
+CRITICAL DISTINCTION:
+Distinguish between "The evidence does not exist" and "The evidence is not presented in the submission."
+
+PROHIBITED:
+- NEVER invent a target band (e.g., do NOT say "Band 4-5 viable").
+- NEVER say "Below ranking threshold". Use "Entry case not yet defensible".
+
+OUTPUT REQUIREMENTS:
+Assess the defensibility of an initial inclusion. Is it a strong entry case, credible, potential but underdeveloped, or insufficient?
+"""
+
+OBJECTIVE_DIRECTIVES = {
+    "First-time recognition": {
+        "priorities": ["existence", "scale", "quality", "market_presence", "referees", "identity"],
+        "benchmark": "Compare against recent new entrants and entry-level ranked profiles.",
+        "narrative": "This practice exists, has scale, has quality, and merits inclusion.",
+        "key_question": "Does this practice clear the threshold for initial recognition?"
+    },
+    "Maintain current ranking": {
+        "priorities": ["continuity", "consistency", "client_retention", "new_matters", "stable_team"],
+        "benchmark": "Compare against own prior cycle and current band peers.",
+        "narrative": "The practice continues to fully justify its current position.",
+        "key_question": "Is there any evidence of deterioration or loss of competitiveness?"
+    },
+    "Move up one band/tier": {
+        "priorities": ["structural_change", "peer_differentiation", "sophistication", "recognition", "depth"],
+        "benchmark": "Compare against firms in the target (next) band.",
+        "narrative": "The practice has structurally evolved and now operates at a higher tier.",
+        "key_question": "Does the evidence show structural improvement or just a good year?"
+    },
+    "Move up multiple bands/tiers": {
+        "priorities": ["transformational_growth", "market_disruption", "flagship_mandates", "elite_roster"],
+        "benchmark": "Compare against elite firms in the target tier.",
+        "narrative": "A transformational shift has fundamentally repositioned this practice.",
+        "key_question": "Is the shift truly transformational and backed by undeniable evidence?"
+    },
+    "Improve individual lawyer recognition": {
+        "priorities": ["matter_attribution", "lawyer_visibility", "leadership", "results", "referee_support"],
+        "benchmark": "Compare against ranked individuals in the practice area.",
+        "narrative": "This individual is a leading market practitioner driving key mandates.",
+        "key_question": "Is the individual's market profile and leadership clearly demonstrated?"
+    },
+    "Correct market perception": {
+        "priorities": ["contrast_with_perception", "myth_busting_matters", "repositioning_narrative"],
+        "benchmark": "Compare against the firm's historic perception vs current reality.",
+        "narrative": "The market's historical view of this firm is outdated; the reality is different.",
+        "key_question": "Does the evidence decisively refute the old market perception?"
+    },
+    "Consolidate sector specialization": {
+        "priorities": ["sector_concentration", "deep_expertise", "industry_clients"],
+        "benchmark": "Compare against leading specialists in this specific sector.",
+        "narrative": "This is the premier specialist practice for this specific industry.",
+        "key_question": "Does the specialization represent strategic depth or risky overdependence?"
+    },
+    "Demonstrate institutional depth": {
+        "priorities": ["multiple_partners", "succession", "associate_strength", "sustainability"],
+        "benchmark": "Compare against fully institutionalized practices.",
+        "narrative": "The practice is built on a deep, sustainable bench, not just one star.",
+        "key_question": "Is the bench strength truly institutional, or still partner-dependent?"
+    },
+    "Support a new office or jurisdiction": {
+        "priorities": ["local_penetration", "cross_office_synergy", "regional_clients"],
+        "benchmark": "Compare against established practices in the new jurisdiction.",
+        "narrative": "The new office has successfully penetrated the local market.",
+        "key_question": "Does the local office have genuine critical mass?"
+    },
+    "Defend against possible ranking decline": {
+        "priorities": ["reassurance", "replacement_of_departures", "ongoing_mandates"],
+        "benchmark": "Compare against own prior cycle to prove stability.",
+        "narrative": "Despite market challenges/departures, the practice remains fully robust.",
+        "key_question": "Has the practice successfully mitigated the risk factors?"
+    }
+}
+
+LATERAL_HIRE_RULE = """
+LATERAL HIRE RULE:
+A significant lateral hire is not evidence of improvement by itself. 
+It becomes ranking evidence when the submission demonstrates the capability, 
+client relationships, matters, market recognition or institutional depth 
+created by that hire.
+"""
+
+# =====================================================
 # v7.1 EDITORIAL VOICE — Shared prohibited terms
+
 # Injected into prompts that generate outward-facing text
 # =====================================================
 

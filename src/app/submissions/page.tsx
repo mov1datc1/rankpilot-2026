@@ -7,7 +7,7 @@ import { createSubmission } from '@/app/actions/submissions';
 import { getLibraryMatters, attachMattersToSubmission } from '@/app/actions/library';
 import { createClient } from '@/utils/supabase/client';
 import PremiumSelect from '@/components/PremiumSelect';
-import { DIRECTORIES, REGIONS, PRACTICE_AREAS, BANDS, JURISDICTIONS } from '@/lib/constants';
+import { DIRECTORIES, REGIONS, PRACTICE_AREAS, BANDS, JURISDICTIONS, SUBMISSION_OBJECTIVES } from '@/lib/constants';
 
 export default function SubmissionsPage() {
   const router = useRouter();
@@ -26,6 +26,19 @@ export default function SubmissionsPage() {
   const [practiceArea, setPracticeArea] = useState('Banking & Finance');
   const [currentBand, setCurrentBand] = useState('Unranked');
   const [deadline, setDeadline] = useState('');
+  const [primaryObjective, setPrimaryObjective] = useState('');
+  const [secondaryObjective, setSecondaryObjective] = useState('');
+
+  // Smart defaults for objectives based on band
+  useEffect(() => {
+    if (currentBand === 'Unranked') {
+      setPrimaryObjective('First-time recognition');
+    } else {
+      setPrimaryObjective('Maintain current ranking');
+    }
+  }, [currentBand]);
+
+  const canSubmit = deadline && primaryObjective && secondaryObjective;
 
   // Library Enrichment
   type LibMatter = { id: string; name: string; client: string; value: string; status: string; firm?: { name: string } | null; practiceArea?: string | null };
@@ -109,6 +122,8 @@ export default function SubmissionsPage() {
         practiceArea,
         currentBand,
         deadline,
+        primaryObjective,
+        secondaryObjective,
       });
 
       if (result.success && result.data) {
@@ -148,6 +163,8 @@ export default function SubmissionsPage() {
         practiceArea,
         currentBand,
         deadline,
+        primaryObjective,
+        secondaryObjective,
       });
 
       if (result.success && result.data) {
@@ -175,6 +192,8 @@ export default function SubmissionsPage() {
         practiceArea,
         currentBand,
         deadline,
+        primaryObjective,
+        secondaryObjective,
       });
 
       if (result.success && result.data) {
@@ -247,7 +266,7 @@ export default function SubmissionsPage() {
           />
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Deadline <span style={{ fontWeight: 400, textTransform: 'none', color: '#94a3b8', letterSpacing: 0 }}>· optional</span>
+              Deadline
             </label>
             <input 
               type="date" 
@@ -260,8 +279,26 @@ export default function SubmissionsPage() {
                 boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
               }} 
             />
-            <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.35rem 0 0', fontStyle: 'italic' }}>For your own tracking — does not affect AI analysis.</p>
           </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
+          <PremiumSelect
+            label="Primary Objective"
+            value={primaryObjective}
+            options={SUBMISSION_OBJECTIVES}
+            onChange={setPrimaryObjective}
+            searchable={false}
+            id="builder-primary-objective"
+          />
+          <PremiumSelect
+            label="Secondary Objective"
+            value={secondaryObjective}
+            options={SUBMISSION_OBJECTIVES}
+            onChange={setSecondaryObjective}
+            searchable={false}
+            id="builder-secondary-objective"
+          />
         </div>
       </div>
 
@@ -422,13 +459,15 @@ export default function SubmissionsPage() {
         {/* Upload Card */}
         <button 
           onClick={() => setShowUploadModal(true)}
+          disabled={!canSubmit}
           style={{ 
             background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '3rem 2rem', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
-            cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+            cursor: canSubmit ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            opacity: canSubmit ? 1 : 0.6
           }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#2563eb'}
-          onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          onMouseOver={(e) => { if (canSubmit) e.currentTarget.style.borderColor = '#2563eb'; }}
+          onMouseOut={(e) => { if (canSubmit) e.currentTarget.style.borderColor = '#e2e8f0'; }}
         >
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
             <Upload size={24} />
@@ -439,13 +478,15 @@ export default function SubmissionsPage() {
         {/* Paste Raw Text Card */}
         <button 
           onClick={() => setShowPasteModal(true)}
+          disabled={!canSubmit}
           style={{ 
             background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '3rem 2rem', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
-            cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+            cursor: canSubmit ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            opacity: canSubmit ? 1 : 0.6
           }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#2563eb'}
-          onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          onMouseOver={(e) => { if (canSubmit) e.currentTarget.style.borderColor = '#2563eb'; }}
+          onMouseOut={(e) => { if (canSubmit) e.currentTarget.style.borderColor = '#e2e8f0'; }}
         >
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
             <FileText size={24} />
@@ -456,15 +497,15 @@ export default function SubmissionsPage() {
         {/* Start from Scratch Card */}
         <button 
           onClick={startFromScratch}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !canSubmit}
           style={{ 
             background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '3rem 2rem', 
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem',
-            cursor: isSubmitting ? 'wait' : 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-            opacity: isSubmitting ? 0.6 : 1
+            cursor: (canSubmit && !isSubmitting) ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            opacity: (canSubmit && !isSubmitting) ? 1 : 0.6
           }}
-          onMouseOver={(e) => e.currentTarget.style.borderColor = '#2563eb'}
-          onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+          onMouseOver={(e) => { if (canSubmit && !isSubmitting) e.currentTarget.style.borderColor = '#16a34a'; }}
+          onMouseOut={(e) => { if (canSubmit && !isSubmitting) e.currentTarget.style.borderColor = '#e2e8f0'; }}
         >
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
             {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Edit3 size={24} />}

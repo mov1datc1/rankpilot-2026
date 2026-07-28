@@ -189,6 +189,16 @@ class ComparativeAnalysisOutput(BaseModel):
     market_position_summary: str = Field(description="2-3 sentence summary of where this firm sits relative to the market.")
 
 
+class EntryCaseOutput(BaseModel):
+    """v13.0: Case for First-Time Recognition — generated when analysis_mode = first_recognition."""
+    why_potentially_rankable: str = Field(description="Why this practice is potentially rankable.")
+    strongest_entry_evidence: List[str] = Field(description="What evidence most strongly supports entry.")
+    what_weakens_entry_case: str = Field(description="What weakens the entry case.")
+    what_must_strengthen: List[str] = Field(description="What must be strengthened before submission.")
+    entry_assessment: str = Field(description="One of: 'strong_entry_case', 'credible_entry_case', 'potential_but_underdeveloped', 'evidence_exists_not_defensible', 'insufficient_evidence'.")
+    entry_assessment_rationale: str = Field(description="Rationale for the entry assessment.")
+
+
 class EditorialConfidenceOutput(BaseModel):
     """Chapter 4: The Editorial Defensibility Test. The system must seek 
     the most DEFENSIBLE conclusion, not the most optimistic one.
@@ -205,6 +215,10 @@ class EditorialConfidenceOutput(BaseModel):
     passes_defensibility_test: bool = Field(description="True if the recommendation is editorially defensible.")
     recommendation: str = Field(description="One of: 'proceed' (confident), 'proceed_with_caveats' (moderate), 'downgrade_recommendation', 'needs_investigation' (insufficient).")
     defensibility_summary: str = Field(description="2-3 sentence summary of why the recommendation is or is not defensible.")
+    
+    # v13.0: First recognition case (if applicable)
+    entry_case: Optional[EntryCaseOutput] = Field(default=None, description="Detailed assessment for unranked entry candidates.")
+    
     # v6.0: Decomposed confidence dimensions (0-100 each)
     evidence_completeness_score: int = Field(default=0, description="0-100: How complete is the evidence base for the target band?")
     matter_quality_score: int = Field(default=0, description="0-100: Quality of individual matters for Chambers ranking purposes.")

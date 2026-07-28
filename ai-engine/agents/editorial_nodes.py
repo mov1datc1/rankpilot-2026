@@ -39,6 +39,8 @@ from agents.prompts import (
     EDITORIAL_CONFIDENCE_PROMPT,
     SUBMISSION_BLUEPRINT_PROMPT,
     NARRATIVE_ARCHITECTURE_PROMPT,
+    FIRST_RECOGNITION_DIRECTIVE,
+    OBJECTIVE_DIRECTIVES,
 )
 from utils.rag_router import RAGRouter
 
@@ -83,7 +85,28 @@ def _build_trace_entry(stage: str, decision: str, evidence: list,
     }
 
 
+def _inject_directives(prompt_template: str, strategic_context: dict) -> str:
+    """v13.0: Inject objective and mode-specific directives into the prompt."""
+    analysis_mode = strategic_context.get("analysis_mode", "")
+    primary_objective = strategic_context.get("primary_objective", "")
+    
+    injections = []
+    
+    if analysis_mode == "first_recognition":
+        injections.append(FIRST_RECOGNITION_DIRECTIVE)
+        
+    if primary_objective and primary_objective in OBJECTIVE_DIRECTIVES:
+        obj_data = OBJECTIVE_DIRECTIVES[primary_objective]
+        injections.append(f"\n### SUBMISSION OBJECTIVE: {primary_objective}\n" + json.dumps(obj_data, indent=2))
+        
+    if injections:
+        return prompt_template + "\n\n" + "\n\n".join(injections)
+    
+    return prompt_template
+
+
 # ─────────────────────────────────────────────
+
 # NODE 0: PRACTICE INTELLIGENCE LAYER (v12.0)
 # ─────────────────────────────────────────────
 def practice_intelligence_node(state: AgentState) -> Dict:
@@ -124,8 +147,11 @@ def practice_intelligence_node(state: AgentState) -> Dict:
         rag_knowledge if rag_knowledge else "No practice-specific RAG knowledge available."
     )
     
+    # v13.0: Inject objective and mode directives
+    system_prompt = _inject_directives(prompt_with_rag, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", prompt_with_rag),
+        ("system", system_prompt),
         ("human", "Analyze this submission and generate the Practice Intelligence Layer output: {data}")
     ])
     
@@ -230,8 +256,10 @@ def comprehension_node(state: AgentState) -> Dict:
         "practice_intelligence": state.get("practice_intelligence", {}),
     }
     
+    system_prompt = _inject_directives(COMPREHENSION_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", COMPREHENSION_PROMPT),
+        ("system", system_prompt),
         ("human", "Analyze this submission data and answer the 9 comprehension questions: {data}")
     ])
     
@@ -432,12 +460,14 @@ def refutation_engine_node(state: AgentState) -> Dict:
         "hypotheses_to_test": top_hypotheses,
         "matters": state.get("matters", []),
         "competitive_identity": state.get("competitive_identity", {}),
-        "metadata": state.get("metadata", {}),
+        "hypotheses": state.get("hypotheses", {}),
     }
     
+    system_prompt = _inject_directives(REFUTATION_ENGINE_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", REFUTATION_ENGINE_PROMPT),
-        ("human", "Attempt to refute these hypotheses: {data}")
+        ("system", system_prompt),
+        ("human", "Execute the Refutation Protocol against the hypotheses: {data}")
     ])
     
     chain = prompt | structured_llm
@@ -577,7 +607,7 @@ def editorial_confidence_node(state: AgentState) -> Dict:
         stage="editorial_confidence",
         decision=f"Defensibility: {confidence.get('passes_defensibility_test')} | Confidence: {confidence.get('overall_confidence')} | Recommendation: {confidence.get('recommendation')}",
         evidence=[confidence.get("defensibility_summary", "")],
-        confidence=1.0 if confidence.get("overall_confidence") == "high" else 0.5,
+        confidence=1.0 if confidence.get('overall_confidence') == "high" else 0.5,
         principle="P10: Editorial Defensibility Is The Final Test"
     ))
     
@@ -617,7 +647,6 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
         "strongest_hypothesis": state.get("refutation_results", {}).get("strongest_surviving", ""),
         "comparative_analysis": state.get("comparative_analysis", {}),
-        "editorial_confidence": state.get("editorial_confidence", {}),
         "matters": state.get("matters", []),
         "metadata": state.get("metadata", {}),
         "strategic_context": state.get("strategic_context", {}),
@@ -629,12 +658,14 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         "centre_of_gravity": pil.get("centre_of_gravity", ""),
         "practice_fit_score": pil.get("fit_test", {}).get("fit_score", 0),
         "practice_tensions": [t.get("description", "") for t in pil.get("tensions", []) if isinstance(t, dict)],
-        "practice_risks": pil.get("risks", []),
+        "editorial_confidence": state.get("editorial_confidence", {}),
     }
     
+    system_prompt = _inject_directives(SUBMISSION_BLUEPRINT_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", SUBMISSION_BLUEPRINT_PROMPT),
-        ("human", "Design the complete Submission Blueprint for this submission: {data}")
+        ("system", system_prompt),
+        ("human", "Design the Submission Blueprint: {data}")
     ])
     
     chain = prompt | structured_llm
@@ -676,7 +707,7 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         stage="submission_blueprint",
         decision=f"Thesis: {blueprint.get('thesis', '')} | Hero: {blueprint.get('hero_matter', '')} | Confidence: {blueprint.get('confidence_level', '')}",
         evidence=blueprint.get("three_key_messages", []),
-        confidence=0.85 if blueprint.get("confidence_level") == "high" else 0.5,
+        confidence=0.85 if blueprint.get('confidence_level') == "high" else 0.5,
         principle="Vol. VI Ch. 15: Design Before Writing"
     ))
 
@@ -719,7 +750,6 @@ def narrative_architecture_node(state: AgentState) -> Dict:
     structured_llm = llm.with_structured_output(NarrativeArchitectureOutput)
     
     input_data = {
-        "submission_blueprint": state.get("submission_blueprint", {}),
         "comprehension": state.get("comprehension", {}),
         "competitive_identity": state.get("competitive_identity", {}),
         "surviving_hypotheses": state.get("refutation_results", {}).get("surviving_hypotheses", []),
@@ -728,11 +758,14 @@ def narrative_architecture_node(state: AgentState) -> Dict:
         "editorial_confidence": state.get("editorial_confidence", {}),
         "matters": state.get("matters", []),
         "metadata": state.get("metadata", {}),
+        "submission_blueprint": state.get("submission_blueprint", {}),
     }
     
+    system_prompt = _inject_directives(NARRATIVE_ARCHITECTURE_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", NARRATIVE_ARCHITECTURE_PROMPT),
-        ("human", "Execute the Submission Blueprint into a narrative architecture: {data}")
+        ("system", system_prompt),
+        ("human", "Design the Narrative Architecture: {data}")
     ])
     
     chain = prompt | structured_llm

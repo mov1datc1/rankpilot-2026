@@ -38,9 +38,17 @@ export async function createSubmission(data: {
   guideRegion: string;
   currentBand?: string;
   deadline?: string;
+  primaryObjective?: string;
+  secondaryObjective?: string;
 }) {
   try {
     const user = await getAuthenticatedUser();
+
+    // v13.0: Store objectives in chambersData JSON field
+    const chambersData = {
+      primaryObjective: data.primaryObjective,
+      secondaryObjective: data.secondaryObjective,
+    };
 
     const submission = await prisma.submission.create({
       data: {
@@ -50,7 +58,8 @@ export async function createSubmission(data: {
         guideRegion: data.guideRegion,
         currentBand: data.currentBand || 'Unranked',
         deadline: data.deadline ? new Date(data.deadline) : null,
-        status: 'Draft'
+        status: 'Draft',
+        chambersData: chambersData as any,
       }
     });
 

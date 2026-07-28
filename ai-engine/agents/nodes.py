@@ -288,19 +288,25 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
     if "mexico" in str(jurisdiction).lower() and "banking" in str(practice_area).lower():
         benchmark = "Entry: mid-market deals, some cross-border. Band 3: strong deal flow, repeat clients. Band 1: flagship deals, complex structuring."
     
-    # Capa 7: Evaluación de viabilidad
-    target_realistic = "Viability assessment pending."
-    if starting_position == "Entry Candidate":
-        if "cross-border" in str(context_dict.get("complexity_profile", "")).lower() or "institutional" in str(context_dict.get("client_type", "")).lower():
-            target_realistic = "Band 4-5 viable"
-        else:
-            target_realistic = "Below ranking threshold"
-    elif starting_position == "Upper Tier Push":
-        target_realistic = "Consolidation needed to break into top tiers"
-    elif starting_position == "Lower Tier Consolidation":
-        target_realistic = "Path to Band 3 viable with flagship mandates"
-    else:
+    # Capa 7 & Objective Routing (v13.0)
+    primary_objective = submission_context.get("primary_objective", "")
+    secondary_objective = submission_context.get("secondary_objective", "")
+    
+    if starting_position == "Entry Candidate" and not primary_objective:
+        primary_objective = "First-time recognition"
+        
+    if primary_objective == "First-time recognition" or starting_position == "Entry Candidate":
+        analysis_mode = "first_recognition"
+        target_realistic = "Assess whether submission presents a defensible case for initial inclusion"
+    elif primary_objective == "Maintain current ranking":
+        analysis_mode = "maintain_ranking"
         target_realistic = "Maintain defensible track record"
+    elif primary_objective in ["Move up one band/tier", "Move up multiple bands/tiers"]:
+        analysis_mode = "promotion"
+        target_realistic = "Consolididation needed to break into higher tiers"
+    else:
+        analysis_mode = "ranked_assessment"
+        target_realistic = f"Assess practice competitiveness and alignment with objective: {primary_objective}"
 
     # v10.0: Load directory config and inject into strategic_context
     dir_config = get_directory_config(directory)
@@ -328,7 +334,10 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         "client_type": context_dict.get("client_type"),
         "identity_adn": context_dict.get("identity_adn"),
         "benchmark_reference": benchmark,
-        "target_realistic": target_realistic
+        "target_realistic": target_realistic,
+        "analysis_mode": analysis_mode,
+        "primary_objective": primary_objective,
+        "secondary_objective": secondary_objective
     }
     
     print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")

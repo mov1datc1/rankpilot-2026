@@ -98,3 +98,16 @@ export const BANDS = [
   'Up and Coming',
   'Associates to Watch',
 ] as const;
+
+export const SUBMISSION_OBJECTIVES = [
+  'First-time recognition',
+  'Maintain current ranking',
+  'Move up one band/tier',
+  'Move up multiple bands/tiers',
+  'Improve individual lawyer recognition',
+  'Correct market perception',
+  'Consolidate sector specialization',
+  'Demonstrate institutional depth',
+  'Support a new office or jurisdiction',
+  'Defend against possible ranking decline',
+] as const;

@@ -1,8 +1,8 @@
-# RankPilot — Documentación Técnica v7.0
+# RankPilot — Documentación Técnica v7.0 (Actualizado a v13.0)
 
 > **Última actualización:** Julio 28, 2026
-> **Versión:** 7.0 — Practice Intelligence Layer, Signal Extraction, Practice Fit Test, Tension Detection
-> **Versiones cubiertas:** v10.0 → v10.2 → v11.0 → v12.0
+> **Versión:** 13.0 — Practice Intelligence Layer, Unranked Mode, Submission Objectives
+> **Versiones cubiertas:** v10.0 → v10.2 → v11.0 → v12.0 → v13.0
 
 ---
 
