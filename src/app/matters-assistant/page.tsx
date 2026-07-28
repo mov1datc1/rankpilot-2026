@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  CloudUpload, Sparkles, Folder, List, 
-  CheckCircle2, Clock, Download, ChevronRight,
-  Upload, FileText, Bot, Pencil, Trash2, Save, X, RotateCw, Loader2, FileCheck
+  CloudUpload, Sparkles, Folder, FolderOpen, List, 
+  CheckCircle2, Clock, Download, ChevronRight, ChevronDown,
+  Upload, FileText, Bot, Pencil, Trash2, Save, X, RotateCw, Loader2, FileCheck,
+  LayoutGrid, LayoutList
 } from 'lucide-react';
 import { getAllUserMatters, deleteMatter, updateMatterInline, optimizeMatterWithAI } from '@/app/actions/matters';
 import { createClient } from '@/utils/supabase/client';
@@ -33,8 +34,11 @@ type Matter = {
   description: string | null;
   tags: string | null;
   submission?: {
+    id: string;
     targetDirectory: string;
     practiceArea: string;
+    createdAt: Date | string;
+    chambersData: any;
   } | null;
   firm?: {
     id: string;
@@ -45,6 +49,18 @@ type Matter = {
     fileName: string;
     fileType: string;
   }[];
+};
+
+type CaseFolder = {
+  id: string;
+  firmName: string;
+  practiceArea: string;
+  directory: string;
+  date: Date;
+  matters: Matter[];
+  optimizedCount: number;
+  totalCount: number;
+  source: string;
 };
 
 export default function MattersAssistantPage() {
@@ -64,6 +80,10 @@ export default function MattersAssistantPage() {
   const [expandedMatterId, setExpandedMatterId] = useState<string | null>(null);
   const [repoSearch, setRepoSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'all' | 'builder' | 'assistant' | 'manual'>('all');
+
+  // Folder View State
+  const [expandedFolderId, setExpandedFolderId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'folders' | 'flat'>('folders');
 
   // Form State for Assistant
   const [directory, setDirectory] = useState('Chambers & Partners');
@@ -182,11 +202,89 @@ export default function MattersAssistantPage() {
     if (sourceFilter !== 'all' && m.source !== sourceFilter) pass = false;
     if (repoSearch) {
       const q = repoSearch.toLowerCase();
-      const searchable = `${m.name} ${m.client} ${m.firm?.name || ''} ${m.submission?.practiceArea || ''}`.toLowerCase();
+      const searchable = `${m.name} ${m.client} ${m.firm?.name || ''} ${m.submission?.practiceArea || ''} ${m.submission?.targetDirectory || ''}`.toLowerCase();
       if (!searchable.includes(q)) pass = false;
     }
     return pass;
   });
+
+  // Group matters into case folders
+  const caseFolders = useMemo<CaseFolder[]>(() => {
+    const folderMap = new Map<string, CaseFolder>();
+
+    for (const m of filteredMatters) {
+      // Determine grouping key
+      let folderId: string;
+      let firmName: string;
+      let practiceArea: string;
+      let directory: string;
+      let date: Date;
+      let source: string;
+
+      if (m.submissionId && m.submission) {
+        // Builder matters — group by submissionId
+        folderId = m.submissionId;
+        const chambersData = m.submission.chambersData as any;
+        firmName = m.firm?.name || chambersData?.firmName || chambersData?.metadata?.firm_metadata?.name || 'Unknown Firm';
+        practiceArea = m.submission.practiceArea || m.practiceArea || 'General';
+        directory = m.submission.targetDirectory || 'Chambers & Partners';
+        date = new Date(m.submission.createdAt);
+        source = 'builder';
+      } else if (m.firmId && m.firm) {
+        // Assistant/Manual with firm — group by firmId + date (day-level)
+        const mDate = new Date(m.createdAt);
+        const dayKey = mDate.toISOString().slice(0, 10);
+        folderId = `${m.firmId}-${dayKey}`;
+        firmName = m.firm.name;
+        practiceArea = m.practiceArea || 'General';
+        directory = m.submission?.targetDirectory || 'Manual Entry';
+        date = mDate;
+        source = m.source;
+      } else {
+        // Ungrouped — matters without firm or submission
+        const mDate = new Date(m.createdAt);
+        const dayKey = mDate.toISOString().slice(0, 10);
+        folderId = `ungrouped-${dayKey}`;
+        firmName = 'Ungrouped Matters';
+        practiceArea = m.practiceArea || 'General';
+        directory = 'Various';
+        date = mDate;
+        source = m.source;
+      }
+
+      if (!folderMap.has(folderId)) {
+        folderMap.set(folderId, {
+          id: folderId,
+          firmName,
+          practiceArea,
+          directory,
+          date,
+          matters: [],
+          optimizedCount: 0,
+          totalCount: 0,
+          source,
+        });
+      }
+
+      const folder = folderMap.get(folderId)!;
+      folder.matters.push(m);
+      folder.totalCount++;
+      if (m.status === 'AI Optimized') folder.optimizedCount++;
+    }
+
+    // Sort folders by date descending (newest first)
+    return Array.from(folderMap.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [filteredMatters]);
+
+  // Directory color helper
+  const getDirColor = (dir: string): { bg: string; text: string; border: string; accent: string } => {
+    const d = dir.toLowerCase();
+    if (d.includes('chambers')) return { bg: '#EEF2FF', text: '#3730A3', border: '#C7D2FE', accent: '#1A237E' };
+    if (d.includes('legal 500')) return { bg: '#ECFDF5', text: '#065F46', border: '#A7F3D0', accent: '#059669' };
+    if (d.includes('iflr')) return { bg: '#FFFBEB', text: '#92400E', border: '#FDE68A', accent: '#D97706' };
+    if (d.includes('leaders')) return { bg: '#FFF1F2', text: '#9F1239', border: '#FECDD3', accent: '#E11D48' };
+    return { bg: '#F8FAFC', text: '#475569', border: '#E2E8F0', accent: '#64748B' };
+  };
 
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', paddingBottom: '3rem' }}>
@@ -376,6 +474,10 @@ export default function MattersAssistantPage() {
         .animate-spin {
           animation: spin 1s linear infinite;
         }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}} />
 
       {activeTab === 'repository' && (
@@ -386,8 +488,31 @@ export default function MattersAssistantPage() {
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.25rem 0' }}>Matter Library</h2>
                   <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>
-                    {matters.length} matter{matters.length !== 1 ? 's' : ''} · {filteredMatters.length} shown
+                    {caseFolders.length} case{caseFolders.length !== 1 ? 's' : ''} · {filteredMatters.length} matter{filteredMatters.length !== 1 ? 's' : ''}
                   </p>
+                </div>
+                {/* View Mode Toggle */}
+                <div style={{ display: 'flex', gap: '2px', background: '#f1f5f9', borderRadius: '8px', padding: '2px' }}>
+                  <button
+                    onClick={() => setViewMode('folders')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, border: 'none', cursor: 'pointer',
+                      background: viewMode === 'folders' ? '#fff' : 'transparent', color: viewMode === 'folders' ? '#1A237E' : '#94a3b8',
+                      boxShadow: viewMode === 'folders' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s'
+                    }}
+                  >
+                    <LayoutGrid size={13} /> Folders
+                  </button>
+                  <button
+                    onClick={() => setViewMode('flat')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, border: 'none', cursor: 'pointer',
+                      background: viewMode === 'flat' ? '#fff' : 'transparent', color: viewMode === 'flat' ? '#1A237E' : '#94a3b8',
+                      boxShadow: viewMode === 'flat' ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s'
+                    }}
+                  >
+                    <LayoutList size={13} /> Flat
+                  </button>
                 </div>
               </div>
 
@@ -440,10 +565,246 @@ export default function MattersAssistantPage() {
               <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280' }}>Loading your repository...</div>
             ) : filteredMatters.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: '#6B7280', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <List style={{ height: '3rem', width: '3rem', color: '#D1D5DB', marginBottom: '1rem' }} />
+                <Folder style={{ height: '3rem', width: '3rem', color: '#D1D5DB', marginBottom: '1rem' }} />
                 No matters found in your repository.
               </div>
+            ) : viewMode === 'folders' ? (
+              /* ═══ FOLDER VIEW ═══ */
+              <div style={{ padding: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {caseFolders.map(folder => {
+                    const isExpanded = expandedFolderId === folder.id;
+                    const dirColors = getDirColor(folder.directory);
+                    const progressPct = folder.totalCount > 0 ? Math.round((folder.optimizedCount / folder.totalCount) * 100) : 0;
+
+                    return (
+                      <div key={folder.id} style={{ borderRadius: '12px', border: `1px solid ${isExpanded ? dirColors.accent + '40' : '#E2E8F0'}`, overflow: 'hidden', transition: 'all 0.25s ease', boxShadow: isExpanded ? `0 4px 16px ${dirColors.accent}15` : '0 1px 3px rgba(0,0,0,0.04)' }}>
+                        {/* Folder Card Header */}
+                        <div
+                          onClick={() => { setExpandedFolderId(isExpanded ? null : folder.id); setExpandedMatterId(null); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem', cursor: 'pointer',
+                            background: isExpanded ? `linear-gradient(135deg, ${dirColors.bg}, #ffffff)` : '#ffffff',
+                            borderLeft: `4px solid ${dirColors.accent}`,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseOver={e => { if (!isExpanded) e.currentTarget.style.background = '#FAFBFF'; }}
+                          onMouseOut={e => { if (!isExpanded) e.currentTarget.style.background = '#ffffff'; }}
+                        >
+                          {/* Folder Icon */}
+                          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '2.5rem', height: '2.5rem', borderRadius: '10px', background: dirColors.bg, border: `1px solid ${dirColors.border}` }}>
+                            {isExpanded
+                              ? <FolderOpen size={18} style={{ color: dirColors.accent }} />
+                              : <Folder size={18} style={{ color: dirColors.accent }} />
+                            }
+                          </div>
+
+                          {/* Folder Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {folder.firmName}
+                              </h3>
+                              <span style={{ fontSize: '0.8rem', color: '#64748b', flexShrink: 0 }}>·</span>
+                              <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {folder.practiceArea}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                              {/* Directory Badge */}
+                              <span style={{
+                                display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.03em',
+                                background: dirColors.bg, color: dirColors.text, border: `1px solid ${dirColors.border}`,
+                              }}>
+                                {folder.directory}
+                              </span>
+                              {/* Date */}
+                              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                {folder.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                              {/* Matter count */}
+                              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                                {folder.totalCount} matter{folder.totalCount !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Progress + Expand */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                            {/* Progress Bar */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px' }}>
+                              <div style={{ flex: 1, height: '6px', background: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{
+                                  width: `${progressPct}%`, height: '100%', borderRadius: '3px', transition: 'width 0.5s ease',
+                                  background: progressPct === 100 ? '#16a34a' : progressPct >= 50 ? '#3b82f6' : '#f59e0b',
+                                }} />
+                              </div>
+                              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: progressPct === 100 ? '#16a34a' : '#64748b', minWidth: '2rem' }}>
+                                {progressPct}%
+                              </span>
+                            </div>
+                            {/* Chevron */}
+                            <ChevronDown size={18} style={{ color: '#94a3b8', transition: 'transform 0.25s ease', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                          </div>
+                        </div>
+
+                        {/* Expanded Folder Contents — Matter Table */}
+                        {isExpanded && (
+                          <div style={{ borderTop: `2px solid ${dirColors.accent}25`, animation: 'fadeIn 0.2s ease-in' }}>
+                            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                                  <th style={{ padding: '0.6rem 1.25rem', fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Matter Details</th>
+                                  <th style={{ padding: '0.6rem 1rem', fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Client</th>
+                                  <th style={{ padding: '0.6rem 1rem', fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Value</th>
+                                  <th style={{ padding: '0.6rem 1rem', fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                                  <th style={{ padding: '0.6rem 1rem', fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {folder.matters.map((m) => (
+                                  <React.Fragment key={m.id}>
+                                    <tr
+                                      style={{ borderBottom: expandedMatterId === m.id ? 'none' : '1px solid #F1F5F9', transition: 'background 0.15s', cursor: 'pointer' }}
+                                      onMouseOver={e => e.currentTarget.style.background = '#FAFBFF'}
+                                      onMouseOut={e => e.currentTarget.style.background = expandedMatterId === m.id ? '#F8FAFF' : 'transparent'}
+                                      onClick={() => setExpandedMatterId(expandedMatterId === m.id ? null : m.id)}
+                                    >
+                                      <td style={{ padding: '0.75rem 1.25rem' }}>
+                                        {editingMatterId === m.id ? (
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }} onClick={e => e.stopPropagation()}>
+                                            <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} style={{ width: '100%', padding: '0.25rem 0.5rem', border: '1px solid #D1D5DB', borderRadius: '0.25rem', fontSize: '0.85rem', fontWeight: 'bold' }} />
+                                          </div>
+                                        ) : (
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                                            <ChevronRight size={13} style={{ color: '#9CA3AF', transition: 'transform 0.2s', transform: expandedMatterId === m.id ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }} />
+                                            <span style={{ fontWeight: 600, color: '#1A237E', fontSize: '0.875rem' }}>{m.name}</span>
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#475569' }}>
+                                        {editingMatterId === m.id ? (
+                                          <input type="text" value={editForm.client} onChange={e => setEditForm({...editForm, client: e.target.value})} placeholder="Client" style={{ width: '100%', padding: '0.25rem 0.5rem', border: '1px solid #D1D5DB', borderRadius: '0.25rem', fontSize: '0.75rem' }} onClick={e => e.stopPropagation()} />
+                                        ) : (
+                                          m.client || '—'
+                                        )}
+                                      </td>
+                                      <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#475569' }}>
+                                        {editingMatterId === m.id ? (
+                                          <input type="text" value={editForm.value} onChange={e => setEditForm({...editForm, value: e.target.value})} placeholder="Value" style={{ width: '100%', padding: '0.25rem 0.5rem', border: '1px solid #D1D5DB', borderRadius: '0.25rem', fontSize: '0.75rem' }} onClick={e => e.stopPropagation()} />
+                                        ) : (
+                                          m.value || '—'
+                                        )}
+                                      </td>
+                                      <td style={{ padding: '0.75rem 1rem' }}>
+                                        {m.status === 'AI Optimized' ? (
+                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#F0FDF4', color: '#15803D', padding: '0.2rem 0.5rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 'bold', border: '1px solid #BBF7D0' }}>
+                                            <CheckCircle2 style={{ height: '0.75rem', width: '0.75rem' }} /> Optimized
+                                          </span>
+                                        ) : (
+                                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#FFFBEB', color: '#B45309', padding: '0.2rem 0.5rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 'bold', border: '1px solid #FDE68A' }}>
+                                            <Clock style={{ height: '0.75rem', width: '0.75rem' }} /> Draft
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                                        <div style={{ display: 'flex', gap: '0.375rem', justifyContent: 'flex-end' }}>
+                                          {editingMatterId === m.id ? (
+                                            <>
+                                              <button onClick={() => saveEdit(m.id)} style={{ padding: '0.3rem', background: '#10B981', color: '#fff', borderRadius: '0.3rem', border: 'none', cursor: 'pointer' }} title="Save"><Save size={13} /></button>
+                                              <button onClick={() => setEditingMatterId(null)} style={{ padding: '0.3rem', background: '#9CA3AF', color: '#fff', borderRadius: '0.3rem', border: 'none', cursor: 'pointer' }} title="Cancel"><X size={13} /></button>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <button onClick={() => handleReOptimize(m.id)} disabled={isOptimizing === m.id} style={{ padding: '0.3rem', background: '#DBEAFE', color: '#2563EB', borderRadius: '0.3rem', border: 'none', cursor: isOptimizing === m.id ? 'wait' : 'pointer', opacity: isOptimizing === m.id ? 0.5 : 1 }} title="Optimize again">
+                                                <RotateCw size={13} className={isOptimizing === m.id ? "animate-spin" : ""} />
+                                              </button>
+                                              <button onClick={() => startEditing(m)} style={{ padding: '0.3rem', background: '#F3F4F6', color: '#4B5563', borderRadius: '0.3rem', border: 'none', cursor: 'pointer' }} title="Edit"><Pencil size={13} /></button>
+                                              <button onClick={() => handleDelete(m.id)} disabled={isDeleting === m.id} style={{ padding: '0.3rem', background: '#FEE2E2', color: '#DC2626', borderRadius: '0.3rem', border: 'none', cursor: isDeleting === m.id ? 'wait' : 'pointer', opacity: isDeleting === m.id ? 0.5 : 1 }} title="Delete"><Trash2 size={13} /></button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    {/* Expanded Matter Detail */}
+                                    {expandedMatterId === m.id && (
+                                      <tr>
+                                        <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid #E5E7EB' }}>
+                                          <div style={{ background: '#F8FAFF', padding: '1.25rem 1.5rem', borderTop: `2px solid ${dirColors.accent}`, animation: 'fadeIn 0.2s ease-in' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                                              <div style={{ flex: 1, minWidth: '180px' }}>
+                                                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1A237E', margin: '0 0 0.25rem' }}>{m.name}</h3>
+                                                <p style={{ fontSize: '0.8rem', color: '#6B7280', margin: 0 }}>
+                                                  {folder.directory} · {folder.practiceArea}
+                                                </p>
+                                              </div>
+                                              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                                                <div style={{ textAlign: 'center' }}>
+                                                  <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Client</div>
+                                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>{m.client || 'N/A'}</div>
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                  <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Value</div>
+                                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>{m.value || 'N/A'}</div>
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                  <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Lead Partner</div>
+                                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>{m.leadPartner || 'N/A'}</div>
+                                                </div>
+                                                <div style={{ textAlign: 'center' }}>
+                                                  <div style={{ fontSize: '0.6rem', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Status</div>
+                                                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: m.status === 'AI Optimized' ? '#16a34a' : '#d97706' }}>{m.status}</div>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: m.optimizedText ? '1fr 1fr' : '1fr', gap: '0.75rem' }}>
+                                              <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '1rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                  <FileText size={13} style={{ color: '#6B7280' }} />
+                                                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Raw Notes / Input</span>
+                                                </div>
+                                                <p style={{ fontSize: '0.85rem', color: '#374151', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', maxHeight: '200px', overflow: 'auto' }}>
+                                                  {m.rawNotes || 'No raw notes available.'}
+                                                </p>
+                                              </div>
+                                              {m.optimizedText && (
+                                                <div style={{ background: '#F0FDF4', borderRadius: '8px', border: '1px solid #BBF7D0', padding: '1rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                                    <Sparkles size={13} style={{ color: '#16a34a' }} />
+                                                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#16a34a', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>AI Optimized Version</span>
+                                                  </div>
+                                                  <p style={{ fontSize: '0.85rem', color: '#1e293b', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', maxHeight: '200px', overflow: 'auto' }}>
+                                                    {m.optimizedText}
+                                                  </p>
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid #E5E7EB' }}>
+                                              <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>
+                                                Created: {new Date(m.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                {m.updatedAt && ` · Updated: ${new Date(m.updatedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                                              </span>
+                                              <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>ID: {m.id.slice(0, 8)}...</span>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </React.Fragment>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
+              /* ═══ FLAT VIEW (Original table) ═══ */
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
@@ -457,8 +818,8 @@ export default function MattersAssistantPage() {
                   </thead>
                   <tbody>
                     {filteredMatters.map((m) => (
-                      <>
-                      <tr key={m.id} style={{ borderBottom: expandedMatterId === m.id ? 'none' : '1px solid #E5E7EB', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = expandedMatterId === m.id ? '#F8FAFF' : 'transparent'} onClick={() => setExpandedMatterId(expandedMatterId === m.id ? null : m.id)}>
+                      <React.Fragment key={m.id}>
+                      <tr style={{ borderBottom: expandedMatterId === m.id ? 'none' : '1px solid #E5E7EB', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.background = '#F9FAFB'} onMouseOut={e => e.currentTarget.style.background = expandedMatterId === m.id ? '#F8FAFF' : 'transparent'} onClick={() => setExpandedMatterId(expandedMatterId === m.id ? null : m.id)}>
                         <td style={{ padding: '1rem 1.5rem' }}>
                           {editingMatterId === m.id ? (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
@@ -544,7 +905,6 @@ export default function MattersAssistantPage() {
                         <tr key={`${m.id}-detail`}>
                           <td colSpan={5} style={{ padding: 0, borderBottom: '1px solid #E5E7EB' }}>
                             <div style={{ background: '#F8FAFF', padding: '1.5rem 2rem', borderTop: '2px solid #1A237E', animation: 'fadeIn 0.2s ease-in' }}>
-                              {/* Header row */}
                               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                                 <div style={{ flex: 1, minWidth: '200px' }}>
                                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', margin: '0 0 0.25rem' }}>{m.name}</h3>
@@ -572,9 +932,7 @@ export default function MattersAssistantPage() {
                                 </div>
                               </div>
 
-                              {/* Content Grid: Raw Notes vs Optimized Text */}
                               <div style={{ display: 'grid', gridTemplateColumns: m.optimizedText ? '1fr 1fr' : '1fr', gap: '1rem' }}>
-                                {/* Raw Notes */}
                                 <div style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                                     <FileText size={14} style={{ color: '#6B7280' }} />
@@ -584,8 +942,6 @@ export default function MattersAssistantPage() {
                                     {m.rawNotes || 'No raw notes available for this matter.'}
                                   </p>
                                 </div>
-
-                                {/* Optimized Text */}
                                 {m.optimizedText && (
                                   <div style={{ background: '#F0FDF4', borderRadius: '8px', border: '1px solid #BBF7D0', padding: '1.25rem', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -599,7 +955,6 @@ export default function MattersAssistantPage() {
                                 )}
                               </div>
 
-                              {/* Footer metadata */}
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #E5E7EB' }}>
                                 <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
                                   Created: {new Date(m.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -611,7 +966,7 @@ export default function MattersAssistantPage() {
                           </td>
                         </tr>
                       )}
-                      </>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>

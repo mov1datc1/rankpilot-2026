@@ -123,8 +123,11 @@ export async function getAllUserMatters() {
       include: {
         submission: {
           select: {
+            id: true,
             targetDirectory: true,
-            practiceArea: true
+            practiceArea: true,
+            createdAt: true,
+            chambersData: true,
           }
         },
         firm: {
