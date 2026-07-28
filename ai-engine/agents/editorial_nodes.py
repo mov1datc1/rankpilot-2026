@@ -162,6 +162,9 @@ def practice_intelligence_node(state: AgentState) -> Dict:
         pil_output = _safe_dump(result)
     except Exception as e:
         print(f"Error in Practice Intelligence Layer Node: {e}")
+        # CRITICAL FIX v13.0: PIL failure must NOT block the pipeline.
+        # The pipeline must degrade gracefully and continue to analysis/writing.
+        # Only explicit LLM-determined CLARIFICATION_REQUIRED should stop the flow.
         pil_output = {
             "practice_main": submission_context.get("practice_area", "Unknown"),
             "sub_practices": [],
@@ -200,8 +203,8 @@ def practice_intelligence_node(state: AgentState) -> Dict:
             "team_classification_rationale": "Unable to assess — PIL failed",
             "narrative_coherence_label": "overclaim",
             "narrative_coherence_rationale": "Unable to assess — PIL failed",
-            "status": "CLARIFICATION_REQUIRED",
-            "stop_reason": f"Practice Intelligence Layer encountered an error: {str(e)}",
+            "status": "PROCEED",
+            "stop_reason": "",
         }
     
     # Build reasoning trace

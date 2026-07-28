@@ -72,6 +72,7 @@
 | 59 | First Recognition / Market Entry Mode — Objective routing and EntryCaseOutput schema | v13.0 | `nodes.py` (objective routing), `schema.py` (EntryCaseOutput), `prompts.py` (FIRST_RECOGNITION_DIRECTIVE) | ✅ ACTIVE | 🔴 SUPREME |
 | 60 | Submission Objectives Hierarchy — 10 dynamic objectives injected into editorial prompts | v13.0 | `prompts.py` (OBJECTIVE_DIRECTIVES), `editorial_nodes.py` (_inject_directives) | ✅ ACTIVE | 🔴 SUPREME |
 | 61 | Lateral Hire Rule — Hire must demonstrate capability/clients to be evidence | v13.0 | `prompts.py` (LATERAL_HIRE_RULE) | ✅ ACTIVE | 🔴 CRITICAL |
+| 62 | Graceful Degradation — PIL/Comprehension gates NEVER block pipeline; blank reports are unacceptable | v13.0 | `graph.py` (route_after_practice_intelligence, route_after_comprehension), `editorial_nodes.py` (PIL fallback) | ✅ ACTIVE | 🔴 SUPREME |
 
 ---
 

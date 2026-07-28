@@ -94,43 +94,49 @@ def create_rankpilot_graph():
     # 4. After context engine → practice_intelligence (v12.0)
     workflow.add_edge("context_engine", "practice_intelligence")
 
-    # 5. Practice Intelligence Gate: stop condition check (§20)
+    # 5. Practice Intelligence Gate: always continue (v13.0 fix)
+    # PIL stop conditions are informational warnings, not pipeline halts.
+    # A blank report is worse than a degraded analysis.
     def route_after_practice_intelligence(state: AgentState):
-        """§20: Check if PIL detected stop conditions requiring clarification."""
+        """§20: PIL may flag issues but the pipeline always continues.
+        The reasoning trace captures any PIL concerns for the final report."""
         pil = state.get("practice_intelligence", {})
         status = pil.get("status", "PROCEED")
         
-        if status == "PROCEED":
-            return "comprehension"
-        return "interrogation"
+        if status != "PROCEED":
+            print(f"[PIL GATE] PIL returned status={status}, but pipeline continues to avoid blank report.")
+        
+        # ALWAYS continue to comprehension — never leave the report blank
+        return "comprehension"
 
     workflow.add_conditional_edges(
         "practice_intelligence",
         route_after_practice_intelligence,
         {
             "comprehension": "comprehension",
-            "interrogation": "interrogation"
         }
     )
 
-    # 6. Comprehension Gate: Does a thesis exist with sufficient evidence?
+    # 6. Comprehension Gate: always continue (v13.0 fix)
+    # Even with low confidence, continue — a partial analysis is better than "Pending".
     def route_after_comprehension(state: AgentState):
-        """Chapter 1 gate: the system must understand before it analyzes."""
+        """Chapter 1 gate: logs confidence but always continues the pipeline."""
         comprehension = state.get("comprehension", {})
         thesis_exists = comprehension.get("thesis_exists", False)
         evidence_sufficient = comprehension.get("evidence_sufficient", False)
         confidence = comprehension.get("comprehension_confidence", 0)
         
-        if thesis_exists and evidence_sufficient and confidence >= 0.4:
-            return "identity_discovery"
-        return "interrogation"
+        if not (thesis_exists and evidence_sufficient and confidence >= 0.4):
+            print(f"[COMPREHENSION GATE] Low confidence (thesis={thesis_exists}, evidence={evidence_sufficient}, conf={confidence}), but pipeline continues.")
+        
+        # ALWAYS continue — never leave the report blank
+        return "identity_discovery"
 
     workflow.add_conditional_edges(
         "comprehension",
         route_after_comprehension,
         {
             "identity_discovery": "identity_discovery",
-            "interrogation": "interrogation"
         }
     )
 
