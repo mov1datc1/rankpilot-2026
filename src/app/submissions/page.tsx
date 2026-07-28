@@ -139,7 +139,7 @@ export default function SubmissionsPage() {
         if (selectedMatterIds.size > 0) {
           await attachMattersToSubmission(result.data.id, Array.from(selectedMatterIds));
         }
-        router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}`);
+        router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}&name=${encodeURIComponent(selectedFile?.name || 'Document')}&directory=${encodeURIComponent(targetDirectory)}&region=${encodeURIComponent(guideRegion)}&practice=${encodeURIComponent(practiceArea)}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);

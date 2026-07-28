@@ -10,6 +10,10 @@ function ProcessingContent() {
   const submissionId = searchParams.get('id');
   const documentUrl = searchParams.get('url');
   const rawText = searchParams.get('text');
+  const docName = searchParams.get('name') || 'Document';
+  const directory = searchParams.get('directory') || '';
+  const region = searchParams.get('region') || '';
+  const practice = searchParams.get('practice') || '';
 
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(1); 
@@ -48,12 +52,24 @@ function ProcessingContent() {
         setProgress(75);
         setStep(3);
 
-        const data = await res.json();
+        // Safe JSON parse: Render may return non-JSON on timeout/deploy
+        // Read as text first since body stream can only be consumed once
+        const responseText = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonErr) {
+          throw new Error(
+            responseText?.includes('An error occurred')
+              ? 'El motor de IA esta reiniciandose. Por favor espera 30 segundos e intenta de nuevo.'
+              : `Error de conexion con el servidor (${res.status}). Intenta de nuevo en unos momentos.`
+          );
+        }
         
         if (!res.ok) {
           setErrorCode(data.errorCode || 'UNKNOWN');
           setSupportMsg(data.supportMessage || null);
-          throw new Error(data.error || 'Fallo en la extracción de la IA');
+          throw new Error(data.error || 'Fallo en la extraccion de la IA');
         }
 
         setProgress(100);
@@ -96,9 +112,9 @@ function ProcessingContent() {
             <FileText size={20} />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem', margin: 0 }}>BANKING & FINANCE - ARAQUEREYNA - CHAMBERS 2027.docx</p>
-            <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>Legal 500 · Latin America · Banking & Finance</p>
-            <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>job_id: 2027bdc6-70d5-4c5a-b71f-e3001f8089df · submission_id: 53</p>
+            <p style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem', margin: 0 }}>{decodeURIComponent(docName)}</p>
+            <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>{[directory, region, practice].filter(Boolean).join(' \u00B7 ') || 'Processing submission...'}</p>
+            <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>submission_id: {submissionId}</p>
           </div>
           <div style={{ padding: '0.5rem 1rem', background: '#dcfce7', color: '#15803d', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
             Uploaded
