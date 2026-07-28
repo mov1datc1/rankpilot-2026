@@ -339,3 +339,66 @@ Escribe un solo parrafo profesional y objetivo (aprox 100-150 palabras) enfocado
     return { success: false, error: error.message };
   }
 }
+
+// ── Delete Case Folder (Submission + all its matters) ──
+export async function deleteCaseFolder(data: {
+  submissionId?: string;
+  matterIds: string[];
+}) {
+  try {
+    const user = await getAuthenticatedUser();
+
+    // Step 1: Delete all matters in the folder
+    if (data.matterIds.length > 0) {
+      // Verify ownership of all matters
+      const matters = await prisma.matter.findMany({
+        where: { id: { in: data.matterIds } },
+      });
+
+      const unauthorized = matters.filter(m => m.userId !== user.id);
+      if (unauthorized.length > 0) {
+        throw new Error('No tienes permiso para eliminar algunos de estos casos.');
+      }
+
+      // Delete MatterSources first (child records)
+      await prisma.matterSource.deleteMany({
+        where: { matterId: { in: data.matterIds } },
+      });
+
+      // Delete the matters themselves
+      await prisma.matter.deleteMany({
+        where: { id: { in: data.matterIds }, userId: user.id },
+      });
+    }
+
+    // Step 2: Delete the submission if it exists (builder folders)
+    if (data.submissionId) {
+      const submission = await prisma.submission.findUnique({
+        where: { id: data.submissionId },
+        include: { matters: { select: { id: true } } },
+      });
+
+      if (submission && submission.userId === user.id) {
+        // Delete any remaining matters linked to this submission
+        if (submission.matters.length > 0) {
+          await prisma.matterSource.deleteMany({
+            where: { matterId: { in: submission.matters.map(m => m.id) } },
+          });
+          await prisma.matter.deleteMany({
+            where: { submissionId: data.submissionId },
+          });
+        }
+
+        // Delete the submission
+        await prisma.submission.delete({
+          where: { id: data.submissionId },
+        });
+      }
+    }
+
+    return { success: true, deletedCount: data.matterIds.length };
+  } catch (error: any) {
+    console.error('Error deleting case folder:', error);
+    return { success: false, error: error.message };
+  }
+}

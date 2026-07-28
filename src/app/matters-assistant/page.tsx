@@ -7,7 +7,7 @@ import {
   Upload, FileText, Bot, Pencil, Trash2, Save, X, RotateCw, Loader2, FileCheck,
   LayoutGrid, LayoutList
 } from 'lucide-react';
-import { getAllUserMatters, deleteMatter, updateMatterInline, optimizeMatterWithAI } from '@/app/actions/matters';
+import { getAllUserMatters, deleteMatter, deleteCaseFolder, updateMatterInline, optimizeMatterWithAI } from '@/app/actions/matters';
 import { createClient } from '@/utils/supabase/client';
 import { useRef } from 'react';
 import PremiumSelect from '@/components/PremiumSelect';
@@ -84,6 +84,31 @@ export default function MattersAssistantPage() {
   // Folder View State
   const [expandedFolderId, setExpandedFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'folders' | 'flat'>('folders');
+  const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
+  const [confirmDeleteFolderId, setConfirmDeleteFolderId] = useState<string | null>(null);
+
+  // Delete an entire folder (submission + matters)
+  async function handleDeleteFolder(folder: CaseFolder) {
+    setDeletingFolderId(folder.id);
+    try {
+      const matterIds = folder.matters.map(m => m.id);
+      // If the folder is backed by a real submission, pass its ID
+      const submissionId = folder.matters[0]?.submissionId || undefined;
+      const res = await deleteCaseFolder({ submissionId, matterIds });
+      if (res.success) {
+        // Remove deleted matters from local state
+        setMatters(prev => prev.filter(m => !matterIds.includes(m.id)));
+        setExpandedFolderId(null);
+        setConfirmDeleteFolderId(null);
+      } else {
+        alert(res.error || 'Error al eliminar la carpeta.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar la carpeta.');
+    } finally {
+      setDeletingFolderId(null);
+    }
+  }
 
   // Form State for Assistant
   const [directory, setDirectory] = useState('Chambers & Partners');
@@ -629,8 +654,8 @@ export default function MattersAssistantPage() {
                             </div>
                           </div>
 
-                          {/* Progress + Expand */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                          {/* Progress + Delete + Expand */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
                             {/* Progress Bar */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '140px' }}>
                               <div style={{ flex: 1, height: '6px', background: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
@@ -643,6 +668,49 @@ export default function MattersAssistantPage() {
                                 {progressPct}%
                               </span>
                             </div>
+                            {/* Delete Folder Button */}
+                            {confirmDeleteFolderId === folder.id ? (
+                              <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <button
+                                  onClick={() => handleDeleteFolder(folder)}
+                                  disabled={deletingFolderId === folder.id}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.3rem 0.6rem',
+                                    borderRadius: '6px', border: '1px solid #FCA5A5', background: '#FEF2F2',
+                                    color: '#DC2626', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
+                                    opacity: deletingFolderId === folder.id ? 0.6 : 1,
+                                  }}
+                                >
+                                  {deletingFolderId === folder.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                  {deletingFolderId === folder.id ? 'Deleting...' : 'Confirm'}
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteFolderId(null)}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', padding: '0.3rem 0.5rem',
+                                    borderRadius: '6px', border: '1px solid #E2E8F0', background: '#F8FAFC',
+                                    color: '#64748B', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
+                                  }}
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={e => { e.stopPropagation(); setConfirmDeleteFolderId(folder.id); }}
+                                title="Delete entire folder"
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  width: '28px', height: '28px', borderRadius: '6px',
+                                  border: '1px solid transparent', background: 'transparent',
+                                  color: '#94a3b8', cursor: 'pointer', transition: 'all 0.15s ease',
+                                }}
+                                onMouseOver={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = '#FECACA'; }}
+                                onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'transparent'; }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                             {/* Chevron */}
                             <ChevronDown size={18} style={{ color: '#94a3b8', transition: 'transform 0.25s ease', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                           </div>
