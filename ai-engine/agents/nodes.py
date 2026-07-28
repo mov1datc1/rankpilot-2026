@@ -562,7 +562,15 @@ SCORING FLOOR CALIBRATION:
             violations = []
             
             # CHECK 1: Matter Evaluations Completeness
+            # v13.1 Rule 69: Check BOTH root-level AND inside audit_letter (schema puts them inside audit_letter)
             eval_count = len(res_json.get("matter_evaluations", []))
+            if eval_count == 0:
+                # Fallback: check inside audit_letter where the prompt schema actually places them
+                audit_evals = res_json.get("audit_letter", {}).get("matter_evaluations", []) if isinstance(res_json.get("audit_letter"), dict) else []
+                if audit_evals:
+                    # Promote to root level so downstream code finds them
+                    res_json["matter_evaluations"] = audit_evals
+                    eval_count = len(audit_evals)
             expected_count = len(all_matters)
             if eval_count < expected_count:
                 violations.append(f"EVAL_COUNT: Got {eval_count} matter_evaluations, expected {expected_count}")

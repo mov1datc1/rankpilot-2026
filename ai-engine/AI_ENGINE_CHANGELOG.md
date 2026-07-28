@@ -79,6 +79,7 @@
 | 66 | PIL Stop Conditions Recalibrated — §20 changed from ANY-trigger to ALL-THREE-trigger. Unranked/small firms no longer blocked. Added CRITICAL MANDATE requiring non-empty signals/patterns | v13.1 | `prompts.py` (PRACTICE_INTELLIGENCE_PROMPT §20 + CRITICAL MANDATE) | ✅ ACTIVE | 🔴 SUPREME |
 | 67 | Comprehension Context Engine Fallback — COMPREHENSION_PROMPT now explicitly instructs LLM to use context_engine data (archetype, identity_adn) for thesis extraction when PIL is empty | v13.1 | `prompts.py` (COMPREHENSION_PROMPT CONTEXT ENGINE FALLBACK section) | ✅ ACTIVE | 🔴 CRITICAL |
 | 68 | LangChain Curly Brace Escaping — json.dumps of OBJECTIVE_DIRECTIVES produces `{"priorities":...}` which LangChain interprets as template variables. Fix: `.replace("{","{{").replace("}","}}")` in _inject_directives. Without this, ALL nodes crash with 'missing variables {"priorities"}' | v13.1 | `editorial_nodes.py` (_inject_directives brace escaping) | ✅ ACTIVE | 🔴 SUPREME |
+| 69 | Validation Gate matter_evaluations Path Fix — Prompt schema puts matter_evaluations inside audit_letter, but validation checked root level only. Fix: check both paths and promote audit_letter.matter_evaluations to root. Eliminates 3 wasted LLM retries per submission | v13.1 | `nodes.py` (validation gate CHECK 1 fallback) | ✅ ACTIVE | 🔴 CRITICAL |
 
 
 ---
