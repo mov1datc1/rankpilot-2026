@@ -76,6 +76,8 @@
 | 63 | PIL Lite Retry — when full PracticeIntelligenceOutput (30+ fields) fails, retry with PracticeIntelligenceLite (15 flat fields), then map to full format | v13.1 | `schema.py` (PracticeIntelligenceLite), `editorial_nodes.py` (practice_intelligence_node retry) | ✅ ACTIVE | 🔴 SUPREME |
 | 64 | Matter Accountability Auto-Fill — programmatic disposition generation when LLM leaves all_matter_dispositions empty. Maps hero/supporting/exclude from blueprint fields | v13.1 | `editorial_nodes.py` (submission_blueprint_node auto-fill) | ✅ ACTIVE | 🔴 CRITICAL |
 | 65 | Comprehension Thesis Resilience — inject context_engine output (archetype, identity_adn, practice_type) into comprehension input so thesis can be extracted even when PIL returns defaults | v13.1 | `editorial_nodes.py` (comprehension_node enriched input) | ✅ ACTIVE | 🔴 CRITICAL |
+| 66 | PIL Stop Conditions Recalibrated — §20 changed from ANY-trigger to ALL-THREE-trigger. Unranked/small firms no longer blocked. Added CRITICAL MANDATE requiring non-empty signals/patterns | v13.1 | `prompts.py` (PRACTICE_INTELLIGENCE_PROMPT §20 + CRITICAL MANDATE) | ✅ ACTIVE | 🔴 SUPREME |
+| 67 | Comprehension Context Engine Fallback — COMPREHENSION_PROMPT now explicitly instructs LLM to use context_engine data (archetype, identity_adn) for thesis extraction when PIL is empty | v13.1 | `prompts.py` (COMPREHENSION_PROMPT CONTEXT ENGINE FALLBACK section) | ✅ ACTIVE | 🔴 CRITICAL |
 
 
 ---

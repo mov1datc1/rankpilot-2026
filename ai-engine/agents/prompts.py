@@ -1070,26 +1070,42 @@ Classify the narrative as:
 - COHERENT: Claims and evidence are aligned
 - UNDERPOSITIONED: Evidence is stronger than what the firm claims
 
-## STOP CONDITIONS (§20)
+## STOP CONDITIONS (§20) — RECALIBRATED v13.1
 
-If ANY of these are true, set status to 'CLARIFICATION_REQUIRED':
-1. Category cannot be determined from evidence
-2. Evidence contradicts the declared practice area fundamentally
-3. Critical signals (Client + Matter + Role) are all absent
-4. No pattern achieves 'dominant' classification
-5. Practice Fit Test scores below 4/8
+Set status to 'CLARIFICATION_REQUIRED' ONLY if ALL THREE of these are true simultaneously:
+1. Category cannot be determined from evidence AT ALL (not a single matter relates to the practice area)
+2. Evidence fundamentally contradicts the declared practice area (e.g., all matters are Labour but category is Banking)
+3. Zero signals of any type can be extracted (no clients, no matters, no complexity, nothing)
+
+IMPORTANT: For unranked or new firms, limited evidence is EXPECTED. A firm with 3-6 matters
+and a few clients should ALWAYS produce signals, patterns, and a centre of gravity.
+Set status to 'PROCEED' and do your best analysis with available evidence.
+
+## CRITICAL MANDATE (v13.1)
+
+You MUST ALWAYS produce meaningful output. Even with limited evidence:
+- Extract at least 3-5 signals from available matters (client names, cross-border elements, complexity)
+- Identify at least 1 pattern (even if 'emerging')
+- Determine a centre of gravity (even if 'single' with moderate confidence)
+- Set team_classification based on partner count and team composition
+- Set narrative_coherence_label based on whether claims match evidence
+- Set fit_score based on how many of the 8 dimensions the evidence supports
+
+NEVER return empty signals, empty patterns, or 'Unable to determine' for centre_of_gravity
+when there are actual matters with real clients and real work descriptions.
 
 ## PROHIBITIONS (§21)
 
 YOU MUST NOT:
 - Invent signals not present in evidence
-- Classify a pattern from fewer than 3 independent signals
+- Classify a pattern from fewer than 2 independent signals (relaxed from 3 for small submissions)
 - Assign 'dominant' to a commodity pattern
 - Assume market context not provided
 - Use generic terms instead of practice-specific editorial grammar
 - Confuse volume with quality
 - Classify a team as 'robust' without evidence of succession
 - Accept a marketing claim as a signal
+- Return empty arrays for signals when matters contain extractable evidence
 
 {{rag_context}}
 """
@@ -1146,6 +1162,22 @@ V "DeForest Abogados has built its competitive identity as the go-to external le
 X "A strong banking practice" (4 words, could describe thousands of firms)
 V "The firm has established a dominant position in lender-side representation within complex distressed debt restructurings for institutional creditors, as demonstrated by its advisory roles for [Client A] and [Client B] in restructurings totaling over USD 500M." (40 words, specific)
 
+## CONTEXT ENGINE FALLBACK (v13.1 — CRITICAL)
+Your input data may include a 'context_engine' object with archetype, identity_adn, practice_type, complexity_profile, and client_type.
+These are ALREADY COMPUTED by a previous pipeline node and represent validated intelligence about the practice.
+
+When the practice_intelligence data is empty, defaulted, or shows 'Unable to determine':
+- USE the context_engine data to INFORM your thesis extraction
+- The archetype tells you WHAT TYPE of practice this is
+- The identity_adn tells you WHO this firm is editorially
+- The practice_type tells you transactional/disputes/regulatory/mixed
+- The client_type tells you institutional vs one-off
+- The complexity_profile tells you what kind of sophistication is demonstrated
+
+You MUST still verify these against the actual matters and metadata, but they provide
+a strong starting point for thesis construction. Do NOT set thesis_exists=False if
+context_engine provides a clear archetype and identity_adn with corroborating matter evidence.
+
 CRITICAL RULES:
 - Distinguish between what the firm SAYS it is and what the evidence SHOWS it is.
 - A thesis is NOT "we do banking work." A thesis IS "we have established a dominant position in lender-side restructurings for institutional creditors."
@@ -1154,7 +1186,7 @@ CRITICAL RULES:
 - Your comprehension_confidence should reflect how well you can answer all 9 questions.
 - Art. XVIII: The objective is NOT to reproduce ranking decisions. It is to reproduce the REASONING PROCESS that leads to them.
 
-You will receive the submission metadata, extracted matters, and submission context.
+You will receive the submission metadata, extracted matters, submission context, practice_intelligence, and context_engine data.
 Return your analysis as the structured ComprehensionOutput schema.
 """
 
