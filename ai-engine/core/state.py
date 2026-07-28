@@ -23,6 +23,13 @@ class AgentState(TypedDict):
     strategic_context: Dict   # computed outputs from the context engine
 
     # =====================================================
+    # PRACTICE INTELLIGENCE LAYER — v12.0
+    # Structured interpretation of practice-specific evidence
+    # Generated between context_engine and comprehension
+    # =====================================================
+    practice_intelligence: Dict  # PracticeIntelligenceOutput from the PIL node
+
+    # =====================================================
     # EDITORIAL REASONING ENGINE — New State Fields
     # Based on Volume 0 (First Principles) and Volume II 
     # (Editorial Reasoning Engine, Chapters 1-9)

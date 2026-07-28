@@ -384,3 +384,129 @@ class EditorialMemoryBank(BaseModel):
     total_submissions_processed: int = Field(default=0, description="Total number of submissions that contributed to this memory bank.")
     practice_areas_covered: List[str] = Field(default_factory=list, description="Unique practice areas seen so far.")
     jurisdictions_covered: List[str] = Field(default_factory=list, description="Unique jurisdictions seen so far.")
+
+
+# =====================================================
+# PRACTICE INTELLIGENCE LAYER — v12.0
+# Based on Editorial Intelligence Specification:
+# "Practice Intelligence Layer — Interpretation Rules"
+# Sections §1-§23: How RankPilot interprets practice-specific
+# editorial knowledge.
+# =====================================================
+
+class PracticeSignal(BaseModel):
+    """§10: A single structured signal extracted from evidence.
+    10 universal signal types (A-J) with practice-specific expression."""
+    signal_type: str = Field(description="One of: 'client' (A), 'matter' (B), 'complexity' (C), 'role' (D), 'leadership' (E), 'team' (F), 'market' (G), 'continuity' (H), 'innovation' (I), 'outcome' (J).")
+    description: str = Field(description="What this signal demonstrates in practice-specific language.")
+    source_matter: str = Field(default="", description="The matter or evidence that produced this signal.")
+    relevance: str = Field(description="One of: 'strong', 'medium', 'weak', 'contradictory'.")
+    confidence: float = Field(default=0.5, description="0-1 confidence in this signal's accuracy.")
+    practice_specific_expression: str = Field(default="", description="§11: The practice-specific expression preserving editorial grammar (e.g., 'Collateral architecture across dual legal systems' for Banking).")
+
+
+class PracticePattern(BaseModel):
+    """§12: A detected pattern across multiple signals.
+    Governed by 7 Pattern Recognition Rules."""
+    pattern_type: str = Field(description="One of: 'dominant', 'secondary', 'emerging', 'anecdotal'.")
+    description: str = Field(description="What pattern emerges from the evidence.")
+    supporting_signals: List[str] = Field(description="Signal descriptions that support this pattern.")
+    distribution: str = Field(description="§12.3-12.4: 'concentrated_in_one_lawyer', 'distributed_in_team', 'concentrated_in_one_client', 'distributed_across_clients'.")
+    persistence: str = Field(default="current_cycle", description="§12.5: 'multi_cycle' (stronger) or 'current_cycle' (weaker).")
+    is_commodity: bool = Field(default=False, description="§12.6: True if the pattern reflects commodity work, not excellence.")
+    coherence_sources: List[str] = Field(default_factory=list, description="§12.7: Where the pattern appears (matters, clients, profiles, overview, market).")
+
+
+class PracticeTension(BaseModel):
+    """§15: A structural tension detected between evidence layers."""
+    tension_type: str = Field(description="One of: 'claim_evidence' (§15.1), 'practice_category' (§15.2), 'matter_team' (§15.3), 'firm_lawyer' (§15.4), 'directory' (§15.5), 'breadth_specialisation' (§15.6), 'volume_sophistication' (§15.7), 'market_narrative' (§15.8).")
+    description: str = Field(description="What the tension is and why it matters editorially.")
+    severity: str = Field(description="One of: 'critical', 'moderate', 'minor'.")
+    recommendation: str = Field(default="", description="How to resolve or mitigate this tension.")
+
+
+class PracticeFitTest(BaseModel):
+    """§14: 8-dimension validation that evidence fits the practice category."""
+    category_fit: bool = Field(description="§14.1: Does the evidence belong to this category?")
+    category_fit_notes: str = Field(default="", description="Explanation of category fit assessment.")
+    matter_fit: bool = Field(description="§14.2: Do the central matters prove the hypothesis?")
+    matter_fit_notes: str = Field(default="", description="Explanation of matter fit assessment.")
+    client_fit: bool = Field(description="§14.3: Is the client profile coherent with the practice?")
+    client_fit_notes: str = Field(default="", description="Explanation of client fit assessment.")
+    role_fit: bool = Field(description="§14.4: Did the firm have the role the hypothesis requires?")
+    role_fit_notes: str = Field(default="", description="Explanation of role fit assessment.")
+    team_fit: bool = Field(description="§14.5: Does the team sustain the identity?")
+    team_fit_notes: str = Field(default="", description="Explanation of team fit assessment.")
+    lawyer_fit: bool = Field(description="§14.6: Are individual profiles coherent with the practice?")
+    lawyer_fit_notes: str = Field(default="", description="Explanation of lawyer fit assessment.")
+    directory_fit: bool = Field(description="§14.7: Does the editorial recognize and value this practice type?")
+    directory_fit_notes: str = Field(default="", description="Explanation of directory fit assessment.")
+    market_fit: bool = Field(description="§14.8: Is there a defensible competitive space?")
+    market_fit_notes: str = Field(default="", description="Explanation of market fit assessment.")
+    overall_fit: bool = Field(description="True if 6+ of the 8 dimensions pass.")
+    fit_score: int = Field(default=0, description="Count of passing dimensions (0-8).")
+
+
+class PracticeIntelligenceOutput(BaseModel):
+    """§8 + §19: The master Practice Interpretation Object.
+    Generated between context_engine and comprehension.
+    Transforms raw evidence into structured, practice-specific intelligence.
+    
+    'The Practice Intelligence Layer comprehends the practice.
+     The Positioning Intelligence Engine determines where it competes.
+     The Decision Engine decides what recommendation is defensible.
+     The Narrative Engine decides how to express it.'
+    """
+    
+    # §19.1: Practice Classification
+    practice_main: str = Field(description="Primary practice area identified from evidence.")
+    sub_practices: List[str] = Field(default_factory=list, description="Sub-practices detected.")
+    centre_of_gravity: str = Field(description="§9: The dominant pattern around which evidence organizes. NOT a marketing label — a conclusion from frequency, quality, repetition, relevance, coherence, centrality.")
+    centre_of_gravity_type: str = Field(description="§9.2-9.4: One of: 'single' (signals converge), 'dual' (primary + secondary), 'fragmented' (no coherent identity).")
+    secondary_gravity: str = Field(default="", description="§9.3: If dual, the secondary centre of gravity.")
+    overlaps: List[str] = Field(default_factory=list, description="Categories that overlap with this practice.")
+    category_fit_concerns: List[str] = Field(default_factory=list, description="Concerns about evidence fitting the declared category.")
+    
+    # §19.2: Activated Knowledge
+    rags_used: List[str] = Field(default_factory=list, description="RAG files that were activated for this analysis.")
+    rules_applied: List[str] = Field(default_factory=list, description="Interpretation rules that were applied.")
+    conflicts_resolved: List[str] = Field(default_factory=list, description="§6: Conflicts between RAG sources that were resolved.")
+    
+    # §19.3: Signal Map (§10)
+    signals: List[PracticeSignal] = Field(default_factory=list, description="All extracted signals, classified by type and relevance.")
+    
+    # §19.4: Pattern Map (§12)
+    patterns: List[PracticePattern] = Field(default_factory=list, description="Detected patterns across signals.")
+    excessive_dependencies: List[str] = Field(default_factory=list, description="§19.4: Over-reliance on single clients, lawyers, or matter types.")
+    
+    # §19.5: Practice Hypotheses (§13)
+    hypothesis_primary: str = Field(description="§13.3: Primary hypothesis about practice identity.")
+    hypothesis_alternative: str = Field(description="§13.3: Alternative hypothesis.")
+    hypothesis_conservative: str = Field(description="§13.3: Conservative interpretation.")
+    hypothesis_confidence: float = Field(default=0.5, description="0-1 confidence in the primary hypothesis.")
+    hypothesis_evidence_for: List[str] = Field(default_factory=list, description="Evidence supporting primary hypothesis.")
+    hypothesis_evidence_against: List[str] = Field(default_factory=list, description="Evidence contradicting primary hypothesis.")
+    
+    # §19.6: Practice Risks
+    risks: List[str] = Field(default_factory=list, description="§8.8: Detected risks (dilution, category mismatch, overclaiming, insufficient complexity, commodity work, weak role, lack of team depth, overdependence, fragmented identity).")
+    
+    # §19.7: Recommended Research Questions
+    research_questions: List[str] = Field(default_factory=list, description="Questions to ask the user before continuing.")
+    
+    # Practice Fit Test (§14)
+    fit_test: PracticeFitTest = Field(description="8-dimension practice fit validation.")
+    
+    # Tension Detection (§15)
+    tensions: List[PracticeTension] = Field(default_factory=list, description="Structural tensions detected between evidence layers.")
+    
+    # Documento Maestro Mod 5: Team Structure Classification
+    team_classification: str = Field(description="One of: 'dependent' (single partner), 'functional' (working but thin), 'robust' (deep bench, succession, specialization).")
+    team_classification_rationale: str = Field(default="", description="Why this team classification was assigned.")
+    
+    # Documento Maestro Mod 4: Narrative Coherence Label
+    narrative_coherence_label: str = Field(description="One of: 'overclaim' (claim > evidence), 'coherent' (claim = evidence), 'underpositioned' (evidence > claim).")
+    narrative_coherence_rationale: str = Field(default="", description="Why this coherence label was assigned.")
+    
+    # §20: Stop Condition
+    status: str = Field(default="PROCEED", description="'PROCEED' or 'CLARIFICATION_REQUIRED'. If clarification needed, research_questions must be populated.")
+    stop_reason: str = Field(default="", description="If status is CLARIFICATION_REQUIRED, explain why processing cannot continue.")

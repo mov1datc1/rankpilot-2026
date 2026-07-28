@@ -2,12 +2,12 @@
 Editorial Reasoning Engine — Node Implementations
 Based on Volume 0 (First Principles) and Volume II (Editorial Reasoning Engine)
 
-These 7 nodes transform RankPilot from a descriptive writer into an editorial 
+These 9 nodes transform RankPilot from a descriptive writer into an editorial 
 intelligence system that thinks like a senior rankings consultant.
 
-Pipeline: comprehension → identity_discovery → hypothesis_construction → 
-          refutation_engine → comparative_analysis → editorial_confidence → 
-          narrative_architecture
+Pipeline: practice_intelligence → comprehension → identity_discovery → 
+          hypothesis_construction → refutation_engine → comparative_analysis → 
+          editorial_confidence → submission_blueprint → narrative_architecture
 """
 
 import json
@@ -27,8 +27,10 @@ from core.schema import (
     EditorialConfidenceOutput,
     SubmissionBlueprintOutput,
     NarrativeArchitectureOutput,
+    PracticeIntelligenceOutput,
 )
 from agents.prompts import (
+    PRACTICE_INTELLIGENCE_PROMPT,
     COMPREHENSION_PROMPT,
     IDENTITY_DISCOVERY_PROMPT,
     HYPOTHESIS_CONSTRUCTION_PROMPT,
@@ -82,6 +84,134 @@ def _build_trace_entry(stage: str, decision: str, evidence: list,
 
 
 # ─────────────────────────────────────────────
+# NODE 0: PRACTICE INTELLIGENCE LAYER (v12.0)
+# ─────────────────────────────────────────────
+def practice_intelligence_node(state: AgentState) -> Dict:
+    """v12.0: Interprets practice-specific evidence BEFORE comprehension begins.
+    Generates a structured Practice Interpretation Object containing:
+    - Signal Map (10 types A-J)
+    - Pattern Map (dominant/secondary/emerging/anecdotal)
+    - Centre of Gravity classification
+    - Practice Fit Test (8 dimensions)
+    - Tension Detection (8 types)
+    - Team Classification (dependent/functional/robust)
+    - Narrative Coherence Label (overclaim/coherent/underpositioned)
+    - Practice Hypotheses (primary, alternative, conservative)
+    """
+    print("--- PRACTICE INTELLIGENCE LAYER: Interpreting practice-specific evidence ---")
+    
+    llm = get_model()
+    structured_llm = llm.with_structured_output(PracticeIntelligenceOutput)
+    
+    # Load RAG context for this practice area
+    submission_context = state.get("submission_context", {})
+    router = RAGRouter()
+    rag_knowledge = router.get_rag_context(
+        submission_context.get("practice_area", ""),
+        submission_context.get("directory", "")
+    )
+    
+    input_data = {
+        "metadata": state.get("metadata", {}),
+        "matters": state.get("matters", []),
+        "submission_context": submission_context,
+        "strategic_context": state.get("strategic_context", {}),
+    }
+    
+    # Inject RAG context into the prompt template
+    prompt_with_rag = PRACTICE_INTELLIGENCE_PROMPT.replace(
+        "{rag_context}",
+        rag_knowledge if rag_knowledge else "No practice-specific RAG knowledge available."
+    )
+    
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt_with_rag),
+        ("human", "Analyze this submission and generate the Practice Intelligence Layer output: {data}")
+    ])
+    
+    chain = prompt | structured_llm
+    
+    try:
+        result = chain.invoke({"data": json.dumps(input_data, default=str, ensure_ascii=True)})
+        pil_output = _safe_dump(result)
+    except Exception as e:
+        print(f"Error in Practice Intelligence Layer Node: {e}")
+        pil_output = {
+            "practice_main": submission_context.get("practice_area", "Unknown"),
+            "sub_practices": [],
+            "centre_of_gravity": "Unable to determine from available evidence",
+            "centre_of_gravity_type": "fragmented",
+            "secondary_gravity": "",
+            "overlaps": [],
+            "category_fit_concerns": [f"PIL analysis failed: {str(e)}"],
+            "rags_used": [],
+            "rules_applied": [],
+            "conflicts_resolved": [],
+            "signals": [],
+            "patterns": [],
+            "excessive_dependencies": [],
+            "hypothesis_primary": "Unable to generate hypothesis",
+            "hypothesis_alternative": "Unable to generate hypothesis",
+            "hypothesis_conservative": "Unable to generate hypothesis",
+            "hypothesis_confidence": 0.0,
+            "hypothesis_evidence_for": [],
+            "hypothesis_evidence_against": [],
+            "risks": [f"Practice Intelligence Layer failed: {str(e)}"],
+            "research_questions": ["Manual review required — PIL node encountered an error"],
+            "fit_test": {
+                "category_fit": False, "category_fit_notes": "Unable to assess",
+                "matter_fit": False, "matter_fit_notes": "Unable to assess",
+                "client_fit": False, "client_fit_notes": "Unable to assess",
+                "role_fit": False, "role_fit_notes": "Unable to assess",
+                "team_fit": False, "team_fit_notes": "Unable to assess",
+                "lawyer_fit": False, "lawyer_fit_notes": "Unable to assess",
+                "directory_fit": False, "directory_fit_notes": "Unable to assess",
+                "market_fit": False, "market_fit_notes": "Unable to assess",
+                "overall_fit": False, "fit_score": 0,
+            },
+            "tensions": [],
+            "team_classification": "dependent",
+            "team_classification_rationale": "Unable to assess — PIL failed",
+            "narrative_coherence_label": "overclaim",
+            "narrative_coherence_rationale": "Unable to assess — PIL failed",
+            "status": "CLARIFICATION_REQUIRED",
+            "stop_reason": f"Practice Intelligence Layer encountered an error: {str(e)}",
+        }
+    
+    # Build reasoning trace
+    trace = state.get("reasoning_trace", [])
+    signals_count = len(pil_output.get("signals", []))
+    patterns_count = len(pil_output.get("patterns", []))
+    tensions_count = len(pil_output.get("tensions", []))
+    fit_score = pil_output.get("fit_test", {}).get("fit_score", 0)
+    
+    trace.append(_build_trace_entry(
+        stage="practice_intelligence",
+        decision=(
+            f"Centre of Gravity: {pil_output.get('centre_of_gravity', '')} ({pil_output.get('centre_of_gravity_type', '')}) | "
+            f"Signals: {signals_count} | Patterns: {patterns_count} | Tensions: {tensions_count} | "
+            f"Fit: {fit_score}/8 | Team: {pil_output.get('team_classification', '')} | "
+            f"Narrative: {pil_output.get('narrative_coherence_label', '')} | "
+            f"Status: {pil_output.get('status', '')}"
+        ),
+        evidence=[pil_output.get("hypothesis_primary", "")],
+        confidence=pil_output.get("hypothesis_confidence", 0),
+        principle="§8: Practice Intelligence Layer — Interpretation before Comprehension"
+    ))
+    
+    print(f"[PIL v12.0] Centre of Gravity: {pil_output.get('centre_of_gravity', '')} ({pil_output.get('centre_of_gravity_type', '')})")
+    print(f"[PIL v12.0] Signals: {signals_count} | Patterns: {patterns_count} | Tensions: {tensions_count} | Fit: {fit_score}/8")
+    print(f"[PIL v12.0] Team: {pil_output.get('team_classification', '')} | Narrative: {pil_output.get('narrative_coherence_label', '')}")
+    print(f"[PIL v12.0] Status: {pil_output.get('status', '')}")
+    
+    return {
+        "practice_intelligence": pil_output,
+        "reasoning_trace": trace,
+        "current_step": "comprehension" if pil_output.get("status") == "PROCEED" else "interrogation"
+    }
+
+
+# ─────────────────────────────────────────────
 # NODE 1: COMPREHENSION (Chapter 1)
 # ─────────────────────────────────────────────
 def comprehension_node(state: AgentState) -> Dict:
@@ -96,6 +226,8 @@ def comprehension_node(state: AgentState) -> Dict:
         "metadata": state.get("metadata", {}),
         "matters": state.get("matters", []),
         "submission_context": state.get("submission_context", {}),
+        # v12.0: Include PIL output for practice-aware comprehension
+        "practice_intelligence": state.get("practice_intelligence", {}),
     }
     
     prompt = ChatPromptTemplate.from_messages([
@@ -154,6 +286,8 @@ def identity_discovery_node(state: AgentState) -> Dict:
         "matters": state.get("matters", []),
         "comprehension": state.get("comprehension", {}),
         "submission_context": state.get("submission_context", {}),
+        # v12.0: Include PIL's centre of gravity and signal map
+        "practice_intelligence": state.get("practice_intelligence", {}),
     }
     
     prompt = ChatPromptTemplate.from_messages([
@@ -217,12 +351,24 @@ def hypothesis_construction_node(state: AgentState) -> Dict:
         submission_context.get("directory", "")
     )
     
+    # v12.0: Seed hypothesis construction with PIL's practice hypotheses
+    pil = state.get("practice_intelligence", {})
+    
     input_data = {
         "competitive_identity": state.get("competitive_identity", {}),
         "matters": state.get("matters", []),
         "strategic_context": state.get("strategic_context", {}),
         "comprehension": state.get("comprehension", {}),
         "RAG_KNOWLEDGE": rag_knowledge,
+        # v12.0: PIL practice hypotheses as seeds for editorial hypothesis generation
+        "practice_hypotheses": {
+            "primary": pil.get("hypothesis_primary", ""),
+            "alternative": pil.get("hypothesis_alternative", ""),
+            "conservative": pil.get("hypothesis_conservative", ""),
+            "confidence": pil.get("hypothesis_confidence", 0),
+        },
+        "centre_of_gravity": pil.get("centre_of_gravity", ""),
+        "team_classification": pil.get("team_classification", ""),
     }
 
     # v7.0: Inject editorial memory for continuous learning
@@ -462,6 +608,9 @@ def submission_blueprint_node(state: AgentState) -> Dict:
     llm = get_model()
     structured_llm = llm.with_structured_output(SubmissionBlueprintOutput)
     
+    # v12.0: Include PIL data for practice-aware blueprint design
+    pil = state.get("practice_intelligence", {})
+    
     input_data = {
         "comprehension": state.get("comprehension", {}),
         "competitive_identity": state.get("competitive_identity", {}),
@@ -472,6 +621,15 @@ def submission_blueprint_node(state: AgentState) -> Dict:
         "matters": state.get("matters", []),
         "metadata": state.get("metadata", {}),
         "strategic_context": state.get("strategic_context", {}),
+        # v12.0: Practice Intelligence Layer enrichment
+        "team_classification": pil.get("team_classification", ""),
+        "team_classification_rationale": pil.get("team_classification_rationale", ""),
+        "narrative_coherence_label": pil.get("narrative_coherence_label", ""),
+        "narrative_coherence_rationale": pil.get("narrative_coherence_rationale", ""),
+        "centre_of_gravity": pil.get("centre_of_gravity", ""),
+        "practice_fit_score": pil.get("fit_test", {}).get("fit_score", 0),
+        "practice_tensions": [t.get("description", "") for t in pil.get("tensions", []) if isinstance(t, dict)],
+        "practice_risks": pil.get("risks", []),
     }
     
     prompt = ChatPromptTemplate.from_messages([

@@ -10,6 +10,7 @@ from agents.nodes import (
     writer_node
 )
 from agents.editorial_nodes import (
+    practice_intelligence_node,
     comprehension_node,
     identity_discovery_node,
     hypothesis_construction_node,
@@ -25,12 +26,16 @@ def create_rankpilot_graph():
     """
     Constructs the RankPilot Editorial Reasoning Engine graph.
     
-    This is a 15-node pipeline that reproduces the reasoning of a senior 
+    This is a 16-node pipeline that reproduces the reasoning of a senior 
     rankings consultant before writing a single word.
     
-    Pipeline Architecture (Vol. 0-VII integrated):
+    Pipeline Architecture (Vol. 0-VII + Practice Intelligence Layer v12.0):
     
-    ingestion → extraction → context_engine → comprehension
+    ingestion → extraction → context_engine → 🆕 practice_intelligence
+                                                    ↓
+                                              [stop condition?]
+                                              YES → interrogation → END
+                                              NO  → comprehension
                                                     ↓
                                               [thesis exists?]
                                               YES → identity_discovery
@@ -58,7 +63,7 @@ def create_rankpilot_graph():
     # 1. Initialize the StateGraph
     workflow = StateGraph(AgentState)
 
-    # 2. Register ALL nodes (original + editorial reasoning)
+    # 2. Register ALL nodes (original + editorial reasoning + practice intelligence)
     # --- Original pipeline nodes ---
     workflow.add_node("ingestion", ingestion_node)
     workflow.add_node("extraction", extraction_node)
@@ -67,6 +72,9 @@ def create_rankpilot_graph():
     workflow.add_node("optimization", optimization_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
+    
+    # --- Practice Intelligence Layer (v12.0) ---
+    workflow.add_node("practice_intelligence", practice_intelligence_node)
     
     # --- Editorial Reasoning Engine nodes ---
     workflow.add_node("comprehension", comprehension_node)
@@ -83,10 +91,29 @@ def create_rankpilot_graph():
     workflow.add_edge("ingestion", "extraction")
     workflow.add_edge("extraction", "context_engine")
     
-    # 4. After context engine → comprehension (NEW: replaces direct-to-analysis)
-    workflow.add_edge("context_engine", "comprehension")
+    # 4. After context engine → practice_intelligence (v12.0)
+    workflow.add_edge("context_engine", "practice_intelligence")
 
-    # 5. Comprehension Gate: Does a thesis exist with sufficient evidence?
+    # 5. Practice Intelligence Gate: stop condition check (§20)
+    def route_after_practice_intelligence(state: AgentState):
+        """§20: Check if PIL detected stop conditions requiring clarification."""
+        pil = state.get("practice_intelligence", {})
+        status = pil.get("status", "PROCEED")
+        
+        if status == "PROCEED":
+            return "comprehension"
+        return "interrogation"
+
+    workflow.add_conditional_edges(
+        "practice_intelligence",
+        route_after_practice_intelligence,
+        {
+            "comprehension": "comprehension",
+            "interrogation": "interrogation"
+        }
+    )
+
+    # 6. Comprehension Gate: Does a thesis exist with sufficient evidence?
     def route_after_comprehension(state: AgentState):
         """Chapter 1 gate: the system must understand before it analyzes."""
         comprehension = state.get("comprehension", {})
@@ -107,27 +134,27 @@ def create_rankpilot_graph():
         }
     )
 
-    # 6. Editorial Reasoning chain (sequential)
+    # 7. Editorial Reasoning chain (sequential)
     workflow.add_edge("identity_discovery", "hypothesis_construction")
     workflow.add_edge("hypothesis_construction", "refutation_engine")
     workflow.add_edge("refutation_engine", "comparative_analysis")
     workflow.add_edge("comparative_analysis", "editorial_confidence")
 
-    # 7. Editorial Confidence → Submission Blueprint → Narrative Architecture
+    # 8. Editorial Confidence → Submission Blueprint → Narrative Architecture
     # ALWAYS proceeds: insufficient confidence is communicated, not hidden.
     workflow.add_edge("editorial_confidence", "submission_blueprint")
     workflow.add_edge("submission_blueprint", "narrative_architecture")
 
-    # 8. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
+    # 9. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
     workflow.add_edge("narrative_architecture", "analysis")
     workflow.add_edge("analysis", "optimization")
     workflow.add_edge("optimization", "writing")
 
-    # 9. Terminal edges
+    # 10. Terminal edges
     workflow.add_edge("interrogation", END)
     workflow.add_edge("writing", END)
 
-    # 10. Persistence Layer
+    # 11. Persistence Layer
     checkpointer = MemorySaver()
 
     return workflow.compile(checkpointer=checkpointer)

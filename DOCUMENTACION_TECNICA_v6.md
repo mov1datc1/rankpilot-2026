@@ -1,8 +1,8 @@
-# RankPilot — Documentación Técnica v6.0
+# RankPilot — Documentación Técnica v7.0
 
-> **Última actualización:** Julio 27, 2026
-> **Versión:** 6.0 — RAG v1 Full Integration, Archetype Rubric, Confidentiality Calibration, Markdown Strip
-> **Versiones cubiertas:** v10.0 → v10.2 → v11.0
+> **Última actualización:** Julio 28, 2026
+> **Versión:** 7.0 — Practice Intelligence Layer, Signal Extraction, Practice Fit Test, Tension Detection
+> **Versiones cubiertas:** v10.0 → v10.2 → v11.0 → v12.0
 
 ---
 
@@ -57,9 +57,9 @@
 
 ---
 
-## 3. Motor de IA — Pipeline de 15 Nodos
+## 3. Motor de IA — Pipeline de 16 Nodos
 
-![Pipeline de 15 Nodos — 4 fases con decision gate](docs/diagrams/03_ai_pipeline.png)
+![Pipeline de 16 Nodos — 5 fases con decision gates](docs/diagrams/03_ai_pipeline.png)
 
 ### 3.1 Detalle por Fase
 
@@ -71,35 +71,56 @@
 | 2 | `extraction` | GPT-4o extracción estructurada | `metadata` + `matters[]` (SubmissionSchema) |
 | 3 | `context_engine` | Análisis 8 capas estratégicas + **Archetype Rubric (v11.0)** | `strategic_context` (archetype, complexity, ADN) |
 
-**🟣 FASE 2 — Razonamiento Editorial (Nodos 4-9)**
-
-| # | Nodo | Gobernado por | Output clave |
-|---|------|--------------|-------------|
-| 4 | `comprehension` | Constitución Arts VII,VIII,X,XIV | `thesis_exists` + `evidence_sufficient` |
-| 5 | `identity_discovery` | Principios 4, 5, 6 | `identity_statement` + `recurring_patterns` |
-| 6 | `hypothesis_construction` | Principios 4, 8, 12 | 3+ hipótesis editoriales con scores |
-| 7 | `refutation_engine` | Popper + Decision Rules 5,6,7,11 | `surviving_hypotheses` + `destroyed_hypotheses` |
-| 8 | `comparative_analysis` | Principios 1, 7, 11 | 13 dimensiones + `band_alignment` |
-| 9 | `editorial_confidence` | Rules 8,9,10 + Arts VII,XIV | `overall_confidence` + `recommendation` |
-
-> **⚠️ Decision Gate:** Después del Nodo 4, si NO existe thesis o la evidencia es insuficiente → ruta a **interrogation → STOP** para solicitar más datos.
-
-**🟠 FASE 3 — Diseño del Blueprint (Nodo 10)**
-
-| # | Nodo | Input | Output |
-|---|------|-------|--------|
-| 10 | `submission_blueprint` | Todos los outputs previos + matters | **Objeto de 22 campos** (SubmissionBlueprintOutput) |
-
-> Este es el nodo **más impactante** — introducido por Vol. VI Ch. 15. La IA **DISEÑA** la estructura completa antes de escribir una sola palabra.
-
-**🟢 FASE 4 — Narrativa y Output (Nodos 11-14)**
+**🟤 FASE 1.5 — Practice Intelligence Layer (Nodo 4 — v12.0 NUEVO)**
 
 | # | Nodo | Función | Output |
 |---|------|---------|--------|
-| 11 | `narrative_architecture` | Ejecuta el Blueprint en plan editorial | thesis, hero_matter, matter_hierarchy, narrative_arc |
-| 12 | `analysis` | Genera Carta de Audit Estratégico + **Validation Gate (v10.2)** | risk_level, score, secciones de audit, evaluaciones |
-| 13 | `optimization` | Optimización texto por matter + **strip_markdown (v11.0)** + Probative Validator | `optimized_text` (plain text, sin markdown) |
-| 14 | `writing` | Output final | Contenido LaTeX/DOCX-ready |
+| 4 | `practice_intelligence` | Interpreta evidencia con gramática específica de la práctica | `PracticeIntelligenceOutput` (señales, patrones, fit test, tensiones) |
+
+> **🆕 Decision Gate (§20):** Después del Nodo 4, si el PIL detecta stop conditions (categoría indeterminable, evidencia contradictoria, fit test < 4/8) → ruta a **interrogation → STOP**.
+
+**Componentes del Practice Intelligence Layer:**
+
+| Componente | Spec | Descripción |
+|-----------|------|-------------|
+| Signal Map | §10 | 10 tipos universales (A-J): Client, Matter, Complexity, Role, Leadership, Team, Market, Continuity, Innovation, Outcome |
+| Pattern Map | §12 | 7 reglas de reconocimiento → clasificación: dominant/secondary/emerging/anecdotal |
+| Centre of Gravity | §9 | Identidad dominante: single/dual/fragmented — basada en frecuencia, calidad, coherencia |
+| Practice Fit Test | §14 | 8 dimensiones: Category, Matter, Client, Role, Team, Lawyer, Directory, Market (6+ = pass) |
+| Tension Detection | §15 | 8 tipos: Claim-Evidence, Practice-Category, Matter-Team, Firm-Lawyer, Directory, Breadth-Specialisation, Volume-Sophistication, Market-Narrative |
+| Team Classification | Mod 5 | dependent/functional/robust — del Documento Maestro |
+| Narrative Coherence | Mod 4 | overclaim/coherent/underpositioned — del Documento Maestro |
+| Practice Hypotheses | §13 | 3 hipótesis: primary, alternative, conservative |
+
+**🟣 FASE 2 — Razonamiento Editorial (Nodos 5-10)**
+
+| # | Nodo | Gobernado por | Output clave |
+|---|------|--------------|-------------|
+| 5 | `comprehension` | Constitución Arts VII,VIII,X,XIV + **PIL output** | `thesis_exists` + `evidence_sufficient` |
+| 6 | `identity_discovery` | Principios 4, 5, 6 + **PIL centre_of_gravity** | `identity_statement` + `recurring_patterns` |
+| 7 | `hypothesis_construction` | Principios 4, 8, 12 + **PIL practice_hypotheses** | 3+ hipótesis editoriales con scores |
+| 8 | `refutation_engine` | Popper + Decision Rules 5,6,7,11 | `surviving_hypotheses` + `destroyed_hypotheses` |
+| 9 | `comparative_analysis` | Principios 1, 7, 11 | 13 dimensiones + `band_alignment` |
+| 10 | `editorial_confidence` | Rules 8,9,10 + Arts VII,XIV | `overall_confidence` + `recommendation` |
+
+> **⚠️ Decision Gate:** Después del Nodo 5, si NO existe thesis o la evidencia es insuficiente → ruta a **interrogation → STOP** para solicitar más datos.
+
+**🟠 FASE 3 — Diseño del Blueprint (Nodo 11)**
+
+| # | Nodo | Input | Output |
+|---|------|-------|--------|
+| 11 | `submission_blueprint` | Todos los outputs previos + matters + **PIL enrichment** | **Objeto de 22 campos** (SubmissionBlueprintOutput) |
+
+> Este es el nodo **más impactante** — introducido por Vol. VI Ch. 15. La IA **DISEÑA** la estructura completa antes de escribir una sola palabra. **v12.0:** Ahora recibe team_classification, narrative_coherence_label, centre_of_gravity, tensions y risks del PIL.
+
+**🟢 FASE 4 — Narrativa y Output (Nodos 12-15)**
+
+| # | Nodo | Función | Output |
+|---|------|---------|--------|
+| 12 | `narrative_architecture` | Ejecuta el Blueprint en plan editorial | thesis, hero_matter, matter_hierarchy, narrative_arc |
+| 13 | `analysis` | Genera Carta de Audit Estratégico + **Validation Gate (v10.2)** | risk_level, score, secciones de audit, evaluaciones |
+| 14 | `optimization` | Optimización texto por matter + **strip_markdown (v11.0)** + Probative Validator | `optimized_text` (plain text, sin markdown) |
+| 15 | `writing` | Output final | Contenido LaTeX/DOCX-ready |
 
 ### 3.2 Validation Gate (v10.2 — NUEVO)
 
@@ -499,7 +520,7 @@ Landing → Clic "Suscribirse" → /api/checkout → Stripe Checkout
 
 ## 16. AI Engine Changelog (Reglas Activas)
 
-> Referencia completa: `ai-engine/AI_ENGINE_CHANGELOG.md` (53 reglas activas)
+> Referencia completa: `ai-engine/AI_ENGINE_CHANGELOG.md` (58 reglas activas)
 
 ### 16.1 Reglas Supremas (🔴 SUPREME)
 
@@ -514,6 +535,7 @@ Landing → Clic "Suscribirse" → /api/checkout → Stripe Checkout
 | 49 | RAG Router v11.0 — .txt + .md, top-7, tiered scoring | v11.0 |
 | 51 | Section D/E Publish Status Split | v11.0 |
 | 53 | Confidentiality Default Flip — "When in doubt → PUBLISHABLE" | v11.0 |
+| **54** | **Practice Intelligence Layer — Signal Extraction, Pattern Recognition, Centre of Gravity** | **v12.0** |
 
 ### 16.2 Historial de Versiones
 
@@ -525,9 +547,10 @@ Landing → Clic "Suscribirse" → /api/checkout → Stripe Checkout
 | v10.0 | Jul 2026 | Setup Wizard, Directory Router, Confidentiality Guardrail, Practice Taxonomy |
 | v10.1 | Jul 2026 | Confidentiality Calibration, MANDATORY_UNIVERSE_FACTS, Audit DOCX parity |
 | v10.2 | Jul 24, 2026 | Validation Gate, De-Emphasize (no exclude), Zero Temperature, Anti-Unranked Bias |
-| **v11.0** | **Jul 27, 2026** | **RAG v1 Integration (19 files), Archetype Rubric, Section D/E Split, Markdown Strip, Confidentiality Default Flip** |
+| v11.0 | Jul 27, 2026 | RAG v1 Integration (19 files), Archetype Rubric, Section D/E Split, Markdown Strip, Confidentiality Default Flip |
+| **v12.0** | **Jul 28, 2026** | **Practice Intelligence Layer (16-node pipeline), Signal Extraction (10 types A-J), Practice Fit Test (8 dims), Tension Detection (8 types), Team Classification, Narrative Coherence Label, Practice Hypotheses** |
 
 ---
 
-*Documento actualizado v6.0 — RankPilot 2026. Julio 27, 2026.*
-*Integra: RAG v1 (44 archivos), Archetype Rubric, Confidentiality v11 (publishable default), Section D/E Split, Markdown Strip, Validation Gate, Setup Wizard, 53 reglas activas en AI_ENGINE_CHANGELOG.*
+*Documento actualizado v7.0 — RankPilot 2026. Julio 28, 2026.*
+*Integra: Practice Intelligence Layer v12.0, RAG v1 (44 archivos), Archetype Rubric, Confidentiality v11 (publishable default), Section D/E Split, Markdown Strip, Validation Gate, Setup Wizard, 58 reglas activas en AI_ENGINE_CHANGELOG.*

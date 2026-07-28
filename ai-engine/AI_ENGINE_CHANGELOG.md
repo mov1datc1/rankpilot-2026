@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-27** (v11.0 — Full RAG v1 Integration, Archetype Rubric, Section D/E Fix, Markdown Strip)
+> Last updated: **2026-07-28** (v12.0 — Practice Intelligence Layer, Signal Extraction, Practice Fit Test, Tension Detection, Team Classification, Narrative Coherence Label)
 
 ---
 
@@ -64,6 +64,11 @@
 | 51 | Section D/E Publish Status Split — publishable → D, non_publishable → E | v11.0 | `docx_generator.py`, `prompts.py` (confidentiality guardrail default flipped) | ✅ ACTIVE | 🔴 SUPREME |
 | 52 | Markdown Strip — strip_markdown() post-processor on all optimized text | v11.0 | `nodes.py` (strip_markdown function + optimization_node) | ✅ ACTIVE | 🔴 CRITICAL |
 | 53 | Confidentiality Default Flip — "When in doubt → PUBLISHABLE" (was non_publishable) | v11.0 | `prompts.py` (CONFIDENTIALITY_GUARDRAIL_RULE, EXTRACTION_SYSTEM_PROMPT) | ✅ ACTIVE | 🔴 SUPREME |
+| 54 | Practice Intelligence Layer — Signal Extraction (10 types A-J), Pattern Recognition (7 rules), Centre of Gravity Classification | v12.0 | `editorial_nodes.py` (practice_intelligence_node), `prompts.py` (PRACTICE_INTELLIGENCE_PROMPT), `schema.py` (PracticeIntelligenceOutput) | ✅ ACTIVE | 🔴 SUPREME |
+| 55 | Practice Fit Test — 8-dimension validation (Category, Matter, Client, Role, Team, Lawyer, Directory, Market) | v12.0 | `schema.py` (PracticeFitTest), `prompts.py` (§14 in PIL prompt) | ✅ ACTIVE | 🔴 CRITICAL |
+| 56 | Tension Detection — 8 structural tension types (Claim-Evidence, Practice-Category, Matter-Team, Firm-Lawyer, Directory, Breadth-Specialisation, Volume-Sophistication, Market-Narrative) | v12.0 | `schema.py` (PracticeTension), `prompts.py` (§15 in PIL prompt) | ✅ ACTIVE | 🔴 CRITICAL |
+| 57 | Team Structure Classification — dependent/functional/robust (Documento Maestro Mod 5) | v12.0 | `schema.py` (PracticeIntelligenceOutput.team_classification), `editorial_nodes.py` (injected into blueprint) | ✅ ACTIVE | 🟡 HIGH |
+| 58 | Narrative Coherence Label — overclaim/coherent/underpositioned (Documento Maestro Mod 4) | v12.0 | `schema.py` (PracticeIntelligenceOutput.narrative_coherence_label), `editorial_nodes.py` (injected into blueprint) | ✅ ACTIVE | 🟡 HIGH |
 
 ---
 
