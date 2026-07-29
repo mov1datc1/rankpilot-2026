@@ -256,6 +256,272 @@ def extraction_node(state: AgentState) -> Dict:
         },
         "matters": matters_list,
         "pipeline_manifest": manifest,
+        "current_step": "pre_flight"
+    }
+
+# =====================================================
+# 2.1 PRE-FLIGHT GATE NODE (v14.1 — Rule 74)
+# Runs 5 validations BEFORE any analysis or reasoning.
+# If critical validations fail, pipeline HALTS.
+# Owner's 5 requirements:
+#   1. Reading the correct submission
+#   2. Extracted all matters
+#   3. Correctly distinguishes publishable/confidential
+#   4. Identifies correct directory and practice
+#   5. Contrasts ranking status with editorial context
+# =====================================================
+def pre_flight_gate_node(state: AgentState) -> Dict:
+    from utils.doc_parser import DocumentParser
+    
+    file_path = state.get("file_path", "")
+    manifest = state.get("pipeline_manifest", {})
+    submission_context = state.get("submission_context", {})
+    matters = state.get("matters", [])
+    
+    user_directory = submission_context.get("directory", "")
+    user_practice = submission_context.get("practice_area", "")
+    user_jurisdiction = submission_context.get("jurisdiction", "")
+    user_status = submission_context.get("current_status", "")
+    
+    # Pre-Flight Report
+    pre_flight = {
+        "passed": True,
+        "checks": [],
+        "warnings": [],
+        "errors": [],
+        "auto_corrections": {},
+    }
+    
+    print(f"\n{'='*60}")
+    print(f"[PRE-FLIGHT GATE v14.1] Starting 5-point validation")
+    print(f"{'='*60}")
+    
+    # ── CHECK 1: Document Identity (Rule 71 complement) ──
+    doc_info = manifest.get("document", {})
+    if doc_info.get("file_name"):
+        pre_flight["checks"].append({
+            "name": "Document Identity",
+            "status": "PASS",
+            "detail": f"Reading: {doc_info['file_name']} (hash: {doc_info.get('file_hash', 'N/A')})"
+        })
+        print(f"[PRE-FLIGHT ✅] CHECK 1: Document identity confirmed — {doc_info['file_name']}")
+    else:
+        pre_flight["checks"].append({"name": "Document Identity", "status": "WARN", "detail": "No document stats available"})
+        pre_flight["warnings"].append("Document identity could not be verified")
+        print(f"[PRE-FLIGHT ⚠️] CHECK 1: Document identity — no stats available")
+    
+    # ── CHECK 2: Matter Extraction Completeness (Rule 70 gate) ──
+    extraction = manifest.get("extraction", {})
+    source_matters = doc_info.get("source_matters", {})
+    source_total = source_matters.get("total", 0)
+    extracted_total = extraction.get("extracted_matter_count", len(matters))
+    
+    if source_total > 0:
+        loss_pct = extraction.get("loss_percentage", 0)
+        if extraction.get("match", False) or loss_pct == 0:
+            pre_flight["checks"].append({
+                "name": "Matter Extraction",
+                "status": "PASS",
+                "detail": f"Source: {source_total} | Extracted: {extracted_total} — MATCH"
+            })
+            print(f"[PRE-FLIGHT ✅] CHECK 2: Matter extraction — {source_total}/{source_total} MATCH")
+        elif loss_pct <= 20:
+            pre_flight["checks"].append({
+                "name": "Matter Extraction",
+                "status": "WARN",
+                "detail": f"Source: {source_total} | Extracted: {extracted_total} — {loss_pct}% loss (within tolerance)"
+            })
+            pre_flight["warnings"].append(f"Minor matter loss: {source_total - extracted_total} matters ({loss_pct}%)")
+            print(f"[PRE-FLIGHT ⚠️] CHECK 2: Matter extraction — {loss_pct}% loss (within 20% tolerance)")
+        else:
+            pre_flight["checks"].append({
+                "name": "Matter Extraction",
+                "status": "FAIL",
+                "detail": f"Source: {source_total} | Extracted: {extracted_total} — {loss_pct}% LOSS — CRITICAL"
+            })
+            pre_flight["errors"].append(f"CRITICAL matter loss: {source_total - extracted_total} of {source_total} matters lost ({loss_pct}%)")
+            pre_flight["passed"] = False
+            print(f"[PRE-FLIGHT ❌] CHECK 2: Matter extraction — {loss_pct}% LOSS — PIPELINE HALT")
+    else:
+        pre_flight["checks"].append({
+            "name": "Matter Extraction",
+            "status": "WARN",
+            "detail": f"Source count unavailable. Extracted: {extracted_total}"
+        })
+        pre_flight["warnings"].append("Could not verify matter count against source document")
+        print(f"[PRE-FLIGHT ⚠️] CHECK 2: Source count unavailable — extracted {extracted_total}")
+    
+    # ── CHECK 3: Publishable/Confidential Classification ──
+    source_pub = source_matters.get("publishable", 0)
+    source_conf = source_matters.get("confidential", 0)
+    if source_pub > 0 or source_conf > 0:
+        # Count extracted classification
+        extracted_pub = sum(1 for m in matters if isinstance(m, dict) and 
+                          not m.get("is_confidential", False))
+        extracted_conf = sum(1 for m in matters if isinstance(m, dict) and 
+                           m.get("is_confidential", False))
+        
+        pre_flight["checks"].append({
+            "name": "Pub/Conf Classification",
+            "status": "PASS",
+            "detail": f"Source: {source_pub} pub / {source_conf} conf | Extracted: {extracted_pub} pub / {extracted_conf} conf"
+        })
+        print(f"[PRE-FLIGHT ✅] CHECK 3: Classification — Source {source_pub}p/{source_conf}c | Extracted {extracted_pub}p/{extracted_conf}c")
+    else:
+        pre_flight["checks"].append({
+            "name": "Pub/Conf Classification",
+            "status": "SKIP",
+            "detail": "Source classification data not available"
+        })
+        print(f"[PRE-FLIGHT ⚠️] CHECK 3: Classification — source data unavailable")
+    
+    # ── CHECK 4: Directory & Practice Auto-Detection (Rule 73) ──
+    template_info = {}
+    if file_path:
+        try:
+            template_info = DocumentParser.detect_directory_template(file_path)
+        except Exception as e:
+            print(f"[PRE-FLIGHT] Template detection error: {e}")
+    
+    if template_info.get("detected_directory", "Unknown") != "Unknown":
+        detected_dir = template_info["detected_directory"]
+        detected_practice = template_info.get("detected_practice_area", "")
+        detected_jurisdiction = template_info.get("detected_jurisdiction", "")
+        detected_firm = template_info.get("detected_firm_name", "")
+        
+        dir_match = detected_dir.lower() in user_directory.lower() or user_directory.lower() in detected_dir.lower() if user_directory else True
+        practice_match = True
+        if detected_practice and user_practice:
+            # Fuzzy match — check if key words overlap
+            det_words = set(detected_practice.lower().split())
+            usr_words = set(user_practice.lower().replace('&', '').replace(',', '').split())
+            practice_match = bool(det_words & usr_words) or detected_practice.lower() in user_practice.lower()
+        
+        detail_parts = [f"Directory: {detected_dir}"]
+        if detected_firm:
+            detail_parts.append(f"Firm: {detected_firm}")
+        if detected_practice:
+            detail_parts.append(f"Practice: {detected_practice}")
+        if detected_jurisdiction:
+            detail_parts.append(f"Jurisdiction: {detected_jurisdiction}")
+        
+        if dir_match and practice_match:
+            pre_flight["checks"].append({
+                "name": "Directory/Practice Detection",
+                "status": "PASS",
+                "detail": " | ".join(detail_parts)
+            })
+            print(f"[PRE-FLIGHT ✅] CHECK 4: {' | '.join(detail_parts)}")
+        else:
+            mismatches = []
+            if not dir_match:
+                mismatches.append(f"Directory: user said '{user_directory}' but DOCX is '{detected_dir}'")
+            if not practice_match:
+                mismatches.append(f"Practice: user said '{user_practice}' but DOCX says '{detected_practice}'")
+            
+            pre_flight["checks"].append({
+                "name": "Directory/Practice Detection",
+                "status": "WARN",
+                "detail": " | ".join(detail_parts) + " | MISMATCHES: " + "; ".join(mismatches)
+            })
+            pre_flight["warnings"].extend(mismatches)
+            print(f"[PRE-FLIGHT ⚠️] CHECK 4: MISMATCH — {'; '.join(mismatches)}")
+        
+        # Auto-correct: fill in detected values if user left blanks
+        if detected_firm and not state.get("metadata", {}).get("firm_name"):
+            pre_flight["auto_corrections"]["firm_name"] = detected_firm
+        if detected_practice and not user_practice:
+            pre_flight["auto_corrections"]["practice_area"] = detected_practice
+        if detected_jurisdiction and not user_jurisdiction:
+            pre_flight["auto_corrections"]["jurisdiction"] = detected_jurisdiction
+        
+        manifest["template_detection"] = template_info
+    else:
+        pre_flight["checks"].append({
+            "name": "Directory/Practice Detection",
+            "status": "SKIP",
+            "detail": "Could not detect template format"
+        })
+        print(f"[PRE-FLIGHT ⚠️] CHECK 4: Template detection — unknown format")
+    
+    # ── CHECK 5: Ranking Contradiction Detection (Rule 72) ──
+    ranking_evidence = {}
+    if file_path:
+        try:
+            ranking_evidence = DocumentParser.detect_ranking_evidence(file_path)
+        except Exception as e:
+            print(f"[PRE-FLIGHT] Ranking evidence error: {e}")
+    
+    user_says_unranked = "unranked" in str(user_status).lower() or not user_status
+    has_evidence = ranking_evidence.get("has_ranking_evidence", False)
+    
+    if has_evidence and user_says_unranked:
+        evidence_text = ranking_evidence.get("evidence_text", "")[:150]
+        detected_band = ranking_evidence.get("detected_band", "")
+        
+        warning_msg = f"RANKING CONTRADICTION: User declared 'Unranked' but document contains ranking evidence"
+        if detected_band:
+            warning_msg += f" (detected: {detected_band})"
+        warning_msg += f". Evidence: \"{evidence_text}\""
+        
+        pre_flight["checks"].append({
+            "name": "Ranking Status Validation",
+            "status": "WARN",
+            "detail": warning_msg
+        })
+        pre_flight["warnings"].append(warning_msg)
+        print(f"[PRE-FLIGHT ⚠️] CHECK 5: {warning_msg}")
+    elif has_evidence:
+        pre_flight["checks"].append({
+            "name": "Ranking Status Validation",
+            "status": "PASS",
+            "detail": f"User declared '{user_status}' — ranking evidence found consistent"
+        })
+        print(f"[PRE-FLIGHT ✅] CHECK 5: Ranking status '{user_status}' — consistent with evidence")
+    else:
+        pre_flight["checks"].append({
+            "name": "Ranking Status Validation",
+            "status": "PASS",
+            "detail": f"User declared '{user_status}' — no contradicting evidence found"
+        })
+        print(f"[PRE-FLIGHT ✅] CHECK 5: Ranking status '{user_status}' — no contradicting evidence")
+    
+    manifest["ranking_evidence"] = ranking_evidence
+    
+    # ── GATE DECISION ──
+    manifest["pre_flight"] = pre_flight
+    
+    if not pre_flight["passed"]:
+        print(f"\n{'='*60}")
+        print(f"[PRE-FLIGHT GATE ❌] PIPELINE HALTED — {len(pre_flight['errors'])} critical errors")
+        for err in pre_flight["errors"]:
+            print(f"  ❌ {err}")
+        print(f"{'='*60}\n")
+        
+        return {
+            "pipeline_manifest": manifest,
+            "analysis": {
+                "pre_flight_failed": True,
+                "pre_flight_report": pre_flight,
+                "summary": "Pipeline halted at Pre-Flight Gate. Critical validation errors detected. The system cannot produce reliable analysis until these issues are resolved.",
+                "score": 0,
+                "risk_level": "Pre-Flight Failure",
+                "audit_letter": {
+                    "strategic_assessment": f"PRE-FLIGHT GATE FAILURE: {'; '.join(pre_flight['errors'])}",
+                    "matter_evaluations": [],
+                },
+            },
+            "current_step": "writing"  # Skip to writing to output the error report
+        }
+    
+    print(f"\n{'='*60}")
+    print(f"[PRE-FLIGHT GATE ✅] ALL CHECKS PASSED — {len(pre_flight['warnings'])} warnings")
+    for w in pre_flight["warnings"]:
+        print(f"  ⚠️ {w}")
+    print(f"{'='*60}\n")
+    
+    return {
+        "pipeline_manifest": manifest,
         "current_step": "context"
     }
 

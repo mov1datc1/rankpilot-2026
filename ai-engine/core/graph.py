@@ -3,6 +3,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from agents.nodes import (
     ingestion_node, 
     extraction_node, 
+    pre_flight_gate_node,
     context_engine_node,
     analysis_node, 
     optimization_node,
@@ -67,6 +68,7 @@ def create_rankpilot_graph():
     # --- Original pipeline nodes ---
     workflow.add_node("ingestion", ingestion_node)
     workflow.add_node("extraction", extraction_node)
+    workflow.add_node("pre_flight", pre_flight_gate_node)
     workflow.add_node("context_engine", context_engine_node)
     workflow.add_node("analysis", analysis_node)
     workflow.add_node("optimization", optimization_node)
@@ -89,7 +91,25 @@ def create_rankpilot_graph():
     # 3. Entry sequence (unchanged start)
     workflow.set_entry_point("ingestion")
     workflow.add_edge("ingestion", "extraction")
-    workflow.add_edge("extraction", "context_engine")
+    workflow.add_edge("extraction", "pre_flight")
+    
+    # Pre-Flight Gate: if critical checks fail, skip to writing
+    def route_after_pre_flight(state: AgentState):
+        """Rule 74: Pre-Flight Gate halts pipeline on critical failures."""
+        analysis = state.get("analysis", {})
+        if isinstance(analysis, dict) and analysis.get("pre_flight_failed"):
+            print("[PRE-FLIGHT GATE] Pipeline HALTED — routing to writing for error report")
+            return "writing"
+        return "context_engine"
+    
+    workflow.add_conditional_edges(
+        "pre_flight",
+        route_after_pre_flight,
+        {
+            "context_engine": "context_engine",
+            "writing": "writing",
+        }
+    )
     
     # 4. After context engine → practice_intelligence (v12.0)
     workflow.add_edge("context_engine", "practice_intelligence")

@@ -91,6 +91,72 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
                     doc.add_paragraph(f_name, style='List Bullet')
             
             doc.add_paragraph(f"\nTimestamp: {manifest.get('timestamp', 'N/A')}")
+            
+            # =====================================================
+            # v14.1 PRE-FLIGHT GATE — Rule 74: Validation Results
+            # Shows the 5-point check results in the DOCX
+            # =====================================================
+            pre_flight = manifest.get('pre_flight', {})
+            if pre_flight and pre_flight.get('checks'):
+                doc.add_paragraph()
+                pf_heading = doc.add_heading('Pre-Flight Gate — Validation Results', level=2)
+                pf_heading.runs[0].font.color.rgb = RGBColor(26, 35, 126)
+                
+                gate_status = "✅ ALL CHECKS PASSED" if pre_flight.get('passed', True) else "❌ PIPELINE HALTED"
+                p_gate = doc.add_paragraph()
+                gate_run = p_gate.add_run(f"Gate Status: {gate_status}")
+                gate_run.bold = True
+                gate_run.font.color.rgb = RGBColor(0, 128, 0) if pre_flight.get('passed', True) else RGBColor(200, 0, 0)
+                
+                for check in pre_flight['checks']:
+                    status_icon = {"PASS": "✅", "WARN": "⚠️", "FAIL": "❌", "SKIP": "⏭️"}.get(check.get('status', ''), '•')
+                    p_check = doc.add_paragraph(style='List Bullet')
+                    status_run = p_check.add_run(f"{status_icon} {check.get('name', '')}: ")
+                    status_run.bold = True
+                    if check.get('status') == 'FAIL':
+                        status_run.font.color.rgb = RGBColor(200, 0, 0)
+                    elif check.get('status') == 'WARN':
+                        status_run.font.color.rgb = RGBColor(200, 150, 0)
+                    p_check.add_run(check.get('detail', ''))
+                
+                if pre_flight.get('warnings'):
+                    p_warnings = doc.add_paragraph()
+                    p_warnings.add_run(f"\nWarnings ({len(pre_flight['warnings'])}):").bold = True
+                    for w in pre_flight['warnings']:
+                        doc.add_paragraph(f"⚠️ {w}", style='List Bullet')
+                
+                if pre_flight.get('errors'):
+                    p_errors = doc.add_paragraph()
+                    err_run = p_errors.add_run(f"\nCritical Errors ({len(pre_flight['errors'])}):")
+                    err_run.bold = True
+                    err_run.font.color.rgb = RGBColor(200, 0, 0)
+                    for e in pre_flight['errors']:
+                        doc.add_paragraph(f"❌ {e}", style='List Bullet')
+                
+                # Template Detection Results
+                template = manifest.get('template_detection', {})
+                if template and template.get('detected_directory', 'Unknown') != 'Unknown':
+                    p_template = doc.add_paragraph()
+                    p_template.add_run('\nAuto-Detected Document Identity:\n').bold = True
+                    p_template.add_run(f"Directory: {template.get('detected_directory', 'Unknown')} ({template.get('confidence', 'low')} confidence)\n")
+                    if template.get('detected_firm_name'):
+                        p_template.add_run(f"Firm: {template['detected_firm_name']}\n")
+                    if template.get('detected_practice_area'):
+                        p_template.add_run(f"Practice Area: {template['detected_practice_area']}\n")
+                    if template.get('detected_jurisdiction'):
+                        p_template.add_run(f"Jurisdiction: {template['detected_jurisdiction']}\n")
+                
+                # Ranking Evidence
+                ranking = manifest.get('ranking_evidence', {})
+                if ranking and ranking.get('has_ranking_evidence'):
+                    p_ranking = doc.add_paragraph()
+                    rank_run = p_ranking.add_run('\n⚠️ Ranking Evidence Detected:\n')
+                    rank_run.bold = True
+                    rank_run.font.color.rgb = RGBColor(200, 150, 0)
+                    p_ranking.add_run(f"Type: {ranking.get('evidence_type', 'unknown')}\n")
+                    p_ranking.add_run(f"Evidence: \"{ranking.get('evidence_text', '')}\"")
+                    if ranking.get('detected_band'):
+                        p_ranking.add_run(f"\nDetected Band: {ranking['detected_band']}")
 
         doc.add_page_break()
         audit_title = doc.add_heading('Strategic Audit Letter', level=1)
