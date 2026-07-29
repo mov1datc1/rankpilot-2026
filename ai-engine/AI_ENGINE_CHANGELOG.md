@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-28** (v13.1 — PIL Lite Retry, Matter Accountability Auto-Fill, Comprehension Thesis Resilience)
+> Last updated: **2026-07-29** (v14.0 — Trust Layer: Extraction Validator, Pipeline Manifest, Market Context Awareness)
 
 ---
 
@@ -54,7 +54,7 @@
 | 41 | Future Deadline Injection — current_date in MANDATORY_UNIVERSE_FACTS | v10.2 | `nodes.py` (analysis_node), `prompts.py` (deadline instruction) | ✅ ACTIVE | 🟡 HIGH |
 | 42 | De-Emphasize Disposition — replace "exclude" with "de_emphasize" label | v10.2 | `schema.py` (MatterDisposition), `prompts.py`, `page.tsx` (UI colors) | ✅ ACTIVE | 🔴 CRITICAL |
 | 43 | Zero Temperature — temperature=0.0 for deterministic scoring consistency | v10.2 | `nodes.py` (get_llm), `editorial_nodes.py` (get_model) | ✅ ACTIVE | 🔴 SUPREME |
-| 44 | Matter Evaluations Completeness — enforce exact count match with input matters | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 CRITICAL |
+| 44 | Matter Evaluations Completeness — enforce exact count match with input matters. v14.0: NOW ALSO validated at EXTRACTION level by Rule 70 | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 CRITICAL |
 | 45 | Evidence-Based Scoring — current_band is user metadata, score based on evidence only | v10.2 | `nodes.py` (analysis_node MANDATORY FACTS block) | ✅ ACTIVE | 🔴 SUPREME |
 | 46 | Validation Gate — programmatic post-analysis filter with auto-retry (max 2) | v10.2 | `nodes.py` (analysis_node) | ✅ ACTIVE | 🔴 SUPREME |
 | 47 | Anti-Unranked Bias — prohibit using 'unranked status' as negative scoring factor + scoring floor calibration | v10.2 | `nodes.py` (MANDATORY FACTS + Validation Gate CHECKs 6-7) | ✅ ACTIVE | 🔴 SUPREME |
@@ -80,6 +80,8 @@
 | 67 | Comprehension Context Engine Fallback — COMPREHENSION_PROMPT now explicitly instructs LLM to use context_engine data (archetype, identity_adn) for thesis extraction when PIL is empty | v13.1 | `prompts.py` (COMPREHENSION_PROMPT CONTEXT ENGINE FALLBACK section) | ✅ ACTIVE | 🔴 CRITICAL |
 | 68 | LangChain Curly Brace Escaping — json.dumps of OBJECTIVE_DIRECTIVES produces `{"priorities":...}` which LangChain interprets as template variables. Fix: `.replace("{","{{").replace("}","}}")` in _inject_directives. Without this, ALL nodes crash with 'missing variables {"priorities"}' | v13.1 | `editorial_nodes.py` (_inject_directives brace escaping) | ✅ ACTIVE | 🔴 SUPREME |
 | 69 | Validation Gate matter_evaluations Path Fix — Prompt schema puts matter_evaluations inside audit_letter, but validation checked root level only. Fix: check both paths and promote audit_letter.matter_evaluations to root. Eliminates 3 wasted LLM retries per submission | v13.1 | `nodes.py` (validation gate CHECK 1 fallback) | ✅ ACTIVE | 🔴 CRITICAL |
+| 70 | **Extraction Validator** — Programmatic DOCX matter counter (`count_source_matters`) runs BEFORE LLM extraction, counts matter sections via table/paragraph pattern matching. After extraction, compares source count vs. extracted count. Logs `[MATTER LOSS WARNING]` on mismatch. Addresses Root Cause #1 from owner feedback (July 2026): 57% matter loss undetected. Source count is ground truth, never LLM-dependent | v14.0 | `doc_parser.py` (count_source_matters), `nodes.py` (ingestion_node + extraction_node validator) | ✅ ACTIVE | 🔴 SUPREME |
+| 71 | **Pipeline Manifest** — Complete audit trail generated at ingestion: file hash, word count, paragraph count, table count, source matter labels, extraction match/loss, RAG files loaded, timestamp. Persisted in `pipeline_manifest` state field, saved to `chambersData`, rendered as first page of Strategic Audit DOCX. Answers owner's 5 questions: what was read, how many matters, do they match, what context loaded, what was prioritized | v14.0 | `doc_parser.py` (get_document_stats), `state.py` (pipeline_manifest), `nodes.py` (ingestion/extraction/analysis), `main.py` (response), `route.ts` (process-document persist + generate-docx manifest page) | ✅ ACTIVE | 🔴 SUPREME |
 
 
 ---

@@ -280,6 +280,7 @@ export async function POST(request: NextRequest) {
           narrative_architecture: pyData.data?.narrative_architecture || existingChambersData.narrative_architecture,
           submission_blueprint: pyData.data?.submission_blueprint || existingChambersData.submission_blueprint,
           reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
+          pipeline_manifest: pyData.data?.pipeline_manifest || existingChambersData.pipeline_manifest,
           // Department/lawyer/contact data from AI extraction
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
           ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),

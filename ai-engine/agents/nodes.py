@@ -100,7 +100,7 @@ def get_model():
         openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
-# 1. INGESTION NODE
+# 1. INGESTION NODE (v14.0 — Trust Layer)
 def ingestion_node(state: AgentState) -> Dict:
     file_path = state.get("file_path")
     if not file_path:
@@ -109,19 +109,48 @@ def ingestion_node(state: AgentState) -> Dict:
         from utils.doc_parser import DocumentParser
         text = DocumentParser.parse(file_path)
         text = sanitize_text(text)
+        
+        # =====================================================
+        # v14.0 TRUST LAYER — Rule 71: Pipeline Manifest
+        # Generate document stats BEFORE any LLM processing.
+        # This is the ground truth about what the system read.
+        # =====================================================
+        doc_stats = DocumentParser.get_document_stats(file_path)
+        source_matters = doc_stats.get("source_matters", {})
+        
+        print(f"[PIPELINE MANIFEST] Document: {doc_stats.get('file_name')}")
+        print(f"[PIPELINE MANIFEST] Hash: {doc_stats.get('file_hash')}")
+        print(f"[PIPELINE MANIFEST] Words: {doc_stats.get('word_count')} | Paragraphs: {doc_stats.get('paragraph_count')} | Tables: {doc_stats.get('table_count')}")
+        print(f"[PIPELINE MANIFEST] Source matters: {source_matters.get('total', 0)} "
+              f"(publishable: {source_matters.get('publishable', 0)}, "
+              f"confidential: {source_matters.get('confidential', 0)})")
+        if source_matters.get("matter_labels"):
+            for label in source_matters["matter_labels"]:
+                print(f"  → {label}")
+        
+        # Build the manifest object
+        manifest = {
+            "document": doc_stats,
+            "timestamp": datetime.now().isoformat(),
+            "extraction": {},  # Populated by extraction_node
+            "rag_files_loaded": [],  # Populated by context_engine
+            "validation": {},  # Populated by extraction validator
+        }
+        
     except Exception as e:
         print(f"[INGESTION ERROR] Failed to parse document: {e}")
         return {
             "doc_text": "",
+            "pipeline_manifest": {"error": str(e)},
             "messages": [("assistant", f"Error al leer el documento: {str(e)}")]
         }
     return {
         "doc_text": text,
+        "pipeline_manifest": manifest,
         "messages": [("assistant", "Document ingested. Analyzing structural signals...")]
     }
 
-# 2. EXTRACTION NODE (Sincronizado con AgentState)
-# 2. EXTRACTION NODE (CORREGIDO)
+# 2. EXTRACTION NODE (v14.0 — Trust Layer Validator)
 def extraction_node(state: AgentState) -> Dict:
     doc_text = sanitize_text(state.get("doc_text", ""))
     chat_history = "\n".join([sanitize_text(msg.content) for msg in state["messages"] if hasattr(msg, 'content')])
@@ -182,6 +211,39 @@ def extraction_node(state: AgentState) -> Dict:
     print(f"[CONFIDENTIALITY GUARDRAIL v10.1] {len(matters_list)} matters: "
           f"{locked_count} locked as confidential, {pub_count} publishable")
 
+    # =====================================================
+    # v14.0 TRUST LAYER — Rule 70: Extraction Validator
+    # Compare LLM-extracted matter count vs. programmatic source count.
+    # If mismatch, log a WARNING — this is the #1 root cause of
+    # incorrect downstream analysis (owner feedback July 2026).
+    # =====================================================
+    manifest = state.get("pipeline_manifest", {})
+    source_matters = manifest.get("document", {}).get("source_matters", {})
+    source_total = source_matters.get("total", 0)
+    extracted_total = len(matters_list)
+    
+    extraction_validation = {
+        "source_matter_count": source_total,
+        "extracted_matter_count": extracted_total,
+        "match": source_total == extracted_total or source_total == 0,
+        "loss_count": max(0, source_total - extracted_total),
+        "loss_percentage": round((1 - extracted_total / max(source_total, 1)) * 100, 1) if source_total > 0 else 0,
+        "extracted_titles": [m.get("title", "?") for m in matters_list if isinstance(m, dict)],
+    }
+    
+    if source_total > 0 and extracted_total < source_total:
+        print(f"[MATTER LOSS WARNING] ⚠️ Source has {source_total} matters but extraction found only {extracted_total}")
+        print(f"[MATTER LOSS WARNING] ⚠️ {source_total - extracted_total} matters LOST ({extraction_validation['loss_percentage']}% loss)")
+        print(f"[MATTER LOSS WARNING] Source labels: {source_matters.get('matter_labels', [])}")
+        print(f"[MATTER LOSS WARNING] Extracted titles: {extraction_validation['extracted_titles']}")
+    elif source_total > 0:
+        print(f"[EXTRACTION VALIDATOR ✅] Source: {source_total} matters | Extracted: {extracted_total} — MATCH")
+    
+    # Update manifest with extraction results
+    manifest["extraction"] = extraction_validation
+    manifest["validation"]["extraction_match"] = extraction_validation["match"]
+    manifest["validation"]["matter_loss"] = extraction_validation["loss_count"]
+
     return {
         "metadata": {
             "firm_name": ext_meta.get("firm_name", ""),
@@ -193,6 +255,7 @@ def extraction_node(state: AgentState) -> Dict:
             "contacts": ext_contacts,
         },
         "matters": matters_list,
+        "pipeline_manifest": manifest,
         "current_step": "context"
     }
 
@@ -361,6 +424,15 @@ def analysis_node(state: AgentState) -> Dict:
     # 2. Inicializar RAG Router y extraer guías
     router = RAGRouter()
     rag_knowledge = router.get_rag_context(practice_area, directory)
+    
+    # v14.0 TRUST LAYER — Rule 71: Capture RAG files in pipeline manifest
+    manifest = state.get("pipeline_manifest", {})
+    if manifest:
+        rag_file_names = re.findall(r'SPECIFIC KNOWLEDGE.*?:\s*(.+?)\s*---', rag_knowledge or "")
+        manifest["rag_files_loaded"] = rag_file_names
+        print(f"[PIPELINE MANIFEST] RAG files loaded: {len(rag_file_names)}")
+        for fn in rag_file_names:
+            print(f"  → {fn}")
     
     # v10.0: Generate directory and practice context blocks
     directory_context_block = get_directory_context_block(directory, practice_area, jurisdiction)
@@ -672,6 +744,7 @@ SCORING FLOOR CALIBRATION:
     return {
         "analysis": res_json,
         "confidence_score": float(res_json.get("confidence_score", 100)),
+        "pipeline_manifest": manifest,
         "current_step": "writing"
     }
 

@@ -7,6 +7,7 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
     """
     Generates a professional DOCX report using python-docx.
     Supports doc_type: 'audit' (internal) or 'submission' (Chambers Template).
+    v14.0: Added Pipeline Manifest page for auditability (Rule 71).
     """
     template_path = os.path.join(os.path.dirname(__file__), '..', 'templates', 'chambers_template.docx')
     
@@ -29,6 +30,68 @@ def generate_docx_report(structured_data: dict, output_filename: str, doc_type: 
     letter = analysis.get('audit_letter', {})
 
     if doc_type == 'audit':
+        # =====================================================
+        # v14.0 TRUST LAYER — Rule 71: Pipeline Manifest Page
+        # First page of every audit report. Answers:
+        # - What did the system read?
+        # - How many matters found vs. source?
+        # - What context/RAG files were loaded?
+        # =====================================================
+        manifest = structured_data.get('pipeline_manifest', {}) or chambers_data.get('pipeline_manifest', {})
+        if manifest and manifest.get('document'):
+            doc.add_page_break()
+            manifest_title = doc.add_heading('Pipeline Manifest — Trust Layer', level=1)
+            manifest_title.runs[0].font.color.rgb = RGBColor(26, 35, 126)
+            
+            doc_info = manifest.get('document', {})
+            p = doc.add_paragraph()
+            p.add_run('What the system read:\n').bold = True
+            p.add_run(f"File: {doc_info.get('file_name', 'Unknown')}\n")
+            p.add_run(f"Hash: {doc_info.get('file_hash', 'N/A')}\n")
+            p.add_run(f"Words: {doc_info.get('word_count', 0)} | Paragraphs: {doc_info.get('paragraph_count', 0)} | Tables: {doc_info.get('table_count', 0)}\n")
+            
+            source_matters = doc_info.get('source_matters', {})
+            extraction = manifest.get('extraction', {})
+            
+            p2 = doc.add_paragraph()
+            p2.add_run('Matter Verification:\n').bold = True
+            p2.add_run(f"Source document matters: {source_matters.get('total', 'N/A')}")
+            if source_matters.get('publishable', 0) or source_matters.get('confidential', 0):
+                p2.add_run(f" (publishable: {source_matters.get('publishable', 0)}, confidential: {source_matters.get('confidential', 0)})")
+            p2.add_run(f"\nExtracted by AI: {extraction.get('extracted_matter_count', 'N/A')}\n")
+            
+            if extraction.get('loss_count', 0) > 0:
+                p_warn = doc.add_paragraph()
+                warn_run = p_warn.add_run(f"⚠️ MATTER LOSS DETECTED: {extraction['loss_count']} matters lost ({extraction.get('loss_percentage', 0)}%)")
+                warn_run.bold = True
+                warn_run.font.color.rgb = RGBColor(200, 0, 0)
+            elif extraction.get('match'):
+                p_ok = doc.add_paragraph()
+                ok_run = p_ok.add_run("✅ Matter count VERIFIED — extraction matches source document")
+                ok_run.bold = True
+                ok_run.font.color.rgb = RGBColor(0, 128, 0)
+            
+            if source_matters.get('matter_labels'):
+                p3 = doc.add_paragraph()
+                p3.add_run('\nSource matter labels:\n').bold = True
+                for label in source_matters['matter_labels']:
+                    doc.add_paragraph(label, style='List Bullet')
+            
+            if extraction.get('extracted_titles'):
+                p4 = doc.add_paragraph()
+                p4.add_run('\nExtracted matter titles:\n').bold = True
+                for title_text in extraction['extracted_titles']:
+                    doc.add_paragraph(title_text, style='List Bullet')
+            
+            rag_files = manifest.get('rag_files_loaded', [])
+            if rag_files:
+                p5 = doc.add_paragraph()
+                p5.add_run('\nRAG Knowledge Files Loaded:\n').bold = True
+                for f_name in rag_files:
+                    doc.add_paragraph(f_name, style='List Bullet')
+            
+            doc.add_paragraph(f"\nTimestamp: {manifest.get('timestamp', 'N/A')}")
+
         doc.add_page_break()
         audit_title = doc.add_heading('Strategic Audit Letter', level=1)
         audit_title.runs[0].font.color.rgb = RGBColor(26, 35, 126)

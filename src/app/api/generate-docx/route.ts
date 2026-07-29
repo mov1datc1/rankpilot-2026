@@ -165,6 +165,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const reasoningTrace = chambersData.reasoning_trace || [];
   const submissionBlueprint = chambersData.submission_blueprint || {};
   const comparativeAnalysis = chambersData.comparative_analysis || {};
+  const pipelineManifest = chambersData.pipeline_manifest || {};
 
   // Title
   sections.push(
@@ -188,6 +189,60 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     fieldLabel('Date: ', dateStr),
     emptyRow()
   );
+
+  // ═══ v14.0 TRUST LAYER — Pipeline Manifest ═══
+  if (pipelineManifest?.document) {
+    const docInfo = pipelineManifest.document || {};
+    const sourceMatters = docInfo.source_matters || {};
+    const extraction = pipelineManifest.extraction || {};
+    const ragFiles = pipelineManifest.rag_files_loaded || [];
+    const hasLoss = (extraction.loss_count || 0) > 0;
+    const isMatch = extraction.match === true;
+
+    sections.push(
+      sectionTitle('Pipeline Manifest — Trust Layer'),
+      p(`File: ${docInfo.file_name || 'Unknown'} | Hash: ${docInfo.file_hash || 'N/A'}`, { size: 20, spacing: { after: 60 } }),
+      p(`Words: ${docInfo.word_count || 0} | Paragraphs: ${docInfo.paragraph_count || 0} | Tables: ${docInfo.table_count || 0}`, { size: 20, spacing: { after: 120 } }),
+      p(`Source matters: ${sourceMatters.total ?? 'N/A'} (publishable: ${sourceMatters.publishable ?? 0}, confidential: ${sourceMatters.confidential ?? 0})`, { bold: true, spacing: { after: 60 } }),
+      p(`Extracted by AI: ${extraction.extracted_matter_count ?? 'N/A'}`, { bold: true, spacing: { after: 60 } })
+    );
+
+    if (hasLoss) {
+      sections.push(
+        p(`⚠️ MATTER LOSS DETECTED: ${extraction.loss_count} matters lost (${extraction.loss_percentage || 0}%)`, { bold: true, color: 'DC2626', size: 22, spacing: { after: 120 } })
+      );
+    } else if (isMatch) {
+      sections.push(
+        p('✅ Matter count VERIFIED — extraction matches source document', { bold: true, color: '16A34A', size: 22, spacing: { after: 120 } })
+      );
+    }
+
+    if (sourceMatters.matter_labels?.length) {
+      sections.push(p('Source matter labels:', { bold: true, size: 20, spacing: { after: 60 } }));
+      for (const label of sourceMatters.matter_labels) {
+        sections.push(p(`  • ${label}`, { size: 18, spacing: { after: 30 } }));
+      }
+    }
+
+    if (extraction.extracted_titles?.length) {
+      sections.push(p('Extracted matter titles:', { bold: true, size: 20, spacing: { after: 60 } }));
+      for (const title of extraction.extracted_titles) {
+        sections.push(p(`  • ${title}`, { size: 18, spacing: { after: 30 } }));
+      }
+    }
+
+    if (ragFiles.length) {
+      sections.push(p('RAG Knowledge Files Loaded:', { bold: true, size: 20, spacing: { after: 60 } }));
+      for (const fn of ragFiles) {
+        sections.push(p(`  • ${fn}`, { size: 18, spacing: { after: 30 } }));
+      }
+    }
+
+    sections.push(
+      p(`Timestamp: ${pipelineManifest.timestamp || 'N/A'}`, { italics: true, color: GRAY, size: 18, spacing: { after: 200 } }),
+      p('━'.repeat(60), { color: 'F59E0B', size: 16, spacing: { after: 300 } })
+    );
+  }
 
   // ═══ NEW §1: Evaluation Context Banner ═══
   const ctxLine = [

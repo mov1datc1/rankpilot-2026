@@ -83,3 +83,10 @@ class AgentState(TypedDict):
 
     # Flow control for the new pipeline
     current_step: str
+
+    # =====================================================
+    # v14.0 TRUST LAYER — Pipeline Manifest
+    # Rule 71: Complete audit trail of what the system read,
+    # what it extracted, and what it decided at each stage.
+    # =====================================================
+    pipeline_manifest: Dict

@@ -129,6 +129,7 @@ async def process_document(request: Request):
         "reasoning_trace": [],
         "editorial_memory": "",
         "current_step": "ingestion",
+        "pipeline_manifest": {},
     }
 
     # v7.0: Load editorial memory for this practice area + jurisdiction
@@ -197,6 +198,7 @@ async def process_document(request: Request):
                 "narrative_architecture": result.get("narrative_architecture", {}),
                 "submission_blueprint": result.get("submission_blueprint", {}),
                 "reasoning_trace": result.get("reasoning_trace", []),
+                "pipeline_manifest": result.get("pipeline_manifest", {}),
             }
         }
 
