@@ -186,6 +186,43 @@ EPISTEMIC_REPLACEMENTS = [
     ("various mandates", "multiple documented mandates"),
     ("several engagements", "multiple documented engagements"),
     ("a range of matters", "a documented portfolio of matters"),
+
+    # ═══ v15.0: EXTERNAL VALIDATION NON-INFERENCE (RC-5) ═══
+    ("lacks external validation", "does not include external validation evidence in the submission"),
+    ("Lacks external validation", "Does not include external validation evidence in the submission"),
+    ("it lacks external validation", "the submission does not include external validation evidence"),
+    ("It lacks external validation", "The submission does not include external validation evidence"),
+    ("lacks market recognition", "is not yet documented in the submission with market recognition evidence"),
+    ("Lacks market recognition", "Is not yet documented in the submission with market recognition evidence"),
+    ("lacks client endorsement", "does not include client endorsement in the submission"),
+    ("lacks referee support", "does not include referee information in the submission"),
+    ("lacks individual lawyer recognition", "does not yet include individual lawyer profiles in the submission"),
+    ("Lacks individual lawyer recognition", "Does not yet include individual lawyer profiles in the submission"),
+    ("it lacks external validation and individual lawyer recognition", "the submission does not yet include external validation or individual lawyer profile sections"),
+    
+    # ═══ v15.0: GENERIC PHRASE ELIMINATION (RC-9) ═══
+    # These are empty filler phrases the LLM produces repeatedly
+    ("played a pivotal role", "led the firm's work on"),
+    ("plays a pivotal role", "leads the firm's work on"),
+    ("pivotal role in", "central contribution to"),
+    ("a pivotal role", "a central contribution"),
+    ("robust framework", "operational framework"),
+    ("robust compliance framework", "compliance framework"),
+    ("comprehensive advice", "advice on"),
+    ("comprehensive advisory", "advisory on"),
+    ("enhanced compliance posture", "strengthened compliance operations"),
+    ("complex regulatory landscape", "regulatory environment"),
+    ("navigate complex", "address"),
+    ("strategic advisory", "advisory"),
+    ("sustainable operational practices", "operational practices"),
+    ("fortifying", "strengthening"),
+    ("fortified", "strengthened"),
+    ("instrumental in", "contributed to"),
+    ("demonstrating commitment", "demonstrating"),
+    ("demonstrating a commitment", "demonstrating"),
+    ("meticulously", ""),
+    ("meticulous", "detailed"),
+    ("ensuring long-term", "supporting sustained"),
 ]
 
 

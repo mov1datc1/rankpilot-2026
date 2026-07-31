@@ -612,10 +612,32 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
             "identity_adn": "General full-service practice"
         }
 
-    # Capa 6: Benchmark Relativo (Hardcoded V1)
-    benchmark = "Standard regional baseline requirements apply."
-    if "mexico" in str(jurisdiction).lower() and "banking" in str(practice_area).lower():
+    # Capa 6: Benchmark Relativo (v15.0 — Jurisdiction-Aware)
+    # Only provide quantitative benchmarks when we have real RAG data
+    benchmark_available = False
+    benchmark = "No specific benchmark data available for this combination. Use evidence-based observations and general Chambers methodology."
+    
+    jurisdiction_lower = str(jurisdiction).lower()
+    practice_lower = str(practice_area).lower()
+    
+    if "mexico" in jurisdiction_lower and "banking" in practice_lower:
         benchmark = "Entry: mid-market deals, some cross-border. Band 3: strong deal flow, repeat clients. Band 1: flagship deals, complex structuring."
+        benchmark_available = True
+    elif "mexico" in jurisdiction_lower and ("corporate" in practice_lower or "m&a" in practice_lower):
+        benchmark = "Entry: demonstrated transactional capability with recognizable clients. Band 4-5: consistent deal flow, multi-sector coverage, identifiable team. Band 1-3: flagship transactions, market-defining work."
+        benchmark_available = True
+    
+    # Determine jurisdiction type for cross-border calibration
+    jurisdiction_type = "national"  # default
+    if any(term in practice_lower for term in ["international", "cross-border", "trade", "arbitration"]):
+        jurisdiction_type = "global"
+    elif any(term in jurisdiction_lower for term in ["latin america", "europe", "asia", "global", "regional"]):
+        jurisdiction_type = "regional"
+    
+    # Determine if cross-border is inherently relevant for this practice
+    cross_border_relevant = jurisdiction_type != "national" or any(
+        term in practice_lower for term in ["international", "cross-border", "trade", "arbitration", "m&a"]
+    )
     
     # Capa 7 & Objective Routing (v13.0)
     primary_objective = submission_context.get("primary_objective", "")
@@ -663,6 +685,9 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         "client_type": context_dict.get("client_type"),
         "identity_adn": context_dict.get("identity_adn"),
         "benchmark_reference": benchmark,
+        "benchmark_available": benchmark_available,
+        "jurisdiction_type": jurisdiction_type,
+        "cross_border_relevant": cross_border_relevant,
         "target_realistic": target_realistic,
         "analysis_mode": analysis_mode,
         "primary_objective": primary_objective,

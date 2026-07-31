@@ -3,7 +3,7 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-07-29** (v14.1 — Pre-Flight Gate: Ranking Evidence Detector, Directory Template Auto-Detector, 5-Point Validation Gate)
+> Last updated: **2026-07-31** (v15.0 — Editorial Reasoning Calibration: Jurisdiction Context, Benchmark Consistency, Editorial-First, Matter Architecture, Blank Field Retrieval)
 
 ---
 
@@ -12,12 +12,12 @@
 | # | Rule / Fix | Version | File(s) | Status | Critical Level |
 |---|-----------|---------|---------|--------|----------------|
 | 1 | Editorial Constitution (6 Articles) | v8.0 | `prompts.py`, `EDITORIAL_CONSTITUTION.txt`, `rag_router.py` | ✅ ACTIVE | 🔴 SUPREME |
-| 2 | Epistemic Guardrails | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
+| 2 | Epistemic Guardrails | v15.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 3 | Matter Accountability Protocol | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 4 | Anti-Exclusion Directive (de_emphasize) | v10.2 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 5 | Evidence Cross-Validation | v7.0 | `prompts.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 6 | Editorial Voice Directive | v7.1 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
-| 7 | Language Guard (131 patterns) | v9.0 | `language_guard.py` | ✅ ACTIVE | 🔴 CRITICAL |
+| 7 | Language Guard (168 patterns) | v15.0 | `language_guard.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 8 | Probative Preservation Validator | v8.0 | `nodes.py` | ✅ ACTIVE | 🔴 CRITICAL |
 | 9 | Reality Check → Editorial Observations | v8.0 | `prompts.py`, `route.ts`, `docx_generator.py` | ✅ ACTIVE | 🟡 HIGH |
 | 10 | Benchmark-First Enforcement | v8.0 | `prompts.py` | ✅ ACTIVE | 🟡 HIGH |
@@ -85,6 +85,13 @@
 | 72 | **Ranking Evidence Detector** — Scans DOCX for evidence of existing ranking (e.g., "current rankings and commentary", "we remain ranked", "Band N"). Detects contradictions when user declares "Unranked" but document contains ranking evidence. Reports explicit/implicit evidence type, extracted text, detected band, and ranked lawyers. Pre-Flight Gate Check #5 | v14.1 | `doc_parser.py` (detect_ranking_evidence), `nodes.py` (pre_flight_gate_node CHECK 5), `docx_generator.py` (ranking evidence section) | ✅ ACTIVE | 🔴 SUPREME |
 | 73 | **Directory Template Auto-Detector** — Programmatically identifies directory format (Chambers/Legal 500/IFLR1000), firm name, practice area, and jurisdiction from the DOCX template structure itself — independent of user input. Chambers: A1/A2/A3 table headers. Legal 500: matter format + lawyer patterns. Fallback: filename. Compares against user-declared values and flags mismatches. Pre-Flight Gate Check #4 | v14.1 | `doc_parser.py` (detect_directory_template), `nodes.py` (pre_flight_gate_node CHECK 4), `docx_generator.py` (template detection section) | ✅ ACTIVE | 🔴 SUPREME |
 | 74 | **Pre-Flight Gate Node** — New pipeline node between extraction and context_engine. Runs 5 mandatory validations before ANY reasoning: (1) Document identity, (2) Matter extraction completeness (>20% loss = HALT), (3) Publishable/Confidential classification, (4) Directory/Practice auto-detection vs user input, (5) Ranking status contradiction detection. If critical checks fail, pipeline HALTS and outputs Pre-Flight Failure report. Owner's explicit requirement: "the pipeline should stop" | v14.1 | `nodes.py` (pre_flight_gate_node), `graph.py` (conditional routing), `docx_generator.py` (validation results page) | ✅ ACTIVE | 🔴 SUPREME |
+| 75 | **External Validation Non-Inference (RC-5)** — System must NEVER state, infer, or score that a firm "lacks external validation", "lacks market recognition", or "lacks referee support" based solely on submission evidence. External validation (referees, testimonials) is outside submission scope. Removed "External Validation" as entry requirement #6. Added 6 new forbidden phrases to EPISTEMIC_GUARDRAILS + 11 patterns to language_guard.py | v15.0 | `prompts.py` (EPISTEMIC_GUARDRAILS v15.0, FIRST_RECOGNITION_DIRECTIVE v15.0), `language_guard.py` (v15.0 RC-5 patterns) | ✅ ACTIVE | 🔴 SUPREME |
+| 76 | **Jurisdiction & Market Context Layer (RC-6)** — Prevents inventing quantitative benchmarks when no RAG data exists. Adds `benchmark_available`, `jurisdiction_type`, `cross_border_relevant` flags to strategic_context. When benchmark unavailable, system uses evidence-based observations. Cross-border NOT treated as universal sophistication indicator. National jurisdiction defaults to national peer sets. Works for ALL practice areas and jurisdictions | v15.0 | `prompts.py` (JURISDICTION_CONTEXT_RULE shared block), `nodes.py` (context_engine_node v15.0 benchmark logic) | ✅ ACTIVE | 🔴 SUPREME |
+| 77 | **Editorial-First Intervention Rule (RC-7)** — 5-level intervention hierarchy: (1) Editorial Reframe, (2) Structural Reorganization, (3) Information Mining, (4) Targeted Questions, (5) Business Development (LAST RESORT). Path to Dominance steps 1-3 MUST be editorial. Weakness Classification mandatory (Type A=editorial fix, B=evidence gap, C=structural limitation). Prohibits business consulting tone | v15.0 | `prompts.py` (EDITORIAL_FIRST_RULE shared block, path_to_dominance rewrite) | ✅ ACTIVE | 🔴 SUPREME |
+| 78 | **Benchmark Consistency Gate (RC-8)** — Logical self-check before every editorial observation: if submission EXCEEDS benchmark, do NOT recommend more of the same. Three outcomes: (A) Exceeds → acknowledge strength, (B) Meets → focus on presentation, (C) Falls short → classify weakness type. Prevents contradictory recommendations like "7 clients present, recommend more clients" | v15.0 | `prompts.py` (BENCHMARK_CONSISTENCY_GATE shared block, reality_check v15.0) | ✅ ACTIVE | 🔴 SUPREME |
+| 79 | **Matter Rewrite Architecture (RC-9)** — Mandatory 9-element structure for every rewritten matter: client context, triggering problem, stakes, precise work, lead partner role, team deployment, legal complexity, result, thesis connection. 16 prohibited generic phrases with specific replacements (e.g., "pivotal role" → describe actual role). Word count minimum raised from 80% to 90%. 95% meaning preservation threshold | v15.0 | `prompts.py` (MATTER_OPTIMIZER_PROMPT v15.0), `language_guard.py` (v15.0 RC-9 generic phrase patterns) | ✅ ACTIVE | 🔴 SUPREME |
+| 80 | **Section Preservation Threshold (RC-10)** — Rewrites must preserve all material propositions. May not shorten substantive sections unless: exceeds word limit, material is repetitive, content is irrelevant, or user expressly requests shorter version. B7/B10 competitive positioning must preserve full evidentiary density | v15.0 | `prompts.py` (MATTER_OPTIMIZER_PROMPT — Meaning Preservation Threshold) | ✅ ACTIVE | 🔴 CRITICAL |
+| 81 | **Blank Field = Retrieval Trigger (RC-11)** — Blank submission sections (B7, B9, B10, C2) trigger information extraction from matters, NOT deficit conclusions. Mandatory sequence: Verify → Mine submission → Produce draft → Ask remaining gaps. Specifically for B9: extract partner profiles from matters when lawyer section is blank. System must NEVER conclude "lacks recognition" when it has data to CREATE the narrative | v15.0 | `prompts.py` (BLANK_FIELD_RETRIEVAL_RULE shared block) | ✅ ACTIVE | 🔴 SUPREME |
 
 
 ---
