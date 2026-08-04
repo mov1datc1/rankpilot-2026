@@ -317,7 +317,7 @@ Prioritize:
 prestige;
 sophistication;
 market standing;
-referees;
+evidence density;
 strategic matters;
 lawyer visibility;
 reputation.
@@ -347,7 +347,7 @@ market influence;
 team expansion;
 differentiation;
 business ecosystem reputation;
-external validation;
+institutional credibility;
 third-party perception.
 
 XV. CORE RAG PHILOSOPHY

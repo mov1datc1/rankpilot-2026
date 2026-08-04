@@ -1,0 +1,134 @@
+{
+  "_version": "v16.0",
+  "_description": "Ranking Architecture Validation Layer (RAVL) — Maps directory+guide+jurisdiction+practice to real ranking structures. Scenario A = firm bands exist, B = individuals only, C = no ranking exists, D = ranking exists but no data available.",
+  
+  "combinations": [
+    {
+      "directory": "Chambers",
+      "guide": "Latin America",
+      "jurisdiction": "Mexico",
+      "practice_area": "Data Protection",
+      "aliases": ["Data Protection & Privacy", "Privacy", "Data Protection/Privacy"],
+      "edition_year": "2026",
+      "scenario": "B",
+      "ranking_type": "individuals_only",
+      "firm_bands_exist": false,
+      "individual_categories": ["Band 1", "Band 2", "Up and Coming", "Associates to Watch"],
+      "known_individuals": [
+        {"name": "Héctor Guzmán", "firm": "Bello, Gallardo, Bonequi y García", "category": "Band 1"},
+        {"name": "Carlos Vela Treviño", "firm": "Baker McKenzie", "category": "Band 2"},
+        {"name": "Alexis Cervantes", "firm": "Davara Abogados", "category": "Up and Coming"},
+        {"name": "Renata Buerón", "firm": "Basham, Ringe y Correa", "category": "Associates to Watch"}
+      ],
+      "benchmark_prohibited_phrases": [
+        "Band 5 firms", "Band 4 firms", "Band 3 firms", "Band 2 firms",
+        "entry-level firms", "peer firms in this category", "peer firms",
+        "firms currently positioned", "firms ranked in Band",
+        "departmental ranking", "firm ranking"
+      ],
+      "editorial_guidance": "Chambers Latin America currently recognises individual lawyers in Mexico for Data Protection, but does not display a departmental ranking of law firms in this category. The relevant editorial question is whether the evidence demonstrates an institutional practice capable of supporting future departmental recognition, while also establishing the visibility and contribution of the lawyers leading that practice."
+    },
+    {
+      "directory": "Chambers",
+      "guide": "Latin America",
+      "jurisdiction": "Mexico",
+      "practice_area": "Banking & Finance",
+      "aliases": ["Banking and Finance", "Banking", "Finance"],
+      "edition_year": "2026",
+      "scenario": "A",
+      "ranking_type": "firms_and_individuals",
+      "firm_bands_exist": true,
+      "firm_bands": ["Band 1", "Band 2", "Band 3"],
+      "individual_categories": ["Band 1", "Band 2", "Band 3", "Up and Coming", "Associates to Watch"],
+      "known_firms": [
+        {"name": "Creel, García-Cuéllar, Aiza y Enríquez", "band": "Band 1"},
+        {"name": "Galicia Abogados", "band": "Band 1"},
+        {"name": "Nader Hayaux Goebel", "band": "Band 1"},
+        {"name": "Ritch Mueller", "band": "Band 1"},
+        {"name": "White & Case", "band": "Band 1"},
+        {"name": "Greenberg Traurig", "band": "Band 2"},
+        {"name": "Mijares, Angoitia, Cortés y Fuentes", "band": "Band 2"}
+      ],
+      "benchmark_prohibited_phrases": [],
+      "editorial_guidance": "Chambers Latin America ranks both firms and individual lawyers for Banking & Finance in Mexico. The category presents Bands 1-3 for departments. Benchmarking against real firm bands is permitted."
+    },
+    {
+      "directory": "Chambers",
+      "guide": "Latin America",
+      "jurisdiction": "Mexico",
+      "practice_area": "Corporate/M&A",
+      "aliases": ["Corporate M&A", "Corporate", "M&A", "Mergers and Acquisitions"],
+      "edition_year": "2026",
+      "scenario": "A",
+      "ranking_type": "firms_and_individuals",
+      "firm_bands_exist": true,
+      "firm_bands": ["The Elite", "Highly Regarded"],
+      "individual_categories": ["Star Individuals", "Band 1", "Band 2", "Band 3", "Band 4", "Up and Coming", "Associates to Watch"],
+      "known_firms": [],
+      "benchmark_prohibited_phrases": [],
+      "editorial_guidance": "Chambers Latin America ranks firms for Corporate/M&A in Mexico using non-standard segments: 'The Elite' and 'Highly Regarded' instead of numbered bands. Benchmarking should reference these actual categories, not numbered bands."
+    },
+    {
+      "directory": "Chambers",
+      "guide": "Latin America",
+      "jurisdiction": "Mexico",
+      "practice_area": "Labour & Employment",
+      "aliases": ["Labour", "Employment", "Labor", "Labour and Employment"],
+      "edition_year": "2026",
+      "scenario": "A",
+      "ranking_type": "firms_and_individuals",
+      "firm_bands_exist": true,
+      "firm_bands": ["Band 1", "Band 2", "Band 3", "Band 4"],
+      "individual_categories": ["Star Individuals", "Band 1", "Band 2", "Band 3", "Up and Coming"],
+      "known_firms": [],
+      "benchmark_prohibited_phrases": [],
+      "editorial_guidance": "Chambers Latin America ranks both firms and individual lawyers for Labour & Employment in Mexico using standard numbered bands."
+    },
+    {
+      "directory": "Chambers",
+      "guide": "Latin America",
+      "jurisdiction": "Venezuela",
+      "practice_area": "Banking & Finance",
+      "aliases": ["Banking and Finance", "Banking", "Finance"],
+      "edition_year": "2026",
+      "scenario": "D",
+      "ranking_type": "unknown",
+      "firm_bands_exist": false,
+      "individual_categories": [],
+      "known_firms": [],
+      "benchmark_prohibited_phrases": [
+        "Band 5 firms", "Band 4 firms", "Band 3 firms",
+        "entry-level firms", "peer firms in this category", "peer firms"
+      ],
+      "editorial_guidance": "No verified ranking architecture data is available for Banking & Finance in Venezuela. The system must not generate benchmarks against firm bands or peer sets. Analysis should focus on submission evidence quality and general Chambers methodology."
+    }
+  ],
+  
+  "default_unknown": {
+    "scenario": "D",
+    "ranking_type": "unknown",
+    "firm_bands_exist": false,
+    "benchmark_prohibited_phrases": [
+      "Band 5 firms", "Band 4 firms", "Band 3 firms", "Band 2 firms",
+      "entry-level firms", "peer firms in this category", "peer firms",
+      "firms currently positioned", "firms ranked in Band"
+    ],
+    "editorial_guidance": "No verified ranking architecture data is available for this combination. The system must not generate benchmarks against firm bands or peer sets. Analysis should be evidence-based using general directory methodology."
+  },
+  
+  "universal_prohibited_when_no_firm_bands": [
+    "Band 5 firms",
+    "Band 4 firms", 
+    "Band 3 firms",
+    "Band 2 firms",
+    "Band 1 firms",
+    "entry-level firms",
+    "peer firms in this category",
+    "peer firms",
+    "firms currently positioned in Band",
+    "firms ranked in Band",
+    "firms at Band",
+    "Firms currently ranked",
+    "Firms in Band"
+  ]
+}

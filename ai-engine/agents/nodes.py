@@ -22,6 +22,7 @@ from utils.pdf_generator import compile_latex_to_pdf
 from utils.rag_router import RAGRouter
 from utils.directory_config import get_directory_config, get_directory_context_block
 from utils.practice_taxonomy import get_practice_taxonomy, get_practice_context_block
+from utils.validators import get_ranking_architecture, validate_analysis_output, validate_matter_enhancement
 
 load_dotenv()
 
@@ -694,7 +695,33 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         "secondary_objective": secondary_objective
     }
     
+    # v16.0: RANKING ARCHITECTURE VALIDATION LAYER (RAVL)
+    ranking_arch = get_ranking_architecture(
+        directory, "", jurisdiction, practice_area
+    )
+    strategic_context["ranking_architecture"] = {
+        "scenario": ranking_arch.get("scenario", "D"),
+        "ranking_type": ranking_arch.get("ranking_type", "unknown"),
+        "firm_bands_exist": ranking_arch.get("firm_bands_exist", False),
+        "editorial_guidance": ranking_arch.get("editorial_guidance", ""),
+        "benchmark_prohibited_phrases": ranking_arch.get("benchmark_prohibited_phrases", []),
+    }
+    
+    # v16.0: If RAVL scenario is B (individuals only), override benchmark to prevent invention
+    if ranking_arch.get("scenario") == "B":
+        strategic_context["benchmark_reference"] = ranking_arch.get("editorial_guidance", benchmark)
+        strategic_context["benchmark_available"] = False
+        print(f"[RAVL] Scenario B: individuals_only — firm band benchmarks PROHIBITED")
+    elif ranking_arch.get("scenario") == "C":
+        strategic_context["benchmark_reference"] = "No ranking exists for this combination. Focus on evidence quality."
+        strategic_context["benchmark_available"] = False
+        print(f"[RAVL] Scenario C: no ranking exists — all benchmarks PROHIBITED")
+    elif ranking_arch.get("scenario") == "D":
+        strategic_context["benchmark_available"] = False
+        print(f"[RAVL] Scenario D: unknown — defaulting to no benchmark")
+    
     print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")
+    print(f"[RAVL] Scenario={ranking_arch.get('scenario', '?')} | Firm bands={ranking_arch.get('firm_bands_exist', False)} | Type={ranking_arch.get('ranking_type', '?')}")
     if practice_taxonomy:
         print(f"[PRACTICE TAXONOMY] Detected: {practice_taxonomy.get('name', 'Generic')} | Value metric: {practice_taxonomy.get('value_is_not', 'standard')}")
 
@@ -882,6 +909,22 @@ SCORING FLOOR CALIBRATION:
 - 5+ cross-border matters = minimum confidence "Moderate"
 - Hero matter with USD 100M+ impact = minimum confidence "Moderate"
 
+RANKING ARCHITECTURE VALIDATION LAYER (v16.0 — RAVL):
+"""
+    # v16.0: Inject RAVL context from strategic_context
+    strategic_context = state.get("strategic_context", {})
+    ravl = strategic_context.get("ranking_architecture", {})
+    ravl_block = f"""
+RANKING ARCHITECTURE FOR THIS COMBINATION:
+- Scenario: {ravl.get('scenario', 'D')} ({'Firms + Individuals' if ravl.get('firm_bands_exist') else 'Individuals Only' if ravl.get('ranking_type') == 'individuals_only' else 'Unknown/No Data'})
+- Firm bands exist: {'YES' if ravl.get('firm_bands_exist') else 'NO'}
+- Ranking type: {ravl.get('ranking_type', 'unknown')}
+- Editorial guidance: {ravl.get('editorial_guidance', 'No specific guidance available.')}
+
+{'CRITICAL: Firm band benchmarks DO NOT EXIST for this combination. DO NOT reference Band 1-6 firms, peer firms, or entry-level firms in your analysis. Focus exclusively on submission evidence quality.' if not ravl.get('firm_bands_exist') else 'Firm band benchmarks are available for this combination. You may reference real band positions.'}
+"""
+    analysis_prompt = f"""{ravl_block}
+
 {analysis_prompt}"""
     
     prompt = ChatPromptTemplate.from_messages([
@@ -1031,6 +1074,14 @@ SCORING FLOOR CALIBRATION:
             if attempt > max_retries:
                 return {"confidence_score": 0, "analysis": {"error": "Analysis parsing failed after retries"}}
             continue
+    
+    # v16.0: POST-VALIDATION GATES — Programmatic enforcement
+    strategic_context = state.get("strategic_context", {})
+    res_json, validation_report = validate_analysis_output(res_json, strategic_context)
+    
+    # Store validation report in manifest for transparency
+    if manifest:
+        manifest["v16_validation_report"] = validation_report
     
     return {
         "analysis": res_json,
@@ -1185,13 +1236,27 @@ def optimization_node(state: AgentState) -> Dict:
                     print(f"  [PROBATIVE] Re-optimization failed: {retry_err}. Keeping original optimization.")
             
             # v11.0: Strip any markdown formatting before storing
-            matter['optimized_text'] = strip_markdown(optimized_text)
-            matter['status'] = 'AI Optimized'
+            optimized_text = strip_markdown(optimized_text)
+            
+            # v16.0: MATTER ENHANCEMENT VALIDATOR — ensure fact preservation
+            original_summary = matter.get('summary', '') or matter.get('significance', '')
+            is_valid, enhancement_details = validate_matter_enhancement(original_summary, optimized_text)
+            if not is_valid:
+                print(f"  [ENHANCEMENT GATE] ⚠️ Matter '{matter.get('title', 'unknown')}' failed fact preservation check")
+                print(f"  Details: {enhancement_details}")
+                # Fall back to original rather than lose facts
+                if enhancement_details.get('word_ratio', 1.0) < 0.5:
+                    # Drastic compression — use original
+                    print(f"  [ENHANCEMENT GATE] Using original text (word ratio {enhancement_details.get('word_ratio', 0):.2f} too low)")
+                    optimized_text = strip_markdown(original_summary)
+            
+            matter['optimized_text'] = optimized_text
+            matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
             
         except Exception as e:
-            print(f"Error optimizing matter: {e}")
+            print(f"Error enhancing matter: {e}")
             matter['optimized_text'] = strip_markdown(matter.get('summary', ''))
-            matter['status'] = 'Optimization Failed'
+            matter['status'] = 'Enhancement Failed'
             
         optimized_matters.append(matter)
         
