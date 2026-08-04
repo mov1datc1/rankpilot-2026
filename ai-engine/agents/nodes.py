@@ -1131,6 +1131,7 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
             # VALIDATION GATE — Hard Rule Checks (NO LLM, pure logic)
             # ═══════════════════════════════════════════════════════
             violations = []
+            expected_count = len(all_matters)  # v17.1: Define for validation checks
             
             # CHECK 1: Matter Evaluations Completeness
             # v17.0: SKIPPED — matter_evaluations are now generated in Call 2 (separate LLM call)
@@ -1189,6 +1190,16 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
                                 break
                     if score and isinstance(score, (int, float)) and score > 0:
                         break
+            if score is None or (isinstance(score, (int, float)) and score == 0):
+                # v17.1: Last resort — derive score from editorial_confidence qualitative assessment
+                ec = res_json.get("editorial_confidence", {})
+                if isinstance(ec, dict):
+                    confidence_map = {"high": 80, "moderate": 65, "low": 45, "limited": 30, "very high": 90}
+                    overall = str(ec.get("overall_confidence", "")).lower().strip()
+                    if overall in confidence_map:
+                        score = confidence_map[overall]
+                        res_json["score"] = score
+                        print(f"[SCORE DERIVED] Derived score={score} from editorial_confidence.overall_confidence='{overall}'")
             if score is None or (isinstance(score, (int, float)) and score == 0):
                 violations.append("MISSING_SCORE: No score or score is 0")
             
