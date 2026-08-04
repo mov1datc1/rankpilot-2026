@@ -23,6 +23,7 @@ from utils.rag_router import RAGRouter
 from utils.directory_config import get_directory_config, get_directory_context_block
 from utils.practice_taxonomy import get_practice_taxonomy, get_practice_context_block
 from utils.validators import get_ranking_architecture, validate_analysis_output, validate_matter_enhancement
+from utils.benchmark_scraper import scrape_rankings, get_benchmark_summary
 
 load_dotenv()
 
@@ -72,22 +73,89 @@ def safe_json_loads(text: str, fallback=None):
     if cleaned.endswith('```'):
         cleaned = cleaned[:-3]
     cleaned = cleaned.strip()
+    
+    # Strategy 1: Direct parse
     try:
         return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
+    except json.JSONDecodeError as e:
+        print(f"[SAFE_JSON_LOADS] Strategy 1 failed: {e}")
+    
+    # Strategy 2: Find the first complete JSON object by brace matching
     try:
-        safe_text = cleaned.encode('ascii', errors='replace').decode('ascii')
+        start_idx = cleaned.index('{')
+        depth = 0
+        in_string = False
+        escape_next = False
+        end_idx = start_idx
+        for i in range(start_idx, len(cleaned)):
+            c = cleaned[i]
+            if escape_next:
+                escape_next = False
+                continue
+            if c == '\\' and in_string:
+                escape_next = True
+                continue
+            if c == '"' and not escape_next:
+                in_string = not in_string
+                continue
+            if not in_string:
+                if c == '{':
+                    depth += 1
+                elif c == '}':
+                    depth -= 1
+                    if depth == 0:
+                        end_idx = i + 1
+                        break
+        if end_idx > start_idx:
+            json_str = cleaned[start_idx:end_idx]
+            result = json.loads(json_str)
+            print(f"[SAFE_JSON_LOADS] Strategy 2 succeeded: extracted {len(json_str)} chars")
+            return result
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"[SAFE_JSON_LOADS] Strategy 2 failed: {e}")
+    
+    # Strategy 3: ASCII replacement (handles encoding issues)
+    try:
+        safe_text = cleaned.encode('utf-8', errors='replace').decode('utf-8')
         return json.loads(safe_text)
     except (json.JSONDecodeError, UnicodeError):
         pass
+    
+    # Strategy 4: Regex extraction
     try:
         match = re.search(r'\{[\s\S]*\}', cleaned)
         if match:
             return json.loads(match.group())
     except (json.JSONDecodeError, AttributeError):
         pass
-    print(f"[SAFE_JSON_LOADS] Failed to parse. First 200 chars: {cleaned[:200]}")
+    
+    # Strategy 5: If truncated JSON, try to repair by closing open braces/brackets
+    try:
+        # Find the first '{' and try to close all open structures
+        json_start = cleaned.index('{')
+        partial = cleaned[json_start:]
+        # Count unclosed braces and brackets
+        open_braces = partial.count('{') - partial.count('}')
+        open_brackets = partial.count('[') - partial.count(']')
+        # Check if we're inside a string (odd number of unescaped quotes)
+        if open_braces > 0 or open_brackets > 0:
+            repaired = partial
+            # Close any open string
+            quote_count = len(re.findall(r'(?<!\\)"', repaired))
+            if quote_count % 2 != 0:
+                repaired += '"'
+            # Close brackets then braces
+            repaired += ']' * max(0, open_brackets)
+            repaired += '}' * max(0, open_braces)
+            result = json.loads(repaired)
+            print(f"[SAFE_JSON_LOADS] Strategy 5 succeeded: repaired truncated JSON ({open_braces} braces, {open_brackets} brackets closed)")
+            return result
+    except (json.JSONDecodeError, ValueError):
+        pass
+    
+    print(f"[SAFE_JSON_LOADS] ALL strategies failed. Content length: {len(cleaned)} chars")
+    print(f"[SAFE_JSON_LOADS] First 300 chars: {cleaned[:300]}")
+    print(f"[SAFE_JSON_LOADS] Last 200 chars: {cleaned[-200:]}")
     return fallback or {}
 
 def get_model():
@@ -98,6 +166,8 @@ def get_model():
     return ChatOpenAI(
         model_name="gpt-4o",
         temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency between runs
+        max_tokens=8192,     # v17.0: Prevent JSON truncation — 8192 covers 7+ matter evals without API hang
+        request_timeout=300, # v17.0: 5min timeout to prevent indefinite hangs
         openai_api_key=os.environ.get("OPENAI_API_KEY")
     )
 
@@ -242,8 +312,8 @@ def extraction_node(state: AgentState) -> Dict:
     
     # Update manifest with extraction results
     manifest["extraction"] = extraction_validation
-    manifest["validation"]["extraction_match"] = extraction_validation["match"]
-    manifest["validation"]["matter_loss"] = extraction_validation["loss_count"]
+    manifest.setdefault("validation", {})["extraction_match"] = extraction_validation["match"]
+    manifest.setdefault("validation", {})["matter_loss"] = extraction_validation["loss_count"]
 
     return {
         "metadata": {
@@ -720,6 +790,47 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         strategic_context["benchmark_available"] = False
         print(f"[RAVL] Scenario D: unknown — defaulting to no benchmark")
     
+    # =====================================================
+    # v17.0: LIVE BENCHMARK ENGINE
+    # Attempt to fetch REAL ranking data from Chambers/Legal500.
+    # If successful, this OVERRIDES the static RAVL data with
+    # verified, up-to-date benchmark information.
+    # If scraping fails, we gracefully fall back to RAVL (v16.0).
+    # Option A: Automatic scraping with 30-day cache.
+    # =====================================================
+    try:
+        live_benchmark = scrape_rankings(directory, practice_area, jurisdiction)
+        if live_benchmark:
+            benchmark_summary = get_benchmark_summary(live_benchmark)
+            strategic_context["live_benchmark"] = live_benchmark
+            strategic_context["benchmark_reference"] = benchmark_summary
+            strategic_context["benchmark_available"] = True
+            strategic_context["benchmark_source"] = "live_scrape"
+            
+            # Override RAVL scenario with real data
+            live_structure = live_benchmark.get("structure", {})
+            strategic_context["ranking_architecture"]["firm_bands_exist"] = live_structure.get("has_firm_bands", False)
+            strategic_context["ranking_architecture"]["live_enriched"] = True
+            
+            # If live data shows no firm bands, ensure scenario reflects this
+            if not live_structure.get("has_firm_bands", False) and live_structure.get("has_individual_bands", False):
+                strategic_context["ranking_architecture"]["scenario"] = "B"
+                strategic_context["ranking_architecture"]["ranking_type"] = "individuals_only"
+            elif live_structure.get("has_firm_bands", False):
+                strategic_context["ranking_architecture"]["scenario"] = "A"
+                strategic_context["ranking_architecture"]["ranking_type"] = "firms_and_individuals"
+            
+            print(f"[LIVE BENCHMARK ✅] Enriched with REAL data from {live_benchmark.get('source', '?')}")
+            print(f"[LIVE BENCHMARK] Firms: {live_benchmark.get('total_firms', 0)} | "
+                  f"Individuals: {live_benchmark.get('total_individuals', 0)} | "
+                  f"Firm bands: {live_structure.get('firm_bands', [])}")
+        else:
+            strategic_context["benchmark_source"] = "ravl_static"
+            print(f"[LIVE BENCHMARK] No live data available — using RAVL static config")
+    except Exception as e:
+        strategic_context["benchmark_source"] = "ravl_static"
+        print(f"[LIVE BENCHMARK] Scraping failed (graceful fallback): {e}")
+    
     print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")
     print(f"[RAVL] Scenario={ranking_arch.get('scenario', '?')} | Firm bands={ranking_arch.get('firm_bands_exist', False)} | Type={ranking_arch.get('ranking_type', '?')}")
     if practice_taxonomy:
@@ -927,13 +1038,38 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
 
 {analysis_prompt}"""
     
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", analysis_prompt),
-        ("human", "Analyze this firm data and return JSON: {data}")
+    # v17.0: Inject LIVE BENCHMARK context when available
+    if strategic_context.get("benchmark_source") == "live_scrape":
+        from agents.prompts import LIVE_BENCHMARK_CONTEXT
+        benchmark_summary = strategic_context.get("benchmark_reference", "")
+        live_block = LIVE_BENCHMARK_CONTEXT.replace("{live_benchmark_data}", benchmark_summary)
+        live_block = live_block.replace("{source}", strategic_context.get("live_benchmark", {}).get("source", "directory"))
+        analysis_prompt = f"""{live_block}
+
+{analysis_prompt}"""
+        print(f"[ANALYSIS NODE v17.0] Live benchmark context injected ({len(benchmark_summary)} chars)")
+    
+    # v17.0: Force JSON output mode so the LLM returns parseable JSON
+    llm_json = llm.bind(response_format={"type": "json_object"})
+    # Use direct message invocation (NOT ChatPromptTemplate) because analysis_prompt
+    # contains JSON schemas with {} that would break template variable parsing
+    from langchain_core.messages import SystemMessage, HumanMessage as HMsg
+    data_str = json.dumps(input_data, indent=2, default=str, ensure_ascii=True)
+    response = llm_json.invoke([
+        SystemMessage(content=analysis_prompt),
+        HMsg(content=f"Analyze this submission data and return your analysis as JSON:\n\n{data_str}")
     ])
     
-    chain = prompt | llm
-    response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str, ensure_ascii=True)})
+    # v17.0: Debug — log response content stats
+    response_text = response.content or ""
+    finish_reason = response.response_metadata.get("finish_reason", "unknown")
+    print(f"[ANALYSIS NODE] Response length: {len(response_text)} chars | finish_reason: {finish_reason}")
+    if finish_reason == "length":
+        print(f"[ANALYSIS NODE] ⚠️ TRUNCATED — gpt-4o hit max_tokens limit. JSON will be incomplete.")
+        print(f"[ANALYSIS NODE] Consider increasing max_tokens or decomposing the output.")
+    if response_text:
+        print(f"[ANALYSIS NODE] First 200 chars: {response_text[:200]}")
+        print(f"[ANALYSIS NODE] Last 100 chars: {response_text[-100:]}")
     
     # v10.2: VALIDATION GATE — Programmatic quality filter with auto-retry
     max_retries = 2
@@ -943,11 +1079,40 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
     while attempt <= max_retries:
         if attempt > 0:
             print(f"[VALIDATION GATE] Retry #{attempt}/{max_retries} — violations: {last_violations}")
-            # Re-invoke the chain with the same data
-            response = chain.invoke({"data": json.dumps(input_data, indent=2, default=str, ensure_ascii=True)})
+            # Re-invoke the LLM with the same messages
+            response = llm_json.invoke([
+                SystemMessage(content=analysis_prompt),
+                HMsg(content=f"Analyze this submission data and return your analysis as JSON:\n\n{data_str}")
+            ])
+            response_text = response.content or ""
+            finish_reason = response.response_metadata.get("finish_reason", "unknown")
+            print(f"[ANALYSIS NODE] Retry response length: {len(response_text)} chars | finish_reason: {finish_reason}")
+            if finish_reason == "length":
+                print(f"[ANALYSIS NODE] ⚠️ RETRY ALSO TRUNCATED — output too large for max_tokens")
         
         try:
             res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
+            
+            # v17.1: Unwrap gpt-4o's common pattern of wrapping everything in {"analysis": {...}}
+            # The validation code expects score, audit_letter, etc. at the top level
+            if "analysis" in res_json and isinstance(res_json["analysis"], dict):
+                inner = res_json["analysis"]
+                # Check if the inner dict has our expected fields but the outer doesn't
+                if "score" not in res_json and ("score" in inner or "submission_summary" in inner or "firm_name" in inner):
+                    print(f"[ANALYSIS NODE] Unwrapping nested 'analysis' wrapper (gpt-4o json_object mode artifact)")
+                    # Promote inner keys to top level, preserving any top-level keys
+                    for k, v in inner.items():
+                        if k not in res_json:
+                            res_json[k] = v
+                    # Also check for score in editorial_confidence
+                    if "score" not in res_json:
+                        ec = inner.get("editorial_confidence", {})
+                        if isinstance(ec, dict):
+                            for score_key in ["overall_score", "confidence_score", "score"]:
+                                if score_key in ec and isinstance(ec[score_key], (int, float)):
+                                    res_json["score"] = ec[score_key]
+                                    print(f"[SCORE FIX] Extracted score={ec[score_key]} from editorial_confidence.{score_key}")
+                                    break
             
             # v10.0: CONFIDENTIALITY GUARDRAIL — Post-analysis validation
             matter_evals = res_json.get("matter_evaluations", [])
@@ -968,7 +1133,9 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
             violations = []
             
             # CHECK 1: Matter Evaluations Completeness
-            # v13.1 Rule 69: Check BOTH root-level AND inside audit_letter (schema puts them inside audit_letter)
+            # v17.0: SKIPPED — matter_evaluations are now generated in Call 2 (separate LLM call)
+            # This check was causing 3 unnecessary retries per pipeline run
+            # The eval count is verified after Call 2 merges results
             eval_count = len(res_json.get("matter_evaluations", []))
             if eval_count == 0:
                 # Fallback: check inside audit_letter where the prompt schema actually places them
@@ -977,9 +1144,7 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
                     # Promote to root level so downstream code finds them
                     res_json["matter_evaluations"] = audit_evals
                     eval_count = len(audit_evals)
-            expected_count = len(all_matters)
-            if eval_count < expected_count:
-                violations.append(f"EVAL_COUNT: Got {eval_count} matter_evaluations, expected {expected_count}")
+            # v17.0: Don't fail on missing evals — Call 2 will provide them
             
             # CHECK 2: No "exclude" disposition (Rule #42)
             audit_letter = res_json.get("audit_letter", {})
@@ -1008,8 +1173,22 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
                     if past_year_match:
                         violations.append(f"PAST_DEADLINE: '{deadline}' is in the past")
             
-            # CHECK 5: Score is present and numeric
+            # CHECK 5: Score is present and numeric — search multiple possible locations
             score = res_json.get("score")
+            if score is None or (isinstance(score, (int, float)) and score == 0):
+                # gpt-4o sometimes nests the score inside 'analysis', 'audit_letter', or 'editorial_confidence'
+                for nested_key in ["analysis", "audit_letter", "editorial_confidence"]:
+                    nested = res_json.get(nested_key, {})
+                    if isinstance(nested, dict):
+                        for score_key in ["score", "confidence_score", "overall_score", "editorial_score"]:
+                            found = nested.get(score_key)
+                            if found and isinstance(found, (int, float)) and found > 0:
+                                score = found
+                                res_json["score"] = score  # Promote to top level
+                                print(f"[SCORE FIX] Found score={score} inside '{nested_key}.{score_key}', promoted to top level")
+                                break
+                    if score and isinstance(score, (int, float)) and score > 0:
+                        break
             if score is None or (isinstance(score, (int, float)) and score == 0):
                 violations.append("MISSING_SCORE: No score or score is 0")
             
@@ -1074,6 +1253,78 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
             if attempt > max_retries:
                 return {"confidence_score": 0, "analysis": {"error": "Analysis parsing failed after retries"}}
             continue
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.0 CALL 2: MATTER EVALUATIONS (separate LLM call)
+    # Prevents JSON truncation by keeping each call under max_tokens
+    # ═══════════════════════════════════════════════════════════════
+    if all_matters and len(all_matters) > 0:
+        print(f"[ANALYSIS NODE] Call 2: Generating matter evaluations for {len(all_matters)} matters...")
+        try:
+            from agents.prompts import MATTER_EVALUATIONS_PROMPT
+            
+            # Prepare matter data for evaluation
+            matter_data = []
+            for m in all_matters:
+                if isinstance(m, dict):
+                    matter_data.append({
+                        "title": m.get("title", ""),
+                        "client": m.get("client", ""),
+                        "value": m.get("value", ""),
+                        "summary": m.get("summary", ""),
+                        "significance": m.get("significance", ""),
+                        "lead_partner": m.get("lead_partner", ""),
+                        "publish_status": m.get("publish_status", "non_publishable"),
+                        "raw_text": m.get("raw_text", ""),
+                    })
+            
+            eval_prompt_text = MATTER_EVALUATIONS_PROMPT.replace("{matter_count}", str(len(all_matters)))
+            eval_prompt = ChatPromptTemplate.from_messages([
+                ("system", eval_prompt_text),
+                ("human", "Evaluate these matters and return JSON:\n{data}")
+            ])
+            
+            eval_chain = eval_prompt | llm_json
+            eval_response = eval_chain.invoke({"data": json.dumps(matter_data, indent=2, default=str, ensure_ascii=False)})
+            
+            eval_finish = eval_response.response_metadata.get("finish_reason", "unknown")
+            print(f"[ANALYSIS NODE] Call 2 response: {len(eval_response.content or '')} chars | finish_reason: {eval_finish}")
+            if eval_finish == "length":
+                print(f"[ANALYSIS NODE] ⚠️ Call 2 ALSO TRUNCATED — matter evaluations may be incomplete")
+            
+            eval_json = safe_json_loads(eval_response.content, fallback={})
+            
+            # Merge matter evaluations into audit_letter
+            matter_evals = eval_json.get("matter_evaluations", [])
+            recommended_rewrites = eval_json.get("recommended_rewrites", [])
+            
+            if matter_evals:
+                print(f"[ANALYSIS NODE] ✅ Call 2 SUCCESS: {len(matter_evals)} matter evaluations generated")
+                # Apply confidentiality guardrail to evaluations
+                for eval_item in matter_evals:
+                    if isinstance(eval_item, dict):
+                        matter_name = eval_item.get("matter_name", "").lower()
+                        for orig_matter in all_matters:
+                            if isinstance(orig_matter, dict):
+                                orig_name = (orig_matter.get("client", "") or orig_matter.get("title", "")).lower()
+                                if matter_name and orig_name and (matter_name in orig_name or orig_name in matter_name):
+                                    if orig_matter.get("_confidentiality_locked"):
+                                        eval_item["type"] = orig_matter.get("publish_status", "non_publishable")
+                                    break
+                
+                # Merge into res_json — both at root level AND inside audit_letter
+                res_json["matter_evaluations"] = matter_evals
+                if isinstance(res_json.get("audit_letter"), dict):
+                    res_json["audit_letter"]["matter_evaluations"] = matter_evals
+                    if recommended_rewrites:
+                        res_json["audit_letter"]["recommended_rewrites"] = recommended_rewrites
+                res_json["recommended_rewrites"] = recommended_rewrites
+            else:
+                print(f"[ANALYSIS NODE] ⚠️ Call 2 returned 0 matter evaluations")
+                
+        except Exception as e:
+            print(f"[ANALYSIS NODE] ⚠️ Call 2 failed: {e}")
+            # Non-fatal — continue with empty evaluations
     
     # v16.0: POST-VALIDATION GATES — Programmatic enforcement
     strategic_context = state.get("strategic_context", {})
@@ -1190,7 +1441,8 @@ def optimization_node(state: AgentState) -> Dict:
                     print(f"  [SCR-DETECT] Strategic Client Relationship detected — ratio {ratio:.2f} is below 90% threshold")
             
             # Check for named entity preservation (company names in uppercase or capitalized)
-            original_entities = set(_re.findall(r'\b[A-Z][A-Za-z]{2,}(?:\s+[A-Z][A-Za-z]+)*\b', matter.get('summary', '') or matter.get('significance', '') or ''))
+            # v17.0 FIX: Use raw_text (full matter) for entity extraction, not just summary field
+            original_entities = set(_re.findall(r'\b[A-Z][A-Za-z]{2,}(?:\s+[A-Z][A-Za-z]+)*\b', raw_text))
             if len(original_entities) > 3:  # Multi-entity evidence
                 preserved = sum(1 for e in original_entities if e.lower() in optimized_lower)
                 preservation_ratio = preserved / len(original_entities)
@@ -1239,8 +1491,8 @@ def optimization_node(state: AgentState) -> Dict:
             optimized_text = strip_markdown(optimized_text)
             
             # v16.0: MATTER ENHANCEMENT VALIDATOR — ensure fact preservation
-            original_summary = matter.get('summary', '') or matter.get('significance', '')
-            is_valid, enhancement_details = validate_matter_enhancement(original_summary, optimized_text)
+            # v17.0 FIX: Compare against raw_text (full matter), not just summary/significance (title-like short text)
+            is_valid, enhancement_details = validate_matter_enhancement(raw_text, optimized_text)
             if not is_valid:
                 print(f"  [ENHANCEMENT GATE] ⚠️ Matter '{matter.get('title', 'unknown')}' failed fact preservation check")
                 print(f"  Details: {enhancement_details}")
@@ -1259,6 +1511,48 @@ def optimization_node(state: AgentState) -> Dict:
             matter['status'] = 'Enhancement Failed'
             
         optimized_matters.append(matter)
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.0: GRAMMAR POST-PROCESSING LAYER
+    # Fixes spelling, grammar, and punctuation errors in all optimized texts
+    # Uses a lightweight LLM call focused ONLY on grammar correction
+    # ═══════════════════════════════════════════════════════════════
+    print("--- GRAMMAR CHECK ---")
+    grammar_llm = get_model()
+    grammar_llm = grammar_llm.bind(response_format={"type": "json_object"})
+    
+    grammar_fixed_count = 0
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        if not opt_text or len(opt_text) < 20:
+            continue
+        
+        try:
+            grammar_response = grammar_llm.invoke([
+                SystemMessage(content=(
+                    "You are a professional English proofreader. Fix ONLY grammar, spelling, "
+                    "and punctuation errors. Do NOT change meaning, content, names, numbers, "
+                    "or sentence structure. Do NOT add or remove information. "
+                    "Return JSON: {\"corrected_text\": \"...\", \"corrections_made\": 0}"
+                )),
+                HumanMessage(content=f"Proofread this text:\n\n{opt_text}")
+            ])
+            grammar_result = safe_json_loads(grammar_response.content, fallback={})
+            corrected = grammar_result.get("corrected_text", "")
+            corrections = grammar_result.get("corrections_made", 0)
+            
+            if corrected and corrections > 0:
+                matter['optimized_text'] = corrected
+                grammar_fixed_count += 1
+                print(f"  [GRAMMAR] Fixed {corrections} issue(s) in '{matter.get('title', '?')[:40]}'")
+        except Exception as e:
+            # Non-fatal — keep original optimized text
+            pass
+    
+    if grammar_fixed_count > 0:
+        print(f"[GRAMMAR] ✅ Fixed grammar in {grammar_fixed_count}/{len(optimized_matters)} matters")
+    else:
+        print(f"[GRAMMAR] ✅ No grammar issues found")
         
     return {"matters": optimized_matters}
 
@@ -1316,9 +1610,13 @@ def writer_node(state: AgentState, config: RunnableConfig) -> Dict:
             # We skip proper escaping for this prototype to avoid breaking actual latex commands
             pass
 
-    # 5. Compile PDF
-    output_filename = f"report_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    pdf_path = compile_latex_to_pdf(latex_code, output_filename)
+    # 5. Compile PDF (graceful — pdflatex may not be installed)
+    try:
+        output_filename = f"report_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        pdf_path = compile_latex_to_pdf(latex_code, output_filename)
+    except (FileNotFoundError, OSError) as e:
+        print(f"[WRITER] pdflatex not available ({e}). Skipping PDF generation — DOCX export via frontend is the primary output.")
+        pdf_path = None
     
     # 6. Return the URL (For local dev, we assume the python API serves the root or we return relative path)
     # In production with Vercel, we would upload to Supabase Storage here.

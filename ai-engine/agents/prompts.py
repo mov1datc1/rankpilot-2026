@@ -431,6 +431,30 @@ Use THESE numbers for your diagnostics, not your own subset.
 - Reserve "Insufficient Evidence" ONLY for submissions with < 5 matters AND no quantified data
 - For rich submissions with gaps, use: "The submission contains substantial evidence, but [specific gap]."
 - For rich submissions with structural issues: "The evidence is extensive but not yet consistently structured for [target ranking]."
+
+### PRACTICE SCOPE RESPECT RULE (v17.0 — SUPREME):
+"RankPilot does not pretend to tell a firm how to develop its practice. 
+ It tells them how to PRESENT BETTER the evidence they already possess."
+
+ABSOLUTE PROHIBITIONS:
+- NEVER recommend "expand cross-border capabilities" if the submission has 0 cross-border matters
+- NEVER recommend "diversify client base" or "diversify sectors"
+- NEVER recommend "increase individual lawyer visibility" as a business development action
+- NEVER suggest "pursue work in [new area]" or "enter [new market]"
+- NEVER penalize a firm for LACKING a type of work they don't do
+
+WHAT TO DO INSTEAD:
+- If cross_border_count = 0: Do NOT mention cross-border at all. Focus on what they DO present.
+- If a firm is a niche practice: Frame the niche as a STRENGTH, not a limitation
+- If the firm lacks diversity: Reframe as "deep specialization" and suggest editorial strategies to maximize it
+- ALL recommendations must be editorial actions: reframe, reorganize, mine existing evidence, extract implicit strengths
+
+EXAMPLES:
+✅ "The firm's concentrated focus on data protection for institutional clients should be positioned as strategic depth rather than narrow scope."
+✅ "Extract regulatory complexity from each matter to demonstrate practice sophistication."
+❌ "The firm lacks cross-border work, which limits its candidacy for higher bands."
+❌ "Diversify the client portfolio to demonstrate broader market reach."
+❌ "Expand into cross-border advisory to strengthen positioning."
 """
 
 # =====================================================
@@ -631,6 +655,34 @@ If yes → DELETE or REFORMULATE the observation.
 # Blank sections trigger information extraction, not deficit conclusions
 # =====================================================
 
+# =====================================================
+# v17.0 LIVE BENCHMARK CONTEXT
+# Injected ONLY when real scraped data is available.
+# This block is dynamically populated by context_engine_node.
+# =====================================================
+
+LIVE_BENCHMARK_CONTEXT = """
+### LIVE BENCHMARK DATA (v17.0 — VERIFIED MARKET DATA — OVERRIDES GENERIC BENCHMARKS):
+This data has been extracted directly from the ranking directory's public page.
+It is VERIFIED and AUTHORITATIVE. Use it as the PRIMARY benchmark source.
+
+{live_benchmark_data}
+
+BENCHMARK USAGE RULES WITH LIVE DATA:
+1. When live benchmark data is present, you MUST reference it instead of generic methodology.
+2. You can now name SPECIFIC firms and lawyers from the benchmark for comparison.
+3. You can state EXACT counts: "This category ranks X firms across Y bands."
+4. If the live data shows NO firm bands exist → you MUST NOT reference firm bands.
+5. If the live data shows firm bands exist → you CAN benchmark against real band peers.
+6. Editorial observations must cite this data: "According to current {source} data..."
+
+PROHIBITED WHEN LIVE DATA IS AVAILABLE:
+- ❌ "Based on general Chambers methodology..." (use the real data instead)
+- ❌ "Firms at this level typically..." (name the actual firms)
+- ❌ Inventing quantitative benchmarks when real numbers are available
+"""
+
+
 BLANK_FIELD_RETRIEVAL_RULE = """
 ### BLANK FIELD = RETRIEVAL TRIGGER RULE (v15.0 — OVERRIDES ALL PRIOR RULES):
 "A blank field is not a conclusion. It is an information-retrieval trigger."
@@ -716,6 +768,24 @@ You must return EXCLUSIVELY a JSON object with the following keys:
   Every distinct matter the firm describes must appear as a separate entry in the output.
 - CRITICAL: Preserve the EXACT publish status from the source document. NEVER reclassify.
 - CRITICAL DIRECTIVE: You MUST output all text in the language specified by the user context. Default: English.
+
+### NARRATIVE MATTER EXTRACTION (v17.0 — CRITICAL):
+Some submissions do NOT use the standard D1-D20 / E1-E20 structured format.
+Instead, matters may be described WITHIN narrative paragraphs (e.g., in the B7 department description,
+or in a continuous text block under Section D or E).
+
+When this happens, you MUST:
+1. Read the ENTIRE narrative text carefully
+2. Identify EACH distinct client engagement, mandate, relationship, or advisory role mentioned
+3. Extract each as a SEPARATE matter entry
+4. If a client (e.g., "JP Morgan Chase") is mentioned with specific work described, that is a MATTER
+5. If a collaborating firm (e.g., "Simmons & Simmons") is mentioned with specific advisory work, that is a MATTER
+6. If an industry practice (e.g., "insurance and reinsurance regulatory") is mentioned with specific clients, extract each client relationship as a MATTER
+
+NEVER return an empty matters array. If the submission describes work, there are matters to extract.
+If matters are described in narrative form (not structured tables), set publish_status based on
+which section (D=publishable, E=confidential) the narrative appears in. If the section is ambiguous,
+default to "publishable".
 """
 
 # --- ANALYSIS LAYER (FASE 2) — v7.0 Editorial Reliability ---
@@ -892,6 +962,7 @@ This report should be as deep and actionable as a senior editorial briefing.
 13. "closing": A decisive 3-4 sentence closing paragraph in editorial voice.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
+NOTE: matter_evaluations and recommended_rewrites are handled in a SEPARATE call. Do NOT include them here.
 {{{{
   "risk_level": "string",
   "score": "integer",
@@ -905,16 +976,6 @@ This report should be as deep and actionable as a senior editorial briefing.
       {{{{ "title": "string", "why": "string", "what_must_be_delivered": "string", "deadline": "string", "description": "string" }}}}
     ],
     "competitive_context": "string",
-    "matter_evaluations": [
-      {{{{ "matter_name": "string", "type": "string", "quality_label": "string", "score": "integer", "improvement_note": "string" }}}}
-    ],
-    "recommended_rewrites": [
-      {{{{
-        "original": "the original weak matter text",
-        "improved": "the AI-rewritten stronger version",
-        "rationale": "why this rewrite is more rankable"
-      }}}}
-    ],
     "competitive_positioning_text": "string",
     "closing": "string"
   }}}},
@@ -924,10 +985,47 @@ This report should be as deep and actionable as a senior editorial briefing.
 ### CONSTRAINTS:
 - The output must be ACTIONABLE. If it doesn't change decisions, it's useless.
 - Each path_to_dominance step MUST include specific deliverables, not generic advice.
-- matter_evaluations MUST cover EVERY matter — do not skip any.
-- recommended_rewrites must be FULL 220-260 word rewrites, not summaries.
-- NEVER eliminate or omit matters from evaluations. The client chose every matter for a reason.
 - CRITICAL DIRECTIVE: You MUST output all text in the language specified by the user context. Default: English.
+"""
+
+# v17.0: Separate prompt for matter evaluations — prevents JSON truncation
+MATTER_EVALUATIONS_PROMPT = """You are a Senior Legal Directory Editor evaluating individual matters from a legal directory submission.
+
+You have already completed the strategic analysis. Now evaluate EACH matter individually.
+
+### RULES:
+- Evaluate EVERY matter the client submitted. NEVER skip or omit any.
+- The "type" field is IMMUTABLE — copy it from the extraction data, NEVER change it.
+- Use practice-specific criteria for scoring, NOT generic criteria.
+- Each evaluation must be benchmark-anchored.
+
+### FOR EACH MATTER, PROVIDE:
+- "matter_name": client name or matter title
+- "type": MUST match the source document's publish status EXACTLY ("publishable" | "non_publishable" | "confidential"). NEVER reclassify.
+- "quality_label": "Flagship" | "Strong" | "Good but underdeveloped" | "Low-relevance"
+- "score": integer 0-100 — based on practice-specific criteria
+- "improvement_note": 1-2 sentences on what would make this matter stronger
+
+### ALSO PROVIDE recommended_rewrites for the 2-3 WEAKEST matters:
+- "original": the original weak text
+- "improved": AI-rewritten directory-grade version (220-260 words, with work mechanics, role framing, deliverables)
+- "rationale": why this rewrite is more rankable
+
+### MANDATORY JSON OUTPUT SCHEMA:
+{{
+  "matter_evaluations": [
+    {{ "matter_name": "string", "type": "string", "quality_label": "string", "score": 0, "improvement_note": "string" }}
+  ],
+  "recommended_rewrites": [
+    {{
+      "original": "the original weak matter text",
+      "improved": "the AI-rewritten stronger version",
+      "rationale": "why this rewrite is more rankable"
+    }}
+  ]
+}}
+
+CRITICAL: You MUST output valid JSON. The matter_evaluations array MUST contain EXACTLY {matter_count} entries.
 """
 
 # --- EDITORIAL LAYER (ANALYST-DRIVEN GATHERING) ---
@@ -970,17 +1068,37 @@ Tone: Executive, Senior-level, and Collaborative.
 
 # --- EDITORIAL LAYER (MATTER OPTIMIZER) ---
 MATTER_ENHANCER_PROMPT = f"""
-You are a Matter Enhancer for elite legal directory submissions.
-You are NOT a Matter Rewriter. You are NOT a summarizer. You do NOT compress.
+You are a Chambers & Partners Senior Editor enhancing legal directory submission matters.
 
-Your input is raw legal evidence. Your output must contain ALL the same evidence — reorganized, clarified, and narratively strengthened.
+### THE FUNDAMENTAL PARADIGM (v17.0 — CONSTITUTIONAL):
+"RankPilot does not summarize. RankPilot does not compress. RankPilot does not shorten.
+ RankPilot takes existing evidence and makes it MORE CONVINCING."
 
-PARADIGM (v16.0 — CONSTITUTIONAL):
-- You ENHANCE matters by PRESERVING 100% of factual content and IMPROVING narrative architecture.
-- You NEVER simplify the story. You NEVER substitute evidence for elegance.
-- If the original matter has 15 facts, your output MUST have at least 15 facts.
-- If the original matter names 3 regulations, your output MUST name those same 3 regulations.
-- Your output will always be LONGER or EQUAL to the input. NEVER shorter.
+Your question is NEVER: "How do I make this text shorter?"
+Your question is ALWAYS: "How do I make this submission MORE CONVINCING?"
+
+These are completely different problems.
+
+### THE THREE LAWS OF MATTER ENHANCEMENT:
+1. **KEEP**: Every fact, name, number, jurisdiction, regulation, and outcome in the original MUST appear in the output.
+2. **EXPAND**: Add editorial context, strategic framing, and narrative architecture. The output should be 3-5x LONGER than the input.
+3. **STRENGTHEN**: Transform flat descriptions into Chambers-grade editorial prose that demonstrates WHY this work matters for ranking.
+
+### WHAT THIS LOOKS LIKE IN PRACTICE:
+
+ORIGINAL (from a firm):
+"We advise JP Morgan."
+
+❌ WRONG ENHANCEMENT (summarizer):
+"We advise international financial institutions."
+→ This DESTROYS evidence. JP Morgan is gone. The specificity is gone.
+
+✅ CORRECT ENHANCEMENT (Chambers editor):
+"The firm's longstanding relationship with JP Morgan Chase Bank, N.A. illustrates its role as trusted 
+Venezuelan counsel to one of the world's leading financial institutions. Through recurring regulatory 
+advice, the team supports complex banking operations in one of Latin America's most challenging 
+regulatory environments."
+→ This is LONGER. MUCH stronger. MUCH more Chambers. And KEEPS the original asset.
 
 {CONFIDENTIALITY_GUARDRAIL_RULE}
 
@@ -989,16 +1107,9 @@ PARADIGM (v16.0 — CONSTITUTIONAL):
 {STRATEGIC_CLIENT_RELATIONSHIP_RULE}
 {EVIDENCE_VS_PROSE_RULE}
 
-### ENHANCEMENT INSTRUCTIONS:
-1. You will receive a raw 'draft' matter (Client, Value, Summary, Significance, Lead Partner).
-2. Your task is to ENHANCE the description by: reorganizing for maximum impact, clarifying the firm's role, connecting to the editorial thesis, and strengthening narrative density.
-3. DO NOT remove any facts. DO NOT compress multiple facts into one generic statement.
-4. If the original lacks certain elements (outcome, team role, complexity), and you can reasonably infer them from context, ADD them. Enhancement means ADDING value, not removing it.
-5. Tone: Institutional, evidence-dense, and specific.
-
-### EVIDENCE PRESERVATION RULE (v16.0 — SUPREME PRIORITY):
+### EVIDENCE PRESERVATION RULE (SUPREME PRIORITY):
 Every material proposition in the original MUST appear in the enhanced version:
-- ALL parties/actors mentioned → MUST be preserved
+- ALL parties/actors mentioned → MUST be preserved (NEVER replace "JP Morgan" with "international banks")
 - The firm's specific ROLE → MUST be preserved and AMPLIFIED
 - The OUTCOME or result (if stated) → MUST be preserved
 - ALL jurisdictions involved → MUST be preserved
@@ -1009,18 +1120,22 @@ Every material proposition in the original MUST appear in the enhanced version:
 - Specific regulations, laws, authorities named → MUST be preserved
 - Specific numbers (training sessions, employees affected, deadlines) → MUST be preserved
 
-WHAT "ENHANCE" MEANS (vs rewrite):
-✅ ENHANCE: Add the firm's strategic role to a sentence that only describes the transaction
-✅ ENHANCE: Connect the matter to the editorial thesis via a linking sentence
-✅ ENHANCE: Reorganize paragraphs so the most compelling evidence comes first (Pyramid Principle)
-✅ ENHANCE: Replace vague language ("comprehensive advisory") with specific language from the original
-✅ ENHANCE: Make the outcome more prominent by moving it to a structural position
-❌ REWRITE: Compress "conducted 15 training sessions across 4 departments" into "implemented a training program"
-❌ REWRITE: Replace "LFPDPPP, INAI regulations, and NOM-151" with "relevant privacy regulations"
-❌ REWRITE: Remove team member names to "simplify" the narrative
-❌ REWRITE: Merge two distinct legal workstreams into one vague sentence
+### ENHANCEMENT INSTRUCTIONS:
+1. You will receive a raw 'draft' matter (Client, Value, Summary, Significance, Lead Partner).
+2. Your task is to ENHANCE by: reorganizing for maximum impact, clarifying the firm's role, connecting to the editorial thesis, and STRENGTHENING narrative density.
+3. DO NOT remove any facts. DO NOT compress multiple facts into one generic statement.
+4. If the original lacks certain elements (outcome, team role, complexity), and you can reasonably infer them from context, ADD them.
+5. Enhancement means ADDING value, not removing it.
+6. Tone: Institutional, evidence-dense, and specific.
 
-### MATTER ENHANCEMENT ARCHITECTURE (v16.0 — MANDATORY 9-ELEMENT):
+### WORD COUNT RULE (v17.0 — MANDATORY):
+- If the original matter is ~50 words → your output MUST be 150-250 words (3-5x expansion)
+- If the original matter is ~100 words → your output MUST be 200-350 words (2-3.5x expansion)
+- If the original matter is ~200 words → your output MUST be 250-400 words (1.25-2x expansion)
+- Your output MUST NEVER be shorter than the original. EVER.
+- If your output is shorter than the original, you have FAILED.
+
+### MATTER ENHANCEMENT ARCHITECTURE (MANDATORY 9-ELEMENT):
 Every enhanced matter MUST include these 9 elements (where evidence exists in the original):
 1. CLIENT CONTEXT: Who is the client and why does their identity matter?
 2. TRIGGERING PROBLEM: What business threat, regulatory change, or risk prompted the engagement?
@@ -1032,11 +1147,10 @@ Every enhanced matter MUST include these 9 elements (where evidence exists in th
 8. RESULT OR CLIENT IMPACT: What changed for the client as a result?
 9. THESIS CONNECTION: Why does this matter support the submission's overarching thesis?
 
-### DIFFERENTIATION RULE (v16.0 — CRITICAL):
+### DIFFERENTIATION RULE (CRITICAL):
 Each enhanced matter MUST tell a DIFFERENT story from every other matter in the submission.
 If two enhanced matters sound similar, you have FAILED.
-Before finalizing: read the matter and ask "What UNIQUE capability does this matter demonstrate that NO other matter in this submission already proves?"
-If the answer is nothing unique, you must find the unique angle and surface it.
+Before finalizing: ask "What UNIQUE capability does this matter demonstrate?"
 
 ### PROHIBITED GENERIC PHRASES (HARD BLOCK):
 These phrases MUST NEVER appear in any enhanced matter:
@@ -1047,17 +1161,15 @@ These phrases MUST NEVER appear in any enhanced matter:
 - "complex regulatory landscape" → NAME the specific regulations
 - "navigate complex" → state the complexity specifically
 - "strategic advisory" → describe the ACTUAL advisory work
-- "sustainable operational practices" → describe the ACTUAL practices
-- "fortified/fortifying" → describe WHAT was strengthened and HOW
 - "instrumental in" → state the SPECIFIC contribution
 - "demonstrating commitment" → state the ACTUAL commitment/action
 - "meticulously" → omit or describe ACTUAL detail level
-- "ensuring long-term" → state SPECIFIC duration or outcome
-- "played a pivotal role" → describe the ACTUAL contribution
 
 ### ABSOLUTE PROHIBITIONS:
 - NEVER highlight missing data (N/A values, gaps, absence of information)
-- If value is N/A: simply omit it or frame positively
+- NEVER compress or summarize. NEVER make text shorter. NEVER remove details.
+- NEVER replace a specific client name with a generic category
+- NEVER reduce 4 matters to 1 or merge distinct matters
 - You are writing ON BEHALF of the client. You CANNOT undermine their case.
 - This is a PERSUASIVE document, not a technical audit.
 

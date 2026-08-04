@@ -1,0 +1,58 @@
+{
+  "_version": "v17.0",
+  "_description": "Maps (directory, practice_area, jurisdiction) → public URL for live benchmark scraping. Keys use format 'Practice Area|Jurisdiction'.",
+  
+  "chambers": {
+    "Data Protection|Mexico": {
+      "url": "https://chambers.com/legal-rankings/data-protection-mexico-9:1113:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Mexico": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-mexico-9:6:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Mexico": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-mexico-9:42:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-venezuela-9:6:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Mexico": {
+      "url": "https://chambers.com/legal-rankings/employment-mexico-9:55:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    }
+  },
+
+  "legal500": {
+    "TMT|Mexico": {
+      "url": "https://www.legal500.com/c/mexico/tmt/"
+    },
+    "Corporate/M&A|Mexico": {
+      "url": "https://www.legal500.com/c/mexico/corporate-and-ma/"
+    }
+  },
+
+  "alias_map": {
+    "Banking and Finance": "Banking & Finance",
+    "Banking": "Banking & Finance",
+    "Finance": "Banking & Finance",
+    "Corporate M&A": "Corporate/M&A",
+    "Corporate": "Corporate/M&A",
+    "M&A": "Corporate/M&A",
+    "Mergers and Acquisitions": "Corporate/M&A",
+    "Data Protection & Privacy": "Data Protection",
+    "Privacy": "Data Protection",
+    "Data Protection/Privacy": "Data Protection",
+    "Labour": "Labour & Employment",
+    "Employment": "Labour & Employment",
+    "Labor": "Labour & Employment",
+    "Labour and Employment": "Labour & Employment"
+  }
+}

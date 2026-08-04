@@ -1,0 +1,105 @@
+{
+  "source": "legal500",
+  "practice_area": "TMT",
+  "jurisdiction": "Mexico",
+  "guide": "",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": false,
+    "firm_bands": [
+      "Tier 1",
+      "Tier 2",
+      "Tier 3",
+      "Tier 4",
+      "Tier 5",
+      "Firms to Watch"
+    ],
+    "individual_categories": []
+  },
+  "firms": [
+    {
+      "name": "Bello, Gallardo, Bonequi y García, S.C.",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Acedo, Santamarina, S.C",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Baker McKenzie Abogados, S.C.",
+      "band": "Tier 2"
+    },
+    {
+      "name": "RM Abogados, S.C.",
+      "band": "Tier 2"
+    },
+    {
+      "name": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Pérez-Llorca",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Santamarina y Steta",
+      "band": "Tier 3"
+    },
+    {
+      "name": "DLA Piper Mexico",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Galicia Abogados S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Greenberg Traurig, S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Hogan Lovells Cadwalader",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Holland & Knight México, S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Nader, Hayaux y Goebel, SC",
+      "band": "Tier 4"
+    },
+    {
+      "name": "White & Case S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Chevez Ruiz Zamarripa",
+      "band": "Tier 5"
+    },
+    {
+      "name": "ECIJA",
+      "band": "Tier 5"
+    },
+    {
+      "name": "FH Legal",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Olivares",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Conesa y Moreno Abogados",
+      "band": "Firms to Watch"
+    }
+  ],
+  "individuals": [],
+  "total_firms": 19,
+  "total_individuals": 0,
+  "editorial_summary": "",
+  "_lawyers_url": "/c/mexico/tmt/lawyers",
+  "scraped_at": "2026-08-04T17:20:58Z",
+  "cache_valid_until": "2026-09-03T17:20:58Z",
+  "cache_key": "legal_500_tmt_mexico"
+}

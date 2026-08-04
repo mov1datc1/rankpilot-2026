@@ -1,0 +1,75 @@
+{
+  "source": "chambers",
+  "practice_area": "Data Protection",
+  "jurisdiction": "Mexico",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": false,
+    "has_individual_bands": true,
+    "firm_bands": [],
+    "individual_categories": [
+      "Band 1",
+      "Band 2",
+      "Up and Coming",
+      "Associates to watch"
+    ]
+  },
+  "firms": [],
+  "individuals": [
+    {
+      "name": "Héctor Guzmán",
+      "firm": "Bello, Gallardo, Bonequi y García, S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 1
+    },
+    {
+      "name": "Isabel Davara",
+      "firm": "Davara Abogados S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 1
+    },
+    {
+      "name": "Carlos Vela Treviño",
+      "firm": "Baker McKenzie",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 10
+    },
+    {
+      "name": "Paola Morales",
+      "firm": "Santamarina y Steta SC",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 7
+    },
+    {
+      "name": "Alexis Cervantes",
+      "firm": "Davara Abogados S.C.",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 1
+    },
+    {
+      "name": "Berenice Sagaón Falcón",
+      "firm": "ECIJA",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 1
+    },
+    {
+      "name": "Renata Buerón",
+      "firm": "Basham, Ringe y Correa S.C.",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 1
+    }
+  ],
+  "total_firms": 0,
+  "total_individuals": 7,
+  "editorial_summary": "In 2025 the Mexican economy has continued to slow down as a result of both internal and external fa...",
+  "scraped_at": "2026-08-04T17:20:19Z",
+  "cache_valid_until": "2026-09-03T17:20:19Z",
+  "cache_key": "chambers_data_protection_mexico"
+}
