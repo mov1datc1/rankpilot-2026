@@ -1642,13 +1642,33 @@ def optimization_node(state: AgentState) -> Dict:
     llm = llm.bind(response_format={"type": "json_object"})
     
     optimized_matters = []
+    
+    # v17.4: Build dynamic context for matter enhancement
+    strategic_ctx = state.get("strategic_context", {})
+    narrative_arch = state.get("narrative_architecture", {})
+    cross_border_relevant = strategic_ctx.get("cross_border_relevant", True)
+    thesis = narrative_arch.get("thesis_statement", "")
+    
+    # v17.4: Dynamic injections for matter enhancer
+    matter_context_lines = []
+    if thesis:
+        matter_context_lines.append(f"EDITORIAL THESIS: {thesis}")
+        matter_context_lines.append("Connect each matter to this thesis. Each matter must demonstrate a DIFFERENT aspect of this thesis.")
+    if not cross_border_relevant:
+        matter_context_lines.append(
+            "CROSS-BORDER PROHIBITION: This practice area does NOT require cross-border evidence. "
+            "Do NOT add cross-border language, international scope claims, or multi-jurisdictional framing "
+            "unless the original matter explicitly describes cross-border work."
+        )
+    matter_context_block = "\n".join(matter_context_lines)
+    
     for matter in matters:
         # Construct the raw matter text to feed to the optimizer
         raw_text = f"Title: {matter.get('title', '')}\nClient: {matter.get('client', '')}\nValue: {matter.get('value', '')}\nSummary: {matter.get('summary', '')}\nSignificance: {matter.get('significance', '')}\nLead Partner: {matter.get('lead_partner', '')}"
         
         messages = [
             SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-            HumanMessage(content=f"Optimize this raw matter:\n\n{raw_text}")
+            HumanMessage(content=f"{matter_context_block}\n\nOptimize this raw matter:\n\n{raw_text}")
         ]
         
         try:
@@ -1822,6 +1842,50 @@ def optimization_node(state: AgentState) -> Dict:
         print(f"[GRAMMAR] ✅ Fixed grammar in {grammar_fixed_count}/{len(optimized_matters)} matters")
     else:
         print(f"[GRAMMAR] ✅ No grammar issues found")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.4: GENERIC FILLER PHRASE STRIPPER
+    # Owner directive: "The system substitutes evidence with elegance.
+    # 'played a pivotal role', 'robust framework', 'comprehensive advice'
+    # — all seven matters end up sounding the same."
+    # Hard regex replacement to eliminate generic filler.
+    # ═══════════════════════════════════════════════════════════════
+    GENERIC_FILLERS = [
+        (r'\bplayed a (?:pivotal|crucial|key|critical|instrumental|significant) role\b', 'contributed'),
+        (r'\brobust (?:framework|infrastructure|system|platform)\b', 'framework'),
+        (r'\bcomprehensive (?:advice|advisory|counsel|guidance|support)\b', 'advice'),
+        (r'\benhanced compliance posture\b', 'improved compliance'),
+        (r'\bcomplex regulatory landscape\b', 'regulatory environment'),
+        (r'\bnavigate (?:the )?complex\b', 'address'),
+        (r'\bstrategic advisory (?:role|capacity|function)\b', 'advisory work'),
+        (r'\binstrumental in\b', 'contributed to'),
+        (r'\bdemonstrating (?:a )?(?:strong |deep |unwavering )?commitment\b', 'showing commitment'),
+        (r'\bmeticulously (?:crafted|designed|developed|prepared)\b', 'developed'),
+        (r'\bholistic approach\b', 'approach'),
+        (r'\bseamlessly integrated\b', 'integrated'),
+        (r'\bstands as a (?:beacon|testament|cornerstone)\b', 'serves as'),
+        (r'\bunderscores the firm\'s\b', 'reflects the firm\'s'),
+        (r'\bat the forefront of\b', 'active in'),
+    ]
+    
+    import re as _re_filler
+    filler_count = 0
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        if not opt_text:
+            continue
+        
+        cleaned = opt_text
+        for pattern, replacement in GENERIC_FILLERS:
+            new_text = _re_filler.sub(pattern, replacement, cleaned, flags=_re_filler.IGNORECASE)
+            if new_text != cleaned:
+                filler_count += 1
+            cleaned = new_text
+        
+        matter['optimized_text'] = cleaned
+    
+    if filler_count > 0:
+        print(f"[FILLER STRIP v17.4] Replaced {filler_count} generic filler phrases across all matters")
     
     # ═══════════════════════════════════════════════════════════════
     # v17.3: B7 ENHANCEMENT PIPELINE
