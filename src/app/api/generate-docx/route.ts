@@ -109,14 +109,17 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // v17.1.5: Detect jurisdiction from pipeline — with full debug logging
-    const detectedJurisdiction = chambersData.detectedJurisdiction
+    // v17.1.6: FIXED PRIORITY — AI-detected country FIRST
+    // analysis.location = AI-detected "Venezuela" (country)
+    // context.jurisdiction = UI dropdown "Latin America" (region)
+    // chambersData.detectedJurisdiction = previously saved (might be stale)
+    const detectedJurisdiction = analysis.location
+      || chambersData.detectedJurisdiction
       || chambersData.metadata?.jurisdiction 
       || context.jurisdiction
-      || analysis.location
       || analysis.practice_area_location;
-    console.log(`[DOCX JURISDICTION] detectedJurisdiction='${detectedJurisdiction}' | chambersData.detectedJurisdiction='${chambersData.detectedJurisdiction}' | context.jurisdiction='${context.jurisdiction}' | analysis.location='${analysis.location}' | guideRegion='${submission.guideRegion}'`);
-    // Always inject — even if it matches guideRegion
+    console.log(`[DOCX JURISDICTION] detectedJurisdiction='${detectedJurisdiction}' | analysis.location='${analysis.location}' | chambersData.detectedJurisdiction='${chambersData.detectedJurisdiction}' | context.jurisdiction='${context.jurisdiction}' | guideRegion='${submission.guideRegion}'`);
+    // Always inject
     if (detectedJurisdiction) {
       chambersData.detectedJurisdiction = detectedJurisdiction;
     }

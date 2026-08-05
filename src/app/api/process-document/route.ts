@@ -323,14 +323,18 @@ export async function POST(request: NextRequest) {
             }))
           } : {}),
           ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
-          // v17.1.5: Detect jurisdiction — comprehensive chain with logging
+          // v17.1.6: FIXED PRIORITY — AI-detected country FIRST, UI region LAST
+          // The AI (analysis.location) detects the actual COUNTRY (e.g., "Venezuela")
+          // The UI dropdown (strategic_context.jurisdiction) only has the REGION (e.g., "Latin America")
+          // We want the country-level value, not the region.
           detectedJurisdiction: (() => {
-            const j = pyData.data?.strategic_context?.jurisdiction 
-              || pyData.data?.metadata?.jurisdiction
-              || (analysisData as any)?.location
-              || existingChambersData.detectedJurisdiction
-              || null;
-            console.log(`[JURISDICTION SAVE] Result: '${j}' | Sources: sc.jurisdiction='${pyData.data?.strategic_context?.jurisdiction}', metadata.jurisdiction='${pyData.data?.metadata?.jurisdiction}', analysis.location='${(analysisData as any)?.location}', existing='${existingChambersData.detectedJurisdiction}' | guideRegion='${submission.guideRegion}'`);
+            const aiLocation = (analysisData as any)?.location;                     // AI-detected: "Venezuela"
+            const metaJurisdiction = pyData.data?.metadata?.jurisdiction;            // Extracted metadata
+            const scJurisdiction = pyData.data?.strategic_context?.jurisdiction;     // UI dropdown: "Latin America"
+            const existing = existingChambersData.detectedJurisdiction;
+            // Priority: AI detection > metadata > strategic_context > existing
+            const j = aiLocation || metaJurisdiction || scJurisdiction || existing || null;
+            console.log(`[JURISDICTION SAVE] Result: '${j}' | AI='${aiLocation}', meta='${metaJurisdiction}', sc='${scJurisdiction}', existing='${existing}', guideRegion='${submission.guideRegion}'`);
             return j;
           })(),
         },
