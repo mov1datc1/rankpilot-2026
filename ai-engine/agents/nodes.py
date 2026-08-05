@@ -1186,20 +1186,99 @@ SCORING FLOOR CALIBRATION:
 - 5+ cross-border matters = minimum confidence "Moderate"
 - Hero matter with USD 100M+ impact = minimum confidence "Moderate"
 
-RANKING ARCHITECTURE VALIDATION LAYER (v16.0 — RAVL):
+RANKING ARCHITECTURE VALIDATION LAYER (v17.4 — RAVL):
 """
-    # v16.0: Inject RAVL context from strategic_context
+    # v17.4: 4-Scenario Ranking Architecture Validation
     strategic_context = state.get("strategic_context", {})
     ravl = strategic_context.get("ranking_architecture", {})
-    ravl_block = f"""
-RANKING ARCHITECTURE FOR THIS COMBINATION:
-- Scenario: {ravl.get('scenario', 'D')} ({'Firms + Individuals' if ravl.get('firm_bands_exist') else 'Individuals Only' if ravl.get('ranking_type') == 'individuals_only' else 'Unknown/No Data'})
-- Firm bands exist: {'YES' if ravl.get('firm_bands_exist') else 'NO'}
-- Ranking type: {ravl.get('ranking_type', 'unknown')}
-- Editorial guidance: {ravl.get('editorial_guidance', 'No specific guidance available.')}
+    scenario = ravl.get("scenario", "D")
+    ranking_type = ravl.get("ranking_type", "unknown")
+    firm_bands_exist = ravl.get("firm_bands_exist", False)
+    
+    # Build scenario-specific RAVL block
+    if scenario == "A" and firm_bands_exist:
+        # ═══ SCENARIO A: Firm + Individual Rankings Exist ═══
+        ravl_block = f"""
+RANKING ARCHITECTURE (SCENARIO A — Firms + Individuals):
+This practice area has BOTH firm/department rankings AND individual lawyer rankings.
+- Ranking type: {ranking_type}
+- Firm bands: {ravl.get('firm_bands', [])}
+- Individual categories: {ravl.get('individual_categories', [])}
 
-{'CRITICAL: Firm band benchmarks DO NOT EXIST for this combination. DO NOT reference Band 1-6 firms, peer firms, or entry-level firms in your analysis. Focus exclusively on submission evidence quality.' if not ravl.get('firm_bands_exist') else 'Firm band benchmarks are available for this combination. You may reference real band positions.'}
+PERMITTED: You may compare the submission against:
+- Firms actually ranked in this category and their band positions
+- Editorial descriptions of ranked firms
+- Types of work and sectors visible in the ranking
+- Positioning and institutional depth
+- Individual lawyers and their band positions
+
+You may use phrases like "Band X firms", "peer firms", "firms in this band".
 """
+    elif scenario == "B" or (not firm_bands_exist and ranking_type == "individuals_only"):
+        # ═══ SCENARIO B: Only Individual Rankings Exist ═══
+        ravl_block = f"""
+RANKING ARCHITECTURE (SCENARIO B — Individuals Only):
+This category ONLY has individual lawyer rankings. There are NO firm/department rankings.
+- Ranking type: individuals_only
+- Individual categories: {ravl.get('individual_categories', [])}
+- Firms ranked: ZERO. The category does NOT rank departments or firms.
+
+=== ABSOLUTE PROHIBITION (CONSTITUTIONAL RULE) ===
+You are FORBIDDEN from using ANY of the following phrases or concepts:
+- "Band X firms" (no firm bands exist)
+- "peer firms" (there is no peer set of firms)
+- "entry-level firm bands" (no firm bands exist at any level)
+- "firms currently positioned in Band..." (no firms are positioned)
+- "firm ranking" or "departmental ranking" (does not exist)
+- "the firm would need to compete with Band X firms" (impossible — no firm bands)
+- "threshold for entry-level recognition" as a firm (no firm entry exists)
+
+=== WHAT YOU MUST DO INSTEAD ===
+1. Acknowledge that this category currently contains ONLY individual lawyer rankings
+2. Analyze whether the submission demonstrates an INSTITUTIONAL practice capable of supporting FUTURE departmental recognition
+3. Contrast the firm's lawyers against the individuals currently recognised (by name and band)
+4. Evaluate if the submission shows a practice beyond one or two individual lawyers
+5. Identify what evidence supports a future departmental candidacy
+6. Frame recommendations around building departmental visibility, NOT achieving a non-existent band
+
+=== CORRECT EDITORIAL FRAMING ===
+Example: "Chambers Latin America currently recognises individual lawyers in Mexico for Data Protection, but does not display a departmental ranking of law firms in this category. The relevant editorial question is whether the evidence demonstrates an institutional practice capable of supporting future departmental recognition."
+"""
+    elif scenario == "C":
+        # ═══ SCENARIO C: No Ranking Exists ═══
+        ravl_block = """
+RANKING ARCHITECTURE (SCENARIO C — No Ranking Exists):
+No ranking exists for this exact combination of directory, guide, jurisdiction, and practice area.
+
+=== ABSOLUTE PROHIBITION ===
+- Do NOT reference any bands, tiers, peer firms, or ranked lawyers
+- Do NOT invent a benchmark from general knowledge
+- Do NOT say "firms in this category" — there IS no category
+
+=== WHAT YOU MUST DO ===
+1. State clearly that no direct ranking exists for this combination
+2. If an adjacent category exists (same practice, different guide; related practice, same jurisdiction), identify it explicitly as a PROXY — never as direct evidence
+3. Assess the submission on its own merits: evidence quality, matter significance, market presence
+4. Frame as: "Should this combination be ranked? Does the evidence justify a new category?"
+"""
+    else:
+        # ═══ SCENARIO D: Unknown / No Data ═══
+        ravl_block = """
+RANKING ARCHITECTURE (SCENARIO D — Unknown / No Verified Data):
+RankPilot does not have verified ranking data for this combination.
+
+=== ABSOLUTE PROHIBITION ===
+- Do NOT reference any specific bands, tiers, or firm positions
+- Do NOT invent benchmarks from general knowledge
+- Do NOT say "Band X firms typically..." or "entry-level firms..."
+
+=== WHAT YOU MUST DO ===
+1. Evaluate the submission purely on evidence quality
+2. Assess matters, clients, complexity, and narrative coherence
+3. Do NOT make comparative statements about the market
+4. Flag that benchmark data is unavailable and recommend verification
+"""
+    
     analysis_prompt = f"""{ravl_block}
 
 {analysis_prompt}"""

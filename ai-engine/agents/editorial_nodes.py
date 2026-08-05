@@ -87,7 +87,7 @@ def _build_trace_entry(stage: str, decision: str, evidence: list,
 
 
 def _inject_directives(prompt_template: str, strategic_context: dict) -> str:
-    """v13.0: Inject objective and mode-specific directives into the prompt."""
+    """v17.4: Inject objective, mode-specific, and ranking architecture directives."""
     analysis_mode = strategic_context.get("analysis_mode", "")
     primary_objective = strategic_context.get("primary_objective", "")
     
@@ -104,6 +104,31 @@ def _inject_directives(prompt_template: str, strategic_context: dict) -> str:
         # 'Input to ChatPromptTemplate is missing variables {"priorities"}'
         obj_json = json.dumps(obj_data, indent=2).replace("{", "{{").replace("}", "}}")
         injections.append(f"\n### SUBMISSION OBJECTIVE: {primary_objective}\n" + obj_json)
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.4: RANKING ARCHITECTURE GUARD — propagated to ALL editorial nodes
+    # Prevents the LLM from inventing firm bands when only individual
+    # rankings exist (Scenario B) or no ranking exists (Scenario C/D).
+    # ═══════════════════════════════════════════════════════════════
+    ravl = strategic_context.get("ranking_architecture", {})
+    scenario = ravl.get("scenario", "D")
+    firm_bands_exist = ravl.get("firm_bands_exist", False)
+    ranking_type = ravl.get("ranking_type", "unknown")
+    
+    if scenario == "B" or (not firm_bands_exist and ranking_type == "individuals_only"):
+        injections.append("""
+### RANKING ARCHITECTURE GUARD (SCENARIO B — Individuals Only)
+This category has ONLY individual lawyer rankings. NO firm/department rankings exist.
+ABSOLUTE PROHIBITION: Do NOT use "Band X firms", "peer firms", "entry-level firm bands",
+"firms positioned in Band...", "departmental ranking", or any concept implying firm rankings.
+Instead: Analyze whether the evidence supports future departmental recognition.
+Contrast the firm's lawyers against individually recognised practitioners.""")
+    elif not firm_bands_exist and scenario in ("C", "D"):
+        injections.append("""
+### RANKING ARCHITECTURE GUARD (NO VERIFIED FIRM RANKING DATA)
+No verified firm ranking data exists for this combination.
+ABSOLUTE PROHIBITION: Do NOT reference any firm bands, tiers, peer firms, or firm positions.
+Evaluate the submission purely on evidence quality.""")
         
     if injections:
         return prompt_template + "\n\n" + "\n\n".join(injections)
