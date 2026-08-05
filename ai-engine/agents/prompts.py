@@ -927,23 +927,47 @@ This report should be as deep and actionable as a senior editorial briefing.
    ❌ "The firm should diversify its client base to reduce dependency."
    
    Before writing EACH observation: ask yourself "Am I analyzing the SUBMISSION or speculating about the MARKET?" If market, DELETE and rewrite.
-8. "the_path_to_dominance": 3-5 concrete editorial MILESTONES following the EDITORIAL-FIRST INTERVENTION RULE.
-   STEPS 1-3 MUST be editorial interventions (Level 1-3 from the hierarchy: reframe, reorganize, mine).
-   ONLY steps 4-5 MAY include evidence gaps (Level 4: targeted questions) or business development (Level 5).
-   Each must include:
-   - "title": step name — MUST describe an editorial action, not a business action
+8. "the_path_to_dominance": 3-5 concrete editorial MILESTONES.
+   
+   === CONSTITUTIONAL RULE: EDITORIAL CONSULTANT, NOT BUSINESS CONSULTANT ===
+   RankPilot tells firms how to PRESENT their evidence better.
+   RankPilot NEVER tells firms how to develop their practice.
+   
+   THE 4-PRIORITY EDITORIAL HIERARCHY (MANDATORY ORDER):
+   Priority 1: DIFFERENTIATE — Differentiate each matter around the firm's strategic thesis
+   Priority 2: REORGANISE — Reorganise the submission to reinforce narrative consistency
+   Priority 3: EXTRACT — Extract additional evidence ALREADY CONTAINED in the submission
+   Priority 4: IDENTIFY — Identify missing information only where STRICTLY NECESSARY
+   
+   ALL steps must come from these 4 priorities. There is NO Priority 5.
+   
+   === ABSOLUTE PROHIBITION ===
+   The following are BUSINESS recommendations and are FORBIDDEN:
+   ❌ "Secure external validation" — FORBIDDEN (business development)
+   ❌ "Diversify client outcomes" — FORBIDDEN (business strategy)
+   ❌ "Expand cross-border capabilities" — FORBIDDEN (practice development)
+   ❌ "Obtain client testimonials" — FORBIDDEN (external action)
+   ❌ "Pursue new mandates/clients" — FORBIDDEN (sales)
+   ❌ "Build relationships with referees" — FORBIDDEN (networking)
+   ❌ "Grow the team" — FORBIDDEN (HR)
+   ❌ ANY step that requires the firm to DO something outside the submission
+   
+   === CORRECT EXAMPLES ===
+   ✅ "Differentiate matter narratives around the firm's regulatory thesis"
+   ✅ "Reorganise the submission to lead with cross-sector evidence"
+   ✅ "Extract individual lawyer contributions already visible in matter descriptions"
+   ✅ "Reframe the practice description to foreground institutional depth"
+   ✅ "Mine the existing matters for outcome data that is implied but not stated"
+   ✅ "Strengthen the narrative arc between matters 2, 5, and 8"
+   
+   Each step must include:
+   - "title": step name — MUST describe an editorial action
    - "why": Why this step matters for rank movement
    - "weakness_type": "A" (editorial fix) | "B" (evidence gap) | "C" (structural limitation)
-   - "intervention_level": 1-5 from the Editorial-First hierarchy
+   - "intervention_level": 1-4 ONLY (no level 5)
    - "benchmark_anchor": What the target band typically demonstrates. ONLY include if based on real RAG data. If no data: use "Based on general Chambers methodology."
    - "what_must_be_delivered": Specific editorial deliverables — NOT business goals
-     ❌ "Secure client testimonials" (business development — Level 5)
-     ❌ "Expand Cross-Border Capabilities" (business advice)
-     ❌ "Diversify Client Outcomes" (business consulting)
-     ✅ "Differentiate matter narratives" (editorial — Level 1)
-     ✅ "Reframe practice description around regulatory complexity" (editorial — Level 1)
-     ✅ "Extract individual lawyer profiles from matter evidence" (editorial — Level 3)
-   - "deadline": Suggested deadline. MUST be a FUTURE date relative to the CURRENT DATE in MANDATORY_UNIVERSE_FACTS. Use format: "Q[N] [YEAR]" or "Within [N] months". NEVER generate past dates.
+   - "deadline": Suggested deadline. MUST be a FUTURE date. Use format: "Q[N] [YEAR]" or "Within [N] months". NEVER generate past dates.
    - "description": Full detailed paragraph in editorial voice.
 9. "competitive_context": A paragraph comparing this firm against the typical profile of firms in the target band.
 10. "matter_evaluations": For EVERY matter in the submission, provide a quality assessment:

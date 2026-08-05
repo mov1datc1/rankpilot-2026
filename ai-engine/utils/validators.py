@@ -203,6 +203,17 @@ BUSINESS_BLACKLIST = [
     "build relationships", "grow", "invest in", "broaden", "enhance visibility",
     "strengthen your brand", "market expansion", "client acquisition",
     "business development", "revenue growth",
+    # v17.4: Additional owner-flagged patterns
+    "secure external validation", "diversify client outcomes",
+    "expand cross-border", "pursue new clients", "attract new",
+    "seek external", "obtain external", "gather testimonials",
+    "increase revenue", "win new mandates", "target new",
+    "recruit", "hire", "onboard new", "open new offices",
+    "enter new markets", "expand into", "develop new practice",
+    "increase market share", "grow the team", "build a network",
+    "establish partnerships", "forge alliances", "seek endorsements",
+    "external endorsements", "client testimonials",
+    "cross-border capabilities", "international expansion",
 ]
 
 # Editorial action verbs that SHOULD appear
@@ -211,13 +222,19 @@ EDITORIAL_WHITELIST = [
     "restructure", "highlight", "amplify", "connect", "strengthen narrative",
     "present", "emphasize", "rewrite", "reorder", "redistribute", "clarify",
     "mine", "identify", "surface", "articulate", "consolidate",
+    # v17.4: Additional editorial verbs
+    "distil", "distill", "foreground", "reposition", "recalibrate",
+    "thread", "sharpen", "map", "align", "annotate", "enrich",
+    "integrate evidence", "weave", "unify", "strengthen coherence",
 ]
 
 def validate_path_to_dominance(steps: List[dict]) -> Tuple[List[dict], List[str]]:
-    """Validate and filter path_to_dominance steps.
+    """v17.4: Validate and filter path_to_dominance steps.
     
-    Steps at intervention_level 1-3 MUST be editorial.
-    Business recommendations are only allowed at levels 4-5.
+    HARD RULE: Steps with business language are REMOVED entirely.
+    RankPilot is an editorial consultant, not a business consultant.
+    The owner's rule: "Must tell them how to PRESENT evidence better,
+    NOT how to develop their practice."
     """
     if not steps:
         return steps, []
@@ -238,23 +255,21 @@ def validate_path_to_dominance(steps: List[dict]) -> Tuple[List[dict], List[str]
         
         has_business = any(verb in all_text for verb in BUSINESS_BLACKLIST)
         
-        if has_business and intervention_level <= 3:
-            # This is a business recommendation disguised as editorial
+        if has_business:
+            # v17.4: REMOVE business steps entirely — don't just reclassify
             violations.append(
-                f"Step {i+1} '{step.get('title', '')}': business language at intervention_level={intervention_level}"
+                f"REMOVED Step {i+1} '{step.get('title', '')}': business language detected"
             )
-            # Attempt to fix: change intervention_level to 5 and mark as business
-            step = dict(step)
-            step["intervention_level"] = 5
-            step["weakness_type"] = "C"
+            # Do NOT add to cleaned_steps
+            continue
             
-        # Always add the step (even if reclassified)
+        # Always add editorial steps
         cleaned_steps.append(step)
     
     if violations:
-        print(f"[VALIDATOR] Path to Dominance Gate: {len(violations)} business steps reclassified")
+        print(f"[VALIDATOR v17.4] Path to Dominance Gate: {len(violations)} business steps REMOVED")
         for v in violations:
-            print(f"  ⚠️ {v}")
+            print(f"  🗑️ {v}")
     
     return cleaned_steps, violations
 
