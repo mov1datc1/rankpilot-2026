@@ -185,8 +185,13 @@ function validateConfidentiality(matters: any[]): { pubMatters: any[], confMatte
 
 function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
-  // v17.1: Use detected jurisdiction (country) from pipeline, falling back to user-selected region
+  // v17.1.3: Use detected jurisdiction (country) from pipeline, falling back to user-selected region
+  // gpt-4o puts the country in analysis.location (e.g., 'Venezuela')
+  const analysisData = chambersData.analysis || {};
+  const innerAnalysis = analysisData.analysis || {}; // Handle gpt-4o nested wrapper
   const guideRegion = chambersData.detectedJurisdiction
+    || innerAnalysis.location
+    || analysisData.location
     || chambersData.metadata?.jurisdiction
     || chambersData.strategicContext?.jurisdiction
     || submission.guideRegion 
@@ -361,13 +366,23 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B7 — v17.1: Prefer enhanced narrative from pipeline over raw extraction
-  const b7Text = chambersData.narrative_architecture?.department_overview
-    || chambersData.narrative_architecture?.b7_text
-    || chambersData.narrative_architecture?.output
-    || chambersData.departmentDesc 
-    || chambersData.b7 
-    || '';
+  // B7 — v17.1.3: Build enhanced B7 from narrative_architecture actual fields
+  const na = chambersData.narrative_architecture || {};
+  let b7Text = '';
+  if (na.thesis_statement || na.positioning_statement) {
+    // Combine thesis + positioning + bench strength into a comprehensive B7
+    const parts = [
+      na.positioning_statement || '',
+      na.thesis_statement || '',
+      na.bench_strength_narrative || '',
+      na.narrative_arc || '',
+    ].filter(Boolean);
+    b7Text = parts.join('\n\n');
+  }
+  // Fallback to raw department description
+  if (!b7Text || b7Text.length < 50) {
+    b7Text = chambersData.departmentDesc || chambersData.b7 || '';
+  }
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B7'));
 
   // ═══ SECTION C ═══

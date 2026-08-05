@@ -47,21 +47,25 @@ export async function GET(request: NextRequest) {
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
     
-    // v17.1: Unwrap gpt-4o's nested {"analysis": {...}} wrapper
+    // v17.1.3: Unwrap gpt-4o's nested {"analysis": {...}} wrapper
     // The Python pipeline saves the raw gpt-4o response which nests everything inside analysis.analysis
     if (analysis.analysis && typeof analysis.analysis === 'object' && !analysis.score) {
       const inner = analysis.analysis;
-      // Promote inner keys to top level
-      for (const [k, v] of Object.entries(inner)) {
-        if (!(k in analysis) || k === 'analysis') continue;
-        (analysis as any)[k] = v;
-      }
-      // Always promote these critical fields
-      for (const key of ['score', 'risk_level', 'summary', 'firm_name', 'practice_area',
+      // Always promote these critical fields from inner to top level
+      const alwaysPromote = ['score', 'risk_level', 'summary', 'firm_name', 'practice_area',
+        'location', 'current_band', 'matter_evaluations',
         'narrative_analysis', 'editorial_confidence', 'entry_case', 'competitive_identity',
-        'surviving_hypotheses', 'comparative_analysis_summary', 'submission_summary']) {
-        if (inner[key] !== undefined && !(key in analysis)) {
+        'surviving_hypotheses', 'comparative_analysis_summary', 'submission_summary'];
+      for (const key of alwaysPromote) {
+        if (inner[key] !== undefined) {
           (analysis as any)[key] = inner[key];
+        }
+      }
+      // Also promote any other keys that don't exist at the top level
+      for (const [k, v] of Object.entries(inner)) {
+        if (k === 'analysis') continue; // Skip self-reference
+        if (!(k in analysis)) {
+          (analysis as any)[k] = v;
         }
       }
     }
@@ -98,7 +102,7 @@ export async function GET(request: NextRequest) {
     
     // v17.1: Derive score from editorial_confidence if missing
     if (!analysis.score && analysis.editorial_confidence) {
-      const confMap: Record<string, number> = { 'very high': 90, 'high': 80, 'moderate': 65, 'low': 45, 'limited': 30 };
+      const confMap: Record<string, number> = { 'very high': 90, 'high': 80, 'moderate': 65, 'low': 45, 'limited': 30, 'insufficient': 35 };
       const overall = String(analysis.editorial_confidence.overall_confidence || '').toLowerCase();
       if (confMap[overall]) {
         analysis.score = confMap[overall];
