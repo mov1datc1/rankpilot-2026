@@ -791,28 +791,71 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         print(f"[RAVL] Scenario D: unknown — defaulting to no benchmark")
     
     # =====================================================
-    # v17.0: LIVE BENCHMARK ENGINE
-    # Attempt to fetch REAL ranking data from Chambers/Legal500.
-    # If successful, this OVERRIDES the static RAVL data with
-    # verified, up-to-date benchmark information.
-    # If scraping fails, we gracefully fall back to RAVL (v16.0).
-    # Option A: Automatic scraping with 30-day cache.
+    # v17.2: LIVE BENCHMARK ENGINE — INTELLIGENT JURISDICTION RESOLUTION
+    # 1. Try exact jurisdiction first (e.g., "Venezuela")
+    # 2. If miss AND jurisdiction is regional (e.g., "Latin America"),
+    #    scan URL map for sub-jurisdictions under same practice area
+    # 3. If firm found in benchmark, AUTO-DETECT current band
+    # 4. Override user-declared "Unranked" with verified band
     # =====================================================
+    firm_name = submission_context.get("firm_name", "")
+    live_benchmark = None
+    resolved_jurisdiction = jurisdiction  # Track which jurisdiction resolved
+    
     try:
+        # Step 1: Try exact jurisdiction
         live_benchmark = scrape_rankings(directory, practice_area, jurisdiction)
+        
+        # Step 2: If miss and jurisdiction is regional, try sub-jurisdictions
+        if not live_benchmark and jurisdiction.lower() in [
+            "latin america", "europe", "asia pacific", "global", 
+            "middle east", "africa", "caribbean"
+        ]:
+            print(f"[BENCHMARK RESOLVER] Regional jurisdiction '{jurisdiction}' — scanning for country-level URLs...")
+            url_map = {}
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "benchmark_url_map.json")
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    url_map = json.load(f)
+            except Exception:
+                pass
+            
+            # Find all country-level entries for this practice area
+            from utils.benchmark_scraper import _normalize_practice_area
+            practice_normalized = _normalize_practice_area(practice_area)
+            dir_section = url_map.get("chambers", {}) if "chambers" in directory.lower() else url_map.get("legal500", {})
+            
+            candidate_jurisdictions = []
+            for map_key in dir_section.keys():
+                if "|" in map_key:
+                    map_practice, map_jurisdiction = map_key.split("|", 1)
+                    if map_practice.lower() == practice_normalized.lower():
+                        candidate_jurisdictions.append(map_jurisdiction)
+            
+            if candidate_jurisdictions:
+                print(f"[BENCHMARK RESOLVER] Found {len(candidate_jurisdictions)} candidates: {candidate_jurisdictions}")
+                for candidate in candidate_jurisdictions:
+                    live_benchmark = scrape_rankings(directory, practice_area, candidate)
+                    if live_benchmark:
+                        resolved_jurisdiction = candidate
+                        print(f"[BENCHMARK RESOLVER] ✅ Resolved '{jurisdiction}' → '{candidate}'")
+                        break
+            else:
+                print(f"[BENCHMARK RESOLVER] No candidate sub-jurisdictions found for {practice_normalized}")
+        
         if live_benchmark:
             benchmark_summary = get_benchmark_summary(live_benchmark)
             strategic_context["live_benchmark"] = live_benchmark
             strategic_context["benchmark_reference"] = benchmark_summary
             strategic_context["benchmark_available"] = True
             strategic_context["benchmark_source"] = "live_scrape"
+            strategic_context["resolved_jurisdiction"] = resolved_jurisdiction
             
             # Override RAVL scenario with real data
             live_structure = live_benchmark.get("structure", {})
             strategic_context["ranking_architecture"]["firm_bands_exist"] = live_structure.get("has_firm_bands", False)
             strategic_context["ranking_architecture"]["live_enriched"] = True
             
-            # If live data shows no firm bands, ensure scenario reflects this
             if not live_structure.get("has_firm_bands", False) and live_structure.get("has_individual_bands", False):
                 strategic_context["ranking_architecture"]["scenario"] = "B"
                 strategic_context["ranking_architecture"]["ranking_type"] = "individuals_only"
@@ -824,6 +867,60 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
             print(f"[LIVE BENCHMARK] Firms: {live_benchmark.get('total_firms', 0)} | "
                   f"Individuals: {live_benchmark.get('total_individuals', 0)} | "
                   f"Firm bands: {live_structure.get('firm_bands', [])}")
+            
+            # =====================================================
+            # v17.2: AUTO-DETECT CURRENT BAND FROM LIVE BENCHMARK
+            # Search for the submission firm in the benchmark data
+            # Override user-declared band with verified band
+            # =====================================================
+            if firm_name and live_benchmark.get("firms"):
+                firm_lower = firm_name.lower().strip()
+                detected_band = None
+                matched_firm_name = None
+                
+                for ranked_firm in live_benchmark["firms"]:
+                    ranked_name = ranked_firm.get("name", "").lower().strip()
+                    # Fuzzy match: check if firm name is contained or vice versa
+                    if (firm_lower in ranked_name or ranked_name in firm_lower or
+                        # Also try without common suffixes
+                        firm_lower.replace(",", "").replace(".", "").split()[0] in ranked_name):
+                        detected_band = ranked_firm.get("band", "")
+                        matched_firm_name = ranked_firm.get("name", "")
+                        break
+                
+                if detected_band:
+                    print(f"[BAND AUTO-DETECT ✅] Found '{matched_firm_name}' in {detected_band}")
+                    print(f"[BAND AUTO-DETECT] Overriding user-declared '{current_status}' → '{detected_band}'")
+                    
+                    # Override strategic context
+                    strategic_context["current_status"] = detected_band
+                    strategic_context["verified_band"] = detected_band
+                    strategic_context["band_source"] = "live_benchmark"
+                    strategic_context["user_declared_band"] = current_status
+                    
+                    # Re-classify starting_position based on real band
+                    band_lower = detected_band.lower()
+                    if "1" in band_lower:
+                        starting_position = "Defensive Leadership"
+                    elif "2" in band_lower or "3" in band_lower:
+                        starting_position = "Upper Tier Push"
+                    elif "4" in band_lower or "5" in band_lower:
+                        starting_position = "Lower Tier Consolidation"
+                    
+                    strategic_context["starting_position"] = starting_position
+                    print(f"[BAND AUTO-DETECT] Starting position reclassified: '{starting_position}'")
+                else:
+                    print(f"[BAND AUTO-DETECT] Firm '{firm_name}' NOT found in benchmark — keeping user-declared '{current_status}'")
+                    # Check individuals too
+                    for ranked_ind in live_benchmark.get("individuals", []):
+                        ind_firm = ranked_ind.get("firm", "").lower().strip()
+                        if firm_lower in ind_firm or ind_firm in firm_lower:
+                            print(f"[BAND AUTO-DETECT] Found firm in INDIVIDUALS: {ranked_ind.get('name', '')} ({ranked_ind.get('firm', '')}) — {ranked_ind.get('band', '')}")
+                            if not detected_band:
+                                # Use the individual's category to infer firm presence
+                                strategic_context["firm_has_ranked_individuals"] = True
+                                strategic_context["individual_band_evidence"] = ranked_ind.get("band", "")
+                            break
         else:
             strategic_context["benchmark_source"] = "ravl_static"
             print(f"[LIVE BENCHMARK] No live data available — using RAVL static config")

@@ -1,0 +1,188 @@
+{
+  "source": "chambers",
+  "practice_area": "Banking & Finance",
+  "jurisdiction": "Venezuela",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": true,
+    "firm_bands": [
+      "Band 1",
+      "Band 2",
+      "Band 3"
+    ],
+    "individual_categories": [
+      "Senior Statespeople",
+      "Band 1",
+      "Band 2",
+      "Band 3"
+    ]
+  },
+  "firms": [
+    {
+      "name": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "ARAQUEREYNA",
+      "band": "Band 2",
+      "rank_type": "2"
+    },
+    {
+      "name": "LEĜA",
+      "band": "Band 2",
+      "rank_type": "2"
+    },
+    {
+      "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Dentons",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "InterJuris Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Lapadula Esteban Cadenas - LEC Abogados",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Rodner Martínez & Asociados",
+      "band": "Band 3",
+      "rank_type": "3"
+    }
+  ],
+  "individuals": [
+    {
+      "name": "Gustavo J Reyna",
+      "firm": "ARAQUEREYNA",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 16
+    },
+    {
+      "name": "Reinaldo Hellmund",
+      "firm": "Rodríguez & Mendoza",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 18
+    },
+    {
+      "name": "James-Otis Rodner",
+      "firm": "Rodner Martínez & Asociados",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 0
+    },
+    {
+      "name": "Carlos Eduardo Acedo Sucre",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Fulvio Italiani",
+      "firm": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Pedro Luis Planchart Pocaterra",
+      "firm": "ARAQUEREYNA",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Alvaro Posada",
+      "firm": "Ágora Abogados",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Carlos Omaña",
+      "firm": "D'Empaire",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Jaime Martínez Estévez",
+      "firm": "Rodner Martínez & Asociados",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 0
+    },
+    {
+      "name": "Alfonso Porras",
+      "firm": "ArnStein Legal",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 11
+    },
+    {
+      "name": "Luisa Acedo",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 17
+    },
+    {
+      "name": "Luisa Lepervanche",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3
+    },
+    {
+      "name": "Rafael de Lemos Matheus",
+      "firm": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 18
+    },
+    {
+      "name": "Juan José Delgado",
+      "firm": "InterJuris Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0
+    },
+    {
+      "name": "Leopoldo Cadenas",
+      "firm": "Lapadula Esteban Cadenas - LEC Abogados",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0
+    },
+    {
+      "name": "Rubén Eduardo Luján",
+      "firm": "Dentons",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0
+    }
+  ],
+  "total_firms": 9,
+  "total_individuals": 16,
+  "editorial_summary": "",
+  "scraped_at": "2026-08-05T21:51:07Z",
+  "cache_valid_until": "2026-09-04T21:51:07Z",
+  "cache_key": "chambers_partners_banking_finance_venezuela"
+}
