@@ -5,6 +5,36 @@ Format follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v17.2] — 2026-08-05
+
+### 🎯 CRITICAL: Intelligent Benchmark Resolver + Band Auto-Detection
+Owner-reported regression: Live meeting showed AraqueReyna (Band 2 in Chambers) being treated as "Unranked" with Band 4 alignment. Root cause: 3 cascading failures.
+
+#### Fix A: Regional Jurisdiction Fallback
+- **Problem**: Benchmark scraper looked for `"Banking & Finance|Latin America"` but URL map has country-level keys (`"Banking & Finance|Venezuela"`)
+- **Fix**: When jurisdiction is regional (Latin America, Europe, Asia Pacific, etc.), automatically scan URL map for all country-level entries under the same practice area
+- **Result**: `"Latin America"` → finds `"Mexico"`, `"Venezuela"` → scrapes Venezuela page → gets real data
+
+#### Fix B: Band Auto-Detection from Live Data
+- **Problem**: User selected "Unranked" in dropdown, but firm is actually Band 2
+- **Fix**: After scraping, search for the submission firm in the ranked firms list using fuzzy matching. If found, override the user-declared band with the verified band
+- **Result**: `ARAQUEREYNA → Band 2` auto-detected. Starting position reclassified from "Entry Candidate" → "Upper Tier Push"
+
+#### Fix C: Owner's Benchmark Specification Implemented
+```
+Directory → Jurisdiction → Practice → Editorial Page → Ranking Structure
+```
+- System now discovers ranking structure AUTOMATICALLY
+- Knows if practice has firm bands, individual bands, or both
+- Example: Data Protection México = individuals only; Banking Venezuela = firms + individuals
+
+### 📊 Verified: Chambers Venezuela Banking & Finance
+- 9 ranked firms (Band 1-3), 16 ranked individuals (SS, Band 1-3)
+- ARAQUEREYNA correctly identified in Band 2
+- Pedro Luis Planchart Pocaterra (Band 1), Gustavo J Reyna (Senior Statespeople)
+
+---
+
 ## [v17.1.6] — 2026-08-05
 
 ### 🎯 ROOT CAUSE FIX: Jurisdiction Detection
