@@ -227,6 +227,7 @@ export async function POST(request: NextRequest) {
 
     // Si encontramos matters, los guardamos en la base de datos
     let createdCount = 0;
+    console.log(`[MATTERS SAVE] extractedMatters from pipeline: ${extractedMatters ? extractedMatters.length : 'NULL'} | Source paths tried: pyData.matters=${!!pyData.matters}, pyData.data?.matters=${!!pyData.data?.matters}`);
     if (extractedMatters && Array.isArray(extractedMatters)) {
       for (const m of extractedMatters) {
         const isOptimized = m.status === 'AI Optimized' || m.optimized_text;
