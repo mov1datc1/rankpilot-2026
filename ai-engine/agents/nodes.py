@@ -998,7 +998,9 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         print(f"[LIVE BENCHMARK] Scraping failed (graceful fallback): {e}")
     
     print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")
-    print(f"[RAVL] Scenario={ranking_arch.get('scenario', '?')} | Firm bands={ranking_arch.get('firm_bands_exist', False)} | Type={ranking_arch.get('ranking_type', '?')}")
+    # v17.4c: Print from UPDATED strategic_context (post live-scrape), not old static ranking_arch
+    final_ravl = strategic_context.get("ranking_architecture", {})
+    print(f"[RAVL FINAL] Scenario={final_ravl.get('scenario', '?')} | Firm bands={final_ravl.get('firm_bands_exist', False)} | Type={final_ravl.get('ranking_type', '?')} | Live={final_ravl.get('live_enriched', False)}")
     if practice_taxonomy:
         print(f"[PRACTICE TAXONOMY] Detected: {practice_taxonomy.get('name', 'Generic')} | Value metric: {practice_taxonomy.get('value_is_not', 'standard')}")
 
@@ -1194,6 +1196,7 @@ RANKING ARCHITECTURE VALIDATION LAYER (v17.4 — RAVL):
     scenario = ravl.get("scenario", "D")
     ranking_type = ravl.get("ranking_type", "unknown")
     firm_bands_exist = ravl.get("firm_bands_exist", False)
+    print(f"[ANALYSIS NODE RAVL] Scenario={scenario} | Type={ranking_type} | Firm bands={firm_bands_exist} | Live={ravl.get('live_enriched', False)}")
     
     # Build scenario-specific RAVL block
     if scenario == "A" and firm_bands_exist:
@@ -1844,28 +1847,41 @@ def optimization_node(state: AgentState) -> Dict:
         print(f"[GRAMMAR] ✅ No grammar issues found")
     
     # ═══════════════════════════════════════════════════════════════
-    # v17.4: GENERIC FILLER PHRASE STRIPPER
+    # v17.4c: GENERIC FILLER PHRASE STRIPPER (Expanded)
     # Owner directive: "The system substitutes evidence with elegance.
     # 'played a pivotal role', 'robust framework', 'comprehensive advice'
     # — all seven matters end up sounding the same."
-    # Hard regex replacement to eliminate generic filler.
+    # These patterns are BROAD to catch all LLM variants.
     # ═══════════════════════════════════════════════════════════════
     GENERIC_FILLERS = [
-        (r'\bplayed a (?:pivotal|crucial|key|critical|instrumental|significant) role\b', 'contributed'),
+        # === STANDALONE ADJECTIVES (the LLM's favorite crutches) ===
+        (r'\bpivotal\b', 'important'),
+        (r'\bseamlessly\b', 'effectively'),
+        (r'\bmeticulously\b', 'carefully'),
+        (r'\bholistic\b', 'integrated'),
+        (r'\bparamount\b', 'significant'),
+        # === FILLER PHRASES ===
+        (r'\bstands as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
+        (r'\bserves as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
+        (r'\bis a testament to\b', 'demonstrates'),
+        (r'\bcarved out a niche\b', 'specialises'),
+        (r'\bsolidified its position\b', 'established itself'),
+        (r'\bunderscores\b', 'demonstrates'),
         (r'\brobust (?:framework|infrastructure|system|platform)\b', 'framework'),
-        (r'\bcomprehensive (?:advice|advisory|counsel|guidance|support)\b', 'advice'),
+        (r'\bcomprehensive (?:data protection |regulatory )?(?:advice|advisory|counsel|guidance|support|framework|strategy|approach)\b', 'thorough \\g<0>'.replace('comprehensive ', '')),
+        (r'\bcomprehensive\b', 'thorough'),
+        (r'\bdistinguished (?:leader|firm|practice|entity|establishment|conglomerate|law firm)\b', 'recognised \\g<0>'.replace('distinguished ', '')),
+        (r'\ba distinguished\b', 'a recognised'),
         (r'\benhanced compliance posture\b', 'improved compliance'),
         (r'\bcomplex regulatory landscape\b', 'regulatory environment'),
+        (r'\bnavigate the intricacies\b', 'address the requirements'),
         (r'\bnavigate (?:the )?complex\b', 'address'),
-        (r'\bstrategic advisory (?:role|capacity|function)\b', 'advisory work'),
-        (r'\binstrumental in\b', 'contributed to'),
-        (r'\bdemonstrating (?:a )?(?:strong |deep |unwavering )?commitment\b', 'showing commitment'),
-        (r'\bmeticulously (?:crafted|designed|developed|prepared)\b', 'developed'),
-        (r'\bholistic approach\b', 'approach'),
-        (r'\bseamlessly integrated\b', 'integrated'),
-        (r'\bstands as a (?:beacon|testament|cornerstone)\b', 'serves as'),
-        (r'\bunderscores the firm\'s\b', 'reflects the firm\'s'),
+        (r'\binstrumental in\b', 'central to'),
+        (r'\bplayed a (?:crucial|key|critical|instrumental|significant) role\b', 'contributed'),
         (r'\bat the forefront of\b', 'active in'),
+        (r'\bbeacon of (?:expertise|excellence)\b', 'centre of expertise'),
+        (r'\bexemplifies\b', 'demonstrates'),
+        (r'\bprofound and enduring\b', 'long-standing'),
     ]
     
     import re as _re_filler
@@ -1885,7 +1901,7 @@ def optimization_node(state: AgentState) -> Dict:
         matter['optimized_text'] = cleaned
     
     if filler_count > 0:
-        print(f"[FILLER STRIP v17.4] Replaced {filler_count} generic filler phrases across all matters")
+        print(f"[FILLER STRIP v17.4c] Replaced {filler_count} generic filler phrases across all matters")
     
     # ═══════════════════════════════════════════════════════════════
     # v17.3: B7 ENHANCEMENT PIPELINE
