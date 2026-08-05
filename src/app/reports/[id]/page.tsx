@@ -370,7 +370,17 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.875rem', color: '#475569' }}>
                 <p style={{ margin: 0 }}><strong>To:</strong> The Board of Directors — {firmName}</p>
                 <p style={{ margin: 0 }}><strong>From:</strong> RankPilot Consulting</p>
-                <p style={{ margin: 0 }}><strong>Re:</strong> {submission.targetDirectory} · {submission.practiceArea} · {submission.guideRegion}</p>
+                <p style={{ margin: 0 }}><strong>Re:</strong> {(() => {
+                  const directory = submission.targetDirectory || 'Chambers & Partners';
+                  const region = submission.guideRegion || '';
+                  const jurisdiction = chambersData?.detectedJurisdiction || '';
+                  const practice = submission.practiceArea || '';
+                  const parts: string[] = [`${directory} (Editorial)`];
+                  if (region) parts.push(`${region} (Region)`);
+                  if (jurisdiction && jurisdiction !== region) parts.push(`${jurisdiction} (Jurisdiction)`);
+                  if (practice) parts.push(`${practice} (Practice Area)`);
+                  return parts.join(' · ');
+                })()}</p>
                 <p style={{ margin: 0 }}><strong>Date:</strong> {dateStr}</p>
               </div>
             </div>

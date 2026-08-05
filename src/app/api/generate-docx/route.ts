@@ -262,7 +262,18 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   sections.push(
     fieldLabel('To: ', `The Board of Directors — ${firmName}`),
     fieldLabel('From: ', 'RankPilot Consulting'),
-    fieldLabel('Re: ', `${submission.targetDirectory || 'Chambers'} · ${practiceArea} · ${(submission.chambersData as any)?.detectedJurisdiction || submission.guideRegion || 'Global'}`),
+    fieldLabel('Re: ', (() => {
+      const directory = submission.targetDirectory || 'Chambers & Partners';
+      const region = submission.guideRegion || '';
+      const jurisdiction = (submission.chambersData as any)?.detectedJurisdiction || '';
+      const practice = practiceArea || '';
+      // Build hierarchy: Directory (Editorial) · Region · Jurisdiction · Practice Area
+      const parts: string[] = [`${directory} (Editorial)`];
+      if (region) parts.push(`${region} (Region)`);
+      if (jurisdiction && jurisdiction !== region) parts.push(`${jurisdiction} (Jurisdiction)`);
+      if (practice) parts.push(`${practice} (Practice Area)`);
+      return parts.join(' · ');
+    })()),
     fieldLabel('Date: ', dateStr),
     emptyRow()
   );
