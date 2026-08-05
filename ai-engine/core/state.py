@@ -90,3 +90,15 @@ class AgentState(TypedDict):
     # what it extracted, and what it decided at each stage.
     # =====================================================
     pipeline_manifest: Dict
+
+    # =====================================================
+    # v17.3: ORIGINAL B10 — Firm's Department Narrative
+    # Extracted from raw doc_text during ingestion.
+    # Used by the B7 Enhancement Pipeline to EXPAND (never summarize).
+    # =====================================================
+    original_b10: str
+    
+    # v17.3: ENHANCED B7 — AI-expanded version of B10
+    # Produced by optimization_node's B7 Enhancement Pipeline.
+    # Used by submission-builder.ts as the primary B7 source.
+    enhanced_b7: str

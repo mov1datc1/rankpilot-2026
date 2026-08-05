@@ -307,6 +307,8 @@ export async function POST(request: NextRequest) {
           submission_blueprint: pyData.data?.submission_blueprint || existingChambersData.submission_blueprint,
           reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
           pipeline_manifest: pyData.data?.pipeline_manifest || existingChambersData.pipeline_manifest,
+          // v17.3: Enhanced B7 — AI-expanded department narrative (never summarized)
+          enhanced_b7: pyData.data?.enhanced_b7 || existingChambersData.enhanced_b7,
           // Department/lawyer/contact data from AI extraction
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
           ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),

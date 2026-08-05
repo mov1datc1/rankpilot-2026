@@ -215,8 +215,56 @@ def ingestion_node(state: AgentState) -> Dict:
             "pipeline_manifest": {"error": str(e)},
             "messages": [("assistant", f"Error al leer el documento: {str(e)}")]
         }
+    
+    # =====================================================
+    # v17.3: EXTRACT ORIGINAL B10/B7 DEPARTMENT NARRATIVE
+    # Preserve the firm's original prose for the B7 Enhancement Pipeline.
+    # This text is the FOUNDATION — it must never be summarized.
+    # =====================================================
+    original_b10 = ""
+    try:
+        import re as _re
+        # Look for B10/B7 section headers in the raw text
+        # Chambers uses "B10 What is this department best known for"
+        # Some forms use "B7 What is this department best known for"
+        # IMPORTANT: Do NOT match "B7 Head or Heads of department" — that's the contacts section
+        b10_pattern = _re.search(
+            r'B(?:10|7)\s+What is this department best known for.*?\n',
+            text, _re.IGNORECASE
+        )
+        if b10_pattern:
+            start_idx = b10_pattern.end()
+            # Find the end: next section (C1, D., or another B section)
+            end_pattern = _re.search(
+                r'\n\s*(?:C1\s|C\.\s|D\.\s|B8\s|B9\s|Publishable|CONFIDENTIAL)',
+                text[start_idx:], _re.IGNORECASE
+            )
+            if end_pattern:
+                original_b10 = text[start_idx:start_idx + end_pattern.start()].strip()
+            else:
+                # Take up to 3000 chars as safety
+                original_b10 = text[start_idx:start_idx + 3000].strip()
+            
+            # Clean up: remove header repetitions and instruction text
+            original_b10 = _re.sub(
+                r'(?:Please include:.*?word count limit\)?|Address any feedback.*?word count limit\)?)',
+                '', original_b10, flags=_re.IGNORECASE | _re.DOTALL
+            ).strip()
+            
+            if original_b10:
+                b10_words = len(original_b10.split())
+                print(f"[B10 EXTRACTOR] ✅ Extracted original department narrative: {b10_words} words")
+                manifest["original_b10_words"] = b10_words
+            else:
+                print("[B10 EXTRACTOR] Section found but empty after cleanup")
+        else:
+            print("[B10 EXTRACTOR] No B10/B7 section header found in document")
+    except Exception as b10_err:
+        print(f"[B10 EXTRACTOR] Warning: {b10_err}")
+    
     return {
         "doc_text": text,
+        "original_b10": original_b10,
         "pipeline_manifest": manifest,
         "messages": [("assistant", "Document ingested. Analyzing structural signals...")]
     }
@@ -1509,9 +1557,6 @@ def interrogator_node(state: AgentState) -> Dict:
 def optimization_node(state: AgentState) -> Dict:
     print("--- OPTIMIZING MATTERS ---")
     matters = state.get("matters", [])
-    
-    if not matters:
-        return state
 
     llm = get_model()
     # Require JSON output with 'optimized_text' key
@@ -1698,8 +1743,116 @@ def optimization_node(state: AgentState) -> Dict:
         print(f"[GRAMMAR] ✅ Fixed grammar in {grammar_fixed_count}/{len(optimized_matters)} matters")
     else:
         print(f"[GRAMMAR] ✅ No grammar issues found")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.3: B7 ENHANCEMENT PIPELINE
+    # Takes the firm's ORIGINAL B10 department narrative as the BASE
+    # and uses narrative_architecture as EDITORIAL DIRECTION to produce
+    # an expanded, strengthened version.
+    # RULE: Output MUST be ≥100% of original word count — NEVER shorter.
+    # ═══════════════════════════════════════════════════════════════
+    print("--- B7 ENHANCEMENT ---")
+    original_b10 = state.get("original_b10", "")
+    narrative_arch = state.get("narrative_architecture", {})
+    enhanced_b7 = ""
+    
+    if original_b10 and len(original_b10.split()) > 20:
+        b7_llm = get_model()
+        b7_llm = b7_llm.bind(response_format={"type": "json_object"})
         
-    return {"matters": optimized_matters}
+        # Build editorial direction from narrative_architecture
+        editorial_direction = []
+        if narrative_arch.get("thesis_statement"):
+            editorial_direction.append(f"THESIS: {narrative_arch['thesis_statement']}")
+        if narrative_arch.get("positioning_statement"):
+            editorial_direction.append(f"POSITIONING: {narrative_arch['positioning_statement']}")
+        if narrative_arch.get("key_differentiators"):
+            diffs = narrative_arch["key_differentiators"]
+            if isinstance(diffs, list):
+                editorial_direction.append(f"KEY DIFFERENTIATORS: {', '.join(str(d) for d in diffs)}")
+        if narrative_arch.get("hero_matter"):
+            editorial_direction.append(f"HERO MATTER: {narrative_arch['hero_matter']}")
+        
+        # Get strategic context for additional direction
+        strategic_ctx = state.get("strategic_context", {})
+        if strategic_ctx.get("verified_band"):
+            editorial_direction.append(f"VERIFIED BAND: {strategic_ctx['verified_band']}")
+        if strategic_ctx.get("resolved_jurisdiction"):
+            editorial_direction.append(f"MARKET: {strategic_ctx['resolved_jurisdiction']}")
+        
+        editorial_direction_text = "\n".join(editorial_direction) if editorial_direction else "Enhance for Chambers editorial standards."
+        
+        original_word_count = len(original_b10.split())
+        
+        b7_enhancement_prompt = f"""You are a Chambers & Partners Senior Editor enhancing a law firm's department description (B7/B10 section).
+
+THE FUNDAMENTAL RULE: KEEP → EXPAND → STRENGTHEN → NEVER SUMMARIZE.
+
+You are given:
+1. The ORIGINAL B10 text written by the firm (THIS IS YOUR BASE — preserve EVERYTHING)
+2. Editorial direction from the AI analysis (use this to ADD strategic framing)
+
+YOUR TASK:
+- Take every sentence, fact, name, and claim in the original and KEEP it
+- ADD strategic editorial context around each point using the editorial direction
+- EXPAND with Chambers-grade prose: why this matters, competitive context, market positioning
+- STRENGTHEN the narrative with editorial architecture: thesis-driven flow, evidence density
+- The output must read as if a Chambers editor took the firm's draft and made it MORE CONVINCING
+
+ABSOLUTE PROHIBITIONS:
+- NEVER make the text shorter. The original is {original_word_count} words. Your output MUST be AT LEAST {original_word_count} words.
+- NEVER replace specific names (JP Morgan, Simmons & Simmons, etc.) with generic categories
+- NEVER remove any client name, lawyer name, regulation, or jurisdiction mentioned
+- NEVER add meta-text like "The narrative should..." or "This section highlights..."
+- NEVER summarize or compress multiple points into one
+- Write ONLY the final editorial prose. NO instructions, NO meta-commentary.
+
+OUTPUT FORMAT (JSON):
+{{"enhanced_b7": "The full enhanced department narrative in plain text paragraphs. NO markdown."}}
+
+---
+EDITORIAL DIRECTION (from AI analysis — use as guidance, NOT as content):
+{editorial_direction_text}
+
+---
+ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
+{original_b10}
+"""
+        
+        try:
+            b7_response = b7_llm.invoke([
+                SystemMessage(content="You enhance legal directory submissions. You EXPAND and STRENGTHEN text. You NEVER summarize or shorten."),
+                HumanMessage(content=b7_enhancement_prompt)
+            ])
+            b7_result = safe_json_loads(b7_response.content, fallback={})
+            enhanced_b7 = b7_result.get("enhanced_b7", "")
+            
+            if enhanced_b7:
+                enhanced_words = len(enhanced_b7.split())
+                ratio = enhanced_words / max(original_word_count, 1)
+                
+                if enhanced_words < original_word_count:
+                    # FAILED: shorter than original — use original as fallback
+                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) is SHORTER than original ({original_word_count}w) — using original")
+                    enhanced_b7 = original_b10
+                else:
+                    # Strip any markdown
+                    enhanced_b7 = strip_markdown(enhanced_b7)
+                    print(f"[B7 ENHANCEMENT] ✅ Enhanced: {original_word_count}w → {enhanced_words}w ({ratio:.1f}x expansion)")
+            else:
+                print("[B7 ENHANCEMENT] ⚠️ Empty response — using original B10")
+                enhanced_b7 = original_b10
+                
+        except Exception as b7_err:
+            print(f"[B7 ENHANCEMENT] Error: {b7_err} — using original B10")
+            enhanced_b7 = original_b10
+    elif original_b10:
+        print(f"[B7 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
+        enhanced_b7 = original_b10
+    else:
+        print("[B7 ENHANCEMENT] No original B10 found — B7 will use narrative_architecture fallback")
+        
+    return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 
 # 6. WRITER NODE
 def writer_node(state: AgentState, config: RunnableConfig) -> Dict:

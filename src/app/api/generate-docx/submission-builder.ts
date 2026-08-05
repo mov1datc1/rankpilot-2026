@@ -366,11 +366,27 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B7 — v17.1.3: Build enhanced B7 from narrative_architecture actual fields
+  // B7 — v17.3: Priority chain for department narrative
+  // 1. enhanced_b7: AI-expanded version of the firm's original B10 (BEST)
+  // 2. departmentDesc / b7: Original firm text as fallback
+  // 3. narrative_architecture: Planning meta-text (LAST RESORT — avoid if possible)
   const na = chambersData.narrative_architecture || {};
   let b7Text = '';
-  if (na.thesis_statement || na.positioning_statement) {
-    // Combine thesis + positioning + bench strength into a comprehensive B7
+  
+  // Priority 1: Enhanced B7 from AI pipeline (expanded, never summarized)
+  if (chambersData.enhanced_b7 && chambersData.enhanced_b7.length > 50) {
+    b7Text = chambersData.enhanced_b7;
+  }
+  // Priority 2: Original firm department description
+  else if (chambersData.departmentDesc && chambersData.departmentDesc.length > 50) {
+    b7Text = chambersData.departmentDesc;
+  }
+  // Priority 3: Original b7 field
+  else if (chambersData.b7 && chambersData.b7.length > 50) {
+    b7Text = chambersData.b7;
+  }
+  // Priority 4 (last resort): Concatenate narrative_architecture planning fields
+  else if (na.thesis_statement || na.positioning_statement) {
     const parts = [
       na.positioning_statement || '',
       na.thesis_statement || '',
@@ -378,10 +394,6 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       na.narrative_arc || '',
     ].filter(Boolean);
     b7Text = parts.join('\n\n');
-  }
-  // Fallback to raw department description
-  if (!b7Text || b7Text.length < 50) {
-    b7Text = chambersData.departmentDesc || chambersData.b7 || '';
   }
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B7'));
 
