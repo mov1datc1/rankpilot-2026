@@ -1,0 +1,548 @@
+{
+  "source": "chambers",
+  "practice_area": "Banking & Finance",
+  "jurisdiction": "Mexico",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": true,
+    "firm_bands": [
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Band 5"
+    ],
+    "individual_categories": [
+      "Eminent Practitioners",
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Band 5",
+      "Up and Coming",
+      "Associates to watch"
+    ]
+  },
+  "firms": [
+    {
+      "name": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "Galicia Abogados, S.C.",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "Nader Hayaux Goebel",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "Ritch Mueller",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "White & Case LLP",
+      "band": "Band 1",
+      "rank_type": "1"
+    },
+    {
+      "name": "Greenberg Traurig, LLP",
+      "band": "Band 2",
+      "rank_type": "2"
+    },
+    {
+      "name": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 2",
+      "rank_type": "2"
+    },
+    {
+      "name": "Bufete Robles Miaja, S.C.",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Jones Day",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Kuri Breña, Sánchez Ugarte y Aznar, S.C.",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Pérez-Llorca",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Santamarina y Steta SC",
+      "band": "Band 3",
+      "rank_type": "3"
+    },
+    {
+      "name": "Gaxiola Calvo, S.C.",
+      "band": "Band 4",
+      "rank_type": "4"
+    },
+    {
+      "name": "Holland & Knight LLP",
+      "band": "Band 4",
+      "rank_type": "4"
+    },
+    {
+      "name": "Villarreal, García Campuzano, Gómez y Fernández",
+      "band": "Band 4",
+      "rank_type": "4"
+    },
+    {
+      "name": "Von Wobeser y Sierra, SC",
+      "band": "Band 4",
+      "rank_type": "4"
+    },
+    {
+      "name": "Actio Legal Partners",
+      "band": "Band 5",
+      "rank_type": "5"
+    },
+    {
+      "name": "Baker McKenzie",
+      "band": "Band 5",
+      "rank_type": "5"
+    },
+    {
+      "name": "CMS Woodhouse Lorente Ludlow SC",
+      "band": "Band 5",
+      "rank_type": "5"
+    },
+    {
+      "name": "Fernández, García-Naranjo, Boker & Garibay",
+      "band": "Band 5",
+      "rank_type": "5"
+    },
+    {
+      "name": "Hogan Lovells Cadwalader",
+      "band": "Band 5",
+      "rank_type": "5"
+    }
+  ],
+  "individuals": [
+    {
+      "name": "Carlos Aiza",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Eminent Practitioners",
+      "rank_type": "EP",
+      "years_ranked": 18
+    },
+    {
+      "name": "José Raz Guzmán",
+      "firm": "Greenberg Traurig, S.C.",
+      "band": "Eminent Practitioners",
+      "rank_type": "EP",
+      "years_ranked": 18
+    },
+    {
+      "name": "Manuel Galicia Romero",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Eminent Practitioners",
+      "rank_type": "EP",
+      "years_ranked": 18
+    },
+    {
+      "name": "Guillermo Pérez Santiago",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 17
+    },
+    {
+      "name": "Jean Paul Farah Chajin",
+      "firm": "Ritch Mueller",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Luis A Nicolau",
+      "firm": "Ritch Mueller",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Michell Nader Schekaiban",
+      "firm": "Nader Hayaux Goebel",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Pedro Velasco de la Peña",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18
+    },
+    {
+      "name": "Arturo Perdomo Jiménez",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Giovanni Ramírez Garrido",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Hans Goebel Caviedes",
+      "firm": "Nader Hayaux Goebel",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Juan Antonio Martín",
+      "firm": "White & Case SC",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Julián Garza Castañeda",
+      "firm": "Nader Hayaux Goebel",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Rafael Robles Miaja",
+      "firm": "Bufete Robles Miaja, S.C.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18
+    },
+    {
+      "name": "Daniel Kuri Breña",
+      "firm": "Kuri Breña, Sánchez Ugarte y Aznar, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 18
+    },
+    {
+      "name": "Eduardo Villanueva",
+      "firm": "Villanueva Ortiz Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3
+    },
+    {
+      "name": "Emilio Aarún Cordero",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 4
+    },
+    {
+      "name": "Felipe Fernández Peña",
+      "firm": "Villarreal, García Campuzano, Gómez y Fernández",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 5
+    },
+    {
+      "name": "Jorge Gaxiola Moraila",
+      "firm": "Gaxiola Calvo, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 15
+    },
+    {
+      "name": "José Ignacio Rivero Andere",
+      "firm": "Pérez-Llorca",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 11
+    },
+    {
+      "name": "María Luisa Petricioli Castellón",
+      "firm": "Bufete Robles Miaja, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 15
+    },
+    {
+      "name": "Miguel Moisés",
+      "firm": "Greenberg Traurig, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 9
+    },
+    {
+      "name": "Pablo Perezalonso Eguía",
+      "firm": "Ritch Mueller",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 18
+    },
+    {
+      "name": "Ricardo Maldonado Yáñez",
+      "firm": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 18
+    },
+    {
+      "name": "Rosemarie McLaren",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3
+    },
+    {
+      "name": "Alejandro Landa Thierry",
+      "firm": "Holland & Knight",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 13
+    },
+    {
+      "name": "Alfredo Gómez Pérez",
+      "firm": "Villarreal, García Campuzano, Gómez y Fernández",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 12
+    },
+    {
+      "name": "Brian Minutti",
+      "firm": "Legal Disruption",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 12
+    },
+    {
+      "name": "Edgar Romo Reynoso",
+      "firm": "DLA Piper Mexico, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 2
+    },
+    {
+      "name": "Federico De Noriega",
+      "firm": "Hogan Lovells Cadwalader",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 16
+    },
+    {
+      "name": "Héctor Sequelis Taboada",
+      "firm": "Sequelis y Asociados SC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 2
+    },
+    {
+      "name": "Javier Arreola Espinosa",
+      "firm": "Nader Hayaux Goebel",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 18
+    },
+    {
+      "name": "Luis Burgueño",
+      "firm": "Von Wobeser y Sierra, SC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 17
+    },
+    {
+      "name": "Mario E Juárez Noguera",
+      "firm": "BRIT, Saltzberg, Juárez, Chiquillo Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 11
+    },
+    {
+      "name": "Miguel Gallardo Guerra",
+      "firm": "Bello, Gallardo, Bonequi y García, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 18
+    },
+    {
+      "name": "Narciso Campos Cuevas",
+      "firm": "White & Case SC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 3
+    },
+    {
+      "name": "Patrick Meshoulam",
+      "firm": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 9
+    },
+    {
+      "name": "Sergio Chagoya",
+      "firm": "Santamarina y Steta SC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 17
+    },
+    {
+      "name": "Carlos Sagaón-Garza",
+      "firm": "DMA Legal",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0
+    },
+    {
+      "name": "Alberto Balderas Fernández",
+      "firm": "Jáuregui y Del Valle, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 1
+    },
+    {
+      "name": "Arturo de la Parra",
+      "firm": "Jones Day",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 9
+    },
+    {
+      "name": "Carlos Mainero Ruíz",
+      "firm": "White & Case SC",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 3
+    },
+    {
+      "name": "Eduardo Flores Herrera",
+      "firm": "White & Case SC",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 5
+    },
+    {
+      "name": "Francisco Garcia-Naranjo",
+      "firm": "Fernández, García-Naranjo, Boker & Garibay",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 3
+    },
+    {
+      "name": "Gerardo Pérez-Chow",
+      "firm": "Bufete Robles Miaja, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 4
+    },
+    {
+      "name": "Maurice Berkman B",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 10
+    },
+    {
+      "name": "Raúl Fernández-Briseño",
+      "firm": "Fernández, García-Naranjo, Boker & Garibay",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 7
+    },
+    {
+      "name": "Ricardo Orea",
+      "firm": "Santamarina y Steta SC",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 9
+    },
+    {
+      "name": "Rodrigo Castelazo",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 13
+    },
+    {
+      "name": "Rodrigo Orozco Waters",
+      "firm": "Greenberg Traurig, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 5
+    },
+    {
+      "name": "Rodrigo Rivera",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 1
+    },
+    {
+      "name": "Eduardo Corzo Ramos",
+      "firm": "Haynes and Boone, SC",
+      "band": "Band 5",
+      "rank_type": "5",
+      "years_ranked": 0
+    },
+    {
+      "name": "David Argueta",
+      "firm": "Greenberg Traurig, S.C.",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 3
+    },
+    {
+      "name": "Diego Ostos",
+      "firm": "Santamarina y Steta SC",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 2
+    },
+    {
+      "name": "José Berrueta Ochoa",
+      "firm": "Garrigues",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 2
+    },
+    {
+      "name": "Alfonso Alfaro Rincón Gallardo",
+      "firm": "Kuri Breña, Sánchez Ugarte y Aznar, S.C.",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 1
+    },
+    {
+      "name": "Martín Pavón Pérez",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 2
+    },
+    {
+      "name": "Michelle Pfeffer Núñez",
+      "firm": "Baker McKenzie",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 3
+    }
+  ],
+  "total_firms": 21,
+  "total_individuals": 58,
+  "editorial_summary": "In 2025 the Mexican economy has continued to slow down as a result of both internal and external fa...",
+  "scraped_at": "2026-08-05T22:03:31Z",
+  "cache_valid_until": "2026-09-04T22:03:31Z",
+  "cache_key": "chambers_partners_banking_finance_mexico"
+}

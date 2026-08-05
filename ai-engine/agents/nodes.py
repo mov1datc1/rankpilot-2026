@@ -834,12 +834,33 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
             
             if candidate_jurisdictions:
                 print(f"[BENCHMARK RESOLVER] Found {len(candidate_jurisdictions)} candidates: {candidate_jurisdictions}")
+                
+                # Scrape ALL candidates and pick the one containing the firm
+                all_benchmarks = {}
                 for candidate in candidate_jurisdictions:
-                    live_benchmark = scrape_rankings(directory, practice_area, candidate)
-                    if live_benchmark:
-                        resolved_jurisdiction = candidate
-                        print(f"[BENCHMARK RESOLVER] ✅ Resolved '{jurisdiction}' → '{candidate}'")
-                        break
+                    bm = scrape_rankings(directory, practice_area, candidate)
+                    if bm:
+                        all_benchmarks[candidate] = bm
+                        # Check if THIS benchmark contains our firm
+                        if firm_name:
+                            firm_lower_check = firm_name.lower().strip()
+                            for rf in bm.get("firms", []):
+                                rn = rf.get("name", "").lower().strip()
+                                if firm_lower_check in rn or rn in firm_lower_check:
+                                    # PRIORITY: use THIS jurisdiction because it has our firm
+                                    live_benchmark = bm
+                                    resolved_jurisdiction = candidate
+                                    print(f"[BENCHMARK RESOLVER] ✅ FIRM MATCH: '{firm_name}' found in {candidate} → using this jurisdiction")
+                                    break
+                        if live_benchmark:
+                            break
+                
+                # If no firm match found, use the first available benchmark as context
+                if not live_benchmark and all_benchmarks:
+                    first_key = list(all_benchmarks.keys())[0]
+                    live_benchmark = all_benchmarks[first_key]
+                    resolved_jurisdiction = first_key
+                    print(f"[BENCHMARK RESOLVER] No firm match — using first available: '{first_key}'")
             else:
                 print(f"[BENCHMARK RESOLVER] No candidate sub-jurisdictions found for {practice_normalized}")
         
