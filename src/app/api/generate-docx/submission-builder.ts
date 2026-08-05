@@ -185,7 +185,13 @@ function validateConfidentiality(matters: any[]): { pubMatters: any[], confMatte
 
 function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
-  const guideRegion = submission.guideRegion || chambersData.jurisdiction || 'Mexico';
+  // v17.1: Use detected jurisdiction (country) from pipeline, falling back to user-selected region
+  const guideRegion = chambersData.detectedJurisdiction
+    || chambersData.metadata?.jurisdiction
+    || chambersData.strategicContext?.jurisdiction
+    || submission.guideRegion 
+    || chambersData.jurisdiction 
+    || '';
   const allMatters = submission.matters || [];
   
   // Deduplicate matters by title to prevent multiplication (e.g., Rivoli 4x bug)
@@ -355,8 +361,14 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B7
-  elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', chambersData.departmentDesc || chambersData.b7 || '', 'B7'));
+  // B7 — v17.1: Prefer enhanced narrative from pipeline over raw extraction
+  const b7Text = chambersData.narrative_architecture?.department_overview
+    || chambersData.narrative_architecture?.b7_text
+    || chambersData.narrative_architecture?.output
+    || chambersData.departmentDesc 
+    || chambersData.b7 
+    || '';
+  elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B7'));
 
   // ═══ SECTION C ═══
   elements.push(new Paragraph({ children: [new PageBreak()] }));

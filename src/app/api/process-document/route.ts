@@ -297,6 +297,11 @@ export async function POST(request: NextRequest) {
             }))
           } : {}),
           ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
+          // v17.1: Detect jurisdiction (country) from pipeline for A3 and market context
+          detectedJurisdiction: pyData.data?.strategic_context?.jurisdiction 
+            || pyData.data?.metadata?.jurisdiction
+            || analysisData?.location
+            || existingChambersData.detectedJurisdiction,
         },
         status: 'Submitted'
       }

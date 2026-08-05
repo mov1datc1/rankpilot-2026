@@ -44,10 +44,79 @@ export async function GET(request: NextRequest) {
     }
 
     const chambersData = submission.chambersData as any || {};
-    const analysis = chambersData.analysis || {};
+    let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
-    const letter = analysis.audit_letter || {};
-    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || submission.practiceArea || 'The Firm';
+    
+    // v17.1: Unwrap gpt-4o's nested {"analysis": {...}} wrapper
+    // The Python pipeline saves the raw gpt-4o response which nests everything inside analysis.analysis
+    if (analysis.analysis && typeof analysis.analysis === 'object' && !analysis.score) {
+      const inner = analysis.analysis;
+      // Promote inner keys to top level
+      for (const [k, v] of Object.entries(inner)) {
+        if (!(k in analysis) || k === 'analysis') continue;
+        (analysis as any)[k] = v;
+      }
+      // Always promote these critical fields
+      for (const key of ['score', 'risk_level', 'summary', 'firm_name', 'practice_area',
+        'narrative_analysis', 'editorial_confidence', 'entry_case', 'competitive_identity',
+        'surviving_hypotheses', 'comparative_analysis_summary', 'submission_summary']) {
+        if (inner[key] !== undefined && !(key in analysis)) {
+          (analysis as any)[key] = inner[key];
+        }
+      }
+    }
+    
+    // v17.1: Build audit_letter from analysis fields if audit_letter is empty
+    let letter = analysis.audit_letter || {};
+    if (!letter.the_state_of_play && !letter.the_unfair_advantage) {
+      // Reconstruct audit_letter from analysis fields that gpt-4o placed elsewhere
+      const na = analysis.narrative_analysis || {};
+      const ec = analysis.editorial_confidence || {};
+      const comp = analysis.comparative_analysis_summary || analysis.comparative_analysis || '';
+      const entryCase = analysis.entry_case || {};
+      
+      letter = {
+        ...letter,
+        the_state_of_play: letter.the_state_of_play 
+          || (typeof na === 'string' ? na : na.thesis_statement || analysis.submission_summary?.overview || '')
+          || analysis.summary || '',
+        the_unfair_advantage: letter.the_unfair_advantage 
+          || entryCase.strongest_entry_evidence?.join('. ')
+          || (typeof na === 'object' ? na.hero_matter_rationale : '') || '',
+        the_reality_check: letter.the_reality_check 
+          || entryCase.critical_gaps 
+          || (ec.recommendation === 'proceed_with_caveats' ? [ec.defensibility_summary || 'Evidence gaps identified'] : []),
+        competitive_context: letter.competitive_context
+          || (typeof comp === 'string' ? comp : comp.band_alignment || ''),
+        narrative_strategy: letter.narrative_strategy || [],
+        the_path_to_dominance: letter.the_path_to_dominance || [],
+        matter_evaluations: letter.matter_evaluations || analysis.matter_evaluations || [],
+        recommended_rewrites: letter.recommended_rewrites || analysis.recommended_rewrites || [],
+        competitive_positioning_text: letter.competitive_positioning_text || '',
+      };
+    }
+    
+    // v17.1: Derive score from editorial_confidence if missing
+    if (!analysis.score && analysis.editorial_confidence) {
+      const confMap: Record<string, number> = { 'very high': 90, 'high': 80, 'moderate': 65, 'low': 45, 'limited': 30 };
+      const overall = String(analysis.editorial_confidence.overall_confidence || '').toLowerCase();
+      if (confMap[overall]) {
+        analysis.score = confMap[overall];
+      }
+    }
+    
+    // v17.1: Detect jurisdiction from pipeline metadata (country-level, not region)
+    const detectedJurisdiction = chambersData.detectedJurisdiction
+      || chambersData.metadata?.jurisdiction 
+      || context.jurisdiction
+      || analysis.location
+      || analysis.practice_area_location;
+    if (detectedJurisdiction && detectedJurisdiction !== submission.guideRegion) {
+      // Inject detected country into chambersData for builders to use
+      chambersData.detectedJurisdiction = detectedJurisdiction;
+    }
+    
+    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
     const practiceArea = submission.practiceArea || 'General Practice';
 
     let doc: Document;
@@ -185,7 +254,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   sections.push(
     fieldLabel('To: ', `The Board of Directors — ${firmName}`),
     fieldLabel('From: ', 'RankPilot Consulting'),
-    fieldLabel('Re: ', `${submission.targetDirectory || 'Chambers'} · ${practiceArea} · ${submission.guideRegion || 'Global'}`),
+    fieldLabel('Re: ', `${submission.targetDirectory || 'Chambers'} · ${practiceArea} · ${(submission.chambersData as any)?.detectedJurisdiction || submission.guideRegion || 'Global'}`),
     fieldLabel('Date: ', dateStr),
     emptyRow()
   );
@@ -248,7 +317,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const ctxLine = [
     `Directory: ${submission.targetDirectory || 'N/A'}`,
     `Practice: ${submission.practiceArea || 'N/A'}`,
-    `Jurisdiction: ${submission.guideRegion || 'N/A'}`,
+    `Jurisdiction: ${(submission.chambersData as any)?.detectedJurisdiction || submission.guideRegion || 'N/A'}`,
     `Current Band: ${submission.currentBand || 'Unranked'}`
   ].join('  |  ');
   sections.push(
@@ -270,6 +339,19 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     sections.push(
       sectionTitle('Executive Summary'),
       p(String(analysis.summary), { italics: true, color: GRAY, spacing: { after: 300 } })
+    );
+  }
+
+  // v17.1: Insufficient Evidence Warning (owner praised this in v15)
+  const evidenceScore = editorialConfidence.evidence_completeness_score || 0;
+  const overallConf = String(editorialConfidence.overall_confidence || '').toLowerCase();
+  const evidenceThresholdMet = editorialConfidence.evidence_threshold_met !== false;
+  if (evidenceScore < 70 || overallConf === 'low' || overallConf === 'moderate' || overallConf === 'limited' || !evidenceThresholdMet) {
+    sections.push(
+      sectionTitle('⚠️ Insufficient Evidence for Full Analysis'),
+      p('The submission does not contain sufficient structured evidence to support a complete ranking analysis. Key sections of the Chambers submission template (Section D: Publishable Matters, Section E: Confidential Matters, Client Lists) appear incomplete or missing.', { spacing: { after: 100 } }),
+      p(`Evidence Completeness: ${evidenceScore}% | Overall Confidence: ${overallConf || 'pending'} | Recommendation: ${editorialConfidence.recommendation || 'proceed_with_caveats'}`, { bold: true, color: 'DC2626', spacing: { after: 100 } }),
+      p('This assessment is based on the evidence provided. Stronger evidence (specific transaction details, client names, deal values, regulatory outcomes) would significantly improve the ranking case.', { italics: true, color: GRAY, spacing: { after: 300 } })
     );
   }
 
