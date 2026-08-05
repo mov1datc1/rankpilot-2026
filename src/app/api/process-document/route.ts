@@ -176,8 +176,29 @@ export async function POST(request: NextRequest) {
     // El motor Python debe retornar la data estructurada.
     const extractedData = pyData.metadata || pyData.data?.metadata;
     const extractedMatters = pyData.matters || pyData.data?.matters;
-    const analysisData = pyData.data?.analysis || pyData.analysis;
+    let analysisData = pyData.data?.analysis || pyData.analysis;
     const strategicContext = pyData.data?.strategic_context || pyData.strategic_context;
+
+    // v17.1.4: Unwrap gpt-4o nested {"analysis": {...}} wrapper at save time
+    // gpt-4o's json_object mode wraps everything in an extra 'analysis' key.
+    // We unwrap here so downstream code (chambersData save, DOCX generation) gets clean data.
+    if (analysisData && typeof analysisData === 'object' && analysisData.analysis && typeof analysisData.analysis === 'object') {
+      const inner = analysisData.analysis;
+      // Promote inner keys to top level (inner has location, firm_name, matter_evaluations, etc.)
+      for (const [k, v] of Object.entries(inner)) {
+        if (k === 'analysis') continue; // Skip self-reference
+        if (!(k in analysisData)) {
+          (analysisData as any)[k] = v;
+        }
+      }
+      // Always promote these critical fields even if they exist (inner values are more specific)
+      for (const key of ['location', 'current_band', 'score', 'firm_name', 'practice_area', 'matter_evaluations']) {
+        if (inner[key] !== undefined) {
+          (analysisData as any)[key] = inner[key];
+        }
+      }
+      console.log(`[ANALYSIS UNWRAP] Promoted keys from nested analysis: location=${(analysisData as any).location}, score=${(analysisData as any).score}`);
+    }
 
     // Extract department/lawyers/contacts from AI metadata (new structured fields)
     const extractedDept = extractedData?.department || {};
