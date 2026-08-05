@@ -1191,15 +1191,31 @@ RANKING ARCHITECTURE FOR THIS COMBINATION:
                     if score and isinstance(score, (int, float)) and score > 0:
                         break
             if score is None or (isinstance(score, (int, float)) and score == 0):
-                # v17.1: Last resort — derive score from editorial_confidence qualitative assessment
+                # v17.1.2: Derive score from editorial_confidence — check BOTH res_json AND pipeline state
+                # gpt-4o's analysis response rarely has editorial_confidence, but the pipeline state always does
                 ec = res_json.get("editorial_confidence", {})
+                if not isinstance(ec, dict) or not ec:
+                    # Fallback: get from pipeline state (editorial_confidence is a separate upstream node)
+                    ec = state.get("editorial_confidence", {})
                 if isinstance(ec, dict):
-                    confidence_map = {"high": 80, "moderate": 65, "low": 45, "limited": 30, "very high": 90}
+                    confidence_map = {"high": 80, "moderate": 65, "low": 45, "limited": 30, "very high": 90, "insufficient": 35}
                     overall = str(ec.get("overall_confidence", "")).lower().strip()
                     if overall in confidence_map:
                         score = confidence_map[overall]
                         res_json["score"] = score
-                        print(f"[SCORE DERIVED] Derived score={score} from editorial_confidence.overall_confidence='{overall}'")
+                        print(f"[SCORE DERIVED] Derived score={score} from editorial_confidence.overall_confidence='{overall}' (source: {'res_json' if res_json.get('editorial_confidence') else 'pipeline_state'})")
+                    else:
+                        # Try numeric scores from editorial_confidence dimensions
+                        dim_scores = []
+                        for dim_key in ["evidence_completeness_score", "matter_quality_score", "leadership_visibility_score",
+                                       "narrative_cohesion_score", "differentiation_score", "institutional_depth_score"]:
+                            ds = ec.get(dim_key)
+                            if isinstance(ds, (int, float)) and ds > 0:
+                                dim_scores.append(ds)
+                        if dim_scores:
+                            score = int(sum(dim_scores) / len(dim_scores))
+                            res_json["score"] = score
+                            print(f"[SCORE DERIVED] Derived score={score} from {len(dim_scores)} editorial_confidence dimension averages")
             if score is None or (isinstance(score, (int, float)) and score == 0):
                 violations.append("MISSING_SCORE: No score or score is 0")
             
