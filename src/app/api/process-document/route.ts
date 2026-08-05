@@ -246,6 +246,14 @@ export async function POST(request: NextRequest) {
     let createdCount = 0;
     console.log(`[MATTERS SAVE] extractedMatters from pipeline: ${extractedMatters ? extractedMatters.length : 'NULL'} | Source paths tried: pyData.matters=${!!pyData.matters}, pyData.data?.matters=${!!pyData.data?.matters}`);
     if (extractedMatters && Array.isArray(extractedMatters)) {
+      // v17.1.5: Clean up existing matters for this submission before creating new ones
+      // This prevents duplicate accumulation when users re-process the same submission
+      const { count: deletedCount } = await prisma.matter.deleteMany({
+        where: { submissionId, source: 'builder' }
+      });
+      if (deletedCount > 0) {
+        console.log(`[MATTERS CLEANUP] Deleted ${deletedCount} existing builder-created matters for submission ${submissionId}`);
+      }
       for (const m of extractedMatters) {
         const isOptimized = m.status === 'AI Optimized' || m.optimized_text;
         
