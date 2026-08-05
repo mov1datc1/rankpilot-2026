@@ -184,20 +184,16 @@ export async function POST(request: NextRequest) {
     // We unwrap here so downstream code (chambersData save, DOCX generation) gets clean data.
     if (analysisData && typeof analysisData === 'object' && analysisData.analysis && typeof analysisData.analysis === 'object') {
       const inner = analysisData.analysis;
-      // Promote inner keys to top level (inner has location, firm_name, matter_evaluations, etc.)
+      // Promote ALL inner keys to top level
       for (const [k, v] of Object.entries(inner)) {
-        if (k === 'analysis') continue; // Skip self-reference
-        if (!(k in analysisData)) {
-          (analysisData as any)[k] = v;
-        }
+        if (k === 'analysis') continue;
+        (analysisData as any)[k] = v; // Always overwrite — inner values are the real ones
       }
-      // Always promote these critical fields even if they exist (inner values are more specific)
-      for (const key of ['location', 'current_band', 'score', 'firm_name', 'practice_area', 'matter_evaluations']) {
-        if (inner[key] !== undefined) {
-          (analysisData as any)[key] = inner[key];
-        }
-      }
-      console.log(`[ANALYSIS UNWRAP] Promoted keys from nested analysis: location=${(analysisData as any).location}, score=${(analysisData as any).score}`);
+      // Remove the nested wrapper to prevent confusion downstream
+      delete (analysisData as any).analysis;
+      console.log(`[ANALYSIS UNWRAP] ✅ Unwrapped and cleaned. location=${(analysisData as any).location}, score=${(analysisData as any).score}, keys=${Object.keys(analysisData).slice(0,8).join(',')}`);
+    } else {
+      console.log(`[ANALYSIS UNWRAP] ℹ️ No nested wrapper found. location=${(analysisData as any)?.location}, score=${(analysisData as any)?.score}`);
     }
 
     // Extract department/lawyers/contacts from AI metadata (new structured fields)
@@ -319,11 +315,16 @@ export async function POST(request: NextRequest) {
             }))
           } : {}),
           ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
-          // v17.1: Detect jurisdiction (country) from pipeline for A3 and market context
-          detectedJurisdiction: pyData.data?.strategic_context?.jurisdiction 
-            || pyData.data?.metadata?.jurisdiction
-            || analysisData?.location
-            || existingChambersData.detectedJurisdiction,
+          // v17.1.5: Detect jurisdiction — comprehensive chain with logging
+          detectedJurisdiction: (() => {
+            const j = pyData.data?.strategic_context?.jurisdiction 
+              || pyData.data?.metadata?.jurisdiction
+              || (analysisData as any)?.location
+              || existingChambersData.detectedJurisdiction
+              || null;
+            console.log(`[JURISDICTION SAVE] Result: '${j}' | Sources: sc.jurisdiction='${pyData.data?.strategic_context?.jurisdiction}', metadata.jurisdiction='${pyData.data?.metadata?.jurisdiction}', analysis.location='${(analysisData as any)?.location}', existing='${existingChambersData.detectedJurisdiction}' | guideRegion='${submission.guideRegion}'`);
+            return j;
+          })(),
         },
         status: 'Submitted'
       }

@@ -109,14 +109,15 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // v17.1: Detect jurisdiction from pipeline metadata (country-level, not region)
+    // v17.1.5: Detect jurisdiction from pipeline — with full debug logging
     const detectedJurisdiction = chambersData.detectedJurisdiction
       || chambersData.metadata?.jurisdiction 
       || context.jurisdiction
       || analysis.location
       || analysis.practice_area_location;
-    if (detectedJurisdiction && detectedJurisdiction !== submission.guideRegion) {
-      // Inject detected country into chambersData for builders to use
+    console.log(`[DOCX JURISDICTION] detectedJurisdiction='${detectedJurisdiction}' | chambersData.detectedJurisdiction='${chambersData.detectedJurisdiction}' | context.jurisdiction='${context.jurisdiction}' | analysis.location='${analysis.location}' | guideRegion='${submission.guideRegion}'`);
+    // Always inject — even if it matches guideRegion
+    if (detectedJurisdiction) {
       chambersData.detectedJurisdiction = detectedJurisdiction;
     }
     
