@@ -120,6 +120,147 @@ def strip_fillers(text: str) -> str:
     return cleaned
 
 
+def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name: str) -> str:
+    """v17.5.3: PROGRAMMATIC client descriptor verification and repair.
+    
+    The LLM tends to replace specific client descriptions with generic labels:
+      "Grupo Excelsior, one of Mexico's leading dairy producers" 
+      → "Grupo Excelsior, a prominent client"
+    
+    This function:
+    1. Extracts the client descriptor from the ORIGINAL text
+    2. Checks if key industry/sector words survived in the enhanced text
+    3. If lost, surgically splices the original descriptor back in
+    
+    This is DETERMINISTIC — no LLM involved, cannot be ignored.
+    """
+    if not original_raw or not enhanced_text or not client_name:
+        return enhanced_text
+    
+    # Step 1: Extract the client descriptor from the original
+    # Pattern: "ClientName, [descriptor phrase],"  or "ClientName, [descriptor phrase]."
+    # e.g., "Grupo Excelsior, one of Mexico's leading dairy producers, in the..."
+    client_clean = client_name.strip()
+    if not client_clean:
+        return enhanced_text
+    
+    # Find the client name in original and extract what follows
+    orig_lower = original_raw.lower()
+    client_lower = client_clean.lower()
+    
+    # Try to find "ClientName, <descriptor>" pattern
+    pos = orig_lower.find(client_lower)
+    if pos == -1:
+        # Try partial match (first significant word)
+        parts = client_clean.split()
+        for p in parts:
+            if len(p) > 3 and p[0].isupper():
+                pos = orig_lower.find(p.lower())
+                if pos != -1:
+                    break
+    
+    if pos == -1:
+        return enhanced_text
+    
+    # Get the text after client name in original
+    after_client_start = pos + len(client_lower)
+    remaining_orig = original_raw[after_client_start:]
+    
+    # Find the descriptor (text between commas or until period)
+    descriptor = ""
+    if remaining_orig.startswith(','):
+        # "ClientName, descriptor phrase, ..."
+        remaining_orig = remaining_orig[1:].strip()
+        # Find end of descriptor (next comma, period, or "on the")
+        end_markers = [', on ', ', in ', ', to ', ', for ', '. ']
+        end_pos = len(remaining_orig)
+        for marker in end_markers:
+            mp = remaining_orig.lower().find(marker)
+            if mp != -1 and mp < end_pos:
+                end_pos = mp
+        descriptor = remaining_orig[:end_pos].strip()
+    
+    if not descriptor or len(descriptor) < 5:
+        return enhanced_text
+    
+    # Step 2: Extract key industry/sector words from the descriptor
+    # These are the words that carry the client's IDENTITY
+    IDENTITY_WORDS = set()
+    # Common industry descriptors
+    industry_terms = [
+        'dairy', 'pharmaceutical', 'retail', 'hospitality', 'engineering',
+        'manufacturing', 'automotive', 'infrastructure', 'energy', 'transport',
+        'mining', 'oil', 'gas', 'telecommunications', 'technology', 'banking',
+        'insurance', 'reinsurance', 'agriculture', 'food', 'beverage',
+        'construction', 'real estate', 'media', 'entertainment', 'healthcare',
+        'chemical', 'textile', 'logistics', 'shipping', 'aviation',
+        'steel', 'cement', 'plastics', 'electronics', 'software',
+        'consulting', 'financial', 'investment', 'consumer', 'industrial',
+        'producer', 'producers', 'manufacturer', 'chain', 'group',
+        'decades', 'years', 'century', 'oldest', 'leading', 'largest',
+        'major', 'premier', 'top', 'first',
+    ]
+    
+    descriptor_lower = descriptor.lower()
+    descriptor_words = [w for w in descriptor_lower.split() if w in industry_terms]
+    
+    if not descriptor_words:
+        return enhanced_text
+    
+    # Step 3: Check if these identity words survived in the enhanced text
+    enhanced_lower = enhanced_text.lower()
+    preserved = sum(1 for w in descriptor_words if w in enhanced_lower)
+    total = len(descriptor_words)
+    
+    if preserved >= total * 0.6:  # 60%+ preserved = OK
+        return enhanced_text
+    
+    # Step 4: REPAIR — splice the original descriptor back in
+    # Find where the client name appears in enhanced text
+    enh_pos = enhanced_lower.find(client_lower)
+    if enh_pos == -1:
+        # Try partial
+        parts = client_clean.split()
+        for p in parts:
+            if len(p) > 3:
+                enh_pos = enhanced_lower.find(p.lower())
+                if enh_pos != -1:
+                    break
+    
+    if enh_pos == -1:
+        return enhanced_text
+    
+    # Find end of client name in enhanced
+    enh_after = enh_pos + len(client_lower)
+    enh_remaining = enhanced_text[enh_after:]
+    
+    # Check if there's already a descriptor after the client name
+    if enh_remaining.startswith(','):
+        # Replace the generic descriptor with the original one
+        # Find end of existing descriptor
+        rest = enh_remaining[1:].strip()
+        end_markers = [', on ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ', ', plays']
+        end_pos = len(rest)
+        for marker in end_markers:
+            mp = rest.lower().find(marker)
+            if mp != -1 and mp < end_pos:
+                end_pos = mp
+        
+        # Reconstruct with original descriptor
+        repaired = (
+            enhanced_text[:enh_after] + 
+            ', ' + descriptor + 
+            rest[end_pos:]
+        )
+        
+        lost_words = [w for w in descriptor_words if w not in enhanced_lower]
+        print(f"  [DESCRIPTOR REPAIR v17.5.3] Restored '{descriptor[:60]}...' for client '{client_clean}'")
+        print(f"    Lost industry words: {lost_words}")
+        return repaired
+    
+    return enhanced_text
+
+
 def safe_json_loads(text: str, fallback=None):
     """Parse JSON with multiple fallback strategies."""
     if not text:
@@ -1872,6 +2013,16 @@ def optimization_node(state: AgentState) -> Dict:
                     # Drastic compression — use original
                     print(f"  [ENHANCEMENT GATE] Using original text (word ratio {enhancement_details.get('word_ratio', 0):.2f} too low)")
                     optimized_text = strip_markdown(original_summary)
+            
+            # ═══ v17.5: FILLER STRIP — remove generic phrases ═══
+            optimized_text = strip_fillers(optimized_text)
+            
+            # ═══ v17.5.3: CLIENT DESCRIPTOR VERIFICATION — programmatic repair ═══
+            # This is DETERMINISTIC — extracts the client descriptor from original,
+            # checks if the LLM preserved it, and splices it back if lost.
+            # e.g., "dairy producers" → restored if LLM replaced with "prominent client"
+            client_name = matter.get('client', '')
+            optimized_text = verify_client_descriptors(raw_text, optimized_text, client_name)
             
             matter['optimized_text'] = optimized_text
             matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
