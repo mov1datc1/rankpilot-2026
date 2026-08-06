@@ -5,6 +5,22 @@ Format follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v17.6.1] — 2026-08-06
+
+### 🔧 Cross-Border Validator: Comprehensive Sweep + Expanded Patterns
+
+**Problem**: Owner Point #6 — "cross-border" appeared 7 times in audit reasoning trace despite Data Protection being a domestic practice.
+
+**Root cause**: `validate_cross_border()` only swept 3 named fields (`the_state_of_play`, `competitive_context`, `competitive_positioning_text`) but cross-border references leaked through HYPOTHESIS_CONSTRUCTION, REFUTATION_ENGINE, COMPARATIVE_ANALYSIS, EDITORIAL_CONFIDENCE nodes into unnamed reasoning trace fields.
+
+**Fixes**:
+- Expanded `CROSS_BORDER_PATTERNS` from 7 → 12 patterns (+`limited cross-border`, `lack of cross-border`, `undermined by cross-border`, etc.)
+- Changed audit sweep from 3 named fields → ALL string fields in audit dict
+- Added top-level `summary` and `competitive_identity` sweep
+- **5/5 real v17-5.1 sentences correctly caught and removed**
+
+---
+
 ## [v17.6] — 2026-08-06
 
 ### 🔧 Complete Rewrite: `verify_client_descriptors()` — 7/7 clients now pass
