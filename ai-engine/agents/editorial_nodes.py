@@ -129,6 +129,29 @@ Contrast the firm's lawyers against individually recognised practitioners.""")
 No verified firm ranking data exists for this combination.
 ABSOLUTE PROHIBITION: Do NOT reference any firm bands, tiers, peer firms, or firm positions.
 Evaluate the submission purely on evidence quality.""")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v17.7: CROSS-BORDER PROHIBITION — propagated to ALL editorial nodes
+    # For domestic practices (data protection, compliance, tax, labour),
+    # cross-border is NOT relevant. The LLM must not penalize its absence.
+    # ═══════════════════════════════════════════════════════════════
+    cross_border_relevant = strategic_context.get("cross_border_relevant", True)
+    if not cross_border_relevant:
+        injections.append("""
+### CROSS-BORDER PROHIBITION (CONSTITUTIONAL RULE — v17.7)
+This practice area does NOT require cross-border work.
+ABSOLUTE PROHIBITIONS:
+- Do NOT mention "cross-border" as a weakness, gap, limitation, or missing element
+- Do NOT say "lacks cross-border work", "limited cross-border", or "no cross-border evidence"
+- Do NOT penalize, downgrade confidence, or lower band alignment because of absent cross-border work
+- Do NOT recommend "expand cross-border capabilities" or similar business development advice
+- Do NOT use "cross-border" as a factor in any evaluation dimension
+
+WHAT TO DO INSTEAD:
+- For domestic regulatory practices (data protection, compliance, tax, labour),
+  sophisticated LOCAL mandates are MORE probative than cross-border work
+- Focus on: regulatory complexity, client sophistication, market depth, matter significance
+- Omit cross-border observations entirely when irrelevant to the practice""")
         
     if injections:
         return prompt_template + "\n\n" + "\n\n".join(injections)
@@ -421,8 +444,11 @@ def identity_discovery_node(state: AgentState) -> Dict:
         "practice_intelligence": state.get("practice_intelligence", {}),
     }
     
+    # v17.7: Inject cross-border + RAVL directives into system prompt
+    system_prompt = _inject_directives(IDENTITY_DISCOVERY_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", IDENTITY_DISCOVERY_PROMPT),
+        ("system", system_prompt),
         ("human", "Discover the competitive identity from this evidence: {data}")
     ])
     
@@ -507,8 +533,11 @@ def hypothesis_construction_node(state: AgentState) -> Dict:
     if editorial_memory:
         input_data["EDITORIAL_MEMORY"] = editorial_memory
     
+    # v17.7: Inject cross-border + RAVL directives into system prompt
+    system_prompt = _inject_directives(HYPOTHESIS_CONSTRUCTION_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", HYPOTHESIS_CONSTRUCTION_PROMPT),
+        ("system", system_prompt),
         ("human", "Generate and rank editorial hypotheses based on this evidence: {data}")
     ])
     
@@ -634,8 +663,11 @@ def comparative_analysis_node(state: AgentState) -> Dict:
     if editorial_memory:
         input_data["EDITORIAL_MEMORY"] = editorial_memory
     
+    # v17.7: Inject cross-border + RAVL directives into system prompt
+    system_prompt = _inject_directives(COMPARATIVE_ANALYSIS_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", COMPARATIVE_ANALYSIS_PROMPT),
+        ("system", system_prompt),
         ("human", "Perform a 13-dimension comparative analysis: {data}")
     ])
     
@@ -686,8 +718,11 @@ def editorial_confidence_node(state: AgentState) -> Dict:
         "comprehension": state.get("comprehension", {}),
     }
     
+    # v17.7: Inject cross-border + RAVL directives into system prompt
+    system_prompt = _inject_directives(EDITORIAL_CONFIDENCE_PROMPT, state.get("strategic_context", {}))
+    
     prompt = ChatPromptTemplate.from_messages([
-        ("system", EDITORIAL_CONFIDENCE_PROMPT),
+        ("system", system_prompt),
         ("human", "Run the Editorial Defensibility Test on these results: {data}")
     ])
     
