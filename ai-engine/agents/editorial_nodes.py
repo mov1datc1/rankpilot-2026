@@ -12,6 +12,7 @@ Pipeline: practice_intelligence → comprehension → identity_discovery →
 
 import json
 import os
+import time
 from typing import Dict
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -56,12 +57,51 @@ load_dotenv()
 
 
 def get_model():
-    """Shared model configuration for editorial reasoning nodes."""
-    return ChatOpenAI(
-        model_name="gpt-4o",
-        temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency
-        openai_api_key=os.environ.get("OPENAI_API_KEY")
-    )
+    """v18.0: GPT-5.6-terra with reasoning_effort=high for editorial depth.
+    
+    Editorial nodes require deep reasoning (hypothesis construction, refutation,
+    comparative analysis). Uses 'high' reasoning_effort by default.
+    
+    CRITICAL FIX: Added request_timeout=300 and max_tokens=16384.
+    These were MISSING in the original, causing indefinite hangs with
+    unstable internet connections (root cause of the 18-min pipeline freeze).
+    """
+    model_name = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
+    reasoning = os.environ.get("REASONING_EFFORT_EDITORIAL", "high")
+    
+    kwargs = {
+        "model_name": model_name,
+        "temperature": 0.0,
+        "max_tokens": 16384,     # v18.0: Editorial outputs are longer (blueprints, architectures)
+        "request_timeout": 300,  # v18.0: CRITICAL — was missing, caused hangs
+        "openai_api_key": os.environ.get("OPENAI_API_KEY"),
+    }
+    
+    # reasoning_effort only supported on GPT-5.x models
+    if "gpt-5" in model_name:
+        kwargs["model_kwargs"] = {"reasoning_effort": reasoning}
+    
+    return ChatOpenAI(**kwargs)
+
+
+def invoke_with_retry(chain, input_data, max_retries=3, base_delay=5):
+    """v18.0: Retry wrapper for unstable connections (shared with nodes.py)."""
+    for attempt in range(max_retries):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            err_str = str(e).lower()
+            is_retriable = any(kw in err_str for kw in [
+                "timeout", "connection", "reset by peer", "broken pipe",
+                "eof", "timed out", "network", "ssl", "connectionerror",
+                "server_error", "502", "503", "529"
+            ])
+            if not is_retriable or attempt == max_retries - 1:
+                raise
+            delay = base_delay * (2 ** attempt)
+            print(f"[RETRY v18.0] Editorial node attempt {attempt+1}/{max_retries} failed: {type(e).__name__}")
+            print(f"[RETRY v18.0] Retrying in {delay}s...")
+            time.sleep(delay)
 
 
 def _safe_dump(obj) -> dict:

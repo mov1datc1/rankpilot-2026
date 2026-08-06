@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import time
 from datetime import datetime
 from typing import Dict
 from dotenv import load_dotenv
@@ -101,6 +102,22 @@ GENERIC_FILLERS = [
     (r'\bstrengthened compliance\b', 'improved compliance'),
     (r'\bdemonstrating expertise\b', 'showing capability'),
     (r'\bwith a keen focus\b', 'focusing'),
+    # === v18.0: EXTENDED PATTERNS (compensate for logit_bias removal on GPT-5.6) ===
+    (r'\bunderpinned\b', 'supported'),
+    (r'\bspearheaded\b', 'led'),
+    (r'\bsafeguarding\b', 'protecting'),
+    (r'\blandscape\b(?!\s+(?:of|in|for))', 'environment'),
+    (r'\brobust\b', 'strong'),
+    (r'\bleveraged?\b', 'used'),
+    (r'\bfacilitated?\b', 'enabled'),
+    (r'\bcommitment to\b', 'focus on'),
+    (r'\bdemonstrated a\b', 'showed'),
+    (r'\bnotable\b', 'significant'),
+    (r'\binvaluable\b', 'important'),
+    (r'\btransformative\b', 'significant'),
+    (r'\brendered\b', 'provided'),
+    (r'\bprofound\b', 'significant'),
+    (r'\boutstanding\b', 'strong'),
 ]
 
 def strip_fillers(text: str) -> str:
@@ -396,36 +413,65 @@ def safe_json_loads(text: str, fallback=None):
 
 def get_model():
     """
-    Configuración para OpenAI Directo (GPT-4o o GPT-4o-mini).
-    Asegúrate de tener OPENAI_API_KEY en tu archivo .env.
+    v18.0: Migrated from GPT-4o to GPT-5.6-terra.
     
-    v17.5: logit_bias physically bans filler tokens at the decoding level.
-    Unlike prompt prohibitions (which the LLM can ignore), logit_bias=-100
-    makes it mathematically impossible for these tokens to appear.
-    Token IDs verified with tiktoken o200k_base encoding for gpt-4o.
+    BREAKING CHANGE: logit_bias is NOT supported by GPT-5.6-terra (API returns
+    error 400: "Unsupported parameter"). Filler word defense now relies on:
+      - Layer 2: Prompt rules with few-shot examples (suggestive)
+      - Layer 3: strip_fillers() — 45+ regex patterns (DETERMINISTIC)
+      - Layer 4: verify_client_descriptors() (DETERMINISTIC)
+    
+    NEW: reasoning_effort parameter controls depth of internal reasoning.
+    Configurable via REASONING_EFFORT env var (none/low/medium/high/xhigh/max).
+    Model configurable via OPENAI_MODEL env var for easy A/B testing & rollback.
     """
-    # v17.5: Hard-ban filler word tokens (o200k_base encoding)
-    # Each maps a single-token filler word to -100 (impossible to generate)
-    FILLER_LOGIT_BIAS = {
-        "96138": -100,   # " pivotal"
-        "77640": -100,   # " seamlessly"
-        "124315": -100,  # " meticulously"
-        "103445": -100,  # " beacon"
-        "79130": -100,   # " testament"
-        "144018": -100,  # " cornerstone"
-        "68202": -100,   # " holistic"
-        "111864": -100,  # " paramount"
-        "168008": -100,  # " underscores"
+    model_name = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
+    reasoning = os.environ.get("REASONING_EFFORT", "medium")
+    
+    kwargs = {
+        "model_name": model_name,
+        "temperature": 0.0,
+        "max_tokens": 8192,
+        "request_timeout": 300,
+        "openai_api_key": os.environ.get("OPENAI_API_KEY"),
     }
     
-    return ChatOpenAI(
-        model_name="gpt-4o",
-        temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency between runs
-        max_tokens=8192,     # v17.0: Prevent JSON truncation — 8192 covers 7+ matter evals without API hang
-        request_timeout=300, # v17.0: 5min timeout to prevent indefinite hangs
-        openai_api_key=os.environ.get("OPENAI_API_KEY"),
-        model_kwargs={"logit_bias": FILLER_LOGIT_BIAS}  # v17.5: Physical token ban
-    )
+    # reasoning_effort only supported on GPT-5.x models
+    if "gpt-5" in model_name:
+        kwargs["model_kwargs"] = {"reasoning_effort": reasoning}
+    # logit_bias only supported on GPT-4o/4.1 (legacy fallback)
+    elif "gpt-4o" in model_name or "gpt-4.1" in model_name:
+        kwargs["model_kwargs"] = {"logit_bias": {
+            "96138": -100, "77640": -100, "124315": -100,
+            "103445": -100, "79130": -100, "144018": -100,
+            "68202": -100, "111864": -100, "168008": -100,
+        }}
+    
+    return ChatOpenAI(**kwargs)
+
+
+def invoke_with_retry(chain, input_data, max_retries=3, base_delay=5):
+    """v18.0: Retry wrapper for unstable connections.
+    Uses exponential backoff: 5s → 10s → 20s.
+    Catches API timeouts and connection errors that occur with
+    unstable internet — especially critical for GPT-5.6-terra
+    which generates denser outputs than GPT-4o."""
+    for attempt in range(max_retries):
+        try:
+            return chain.invoke(input_data)
+        except Exception as e:
+            err_str = str(e).lower()
+            is_retriable = any(kw in err_str for kw in [
+                "timeout", "connection", "reset by peer", "broken pipe",
+                "eof", "timed out", "network", "ssl", "connectionerror",
+                "server_error", "502", "503", "529"
+            ])
+            if not is_retriable or attempt == max_retries - 1:
+                raise
+            delay = base_delay * (2 ** attempt)
+            print(f"[RETRY v18.0] Attempt {attempt+1}/{max_retries} failed: {type(e).__name__}")
+            print(f"[RETRY v18.0] Retrying in {delay}s...")
+            time.sleep(delay)
 
 # 1. INGESTION NODE (v14.0 — Trust Layer)
 def ingestion_node(state: AgentState) -> Dict:
@@ -1541,6 +1587,35 @@ RankPilot does not have verified ranking data for this combination.
     analysis_prompt = f"""{ravl_block}
 
 {analysis_prompt}"""
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v18.0: CROSS-BORDER PROHIBITION for analysis node
+    # Previously only existed in editorial_nodes._inject_directives()
+    # but was MISSING here, causing GPT-5.6-terra to flag "Cross-border
+    # evidence" as a gap for domestic practices like Data Protection.
+    # ═══════════════════════════════════════════════════════════════
+    cross_border_relevant = strategic_context.get("cross_border_relevant", True)
+    if not cross_border_relevant:
+        cross_border_block = """
+### CROSS-BORDER PROHIBITION (CONSTITUTIONAL RULE — v18.0)
+This practice area does NOT require cross-border work.
+ABSOLUTE PROHIBITIONS:
+- Do NOT list "cross-border" as a gap, weakness, risk, or missing element
+- Do NOT mention "lacks cross-border", "zero cross-border matters", or "no cross-border evidence"
+- Do NOT penalize or lower confidence because of absent cross-border work
+- Do NOT recommend "expand cross-border capabilities"
+- In key_evidence_gaps: Do NOT include any cross-border related gaps
+- cross_border_matters count of 0 is EXPECTED and NOT a deficiency
+
+WHAT TO DO INSTEAD:
+- For domestic practices (data protection, compliance, tax, labour),
+  sophisticated LOCAL mandates are MORE probative than cross-border work
+- Focus on: regulatory complexity, client sophistication, market depth
+"""
+        analysis_prompt = f"""{cross_border_block}
+
+{analysis_prompt}"""
+        print(f"[ANALYSIS NODE v18.0] Cross-border prohibition injected (domestic practice)")
     
     # v17.0: Inject LIVE BENCHMARK context when available
     if strategic_context.get("benchmark_source") == "live_scrape":
