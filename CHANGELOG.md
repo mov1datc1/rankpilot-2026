@@ -43,6 +43,51 @@ The LLM kept generating filler phrases despite prompt prohibitions. Root cause: 
 | robust framework | ❌ (phrase) | ✅ | ✅ |
 | navigate complex | ❌ (phrase) | ✅ | ✅ |
 
+### v17.5.1 — Broaden `solidified` regex
+- Pattern `\bsolidified its position\b` only caught ONE variant
+- Changed to `\bsolidified its\b` → catches `solidified its reputation`, `solidified its role`, etc.
+
+### v17.5.2 — CLIENT IDENTITY PRESERVATION rule (few-shot prompt)
+- **Problem found via Original-vs-Enhanced comparison:**
+  - Excelsior: `"one of Mexico's leading dairy producers"` → `"a prominent client"` ❌
+  - Modelquipo: `"an engineering and manufacturing group"` → `"a key player in its sector"` ❌
+- **Fix**: Added `CLIENT IDENTITY PRESERVATION` block to `MATTER_ENHANCER_PROMPT` with:
+  - 4 ❌ forbidden examples (exactly what the LLM was doing)
+  - 3 ✅ correct examples (copy original descriptor, then ADD context)
+  - Rule: "Copy the original client descriptor FIRST, then ADD context. NEVER replace it."
+
+### v17.5.3 — ARCHITECTURAL FIX: `verify_client_descriptors()` (4th layer)
+
+**Root cause**: Prompt rules are "suggestions" the LLM can ignore. Client descriptor loss is NOT fixable with prompts alone.
+
+**Solution**: Programmatic post-processing function (DETERMINISTIC — no LLM involved):
+1. Extracts client descriptor from ORIGINAL text (e.g., "one of Mexico's leading dairy producers")
+2. Extracts industry/sector keywords (dairy, engineering, manufacturing, decades, etc.)
+3. Checks if 60%+ of keywords survived in enhanced text
+4. If NOT → surgically splices the original descriptor back in
+
+**Unit tests passed:**
+- Excelsior: ✅ Restored "dairy producers" (was "prominent client")
+- Modelquipo: ✅ Restored "engineering and manufacturing" (was "key player")
+- Hotel Riazor: ✅ Restored "five decades of experience" (was "recognised entity")
+- Chedraui: ✅ NOT modified (already had "retail" — correct behavior)
+
+**4-Layer Defense Architecture (v17.5.3):**
+
+```
+Original → [LLM + logit_bias] → [strip_fillers] → [verify_client_descriptors] → Output
+            Layer 1+2              Layer 3           Layer 4
+            (token ban +           (31 regex)         (descriptor repair)
+             prompt rules)
+```
+
+| Layer | Function | Type | Can fail? |
+|-------|----------|------|-----------|
+| 1. `logit_bias` | Ban 9 filler tokens | Token-level | ❌ Impossible |
+| 2. Prompt rules | Few-shot examples | LLM instruction | 🟡 Can ignore |
+| 3. `strip_fillers()` | 31 regex patterns | Deterministic | ❌ No |
+| 4. `verify_client_descriptors()` | Restore lost descriptors | Deterministic | ❌ No |
+
 ---
 
 ## [v17.2] — 2026-08-05
