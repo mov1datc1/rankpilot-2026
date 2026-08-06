@@ -121,7 +121,7 @@ def strip_fillers(text: str) -> str:
 
 
 def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name: str) -> str:
-    """v17.5.3: PROGRAMMATIC client descriptor verification and repair.
+    """v17.6: PROGRAMMATIC client descriptor verification and repair.
     
     The LLM tends to replace specific client descriptions with generic labels:
       "Grupo Excelsior, one of Mexico's leading dairy producers" 
@@ -137,89 +137,119 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     if not original_raw or not enhanced_text or not client_name:
         return enhanced_text
     
-    # Step 1: Extract the client descriptor from the original
-    # Pattern: "ClientName, [descriptor phrase],"  or "ClientName, [descriptor phrase]."
-    # e.g., "Grupo Excelsior, one of Mexico's leading dairy producers, in the..."
     client_clean = client_name.strip()
     if not client_clean:
         return enhanced_text
     
-    # Find the client name in original and extract what follows
+    # ═══ Step 1: Find the client name in original text ═══
     orig_lower = original_raw.lower()
     client_lower = client_clean.lower()
     
-    # Try to find "ClientName, <descriptor>" pattern
     pos = orig_lower.find(client_lower)
     if pos == -1:
-        # Try partial match (first significant word)
+        # Try partial match — each significant word
         parts = client_clean.split()
         for p in parts:
             if len(p) > 3 and p[0].isupper():
                 pos = orig_lower.find(p.lower())
                 if pos != -1:
+                    # Adjust client_lower to match what we found
+                    client_lower = p.lower()
                     break
     
     if pos == -1:
         return enhanced_text
     
-    # Get the text after client name in original
+    # ═══ Step 2: Extract descriptor phrase after client name ═══
     after_client_start = pos + len(client_lower)
     remaining_orig = original_raw[after_client_start:]
     
-    # Find the descriptor (text between commas or until period)
     descriptor = ""
-    if remaining_orig.startswith(','):
-        # "ClientName, descriptor phrase, ..."
-        remaining_orig = remaining_orig[1:].strip()
-        # Find end of descriptor (next comma, period, or "on the")
-        end_markers = [', on ', ', in ', ', to ', ', for ', '. ']
+    # Pattern A: "ClientName, descriptor phrase, ..." (comma-delimited)
+    if remaining_orig.lstrip().startswith(','):
+        remaining_orig = remaining_orig.lstrip()[1:].strip()
+        # Find end of descriptor — first clause boundary
+        end_markers = [', on ', ', in the ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ']
         end_pos = len(remaining_orig)
         for marker in end_markers:
             mp = remaining_orig.lower().find(marker)
-            if mp != -1 and mp < end_pos:
+            if mp != -1 and mp < end_pos and mp > 5:  # at least 5 chars of descriptor
                 end_pos = mp
+        descriptor = remaining_orig[:end_pos].strip()
+    # Pattern B: "ClientName — descriptor" (em dash)
+    elif remaining_orig.lstrip().startswith('-') or remaining_orig.lstrip().startswith('—'):
+        remaining_orig = remaining_orig.lstrip().lstrip('-—').strip()
+        end_pos = remaining_orig.find('.')
+        if end_pos == -1:
+            end_pos = len(remaining_orig)
         descriptor = remaining_orig[:end_pos].strip()
     
     if not descriptor or len(descriptor) < 5:
         return enhanced_text
     
-    # Step 2: Extract key industry/sector words from the descriptor
-    # These are the words that carry the client's IDENTITY
-    IDENTITY_WORDS = set()
-    # Common industry descriptors
-    industry_terms = [
+    # ═══ Step 3: Extract identity-bearing words from the descriptor ═══
+    # Comprehensive list of words that carry client identity
+    industry_terms = {
+        # Sectors
         'dairy', 'pharmaceutical', 'retail', 'hospitality', 'engineering',
         'manufacturing', 'automotive', 'infrastructure', 'energy', 'transport',
-        'mining', 'oil', 'gas', 'telecommunications', 'technology', 'banking',
-        'insurance', 'reinsurance', 'agriculture', 'food', 'beverage',
-        'construction', 'real estate', 'media', 'entertainment', 'healthcare',
-        'chemical', 'textile', 'logistics', 'shipping', 'aviation',
+        'transportation', 'mining', 'oil', 'gas', 'telecommunications', 'technology',
+        'banking', 'insurance', 'reinsurance', 'agriculture', 'food', 'beverage',
+        'construction', 'media', 'entertainment', 'healthcare', 'health',
+        'chemical', 'textile', 'logistics', 'shipping', 'aviation', 'aerospace',
         'steel', 'cement', 'plastics', 'electronics', 'software',
         'consulting', 'financial', 'investment', 'consumer', 'industrial',
-        'producer', 'producers', 'manufacturer', 'chain', 'group',
-        'decades', 'years', 'century', 'oldest', 'leading', 'largest',
-        'major', 'premier', 'top', 'first',
-    ]
+        'advertising', 'marketing', 'information', 'services', 'experience',
+        'education', 'defense', 'agriculture', 'forestry', 'fishing',
+        'communications', 'digital', 'biotechnology', 'cosmetics', 'fashion',
+        # Organization types
+        'producer', 'producers', 'manufacturer', 'manufacturers', 'chain',
+        'group', 'conglomerate', 'corporation', 'provider', 'providers',
+        'distributor', 'operator', 'developer', 'contractor',
+        # Qualifiers that describe identity
+        'diversified', 'leading', 'largest', 'major', 'premier', 'top',
+        'first', 'oldest', 'multinational', 'international', 'domestic',
+        'independent', 'private', 'public', 'state-owned', 'family-owned',
+        # Time-based descriptors
+        'decades', 'years', 'century', 'established',
+        # Multi-word phrase components
+        'call', 'center', 'real', 'estate', 'private', 'equity',
+        'venture', 'capital', 'natural', 'resources', 'public', 'sector',
+    }
     
     descriptor_lower = descriptor.lower()
+    # Extract matching words
     descriptor_words = [w for w in descriptor_lower.split() if w in industry_terms]
     
-    if not descriptor_words:
+    # Also check multi-word phrases
+    multi_word_phrases = [
+        'call center', 'real estate', 'private equity', 'venture capital',
+        'natural resources', 'public sector', 'oil and gas', 'food and beverage',
+    ]
+    matching_phrases = [p for p in multi_word_phrases if p in descriptor_lower]
+    
+    # Combine: each matching phrase counts as 2 identity signals
+    identity_score = len(descriptor_words) + len(matching_phrases) * 2
+    
+    if identity_score == 0:
         return enhanced_text
     
-    # Step 3: Check if these identity words survived in the enhanced text
+    # ═══ Step 4: Check if identity words survived in enhanced text ═══
     enhanced_lower = enhanced_text.lower()
-    preserved = sum(1 for w in descriptor_words if w in enhanced_lower)
-    total = len(descriptor_words)
     
-    if preserved >= total * 0.6:  # 60%+ preserved = OK
+    # Count preserved words
+    preserved_words = [w for w in descriptor_words if w in enhanced_lower]
+    preserved_phrases = [p for p in matching_phrases if p in enhanced_lower]
+    preserved_score = len(preserved_words) + len(preserved_phrases) * 2
+    
+    preservation_ratio = preserved_score / max(identity_score, 1)
+    
+    if preservation_ratio >= 0.5:  # 50%+ of identity preserved = OK
         return enhanced_text
     
-    # Step 4: REPAIR — splice the original descriptor back in
-    # Find where the client name appears in enhanced text
+    # ═══ Step 5: REPAIR — splice the original descriptor back in ═══
     enh_pos = enhanced_lower.find(client_lower)
     if enh_pos == -1:
-        # Try partial
         parts = client_clean.split()
         for p in parts:
             if len(p) > 3:
@@ -230,21 +260,25 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     if enh_pos == -1:
         return enhanced_text
     
-    # Find end of client name in enhanced
+    # Find end of client name in enhanced text
     enh_after = enh_pos + len(client_lower)
     enh_remaining = enhanced_text[enh_after:]
     
-    # Check if there's already a descriptor after the client name
-    if enh_remaining.startswith(','):
-        # Replace the generic descriptor with the original one
-        # Find end of existing descriptor
-        rest = enh_remaining[1:].strip()
-        end_markers = [', on ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ', ', plays']
+    # Replace existing (generic) descriptor with original descriptor
+    if enh_remaining.lstrip().startswith(','):
+        offset = len(enh_remaining) - len(enh_remaining.lstrip())
+        rest = enh_remaining.lstrip()[1:].strip()
+        
+        # Find end of existing generic descriptor
+        end_markers = [', on ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ',
+                       ', plays', ', engaged', ', entered', ', undertook', ', retained']
         end_pos = len(rest)
         for marker in end_markers:
             mp = rest.lower().find(marker)
-            if mp != -1 and mp < end_pos:
+            if mp != -1 and mp < end_pos and mp > 3:
                 end_pos = mp
+        
+        old_descriptor = rest[:end_pos]
         
         # Reconstruct with original descriptor
         repaired = (
@@ -253,9 +287,11 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
             rest[end_pos:]
         )
         
-        lost_words = [w for w in descriptor_words if w not in enhanced_lower]
-        print(f"  [DESCRIPTOR REPAIR v17.5.3] Restored '{descriptor[:60]}...' for client '{client_clean}'")
-        print(f"    Lost industry words: {lost_words}")
+        lost = [w for w in descriptor_words if w not in enhanced_lower]
+        print(f"  [DESCRIPTOR REPAIR v17.6] Client '{client_clean}'")
+        print(f"    Replaced: \"{old_descriptor[:80]}\"")
+        print(f"    With:     \"{descriptor[:80]}\"")
+        print(f"    Lost words: {lost}")
         return repaired
     
     return enhanced_text

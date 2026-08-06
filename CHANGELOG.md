@@ -5,7 +5,35 @@ Format follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [v17.5] — 2026-08-06
+## [v17.6] — 2026-08-06
+
+### 🔧 Complete Rewrite: `verify_client_descriptors()` — 7/7 clients now pass
+
+**v17.5.3 fixed 5/7 clients but FAILED on Grupo Hermes and MEGA DIRECT because:**
+1. `industry_terms` list was too narrow — missing: `diversified`, `services`, `advertising`, `marketing`, `information`, `conglomerate`, `provider`, `call`, `center`
+2. Only matched comma-delimited descriptors — missed em-dash format (`ClientName — descriptor`)
+3. Single-word matching missed multi-word phrases like `call center`
+
+**v17.6 fixes:**
+- Expanded `industry_terms` from 31 → 60+ words (added services, conglomerate, diversified, advertising, etc.)
+- Added multi-word phrase matching (`call center`, `real estate`, `private equity`, etc.)
+- Added em-dash pattern (`ClientName — descriptor`) for client list formats
+- Added more end markers (`, engaged`, `, undertook`, `, retained`) for descriptor boundary detection
+- Scoring system: each phrase match counts as 2 identity signals
+
+**Test results — 7/7:**
+| Client | Before v17.6 | After v17.6 | Key words |
+|--------|-------------|-------------|-----------|
+| Excelsior | ✅ was OK | ✅ | dairy, producers |
+| Modelquipo | ✅ was OK | ✅ | engineering, manufacturing |
+| Hotel Riazor | ✅ was OK | ✅ | decades, experience |
+| Biocodex | ✅ was OK | ✅ | pharmaceutical |
+| Chedraui | ✅ was OK | ✅ | retail |
+| **Grupo Hermes** | 🔴 FAILED | ✅ **FIXED** | diversified, infrastructure, energy, transport, automotive |
+| **MEGA DIRECT** | 🔴 FAILED | ✅ **FIXED** | call center, marketing, experience |
+
+---
+
 
 ### 🧬 PHYSICAL TOKEN BAN: logit_bias Filler Prevention (3-Layer Defense)
 
