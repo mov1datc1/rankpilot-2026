@@ -61,6 +61,65 @@ def strip_markdown(text: str) -> str:
     return text.strip()
 
 
+# ═══════════════════════════════════════════════════════════════
+# v17.5: CENTRALIZED FILLER PHRASE STRIPPER (Module Level)
+# Owner directive: "The system substitutes evidence with elegance.
+# 'played a pivotal role', 'robust framework', 'comprehensive advice'
+# — all seven matters end up sounding the same."
+# This runs on ALL LLM output: matters, B7, any future text.
+# ═══════════════════════════════════════════════════════════════
+GENERIC_FILLERS = [
+    # === STANDALONE ADJECTIVES (the LLM's favorite crutches) ===
+    (r'\bpivotal\b', 'important'),
+    (r'\bseamlessly\b', 'effectively'),
+    (r'\bmeticulously\b', 'carefully'),
+    (r'\bholistic\b', 'integrated'),
+    (r'\bparamount\b', 'significant'),
+    # === FILLER PHRASES ===
+    (r'\bstands as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
+    (r'\bserves as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
+    (r'\bis a testament to\b', 'demonstrates'),
+    (r'\bcarved out a niche\b', 'specialises'),
+    (r'\bsolidified its position\b', 'established itself'),
+    (r'\bunderscores\b', 'demonstrates'),
+    (r'\brobust (?:framework|infrastructure|system|platform)\b', 'framework'),
+    (r'\bcomprehensive\b', 'thorough'),
+    (r'\bdistinguished\b', 'recognised'),
+    (r'\benhanced compliance posture\b', 'improved compliance'),
+    (r'\bcomplex regulatory landscape\b', 'regulatory environment'),
+    (r'\bnavigate the intricacies\b', 'address the requirements'),
+    (r'\bnavigate (?:the )?complex\b', 'address'),
+    (r'\binstrumental in\b', 'central to'),
+    (r'\bplayed a (?:crucial|key|critical|instrumental|significant|pivotal) role\b', 'contributed'),
+    (r'\bat the forefront of\b', 'active in'),
+    (r'\bbeacon of (?:expertise|excellence)\b', 'centre of expertise'),
+    (r'\bexemplifies\b', 'demonstrates'),
+    (r'\bprofound and enduring\b', 'long-standing'),
+    (r'\btestament to\b', 'evidence of'),
+    (r'\bcornerstone of\b', 'central to'),
+    (r'\bauthoritative role\b', 'role'),
+    (r'\bstrengthened compliance\b', 'improved compliance'),
+    (r'\bdemonstrating expertise\b', 'showing capability'),
+    (r'\bwith a keen focus\b', 'focusing'),
+]
+
+def strip_fillers(text: str) -> str:
+    """v17.5: Remove generic filler phrases from any LLM-generated text.
+    Centralized function called on all output: matters, B7, audit sections."""
+    if not text:
+        return text
+    cleaned = text
+    count = 0
+    for pattern, replacement in GENERIC_FILLERS:
+        new_text = re.sub(pattern, replacement, cleaned, flags=re.IGNORECASE)
+        if new_text != cleaned:
+            count += 1
+        cleaned = new_text
+    if count > 0:
+        print(f"[FILLER STRIP v17.5] Cleaned {count} filler patterns")
+    return cleaned
+
+
 def safe_json_loads(text: str, fallback=None):
     """Parse JSON with multiple fallback strategies."""
     if not text:
@@ -162,13 +221,33 @@ def get_model():
     """
     Configuración para OpenAI Directo (GPT-4o o GPT-4o-mini).
     Asegúrate de tener OPENAI_API_KEY en tu archivo .env.
+    
+    v17.5: logit_bias physically bans filler tokens at the decoding level.
+    Unlike prompt prohibitions (which the LLM can ignore), logit_bias=-100
+    makes it mathematically impossible for these tokens to appear.
+    Token IDs verified with tiktoken o200k_base encoding for gpt-4o.
     """
+    # v17.5: Hard-ban filler word tokens (o200k_base encoding)
+    # Each maps a single-token filler word to -100 (impossible to generate)
+    FILLER_LOGIT_BIAS = {
+        "96138": -100,   # " pivotal"
+        "77640": -100,   # " seamlessly"
+        "124315": -100,  # " meticulously"
+        "103445": -100,  # " beacon"
+        "79130": -100,   # " testament"
+        "144018": -100,  # " cornerstone"
+        "68202": -100,   # " holistic"
+        "111864": -100,  # " paramount"
+        "168008": -100,  # " underscores"
+    }
+    
     return ChatOpenAI(
         model_name="gpt-4o",
         temperature=0.0,     # v10.2: Zero temperature for maximum scoring consistency between runs
         max_tokens=8192,     # v17.0: Prevent JSON truncation — 8192 covers 7+ matter evals without API hang
         request_timeout=300, # v17.0: 5min timeout to prevent indefinite hangs
-        openai_api_key=os.environ.get("OPENAI_API_KEY")
+        openai_api_key=os.environ.get("OPENAI_API_KEY"),
+        model_kwargs={"logit_bias": FILLER_LOGIT_BIAS}  # v17.5: Physical token ban
     )
 
 # 1. INGESTION NODE (v14.0 — Trust Layer)
@@ -1846,62 +1925,11 @@ def optimization_node(state: AgentState) -> Dict:
     else:
         print(f"[GRAMMAR] ✅ No grammar issues found")
     
-    # ═══════════════════════════════════════════════════════════════
-    # v17.4c: GENERIC FILLER PHRASE STRIPPER (Expanded)
-    # Owner directive: "The system substitutes evidence with elegance.
-    # 'played a pivotal role', 'robust framework', 'comprehensive advice'
-    # — all seven matters end up sounding the same."
-    # These patterns are BROAD to catch all LLM variants.
-    # ═══════════════════════════════════════════════════════════════
-    GENERIC_FILLERS = [
-        # === STANDALONE ADJECTIVES (the LLM's favorite crutches) ===
-        (r'\bpivotal\b', 'important'),
-        (r'\bseamlessly\b', 'effectively'),
-        (r'\bmeticulously\b', 'carefully'),
-        (r'\bholistic\b', 'integrated'),
-        (r'\bparamount\b', 'significant'),
-        # === FILLER PHRASES ===
-        (r'\bstands as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
-        (r'\bserves as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
-        (r'\bis a testament to\b', 'demonstrates'),
-        (r'\bcarved out a niche\b', 'specialises'),
-        (r'\bsolidified its position\b', 'established itself'),
-        (r'\bunderscores\b', 'demonstrates'),
-        (r'\brobust (?:framework|infrastructure|system|platform)\b', 'framework'),
-        (r'\bcomprehensive (?:data protection |regulatory )?(?:advice|advisory|counsel|guidance|support|framework|strategy|approach)\b', 'thorough \\g<0>'.replace('comprehensive ', '')),
-        (r'\bcomprehensive\b', 'thorough'),
-        (r'\bdistinguished (?:leader|firm|practice|entity|establishment|conglomerate|law firm)\b', 'recognised \\g<0>'.replace('distinguished ', '')),
-        (r'\ba distinguished\b', 'a recognised'),
-        (r'\benhanced compliance posture\b', 'improved compliance'),
-        (r'\bcomplex regulatory landscape\b', 'regulatory environment'),
-        (r'\bnavigate the intricacies\b', 'address the requirements'),
-        (r'\bnavigate (?:the )?complex\b', 'address'),
-        (r'\binstrumental in\b', 'central to'),
-        (r'\bplayed a (?:crucial|key|critical|instrumental|significant) role\b', 'contributed'),
-        (r'\bat the forefront of\b', 'active in'),
-        (r'\bbeacon of (?:expertise|excellence)\b', 'centre of expertise'),
-        (r'\bexemplifies\b', 'demonstrates'),
-        (r'\bprofound and enduring\b', 'long-standing'),
-    ]
-    
-    import re as _re_filler
-    filler_count = 0
+    # v17.5: Apply centralized filler strip to ALL matters
     for matter in optimized_matters:
         opt_text = matter.get('optimized_text', '')
-        if not opt_text:
-            continue
-        
-        cleaned = opt_text
-        for pattern, replacement in GENERIC_FILLERS:
-            new_text = _re_filler.sub(pattern, replacement, cleaned, flags=_re_filler.IGNORECASE)
-            if new_text != cleaned:
-                filler_count += 1
-            cleaned = new_text
-        
-        matter['optimized_text'] = cleaned
-    
-    if filler_count > 0:
-        print(f"[FILLER STRIP v17.4c] Replaced {filler_count} generic filler phrases across all matters")
+        if opt_text:
+            matter['optimized_text'] = strip_fillers(opt_text)
     
     # ═══════════════════════════════════════════════════════════════
     # v17.3: B7 ENHANCEMENT PIPELINE
@@ -1966,6 +1994,23 @@ ABSOLUTE PROHIBITIONS:
 - NEVER summarize or compress multiple points into one
 - Write ONLY the final editorial prose. NO instructions, NO meta-commentary.
 
+PROHIBITED GENERIC PHRASES (HARD BLOCK — NEVER USE):
+- "pivotal role" / "pivotal" → describe the ACTUAL role or contribution
+- "stands as a beacon" / "beacon of expertise" → remove entirely
+- "testament to" / "is a testament" → replace with "demonstrates" or "shows"
+- "cornerstone of" → replace with "central to"
+- "robust framework" → describe the ACTUAL framework
+- "comprehensive advice" / "comprehensive" → replace with "thorough" or specify WHAT
+- "distinguished" → replace with "recognised"
+- "navigate complex" → replace with "address" + specific challenge
+- "seamlessly" / "meticulously" / "holistic" → remove or use plain alternatives
+- "instrumental in" → replace with "central to" or state WHAT was done
+- "carved out a niche" → replace with "specialises in"
+- "at the forefront of" → replace with "active in"
+- "underscores" → replace with "demonstrates"
+- "exemplifies" → replace with "demonstrates"
+If you use ANY of these phrases, your output has FAILED. Use SPECIFIC, EVIDENCE-BASED language instead.
+
 OUTPUT FORMAT (JSON):
 {{"enhanced_b7": "The full enhanced department narrative in plain text paragraphs. NO markdown."}}
 
@@ -2011,18 +2056,9 @@ ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
     else:
         print("[B7 ENHANCEMENT] No original B10 found — B7 will use narrative_architecture fallback")
         
-    # v17.4c: Apply filler strip to B7 as well (same patterns used for matters)
+    # v17.5: Apply centralized filler strip to B7
     if enhanced_b7:
-        cleaned_b7 = enhanced_b7
-        b7_filler_count = 0
-        for pattern, replacement in GENERIC_FILLERS:
-            new_b7 = _re_filler.sub(pattern, replacement, cleaned_b7, flags=_re_filler.IGNORECASE)
-            if new_b7 != cleaned_b7:
-                b7_filler_count += 1
-            cleaned_b7 = new_b7
-        if b7_filler_count > 0:
-            enhanced_b7 = cleaned_b7
-            print(f"[FILLER STRIP B7 v17.4c] Replaced {b7_filler_count} filler phrases in B7")
+        enhanced_b7 = strip_fillers(enhanced_b7)
         
     return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 

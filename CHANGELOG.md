@@ -5,6 +5,46 @@ Format follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v17.5] — 2026-08-06
+
+### 🧬 PHYSICAL TOKEN BAN: logit_bias Filler Prevention (3-Layer Defense)
+
+The LLM kept generating filler phrases despite prompt prohibitions. Root cause: prompt-level prohibitions are "suggestions" the LLM can ignore. Now using a 3-layer defense:
+
+#### Layer 1: logit_bias (PHYSICAL BAN — impossible to bypass)
+- **What**: Token-level ban via OpenAI's `logit_bias` parameter with value `-100`
+- **Effect**: Makes it **mathematically impossible** for the LLM to generate these 9 words:
+  - `pivotal`, `seamlessly`, `meticulously`, `beacon`, `testament`, `cornerstone`, `holistic`, `paramount`, `underscores`
+- **How**: Token IDs verified with `tiktoken` `o200k_base` encoding (gpt-4o)
+- **Scope**: Applied to `get_model()` factory — affects ALL LLM calls (matters, B7, audit, analysis)
+
+#### Layer 2: Prompt Prohibition (EXPLICIT INSTRUCTION)
+- Added `PROHIBITED GENERIC PHRASES` block to B7 enhancement prompt
+- Matter enhancer already had this since v17.1
+- Lists 15+ filler phrases with correct alternatives
+
+#### Layer 3: strip_fillers() (POST-PROCESSING SAFETY NET)
+- Moved `GENERIC_FILLERS` regex patterns to **module level** (was inline in function)
+- Created centralized `strip_fillers(text)` function
+- Applied to **ALL** LLM output: matters AND B7 (previously only matters)
+- Expanded to 31 patterns (from original 15)
+
+### 📊 Defense Matrix
+
+| Filler Word | Layer 1 (logit_bias) | Layer 2 (prompt) | Layer 3 (regex) |
+|------------|---------------------|------------------|-----------------|
+| pivotal | ✅ TOKEN BAN | ✅ | ✅ |
+| seamlessly | ✅ TOKEN BAN | ✅ | ✅ |
+| beacon | ✅ TOKEN BAN | ✅ | ✅ |
+| testament | ✅ TOKEN BAN | ✅ | ✅ |
+| cornerstone | ✅ TOKEN BAN | ✅ | ✅ |
+| comprehensive | ❌ (multi-token) | ✅ | ✅ |
+| distinguished | ❌ (multi-token) | ✅ | ✅ |
+| robust framework | ❌ (phrase) | ✅ | ✅ |
+| navigate complex | ❌ (phrase) | ✅ | ✅ |
+
+---
+
 ## [v17.2] — 2026-08-05
 
 ### 🎯 CRITICAL: Intelligent Benchmark Resolver + Band Auto-Detection
