@@ -1144,6 +1144,23 @@ Every material proposition in the original MUST appear in the enhanced version:
 - Specific regulations, laws, authorities named → MUST be preserved
 - Specific numbers (training sessions, employees affected, deadlines) → MUST be preserved
 
+### CLIENT IDENTITY PRESERVATION (v17.5 — ABSOLUTE — NEVER VIOLATE):
+The CLIENT DESCRIPTION from the original is EVIDENCE. It tells Chambers WHO the client is.
+You MUST copy the client's industry/sector description VERBATIM from the original.
+
+EXAMPLES OF WHAT IS ABSOLUTELY PROHIBITED:
+❌ Original: "Grupo Excelsior, one of Mexico's leading dairy producers" → Enhanced: "Grupo Excelsior, a prominent client" — THIS IS FORBIDDEN
+❌ Original: "Grupo Modelquipo, an engineering and manufacturing group" → Enhanced: "Grupo Modelquipo, a key player in its sector" — THIS IS FORBIDDEN
+❌ Original: "Biocodex, a pharmaceutical company with global operations" → Enhanced: "Biocodex, a significant entity" — THIS IS FORBIDDEN
+❌ Original: "Hotel Riazor, a hospitality group with nearly five decades of experience" → Enhanced: "Hotel Riazor, a recognised hospitality entity" — LOSES "five decades"
+
+WHAT YOU MUST DO INSTEAD:
+✅ Original: "Grupo Excelsior, one of Mexico's leading dairy producers" → Enhanced: "Grupo Excelsior, one of Mexico's leading dairy producers and a major player in the country's food industry"
+✅ Original: "Grupo Modelquipo, an engineering and manufacturing group" → Enhanced: "Grupo Modelquipo, a diversified engineering and manufacturing group operating across multiple industrial segments"
+✅ Original: "Biocodex, a pharmaceutical company with global operations" → Enhanced: "Biocodex de México, a pharmaceutical company with global operations and a significant presence in the Mexican healthcare market"
+
+THE RULE: Copy the original client descriptor FIRST, then ADD context. NEVER replace it.
+
 ### ENHANCEMENT INSTRUCTIONS:
 1. You will receive a raw 'draft' matter (Client, Value, Summary, Significance, Lead Partner).
 2. Your task is to ENHANCE by: reorganizing for maximum impact, clarifying the firm's role, connecting to the editorial thesis, and STRENGTHENING narrative density.
