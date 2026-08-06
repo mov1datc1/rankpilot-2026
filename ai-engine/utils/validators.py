@@ -332,12 +332,17 @@ def validate_reality_check(observations: List[str], ranking_arch: dict) -> Tuple
 
 CROSS_BORDER_PATTERNS = [
     r"(?i)(?:expand|develop|build|grow|strengthen)\s+cross.?border",
-    r"(?i)cross.?border\s+(?:capabilities|capacity|work|experience|expansion)",
+    r"(?i)cross.?border\s+(?:capabilities|capacity|work|experience|expansion|expertise|advisory|elements?|matters?|mandates?|signals?)",
     r"(?i)lacks?\s+cross.?border",
     r"(?i)absence\s+of\s+cross.?border",
-    r"(?i)no\s+cross.?border\s+(?:work|evidence|matters?)",
+    r"(?i)no\s+cross.?border\s+(?:work|evidence|matters?|signals?)",
     r"(?i)without\s+cross.?border",
     r"(?i)does\s+not\s+(?:currently\s+)?present\s+cross.?border",
+    r"(?i)limited\s+cross.?border",
+    r"(?i)lack\s+of\s+cross.?border",
+    r"(?i)(?:undermined|weakened|limited)\s+by\s+(?:its\s+)?(?:lack\s+of\s+)?cross.?border",
+    r"(?i)(?:insufficient|lacking)\s+cross.?border",
+    r"(?i)cross.?border.*?(?:limits?\s|limitat|restrict|weaken|undermine)",
 ]
 
 def validate_cross_border(text: str, is_relevant: bool) -> Tuple[str, List[str]]:
@@ -547,12 +552,17 @@ def validate_analysis_output(analysis: dict, strategic_context: dict) -> Tuple[d
                                 step[field], violations = validate_cross_border(step[field], cross_border_relevant)
                                 report["cross_border"].extend(violations)
         
-        # 5. Cross-border in all text fields
+        # 5. Cross-border in ALL text fields (v17.6.1: comprehensive sweep)
         if not cross_border_relevant:
-            for field in ["the_state_of_play", "competitive_context",
-                          "competitive_positioning_text"]:
-                if field in audit and isinstance(audit[field], str):
+            # v17.6.1: Sweep ALL string fields in audit (catches reasoning trace, etc.)
+            for field in list(audit.keys()):
+                if isinstance(audit[field], str):
                     audit[field], violations = validate_cross_border(audit[field], cross_border_relevant)
+                    report["cross_border"].extend(violations)
+            # Also sweep top-level result fields
+            for field in ["summary", "competitive_identity"]:
+                if field in result and isinstance(result[field], str):
+                    result[field], violations = validate_cross_border(result[field], cross_border_relevant)
                     report["cross_border"].extend(violations)
         
         result["audit_letter"] = audit
