@@ -80,7 +80,7 @@ GENERIC_FILLERS = [
     (r'\bserves as a (?:beacon|testament|cornerstone|pillar)\b', 'is'),
     (r'\bis a testament to\b', 'demonstrates'),
     (r'\bcarved out a niche\b', 'specialises'),
-    (r'\bsolidified its position\b', 'established itself'),
+    (r'\bsolidified its\b', 'established its'),
     (r'\bunderscores\b', 'demonstrates'),
     (r'\brobust (?:framework|infrastructure|system|platform)\b', 'framework'),
     (r'\bcomprehensive\b', 'thorough'),
