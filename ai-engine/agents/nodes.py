@@ -2011,6 +2011,19 @@ ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
     else:
         print("[B7 ENHANCEMENT] No original B10 found — B7 will use narrative_architecture fallback")
         
+    # v17.4c: Apply filler strip to B7 as well (same patterns used for matters)
+    if enhanced_b7:
+        cleaned_b7 = enhanced_b7
+        b7_filler_count = 0
+        for pattern, replacement in GENERIC_FILLERS:
+            new_b7 = _re_filler.sub(pattern, replacement, cleaned_b7, flags=_re_filler.IGNORECASE)
+            if new_b7 != cleaned_b7:
+                b7_filler_count += 1
+            cleaned_b7 = new_b7
+        if b7_filler_count > 0:
+            enhanced_b7 = cleaned_b7
+            print(f"[FILLER STRIP B7 v17.4c] Replaced {b7_filler_count} filler phrases in B7")
+        
     return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 
 # 6. WRITER NODE
