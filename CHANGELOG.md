@@ -5,6 +5,37 @@ Format follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [v17.7] — 2026-08-06
+
+### 🏗️ L1 Defense: Cross-Border + RAVL Injection into ALL Editorial Nodes
+
+**Problem**: 4 editorial nodes (`identity_discovery`, `hypothesis_construction`, `comparative_analysis`, `editorial_confidence`) in `editorial_nodes.py` NEVER received:
+- The `cross_border_relevant` flag in their system prompt
+- The RAVL scenario (Scenario B: individuals only)
+
+The LLM generated "lacks cross-border work" because the prohibition was only in the JSON data (which the LLM ignores), not in the system message (which it follows).
+
+**Root cause**: `_inject_directives()` existed but was only wired to 5 of 9 nodes. The 4 reasoning-heavy nodes were missing.
+
+**Fixes**:
+1. Added **CROSS-BORDER PROHIBITION** block to `_inject_directives()`:
+   - 5 explicit DO NOT rules
+   - Positive alternatives (focus on regulatory complexity, local mandates)
+   - Activated when `cross_border_relevant = False`
+
+2. Wired `_inject_directives()` into ALL 4 missing nodes:
+   - `identity_discovery_node` (L424)
+   - `hypothesis_construction_node` (L510)
+   - `comparative_analysis_node` (L637)
+   - `editorial_confidence_node` (L689)
+
+**Architecture**: 3-layer defense now complete:
+- **L1**: System prompt injection (THIS FIX) — tells LLM what NOT to do
+- **L2**: Post-processing validator (v17.6.1) — catches remaining leaks
+- **L3**: Validation gate — blocks violating outputs
+
+---
+
 ## [v17.6.1] — 2026-08-06
 
 ### 🔧 Cross-Border Validator: Comprehensive Sweep + Expanded Patterns

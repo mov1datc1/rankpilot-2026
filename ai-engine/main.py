@@ -2,8 +2,10 @@ import os
 import re
 import uuid
 import json
+import asyncio
 import traceback
-from fastapi import FastAPI, Request
+import httpx
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from core.graph import app as graph_app 
 from langchain_core.messages import HumanMessage
@@ -227,6 +229,207 @@ async def process_document(request: Request):
         # Fallback: force ASCII serialization
         safe_response = json.loads(json.dumps(response_data, default=str, ensure_ascii=True))
         return safe_response
+
+
+# =============================================================================
+# v18.0: ASYNC PROCESSING — Fire-and-forget with webhook callback
+# Vercel Hobby has a 300s function timeout. Pipeline takes 8-15 min.
+# Solution: Return immediately, run pipeline in background, call webhook when done.
+# =============================================================================
+
+def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_id: str, callback_url: str, webhook_secret: str):
+    """
+    Synchronous function that runs the full LangGraph pipeline and 
+    POSTs results to the Vercel webhook when complete.
+    Called via asyncio.to_thread() to avoid blocking the event loop.
+    """
+    import requests as sync_requests
+
+    try:
+        print(f"[ASYNC PIPELINE] Starting pipeline for thread {thread_id}...")
+        result = graph_app.invoke(initial_state, config)
+        print(f"[ASYNC PIPELINE] Pipeline completed for thread {thread_id}")
+
+        # Build response data (same logic as /process endpoint)
+        messages = result.get("messages", [])
+        response_text = "No response generated."
+        if messages:
+            last_msg = messages[-1]
+            if hasattr(last_msg, "content"):
+                response_text = sanitize_unicode(last_msg.content)
+            elif isinstance(last_msg, tuple) and len(last_msg) > 1:
+                response_text = sanitize_unicode(str(last_msg[1]))
+            else:
+                response_text = sanitize_unicode(str(last_msg))
+
+        response_data = {
+            "status": "completed" if result.get("is_complete") else "interrogating",
+            "thread_id": thread_id,
+            "data": {
+                "pdf_url": result.get("pdf_url"),
+                "is_complete": result.get("is_complete", False),
+                "response": response_text,
+                "metadata": result.get("metadata", {}),
+                "matters": result.get("matters", []),
+                "analysis": result.get("analysis", {}),
+                "strategic_context": result.get("strategic_context", {}),
+                "comprehension": result.get("comprehension", {}),
+                "competitive_identity": result.get("competitive_identity", {}),
+                "hypotheses": result.get("hypotheses", []),
+                "refutation_results": result.get("refutation_results", {}),
+                "comparative_analysis": result.get("comparative_analysis", {}),
+                "editorial_confidence": result.get("editorial_confidence", {}),
+                "narrative_architecture": result.get("narrative_architecture", {}),
+                "submission_blueprint": result.get("submission_blueprint", {}),
+                "reasoning_trace": result.get("reasoning_trace", []),
+                "pipeline_manifest": result.get("pipeline_manifest", {}),
+                "enhanced_b7": result.get("enhanced_b7", ""),
+            }
+        }
+
+        # Apply epistemic language guard
+        response_data["data"] = filter_pipeline_output(response_data["data"])
+
+        # Save editorial memory
+        try:
+            practice_area = context.get("practice_area", "")
+            jurisdiction = context.get("jurisdiction", "")
+            if practice_area and jurisdiction:
+                lessons = extract_lessons_from_result(response_data["data"], practice_area, jurisdiction)
+                if lessons:
+                    save_memory(practice_area, jurisdiction, lessons)
+        except Exception as mem_err:
+            print(f"[EDITORIAL MEMORY] Warning: Could not save memory: {mem_err}")
+
+        # Validate serialization
+        json.dumps(response_data, default=str, ensure_ascii=False)
+
+        # POST results to Vercel webhook
+        print(f"[ASYNC PIPELINE] Sending results to webhook: {callback_url}")
+        webhook_response = sync_requests.post(
+            callback_url,
+            json={
+                "secret": webhook_secret,
+                "submission_id": thread_id,
+                "pipeline_result": response_data,
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=30,
+        )
+        print(f"[ASYNC PIPELINE] Webhook response: {webhook_response.status_code}")
+
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        print(f"[ASYNC PIPELINE ERROR] Thread {thread_id}: {error_msg}")
+
+        # Notify webhook of failure so the submission gets marked as Error
+        try:
+            sync_requests.post(
+                callback_url,
+                json={
+                    "secret": webhook_secret,
+                    "submission_id": thread_id,
+                    "pipeline_error": {
+                        "code": "PIPELINE_EXECUTION_ERROR",
+                        "message": str(e),
+                        "details": error_msg[:2000],
+                    },
+                },
+                headers={"Content-Type": "application/json"},
+                timeout=30,
+            )
+        except Exception as cb_err:
+            print(f"[ASYNC PIPELINE] Failed to notify webhook of error: {cb_err}")
+
+
+@api.post("/process-async")
+async def process_document_async(request: Request):
+    """
+    v18.0: Async version of /process.
+    Returns immediately with {"status": "accepted"}.
+    Runs pipeline in background thread, then POSTs results to callback_url.
+    """
+    try:
+        data = await request.json()
+    except Exception as e:
+        return JSONResponse(status_code=400, content={
+            "error": "Invalid JSON in request body",
+            "error_code": "INVALID_REQUEST",
+            "details": str(e)
+        })
+
+    user_input = data.get("user_input")
+    thread_id = data.get("thread_id")
+    is_file = data.get("is_file", False)
+    context = data.get("context", {})
+    callback_url = data.get("callback_url")
+    webhook_secret = data.get("webhook_secret", "")
+
+    if not user_input or not thread_id or not callback_url:
+        return JSONResponse(status_code=400, content={
+            "error": "Missing user_input, thread_id, or callback_url",
+            "error_code": "MISSING_PARAMS"
+        })
+
+    config = {"configurable": {"thread_id": thread_id}}
+    sanitized_input = sanitize_unicode(user_input) if not is_file else user_input
+
+    initial_state = {
+        "file_path": user_input if is_file else "",
+        "doc_text": sanitized_input if not is_file else "",
+        "messages": [HumanMessage(content="Please process this submission document.")],
+        "metadata": {},
+        "matters": [],
+        "analysis": {},
+        "latex_code": "",
+        "confidence_score": 0.0,
+        "is_complete": False,
+        "pdf_url": "",
+        "submission_context": context,
+        "strategic_context": {},
+        "comprehension": {},
+        "competitive_identity": {},
+        "hypotheses": [],
+        "refutation_results": {},
+        "comparative_analysis": {},
+        "editorial_confidence": {},
+        "narrative_architecture": {},
+        "submission_blueprint": {},
+        "evidence_map": {},
+        "reasoning_trace": [],
+        "editorial_memory": "",
+        "current_step": "ingestion",
+        "pipeline_manifest": {},
+        "original_b10": "",
+        "enhanced_b7": "",
+    }
+
+    # Load editorial memory
+    try:
+        practice_area = context.get("practice_area", "")
+        jurisdiction = context.get("jurisdiction", "")
+        if practice_area and jurisdiction:
+            memory_bank = load_memory(practice_area, jurisdiction)
+            editorial_memory_context = format_memory_for_prompt(memory_bank)
+            if editorial_memory_context:
+                initial_state["editorial_memory"] = editorial_memory_context
+                print(f"[EDITORIAL MEMORY] Loaded {memory_bank.total_submissions_processed} past submissions for {practice_area}/{jurisdiction}")
+    except Exception as e:
+        print(f"[EDITORIAL MEMORY] Warning: Could not load memory: {e}")
+
+    # Launch pipeline in background thread (graph_app.invoke is synchronous)
+    asyncio.get_event_loop().run_in_executor(
+        None,
+        _run_pipeline_sync,
+        initial_state, config, context, thread_id, callback_url, webhook_secret
+    )
+
+    print(f"[ASYNC PIPELINE] Accepted job for thread {thread_id}, will callback to {callback_url}")
+    return JSONResponse(status_code=202, content={
+        "status": "accepted",
+        "thread_id": thread_id,
+        "message": "Pipeline started in background. Results will be sent to callback_url."
+    })
 
 @api.post("/generate-report")
 async def generate_report_endpoint(request: Request):

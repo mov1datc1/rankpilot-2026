@@ -22,17 +22,18 @@ function ProcessingContent() {
   const [supportMsg, setSupportMsg] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
+  // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Polling
+  // Step 1: Send document to Render (returns in <5s)
+  // Step 2: Poll /api/check-status every 10s until 'Submitted' or 'Error'
   useEffect(() => {
     if (!submissionId || hasStarted) return;
-    // Need either a documentUrl or raw text to process
     if (!documentUrl && !rawText) return;
     setHasStarted(true);
     
-    // Iniciar el procesamiento real
     const processDocument = async () => {
       try {
         setStep(1);
-        setProgress(20);
+        setProgress(10);
         
         const body: any = { submissionId };
         if (documentUrl) {
@@ -43,17 +44,13 @@ function ProcessingContent() {
           body.is_text = true;
         }
 
+        // Fire-and-forget: this returns in <5 seconds
         const res = await fetch('/api/process-document', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
         
-        setProgress(75);
-        setStep(3);
-
-        // Safe JSON parse: Render may return non-JSON on timeout/deploy
-        // Read as text first since body stream can only be consumed once
         const responseText = await res.text();
         let data: any;
         try {
@@ -72,10 +69,52 @@ function ProcessingContent() {
           throw new Error(data.error || 'Fallo en la extraccion de la IA');
         }
 
-        setProgress(100);
-        setStep(4);
-        
-        setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
+        // Pipeline accepted — now poll for completion
+        setStep(2);
+        setProgress(20);
+        const startTime = Date.now();
+        const estimatedDurationMs = 10 * 60 * 1000; // ~10 min estimate
+
+        const pollInterval = setInterval(async () => {
+          try {
+            // Update progress based on elapsed time (estimated)
+            const elapsed = Date.now() - startTime;
+            const estimatedProgress = Math.min(20 + (elapsed / estimatedDurationMs) * 70, 90);
+            setProgress(Math.round(estimatedProgress));
+
+            // Update step labels based on elapsed time
+            if (elapsed > 7 * 60 * 1000) setStep(3); // >7min: "Classification"
+            else if (elapsed > 3 * 60 * 1000) setStep(2); // >3min: "Analysis"
+
+            const statusRes = await fetch(`/api/check-status?id=${submissionId}`);
+            const statusData = await statusRes.json();
+
+            if (statusData.status === 'Submitted') {
+              // Pipeline completed!
+              clearInterval(pollInterval);
+              setProgress(100);
+              setStep(4);
+              setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
+            } else if (statusData.status === 'Error') {
+              // Pipeline failed
+              clearInterval(pollInterval);
+              setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
+              setErrorMsg(statusData.errorMessage || 'El pipeline encontró un error. Intenta de nuevo.');
+            }
+            // else: still 'Processing' — keep polling
+          } catch (pollErr) {
+            console.error('[POLL ERROR]', pollErr);
+            // Don't stop polling on network errors — just retry
+          }
+        }, 10_000); // Poll every 10 seconds
+
+        // Safety: stop polling after 20 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (progress < 100) {
+            setErrorMsg('El procesamiento tardó demasiado. Revisa la página de reportes — tu resultado podría estar listo.');
+          }
+        }, 20 * 60 * 1000);
 
       } catch (err: any) {
         console.error(err);

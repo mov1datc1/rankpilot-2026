@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
-// v18.0: GPT-5.6-terra pipeline takes ~15 min. Vercel Pro max is 900s.
-// Without this, the serverless function times out at 60s (default).
-export const maxDuration = 900;
+// v18.0: Async architecture — no maxDuration needed.
+// Pipeline runs on Render in background, results come via webhook.
 
 // Sanitize text to remove problematic Unicode characters
 function sanitizeText(text: string): string {
@@ -101,10 +100,24 @@ export async function POST(request: NextRequest) {
       submissionId = submission.id;
     }
 
-    // Call Python backend
+    // v18.0: ASYNC ARCHITECTURE — Fire-and-forget to Render
+    // Vercel Hobby times out at 300s. Pipeline takes 8-15 min.
+    // Solution: Call /process-async, Render processes in background,
+    // then POSTs results to /api/pipeline-callback webhook.
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
     const userInput = documentUrl || text || '';
-    const pyResponse = await fetch(`${pythonApiUrl}/process`, {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app';
+    const callbackUrl = `${siteUrl}/api/pipeline-callback`;
+    const webhookSecret = process.env.PIPELINE_WEBHOOK_SECRET || '';
+
+    // Mark submission as Processing
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: { status: 'Processing' }
+    });
+
+    // Fire-and-forget: send to Render's async endpoint
+    const pyResponse = await fetch(`${pythonApiUrl}/process-async`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -118,247 +131,34 @@ export async function POST(request: NextRequest) {
           current_status: submission.currentBand,
           primary_objective: (submission.chambersData as any)?.primaryObjective || '',
           secondary_objective: (submission.chambersData as any)?.secondaryObjective || ''
-        }
+        },
+        callback_url: callbackUrl,
+        webhook_secret: webhookSecret,
       })
     });
 
-    let pyData: any = {};
-    const rawText = await pyResponse.text();
-    pyData = safeJsonParse(rawText, { error: rawText || pyResponse.statusText });
-
     if (!pyResponse.ok) {
-      console.error(`[PYTHON API ERROR] Status: ${pyResponse.status}, Thread: ${submissionId}`);
-      console.error(`[PYTHON API ERROR] Raw response (first 500 chars): ${rawText.substring(0, 500)}`);
-      
-      const errorCode = pyData.error_code || 'PIPELINE_ERROR';
-      const userMsg = pyData.error || 'El motor de IA encontr\u00f3 un error al procesar tu documento.';
-      
-      // CRITICAL: Save partial data even on error so the report shows something useful
-      try {
-        const partialData = pyData.data || {};
-        const existingCD = (submission.chambersData as any) || {};
-        await prisma.submission.update({
-          where: { id: submissionId },
-          data: {
-            status: 'Error',
-            chambersData: {
-              ...existingCD,
-              // Save whatever the pipeline managed to extract before failing
-              ...(partialData.metadata ? { metadata: partialData.metadata } : {}),
-              ...(partialData.analysis ? { analysis: partialData.analysis } : {}),
-              ...(partialData.strategic_context ? { strategicContext: partialData.strategic_context } : {}),
-              ...(partialData.comprehension ? { comprehension: partialData.comprehension } : {}),
-              ...(partialData.competitive_identity ? { competitive_identity: partialData.competitive_identity } : {}),
-              ...(partialData.hypotheses ? { hypotheses: partialData.hypotheses } : {}),
-              ...(partialData.refutation_results ? { refutation_results: partialData.refutation_results } : {}),
-              ...(partialData.comparative_analysis ? { comparative_analysis: partialData.comparative_analysis } : {}),
-              ...(partialData.editorial_confidence ? { editorial_confidence: partialData.editorial_confidence } : {}),
-              ...(partialData.narrative_architecture ? { narrative_architecture: partialData.narrative_architecture } : {}),
-              ...(partialData.submission_blueprint ? { submission_blueprint: partialData.submission_blueprint } : {}),
-              ...(partialData.reasoning_trace ? { reasoning_trace: partialData.reasoning_trace } : {}),
-              // Store the error for the report page to display
-              _pipeline_error: {
-                code: errorCode,
-                message: userMsg,
-                details: pyData.details || '',
-                timestamp: new Date().toISOString(),
-              }
-            }
-          }
-        });
-      } catch (saveErr) {
-        console.error('[PARTIAL SAVE ERROR]', saveErr);
-      }
-      
-      return createErrorResponse(
-        errorCode,
-        userMsg,
-        `Python API responded with status ${pyResponse.status}`,
-      );
-    }
-    
-    // El motor Python debe retornar la data estructurada.
-    const extractedData = pyData.metadata || pyData.data?.metadata;
-    const extractedMatters = pyData.matters || pyData.data?.matters;
-    let analysisData = pyData.data?.analysis || pyData.analysis;
-    const strategicContext = pyData.data?.strategic_context || pyData.strategic_context;
-
-    // v17.1.4: Unwrap gpt-4o nested {"analysis": {...}} wrapper at save time
-    // gpt-4o's json_object mode wraps everything in an extra 'analysis' key.
-    // We unwrap here so downstream code (chambersData save, DOCX generation) gets clean data.
-    if (analysisData && typeof analysisData === 'object' && analysisData.analysis && typeof analysisData.analysis === 'object') {
-      const inner = analysisData.analysis;
-      // Promote ALL inner keys to top level
-      for (const [k, v] of Object.entries(inner)) {
-        if (k === 'analysis') continue;
-        (analysisData as any)[k] = v; // Always overwrite — inner values are the real ones
-      }
-      // Remove the nested wrapper to prevent confusion downstream
-      delete (analysisData as any).analysis;
-      console.log(`[ANALYSIS UNWRAP] ✅ Unwrapped and cleaned. location=${(analysisData as any).location}, score=${(analysisData as any).score}, keys=${Object.keys(analysisData).slice(0,8).join(',')}`);
-    } else {
-      console.log(`[ANALYSIS UNWRAP] ℹ️ No nested wrapper found. location=${(analysisData as any)?.location}, score=${(analysisData as any)?.score}`);
-    }
-
-    // Extract department/lawyers/contacts from AI metadata (new structured fields)
-    const extractedDept = extractedData?.department || {};
-    const extractedLawyers = extractedData?.lawyers || [];
-    const extractedContacts = extractedData?.contacts || [];
-
-    // Auto-create or find Firm for library organization
-    const firmName = (submission.chambersData as any)?.firmName
-      || strategicContext?.firm_name
-      || extractedData?.firm_name
-      || '';
-    let firmId: string | null = null;
-    if (firmName && resolvedUserId) {
-      const firm = await prisma.firm.upsert({
-        where: { userId_name: { userId: resolvedUserId, name: firmName } },
-        update: {},
-        create: { userId: resolvedUserId, name: firmName },
-      });
-      firmId = firm.id;
-    }
-
-    // v7.1: AUTO-CORRECT practiceArea and firmName from extracted metadata
-    // The user may have selected a wrong practice area in the Builder wizard.
-    // If the AI extracted a different practice area from the document, trust the document.
-    const extractedPracticeArea = extractedData?.practice_area || extractedData?.firm_metadata?.practice_area;
-    const submissionUpdates: Record<string, any> = {};
-    if (extractedPracticeArea && extractedPracticeArea !== submission.practiceArea) {
-      console.log(`[PRACTICE_AREA_CORRECTION] "${submission.practiceArea}" → "${extractedPracticeArea}" (from document extraction)`);
-      submissionUpdates.practiceArea = extractedPracticeArea;
-    }
-    if (firmName && firmName !== (submission.chambersData as any)?.firmName) {
-      submissionUpdates.chambersData = {
-        ...((submission.chambersData as any) || {}),
-        firmName: firmName,
-      };
-    }
-    if (Object.keys(submissionUpdates).length > 0) {
+      const errorText = await pyResponse.text();
+      console.error(`[PROCESS-ASYNC ERROR] Render rejected: ${pyResponse.status} — ${errorText.substring(0, 500)}`);
       await prisma.submission.update({
         where: { id: submissionId },
-        data: submissionUpdates,
+        data: { status: 'Error' }
       });
-      // Refresh submission object for downstream use
-      if (submissionUpdates.practiceArea) {
-        (submission as any).practiceArea = submissionUpdates.practiceArea;
-      }
+      return createErrorResponse(
+        'AI_ENGINE_OFFLINE',
+        'El motor de IA no está disponible. Intenta de nuevo en unos minutos.',
+        `Render /process-async returned ${pyResponse.status}`,
+      );
     }
 
-    // Si encontramos matters, los guardamos en la base de datos
-    let createdCount = 0;
-    console.log(`[MATTERS SAVE] extractedMatters from pipeline: ${extractedMatters ? extractedMatters.length : 'NULL'} | Source paths tried: pyData.matters=${!!pyData.matters}, pyData.data?.matters=${!!pyData.data?.matters}`);
-    if (extractedMatters && Array.isArray(extractedMatters)) {
-      // v17.1.5: Clean up existing matters for this submission before creating new ones
-      // This prevents duplicate accumulation when users re-process the same submission
-      const { count: deletedCount } = await prisma.matter.deleteMany({
-        where: { submissionId, source: 'builder' }
-      });
-      if (deletedCount > 0) {
-        console.log(`[MATTERS CLEANUP] Deleted ${deletedCount} existing builder-created matters for submission ${submissionId}`);
-      }
-      for (const m of extractedMatters) {
-        const isOptimized = m.status === 'AI Optimized' || m.optimized_text;
-        
-        await prisma.matter.create({
-          data: {
-            submissionId,
-            userId: resolvedUserId,
-            firmId,
-            name: m.name || m.title || 'Extracted Matter',
-            client: m.client || 'Unknown Client',
-            value: m.matter_value || m.value || 'N/A',
-            leadPartner: m.lead_partner || m.partner || 'Unknown',
-            rawNotes: [m.summary, m.significance].filter(Boolean).join('\n\n') || m.description || m.notes || 'No description extracted',
-            optimizedText: m.optimized_text || null,
-            status: isOptimized ? 'AI Optimized' : 'Draft',
-            source: 'builder',
-            practiceArea: submission.practiceArea,
-            jurisdiction: submission.guideRegion,
-            // Chambers-specific fields
-            isConfidential: m.is_confidential || false,
-            crossBorder: m.is_cross_border ? (m.cross_border_jurisdictions || 'Yes') : '',
-            teamMembers: m.team_members || '',
-            otherFirms: m.other_firms || '',
-            completionDate: m.completion_date || '',
-            otherInfo: '',
-            isNewClient: m.is_new_client || false,
-          }
-        });
-        createdCount++;
-      }
-    }
+    console.log(`[PROCESS-ASYNC] ✅ Pipeline accepted by Render for submission ${submissionId}`);
 
-    // ALWAYS persist analysis, strategicContext, editorial reasoning, AND department/lawyer data into chambersData
-    const existingChambersData = (submission.chambersData as any) || {};
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: { 
-        chambersData: {
-          ...existingChambersData,
-          metadata: extractedData || existingChambersData.metadata,
-          analysis: analysisData || existingChambersData.analysis,
-          strategicContext: strategicContext || existingChambersData.strategicContext,
-          // Editorial Reasoning Engine outputs
-          comprehension: pyData.data?.comprehension || existingChambersData.comprehension,
-          competitive_identity: pyData.data?.competitive_identity || existingChambersData.competitive_identity,
-          hypotheses: pyData.data?.hypotheses || existingChambersData.hypotheses,
-          refutation_results: pyData.data?.refutation_results || existingChambersData.refutation_results,
-          comparative_analysis: pyData.data?.comparative_analysis || existingChambersData.comparative_analysis,
-          editorial_confidence: pyData.data?.editorial_confidence || existingChambersData.editorial_confidence,
-          narrative_architecture: pyData.data?.narrative_architecture || existingChambersData.narrative_architecture,
-          submission_blueprint: pyData.data?.submission_blueprint || existingChambersData.submission_blueprint,
-          reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
-          pipeline_manifest: pyData.data?.pipeline_manifest || existingChambersData.pipeline_manifest,
-          // v17.3: Enhanced B7 — AI-expanded department narrative (never summarized)
-          enhanced_b7: pyData.data?.enhanced_b7 || existingChambersData.enhanced_b7,
-          // Department/lawyer/contact data from AI extraction
-          ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
-          ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),
-          ...(extractedDept.num_lawyers ? { numLawyers: extractedDept.num_lawyers } : {}),
-          ...(extractedDept.department_heads?.length ? { departmentHeads: extractedDept.department_heads } : {}),
-          ...(extractedDept.hires_departures?.length ? { hires: extractedDept.hires_departures } : {}),
-          ...(extractedDept.department_description ? { departmentDesc: extractedDept.department_description } : {}),
-          ...(extractedLawyers.length ? {
-            lawyers: extractedLawyers.map((l: any) => ({
-              name: l.name, url: l.url || '', currentRank: l.current_ranking || 'Not Ranked',
-              suggestedRank: l.suggested_ranking || '', focus: l.key_focus || '',
-              bio: l.bio || '', standoutWork: l.standout_work || '',
-              isPartner: l.is_partner || false, isRanked: l.is_ranked || false,
-            }))
-          } : {}),
-          ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
-          // v17.1.6: FIXED PRIORITY — AI-detected country FIRST, UI region LAST
-          // The AI (analysis.location) detects the actual COUNTRY (e.g., "Venezuela")
-          // The UI dropdown (strategic_context.jurisdiction) only has the REGION (e.g., "Latin America")
-          // We want the country-level value, not the region.
-          detectedJurisdiction: (() => {
-            const aiLocation = (analysisData as any)?.location;                     // AI-detected: "Venezuela"
-            const metaJurisdiction = pyData.data?.metadata?.jurisdiction;            // Extracted metadata
-            const scJurisdiction = pyData.data?.strategic_context?.jurisdiction;     // UI dropdown: "Latin America"
-            const existing = existingChambersData.detectedJurisdiction;
-            // Priority: AI detection > metadata > strategic_context > existing
-            const j = aiLocation || metaJurisdiction || scJurisdiction || existing || null;
-            console.log(`[JURISDICTION SAVE] Result: '${j}' | AI='${aiLocation}', meta='${metaJurisdiction}', sc='${scJurisdiction}', existing='${existing}', guideRegion='${submission.guideRegion}'`);
-            return j;
-          })(),
-        },
-        status: 'Submitted'
-      }
+    return NextResponse.json({ 
+      success: true, 
+      status: 'processing',
+      submissionId,
+      message: 'Pipeline started. Polling for status.' 
     });
-
-    // Log the AI interaction for traceability
-    await prisma.aILog.create({
-      data: {
-        userId: resolvedUserId,
-        prompt: `Process Document: ${documentUrl}`,
-        response: typeof pyData === 'string' ? pyData : JSON.stringify(pyData).substring(0, 5000), // Limit size for DB text column if huge
-        durationMs: 0
-      }
-    });
-
-    return NextResponse.json({ success: true, createdCount, raw: pyData });
   } catch (error: any) {
     console.error('[PROCESS DOCUMENT ERROR]', error);
     
