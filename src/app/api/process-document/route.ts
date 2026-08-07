@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
+// v18.0: GPT-5.6-terra pipeline takes ~15 min. Vercel Pro max is 900s.
+// Without this, the serverless function times out at 60s (default).
+export const maxDuration = 900;
+
 // Sanitize text to remove problematic Unicode characters
 function sanitizeText(text: string): string {
   if (!text) return '';
