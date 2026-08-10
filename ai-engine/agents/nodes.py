@@ -853,8 +853,16 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
             pre_flight["auto_corrections"]["firm_name"] = detected_firm
         if detected_practice and not user_practice:
             pre_flight["auto_corrections"]["practice_area"] = detected_practice
-        if detected_jurisdiction and not user_jurisdiction:
-            pre_flight["auto_corrections"]["jurisdiction"] = detected_jurisdiction
+        # v18.1: ALWAYS prefer DOCX-detected jurisdiction over UI dropdown.
+        # The UI dropdown has the REGION (e.g., "Latin America") but the DOCX
+        # template has the actual COUNTRY (e.g., "Mexico City and Houston").
+        # The country-level jurisdiction is critical for market analysis.
+        generic_regions = ["latin america", "europe", "asia", "global", "africa", "middle east", "north america"]
+        user_is_generic = user_jurisdiction.lower().strip() in generic_regions if user_jurisdiction else True
+        if detected_jurisdiction:
+            if not user_jurisdiction or user_is_generic:
+                pre_flight["auto_corrections"]["jurisdiction"] = detected_jurisdiction
+                print(f"[PRE-FLIGHT 🌎] JURISDICTION UPGRADE: '{user_jurisdiction}' → '{detected_jurisdiction}' (DOCX template has country-level data)")
         
         manifest["template_detection"] = template_info
     else:
@@ -941,15 +949,40 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
         print(f"  ⚠️ {w}")
     print(f"{'='*60}\n")
     
+    # v18.1: Apply auto-corrections to submission_context so downstream nodes use the corrected values
+    auto_corrections = pre_flight.get("auto_corrections", {})
+    updated_context = dict(state.get("submission_context", {}))
+    if auto_corrections.get("jurisdiction"):
+        old_j = updated_context.get("jurisdiction", "")
+        updated_context["jurisdiction"] = auto_corrections["jurisdiction"]
+        print(f"[PRE-FLIGHT 🌎] submission_context.jurisdiction CORRECTED: '{old_j}' → '{auto_corrections['jurisdiction']}'")
+    if auto_corrections.get("practice_area"):
+        updated_context["practice_area"] = auto_corrections["practice_area"]
+    
     return {
         "pipeline_manifest": manifest,
+        "submission_context": updated_context,
         "current_step": "context"
     }
 
 # 2.5 CONTEXT ENGINE NODE (8-Layer Methodology)
 def context_engine_node(state: AgentState) -> Dict:
     submission_context = state.get("submission_context", {})
-    jurisdiction = submission_context.get("jurisdiction", "")
+    # v18.1: Resolve jurisdiction with correct priority:
+    # 1. DOCX-detected (from pre_flight auto_corrections, now in submission_context)
+    # 2. AI extraction from metadata.location
+    # 3. User UI dropdown (may be generic region like "Latin America")
+    metadata_location = state.get("metadata", {}).get("location", "")
+    context_jurisdiction = submission_context.get("jurisdiction", "")
+    generic_regions = ["latin america", "europe", "asia", "global", "africa", "middle east", "north america"]
+    
+    # If context_jurisdiction is a generic region and we have a specific location from AI, prefer AI
+    if context_jurisdiction.lower().strip() in generic_regions and metadata_location:
+        jurisdiction = metadata_location
+        print(f"[CONTEXT ENGINE 🌎] Using AI-detected location '{metadata_location}' over generic region '{context_jurisdiction}'")
+    else:
+        jurisdiction = context_jurisdiction
+    
     practice_area = submission_context.get("practice_area", "")
     directory = submission_context.get("directory", "")
     current_status = submission_context.get("current_status", "")

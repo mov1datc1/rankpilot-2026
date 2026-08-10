@@ -208,12 +208,25 @@ export async function POST(request: NextRequest) {
             }))
           } : {}),
           ...(extractedContacts.length ? { contacts: extractedContacts } : {}),
+          // v18.1: Jurisdiction priority — country-level data is critical for market analysis
+          // resolved_jurisdiction = benchmark resolver found the exact Chambers URL match
+          // aiLocation = AI extraction from the document text
+          // metaJurisdiction = extracted from document metadata fields
+          // scJurisdiction = may be generic region from UI dropdown ("Latin America")
           detectedJurisdiction: (() => {
+            const resolvedJ = pyData.data?.strategic_context?.resolved_jurisdiction;
             const aiLocation = (analysisData as any)?.location;
+            const metaLocation = pyData.data?.metadata?.location;
             const metaJurisdiction = pyData.data?.metadata?.jurisdiction;
             const scJurisdiction = pyData.data?.strategic_context?.jurisdiction;
             const existing = existingChambersData.detectedJurisdiction;
-            return aiLocation || metaJurisdiction || scJurisdiction || existing || null;
+            // Priority: benchmark-resolved > AI analysis.location > metadata.location > metadata.jurisdiction > strategic_context > existing
+            const j = resolvedJ || aiLocation || metaLocation || metaJurisdiction || existing || null;
+            // Skip generic regions like "Latin America" from scJurisdiction — they're useless for market analysis
+            const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america'];
+            const finalJ = j || (scJurisdiction && !genericRegions.includes(scJurisdiction.toLowerCase()) ? scJurisdiction : null) || existing || null;
+            console.log(`[JURISDICTION SAVE] Result: '${finalJ}' | resolved='${resolvedJ}', AI='${aiLocation}', metaLoc='${metaLocation}', sc='${scJurisdiction}'`);
+            return finalJ;
           })(),
         },
         status: 'Submitted'
