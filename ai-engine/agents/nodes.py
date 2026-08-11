@@ -2262,6 +2262,31 @@ def optimization_node(state: AgentState) -> Dict:
         if strategic_ctx.get("resolved_jurisdiction"):
             editorial_direction.append(f"MARKET: {strategic_ctx['resolved_jurisdiction']}")
         
+        # v18.2: Extract department head names for B7 partner mention
+        metadata = state.get("metadata", {})
+        dept_info = metadata.get("department", {})
+        dept_heads = []
+        if isinstance(dept_info, dict):
+            raw_heads = dept_info.get("department_heads", [])
+            for h in raw_heads:
+                name = h.get("name", "") if isinstance(h, dict) else str(h)
+                if name and name.strip():
+                    dept_heads.append(name.strip())
+        # Also try from matters — unique lead partners
+        if not dept_heads:
+            matters = state.get("matters", [])
+            seen_partners = set()
+            for m in matters:
+                lp = m.get("lead_partner", "")
+                if lp:
+                    for name in lp.split(","):
+                        name = name.strip()
+                        if name and name not in seen_partners:
+                            seen_partners.add(name)
+                            dept_heads.append(name)
+        if dept_heads:
+            editorial_direction.append(f"DEPARTMENT HEADS/KEY PARTNERS: {', '.join(dept_heads)}")
+        
         editorial_direction_text = "\n".join(editorial_direction) if editorial_direction else "Enhance for Chambers editorial standards."
         
         original_word_count = len(original_b10.split())
@@ -2280,9 +2305,16 @@ YOUR TASK:
 - EXPAND with Chambers-grade prose: why this matters, competitive context, market positioning
 - STRENGTHEN the narrative with editorial architecture: thesis-driven flow, evidence density
 - The output must read as if a Chambers editor took the firm's draft and made it MORE CONVINCING
+- You MUST mention at least the lead partner or department head BY NAME in the narrative (e.g., "Led by [Name], the practice..."). This is a MANDATORY requirement.
+
+WORD COUNT CONSTRAINT:
+- Your output MUST be between {original_word_count} and 500 words. The Chambers template enforces a HARD LIMIT of 500 words for B7.
+- If the original is already close to 500 words, focus on QUALITY over expansion.
+- Target 400-490 words for optimal coverage within the limit.
 
 ABSOLUTE PROHIBITIONS:
-- NEVER make the text shorter. The original is {original_word_count} words. Your output MUST be AT LEAST {original_word_count} words.
+- NEVER make the text shorter than the original ({original_word_count} words).
+- NEVER exceed 500 words — this is a Chambers submission rule.
 - NEVER replace specific names (JP Morgan, Simmons & Simmons, etc.) with generic categories
 - NEVER remove any client name, lawyer name, regulation, or jurisdiction mentioned
 - NEVER add meta-text like "The narrative should..." or "This section highlights..."
@@ -2354,6 +2386,25 @@ ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
     # v17.5: Apply centralized filler strip to B7
     if enhanced_b7:
         enhanced_b7 = strip_fillers(enhanced_b7)
+    
+    # v18.2: HARD CAP — Chambers B7 has a 500 word limit
+    if enhanced_b7:
+        b7_words = enhanced_b7.split()
+        if len(b7_words) > 500:
+            print(f"[B7 ENHANCEMENT] ⚠️ B7 is {len(b7_words)}w — truncating to 500w limit")
+            # Truncate at the last complete sentence before 500 words
+            truncated = ' '.join(b7_words[:500])
+            # Find last sentence-ending punctuation
+            last_period = truncated.rfind('.')
+            last_excl = truncated.rfind('!')
+            last_q = truncated.rfind('?')
+            last_sentence_end = max(last_period, last_excl, last_q)
+            if last_sentence_end > len(truncated) * 0.7:  # Only if we keep >70% of the content
+                enhanced_b7 = truncated[:last_sentence_end + 1]
+            else:
+                enhanced_b7 = truncated + '.'
+            final_wc = len(enhanced_b7.split())
+            print(f"[B7 ENHANCEMENT] ✅ Truncated to {final_wc}w (within 500w limit)")
         
     return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 
