@@ -2001,7 +2001,15 @@ def interrogator_node(state: AgentState) -> Dict:
 
 # 5. OPTIMIZATION NODE
 def optimization_node(state: AgentState) -> Dict:
-    print("--- OPTIMIZING MATTERS ---")
+    # v18.6: Detect constitutional validation retry
+    constitutional_retry = state.get("constitutional_retry_count", 0)
+    violation_feedback = state.get("constitutional_violation_feedback", "")
+    if constitutional_retry > 0:
+        print(f"--- OPTIMIZING MATTERS (CONSTITUTIONAL RETRY {constitutional_retry}/2) ---")
+        print(f"  Violation feedback: {violation_feedback[:200]}...")
+    else:
+        print("--- OPTIMIZING MATTERS ---")
+    
     matters = state.get("matters", [])
 
     llm = get_model()
@@ -2028,6 +2036,10 @@ def optimization_node(state: AgentState) -> Dict:
             "unless the original matter explicitly describes cross-border work."
         )
     matter_context_block = "\n".join(matter_context_lines)
+    
+    # v18.6: On constitutional retry, inject violation feedback
+    if constitutional_retry > 0 and violation_feedback:
+        matter_context_block += f"\n\n⚠️ CONSTITUTIONAL VALIDATION RETRY (attempt {constitutional_retry + 1}):\n{violation_feedback}\n\nYou MUST fix ALL listed violations in this retry. Pay special attention to:\n- Each matter must open with a DIFFERENT strategic angle (not generic mandate)\n- Do NOT use any prohibited filler phrases\n- Preserve all client descriptors VERBATIM from the original\n- Outcomes must be STRONG (quantified) or MODERATE (institutional change), never WEAK (generic benefit)"
     
     for matter in matters:
         # Construct the raw matter text to feed to the optimizer

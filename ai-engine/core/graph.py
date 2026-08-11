@@ -21,6 +21,7 @@ from agents.editorial_nodes import (
     submission_blueprint_node,
     narrative_architecture_node,
 )
+from agents.constitutional_validator import constitutional_validation_node
 from core.state import AgentState
 
 def create_rankpilot_graph():
@@ -53,12 +54,17 @@ def create_rankpilot_graph():
                                               submission_blueprint (NEW: Vol. VI Ch. 15)
                                                     ↓
                                               narrative_architecture (executes blueprint)
-                                                    ↓
-                                              analysis (now thesis-driven)
-                                                    ↓
-                                              optimization
-                                                    ↓
-                                              writing → END
+                                                     ↓
+                                               analysis (now thesis-driven)
+                                                     ↓
+                                               optimization
+                                                     ↓
+                                               🆕 constitutional_validation
+                                                     ↓
+                                               [all checks pass?]
+                                               YES → writing → END
+                                               NO  → optimization (retry, max 2)
+                                               MAX → writing → END (with warnings)
     """
     
     # 1. Initialize the StateGraph
@@ -74,6 +80,9 @@ def create_rankpilot_graph():
     workflow.add_node("optimization", optimization_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
+    
+    # --- Constitutional Validation Gate (v18.6) ---
+    workflow.add_node("constitutional_validation", constitutional_validation_node)
     
     # --- Practice Intelligence Layer (v12.0) ---
     workflow.add_node("practice_intelligence", practice_intelligence_node)
@@ -174,9 +183,33 @@ def create_rankpilot_graph():
     # 9. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
     workflow.add_edge("narrative_architecture", "analysis")
     workflow.add_edge("analysis", "optimization")
-    workflow.add_edge("optimization", "writing")
+    workflow.add_edge("optimization", "constitutional_validation")
 
-    # 10. Terminal edges
+    # 10. Constitutional Validation Gate — conditional routing
+    def route_after_constitutional_validation(state: AgentState):
+        """v18.6: Route based on constitutional validation results.
+        If passed or max retries exhausted → writing → END.
+        If failed with retries remaining → back to optimization."""
+        route = state.get("constitutional_route", "end")
+        retry_count = state.get("constitutional_retry_count", 0)
+        
+        if route == "optimization" and retry_count <= 2:
+            print(f"[CONSTITUTIONAL GATE] Routing back to optimization (retry {retry_count}/2)")
+            return "optimization"
+        else:
+            print(f"[CONSTITUTIONAL GATE] Routing to writing (route={route}, retries={retry_count})")
+            return "writing"
+    
+    workflow.add_conditional_edges(
+        "constitutional_validation",
+        route_after_constitutional_validation,
+        {
+            "optimization": "optimization",
+            "writing": "writing",
+        }
+    )
+
+    # 11. Terminal edges
     workflow.add_edge("interrogation", END)
     workflow.add_edge("writing", END)
 

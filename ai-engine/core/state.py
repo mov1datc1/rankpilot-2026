@@ -102,3 +102,13 @@ class AgentState(TypedDict):
     # Produced by optimization_node's B7 Enhancement Pipeline.
     # Used by submission-builder.ts as the primary B7 source.
     enhanced_b7: str
+
+    # =====================================================
+    # v18.6: CONSTITUTIONAL VALIDATION GATE
+    # Final quality gate that validates ALL output against
+    # the Owner's Editorial Constitution before delivery.
+    # =====================================================
+    constitutional_validation: Dict    # Layer 1 + Layer 2 results
+    constitutional_retry_count: int    # How many retries so far (max 2)
+    constitutional_route: str          # "end" | "optimization" | "writing"
+    constitutional_violation_feedback: str  # Injected into retry prompts
