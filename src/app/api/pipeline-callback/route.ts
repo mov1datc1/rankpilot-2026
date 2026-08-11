@@ -193,6 +193,10 @@ export async function POST(request: NextRequest) {
           reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
           pipeline_manifest: pyData.data?.pipeline_manifest || existingChambersData.pipeline_manifest,
           enhanced_b7: pyData.data?.enhanced_b7 || existingChambersData.enhanced_b7,
+          // v19.0: Clone-and-Replace DOCX — base64-encoded cloned DOCX with AI enhancements
+          // This preserves the original formatting (colors, bold, logos, diversity sections)
+          // and only replaces B10 + D2/E2 cells with enhanced content
+          cloned_docx_b64: pyData.data?.cloned_docx_b64 || existingChambersData.cloned_docx_b64 || null,
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
           ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),
           ...(extractedDept.num_lawyers ? { numLawyers: extractedDept.num_lawyers } : {}),

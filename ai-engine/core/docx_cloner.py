@@ -1,0 +1,400 @@
+"""
+v19.0: Clone-and-Replace DOCX Generator
+========================================
+Instead of rebuilding the DOCX from scratch (which loses formatting),
+this module CLONES the original DOCX and only replaces the cells
+that the AI pipeline has enhanced:
+
+  - B10 (or B7): Department narrative → enhanced_b7
+  - D2/E2: Matter summaries → optimized_text per matter
+
+Everything else (colors, bold, numbering, diversity sections, C2 feedback,
+client lists, logos, etc.) is preserved EXACTLY as the firm submitted.
+
+Architecture:
+  1. Read the original DOCX with python-docx
+  2. Walk all tables and identify section markers (B10, D2, E2, etc.)
+  3. Match each E2/D2 to its corresponding matter via E1/D1 client name
+  4. Replace ONLY the content paragraphs (not the label cells)
+  5. Save as new DOCX
+
+Usage:
+  from core.docx_cloner import clone_and_replace
+  docx_bytes = clone_and_replace(
+      original_path="/tmp/uploads/original.docx",
+      enhanced_b7="AI-enhanced department narrative...",
+      enhanced_matters=[
+          {"client": "Grupo Hermes", "optimized_text": "..."},
+          {"client": "MEGA DIRECT", "optimized_text": "..."},
+      ]
+  )
+"""
+
+import io
+import re
+from typing import List, Dict, Optional, Tuple
+from docx import Document
+from docx.table import Table, _Cell
+from docx.text.paragraph import Paragraph
+from copy import deepcopy
+
+
+# =====================================================
+# SECTION DETECTION HEURISTICS
+# =====================================================
+
+def _cell_text(cell: _Cell) -> str:
+    """Get the full text of a cell, joining all paragraphs."""
+    return "\n".join(p.text for p in cell.paragraphs).strip()
+
+
+def _is_b10_label(text: str) -> bool:
+    """Check if a cell contains the B10 section label."""
+    t = text.lower()
+    return ("what is this department best known for" in t or 
+            "what is this department" in t)
+
+
+def _is_matter_summary_label(text: str) -> bool:
+    """Check if a cell contains a D2/E2 'Summary of matter' label."""
+    t = text.lower()
+    return ("summary of matter" in t and "department" in t)
+
+
+def _is_client_name_label(text: str) -> bool:
+    """Check if a cell contains a D1/E1 'Name of client' label."""
+    t = text.lower()
+    return "name of client" in t
+
+
+def _normalize_client_name(name: str) -> str:
+    """Normalize a client name for fuzzy matching."""
+    # Remove descriptors after " - " 
+    name = name.split(" - ")[0].strip()
+    # Remove common suffixes
+    for suffix in [", S.A. de C.V.", ", S.A.", " S.A. de C.V.", " S.A.",
+                   " S. de R.L.", ", S. de R.L.", " Ltd.", " Ltd",
+                   " LLP", " LLC", " N.A.", " Inc.", " Corp."]:
+        name = name.replace(suffix, "")
+    return name.strip().lower()
+
+
+def _match_client(client_in_doc: str, enhanced_matters: List[Dict]) -> Optional[Dict]:
+    """
+    Match a client name from the document to an enhanced matter.
+    Uses normalized fuzzy matching to handle descriptor variations.
+    """
+    norm_doc = _normalize_client_name(client_in_doc)
+    
+    best_match = None
+    best_score = 0
+    
+    for matter in enhanced_matters:
+        matter_client = matter.get("client", "")
+        norm_matter = _normalize_client_name(matter_client)
+        
+        # Exact match (after normalization)
+        if norm_doc == norm_matter:
+            return matter
+        
+        # Substring match (one contains the other)
+        if norm_doc in norm_matter or norm_matter in norm_doc:
+            score = min(len(norm_doc), len(norm_matter)) / max(len(norm_doc), len(norm_matter), 1)
+            if score > best_score:
+                best_score = score
+                best_match = matter
+        
+        # Try matching by first word(s) — "Grupo Hermes" in "Grupo Hermes - Mexican..."
+        doc_words = norm_doc.split()
+        matter_words = norm_matter.split()
+        if len(doc_words) >= 2 and len(matter_words) >= 2:
+            if doc_words[0] == matter_words[0] and doc_words[1] == matter_words[1]:
+                return matter
+    
+    if best_match and best_score > 0.5:
+        return best_match
+    
+    return None
+
+
+# =====================================================
+# CELL CONTENT REPLACEMENT
+# =====================================================
+
+def _replace_cell_content(cell: _Cell, new_text: str, preserve_first_paragraph_format: bool = True):
+    """
+    Replace the content of a cell while preserving paragraph formatting.
+    
+    Strategy:
+    1. Split new_text by double newlines into paragraphs
+    2. For the first paragraph, preserve the original paragraph's run formatting
+    3. For subsequent paragraphs, clone formatting from the first paragraph
+    4. Remove any excess original paragraphs
+    """
+    new_paragraphs = [p.strip() for p in new_text.split("\n\n") if p.strip()]
+    
+    if not new_paragraphs:
+        return
+    
+    original_paragraphs = cell.paragraphs
+    
+    if not original_paragraphs:
+        return
+    
+    # Get reference formatting from the first content paragraph
+    ref_paragraph = original_paragraphs[0]
+    ref_format = None
+    if ref_paragraph.runs:
+        ref_run = ref_paragraph.runs[0]
+        ref_format = {
+            "font_name": ref_run.font.name,
+            "font_size": ref_run.font.size,
+            "bold": ref_run.font.bold,
+            "italic": ref_run.font.italic,
+            "color": ref_run.font.color.rgb if ref_run.font.color and ref_run.font.color.rgb else None,
+        }
+    
+    # Clear all existing paragraphs
+    for i in range(len(original_paragraphs) - 1, -1, -1):
+        p = original_paragraphs[i]
+        p_element = p._element
+        p_element.getparent().remove(p_element)
+    
+    # Add new paragraphs
+    for i, para_text in enumerate(new_paragraphs):
+        if i == 0:
+            # Re-add the first paragraph (we deleted it)
+            from docx.oxml.ns import qn
+            new_p = cell._element.makeelement(qn('w:p'), {})
+            cell._element.append(new_p)
+            p = Paragraph(new_p, cell)
+        else:
+            p = cell.add_paragraph()
+        
+        # Check for bold markers: **text** → bold
+        segments = _parse_bold_segments(para_text)
+        
+        for text, is_bold in segments:
+            run = p.add_run(text)
+            if ref_format:
+                if ref_format["font_name"]:
+                    run.font.name = ref_format["font_name"]
+                if ref_format["font_size"]:
+                    run.font.size = ref_format["font_size"]
+                if ref_format["color"]:
+                    run.font.color.rgb = ref_format["color"]
+                # Bold: either from the ** markers or from original formatting
+                run.font.bold = is_bold or (ref_format["bold"] if not segments[0][1] else False)
+                if ref_format["italic"]:
+                    run.font.italic = ref_format["italic"]
+
+
+def _parse_bold_segments(text: str) -> List[Tuple[str, bool]]:
+    """
+    Parse text with **bold markers** into segments.
+    Returns list of (text, is_bold) tuples.
+    """
+    segments = []
+    pattern = re.compile(r'\*\*(.*?)\*\*')
+    last_end = 0
+    
+    for match in pattern.finditer(text):
+        # Text before the bold marker
+        if match.start() > last_end:
+            segments.append((text[last_end:match.start()], False))
+        # Bold text
+        segments.append((match.group(1), True))
+        last_end = match.end()
+    
+    # Remaining text after last bold marker
+    if last_end < len(text):
+        segments.append((text[last_end:], False))
+    
+    if not segments:
+        segments.append((text, False))
+    
+    return segments
+
+
+# =====================================================
+# TABLE STRUCTURE ANALYSIS
+# =====================================================
+
+def _find_data_cell_in_table(table: Table, label_check_fn) -> Optional[Tuple[int, int]]:
+    """
+    Find a label cell in a table and return the position of the DATA cell below it.
+    Chambers template pattern: label row → data row (in the next row, same column).
+    Returns (row_index, col_index) of the data cell, or None.
+    """
+    for row_idx, row in enumerate(table.rows):
+        for col_idx, cell in enumerate(row.cells):
+            text = _cell_text(cell)
+            if label_check_fn(text):
+                # The data cell is typically in the NEXT row, same column
+                if row_idx + 1 < len(table.rows):
+                    return (row_idx + 1, col_idx)
+    return None
+
+
+def _find_client_name_in_table(table: Table) -> str:
+    """
+    Find the E1/D1 client name in a matter table.
+    Pattern: "Name of client" label → data in next row.
+    """
+    for row_idx, row in enumerate(table.rows):
+        for cell in row.cells:
+            text = _cell_text(cell)
+            if _is_client_name_label(text):
+                if row_idx + 1 < len(table.rows):
+                    return _cell_text(table.rows[row_idx + 1].cells[0])
+    return ""
+
+
+# =====================================================
+# MAIN CLONE-AND-REPLACE FUNCTION
+# =====================================================
+
+def clone_and_replace(
+    original_path: str,
+    enhanced_b7: str = "",
+    enhanced_matters: Optional[List[Dict]] = None,
+) -> bytes:
+    """
+    Clone the original DOCX and replace only B10 + D2/E2 cells.
+    
+    Args:
+        original_path: Path to the original DOCX file uploaded by the firm
+        enhanced_b7: AI-enhanced department narrative (replaces B10 cell content)
+        enhanced_matters: List of dicts with {"client": str, "optimized_text": str}
+                         Each replaces the corresponding D2/E2 matter summary
+    
+    Returns:
+        bytes: The modified DOCX file as bytes
+    """
+    if enhanced_matters is None:
+        enhanced_matters = []
+    
+    print(f"[DOCX CLONER] Loading original document: {original_path}")
+    doc = Document(original_path)
+    
+    b7_replaced = False
+    matters_replaced = 0
+    matters_skipped = []
+    
+    # Track which enhanced matters have been used
+    used_matters = set()
+    
+    for table_idx, table in enumerate(doc.tables):
+        # ─── CHECK FOR B10 SECTION ───
+        if enhanced_b7 and not b7_replaced:
+            data_pos = _find_data_cell_in_table(table, _is_b10_label)
+            if data_pos:
+                row_idx, col_idx = data_pos
+                data_cell = table.rows[row_idx].cells[col_idx]
+                original_text = _cell_text(data_cell)
+                
+                print(f"[DOCX CLONER] Found B10 at table {table_idx}, row {row_idx}")
+                print(f"[DOCX CLONER]   Original B10: {len(original_text.split())} words")
+                print(f"[DOCX CLONER]   Enhanced B7:  {len(enhanced_b7.split())} words")
+                
+                _replace_cell_content(data_cell, enhanced_b7)
+                b7_replaced = True
+                continue
+        
+        # ─── CHECK FOR MATTER SUMMARY (D2/E2) ───
+        if enhanced_matters:
+            data_pos = _find_data_cell_in_table(table, _is_matter_summary_label)
+            if data_pos:
+                # Find the client name for this matter table
+                client_name = _find_client_name_in_table(table)
+                
+                if client_name:
+                    matched_matter = _match_client(client_name, enhanced_matters)
+                    
+                    if matched_matter:
+                        optimized_text = matched_matter.get("optimized_text", "")
+                        if optimized_text:
+                            row_idx, col_idx = data_pos
+                            data_cell = table.rows[row_idx].cells[col_idx]
+                            original_text = _cell_text(data_cell)
+                            
+                            client_key = _normalize_client_name(matched_matter.get("client", ""))
+                            
+                            # Only replace if not already used (avoid double-replacing)
+                            if client_key not in used_matters:
+                                print(f"[DOCX CLONER] Replacing matter for '{client_name[:50]}' at table {table_idx}")
+                                print(f"[DOCX CLONER]   Original: {len(original_text.split())} words → Enhanced: {len(optimized_text.split())} words")
+                                
+                                _replace_cell_content(data_cell, optimized_text)
+                                used_matters.add(client_key)
+                                matters_replaced += 1
+                            else:
+                                print(f"[DOCX CLONER] Skipping duplicate match for '{client_name[:50]}'")
+                        else:
+                            matters_skipped.append(client_name)
+                    else:
+                        matters_skipped.append(client_name)
+                else:
+                    print(f"[DOCX CLONER] Warning: Found D2/E2 at table {table_idx} but no client name")
+    
+    # ─── SUMMARY ───
+    print(f"\n[DOCX CLONER] ════════════════════════════════════════")
+    print(f"[DOCX CLONER] Clone-and-Replace complete:")
+    print(f"[DOCX CLONER]   B10 replaced: {'✅ Yes' if b7_replaced else '❌ No (not found or no enhanced_b7)'}")
+    print(f"[DOCX CLONER]   Matters replaced: {matters_replaced}/{len(enhanced_matters)}")
+    if matters_skipped:
+        print(f"[DOCX CLONER]   Skipped (no match): {', '.join(s[:40] for s in matters_skipped)}")
+    print(f"[DOCX CLONER] ════════════════════════════════════════\n")
+    
+    # Save to bytes
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def clone_and_replace_from_state(
+    file_path: str,
+    enhanced_b7: str,
+    matters: List[Dict],
+) -> Optional[bytes]:
+    """
+    Convenience wrapper that extracts enhanced_matters from the pipeline state format.
+    
+    Args:
+        file_path: Path to original DOCX
+        enhanced_b7: AI-enhanced B7 narrative
+        matters: List of matter dicts from the pipeline (with client + optimized_text fields)
+    
+    Returns:
+        bytes or None if file_path is invalid or not a DOCX
+    """
+    if not file_path or not file_path.lower().endswith('.docx'):
+        print(f"[DOCX CLONER] Skipping — not a DOCX file: {file_path}")
+        return None
+    
+    import os
+    if not os.path.exists(file_path):
+        print(f"[DOCX CLONER] Skipping — file not found: {file_path}")
+        return None
+    
+    # Build enhanced_matters list from pipeline state
+    enhanced_matters = []
+    for m in matters:
+        optimized = m.get("optimized_text") or m.get("optimizedText")
+        client = m.get("client", "")
+        if optimized and client:
+            enhanced_matters.append({
+                "client": client,
+                "optimized_text": optimized,
+            })
+    
+    if not enhanced_b7 and not enhanced_matters:
+        print("[DOCX CLONER] Skipping — no enhanced content to replace")
+        return None
+    
+    return clone_and_replace(
+        original_path=file_path,
+        enhanced_b7=enhanced_b7,
+        enhanced_matters=enhanced_matters,
+    )

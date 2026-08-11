@@ -4,6 +4,7 @@ import uuid
 import json
 import asyncio
 import traceback
+import base64
 import httpx
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
@@ -12,6 +13,7 @@ from langchain_core.messages import HumanMessage
 from agents.nodes import writer_node
 from utils.docx_generator import generate_docx_report
 from utils.language_guard import filter_pipeline_output
+from core.docx_cloner import clone_and_replace_from_state
 from utils.editorial_memory import (
     load_memory, save_memory, extract_lessons_from_result, format_memory_for_prompt
 )
@@ -286,6 +288,33 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                 "enhanced_b7": result.get("enhanced_b7", ""),
             }
         }
+
+        # =====================================================
+        # v19.0: CLONE-AND-REPLACE DOCX GENERATION
+        # Clone the original DOCX and replace only B10 + E2/D2
+        # with AI-enhanced content. Preserves ALL formatting.
+        # =====================================================
+        try:
+            file_path = result.get("file_path", "")
+            enhanced_b7 = result.get("enhanced_b7", "")
+            matters = result.get("matters", [])
+            
+            docx_bytes = clone_and_replace_from_state(
+                file_path=file_path,
+                enhanced_b7=enhanced_b7,
+                matters=matters,
+            )
+            
+            if docx_bytes:
+                # Base64 encode the DOCX for transport via webhook
+                docx_b64 = base64.b64encode(docx_bytes).decode('utf-8')
+                response_data["data"]["cloned_docx_b64"] = docx_b64
+                print(f"[DOCX CLONER] ✅ Generated cloned DOCX: {len(docx_bytes)} bytes")
+            else:
+                print("[DOCX CLONER] No cloned DOCX generated (no original file or no enhanced content)")
+        except Exception as docx_err:
+            print(f"[DOCX CLONER] Warning: Clone-and-replace failed: {docx_err}")
+            # Non-fatal — the pipeline results are still valid
 
         # Apply epistemic language guard
         response_data["data"] = filter_pipeline_output(response_data["data"])

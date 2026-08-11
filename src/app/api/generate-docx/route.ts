@@ -127,6 +127,29 @@ export async function GET(request: NextRequest) {
     const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
     const practiceArea = submission.practiceArea || 'General Practice';
 
+    // ═══════════════════════════════════════════════════════════
+    // v19.0: CLONE-AND-REPLACE — Serve pre-built DOCX if available
+    // The Python pipeline clones the original DOCX and only replaces
+    // B10 + D2/E2 cells. This preserves ALL formatting (colors, bold,
+    // logos, diversity sections, numbering, etc.)
+    // ═══════════════════════════════════════════════════════════
+    if (docType === 'submission' && chambersData.cloned_docx_b64) {
+      console.log('[DOCX GENERATOR] ✅ Serving cloned DOCX (v19.0 Clone-and-Replace)');
+      try {
+        const docxBuffer = Buffer.from(chambersData.cloned_docx_b64, 'base64');
+        const prefix = 'Submission_Form';
+        return new NextResponse(new Uint8Array(docxBuffer), {
+          headers: {
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition': `attachment; filename="RankPilot_${prefix}_${practiceArea.replace(/\s+/g, '_')}.docx"`,
+          },
+        });
+      } catch (cloneErr: any) {
+        console.error('[DOCX GENERATOR] Failed to decode cloned DOCX, falling back to builder:', cloneErr.message);
+        // Fall through to the TypeScript builder below
+      }
+    }
+
     let doc: Document;
     if (docType === 'submission') {
       doc = buildSubmissionDoc(firmName, practiceArea, chambersData, submission, exportMode);
