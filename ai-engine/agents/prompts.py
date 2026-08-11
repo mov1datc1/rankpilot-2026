@@ -1176,22 +1176,38 @@ THE RULE: Copy the original client descriptor FIRST, then ADD context. NEVER rep
 - Your output MUST NEVER be shorter than the original. EVER.
 - If your output is shorter than the original, you have FAILED.
 
-### MATTER ENHANCEMENT ARCHITECTURE (MANDATORY 9-ELEMENT):
-Every enhanced matter MUST include these 9 elements (where evidence exists in the original):
-1. CLIENT CONTEXT: Who is the client and why does their identity matter?
-2. TRIGGERING PROBLEM: What business threat, regulatory change, or risk prompted the engagement?
-3. STAKES: What was at stake (financial, operational, reputational, regulatory)?
-4. PRECISE WORK PERFORMED: What exactly did the firm do? (Not "advised on" — describe the actual deliverables)
-5. LEAD PARTNER ROLE: What was the lead partner's specific contribution?
-6. TEAM DEPLOYMENT: Who else worked on it and what was their role?
-7. LEGAL/REGULATORY COMPLEXITY: What made this matter legally complex? (Name specific regulations, proceedings, authorities)
-8. RESULT OR CLIENT IMPACT: What changed for the client as a result?
-9. THESIS CONNECTION: Why does this matter support the submission's overarching thesis?
+### MATTER NARRATIVE STRUCTURE (MANDATORY — FOLLOW THIS ORDER):
+The opening sentence of each matter is CRITICAL. It must reveal WHY this matter is strategically important, NOT just describe the mandate.
 
-### DIFFERENTIATION RULE (CRITICAL):
-Each enhanced matter MUST tell a DIFFERENT story from every other matter in the submission.
-If two enhanced matters sound similar, you have FAILED.
-Before finalizing: ask "What UNIQUE capability does this matter demonstrate?"
+❌ WRONG OPENING: "[Client] instructed the firm to design and implement a data protection framework."
+   (This is GENERIC. Five matters could start this way. It tells Chambers nothing.)
+✅ RIGHT OPENING: "The firm has defended during 16 years the legal and operational viability of large-scale databases as critical business assets, including in sensitive regulatory and electoral contexts."
+   (This is STRATEGIC. It tells Chambers why this matters for ranking.)
+
+Follow this flow:
+1. WHY THIS MATTER MATTERS: Open with the strategic significance — what makes this engagement different from routine work? What does it PROVE about the practice?
+2. CLIENT CONTEXT: Who is the client and why does their identity add weight? (Copy original descriptor VERBATIM, then expand.)
+3. CHALLENGE/CONTEXT: What business threat, regulatory change, or risk prompted the engagement?
+4. FIRM'S ROLE + SOPHISTICATION: What exactly did the firm do? Name deliverables, regulations, authorities.
+5. LEAD PARTNER + TEAM: Who led and what was their specific contribution?
+6. OUTCOME: What changed for the client? Prefer quantified results (100% compliance, zero sanctions) over generic claims.
+
+### EVIDENCE STRENGTH IN OUTCOMES:
+When writing outcomes, classify your language:
+- STRONG (use when evidence exists): "achieved 100% compliance in ARCO requests and avoided regulatory sanctions" — quantified, verifiable
+- MODERATE (use when concrete change is clear): "established a dedicated Personal Data Protection Department" — institutional, demonstrable
+- WEAK (AVOID): "strengthened compliance posture", "reduced regulatory exposure", "enhanced its position" — generic, unverifiable
+If you can only write a WEAK outcome because the original lacks evidence, write a MODERATE one instead that describes the concrete institutional or operational change. NEVER manufacture metrics.
+
+### ANTI-HOMOGENIZATION RULE (SUPREME PRIORITY):
+Each matter MUST open with a DIFFERENT strategic angle. If two matters start with similar language about "designing and implementing a framework", you have FAILED.
+The portfolio has real diversity — surface it:
+- A pharma engagement is about SENSITIVE DATA CATEGORIES and institutional building
+- A retail expansion engagement is about SCALING privacy across new locations
+- An industrial engagement is about EMBEDDING privacy in risk management
+- A litigation/defence engagement is about PROTECTING databases as business assets
+- A restructuring engagement is about INTEGRATING privacy into organisational change
+Ask: "What NEW evidence does this matter add to the case for ranking?" If two matters add the SAME evidence, rewrite one.
 
 ### PROHIBITED GENERIC PHRASES (HARD BLOCK):
 These phrases MUST NEVER appear in any enhanced matter:

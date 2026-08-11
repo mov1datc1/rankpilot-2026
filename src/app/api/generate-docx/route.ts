@@ -374,12 +374,12 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     );
   }
 
-  // ═══ NEW §2: Competitive Identity Statement ═══
+  // ═══ NEW §2: Practice Positioning Statement ═══
   const identityStatement = competitiveIdentity.identity_statement || '';
   const identityCoherence = competitiveIdentity.identity_coherence || '';
   if (identityStatement) {
     sections.push(
-      sectionTitle('Competitive Identity'),
+      sectionTitle('Practice Positioning'),
       p(`Coherence: ${identityCoherence ? identityCoherence.charAt(0).toUpperCase() + identityCoherence.slice(1) : 'Pending'}`, { bold: true, color: '6366F1', spacing: { after: 80 } }),
       p(String(identityStatement), { size: 24, spacing: { after: 100 } })
     );
@@ -388,11 +388,11 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     }
   }
 
-  // ═══ NEW §3: Editorial Thesis + Hero Matter ═══
+  // ═══ NEW §3: Editorial Thesis + Lead Matter ═══
   const thesis = narrativeArch.thesis_statement || '';
   const heroMatter = narrativeArch.hero_matter || '';
   if (thesis || heroMatter) {
-    sections.push(sectionTitle('Editorial Thesis & Hero Matter'));
+    sections.push(sectionTitle('Editorial Thesis & Lead Engagement'));
     if (thesis) {
       sections.push(
         subTitle('Editorial Thesis'),
@@ -401,7 +401,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     }
     if (heroMatter) {
       sections.push(
-        subTitle('Hero Matter'),
+        subTitle('Lead Engagement'),
         p(String(heroMatter), { bold: true, spacing: { after: 80 } })
       );
       if (narrativeArch.hero_matter_rationale) {
@@ -529,6 +529,61 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     ]);
     sections.push(makeTable(['Matter', 'Type', 'Quality Label', 'Score', 'Improvement Note'], evalRows));
     sections.push(emptyRow());
+
+    // ═══ NEW §6b: Evidence Strengthening Requests (OBS-7/8) ═══
+    // Scan matters for weak evidence and generate information requests
+    const weakMatters = matterEvals.filter((ev: any) => {
+      const score = typeof ev.score === 'number' ? ev.score : 0;
+      const note = (ev.improvement_note || '').toLowerCase();
+      // Flag matters with low scores or generic outcomes
+      return score < 70 || note.includes('generic') || note.includes('quantif') || note.includes('evidence') || note.includes('measurable');
+    });
+
+    // Also check the actual matter texts for weak claims
+    const allMatters = Array.isArray(chambersData.matters) ? chambersData.matters : [];
+    const infoRequests: Array<{ matter: string; questions: string[] }> = [];
+    
+    for (const matter of allMatters) {
+      const text = (matter.optimized_text || matter.summary || '').toLowerCase();
+      const client = matter.client || matter.title || 'Unknown';
+      const questions: string[] = [];
+      
+      // Detect weak generic claims
+      if (text.includes('strengthened compliance posture') || text.includes('enhanced compliance')) {
+        questions.push('How was compliance strengthened? Number of policies implemented, employees trained, or audits passed?');
+      }
+      if (text.includes('reduced regulatory exposure') || text.includes('regulatory risk')) {
+        questions.push('What specific regulatory exposure was reduced? Were any sanctions avoided? Were there interactions with authorities?');
+      }
+      if (text.includes('improved regulatory compliance') || text.includes('improve regulatory')) {
+        questions.push('What measurable improvement occurred? Number of ARCO requests handled, zero-sanctions track record, or audit results?');
+      }
+      // Detect missing quantifiable evidence
+      if (!text.match(/\d+%|\d+ year|\d+ employee|\d+ store|\d+ entit|\d+ polic|\d+ train/)) {
+        questions.push('Can the firm provide specific numbers? (e.g., employees trained, policies drafted, entities covered, years of relationship)');
+      }
+      // Detect missing outcome
+      if (!text.match(/achieved|avoided|zero sanction|100%|established.*department|created.*function/)) {
+        questions.push('What was the concrete outcome? Did the client avoid sanctions, pass an audit, or establish a new internal function?');
+      }
+      
+      if (questions.length > 0) {
+        infoRequests.push({ matter: client, questions });
+      }
+    }
+
+    if (infoRequests.length > 0) {
+      sections.push(sectionTitle('Evidence Strengthening Requests'));
+      sections.push(p('The following matters contain claims that would be significantly stronger with additional supporting evidence. These are not weaknesses — they are opportunities to convert good matters into excellent ones.', { italics: true, color: GRAY, spacing: { after: 200 } }));
+      
+      for (const req of infoRequests) {
+        sections.push(p(req.matter, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } }));
+        for (const q of req.questions) {
+          sections.push(p(`→ ${q}`, { color: 'D97706', spacing: { after: 60 } }));
+        }
+      }
+      sections.push(emptyRow());
+    }
   }
 
   // AI Recommended Rewrites
