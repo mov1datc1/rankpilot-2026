@@ -2214,12 +2214,21 @@ def optimization_node(state: AgentState) -> Dict:
             # ═══ v17.5: FILLER STRIP — remove generic phrases ═══
             optimized_text = strip_fillers(optimized_text)
             
-            # ═══ v17.5.3: CLIENT DESCRIPTOR VERIFICATION — programmatic repair ═══
-            # This is DETERMINISTIC — extracts the client descriptor from original,
-            # checks if the LLM preserved it, and splices it back if lost.
+            # ═══ v18.8: CLIENT DESCRIPTOR VERIFICATION — programmatic repair ═══
+            # This is DETERMINISTIC — extracts the client descriptor from the ORIGINAL
+            # document text (not the extracted fields, which may have lost descriptors).
             # e.g., "dairy producers" → restored if LLM replaced with "prominent client"
+            #
+            # v18.8 ROOT CAUSE FIX: Previously used `raw_text` (built from extracted
+            # fields where the extraction LLM already compressed out the descriptor).
+            # Now uses `doc_text` — the ORIGINAL DOCX text which contains:
+            #   "Grupo Excelsior, one of Mexico's leading dairy producers"
+            # The extraction chain's `summary` field often strips this to:
+            #   "Advised Grupo Excelsior on data protection..."
+            # So verify_client_descriptors could never find the descriptor.
             client_name = matter.get('client', '')
-            optimized_text = verify_client_descriptors(raw_text, optimized_text, client_name)
+            original_doc_text = state.get('doc_text', '') or raw_text
+            optimized_text = verify_client_descriptors(original_doc_text, optimized_text, client_name)
             
             matter['optimized_text'] = optimized_text
             matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
