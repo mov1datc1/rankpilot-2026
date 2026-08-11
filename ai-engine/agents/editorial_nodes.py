@@ -917,8 +917,8 @@ def submission_blueprint_node(state: AgentState) -> Dict:
             m_lower = m_title.lower()
             
             if m_lower == hero_title or (hero_title and hero_title in m_lower):
-                role = "hero"
-                rationale = "Selected as hero matter by editorial analysis"
+                role = "lead"
+                rationale = "Selected as lead matter by editorial analysis"
             elif m_lower in supporting_titles or any(s in m_lower for s in supporting_titles if s):
                 role = "supporting"
                 rationale = "Supporting evidence for the thesis"

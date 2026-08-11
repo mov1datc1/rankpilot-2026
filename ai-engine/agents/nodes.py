@@ -118,6 +118,13 @@ GENERIC_FILLERS = [
     (r'\brendered\b', 'provided'),
     (r'\bprofound\b', 'significant'),
     (r'\boutstanding\b', 'strong'),
+    # === v18.7: WEAK OUTCOME PHRASES (found duplicated across matters in v18-4) ===
+    (r'\breduced regulatory exposure\b', 'reduced specific regulatory risk'),
+    (r'\bstrengthened compliance posture\b', 'achieved measurable compliance'),
+    (r'\bmitigated potential risks\b', 'addressed identified risks'),
+    (r'\bwidely recognised\b', 'recognised'),
+    (r'\bparticularly recognised\b', 'recognised'),
+    (r'\bstrategic advisory role\b', 'advisory function'),
 ]
 
 def strip_fillers(text: str) -> str:
@@ -138,7 +145,7 @@ def strip_fillers(text: str) -> str:
 
 
 def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name: str) -> str:
-    """v17.6: PROGRAMMATIC client descriptor verification and repair.
+    """v18.7: PROGRAMMATIC client descriptor verification and repair.
     
     The LLM tends to replace specific client descriptions with generic labels:
       "Grupo Excelsior, one of Mexico's leading dairy producers" 
@@ -149,6 +156,10 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     2. Checks if key industry/sector words survived in the enhanced text
     3. If lost, surgically splices the original descriptor back in
     
+    v18.7 FIX: Searches ALL occurrences of client name, not just the first.
+    The first occurrence is often in "Title:" or "Client:" fields (no comma).
+    The descriptor with comma lives in "Summary:" (2nd+ occurrence).
+    
     This is DETERMINISTIC — no LLM involved, cannot be ignored.
     """
     if not original_raw or not enhanced_text or not client_name:
@@ -158,48 +169,78 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     if not client_clean:
         return enhanced_text
     
-    # ═══ Step 1: Find the client name in original text ═══
+    # ═══ Step 1: Find ALL occurrences of client name in original text ═══
+    # v18.7 FIX: The old code only found the FIRST match, which was in
+    # "Title: Grupo Excelsior Data Protection..." (no comma after = no descriptor).
+    # The descriptor "one of Mexico's leading dairy producers" was in the SECOND
+    # match inside "Summary: Advised Grupo Excelsior, one of Mexico's..."
     orig_lower = original_raw.lower()
     client_lower = client_clean.lower()
     
-    pos = orig_lower.find(client_lower)
-    if pos == -1:
-        # Try partial match — each significant word
+    # Collect ALL positions where client name appears
+    positions = []
+    search_start = 0
+    while True:
+        pos = orig_lower.find(client_lower, search_start)
+        if pos == -1:
+            break
+        positions.append(pos)
+        search_start = pos + 1
+    
+    # If no exact match, try partial match
+    if not positions:
         parts = client_clean.split()
         for p in parts:
             if len(p) > 3 and p[0].isupper():
-                pos = orig_lower.find(p.lower())
-                if pos != -1:
-                    # Adjust client_lower to match what we found
+                search_start = 0
+                while True:
+                    pos = orig_lower.find(p.lower(), search_start)
+                    if pos == -1:
+                        break
+                    positions.append(pos)
+                    search_start = pos + 1
+                if positions:
                     client_lower = p.lower()
                     break
     
-    if pos == -1:
+    if not positions:
         return enhanced_text
     
     # ═══ Step 2: Extract descriptor phrase after client name ═══
-    after_client_start = pos + len(client_lower)
-    remaining_orig = original_raw[after_client_start:]
-    
+    # v18.7 FIX: Try ALL positions, pick the first one with a comma-delimited descriptor.
+    # Position 0 is typically "Title: Grupo Excelsior Data Protection..." (no comma)
+    # Position 1+ is typically "Summary: Advised Grupo Excelsior, one of Mexico's..." (HAS comma)
     descriptor = ""
-    # Pattern A: "ClientName, descriptor phrase, ..." (comma-delimited)
-    if remaining_orig.lstrip().startswith(','):
-        remaining_orig = remaining_orig.lstrip()[1:].strip()
-        # Find end of descriptor — first clause boundary
-        end_markers = [', on ', ', in the ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ']
-        end_pos = len(remaining_orig)
-        for marker in end_markers:
-            mp = remaining_orig.lower().find(marker)
-            if mp != -1 and mp < end_pos and mp > 5:  # at least 5 chars of descriptor
-                end_pos = mp
-        descriptor = remaining_orig[:end_pos].strip()
-    # Pattern B: "ClientName — descriptor" (em dash)
-    elif remaining_orig.lstrip().startswith('-') or remaining_orig.lstrip().startswith('—'):
-        remaining_orig = remaining_orig.lstrip().lstrip('-—').strip()
-        end_pos = remaining_orig.find('.')
-        if end_pos == -1:
-            end_pos = len(remaining_orig)
-        descriptor = remaining_orig[:end_pos].strip()
+    for pos in positions:
+        after_client_start = pos + len(client_lower)
+        remaining_orig = original_raw[after_client_start:]
+        
+        # Pattern A: "ClientName, descriptor phrase, ..." (comma-delimited)
+        if remaining_orig.lstrip().startswith(','):
+            remaining_trimmed = remaining_orig.lstrip()[1:].strip()
+            # Find end of descriptor — first clause boundary
+            end_markers = [', on ', ', in the ', ', to ', ', for ', '. ', ', has ', ', was ', ', is ',
+                          ', instructed ', ', engaged ', ', entered ', ', retained ']
+            end_pos = len(remaining_trimmed)
+            for marker in end_markers:
+                mp = remaining_trimmed.lower().find(marker)
+                if mp != -1 and mp < end_pos and mp > 5:  # at least 5 chars of descriptor
+                    end_pos = mp
+            candidate = remaining_trimmed[:end_pos].strip()
+            if candidate and len(candidate) >= 5:
+                descriptor = candidate
+                break  # Found a good descriptor — stop searching
+        
+        # Pattern B: "ClientName — descriptor" (em dash)
+        elif remaining_orig.lstrip().startswith('-') or remaining_orig.lstrip().startswith('—'):
+            remaining_trimmed = remaining_orig.lstrip().lstrip('-—').strip()
+            end_pos = remaining_trimmed.find('.')
+            if end_pos == -1:
+                end_pos = len(remaining_trimmed)
+            candidate = remaining_trimmed[:end_pos].strip()
+            if candidate and len(candidate) >= 5:
+                descriptor = candidate
+                break
     
     if not descriptor or len(descriptor) < 5:
         return enhanced_text
@@ -2359,9 +2400,10 @@ WHAT "STRATEGIC DENSITY" MEANS:
 
 MANDATORY REQUIREMENTS:
 1. Mention the lead partner or department head BY NAME (e.g., "Led by [Name], the practice...")
-2. Mention 2-3 client names as EXAMPLES of patterns (not as a list)
+2. Mention AT MOST 3 client names in the entire B7. Choose the 2-3 that best ILLUSTRATE the patterns you discovered. The remaining clients are CONTEXT — they prove the pattern exists, but do NOT name them individually. If you name 4+ clients, your output has FAILED.
 3. Include at least 2 specific measurable outcomes from the matters (percentages, year counts, concrete results)
 4. The narrative must reveal WHY this practice is differentiated, not just WHAT it does
+5. HARD CAP: Count the client names in your output BEFORE submitting. If you have named more than 3 clients, REMOVE the excess ones and refer to them generically (e.g., "across additional mandates for corporate groups in regulated sectors").
 
 WORD COUNT:
 - Your output MUST be between {max(original_word_count, 300)} and 500 words (Chambers hard limit for B7).
