@@ -2262,7 +2262,7 @@ def optimization_node(state: AgentState) -> Dict:
         if strategic_ctx.get("resolved_jurisdiction"):
             editorial_direction.append(f"MARKET: {strategic_ctx['resolved_jurisdiction']}")
         
-        # v18.4: Extract department head names for B7 partner mention
+        # v18.5: Extract department head names for B7 partner mention
         metadata = state.get("metadata", {})
         dept_info = metadata.get("department", {})
         dept_heads = []
@@ -2272,7 +2272,7 @@ def optimization_node(state: AgentState) -> Dict:
                 name = h.get("name", "") if isinstance(h, dict) else str(h)
                 if name and name.strip():
                     dept_heads.append(name.strip())
-        # Also try from matters — unique lead partners
+        # Fallback: extract unique lead partners from matters
         if not dept_heads:
             matters_for_heads = state.get("matters", [])
             seen_partners = set()
@@ -2287,118 +2287,98 @@ def optimization_node(state: AgentState) -> Dict:
         if dept_heads:
             editorial_direction.append(f"DEPARTMENT HEADS/KEY PARTNERS: {', '.join(dept_heads)}")
         
-        # v18.4: Extract CLIENT NAMES and KEY EVIDENCE from matters
-        # This is critical — the LLM needs this data to include it in B7
+        # v18.5: Extract STRATEGIC PATTERNS from matters (not raw client lists)
+        # The owner's rule: B7 = strategic proposition. Matters = evidence.
+        # B7 should show PATTERNS, using 2-3 client names as EXAMPLES of those patterns.
         matters_data = state.get("matters", [])
         client_names = []
-        key_evidence_points = []
+        matter_summaries = []  # condensed summaries for pattern extraction
         for m in matters_data:
-            # Client name
             client = m.get("client", "") or m.get("title", "")
             if client and client.strip():
                 client_names.append(client.strip())
-            # Key evidence: scan summary for quantitative/temporal data
             summary = m.get("summary", "") or m.get("optimized_text", "") or m.get("original_text", "")
             if summary:
-                # Extract sentences with numbers, years, percentages
-                import re
-                for sentence in re.split(r'[.!?]', summary):
-                    sentence = sentence.strip()
-                    if not sentence:
-                        continue
-                    # Keep sentences with: percentages, year counts, specific outcomes
-                    has_number = bool(re.search(r'\d+%|\d+ year|\d+ contract|\d+ decade|hundred|thousand', sentence, re.IGNORECASE))
-                    has_outcome = bool(re.search(r'compliance|sanction|avoided|achieved|successful|established|regularisation|store opening|expansion', sentence, re.IGNORECASE))
-                    if has_number or has_outcome:
-                        if len(sentence.split()) > 5 and sentence not in key_evidence_points:
-                            key_evidence_points.append(f"• {client}: {sentence.strip()}")
+                # Keep a short summary per matter for the LLM to identify patterns
+                words = summary.split()
+                short = ' '.join(words[:60])  # ~60 words max per matter
+                matter_summaries.append(f"• {client}: {short}")
         
-        # Build mandatory client + evidence section for prompt
-        client_evidence_text = ""
-        if client_names:
-            unique_clients = list(dict.fromkeys(client_names))  # preserve order, deduplicate
-            client_evidence_text += f"\nCLIENT NAMES FROM MATTERS (you MUST mention at least 3-4 of these BY NAME in B7):\n"
-            client_evidence_text += ", ".join(unique_clients)
-        if key_evidence_points:
-            client_evidence_text += f"\n\nKEY EVIDENCE FROM MATTERS (weave at least 2-3 of these specific data points into B7):\n"
-            client_evidence_text += "\n".join(key_evidence_points[:10])  # cap at 10 to avoid prompt bloat
+        # Build strategic context for pattern extraction
+        strategic_matter_context = ""
+        if matter_summaries:
+            unique_clients = list(dict.fromkeys(client_names))
+            strategic_matter_context += f"\nCLIENT PORTFOLIO ({len(unique_clients)} clients across {len(matters_data)} matters):\n"
+            strategic_matter_context += ", ".join(unique_clients)
+            strategic_matter_context += f"\n\nMATTER EVIDENCE (extract PATTERNS from these — do NOT list them all):\n"
+            strategic_matter_context += "\n".join(matter_summaries[:8])  # cap to avoid prompt bloat
         
-        print(f"[B7 ENHANCEMENT] Injecting {len(client_names)} client names, {len(key_evidence_points)} evidence points into prompt")
+        print(f"[B7 ENHANCEMENT] v18.5: Injecting {len(client_names)} clients, {len(matter_summaries)} matter summaries for PATTERN extraction")
         
         editorial_direction_text = "\n".join(editorial_direction) if editorial_direction else "Enhance for Chambers editorial standards."
         
         original_word_count = len(original_b10.split())
         
-        b7_enhancement_prompt = f"""You are a Chambers & Partners Senior Editor enhancing a law firm's department description (B7/B10 section).
+        b7_enhancement_prompt = f"""You are a Chambers & Partners Senior Editor enhancing a law firm's B7 section ("What is this department best known for?").
 
-THE FUNDAMENTAL RULE: KEEP → EXPAND → STRENGTHEN → NEVER SUMMARIZE.
+EDITORIAL PHILOSOPHY (CONSTITUTIONAL RULE):
+The objective is NOT to produce more words than the client.
+The objective IS to produce more STRATEGIC DENSITY per word, preserving all relevant evidence.
+B7 is the STRATEGIC PROPOSITION of the practice. The matters (listed separately) are the EVIDENCE that proves it.
 
 You are given:
-1. The ORIGINAL B10 text written by the firm (THIS IS YOUR BASE — preserve EVERYTHING)
-2. Editorial direction from the AI analysis (use this to ADD strategic framing)
-3. Client names and key evidence extracted from the firm's matters (USE THESE — they are the firm's competitive proof)
+1. The ORIGINAL B7 text written by the firm (THIS IS YOUR BASE — preserve its strategic thesis)
+2. Editorial direction from the AI analysis (use to sharpen the thesis)
+3. Matter evidence summaries (extract PATTERNS from these — do NOT dump them as a list)
 
-YOUR TASK:
-- Take every sentence, fact, name, and claim in the original and KEEP it
-- ADD strategic editorial context around each point using the editorial direction
-- WEAVE IN client names and specific evidence from the matters list below — B7 must demonstrate the practice with CONCRETE examples, not generic descriptions
-- EXPAND with Chambers-grade prose: why this matters, competitive context, market positioning
-- STRENGTHEN the narrative with editorial architecture: thesis-driven flow, evidence density
-- The output must read as if a Chambers editor took the firm's draft and made it MORE CONVINCING
+YOUR TASK — INTERPRET THE PRACTICE:
+- Preserve the firm's original strategic thesis (e.g., "data protection integrated into governance" — that's GOOD, keep it)
+- INTERPRET what the matters reveal about the practice's REAL differentiation
+- Extract PATTERNS from the matters: recurring advisory relationships, governance integration, sector diversity, measurable outcomes, institutional capability, regulatory defence
+- Use 2-3 client names as EXAMPLES that illustrate these patterns (e.g., "For [Client], the team..." or "including work for [Client] on...")
+- Add Chambers-grade editorial intelligence: why this practice is positioned differently, what the evidence MEANS, not just what it IS
+- Every sentence must either: (a) establish the practice's strategic thesis, (b) demonstrate a pattern with a specific example, or (c) differentiate the practice from generic descriptions
 
-MANDATORY REQUIREMENTS (FAILURE TO COMPLY = REJECTED OUTPUT):
-1. You MUST mention at least the lead partner or department head BY NAME (e.g., "Led by [Name], the practice...").
-2. You MUST mention at least 3-4 client names BY NAME from the matters list below (e.g., "For [Client], the team...").
-3. You MUST include at least 2-3 specific evidence points (percentages, year counts, outcomes) from the matters.
-4. These are NOT optional. A B7 without named clients and specific evidence is GENERIC and will be rejected by the editorial team.
+WHAT "STRATEGIC DENSITY" MEANS:
+✅ GOOD: "The team positions privacy as an operational and governance issue that affects consumer relationships, regulatory exposure, internal decision-making and the integrity of information-driven business models." (INTERPRETS the practice)
+❌ BAD: "The practice is widely recognised for its strategic advisory role in guiding corporations on the governance of personal data." (GENERIC — adds no intelligence)
+✅ GOOD: "For Grupo Hermes, the team achieved 100% compliance across ARCO requests while embedding privacy governance within broader operational structures." (PATTERN + EXAMPLE + EVIDENCE)
+❌ BAD: "The firm advises Grupo Hermes, Mega Direct, Biocodex, Hotel Riazor, Excelsior, Modelquipo, and Chedraui." (CLIENT LIST — no strategic value)
 
-WORD COUNT CONSTRAINT:
-- Your output MUST be between {max(original_word_count, 300)} and 500 words. The Chambers template enforces a HARD LIMIT of 500 words for B7.
-- If the original is already close to 500 words, focus on QUALITY over expansion.
-- Target 450-500 words — use the full space to include clients and evidence.
+MANDATORY REQUIREMENTS:
+1. Mention the lead partner or department head BY NAME (e.g., "Led by [Name], the practice...")
+2. Mention 2-3 client names as EXAMPLES of patterns (not as a list)
+3. Include at least 2 specific measurable outcomes from the matters (percentages, year counts, concrete results)
+4. The narrative must reveal WHY this practice is differentiated, not just WHAT it does
+
+WORD COUNT:
+- Your output MUST be between {max(original_word_count, 300)} and 500 words (Chambers hard limit for B7).
+- Do NOT inflate word count with generic prose. If 400 words of high strategic density is better than 500 words with padding, write 400 words.
 
 ABSOLUTE PROHIBITIONS:
-- NEVER make the text shorter than the original ({original_word_count} words).
-- NEVER exceed 500 words — this is a Chambers submission rule.
+- NEVER make the text shorter than the original ({original_word_count} words)
+- NEVER exceed 500 words
 - NEVER replace specific names with generic categories
-- NEVER remove any client name, lawyer name, regulation, or jurisdiction mentioned
-- NEVER add meta-text like "The narrative should..." or "This section highlights..."
-- NEVER summarize or compress multiple points into one
-- Write ONLY the final editorial prose. NO instructions, NO meta-commentary.
-
-PROHIBITED GENERIC PHRASES (HARD BLOCK — NEVER USE):
-- "pivotal role" / "pivotal" → describe the ACTUAL role or contribution
-- "stands as a beacon" / "beacon of expertise" → remove entirely
-- "testament to" / "is a testament" → replace with "demonstrates" or "shows"
-- "cornerstone of" → replace with "central to"
-- "robust framework" → describe the ACTUAL framework
-- "comprehensive advice" / "comprehensive" → replace with "thorough" or specify WHAT
-- "distinguished" → replace with "recognised"
-- "navigate complex" → replace with "address" + specific challenge
-- "seamlessly" / "meticulously" / "holistic" → remove or use plain alternatives
-- "instrumental in" → replace with "central to" or state WHAT was done
-- "carved out a niche" → replace with "specialises in"
-- "at the forefront of" → replace with "active in"
-- "underscores" → replace with "demonstrates"
-- "exemplifies" → replace with "demonstrates"
-If you use ANY of these phrases, your output has FAILED. Use SPECIFIC, EVIDENCE-BASED language instead.
+- NEVER add meta-text ("The narrative should...", "This section highlights...")
+- NEVER use promotional/generic language: "widely recognised", "particularly recognised", "strategic advisory role", "comprehensive", "pivotal", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex", "seamlessly", "meticulously", "holistic", "instrumental", "carved out a niche", "at the forefront", "underscores", "exemplifies", "distinguished"
+- If you use ANY prohibited phrase, your output has FAILED
 
 OUTPUT FORMAT (JSON):
-{{"enhanced_b7": "The full enhanced department narrative in plain text paragraphs. NO markdown."}}
+{{"enhanced_b7": "The full enhanced B7 narrative in plain text paragraphs. NO markdown."}}
 
 ---
-EDITORIAL DIRECTION (from AI analysis — use as guidance, NOT as content):
+EDITORIAL DIRECTION:
 {editorial_direction_text}
-{client_evidence_text}
+{strategic_matter_context}
 
 ---
-ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
+ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
 {original_b10}
 """
         
         try:
             b7_response = b7_llm.invoke([
-                SystemMessage(content="You enhance legal directory submissions. You EXPAND and STRENGTHEN text. You NEVER summarize or shorten."),
+                SystemMessage(content="You are a Chambers & Partners Senior Editor. Your role is to INTERPRET law firm practices and produce maximum strategic density per word. You are NOT a copywriter who adds embellishment. You are an editorial analyst who reveals why a practice is differentiated through patterns in the evidence. Preserve the firm's original thesis. Add editorial intelligence. Never add generic prose."),
                 HumanMessage(content=b7_enhancement_prompt)
             ])
             b7_result = safe_json_loads(b7_response.content, fallback={})
