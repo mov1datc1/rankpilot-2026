@@ -2262,7 +2262,7 @@ def optimization_node(state: AgentState) -> Dict:
         if strategic_ctx.get("resolved_jurisdiction"):
             editorial_direction.append(f"MARKET: {strategic_ctx['resolved_jurisdiction']}")
         
-        # v18.2: Extract department head names for B7 partner mention
+        # v18.4: Extract department head names for B7 partner mention
         metadata = state.get("metadata", {})
         dept_info = metadata.get("department", {})
         dept_heads = []
@@ -2274,9 +2274,9 @@ def optimization_node(state: AgentState) -> Dict:
                     dept_heads.append(name.strip())
         # Also try from matters — unique lead partners
         if not dept_heads:
-            matters = state.get("matters", [])
+            matters_for_heads = state.get("matters", [])
             seen_partners = set()
-            for m in matters:
+            for m in matters_for_heads:
                 lp = m.get("lead_partner", "")
                 if lp:
                     for name in lp.split(","):
@@ -2286,6 +2286,44 @@ def optimization_node(state: AgentState) -> Dict:
                             dept_heads.append(name)
         if dept_heads:
             editorial_direction.append(f"DEPARTMENT HEADS/KEY PARTNERS: {', '.join(dept_heads)}")
+        
+        # v18.4: Extract CLIENT NAMES and KEY EVIDENCE from matters
+        # This is critical — the LLM needs this data to include it in B7
+        matters_data = state.get("matters", [])
+        client_names = []
+        key_evidence_points = []
+        for m in matters_data:
+            # Client name
+            client = m.get("client", "") or m.get("title", "")
+            if client and client.strip():
+                client_names.append(client.strip())
+            # Key evidence: scan summary for quantitative/temporal data
+            summary = m.get("summary", "") or m.get("optimized_text", "") or m.get("original_text", "")
+            if summary:
+                # Extract sentences with numbers, years, percentages
+                import re
+                for sentence in re.split(r'[.!?]', summary):
+                    sentence = sentence.strip()
+                    if not sentence:
+                        continue
+                    # Keep sentences with: percentages, year counts, specific outcomes
+                    has_number = bool(re.search(r'\d+%|\d+ year|\d+ contract|\d+ decade|hundred|thousand', sentence, re.IGNORECASE))
+                    has_outcome = bool(re.search(r'compliance|sanction|avoided|achieved|successful|established|regularisation|store opening|expansion', sentence, re.IGNORECASE))
+                    if has_number or has_outcome:
+                        if len(sentence.split()) > 5 and sentence not in key_evidence_points:
+                            key_evidence_points.append(f"• {client}: {sentence.strip()}")
+        
+        # Build mandatory client + evidence section for prompt
+        client_evidence_text = ""
+        if client_names:
+            unique_clients = list(dict.fromkeys(client_names))  # preserve order, deduplicate
+            client_evidence_text += f"\nCLIENT NAMES FROM MATTERS (you MUST mention at least 3-4 of these BY NAME in B7):\n"
+            client_evidence_text += ", ".join(unique_clients)
+        if key_evidence_points:
+            client_evidence_text += f"\n\nKEY EVIDENCE FROM MATTERS (weave at least 2-3 of these specific data points into B7):\n"
+            client_evidence_text += "\n".join(key_evidence_points[:10])  # cap at 10 to avoid prompt bloat
+        
+        print(f"[B7 ENHANCEMENT] Injecting {len(client_names)} client names, {len(key_evidence_points)} evidence points into prompt")
         
         editorial_direction_text = "\n".join(editorial_direction) if editorial_direction else "Enhance for Chambers editorial standards."
         
@@ -2298,24 +2336,31 @@ THE FUNDAMENTAL RULE: KEEP → EXPAND → STRENGTHEN → NEVER SUMMARIZE.
 You are given:
 1. The ORIGINAL B10 text written by the firm (THIS IS YOUR BASE — preserve EVERYTHING)
 2. Editorial direction from the AI analysis (use this to ADD strategic framing)
+3. Client names and key evidence extracted from the firm's matters (USE THESE — they are the firm's competitive proof)
 
 YOUR TASK:
 - Take every sentence, fact, name, and claim in the original and KEEP it
 - ADD strategic editorial context around each point using the editorial direction
+- WEAVE IN client names and specific evidence from the matters list below — B7 must demonstrate the practice with CONCRETE examples, not generic descriptions
 - EXPAND with Chambers-grade prose: why this matters, competitive context, market positioning
 - STRENGTHEN the narrative with editorial architecture: thesis-driven flow, evidence density
 - The output must read as if a Chambers editor took the firm's draft and made it MORE CONVINCING
-- You MUST mention at least the lead partner or department head BY NAME in the narrative (e.g., "Led by [Name], the practice..."). This is a MANDATORY requirement.
+
+MANDATORY REQUIREMENTS (FAILURE TO COMPLY = REJECTED OUTPUT):
+1. You MUST mention at least the lead partner or department head BY NAME (e.g., "Led by [Name], the practice...").
+2. You MUST mention at least 3-4 client names BY NAME from the matters list below (e.g., "For [Client], the team...").
+3. You MUST include at least 2-3 specific evidence points (percentages, year counts, outcomes) from the matters.
+4. These are NOT optional. A B7 without named clients and specific evidence is GENERIC and will be rejected by the editorial team.
 
 WORD COUNT CONSTRAINT:
-- Your output MUST be between {original_word_count} and 500 words. The Chambers template enforces a HARD LIMIT of 500 words for B7.
+- Your output MUST be between {max(original_word_count, 300)} and 500 words. The Chambers template enforces a HARD LIMIT of 500 words for B7.
 - If the original is already close to 500 words, focus on QUALITY over expansion.
-- Target 400-490 words for optimal coverage within the limit.
+- Target 450-500 words — use the full space to include clients and evidence.
 
 ABSOLUTE PROHIBITIONS:
 - NEVER make the text shorter than the original ({original_word_count} words).
 - NEVER exceed 500 words — this is a Chambers submission rule.
-- NEVER replace specific names (JP Morgan, Simmons & Simmons, etc.) with generic categories
+- NEVER replace specific names with generic categories
 - NEVER remove any client name, lawyer name, regulation, or jurisdiction mentioned
 - NEVER add meta-text like "The narrative should..." or "This section highlights..."
 - NEVER summarize or compress multiple points into one
@@ -2344,6 +2389,7 @@ OUTPUT FORMAT (JSON):
 ---
 EDITORIAL DIRECTION (from AI analysis — use as guidance, NOT as content):
 {editorial_direction_text}
+{client_evidence_text}
 
 ---
 ORIGINAL B10 TEXT (THIS IS YOUR BASE — preserve ALL of this):
