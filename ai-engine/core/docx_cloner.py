@@ -361,21 +361,33 @@ def clone_and_replace_from_state(
     """
     Convenience wrapper that extracts enhanced_matters from the pipeline state format.
     
+    Handles both local file paths and URLs (Supabase Storage).
+    When file_path is a URL, downloads the DOCX to a temp file first.
+    
     Args:
-        file_path: Path to original DOCX
+        file_path: Path or URL to original DOCX
         enhanced_b7: AI-enhanced B7 narrative
         matters: List of matter dicts from the pipeline (with client + optimized_text fields)
     
     Returns:
         bytes or None if file_path is invalid or not a DOCX
     """
-    if not file_path or not file_path.lower().endswith('.docx'):
-        print(f"[DOCX CLONER] Skipping — not a DOCX file: {file_path}")
+    import os
+    import tempfile
+    import urllib.request
+    from urllib.parse import urlparse
+    
+    if not file_path:
+        print("[DOCX CLONER] Skipping — no file_path provided")
         return None
     
-    import os
-    if not os.path.exists(file_path):
-        print(f"[DOCX CLONER] Skipping — file not found: {file_path}")
+    # Check if it's a URL or local path
+    is_url = file_path.startswith('http://') or file_path.startswith('https://')
+    
+    # Validate extension (handle URL query params)
+    parsed_path = urlparse(file_path).path if is_url else file_path
+    if not parsed_path.lower().endswith('.docx'):
+        print(f"[DOCX CLONER] Skipping — not a DOCX file: {file_path[:100]}")
         return None
     
     # Build enhanced_matters list from pipeline state
@@ -393,8 +405,38 @@ def clone_and_replace_from_state(
         print("[DOCX CLONER] Skipping — no enhanced content to replace")
         return None
     
-    return clone_and_replace(
-        original_path=file_path,
-        enhanced_b7=enhanced_b7,
-        enhanced_matters=enhanced_matters,
-    )
+    # Download from URL if needed
+    local_path = file_path
+    temp_file = None
+    
+    if is_url:
+        try:
+            print(f"[DOCX CLONER] Downloading original DOCX from URL...")
+            fd, local_path = tempfile.mkstemp(suffix='.docx')
+            os.close(fd)
+            req = urllib.request.Request(file_path, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=30) as response, open(local_path, 'wb') as out_file:
+                out_file.write(response.read())
+            temp_file = local_path
+            print(f"[DOCX CLONER] Downloaded to temp file: {local_path} ({os.path.getsize(local_path)} bytes)")
+        except Exception as dl_err:
+            print(f"[DOCX CLONER] Failed to download DOCX: {dl_err}")
+            if temp_file and os.path.exists(temp_file):
+                os.remove(temp_file)
+            return None
+    elif not os.path.exists(file_path):
+        print(f"[DOCX CLONER] Skipping — local file not found: {file_path}")
+        return None
+    
+    try:
+        return clone_and_replace(
+            original_path=local_path,
+            enhanced_b7=enhanced_b7,
+            enhanced_matters=enhanced_matters,
+        )
+    finally:
+        # Cleanup temp file
+        if temp_file and os.path.exists(temp_file):
+            os.remove(temp_file)
+            print(f"[DOCX CLONER] Cleaned up temp file")
+
