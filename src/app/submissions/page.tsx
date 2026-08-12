@@ -168,7 +168,14 @@ export default function SubmissionsPage() {
         setIsSubmitting(false);
       }
     } catch (error: any) {
-      alert(error.message);
+      const msg = error.message || '';
+      if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network') || !navigator.onLine) {
+        alert('⚠️ Error de conexión a internet.\n\nNo se pudo subir el archivo. Verifica tu conexión a internet e intenta de nuevo.');
+      } else if (msg.includes('Supabase Storage')) {
+        alert('⚠️ Error al subir el archivo.\n\nEl servicio de almacenamiento no respondió correctamente. Intenta de nuevo en unos segundos.');
+      } else {
+        alert('Error: ' + msg);
+      }
       setIsSubmitting(false);
     }
   };
