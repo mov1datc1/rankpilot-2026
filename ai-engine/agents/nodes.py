@@ -2166,6 +2166,7 @@ def optimization_node(state: AgentState) -> Dict:
                     "The previous optimization LOST probative evidence (Constitutional Article V violation).\n"
                     "You MUST preserve ALL of the following from the original:\n"
                     "- Client name exactly as written\n"
+                    "- The CLIENT DESCRIPTOR phrase (industry/sector description after the client name) — copy VERBATIM\n"
                     "- All monetary values with currency\n"
                     "- All jurisdictions mentioned\n"
                     "- The firm's specific role (not generic 'advised')\n"
@@ -2174,7 +2175,32 @@ def optimization_node(state: AgentState) -> Dict:
                     "- ALL numeric counts (e.g., '17 matters', '300 contracts', '8 years') — NEVER compress to 'various' or 'multiple'\n"
                     "- ALL named sub-entities (e.g., PUREM, Hutchison, ISOCLIMA) — preserve EVERY name\n"
                     "- Exclusivity signals (e.g., 'exclusive external counsel') — NEVER drop\n"
-                    "- Duration signals (e.g., 'eight-year relationship') — NEVER drop\n\n"
+                    "- Duration signals (e.g., 'eight-year relationship', 'nearly five decades') — NEVER drop\n\n"
+                )
+                
+                # v19.2: Extract and inject client descriptor as hard requirement
+                client_name = matter.get("client", "")
+                descriptor_match = None
+                if client_name:
+                    import re as _re_local
+                    # Try to find the descriptor pattern: "ClientName, descriptor phrase"
+                    escaped_name = _re_local.escape(client_name.split(",")[0].strip())
+                    desc_pattern = _re_local.compile(
+                        rf'{escaped_name}[^,]*,\s*(.+?)(?:\.|,\s*(?:on |in |for |to |with ))',
+                        _re_local.IGNORECASE
+                    )
+                    desc_match = desc_pattern.search(raw_text)
+                    if desc_match:
+                        descriptor_match = desc_match.group(1).strip()
+                
+                if descriptor_match:
+                    preservation_prompt += (
+                        f"⚠️ CLIENT DESCRIPTOR (MUST APPEAR VERBATIM IN OUTPUT):\n"
+                        f'"{client_name}, {descriptor_match}"\n'
+                        f"This phrase MUST appear word-for-word in your enhanced text. Do NOT paraphrase it.\n\n"
+                    )
+                
+                preservation_prompt += (
                     "EVIDENCE VS PROSE RULE: If the original contains LISTS of matters, contracts, or entities, "
                     "these are COMPETITIVE EVIDENCE, not prose. Preserve each item individually.\n\n"
                     "RESTRUCTURE for editorial impact but do NOT compress or summarize away evidence.\n"

@@ -1144,7 +1144,7 @@ Every material proposition in the original MUST appear in the enhanced version:
 - Specific regulations, laws, authorities named → MUST be preserved
 - Specific numbers (training sessions, employees affected, deadlines) → MUST be preserved
 
-### CLIENT IDENTITY PRESERVATION (v17.5 — ABSOLUTE — NEVER VIOLATE):
+### CLIENT IDENTITY PRESERVATION (v17.5 + v19.2 — ABSOLUTE — NEVER VIOLATE):
 The CLIENT DESCRIPTION from the original is EVIDENCE. It tells Chambers WHO the client is.
 You MUST copy the client's industry/sector description VERBATIM from the original.
 
@@ -1160,6 +1160,18 @@ WHAT YOU MUST DO INSTEAD:
 ✅ Original: "Biocodex, a pharmaceutical company with global operations" → Enhanced: "Biocodex de México, a pharmaceutical company with global operations and a significant presence in the Mexican healthcare market"
 
 THE RULE: Copy the original client descriptor FIRST, then ADD context. NEVER replace it.
+
+### CLIENT DESCRIPTOR INJECTION (v19.2 — HARD REQUIREMENT):
+Before enhancing, scan the original text for the client descriptor phrase that appears immediately after the client name.
+This descriptor phrase MUST appear VERBATIM in your output. Examples of descriptor phrases:
+- "a diversified Mexican business group operating across infrastructure, energy, transport and automotive sectors"
+- "one of Mexico's leading information and advertising services providers"
+- "a pharmaceutical company with global operations"
+- "a hospitality group with nearly five decades of experience"
+- "one of Mexico's leading dairy producers"
+- "an engineering and manufacturing group"
+- "a major Mexican retail chain"
+These are NOT optional decorations — they are RANKING EVIDENCE. If the original says "nearly five decades", your output MUST say "nearly five decades". If the original says "leading dairy producers", your output MUST say "leading dairy producers".
 
 ### ENHANCEMENT INSTRUCTIONS:
 1. You will receive a raw 'draft' matter (Client, Value, Summary, Significance, Lead Partner).
@@ -1208,6 +1220,18 @@ The portfolio has real diversity — surface it:
 - A litigation/defence engagement is about PROTECTING databases as business assets
 - A restructuring engagement is about INTEGRATING privacy into organisational change
 Ask: "What NEW evidence does this matter add to the case for ranking?" If two matters add the SAME evidence, rewrite one.
+
+### OPENING WORD DIVERSITY (v19.2 — MANDATORY):
+The FIRST WORD of each matter's opening sentence MUST be different. NEVER start 3+ matters with the same word.
+DO NOT start multiple matters with "This..." — vary the construction:
+- Pattern A: Lead with CLIENT NAME → "Grupo Hermes's engagement demonstrates..."
+- Pattern B: Lead with TIME/DURATION → "A 16-year relationship with MEGA DIRECT..."
+- Pattern C: Lead with SECTOR/INDUSTRY → "In the pharmaceutical sector, Biocodex..."
+- Pattern D: Lead with THE LEGAL CHALLENGE → "Regularisation of operations following..."
+- Pattern E: Lead with SIGNIFICANCE → "The significance of this mandate lies in..."
+- Pattern F: Lead with CONCRETE DELIVERABLE → "Design and implementation of a dedicated..."
+- Pattern G: Lead with GEOGRAPHIC/SCALE → "Across multiple retail locations, the team..."
+If you find yourself writing "This matter..." or "This engagement..." for a 3rd time, STOP and use a different pattern.
 
 ### PROHIBITED GENERIC PHRASES (HARD BLOCK):
 These phrases MUST NEVER appear in any enhanced matter:
