@@ -2,8 +2,10 @@ import json
 import re
 import os
 import time
+import unicodedata
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Tuple, Optional
+from difflib import SequenceMatcher
 from dotenv import load_dotenv
 from chains.extraction_chain import get_extraction_chain
 # Importaciones de LangChain y Core
@@ -144,8 +146,25 @@ def strip_fillers(text: str) -> str:
     return cleaned
 
 
+def _normalize_for_fuzzy(text: str) -> str:
+    """v20.0: Normalize text for fuzzy comparison (Sol's approach)."""
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _phrase_similarity(a: str, b: str) -> float:
+    """v20.0: Fuzzy comparison via SequenceMatcher (Sol's approach)."""
+    a = _normalize_for_fuzzy(a)
+    b = _normalize_for_fuzzy(b)
+    return SequenceMatcher(None, a, b).ratio()
+
+
 def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name: str) -> str:
-    """v18.7: PROGRAMMATIC client descriptor verification and repair.
+    """v20.0: PROGRAMMATIC client descriptor verification and repair.
     
     The LLM tends to replace specific client descriptions with generic labels:
       "Grupo Excelsior, one of Mexico's leading dairy producers" 
@@ -153,12 +172,13 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     
     This function:
     1. Extracts the client descriptor from the ORIGINAL text
-    2. Checks if key industry/sector words survived in the enhanced text
-    3. If lost, surgically splices the original descriptor back in
+    2. Checks if key industry/sector words survived (word matching)
+    3. NEW v20.0: Also checks fuzzy similarity (SequenceMatcher) to avoid
+       false-flagging slightly reworded but semantically preserved descriptors
+    4. If truly lost, surgically splices the original descriptor back in
     
     v18.7 FIX: Searches ALL occurrences of client name, not just the first.
-    The first occurrence is often in "Title:" or "Client:" fields (no comma).
-    The descriptor with comma lives in "Summary:" (2nd+ occurrence).
+    v20.0 FIX: Added fuzzy matching from ChatGPT Sol's approach.
     
     This is DETERMINISTIC — no LLM involved, cannot be ignored.
     """
@@ -305,6 +325,28 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     if preservation_ratio >= 0.5:  # 50%+ of identity preserved = OK
         return enhanced_text
     
+    # ═══ Step 4b (v20.0): Fuzzy matching — check if descriptor was rephrased ═══
+    # Sol's insight: before declaring "lost", check if the enhanced text contains
+    # a chunk that's semantically similar (e.g., "a leading dairy company" ≈
+    # "one of Mexico's leading dairy producers")
+    fuzzy_threshold = 0.75
+    enhanced_chunks = re.split(r'[.;:\n]', enhanced_text)
+    for chunk in enhanced_chunks:
+        chunk = chunk.strip()
+        if len(chunk) < 10:
+            continue
+        sim = _phrase_similarity(descriptor, chunk)
+        if sim >= fuzzy_threshold:
+            print(f"  [DESCRIPTOR CHECK v20.0] Fuzzy match found ({sim:.2f}) — descriptor preserved (rephrased)")
+            return enhanced_text
+    
+    # Also check: if descriptor appears as normalized substring
+    norm_descriptor = _normalize_for_fuzzy(descriptor)
+    norm_enhanced = _normalize_for_fuzzy(enhanced_text)
+    if norm_descriptor in norm_enhanced:
+        print(f"  [DESCRIPTOR CHECK v20.0] Normalized exact match — descriptor preserved")
+        return enhanced_text
+    
     # ═══ Step 5: REPAIR — splice the original descriptor back in ═══
     enh_pos = enhanced_lower.find(client_lower)
     if enh_pos == -1:
@@ -346,10 +388,24 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
         )
         
         lost = [w for w in descriptor_words if w not in enhanced_lower]
-        print(f"  [DESCRIPTOR REPAIR v17.6] Client '{client_clean}'")
+        print(f"  [DESCRIPTOR REPAIR v20.0] Client '{client_clean}'")
         print(f"    Replaced: \"{old_descriptor[:80]}\"")
         print(f"    With:     \"{descriptor[:80]}\"")
         print(f"    Lost words: {lost}")
+        return repaired
+    
+    # v20.0: If no comma after client name but descriptor was lost, try insertion
+    elif not enh_remaining.lstrip().startswith(','):
+        # Insert descriptor after client name with comma
+        repaired = (
+            enhanced_text[:enh_after] +
+            ', ' + descriptor + ',' +
+            enhanced_text[enh_after:]
+        )
+        # Clean possible double punctuation
+        repaired = re.sub(r',\s*,', ',', repaired)
+        print(f"  [DESCRIPTOR INSERT v20.0] Client '{client_clean}'")
+        print(f"    Inserted: \"{descriptor[:80]}\"")
         return repaired
     
     return enhanced_text
@@ -2082,19 +2138,63 @@ def optimization_node(state: AgentState) -> Dict:
     if constitutional_retry > 0 and violation_feedback:
         matter_context_block += f"\n\n⚠️ CONSTITUTIONAL VALIDATION RETRY (attempt {constitutional_retry + 1}):\n{violation_feedback}\n\nYou MUST fix ALL listed violations in this retry. Pay special attention to:\n- Each matter must open with a DIFFERENT strategic angle (not generic mandate)\n- Do NOT use any prohibited filler phrases\n- Preserve all client descriptors VERBATIM from the original\n- Outcomes must be STRONG (quantified) or MODERATE (institutional change), never WEAK (generic benefit)"
     
-    for matter in matters:
+    # v20.0: Opening Diversity Tracker — deterministic enforcement
+    from utils.opening_diversity import OpeningDiversityTracker, force_opening_diversity
+    diversity_tracker = OpeningDiversityTracker()
+    
+    for matter_idx, matter in enumerate(matters):
         # Construct the raw matter text to feed to the optimizer
         raw_text = f"Title: {matter.get('title', '')}\nClient: {matter.get('client', '')}\nValue: {matter.get('value', '')}\nSummary: {matter.get('summary', '')}\nSignificance: {matter.get('significance', '')}\nLead Partner: {matter.get('lead_partner', '')}"
         
+        # v20.0: Build diversity instruction for this matter
+        diversity_instruction = diversity_tracker.prompt_with_suggestions()
+        full_context = matter_context_block
+        if diversity_instruction:
+            full_context += "\n" + diversity_instruction
+        
         messages = [
             SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-            HumanMessage(content=f"{matter_context_block}\n\nOptimize this raw matter:\n\n{raw_text}")
+            HumanMessage(content=f"{full_context}\n\nOptimize this raw matter:\n\n{raw_text}")
         ]
         
         try:
-            response = llm.invoke(messages)
-            result = json.loads(response.content)
-            optimized_text = result.get('optimized_text', matter.get('summary'))
+            # v20.0: Try up to 3 times for opening diversity compliance
+            optimized_text = None
+            max_diversity_retries = 3
+            
+            for diversity_attempt in range(max_diversity_retries):
+                response = llm.invoke(messages)
+                result = json.loads(response.content)
+                optimized_text = result.get('optimized_text', matter.get('summary'))
+                
+                if not optimized_text:
+                    break
+                
+                # Check opening diversity
+                if diversity_tracker.validate(optimized_text):
+                    word = diversity_tracker.register(optimized_text)
+                    if diversity_attempt > 0:
+                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{word}' ✅ (attempt {diversity_attempt+1})")
+                    else:
+                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: opening='{word}' ✅")
+                    break
+                else:
+                    bad_word = diversity_tracker.first_word(optimized_text)
+                    if diversity_attempt < max_diversity_retries - 1:
+                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{bad_word}' ❌ — retrying (attempt {diversity_attempt+1})")
+                        # Strengthen the prohibition for retry
+                        retry_instruction = diversity_tracker.prompt_with_suggestions()
+                        retry_instruction += f"\nCRITICAL: Your previous attempt started with '{bad_word}'. This word is FORBIDDEN. Choose a COMPLETELY different opening.\n"
+                        messages = [
+                            SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
+                            HumanMessage(content=f"{matter_context_block}\n{retry_instruction}\n\nOptimize this raw matter:\n\n{raw_text}")
+                        ]
+                    else:
+                        # Last resort: programmatic force-replace
+                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{bad_word}' ❌ — forcing replacement")
+                        optimized_text = force_opening_diversity(optimized_text, diversity_tracker)
+                        diversity_tracker.register(optimized_text)
+
             
             # ═══ v8.0: PROBATIVE PRESERVATION VALIDATOR (Constitutional Article V) ═══
             original_word_count = len(raw_text.split())
@@ -2150,14 +2250,19 @@ def optimization_node(state: AgentState) -> Dict:
                     print(f"  [SCR-DETECT] Strategic Client Relationship detected — ratio {ratio:.2f} is below 90% threshold")
             
             # Check for named entity preservation (company names in uppercase or capitalized)
-            # v17.0 FIX: Use raw_text (full matter) for entity extraction, not just summary field
-            original_entities = set(_re.findall(r'\b[A-Z][A-Za-z]{2,}(?:\s+[A-Z][A-Za-z]+)*\b', raw_text))
-            if len(original_entities) > 3:  # Multi-entity evidence
+            # v20.0: Replace naive regex with extract_true_entities() — filters false positives
+            # The old regex counted "The", "Data", "Protection" as entities, inflating loss metrics
+            from agents.entity_extraction import extract_true_entities, extract_entity_names
+            client_name_for_entities = matter.get('client', '')
+            known_companies_set = {client_name_for_entities} if client_name_for_entities else set()
+            original_entities = extract_entity_names(raw_text, company_names=known_companies_set)
+            if len(original_entities) > 1:  # v20.0: lowered threshold (true entities are fewer)
                 preserved = sum(1 for e in original_entities if e.lower() in optimized_lower)
-                preservation_ratio = preserved / len(original_entities)
+                preservation_ratio = preserved / len(original_entities) if original_entities else 1.0
                 if preservation_ratio < 0.70:
                     needs_reoptimization = True
-                    print(f"  [ENTITY-LOSS] Only {preserved}/{len(original_entities)} named entities preserved ({preservation_ratio:.0%})")
+                    print(f"  [ENTITY-LOSS v20] Only {preserved}/{len(original_entities)} true entities preserved ({preservation_ratio:.0%})")
+                    print(f"    Entities: {original_entities}")
             
             if needs_reoptimization:
                 print(f"  [PROBATIVE] Re-optimizing matter '{matter.get('title', 'unknown')}' — ratio: {ratio:.2f}")
