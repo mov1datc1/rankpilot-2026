@@ -101,12 +101,35 @@ export default function SubmissionsPage() {
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(`submissions/${fileName}`, selectedFile);
+        // v19.2: Retry logic for transient Supabase Storage network errors
+        let uploadError: any = null;
+        let uploadData: any = null;
+        const MAX_RETRIES = 3;
+        
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+          const result = await supabase.storage
+            .from('documents')
+            .upload(`submissions/${fileName}`, selectedFile, {
+              cacheControl: '3600',
+              upsert: true,
+            });
+          
+          if (!result.error) {
+            uploadData = result.data;
+            uploadError = null;
+            break;
+          }
+          
+          uploadError = result.error;
+          console.warn(`[Upload] Attempt ${attempt}/${MAX_RETRIES} failed:`, result.error.message);
+          
+          if (attempt < MAX_RETRIES) {
+            await new Promise(r => setTimeout(r, 1000 * attempt)); // exponential backoff
+          }
+        }
           
         if (uploadError) {
-          throw new Error('Failed to upload file to Supabase Storage: ' + uploadError.message);
+          throw new Error(`Failed to upload file to Supabase Storage (after ${MAX_RETRIES} attempts): ${uploadError.message}`);
         }
         
         const { data: { publicUrl } } = supabase.storage
