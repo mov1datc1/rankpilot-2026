@@ -2273,6 +2273,16 @@ def optimization_node(state: AgentState) -> Dict:
     
     matters = state.get("matters", [])
 
+    # v21.0: Handle submissions WITHOUT matters (D/E sections empty)
+    # Some submissions (e.g., AraqueReyna) have ALL content in B10 with no separate matter tables.
+    # In this case, skip matter optimization entirely and proceed to B7 enhancement only.
+    if not matters:
+        original_b10 = state.get("original_b10", "")
+        b10_wc = len(original_b10.split()) if original_b10 else 0
+        print(f"[OPTIMIZATION] ℹ️ No matters found in submission — B7-only mode (B10: {b10_wc}w)")
+        print(f"[OPTIMIZATION] This is VALID for submissions where all content is in B10/B7 section")
+        # Skip directly to B7 enhancement with empty matters list
+    
     llm = get_model()
     # Require JSON output with 'optimized_text' key
     llm = llm.bind(response_format={"type": "json_object"})
@@ -2886,8 +2896,11 @@ MANDATORY REQUIREMENTS:
 5. HARD CAP: Count the client names in your output BEFORE submitting. If you have named more than 3 clients, REMOVE the excess ones and refer to them generically (e.g., "across additional mandates for corporate groups in regulated sectors").
 
 WORD COUNT:
-- Your output MUST be between {max(original_word_count, 300)} and 500 words (Chambers hard limit for B7).
-- Do NOT inflate word count with generic prose. If 400 words of high strategic density is better than 500 words with padding, write 400 words.
+- The original text is {original_word_count} words.
+- Your output MUST be AT LEAST {original_word_count} words — NEVER shorter than the original.
+- Chambers has a soft guidance of ~500 words for B7, but PRESERVING CONTENT is more important than hitting a word limit.
+- If the original is already over 500 words, you MUST preserve ALL its content and may expand further. Do NOT compress a well-written original.
+- Do NOT inflate word count with generic prose. Every word must earn its place.
 
 ACTIVE EDITORIAL VOICE (v21.0 — ChatGPT 5.6 RECOMMENDATION):
 You are a senior editorial analyst at Chambers & Partners who writes the published research notes.
@@ -2932,16 +2945,19 @@ ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
             enhanced_b7 = b7_result.get("enhanced_b7", "")
             
             if enhanced_b7:
+                enhanced_b7 = strip_markdown(enhanced_b7)
                 enhanced_words = len(enhanced_b7.split())
                 ratio = enhanced_words / max(original_word_count, 1)
                 
                 if enhanced_words < original_word_count:
                     # FAILED: shorter than original — use original as fallback
-                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) is SHORTER than original ({original_word_count}w) — using original")
+                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) is SHORTER than original ({original_word_count}w) — USING ORIGINAL")
+                    enhanced_b7 = original_b10
+                elif enhanced_words < original_word_count * 0.95:
+                    # Within 5% tolerance but still shorter — flag and use original
+                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) lost content vs original ({original_word_count}w) — USING ORIGINAL")
                     enhanced_b7 = original_b10
                 else:
-                    # Strip any markdown
-                    enhanced_b7 = strip_markdown(enhanced_b7)
                     print(f"[B7 ENHANCEMENT] ✅ Enhanced: {original_word_count}w → {enhanced_words}w ({ratio:.1f}x expansion)")
             else:
                 print("[B7 ENHANCEMENT] ⚠️ Empty response — using original B10")
@@ -2960,24 +2976,29 @@ ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
     if enhanced_b7:
         enhanced_b7 = strip_fillers(enhanced_b7)
     
-    # v18.2: HARD CAP — Chambers B7 has a 500 word limit
-    if enhanced_b7:
-        b7_words = enhanced_b7.split()
-        if len(b7_words) > 500:
-            print(f"[B7 ENHANCEMENT] ⚠️ B7 is {len(b7_words)}w — truncating to 500w limit")
-            # Truncate at the last complete sentence before 500 words
-            truncated = ' '.join(b7_words[:500])
-            # Find last sentence-ending punctuation
+    # v21.0: WORD FLOOR + SOFT CAP — Never shorter than original, soft cap at 600w
+    if enhanced_b7 and original_b10:
+        b7_words_count = len(enhanced_b7.split())
+        orig_words_count = len(original_b10.split())
+        
+        # v21.0 FIX: If the enhanced B7 is SHORTER than the original, fall back to original
+        # This catches cases where the LLM compressed a strong original (AraqueReyna bug)
+        if b7_words_count < orig_words_count:
+            print(f"[B7 WORD FLOOR] ⚠️ Enhanced ({b7_words_count}w) < Original ({orig_words_count}w) — REVERTING to original")
+            enhanced_b7 = original_b10
+        # v21.0: Soft cap at 600w (allows strong originals of 500-600w to pass through)
+        # Only truncate if significantly over 600w AND the original was under 500w
+        elif b7_words_count > 600 and orig_words_count <= 500:
+            print(f"[B7 SOFT CAP] ⚠️ B7 is {b7_words_count}w (original was {orig_words_count}w) — truncating to 600w")
+            truncated = ' '.join(enhanced_b7.split()[:600])
             last_period = truncated.rfind('.')
-            last_excl = truncated.rfind('!')
-            last_q = truncated.rfind('?')
-            last_sentence_end = max(last_period, last_excl, last_q)
-            if last_sentence_end > len(truncated) * 0.7:  # Only if we keep >70% of the content
-                enhanced_b7 = truncated[:last_sentence_end + 1]
+            if last_period > len(truncated) * 0.7:
+                enhanced_b7 = truncated[:last_period + 1]
             else:
                 enhanced_b7 = truncated + '.'
-            final_wc = len(enhanced_b7.split())
-            print(f"[B7 ENHANCEMENT] ✅ Truncated to {final_wc}w (within 500w limit)")
+            print(f"[B7 SOFT CAP] ✅ Truncated to {len(enhanced_b7.split())}w")
+        else:
+            print(f"[B7 WORD FLOOR] ✅ B7 word count OK: {b7_words_count}w (original: {orig_words_count}w)")
         
     return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 
