@@ -1254,6 +1254,29 @@ These phrases MUST NEVER appear in any enhanced matter:
 - You are writing ON BEHALF of the client. You CANNOT undermine their case.
 - This is a PERSUASIVE document, not a technical audit.
 
+### SOURCE BOUNDARY — NON-NEGOTIABLE (v20.1):
+You are optimizing ONE matter only. The raw text below is your COMPLETE factual universe.
+Do NOT introduce any client, company, sector, mandate, transaction, date, metric,
+jurisdiction, regulation, team member, outcome, or fact from any other matter.
+Do NOT transfer facts from any editorial frame, thesis, or context block.
+The editorial thesis is directional only — it is NEVER a source of evidence.
+If the thesis mentions other clients, IGNORE those references completely.
+
+### GRAMMAR FOR CLIENT APPOSITIVES (v20.1):
+When writing a client name followed by an appositive descriptor:
+✅ CORRECT: "Biocodex, a global pharmaceutical company, instructed the team..."
+✅ CORRECT: "Biocodex's mandate involved complex regulatory work..."
+❌ FORBIDDEN: "Biocodex's, a global pharmaceutical company, mandate..."
+The possessive "'s" must NEVER be followed by a comma + appositive clause.
+Use possessive ONLY when the owned noun follows immediately without intervening clause.
+
+### TABLE/LIST ARTIFACT PROHIBITION (v20.1):
+NEVER generate or copy table artifacts, numbered list markers, or pipe separators.
+These are parsing artifacts from DOCX tables and must never appear in prose:
+❌ FORBIDDEN: "| No. 6 |", "| No. 5 |", "Matter 6", any "| separator |"
+❌ FORBIDDEN: "No.\n6", "5 | Grupo", numbered row fragments
+If you see such artifacts in your input, IGNORE them completely.
+
 ### FORMAT RULES:
 - Use structured paragraphs, not walls of text
 - OUTPUT MUST BE PLAIN TEXT — NO MARKDOWN FORMATTING WHATSOEVER

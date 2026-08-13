@@ -219,14 +219,18 @@ def available_openings(
 def force_opening_diversity(
     text: str,
     tracker: OpeningDiversityTracker,
+    client_name: str = "",
 ) -> str:
     """
-    Programmatic fallback: if the LLM repeatedly uses a forbidden word
-    after all retries, this function replaces the first word with an
-    available alternative.
+    v20.1: Smarter programmatic fallback for opening diversity.
     
-    This is a LAST RESORT — the result may be grammatically imperfect,
-    but it guarantees diversity.
+    Instead of just swapping the first word (which creates "Acting significance"),
+    this function recognizes common patterns and restructures the sentence:
+    
+    Pattern 1: "The significance of [Client]..." → "For [Client], the significance..."
+    Pattern 2: "The [Client] mandate..." → "[Client]'s mandate..."
+    Pattern 3: Generic → Use client name as opener if available
+    Fallback: Simple word swap (v20.0 behavior)
     """
     word = tracker.first_word(text)
     if not word or tracker.validate(text):
@@ -236,15 +240,57 @@ def force_opening_diversity(
     if not alternatives:
         return text  # All openings exhausted
 
-    replacement = alternatives[0]
-
-    # Find and replace the first word
     cleaned = text.lstrip()
+    
+    # v20.1: Smart pattern matching for common "The..." openings
+    if word == "the":
+        # Pattern 1: "The significance of [X]..." → "In [X]'s case, the significance..."
+        m1 = re.match(
+            r"^The\s+(significance|importance|mandate|engagement)\s+of\s+(.+?)(?:,|\s+lies\b|\s+is\b)",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        if m1 and client_name:
+            # Check if client_name opener is available
+            client_first = client_name.split()[0].lower()
+            if client_first not in tracker.forbidden_words():
+                # "The significance of Client, descriptor, lies in..." 
+                # → "Client, descriptor, holds significance in..."
+                noun = m1.group(1).lower()
+                result = cleaned[m1.end():].lstrip(', ')
+                result = f"{client_name}'s {noun} " + result
+                # Capitalize first letter
+                result = result[0].upper() + result[1:] if result else result
+                print(f"  [DIVERSITY FORCE v20.1] Pattern1: 'The {noun} of...' → '{client_name}...'")
+                return result
+        
+        # Pattern 2: "The [Client], descriptor, Data Protection..." → "[Client], descriptor,..."
+        if client_name:
+            client_first = client_name.split()[0].lower()
+            if client_first not in tracker.forbidden_words():
+                # Remove leading "The " and let client name be the opener
+                if cleaned.lower().startswith("the " + client_name.lower()[:8].lower()):
+                    result = cleaned[4:]  # Remove "The "
+                    print(f"  [DIVERSITY FORCE v20.1] Pattern2: Removed leading 'The' → '{result[:20]}...'")
+                    return result
+    
+    # Fallback: Use client name if available and not forbidden
+    if client_name:
+        client_first = client_name.split()[0].lower()
+        if client_first not in tracker.forbidden_words():
+            # Prepend "For [Client], " to the existing text
+            # But lowercase the first letter of the original text
+            lower_text = cleaned[0].lower() + cleaned[1:] if cleaned else cleaned
+            result = f"For {client_name}, {lower_text}"
+            print(f"  [DIVERSITY FORCE v20.1] Fallback: Prepended 'For {client_name},...'")
+            return result
+    
+    # Ultimate fallback: simple word swap (v20.0 behavior)
+    replacement = alternatives[0]
     match = re.search(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", cleaned)
     if match:
         start = match.start()
         end = match.end()
-        # Reconstruct with proper capitalization
         result = cleaned[:start] + replacement + cleaned[end:]
         print(f"  [DIVERSITY FORCE v20.0] Replaced opening '{match.group()}' → '{replacement}'")
         return result

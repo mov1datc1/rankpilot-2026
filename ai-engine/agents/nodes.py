@@ -163,6 +163,144 @@ def _phrase_similarity(a: str, b: str) -> float:
     return SequenceMatcher(None, a, b).ratio()
 
 
+def sanitize_descriptor_source(doc_text: str, client_name: str) -> str:
+    """v20.1: Strip table row artifacts from doc_text before descriptor search.
+    
+    ROOT CAUSE FIX: Table 14 (E0 Confidential Clients) has numbered rows like:
+      Row 6: "5 | Grupo Excelsior - dairy producers | No"
+      Row 7: "6 | Grupo Modelquipo - machinery provider | No"
+    
+    When concatenated, this creates:
+      "Excelsior - dairy producers No\n6 Grupo Modelquipo - machinery..."
+    
+    The descriptor extractor then grabs text beyond the row boundary into 
+    the adjacent matter's data, causing the splice contamination.
+    
+    This function:
+    1. Strips numbered-row patterns like "| No\n6" or "No\n6 Grupo"
+    2. Strips table markers like "| No. 6 |"
+    3. Isolates the text segment AROUND the client name (±500 chars)
+       to prevent cross-matter contamination from distant table rows
+    """
+    if not doc_text or not client_name:
+        return doc_text
+    
+    # Step 1: Strip common DOCX table concatenation artifacts
+    # Pattern: "... producers | No\n6 Grupo Modelquipo" or "... | No. 6 |"
+    cleaned = re.sub(r'\|\s*No\.?\s*\n\s*\d+\s+', '. ', doc_text)
+    cleaned = re.sub(r'\|\s*No\.?\s*\d+\s*\|', '. ', cleaned)
+    cleaned = re.sub(r'\bNo\.?\s*\n\s*\d+\s+', '. ', cleaned)
+    # Pattern: standalone row numbers at line start like "6 Grupo Modelquipo"
+    cleaned = re.sub(r'\n\s*\d{1,2}\s+(?=[A-Z])', '\n', cleaned)
+    
+    # Step 2: Isolate the text segment around the client name
+    # This prevents the descriptor extractor from reaching into other matters
+    client_lower = client_name.strip().lower()
+    text_lower = cleaned.lower()
+    pos = text_lower.find(client_lower)
+    
+    if pos == -1:
+        # Try partial match
+        parts = client_name.strip().split()
+        for p in parts:
+            if len(p) > 3 and p[0].isupper():
+                pos = text_lower.find(p.lower())
+                if pos != -1:
+                    break
+    
+    if pos != -1:
+        # Extract ±500 chars around the client mention
+        start = max(0, pos - 200)
+        end = min(len(cleaned), pos + len(client_name) + 500)
+        # Find sentence boundaries
+        segment = cleaned[start:end]
+        # Ensure we don't cut mid-word at the end
+        last_period = segment.rfind('.')
+        if last_period > len(segment) // 2:
+            segment = segment[:last_period + 1]
+        return segment
+    
+    return cleaned
+
+
+def find_foreign_client_mentions(optimized_text: str, current_client_name: str, all_matters: list) -> list:
+    """v20.1: Detect if optimized text mentions clients from OTHER matters.
+    
+    GPT-5.6 recommendation: A foreign client mention should trigger retry or 
+    rollback, never post-processing deletion (which corrupts sentences).
+    
+    Returns list of foreign client names found in the text.
+    """
+    if not optimized_text or not all_matters:
+        return []
+    
+    current_norm = current_client_name.strip().lower() if current_client_name else ""
+    found = []
+    
+    for other in all_matters:
+        other_name = other.get('client', '').strip()
+        if not other_name:
+            continue
+        
+        other_norm = other_name.lower()
+        if other_norm == current_norm:
+            continue
+        
+        # Check full name
+        if re.search(re.escape(other_name), optimized_text, flags=re.IGNORECASE):
+            found.append(other_name)
+            continue
+        
+        # Check first significant word (e.g., "Modelquipo" from "Grupo Modelquipo")
+        other_parts = other_name.split()
+        for part in other_parts:
+            if len(part) > 5 and part[0].isupper() and part.lower() not in current_norm:
+                # Skip common words
+                if part.lower() in {'grupo', 'tiendas', 'hotel', 'mega', 'direct', 'data', 'protection'}:
+                    continue
+                if re.search(r'\b' + re.escape(part) + r'\b', optimized_text, flags=re.IGNORECASE):
+                    found.append(other_name)
+                    break
+    
+    return sorted(set(found))
+
+
+def repair_possessive_appositive(text: str, client_names: list) -> str:
+    """v20.1: Fix possessive-appositive grammar error.
+    
+    Bug: LLM generates "Biocodex's, a global pharmaceutical company, mandate..."
+    Fix: "Biocodex, a global pharmaceutical company, mandate..."
+    
+    The possessive "'s" is incorrect when followed by a comma + appositive clause.
+    Only valid when the possessed noun follows immediately: "Biocodex's mandate"
+    """
+    if not text:
+        return text
+    
+    repaired = text
+    repairs = []
+    
+    for client_name in client_names:
+        if not client_name or not client_name.strip():
+            continue
+        name = client_name.strip()
+        # Pattern: "ClientName's, " → "ClientName, "
+        # Must handle BOTH straight (') and curly (\u2019, \u2018) apostrophes
+        # because the grammar LLM often converts straight to curly
+        pattern = re.compile(
+            rf"({re.escape(name)})[\u2019\u2018']s(?=\s*,)",
+            flags=re.IGNORECASE,
+        )
+        if pattern.search(repaired):
+            repaired = pattern.sub(r"\1", repaired)
+            repairs.append(name)
+    
+    if repairs:
+        print(f"  [GRAMMAR FIX v20.1] Fixed possessive-appositive for: {repairs}")
+    
+    return repaired
+
+
 def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name: str) -> str:
     """v20.0: PROGRAMMATIC client descriptor verification and repair.
     
@@ -2121,11 +2259,32 @@ def optimization_node(state: AgentState) -> Dict:
     cross_border_relevant = strategic_ctx.get("cross_border_relevant", True)
     thesis = narrative_arch.get("thesis_statement", "")
     
-    # v17.4: Dynamic injections for matter enhancer
+    # v17.4+v20.1: Dynamic injections for matter enhancer
+    # v20.1: Redact other client names from thesis to prevent cross-matter contamination
     matter_context_lines = []
     if thesis:
-        matter_context_lines.append(f"EDITORIAL THESIS: {thesis}")
-        matter_context_lines.append("Connect each matter to this thesis. Each matter must demonstrate a DIFFERENT aspect of this thesis.")
+        # Strip all client names from the thesis (GPT-5.6 recommendation)
+        redacted_thesis = thesis
+        for m in matters:
+            client_name = m.get('client', '').strip()
+            if client_name:
+                redacted_thesis = re.sub(
+                    re.escape(client_name), '[client]', redacted_thesis, flags=re.IGNORECASE
+                )
+                # Also redact significant parts (e.g., "Excelsior" from "Grupo Excelsior")
+                for part in client_name.split():
+                    if len(part) > 5 and part[0].isupper():
+                        if part.lower() not in {'grupo', 'tiendas', 'hotel', 'mega', 'direct'}:
+                            redacted_thesis = re.sub(
+                                r'\b' + re.escape(part) + r'\b', '[client]', 
+                                redacted_thesis, flags=re.IGNORECASE
+                            )
+        matter_context_lines.append(f"NON-EVIDENTIARY EDITORIAL FRAME: {redacted_thesis}")
+        matter_context_lines.append(
+            "The editorial frame is directional only. It is NOT a source of facts, "
+            "clients, mandates, outcomes, sectors, dates, metrics, or jurisdictions. "
+            "Use ONLY the raw matter text below as your factual source."
+        )
     if not cross_border_relevant:
         matter_context_lines.append(
             "CROSS-BORDER PROHIBITION: This practice area does NOT require cross-border evidence. "
@@ -2192,7 +2351,7 @@ def optimization_node(state: AgentState) -> Dict:
                     else:
                         # Last resort: programmatic force-replace
                         print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{bad_word}' ❌ — forcing replacement")
-                        optimized_text = force_opening_diversity(optimized_text, diversity_tracker)
+                        optimized_text = force_opening_diversity(optimized_text, diversity_tracker, client_name=matter.get('client', ''))
                         diversity_tracker.register(optimized_text)
 
             
@@ -2345,21 +2504,55 @@ def optimization_node(state: AgentState) -> Dict:
             # ═══ v17.5: FILLER STRIP — remove generic phrases ═══
             optimized_text = strip_fillers(optimized_text)
             
-            # ═══ v18.8: CLIENT DESCRIPTOR VERIFICATION — programmatic repair ═══
-            # This is DETERMINISTIC — extracts the client descriptor from the ORIGINAL
-            # document text (not the extracted fields, which may have lost descriptors).
-            # e.g., "dairy producers" → restored if LLM replaced with "prominent client"
+            # ═══ v18.8+v20.1: CLIENT DESCRIPTOR VERIFICATION — programmatic repair ═══
+            # v20.1 FIX: sanitize_descriptor_source() strips DOCX table artifacts from
+            # doc_text BEFORE descriptor search. This prevents the Table 14 splice bug
+            # where "5 | Grupo Excelsior | No\n6 Grupo Modelquipo" gets grabbed as
+            # part of the Excelsior descriptor.
             #
-            # v18.8 ROOT CAUSE FIX: Previously used `raw_text` (built from extracted
-            # fields where the extraction LLM already compressed out the descriptor).
-            # Now uses `doc_text` — the ORIGINAL DOCX text which contains:
-            #   "Grupo Excelsior, one of Mexico's leading dairy producers"
-            # The extraction chain's `summary` field often strips this to:
-            #   "Advised Grupo Excelsior on data protection..."
-            # So verify_client_descriptors could never find the descriptor.
+            # v20.1 DESCRIPTOR PRIORITY FIX:
+            # Search the matter's OWN summary text FIRST (E2 body descriptor like
+            # "hospitality group with nearly five decades of experience").
+            # Only fall back to doc_text if the body text doesn't have a descriptor.
+            # This prevents the E1 form descriptor ("Business hotel...") from
+            # overwriting the richer original body descriptor.
             client_name = matter.get('client', '')
+            original_summary = matter.get('summary', '')
+            
+            # Priority 1: Use the matter's own summary text (has E2 body descriptors)
+            body_descriptor_text = f"Summary: {original_summary}"
+            if matter.get('significance'):
+                body_descriptor_text += f"\nSignificance: {matter.get('significance', '')}"
+            optimized_text = verify_client_descriptors(body_descriptor_text, optimized_text, client_name)
+            
+            # Priority 2: If body didn't have a descriptor, try sanitized doc_text as fallback
             original_doc_text = state.get('doc_text', '') or raw_text
-            optimized_text = verify_client_descriptors(original_doc_text, optimized_text, client_name)
+            sanitized_doc_text = sanitize_descriptor_source(original_doc_text, client_name)
+            optimized_text = verify_client_descriptors(sanitized_doc_text, optimized_text, client_name)
+            
+            # ═══ v20.1: FOREIGN CLIENT VALIDATOR — post-generation contamination check ═══
+            # GPT-5.6 recommendation: Detect if ANY other matter's client name appears
+            # in this matter's optimized text. If found, log warning and strip the
+            # contaminated sentence. A foreign mention means a full sentence needs removal.
+            foreign_clients = find_foreign_client_mentions(
+                optimized_text, client_name, matters
+            )
+            if foreign_clients:
+                print(f"  ⚠️ [FOREIGN CLIENT v20.1] Matter '{client_name}' mentions: {foreign_clients}")
+                # Remove sentences containing foreign client names
+                for fc in foreign_clients:
+                    sentences = optimized_text.split('. ')
+                    clean_sentences = [s for s in sentences if fc.lower() not in s.lower()]
+                    if clean_sentences:
+                        optimized_text = '. '.join(clean_sentences)
+                        if not optimized_text.endswith('.'):
+                            optimized_text += '.'
+                print(f"  ✅ [FOREIGN CLIENT v20.1] Cleaned foreign references")
+            
+            # ═══ v20.1: POSSESSIVE-APPOSITIVE GRAMMAR FIX ═══
+            # Fixes "Biocodex's, a global..." → "Biocodex, a global..."
+            all_client_names = [m.get('client', '') for m in matters]
+            optimized_text = repair_possessive_appositive(optimized_text, all_client_names)
             
             matter['optimized_text'] = optimized_text
             matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
@@ -2418,6 +2611,83 @@ def optimization_node(state: AgentState) -> Dict:
         opt_text = matter.get('optimized_text', '')
         if opt_text:
             matter['optimized_text'] = strip_fillers(opt_text)
+    
+    # ═══ v20.1: FINAL POSSESSIVE-APPOSITIVE REPAIR ═══
+    # This runs AFTER the grammar LLM check because the grammar LLM sometimes
+    # re-introduces "Client's, descriptor" when converting straight to curly apostrophes.
+    # This is the LAST deterministic safety net before output.
+    all_client_names = [m.get('client', '') for m in optimized_matters]
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        if opt_text:
+            matter['optimized_text'] = repair_possessive_appositive(opt_text, all_client_names)
+    
+    # ═══ v20.1: FINAL OPENING DIVERSITY ENFORCEMENT ═══
+    # The descriptor insert and grammar LLM can corrupt openings AFTER the
+    # per-matter diversity check. This pass runs AFTER all post-processing
+    # and force-replaces any duplicate openings as a final safety net.
+    final_diversity_tracker = OpeningDiversityTracker()
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        if not opt_text:
+            continue
+        
+        first_word = final_diversity_tracker.first_word(opt_text)
+        if first_word and not final_diversity_tracker.validate(opt_text):
+            # This opening is duplicated — force-replace it
+            old_text = opt_text
+            client_name = matter.get('client', '')
+            opt_text = force_opening_diversity(opt_text, final_diversity_tracker, client_name=client_name)
+            new_word = final_diversity_tracker.first_word(opt_text)
+            if new_word != first_word:
+                print(f"  [FINAL DIVERSITY v20.1] '{first_word}' → '{new_word}' for {matter.get('client', '?')}")
+                matter['optimized_text'] = opt_text
+        
+        final_diversity_tracker.register(matter.get('optimized_text', ''))
+    
+    # ═══ v20.1: DESCRIPTOR CAPITALIZATION FIX ═══
+    # When descriptors from E1 form data get inserted mid-sentence, they retain
+    # their original capitalization: "MEGA DIRECT, Customer experience, call center..."
+    # This looks wrong in prose. Fix: lowercase the first letter of the descriptor
+    # when it follows a comma after the client name.
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        client_name = matter.get('client', '').strip()
+        if not opt_text or not client_name:
+            continue
+        
+        # Pattern: "ClientName, Uppercase descriptor" where the uppercase is from E1 form
+        # Only fix when the descriptor starts with a common industry word (not a proper noun)
+        industry_starters = {
+            'customer', 'business', 'industrial', 'global', 'mexican', 'one',
+            'diversified', 'leading', 'major', 'a', 'an', 'the',
+        }
+        
+        # Find the descriptor after client name
+        pattern = re.compile(
+            rf'({re.escape(client_name)},\s+)([A-Z][a-z]+)',
+            flags=re.IGNORECASE if client_name.isupper() else 0
+        )
+        match = pattern.search(opt_text)
+        if match:
+            desc_start = match.group(2)
+            if desc_start.lower() in industry_starters and desc_start[0].isupper():
+                # Only lowercase if it's not at the start of a sentence
+                pos = match.start()
+                if pos > 0 and opt_text[pos-1] not in '.!?\n':
+                    fixed = opt_text[:match.start(2)] + desc_start[0].lower() + desc_start[1:] + opt_text[match.end(2):]
+                    if fixed != opt_text:
+                        print(f"  [DESCRIPTOR CASE v20.1] Fixed '{desc_start}' → '{desc_start[0].lower() + desc_start[1:]}' for {client_name}")
+                        matter['optimized_text'] = fixed
+    
+    # ═══ v20.1: MINIMUM WORD COUNT FLOOR ═══
+    # Any matter below 175 words gets a warning. The constitutional validator
+    # may flag this, but we log it explicitly for debugging.
+    for matter in optimized_matters:
+        opt_text = matter.get('optimized_text', '')
+        wc = len(opt_text.split()) if opt_text else 0
+        if wc < 175:
+            print(f"  ⚠️ [WORD FLOOR v20.1] {matter.get('client', '?')}: {wc}w (below 175w minimum)")
     
     # ═══════════════════════════════════════════════════════════════
     # v17.3: B7 ENHANCEMENT PIPELINE
