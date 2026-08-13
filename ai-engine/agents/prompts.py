@@ -1197,12 +1197,16 @@ These are NOT optional decorations — they are RANKING EVIDENCE. If the origina
 5. Enhancement means ADDING value, not removing it.
 6. Tone: Institutional, evidence-dense, and specific.
 
-### WORD COUNT RULE (v17.0 — MANDATORY):
-- If the original matter is ~50 words → your output MUST be 150-250 words (3-5x expansion)
-- If the original matter is ~100 words → your output MUST be 200-350 words (2-3.5x expansion)
-- If the original matter is ~200 words → your output MUST be 250-400 words (1.25-2x expansion)
+### WORD COUNT & STRATEGIC DENSITY RULE (v21.0 — MANDATORY):
 - Your output MUST NEVER be shorter than the original. EVER.
-- If your output is shorter than the original, you have FAILED.
+- MINIMUM FLOOR: 175 words per matter.
+- LENGTH TARGET: Focus on STRATEGIC DENSITY PER WORD, not raw expansion.
+  The goal is NOT "make this 3x longer" — the goal is "make every word earn its place."
+  If 200 words of high strategic density is better than 350 words with padding, write 200 words.
+- Each word must either: (a) state evidence, (b) interpret evidence, or (c) connect evidence to ranking.
+  Words that do none of these are PADDING. Padding is FAILURE.
+- Your output SHOULD be 150-350 words depending on the complexity of the original matter.
+  Simple matters (few facts) → 150-200w. Complex matters (many facts, multi-party) → 250-350w.
 
 ### MATTER NARRATIVE STRUCTURE (MANDATORY — FOLLOW THIS ORDER):
 The opening sentence of each matter is CRITICAL. It must reveal WHY this matter is strategically important, NOT just describe the mandate.
@@ -1220,12 +1224,19 @@ Follow this flow:
 5. LEAD PARTNER + TEAM: Who led and what was their specific contribution?
 6. OUTCOME: What changed for the client? Prefer quantified results (100% compliance, zero sanctions) over generic claims.
 
-### EVIDENCE STRENGTH IN OUTCOMES:
-When writing outcomes, classify your language:
-- STRONG (use when evidence exists): "achieved 100% compliance in ARCO requests and avoided regulatory sanctions" — quantified, verifiable
-- MODERATE (use when concrete change is clear): "established a dedicated Personal Data Protection Department" — institutional, demonstrable
-- WEAK (AVOID): "strengthened compliance posture", "reduced regulatory exposure", "enhanced its position" — generic, unverifiable
-If you can only write a WEAK outcome because the original lacks evidence, write a MODERATE one instead that describes the concrete institutional or operational change. NEVER manufacture metrics.
+### EVIDENCE STRENGTH IN OUTCOMES (v21.0 — REVISED):
+Classify every outcome statement you write:
+- STRONG: quantified, verifiable → "achieved 100% compliance in ARCO requests and avoided regulatory sanctions"
+- MODERATE: concrete institutional/operational change → "established a dedicated Personal Data Protection Department"
+- WEAK: generic benefit → "strengthened compliance posture", "reduced regulatory exposure"
+
+RULE: You MUST NOT write WEAK outcomes. Instead:
+- If the original has evidence for a STRONG outcome → use it
+- If the original shows concrete change → write a MODERATE outcome
+- If you can ONLY write a WEAK outcome because no evidence exists → write this instead:
+  "[The engagement produced institutional changes whose measurable impact could be further documented — see Evidence Strengthening Requests.]"
+  This signals the audit module to generate an information request to the firm.
+  NEVER manufacture metrics. NEVER write generic benefits. Ask for evidence instead.
 
 ### ANTI-HOMOGENIZATION RULE (SUPREME PRIORITY):
 Each matter MUST open with a DIFFERENT strategic angle. If two matters start with similar language about "designing and implementing a framework", you have FAILED.
@@ -1247,6 +1258,30 @@ If a UNIQUE_ANGLE field is provided with this matter, you MUST:
    and find the SPECIFIC evidence that makes THIS matter different
 4. The UNIQUE_ANGLE contains the differentiating evidence — USE IT as the backbone of your expansion
 5. Generic governance language is FILLER. Specific sector-level detail is EVIDENCE.
+
+### BODY DIFFERENTIATION RULE (v21.0 — ANTI-HOMOGENIZATION FOR BODY TEXT):
+The anti-homogenization rule above applies to OPENINGS. This rule applies to the BODY and CONCLUSION.
+In the BODY paragraphs, each matter MUST:
+1. Spend 60%+ of body words on SPECIFIC deliverables, challenges, and outcomes unique to THIS client's sector
+2. Name the SPECIFIC regulations, authorities, data categories, or business processes relevant to THIS client
+3. Describe what the firm did in terms that ONLY apply to this client's industry:
+   - For pharma: sensitive health data categories, patient privacy, pharmacovigilance
+   - For retail: consumer data at point of sale, store-level privacy deployment, scaling
+   - For industrial: workplace data, equipment telemetry, transversal risk
+   - For hospitality: guest data, event management, seasonal operations
+   - For services: database management, marketing data, call center recordings
+4. The CONCLUSION must state what THIS matter proves about the practice that NO other matter proves
+
+### MATTER CYCLE POSITION (v21.0 — OWNER'S KEY PATTERN):
+The owner identified a recurring cycle across matters: diagnose → design → implement → institutionalise → monitor.
+Each matter sits at a DIFFERENT point in this cycle:
+- DIAGNOSE: Initial assessment, gap analysis, audit of existing practices
+- DESIGN: Creating frameworks, policies, departments from scratch
+- IMPLEMENT: Deploying privacy across operations, training, rolling out procedures
+- INSTITUTIONALISE: Embedding privacy into governance, creating permanent departments
+- MONITOR: Ongoing audit, ARCO compliance tracking, long-term advisory
+Identify where THIS matter sits in the cycle. Use that position to frame the matter's UNIQUE contribution.
+Example: If M1 is at INSTITUTIONALISE+MONITOR, and M3 is at DESIGN+IMPLEMENT, they tell DIFFERENT stories.
 
 ### OPENING WORD DIVERSITY (v19.2 — MANDATORY):
 The FIRST WORD of each matter's opening sentence MUST be different. NEVER start 3+ matters with the same word.
