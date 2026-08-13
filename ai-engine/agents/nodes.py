@@ -518,11 +518,24 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
         
         old_descriptor = rest[:end_pos]
         
-        # Reconstruct with original descriptor
+        # v21.0: Add article if missing and ensure comma closure
+        article_descriptor = descriptor
+        first_word_desc = descriptor.split()[0].lower() if descriptor else ''
+        articles = {'a', 'an', 'the', 'one'}
+        if first_word_desc not in articles:
+            vowel_sounds = {'a', 'e', 'i', 'o', 'u'}
+            article = 'an' if first_word_desc[0:1] in vowel_sounds else 'a'
+            article_descriptor = f"{article} {descriptor}"
+        
+        # Reconstruct with original descriptor + comma closure for appositive
+        remaining_after = rest[end_pos:]
+        # Ensure the descriptor closes with a comma before the next clause
+        if remaining_after and not remaining_after.lstrip().startswith(',') and not remaining_after.lstrip().startswith('.'):
+            remaining_after = ', ' + remaining_after.lstrip(', ')
         repaired = (
             enhanced_text[:enh_after] + 
-            ', ' + descriptor + 
-            rest[end_pos:]
+            ', ' + article_descriptor + 
+            remaining_after
         )
         
         lost = [w for w in descriptor_words if w not in enhanced_lower]
@@ -532,18 +545,31 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
         print(f"    Lost words: {lost}")
         return repaired
     
-    # v20.0: If no comma after client name but descriptor was lost, try insertion
+    # v21.0: If no comma after client name but descriptor was lost, try insertion
+    # ChatGPT 5.6 FIX: Add article 'a/an' before descriptor and close with comma
+    # to prevent grammar errors like "Mexico City's Data Protection" possessive confusion.
     elif not enh_remaining.lstrip().startswith(','):
-        # Insert descriptor after client name with comma
+        # Add indefinite article if descriptor doesn't already start with one
+        article_descriptor = descriptor
+        first_word_desc = descriptor.split()[0].lower() if descriptor else ''
+        articles = {'a', 'an', 'the', 'one'}
+        if first_word_desc not in articles:
+            # Choose a/an based on first letter sound
+            vowel_sounds = {'a', 'e', 'i', 'o', 'u'}
+            article = 'an' if first_word_desc[0:1] in vowel_sounds else 'a'
+            article_descriptor = f"{article} {descriptor}"
+        
+        # Insert descriptor as proper appositive clause: "Client, a descriptor, verb..."
         repaired = (
             enhanced_text[:enh_after] +
-            ', ' + descriptor + ',' +
+            ', ' + article_descriptor + ',' +
             enhanced_text[enh_after:]
         )
         # Clean possible double punctuation
         repaired = re.sub(r',\s*,', ',', repaired)
-        print(f"  [DESCRIPTOR INSERT v20.0] Client '{client_clean}'")
-        print(f"    Inserted: \"{descriptor[:80]}\"")
+        repaired = re.sub(r',\s*\'s', '\'s', repaired)  # Fix "Client, descriptor,'s" edge case
+        print(f"  [DESCRIPTOR INSERT v21.0] Client '{client_clean}'")
+        print(f"    Inserted: \"{article_descriptor[:80]}\"")
         return repaired
     
     return enhanced_text
@@ -2305,6 +2331,50 @@ def optimization_node(state: AgentState) -> Dict:
         # Construct the raw matter text to feed to the optimizer
         raw_text = f"Title: {matter.get('title', '')}\nClient: {matter.get('client', '')}\nValue: {matter.get('value', '')}\nSummary: {matter.get('summary', '')}\nSignificance: {matter.get('significance', '')}\nLead Partner: {matter.get('lead_partner', '')}"
         
+        # v21.0: UNIQUE_ANGLE detection — auto-detect differentiating evidence
+        # ChatGPT 5.6 recommendation: Give each matter its unique angle so the LLM
+        # focuses on specific evidence instead of generic governance language
+        matter_text_lower = raw_text.lower()
+        unique_angle_parts = []
+        
+        # Detect sector-specific signals
+        sector_angles = {
+            'pharma': ('pharmaceutical', 'probiotics', 'healthcare', 'biocodex', 'sensitive data', 'health'),
+            'retail': ('retail', 'supermarket', 'store opening', 'consumer data', 'chedraui', 'chain'),
+            'industrial': ('industrial', 'machinery', 'equipment', 'manufacturing', 'modelquipo'),
+            'hospitality': ('hotel', 'lodging', 'hospitality', 'riazor', 'event services'),
+            'dairy': ('dairy', 'food', 'excelsior', 'producers'),
+            'infrastructure': ('infrastructure', 'conglomerate', 'hermes', 'diversified'),
+            'services': ('call center', 'marketing', 'customer experience', 'mega direct'),
+        }
+        
+        for sector, keywords in sector_angles.items():
+            if any(kw in matter_text_lower for kw in keywords):
+                unique_angle_parts.append(f"SECTOR: {sector}")
+                break
+        
+        # Detect temporal/relational signals
+        if any(w in matter_text_lower for w in ['16 year', 'sixteen year', 'decade', 'years of']):
+            unique_angle_parts.append("TEMPORAL: long-term advisory relationship — emphasize duration and evolution")
+        if any(w in matter_text_lower for w in ['restructur', 'regularisation', 'reorganis']):
+            unique_angle_parts.append("CHANGE: organizational restructuring — emphasize transformation and integration")
+        if any(w in matter_text_lower for w in ['department', 'institutional', 'programme']):
+            unique_angle_parts.append("BUILDING: institutional capability creation — emphasize what was built")
+        if any(w in matter_text_lower for w in ['100%', 'zero sanctions', 'no regulatory']):
+            unique_angle_parts.append("OUTCOME: quantifiable compliance result — lead with the measurable result")
+        if any(w in matter_text_lower for w in ['expansion', 'new store', 'scaling', 'growth']):
+            unique_angle_parts.append("GROWTH: business expansion context — emphasize privacy in scaling operations")
+        if any(w in matter_text_lower for w in ['litigation', 'defence', 'defense', 'proceedings', 'electoral']):
+            unique_angle_parts.append("DEFENCE: litigation/regulatory defence — emphasize protection of data assets")
+        if any(w in matter_text_lower for w in ['risk management', 'transversal', 'governance strategy']):
+            unique_angle_parts.append("GOVERNANCE: cross-cutting risk management — emphasize privacy in corporate strategy")
+        
+        unique_angle_block = ""
+        if unique_angle_parts:
+            unique_angle_block = f"\n\nUNIQUE_ANGLE FOR THIS MATTER:\n" + "\n".join(unique_angle_parts)
+            unique_angle_block += "\nUSE this angle as the backbone of your expansion. 60%+ of the body MUST reflect this specific angle."
+            print(f"  [DIFFERENTIATION v21.0] Matter {matter_idx+1}: {', '.join(unique_angle_parts)}")
+        
         # v20.0: Build diversity instruction for this matter
         diversity_instruction = diversity_tracker.prompt_with_suggestions()
         full_context = matter_context_block
@@ -2313,7 +2383,7 @@ def optimization_node(state: AgentState) -> Dict:
         
         messages = [
             SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-            HumanMessage(content=f"{full_context}\n\nOptimize this raw matter:\n\n{raw_text}")
+            HumanMessage(content=f"{full_context}{unique_angle_block}\n\nOptimize this raw matter:\n\n{raw_text}")
         ]
         
         try:
@@ -2818,6 +2888,19 @@ MANDATORY REQUIREMENTS:
 WORD COUNT:
 - Your output MUST be between {max(original_word_count, 300)} and 500 words (Chambers hard limit for B7).
 - Do NOT inflate word count with generic prose. If 400 words of high strategic density is better than 500 words with padding, write 400 words.
+
+ACTIVE EDITORIAL VOICE (v21.0 — ChatGPT 5.6 RECOMMENDATION):
+You are a senior editorial analyst at Chambers & Partners who writes the published research notes.
+Your role is to INTERPRET the practice, not merely DESCRIBE it.
+
+INTERPRETING (GOOD) vs DESCRIBING (BAD):
+BAD: "The firm places privacy within corporate compliance and operating structures."
+GOOD: "The practice positions privacy as an operational governance imperative, embedding it within compliance structures rather than treating it as a standalone exercise."
+BAD: "The team is known for advising on data protection frameworks."
+GOOD: "The team translates regulatory obligation into operational architecture, designing privacy controls that function as risk management tools rather than documentation exercises."
+
+MANDATORY ACTIVE VERBS (use these): "positions", "embeds", "translates", "demonstrates", "delivers", "drives", "deploys", "anchors", "converts"
+PROHIBITED PASSIVE CONSTRUCTIONS: "is placed", "is treated", "is known for", "is recognised for", "is noted for", "has been involved in", "has advised on"
 
 ABSOLUTE PROHIBITIONS:
 - NEVER make the text shorter than the original ({original_word_count} words)

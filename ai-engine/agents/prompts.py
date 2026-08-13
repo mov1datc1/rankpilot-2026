@@ -1161,6 +1161,22 @@ WHAT YOU MUST DO INSTEAD:
 
 THE RULE: Copy the original client descriptor FIRST, then ADD context. NEVER replace it.
 
+### CLIENT DESCRIPTOR INTEGRATION RULE (v21.0 — ChatGPT 5.6):
+You will receive CLIENT_NAME and CLIENT_DESCRIPTOR as separate fields.
+Integrate the CLIENT_DESCRIPTOR as a proper appositive clause in the FIRST SENTENCE using this pattern:
+"[CLIENT_NAME], [article] [CLIENT_DESCRIPTOR], [verb phrase about the matter]..."
+
+GRAMMAR RULES FOR DESCRIPTOR INTEGRATION:
+✅ CORRECT: "Hotel Riazor, a business hotel offering lodging and event services in Mexico City, required a data protection enhancement..."
+✅ CORRECT: "Grupo Excelsior, one of Mexico's leading dairy producers, placed data protection within..."
+❌ FORBIDDEN: "Hotel Riazor, Business hotel offering lodging and event services in Mexico City's Data Protection..." (possessive confusion)
+❌ FORBIDDEN: "Hotel Riazor's, a business hotel, data protection..." (possessive + appositive)
+
+The descriptor MUST:
+- Be preceded by an article ("a", "an", "one of") if it doesn't already have one
+- Be ENCLOSED in commas (opening comma after client name, closing comma before verb)
+- NEVER be followed by a possessive "'s" on the next word
+
 ### CLIENT DESCRIPTOR INJECTION (v19.2 — HARD REQUIREMENT):
 Before enhancing, scan the original text for the client descriptor phrase that appears immediately after the client name.
 This descriptor phrase MUST appear VERBATIM in your output. Examples of descriptor phrases:
@@ -1220,6 +1236,17 @@ The portfolio has real diversity — surface it:
 - A litigation/defence engagement is about PROTECTING databases as business assets
 - A restructuring engagement is about INTEGRATING privacy into organisational change
 Ask: "What NEW evidence does this matter add to the case for ranking?" If two matters add the SAME evidence, rewrite one.
+
+### DIFFERENTIATION ENFORCER (v21.0 — ChatGPT 5.6 RECOMMENDATION):
+If a UNIQUE_ANGLE field is provided with this matter, you MUST:
+1. Ensure that at least 60% of the matter body uses language, concepts, and evidence FROM the UNIQUE_ANGLE
+2. DO NOT reuse the following generic phrases when they describe different matters:
+   "framework implementation", "governance structures", "regulatory compliance",
+   "operational accountability", "privacy framework", "data protection framework"
+3. If you find yourself writing a phrase that ANY other matter could use unchanged, STOP
+   and find the SPECIFIC evidence that makes THIS matter different
+4. The UNIQUE_ANGLE contains the differentiating evidence — USE IT as the backbone of your expansion
+5. Generic governance language is FILLER. Specific sector-level detail is EVIDENCE.
 
 ### OPENING WORD DIVERSITY (v19.2 — MANDATORY):
 The FIRST WORD of each matter's opening sentence MUST be different. NEVER start 3+ matters with the same word.
