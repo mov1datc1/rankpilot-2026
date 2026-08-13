@@ -3,9 +3,99 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v20.1] — 2026-08-13
+
+### 🔧 Splice, Grammar, Diversity & Word Count Fixes
+
+**6 bugs identified and resolved across 4 pipeline test runs (González de Araujo DOCX).**
+
+#### Bug Fixes:
+1. **Splice Contamination (Critical)**: `sanitize_descriptor_source()` strips DOCX table artifacts (`| No. 6 |`) and isolates ±500 chars around client name. `find_foreign_client_mentions()` post-generation validator detects cross-matter contamination.
+2. **Grammar Errors (Critical)**: `repair_possessive_appositive()` fixes `"Client's, descriptor"` → `"Client, descriptor"` with Unicode curly apostrophe support (U+2019/U+2018). Runs both per-matter AND after grammar LLM as final safety net.
+3. **Opening Diversity**: Final Diversity Enforcement runs AFTER all post-processing (descriptor insert, grammar LLM) to catch corrupted openings. `force_opening_diversity()` rewritten with smart pattern matching using client_name context.
+4. **Word Count Floor**: 175-word minimum with warning log. Descriptor capitalization fix for mid-sentence industry words.
+
+#### Prompt Changes:
+- SOURCE BOUNDARY rules in MATTER_OPTIMIZER_PROMPT
+- GRAMMAR FOR CLIENT APPOSITIVES prohibition
+- TABLE/LIST ARTIFACT prohibition
+- Thesis redaction: all client names → `[client]` placeholder
+- Descriptor priority: Body E2 summary FIRST, doc_text E1 as fallback
+
+#### Test Results (R4 — Final):
+| Check | Result |
+|-------|--------|
+| Splice | ✅ 7/7 CLEAN |
+| Diversity | ✅ 7/7 UNIQUE |
+| Word Count | ✅ ALL ≥ 175w |
+| Grammar | ✅ 7/7 CLEAN |
+| Constitutional | ✅ PASS (attempt 2) |
+| Pipeline Time | 882s |
+
 ---
 
-## [v17.7] — 2026-08-06
+## [v20.0] — 2026-08-12
+
+### 🏗️ Opening Diversity Tracker + Constitutional Validation Gate
+
+**New modules**: `OpeningDiversityTracker` class with prompt injection, validation, and programmatic force-replace. Constitutional Validation Gate with LLM editorial judge (7 checks: B1, B3, B4, C2, C3, C4, C9) + deterministic L1 checks. Gate allows up to 3 retries before delivering with warnings.
+
+**6 bugs found in testing**: Splice contamination (M5), opening diversity (5/7), word count regression, M4 evidence loss, D2 missing section, grammar errors.
+
+---
+
+## [v19.2] — 2026-08-11
+
+### 📊 Stable Baseline
+
+Pipeline producing consistently good output. 7/7 matters expanded vs original (+55-171%). All constitutional checks passing. Client descriptors preserved. Zero filler words. Established as baseline for v20.0 comparison testing.
+
+---
+
+## [v18.8] — 2026-08-10
+
+### 🔧 Client Descriptor Verification v2 + Entity-Loss Detection
+
+`verify_client_descriptors()` expanded with E1 form data extraction, industry keyword matching (60+ terms), and multi-word phrase support. Entity-loss detection (`[ENTITY-LOSS v20]`) checks that ≥60% of named entities survive optimization. Re-optimization triggered on entity loss.
+
+---
+
+## [v18.5b] — 2026-08-09
+
+### 📝 Architecture Labels Hidden + Anti-Homogenization
+
+**Labels renamed**: "Competitive Identity" → "Practice Positioning", "Hero Matter" → "Lead Engagement". Internal architecture terms removed from all visible output (DOCX headers, audit letter).
+
+**Anti-homogenization**: Each matter must tell a DIFFERENT strategic story. C3 constitutional check enforces differentiated openings. Prompt includes sector-specific angles (pharma=sensitive data, retail=scaling, industrial=risk management).
+
+---
+
+## [v18.5] — 2026-08-09
+
+### 🎯 B7 Strategic Enhancement + Evidence Strengthening
+
+**B7 rewrite**: System message changed to "editorial analyst who reveals why a practice is differentiated". B7 now interprets (not decorates) the practice. 2-3 client examples illustrate patterns. Lead partner mentioned by name. Thesis preserved from original.
+
+**Evidence Strengthening Requests**: Claims lacking quantifiable evidence get targeted questions instead of manufactured prose. Section added to Strategic Audit Letter.
+
+**Density > Volume**: "400 words of high density > 500 words with filler."
+
+---
+
+## [v18.0] — 2026-08-08
+
+### 🔄 Matter Enhancer Prompt Rewrite
+
+Complete rewrite of `MATTER_OPTIMIZER_PROMPT` with:
+- KEEP → EXPAND → STRENGTHEN paradigm
+- Client descriptor preservation rules with few-shot examples
+- Evidence strength tiers (Strong > Moderate > Weak)
+- Strategic opening requirement (WHY first, not mandate)
+- Anti-homogenization rule with sector-specific angles
+
+---
+
+
 
 ### 🏗️ L1 Defense: Cross-Border + RAVL Injection into ALL Editorial Nodes
 

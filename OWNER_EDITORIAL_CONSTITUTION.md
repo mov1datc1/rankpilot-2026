@@ -2,8 +2,8 @@
 
 > **Propósito**: Este documento consolida TODAS las reglas que el owner ha dado en TODOS los feedbacks. Es el documento único para validar cualquier output de RankPilot. Si una regla no está aquí, no existe.
 > 
-> **Última actualización**: 11 Agosto 2026  
-> **Feedbacks incorporados**: Pre-v17, v17 (7 obs), v18 (12 obs), v18.5 (B7/B10 feedback)
+> **Última actualización**: 13 Agosto 2026  
+> **Feedbacks incorporados**: Pre-v17, v17 (7 obs), v18 (12 obs), v18.5 (B7/B10 feedback), v20.0 (6 bugs), v20.1 (6 fixes)
 
 ---
 
@@ -168,6 +168,42 @@
 - **Status**: ✅ Implementado v18.5 — "Extract PATTERNS from matters: governance integration, recurring advisory, sector diversity, measurable outcomes"
 - **Código**: [nodes.py B7 strategic_matter_context](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py#L2297-L2320)
 
+### C10. Splice Prevention — zero contaminación entre matters
+- **Origen**: Bug v20.0 — M5 (Excelsior) contenía texto de M6 (Modelquipo)
+- **Regla**: Cada matter SOLO contiene información de SU cliente y SU mandato. Cero artefactos de tabla DOCX (`| No. 6 |`), cero nombres de clientes de otros matters en el texto.
+- **Status**: ✅ Implementado v20.1
+- **Código**: [nodes.py sanitize_descriptor_source()](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py), [nodes.py find_foreign_client_mentions()](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
+### C11. Opening Diversity — 7/7 first words ÚNICOS
+- **Origen**: Bug v20.0 — 3+ matters abrían con "The..."
+- **Regla**: El primer word de cada matter DEBE ser diferente de todos los demás. Banned defaults: "the", "this", "our", "it", "we". Enforcement determinístico post-LLM con `force_opening_diversity()`.
+- **Status**: ✅ Implementado v20.1
+- **Código**: [opening_diversity.py](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/utils/opening_diversity.py), [nodes.py Final Diversity Enforcement](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
+### C12. Grammar Repair — no "Client's, descriptor" pattern
+- **Origen**: Bug v20.0 — LLM generaba "Biocodex's, a global pharmaceutical..."
+- **Regla**: `"Client's, appositive"` es incorrecto. Solo válido cuando el poseído sigue inmediatamente: `"Client's mandate"`. Soporte Unicode curvos (', ').
+- **Status**: ✅ Implementado v20.1
+- **Código**: [nodes.py repair_possessive_appositive()](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
+### C13. Foreign Client Validator — zero cross-matter names
+- **Origen**: Bug v20.0 — GPT insertaba nombres de otros clientes
+- **Regla**: Post-generation check: si el texto de M5 menciona "Grupo Modelquipo", la oración contaminada se elimina.
+- **Status**: ✅ Implementado v20.1
+- **Código**: [nodes.py find_foreign_client_mentions()](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
+### C14. Minimum Word Floor (175w)
+- **Origen**: Bug v20.0 — M5 tenía solo 153w
+- **Regla**: Cada matter optimizado debe tener ≥ 175 palabras. Warning log si está por debajo.
+- **Status**: ✅ Implementado v20.1
+- **Código**: [nodes.py word floor check](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
+### C15. Descriptor Capitalization — lowercase mid-sentence
+- **Origen**: Bug v20.1 — "MEGA DIRECT, Customer experience, call center..."
+- **Regla**: Cuando un descriptor de E1 se inserta mid-sentence, la primera letra se convierte a lowercase si es un industry word.
+- **Status**: ✅ Implementado v20.1
+- **Código**: [nodes.py DESCRIPTOR CAPITALIZATION FIX](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py)
+
 ---
 
 ## D. REGLAS DEL AUDIT (Strategic Audit Letter)
@@ -207,7 +243,7 @@
 
 ---
 
-## 🔎 CHECKLIST DE VALIDACIÓN (30 puntos)
+## 🔎 CHECKLIST DE VALIDACIÓN (36 puntos)
 
 > Usar esta checklist para auditar CUALQUIER output de RankPilot antes de entregarlo al owner.
 
@@ -229,7 +265,7 @@
 - [ ] **B6**: Word count ≥ original AND ≤ 500
 - [ ] **B7**: Lead partner mencionado BY NAME
 
-### Matters (10 checks)
+### Matters (16 checks)
 - [ ] **C1**: Cada matter ≥ original word count (EXPANDIDO, no resumido)
 - [ ] **C2**: Cada matter ABRE con WHY (significancia estratégica), no con mandate genérico
 - [ ] **C3**: Los 7 openings son DIFERENTES entre sí (no homogeneizados)
@@ -240,6 +276,12 @@
 - [ ] **C8**: Claims débiles tienen Information Request en audit (no prose manufacturada)
 - [ ] **C9**: Se descubrieron PATRONES más profundos (no solo la tesis explícita del original)
 - [ ] **C10**: 7/7 matters evaluados (zero matters dropped/ignored)
+- [ ] **C11**: Zero splice/contaminación entre matters (zero artefactos de tabla DOCX)
+- [ ] **C12**: 7/7 first words ÚNICOS (opening diversity)
+- [ ] **C13**: Zero errores gramaticales "Client's, descriptor" (possessive-appositive)
+- [ ] **C14**: Zero nombres de clientes ajenos en cada matter (foreign client validation)
+- [ ] **C15**: Cada matter ≥ 175 palabras (word floor)
+- [ ] **C16**: Descriptors en lowercase mid-sentence (no "Customer experience" capitalizado)
 
 ### Audit (6 checks)
 - [ ] **D1**: Headers sin arquitectura interna ("Practice Positioning", "Lead Engagement")
