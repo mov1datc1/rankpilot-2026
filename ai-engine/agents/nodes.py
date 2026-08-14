@@ -2862,6 +2862,35 @@ def optimization_node(state: AgentState) -> Dict:
         
         original_word_count = len(original_b10.split())
         
+        # v21.0.2: PRESERVE + ENRICH MODE (Fix #5 from owner feedback)
+        # When the original B10 is already strong (>400w, well-written),
+        # the pipeline should PRESERVE all original content and ENRICH it,
+        # not rewrite it from scratch. "La reescritura nunca debe empeorar un texto original fuerte."
+        preserve_enrich_mode = original_word_count > 400
+        
+        if preserve_enrich_mode:
+            preserve_instruction = f"""
+CRITICAL — PRESERVE + ENRICH MODE:
+The original B10 is {original_word_count} words — this is a STRONG, well-written original.
+You MUST follow these rules:
+1. PRESERVE every sentence from the original. Do NOT delete, compress, or summarize any content.
+2. PRESERVE every person mentioned by name (partners, senior counsel, statespeople).
+3. PRESERVE every client name mentioned.
+4. PRESERVE every specific fact (years, numbers, regulatory bodies, jurisdictions).
+5. You may ADD 2-3 sentences of editorial interpretation between paragraphs.
+6. You may STRENGTHEN existing language by replacing generic phrases with Chambers-grade editorial language.
+7. Your output MUST be AT LEAST {original_word_count} words — ideally {original_word_count + 50}-{min(original_word_count + 100, 650)} words.
+8. If in doubt, KEEP the original wording. It is better to output the original unchanged than to lose any evidence.
+"""
+            print(f"[B7 ENHANCEMENT] v21.0.2: PRESERVE+ENRICH mode activated (original: {original_word_count}w)")
+        else:
+            preserve_instruction = f"""
+EXPANSION MODE:
+The original B10 is only {original_word_count} words — it needs significant expansion.
+Your output MUST be AT LEAST {max(original_word_count, 300)} words — NEVER shorter than the original.
+"""
+            print(f"[B7 ENHANCEMENT] Standard expansion mode (original: {original_word_count}w)")
+        
         b7_enhancement_prompt = f"""You are a Chambers & Partners Senior Editor enhancing a law firm's B7 section ("What is this department best known for?").
 
 EDITORIAL PHILOSOPHY (CONSTITUTIONAL RULE):
@@ -2895,11 +2924,9 @@ MANDATORY REQUIREMENTS:
 4. The narrative must reveal WHY this practice is differentiated, not just WHAT it does
 5. HARD CAP: Count the client names in your output BEFORE submitting. If you have named more than 3 clients, REMOVE the excess ones and refer to them generically (e.g., "across additional mandates for corporate groups in regulated sectors").
 
-WORD COUNT:
-- The original text is {original_word_count} words.
-- Your output MUST be AT LEAST {original_word_count} words — NEVER shorter than the original.
+WORD COUNT AND PRESERVATION MODE:
+{preserve_instruction}
 - Chambers has a soft guidance of ~500 words for B7, but PRESERVING CONTENT is more important than hitting a word limit.
-- If the original is already over 500 words, you MUST preserve ALL its content and may expand further. Do NOT compress a well-written original.
 - Do NOT inflate word count with generic prose. Every word must earn its place.
 
 ACTIVE EDITORIAL VOICE (v21.0 — ChatGPT 5.6 RECOMMENDATION):
@@ -2999,6 +3026,79 @@ ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
             print(f"[B7 SOFT CAP] ✅ Truncated to {len(enhanced_b7.split())}w")
         else:
             print(f"[B7 WORD FLOOR] ✅ B7 word count OK: {b7_words_count}w (original: {orig_words_count}w)")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v21.0.2: GRAMMAR CHECK FOR B7 (Fix #1 from owner feedback)
+    # "benefit from provide" → "benefit from providing"
+    # The grammar check already runs on matters but was MISSING for B7.
+    # ═══════════════════════════════════════════════════════════════
+    if enhanced_b7 and len(enhanced_b7.split()) > 20:
+        print("--- B7 GRAMMAR CHECK ---")
+        try:
+            b7_grammar_llm = get_model()
+            b7_grammar_llm = b7_grammar_llm.bind(response_format={"type": "json_object"})
+            b7_grammar_response = b7_grammar_llm.invoke([
+                SystemMessage(content=(
+                    "You are a professional English proofreader. Fix ONLY grammar, spelling, "
+                    "and punctuation errors. Do NOT change meaning, content, names, numbers, "
+                    "or sentence structure. Do NOT add or remove information. "
+                    "Return JSON: {\"corrected_text\": \"...\", \"corrections_made\": 0}"
+                )),
+                HumanMessage(content=f"Proofread this text:\n\n{enhanced_b7}")
+            ])
+            b7_grammar_result = safe_json_loads(b7_grammar_response.content, fallback={})
+            b7_corrected = b7_grammar_result.get("corrected_text", "")
+            b7_corrections = b7_grammar_result.get("corrections_made", 0)
+            
+            if b7_corrected and b7_corrections > 0:
+                # Validate the corrected version isn't shorter (grammar check shouldn't remove content)
+                if len(b7_corrected.split()) >= len(enhanced_b7.split()) * 0.95:
+                    enhanced_b7 = b7_corrected
+                    print(f"[B7 GRAMMAR] ✅ Fixed {b7_corrections} grammar issue(s)")
+                else:
+                    print(f"[B7 GRAMMAR] ⚠️ Grammar correction shortened B7 — keeping original")
+            else:
+                print("[B7 GRAMMAR] ✅ No grammar issues found")
+        except Exception as b7_gram_err:
+            print(f"[B7 GRAMMAR] Warning: {b7_gram_err} — keeping current B7")
+    
+    # ═══════════════════════════════════════════════════════════════
+    # v21.0.2: MATTER COUNT ENFORCEMENT (Fix #4 from owner feedback)
+    # "Nunca. Nunca. Nunca. Debe eliminar un caso."
+    # If we have fewer optimized matters than source, LOG ERROR and 
+    # fill the gap with un-optimized originals.
+    # ═══════════════════════════════════════════════════════════════
+    manifest = state.get("pipeline_manifest", {})
+    source_matters_info = manifest.get("document", {}).get("source_matters", {})
+    source_total = source_matters_info.get("total", 0)
+    
+    if source_total > 0 and len(optimized_matters) < source_total:
+        deficit = source_total - len(optimized_matters)
+        print(f"[MATTER ENFORCEMENT] ⚠️ DEFICIT: {len(optimized_matters)} optimized vs {source_total} source — {deficit} matter(s) MISSING")
+        print(f"[MATTER ENFORCEMENT] Original source labels: {source_matters_info.get('matter_labels', [])}")
+        
+        # Try to recover missing matters from the original extraction
+        original_matters = state.get("_original_extracted_matters", [])
+        if original_matters:
+            existing_clients = {m.get('client', '').lower().strip() for m in optimized_matters}
+            for om in original_matters:
+                client = om.get('client', '').lower().strip()
+                if client and client not in existing_clients:
+                    # Add the original matter as-is (un-optimized) to preserve evidence
+                    recovery_matter = dict(om)
+                    if not recovery_matter.get('optimized_text'):
+                        recovery_matter['optimized_text'] = recovery_matter.get('original_text', recovery_matter.get('summary', ''))
+                    recovery_matter['_recovered'] = True
+                    optimized_matters.append(recovery_matter)
+                    existing_clients.add(client)
+                    print(f"[MATTER ENFORCEMENT] ✅ RECOVERED: '{om.get('client', '?')[:50]}' (using original text)")
+            
+            if len(optimized_matters) >= source_total:
+                print(f"[MATTER ENFORCEMENT] ✅ All {source_total} matters preserved ({deficit} recovered)")
+            else:
+                print(f"[MATTER ENFORCEMENT] ⚠️ Still missing {source_total - len(optimized_matters)} matter(s) after recovery")
+    elif source_total > 0:
+        print(f"[MATTER ENFORCEMENT] ✅ All {source_total} matters preserved ({len(optimized_matters)} optimized)")
         
     return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
 

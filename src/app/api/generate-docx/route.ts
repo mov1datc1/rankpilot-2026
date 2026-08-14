@@ -288,12 +288,31 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     fieldLabel('Re: ', (() => {
       const directory = submission.targetDirectory || 'Chambers & Partners';
       const region = submission.guideRegion || '';
-      const jurisdiction = (submission.chambersData as any)?.detectedJurisdiction || '';
+      // v21.0.2: Priority chain for jurisdiction (Fix #2 from owner feedback)
+      // 1. resolved_jurisdiction from pipeline context (most accurate — e.g., "Venezuela")
+      // 2. detectedJurisdiction from DOCX template
+      // 3. guideRegion from UI dropdown (may be generic like "Latin America")
+      const resolvedJurisdiction = (submission.chambersData as any)?.strategic_context?.resolved_jurisdiction || '';
+      const detectedJurisdiction = (submission.chambersData as any)?.detectedJurisdiction || '';
+      const jurisdiction = resolvedJurisdiction || detectedJurisdiction || '';
       const practice = practiceArea || '';
-      // Build hierarchy: Directory (Editorial) · Region · Jurisdiction · Practice Area
+      
+      // Build hierarchy: Directory (Editorial) · Jurisdiction · Practice Area
+      // v21.0.2: If we have a specific jurisdiction, DON'T show the generic region
+      // Owner feedback: "Dice Latin America pero debería decir Venezuela"
+      const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america'];
+      const regionIsGeneric = genericRegions.includes(region.toLowerCase().trim());
+      
       const parts: string[] = [`${directory} (Editorial)`];
-      if (region) parts.push(`${region} (Region)`);
-      if (jurisdiction && jurisdiction !== region) parts.push(`${jurisdiction} (Jurisdiction)`);
+      if (jurisdiction) {
+        parts.push(`${jurisdiction} (Jurisdiction)`);
+        // Only show region separately if it's NOT generic AND different from jurisdiction
+        if (region && !regionIsGeneric && region.toLowerCase() !== jurisdiction.toLowerCase()) {
+          parts.push(`${region} (Region)`);
+        }
+      } else if (region) {
+        parts.push(`${region} (Region/Jurisdiction)`);
+      }
       if (practice) parts.push(`${practice} (Practice Area)`);
       return parts.join(' · ');
     })()),
