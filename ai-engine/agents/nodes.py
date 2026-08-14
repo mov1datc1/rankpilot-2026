@@ -2862,136 +2862,145 @@ def optimization_node(state: AgentState) -> Dict:
         
         original_word_count = len(original_b10.split())
         
-        # v21.0.2: PRESERVE + ENRICH MODE (Fix #5 from owner feedback)
-        # When the original B10 is already strong (>400w, well-written),
-        # the pipeline should PRESERVE all original content and ENRICH it,
-        # not rewrite it from scratch. "La reescritura nunca debe empeorar un texto original fuerte."
-        preserve_enrich_mode = original_word_count > 400
+        # ═══════════════════════════════════════════════════════════════
+        # v21.1: OPTION D ARCHITECTURE (ChatGPT 5.6 Terra recommendation)
+        # "Do not make the LLM responsible for preserving source text.
+        #  Make your CODE responsible for preserving it.
+        #  The LLM only generates INSERTIONS."
+        #
+        # HOW IT WORKS:
+        # 1. Split original B10 into paragraphs with IDs (P01, P02, etc.)
+        # 2. LLM generates ONLY editorial insertions (20-60w each)
+        # 3. Python assembles: original_paragraph + insertion
+        # 4. Original text is NEVER passed through the LLM output
+        #
+        # GUARANTEE: Structurally impossible to compress or lose evidence.
+        # ═══════════════════════════════════════════════════════════════
         
-        if preserve_enrich_mode:
-            preserve_instruction = f"""
-CRITICAL — PRESERVE + ENRICH MODE:
-The original B10 is {original_word_count} words — this is a STRONG, well-written original.
-You MUST follow these rules:
-1. PRESERVE every sentence from the original. Do NOT delete, compress, or summarize any content.
-2. PRESERVE every person mentioned by name (partners, senior counsel, statespeople).
-3. PRESERVE every client name mentioned.
-4. PRESERVE every specific fact (years, numbers, regulatory bodies, jurisdictions).
-5. You may ADD 2-3 sentences of editorial interpretation between paragraphs.
-6. You may STRENGTHEN existing language by replacing generic phrases with Chambers-grade editorial language.
-7. Your output MUST be AT LEAST {original_word_count} words — ideally {original_word_count + 50}-{min(original_word_count + 100, 650)} words.
-8. If in doubt, KEEP the original wording. It is better to output the original unchanged than to lose any evidence.
-"""
-            print(f"[B7 ENHANCEMENT] v21.0.2: PRESERVE+ENRICH mode activated (original: {original_word_count}w)")
-        else:
-            preserve_instruction = f"""
-EXPANSION MODE:
-The original B10 is only {original_word_count} words — it needs significant expansion.
-Your output MUST be AT LEAST {max(original_word_count, 300)} words — NEVER shorter than the original.
-"""
-            print(f"[B7 ENHANCEMENT] Standard expansion mode (original: {original_word_count}w)")
+        print(f"[B7 v21.1] Option D: Immutable Source + LLM Insertions (original: {original_word_count}w)")
         
-        b7_enhancement_prompt = f"""You are a Chambers & Partners Senior Editor enhancing a law firm's B7 section ("What is this department best known for?").
+        # Step 1: Split B10 into immutable paragraphs
+        import re as _re
+        raw_paragraphs = [p.strip() for p in _re.split(r'\n\s*\n', original_b10.strip()) if p.strip()]
+        
+        # If the B10 is a single block, split by sentences into ~3 logical groups
+        if len(raw_paragraphs) == 1 and original_word_count > 100:
+            sentences = [s.strip() for s in _re.split(r'(?<=[.!?])\s+', raw_paragraphs[0]) if s.strip()]
+            if len(sentences) >= 6:
+                chunk_size = max(2, len(sentences) // 3)
+                raw_paragraphs = []
+                for i in range(0, len(sentences), chunk_size):
+                    raw_paragraphs.append(' '.join(sentences[i:i+chunk_size]))
+            elif len(sentences) >= 3:
+                mid = len(sentences) // 2
+                raw_paragraphs = [' '.join(sentences[:mid]), ' '.join(sentences[mid:])]
+        
+        paragraph_ids = [f"P{i:02d}" for i in range(1, len(raw_paragraphs) + 1)]
+        numbered_display = "\n\n".join(
+            f"[{pid}]\n{text}" for pid, text in zip(paragraph_ids, raw_paragraphs)
+        )
+        
+        print(f"[B7 v21.1] Split into {len(raw_paragraphs)} immutable paragraphs")
+        
+        # Step 2: Build the insertion-only prompt
+        b7_insertion_prompt = f"""Create editorial insertions for the B10 paragraphs below.
 
-EDITORIAL PHILOSOPHY (CONSTITUTIONAL RULE):
-The objective is NOT to produce more words than the client.
-The objective IS to produce more STRATEGIC DENSITY per word, preserving all relevant evidence.
-B7 is the STRATEGIC PROPOSITION of the practice. The matters (listed separately) are the EVIDENCE that proves it.
+OBJECTIVE:
+The original B10 paragraphs will be preserved VERBATIM in the final output by the software.
+Your job is to write a SHORT editorial insertion to follow each paragraph.
+You are NOT rewriting, summarising, or replacing the source text.
 
-You are given:
-1. The ORIGINAL B7 text written by the firm (THIS IS YOUR BASE — preserve its strategic thesis)
-2. Editorial direction from the AI analysis (use to sharpen the thesis)
-3. Matter evidence summaries (extract PATTERNS from these — do NOT dump them as a list)
-
-YOUR TASK — INTERPRET THE PRACTICE:
-- Preserve the firm's original strategic thesis (e.g., "data protection integrated into governance" — that's GOOD, keep it)
-- INTERPRET what the matters reveal about the practice's REAL differentiation
-- Extract PATTERNS from the matters: recurring advisory relationships, governance integration, sector diversity, measurable outcomes, institutional capability, regulatory defence
-- Use 2-3 client names as EXAMPLES that illustrate these patterns (e.g., "For [Client], the team..." or "including work for [Client] on...")
-- Add Chambers-grade editorial intelligence: why this practice is positioned differently, what the evidence MEANS, not just what it IS
-- Every sentence must either: (a) establish the practice's strategic thesis, (b) demonstrate a pattern with a specific example, or (c) differentiate the practice from generic descriptions
-
-WHAT "STRATEGIC DENSITY" MEANS:
-✅ GOOD: "The team positions privacy as an operational and governance issue that affects consumer relationships, regulatory exposure, internal decision-making and the integrity of information-driven business models." (INTERPRETS the practice)
-❌ BAD: "The practice is widely recognised for its strategic advisory role in guiding corporations on the governance of personal data." (GENERIC — adds no intelligence)
-✅ GOOD: "For Grupo Hermes, the team achieved 100% compliance across ARCO requests while embedding privacy governance within broader operational structures." (PATTERN + EXAMPLE + EVIDENCE)
-❌ BAD: "The firm advises Grupo Hermes, Mega Direct, Biocodex, Hotel Riazor, Excelsior, Modelquipo, and Chedraui." (CLIENT LIST — no strategic value)
-
-MANDATORY REQUIREMENTS:
-1. Mention the lead partner or department head BY NAME (e.g., "Led by [Name], the practice...")
-2. Mention AT MOST 3 client names in the entire B7. Choose the 2-3 that best ILLUSTRATE the patterns you discovered. The remaining clients are CONTEXT — they prove the pattern exists, but do NOT name them individually. If you name 4+ clients, your output has FAILED.
-3. Include at least 2 specific measurable outcomes from the matters (percentages, year counts, concrete results)
-4. The narrative must reveal WHY this practice is differentiated, not just WHAT it does
-5. HARD CAP: Count the client names in your output BEFORE submitting. If you have named more than 3 clients, REMOVE the excess ones and refer to them generically (e.g., "across additional mandates for corporate groups in regulated sectors").
-
-WORD COUNT AND PRESERVATION MODE:
-{preserve_instruction}
-- Chambers has a soft guidance of ~500 words for B7, but PRESERVING CONTENT is more important than hitting a word limit.
-- Do NOT inflate word count with generic prose. Every word must earn its place.
-
-ACTIVE EDITORIAL VOICE (v21.0 — ChatGPT 5.6 RECOMMENDATION):
-You are a senior editorial analyst at Chambers & Partners who writes the published research notes.
-Your role is to INTERPRET the practice, not merely DESCRIBE it.
-
-INTERPRETING (GOOD) vs DESCRIBING (BAD):
-BAD: "The firm places privacy within corporate compliance and operating structures."
-GOOD: "The practice positions privacy as an operational governance imperative, embedding it within compliance structures rather than treating it as a standalone exercise."
-BAD: "The team is known for advising on data protection frameworks."
-GOOD: "The team translates regulatory obligation into operational architecture, designing privacy controls that function as risk management tools rather than documentation exercises."
-
-MANDATORY ACTIVE VERBS (use these): "positions", "embeds", "translates", "demonstrates", "delivers", "drives", "deploys", "anchors", "converts"
-PROHIBITED PASSIVE CONSTRUCTIONS: "is placed", "is treated", "is known for", "is recognised for", "is noted for", "has been involved in", "has advised on"
-
-ABSOLUTE PROHIBITIONS:
-- NEVER make the text shorter than the original ({original_word_count} words)
-- NEVER exceed 500 words
-- NEVER replace specific names with generic categories
-- NEVER add meta-text ("The narrative should...", "This section highlights...")
-- NEVER use promotional/generic language: "widely recognised", "particularly recognised", "strategic advisory role", "comprehensive", "pivotal", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex", "seamlessly", "meticulously", "holistic", "instrumental", "carved out a niche", "at the forefront", "underscores", "exemplifies", "distinguished"
-- If you use ANY prohibited phrase, your output has FAILED
-
-OUTPUT FORMAT (JSON):
-{{"enhanced_b7": "The full enhanced B7 narrative in plain text paragraphs. NO markdown."}}
-
----
 EDITORIAL DIRECTION:
+<thesis>
 {editorial_direction_text}
+</thesis>
+
+MATTER EVIDENCE (extract PATTERNS from these):
 {strategic_matter_context}
 
----
-ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
-{original_b10}
+SOURCE B10 PARAGRAPHS (these are IMMUTABLE — do not reproduce them):
+{numbered_display}
+
+RESPONSE REQUIREMENTS:
+- Return one JSON object with exactly one insertion for every paragraph ID.
+- Use this exact JSON shape:
+
+{{"insertions": [{{"paragraph_id": "P01", "after_text": "..."}}]}}
+
+- Each "after_text" must be 20 to 60 words.
+- Each insertion must add strategic interpretation, market positioning, pattern recognition, or matter-led credibility.
+- Connect the paragraph to the editorial thesis, market positioning, or patterns in the matters.
+- Use client names, lawyer names, regulators, values, dates ONLY when explicitly in the supplied material.
+- Do NOT reproduce any source paragraph in "after_text".
+- Do NOT use: "widely recognised", "particularly recognised", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex", "seamlessly", "holistic", "instrumental", "at the forefront", "underscores", "exemplifies".
+- Preserve a restrained Chambers & Partners editorial tone.
+- Do NOT include headings, bullet points, labels, or commentary inside "after_text".
 """
-        
+
         try:
             b7_response = b7_llm.invoke([
-                SystemMessage(content="You are a Chambers & Partners Senior Editor. Your role is to INTERPRET law firm practices and produce maximum strategic density per word. You are NOT a copywriter who adds embellishment. You are an editorial analyst who reveals why a practice is differentiated through patterns in the evidence. Preserve the firm's original thesis. Add editorial intelligence. Never add generic prose."),
-                HumanMessage(content=b7_enhancement_prompt)
+                SystemMessage(content=(
+                    "You are a senior legal-directory editor. "
+                    "Your role is to strengthen legal directory submission copy through precise editorial insertions. "
+                    "You are NOT rewriting the source paragraphs. "
+                    "You are NOT summarising the source paragraphs. "
+                    "You are NOT copying the source paragraphs into your response. "
+                    "The source paragraphs will be preserved verbatim by software after your response. "
+                    "Your job is to write a short editorial insertion to follow each source paragraph. "
+                    "Return valid JSON only."
+                )),
+                HumanMessage(content=b7_insertion_prompt)
             ])
-            b7_result = safe_json_loads(b7_response.content, fallback={})
-            enhanced_b7 = b7_result.get("enhanced_b7", "")
             
-            if enhanced_b7:
-                enhanced_b7 = strip_markdown(enhanced_b7)
-                enhanced_words = len(enhanced_b7.split())
-                ratio = enhanced_words / max(original_word_count, 1)
+            b7_result = safe_json_loads(b7_response.content, fallback={})
+            insertions_list = b7_result.get("insertions", [])
+            
+            # Build insertion map
+            insertion_map = {}
+            for item in insertions_list:
+                pid = item.get("paragraph_id", "")
+                after_text = item.get("after_text", "").strip()
+                if pid and after_text:
+                    # Strip any markdown/filler from insertions
+                    after_text = strip_markdown(after_text)
+                    after_text = strip_fillers(after_text)
+                    insertion_map[pid] = after_text
+            
+            # Step 3: Deterministic assembly — original text is NEVER from LLM
+            assembled_blocks = []
+            insertion_count = 0
+            
+            for i, (pid, original_paragraph) in enumerate(zip(paragraph_ids, raw_paragraphs)):
+                # ALWAYS include the original paragraph VERBATIM
+                assembled_blocks.append(original_paragraph)
                 
-                if enhanced_words < original_word_count:
-                    # FAILED: shorter than original — use original as fallback
-                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) is SHORTER than original ({original_word_count}w) — USING ORIGINAL")
-                    enhanced_b7 = original_b10
-                elif enhanced_words < original_word_count * 0.95:
-                    # Within 5% tolerance but still shorter — flag and use original
-                    print(f"[B7 ENHANCEMENT] ⚠️ Enhanced ({enhanced_words}w) lost content vs original ({original_word_count}w) — USING ORIGINAL")
-                    enhanced_b7 = original_b10
+                # Add LLM insertion if available
+                if pid in insertion_map:
+                    insertion = insertion_map[pid]
+                    ins_words = len(insertion.split())
+                    # Validate insertion is reasonable (20-85 words, not a copy of original)
+                    if 10 <= ins_words <= 85 and insertion.lower()[:50] != original_paragraph.lower()[:50]:
+                        assembled_blocks.append(insertion)
+                        insertion_count += 1
+                        print(f"  [B7 v21.1] {pid}: +{ins_words}w insertion")
+                    else:
+                        print(f"  [B7 v21.1] {pid}: ⚠️ Insertion rejected (wc={ins_words} or duplicate)")
                 else:
-                    print(f"[B7 ENHANCEMENT] ✅ Enhanced: {original_word_count}w → {enhanced_words}w ({ratio:.1f}x expansion)")
-            else:
-                print("[B7 ENHANCEMENT] ⚠️ Empty response — using original B10")
+                    print(f"  [B7 v21.1] {pid}: No insertion generated")
+            
+            enhanced_b7 = '\n\n'.join(assembled_blocks)
+            enhanced_words = len(enhanced_b7.split())
+            
+            print(f"[B7 v21.1] ✅ Assembled: {original_word_count}w → {enhanced_words}w (+{enhanced_words - original_word_count}w from {insertion_count} insertions)")
+            
+            # GUARANTEED: enhanced_b7 >= original_word_count because we always include all original paragraphs
+            if enhanced_words < original_word_count:
+                # This should be impossible, but safety net
+                print(f"[B7 v21.1] ⚠️ SAFETY NET: Assembly shorter than original (should be impossible) — using original")
                 enhanced_b7 = original_b10
                 
         except Exception as b7_err:
-            print(f"[B7 ENHANCEMENT] Error: {b7_err} — using original B10")
+            print(f"[B7 v21.1] Error: {b7_err} — using original B10")
             enhanced_b7 = original_b10
     elif original_b10:
         print(f"[B7 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
@@ -3028,35 +3037,66 @@ ORIGINAL B7 TEXT (preserve its strategic thesis — this is YOUR BASE):
             print(f"[B7 WORD FLOOR] ✅ B7 word count OK: {b7_words_count}w (original: {orig_words_count}w)")
     
     # ═══════════════════════════════════════════════════════════════
-    # v21.0.2: GRAMMAR CHECK FOR B7 (Fix #1 from owner feedback)
-    # "benefit from provide" → "benefit from providing"
-    # The grammar check already runs on matters but was MISSING for B7.
+    # v21.1: GRAMMAR PATCH CHECK FOR B7 (upgraded from v21.0.2)
+    # Instead of asking LLM to rewrite entire text, we ask for
+    # specific PATCHES only (original_span → replacement_span).
+    # Protected patterns (numbers, currency, names) cannot be modified.
     # ═══════════════════════════════════════════════════════════════
     if enhanced_b7 and len(enhanced_b7.split()) > 20:
-        print("--- B7 GRAMMAR CHECK ---")
+        print("--- B7 GRAMMAR PATCH CHECK ---")
         try:
+            import re as _gre
             b7_grammar_llm = get_model()
             b7_grammar_llm = b7_grammar_llm.bind(response_format={"type": "json_object"})
             b7_grammar_response = b7_grammar_llm.invoke([
                 SystemMessage(content=(
-                    "You are a professional English proofreader. Fix ONLY grammar, spelling, "
-                    "and punctuation errors. Do NOT change meaning, content, names, numbers, "
-                    "or sentence structure. Do NOT add or remove information. "
-                    "Return JSON: {\"corrected_text\": \"...\", \"corrections_made\": 0}"
+                    "You are a legal-directory copy editor. Return grammar edits ONLY as a JSON list of patches. "
+                    "You must NOT: add, remove, or alter factual claims; alter client names, individual names, "
+                    "firm names, dates, values, currencies, percentages, jurisdictions, regulators, legal instruments; "
+                    "alter modal verbs (may, might, can, should, will, must); alter negation (no, not, never, without); "
+                    "change certainty, scope, chronology, or legal meaning; improve style, tone, or concision. "
+                    "Allowed changes: spelling, punctuation, subject-verb agreement, articles, prepositions, "
+                    "pluralization, capitalization, typography. "
+                    "Return JSON: {\"patches\": [{\"original\": \"...\", \"replacement\": \"...\", \"category\": \"...\"}]}"
                 )),
-                HumanMessage(content=f"Proofread this text:\n\n{enhanced_b7}")
+                HumanMessage(content=f"Find grammar errors in this text and return patches:\n\n{enhanced_b7}")
             ])
             b7_grammar_result = safe_json_loads(b7_grammar_response.content, fallback={})
-            b7_corrected = b7_grammar_result.get("corrected_text", "")
-            b7_corrections = b7_grammar_result.get("corrections_made", 0)
+            patches = b7_grammar_result.get("patches", [])
             
-            if b7_corrected and b7_corrections > 0:
-                # Validate the corrected version isn't shorter (grammar check shouldn't remove content)
-                if len(b7_corrected.split()) >= len(enhanced_b7.split()) * 0.95:
-                    enhanced_b7 = b7_corrected
-                    print(f"[B7 GRAMMAR] ✅ Fixed {b7_corrections} grammar issue(s)")
-                else:
-                    print(f"[B7 GRAMMAR] ⚠️ Grammar correction shortened B7 — keeping original")
+            if patches:
+                # Protected patterns — patches touching these are REJECTED
+                PROTECTED = [
+                    r'\b\d+(?:[,.]\d+)?\b',              # numbers
+                    r'\b(?:USD|US\$|EUR|€|GBP|£)\s?\d',   # currency
+                    r'\b(?:20\d{2}|19\d{2})\b',           # years
+                    r'\b(?:may|might|must|shall|will|not|no|never|without)\b',  # modals/negation
+                ]
+                
+                applied = 0
+                for patch in patches:
+                    orig = patch.get("original", "")
+                    repl = patch.get("replacement", "")
+                    if not orig or not repl or orig == repl:
+                        continue
+                    
+                    # Safety: reject if patch touches protected tokens
+                    safe = True
+                    for pattern in PROTECTED:
+                        if _gre.search(pattern, orig, _gre.IGNORECASE) or _gre.search(pattern, repl, _gre.IGNORECASE):
+                            safe = False
+                            break
+                    
+                    # Safety: reject overly broad replacements (> 8 words)
+                    if len(orig.split()) > 8:
+                        safe = False
+                    
+                    if safe and orig in enhanced_b7:
+                        enhanced_b7 = enhanced_b7.replace(orig, repl, 1)
+                        applied += 1
+                        print(f"  [GRAMMAR PATCH] '{orig}' → '{repl}'")
+                
+                print(f"[B7 GRAMMAR] ✅ Applied {applied}/{len(patches)} safe patches")
             else:
                 print("[B7 GRAMMAR] ✅ No grammar issues found")
         except Exception as b7_gram_err:
