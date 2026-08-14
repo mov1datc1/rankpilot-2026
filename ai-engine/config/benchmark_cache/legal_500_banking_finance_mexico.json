@@ -1,0 +1,185 @@
+{
+  "source": "legal500",
+  "practice_area": "Banking & Finance",
+  "jurisdiction": "Mexico",
+  "guide": "",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": false,
+    "firm_bands": [
+      "Tier 1",
+      "Tier 2",
+      "Tier 3",
+      "Tier 4",
+      "Tier 5",
+      "Firms to Watch"
+    ],
+    "individual_categories": []
+  },
+  "firms": [
+    {
+      "name": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Galicia Abogados S.C.",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Mijares, Angoitia, Cortés y Fuentes S.C.",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Nader, Hayaux y Goebel, SC",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Ritch, Mueller y Nicolau, S.C.",
+      "band": "Tier 1"
+    },
+    {
+      "name": "Greenberg Traurig, S.C.",
+      "band": "Tier 2"
+    },
+    {
+      "name": "Santamarina y Steta",
+      "band": "Tier 2"
+    },
+    {
+      "name": "White & Case S.C.",
+      "band": "Tier 2"
+    },
+    {
+      "name": "Cuatrecasas",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Garrigues",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Hogan Lovells Cadwalader",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Holland & Knight México, S.C.",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Jones Day",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Kuri Breña, Sánchez Ugarte y Aznar",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Pérez-Llorca",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Robles Miaja, SC",
+      "band": "Tier 3"
+    },
+    {
+      "name": "Baker McKenzie Abogados, S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "CMS Woodhouse Lorente Ludlow",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Cuesta Campos y Asociados S.C.",
+      "band": "Tier 4"
+    },
+    {
+      "name": "DLA Piper Mexico",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Von Wobeser y Sierra, SC",
+      "band": "Tier 4"
+    },
+    {
+      "name": "Basham, Ringe y Correa, S.C.",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Cacheaux, Cavazos & Newton",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Creel Abogados, SC",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Jáuregui y Del Valle, S.C.",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Pérez Correa González",
+      "band": "Tier 5"
+    },
+    {
+      "name": "SMPS Legal",
+      "band": "Tier 5"
+    },
+    {
+      "name": "CDA Abogados",
+      "band": "Tier 5"
+    },
+    {
+      "name": "DMA Legal (DMA Servicios Legales, S.C.)",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Sequelis y Asociados, S.C.",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Villanueva Ortiz Abogados",
+      "band": "Tier 5"
+    },
+    {
+      "name": "Assembla",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Chevez Ruiz Zamarripa",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "International Disruption",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Ontier México",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Actio Legal Partners",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "BRIT Abogados",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Fernandez, Garcia-Naranjo, Boker & Garibay, S.C.",
+      "band": "Firms to Watch"
+    },
+    {
+      "name": "Sobrino | Russek",
+      "band": "Firms to Watch"
+    }
+  ],
+  "individuals": [],
+  "total_firms": 39,
+  "total_individuals": 0,
+  "editorial_summary": "",
+  "_lawyers_url": "/c/mexico/banking-and-finance/lawyers",
+  "scraped_at": "2026-08-14T15:15:09Z",
+  "cache_valid_until": "2026-09-13T15:15:09Z",
+  "cache_key": "legal_500_banking_finance_mexico"
+}
