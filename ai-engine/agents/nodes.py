@@ -1419,6 +1419,12 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         "firm_bands_exist": ranking_arch.get("firm_bands_exist", False),
         "editorial_guidance": ranking_arch.get("editorial_guidance", ""),
         "benchmark_prohibited_phrases": ranking_arch.get("benchmark_prohibited_phrases", []),
+        # v21.1: Pass individual data for Scenario B comparisons
+        "known_individuals": ranking_arch.get("known_individuals", []),
+        "individual_categories": ranking_arch.get("individual_categories", []),
+        # v21.1: Pass firm data for Scenario A comparisons
+        "known_firms": ranking_arch.get("known_firms", []),
+        "firm_bands": ranking_arch.get("firm_bands", []),
     }
     
     # v16.0: If RAVL scenario is B (individuals only), override benchmark to prevent invention
@@ -1797,13 +1803,22 @@ RANKING ARCHITECTURE VALIDATION LAYER (v17.4 — RAVL):
     # Build scenario-specific RAVL block
     if scenario == "A" and firm_bands_exist:
         # ═══ SCENARIO A: Firm + Individual Rankings Exist ═══
+        # v21.1: Inject known ranked firms for concrete comparison
+        known_firms = ravl.get("known_firms", [])
+        known_firms_block = ""
+        if known_firms:
+            known_firms_block = "\n=== CURRENTLY RANKED FIRMS (from Chambers) ===\n"
+            for firm in known_firms:
+                known_firms_block += f"- {firm.get('name', '?')} — {firm.get('band', '?')}\n"
+            known_firms_block += "\nUse these firms as concrete comparators when assessing the submission's positioning.\n"
+        
         ravl_block = f"""
 RANKING ARCHITECTURE (SCENARIO A — Firms + Individuals):
 This practice area has BOTH firm/department rankings AND individual lawyer rankings.
 - Ranking type: {ranking_type}
 - Firm bands: {ravl.get('firm_bands', [])}
 - Individual categories: {ravl.get('individual_categories', [])}
-
+{known_firms_block}
 PERMITTED: You may compare the submission against:
 - Firms actually ranked in this category and their band positions
 - Editorial descriptions of ranked firms
@@ -1815,13 +1830,31 @@ You may use phrases like "Band X firms", "peer firms", "firms in this band".
 """
     elif scenario == "B" or (not firm_bands_exist and ranking_type == "individuals_only"):
         # ═══ SCENARIO B: Only Individual Rankings Exist ═══
+        # v21.1: Inject known ranked individuals for direct comparison
+        known_individuals = ravl.get("known_individuals", [])
+        known_individuals_block = ""
+        if known_individuals:
+            known_individuals_block = "\n=== CURRENTLY RECOGNISED INDIVIDUALS (from Chambers) ===\n"
+            known_individuals_block += "Compare the submission's lawyers against these currently ranked practitioners:\n"
+            for ind in known_individuals:
+                known_individuals_block += f"- {ind.get('name', '?')} ({ind.get('firm', '?')}) — {ind.get('category', '?')}\n"
+            known_individuals_block += """
+When evaluating the submission's lawyers:
+1. Identify which category (Band 1, Band 2, Up and Coming, Associates to Watch) the submission's lead practitioner could credibly target
+2. Assess whether the submission demonstrates differentiation or comparable sophistication to the lawyers listed above
+3. Note specific evidence gaps compared to these ranked individuals (e.g., matter complexity, client calibre, sector breadth)
+4. If the submission's lawyers are NOT comparable, explain WHY and what evidence would be needed
+"""
+        else:
+            known_individuals_block = "\n(No specific currently-ranked individuals available for comparison — assess candidacy on evidence quality alone.)\n"
+        
         ravl_block = f"""
 RANKING ARCHITECTURE (SCENARIO B — Individuals Only):
 This category ONLY has individual lawyer rankings. There are NO firm/department rankings.
 - Ranking type: individuals_only
 - Individual categories: {ravl.get('individual_categories', [])}
 - Firms ranked: ZERO. The category does NOT rank departments or firms.
-
+{known_individuals_block}
 === ABSOLUTE PROHIBITION (CONSTITUTIONAL RULE) ===
 You are FORBIDDEN from using ANY of the following phrases or concepts:
 - "Band X firms" (no firm bands exist)
@@ -1835,7 +1868,7 @@ You are FORBIDDEN from using ANY of the following phrases or concepts:
 === WHAT YOU MUST DO INSTEAD ===
 1. Acknowledge that this category currently contains ONLY individual lawyer rankings
 2. Analyze whether the submission demonstrates an INSTITUTIONAL practice capable of supporting FUTURE departmental recognition
-3. Contrast the firm's lawyers against the individuals currently recognised (by name and band)
+3. Contrast the firm's lawyers against the individuals currently recognised (by name and band) — use the list above
 4. Evaluate if the submission shows a practice beyond one or two individual lawyers
 5. Identify what evidence supports a future departmental candidacy
 6. Frame recommendations around building departmental visibility, NOT achieving a non-existent band
