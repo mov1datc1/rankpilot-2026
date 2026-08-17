@@ -61,6 +61,15 @@ def _is_matter_summary_label(text: str) -> bool:
     return ("summary of matter" in t and "department" in t)
 
 
+def _is_c2_label(text: str) -> bool:
+    """Check if a cell contains the C2 Feedback label."""
+    t = text.lower()
+    return ("feedback on our coverage" in t or 
+            "feedback on our recent coverage" in t or
+            "feedback on coverage" in t or
+            "c2 feedback" in t)
+
+
 def _is_client_name_label(text: str) -> bool:
     """Check if a cell contains a D1/E1 'Name of client' label."""
     t = text.lower()
@@ -258,15 +267,17 @@ def clone_and_replace(
     original_path: str,
     enhanced_b7: str = "",
     enhanced_matters: Optional[List[Dict]] = None,
+    enhanced_c2: str = "",
 ) -> bytes:
     """
-    Clone the original DOCX and replace only B10 + D2/E2 cells.
+    Clone the original DOCX and replace only B10 + C2 + D2/E2 cells.
     
     Args:
         original_path: Path to the original DOCX file uploaded by the firm
         enhanced_b7: AI-enhanced department narrative (replaces B10 cell content)
         enhanced_matters: List of dicts with {"client": str, "optimized_text": str}
                          Each replaces the corresponding D2/E2 matter summary
+        enhanced_c2: AI-enhanced C2 feedback narrative (replaces C2 cell content)
     
     Returns:
         bytes: The modified DOCX file as bytes
@@ -278,6 +289,7 @@ def clone_and_replace(
     doc = Document(original_path)
     
     b7_replaced = False
+    c2_replaced = False
     matters_replaced = 0
     matters_skipped = []
     
@@ -299,6 +311,22 @@ def clone_and_replace(
                 
                 _replace_cell_content(data_cell, enhanced_b7)
                 b7_replaced = True
+                continue
+        
+        # ─── CHECK FOR C2 SECTION ───
+        if enhanced_c2 and not c2_replaced:
+            data_pos = _find_data_cell_in_table(table, _is_c2_label)
+            if data_pos:
+                row_idx, col_idx = data_pos
+                data_cell = table.rows[row_idx].cells[col_idx]
+                original_text = _cell_text(data_cell)
+                
+                print(f"[DOCX CLONER] Found C2 at table {table_idx}, row {row_idx}")
+                print(f"[DOCX CLONER]   Original C2: {len(original_text.split())} words")
+                print(f"[DOCX CLONER]   Enhanced C2: {len(enhanced_c2.split())} words")
+                
+                _replace_cell_content(data_cell, enhanced_c2)
+                c2_replaced = True
                 continue
         
         # ─── CHECK FOR MATTER SUMMARY (D2/E2) ───
@@ -357,6 +385,7 @@ def clone_and_replace_from_state(
     file_path: str,
     enhanced_b7: str,
     matters: List[Dict],
+    enhanced_c2: str = "",
 ) -> Optional[bytes]:
     """
     Convenience wrapper that extracts enhanced_matters from the pipeline state format.
@@ -368,6 +397,7 @@ def clone_and_replace_from_state(
         file_path: Path or URL to original DOCX
         enhanced_b7: AI-enhanced B7 narrative
         matters: List of matter dicts from the pipeline (with client + optimized_text fields)
+        enhanced_c2: AI-enhanced C2 feedback narrative
     
     Returns:
         bytes or None if file_path is invalid or not a DOCX
@@ -401,7 +431,7 @@ def clone_and_replace_from_state(
                 "optimized_text": optimized,
             })
     
-    if not enhanced_b7 and not enhanced_matters:
+    if not enhanced_b7 and not enhanced_matters and not enhanced_c2:
         print("[DOCX CLONER] Skipping — no enhanced content to replace")
         return None
     
@@ -433,6 +463,7 @@ def clone_and_replace_from_state(
             original_path=local_path,
             enhanced_b7=enhanced_b7,
             enhanced_matters=enhanced_matters,
+            enhanced_c2=enhanced_c2,
         )
     finally:
         # Cleanup temp file

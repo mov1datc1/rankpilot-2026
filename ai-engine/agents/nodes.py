@@ -2935,21 +2935,29 @@ def optimization_node(state: AgentState) -> Dict:
         
         print(f"[B7 v21.1] Split into {len(raw_paragraphs)} immutable paragraphs")
         
-        # Step 2: Build the insertion-only prompt
-        b7_insertion_prompt = f"""Create editorial insertions for the B10 paragraphs below.
+        # Step 2: Build the insertion-only prompt (v22.0: Submission Voice & Practice-Level Positioning)
+        b7_insertion_prompt = f"""Create authoritative editorial insertions for the department overview (Section B10) below.
+
+VOICE & PERSONA (v22.0 — SUPREME MANDATE):
+You are writing ON BEHALF OF THE LAW FIRM submitting to Chambers & Partners.
+Your voice must be: AUTHORITATIVE, INSTITUTIONAL, FACTUAL, AND FIRM-LED.
+You are NOT an external auditor, evaluator, or consultant sitting beside the Chambers researcher.
+Do NOT comment on the submission, the record, or what the evidence proves to an auditor.
 
 OBJECTIVE:
 The original B10 paragraphs will be preserved VERBATIM in the final output by the software.
-Your job is to write a SHORT editorial insertion to follow each paragraph.
-You are NOT rewriting, summarising, or replacing the source text.
+Your job is to write a SHORT factual insertion to follow each paragraph, strengthening the practice's value proposition, client spectrum, regulatory depth, and senior partner leadership.
 
-EDITORIAL DIRECTION:
-<thesis>
+PRACTICE VALUE PROPOSITION:
+<proposition>
 {editorial_direction_text}
-</thesis>
+</proposition>
 
-MATTER EVIDENCE (extract PATTERNS from these):
-{strategic_matter_context}
+CORE THEMES (Use to strengthen practice-level identity):
+- Core practice identity: how the firm positions itself in this legal market
+- Client & industry spectrum: multinational institutions, major domestic corporations, cross-border entities
+- Senior partner leadership: hands-on involvement, deep regulatory memory, institutional interface
+- Institutional capabilities: ongoing advisory, risk management, and governance depth
 
 SOURCE B10 PARAGRAPHS (these are IMMUTABLE — do not reproduce them):
 {numbered_display}
@@ -2961,25 +2969,25 @@ RESPONSE REQUIREMENTS:
 {{"insertions": [{{"paragraph_id": "P01", "after_text": "..."}}]}}
 
 - Each "after_text" must be 20 to 60 words.
-- Each insertion must add strategic interpretation, market positioning, pattern recognition, or matter-led credibility.
-- Connect the paragraph to the editorial thesis, market positioning, or patterns in the matters.
-- Use client names, lawyer names, regulators, values, dates ONLY when explicitly in the supplied material.
+- Each insertion must strengthen the practice's institutional standing, specialized capabilities, or client advisory scope.
+- Use client names, lawyer names, regulators, dates ONLY when explicitly in the supplied material.
 - Do NOT reproduce any source paragraph in "after_text".
-- Do NOT use: "widely recognised", "particularly recognised", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex", "seamlessly", "holistic", "instrumental", "at the forefront", "underscores", "exemplifies".
-- Preserve a restrained Chambers & Partners editorial tone.
+- ZERO TOLERANCE for meta-evaluative commentary. NEVER use:
+  ❌ "this matter demonstrates", "this is the submission's clearest evidence", "on the present [N]-matter record",
+  ❌ "the evidenced mandates extend", "for ranking purposes", "the submission shows", "serves as proof",
+  ❌ "widely recognised", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex",
+  ❌ "seamlessly", "holistic", "instrumental", "at the forefront", "underscores", "exemplifies".
+- Write in clean, persuasive, authoritative English prose as the law firm.
 - Do NOT include headings, bullet points, labels, or commentary inside "after_text".
 """
 
         try:
             b7_response = b7_llm.invoke([
                 SystemMessage(content=(
-                    "You are a senior legal-directory editor. "
-                    "Your role is to strengthen legal directory submission copy through precise editorial insertions. "
-                    "You are NOT rewriting the source paragraphs. "
-                    "You are NOT summarising the source paragraphs. "
-                    "You are NOT copying the source paragraphs into your response. "
-                    "The source paragraphs will be preserved verbatim by software after your response. "
-                    "Your job is to write a short editorial insertion to follow each source paragraph. "
+                    "You are a senior legal writer drafting official Chambers & Partners submission copy on behalf of the law firm. "
+                    "Write in an authoritative, institutional, firm-led voice. "
+                    "Do NOT write meta-analytical commentary about the submission or evidence. "
+                    "Write short, impactful insertions that expand on practice capabilities and senior partner depth. "
                     "Return valid JSON only."
                 )),
                 HumanMessage(content=b7_insertion_prompt)

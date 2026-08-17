@@ -290,6 +290,102 @@ EPISTEMIC_REPLACEMENTS = [
 ]
 
 
+# ─────────────────────────────────────────────
+# SUBMISSION VOICE SANITIZER (v22.0)
+# Removes meta-evaluative commentary and audit voice from Chambers submission texts
+# ─────────────────────────────────────────────
+
+SUBMISSION_VOICE_REPLACEMENTS = [
+    # Meta-evaluative framing
+    ("For ranking purposes, the matter provides", "The engagement provides"),
+    ("for ranking purposes, the matter provides", "the engagement provides"),
+    ("For ranking purposes, ", ""),
+    ("for ranking purposes, ", ""),
+    ("For ranking purposes", ""),
+    ("for ranking purposes", ""),
+    
+    # Audit voice in matter opening / significance
+    ("This is important ranking evidence because", "The mandate addressed critical operational requirements, as"),
+    ("this is important ranking evidence because", "the mandate addressed critical operational requirements, as"),
+    ("is important ranking evidence because", "addressed critical operational requirements, as"),
+    ("is important ranking evidence", "represents significant operational work"),
+    ("Is important ranking evidence", "Represents significant operational work"),
+    
+    ("The defining significance of this mandate lies in", "The mandate centered on"),
+    ("the defining significance of this mandate lies in", "the mandate centered on"),
+    ("is the defining significance of", "is a central feature of"),
+    ("The defining significance of", "The core scope of"),
+    ("the defining significance of", "the core scope of"),
+    
+    # Meta-evidence claims
+    ("This is the submission's clearest matter-led evidence", "A key demonstration of our practice"),
+    ("this is the submission's clearest matter-led evidence", "a key demonstration of our practice"),
+    ("This is the submission's clearest evidence", "A key demonstration of our practice"),
+    ("this is the submission's clearest evidence", "a key demonstration of our practice"),
+    
+    ("The evidenced mandates for", "Our mandates for"),
+    ("the evidenced mandates for", "our mandates for"),
+    ("The evidenced mandates", "Our mandates"),
+    ("the evidenced mandates", "our mandates"),
+    
+    ("This matter demonstrates", "The engagement involved"),
+    ("this matter demonstrates", "the engagement involved"),
+    ("The matter demonstrates", "The engagement involved"),
+    ("the matter demonstrates", "the engagement involved"),
+    
+    ("provides the submission with concrete evidence", "provides documented experience"),
+    ("provides the submission with evidence", "provides documented experience"),
+    ("provides the submission with", "provides"),
+    ("Provides the submission with", "Provides"),
+    
+    ("reinforces the practice's identity", "reinforces our operational focus"),
+    ("reinforces the practice's operational-governance identity", "reinforces our operational governance advisory"),
+    ("The submitted work connects", "Our work connects"),
+    ("the submitted work connects", "our work connects"),
+    ("is significant to the submission narrative because", "is significant because"),
+    ("Is significant to the submission narrative because", "Is significant because"),
+    
+    ("provides concrete evidence of institutional change", "established meaningful institutional governance"),
+    ("Provides concrete evidence of institutional change", "Established meaningful institutional governance"),
+]
+
+
+def sanitize_submission_voice(text: str) -> str:
+    """v22.0: Strip all meta-evaluative, audit-voice artifacts from submission text.
+    
+    Guarantees that phrases like 'for ranking purposes', 'this matter demonstrates',
+    or 'on the present three-matter record' never reach the final Chambers DOCX.
+    """
+    if not isinstance(text, str) or not text:
+        return text
+    
+    result = text
+    
+    # Regex cleans for dynamic patterns like 'on the present X-matter record'
+    result = re.sub(
+        r'(?i)\bOn the present\s+(?:\w+|\d+)-matter record,?\s*(?:however,?\s*)?',
+        '',
+        result
+    )
+    result = re.sub(
+        r'(?i)\bon the present\s+(?:\w+|\d+)-matter record,?\s*(?:however,?\s*)?',
+        '',
+        result
+    )
+    
+    # Static string replacements
+    for forbidden, replacement in SUBMISSION_VOICE_REPLACEMENTS:
+        result = result.replace(forbidden, replacement)
+    
+    # Clean up double spaces or awkward leading commas resulting from removals
+    result = re.sub(r'  +', ' ', result)
+    result = re.sub(r'\(\s*,', '(', result)
+    result = re.sub(r'^\s*,\s*', '', result)
+    result = re.sub(r'\.\s*,\s*', '. ', result)
+    
+    return result.strip()
+
+
 def apply_epistemic_filter(text: str) -> str:
     """Apply all epistemic replacements to a single text string.
     
@@ -340,7 +436,7 @@ def filter_pipeline_output(result: Dict) -> Dict:
     refutation_results, comparative_analysis, editorial_confidence,
     narrative_architecture, and reasoning_trace.
     
-    Fields NOT filtered: metadata, matters (raw client data), strategic_context.
+    Also sanitizes submission fields (matters, B7, B10, C2) with sanitize_submission_voice.
     """
     fields_to_filter = [
         "analysis",
@@ -360,5 +456,17 @@ def filter_pipeline_output(result: Dict) -> Dict:
     for field in fields_to_filter:
         if field in filtered and filtered[field]:
             filtered[field] = apply_to_dict(filtered[field])
+    
+    # v22.0: Sanitize submission-facing outputs with submission voice sanitizer
+    if "enhanced_b7" in filtered and filtered["enhanced_b7"]:
+        filtered["enhanced_b7"] = sanitize_submission_voice(filtered["enhanced_b7"])
+    if "enhanced_b10" in filtered and filtered["enhanced_b10"]:
+        filtered["enhanced_b10"] = sanitize_submission_voice(filtered["enhanced_b10"])
+    if "optimized_matters" in filtered and filtered["optimized_matters"]:
+        for m in filtered["optimized_matters"]:
+            if isinstance(m, dict):
+                for k in ["summary", "significance", "optimized_text"]:
+                    if k in m and m[k]:
+                        m[k] = sanitize_submission_voice(m[k])
     
     return filtered

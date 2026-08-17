@@ -405,8 +405,13 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('If you have used barristers / advocates in the UK, Australia, Hong Kong, India, Malaysia, New Zealand or Sri Lanka please provide the information below (Optional)', ['Barrister/advocate name', 'Firm / Set', 'Comments'], emptyBarRows, { labelPrefix: 'C1' }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // C2 Feedback
-  const c2Val = chambersData.feedback || chambersData.c2 || 'We would be happy to discuss the market during a telephone interview.';
+  // C2 Feedback (v22.0: Prioritize AI-enhanced strategic market positioning narrative)
+  const c2Val = chambersData.analysis?.audit_letter?.competitive_positioning_text
+    || chambersData.analysis?.competitive_positioning_text
+    || chambersData.competitive_positioning_text
+    || chambersData.feedback
+    || chambersData.c2
+    || 'We would be happy to discuss the market during a telephone interview.';
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
   // ═══ SECTION D ═══

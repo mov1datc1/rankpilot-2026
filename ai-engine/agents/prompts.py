@@ -786,6 +786,14 @@ NEVER return an empty matters array. If the submission describes work, there are
 If matters are described in narrative form (not structured tables), set publish_status based on
 which section (D=publishable, E=confidential) the narrative appears in. If the section is ambiguous,
 default to "publishable".
+
+### COMPOUND ENTITY & CO-LISTED FIRM EXTRACTION (v22.0 — SUPREME RULE):
+When narrative text mentions multiple collaborating law firms, referral partners, or clients in a single sentence or clause
+(e.g., "particularly Simmons & Simmons LLP and Debevoise & Plimpton", or "clients such as Company A, Company B and Company C"):
+- You MUST extract EACH named entity as an INDEPENDENT, SEPARATE matter entry.
+- NEVER merge them into a single entry (e.g., do NOT create a single matter for "Simmons & Simmons and Debevoise & Plimpton").
+- NEVER drop, skip, or omit any co-listed entity (e.g., Debevoise & Plimpton MUST be extracted as its own distinct matter alongside Simmons & Simmons).
+- If two firms collaborate on similar cross-border mandates, extract Matter N for Firm A and Matter N+1 for Firm B, attributing the specific cross-border advisory context to each.
 """
 
 # --- ANALYSIS LAYER (FASE 2) — v7.0 Editorial Reliability ---
@@ -982,7 +990,11 @@ This report should be as deep and actionable as a senior editorial briefing.
     - "original": the original weak text
     - "improved": AI-rewritten directory-grade version (220-260 words, with work mechanics, role framing, deliverables)
     - "rationale": why this rewrite is more rankable
-12. "competitive_positioning_text": A 200-300 word paragraph ready to copy-paste into Section B7 or C2.
+12. "competitive_positioning_text": A 200-250 word strategic positioning statement for Section C2 (Feedback on our coverage).
+    CRITICAL (v22.0): Do NOT write generic polite feedback. Articulate the structural evolution of this practice area in the jurisdiction:
+    - How the market is evolving (e.g. from standalone compliance to integrated corporate governance and risk management; or navigating a constrained non-transactional environment through senior regulatory memory and institutional interface).
+    - Position the firm directly at the forefront of that market evolution based on its documented mandates.
+    - Write in an authoritative, firm-led Submission Voice (first/third-person firm perspective, ZERO external consultant meta-commentary).
 13. "closing": A decisive 3-4 sentence closing paragraph in editorial voice.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
@@ -1197,105 +1209,64 @@ These are NOT optional decorations — they are RANKING EVIDENCE. If the origina
 5. Enhancement means ADDING value, not removing it.
 6. Tone: Institutional, evidence-dense, and specific.
 
-### WORD COUNT & STRATEGIC DENSITY RULE (v21.0 — MANDATORY):
+### 🏛️ SUBMISSION VOICE DIRECTIVE (v22.0 — SUPREME LAW FOR MATTERS):
+You are writing the official Chambers Submission text ON BEHALF OF THE LAW FIRM.
+Your voice must be: AUTHORITATIVE, FACTUAL, PERSUASIVE, AND FIRM-LED.
+You are NOT an external auditor, evaluator, or consultant sitting beside the Chambers researcher.
+The Chambers researcher will evaluate the evidence themselves. Your job is to present the factual record with maximum clarity, precision, and sophistication.
+
+### ABSOLUTE PROHIBITION ON META-EVALUATIVE LANGUAGE (ZERO-TOLERANCE):
+You MUST NEVER use meta-analytical or evaluative phrases that comment on the submission itself or tell Chambers how to judge the matter.
+❌ FORBIDDEN (INSTANT FAILURE):
+- "this matter demonstrates..."
+- "for ranking purposes..."
+- "this provides the submission with..."
+- "is important ranking evidence because..."
+- "the defining significance of this mandate lies in..."
+- "provides concrete evidence of..."
+- "on the present [N]-matter record..."
+- "this is the submission's clearest evidence..."
+- "reinforces the practice's identity..."
+- "serves as proof of..."
+- "this engagement highlights..."
+- "as evidence of..."
+- "underlines the firm's positioning..."
+- "connects data protection to ranking..."
+
+### 7-STEP FACTUAL NARRATIVE STRUCTURE (MANDATORY FLOW):
+Write each matter in 1-2 seamless, flowing professional paragraphs following this exact factual sequence:
+
+1. [CLIENT & OPERATIONAL CONTEXT]: State the client name, industry sector descriptor (VERBATIM from source), and operational setting.
+2. [LEGAL / REGULATORY / BUSINESS CHALLENGE]: Describe the specific legal, regulatory, or business issue that prompted the engagement.
+3. [FIRM'S MANDATE & ROLE]: State precisely what the firm was instructed to do (e.g. lead counsel, specialized regulatory adviser, framework designer).
+4. [SPECIFIC WORK DELIVERED]: Detail the concrete legal deliverables, regulatory filings, contractual instruments, risk assessments, or policies structured.
+5. [LAWYER RESPONSIBILITIES — FACTUAL PURITY]:
+   - State the names of the lead partner(s) and specific lawyers.
+   - Describe their actual documented contribution (e.g. designed the governance architecture, supervised the data audit, led regulatory discussions).
+   - CRITICAL: If specific roles are not detailed in the original source, state their participation CLEANLY and FACTUALLY without generic filler (e.g. "Arturo González de Araujo and Damián Ortega led the team advising on the engagement."). Do NOT manufacture actions, and do NOT use meta-commentary.
+6. [TECHNICAL COMPLEXITY & CONSTRAINTS]: Detail the operational friction, cross-border elements, multi-jurisdictional rules, or strict regulatory oversight involved.
+7. [CONCRETE OUTCOME & IMPACT]: State the factual result achieved for the client (e.g. 100% compliance in handling ARCO requests, establishment of a permanent Personal Data Protection Department, zero regulatory sanctions, alignment of new store openings with statutory requirements).
+
+### WORD COUNT & FACTUAL DENSITY RULE (v22.0 — MANDATORY):
 - Your output MUST NEVER be shorter than the original. EVER.
 - MINIMUM FLOOR: 175 words per matter.
-- LENGTH TARGET: Focus on STRATEGIC DENSITY PER WORD, not raw expansion.
-  The goal is NOT "make this 3x longer" — the goal is "make every word earn its place."
-  If 200 words of high strategic density is better than 350 words with padding, write 200 words.
-- Each word must either: (a) state evidence, (b) interpret evidence, or (c) connect evidence to ranking.
-  Words that do none of these are PADDING. Padding is FAILURE.
-- Your output SHOULD be 150-350 words depending on the complexity of the original matter.
-  Simple matters (few facts) → 150-200w. Complex matters (many facts, multi-party) → 250-350w.
+- LENGTH TARGET: 175-350 words depending on matter complexity.
+- Focus on FACTUAL DENSITY: specific deliverables, named mechanisms, operational facts. Every sentence must state factual reality, never meta-analysis.
 
-### MATTER NARRATIVE STRUCTURE (MANDATORY — FOLLOW THIS ORDER):
-The opening sentence of each matter is CRITICAL. It must reveal WHY this matter is strategically important, NOT just describe the mandate.
-
-❌ WRONG OPENING: "[Client] instructed the firm to design and implement a data protection framework."
-   (This is GENERIC. Five matters could start this way. It tells Chambers nothing.)
-✅ RIGHT OPENING: "The firm has defended during 16 years the legal and operational viability of large-scale databases as critical business assets, including in sensitive regulatory and electoral contexts."
-   (This is STRATEGIC. It tells Chambers why this matters for ranking.)
-
-Follow this flow:
-1. WHY THIS MATTER MATTERS: Open with the strategic significance — what makes this engagement different from routine work? What does it PROVE about the practice?
-2. CLIENT CONTEXT: Who is the client and why does their identity add weight? (Copy original descriptor VERBATIM, then expand.)
-3. CHALLENGE/CONTEXT: What business threat, regulatory change, or risk prompted the engagement?
-4. FIRM'S ROLE + SOPHISTICATION: What exactly did the firm do? Name deliverables, regulations, authorities.
-5. LEAD PARTNER + TEAM: Who led and what was their specific contribution?
-6. OUTCOME: What changed for the client? Prefer quantified results (100% compliance, zero sanctions) over generic claims.
-
-### EVIDENCE STRENGTH IN OUTCOMES (v21.0 — REVISED):
-Classify every outcome statement you write:
+### EVIDENCE STRENGTH IN OUTCOMES (v22.0):
 - STRONG: quantified, verifiable → "achieved 100% compliance in ARCO requests and avoided regulatory sanctions"
 - MODERATE: concrete institutional/operational change → "established a dedicated Personal Data Protection Department"
-- WEAK: generic benefit → "strengthened compliance posture", "reduced regulatory exposure"
-
-RULE: You MUST NOT write WEAK outcomes. Instead:
-- If the original has evidence for a STRONG outcome → use it
-- If the original shows concrete change → write a MODERATE outcome
-- If you can ONLY write a WEAK outcome because no evidence exists → write this instead:
-  "[The engagement produced institutional changes whose measurable impact could be further documented — see Evidence Strengthening Requests.]"
-  This signals the audit module to generate an information request to the firm.
-  NEVER manufacture metrics. NEVER write generic benefits. Ask for evidence instead.
+- If only a general compliance result is stated in the original, state the factual result cleanly without inflating or guessing metrics.
 
 ### ANTI-HOMOGENIZATION RULE (SUPREME PRIORITY):
-Each matter MUST open with a DIFFERENT strategic angle. If two matters start with similar language about "designing and implementing a framework", you have FAILED.
-The portfolio has real diversity — surface it:
-- A pharma engagement is about SENSITIVE DATA CATEGORIES and institutional building
-- A retail expansion engagement is about SCALING privacy across new locations
-- An industrial engagement is about EMBEDDING privacy in risk management
-- A litigation/defence engagement is about PROTECTING databases as business assets
-- A restructuring engagement is about INTEGRATING privacy into organisational change
-Ask: "What NEW evidence does this matter add to the case for ranking?" If two matters add the SAME evidence, rewrite one.
+Each matter MUST open with a DIFFERENT factual angle based on the client's industry and mandate:
+- Sector A: Open with the specific sector context and operational challenge
+- Sector B: Open with the long-term relationship duration or strategic advisory scope
+- Sector C: Open with the institutional building of a dedicated department
+- Sector D: Open with the operational regularisation or restructuring event
+- Sector E: Open with the geographic expansion or new facility deployment
 
-### DIFFERENTIATION ENFORCER (v21.0 — ChatGPT 5.6 RECOMMENDATION):
-If a UNIQUE_ANGLE field is provided with this matter, you MUST:
-1. Ensure that at least 60% of the matter body uses language, concepts, and evidence FROM the UNIQUE_ANGLE
-2. DO NOT reuse the following generic phrases when they describe different matters:
-   "framework implementation", "governance structures", "regulatory compliance",
-   "operational accountability", "privacy framework", "data protection framework"
-3. If you find yourself writing a phrase that ANY other matter could use unchanged, STOP
-   and find the SPECIFIC evidence that makes THIS matter different
-4. The UNIQUE_ANGLE contains the differentiating evidence — USE IT as the backbone of your expansion
-5. Generic governance language is FILLER. Specific sector-level detail is EVIDENCE.
-
-### BODY DIFFERENTIATION RULE (v21.0 — ANTI-HOMOGENIZATION FOR BODY TEXT):
-The anti-homogenization rule above applies to OPENINGS. This rule applies to the BODY and CONCLUSION.
-In the BODY paragraphs, each matter MUST:
-1. Spend 60%+ of body words on SPECIFIC deliverables, challenges, and outcomes unique to THIS client's sector
-2. Name the SPECIFIC regulations, authorities, data categories, or business processes relevant to THIS client
-3. Describe what the firm did in terms that ONLY apply to this client's industry:
-   - For pharma: sensitive health data categories, patient privacy, pharmacovigilance
-   - For retail: consumer data at point of sale, store-level privacy deployment, scaling
-   - For industrial: workplace data, equipment telemetry, transversal risk
-   - For hospitality: guest data, event management, seasonal operations
-   - For services: database management, marketing data, call center recordings
-4. The CONCLUSION must state what THIS matter proves about the practice that NO other matter proves
-
-### MATTER CYCLE POSITION (v21.0 — OWNER'S KEY PATTERN):
-The owner identified a recurring cycle across matters: diagnose → design → implement → institutionalise → monitor.
-Each matter sits at a DIFFERENT point in this cycle:
-- DIAGNOSE: Initial assessment, gap analysis, audit of existing practices
-- DESIGN: Creating frameworks, policies, departments from scratch
-- IMPLEMENT: Deploying privacy across operations, training, rolling out procedures
-- INSTITUTIONALISE: Embedding privacy into governance, creating permanent departments
-- MONITOR: Ongoing audit, ARCO compliance tracking, long-term advisory
-Identify where THIS matter sits in the cycle. Use that position to frame the matter's UNIQUE contribution.
-Example: If M1 is at INSTITUTIONALISE+MONITOR, and M3 is at DESIGN+IMPLEMENT, they tell DIFFERENT stories.
-
-### OPENING WORD DIVERSITY (v19.2 — MANDATORY):
-The FIRST WORD of each matter's opening sentence MUST be different. NEVER start 3+ matters with the same word.
-DO NOT start multiple matters with "This..." — vary the construction:
-- Pattern A: Lead with CLIENT NAME → "Grupo Hermes's engagement demonstrates..."
-- Pattern B: Lead with TIME/DURATION → "A 16-year relationship with MEGA DIRECT..."
-- Pattern C: Lead with SECTOR/INDUSTRY → "In the pharmaceutical sector, Biocodex..."
-- Pattern D: Lead with THE LEGAL CHALLENGE → "Regularisation of operations following..."
-- Pattern E: Lead with SIGNIFICANCE → "The significance of this mandate lies in..."
-- Pattern F: Lead with CONCRETE DELIVERABLE → "Design and implementation of a dedicated..."
-- Pattern G: Lead with GEOGRAPHIC/SCALE → "Across multiple retail locations, the team..."
-If you find yourself writing "This matter..." or "This engagement..." for a 3rd time, STOP and use a different pattern.
-
-### PROHIBITED GENERIC PHRASES (HARD BLOCK):
+### PROHIBITED GENERIC CLICHÉS (HARD BLOCK):
 These phrases MUST NEVER appear in any enhanced matter:
 - "pivotal role" → describe the ACTUAL role
 - "robust framework" → describe the ACTUAL framework elements
@@ -1314,7 +1285,7 @@ These phrases MUST NEVER appear in any enhanced matter:
 - NEVER replace a specific client name with a generic category
 - NEVER reduce 4 matters to 1 or merge distinct matters
 - You are writing ON BEHALF of the client. You CANNOT undermine their case.
-- This is a PERSUASIVE document, not a technical audit.
+- This is a PERSUASIVE, FACTUAL SUBMISSION document, not a technical audit.
 
 ### SOURCE BOUNDARY — NON-NEGOTIABLE (v20.1):
 You are optimizing ONE matter only. The raw text below is your COMPLETE factual universe.
