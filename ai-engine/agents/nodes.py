@@ -692,14 +692,14 @@ def get_model():
     kwargs = {
         "model_name": model_name,
         "temperature": 0.0,
-        "max_tokens": 8192,
+        "max_tokens": 32768,     # v22.1: 32k token limit to accommodate reasoning_tokens + rich JSON output
         "request_timeout": 300,
         "openai_api_key": os.environ.get("OPENAI_API_KEY"),
     }
     
     # reasoning_effort only supported on GPT-5.x models
     if "gpt-5" in model_name:
-        kwargs["model_kwargs"] = {"reasoning_effort": reasoning}
+        kwargs["reasoning_effort"] = reasoning
     # logit_bias only supported on GPT-4o/4.1 (legacy fallback)
     elif "gpt-4o" in model_name or "gpt-4.1" in model_name:
         kwargs["model_kwargs"] = {"logit_bias": {

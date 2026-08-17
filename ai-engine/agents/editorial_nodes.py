@@ -72,14 +72,14 @@ def get_model():
     kwargs = {
         "model_name": model_name,
         "temperature": 0.0,
-        "max_tokens": 16384,     # v18.0: Editorial outputs are longer (blueprints, architectures)
+        "max_tokens": 32768,     # v22.1: 32k token limit to accommodate reasoning_tokens + rich JSON output
         "request_timeout": 300,  # v18.0: CRITICAL — was missing, caused hangs
         "openai_api_key": os.environ.get("OPENAI_API_KEY"),
     }
     
     # reasoning_effort only supported on GPT-5.x models
     if "gpt-5" in model_name:
-        kwargs["model_kwargs"] = {"reasoning_effort": reasoning}
+        kwargs["reasoning_effort"] = reasoning
     
     return ChatOpenAI(**kwargs)
 
