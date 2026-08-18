@@ -78,12 +78,12 @@ def _is_client_name_label(text: str) -> bool:
 
 def _normalize_client_name(name: str) -> str:
     """Normalize a client name for fuzzy matching."""
-    # Remove descriptors after " - " 
+    # Remove descriptors after " - "
     name = name.split(" - ")[0].strip()
-    # Remove common suffixes
+    # Remove common corporate and legal suffixes
     for suffix in [", S.A. de C.V.", ", S.A.", " S.A. de C.V.", " S.A.",
                    " S. de R.L.", ", S. de R.L.", " Ltd.", " Ltd",
-                   " LLP", " LLC", " N.A.", " Inc.", " Corp."]:
+                   " LLP", " LLC", " N.A.", " Inc.", " Corp.", " Law Firm", " Law"]:
         name = name.replace(suffix, "")
     return name.strip().lower()
 
@@ -91,36 +91,40 @@ def _normalize_client_name(name: str) -> str:
 def _match_client(client_in_doc: str, enhanced_matters: List[Dict]) -> Optional[Dict]:
     """
     Match a client name from the document to an enhanced matter.
-    Uses normalized fuzzy matching to handle descriptor variations.
+    Uses token intersection and substring matching to handle firm descriptor variations.
     """
     norm_doc = _normalize_client_name(client_in_doc)
+    doc_tokens = set(re.findall(r'\w+', norm_doc))
     
     best_match = None
-    best_score = 0
+    best_score = 0.0
     
     for matter in enhanced_matters:
         matter_client = matter.get("client", "")
         norm_matter = _normalize_client_name(matter_client)
+        matter_tokens = set(re.findall(r'\w+', norm_matter))
         
-        # Exact match (after normalization)
+        # Exact match
         if norm_doc == norm_matter:
             return matter
         
-        # Substring match (one contains the other)
-        if norm_doc in norm_matter or norm_matter in norm_doc:
-            score = min(len(norm_doc), len(norm_matter)) / max(len(norm_doc), len(norm_matter), 1)
+        # Substring / Containment (handles "Kennedys" in "Kennedys and Kennedys Law")
+        if norm_matter and (norm_matter in norm_doc or norm_doc in norm_matter):
+            return matter
+        
+        # Token intersection
+        intersection = doc_tokens.intersection(matter_tokens)
+        meaningful_common = [
+            w for w in intersection 
+            if w not in {'and', 'the', 'of', 'for', 'group', 'firm', 'solutions', 'limited', 'bank'}
+        ]
+        if meaningful_common:
+            score = len(meaningful_common) / max(len(matter_tokens), 1)
             if score > best_score:
                 best_score = score
                 best_match = matter
-        
-        # Try matching by first word(s) — "Grupo Hermes" in "Grupo Hermes - Mexican..."
-        doc_words = norm_doc.split()
-        matter_words = norm_matter.split()
-        if len(doc_words) >= 2 and len(matter_words) >= 2:
-            if doc_words[0] == matter_words[0] and doc_words[1] == matter_words[1]:
-                return matter
     
-    if best_match and best_score > 0.5:
+    if best_match and best_score >= 0.5:
         return best_match
     
     return None
