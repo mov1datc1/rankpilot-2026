@@ -64,10 +64,9 @@ def _is_matter_summary_label(text: str) -> bool:
 def _is_c2_label(text: str) -> bool:
     """Check if a cell contains the C2 Feedback label."""
     t = text.lower()
-    return ("feedback on our coverage" in t or 
-            "feedback on our recent coverage" in t or
-            "feedback on coverage" in t or
-            "c2 feedback" in t)
+    if "b10" in t or "500 word" in t or "best known for" in t:
+        return False
+    return ("feedback" in t and "other firms" in t) or ("c2" in t and "feedback" in t) or ("feedback on our coverage" in t)
 
 
 def _is_client_name_label(text: str) -> bool:
@@ -354,7 +353,10 @@ def clone_and_replace(
     # Track which enhanced matters have been used
     used_matters = set()
     
-    for table_idx, table in enumerate(doc.tables):
+    # Collect all tables across the document tree (including nested <w:sdt> controls)
+    all_doc_tables = [Table(elem, doc) for elem in doc.element.body.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl')]
+    
+    for table_idx, table in enumerate(all_doc_tables):
         # ─── CHECK FOR B10 SECTION ───
         if enhanced_b7 and not b7_replaced:
             data_pos = _find_data_cell_in_table(table, _is_b10_label)
@@ -436,7 +438,7 @@ def clone_and_replace(
         elif 'e. confidential information' in t:
             sec_e_para = p
     
-    for t in doc.tables:
+    for t in all_doc_tables:
         for r in t.rows:
             for c in r.cells:
                 if 'barrister' in c.text.lower() or 'c1' in c.text.lower():
