@@ -427,9 +427,9 @@ def clone_and_replace(
     
     for p in doc.paragraphs:
         t = p.text.strip().lower()
-        if 'd. publishable information' in t or "section 'd'" in t:
+        if 'd. publishable information' in t:
             sec_d_para = p
-        elif 'e. confidential information' in t or "section 'e'" in t:
+        elif 'e. confidential information' in t:
             sec_e_para = p
     
     for t in doc.tables:
