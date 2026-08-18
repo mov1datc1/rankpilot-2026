@@ -419,14 +419,29 @@ def clone_and_replace(
                 else:
                     print(f"[DOCX CLONER] Warning: Found D2/E2 at table {table_idx} but no client name")
     
-    # ─── v23.0 APPEND MISSING C2 SECTION IF NOT FOUND IN EXISTING TABLES ───
+    # ─── v23.0 IN-PLACE INSERTION FOR MISSING C2 & MATTERS ───
+    # Find anchor points in original document
+    sec_d_para = None
+    sec_e_para = None
+    c1_table = None
+    
+    for p in doc.paragraphs:
+        t = p.text.strip().lower()
+        if 'd. publishable information' in t or "section 'd'" in t:
+            sec_d_para = p
+        elif 'e. confidential information' in t or "section 'e'" in t:
+            sec_e_para = p
+    
+    for t in doc.tables:
+        for r in t.rows:
+            for c in r.cells:
+                if 'barrister' in c.text.lower() or 'c1' in c.text.lower():
+                    c1_table = t
+                    break
+    
+    # 1. Insert C2 Table at Section C anchor if not found in existing tables
     if enhanced_c2 and not c2_replaced:
-        print(f"[DOCX CLONER] Appending C2 Feedback table to DOCX ({len(enhanced_c2.split())} words)...")
-        p_c2_head = doc.add_paragraph()
-        p_c2_run = p_c2_head.add_run("C2 FEEDBACK ON OUR COVERAGE")
-        p_c2_run.bold = True
-        p_c2_run.font.size = Pt(12)
-        
+        print(f"[DOCX CLONER] Inserting C2 Feedback table in Section C ({len(enhanced_c2.split())} words)...")
         c2_table = doc.add_table(rows=0, cols=1)
         try:
             c2_table.style = 'Table Grid'
@@ -439,26 +454,107 @@ def clone_and_replace(
             r1.cells[0].paragraphs[0].runs[0].bold = True
         r2 = c2_table.add_row()
         _replace_cell_content(r2.cells[0], enhanced_c2)
+        
+        if c1_table:
+            c1_table._element.addnext(c2_table._element)
         c2_replaced = True
     
-    # ─── v23.0 APPEND UNMATCHED / NEW MATTERS IF NO TABLES EXISTED IN DOCX ───
+    # 2. Insert Unmatched Matters at Section D and Section E anchors
     unmatched_matters = [
         m for m in enhanced_matters 
         if _normalize_client_name(m.get("client", "")) not in used_matters
     ]
     if unmatched_matters:
-        print(f"[DOCX CLONER] Appending {len(unmatched_matters)} matter tables to DOCX (matters not in original tables)...")
-        for i, m in enumerate(unmatched_matters, start=matters_replaced + 1):
-            is_conf = m.get("is_confidential", False) or m.get("publish_status") == "confidential"
-            _append_matter_table(doc, i, m, is_conf)
-            matters_replaced += 1
-            used_matters.add(_normalize_client_name(m.get("client", "")))
+        print(f"[DOCX CLONER] Inserting {len(unmatched_matters)} matter tables in Sections D and E...")
+        
+        pub_matters = [
+            m for m in unmatched_matters 
+            if not (m.get("is_confidential") or m.get("publish_status") == "confidential")
+        ]
+        conf_matters = [
+            m for m in unmatched_matters 
+            if (m.get("is_confidential") or m.get("publish_status") == "confidential")
+        ]
+        
+        # Insert publishable matters inside Section D
+        if sec_d_para and pub_matters:
+            for m in reversed(pub_matters):
+                t_pub = doc.add_table(rows=0, cols=1)
+                try:
+                    t_pub.style = 'Table Grid'
+                except Exception:
+                    pass
+                r1 = t_pub.add_row()
+                r1.cells[0].text = "D1 Name of client (including country of origin and website URL):"
+                if r1.cells[0].paragraphs and r1.cells[0].paragraphs[0].runs:
+                    r1.cells[0].paragraphs[0].runs[0].bold = True
+                r2 = t_pub.add_row()
+                r2.cells[0].text = m.get("client", "")
+                r3 = t_pub.add_row()
+                r3.cells[0].text = "D2 Summary of matter and your department's involvement:"
+                if r3.cells[0].paragraphs and r3.cells[0].paragraphs[0].runs:
+                    r3.cells[0].paragraphs[0].runs[0].bold = True
+                r4 = t_pub.add_row()
+                _replace_cell_content(r4.cells[0], m.get("optimized_text") or m.get("summary", ""))
+                r5 = t_pub.add_row()
+                r5.cells[0].text = "D3 Value of deal / matter (if applicable):"
+                if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
+                    r5.cells[0].paragraphs[0].runs[0].bold = True
+                r6 = t_pub.add_row()
+                r6.cells[0].text = str(m.get("value", "") or "N/A")
+                r7 = t_pub.add_row()
+                r7.cells[0].text = "D4 Lead partner / lawyers involved:"
+                if r7.cells[0].paragraphs and r7.cells[0].paragraphs[0].runs:
+                    r7.cells[0].paragraphs[0].runs[0].bold = True
+                r8 = t_pub.add_row()
+                r8.cells[0].text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
+                
+                sec_d_para._element.addnext(t_pub._element)
+                matters_replaced += 1
+                used_matters.add(_normalize_client_name(m.get("client", "")))
+        
+        # Insert confidential matters inside Section E
+        if sec_e_para and conf_matters:
+            for m in reversed(conf_matters):
+                t_conf = doc.add_table(rows=0, cols=1)
+                try:
+                    t_conf.style = 'Table Grid'
+                except Exception:
+                    pass
+                r1 = t_conf.add_row()
+                r1.cells[0].text = "E1 Name of client (including country of origin and website URL):"
+                if r1.cells[0].paragraphs and r1.cells[0].paragraphs[0].runs:
+                    r1.cells[0].paragraphs[0].runs[0].bold = True
+                r2 = t_conf.add_row()
+                r2.cells[0].text = m.get("client", "")
+                r3 = t_conf.add_row()
+                r3.cells[0].text = "E2 Summary of matter and your department's involvement:"
+                if r3.cells[0].paragraphs and r3.cells[0].paragraphs[0].runs:
+                    r3.cells[0].paragraphs[0].runs[0].bold = True
+                r4 = t_conf.add_row()
+                _replace_cell_content(r4.cells[0], m.get("optimized_text") or m.get("summary", ""))
+                r5 = t_conf.add_row()
+                r5.cells[0].text = "E3 Value of deal / matter (if applicable):"
+                if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
+                    r5.cells[0].paragraphs[0].runs[0].bold = True
+                r6 = t_conf.add_row()
+                r6.cells[0].text = str(m.get("value", "") or "N/A")
+                r7 = t_conf.add_row()
+                r7.cells[0].text = "E4 Lead partner / lawyers involved:"
+                if r7.cells[0].paragraphs and r7.cells[0].paragraphs[0].runs:
+                    r7.cells[0].paragraphs[0].runs[0].bold = True
+                r8 = t_conf.add_row()
+                r8.cells[0].text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
+                
+                sec_e_para._element.addnext(t_conf._element)
+                matters_replaced += 1
+                used_matters.add(_normalize_client_name(m.get("client", "")))
     
     # ─── SUMMARY ───
     print(f"\n[DOCX CLONER] ════════════════════════════════════════")
     print(f"[DOCX CLONER] Clone-and-Replace complete:")
     print(f"[DOCX CLONER]   B10 replaced: {'✅ Yes' if b7_replaced else '❌ No (not found or no enhanced_b7)'}")
-    print(f"[DOCX CLONER]   C2 replaced/appended: {'✅ Yes' if c2_replaced else '❌ No'}")
+    print(f"[DOCX CLONER]   C2 replaced/inserted: {'✅ Yes' if c2_replaced else '❌ No'}")
     print(f"[DOCX CLONER]   Matters present: {matters_replaced}/{len(enhanced_matters)}")
     if matters_skipped:
         print(f"[DOCX CLONER]   Skipped (no match): {', '.join(s[:40] for s in matters_skipped)}")

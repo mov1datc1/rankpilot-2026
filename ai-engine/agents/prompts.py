@@ -804,12 +804,12 @@ A legal directory "Matter" or "Work Highlight" is strictly defined as a DISTINCT
      * The networks (INSULAW, AZSURE) are BACKGROUND PRACTICE ATTRIBUTES of that mandate, NOT independent matters. DO NOT create separate matter entries for INSULAW or AZSURE.
 
 2. CANONICAL EXAMPLE — ARAQUEREYNA BANKING & FINANCE:
-   - The universe of actual practice matters described in the narrative is EXACTLY 4:
-     1. JP Morgan Chase Bank, N.A. (Representative Office & Ongoing Regulatory Advisory)
-     2. Simmons & Simmons LLP (Cross-Border Financial Services Advisory)
-     3. Debevoise & Plimpton (Cross-Border Financial Regulatory, Wealth Management & Sanctions)
-     4. Kennedys (Insurance and Reinsurance Regulatory Advisory — including work through INSULAW and AZSURE)
-   - Do NOT create matter entries 5 or 6 for INSULAW or AZSURE. Total matters extracted must be EXACTLY 4.
+   - The universe of actual practice matters described in the narrative is EXACTLY 4 (3 Publishable in Section D + 1 Confidential in Section E):
+     1. Simmons & Simmons LLP (Cross-Border Financial Services Advisory) -> publish_status: "publishable"
+     2. Debevoise & Plimpton (Cross-Border Financial Regulatory, Wealth Management & Sanctions) -> publish_status: "publishable"
+     3. Kennedys (Insurance and Reinsurance Regulatory Advisory — including work through INSULAW and AZSURE) -> publish_status: "publishable"
+     4. JP Morgan Chase Bank, N.A. (Representative Office & Ongoing Regulatory Advisory) -> publish_status: "confidential"
+   - Do NOT create matter entries for INSULAW or AZSURE. Total matters extracted must be EXACTLY 4 (3 publishable + 1 confidential).
 """
 
 # --- ANALYSIS LAYER (FASE 2) — v7.0 Editorial Reliability ---
