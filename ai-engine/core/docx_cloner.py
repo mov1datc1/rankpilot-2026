@@ -273,7 +273,10 @@ def _append_matter_table(doc: Document, matter_idx: int, matter: Dict, is_confid
     p_run.font.size = Pt(12)
     
     table = doc.add_table(rows=0, cols=1)
-    table.style = 'Table Grid'
+    try:
+        table.style = 'Table Grid'
+    except Exception:
+        pass
     
     # 1. Client
     r1 = table.add_row()
@@ -425,7 +428,10 @@ def clone_and_replace(
         p_c2_run.font.size = Pt(12)
         
         c2_table = doc.add_table(rows=0, cols=1)
-        c2_table.style = 'Table Grid'
+        try:
+            c2_table.style = 'Table Grid'
+        except Exception:
+            pass
         
         r1 = c2_table.add_row()
         r1.cells[0].text = "C2 Feedback on our coverage of this practice area (Optional):"
