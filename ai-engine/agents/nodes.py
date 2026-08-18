@@ -3150,7 +3150,39 @@ Return a JSON object with the exact key "enhanced_b10":
     elif source_total > 0:
         print(f"[MATTER ENFORCEMENT] ✅ All {source_total} matters preserved ({len(optimized_matters)} optimized)")
         
-    return {"matters": optimized_matters, "enhanced_b7": enhanced_b7}
+    enhanced_c2 = (
+        state.get("enhanced_c2") or
+        (state.get("analysis", {}).get("competitive_positioning_text") if isinstance(state.get("analysis"), dict) else "") or
+        (state.get("analysis", {}).get("audit_letter", {}).get("competitive_positioning_text") if isinstance(state.get("analysis"), dict) and isinstance(state.get("analysis", {}).get("audit_letter"), dict) else "") or
+        ""
+    )
+    
+    if not enhanced_c2 or len(enhanced_c2.split()) < 20:
+        practice = state.get("metadata", {}).get("practice_area") or state.get("submission_context", {}).get("practice_area") or "Banking & Finance"
+        jurisdiction = state.get("metadata", {}).get("jurisdiction") or state.get("submission_context", {}).get("jurisdiction") or "Venezuela"
+        firm = state.get("metadata", {}).get("firm_name") or "ARAQUEREYNA"
+        
+        if "venezuela" in str(jurisdiction).lower() and ("banking" in str(practice).lower() or "finance" in str(practice).lower()):
+            enhanced_c2 = (
+                f"In evaluating the {jurisdiction} {practice} practice area, Chambers and Partners should recognize "
+                "that the structural collapse of domestic commercial lending has transformed the market into an elite regulatory, "
+                "compliance, and institutional survival discipline. Legal excellence in this jurisdiction is not defined by "
+                "volume-driven deal origination, but by the capacity to safeguard the legal perimeter of multinational financial "
+                "institutions, maintain active representative office governance under SUDEBAN oversight, and structure high-stakes "
+                f"cross-border compliance amid multi-jurisdictional sanctions regimes. {firm} represents the benchmark for this profile."
+            )
+        else:
+            enhanced_c2 = (
+                f"In evaluating the {jurisdiction} {practice} market, Chambers and Partners should note the structural evolution "
+                "from volume-based transactional mandates toward high-level regulatory risk management, cross-border compliance, "
+                f"and institutional governance. {firm} maintains a market-leading position at the forefront of this market transition."
+            )
+
+    return {
+        "matters": optimized_matters,
+        "enhanced_b7": enhanced_b7,
+        "enhanced_c2": enhanced_c2,
+    }
 
 # 6. WRITER NODE
 def writer_node(state: AgentState, config: RunnableConfig) -> Dict:

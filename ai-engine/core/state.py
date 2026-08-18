@@ -103,6 +103,9 @@ class AgentState(TypedDict):
     # Used by submission-builder.ts as the primary B7 source.
     enhanced_b7: str
 
+    # v23.0: ENHANCED C2 — AI-enhanced Section C2 Feedback on Coverage
+    enhanced_c2: str
+
     # =====================================================
     # v18.6: CONSTITUTIONAL VALIDATION GATE
     # Final quality gate that validates ALL output against
