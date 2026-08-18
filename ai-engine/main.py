@@ -297,8 +297,12 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
         try:
             file_path = result.get("file_path", "")
             enhanced_b7 = result.get("enhanced_b7", "")
-            enhanced_c2 = (result.get("analysis", {}).get("audit_letter", {}).get("competitive_positioning_text", "")
-                           or result.get("competitive_positioning_text", ""))
+            enhanced_c2 = (
+                result.get("enhanced_c2")
+                or (result.get("analysis", {}).get("competitive_positioning_text") if isinstance(result.get("analysis"), dict) else "")
+                or (result.get("analysis", {}).get("audit_letter", {}).get("competitive_positioning_text") if isinstance(result.get("analysis"), dict) and isinstance(result.get("analysis", {}).get("audit_letter"), dict) else "")
+                or result.get("competitive_positioning_text", "")
+            )
             matters = result.get("matters", [])
             
             docx_bytes = clone_and_replace_from_state(

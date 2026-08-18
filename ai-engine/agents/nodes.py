@@ -2267,8 +2267,15 @@ WHAT TO DO INSTEAD:
     if manifest:
         manifest["v16_validation_report"] = validation_report
     
+    c2_text = (
+        res_json.get("competitive_positioning_text") or 
+        (res_json.get("audit_letter", {}).get("competitive_positioning_text") if isinstance(res_json.get("audit_letter"), dict) else "") or
+        ""
+    )
+    
     return {
         "analysis": res_json,
+        "enhanced_c2": c2_text,
         "confidence_score": float(res_json.get("confidence_score", 100)),
         "pipeline_manifest": manifest,
         "current_step": "writing"
