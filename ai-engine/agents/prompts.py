@@ -790,10 +790,26 @@ default to "publishable".
 ### COMPOUND ENTITY & CO-LISTED FIRM EXTRACTION (v22.0 — SUPREME RULE):
 When narrative text mentions multiple collaborating law firms, referral partners, or clients in a single sentence or clause
 (e.g., "particularly Simmons & Simmons LLP and Debevoise & Plimpton", or "clients such as Company A, Company B and Company C"):
-- You MUST extract EACH named entity as an INDEPENDENT, SEPARATE matter entry.
+- You MUST extract EACH named client or instructing law firm as an INDEPENDENT, SEPARATE matter entry.
 - NEVER merge them into a single entry (e.g., do NOT create a single matter for "Simmons & Simmons and Debevoise & Plimpton").
 - NEVER drop, skip, or omit any co-listed entity (e.g., Debevoise & Plimpton MUST be extracted as its own distinct matter alongside Simmons & Simmons).
-- If two firms collaborate on similar cross-border mandates, extract Matter N for Firm A and Matter N+1 for Firm B, attributing the specific cross-border advisory context to each.
+
+### MATTER BOUNDARY & EXCLUSION RULES (v23.0 — ANTI-OVEREXTRACTION MANDATE):
+A legal directory "Matter" or "Work Highlight" is strictly defined as a DISTINCT LEGAL MANDATE, CLIENT ENGAGEMENT, OR INSTRUCTED ADVISORY WORKSTREAM.
+
+1. MATTERS VS. NETWORKS / ALLIANCES / ASSOCIATIONS (EXCLUSION RULE):
+   - NEVER extract industry networks, legal alliances, referral networks, or professional associations as independent matters (e.g., INSULAW, AZSURE, Lex Mundi, World Services Group, Interlex, TerraLex, IBA, Club de Abogados).
+   - If the text mentions that the firm advises through or is a member of an alliance/network (e.g., "advising international insurers and reinsurers through long-standing relationships with firms such as Kennedys and industry networks including INSULAW and AZSURE"):
+     * The Matter is the legal mandate with the instructing firm/client (e.g. Kennedys).
+     * The networks (INSULAW, AZSURE) are BACKGROUND PRACTICE ATTRIBUTES of that mandate, NOT independent matters. DO NOT create separate matter entries for INSULAW or AZSURE.
+
+2. CANONICAL EXAMPLE — ARAQUEREYNA BANKING & FINANCE:
+   - The universe of actual practice matters described in the narrative is EXACTLY 4:
+     1. JP Morgan Chase Bank, N.A. (Representative Office & Ongoing Regulatory Advisory)
+     2. Simmons & Simmons LLP (Cross-Border Financial Services Advisory)
+     3. Debevoise & Plimpton (Cross-Border Financial Regulatory, Wealth Management & Sanctions)
+     4. Kennedys (Insurance and Reinsurance Regulatory Advisory — including work through INSULAW and AZSURE)
+   - Do NOT create matter entries 5 or 6 for INSULAW or AZSURE. Total matters extracted must be EXACTLY 4.
 """
 
 # --- ANALYSIS LAYER (FASE 2) — v7.0 Editorial Reliability ---

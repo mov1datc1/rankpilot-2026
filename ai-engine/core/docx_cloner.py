@@ -259,6 +259,55 @@ def _find_client_name_in_table(table: Table) -> str:
     return ""
 
 
+def _append_matter_table(doc: Document, matter_idx: int, matter: Dict, is_confidential: bool = False):
+    """Append a standard Chambers D/E matter table to the document."""
+    from docx.shared import Pt
+    prefix = 'E' if is_confidential else 'D'
+    sec_label = 'CONFIDENTIAL' if is_confidential else 'PUBLISHABLE'
+    
+    # Add page break before matter
+    doc.add_page_break()
+    p_header = doc.add_paragraph()
+    p_run = p_header.add_run(f"Matter {matter_idx} ({sec_label} WORK HIGHLIGHT)")
+    p_run.bold = True
+    p_run.font.size = Pt(12)
+    
+    table = doc.add_table(rows=0, cols=1)
+    table.style = 'Table Grid'
+    
+    # 1. Client
+    r1 = table.add_row()
+    r1.cells[0].text = f"{prefix}1 Name of client (including country of origin and website URL):"
+    if r1.cells[0].paragraphs and r1.cells[0].paragraphs[0].runs:
+        r1.cells[0].paragraphs[0].runs[0].bold = True
+    r2 = table.add_row()
+    r2.cells[0].text = matter.get("client", "")
+    
+    # 2. Summary
+    r3 = table.add_row()
+    r3.cells[0].text = f"{prefix}2 Summary of matter and your department's involvement:"
+    if r3.cells[0].paragraphs and r3.cells[0].paragraphs[0].runs:
+        r3.cells[0].paragraphs[0].runs[0].bold = True
+    r4 = table.add_row()
+    _replace_cell_content(r4.cells[0], matter.get("optimized_text") or matter.get("summary", ""))
+    
+    # 3. Value
+    r5 = table.add_row()
+    r5.cells[0].text = f"{prefix}3 Value of deal / matter (if applicable):"
+    if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
+        r5.cells[0].paragraphs[0].runs[0].bold = True
+    r6 = table.add_row()
+    r6.cells[0].text = str(matter.get("value", "") or "N/A")
+    
+    # 4. Lead partner
+    r7 = table.add_row()
+    r7.cells[0].text = f"{prefix}4 Lead partner / lawyers involved:"
+    if r7.cells[0].paragraphs and r7.cells[0].paragraphs[0].runs:
+        r7.cells[0].paragraphs[0].runs[0].bold = True
+    r8 = table.add_row()
+    r8.cells[0].text = str(matter.get("lead_partner", "") or matter.get("leadPartner", "") or "")
+
+
 # =====================================================
 # MAIN CLONE-AND-REPLACE FUNCTION
 # =====================================================
@@ -271,17 +320,19 @@ def clone_and_replace(
 ) -> bytes:
     """
     Clone the original DOCX and replace only B10 + C2 + D2/E2 cells.
+    If the original document lacks C2 or D2/E2 tables, appends them cleanly.
     
     Args:
         original_path: Path to the original DOCX file uploaded by the firm
         enhanced_b7: AI-enhanced department narrative (replaces B10 cell content)
-        enhanced_matters: List of dicts with {"client": str, "optimized_text": str}
+        enhanced_matters: List of dicts with {"client": str, "optimized_text": str, ...}
                          Each replaces the corresponding D2/E2 matter summary
         enhanced_c2: AI-enhanced C2 feedback narrative (replaces C2 cell content)
     
     Returns:
         bytes: The modified DOCX file as bytes
     """
+    from docx.shared import Pt
     if enhanced_matters is None:
         enhanced_matters = []
     
@@ -340,7 +391,7 @@ def clone_and_replace(
                     matched_matter = _match_client(client_name, enhanced_matters)
                     
                     if matched_matter:
-                        optimized_text = matched_matter.get("optimized_text", "")
+                        optimized_text = matched_matter.get("optimized_text", "") or matched_matter.get("summary", "")
                         if optimized_text:
                             row_idx, col_idx = data_pos
                             data_cell = table.rows[row_idx].cells[col_idx]
@@ -365,11 +416,44 @@ def clone_and_replace(
                 else:
                     print(f"[DOCX CLONER] Warning: Found D2/E2 at table {table_idx} but no client name")
     
+    # ─── v23.0 APPEND MISSING C2 SECTION IF NOT FOUND IN EXISTING TABLES ───
+    if enhanced_c2 and not c2_replaced:
+        print(f"[DOCX CLONER] Appending C2 Feedback table to DOCX ({len(enhanced_c2.split())} words)...")
+        p_c2_head = doc.add_paragraph()
+        p_c2_run = p_c2_head.add_run("C2 FEEDBACK ON OUR COVERAGE")
+        p_c2_run.bold = True
+        p_c2_run.font.size = Pt(12)
+        
+        c2_table = doc.add_table(rows=0, cols=1)
+        c2_table.style = 'Table Grid'
+        
+        r1 = c2_table.add_row()
+        r1.cells[0].text = "C2 Feedback on our coverage of this practice area (Optional):"
+        if r1.cells[0].paragraphs and r1.cells[0].paragraphs[0].runs:
+            r1.cells[0].paragraphs[0].runs[0].bold = True
+        r2 = c2_table.add_row()
+        _replace_cell_content(r2.cells[0], enhanced_c2)
+        c2_replaced = True
+    
+    # ─── v23.0 APPEND UNMATCHED / NEW MATTERS IF NO TABLES EXISTED IN DOCX ───
+    unmatched_matters = [
+        m for m in enhanced_matters 
+        if _normalize_client_name(m.get("client", "")) not in used_matters
+    ]
+    if unmatched_matters:
+        print(f"[DOCX CLONER] Appending {len(unmatched_matters)} matter tables to DOCX (matters not in original tables)...")
+        for i, m in enumerate(unmatched_matters, start=matters_replaced + 1):
+            is_conf = m.get("is_confidential", False) or m.get("publish_status") == "confidential"
+            _append_matter_table(doc, i, m, is_conf)
+            matters_replaced += 1
+            used_matters.add(_normalize_client_name(m.get("client", "")))
+    
     # ─── SUMMARY ───
     print(f"\n[DOCX CLONER] ════════════════════════════════════════")
     print(f"[DOCX CLONER] Clone-and-Replace complete:")
     print(f"[DOCX CLONER]   B10 replaced: {'✅ Yes' if b7_replaced else '❌ No (not found or no enhanced_b7)'}")
-    print(f"[DOCX CLONER]   Matters replaced: {matters_replaced}/{len(enhanced_matters)}")
+    print(f"[DOCX CLONER]   C2 replaced/appended: {'✅ Yes' if c2_replaced else '❌ No'}")
+    print(f"[DOCX CLONER]   Matters present: {matters_replaced}/{len(enhanced_matters)}")
     if matters_skipped:
         print(f"[DOCX CLONER]   Skipped (no match): {', '.join(s[:40] for s in matters_skipped)}")
     print(f"[DOCX CLONER] ════════════════════════════════════════\n")
@@ -420,16 +504,16 @@ def clone_and_replace_from_state(
         print(f"[DOCX CLONER] Skipping — not a DOCX file: {file_path[:100]}")
         return None
     
-    # Build enhanced_matters list from pipeline state
+    # Build enhanced_matters list from pipeline state (preserving full metadata)
     enhanced_matters = []
     for m in matters:
-        optimized = m.get("optimized_text") or m.get("optimizedText")
+        optimized = m.get("optimized_text") or m.get("optimizedText") or m.get("summary")
         client = m.get("client", "")
-        if optimized and client:
-            enhanced_matters.append({
-                "client": client,
-                "optimized_text": optimized,
-            })
+        if client:
+            matter_entry = dict(m)
+            if optimized:
+                matter_entry["optimized_text"] = optimized
+            enhanced_matters.append(matter_entry)
     
     if not enhanced_b7 and not enhanced_matters and not enhanced_c2:
         print("[DOCX CLONER] Skipping — no enhanced content to replace")

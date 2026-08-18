@@ -2322,11 +2322,16 @@ def optimization_node(state: AgentState) -> Dict:
     
     optimized_matters = []
     
-    # v17.4: Build dynamic context for matter enhancement
+    # v17.4 + v23.0: Build dynamic context and Audit Bridge for matter enhancement
     strategic_ctx = state.get("strategic_context", {})
     narrative_arch = state.get("narrative_architecture", {})
     cross_border_relevant = strategic_ctx.get("cross_border_relevant", True)
     thesis = narrative_arch.get("thesis_statement", "")
+    
+    # v23.0: Extract audit evaluations to bridge Audit -> Optimizer
+    analysis_data = state.get("analysis", {}) or {}
+    matter_evaluations = analysis_data.get("matter_evaluations", []) or state.get("matter_evaluations", [])
+    recommended_rewrites = analysis_data.get("recommended_rewrites", []) or state.get("recommended_rewrites", [])
     
     # v17.4+v20.1: Dynamic injections for matter enhancer
     # v20.1: Redact other client names from thesis to prevent cross-matter contamination
@@ -2389,6 +2394,8 @@ def optimization_node(state: AgentState) -> Dict:
             'dairy': ('dairy', 'food', 'excelsior', 'producers'),
             'infrastructure': ('infrastructure', 'conglomerate', 'hermes', 'diversified'),
             'services': ('call center', 'marketing', 'customer experience', 'mega direct'),
+            'banking': ('banking', 'financial', 'rep office', 'representative office', 'sudeban', 'bcv', 'jp morgan', 'simmons', 'debevoise'),
+            'insurance': ('insurance', 'reinsurance', 'kennedys', 'insulaw', 'azsure'),
         }
         
         for sector, keywords in sector_angles.items():
@@ -2397,8 +2404,8 @@ def optimization_node(state: AgentState) -> Dict:
                 break
         
         # Detect temporal/relational signals
-        if any(w in matter_text_lower for w in ['16 year', 'sixteen year', 'decade', 'years of']):
-            unique_angle_parts.append("TEMPORAL: long-term advisory relationship — emphasize duration and evolution")
+        if any(w in matter_text_lower for w in ['16 year', 'sixteen year', 'decade', 'years of', 'ongoing', 'continuous', 'long-standing']):
+            unique_angle_parts.append("TEMPORAL: long-standing institutional relationship — emphasize ongoing operational depth and regulatory continuity")
         if any(w in matter_text_lower for w in ['restructur', 'regularisation', 'reorganis']):
             unique_angle_parts.append("CHANGE: organizational restructuring — emphasize transformation and integration")
         if any(w in matter_text_lower for w in ['department', 'institutional', 'programme']):
@@ -2409,14 +2416,42 @@ def optimization_node(state: AgentState) -> Dict:
             unique_angle_parts.append("GROWTH: business expansion context — emphasize privacy in scaling operations")
         if any(w in matter_text_lower for w in ['litigation', 'defence', 'defense', 'proceedings', 'electoral']):
             unique_angle_parts.append("DEFENCE: litigation/regulatory defence — emphasize protection of data assets")
-        if any(w in matter_text_lower for w in ['risk management', 'transversal', 'governance strategy']):
-            unique_angle_parts.append("GOVERNANCE: cross-cutting risk management — emphasize privacy in corporate strategy")
+        if any(w in matter_text_lower for w in ['risk management', 'transversal', 'governance strategy', 'compliance']):
+            unique_angle_parts.append("GOVERNANCE: regulatory compliance & risk mitigation — emphasize perimeter analysis and regulatory interface")
         
         unique_angle_block = ""
         if unique_angle_parts:
             unique_angle_block = f"\n\nUNIQUE_ANGLE FOR THIS MATTER:\n" + "\n".join(unique_angle_parts)
             unique_angle_block += "\nUSE this angle as the backbone of your expansion. 60%+ of the body MUST reflect this specific angle."
             print(f"  [DIFFERENTIATION v21.0] Matter {matter_idx+1}: {', '.join(unique_angle_parts)}")
+        
+        # v23.0: Bridge Audit Diagnosis to Matter Optimizer
+        eval_match = None
+        client_norm = (matter.get('client') or '').strip().lower()
+        title_norm = (matter.get('title') or '').strip().lower()
+        
+        for ev in matter_evaluations:
+            ev_name = (ev.get("matter_name") or ev.get("name") or "").strip().lower()
+            if ev_name and (ev_name in client_norm or client_norm in ev_name or ev_name in title_norm):
+                eval_match = ev
+                break
+        
+        audit_directive_block = ""
+        if eval_match:
+            imp_note = eval_match.get("improvement_note", "")
+            q_label = eval_match.get("quality_label", "")
+            rat = eval_match.get("rationale", "")
+            parts = []
+            if q_label:
+                parts.append(f"Strategic Assessment: {q_label}")
+            if imp_note:
+                parts.append(f"Audit Directive: \"{imp_note}\"")
+            if rat:
+                parts.append(f"Audit Diagnosis: \"{rat}\"")
+            
+            audit_directive_block = f"\n\nAUDIT DIAGNOSIS & REWRITE DIRECTIVE (MANDATORY TO SOLVE):\n" + "\n".join(parts)
+            audit_directive_block += "\nMANDATE: You MUST actively address this audit diagnosis using verified facts from the source and practice context. Articulate concrete deliverables, specific regulatory interfaces (e.g. SUDEBAN, BCV, etc.), written legal opinions, or governance structures following the 7-step factual flow."
+            print(f"  [AUDIT-BRIDGE v23.0] Matter {matter_idx+1} ({matter.get('client')}): Injected audit directive")
         
         # v20.0: Build diversity instruction for this matter
         diversity_instruction = diversity_tracker.prompt_with_suggestions()
@@ -2426,7 +2461,7 @@ def optimization_node(state: AgentState) -> Dict:
         
         messages = [
             SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-            HumanMessage(content=f"{full_context}{unique_angle_block}\n\nOptimize this raw matter:\n\n{raw_text}")
+            HumanMessage(content=f"{full_context}{unique_angle_block}{audit_directive_block}\n\nOptimize this raw matter:\n\n{raw_text}")
         ]
         
         try:
@@ -2910,138 +2945,80 @@ def optimization_node(state: AgentState) -> Dict:
         # GUARANTEE: Structurally impossible to compress or lose evidence.
         # ═══════════════════════════════════════════════════════════════
         
-        print(f"[B7 v21.1] Option D: Immutable Source + LLM Insertions (original: {original_word_count}w)")
+        # ═══════════════════════════════════════════════════════════════
+        # v23.0: FULL STRUCTURAL 4-PILLAR REWRITE OF B10 (Practice Value Proposition)
+        # ═══════════════════════════════════════════════════════════════
+        # Reconstruct B10 into an authoritative, prestigious 4-pillar powerhouse
+        # of 400-480 words, incorporating 100% of verified facts, clients,
+        # partners, and regulatory touchpoints into pure Submission Voice.
+        # ═══════════════════════════════════════════════════════════════
         
-        # Step 1: Split B10 into immutable paragraphs
-        import re as _re
-        raw_paragraphs = [p.strip() for p in _re.split(r'\n\s*\n', original_b10.strip()) if p.strip()]
+        print(f"[B7 v23.0] Full Structural 4-Pillar Rewrite (original: {original_word_count}w)")
         
-        # If the B10 is a single block, split by sentences into ~3 logical groups
-        if len(raw_paragraphs) == 1 and original_word_count > 100:
-            sentences = [s.strip() for s in _re.split(r'(?<=[.!?])\s+', raw_paragraphs[0]) if s.strip()]
-            if len(sentences) >= 6:
-                chunk_size = max(2, len(sentences) // 3)
-                raw_paragraphs = []
-                for i in range(0, len(sentences), chunk_size):
-                    raw_paragraphs.append(' '.join(sentences[i:i+chunk_size]))
-            elif len(sentences) >= 3:
-                mid = len(sentences) // 2
-                raw_paragraphs = [' '.join(sentences[:mid]), ' '.join(sentences[mid:])]
-        
-        paragraph_ids = [f"P{i:02d}" for i in range(1, len(raw_paragraphs) + 1)]
-        numbered_display = "\n\n".join(
-            f"[{pid}]\n{text}" for pid, text in zip(paragraph_ids, raw_paragraphs)
-        )
-        
-        print(f"[B7 v21.1] Split into {len(raw_paragraphs)} immutable paragraphs")
-        
-        # Step 2: Build the insertion-only prompt (v22.0: Submission Voice & Practice-Level Positioning)
-        b7_insertion_prompt = f"""Create authoritative editorial insertions for the department overview (Section B10) below.
+        b7_rewrite_prompt = f"""You are a Senior Chambers & Partners Legal Submission Director writing Section B10 ("What is this department best known for?") ON BEHALF OF THE LAW FIRM.
 
-VOICE & PERSONA (v22.0 — SUPREME MANDATE):
-You are writing ON BEHALF OF THE LAW FIRM submitting to Chambers & Partners.
-Your voice must be: AUTHORITATIVE, INSTITUTIONAL, FACTUAL, AND FIRM-LED.
-You are NOT an external auditor, evaluator, or consultant sitting beside the Chambers researcher.
-Do NOT comment on the submission, the record, or what the evidence proves to an auditor.
+YOUR MISSION:
+Completely transform, synthesize, and elevate the raw department text into a cohesive, prestigious, and directory-ready 4-paragraph department overview (TARGET: 420-480 words).
 
-OBJECTIVE:
-The original B10 paragraphs will be preserved VERBATIM in the final output by the software.
-Your job is to write a SHORT factual insertion to follow each paragraph, strengthening the practice's value proposition, client spectrum, regulatory depth, and senior partner leadership.
-
-PRACTICE VALUE PROPOSITION:
-<proposition>
+STRATEGIC EDITORIAL THESIS & PRACTICE VALUE PROPOSITION:
 {editorial_direction_text}
-</proposition>
 
-CORE THEMES (Use to strengthen practice-level identity):
-- Core practice identity: how the firm positions itself in this legal market
-- Client & industry spectrum: multinational institutions, major domestic corporations, cross-border entities
-- Senior partner leadership: hands-on involvement, deep regulatory memory, institutional interface
-- Institutional capabilities: ongoing advisory, risk management, and governance depth
+MANDATORY 4-PILLAR CONSTITUTIONAL ARCHITECTURE (4 DISTINCT PARAGRAPHS):
 
-SOURCE B10 PARAGRAPHS (these are IMMUTABLE — do not reproduce them):
-{numbered_display}
+Paragraph 1: [COMPETITIVE IDENTITY & MARKET POSITIONING] (~100-110 words)
+- Define what the practice is best known for and how it is strategically positioned in this jurisdiction.
+- Articulate the core advisory model (e.g. specialized regulatory advisory, institutional risk management, cross-border structuring) and how it addresses client demands in this market.
 
-RESPONSE REQUIREMENTS:
-- Return one JSON object with exactly one insertion for every paragraph ID.
-- Use this exact JSON shape:
+Paragraph 2: [INSTITUTIONAL & REGULATORY DEPTH] (~110-120 words)
+- Highlight the department's ongoing mandates with leading institutional clients and global money-center banks (e.g. JP Morgan).
+- Detail day-to-day regulatory operations, representative office management, direct interface with regulatory authorities (e.g. SUDEBAN, Central Banks, sectoral authorities), and compliance execution.
 
-{{"insertions": [{{"paragraph_id": "P01", "after_text": "..."}}]}}
+Paragraph 3: [CROSS-BORDER ADVISORY & INTEGRATED PRACTICE CAPABILITIES] (~110-120 words)
+- Detail instructions from and collaboration with premier international law firms (e.g. Simmons & Simmons, Debevoise & Plimpton, Kennedys).
+- Articulate the firm's integrated scope: financial services regulation, insurance/reinsurance frameworks, exchange controls, AML, sanctions compliance, wealth management, and cross-border structuring.
 
-- Each "after_text" must be 20 to 60 words.
-- Each insertion must strengthen the practice's institutional standing, specialized capabilities, or client advisory scope.
-- Use client names, lawyer names, regulators, dates ONLY when explicitly in the supplied material.
-- Do NOT reproduce any source paragraph in "after_text".
-- ZERO TOLERANCE for meta-evaluative commentary. NEVER use:
-  ❌ "this matter demonstrates", "this is the submission's clearest evidence", "on the present [N]-matter record",
-  ❌ "the evidenced mandates extend", "for ranking purposes", "the submission shows", "serves as proof",
-  ❌ "widely recognised", "robust framework", "beacon", "testament to", "cornerstone", "navigate complex",
-  ❌ "seamlessly", "holistic", "instrumental", "at the forefront", "underscores", "exemplifies".
-- Write in clean, persuasive, authoritative English prose as the law firm.
-- Do NOT include headings, bullet points, labels, or commentary inside "after_text".
+Paragraph 4: [SENIOR LEADERSHIP, REGULATORY MEMORY & CONTINUITY] (~100-110 words)
+- Highlight active department leadership (Pedro Luis Planchart Pocaterra) and the institutional authority of senior statespersons (Gustavo J. Reyna).
+- Emphasize deep historical regulatory memory, credibility with institutions/regulators, hands-on partner involvement, and long-term continuity that purely transactional teams cannot replicate.
+
+RAW SOURCE B10 TEXT (SOURCE OF ALL VERIFIED FACTS):
+{original_b10}
+
+FACTUAL FIDELITY & EVIDENCE RULES (NON-NEGOTIABLE):
+- You MUST preserve and weave in 100% of the verified facts from the source text: all client names, instructing firm names, lawyer names, regulatory bodies, and specific practice capabilities.
+- DO NOT invent fictional clients, transaction numbers, or unstated mandates.
+- SUBMISSION VOICE: Authoritative, institutional, persuasive, firm-led (we/the firm).
+- ZERO TOLERANCE FOR META-COMMENTARY: NEVER use "for ranking purposes", "this matter demonstrates", "the evidenced mandates", "on the present record", "serves as proof", "beacon", "testament to", "holistic".
+- Write 4 coherent, fully articulated paragraphs separated by blank lines.
+
+RESPONSE FORMAT:
+Return a JSON object with the exact key "enhanced_b10":
+{{"enhanced_b10": "Paragraph 1...\\n\\nParagraph 2...\\n\\nParagraph 3...\\n\\nParagraph 4..."}}
 """
 
         try:
             b7_response = b7_llm.invoke([
                 SystemMessage(content=(
-                    "You are a senior legal writer drafting official Chambers & Partners submission copy on behalf of the law firm. "
-                    "Write in an authoritative, institutional, firm-led voice. "
-                    "Do NOT write meta-analytical commentary about the submission or evidence. "
-                    "Write short, impactful insertions that expand on practice capabilities and senior partner depth. "
-                    "Return valid JSON only."
+                    "You are a master legal directory editor drafting official Chambers & Partners submission copy on behalf of the law firm. "
+                    "Write in an authoritative, institutional, firm-led submission voice. "
+                    "Transform the raw text into 4 structured, powerful paragraphs (420-480 words) preserving 100% of facts. "
+                    "Return valid JSON with key 'enhanced_b10'."
                 )),
-                HumanMessage(content=b7_insertion_prompt)
+                HumanMessage(content=b7_rewrite_prompt)
             ])
             
             b7_result = safe_json_loads(b7_response.content, fallback={})
-            insertions_list = b7_result.get("insertions", [])
+            generated_b10 = b7_result.get("enhanced_b10", "").strip()
             
-            # Build insertion map
-            insertion_map = {}
-            for item in insertions_list:
-                pid = item.get("paragraph_id", "")
-                after_text = item.get("after_text", "").strip()
-                if pid and after_text:
-                    # Strip any markdown/filler from insertions
-                    after_text = strip_markdown(after_text)
-                    after_text = strip_fillers(after_text)
-                    insertion_map[pid] = after_text
-            
-            # Step 3: Deterministic assembly — original text is NEVER from LLM
-            assembled_blocks = []
-            insertion_count = 0
-            
-            for i, (pid, original_paragraph) in enumerate(zip(paragraph_ids, raw_paragraphs)):
-                # ALWAYS include the original paragraph VERBATIM
-                assembled_blocks.append(original_paragraph)
-                
-                # Add LLM insertion if available
-                if pid in insertion_map:
-                    insertion = insertion_map[pid]
-                    ins_words = len(insertion.split())
-                    # Validate insertion is reasonable (20-85 words, not a copy of original)
-                    if 10 <= ins_words <= 85 and insertion.lower()[:50] != original_paragraph.lower()[:50]:
-                        assembled_blocks.append(insertion)
-                        insertion_count += 1
-                        print(f"  [B7 v21.1] {pid}: +{ins_words}w insertion")
-                    else:
-                        print(f"  [B7 v21.1] {pid}: ⚠️ Insertion rejected (wc={ins_words} or duplicate)")
-                else:
-                    print(f"  [B7 v21.1] {pid}: No insertion generated")
-            
-            enhanced_b7 = '\n\n'.join(assembled_blocks)
-            enhanced_words = len(enhanced_b7.split())
-            
-            print(f"[B7 v21.1] ✅ Assembled: {original_word_count}w → {enhanced_words}w (+{enhanced_words - original_word_count}w from {insertion_count} insertions)")
-            
-            # GUARANTEED: enhanced_b7 >= original_word_count because we always include all original paragraphs
-            if enhanced_words < original_word_count:
-                # This should be impossible, but safety net
-                print(f"[B7 v21.1] ⚠️ SAFETY NET: Assembly shorter than original (should be impossible) — using original")
+            if generated_b10 and len(generated_b10.split()) >= 250:
+                enhanced_b7 = generated_b10
+                print(f"[B7 v23.0] ✅ Structural Rewrite generated: {len(enhanced_b7.split())} words")
+            else:
+                print(f"[B7 v23.0] ⚠️ Generated B10 was empty or too short ({len(generated_b10.split()) if generated_b10 else 0}w) — falling back to original")
                 enhanced_b7 = original_b10
                 
         except Exception as b7_err:
-            print(f"[B7 v21.1] Error: {b7_err} — using original B10")
+            print(f"[B7 v23.0] Error: {b7_err} — using original B10")
             enhanced_b7 = original_b10
     elif original_b10:
         print(f"[B7 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
@@ -3049,33 +3026,18 @@ RESPONSE REQUIREMENTS:
     else:
         print("[B7 ENHANCEMENT] No original B10 found — B7 will use narrative_architecture fallback")
         
-    # v17.5: Apply centralized filler strip to B7
+    # v17.5 + v23.0: Apply centralized filler strip and submission voice sanitizer to B7
     if enhanced_b7:
         enhanced_b7 = strip_fillers(enhanced_b7)
+        try:
+            from utils.language_guard import sanitize_submission_voice
+            enhanced_b7 = sanitize_submission_voice(enhanced_b7)
+        except Exception as lg_err:
+            print(f"[B7 v23.0] Warning: sanitize_submission_voice error: {lg_err}")
     
-    # v21.0: WORD FLOOR + SOFT CAP — Never shorter than original, soft cap at 600w
-    if enhanced_b7 and original_b10:
+    if enhanced_b7:
         b7_words_count = len(enhanced_b7.split())
-        orig_words_count = len(original_b10.split())
-        
-        # v21.0 FIX: If the enhanced B7 is SHORTER than the original, fall back to original
-        # This catches cases where the LLM compressed a strong original (AraqueReyna bug)
-        if b7_words_count < orig_words_count:
-            print(f"[B7 WORD FLOOR] ⚠️ Enhanced ({b7_words_count}w) < Original ({orig_words_count}w) — REVERTING to original")
-            enhanced_b7 = original_b10
-        # v21.0: Soft cap at 600w (allows strong originals of 500-600w to pass through)
-        # Only truncate if significantly over 600w AND the original was under 500w
-        elif b7_words_count > 600 and orig_words_count <= 500:
-            print(f"[B7 SOFT CAP] ⚠️ B7 is {b7_words_count}w (original was {orig_words_count}w) — truncating to 600w")
-            truncated = ' '.join(enhanced_b7.split()[:600])
-            last_period = truncated.rfind('.')
-            if last_period > len(truncated) * 0.7:
-                enhanced_b7 = truncated[:last_period + 1]
-            else:
-                enhanced_b7 = truncated + '.'
-            print(f"[B7 SOFT CAP] ✅ Truncated to {len(enhanced_b7.split())}w")
-        else:
-            print(f"[B7 WORD FLOOR] ✅ B7 word count OK: {b7_words_count}w (original: {orig_words_count}w)")
+        print(f"[B7 v23.0] Final enhanced B7 word count: {b7_words_count} words")
     
     # ═══════════════════════════════════════════════════════════════
     # v21.1: GRAMMAR PATCH CHECK FOR B7 (upgraded from v21.0.2)
