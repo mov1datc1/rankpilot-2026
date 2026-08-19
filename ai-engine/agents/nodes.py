@@ -2460,6 +2460,32 @@ def optimization_node(state: AgentState) -> Dict:
             audit_directive_block += "\nMANDATE: You MUST actively address this audit diagnosis using verified facts from the source and practice context. Articulate concrete deliverables, specific regulatory interfaces (e.g. SUDEBAN, BCV, etc.), written legal opinions, or governance structures following the 7-step factual flow."
             print(f"  [AUDIT-BRIDGE v23.0] Matter {matter_idx+1} ({matter.get('client')}): Injected audit directive")
         
+        # v24.0: Inject Primary Strategic Proposition per matter (Prevent homogenization & keyword stuffing)
+        strat_prop = ""
+        if "simmons" in client_norm:
+            strat_prop = (
+                "PRIMARY STRATEGIC PROPOSITION: Sophistication of cross-border financial-regulatory advisory and multi-jurisdictional risk structuring for international financial institutions. "
+                "Focus on continuous legal analysis, exchange control regimes, and multi-country compliance."
+            )
+        elif "debevoise" in client_norm:
+            strat_prop = (
+                "PRIMARY STRATEGIC PROPOSITION: Private banking, wealth management, and sanctions-sensitive cross-border asset structuring. "
+                "Focus on international private client considerations, AML, and regulatory risk in cross-border wealth advisory."
+            )
+        elif "kennedys" in client_norm:
+            strat_prop = (
+                "PRIMARY STRATEGIC PROPOSITION: Intersection of insurance and reinsurance regulatory frameworks with banking compliance and cross-border risk. "
+                "Focus on insurance regulatory oversight, international reinsurance programs, and specialized financial compliance."
+            )
+        elif "jp morgan" in client_norm or "jpmorgan" in client_norm or "chase" in client_norm:
+            strat_prop = (
+                "PRIMARY STRATEGIC PROPOSITION: Operational continuity, day-to-day attorney-in-fact representation, and regulatory governance of a global financial institution's representative office under SUDEBAN oversight in a constrained banking environment."
+            )
+        else:
+            strat_prop = f"PRIMARY STRATEGIC PROPOSITION: Articulate the distinct technical discipline demonstrated in this mandate ({matter.get('title', 'regulatory advisory')}) to present a unique evidentiary facet of the practice."
+            
+        primary_prop_block = f"\n\n{strat_prop}\nMANDATE: Build the narrative around this specific proposition. Do NOT duplicate keywords or generic themes from other matters."
+        
         # v20.0: Build diversity instruction for this matter
         diversity_instruction = diversity_tracker.prompt_with_suggestions()
         full_context = matter_context_block
@@ -2468,7 +2494,7 @@ def optimization_node(state: AgentState) -> Dict:
         
         messages = [
             SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-            HumanMessage(content=f"{full_context}{unique_angle_block}{audit_directive_block}\n\nOptimize this raw matter:\n\n{raw_text}")
+            HumanMessage(content=f"{full_context}{unique_angle_block}{audit_directive_block}{primary_prop_block}\n\nOptimize this raw matter:\n\n{raw_text}")
         ]
         
         try:
@@ -3166,16 +3192,25 @@ Return a JSON object with the exact key "enhanced_b10":
             enhanced_c2 = (
                 f"In evaluating the {jurisdiction} {practice} practice area, Chambers and Partners should recognize "
                 "that the structural collapse of domestic commercial lending has transformed the market into an elite regulatory, "
-                "compliance, and institutional survival discipline. Legal excellence in this jurisdiction is not defined by "
-                "volume-driven deal origination, but by the capacity to safeguard the legal perimeter of multinational financial "
-                "institutions, maintain active representative office governance under SUDEBAN oversight, and structure high-stakes "
-                f"cross-border compliance amid multi-jurisdictional sanctions regimes. {firm} represents the benchmark for this profile."
+                "compliance, and institutional governance discipline. When traditional loan volume ceases to be a meaningful gauge of market "
+                "leadership, ranking research must prioritize the handling of complex financial regulatory frameworks, multi-jurisdictional "
+                "sanctions and AML sensitivities, exchange control constraints, private wealth structuring, and the continuous operational "
+                "interface of global financial institutions under SUDEBAN oversight.\n\n"
+                f"{firm}'s submission directly demonstrates this capability through concrete, unmatched evidence: the firm manages the day-to-day "
+                "legal and regulatory operation of the Venezuelan Representative Office of JP Morgan Chase Bank, N.A.—the sole major US global financial "
+                "institution maintaining an active regulated presence in Caracas—while serving as the go-to local counsel for premier international "
+                "law firms, including Simmons & Simmons, Debevoise & Plimpton, and Kennedys, on cross-border banking, private banking, insurance, "
+                "and financial compliance instructions. Combining Senior Statesperson Gustavo J. Reyna's foundational regulatory memory with "
+                "Pedro Luis Planchart's active day-to-day coordination with in-house legal teams in New York, London, and Bogotá, "
+                f"{firm} provides the definitive institutional benchmark for sophisticated banking and regulatory advice in {jurisdiction}."
             )
         else:
             enhanced_c2 = (
-                f"In evaluating the {jurisdiction} {practice} market, Chambers and Partners should note the structural evolution "
-                "from volume-based transactional mandates toward high-level regulatory risk management, cross-border compliance, "
-                f"and institutional governance. {firm} maintains a market-leading position at the forefront of this market transition."
+                f"In evaluating the {jurisdiction} {practice} market, Chambers and Partners should recognize that market leadership is defined "
+                "by high-stakes regulatory risk management, cross-border structuring, and complex institutional governance rather than transactional volume alone.\n\n"
+                f"{firm}'s submission demonstrates this capability through ongoing mandates for leading multinational financial institutions and international "
+                f"counsel. With an unmatched combination of senior regulatory memory and active front-line partner leadership, {firm} maintains "
+                f"a market-leading position at the forefront of this practice area in {jurisdiction}."
             )
 
     return {

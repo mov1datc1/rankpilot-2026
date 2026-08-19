@@ -1007,10 +1007,12 @@ This report should be as deep and actionable as a senior editorial briefing.
     - "improved": AI-rewritten directory-grade version (220-260 words, with work mechanics, role framing, deliverables)
     - "rationale": why this rewrite is more rankable
 12. "competitive_positioning_text": A 200-250 word strategic positioning statement for Section C2 (Feedback on our coverage).
-    CRITICAL (v22.0): Do NOT write generic polite feedback. Articulate the structural evolution of this practice area in the jurisdiction:
-    - How the market is evolving (e.g. from standalone compliance to integrated corporate governance and risk management; or navigating a constrained non-transactional environment through senior regulatory memory and institutional interface).
-    - Position the firm directly at the forefront of that market evolution based on its documented mandates.
-    - Write in an authoritative, firm-led Submission Voice (first/third-person firm perspective, ZERO external consultant meta-commentary).
+    CRITICAL (v24.0): Do NOT write generic polite feedback or merely describe the market. Construct a definitive 4-STEP MINI RANKING ARGUMENT:
+    1. [Market Context]: Explain how the collapse of domestic commercial lending has reshaped the practice area into an elite regulatory, compliance, and institutional survival discipline.
+    2. [Ranking Implication]: Articulate why Chambers cannot measure market leadership by loan volume, and must prioritize regulatory complexity, sanctions/AML regimes, exchange controls, private wealth structuring, and operational governance under SUDEBAN.
+    3. [Concrete Evidence from Submission]: Ground the argument in the firm's documented bench: the continuous regulatory operation of the Representative Office of JP Morgan Chase Bank, N.A. (the sole major US bank with active SUDEBAN presence), combined with ongoing instructions from premier international counsel (Simmons & Simmons, Debevoise & Plimpton, Kennedys) on cross-border financial and sanctions exposure.
+    4. [Competitive Conclusion]: Explain why this combination of foundational regulatory memory (Gustavo J. Reyna) and active front-line coordination (Pedro Luis Planchart) establishes the firm as the definitive benchmark for the jurisdiction.
+    Write in an authoritative, firm-led Submission Voice (first/third-person firm perspective, ZERO external consultant meta-commentary).
 13. "closing": A decisive 3-4 sentence closing paragraph in editorial voice.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
@@ -1325,6 +1327,27 @@ These are parsing artifacts from DOCX tables and must never appear in prose:
 ❌ FORBIDDEN: "| No. 6 |", "| No. 5 |", "Matter 6", any "| separator |"
 ❌ FORBIDDEN: "No.\n6", "5 | Grupo", numbered row fragments
 If you see such artifacts in your input, IGNORE them completely.
+
+### FIRST-SENTENCE AUTONOMOUS SYNTAX RULE (v24.0 — MANDATORY):
+The opening sentence of EVERY matter MUST be clean, grammatically complete, self-contained, and immediately establish: (1) who instructs the firm, (2) in what capacity, and (3) the broad nature of the mandate.
+❌ ABSOLUTELY FORBIDDEN: Cramming comma-separated keyword soup between the client name and the main verb!
+   NEVER WRITE: "Simmons & Simmons LLP, securities, private-banking, wealth-management, exchange-control, AML and sanctions-related issues, instructs the team..."
+   NEVER WRITE: "Debevoise & Plimpton, financial regulation, wealth-management structures, exchange controls, AML and sanctions issues, engages..."
+✅ MANDATORY FIRST-SENTENCE PATTERN:
+   "[Client Name] ([general descriptor, if applicable]) instructs [Firm Name] as [jurisdiction/capacity] counsel on [broad mandate nature], encompassing [2-3 primary disciplines]."
+   Gold Standard Examples:
+   - "Simmons & Simmons LLP instructs ARAQUEREYNA as Venezuelan counsel on cross-border banking and financial regulatory matters involving securities, private banking, wealth management, exchange control, AML, and sanctions."
+   - "Debevoise & Plimpton instructs ARAQUEREYNA as Venezuelan counsel on cross-border financial regulatory, private banking, and wealth management mandates with high-stakes sanctions exposure."
+   - "Kennedys instructs ARAQUEREYNA as Venezuelan counsel on regulatory insurance, reinsurance, and connected banking and financial structuring matters."
+   - "JP Morgan Chase Bank, N.A., a leading global financial institution, instructs ARAQUEREYNA as trusted Venezuelan counsel on the continuous regulatory operation and governance of its Venezuelan Representative Office."
+
+### FACTUAL DISCIPLINE — CLIENT DESCRIPTIONS VS. MATTER COORDINATION HUBS (v24.0):
+Do NOT convert matter-specific coordination cities, cross-border jurisdictions, or working hubs (e.g. New York, London, Bogotá) into permanent factual attributes of the client.
+❌ FORBIDDEN: "JPMorgan Chase Bank, N.A., a major international bank operating across New York, London and Bogotá..." (New York, London, and Bogotá are the coordination offices for this specific mandate, not the client's global scope).
+✅ REQUIRED: Describe the client by its true global stature ("a leading global financial institution"), and specify coordination hubs and cross-border interactions in subsequent sentences detailing the work delivered ("The mandate requires continuous interaction and regulatory reporting with the client's legal and compliance teams in New York, London, and Bogotá...").
+
+### ANTI-HOMOGENIZATION & PRIMARY STRATEGIC PROPOSITION (v24.0):
+Every matter must serve as a distinct evidentiary pillar within the firm's portfolio. Do NOT stuff every matter with identical keyword lists ("AML, sanctions, securities, exchange control"). Anchor strictly to the designated PRIMARY STRATEGIC PROPOSITION for that specific matter.
 
 ### FORMAT RULES:
 - Use structured paragraphs, not walls of text
