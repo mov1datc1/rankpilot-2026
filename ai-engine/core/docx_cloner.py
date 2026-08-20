@@ -599,9 +599,16 @@ def clone_and_replace_from_state(
     import urllib.request
     from urllib.parse import urlparse
     
-    if not file_path:
-        print("[DOCX CLONER] Skipping — no file_path provided")
-        return None
+    if not file_path or not isinstance(file_path, str) or not file_path.strip():
+        # Fallback to official native Chambers template on disk
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        fallback_template = os.path.join(base_dir, "templates", "chambers_template.docx")
+        if os.path.exists(fallback_template):
+            print(f"[DOCX CLONER] No input DOCX file provided — using official native disk template: {fallback_template}")
+            file_path = fallback_template
+        else:
+            print("[DOCX CLONER] Skipping — no file_path provided and no fallback template found")
+            return None
     
     # Check if it's a URL or local path
     is_url = file_path.startswith('http://') or file_path.startswith('https://')
