@@ -1351,7 +1351,11 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
     
     # Determine if cross-border is inherently relevant for this practice
     cross_border_relevant = jurisdiction_type != "national" or any(
-        term in practice_lower for term in ["international", "cross-border", "trade", "arbitration", "m&a"]
+        term in practice_lower for term in [
+            "banking", "finance", "corporate", "m&a", "tax", "ip", "intellectual", 
+            "data", "privacy", "protection", "capital", "markets", "energy", "projects",
+            "international", "cross-border", "trade", "arbitration", "shipping", "aviation"
+        ]
     )
     
     # Capa 7 & Objective Routing (v13.0)

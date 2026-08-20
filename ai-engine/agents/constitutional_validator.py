@@ -138,7 +138,9 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     
     # --- A4: Cross-border (conditional) ---
     strategic_context = state.get("strategic_context", {})
-    cross_border = strategic_context.get("cross_border_relevant", True)
+    practice_area = (state.get("metadata", {}).get("practice_area") or state.get("submission_context", {}).get("practice_area") or "").lower()
+    inherently_cross_border = any(t in practice_area for t in ["banking", "finance", "corporate", "m&a", "tax", "ip", "data", "privacy", "protection", "capital", "energy", "projects", "international", "cross-border", "trade", "arbitration"])
+    cross_border = strategic_context.get("cross_border_relevant", True) or inherently_cross_border
     if not cross_border:
         cross_border_patterns = [r'\bcross-border\b', r'\bcross border\b', r'\binternational reach\b']
         # Only scan AI-generated text, not form field headers
