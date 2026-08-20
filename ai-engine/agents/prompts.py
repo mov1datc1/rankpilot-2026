@@ -1007,12 +1007,15 @@ This report should be as deep and actionable as a senior editorial briefing.
     - "improved": AI-rewritten directory-grade version (220-260 words, with work mechanics, role framing, deliverables)
     - "rationale": why this rewrite is more rankable
 12. "competitive_positioning_text": A 200-250 word strategic positioning statement for Section C2 (Feedback on our coverage).
-    CRITICAL (v24.0): Do NOT write generic polite feedback or merely describe the market. Construct a definitive 4-STEP MINI RANKING ARGUMENT:
-    1. [Market Context]: Explain how the collapse of domestic commercial lending has reshaped the practice area into an elite regulatory, compliance, and institutional survival discipline.
-    2. [Ranking Implication]: Articulate why Chambers cannot measure market leadership by loan volume, and must prioritize regulatory complexity, sanctions/AML regimes, exchange controls, private wealth structuring, and operational governance under SUDEBAN.
-    3. [Concrete Evidence from Submission]: Ground the argument in the firm's documented bench: the continuous regulatory operation of the Representative Office of JP Morgan Chase Bank, N.A. (the sole major US bank with active SUDEBAN presence), combined with ongoing instructions from premier international counsel (Simmons & Simmons, Debevoise & Plimpton, Kennedys) on cross-border financial and sanctions exposure.
-    4. [Competitive Conclusion]: Explain why this combination of foundational regulatory memory (Gustavo J. Reyna) and active front-line coordination (Pedro Luis Planchart) establishes the firm as the definitive benchmark for the jurisdiction.
-    Write in an authoritative, firm-led Submission Voice (first/third-person firm perspective, ZERO external consultant meta-commentary).
+    CRITICAL (v24.1): Do NOT write generic polite feedback or merely describe the market. Construct a definitive 4-STEP MINI RANKING ARGUMENT WITH AN EXPLICIT RANKING ASK:
+    1. [Market Context]: Explain how market conditions/shifts have reshaped the practice area into an elite regulatory, compliance, and institutional discipline.
+    2. [Ranking Implication]: Articulate why Chambers cannot measure market leadership by transactional volume alone, and must prioritize regulatory complexity, sanctions/AML regimes, exchange controls, private wealth structuring, and operational governance.
+    3. [Concrete Evidence from Submission]: Ground the argument in the firm's documented bench, major client instructions, and key international/domestic mandates.
+    4. [Competitive Conclusion & Explicit Ranking Ask]: Conclude with an EXPLICIT RANKING RECOMMENDATION ("the ask") for Chambers researchers — e.g., "Accordingly, Chambers research should reflect this market evidence by recognizing [Firm] in the top tier / Band 1 for [Practice Area] in [Jurisdiction]."
+
+    CRITICAL ANTI-REDUNDANCY & SUPERLATIVE RULES (v24.1):
+    - ANTI-REDUNDANCY: Never repeat the exact same list of locations, cities, or client entities twice in adjacent paragraphs. Vary the phrasing (e.g., "global offices", "international in-house counsel").
+    - FACT-GROUNDED CLAIMS: Avoid absolute superlatives ("sole", "unmatched", "definitive benchmark") unless strictly backed by factual proof. Use defensible, authoritative terms ("demonstrable benchmark", "leading", "distinguished").
 13. "closing": A decisive 3-4 sentence closing paragraph in editorial voice.
 
 ### MANDATORY JSON OUTPUT SCHEMA:
@@ -1348,6 +1351,15 @@ Do NOT convert matter-specific coordination cities, cross-border jurisdictions, 
 
 ### ANTI-HOMOGENIZATION & PRIMARY STRATEGIC PROPOSITION (v24.0):
 Every matter must serve as a distinct evidentiary pillar within the firm's portfolio. Do NOT stuff every matter with identical keyword lists ("AML, sanctions, securities, exchange control"). Anchor strictly to the designated PRIMARY STRATEGIC PROPOSITION for that specific matter.
+
+### LOCAL DEDUPLICATION & ANTI-REDUNDANCY (v24.1 — MANDATORY):
+Do NOT repeat the exact same list of cities, locations, or stakeholders (e.g. "New York, London, and Bogotá") twice within the same matter or in adjacent paragraphs.
+If a list of locations is stated in paragraph 1, refer to them in paragraph 2 as "the client's global offices", "international in-house counsel", or "the relevant cross-border stakeholders".
+Eliminate redundant repetitions of concept phrases across consecutive sentences.
+
+### SUPERLATIVE GUARDRAIL & FACT-GROUNDED CLAIMS (v24.1 — MANDATORY):
+Do NOT use absolute superlatives ("sole", "unmatched", "definitive benchmark", "only firm") unless backed by explicit numerical or statutory evidence in the source text.
+Replace absolute claims with authoritative, factually grounded descriptors ("one of the very few regulated global institutions", "demonstrable market benchmark", "leading", "distinguished").
 
 ### FORMAT RULES:
 - Use structured paragraphs, not walls of text
