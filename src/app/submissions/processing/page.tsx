@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sparkles, FileText, CheckCircle2 } from 'lucide-react';
+import { Sparkles, FileText, CheckCircle2, FileBarChart, Clock, ArrowRight } from 'lucide-react';
 
 function ProcessingContent() {
   const router = useRouter();
@@ -221,7 +221,7 @@ function ProcessingContent() {
             </div>
             <p style={{ fontSize: '0.9rem', color: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#1e3a8a' : '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>
               {errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano')
-                ? 'Tu postulación contiene un volumen amplio de evidencia (30+ asuntos). El motor de IA continúa analizando de forma segura en Render (~8-15 min). Puedes cerrar esta pantalla o consultar tus Deliverables en Reportes.'
+                ? 'Tu postulación contiene un volumen amplio de evidencia (30+ asuntos). El motor de IA continúa analizando de forma segura en el servidor (~8-15 min). Puedes cerrar esta pantalla o consultar tus Deliverables en Reportes.'
                 : errorMsg}
             </p>
             {supportMsg && (
@@ -229,18 +229,44 @@ function ProcessingContent() {
                 💡 {supportMsg}
               </p>
             )}
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               <button
                 onClick={() => router.push('/reports')}
-                style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '0.6rem 1.25rem', 
+                  background: '#2563eb', 
+                  color: '#fff', 
+                  borderRadius: '8px', 
+                  border: 'none', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
+                }}
               >
-                📊 Ir a la sección de Reportes
+                <FileBarChart size={17} />
+                <span>Ver Sección de Reportes</span>
               </button>
               <button
                 onClick={() => { setErrorMsg(null); setErrorCode(null); setSupportMsg(null); }}
-                style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  padding: '0.6rem 1.25rem', 
+                  background: '#f1f5f9', 
+                  color: '#475569', 
+                  borderRadius: '8px', 
+                  border: '1px solid #cbd5e1', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 500, 
+                  cursor: 'pointer' 
+                }}
               >
-                Seguir en esta pantalla
+                <span>Seguir en esta pantalla</span>
               </button>
             </div>
           </div>
