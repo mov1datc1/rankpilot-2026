@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sparkles, FileText, CheckCircle2, FileBarChart, Clock, ArrowRight } from 'lucide-react';
+import { Sparkles, FileText, CheckCircle2, FileBarChart, Clock, ArrowRight, AlertTriangle, RotateCw } from 'lucide-react';
 
 function ProcessingContent() {
   const router = useRouter();
@@ -228,33 +228,46 @@ function ProcessingContent() {
         {errorMsg && (
           <div style={{ 
             padding: '1.5rem', 
-            background: '#fef2f2', 
+            background: '#fff1f2', 
             borderRadius: '12px', 
-            border: '1px solid #fecaca', 
-            marginBottom: '3rem' 
+            border: '1px solid #fecdd3', 
+            marginBottom: '3rem',
+            boxShadow: '0 4px 6px -1px rgba(225, 29, 72, 0.05)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>Error en el procesamiento</h3>
-              {errorCode && (
-                <span style={{ padding: '0.25rem 0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 600 }}>
-                  {errorCode}
-                </span>
-              )}
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ffe4e6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={18} color="#e11d48" />
+              </div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#9f1239', margin: 0 }}>
+                Aviso de Procesamiento
+              </h3>
             </div>
-            <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>{errorMsg}</p>
+            <p style={{ fontSize: '0.9rem', color: '#881337', margin: '0 0 1.25rem 0', lineHeight: 1.6 }}>
+              {(() => {
+                const lower = (errorMsg || '').toLowerCase();
+                if (lower.includes('429') || lower.includes('quota') || lower.includes('credit') || lower.includes('rate_limit') || lower.includes('openai') || lower.includes('insufficient') || lower.includes('balance')) {
+                  return 'El servidor de IA está experimentando un ajuste de capacidad temporal. Tu postulación se reanudará en unos momentos. Puedes reintentar o consultar tus entregables.';
+                }
+                if (lower.includes('{') || lower.includes('traceback') || lower.includes('code:')) {
+                  return 'El procesamiento requirió tiempo adicional en el servidor. Por favor reintenta o consulta la sección de reportes.';
+                }
+                return errorMsg;
+              })()}
+            </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={() => { setErrorMsg(null); setErrorCode(null); setHasStarted(false); setProgress(0); setStep(1); }}
-                style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
-                🔄 Reintentar
+                <RotateCw size={15} />
+                <span>Reintentar</span>
               </button>
               <button
                 onClick={() => router.push('/reports')}
-                style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#ffffff', color: '#475569', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
               >
-                📊 Ir a Reportes
+                <FileBarChart size={15} />
+                <span>Ir a Reportes</span>
               </button>
             </div>
           </div>

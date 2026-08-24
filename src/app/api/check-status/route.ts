@@ -34,13 +34,31 @@ export async function GET(request: NextRequest) {
 
     const chambersData = submission.chambersData as any;
     const pipelineError = chambersData?._pipeline_error || null;
+    let sanitizedError = pipelineError?.message || null;
+
+    if (sanitizedError) {
+      const lower = sanitizedError.toLowerCase();
+      if (
+        lower.includes('429') ||
+        lower.includes('quota') ||
+        lower.includes('credit') ||
+        lower.includes('rate_limit') ||
+        lower.includes('openai') ||
+        lower.includes('insufficient') ||
+        lower.includes('balance')
+      ) {
+        sanitizedError = 'El servidor de IA está experimentando un ajuste de capacidad temporal. Por favor reintenta en unos momentos o consulta tus entregables.';
+      } else if (lower.includes('{') || lower.includes('traceback') || lower.includes('code:')) {
+        sanitizedError = 'El procesamiento del servidor requirió tiempo adicional. Por favor reintenta o consulta tus entregables.';
+      }
+    }
 
     return NextResponse.json({
       id: submission.id,
       status: submission.status,
       hasError: !!pipelineError,
-      errorMessage: pipelineError?.message || null,
-      errorCode: pipelineError?.code || null,
+      errorMessage: sanitizedError,
+      errorCode: pipelineError?.code ? 'SERVER_CAPACITY_RETRY' : null,
     });
   } catch (error: any) {
     console.error('[CHECK STATUS ERROR]', error);
