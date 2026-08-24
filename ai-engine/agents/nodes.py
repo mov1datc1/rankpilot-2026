@@ -2507,9 +2507,17 @@ def optimization_node(state: AgentState) -> Dict:
             max_diversity_retries = 3
             
             for diversity_attempt in range(max_diversity_retries):
-                response = llm.invoke(messages)
-                result = json.loads(response.content)
-                optimized_text = result.get('optimized_text', matter.get('summary'))
+                try:
+                    response = llm.invoke(messages)
+                    result = json.loads(response.content)
+                    optimized_text = result.get('optimized_text', matter.get('summary'))
+                except Exception as invoke_err:
+                    err_str = str(invoke_err).lower()
+                    if any(k in err_str for k in ['quota', '429', 'credit', 'rate_limit', 'insufficient', 'balance']):
+                        print(f"  [FATAL LLM ERROR] OpenAI Quota/RateLimit error: {invoke_err} — aborting pipeline immediately")
+                        raise invoke_err
+                    if diversity_attempt == max_diversity_retries - 1:
+                        raise invoke_err
                 
                 if not optimized_text:
                     break
