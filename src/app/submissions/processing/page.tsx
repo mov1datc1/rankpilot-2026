@@ -201,17 +201,29 @@ function ProcessingContent() {
 
         {/* Backend Status / Error Box */}
         {errorMsg ? (
-          <div style={{ padding: '1.5rem', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca', marginBottom: '3rem' }}>
+          <div style={{ 
+            padding: '1.5rem', 
+            background: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#eff6ff' : '#fef2f2', 
+            borderRadius: '12px', 
+            border: `1px solid ${errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#bfdbfe' : '#fecaca'}`, 
+            marginBottom: '3rem' 
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>Error en el procesamiento</h3>
+              <span style={{ fontSize: '1.5rem' }}>{errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? 'ℹ️' : '⚠️'}</span>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#1e40af' : '#991b1b', margin: 0 }}>
+                {errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? 'Procesamiento profundo en segundo plano' : 'Error en el procesamiento'}
+              </h3>
               {errorCode && (
                 <span style={{ padding: '0.25rem 0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 600 }}>
                   {errorCode}
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>{errorMsg}</p>
+            <p style={{ fontSize: '0.9rem', color: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#1e3a8a' : '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>
+              {errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano')
+                ? 'Tu postulación contiene un volumen amplio de evidencia (30+ asuntos). El motor de IA continúa analizando de forma segura en Render (~8-15 min). Puedes cerrar esta pantalla o consultar tus Deliverables en Reportes.'
+                : errorMsg}
+            </p>
             {supportMsg && (
               <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem 0', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
                 💡 {supportMsg}
@@ -219,16 +231,16 @@ function ProcessingContent() {
             )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
-                onClick={() => { setErrorMsg(null); setErrorCode(null); setSupportMsg(null); setHasStarted(false); setProgress(0); setStep(1); }}
+                onClick={() => router.push('/reports')}
                 style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
               >
-                🔄 Reintentar
+                📊 Ir a la sección de Reportes
               </button>
               <button
-                onClick={() => router.push('/submissions')}
+                onClick={() => { setErrorMsg(null); setErrorCode(null); setSupportMsg(null); }}
                 style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
               >
-                ← Volver a Submissions
+                Seguir en esta pantalla
               </button>
             </div>
           </div>
