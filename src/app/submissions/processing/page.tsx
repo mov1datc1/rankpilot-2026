@@ -92,24 +92,24 @@ function ProcessingContent() {
         setStep(2);
         setProgress(20);
         const startTime = Date.now();
-        const estimatedDurationMs = 10 * 60 * 1000; // ~10 min estimate
+        const estimatedDurationMs = 12 * 60 * 1000; // ~12 min estimate for smooth progress
 
         const pollInterval = setInterval(async () => {
           try {
-            // Update progress based on elapsed time (estimated)
             const elapsed = Date.now() - startTime;
-            const estimatedProgress = Math.min(20 + (elapsed / estimatedDurationMs) * 70, 90);
-            setProgress(Math.round(estimatedProgress));
+            // Smoothly move from 20% to 95% while waiting for backend
+            const estimatedProgress = Math.min(20 + Math.floor((elapsed / estimatedDurationMs) * 75), 95);
+            setProgress(estimatedProgress);
 
             // Update step labels based on elapsed time
-            if (elapsed > 7 * 60 * 1000) setStep(3); // >7min: "Classification"
-            else if (elapsed > 3 * 60 * 1000) setStep(2); // >3min: "Analysis"
+            if (elapsed > 6 * 60 * 1000) setStep(3); // >6min: "Classification"
+            else if (elapsed > 2 * 60 * 1000) setStep(2); // >2min: "Analysis"
 
             const statusRes = await fetch(`/api/check-status?id=${submissionId}`);
             const statusData = await statusRes.json();
 
             if (statusData.status === 'Submitted') {
-              // Pipeline completed!
+              // Pipeline completed! Jump to 100% Ready and redirect
               isFinishedRef.current = true;
               clearInterval(pollInterval);
               setProgress(100);
@@ -129,13 +129,13 @@ function ProcessingContent() {
           }
         }, 10_000); // Poll every 10 seconds
 
-        // Safety: stop polling after 20 minutes
+        // Safety: stop polling after 30 minutes
         setTimeout(() => {
           clearInterval(pollInterval);
           if (!isFinishedRef.current) {
-            setErrorMsg('El procesamiento tardó demasiado. Revisa la página de reportes — tu resultado podría estar listo.');
+            setErrorMsg('El procesamiento superó el límite de tiempo. Consulta la sección de reportes.');
           }
-        }, 20 * 60 * 1000);
+        }, 30 * 60 * 1000);
 
       } catch (err: any) {
         console.error(err);
@@ -176,8 +176,8 @@ function ProcessingContent() {
             <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>{[directory, region, practice].filter(Boolean).join(' \u00B7 ') || 'Processing submission...'}</p>
             <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>submission_id: {submissionId}</p>
           </div>
-          <div style={{ padding: '0.5rem 1rem', background: '#dcfce7', color: '#15803d', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
-            Uploaded
+          <div style={{ padding: '0.5rem 1rem', background: step === 4 ? '#dcfce7' : '#e0e7ff', color: step === 4 ? '#15803d' : '#4338ca', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
+            {step === 4 ? 'Completed' : 'Processing'}
           </div>
         </div>
 
@@ -190,11 +190,12 @@ function ProcessingContent() {
             <div style={{ position: 'absolute', inset: '10px', border: '1px dashed #94a3b8', borderRadius: '50%', animation: 'spin-reverse 15s linear infinite' }}></div>
             
             <div style={{ 
-              width: '64px', height: '64px', background: '#2563eb', borderRadius: '16px', 
+              width: '64px', height: '64px', background: step === 4 ? '#16a34a' : '#2563eb', borderRadius: '16px', 
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff',
-              boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.5)', zIndex: 10
+              boxShadow: step === 4 ? '0 10px 25px -5px rgba(22, 163, 74, 0.5)' : '0 10px 25px -5px rgba(37, 99, 235, 0.5)', zIndex: 10,
+              transition: 'background 0.3s ease'
             }}>
-              <Sparkles size={32} />
+              {step === 4 ? <CheckCircle2 size={36} /> : <Sparkles size={32} />}
             </div>
 
             {/* Orbiting icons */}
@@ -202,98 +203,60 @@ function ProcessingContent() {
             <div style={{ position: 'absolute', bottom: 0, right: 0, transform: 'translate(50%, 50%)', background: '#fff', borderRadius: '50%', padding: '4px', color: '#3b82f6' }}><CheckCircle2 size={16} /></div>
           </div>
 
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem' }}>Mapping raw data to universal schema...</h2>
-          <p style={{ fontSize: '1.25rem', color: '#64748b' }}>Extracting key content and signals from the document.</p>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem' }}>
+            {step === 4 ? '¡Postulación procesada con éxito!' : 'Mapping raw data to universal schema...'}
+          </h2>
+          <p style={{ fontSize: '1.25rem', color: '#64748b' }}>
+            {step === 4 ? 'Redirigiendo a la sección de Reportes...' : 'Extracting key content and signals from the document.'}
+          </p>
         </div>
 
         {/* Progress Bar */}
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '3rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>Extraction</span>
-            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2563eb' }}>{progress}%</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>
+              {step === 4 ? 'Complete' : 'Processing'}
+            </span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: step === 4 ? '#16a34a' : '#2563eb' }}>{progress}%</span>
           </div>
           <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: '#2563eb', transition: 'width 0.2s ease-out' }}></div>
+            <div style={{ height: '100%', width: `${progress}%`, background: step === 4 ? '#16a34a' : '#2563eb', transition: 'width 0.3s ease-out' }}></div>
           </div>
         </div>
 
-        {/* Backend Status / Error Box */}
-        {errorMsg ? (
+        {/* Backend Status / Error Box (Only on real error) */}
+        {errorMsg && (
           <div style={{ 
             padding: '1.5rem', 
-            background: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#eff6ff' : '#fef2f2', 
+            background: '#fef2f2', 
             borderRadius: '12px', 
-            border: `1px solid ${errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#bfdbfe' : '#fecaca'}`, 
+            border: '1px solid #fecaca', 
             marginBottom: '3rem' 
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '1.5rem' }}>{errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? 'ℹ️' : '⚠️'}</span>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#1e40af' : '#991b1b', margin: 0 }}>
-                {errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? 'Procesamiento profundo en segundo plano' : 'Error en el procesamiento'}
-              </h3>
+              <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>Error en el procesamiento</h3>
               {errorCode && (
                 <span style={{ padding: '0.25rem 0.75rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 600 }}>
                   {errorCode}
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '0.9rem', color: errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano') ? '#1e3a8a' : '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>
-              {errorMsg.includes('tardó demasiado') || errorMsg.includes('segundo plano')
-                ? 'Tu postulación contiene un volumen amplio de evidencia (30+ asuntos). El motor de IA continúa analizando de forma segura en el servidor (~8-15 min). Puedes cerrar esta pantalla o consultar tus Deliverables en Reportes.'
-                : errorMsg}
-            </p>
-            {supportMsg && (
-              <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem 0', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                💡 {supportMsg}
-              </p>
-            )}
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+            <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>{errorMsg}</p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => { setErrorMsg(null); setErrorCode(null); setHasStarted(false); setProgress(0); setStep(1); }}
+                style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                🔄 Reintentar
+              </button>
               <button
                 onClick={() => router.push('/reports')}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  padding: '0.6rem 1.25rem', 
-                  background: '#2563eb', 
-                  color: '#fff', 
-                  borderRadius: '8px', 
-                  border: 'none', 
-                  fontSize: '0.85rem', 
-                  fontWeight: 600, 
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
-                }}
+                style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
               >
-                <FileBarChart size={17} />
-                <span>Ver Sección de Reportes</span>
-              </button>
-              <button
-                onClick={() => { setErrorMsg(null); setErrorCode(null); setSupportMsg(null); }}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  padding: '0.6rem 1.25rem', 
-                  background: '#f1f5f9', 
-                  color: '#475569', 
-                  borderRadius: '8px', 
-                  border: '1px solid #cbd5e1', 
-                  fontSize: '0.85rem', 
-                  fontWeight: 500, 
-                  cursor: 'pointer' 
-                }}
-              >
-                <span>Seguir en esta pantalla</span>
+                📊 Ir a Reportes
               </button>
             </div>
-          </div>
-        ) : (
-          <div style={{ padding: '1rem 1.5rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '3rem' }}>
-            <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.25rem 0' }}>
-              <span style={{ fontWeight: 600, color: '#334155' }}>Backend status:</span> processing · <span style={{ fontWeight: 600, color: '#334155' }}>message:</span> {step === 4 ? 'Complete! Matters extracted.' : 'Mapping raw data to universal schema...'}
-            </p>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Metadata and matters detection in progress</p>
           </div>
         )}
 
