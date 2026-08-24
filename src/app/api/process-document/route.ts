@@ -84,6 +84,25 @@ export async function POST(request: NextRequest) {
       if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
+      // If submission is already Submitted or Processing, don't restart pipeline
+      if (submission.status === 'Submitted') {
+        console.log(`[PROCESS-DOCUMENT] Submission ${submissionId} is already Completed — returning status`);
+        return NextResponse.json({
+          success: true,
+          status: 'submitted',
+          submissionId,
+          message: 'Submission already completed.'
+        });
+      }
+      if (submission.status === 'Processing') {
+        console.log(`[PROCESS-DOCUMENT] Submission ${submissionId} is already Processing — skipping re-trigger`);
+        return NextResponse.json({
+          success: true,
+          status: 'processing',
+          submissionId,
+          message: 'Submission is already processing.'
+        });
+      }
     } else {
       // Create a temporary submission from Matter Assistant context
       submission = await prisma.submission.create({

@@ -36,6 +36,24 @@ function ProcessingContent() {
         setStep(1);
         setProgress(10);
         
+        // Pre-check if submission is ALREADY completed in DB
+        try {
+          const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.status === 'Submitted') {
+              console.log('[PROCESSING PAGE] Submission already completed — redirecting to reports');
+              isFinishedRef.current = true;
+              setProgress(100);
+              setStep(4);
+              router.push(`/reports/${submissionId}`);
+              return;
+            }
+          }
+        } catch (checkErr) {
+          console.warn('[PROCESSING PAGE] Status pre-check failed, continuing to process-document', checkErr);
+        }
+
         const body: any = { submissionId };
         if (documentUrl) {
           body.documentUrl = documentUrl;
