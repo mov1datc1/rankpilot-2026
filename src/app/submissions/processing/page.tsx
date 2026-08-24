@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles, FileText, CheckCircle2 } from 'lucide-react';
 
@@ -21,6 +21,7 @@ function ProcessingContent() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [supportMsg, setSupportMsg] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const isFinishedRef = useRef(false);
 
   // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Polling
   // Step 1: Send document to Render (returns in <5s)
@@ -91,12 +92,14 @@ function ProcessingContent() {
 
             if (statusData.status === 'Submitted') {
               // Pipeline completed!
+              isFinishedRef.current = true;
               clearInterval(pollInterval);
               setProgress(100);
               setStep(4);
               setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
             } else if (statusData.status === 'Error') {
               // Pipeline failed
+              isFinishedRef.current = true;
               clearInterval(pollInterval);
               setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
               setErrorMsg(statusData.errorMessage || 'El pipeline encontró un error. Intenta de nuevo.');
@@ -111,7 +114,7 @@ function ProcessingContent() {
         // Safety: stop polling after 20 minutes
         setTimeout(() => {
           clearInterval(pollInterval);
-          if (progress < 100) {
+          if (!isFinishedRef.current) {
             setErrorMsg('El procesamiento tardó demasiado. Revisa la página de reportes — tu resultado podría estar listo.');
           }
         }, 20 * 60 * 1000);
