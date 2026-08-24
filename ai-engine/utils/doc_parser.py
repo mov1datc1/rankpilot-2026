@@ -49,19 +49,64 @@ class DocumentParser:
 
     @staticmethod
     def _parse_docx(file_path: str) -> str:
-        """Extracts text from Word documents maintaining paragraph separation."""
+        """Extracts text from Word documents in exact document order, handling SDT content controls and tables."""
         doc = Document(file_path)
-        full_text = []
-        for para in doc.paragraphs:
-            if para.text.strip():
-                full_text.append(para.text)
-        # Also extract text from tables (critical for Chambers forms)
-        for table in doc.tables:
-            for row in table.rows:
-                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                full_text.append(" | ".join(row_text))
-                
-        return "\n".join(full_text)
+        body = doc._body._element
+        text_lines = []
+
+        def clean_text(raw: str) -> str:
+            if not raw:
+                return ''
+            parts = [p.strip() for p in raw.split('\n') if p.strip()]
+            cleaned_parts = []
+            for p in parts:
+                half = len(p) // 2
+                if len(p) > 4 and len(p) % 2 == 0 and p[:half] == p[half:]:
+                    p = p[:half]
+                if not cleaned_parts or p != cleaned_parts[-1]:
+                    cleaned_parts.append(p)
+            return ' '.join(cleaned_parts)
+
+        def process_node(elem):
+            for child in elem:
+                tag = child.tag.split('}')[-1]
+                if tag == 'p':
+                    p_txt = clean_text(''.join(child.itertext()).strip())
+                    if p_txt:
+                        text_lines.append(p_txt)
+                elif tag == 'tbl':
+                    for row in child.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tr'):
+                        row_cells = []
+                        for cell in row.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tc'):
+                            c_txt = clean_text(''.join(cell.itertext()).strip())
+                            if c_txt and (not row_cells or c_txt != row_cells[-1]):
+                                row_cells.append(c_txt)
+                        if row_cells:
+                            text_lines.append(' | '.join(row_cells))
+                elif tag == 'sdt':
+                    sdt_content = child.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}sdtContent')
+                    if sdt_content is not None:
+                        process_node(sdt_content)
+                    else:
+                        process_node(child)
+
+        try:
+            process_node(body)
+        except Exception as err:
+            print(f"[DOC PARSER WARNING] XML document-order traversal failed ({err}) — falling back to standard extraction")
+
+        # Fallback if XML traversal yielded no text lines
+        if not text_lines:
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    text_lines.append(para.text.strip())
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if row_text:
+                        text_lines.append(" | ".join(row_text))
+
+        return "\n".join(text_lines)
 
     @staticmethod
     def _parse_pdf(file_path: str) -> str:
@@ -129,48 +174,25 @@ class DocumentParser:
                 re.IGNORECASE
             )
             
-            # Scan each table's first cell for matter headers
-            for ti, table in enumerate(doc.tables):
+            # Scan all table elements in XML tree (including those inside w:sdt content controls)
+            all_tbl_elems = doc._body._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl')
+            for ti, tbl_elem in enumerate(all_tbl_elems):
                 if ti in seen_table_indices:
                     continue
-                if not table.rows or not table.rows[0].cells:
-                    continue
-                    
-                first_cell_text = table.rows[0].cells[0].text.strip()
-                
-                # Check Chambers pattern (more specific — with number)
-                chambers_match = chambers_pattern.search(first_cell_text)
+                tbl_text = ''.join(tbl_elem.itertext()).strip()
+                chambers_match = chambers_pattern.search(tbl_text)
                 if chambers_match:
                     label = chambers_match.group(0).strip()
                     matter_labels.append(label)
                     seen_table_indices.add(ti)
                     continue
                 
-                # Check Legal 500 pattern (may lack number)
-                legal500_match = legal500_pattern.match(first_cell_text)
+                legal500_match = legal500_pattern.search(tbl_text)
                 if legal500_match:
-                    label = first_cell_text
-                    # Add table index to disambiguate duplicate labels (e.g., multiple "Non-publishable matter 4")
+                    label = legal500_match.group(0).strip()
                     matter_labels.append(f"{label} (Table {ti})")
                     seen_table_indices.add(ti)
                     continue
-            
-            # Also scan interior table cells for Chambers format (matter labels in non-first cells)
-            for ti, table in enumerate(doc.tables):
-                if ti in seen_table_indices:
-                    continue
-                for row in table.rows:
-                    for cell in row.cells:
-                        txt = cell.text.strip()
-                        chambers_match = chambers_pattern.search(txt)
-                        if chambers_match:
-                            label = chambers_match.group(0).strip()
-                            if label not in [l.split(' (Table')[0] for l in matter_labels]:
-                                matter_labels.append(label)
-                                seen_table_indices.add(ti)
-                            break
-                    if ti in seen_table_indices:
-                        break
             
             # Also scan paragraphs for matter headers (some templates use headings)
             seen_para_labels = set()
@@ -253,15 +275,11 @@ class DocumentParser:
                 stats["file_hash"] = hashlib.sha256(f.read()).hexdigest()[:16]
             
             if extension == '.docx':
+                doc_text = DocumentParser._parse_docx(local_path)
+                stats["word_count"] = len(doc_text.split())
+                stats["paragraph_count"] = len([l for l in doc_text.splitlines() if l.strip()])
                 doc = Document(local_path)
-                all_text = []
-                for para in doc.paragraphs:
-                    if para.text.strip():
-                        all_text.append(para.text)
-                
-                stats["paragraph_count"] = len(all_text)
-                stats["word_count"] = sum(len(p.split()) for p in all_text)
-                stats["table_count"] = len(doc.tables)
+                stats["table_count"] = len(doc._body._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl'))
                 stats["source_matters"] = DocumentParser.count_source_matters(file_path)
             elif extension == '.pdf':
                 text = DocumentParser._parse_pdf(local_path)
