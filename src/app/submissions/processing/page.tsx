@@ -97,8 +97,8 @@ function ProcessingContent() {
         const pollInterval = setInterval(async () => {
           try {
             const elapsed = Date.now() - startTime;
-            // Smoothly move from 20% to 95% while waiting for backend
-            const estimatedProgress = Math.min(20 + Math.floor((elapsed / estimatedDurationMs) * 75), 95);
+            // Smoothly move from 20% to 90% while waiting for backend
+            const estimatedProgress = Math.min(20 + Math.floor((elapsed / estimatedDurationMs) * 70), 90);
             setProgress(estimatedProgress);
 
             // Update step labels based on elapsed time
@@ -114,7 +114,7 @@ function ProcessingContent() {
               clearInterval(pollInterval);
               setProgress(100);
               setStep(4);
-              setTimeout(() => router.push(`/reports/${submissionId}`), 1500);
+              setTimeout(() => router.push(`/reports/${submissionId}`), 1200);
             } else if (statusData.status === 'Error') {
               // Pipeline failed
               isFinishedRef.current = true;
