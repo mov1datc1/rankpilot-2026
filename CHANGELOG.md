@@ -3,6 +3,32 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v24.2] — 2026-08-25
+
+### 🚀 Production Processing & Polling Architecture + Extraction Engine Refactor
+
+**Major Architectural Improvements & Fixes across Frontend, Parsing Engine, and Error Abstraction:**
+
+#### 1. DOCX XML SDT Recursive Parser (`doc_parser.py`)
+- **Root Cause Resolved**: Official Chambers & Partners submission forms structure sections and tables inside `<w:sdt>` (Structured Document Tags). Standard `python-docx` `doc.paragraphs` and `doc.tables` skipped `<w:sdt>` children.
+- **Fix**: Refactored `DocumentParser._parse_docx` to perform recursive XML DOM traversal over `doc._body._element` (`w:p`, `w:tbl`, `<w:sdt>` / `<w:sdtContent>`) in exact document order.
+- **Impact**: Resolved A1 firm name desmapping ("Real Estate" → "Ramos Castillo Abogados"), A3 jurisdiction desmapping ("Latin America" → "Guadalajara, State of Jalisco, Mexico"), and matter extraction loss (Evidence Completeness rose from `0%` to `75% Strong`, capturing 33 source matters).
+
+#### 2. Processing & Polling State Management (`processing/page.tsx`)
+- **Stale Closure Fix**: Added `isFinishedRef` to prevent React stale closure in polling loops.
+- **Auto-Redirect on Submitted**: When `status === 'Submitted'` is returned by polling, progress bar animates to **100% Complete (Green Checkmark)**, step 4 lights up **Ready**, and page auto-redirects to `/reports/[submissionId]` in 1.2s.
+- **Anti-Duplicate Trigger Protection**: `process-document` API route and processing page pre-check database status. If submission is already `Submitted` or `Processing`, duplicate pipeline triggers are blocked on page refresh.
+
+#### 3. OpenAI Quota & API Error Sanitization + Lucide React Error Flyer
+- **Error Abstraction**: Technical OpenAI errors (`429`, `insufficient_quota`, `credit_balance_exhausted`, API keys, stack traces) are intercepted and sanitized into clean, professional legal messages (*"El servidor de IA está experimentando un ajuste de capacidad temporal. Tu postulación se reanudará en unos momentos."*).
+- **Lucide React UI**: Replaced raw emojis with high-end Lucide React icons (`<AlertTriangle />`, `<RotateCw />`, `<FileBarChart />`).
+
+#### 4. Model Architecture & Abort Guard (`nodes.py`)
+- **Default Model**: Configured default model fallback to `gpt-5.6-terra` with `reasoning_effort="medium"` for deep legal reasoning.
+- **Fatal Error Abort Guard**: Added immediate abort on OpenAI 429/Quota errors in `optimization_node` to prevent useless retries and token waste.
+
+---
+
 ## [v20.1] — 2026-08-13
 
 ### 🔧 Splice, Grammar, Diversity & Word Count Fixes
