@@ -133,6 +133,26 @@ def _match_client(client_in_doc: str, enhanced_matters: List[Dict]) -> Optional[
 # CELL CONTENT REPLACEMENT
 # =====================================================
 
+def strip_system_instructions(text: str) -> str:
+    """v24.3: Prevent system reasoning or internal directives from leaking into client-facing DOCX."""
+    if not text:
+        return ""
+    instruction_patterns = [
+        r'Recover the complete evidentiary record.*',
+        r'Test practice trajectory only after recovery.*',
+        r'Select the hero matter only after all candidates can be assessed.*',
+        r'\[INTERNAL DIRECTIVE\].*',
+        r'\[SYSTEM NOTE\].*',
+        r'\[RETRY DIRECTIVE\].*',
+        r'Address any feedback.*word count limit\)?',
+        r'Please include:.*word count limit\)?'
+    ]
+    cleaned = text
+    for pattern in instruction_patterns:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE | re.DOTALL).strip()
+    return cleaned
+
+
 def _replace_cell_content(cell: _Cell, new_text: str, preserve_first_paragraph_format: bool = True):
     """
     Replace the content of a cell while preserving paragraph formatting.
@@ -143,6 +163,7 @@ def _replace_cell_content(cell: _Cell, new_text: str, preserve_first_paragraph_f
     3. For subsequent paragraphs, clone formatting from the first paragraph
     4. Remove any excess original paragraphs
     """
+    new_text = strip_system_instructions(new_text)
     new_paragraphs = [p.strip() for p in new_text.split("\n\n") if p.strip()]
     
     if not new_paragraphs:

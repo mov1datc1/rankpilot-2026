@@ -22,7 +22,7 @@ class DocumentParser:
         parsed_path = urlparse(file_path).path if is_url else file_path
         extension = os.path.splitext(parsed_path)[1].lower()
         
-        if extension not in ['.docx', '.pdf']:
+        if extension not in ['.docx', '.doc', '.pdf']:
             raise ValueError(f"Unsupported file format: {extension}")
 
         local_path = file_path
@@ -40,12 +40,70 @@ class DocumentParser:
         try:
             if extension == '.docx':
                 return DocumentParser._parse_docx(local_path)
+            elif extension == '.doc':
+                return DocumentParser._parse_doc(local_path)
             elif extension == '.pdf':
                 return DocumentParser._parse_pdf(local_path)
         finally:
             # Cleanup temp file if it was created
             if temp_file and os.path.exists(temp_file):
                 os.remove(temp_file)
+
+    @staticmethod
+    def _parse_doc(file_path: str) -> str:
+        """v24.3: Native Word 97-2003 (.doc) binary OLE extractor with LibreOffice conversion fallback."""
+        # Method 1: Try libreoffice / soffice conversion if installed on system
+        try:
+            output_dir = tempfile.mkdtemp()
+            docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
+            ret = os.system(f'soffice --headless --convert-to docx "{file_path}" --outdir "{output_dir}" >/dev/null 2>&1')
+            if ret == 0 and os.path.exists(docx_path):
+                parsed = DocumentParser._parse_docx(docx_path)
+                try:
+                    os.remove(docx_path)
+                    os.rmdir(output_dir)
+                except Exception:
+                    pass
+                if len(parsed.strip()) > 100:
+                    return parsed
+        except Exception:
+            pass
+
+        # Method 2: Pure Python OLE Stream Text Extractor (No external dependencies)
+        try:
+            with open(file_path, 'rb') as f:
+                content = f.read()
+
+            lines = []
+            # Extract UTF-16LE text strings
+            try:
+                text_utf16 = content.decode('utf-16le', errors='ignore')
+                clean_utf16 = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text_utf16)
+                blocks = re.findall(r'[\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]{4,}', clean_utf16)
+                for b in blocks:
+                    st = b.strip()
+                    if len(st) > 3 and not any(st.startswith(x) for x in ['Root', 'WordDocument', 'þÿ', 'bjbj', 'Table', 'CompObj']):
+                        if not any(c in st for c in ['Ą', 'ȫ']):
+                            lines.append(st)
+            except Exception:
+                pass
+
+            # Extract Latin1 text strings
+            text_latin1 = content.decode('latin1', errors='ignore')
+            blocks_latin = re.findall(r'[\x20-\x7E\xA0-\xFF]{4,}', text_latin1)
+            for b in blocks_latin:
+                st = b.strip()
+                if len(st) > 4 and not any(st.startswith(x) for x in ['Root', 'WordDocument', 'þÿ', 'bjbj', 'Table', 'CompObj']):
+                    if st not in lines:
+                        lines.append(st)
+
+            extracted_doc_text = '\n'.join(lines)
+            if len(extracted_doc_text.strip()) > 50:
+                return extracted_doc_text
+        except Exception as doc_err:
+            print(f"[DOC PARSER ERROR] OLE binary .doc extraction failed: {doc_err}")
+
+        return ""
 
     @staticmethod
     def _parse_docx(file_path: str) -> str:

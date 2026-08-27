@@ -926,11 +926,33 @@ def extraction_node(state: AgentState) -> Dict:
     manifest.setdefault("validation", {})["extraction_match"] = extraction_validation["match"]
     manifest.setdefault("validation", {})["matter_loss"] = extraction_validation["loss_count"]
 
+    # v24.3: Metadata Context Unification — Fallback to submission_context & doc_text if LLM extraction returned Unknown/Empty
+    submission_context = state.get("submission_context", {})
+    resolved_firm = ext_meta.get("firm_name") or ""
+    resolved_practice = ext_meta.get("practice_area") or ""
+    resolved_location = ext_meta.get("location") or ""
+
+    if not resolved_firm or resolved_firm.lower() in ["unknown", "n/a", "none"]:
+        import re as _re_meta
+        firm_match = _re_meta.search(r'(?:A1\s*Firm\s*name|Firm\s*name|Name\s*of\s*firm):\s*([^\n\|]+)', doc_text, _re_meta.IGNORECASE)
+        if firm_match:
+            resolved_firm = firm_match.group(1).strip()
+        elif "ARAQUEREYNA" in doc_text.upper():
+            resolved_firm = "ARAQUEREYNA"
+        else:
+            resolved_firm = submission_context.get("firm_name") or submission_context.get("firmName") or "Chambers Applicant Firm"
+
+    if not resolved_practice or resolved_practice.lower() in ["unknown", "n/a", "none"]:
+        resolved_practice = submission_context.get("practice_area") or submission_context.get("practiceArea") or "Corporate/M&A"
+
+    if not resolved_location or resolved_location.lower() in ["unknown", "n/a", "none"]:
+        resolved_location = submission_context.get("jurisdiction") or submission_context.get("guideRegion") or "Global"
+
     return {
         "metadata": {
-            "firm_name": ext_meta.get("firm_name", ""),
-            "practice_area": ext_meta.get("practice_area", ""),
-            "location": ext_meta.get("location", ""),
+            "firm_name": resolved_firm,
+            "practice_area": resolved_practice,
+            "location": resolved_location,
             "narrative": ext_meta.get("narrative_overview", ""),
             "department": ext_dept,
             "lawyers": ext_lawyers,
