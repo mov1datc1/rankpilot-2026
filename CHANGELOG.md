@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v25.2] — 2026-08-27
+
+### 🏆 Physical Table Strategic Re-Ordering & Hero Matter Enforcement (`docx_cloner.py`)
+
+- **Physical Table Re-Ordering Algorithm**: Refactored `clone_and_replace` in `docx_cloner.py` to re-assign matter cells in top-to-bottom physical table order in Sections D and E.
+- **Hero Matter Position #1 Guarantee**: Guaranteed that the strategic **Hero Matter** (*El Cielo Country Club*) is physically written to **Table #1** of Section D in the exported client-facing DOCX form.
+
+---
+
 ## [v25.1] — 2026-08-27
 
 ### 🛡️ 360-Degree Practice Area Keyword Matrix & Universal Catch-All Fallback (`rag_router.py`)
