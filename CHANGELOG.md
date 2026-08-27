@@ -3,6 +3,26 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v25.0] — 2026-08-27
+
+### 🏆 Strategic Alignment & Production Execution (Ramos Castillo & AraqueReyna Audits)
+
+**Core Architectural & Editorial Breakthroughs across Strategic Alignment, RAG Isolation, Blueprint Execution & Ingestion:**
+
+#### 1. Native `.doc` Binary OLE Parser & Fail-Closed Guardrail (`doc_parser.py`)
+- **Native Word 97-2003 Extractor**: Built binary OLE stream text & table parser for `.doc` files (e.g. `AraqueReyna Corporate M&A 2024`). Successfully extracted 65,056 characters and 25 matters without throwing `ValueError`.
+- **Fail-Closed Architecture**: Implemented explicit pipeline halt if evidence completeness < 15% or document is unreadable (*"FAIL CLOSED, NOT FAIL CREATIVELY"*).
+
+#### 2. Practice Isolation & RAG Routing Fix (`rag_router.py`)
+- **P0 Grounding Root Cause Resolved**: Fixed keyword matching bug where `"property"` in `"INTELLECTUAL PROPERTY"` triggered IP RAG loading for Real Estate submissions. Created dedicated `Real_Estate_RAG.txt`.
+- **Zero Unsupported Additions**: Enforced strict practice isolation to eliminate cross-practice financial/banking terminology leakage into C2 feedback.
+
+#### 3. Blueprint Execution & Hero Matter Order (`docx_cloner.py` & `main.py`)
+- **Hero Matter Order Execution**: Configured `clone_and_replace_from_state` to strictly obey Blueprint matter ordering, placing *El Cielo Country Club* as **Matter #1** in Section D of the client-facing DOCX.
+- **B7 System Instruction Stripper**: Added `strip_system_instructions()` regex filter to prevent internal AI notes (e.g. *"Recover the complete evidentiary record..."*) from leaking into exported DOCX forms.
+
+---
+
 ## [v24.2] — 2026-08-25
 
 ### 🚀 Production Processing & Polling Architecture + Extraction Engine Refactor
