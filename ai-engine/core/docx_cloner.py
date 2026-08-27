@@ -410,41 +410,81 @@ def clone_and_replace(
                 c2_replaced = True
                 continue
         
-        # ─── CHECK FOR MATTER SUMMARY (D2/E2) ───
-        if enhanced_matters:
-            data_pos = _find_data_cell_in_table(table, _is_matter_summary_label)
-            if data_pos:
-                # Find the client name for this matter table
-                client_name = _find_client_name_in_table(table)
+    # ─── v25.2 STRATEGIC PHYSICAL TABLE RE-ORDERING ───
+    # Ensure Hero Matter is written to Physical Table 1 in Section D
+    if enhanced_matters:
+        # Collect all physical matter tables in Section D and Section E
+        sec_d_tables = []
+        sec_e_tables = []
+        
+        for table in all_doc_tables:
+            table_text = "\n".join(_cell_text(c) for r in table.rows for c in r.cells).lower()
+            if "d1 name of client" in table_text or ("d2 summary" in table_text and "d1" in table_text):
+                sec_d_tables.append(table)
+            elif "e1 name of client" in table_text or ("e2 summary" in table_text and "e1" in table_text):
+                sec_e_tables.append(table)
+        
+        pub_matters = [
+            m for m in enhanced_matters 
+            if not (m.get("is_confidential") or m.get("publish_status") == "confidential")
+        ]
+        conf_matters = [
+            m for m in enhanced_matters 
+            if (m.get("is_confidential") or m.get("publish_status") == "confidential")
+        ]
+
+        print(f"[DOCX CLONER 🎯] Physical tables found: {len(sec_d_tables)} in Section D, {len(sec_e_tables)} in Section E")
+        print(f"[DOCX CLONER 🎯] Enhanced matters to write: {len(pub_matters)} Publishable, {len(conf_matters)} Confidential")
+
+        # 1. Populate Section D tables in exact strategic order (Hero Matter #1 in Table 1)
+        for idx, m in enumerate(pub_matters):
+            client_name = m.get("client", "")
+            opt_text = m.get("optimized_text") or m.get("summary", "")
+            val_text = str(m.get("value", "") or "N/A")
+            partner_text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
+
+            if idx < len(sec_d_tables):
+                t = sec_d_tables[idx]
+                for i, r in enumerate(t.rows):
+                    c0 = r.cells[0].text.strip().lower()
+                    if "d1 name" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], client_name)
+                    elif "d2 summary" in c0 and i + 1 < len(t.rows) and opt_text:
+                        _replace_cell_content(t.rows[i+1].cells[0], opt_text)
+                    elif "d3 value" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], val_text)
+                    elif "d4 lead partner" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], partner_text)
                 
-                if client_name:
-                    matched_matter = _match_client(client_name, enhanced_matters)
-                    
-                    if matched_matter:
-                        optimized_text = matched_matter.get("optimized_text", "") or matched_matter.get("summary", "")
-                        if optimized_text:
-                            row_idx, col_idx = data_pos
-                            data_cell = table.rows[row_idx].cells[col_idx]
-                            original_text = _cell_text(data_cell)
-                            
-                            client_key = _normalize_client_name(matched_matter.get("client", ""))
-                            
-                            # Only replace if not already used (avoid double-replacing)
-                            if client_key not in used_matters:
-                                print(f"[DOCX CLONER] Replacing matter for '{client_name[:50]}' at table {table_idx}")
-                                print(f"[DOCX CLONER]   Original: {len(original_text.split())} words → Enhanced: {len(optimized_text.split())} words")
-                                
-                                _replace_cell_content(data_cell, optimized_text)
-                                used_matters.add(client_key)
-                                matters_replaced += 1
-                            else:
-                                print(f"[DOCX CLONER] Skipping duplicate match for '{client_name[:50]}'")
-                        else:
-                            matters_skipped.append(client_name)
-                    else:
-                        matters_skipped.append(client_name)
-                else:
-                    print(f"[DOCX CLONER] Warning: Found D2/E2 at table {table_idx} but no client name")
+                client_key = _normalize_client_name(client_name)
+                used_matters.add(client_key)
+                matters_replaced += 1
+                if idx == 0:
+                    print(f"[DOCX CLONER 🏆] HERO MATTER SUCCESSFULLY WRITTEN TO SECTION D TABLE 1: {client_name}")
+
+        # 2. Populate Section E tables in exact strategic order
+        for idx, m in enumerate(conf_matters):
+            client_name = m.get("client", "")
+            opt_text = m.get("optimized_text") or m.get("summary", "")
+            val_text = str(m.get("value", "") or "N/A")
+            partner_text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
+
+            if idx < len(sec_e_tables):
+                t = sec_e_tables[idx]
+                for i, r in enumerate(t.rows):
+                    c0 = r.cells[0].text.strip().lower()
+                    if "e1 name" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], client_name)
+                    elif "e2 summary" in c0 and i + 1 < len(t.rows) and opt_text:
+                        _replace_cell_content(t.rows[i+1].cells[0], opt_text)
+                    elif "e3 value" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], val_text)
+                    elif "e4 lead partner" in c0 and i + 1 < len(t.rows):
+                        _replace_cell_content(t.rows[i+1].cells[0], partner_text)
+
+                client_key = _normalize_client_name(client_name)
+                used_matters.add(client_key)
+                matters_replaced += 1
     
     # ─── v23.0 IN-PLACE INSERTION FOR MISSING C2 & MATTERS ───
     # Find anchor points in original document
