@@ -28,7 +28,6 @@ function ProcessingContent() {
   // Step 2: Poll /api/check-status every 10s until 'Submitted' or 'Error'
   useEffect(() => {
     if (!submissionId || hasStarted) return;
-    if (!documentUrl && !rawText) return;
     setHasStarted(true);
     
     const processDocument = async () => {
@@ -44,6 +43,7 @@ function ProcessingContent() {
             if (checkData.status === 'Submitted') {
               console.log('[PROCESSING PAGE] Submission already completed — redirecting to reports');
               isFinishedRef.current = true;
+              setErrorMsg(null);
               setProgress(100);
               setStep(4);
               router.push(`/reports/${submissionId}`);
@@ -54,38 +54,41 @@ function ProcessingContent() {
           console.warn('[PROCESSING PAGE] Status pre-check failed, continuing to process-document', checkErr);
         }
 
-        const body: any = { submissionId };
-        if (documentUrl) {
-          body.documentUrl = documentUrl;
-        }
-        if (rawText) {
-          body.text = rawText;
-          body.is_text = true;
-        }
+        if (!documentUrl && !rawText) {
+          // No input provided and submission not yet Submitted — fallback to polling
+          console.log('[PROCESSING PAGE] No documentUrl provided — entering status polling mode');
+        } else {
+          // Fire-and-forget: this returns in <5 seconds
+          const body: any = { submissionId };
+          if (documentUrl) body.documentUrl = documentUrl;
+          if (rawText) {
+            body.text = rawText;
+            body.is_text = true;
+          }
 
-        // Fire-and-forget: this returns in <5 seconds
-        const res = await fetch('/api/process-document', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        
-        const responseText = await res.text();
-        let data: any;
-        try {
-          data = JSON.parse(responseText);
-        } catch (jsonErr) {
-          throw new Error(
-            responseText?.includes('An error occurred')
-              ? 'El motor de IA esta reiniciandose. Por favor espera 30 segundos e intenta de nuevo.'
-              : `Error de conexion con el servidor (${res.status}). Intenta de nuevo en unos momentos.`
-          );
-        }
-        
-        if (!res.ok) {
-          setErrorCode(data.errorCode || 'UNKNOWN');
-          setSupportMsg(data.supportMessage || null);
-          throw new Error(data.error || 'Fallo en la extraccion de la IA');
+          const res = await fetch('/api/process-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          
+          const responseText = await res.text();
+          let data: any;
+          try {
+            data = JSON.parse(responseText);
+          } catch (jsonErr) {
+            throw new Error(
+              responseText?.includes('An error occurred')
+                ? 'El motor de IA esta reiniciandose. Por favor espera 30 segundos e intenta de nuevo.'
+                : `Error de conexion con el servidor (${res.status}). Intenta de nuevo en unos momentos.`
+            );
+          }
+          
+          if (!res.ok) {
+            setErrorCode(data.errorCode || 'UNKNOWN');
+            setSupportMsg(data.supportMessage || null);
+            throw new Error(data.error || 'Fallo en la extraccion de la IA');
+          }
         }
 
         // Pipeline accepted — now poll for completion
@@ -109,9 +112,10 @@ function ProcessingContent() {
             const statusData = await statusRes.json();
 
             if (statusData.status === 'Submitted') {
-              // Pipeline completed! Jump to 100% Ready and redirect
+              // Pipeline completed! Jump to 100% Ready, clear any errors and redirect
               isFinishedRef.current = true;
               clearInterval(pollInterval);
+              setErrorMsg(null);
               setProgress(100);
               setStep(4);
               setTimeout(() => router.push(`/reports/${submissionId}`), 1200);

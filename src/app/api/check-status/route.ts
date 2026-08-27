@@ -36,6 +36,17 @@ export async function GET(request: NextRequest) {
     const pipelineError = chambersData?._pipeline_error || null;
     let sanitizedError = pipelineError?.message || null;
 
+    // If submission is Submitted, clear any non-fatal transient error messages
+    if (submission.status === 'Submitted') {
+      return NextResponse.json({
+        id: submission.id,
+        status: submission.status,
+        hasError: false,
+        errorMessage: null,
+        errorCode: null,
+      });
+    }
+
     if (sanitizedError) {
       const lower = sanitizedError.toLowerCase();
       if (
