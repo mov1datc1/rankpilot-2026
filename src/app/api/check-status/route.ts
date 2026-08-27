@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
         id: true, 
         status: true,
         chambersData: true,
+        _count: {
+          select: { matters: true }
+        }
       }
     });
 
@@ -32,9 +35,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    const chambersData = submission.chambersData as any;
+    const chambersData = (submission.chambersData as any) || {};
     const pipelineError = chambersData?._pipeline_error || null;
     let sanitizedError = pipelineError?.message || null;
+
+    // Calculate matter count from DB relation and chambersData
+    const dbMatterCount = submission._count?.matters || 0;
+    const jsonMatters = chambersData?.matters || chambersData?.extractedMatters || chambersData?.metadata?.matters || [];
+    const jsonMatterCount = Array.isArray(jsonMatters)
+      ? jsonMatters.length
+      : (chambersData?.metadata?.matters_count || chambersData?.metadata?.total_matters || 0);
+    const matterCount = Math.max(dbMatterCount, jsonMatterCount);
 
     // If submission is Submitted, clear any non-fatal transient error messages
     if (submission.status === 'Submitted') {
@@ -44,6 +55,7 @@ export async function GET(request: NextRequest) {
         hasError: false,
         errorMessage: null,
         errorCode: null,
+        matterCount,
       });
     }
 
@@ -70,6 +82,7 @@ export async function GET(request: NextRequest) {
       hasError: !!pipelineError,
       errorMessage: sanitizedError,
       errorCode: pipelineError?.code ? 'SERVER_CAPACITY_RETRY' : null,
+      matterCount,
     });
   } catch (error: any) {
     console.error('[CHECK STATUS ERROR]', error);

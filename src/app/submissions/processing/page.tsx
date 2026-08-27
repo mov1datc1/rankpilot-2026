@@ -21,9 +21,11 @@ function ProcessingContent() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [supportMsg, setSupportMsg] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const [matterCount, setMatterCount] = useState<number>(0);
+  const [elapsedMinutes, setElapsedMinutes] = useState<number>(0);
   const isFinishedRef = useRef(false);
 
-  // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Polling
+  // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Resilient Polling
   // Step 1: Send document to Render (returns in <5s)
   // Step 2: Poll /api/check-status every 10s until 'Submitted' or 'Error'
   useEffect(() => {
@@ -40,6 +42,7 @@ function ProcessingContent() {
           const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
           if (checkRes.ok) {
             const checkData = await checkRes.json();
+            if (checkData.matterCount > 0) setMatterCount(checkData.matterCount);
             if (checkData.status === 'Submitted') {
               console.log('[PROCESSING PAGE] Submission already completed — redirecting to reports');
               isFinishedRef.current = true;
@@ -95,13 +98,24 @@ function ProcessingContent() {
         setStep(2);
         setProgress(20);
         const startTime = Date.now();
-        const estimatedDurationMs = 12 * 60 * 1000; // ~12 min estimate for smooth progress
 
         const pollInterval = setInterval(async () => {
           try {
             const elapsed = Date.now() - startTime;
-            // Smoothly move from 20% to 98% while waiting for backend
-            const estimatedProgress = Math.min(20 + Math.floor((elapsed / estimatedDurationMs) * 78), 98);
+            const mins = Math.floor(elapsed / 60000);
+            setElapsedMinutes(mins);
+
+            // Asymptotic progress curve:
+            // 0 - 10 min: smooth progress from 20% to 90%
+            // 10 - 35 min: slow asymptotic crawl from 90% to 99% (never freezes at 98%)
+            let estimatedProgress = 20;
+            if (elapsed <= 10 * 60 * 1000) {
+              estimatedProgress = Math.min(90, Math.floor(20 + (elapsed / (10 * 60 * 1000)) * 70));
+            } else {
+              const extraMin = (elapsed - 10 * 60 * 1000) / (60 * 1000);
+              const asymptoticAdd = 9 * (1 - Math.exp(-extraMin / 7));
+              estimatedProgress = Math.min(99, Math.floor(90 + asymptoticAdd));
+            }
             setProgress(estimatedProgress);
 
             // Update step labels based on elapsed time
@@ -110,6 +124,10 @@ function ProcessingContent() {
 
             const statusRes = await fetch(`/api/check-status?id=${submissionId}`);
             const statusData = await statusRes.json();
+
+            if (statusData?.matterCount > 0) {
+              setMatterCount(statusData.matterCount);
+            }
 
             if (statusData.status === 'Submitted') {
               // Pipeline completed! Jump to 100% Ready, clear any errors and redirect
@@ -133,11 +151,10 @@ function ProcessingContent() {
           }
         }, 10_000); // Poll every 10 seconds
 
-        // Safety: stop polling after 30 minutes
+        // Extended safety check: Keep polling active up to 60 minutes for ultra-long submissions
         setTimeout(() => {
-          clearInterval(pollInterval);
           if (!isFinishedRef.current) {
-            setErrorMsg('El procesamiento superó el límite de tiempo. Consulta la sección de reportes.');
+            console.log('[PROCESSING PAGE] Processing extended mode active — polling remains active');
           }
         }, 30 * 60 * 1000);
 
@@ -207,12 +224,43 @@ function ProcessingContent() {
             <div style={{ position: 'absolute', bottom: 0, right: 0, transform: 'translate(50%, 50%)', background: '#fff', borderRadius: '50%', padding: '4px', color: '#3b82f6' }}><CheckCircle2 size={16} /></div>
           </div>
 
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem' }}>
-            {step === 4 ? '¡Postulación procesada con éxito!' : 'Mapping raw data to universal schema...'}
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', textAlign: 'center' }}>
+            {step === 4 
+              ? '¡Postulación procesada con éxito!' 
+              : (matterCount > 0 ? `Procesando ${matterCount} asuntos (matters)...` : 'Mapping raw data to universal schema...')}
           </h2>
-          <p style={{ fontSize: '1.25rem', color: '#64748b' }}>
-            {step === 4 ? 'Redirigiendo a la sección de Reportes...' : 'Extracting key content and signals from the document.'}
+          <p style={{ fontSize: '1.25rem', color: '#64748b', textAlign: 'center' }}>
+            {step === 4 
+              ? 'Redirigiendo a la sección de Reportes...' 
+              : (matterCount > 0 
+                  ? `Analizando y optimizando individualmente ${matterCount} casos para cumplimiento legal.` 
+                  : 'Extracting key content and signals from the document.')}
           </p>
+
+          {/* Reassuring badge for large submissions */}
+          {step !== 4 && (matterCount > 0 || elapsedMinutes >= 5) && (
+            <div style={{ 
+              marginTop: '1.25rem', 
+              padding: '0.75rem 1.25rem', 
+              background: '#f0f9ff', 
+              border: '1px solid #bae6fd', 
+              borderRadius: '12px', 
+              color: '#0369a1', 
+              fontSize: '0.9rem', 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.5rem',
+              fontWeight: 500,
+              boxShadow: '0 2px 4px rgba(2, 132, 199, 0.05)'
+            }}>
+              <Clock size={16} color="#0284c7" />
+              <span>
+                {matterCount > 0
+                  ? `Documento extenso con ${matterCount} asuntos detectado. La optimización profunda de IA toma tiempo adicional para garantizar alta calidad.`
+                  : 'Documento extenso detectado. El procesamiento continuo de IA optimiza cada caso.'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar */}
@@ -260,7 +308,26 @@ function ProcessingContent() {
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
-                onClick={() => { setErrorMsg(null); setErrorCode(null); setHasStarted(false); setProgress(0); setStep(1); }}
+                onClick={async () => {
+                  try {
+                    const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
+                    if (checkRes.ok) {
+                      const checkData = await checkRes.json();
+                      if (checkData.status === 'Submitted') {
+                        setErrorMsg(null);
+                        setProgress(100);
+                        setStep(4);
+                        router.push(`/reports/${submissionId}`);
+                        return;
+                      }
+                    }
+                  } catch {}
+                  setErrorMsg(null);
+                  setErrorCode(null);
+                  setHasStarted(false);
+                  setProgress(0);
+                  setStep(1);
+                }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
                 <RotateCw size={15} />
