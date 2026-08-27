@@ -36,28 +36,31 @@ class RAGRouter:
         practice_area = str(practice_area).lower()
         directory = str(directory).lower()
         
-        # Define keywords for practice areas — EXPANDED for v1 file names
+        # Define keywords for practice areas — 360-Degree Coverage (v25.1)
         pa_keywords = []
-        if "bank" in practice_area or "financ" in practice_area:
+        if any(k in practice_area for k in ["bank", "financ", "capital market", "fintech"]):
             pa_keywords = ["banking", "bank", "finance"]
-        elif "tax" in practice_area or "fiscal" in practice_area:
+        elif any(k in practice_area for k in ["tax", "fiscal", "tributar"]):
             pa_keywords = ["tax ", " tax", "tax_", "tax.", "tax-", "fiscal"]
-        elif "labour" in practice_area or "labor" in practice_area or "employ" in practice_area:
+        elif any(k in practice_area for k in ["labour", "labor", "employ", "trabajo"]):
             pa_keywords = ["labour", "labor", "employment"]
-        elif "corp" in practice_area or "m&a" in practice_area or "merger" in practice_area:
+        elif any(k in practice_area for k in ["corp", "m&a", "merger", "sociedad"]):
             pa_keywords = ["corporate", "m&a", "corporate_ma"]
-        elif "dispute" in practice_area or "litig" in practice_area or "arbitrat" in practice_area:
+        elif any(k in practice_area for k in ["dispute", "litig", "arbitrat", "resoluc", "juicio", "amparo"]):
             pa_keywords = ["dispute", "litigation", "arbitrat"]
-        elif "competi" in practice_area or "antitrust" in practice_area:
+        elif any(k in practice_area for k in ["competi", "antitrust", "competenc"]):
             pa_keywords = ["competition", "antitrust"]
-        elif "ip" in practice_area or "intellectual" in practice_area or "patent" in practice_area or "pi" in practice_area:
+        elif any(k in practice_area for k in ["intellectual", "patent", "trademark", "marca", "tmt", "tech", "data protection", "privacy"]):
             pa_keywords = ["intellectual property", " pi ", "ip ", "_ip_"]
-        elif "regulat" in practice_area or "public" in practice_area or "admin" in practice_area:
+        elif any(k in practice_area for k in ["regulat", "public", "admin", "gobierno", "derecho publico"]):
             pa_keywords = ["regulatory", "public", "administrative"]
-        elif "energy" in practice_area or "project" in practice_area or "infra" in practice_area:
-            pa_keywords = ["energy", "project", "infrastructure"]
-        elif "real estate" in practice_area or "property" in practice_area or "real_estate" in practice_area or "inmobiliario" in practice_area:
+        elif any(k in practice_area for k in ["energy", "project", "infra", "mineri", "mining", "environ", "ambienta"]):
+            pa_keywords = ["energy", "project", "infrastructure", "regulatory"]
+        elif any(k in practice_area for k in ["real estate", "property", "real_estate", "inmobiliario", "urban"]):
             pa_keywords = ["real estate", "real_estate", "inmobiliario", "real property"]
+        else:
+            # v25.1: 360-Degree Catch-All Fallback for unmapped or niche practices
+            pa_keywords = ["regulatory", "dispute", "corporate"]
             
         # Define keywords for directories — EXPANDED
         dir_keywords = []
