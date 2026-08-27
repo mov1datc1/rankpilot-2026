@@ -599,6 +599,8 @@ def clone_and_replace_from_state(
     enhanced_b7: str,
     matters: List[Dict],
     enhanced_c2: str = "",
+    hero_matter: str = "",
+    matter_order: List[str] = None,
 ) -> Optional[bytes]:
     """
     Convenience wrapper that extracts enhanced_matters from the pipeline state format.
@@ -611,6 +613,8 @@ def clone_and_replace_from_state(
         enhanced_b7: AI-enhanced B7 narrative
         matters: List of matter dicts from the pipeline (with client + optimized_text fields)
         enhanced_c2: AI-enhanced C2 feedback narrative
+        hero_matter: Name of hero matter to force to position #1
+        matter_order: Desired order of client names from Blueprint
     
     Returns:
         bytes or None if file_path is invalid or not a DOCX
@@ -650,6 +654,22 @@ def clone_and_replace_from_state(
             if optimized:
                 matter_entry["optimized_text"] = optimized
             enhanced_matters.append(matter_entry)
+
+    # v25.0: BLUEPRINT ORDER ENFORCEMENT — Force Hero Matter to position #1
+    if hero_matter:
+        norm_hero = _normalize_client_name(hero_matter)
+        hero_matches = []
+        non_hero = []
+        for m in enhanced_matters:
+            norm_c = _normalize_client_name(m.get("client", ""))
+            title = m.get("title", "").lower()
+            if norm_hero in norm_c or norm_c in norm_hero or hero_matter.lower() in title or hero_matter.lower() in m.get("client", "").lower():
+                hero_matches.append(m)
+            else:
+                non_hero.append(m)
+        if hero_matches:
+            enhanced_matters = hero_matches + non_hero
+            print(f"[DOCX CLONER 🎯] BLUEPRINT EXECUTION: Hero Matter '{hero_matches[0].get('client')}' forced to Position #1")
     
     if not enhanced_b7 and not enhanced_matters and not enhanced_c2:
         print("[DOCX CLONER] Skipping — no enhanced content to replace")

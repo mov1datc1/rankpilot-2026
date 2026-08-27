@@ -56,8 +56,8 @@ class RAGRouter:
             pa_keywords = ["regulatory", "public", "administrative"]
         elif "energy" in practice_area or "project" in practice_area or "infra" in practice_area:
             pa_keywords = ["energy", "project", "infrastructure"]
-        elif "real estate" in practice_area or "property" in practice_area:
-            pa_keywords = ["real estate", "property"]
+        elif "real estate" in practice_area or "property" in practice_area or "real_estate" in practice_area or "inmobiliario" in practice_area:
+            pa_keywords = ["real estate", "real_estate", "inmobiliario", "real property"]
             
         # Define keywords for directories — EXPANDED
         dir_keywords = []

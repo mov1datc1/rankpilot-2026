@@ -305,11 +305,19 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
             )
             matters = result.get("matters", [])
             
+            hero_matter = (
+                result.get("hero_matter")
+                or (result.get("submission_blueprint", {}).get("hero_matter") if isinstance(result.get("submission_blueprint"), dict) else "")
+                or (result.get("analysis", {}).get("hero_matter") if isinstance(result.get("analysis"), dict) else "")
+                or ""
+            )
+            
             docx_bytes = clone_and_replace_from_state(
                 file_path=file_path,
                 enhanced_b7=enhanced_b7,
                 matters=matters,
                 enhanced_c2=enhanced_c2,
+                hero_matter=hero_matter,
             )
             
             if docx_bytes:
