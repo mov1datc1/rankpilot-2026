@@ -3,6 +3,16 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v25.1] — 2026-08-27
+
+### 🛡️ 360-Degree Practice Area Keyword Matrix & Universal Catch-All Fallback (`rag_router.py`)
+
+- **360-Degree Practice Keyword Matrix**: Expanded `rag_router.py` to support all major practice areas in both English and Spanish (*Banking, Tax, Labour, Corporate, Disputes, Competition, IP, Public Law, Energy, Real Estate*).
+- **Universal Catch-All Fallback Router**: Implemented automatic assignment of `Regulatory`, `Disputes`, and `Corporate` RAG pillars for unmapped or niche practices (*Healthcare, ESG, Maritime, Compliance*), preventing zero-match RAG failures.
+- **Strict Keyword Isolation**: Fixed string collision where `"property"` in `"INTELLECTUAL PROPERTY"` matched Real Estate.
+
+---
+
 ## [v25.0] — 2026-08-27
 
 ### 🏆 Strategic Alignment & Production Execution (Ramos Castillo & AraqueReyna Audits)
