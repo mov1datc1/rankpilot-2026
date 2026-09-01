@@ -23,7 +23,7 @@ function sanitizeText(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { secret, submission_id, pipeline_result, pipeline_error, pipeline_progress } = body;
+    const { secret, submission_id, run_id, pipeline_result, pipeline_error, pipeline_progress } = body;
 
     // Validate webhook secret
     const expectedSecret = process.env.PIPELINE_WEBHOOK_SECRET || '';
@@ -46,6 +46,16 @@ export async function POST(request: NextRequest) {
     if (!submission) {
       console.error(`[PIPELINE CALLBACK] Submission ${submission_id} not found`);
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
+    }
+
+    // A delayed callback from an older attempt must never overwrite the active
+    // retry. Legacy callbacks without a run ID remain backward compatible.
+    const activeRunId = ((submission.chambersData as any)?._pipeline_progress?.run_id || '') as string;
+    if (run_id && activeRunId && run_id !== activeRunId) {
+      console.warn(
+        `[PIPELINE CALLBACK] Ignoring stale run ${run_id}; active run is ${activeRunId}`,
+      );
+      return NextResponse.json({ status: 'stale_callback_ignored' });
     }
 
     // Persist lightweight, non-sensitive progress snapshots. These callbacks

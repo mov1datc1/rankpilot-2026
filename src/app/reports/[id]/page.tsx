@@ -197,7 +197,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <a
                   href={pipelineErrorView?.canRetry && submission.documentUrl
-                    ? `/submissions/processing?id=${submission.id}&url=${encodeURIComponent(submission.documentUrl)}`
+                    ? `/submissions/processing?id=${submission.id}&url=${encodeURIComponent(submission.documentUrl)}&retry=1`
                     : '/submissions'}
                   style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
                 >

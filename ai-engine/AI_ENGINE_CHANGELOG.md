@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.7 — authoritative legacy DOC extraction)
+> Last updated: **2026-09-01** (v26.8 — real retry execution)
+
+## v26.8 — REAL RETRY EXECUTION (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Terminal retry | Retry calls the processing endpoint before resetting the UI, producing a real atomic `Error → Processing` transition | processing page, `process-document/route.ts` |
+| Fresh checkpoint | Every attempt receives a unique LangGraph thread/run ID so a retry cannot resume the prior terminal checkpoint | `process-document/route.ts`, `main.py` |
+| Callback isolation | Progress/results carry the run ID; delayed callbacks from older attempts cannot overwrite the active retry | `main.py`, `pipeline-callback/route.ts` |
+| One-shot report action | Reports sends explicit retry intent and consumes it after enqueue, preventing refresh-driven retry loops | report and processing pages |
 
 ## v26.7 — AUTHORITATIVE LEGACY DOC EXTRACTION (2026-09-01)
 

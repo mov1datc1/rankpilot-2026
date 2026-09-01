@@ -14,6 +14,7 @@ function ProcessingContent() {
   const directory = searchParams.get('directory') || '';
   const region = searchParams.get('region') || '';
   const practice = searchParams.get('practice') || '';
+  const retryRequested = searchParams.get('retry') === '1';
 
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(1); 
@@ -29,6 +30,7 @@ function ProcessingContent() {
   const [progressLabel, setProgressLabel] = useState('Preparing the background job');
   const [estimatedTotalMinutes, setEstimatedTotalMinutes] = useState<number>(0);
   const [terminalState, setTerminalState] = useState<'processing' | 'submitted' | 'error'>('processing');
+  const [isRetrying, setIsRetrying] = useState(false);
   const isFinishedRef = useRef(false);
 
   // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Resilient Polling
@@ -97,7 +99,11 @@ function ProcessingContent() {
           if (checkRes.ok) {
             const checkData = await checkRes.json();
             applyStatus(checkData);
-            if (handleTerminalStatus(checkData)) return;
+            // A report-level Retry carries an explicit one-shot intent. An
+            // existing terminal Error must not short-circuit the new enqueue.
+            if (!(retryRequested && checkData.status === 'Error')) {
+              if (handleTerminalStatus(checkData)) return;
+            }
             if (checkData.status === 'Processing') {
               shouldTriggerPipeline = false;
               console.log('[PROCESSING PAGE] Resuming persisted background job');
@@ -146,6 +152,14 @@ function ProcessingContent() {
             setCanRetry(true);
             throw new Error(data.error || 'The AI extraction failed');
           }
+
+          // Consume the one-shot retry flag. Refreshing a later terminal error
+          // must display that error, never start an unbounded retry loop.
+          if (retryRequested) {
+            const nextParams = new URLSearchParams(searchParams.toString());
+            nextParams.delete('retry');
+            router.replace(`/submissions/processing?${nextParams.toString()}`, { scroll: false });
+          }
         }
 
         // Pipeline accepted — now poll for completion
@@ -177,7 +191,52 @@ function ProcessingContent() {
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [submissionId, documentUrl, rawText, docName, router, runToken]);
+  }, [submissionId, documentUrl, rawText, docName, router, runToken, retryRequested, searchParams]);
+
+  const retryProcessing = async () => {
+    if (!submissionId || isRetrying) return;
+    setIsRetrying(true);
+    try {
+      const res = await fetch('/api/process-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submissionId, originalFileName: docName }),
+      });
+      const responseText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error('The retry request could not be confirmed. Please try again shortly.');
+      }
+      if (!res.ok) {
+        throw new Error(data.error || 'Processing could not be restarted.');
+      }
+
+      isFinishedRef.current = false;
+      setErrorMsg(null);
+      setErrorTitle(null);
+      setErrorCode(null);
+      setSupportMsg(null);
+      setErrorReference(null);
+      setTerminalState('processing');
+      setProgress(2);
+      setProgressLabel('Preparing the background job');
+      setStep(1);
+      if (retryRequested) {
+        const nextParams = new URLSearchParams(searchParams.toString());
+        nextParams.delete('retry');
+        router.replace(`/submissions/processing?${nextParams.toString()}`, { scroll: false });
+      }
+      setRunToken((token) => token + 1);
+    } catch (err: any) {
+      setTerminalState('error');
+      setErrorTitle('Processing could not be restarted');
+      setErrorMsg(err.message || 'Processing could not be restarted.');
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
   const remainingMinutes = estimatedTotalMinutes
@@ -350,35 +409,12 @@ function ProcessingContent() {
             )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               {canRetry ? <button
-                onClick={async () => {
-                  try {
-                    const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
-                    if (checkRes.ok) {
-                      const checkData = await checkRes.json();
-                      if (checkData.status === 'Submitted') {
-                        setErrorMsg(null);
-                        setProgress(100);
-                        setTerminalState('submitted');
-                        setStep(4);
-                        router.push(`/reports/${submissionId}`);
-                        return;
-                      }
-                    }
-                  } catch {}
-                  setErrorMsg(null);
-                  setErrorTitle(null);
-                  setErrorCode(null);
-                  setSupportMsg(null);
-                  setErrorReference(null);
-                  setTerminalState('processing');
-                  setRunToken((token) => token + 1);
-                  setProgress(0);
-                  setStep(1);
-                }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
+                onClick={retryProcessing}
+                disabled={isRetrying}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: isRetrying ? 'wait' : 'pointer', opacity: isRetrying ? 0.75 : 1, boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
-                <RotateCw size={15} />
-                <span>Retry</span>
+                <RotateCw size={15} className={isRetrying ? 'animate-spin' : ''} />
+                <span>{isRetrying ? 'Restarting…' : 'Retry'}</span>
               </button> : <button
                 onClick={() => router.push('/submissions')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}

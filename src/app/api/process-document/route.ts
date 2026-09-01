@@ -137,6 +137,9 @@ export async function POST(request: NextRequest) {
     const webhookSecret = process.env.PIPELINE_WEBHOOK_SECRET || '';
     const processingStartedAt = new Date().toISOString();
     const existingChambersData = (submission.chambersData as any) || {};
+    const previousRunAttempt = Number(existingChambersData?._pipeline_progress?.run_attempt || 0);
+    const runAttempt = previousRunAttempt + 1;
+    const runId = crypto.randomUUID();
 
     // Atomically claim the job. Two tabs/refreshes may arrive together; only
     // one request is allowed to enqueue work in Render.
@@ -168,6 +171,8 @@ export async function POST(request: NextRequest) {
             stage_label: 'Preparing the background job',
             matter_count: 0,
             estimated_total_minutes: 25,
+            run_id: runId,
+            run_attempt: runAttempt,
             started_at: processingStartedAt,
             updated_at: processingStartedAt,
           },
@@ -181,7 +186,12 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_input: userInput,
-        thread_id: submissionId,
+        // Every retry receives a fresh LangGraph checkpoint namespace. Reusing
+        // the submission ID can resume a previous terminal checkpoint instead
+        // of executing a new run.
+        thread_id: runId,
+        submission_id: submissionId,
+        run_id: runId,
         is_file: Boolean(documentUrl || persistedDocumentUrl),
         context: {
           directory: submission.targetDirectory,

@@ -74,7 +74,7 @@ def _assert_release_approved(result: dict) -> None:
         )
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.7")
+api = FastAPI(title="RankPilot AI Core", version="26.8")
 
 @api.get("/health")
 async def health_check():
@@ -84,7 +84,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.7",
+        "version": "26.8",
         "environment": "Ubuntu/Docker"
     }
 
@@ -335,7 +335,7 @@ def _estimate_pipeline_minutes(matter_count: int) -> int:
 
 
 def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: str,
-                            thread_id: str, node_name: str, state: dict,
+                            submission_id: str, run_id: str, node_name: str, state: dict,
                             progress: int, started_at: float) -> None:
     matters = state.get("matters") if isinstance(state, dict) else []
     matter_count = len(matters) if isinstance(matters, list) else 0
@@ -348,7 +348,8 @@ def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: st
             callback_url,
             json={
                 "secret": webhook_secret,
-                "submission_id": thread_id,
+                "submission_id": submission_id,
+                "run_id": run_id,
                 "pipeline_progress": {
                     "progress": progress,
                     "stage": node_name,
@@ -364,7 +365,7 @@ def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: st
         )
         if response.status_code >= 400:
             print(
-                f"[PIPELINE PROGRESS] Callback rejected for {thread_id}: "
+                f"[PIPELINE PROGRESS] Callback rejected for {submission_id}/{run_id}: "
                 f"{response.status_code}"
             )
     except Exception as progress_err:
@@ -372,7 +373,9 @@ def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: st
         print(f"[PIPELINE PROGRESS] Non-fatal callback error: {progress_err}")
 
 
-def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_id: str, callback_url: str, webhook_secret: str):
+def _run_pipeline_sync(initial_state: dict, config: dict, context: dict,
+                       thread_id: str, submission_id: str, run_id: str,
+                       callback_url: str, webhook_secret: str):
     """
     Synchronous function that runs the full LangGraph pipeline and 
     POSTs results to the Vercel webhook when complete.
@@ -384,7 +387,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
         started_at = time.time()
         print(f"[ASYNC PIPELINE] Starting pipeline for thread {thread_id}...")
         _send_progress_callback(
-            sync_requests, callback_url, webhook_secret, thread_id,
+            sync_requests, callback_url, webhook_secret, submission_id, run_id,
             "ingestion", initial_state, 3, started_at,
         )
 
@@ -409,7 +412,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
             node_progress = PIPELINE_PROGRESS.get(pending_node, (last_progress, ""))[0]
             last_progress = max(last_progress, node_progress)
             _send_progress_callback(
-                sync_requests, callback_url, webhook_secret, thread_id,
+                sync_requests, callback_url, webhook_secret, submission_id, run_id,
                 pending_node, result, last_progress, started_at,
             )
             pending_node = ""
@@ -557,7 +560,8 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
             callback_url,
             json={
                 "secret": webhook_secret,
-                "submission_id": thread_id,
+                "submission_id": submission_id,
+                "run_id": run_id,
                 "pipeline_result": response_data,
             },
             headers={"Content-Type": "application/json"},
@@ -575,7 +579,8 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                 callback_url,
                 json={
                     "secret": webhook_secret,
-                    "submission_id": thread_id,
+                    "submission_id": submission_id,
+                    "run_id": run_id,
                     "pipeline_error": {
                         "code": e.code if isinstance(e, PipelineReleaseError) else "PIPELINE_EXECUTION_ERROR",
                         "message": str(e),
@@ -607,12 +612,14 @@ async def process_document_async(request: Request):
 
     user_input = data.get("user_input")
     thread_id = data.get("thread_id")
+    submission_id = data.get("submission_id") or thread_id
+    run_id = data.get("run_id") or thread_id
     is_file = data.get("is_file", False)
     context = data.get("context", {})
     callback_url = data.get("callback_url")
     webhook_secret = data.get("webhook_secret", "")
 
-    if not user_input or not thread_id or not callback_url:
+    if not user_input or not thread_id or not submission_id or not callback_url:
         return JSONResponse(status_code=400, content={
             "error": "Missing user_input, thread_id, or callback_url",
             "error_code": "MISSING_PARAMS"
@@ -682,7 +689,8 @@ async def process_document_async(request: Request):
     asyncio.get_event_loop().run_in_executor(
         None,
         _run_pipeline_sync,
-        initial_state, config, context, thread_id, callback_url, webhook_secret
+        initial_state, config, context, thread_id, submission_id, run_id,
+        callback_url, webhook_secret
     )
 
     print(f"[ASYNC PIPELINE] Accepted job for thread {thread_id}, will callback to {callback_url}")
