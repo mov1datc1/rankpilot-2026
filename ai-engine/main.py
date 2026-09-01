@@ -74,7 +74,7 @@ def _assert_release_approved(result: dict) -> None:
         )
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.4")
+api = FastAPI(title="RankPilot AI Core", version="26.5")
 
 @api.get("/health")
 async def health_check():
@@ -83,8 +83,8 @@ async def health_check():
     """
     return {
         "status": "online",
-        "message": "Hola Mundo - RankPilot Core is alive",
-        "version": "26.4",
+        "message": "RankPilot Core is online",
+        "version": "26.5",
         "environment": "Ubuntu/Docker"
     }
 
@@ -209,7 +209,7 @@ async def process_document(request: Request):
         print(f"[PIPELINE ERROR] LangGraph execution failed for thread {thread_id}:")
         print(error_msg)
         return JSONResponse(status_code=500, content={
-            "error": "El motor de IA encontró un error al procesar tu documento. Por favor, intenta de nuevo o contacta soporte.",
+            "error": "The AI engine encountered an error while processing your document. Please try again or contact support.",
             "error_code": "PIPELINE_EXECUTION_ERROR",
             "details": str(e),
             "thread_id": thread_id
@@ -303,27 +303,27 @@ async def process_document(request: Request):
 # =============================================================================
 
 PIPELINE_PROGRESS = {
-    "ingestion": (7, "Preparando el documento"),
-    "extraction": (15, "Identificando asuntos y abogados"),
-    "evidence_reconciliation": (22, "Verificando el registro contra el archivo"),
-    "pre_flight": (27, "Comprobando integridad del documento"),
-    "context_engine": (33, "Analizando el contexto de la postulación"),
-    "practice_intelligence": (39, "Contrastando la práctica y jurisdicción"),
-    "comprehension": (44, "Construyendo la lectura editorial"),
-    "identity_discovery": (49, "Definiendo el posicionamiento competitivo"),
-    "hypothesis_construction": (54, "Evaluando la tesis de reconocimiento"),
-    "refutation_engine": (59, "Sometiendo la tesis a pruebas de evidencia"),
-    "comparative_analysis": (64, "Comparando fortalezas y brechas"),
-    "editorial_confidence": (69, "Calculando la confianza editorial"),
-    "submission_blueprint": (74, "Diseñando la arquitectura de la postulación"),
-    "narrative_architecture": (79, "Organizando la narrativa estratégica"),
-    "analysis": (83, "Redactando el diagnóstico estratégico"),
-    "evidence_gap_analysis": (86, "Localizando brechas de evidencia"),
-    "optimization": (90, "Optimizando cada asunto con su evidencia"),
-    "artifact_validation": (95, "Validando los asuntos contra la fuente"),
-    "constitutional_validation": (97, "Ejecutando la revisión final de calidad"),
-    "writing": (99, "Preparando los entregables"),
-    "interrogation": (99, "Preparando preguntas de evidencia"),
+    "ingestion": (7, "Preparing the document"),
+    "extraction": (15, "Identifying matters and lawyers"),
+    "evidence_reconciliation": (22, "Checking the matter register against the file"),
+    "pre_flight": (27, "Checking document integrity"),
+    "context_engine": (33, "Analyzing the submission context"),
+    "practice_intelligence": (39, "Reviewing the practice and jurisdiction"),
+    "comprehension": (44, "Building the editorial reading"),
+    "identity_discovery": (49, "Defining the competitive position"),
+    "hypothesis_construction": (54, "Evaluating the recognition thesis"),
+    "refutation_engine": (59, "Testing the thesis against the evidence"),
+    "comparative_analysis": (64, "Comparing strengths and evidence gaps"),
+    "editorial_confidence": (69, "Calculating editorial confidence"),
+    "submission_blueprint": (74, "Designing the submission structure"),
+    "narrative_architecture": (79, "Organizing the strategic narrative"),
+    "analysis": (83, "Drafting the strategic assessment"),
+    "evidence_gap_analysis": (86, "Locating evidence gaps"),
+    "optimization": (90, "Optimizing each matter against its evidence"),
+    "artifact_validation": (95, "Validating every matter against the source"),
+    "constitutional_validation": (97, "Running the final quality review"),
+    "writing": (99, "Preparing the deliverables"),
+    "interrogation": (99, "Preparing evidence questions"),
 }
 
 
@@ -340,7 +340,7 @@ def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: st
     matters = state.get("matters") if isinstance(state, dict) else []
     matter_count = len(matters) if isinstance(matters, list) else 0
     _, stage_label = PIPELINE_PROGRESS.get(
-        node_name, (progress, "Procesando el documento")
+        node_name, (progress, "Processing the document")
     )
     estimated_minutes = _estimate_pipeline_minutes(matter_count)
     try:

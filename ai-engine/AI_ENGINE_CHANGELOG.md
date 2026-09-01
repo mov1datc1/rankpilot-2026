@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.4 — resumable processing and live-run repair)
+> Last updated: **2026-09-01** (v26.5 — verified source preservation)
+
+## v26.5 — VERIFIED SOURCE PRESERVATION (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Missing evidence maps | A rewrite without literal, source-resolvable quotes is replaced immediately by its exact canonical source span | `nodes.py`, `evidence_validation.py` |
+| Repair-aware artifact gate | Revalidate the repaired artifact and block only unresolved grounding failures; verified source text is a safe terminal state | `nodes.py` |
+| Terminal UI state | Submission success, processing and final-review error are independent states; progress 100 alone never implies success | processing page |
+| English customer copy | Progress, background-job guidance, errors, recovery actions and support references are English throughout the active flow | `main.py`, processing, Builder, Reports, callbacks |
 
 ## v26.4 — RESUMABLE PROCESSING & LIVE-RUN REPAIR (2026-09-01)
 

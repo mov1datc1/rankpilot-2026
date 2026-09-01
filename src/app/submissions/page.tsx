@@ -199,9 +199,9 @@ export default function SubmissionsPage() {
     } catch (error: any) {
       const msg = error.message || '';
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network') || !navigator.onLine) {
-        alert('⚠️ Error de conexión a internet.\n\nNo se pudo subir el archivo. Verifica tu conexión a internet e intenta de nuevo.');
+        alert('⚠️ Internet connection error.\n\nThe file could not be uploaded. Check your connection and try again.');
       } else if (msg.includes('Supabase Storage')) {
-        alert('⚠️ Error al subir el archivo.\n\nEl servicio de almacenamiento no respondió correctamente. Intenta de nuevo en unos segundos.');
+        alert('⚠️ File upload error.\n\nThe storage service did not respond correctly. Please try again in a few seconds.');
       } else {
         alert('Error: ' + msg);
       }
@@ -291,11 +291,11 @@ export default function SubmissionsPage() {
             <div>
               <p style={{ margin: 0, color: '#1e3a8a', fontWeight: 800 }}>
                 {processingSubmissions.length === 1
-                  ? 'Tu análisis continúa en segundo plano'
-                  : `${processingSubmissions.length} análisis continúan en segundo plano`}
+                  ? 'Your analysis is continuing in the background'
+                  : `${processingSubmissions.length} analyses are continuing in the background`}
               </p>
               <p style={{ margin: '0.2rem 0 0', color: '#475569', fontSize: '0.84rem' }}>
-                Volver al Builder no reinicia el procesamiento. Puedes iniciar otro trabajo o consultar el avance.
+                Returning to Builder will not restart processing. You can begin another job or check progress.
               </p>
             </div>
           </div>
@@ -304,13 +304,13 @@ export default function SubmissionsPage() {
               onClick={() => router.push(`/submissions/processing?id=${processingSubmissions[0].id}`)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid #93c5fd', background: '#fff', color: '#1d4ed8', cursor: 'pointer', fontWeight: 700 }}
             >
-              <Clock size={15} /> Ver avance
+              <Clock size={15} /> View progress
             </button>
             <button
               onClick={() => router.push('/reports')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 0.85rem', borderRadius: '8px', border: 'none', background: '#1d4ed8', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
             >
-              <FileBarChart size={15} /> Reportes
+              <FileBarChart size={15} /> Reports
             </button>
           </div>
         </div>

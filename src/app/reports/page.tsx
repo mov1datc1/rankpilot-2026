@@ -156,10 +156,10 @@ export default function ReportsPage() {
           <Clock size={20} />
           <div>
             <p style={{ margin: 0, fontWeight: 700 }}>
-              {processingCount === 1 ? '1 análisis continúa en segundo plano' : `${processingCount} análisis continúan en segundo plano`}
+              {processingCount === 1 ? '1 analysis is continuing in the background' : `${processingCount} analyses are continuing in the background`}
             </p>
             <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#475569' }}>
-              Esta lista se actualiza automáticamente. Puedes entrar a “Ver avance” sin reiniciar el trabajo.
+              This list updates automatically. You can view progress without restarting the job.
             </p>
           </div>
         </div>
@@ -303,7 +303,7 @@ export default function ReportsPage() {
                 } else if (sub.status === 'Submitted' && !needsEvidence) {
                   statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
                 } else if (sub.status === 'Processing') {
-                  statusBg = '#DBEAFE'; statusColor = '#1D4ED8'; StatusIcon = Clock; displayStatus = 'Procesando en segundo plano';
+                  statusBg = '#DBEAFE'; statusColor = '#1D4ED8'; StatusIcon = Clock; displayStatus = 'Processing in background';
                 } else if (sub.status === 'Draft') {
                   statusBg = '#F1F5F9'; statusColor = '#475569'; StatusIcon = Clock; displayStatus = 'Draft';
                 } else if (sub.status === 'Error') {

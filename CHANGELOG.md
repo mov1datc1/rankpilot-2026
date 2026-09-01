@@ -3,6 +3,22 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.5] — 2026-09-01
+
+### Verified source preservation and English processing UX
+
+- Confirmed the live `2fc6f073…` run was blocked because all 25 generated
+  matters lacked literal evidence mappings; Vercel remained healthy throughout.
+- Rewrites without verifiable source quotes now preserve the exact canonical
+  matter immediately. The artifact gate validates the repaired source text and
+  blocks only unresolved repairs, so safe source preservation cannot discard a
+  complete report.
+- Processing has explicit processing, success and error states. A failed final
+  review at 100% can no longer display the green success heading concurrently.
+- Converted progress stages, duration guidance, background-job notices,
+  recovery actions and support references to English across Builder, Reports,
+  processing and report-detail views.
+
 ## [v26.4] — 2026-09-01
 
 ### Resumable processing and owner live-run repair

@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
           _pipeline_progress: {
             progress: 2,
             stage: 'queued',
-            stage_label: 'Preparando el trabajo en segundo plano',
+            stage_label: 'Preparing the background job',
             matter_count: 0,
             estimated_total_minutes: 25,
             started_at: processingStartedAt,
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
       });
       return createErrorResponse(
         'AI_ENGINE_OFFLINE',
-        'El motor de IA no está disponible. Intenta de nuevo en unos minutos.',
+        'The AI engine is temporarily unavailable. Please try again in a few minutes.',
         `Render /process-async returned ${pyResponse.status}`,
       );
     }
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
               ...existingCD,
               _pipeline_error: {
                 code: 'SYSTEM_ERROR',
-                message: error.message || 'Error inesperado en el procesamiento',
+                message: error.message || 'Unexpected processing error',
                 timestamp: new Date().toISOString(),
               }
             }
@@ -247,17 +247,17 @@ export async function POST(request: NextRequest) {
     
     // Categorize error for user-facing message
     let errorCode = 'UNKNOWN_ERROR';
-    let userMessage = 'Ocurri\u00f3 un error inesperado al procesar tu documento.';
+    let userMessage = 'An unexpected error occurred while processing your document.';
     
     if (error.message?.includes('Unicode') || error.message?.includes('unicode')) {
       errorCode = 'UNICODE_ERROR';
-      userMessage = 'El documento contiene caracteres especiales que no pudieron ser procesados. Intenta guardar el documento como UTF-8 y s\u00fabelo de nuevo.';
+      userMessage = 'The document contains special characters that could not be processed. Save it as UTF-8 and upload it again.';
     } else if (error.message?.includes('fetch') || error.message?.includes('ECONNREFUSED')) {
       errorCode = 'AI_ENGINE_OFFLINE';
-      userMessage = 'El motor de IA no est\u00e1 disponible en este momento. Por favor, intenta de nuevo en unos minutos.';
+      userMessage = 'The AI engine is temporarily unavailable. Please try again in a few minutes.';
     } else if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
       errorCode = 'TIMEOUT';
-      userMessage = 'El procesamiento del documento tard\u00f3 demasiado. Intenta con un documento m\u00e1s peque\u00f1o o int\u00e9ntalo de nuevo.';
+      userMessage = 'Document processing took too long. Try again or use a smaller document.';
     }
     
     return createErrorResponse(errorCode, userMessage, error.message);

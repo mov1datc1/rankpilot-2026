@@ -38,7 +38,7 @@ from utils.canonical_builder import (  # noqa: E402
 )
 from utils.model_response import coerce_message_text  # noqa: E402
 from utils.objective_alignment import compose_b10_with_budget  # noqa: E402
-from agents.nodes import optimization_node, safe_json_loads  # noqa: E402
+from agents.nodes import artifact_validation_node, optimization_node, safe_json_loads  # noqa: E402
 
 
 class _FakeMessage:
@@ -54,6 +54,13 @@ class _FakeMatterModel:
 
     def invoke(self, _messages):
         return _FakeMessage()
+
+
+class _FakeMatterModelWithoutQuotes(_FakeMatterModel):
+    def invoke(self, _messages):
+        return type("Message", (), {
+            "content": '{"optimized_text":"Client A instructed the team on the stated mandate."}'
+        })()
 
 
 def matter(index: int, status: str = "publishable") -> MatterRecord:
@@ -431,6 +438,36 @@ Ongoing
         )
         self.assertNotEqual("Enhancement Failed", optimized["status"])
 
+    def test_optimization_without_evidence_map_preserves_exact_source(self):
+        source = (
+            "Publishable Matter 1\nD1 Name of client\nClient A\nD2 Summary\n"
+            "Client A instructed the team on the stated mandate."
+        )
+        state = {
+            "matters": [{
+                "title": "Matter 1",
+                "client": "Client A",
+                "summary": "Client A instructed the team on the stated mandate.",
+            }],
+            "canonical_submission": {
+                "matters": [{"source_span_ids": ["matter-span-01"]}],
+            },
+            "evidence_ledger": {"matter-span-01": {"text": source}},
+            "strategic_context": {},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 1}}},
+            "original_b10": "",
+            "original_c2": "",
+        }
+        with patch("agents.nodes.get_model", return_value=_FakeMatterModelWithoutQuotes()):
+            result = optimization_node(state)
+
+        optimized = result["matters"][0]
+        self.assertEqual(source, optimized["optimized_text"])
+        self.assertTrue(optimized["_source_fallback"])
+        self.assertEqual("Source Preserved", optimized["status"])
+
     def test_unknown_evidence_reference_fails(self):
         claim = EvidenceClaim(
             claim_id="claim-1",
@@ -487,6 +524,40 @@ Ongoing
     def test_source_fallback_does_not_require_claim_map(self):
         source = "The team advised Client 1."
         self.assertEqual([], validate_evidence_quotes(source, [], source))
+
+    def test_artifact_gate_accepts_verified_exact_source_repair(self):
+        source = "Client 1 instructed the team on the stated mandate."
+        result = artifact_validation_node({
+            "canonical_submission": {
+                "matters": [{
+                    "matter_id": "matter-01",
+                    "source_label": "Publishable Matter 1",
+                    "publish_status": "publishable",
+                    "client": "Client 1",
+                    "source_span_ids": ["span-01"],
+                }],
+                "lawyers": [],
+            },
+            "evidence_ledger": {
+                "span-01": {"text": source},
+            },
+            "matters": [{
+                "client": "Client 1",
+                "publish_status": "publishable",
+                "optimized_text": "Client 1 completed an unsupported audit.",
+                "_evidence_quotes": [],
+            }],
+            "analysis": {},
+            "strategic_context": {},
+            "gaps": [],
+            "interrogation_questions": [],
+            "matter_evidence_gaps": {},
+        })
+
+        self.assertTrue(result["artifact_validation"]["passed"])
+        self.assertEqual([], result["artifact_validation"]["matter_rollbacks"])
+        self.assertEqual(1, len(result["artifact_validation"]["source_preservations"]))
+        self.assertEqual(source, result["matters"][0]["optimized_text"])
 
     def test_generated_matter_client_change_fails(self):
         errors = validate_artifact_matter_register(

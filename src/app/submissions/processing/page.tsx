@@ -26,8 +26,9 @@ function ProcessingContent() {
   const [runToken, setRunToken] = useState(0);
   const [matterCount, setMatterCount] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [progressLabel, setProgressLabel] = useState('Preparando el trabajo en segundo plano');
+  const [progressLabel, setProgressLabel] = useState('Preparing the background job');
   const [estimatedTotalMinutes, setEstimatedTotalMinutes] = useState<number>(0);
+  const [terminalState, setTerminalState] = useState<'processing' | 'submitted' | 'error'>('processing');
   const isFinishedRef = useRef(false);
 
   // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Resilient Polling
@@ -49,7 +50,8 @@ function ProcessingContent() {
         setElapsedSeconds(statusData.elapsedSeconds);
       }
       const backendProgress = Number(statusData?.progress || 0);
-      if (backendProgress >= 99) setStep(4);
+      if (statusData?.status === 'Submitted') setStep(4);
+      else if (backendProgress >= 99) setStep(3);
       else if (backendProgress >= 74) setStep(3);
       else if (backendProgress >= 22) setStep(2);
       else setStep(1);
@@ -58,20 +60,23 @@ function ProcessingContent() {
     const handleTerminalStatus = (statusData: any) => {
       if (statusData.status === 'Submitted') {
         isFinishedRef.current = true;
+        setTerminalState('submitted');
         if (pollInterval) clearInterval(pollInterval);
         setErrorMsg(null);
         setProgress(100);
-        setProgressLabel('Entregables listos');
+        setProgressLabel('Deliverables ready');
         setStep(4);
         setTimeout(() => router.push(`/reports/${submissionId}`), 800);
         return true;
       }
       if (statusData.status === 'Error') {
         isFinishedRef.current = true;
+        setTerminalState('error');
+        setStep(3);
         if (pollInterval) clearInterval(pollInterval);
         setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
-        setErrorTitle(statusData.errorTitle || 'No pudimos completar el análisis');
-        setErrorMsg(statusData.errorMessage || 'No pudimos completar el análisis. Intenta nuevamente.');
+        setErrorTitle(statusData.errorTitle || 'The analysis could not be completed');
+        setErrorMsg(statusData.errorMessage || 'The analysis could not be completed. Please try again.');
         setSupportMsg(statusData.errorNextStep || null);
         setErrorReference(statusData.errorReference || null);
         setCanRetry(statusData.canRetry !== false);
@@ -127,17 +132,19 @@ function ProcessingContent() {
           } catch (jsonErr) {
             throw new Error(
               responseText?.includes('An error occurred')
-                ? 'El motor de IA esta reiniciandose. Por favor espera 30 segundos e intenta de nuevo.'
-                : `Error de conexion con el servidor (${res.status}). Intenta de nuevo en unos momentos.`
+                ? 'The AI engine is restarting. Please wait 30 seconds and try again.'
+                : `Server connection error (${res.status}). Please try again shortly.`
             );
           }
           
           if (!res.ok) {
             setErrorCode(data.errorCode || 'UNKNOWN');
-            setErrorTitle('No pudimos iniciar el procesamiento');
+            setTerminalState('error');
+            setStep(3);
+            setErrorTitle('Processing could not be started');
             setSupportMsg(data.supportMessage || null);
             setCanRetry(true);
-            throw new Error(data.error || 'Fallo en la extraccion de la IA');
+            throw new Error(data.error || 'The AI extraction failed');
           }
         }
 
@@ -160,6 +167,8 @@ function ProcessingContent() {
 
       } catch (err: any) {
         console.error(err);
+        setTerminalState('error');
+        setStep(3);
         setErrorMsg(err.message);
       }
     };
@@ -176,11 +185,14 @@ function ProcessingContent() {
     : 0;
   const waitingMessage = matterCount > 0
     ? elapsedMinutes >= 8
-      ? `Seguimos trabajando en ${matterCount} asuntos. Puedes ir por un café: este proceso continúa aunque cierres o actualices la página.`
-      : `Detectamos ${matterCount} asuntos. El tiempo estimado total es de aproximadamente ${estimatedTotalMinutes || 25} minutos.`
+      ? `We are still working through ${matterCount} matters. Feel free to grab a coffee—processing will continue if you close or refresh this page.`
+      : `We detected ${matterCount} matters. Estimated total processing time is approximately ${estimatedTotalMinutes || 25} minutes.`
     : elapsedMinutes >= 5
-      ? 'El documento es extenso y continúa procesándose de forma segura en segundo plano.'
-      : 'Estamos leyendo la estructura del documento y calcularemos el tiempo según los asuntos detectados.';
+      ? 'This is a substantial document and it is continuing safely in the background.'
+      : 'We are reading the document structure and will estimate the time after detecting its matters.';
+
+  const isSuccess = terminalState === 'submitted';
+  const isError = terminalState === 'error';
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 0' }}>
@@ -212,8 +224,8 @@ function ProcessingContent() {
             <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0 }}>{[directory, region, practice].filter(Boolean).join(' \u00B7 ') || 'Processing submission...'}</p>
             <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>submission_id: {submissionId}</p>
           </div>
-          <div style={{ padding: '0.5rem 1rem', background: step === 4 ? '#dcfce7' : '#e0e7ff', color: step === 4 ? '#15803d' : '#4338ca', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
-            {step === 4 ? 'Completed' : 'Processing'}
+          <div style={{ padding: '0.5rem 1rem', background: isSuccess ? '#dcfce7' : (isError ? '#ffe4e6' : '#e0e7ff'), color: isSuccess ? '#15803d' : (isError ? '#be123c' : '#4338ca'), borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 600 }}>
+            {isSuccess ? 'Completed' : (isError ? 'Review required' : 'Processing')}
           </div>
         </div>
 
@@ -226,12 +238,12 @@ function ProcessingContent() {
             <div style={{ position: 'absolute', inset: '10px', border: '1px dashed #94a3b8', borderRadius: '50%', animation: 'spin-reverse 15s linear infinite' }}></div>
             
             <div style={{ 
-              width: '64px', height: '64px', background: step === 4 ? '#16a34a' : '#2563eb', borderRadius: '16px', 
+              width: '64px', height: '64px', background: isSuccess ? '#16a34a' : (isError ? '#e11d48' : '#2563eb'), borderRadius: '16px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff',
-              boxShadow: step === 4 ? '0 10px 25px -5px rgba(22, 163, 74, 0.5)' : '0 10px 25px -5px rgba(37, 99, 235, 0.5)', zIndex: 10,
+              boxShadow: isSuccess ? '0 10px 25px -5px rgba(22, 163, 74, 0.5)' : (isError ? '0 10px 25px -5px rgba(225, 29, 72, 0.35)' : '0 10px 25px -5px rgba(37, 99, 235, 0.5)'), zIndex: 10,
               transition: 'background 0.3s ease'
             }}>
-              {step === 4 ? <CheckCircle2 size={36} /> : <Sparkles size={32} />}
+              {isSuccess ? <CheckCircle2 size={36} /> : (isError ? <AlertTriangle size={32} /> : <Sparkles size={32} />)}
             </div>
 
             {/* Orbiting icons */}
@@ -240,20 +252,22 @@ function ProcessingContent() {
           </div>
 
           <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', textAlign: 'center' }}>
-            {step === 4 
-              ? '¡Postulación procesada con éxito!' 
-              : progressLabel}
+            {isSuccess
+              ? 'Submission processed successfully!'
+              : (isError ? 'Processing stopped at the final review' : progressLabel)}
           </h2>
           <p style={{ fontSize: '1.25rem', color: '#64748b', textAlign: 'center' }}>
-            {step === 4 
-              ? 'Redirigiendo a la sección de Reportes...' 
+            {isSuccess
+              ? 'Redirecting to Reports...'
+              : isError
+                ? 'Your original document remains unchanged. See the guidance below.'
               : (matterCount > 0 
-                  ? `RankPilot está analizando y optimizando individualmente ${matterCount} asuntos.`
-                  : 'Extrayendo el contenido y las señales clave del archivo.')}
+                  ? `RankPilot is analyzing and optimizing ${matterCount} matters individually.`
+                  : 'Extracting key content and signals from the file.')}
           </p>
 
           {/* Reassuring badge for large submissions */}
-          {step !== 4 && (matterCount > 0 || elapsedMinutes >= 5) && (
+          {!isSuccess && !isError && (matterCount > 0 || elapsedMinutes >= 5) && (
             <div style={{ 
               marginTop: '1.25rem', 
               padding: '0.75rem 1.25rem', 
@@ -278,23 +292,23 @@ function ProcessingContent() {
         <div style={{ marginBottom: '3rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>
-              {step === 4 ? 'Completado' : 'Avance real por etapas'}
+              {isSuccess ? 'Completed' : (isError ? 'Final review stopped' : 'Live stage progress')}
             </span>
-            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: step === 4 ? '#16a34a' : '#2563eb' }}>{progress}%</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isSuccess ? '#16a34a' : (isError ? '#e11d48' : '#2563eb') }}>{progress}%</span>
           </div>
           <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: step === 4 ? '#16a34a' : '#2563eb', transition: 'width 0.3s ease-out' }}></div>
+            <div style={{ height: '100%', width: `${progress}%`, background: isSuccess ? '#16a34a' : (isError ? '#e11d48' : '#2563eb'), transition: 'width 0.3s ease-out' }}></div>
           </div>
-          {step !== 4 && !errorMsg && (
+          {!isSuccess && !isError && !errorMsg && (
             <div style={{ marginTop: '1rem', padding: '1rem 1.15rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <div>
                 <p style={{ margin: 0, color: '#334155', fontSize: '0.9rem', fontWeight: 700 }}>
-                  Continúa en segundo plano
+                  Continues in the background
                 </p>
                 <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.82rem' }}>
-                  Puedes actualizar, cerrar esta página o seguir trabajando. No se reiniciará.
-                  {elapsedMinutes > 0 ? ` Tiempo transcurrido: ${elapsedMinutes} min.` : ''}
-                  {remainingMinutes > 0 ? ` Estimado restante: ~${remainingMinutes} min.` : ''}
+                  You can refresh, close this page, or keep working. Processing will not restart.
+                  {elapsedMinutes > 0 ? ` Elapsed time: ${elapsedMinutes} min.` : ''}
+                  {remainingMinutes > 0 ? ` Estimated time remaining: ~${remainingMinutes} min.` : ''}
                 </p>
               </div>
               <button
@@ -302,7 +316,7 @@ function ProcessingContent() {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 0.9rem', background: '#fff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}
               >
                 <FileBarChart size={15} />
-                Seguir en Reportes
+                Continue in Reports
               </button>
             </div>
           )}
@@ -323,7 +337,7 @@ function ProcessingContent() {
                 <AlertTriangle size={18} color="#e11d48" />
               </div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#9f1239', margin: 0 }}>
-                {errorTitle || 'No pudimos completar el procesamiento'}
+                {errorTitle || 'Processing could not be completed'}
               </h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: '#881337', margin: '0 0 1.25rem 0', lineHeight: 1.6 }}>
@@ -331,7 +345,7 @@ function ProcessingContent() {
             </p>
             {supportMsg && (
               <div style={{ fontSize: '0.85rem', color: '#78350f', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', lineHeight: 1.55 }}>
-                <strong>Qué puedes hacer:</strong> {supportMsg}
+                <strong>What you can do:</strong> {supportMsg}
               </div>
             )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -344,6 +358,7 @@ function ProcessingContent() {
                       if (checkData.status === 'Submitted') {
                         setErrorMsg(null);
                         setProgress(100);
+                        setTerminalState('submitted');
                         setStep(4);
                         router.push(`/reports/${submissionId}`);
                         return;
@@ -355,6 +370,7 @@ function ProcessingContent() {
                   setErrorCode(null);
                   setSupportMsg(null);
                   setErrorReference(null);
+                  setTerminalState('processing');
                   setRunToken((token) => token + 1);
                   setProgress(0);
                   setStep(1);
@@ -362,25 +378,25 @@ function ProcessingContent() {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
                 <RotateCw size={15} />
-                <span>Reintentar</span>
+                <span>Retry</span>
               </button> : <button
                 onClick={() => router.push('/submissions')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
                 <FileText size={15} />
-                <span>Revisar y volver a cargar</span>
+                <span>Review and upload again</span>
               </button>}
               <button
                 onClick={() => router.push('/reports')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#ffffff', color: '#475569', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
               >
                 <FileBarChart size={15} />
-                <span>Ir a Reportes</span>
+                <span>Go to Reports</span>
               </button>
             </div>
             {errorReference && (
               <p style={{ fontSize: '0.72rem', color: '#9f1239', margin: '0.9rem 0 0' }}>
-                Referencia para soporte: {errorReference}
+                Support reference: {errorReference}
               </p>
             )}
           </div>

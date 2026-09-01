@@ -183,15 +183,15 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>
-                  {pipelineErrorView?.title || 'Análisis pendiente de generación'}
+                  {pipelineErrorView?.title || 'Analysis has not been generated'}
                 </h3>
               </div>
               <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
-                {pipelineErrorView?.message || 'Todavía no se ha generado el análisis de este documento.'}
+                {pipelineErrorView?.message || 'The analysis for this document has not been generated yet.'}
               </p>
               {pipelineErrorView?.nextStep && (
                 <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                  <strong>Qué puedes hacer:</strong> {pipelineErrorView.nextStep}
+                  <strong>What you can do:</strong> {pipelineErrorView.nextStep}
                 </p>
               )}
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -201,18 +201,18 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                     : '/submissions'}
                   style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
                 >
-                  {pipelineErrorView?.canRetry ? 'Reintentar procesamiento' : 'Revisar y volver a cargar'}
+                  {pipelineErrorView?.canRetry ? 'Retry processing' : 'Review and upload again'}
                 </a>
                 <a
                   href="/submissions"
                   style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}
                 >
-                  ← Volver a Submissions
+                  ← Back to Submissions
                 </a>
               </div>
               {pipelineError?.timestamp && (
                 <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.75rem 0 0' }}>
-                  Referencia para soporte: {pipelineErrorView?.reference} · Registrado: {new Date(pipelineError.timestamp).toLocaleString()}
+                  Support reference: {pipelineErrorView?.reference} · Recorded: {new Date(pipelineError.timestamp).toLocaleString()}
                 </p>
               )}
             </div>

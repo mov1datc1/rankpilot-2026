@@ -2943,9 +2943,30 @@ def optimization_node(state: AgentState) -> Dict:
             ):
                 optimized_text = f"Client: {canonical_client}.\n\n{optimized_text}"
             
-            matter['optimized_text'] = optimized_text
-            matter['_evidence_quotes'] = evidence_quotes
-            matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
+            # A rewrite without literal provenance is not deliverable. Preserve
+            # the exact canonical source immediately instead of carrying an
+            # ungrounded candidate into the final gate, where it used to make
+            # an otherwise valid multi-matter submission fail as a whole.
+            from utils.evidence_validation import validate_evidence_quotes
+            quote_errors = validate_evidence_quotes(
+                optimized_text,
+                evidence_quotes,
+                exact_source,
+            )
+            if quote_errors and exact_source:
+                print(
+                    f"  [SOURCE PRESERVATION] Matter {matter_idx + 1}: "
+                    f"rewrite lacked verifiable provenance; preserving source"
+                )
+                matter['optimized_text'] = exact_source
+                matter['_evidence_quotes'] = []
+                matter['_source_fallback'] = True
+                matter['_grounding_repair'] = quote_errors
+                matter['status'] = 'Source Preserved'
+            else:
+                matter['optimized_text'] = optimized_text
+                matter['_evidence_quotes'] = evidence_quotes
+                matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
             
         except Exception as e:
             print(f"Error enhancing matter: {e}")
@@ -3350,6 +3371,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
     ledger = state.get("evidence_ledger", {})
     errors = validate_artifact_matter_register(canonical_matters, generated_matters)
     source_preservations = []
+    unresolved_grounding_failures = []
 
     if len(canonical_matters) == len(generated_matters):
         for index, (canonical, generated) in enumerate(
@@ -3394,6 +3416,24 @@ def artifact_validation_node(state: AgentState) -> Dict:
                     }
                 )
 
+                # Validate the repaired artifact, not the rejected candidate.
+                # Exact-source preservation is a safe terminal state and must
+                # not be mislabeled as a failed rollback. Only a repair that is
+                # still invalid is allowed to block the release.
+                repaired_errors = validate_optimized_matter_text(
+                    canonical, fallback, source_text
+                )
+                repaired_errors.extend(
+                    validate_evidence_quotes(fallback, [], source_text)
+                )
+                if repaired_errors:
+                    unresolved_grounding_failures.append(
+                        {
+                            "matter_id": canonical.matter_id,
+                            "errors": repaired_errors,
+                        }
+                    )
+
     audit = repair_objective_conflicts(
         state.get("analysis", {}), state.get("strategic_context", {})
     )
@@ -3428,17 +3468,11 @@ def artifact_validation_node(state: AgentState) -> Dict:
             "defensible_on_submitted_evidence": bool(supporting),
             "follow_up_question": question,
         })
-    # A small number of exact-source preservations is a safe, explainable
-    # degradation; a systemic fallback remains a hard failure. This prevents one
-    # imperfect rewrite from discarding an otherwise valid 25-matter report.
-    max_safe_preservations = max(1, len(canonical_matters) // 10)
-    systemic_preservation_failure = len(source_preservations) > max_safe_preservations
     artifact_validation = {
-        "passed": not errors and not systemic_preservation_failure,
+        "passed": not errors and not unresolved_grounding_failures,
         "errors": errors,
-        "matter_rollbacks": source_preservations if systemic_preservation_failure else [],
+        "matter_rollbacks": unresolved_grounding_failures,
         "source_preservations": source_preservations,
-        "source_preservation_limit": max_safe_preservations,
         "optimized_matter_count": len(generated_matters),
         "audit_present": bool(audit),
     }
