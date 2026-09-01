@@ -8,6 +8,10 @@ import {
 } from 'docx';
 import { buildSubmissionDoc } from './submission-builder';
 
+// Letter page width (8.5") minus 1" margins on both sides, in twentieths
+// of a point. Google Docs requires explicit DXA table/grid/cell widths.
+const CONTENT_WIDTH_DXA = 9360;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -95,7 +99,6 @@ export async function GET(request: NextRequest) {
         narrative_strategy: letter.narrative_strategy || [],
         the_path_to_dominance: letter.the_path_to_dominance || [],
         matter_evaluations: letter.matter_evaluations || analysis.matter_evaluations || [],
-        recommended_rewrites: letter.recommended_rewrites || analysis.recommended_rewrites || [],
         competitive_positioning_text: letter.competitive_positioning_text || '',
       };
     }
@@ -228,23 +231,32 @@ function emptyRow(): Paragraph {
 
 // Create a proper Word table
 function makeTable(headers: string[], rows: string[][]): Table {
-  const headerCells = headers.map(h => new TableCell({
+  const baseColumnWidth = Math.floor(CONTENT_WIDTH_DXA / headers.length);
+  const columnWidths = headers.map((_, index) =>
+    index === headers.length - 1
+      ? CONTENT_WIDTH_DXA - baseColumnWidth * (headers.length - 1)
+      : baseColumnWidth
+  );
+
+  const headerCells = headers.map((h, index) => new TableCell({
     children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 20, color: NAVY })], spacing: { after: 40 } })],
     shading: { type: ShadingType.SOLID, color: HEADER_BG },
     verticalAlign: VerticalAlign.CENTER,
-    width: { size: Math.floor(10000 / headers.length), type: WidthType.DXA },
+    width: { size: columnWidths[index], type: WidthType.DXA },
   }));
 
   const dataRows = rows.map(row => new TableRow({
-    children: row.map(cell => new TableCell({
-      children: [new Paragraph({ children: [new TextRun({ text: cell || '', size: 20 })], spacing: { after: 40 } })],
+    children: headers.map((_, index) => new TableCell({
+      children: [new Paragraph({ children: [new TextRun({ text: row[index] || '', size: 20 })], spacing: { after: 40 } })],
       verticalAlign: VerticalAlign.CENTER,
+      width: { size: columnWidths[index], type: WidthType.DXA },
     })),
   }));
 
   return new Table({
     rows: [new TableRow({ children: headerCells }), ...dataRows],
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+    columnWidths,
     layout: TableLayoutType.FIXED,
   });
 }
@@ -266,6 +278,13 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const submissionBlueprint = chambersData.submission_blueprint || {};
   const comparativeAnalysis = chambersData.comparative_analysis || {};
   const pipelineManifest = chambersData.pipeline_manifest || {};
+  const gapAnalysis = chambersData.matter_evidence_gaps || {};
+  const artifactValidation = chambersData.artifact_validation || {};
+  const evidenceReconciliation = chambersData.evidence_reconciliation || {};
+  const strategicAudit = chambersData.strategic_audit || {};
+  const lawyerAccountability = Array.isArray(strategicAudit.lawyer_accountability)
+    ? strategicAudit.lawyer_accountability
+    : [];
 
   // Title
   sections.push(
@@ -326,7 +345,9 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     const sourceMatters = docInfo.source_matters || {};
     const extraction = pipelineManifest.extraction || {};
     const ragFiles = pipelineManifest.rag_files_loaded || [];
-    const hasLoss = (extraction.loss_count || 0) > 0;
+    const ragChunks = Array.isArray(pipelineManifest.rag_chunks_loaded) ? pipelineManifest.rag_chunks_loaded : [];
+    const modelProfiles = pipelineManifest.model_profiles || {};
+    const hasLoss = (extraction.loss_count || 0) > 0 || (extraction.over_extraction_count || 0) > 0;
     const isMatch = extraction.match === true;
 
     sections.push(
@@ -339,7 +360,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
 
     if (hasLoss) {
       sections.push(
-        p(`⚠️ MATTER LOSS DETECTED: ${extraction.loss_count} matters lost (${extraction.loss_percentage || 0}%)`, { bold: true, color: 'DC2626', size: 22, spacing: { after: 120 } })
+        p(`⚠️ MATTER REGISTER MISMATCH: ${extraction.loss_count || 0} missing; ${extraction.over_extraction_count || 0} unsupported additions`, { bold: true, color: 'DC2626', size: 22, spacing: { after: 120 } })
       );
     } else if (isMatch) {
       sections.push(
@@ -365,6 +386,41 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
       sections.push(p('RAG Knowledge Files Loaded:', { bold: true, size: 20, spacing: { after: 60 } }));
       for (const fn of ragFiles) {
         sections.push(p(`  • ${fn}`, { size: 18, spacing: { after: 30 } }));
+      }
+    }
+
+    if (Object.keys(modelProfiles).length > 0) {
+      sections.push(p('AI Model Execution Profiles:', { bold: true, size: 20, spacing: { before: 100, after: 60 } }));
+      const modelRows = Object.entries(modelProfiles as Record<string, Record<string, unknown>>).map(([stage, rawProfile]) => {
+        const profile = rawProfile || {};
+        return [stage, String(profile.model || 'N/A'), String(profile.reasoning_effort || 'N/A'), String(profile.api_mode || 'N/A')];
+      });
+      sections.push(makeTable(['Stage', 'Model', 'Reasoning', 'API'], modelRows));
+      sections.push(emptyRow());
+    }
+
+    if (ragChunks.length > 0) {
+      sections.push(p('RAG Chunks Used (methodology only):', { bold: true, size: 20, spacing: { before: 100, after: 60 } }));
+      const ragRows = ragChunks.map((chunk: Record<string, unknown>) => [
+        String(chunk.chunk_id || ''),
+        String(chunk.source || ''),
+        String(chunk.tier || ''),
+        String(chunk.score ?? ''),
+      ]);
+      sections.push(makeTable(['Chunk ID', 'Source', 'Tier', 'Score'], ragRows));
+      sections.push(emptyRow());
+    }
+
+    if (Object.keys(evidenceReconciliation).length > 0) {
+      const reconciliationPassed = evidenceReconciliation.passed === true;
+      sections.push(p(
+        `Canonical evidence reconciliation: ${reconciliationPassed ? 'PASSED' : 'FAILED'} | Matters: ${evidenceReconciliation.matter_count ?? 'N/A'} | Source spans: ${evidenceReconciliation.source_span_count ?? 'N/A'}`,
+        { bold: true, color: reconciliationPassed ? '16A34A' : 'DC2626', spacing: { before: 100, after: 80 } }
+      ));
+      if (Array.isArray(evidenceReconciliation.errors)) {
+        for (const error of evidenceReconciliation.errors) {
+          sections.push(p(`• ${String(error)}`, { color: 'DC2626', size: 18, spacing: { after: 30 } }));
+        }
       }
     }
 
@@ -407,10 +463,13 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const evidenceScore = editorialConfidence.evidence_completeness_score || 0;
   const overallConf = String(editorialConfidence.overall_confidence || '').toLowerCase();
   const evidenceThresholdMet = editorialConfidence.evidence_threshold_met !== false;
-  if (evidenceScore < 70 || overallConf === 'low' || overallConf === 'moderate' || overallConf === 'limited' || !evidenceThresholdMet) {
+  const matterRegisterReconciled = pipelineManifest?.extraction?.match === true;
+  if (!matterRegisterReconciled || !evidenceThresholdMet) {
     sections.push(
       sectionTitle('⚠️ Insufficient Evidence for Full Analysis'),
-      p('The submission does not contain sufficient structured evidence to support a complete ranking analysis. Key sections of the Chambers submission template (Section D: Publishable Matters, Section E: Confidential Matters, Client Lists) appear incomplete or missing.', { spacing: { after: 100 } }),
+      p(matterRegisterReconciled
+        ? 'The numbered matter register is complete, but one or more material conclusions require additional support. The targeted questions later in this Audit identify exactly what should be confirmed.'
+        : 'The source and extracted matter registers did not reconcile exactly. Strategic conclusions must remain provisional until the register is corrected.', { spacing: { after: 100 } }),
       p(`Evidence Completeness: ${evidenceScore}% | Overall Confidence: ${overallConf || 'pending'} | Recommendation: ${editorialConfidence.recommendation || 'proceed_with_caveats'}`, { bold: true, color: 'DC2626', spacing: { after: 100 } }),
       p('This assessment is based on the evidence provided. Stronger evidence (specific transaction details, client names, deal values, regulatory outcomes) would significantly improve the ranking case.', { italics: true, color: GRAY, spacing: { after: 300 } })
     );
@@ -562,7 +621,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const matterEvals = Array.isArray(letter.matter_evaluations) ? letter.matter_evaluations : [];
   if (matterEvals.length > 0) {
     sections.push(sectionTitle('Case Evaluation — Matter Scores'));
-    const evalRows = matterEvals.map((ev: any) => [
+    const evalRows = matterEvals.map((ev: Record<string, unknown>) => [
       ev.matter_name || 'Unknown',
       ev.type || 'publishable',
       ev.quality_label || 'Pending',
@@ -572,86 +631,54 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     sections.push(makeTable(['Matter', 'Type', 'Quality Label', 'Score', 'Improvement Note'], evalRows));
     sections.push(emptyRow());
 
-    // ═══ NEW §6b: Evidence Strengthening Requests (OBS-7/8) ═══
-    // Scan matters for weak evidence and generate information requests
-    const weakMatters = matterEvals.filter((ev: any) => {
-      const score = typeof ev.score === 'number' ? ev.score : 0;
-      const note = (ev.improvement_note || '').toLowerCase();
-      // Flag matters with low scores or generic outcomes
-      return score < 70 || note.includes('generic') || note.includes('quantif') || note.includes('evidence') || note.includes('measurable');
-    });
-
-    // Also check the actual matter texts for weak claims
-    const allMatters = Array.isArray(chambersData.matters) ? chambersData.matters : [];
-    const infoRequests: Array<{ matter: string; questions: string[] }> = [];
-    
-    for (const matter of allMatters) {
-      const text = (matter.optimized_text || matter.summary || '').toLowerCase();
-      const client = matter.client || matter.title || 'Unknown';
-      const questions: string[] = [];
-      
-      // Detect weak generic claims
-      if (text.includes('strengthened compliance posture') || text.includes('enhanced compliance')) {
-        questions.push('How was compliance strengthened? Number of policies implemented, employees trained, or audits passed?');
-      }
-      if (text.includes('reduced regulatory exposure') || text.includes('regulatory risk')) {
-        questions.push('What specific regulatory exposure was reduced? Were any sanctions avoided? Were there interactions with authorities?');
-      }
-      if (text.includes('improved regulatory compliance') || text.includes('improve regulatory')) {
-        questions.push('What measurable improvement occurred? Number of ARCO requests handled, zero-sanctions track record, or audit results?');
-      }
-      // Detect missing quantifiable evidence
-      if (!text.match(/\d+%|\d+ year|\d+ employee|\d+ store|\d+ entit|\d+ polic|\d+ train/)) {
-        questions.push('Can the firm provide specific numbers? (e.g., employees trained, policies drafted, entities covered, years of relationship)');
-      }
-      // Detect missing outcome
-      if (!text.match(/achieved|avoided|zero sanction|100%|established.*department|created.*function/)) {
-        questions.push('What was the concrete outcome? Did the client avoid sanctions, pass an audit, or establish a new internal function?');
-      }
-      
-      if (questions.length > 0) {
-        infoRequests.push({ matter: client, questions });
-      }
-    }
-
-    if (infoRequests.length > 0) {
-      sections.push(sectionTitle('Evidence Strengthening Requests'));
-      sections.push(p('The following matters contain claims that would be significantly stronger with additional supporting evidence. These are not weaknesses — they are opportunities to convert good matters into excellent ones.', { italics: true, color: GRAY, spacing: { after: 200 } }));
-      
-      for (const req of infoRequests) {
-        sections.push(p(req.matter, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } }));
-        for (const q of req.questions) {
-          sections.push(p(`→ ${q}`, { color: 'D97706', spacing: { after: 60 } }));
-        }
-      }
-      sections.push(emptyRow());
-    }
   }
 
-  // AI Recommended Rewrites
-  const rewrites = Array.isArray(letter.recommended_rewrites) ? letter.recommended_rewrites : [];
-  if (rewrites.length > 0) {
-    sections.push(sectionTitle('AI-Recommended Matter Rewrites'));
-    sections.push(p('The following matters have been identified as strategically weak. Below are AI-generated improved versions ready for submission:', { color: GRAY, italics: true, spacing: { after: 200 } }));
-
-    for (let i = 0; i < rewrites.length; i++) {
-      const rw = rewrites[i];
+  // Evidence gaps are questions, never invented rewrites.
+  const evidenceGaps = Array.isArray(gapAnalysis.gaps) ? gapAnalysis.gaps : [];
+  if (evidenceGaps.length > 0 || gapAnalysis.c2_question) {
+    sections.push(sectionTitle('Evidence Development — Ask, Don’t Invent'));
+    sections.push(p('Each item separates the current evidentiary record from information that should be confirmed before any further rewrite.', { italics: true, color: GRAY, spacing: { after: 200 } }));
+    for (const gap of evidenceGaps) {
       sections.push(
-        p(`Rewrite ${i + 1}`, { bold: true, size: 24, color: NAVY, spacing: { before: 300, after: 80 } }),
-        p('ORIGINAL:', { bold: true, color: 'B91C1C', spacing: { after: 60 } }),
-        p(String(rw.original || 'N/A'), { color: '6B7280', italics: true, spacing: { after: 120 } }),
-        p('IMPROVED VERSION:', { bold: true, color: '15803D', spacing: { after: 60 } }),
-        p(String(rw.improved || 'N/A'), { spacing: { after: 120 } }),
-        p(`Rationale: ${String(rw.rationale || '')}`, { italics: true, color: GRAY, spacing: { after: 200 } })
+        p(String(gap.matter_name || gap.matter_id || 'Matter'), { bold: true, size: 24, color: NAVY, spacing: { before: 220, after: 70 } }),
+        p(`Known facts: ${(Array.isArray(gap.known_facts) ? gap.known_facts : []).join('; ')}`, { spacing: { after: 60 } }),
+        p(`Evidentiary value: ${String(gap.evidentiary_value || '')}`, { spacing: { after: 60 } }),
+        p(`Missing fact: ${String(gap.missing_fact || '')}`, { color: GRAY, spacing: { after: 60 } }),
+        p(`Question for the firm: ${String(gap.targeted_question || '')}`, { bold: true, color: 'D97706', spacing: { after: 60 } }),
+        p(`Positioning supportable now: ${String(gap.proposed_positioning || '')}`, { color: '15803D', spacing: { after: 120 } })
+      );
+    }
+    if (gapAnalysis.c2_question) {
+      sections.push(
+        p('C2 — Competitive Feedback', { bold: true, size: 24, color: NAVY, spacing: { before: 220, after: 70 } }),
+        p(`Question for the firm: ${String(gapAnalysis.c2_question)}`, { bold: true, color: 'D97706', spacing: { after: 180 } })
       );
     }
   }
 
-  // AI Competitive Positioning Text
-  if (letter.competitive_positioning_text) {
-    sections.push(sectionTitle('Ready-to-Use Competitive Positioning'));
-    sections.push(p('The following paragraph is AI-generated and ready to be inserted into Section B7 or C2 of your submission:', { italics: true, color: GRAY, spacing: { after: 100 } }));
-    sections.push(p(String(letter.competitive_positioning_text), { spacing: { after: 300 } }));
+  if (artifactValidation.matter_rollbacks?.length) {
+    sections.push(sectionTitle('Evidence Integrity Controls Applied'));
+    sections.push(p(`${artifactValidation.matter_rollbacks.length} matter rewrite(s) were reverted to source-backed text because the generated candidate introduced or omitted a protected fact.`, { color: 'B45309', spacing: { after: 200 } }));
+  }
+
+  if (lawyerAccountability.length > 0) {
+    sections.push(sectionTitle('Lawyer Ranking Accountability'));
+    sections.push(p('Each submitted lawyer is tied to the matters that support a personal ranking case. A question is shown where the source does not yet identify that lawyer’s role.', { italics: true, color: GRAY, spacing: { after: 200 } }));
+    const lawyerRows = lawyerAccountability.map((lawyer: Record<string, unknown>) => [
+      String(lawyer.name || 'Unknown'),
+      String(lawyer.current_ranking || (lawyer.is_ranked ? 'Ranked — band not stated' : 'No ranking stated')),
+      Array.isArray(lawyer.supporting_matter_ids) && lawyer.supporting_matter_ids.length > 0
+        ? lawyer.supporting_matter_ids.join(', ')
+        : 'No submitted matter linked',
+      lawyer.defensible_on_submitted_evidence ? 'Supported' : 'Evidence gap',
+    ]);
+    sections.push(makeTable(['Lawyer', 'Current ranking', 'Supporting matters', 'Status'], lawyerRows));
+    for (const lawyer of lawyerAccountability) {
+      if (lawyer.follow_up_question) {
+        sections.push(p(`${lawyer.name}: ${lawyer.follow_up_question}`, { bold: true, color: 'D97706', spacing: { before: 100, after: 80 } }));
+      }
+    }
+    sections.push(emptyRow());
   }
 
   // ═══ NEW §7: Editorial Reasoning Trace ═══
@@ -686,7 +713,7 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   const allDispositions = Array.isArray(submissionBlueprint.all_matter_dispositions) ? submissionBlueprint.all_matter_dispositions : [];
   if (allDispositions.length > 0 || submissionBlueprint.transformation_summary) {
     sections.push(sectionTitle('Matter Accountability'));
-    sections.push(p(`${submission.matters?.length || allDispositions.length} matters tracked — zero loss guarantee`, { bold: true, color: '065F46', spacing: { after: 100 } }));
+    sections.push(p(`${submission.matters?.length || allDispositions.length} matters tracked — ${matterRegisterReconciled ? 'count reconciled to source' : 'reconciliation pending'}`, { bold: true, color: matterRegisterReconciled ? '065F46' : 'B45309', spacing: { after: 100 } }));
     
     if (submissionBlueprint.transformation_summary) {
       sections.push(
@@ -730,4 +757,3 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     sections: [{ children: sections }],
   });
 }
-

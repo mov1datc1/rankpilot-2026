@@ -13,6 +13,7 @@ from langchain_core.messages import HumanMessage
 from agents.nodes import writer_node
 from utils.docx_generator import generate_docx_report
 from utils.language_guard import filter_pipeline_output
+from utils.ooxml_validation import validate_docx_ooxml
 from core.docx_cloner import clone_and_replace_from_state
 from utils.editorial_memory import (
     load_memory, save_memory, extract_lessons_from_result, format_memory_for_prompt
@@ -134,7 +135,19 @@ async def process_document(request: Request):
         "editorial_memory": "",
         "current_step": "ingestion",
         "pipeline_manifest": {},
+        "canonical_submission": {},
+        "strategic_objective": {},
+        "evidence_ledger": {},
+        "gaps": [],
+        "interrogation_questions": [],
+        "evidence_reconciliation": {},
+        "requires_user_input": False,
+        "optimized_submission": {},
+        "strategic_audit": {},
+        "artifact_validation": {},
+        "matter_evidence_gaps": {},
         "original_b10": "",
+        "original_c2": "",
         "enhanced_b7": "",
     }
 
@@ -206,6 +219,16 @@ async def process_document(request: Request):
                 "reasoning_trace": result.get("reasoning_trace", []),
                 "pipeline_manifest": result.get("pipeline_manifest", {}),
                 "enhanced_b7": result.get("enhanced_b7", ""),
+                "enhanced_c2": result.get("enhanced_c2", ""),
+                "canonical_submission": result.get("canonical_submission", {}),
+                "strategic_objective": result.get("strategic_objective", {}),
+                "gaps": result.get("gaps", []),
+                "interrogation_questions": result.get("interrogation_questions", []),
+                "optimized_submission": result.get("optimized_submission", {}),
+                "strategic_audit": result.get("strategic_audit", {}),
+                "artifact_validation": result.get("artifact_validation", {}),
+                "matter_evidence_gaps": result.get("matter_evidence_gaps", {}),
+                "evidence_reconciliation": result.get("evidence_reconciliation", {}),
             }
         }
 
@@ -286,6 +309,16 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                 "reasoning_trace": result.get("reasoning_trace", []),
                 "pipeline_manifest": result.get("pipeline_manifest", {}),
                 "enhanced_b7": result.get("enhanced_b7", ""),
+                "enhanced_c2": result.get("enhanced_c2", ""),
+                "canonical_submission": result.get("canonical_submission", {}),
+                "strategic_objective": result.get("strategic_objective", {}),
+                "gaps": result.get("gaps", []),
+                "interrogation_questions": result.get("interrogation_questions", []),
+                "optimized_submission": result.get("optimized_submission", {}),
+                "strategic_audit": result.get("strategic_audit", {}),
+                "artifact_validation": result.get("artifact_validation", {}),
+                "matter_evidence_gaps": result.get("matter_evidence_gaps", {}),
+                "evidence_reconciliation": result.get("evidence_reconciliation", {}),
             }
         }
 
@@ -297,12 +330,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
         try:
             file_path = result.get("file_path", "")
             enhanced_b7 = result.get("enhanced_b7", "")
-            enhanced_c2 = (
-                result.get("enhanced_c2")
-                or (result.get("analysis", {}).get("competitive_positioning_text") if isinstance(result.get("analysis"), dict) else "")
-                or (result.get("analysis", {}).get("audit_letter", {}).get("competitive_positioning_text") if isinstance(result.get("analysis"), dict) and isinstance(result.get("analysis", {}).get("audit_letter"), dict) else "")
-                or result.get("competitive_positioning_text", "")
-            )
+            enhanced_c2 = result.get("enhanced_c2", "")
             matters = result.get("matters", [])
             
             hero_matter = (
@@ -321,6 +349,9 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
             )
             
             if docx_bytes:
+                ooxml_errors = validate_docx_ooxml(docx_bytes)
+                if ooxml_errors:
+                    raise ValueError("DOCX OOXML validation failed: " + "; ".join(ooxml_errors))
                 # Base64 encode the DOCX for transport via webhook
                 docx_b64 = base64.b64encode(docx_bytes).decode('utf-8')
                 response_data["data"]["cloned_docx_b64"] = docx_b64
@@ -444,7 +475,19 @@ async def process_document_async(request: Request):
         "editorial_memory": "",
         "current_step": "ingestion",
         "pipeline_manifest": {},
+        "canonical_submission": {},
+        "strategic_objective": {},
+        "evidence_ledger": {},
+        "gaps": [],
+        "interrogation_questions": [],
+        "evidence_reconciliation": {},
+        "requires_user_input": False,
+        "optimized_submission": {},
+        "strategic_audit": {},
+        "artifact_validation": {},
+        "matter_evidence_gaps": {},
         "original_b10": "",
+        "original_c2": "",
         "enhanced_b7": "",
     }
 

@@ -182,11 +182,189 @@ class DocumentParser:
     # =====================================================
 
     @staticmethod
+    def _count_matter_labels_in_text(text: str) -> dict:
+        """Count numbered Chambers matter labels in normalized document text.
+
+        This is the deterministic fallback for legacy ``.doc`` files after the
+        parser has normalized their text.  Labels are de-duplicated by section
+        and number, so repeated headers cannot inflate the manifest.
+        """
+        pattern = re.compile(
+            r'\b(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\b',
+            re.IGNORECASE,
+        )
+        seen = set()
+        labels = []
+        for match in pattern.finditer(text or ""):
+            raw_kind = match.group(1).lower().replace(" ", "-")
+            number = int(match.group(2))
+            if raw_kind == "publishable":
+                kind = "Publishable"
+            elif raw_kind == "confidential":
+                kind = "Confidential"
+            else:
+                kind = "Non-publishable"
+            key = (kind.lower(), number)
+            if key in seen:
+                continue
+            seen.add(key)
+            labels.append(f"{kind} Matter {number}")
+
+        publishable = sum(label.startswith("Publishable") for label in labels)
+        confidential = len(labels) - publishable
+        return {
+            "total": len(labels),
+            "publishable": publishable,
+            "confidential": confidential,
+            "matter_labels": labels,
+        }
+
+    @staticmethod
+    def extract_numbered_matter_sections(text: str) -> dict:
+        """Return verbatim matter sections keyed by normalized source label.
+
+        The boundary is the next numbered matter header.  This gives the
+        evidence ledger source text that predates all LLM transformation.
+        """
+        pattern = re.compile(
+            r'(?im)^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\s*$'
+        )
+        matches = list(pattern.finditer(text or ""))
+        sections = {}
+        for index, match in enumerate(matches):
+            kind_raw = match.group(1).lower().replace(" ", "-")
+            if kind_raw == "publishable":
+                kind = "Publishable"
+            elif kind_raw == "confidential":
+                kind = "Confidential"
+            else:
+                kind = "Non-publishable"
+            label = f"{kind} Matter {int(match.group(2))}"
+            end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+            excerpt = text[match.end():end].strip()
+            sections[label.lower()] = {
+                "label": label,
+                "text": excerpt,
+            }
+        return sections
+
+    @staticmethod
+    def extract_c2_source(text: str) -> str:
+        """Extract the submitted C2 answer without creating content for a blank field."""
+
+        header = re.search(r"(?im)^\s*C2\b(?P<line>[^\n]*)", text or "")
+        if not header:
+            return ""
+        inline = header.group("line").strip()
+        if "|" in inline:
+            inline = inline.rsplit("|", 1)[-1].strip()
+        else:
+            # A normal paragraph header contains only the question. Answers in
+            # tabular extraction are separated with ``|`` and handled above.
+            inline = ""
+        remainder = (text or "")[header.end():]
+        boundary = re.search(
+            r"(?im)^\s*(?:C3\b|D\d*\b|D\.\s|WORK\s+HIGHLIGHTS\s+AND\s+CLIENTS|Publishable\s+Matter\s+\d+|Confidential\s+Matter\s+\d+)",
+            remainder,
+        )
+        following = remainder[:boundary.start()] if boundary else remainder[:4000]
+        content = "\n".join(part for part in (inline, following.strip()) if part).strip()
+        for repetitions in (4, 3, 2):
+            if len(content) % repetitions == 0:
+                unit_length = len(content) // repetitions
+                unit = content[:unit_length]
+                if unit and unit * repetitions == content:
+                    content = unit.strip()
+                    break
+        # Template instructions are not evidence. A section containing only an
+        # instruction is treated as blank and therefore triggers a question.
+        if re.fullmatch(
+            r"(?is)(?:please\s+)?(?:provide|include|address|give).{0,300}", content
+        ):
+            return ""
+        return content
+
+    @staticmethod
+    def extract_lawyer_roster(text: str) -> list:
+        """Recover the complete B9 lawyer roster independently of the LLM.
+
+        Legacy ``.doc`` extraction loses table columns but preserves the ordered
+        names and profile URLs. A Chambers profile URL is treated as source
+        evidence that the submitted lawyer is ranked; an internal firm profile
+        alone is not converted into a ranking.
+        """
+
+        source = text or ""
+        start_match = re.search(
+            r"(?i)information regarding ranked and unranked lawyers", source
+        )
+        end_match = re.search(r"(?im)^\s*B10\b", source)
+        if not start_match or not end_match or end_match.start() <= start_match.end():
+            return []
+        section = source[start_match.end():end_match.start()]
+        lines = [line.strip() for line in section.splitlines() if line.strip()]
+        name_pattern = re.compile(
+            r"^[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]*(?:\s+(?:[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’.-]*|[A-Z])){1,5}$"
+        )
+        excluded = {
+            "comments or web link", "partner ranked", "web link partner",
+        }
+        candidates = []
+        for index, line in enumerate(lines):
+            normalized = line.casefold()
+            if (
+                len(line) <= 80
+                and name_pattern.fullmatch(line)
+                and normalized not in excluded
+                and not normalized.startswith(("current or", "please do", "comments or"))
+            ):
+                candidates.append((index, line))
+
+        roster = []
+        claimed_chambers_slugs = set()
+        for position, (line_index, name) in enumerate(candidates):
+            next_index = candidates[position + 1][0] if position + 1 < len(candidates) else len(lines)
+            evidence_block = "\n".join(lines[line_index + 1:next_index]).casefold()
+            chamber_slugs = re.findall(
+                r"chambers\.com/lawyer/([a-z0-9-]+?)-latin-america",
+                evidence_block,
+                re.I,
+            )
+            if chamber_slugs:
+                claimed_chambers_slugs.add(chamber_slugs[0].casefold())
+            roster.append({
+                "name": name,
+                "is_partner": None,
+                "is_ranked": "chambers.com/lawyer/" in evidence_block,
+                "current_ranking": "Ranked" if "chambers.com/lawyer/" in evidence_block else None,
+                "source_excerpt": "\n".join(lines[line_index:next_index]),
+            })
+
+        # Some binary DOC files lose a displayed name but retain the Chambers
+        # URL. Recover that row from its slug only when no submitted name maps to it.
+        seen_url_slugs = set()
+        for slug in re.findall(r"chambers\.com/lawyer/([a-z0-9-]+?)-latin-america", section, re.I):
+            normalized_slug = slug.casefold()
+            if normalized_slug in seen_url_slugs or normalized_slug in claimed_chambers_slugs:
+                continue
+            seen_url_slugs.add(normalized_slug)
+            display = " ".join(part.capitalize() for part in slug.split("-") if part)
+            if display:
+                roster.append({
+                    "name": display,
+                    "is_partner": None,
+                    "is_ranked": True,
+                    "current_ranking": "Ranked",
+                    "source_excerpt": slug,
+                })
+        return roster
+
+    @staticmethod
     def count_source_matters(file_path: str) -> dict:
         """
-        Rule 70: Programmatically count matter sections in a DOCX by scanning
-        table headers for 'Matter N' patterns. This count is INDEPENDENT of LLM
-        extraction and serves as ground truth for validation.
+        Rule 70: Programmatically count matter sections. DOCX files are scanned
+        through their XML tables; legacy DOC files use normalized text labels.
+        This count is INDEPENDENT of LLM extraction and serves as ground truth.
         
         Returns:
             {
@@ -200,8 +378,8 @@ class DocumentParser:
         parsed_path = urlparse(file_path).path if is_url else file_path
         extension = os.path.splitext(parsed_path)[1].lower()
         
-        if extension != '.docx':
-            return {"total": 0, "publishable": 0, "confidential": 0, "matter_labels": [], "note": "Non-DOCX format — programmatic count not available"}
+        if extension not in {'.docx', '.doc'}:
+            return {"total": 0, "publishable": 0, "confidential": 0, "matter_labels": [], "note": "Programmatic count is available for DOC and DOCX only"}
         
         local_path = file_path
         temp_file = None
@@ -215,6 +393,12 @@ class DocumentParser:
             temp_file = local_path
         
         try:
+            if extension == '.doc':
+                normalized_text = DocumentParser._parse_doc(local_path)
+                result = DocumentParser._count_matter_labels_in_text(normalized_text)
+                result["count_method"] = "normalized_doc_text"
+                return result
+
             doc = Document(local_path)
             matter_labels = []
             seen_table_indices = set()
@@ -278,6 +462,7 @@ class DocumentParser:
                 "publishable": publishable,
                 "confidential": confidential,
                 "matter_labels": matter_labels,
+                "count_method": "docx_xml",
             }
         except Exception as e:
             print(f"[MATTER COUNTER] Error counting matters: {e}")
@@ -330,7 +515,7 @@ class DocumentParser:
         try:
             # File hash
             with open(local_path, 'rb') as f:
-                stats["file_hash"] = hashlib.sha256(f.read()).hexdigest()[:16]
+                stats["file_hash"] = hashlib.sha256(f.read()).hexdigest()
             
             if extension == '.docx':
                 doc_text = DocumentParser._parse_docx(local_path)
@@ -338,6 +523,11 @@ class DocumentParser:
                 stats["paragraph_count"] = len([l for l in doc_text.splitlines() if l.strip()])
                 doc = Document(local_path)
                 stats["table_count"] = len(doc._body._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl'))
+                stats["source_matters"] = DocumentParser.count_source_matters(file_path)
+            elif extension == '.doc':
+                text = DocumentParser._parse_doc(local_path)
+                stats["word_count"] = len(text.split())
+                stats["paragraph_count"] = len([line for line in text.splitlines() if line.strip()])
                 stats["source_matters"] = DocumentParser.count_source_matters(file_path)
             elif extension == '.pdf':
                 text = DocumentParser._parse_pdf(local_path)

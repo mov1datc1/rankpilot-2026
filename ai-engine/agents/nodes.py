@@ -9,7 +9,6 @@ from difflib import SequenceMatcher
 from dotenv import load_dotenv
 from chains.extraction_chain import get_extraction_chain
 # Importaciones de LangChain y Core
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -27,6 +26,8 @@ from utils.directory_config import get_directory_config, get_directory_context_b
 from utils.practice_taxonomy import get_practice_taxonomy, get_practice_context_block
 from utils.validators import get_ranking_architecture, validate_analysis_output, validate_matter_enhancement
 from utils.benchmark_scraper import scrape_rankings, get_benchmark_summary
+from utils.model_factory import create_chat_model, get_model_profile
+from utils.objective_alignment import repair_objective_conflicts
 
 load_dotenv()
 
@@ -686,29 +687,7 @@ def get_model():
     Configurable via REASONING_EFFORT env var (none/low/medium/high/xhigh/max).
     Model configurable via OPENAI_MODEL env var for easy A/B testing & rollback.
     """
-    model_name = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
-    reasoning = os.environ.get("REASONING_EFFORT", "medium")
-    
-    kwargs = {
-        "model_name": model_name,
-        "temperature": 0.0,
-        "max_tokens": 32768,     # v22.1: 32k token limit to accommodate reasoning_tokens + rich JSON output
-        "request_timeout": 300,
-        "openai_api_key": os.environ.get("OPENAI_API_KEY"),
-    }
-    
-    # reasoning_effort only supported on GPT-5.x models
-    if "gpt-5" in model_name:
-        kwargs["reasoning_effort"] = reasoning
-    # logit_bias only supported on GPT-4o/4.1 (legacy fallback)
-    elif "gpt-4o" in model_name or "gpt-4.1" in model_name:
-        kwargs["model_kwargs"] = {"logit_bias": {
-            "96138": -100, "77640": -100, "124315": -100,
-            "103445": -100, "79130": -100, "144018": -100,
-            "68202": -100, "111864": -100, "168008": -100,
-        }}
-    
-    return ChatOpenAI(**kwargs)
+    return create_chat_model("standard")
 
 
 def invoke_with_retry(chain, input_data, max_retries=3, base_delay=5):
@@ -785,6 +764,7 @@ def ingestion_node(state: AgentState) -> Dict:
     # This text is the FOUNDATION — it must never be summarized.
     # =====================================================
     original_b10 = ""
+    original_c2 = ""
     try:
         import re as _re
         # Look for B10/B7 section headers in the raw text
@@ -824,19 +804,39 @@ def ingestion_node(state: AgentState) -> Dict:
             print("[B10 EXTRACTOR] No B10/B7 section header found in document")
     except Exception as b10_err:
         print(f"[B10 EXTRACTOR] Warning: {b10_err}")
+
+    original_c2 = DocumentParser.extract_c2_source(text)
+    manifest["original_c2_words"] = len(original_c2.split())
+    print(
+        f"[C2 EXTRACTOR] {'Source answer found' if original_c2 else 'No source answer'} "
+        f"({manifest['original_c2_words']} words)"
+    )
     
     return {
         "doc_text": text,
         "original_b10": original_b10,
+        "original_c2": original_c2,
         "pipeline_manifest": manifest,
         "messages": [("assistant", "Document ingested. Analyzing structural signals...")]
     }
 
 # 2. EXTRACTION NODE (v14.0 — Trust Layer Validator)
 def extraction_node(state: AgentState) -> Dict:
+    from utils.doc_parser import DocumentParser
+
     doc_text = sanitize_text(state.get("doc_text", ""))
     chat_history = "\n".join([sanitize_text(msg.content) for msg in state["messages"] if hasattr(msg, 'content')])
-    full_input = f"{doc_text}\n\nUpdates from chat:\n{chat_history}"
+    source_manifest = state.get("pipeline_manifest", {}).get("document", {}).get("source_matters", {})
+    manifest_block = json.dumps({
+        "total": source_manifest.get("total", 0),
+        "publishable": source_manifest.get("publishable", 0),
+        "confidential": source_manifest.get("confidential", 0),
+        "matter_labels": source_manifest.get("matter_labels", []),
+    }, ensure_ascii=False)
+    full_input = (
+        f"SOURCE MANIFEST (deterministic; must reconcile exactly):\n{manifest_block}\n\n"
+        f"SOURCE DOCUMENT:\n{doc_text}\n\nUpdates from chat:\n{chat_history}"
+    )
 
     try:
         chain = get_extraction_chain()
@@ -863,6 +863,14 @@ def extraction_node(state: AgentState) -> Dict:
     ext_dept = data_dict.get("department", {})
     ext_lawyers = data_dict.get("lawyers", [])
     ext_contacts = data_dict.get("contacts", [])
+    deterministic_lawyers = DocumentParser.extract_lawyer_roster(doc_text)
+    if deterministic_lawyers:
+        from utils.canonical_builder import merge_lawyer_roster
+        ext_lawyers = merge_lawyer_roster(deterministic_lawyers, ext_lawyers)
+        print(
+            f"[LAWYER ROSTER] Reconciled {len(ext_lawyers)} source lawyers "
+            f"({sum(bool(lawyer.get('is_ranked')) for lawyer in ext_lawyers)} ranked)"
+        )
 
     # v10.1: CONFIDENTIALITY GUARDRAIL — Calibrated lock
     # RULE: Respect the source document's classification. Only lock matters that have
@@ -872,6 +880,21 @@ def extraction_node(state: AgentState) -> Dict:
     # - If NEITHER flag is explicitly set → KEEP the default publish_status ("publishable")
     # This prevents the bug where all 20 matters end up in Section E with 0 in Section D.
     matters_list = data_dict.get("matters", [])
+    manifest = state.get("pipeline_manifest", {})
+    source_labels = list(
+        manifest.get("document", {}).get("source_matters", {}).get("matter_labels", [])
+    )
+    if source_labels:
+        from utils.canonical_builder import reconcile_extracted_matters_to_source
+        matters_list, register_report = reconcile_extracted_matters_to_source(
+            matters_list, source_labels, doc_text
+        )
+        manifest["extraction_register_reconciliation"] = register_report
+        print(
+            f"[EXTRACTION REGISTER] passed={register_report['passed']} "
+            f"selected={register_report['selected_count']}/{register_report['source_count']} "
+            f"dropped={len(register_report['dropped_records'])}"
+        )
     for matter in matters_list:
         if isinstance(matter, dict):
             explicitly_confidential = matter.get("is_confidential", False)
@@ -899,7 +922,6 @@ def extraction_node(state: AgentState) -> Dict:
     # If mismatch, log a WARNING — this is the #1 root cause of
     # incorrect downstream analysis (owner feedback July 2026).
     # =====================================================
-    manifest = state.get("pipeline_manifest", {})
     source_matters = manifest.get("document", {}).get("source_matters", {})
     source_total = source_matters.get("total", 0)
     extracted_total = len(matters_list)
@@ -907,9 +929,10 @@ def extraction_node(state: AgentState) -> Dict:
     extraction_validation = {
         "source_matter_count": source_total,
         "extracted_matter_count": extracted_total,
-        "match": source_total == extracted_total or source_total == 0,
+        "match": source_total > 0 and source_total == extracted_total,
         "loss_count": max(0, source_total - extracted_total),
-        "loss_percentage": round((1 - extracted_total / max(source_total, 1)) * 100, 1) if source_total > 0 else 0,
+        "over_extraction_count": max(0, extracted_total - source_total),
+        "loss_percentage": round(max(0, source_total - extracted_total) / source_total * 100, 1) if source_total > 0 else 0,
         "extracted_titles": [m.get("title", "?") for m in matters_list if isinstance(m, dict)],
     }
     
@@ -918,11 +941,20 @@ def extraction_node(state: AgentState) -> Dict:
         print(f"[MATTER LOSS WARNING] ⚠️ {source_total - extracted_total} matters LOST ({extraction_validation['loss_percentage']}% loss)")
         print(f"[MATTER LOSS WARNING] Source labels: {source_matters.get('matter_labels', [])}")
         print(f"[MATTER LOSS WARNING] Extracted titles: {extraction_validation['extracted_titles']}")
+    elif source_total > 0 and extracted_total > source_total:
+        print(f"[MATTER OVER-EXTRACTION] ❌ Source has {source_total} matters but extraction found {extracted_total}")
+        print(f"[MATTER OVER-EXTRACTION] ❌ {extracted_total - source_total} unsupported matter(s) added")
     elif source_total > 0:
         print(f"[EXTRACTION VALIDATOR ✅] Source: {source_total} matters | Extracted: {extracted_total} — MATCH")
     
     # Update manifest with extraction results
     manifest["extraction"] = extraction_validation
+    manifest["model_profiles"] = {
+        "extraction": get_model_profile("extraction"),
+        "standard": get_model_profile("standard"),
+        "editorial": get_model_profile("editorial"),
+    }
+    manifest["source_lawyers"] = deterministic_lawyers
     manifest.setdefault("validation", {})["extraction_match"] = extraction_validation["match"]
     manifest.setdefault("validation", {})["matter_loss"] = extraction_validation["loss_count"]
 
@@ -959,9 +991,60 @@ def extraction_node(state: AgentState) -> Dict:
             "contacts": ext_contacts,
         },
         "matters": matters_list,
+        "_original_extracted_matters": [dict(m) for m in matters_list if isinstance(m, dict)],
         "pipeline_manifest": manifest,
         "current_step": "pre_flight"
     }
+
+
+def evidence_reconciliation_node(state: AgentState) -> Dict:
+    """Build canonical evidence state before any strategic reasoning."""
+
+    from utils.canonical_builder import build_canonical_submission
+
+    try:
+        canonical, errors = build_canonical_submission(dict(state))
+        payload = canonical.model_dump(mode="json")
+        objective = payload.get("objective", {})
+        evidence_ledger = {
+            span["span_id"]: span
+            for span in payload.get("source_spans", [])
+        }
+        questions = [
+            gap["question"]
+            for gap in payload.get("gaps", [])
+            if gap.get("question")
+        ]
+        result = {
+            "passed": not errors,
+            "errors": errors,
+            "matter_count": len(payload.get("matters", [])),
+            "source_span_count": len(payload.get("source_spans", [])),
+        }
+        print(
+            f"[EVIDENCE RECONCILIATION] passed={result['passed']} "
+            f"matters={result['matter_count']} spans={result['source_span_count']}"
+        )
+        for error in errors:
+            print(f"[EVIDENCE RECONCILIATION ❌] {error}")
+        return {
+            "canonical_submission": payload,
+            "strategic_objective": objective,
+            "evidence_ledger": evidence_ledger,
+            "gaps": payload.get("gaps", []),
+            "interrogation_questions": questions,
+            "evidence_reconciliation": result,
+            "current_step": "pre_flight",
+        }
+    except Exception as exc:
+        error = f"Canonical evidence construction failed: {exc}"
+        print(f"[EVIDENCE RECONCILIATION ❌] {error}")
+        return {
+            "canonical_submission": {},
+            "evidence_reconciliation": {"passed": False, "errors": [error]},
+            "interrogation_questions": [],
+            "current_step": "pre_flight",
+        }
 
 # =====================================================
 # 2.1 PRE-FLIGHT GATE NODE (v14.1 — Rule 74)
@@ -999,6 +1082,27 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
     print(f"\n{'='*60}")
     print(f"[PRE-FLIGHT GATE v14.1] Starting 5-point validation")
     print(f"{'='*60}")
+
+    # ── CHECK 0: Canonical evidence reconciliation ──
+    evidence_reconciliation = state.get("evidence_reconciliation", {})
+    if evidence_reconciliation.get("passed"):
+        pre_flight["checks"].append({
+            "name": "Canonical Evidence",
+            "status": "PASS",
+            "detail": (
+                f"{evidence_reconciliation.get('matter_count', 0)} matters with "
+                f"{evidence_reconciliation.get('source_span_count', 0)} source spans"
+            ),
+        })
+    else:
+        canonical_errors = evidence_reconciliation.get("errors") or ["Canonical evidence was not reconciled"]
+        pre_flight["checks"].append({
+            "name": "Canonical Evidence",
+            "status": "FAIL",
+            "detail": "; ".join(canonical_errors),
+        })
+        pre_flight["errors"].extend(canonical_errors)
+        pre_flight["passed"] = False
     
     # ── CHECK 1: Document Identity (Rule 71 complement) ──
     doc_info = manifest.get("document", {})
@@ -1021,39 +1125,35 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
     extracted_total = extraction.get("extracted_matter_count", len(matters))
     
     if source_total > 0:
-        loss_pct = extraction.get("loss_percentage", 0)
-        if extraction.get("match", False) or loss_pct == 0:
+        if extraction.get("match", False) and extracted_total == source_total:
             pre_flight["checks"].append({
                 "name": "Matter Extraction",
                 "status": "PASS",
                 "detail": f"Source: {source_total} | Extracted: {extracted_total} — MATCH"
             })
             print(f"[PRE-FLIGHT ✅] CHECK 2: Matter extraction — {source_total}/{source_total} MATCH")
-        elif loss_pct <= 20:
-            pre_flight["checks"].append({
-                "name": "Matter Extraction",
-                "status": "WARN",
-                "detail": f"Source: {source_total} | Extracted: {extracted_total} — {loss_pct}% loss (within tolerance)"
-            })
-            pre_flight["warnings"].append(f"Minor matter loss: {source_total - extracted_total} matters ({loss_pct}%)")
-            print(f"[PRE-FLIGHT ⚠️] CHECK 2: Matter extraction — {loss_pct}% loss (within 20% tolerance)")
         else:
+            missing = max(0, source_total - extracted_total)
+            over = max(0, extracted_total - source_total)
             pre_flight["checks"].append({
                 "name": "Matter Extraction",
                 "status": "FAIL",
-                "detail": f"Source: {source_total} | Extracted: {extracted_total} — {loss_pct}% LOSS — CRITICAL"
+                "detail": f"Source: {source_total} | Extracted: {extracted_total} | Missing: {missing} | Added: {over} — CRITICAL"
             })
-            pre_flight["errors"].append(f"CRITICAL matter loss: {source_total - extracted_total} of {source_total} matters lost ({loss_pct}%)")
+            pre_flight["errors"].append(
+                f"CRITICAL matter mismatch: source={source_total}, extracted={extracted_total}, missing={missing}, added={over}"
+            )
             pre_flight["passed"] = False
-            print(f"[PRE-FLIGHT ❌] CHECK 2: Matter extraction — {loss_pct}% LOSS — PIPELINE HALT")
+            print(f"[PRE-FLIGHT ❌] CHECK 2: Matter extraction mismatch — PIPELINE HALT")
     else:
         pre_flight["checks"].append({
             "name": "Matter Extraction",
-            "status": "WARN",
+            "status": "FAIL",
             "detail": f"Source count unavailable. Extracted: {extracted_total}"
         })
-        pre_flight["warnings"].append("Could not verify matter count against source document")
-        print(f"[PRE-FLIGHT ⚠️] CHECK 2: Source count unavailable — extracted {extracted_total}")
+        pre_flight["errors"].append("Source matter count unavailable; exact extraction cannot be verified")
+        pre_flight["passed"] = False
+        print(f"[PRE-FLIGHT ❌] CHECK 2: Source count unavailable — PIPELINE HALT")
     
     # ── CHECK 3: Publishable/Confidential Classification ──
     source_pub = source_matters.get("publishable", 0)
@@ -1065,12 +1165,20 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
         extracted_conf = sum(1 for m in matters if isinstance(m, dict) and 
                            m.get("is_confidential", False))
         
+        classification_matches = source_pub == extracted_pub and source_conf == extracted_conf
         pre_flight["checks"].append({
             "name": "Pub/Conf Classification",
-            "status": "PASS",
+            "status": "PASS" if classification_matches else "FAIL",
             "detail": f"Source: {source_pub} pub / {source_conf} conf | Extracted: {extracted_pub} pub / {extracted_conf} conf"
         })
-        print(f"[PRE-FLIGHT ✅] CHECK 3: Classification — Source {source_pub}p/{source_conf}c | Extracted {extracted_pub}p/{extracted_conf}c")
+        if classification_matches:
+            print(f"[PRE-FLIGHT ✅] CHECK 3: Classification — Source {source_pub}p/{source_conf}c | Extracted {extracted_pub}p/{extracted_conf}c")
+        else:
+            pre_flight["errors"].append(
+                f"CRITICAL classification mismatch: source={source_pub}p/{source_conf}c, extracted={extracted_pub}p/{extracted_conf}c"
+            )
+            pre_flight["passed"] = False
+            print(f"[PRE-FLIGHT ❌] CHECK 3: Classification mismatch — PIPELINE HALT")
     else:
         pre_flight["checks"].append({
             "name": "Pub/Conf Classification",
@@ -1653,11 +1761,12 @@ def analysis_node(state: AgentState) -> Dict:
     # v14.0 TRUST LAYER — Rule 71: Capture RAG files in pipeline manifest
     manifest = state.get("pipeline_manifest", {})
     if manifest:
-        rag_file_names = re.findall(r'SPECIFIC KNOWLEDGE.*?:\s*(.+?)\s*---', rag_knowledge or "")
-        manifest["rag_files_loaded"] = rag_file_names
-        print(f"[PIPELINE MANIFEST] RAG files loaded: {len(rag_file_names)}")
-        for fn in rag_file_names:
-            print(f"  → {fn}")
+        rag_chunks = router.get_rag_manifest()
+        manifest["rag_chunks_loaded"] = rag_chunks
+        manifest["rag_files_loaded"] = sorted({chunk["source"] for chunk in rag_chunks})
+        print(f"[PIPELINE MANIFEST] RAG chunks loaded: {len(rag_chunks)}")
+        for chunk in rag_chunks:
+            print(f"  → {chunk['chunk_id']} | {chunk['source']} | score={chunk['score']}")
     
     # v10.0: Generate directory and practice context blocks
     directory_context_block = get_directory_context_block(directory, practice_area, jurisdiction)
@@ -2255,8 +2364,6 @@ WHAT TO DO INSTEAD:
             
             # Merge matter evaluations into audit_letter
             matter_evals = eval_json.get("matter_evaluations", [])
-            recommended_rewrites = eval_json.get("recommended_rewrites", [])
-            
             if matter_evals:
                 print(f"[ANALYSIS NODE] ✅ Call 2 SUCCESS: {len(matter_evals)} matter evaluations generated")
                 # Apply confidentiality guardrail to evaluations
@@ -2275,9 +2382,6 @@ WHAT TO DO INSTEAD:
                 res_json["matter_evaluations"] = matter_evals
                 if isinstance(res_json.get("audit_letter"), dict):
                     res_json["audit_letter"]["matter_evaluations"] = matter_evals
-                    if recommended_rewrites:
-                        res_json["audit_letter"]["recommended_rewrites"] = recommended_rewrites
-                res_json["recommended_rewrites"] = recommended_rewrites
             else:
                 print(f"[ANALYSIS NODE] ⚠️ Call 2 returned 0 matter evaluations")
                 
@@ -2293,11 +2397,16 @@ WHAT TO DO INSTEAD:
     if manifest:
         manifest["v16_validation_report"] = validation_report
     
-    c2_text = (
-        res_json.get("competitive_positioning_text") or 
-        (res_json.get("audit_letter", {}).get("competitive_positioning_text") if isinstance(res_json.get("audit_letter"), dict) else "") or
-        ""
-    )
+    # C2 is not inferable from the general matter universe. If the source field
+    # is blank, erase any model-generated answer and let the gap node ask.
+    original_c2 = state.get("original_c2", "").strip()
+    # C2 contains competitive assertions that cannot be safely reconstructed
+    # from the matter portfolio. Preserve the submitted answer verbatim; when it
+    # is blank, leave it blank and generate a targeted question downstream.
+    c2_text = original_c2 if original_c2 else ""
+    res_json["competitive_positioning_text"] = c2_text
+    if isinstance(res_json.get("audit_letter"), dict):
+        res_json["audit_letter"]["competitive_positioning_text"] = c2_text
     
     return {
         "analysis": res_json,
@@ -2307,24 +2416,81 @@ WHAT TO DO INSTEAD:
         "current_step": "writing"
     }
 
+
+def evidence_gap_analysis_node(state: AgentState) -> Dict:
+    """Turn material omissions into targeted questions, never into prose facts."""
+
+    from core.schema import EvidenceGapAnalysisOutput
+
+    canonical = state.get("canonical_submission", {})
+    ledger = state.get("evidence_ledger", {})
+    evidence_matters = []
+    for matter in canonical.get("matters", []):
+        source = "\n".join(
+            ledger.get(span_id, {}).get("text", "")
+            for span_id in matter.get("source_span_ids", [])
+        )
+        evidence_matters.append({
+            "matter_id": matter.get("matter_id"),
+            "matter_name": matter.get("title") or matter.get("client"),
+            "source": source,
+        })
+
+    llm = get_model().with_structured_output(EvidenceGapAnalysisOutput)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are the RankPilot Evidence Gap Analyst. Apply ASK, DON'T INVENT.
+For each strategically material matter, separate: (1) known source facts, (2) what those facts prove for the submitted practice, (3) one missing fact that would materially increase evidentiary value, (4) one precise client question, and (5) positioning supportable now.
+Never state or imply that a missing activity occurred. Never propose a rewritten answer to the question. Do not ask for information already semantically present; acquisition 'of X from Y' identifies the client as buyer and Y as seller. Select at most eight high-value gaps across the portfolio. Prefer outcome, client objective, lawyer role, transaction side, final procedural status, economic scale, geographic reach, and practice-category fit. RAG examples are methodology only and are not client evidence.
+If C2/competitive feedback is unsupported, provide one targeted C2 question rather than drafting competitive claims."""),
+        ("human", "Objective: {objective}\n\nCanonical matters: {matters}\n\nExisting evaluations: {evaluations}"),
+    ])
+    try:
+        result = (prompt | llm).invoke({
+            "objective": json.dumps(state.get("strategic_objective", {}), ensure_ascii=True),
+            "matters": json.dumps(evidence_matters, ensure_ascii=True),
+            "evaluations": json.dumps(state.get("analysis", {}).get("matter_evaluations", []), ensure_ascii=True),
+        })
+        payload = result.model_dump() if hasattr(result, "model_dump") else dict(result)
+    except Exception as exc:
+        print(f"[EVIDENCE GAP ANALYSIS] Failed: {exc}")
+        payload = {"gaps": [], "c2_question": None, "error": str(exc)}
+    questions = [gap.get("targeted_question") for gap in payload.get("gaps", []) if gap.get("targeted_question")]
+    if not state.get("original_c2", "").strip() and not payload.get("c2_question"):
+        payload["c2_question"] = (
+            "What source-backed feedback about the directory's current coverage "
+            "should the firm provide in C2, and which specific omission or market "
+            "development supports that feedback?"
+        )
+    if payload.get("c2_question"):
+        questions.append(payload["c2_question"])
+    print(f"[EVIDENCE GAP ANALYSIS] material gaps={len(payload.get('gaps', []))}")
+    return {
+        "matter_evidence_gaps": payload,
+        "interrogation_questions": list(state.get("interrogation_questions", [])) + questions,
+    }
+
 # 4. INTERROGATOR NODE
 def interrogator_node(state: AgentState) -> Dict:
-    llm = get_model()
-    analysis = state.get("analysis", {})
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", EDITORIAL_INTERROGATOR_PROMPT),
-        ("placeholder", "{messages}"),
-        ("human", "Current Analysis: {analysis_data}. Ask for missing info.")
-    ])
-    
-    chain = prompt | llm
-    response = chain.invoke({
-        "messages": state["messages"],
-        "analysis_data": json.dumps(analysis)
-    })
-    
-    return {"messages": [response]}
+    """Stop only for concrete, pre-computed factual questions.
+
+    An LLM must not turn vague low confidence into a fresh questionnaire.  The
+    evidence layer owns the questions and this node only presents them.
+    """
+
+    questions = [q for q in state.get("interrogation_questions", []) if q]
+    if not questions:
+        questions = [
+            "The source document could not be reconciled exactly. Please provide a clean DOCX export so every numbered matter can be recovered verbatim."
+        ]
+    message = "Before optimization can continue, please resolve:\n" + "\n".join(
+        f"{index}. {question}" for index, question in enumerate(questions, start=1)
+    )
+    return {
+        "messages": [("assistant", message)],
+        "requires_user_input": True,
+        "is_complete": False,
+        "current_step": "interrogation",
+    }
 
 # 5. OPTIMIZATION NODE
 def optimization_node(state: AgentState) -> Dict:
@@ -2364,8 +2530,6 @@ def optimization_node(state: AgentState) -> Dict:
     # v23.0: Extract audit evaluations to bridge Audit -> Optimizer
     analysis_data = state.get("analysis", {}) or {}
     matter_evaluations = analysis_data.get("matter_evaluations", []) or state.get("matter_evaluations", [])
-    recommended_rewrites = analysis_data.get("recommended_rewrites", []) or state.get("recommended_rewrites", [])
-    
     # v17.4+v20.1: Dynamic injections for matter enhancer
     # v20.1: Redact other client names from thesis to prevent cross-matter contamination
     matter_context_lines = []
@@ -2402,15 +2566,29 @@ def optimization_node(state: AgentState) -> Dict:
     
     # v18.6: On constitutional retry, inject violation feedback
     if constitutional_retry > 0 and violation_feedback:
-        matter_context_block += f"\n\n⚠️ CONSTITUTIONAL VALIDATION RETRY (attempt {constitutional_retry + 1}):\n{violation_feedback}\n\nYou MUST fix ALL listed violations in this retry. Pay special attention to:\n- Each matter must open with a DIFFERENT strategic angle (not generic mandate)\n- Do NOT use any prohibited filler phrases\n- Preserve all client descriptors VERBATIM from the original\n- Outcomes must be STRONG (quantified) or MODERATE (institutional change), never WEAK (generic benefit)"
+        matter_context_block += f"\n\nCONSTITUTIONAL VALIDATION RETRY (attempt {constitutional_retry + 1}):\n{violation_feedback}\n\nFix only wording or preservation violations. Do not strengthen an outcome, role, deliverable or metric beyond the exact source."
     
     # v20.0: Opening Diversity Tracker — deterministic enforcement
-    from utils.opening_diversity import OpeningDiversityTracker, force_opening_diversity
+    from utils.opening_diversity import OpeningDiversityTracker
     diversity_tracker = OpeningDiversityTracker()
     
     for matter_idx, matter in enumerate(matters):
         # Construct the raw matter text to feed to the optimizer
-        raw_text = f"Title: {matter.get('title', '')}\nClient: {matter.get('client', '')}\nValue: {matter.get('value', '')}\nSummary: {matter.get('summary', '')}\nSignificance: {matter.get('significance', '')}\nLead Partner: {matter.get('lead_partner', '')}"
+        canonical_matters = state.get("canonical_submission", {}).get("matters", [])
+        ledger = state.get("evidence_ledger", {})
+        canonical_matter = canonical_matters[matter_idx] if matter_idx < len(canonical_matters) else {}
+        source_span_ids = canonical_matter.get("source_span_ids", [])
+        exact_source = "\n".join(
+            ledger.get(span_id, {}).get("text", "") for span_id in source_span_ids
+        ).strip()
+        raw_text = exact_source or (
+            f"Title: {matter.get('title', '')}\n"
+            f"Client: {matter.get('client', '')}\n"
+            f"Value: {matter.get('matter_value') or matter.get('value', '')}\n"
+            f"Summary: {matter.get('summary', '')}\n"
+            f"Significance: {matter.get('significance', '')}\n"
+            f"Lead Partner: {matter.get('lead_partner', '')}"
+        )
         
         # v21.0: UNIQUE_ANGLE detection — auto-detect differentiating evidence
         # ChatGPT 5.6 recommendation: Give each matter its unique angle so the LLM
@@ -2454,9 +2632,7 @@ def optimization_node(state: AgentState) -> Dict:
         
         unique_angle_block = ""
         if unique_angle_parts:
-            unique_angle_block = f"\n\nUNIQUE_ANGLE FOR THIS MATTER:\n" + "\n".join(unique_angle_parts)
-            unique_angle_block += "\nUSE this angle as the backbone of your expansion. 60%+ of the body MUST reflect this specific angle."
-            print(f"  [DIFFERENTIATION v21.0] Matter {matter_idx+1}: {', '.join(unique_angle_parts)}")
+            print(f"  [SOURCE SIGNALS] Matter {matter_idx+1}: {', '.join(unique_angle_parts)}")
         
         # v23.0: Bridge Audit Diagnosis to Matter Optimizer
         eval_match = None
@@ -2483,37 +2659,16 @@ def optimization_node(state: AgentState) -> Dict:
                 parts.append(f"Audit Diagnosis: \"{rat}\"")
             
             audit_directive_block = f"\n\nAUDIT DIAGNOSIS & REWRITE DIRECTIVE (MANDATORY TO SOLVE):\n" + "\n".join(parts)
-            audit_directive_block += "\nMANDATE: You MUST actively address this audit diagnosis using verified facts from the source and practice context. Articulate concrete deliverables, specific regulatory interfaces (e.g. SUDEBAN, BCV, etc.), written legal opinions, or governance structures following the 7-step factual flow."
+            audit_directive_block += "\nUse the diagnosis only to improve ordering and clarity. Never cure an evidentiary gap by inventing a deliverable, outcome, authority, document, procedure, metric, or lawyer action."
             print(f"  [AUDIT-BRIDGE v23.0] Matter {matter_idx+1} ({matter.get('client')}): Injected audit directive")
         
-        # v24.0: Inject Primary Strategic Proposition per matter (Prevent homogenization & keyword stuffing)
-        strat_prop = ""
-        if "simmons" in client_norm:
-            strat_prop = (
-                "PRIMARY STRATEGIC PROPOSITION: Sophistication of cross-border financial-regulatory advisory and multi-jurisdictional risk structuring for international financial institutions. "
-                "Focus on continuous legal analysis, exchange control regimes, and multi-country compliance."
-            )
-        elif "debevoise" in client_norm:
-            strat_prop = (
-                "PRIMARY STRATEGIC PROPOSITION: Private banking, wealth management, and sanctions-sensitive cross-border asset structuring. "
-                "Focus on international private client considerations, AML, and regulatory risk in cross-border wealth advisory."
-            )
-        elif "kennedys" in client_norm:
-            strat_prop = (
-                "PRIMARY STRATEGIC PROPOSITION: Intersection of insurance and reinsurance regulatory frameworks with banking compliance and cross-border risk. "
-                "Focus on insurance regulatory oversight, international reinsurance programs, and specialized financial compliance."
-            )
-        elif "jp morgan" in client_norm or "jpmorgan" in client_norm or "chase" in client_norm:
-            strat_prop = (
-                "PRIMARY STRATEGIC PROPOSITION: Operational continuity, day-to-day attorney-in-fact representation, and regulatory governance of a global financial institution's representative office under SUDEBAN oversight in a constrained banking environment."
-            )
-        else:
-            strat_prop = f"PRIMARY STRATEGIC PROPOSITION: Articulate the distinct technical discipline demonstrated in this mandate ({matter.get('title', 'regulatory advisory')}) to present a unique evidentiary facet of the practice."
-            
-        primary_prop_block = f"\n\n{strat_prop}\nMANDATE: Build the narrative around this specific proposition. Do NOT duplicate keywords or generic themes from other matters."
+        primary_prop_block = (
+            "\n\nEVIDENCE BOUNDARY: the exact source matter above is the complete factual universe. "
+            "The editorial thesis may determine emphasis, but cannot supply facts."
+        )
         
         # v20.0: Build diversity instruction for this matter
-        diversity_instruction = diversity_tracker.prompt_with_suggestions()
+        diversity_instruction = ""
         full_context = matter_context_block
         if diversity_instruction:
             full_context += "\n" + diversity_instruction
@@ -2526,13 +2681,15 @@ def optimization_node(state: AgentState) -> Dict:
         try:
             # v20.0: Try up to 3 times for opening diversity compliance
             optimized_text = None
-            max_diversity_retries = 3
+            evidence_quotes = []
+            max_diversity_retries = 1
             
             for diversity_attempt in range(max_diversity_retries):
                 try:
                     response = llm.invoke(messages)
                     result = json.loads(response.content)
                     optimized_text = result.get('optimized_text', matter.get('summary'))
+                    evidence_quotes = result.get('evidence_quotes', [])
                 except Exception as invoke_err:
                     err_str = str(invoke_err).lower()
                     if any(k in err_str for k in ['quota', '429', 'credit', 'rate_limit', 'insufficient', 'balance']):
@@ -2544,30 +2701,8 @@ def optimization_node(state: AgentState) -> Dict:
                 if not optimized_text:
                     break
                 
-                # Check opening diversity
-                if diversity_tracker.validate(optimized_text):
-                    word = diversity_tracker.register(optimized_text)
-                    if diversity_attempt > 0:
-                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{word}' ✅ (attempt {diversity_attempt+1})")
-                    else:
-                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: opening='{word}' ✅")
-                    break
-                else:
-                    bad_word = diversity_tracker.first_word(optimized_text)
-                    if diversity_attempt < max_diversity_retries - 1:
-                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{bad_word}' ❌ — retrying (attempt {diversity_attempt+1})")
-                        # Strengthen the prohibition for retry
-                        retry_instruction = diversity_tracker.prompt_with_suggestions()
-                        retry_instruction += f"\nCRITICAL: Your previous attempt started with '{bad_word}'. This word is FORBIDDEN. Choose a COMPLETELY different opening.\n"
-                        messages = [
-                            SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-                            HumanMessage(content=f"{matter_context_block}\n{retry_instruction}\n\nOptimize this raw matter:\n\n{raw_text}")
-                        ]
-                    else:
-                        # Last resort: programmatic force-replace
-                        print(f"  [DIVERSITY v20.0] Matter {matter_idx+1}: '{bad_word}' ❌ — forcing replacement")
-                        optimized_text = force_opening_diversity(optimized_text, diversity_tracker, client_name=matter.get('client', ''))
-                        diversity_tracker.register(optimized_text)
+                diversity_tracker.register(optimized_text)
+                break
 
             
             # ═══ v8.0: PROBATIVE PRESERVATION VALIDATOR (Constitutional Article V) ═══
@@ -2575,8 +2710,8 @@ def optimization_node(state: AgentState) -> Dict:
             optimized_word_count = len(optimized_text.split()) if optimized_text else 0
             ratio = optimized_word_count / max(original_word_count, 1)
             
-            # Check 1: Word count ratio — optimized should be >= 75% of original
-            needs_reoptimization = ratio < 0.75
+            # Evidence preservation, never a word-count or expansion quota.
+            needs_reoptimization = False
             
             # Check 2: Key evidence element preservation
             import re as _re
@@ -2611,17 +2746,6 @@ def optimization_node(state: AgentState) -> Dict:
                 if num not in (optimized_text or '').lower():
                     needs_reoptimization = True
                     print(f"  [EVIDENCE-LIST] Numeric evidence '{num}' (count of sub-items) missing from optimized text")
-            
-            # Check for Strategic Client Relationship signals
-            scr_signals = ['exclusive external', 'departamento jurídico externo', 'ongoing counsel', 
-                          'institutional counsel', 'retained counsel', 'exclusive counsel',
-                          'external legal department', 'long-term advisory', 'longstanding relationship']
-            original_has_scr = any(signal in raw_text.lower() for signal in scr_signals)
-            if original_has_scr:
-                # If it's a Strategic Client Relationship, the optimized text MUST be at least 90% of original
-                if ratio < 0.90:
-                    needs_reoptimization = True
-                    print(f"  [SCR-DETECT] Strategic Client Relationship detected — ratio {ratio:.2f} is below 90% threshold")
             
             # Check for named entity preservation (company names in uppercase or capitalized)
             # v20.0: Replace naive regex with extract_true_entities() — filters false positives
@@ -2682,9 +2806,7 @@ def optimization_node(state: AgentState) -> Dict:
                 preservation_prompt += (
                     "EVIDENCE VS PROSE RULE: If the original contains LISTS of matters, contracts, or entities, "
                     "these are COMPETITIVE EVIDENCE, not prose. Preserve each item individually.\n\n"
-                    "RESTRUCTURE for editorial impact but do NOT compress or summarize away evidence.\n"
-                    "The optimized version MUST be at least 75% of the original word count "
-                    "(90% if a Strategic Client Relationship is detected).\n\n"
+                    "RESTRUCTURE for editorial impact but do not add or remove evidence.\n\n"
                     f"Original text:\n{raw_text}\n\n"
                     f"Previous (rejected) optimization:\n{optimized_text}\n\n"
                     "Provide a corrected optimization that preserves ALL probative elements."
@@ -2697,6 +2819,7 @@ def optimization_node(state: AgentState) -> Dict:
                     retry_response = llm.invoke(retry_messages)
                     retry_result = json.loads(retry_response.content)
                     optimized_text = retry_result.get('optimized_text', optimized_text)
+                    evidence_quotes = retry_result.get('evidence_quotes', evidence_quotes)
                     print(f"  [PROBATIVE] Re-optimization complete. New word count: {len(optimized_text.split())}")
                 except Exception as retry_err:
                     print(f"  [PROBATIVE] Re-optimization failed: {retry_err}. Keeping original optimization.")
@@ -2740,11 +2863,6 @@ def optimization_node(state: AgentState) -> Dict:
                 body_descriptor_text += f"\nSignificance: {matter.get('significance', '')}"
             optimized_text = verify_client_descriptors(body_descriptor_text, optimized_text, client_name)
             
-            # Priority 2: If body didn't have a descriptor, try sanitized doc_text as fallback
-            original_doc_text = state.get('doc_text', '') or raw_text
-            sanitized_doc_text = sanitize_descriptor_source(original_doc_text, client_name)
-            optimized_text = verify_client_descriptors(sanitized_doc_text, optimized_text, client_name)
-            
             # ═══ v20.1: FOREIGN CLIENT VALIDATOR — post-generation contamination check ═══
             # GPT-5.6 recommendation: Detect if ANY other matter's client name appears
             # in this matter's optimized text. If found, log warning and strip the
@@ -2770,6 +2888,7 @@ def optimization_node(state: AgentState) -> Dict:
             optimized_text = repair_possessive_appositive(optimized_text, all_client_names)
             
             matter['optimized_text'] = optimized_text
+            matter['_evidence_quotes'] = evidence_quotes
             matter['status'] = 'AI Enhanced' if is_valid else 'AI Enhanced (partial)'
             
         except Exception as e:
@@ -2837,29 +2956,6 @@ def optimization_node(state: AgentState) -> Dict:
         if opt_text:
             matter['optimized_text'] = repair_possessive_appositive(opt_text, all_client_names)
     
-    # ═══ v20.1: FINAL OPENING DIVERSITY ENFORCEMENT ═══
-    # The descriptor insert and grammar LLM can corrupt openings AFTER the
-    # per-matter diversity check. This pass runs AFTER all post-processing
-    # and force-replaces any duplicate openings as a final safety net.
-    final_diversity_tracker = OpeningDiversityTracker()
-    for matter in optimized_matters:
-        opt_text = matter.get('optimized_text', '')
-        if not opt_text:
-            continue
-        
-        first_word = final_diversity_tracker.first_word(opt_text)
-        if first_word and not final_diversity_tracker.validate(opt_text):
-            # This opening is duplicated — force-replace it
-            old_text = opt_text
-            client_name = matter.get('client', '')
-            opt_text = force_opening_diversity(opt_text, final_diversity_tracker, client_name=client_name)
-            new_word = final_diversity_tracker.first_word(opt_text)
-            if new_word != first_word:
-                print(f"  [FINAL DIVERSITY v20.1] '{first_word}' → '{new_word}' for {matter.get('client', '?')}")
-                matter['optimized_text'] = opt_text
-        
-        final_diversity_tracker.register(matter.get('optimized_text', ''))
-    
     # ═══ v20.1: DESCRIPTOR CAPITALIZATION FIX ═══
     # When descriptors from E1 form data get inserted mid-sentence, they retain
     # their original capitalization: "MEGA DIRECT, Customer experience, call center..."
@@ -2894,15 +2990,6 @@ def optimization_node(state: AgentState) -> Dict:
                     if fixed != opt_text:
                         print(f"  [DESCRIPTOR CASE v20.1] Fixed '{desc_start}' → '{desc_start[0].lower() + desc_start[1:]}' for {client_name}")
                         matter['optimized_text'] = fixed
-    
-    # ═══ v20.1: MINIMUM WORD COUNT FLOOR ═══
-    # Any matter below 175 words gets a warning. The constitutional validator
-    # may flag this, but we log it explicitly for debugging.
-    for matter in optimized_matters:
-        opt_text = matter.get('optimized_text', '')
-        wc = len(opt_text.split()) if opt_text else 0
-        if wc < 175:
-            print(f"  ⚠️ [WORD FLOOR v20.1] {matter.get('client', '?')}: {wc}w (below 175w minimum)")
     
     # ═══════════════════════════════════════════════════════════════
     # v17.3: B7 ENHANCEMENT PIPELINE
@@ -3020,73 +3107,38 @@ def optimization_node(state: AgentState) -> Dict:
         # partners, and regulatory touchpoints into pure Submission Voice.
         # ═══════════════════════════════════════════════════════════════
         
-        print(f"[B7 v23.0] Full Structural 4-Pillar Rewrite (original: {original_word_count}w)")
-        
-        b7_rewrite_prompt = f"""You are a Senior Chambers & Partners Legal Submission Director writing Section B10 ("What is this department best known for?") ON BEHALF OF THE LAW FIRM.
-
-YOUR MISSION:
-Completely transform, synthesize, and elevate the raw department text into a cohesive, prestigious, and directory-ready 4-paragraph department overview (TARGET: 420-480 words).
-
-STRATEGIC EDITORIAL THESIS & PRACTICE VALUE PROPOSITION:
-{editorial_direction_text}
-
-MANDATORY 4-PILLAR CONSTITUTIONAL ARCHITECTURE (4 DISTINCT PARAGRAPHS):
-
-Paragraph 1: [COMPETITIVE IDENTITY & MARKET POSITIONING] (~100-110 words)
-- Define what the practice is best known for and how it is strategically positioned in this jurisdiction.
-- Articulate the core advisory model (e.g. specialized regulatory advisory, institutional risk management, cross-border structuring) and how it addresses client demands in this market.
-
-Paragraph 2: [INSTITUTIONAL & REGULATORY DEPTH] (~110-120 words)
-- Highlight the department's ongoing mandates with leading institutional clients and global money-center banks (e.g. JP Morgan).
-- Detail day-to-day regulatory operations, representative office management, direct interface with regulatory authorities (e.g. SUDEBAN, Central Banks, sectoral authorities), and compliance execution.
-
-Paragraph 3: [CROSS-BORDER ADVISORY & INTEGRATED PRACTICE CAPABILITIES] (~110-120 words)
-- Detail instructions from and collaboration with premier international law firms (e.g. Simmons & Simmons, Debevoise & Plimpton, Kennedys).
-- Articulate the firm's integrated scope: financial services regulation, insurance/reinsurance frameworks, exchange controls, AML, sanctions compliance, wealth management, and cross-border structuring.
-
-Paragraph 4: [SENIOR LEADERSHIP, REGULATORY MEMORY & CONTINUITY] (~100-110 words)
-- Highlight active department leadership (Pedro Luis Planchart Pocaterra) and the institutional authority of senior statespersons (Gustavo J. Reyna).
-- Emphasize deep historical regulatory memory, credibility with institutions/regulators, hands-on partner involvement, and long-term continuity that purely transactional teams cannot replicate.
-
-RAW SOURCE B10 TEXT (SOURCE OF ALL VERIFIED FACTS):
-{original_b10}
-
-FACTUAL FIDELITY & EVIDENCE RULES (NON-NEGOTIABLE):
-- You MUST preserve and weave in 100% of the verified facts from the source text: all client names, instructing firm names, lawyer names, regulatory bodies, and specific practice capabilities.
-- DO NOT invent fictional clients, transaction numbers, or unstated mandates.
-- SUBMISSION VOICE: Authoritative, institutional, persuasive, firm-led (we/the firm).
-- ZERO TOLERANCE FOR META-COMMENTARY: NEVER use "for ranking purposes", "this matter demonstrates", "the evidenced mandates", "on the present record", "serves as proof", "beacon", "testament to", "holistic".
-- Write 4 coherent, fully articulated paragraphs separated by blank lines.
-
-RESPONSE FORMAT:
-Return a JSON object with the exact key "enhanced_b10":
-{{"enhanced_b10": "Paragraph 1...\\n\\nParagraph 2...\\n\\nParagraph 3...\\n\\nParagraph 4..."}}
-"""
-
-        try:
-            b7_response = b7_llm.invoke([
-                SystemMessage(content=(
-                    "You are a master legal directory editor drafting official Chambers & Partners submission copy on behalf of the law firm. "
-                    "Write in an authoritative, institutional, firm-led submission voice. "
-                    "Transform the raw text into 4 structured, powerful paragraphs (420-480 words) preserving 100% of facts. "
-                    "Return valid JSON with key 'enhanced_b10'."
-                )),
-                HumanMessage(content=b7_rewrite_prompt)
-            ])
-            
-            b7_result = safe_json_loads(b7_response.content, fallback={})
-            generated_b10 = b7_result.get("enhanced_b10", "").strip()
-            
-            if generated_b10 and len(generated_b10.split()) >= 250:
-                enhanced_b7 = generated_b10
-                print(f"[B7 v23.0] ✅ Structural Rewrite generated: {len(enhanced_b7.split())} words")
-            else:
-                print(f"[B7 v23.0] ⚠️ Generated B10 was empty or too short ({len(generated_b10.split()) if generated_b10 else 0}w) — falling back to original")
-                enhanced_b7 = original_b10
-                
-        except Exception as b7_err:
-            print(f"[B7 v23.0] Error: {b7_err} — using original B10")
-            enhanced_b7 = original_b10
+        # Propagate the Audit thesis into B10 without asking the model to invent
+        # connective facts. The insertion is assembled only from patterns,
+        # anchors and geographies found in canonical source spans. The original
+        # B10 remains intact underneath it.
+        from utils.objective_alignment import build_source_backed_b10_positioning
+        ledger = state.get("evidence_ledger", {})
+        source_universe = "\n\n".join(
+            str(span.get("text") or "") for span in ledger.values()
+            if isinstance(span, dict)
+        )
+        supporting_candidates = [
+            str(gap.get("matter_name") or "")
+            for gap in state.get("matter_evidence_gaps", {}).get("gaps", [])
+            if isinstance(gap, dict) and gap.get("matter_name")
+        ]
+        objective = state.get("strategic_objective", {})
+        strategic_insert = build_source_backed_b10_positioning(
+            source_universe,
+            state.get("metadata", {}).get("firm_name", ""),
+            objective.get("practice_area") or strategic_ctx.get("practice_area", ""),
+            objective.get("ranking_unit") or strategic_ctx.get("ranking_unit", ""),
+            narrative_arch.get("hero_matter", ""),
+            supporting_candidates,
+        )
+        enhanced_b7 = (
+            f"{strategic_insert}\n\n{original_b10}"
+            if strategic_insert else original_b10
+        )
+        print(
+            f"[B7 EVIDENCE MODE] Preserved {original_word_count} source words; "
+            f"source-backed strategic insertion={'yes' if strategic_insert else 'no'}"
+        )
     elif original_b10:
         print(f"[B7 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
         enhanced_b7 = original_b10
@@ -3210,47 +3262,147 @@ Return a JSON object with the exact key "enhanced_b10":
     elif source_total > 0:
         print(f"[MATTER ENFORCEMENT] ✅ All {source_total} matters preserved ({len(optimized_matters)} optimized)")
         
-    enhanced_c2 = (
-        state.get("enhanced_c2") or
-        (state.get("analysis", {}).get("competitive_positioning_text") if isinstance(state.get("analysis"), dict) else "") or
-        (state.get("analysis", {}).get("audit_letter", {}).get("competitive_positioning_text") if isinstance(state.get("analysis"), dict) and isinstance(state.get("analysis", {}).get("audit_letter"), dict) else "") or
-        ""
-    )
+    enhanced_c2 = state.get("enhanced_c2", "") if state.get("original_c2", "").strip() else ""
     
     if not enhanced_c2 or len(enhanced_c2.split()) < 20:
-        practice = state.get("metadata", {}).get("practice_area") or state.get("submission_context", {}).get("practice_area") or "Banking & Finance"
-        jurisdiction = state.get("metadata", {}).get("jurisdiction") or state.get("submission_context", {}).get("jurisdiction") or "Venezuela"
-        firm = state.get("metadata", {}).get("firm_name") or "ARAQUEREYNA"
-        
-        if "venezuela" in str(jurisdiction).lower() and ("banking" in str(practice).lower() or "finance" in str(practice).lower()):
-            enhanced_c2 = (
-                f"In evaluating the {jurisdiction} {practice} practice area, Chambers and Partners should recognize "
-                "that the structural collapse of domestic commercial lending has transformed the market into an elite regulatory, "
-                "compliance, and institutional governance discipline. When traditional loan volume ceases to be a meaningful gauge of market "
-                "leadership, ranking research must prioritize the handling of complex financial regulatory frameworks, multi-jurisdictional "
-                "sanctions and AML sensitivities, exchange control constraints, private wealth structuring, and the continuous operational "
-                "interface of global financial institutions under SUDEBAN oversight.\n\n"
-                f"{firm}'s submission directly demonstrates this capability through concrete, unmatched evidence: the firm manages the day-to-day "
-                "legal and regulatory operation of the Venezuelan Representative Office of JP Morgan Chase Bank, N.A.—the sole major US global financial "
-                "institution maintaining an active regulated presence in Caracas—while serving as the go-to local counsel for premier international "
-                "law firms, including Simmons & Simmons, Debevoise & Plimpton, and Kennedys, on cross-border banking, private banking, insurance, "
-                "and financial compliance instructions. Combining Senior Statesperson Gustavo J. Reyna's foundational regulatory memory with "
-                "Pedro Luis Planchart's active day-to-day coordination with in-house legal teams in New York, London, and Bogotá, "
-                f"{firm} provides the definitive institutional benchmark for sophisticated banking and regulatory advice in {jurisdiction}."
-            )
-        else:
-            enhanced_c2 = (
-                f"In evaluating the {jurisdiction} {practice} market, Chambers and Partners should recognize that market leadership is defined "
-                "by high-stakes regulatory risk management, cross-border structuring, and complex institutional governance rather than transactional volume alone.\n\n"
-                f"{firm}'s submission demonstrates this capability through ongoing mandates for leading multinational financial institutions and international "
-                f"counsel. With an unmatched combination of senior regulatory memory and active front-line partner leadership, {firm} maintains "
-                f"a market-leading position at the forefront of this practice area in {jurisdiction}."
-            )
+        # C2 is strategic and cannot be safely fabricated as a generic fallback.
+        # Leave it blank and surface the targeted gap in the Audit instead.
+        enhanced_c2 = ""
 
     return {
         "matters": optimized_matters,
         "enhanced_b7": enhanced_b7,
         "enhanced_c2": enhanced_c2,
+    }
+
+
+def artifact_validation_node(state: AgentState) -> Dict:
+    """Validate the two deliverables and roll unsafe matter prose back to source."""
+
+    from core.contracts import MatterRecord
+    from utils.evidence_validation import (
+        validate_artifact_matter_register,
+        validate_evidence_quotes,
+        validate_optimized_matter_text,
+    )
+
+    canonical_payload = state.get("canonical_submission", {})
+    canonical_matters = [
+        MatterRecord.model_validate(item)
+        for item in canonical_payload.get("matters", [])
+    ]
+    generated_matters = [dict(item) for item in state.get("matters", [])]
+    ledger = state.get("evidence_ledger", {})
+    errors = validate_artifact_matter_register(canonical_matters, generated_matters)
+    rollbacks = []
+
+    if len(canonical_matters) == len(generated_matters):
+        for index, (canonical, generated) in enumerate(
+            zip(canonical_matters, generated_matters)
+        ):
+            source_text = "\n".join(
+                ledger.get(span_id, {}).get("text", "")
+                for span_id in canonical.source_span_ids
+            ).strip()
+            optimized_text = str(
+                generated.get("optimized_text")
+                or generated.get("optimizedText")
+                or generated.get("summary")
+                or ""
+            )
+            matter_errors = validate_optimized_matter_text(
+                canonical, optimized_text, source_text
+            )
+            matter_errors.extend(
+                validate_evidence_quotes(
+                    optimized_text,
+                    generated.get("_evidence_quotes", []),
+                    source_text,
+                )
+            )
+            if matter_errors:
+                # Fail safe per matter: preserve the original summary only when it
+                # is a literal source substring; otherwise preserve the full span.
+                original_summary = str(generated.get("summary") or "").strip()
+                fallback = (
+                    original_summary
+                    if original_summary and original_summary in source_text
+                    else source_text
+                )
+                generated["optimized_text"] = fallback
+                generated["_grounding_rollback"] = matter_errors
+                rollbacks.append(
+                    {
+                        "matter_id": canonical.matter_id,
+                        "errors": matter_errors,
+                    }
+                )
+
+    audit = repair_objective_conflicts(
+        state.get("analysis", {}), state.get("strategic_context", {})
+    )
+    lawyer_accountability = []
+    lawyer_questions = []
+    for lawyer in canonical_payload.get("lawyers", []):
+        lawyer_name = lawyer.get("name", "")
+        supporting = [
+            matter.get("matter_id")
+            for matter in canonical_payload.get("matters", [])
+            if any(
+                lawyer_name.casefold() == lead.casefold()
+                or lawyer_name.casefold() in lead.casefold()
+                or lead.casefold() in lawyer_name.casefold()
+                for lead in matter.get("lead_lawyers", [])
+                if lead
+            )
+        ]
+        question = ""
+        if not supporting:
+            question = (
+                f"Which submitted matters best evidence {lawyer_name}'s personal leadership, "
+                "and what specific role did the lawyer perform in each?"
+            )
+            lawyer_questions.append(question)
+        lawyer_accountability.append({
+            "lawyer_id": lawyer.get("lawyer_id"),
+            "name": lawyer_name,
+            "current_ranking": lawyer.get("current_ranking"),
+            "is_ranked": lawyer.get("is_ranked"),
+            "supporting_matter_ids": supporting,
+            "defensible_on_submitted_evidence": bool(supporting),
+            "follow_up_question": question,
+        })
+    artifact_validation = {
+        "passed": not errors,
+        "errors": errors,
+        "matter_rollbacks": rollbacks,
+        "optimized_matter_count": len(generated_matters),
+        "audit_present": bool(audit),
+    }
+    print(
+        f"[ARTIFACT VALIDATION] passed={artifact_validation['passed']} "
+        f"rollbacks={len(rollbacks)}"
+    )
+    return {
+        "matters": generated_matters,
+        "analysis": audit,
+        "optimized_submission": {
+            "artifact_type": "optimized_submission",
+            "matter_count": len(generated_matters),
+            "matters": generated_matters,
+            "enhanced_b7": state.get("enhanced_b7", ""),
+            "enhanced_c2": state.get("enhanced_c2", ""),
+        },
+        "strategic_audit": {
+            "artifact_type": "strategic_audit",
+            "analysis": audit,
+            "gaps": state.get("gaps", []),
+            "questions": list(state.get("interrogation_questions", [])) + lawyer_questions,
+            "objective": state.get("strategic_objective", {}),
+            "lawyer_accountability": lawyer_accountability,
+            "matter_evidence_gaps": state.get("matter_evidence_gaps", {}),
+        },
+        "artifact_validation": artifact_validation,
     }
 
 # 6. WRITER NODE

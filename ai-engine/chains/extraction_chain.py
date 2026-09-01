@@ -1,4 +1,3 @@
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from core.schema import SubmissionSchema
 from agents.prompts import EXTRACTION_SYSTEM_PROMPT
@@ -10,6 +9,7 @@ load_dotenv()
 # System Prompt focused on 'Structural Signal Detection'
 
 import os
+from utils.model_factory import create_chat_model
 
 def get_extraction_chain(model_name=None):
     """
@@ -19,14 +19,9 @@ def get_extraction_chain(model_name=None):
     if model_name is None:
         model_name = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
     
-    api_key = os.environ.get("OPENAI_API_KEY")
-    llm = ChatOpenAI(
-        model=model_name,
-        temperature=0,
-        max_tokens=32768,
-        request_timeout=300,
-        openai_api_key=api_key
-    )
+    # A caller may override the model for an explicit A/B test. Production
+    # uses the centralized extraction profile (Terra + low reasoning).
+    llm = create_chat_model("extraction", model_override=model_name)
     
     # This is where the magic happens: the LLM is forced to follow the schema
     structured_llm = llm.with_structured_output(SubmissionSchema)

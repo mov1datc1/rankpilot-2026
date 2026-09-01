@@ -21,12 +21,25 @@ class Matter(BaseModel):
         default="publishable",
         description="IMMUTABLE publish status extracted from source document. 'non_publishable' = matter appears in non-publishable/confidential section. 'confidential' = explicitly marked confidential. 'publishable' = safe for publication. The AI CANNOT change this after extraction."
     )
+    source_label: Optional[str] = Field(
+        default="",
+        description="Exact source label, e.g. 'Publishable Matter 3' or 'Confidential Matter 2'.",
+    )
+    source_excerpt: Optional[str] = Field(
+        default="",
+        description="Verbatim source excerpt supporting this matter. Never paraphrased or expanded.",
+    )
+    client_role: Optional[Literal["buyer", "seller", "target", "investor", "borrower", "lender", "other"]] = Field(
+        default=None,
+        description="Client's transaction role only when explicit or semantically unambiguous in the source.",
+    )
+    counterparty: Optional[str] = Field(default="", description="Named counterparty, if stated in the source.")
 
 class LawyerProfile(BaseModel):
     """Profile of a ranked or unranked lawyer in the practice area."""
     name: str = Field(description="Full name of the lawyer.")
     url: Optional[str] = Field(default="", description="URL to the lawyer's biography page.")
-    current_ranking: Optional[str] = Field(default="Not Ranked", description="Current Chambers ranking (e.g. 'Band 3', 'Not Ranked').")
+    current_ranking: Optional[str] = Field(default=None, description="Current Chambers ranking copied from source. Null when unreadable or absent; never default to Not Ranked.")
     suggested_ranking: Optional[str] = Field(default="", description="Suggested ranking for this submission cycle.")
     key_focus: Optional[str] = Field(default="", description="Key areas of focus for this lawyer.")
     bio: Optional[str] = Field(default="", description="Brief biographical paragraph about the lawyer's practice.")
@@ -288,7 +301,7 @@ class SubmissionBlueprintOutput(BaseModel):
     thesis: str = Field(description="The ONE specific argument this submission will prove. Not 'we do banking' but 'we have established dominance in lender-side restructurings for institutional creditors.'")
     
     # Matter architecture
-    hero_matter: str = Field(description="The single matter that best demonstrates the thesis. Chosen by 7-criteria editorial selection (thesis embodiment, client importance, economic impact, Chambers relevance, demonstrative capacity, differentiation, strategic position) — NOT by deal value or word count.")
+    hero_matter: str = Field(description="The single matter that best demonstrates the thesis. For first recognition, objective and category fit precede client importance, impact, evidentiary value, differentiation and strategic position — never deal value or word count alone.")
     hero_rationale: str = Field(description="Why this matter was chosen — must reference multiple selection criteria, not just one dimension.")
     hero_selection_reasoning: str = Field(default="", description="Detailed explanation of 'Why this matter?' — how it embodies the editorial thesis and why alternatives were rejected.")
     supporting_matters: List[str] = Field(description="Matters that prove the Hero wasn't an exception. Each must prove something NEW (Ch. 4).")
@@ -360,6 +373,22 @@ class NarrativeArchitectureOutput(BaseModel):
     target_researcher_perception: str = Field(description="After reading this submission, the researcher should think: [this sentence].")
     editorial_tone: str = Field(description="The tone the writing should take (authoritative, specialist, institutional, etc.).")
     bench_strength_narrative: str = Field(description="How to present team depth and individual lawyers to reinforce institutional strength.")
+
+
+class MatterEvidenceGap(BaseModel):
+    matter_id: str
+    matter_name: str
+    known_facts: List[str] = Field(default_factory=list)
+    evidentiary_value: str
+    missing_fact: str
+    targeted_question: str
+    proposed_positioning: str
+    materiality: Literal["high", "medium", "low"] = "medium"
+
+
+class EvidenceGapAnalysisOutput(BaseModel):
+    gaps: List[MatterEvidenceGap] = Field(default_factory=list)
+    c2_question: Optional[str] = None
 
 
 class ReasoningTraceEntry(BaseModel):

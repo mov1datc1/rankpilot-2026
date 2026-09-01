@@ -1,0 +1,41 @@
+{
+  "fixture_id": "ramos-castillo-real-estate-31-08",
+  "source_sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+  "source_format": "docx",
+  "expected_manifest": {
+    "total": 33,
+    "publishable": 20,
+    "confidential": 13
+  },
+  "objective": {
+    "directory": "Chambers & Partners",
+    "practice_area": "Real Estate",
+    "ranking_unit": "Mexico national",
+    "current_position": "Unranked",
+    "target": "Initial inclusion",
+    "priority": "Build a national recognition case"
+  },
+  "hero": "El Cielo Country Club Environmental Decree Amparos",
+  "required_geographic_signals": [
+    "Jalisco",
+    "Guanajuato",
+    "Durango",
+    "Querétaro",
+    "Mexico City"
+  ],
+  "forbidden_balken_additions": [
+    "audit record",
+    "invoices",
+    "evidence matrix",
+    "procedural calendar",
+    "guarantee",
+    "executive risk memorandum"
+  ],
+  "forbidden_c2_additions": [
+    "multinational financial institutions",
+    "international counsel",
+    "senior regulatory memory",
+    "market-leading position"
+  ],
+  "forbidden_positioning": ["Jalisco-centred"]
+}

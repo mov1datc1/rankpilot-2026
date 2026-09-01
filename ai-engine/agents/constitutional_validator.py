@@ -182,17 +182,10 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
                 if last_name and len(last_name) > 2 and last_name.lower() not in enhanced_b7.lower():
                     violations.append(f"[B7-PARTNER] Lead partner '{first_head}' not found in B7 text")
     
-    # --- C1: Matter word count (each output ≥ 75% of original) ---
+    # Matter length is evidence-conditioned. Grounding and proposition
+    # preservation are enforced by the canonical artifact validator, not by a
+    # word-count ratio that could incentivize unsupported expansion.
     matters = state.get("matters", [])
-    for m in matters:
-        original = m.get("summary", "") or m.get("original_text", "")
-        optimized = m.get("optimized_text", "")
-        if original and optimized:
-            orig_wc = len(original.split())
-            opt_wc = len(optimized.split())
-            if orig_wc > 20 and opt_wc < orig_wc * 0.75:
-                client = m.get("client", m.get("title", "?"))
-                violations.append(f"[C1-SHRUNK] Matter '{client}' shrunk: {orig_wc}w → {opt_wc}w ({opt_wc/max(orig_wc,1)*100:.0f}%)")
     
     # --- C6: Evidence preservation (numbers/years) ---
     for m in matters:
@@ -243,28 +236,24 @@ or dumped as a LIST (4+ names in sequence)?
 PASS = 2-3 clients woven into narrative as evidence of patterns
 FAIL = 4+ clients listed sequentially
 
-C2 — WHY-FIRST OPENING: Do the matters open with their STRATEGIC SIGNIFICANCE 
-(why this engagement matters for ranking) or with a GENERIC MANDATE description 
-(\"[Client] instructed the firm to...\")?
-PASS = Most matters open with strategic angle
-FAIL = 3+ matters open with generic mandate descriptions
+C2 — FACTUAL OPENING: Does each matter open with a client, mandate,
+challenge or outcome that is actually present in its source evidence?
+PASS = Openings are factual and source-bounded
+FAIL = An opening adds evaluative significance, client stature or work not stated
 
-C3 — ANTI-HOMOGENIZATION: Are the matter openings DIFFERENTIATED from each other? 
-Does each matter tell a DIFFERENT strategic story?
-PASS = Each matter has a distinct opening angle
-FAIL = 3+ matters start with similar language about frameworks/implementation
+C3 — DIFFERENTIATION WITHOUT INVENTION: Does ordering reflect each matter's
+distinctive source facts without forcing artificial opening variety?
+PASS = Distinctions arise from source facts; repeated syntax alone is not a failure
+FAIL = Matters are homogenized by adding the same unsupported mechanics
 
-C4 — EVIDENCE STRENGTH: Are outcomes expressed with STRONG/MODERATE evidence 
-(specific metrics, institutional changes) or WEAK generic claims 
-("strengthened compliance posture", "reduced regulatory exposure")?
-PASS = Most outcomes cite specific results or concrete institutional changes
-FAIL = 3+ matters have only generic outcome claims
+C4 — OUTCOME DISCIPLINE: Are outcomes stated only when the source states them?
+PASS = Source outcomes are preserved; absent outcomes remain omitted
+FAIL = A generic, quantified or institutional outcome was supplied without evidence
 
-C9 — PATTERN DISCOVERY: Does the B7 reveal deeper PATTERNS from the matters 
-(recurring advisory, governance integration, sector diversity) or just repeat 
-what the firm explicitly stated?
-PASS = B7 identifies patterns the firm didn't explicitly state
-FAIL = B7 merely paraphrases the firm's original text
+C9 — SOURCE-BACKED PATTERN DISCOVERY: Does the B7 foreground patterns that
+recur in the submitted matters while preserving the original narrative?
+PASS = The proposition is traceable to matter evidence
+FAIL = The proposition relies on a pattern absent from the submitted evidence
 
 OUTPUT FORMAT (JSON):
 {

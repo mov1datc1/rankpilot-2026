@@ -3,10 +3,13 @@ from langgraph.checkpoint.memory import MemorySaver
 from agents.nodes import (
     ingestion_node, 
     extraction_node, 
+    evidence_reconciliation_node,
     pre_flight_gate_node,
     context_engine_node,
     analysis_node, 
+    evidence_gap_analysis_node,
     optimization_node,
+    artifact_validation_node,
     interrogator_node, 
     writer_node
 )
@@ -74,10 +77,13 @@ def create_rankpilot_graph():
     # --- Original pipeline nodes ---
     workflow.add_node("ingestion", ingestion_node)
     workflow.add_node("extraction", extraction_node)
+    workflow.add_node("evidence_reconciliation", evidence_reconciliation_node)
     workflow.add_node("pre_flight", pre_flight_gate_node)
     workflow.add_node("context_engine", context_engine_node)
     workflow.add_node("analysis", analysis_node)
+    workflow.add_node("evidence_gap_analysis", evidence_gap_analysis_node)
     workflow.add_node("optimization", optimization_node)
+    workflow.add_node("artifact_validation", artifact_validation_node)
     workflow.add_node("interrogation", interrogator_node)
     workflow.add_node("writing", writer_node)
     
@@ -100,7 +106,8 @@ def create_rankpilot_graph():
     # 3. Entry sequence (unchanged start)
     workflow.set_entry_point("ingestion")
     workflow.add_edge("ingestion", "extraction")
-    workflow.add_edge("extraction", "pre_flight")
+    workflow.add_edge("extraction", "evidence_reconciliation")
+    workflow.add_edge("evidence_reconciliation", "pre_flight")
     
     # Pre-Flight Gate: if critical checks fail, skip to writing
     def route_after_pre_flight(state: AgentState):
@@ -175,15 +182,33 @@ def create_rankpilot_graph():
     workflow.add_edge("refutation_engine", "comparative_analysis")
     workflow.add_edge("comparative_analysis", "editorial_confidence")
 
-    # 8. Editorial Confidence → Submission Blueprint → Narrative Architecture
-    # ALWAYS proceeds: insufficient confidence is communicated, not hidden.
-    workflow.add_edge("editorial_confidence", "submission_blueprint")
+    # 8. Editorial Confidence → Submission Blueprint → Narrative Architecture.
+    # Strategic uncertainty belongs in the Audit and must not suppress both
+    # deliverables. Only a concrete blocking factual gap can stop for questions.
+    def route_after_editorial_confidence(state: AgentState):
+        blocking = any(
+            gap.get("severity") == "blocking_factual"
+            for gap in state.get("gaps", [])
+            if isinstance(gap, dict)
+        )
+        return "interrogation" if blocking else "submission_blueprint"
+
+    workflow.add_conditional_edges(
+        "editorial_confidence",
+        route_after_editorial_confidence,
+        {
+            "interrogation": "interrogation",
+            "submission_blueprint": "submission_blueprint",
+        },
+    )
     workflow.add_edge("submission_blueprint", "narrative_architecture")
 
     # 9. Narrative Architecture → Analysis (now thesis-driven) → Optimization → Writing
     workflow.add_edge("narrative_architecture", "analysis")
-    workflow.add_edge("analysis", "optimization")
-    workflow.add_edge("optimization", "constitutional_validation")
+    workflow.add_edge("analysis", "evidence_gap_analysis")
+    workflow.add_edge("evidence_gap_analysis", "optimization")
+    workflow.add_edge("optimization", "artifact_validation")
+    workflow.add_edge("artifact_validation", "constitutional_validation")
 
     # 10. Constitutional Validation Gate — conditional routing
     def route_after_constitutional_validation(state: AgentState):

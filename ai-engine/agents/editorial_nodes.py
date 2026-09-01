@@ -15,7 +15,6 @@ import os
 import time
 from typing import Dict
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from core.state import AgentState
@@ -45,6 +44,12 @@ from agents.prompts import (
     OBJECTIVE_DIRECTIVES,
 )
 from utils.rag_router import RAGRouter
+from utils.model_factory import create_chat_model
+from utils.objective_alignment import (
+    build_objective_aligned_thesis,
+    select_objective_aligned_hero,
+    validate_thesis_objective,
+)
 
 # v7.0: Import editorial memory for continuous learning
 try:
@@ -66,22 +71,7 @@ def get_model():
     These were MISSING in the original, causing indefinite hangs with
     unstable internet connections (root cause of the 18-min pipeline freeze).
     """
-    model_name = os.environ.get("OPENAI_MODEL", "gpt-5.6-terra")
-    reasoning = os.environ.get("REASONING_EFFORT_EDITORIAL", "high")
-    
-    kwargs = {
-        "model_name": model_name,
-        "temperature": 0.0,
-        "max_tokens": 32768,     # v22.1: 32k token limit to accommodate reasoning_tokens + rich JSON output
-        "request_timeout": 300,  # v18.0: CRITICAL — was missing, caused hangs
-        "openai_api_key": os.environ.get("OPENAI_API_KEY"),
-    }
-    
-    # reasoning_effort only supported on GPT-5.x models
-    if "gpt-5" in model_name:
-        kwargs["reasoning_effort"] = reasoning
-    
-    return ChatOpenAI(**kwargs)
+    return create_chat_model("editorial")
 
 
 def invoke_with_retry(chain, input_data, max_retries=3, base_delay=5):
@@ -879,6 +869,31 @@ def submission_blueprint_node(state: AgentState) -> Dict:
             "promotion_not_recommended": False,
             "practice_change_recommended": "",
         }
+
+    alignment_errors = validate_thesis_objective(
+        blueprint.get("thesis", ""), state.get("strategic_context", {})
+    )
+    aligned_hero, hero_notes = select_objective_aligned_hero(
+        state.get("matters", []),
+        state.get("strategic_context", {}).get("practice_area", ""),
+        state.get("strategic_context", {}).get("analysis_mode", ""),
+        blueprint.get("hero_matter", ""),
+    )
+    if aligned_hero and aligned_hero != blueprint.get("hero_matter"):
+        blueprint["hero_matter"] = aligned_hero
+        blueprint["hero_selection_reasoning"] = " ".join(hero_notes)
+    if alignment_errors:
+        blueprint["thesis"] = build_objective_aligned_thesis(
+            state.get("matters", []),
+            state.get("strategic_context", {}).get("practice_area", ""),
+            state.get("strategic_objective", {}).get("ranking_unit")
+            or state.get("strategic_context", {}).get("ranking_unit", ""),
+        )
+        blueprint.setdefault("editorial_risks", []).extend(alignment_errors)
+        blueprint["coherence_check"] = {
+            "passes_coherence": False,
+            "redesign_notes": " ".join(alignment_errors),
+        }
     
     trace = state.get("reasoning_trace", [])
     trace.append(_build_trace_entry(
@@ -1014,6 +1029,30 @@ def narrative_architecture_node(state: AgentState) -> Dict:
             "editorial_tone": "institutional",
             "bench_strength_narrative": "",
         }
+
+    architecture_errors = validate_thesis_objective(
+        architecture.get("thesis_statement", ""), state.get("strategic_context", {})
+    )
+    if architecture_errors:
+        blueprint_thesis = state.get("submission_blueprint", {}).get("thesis", "")
+        if validate_thesis_objective(
+            blueprint_thesis, state.get("strategic_context", {})
+        ):
+            blueprint_thesis = ""
+        architecture["thesis_statement"] = blueprint_thesis or build_objective_aligned_thesis(
+            state.get("matters", []),
+            state.get("strategic_context", {}).get("practice_area", ""),
+            state.get("strategic_objective", {}).get("ranking_unit")
+            or state.get("strategic_context", {}).get("ranking_unit", ""),
+        )
+    aligned_hero, _ = select_objective_aligned_hero(
+        state.get("matters", []),
+        state.get("strategic_context", {}).get("practice_area", ""),
+        state.get("strategic_context", {}).get("analysis_mode", ""),
+        architecture.get("hero_matter", ""),
+    )
+    if aligned_hero:
+        architecture["hero_matter"] = aligned_hero
     
     trace = state.get("reasoning_trace", [])
     trace.append(_build_trace_entry(

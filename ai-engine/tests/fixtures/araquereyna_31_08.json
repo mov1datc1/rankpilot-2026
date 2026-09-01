@@ -1,0 +1,41 @@
+{
+  "fixture_id": "araquereyna-corporate-ma-31-08",
+  "source_sha256": "cb1feba357556c1fd22912dd58020716b1b9a2d29e15ec083d715ba1e1c9fd65",
+  "source_format": "doc",
+  "expected_manifest": {
+    "total": 25,
+    "publishable": 10,
+    "confidential": 15
+  },
+  "objective": {
+    "directory": "Chambers & Partners",
+    "practice_area": "Corporate/M&A",
+    "ranking_unit": "Venezuela",
+    "current_position": "Band 2",
+    "target": "Advancement",
+    "priority": "Build a defensible advancement case"
+  },
+  "hero": "Gruppo Montenegro / Pampero",
+  "semantic_claims": [
+    {
+      "claim": "Gruppo Montenegro acquired Pampero from Diageo",
+      "client_role": "buyer",
+      "counterparty_role": "seller"
+    }
+  ],
+  "ranked_lawyers": [
+    "Pedro I Sosa Mendoza",
+    "Maripi Viso",
+    "María Carolina Cano",
+    "Manuel Reyna",
+    "Gustavo J Reyna",
+    "Pedro Luis Planchart"
+  ],
+  "required_b7_anchors": ["Pampero", "SUMMUS", "Dragados"],
+  "forbidden_client_output": [
+    "applicable guard",
+    "ranking-architecture guard",
+    "precedent testing",
+    "demonstrative capacity"
+  ]
+}

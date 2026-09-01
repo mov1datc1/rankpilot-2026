@@ -1,174 +1,152 @@
-import os
+"""Practice-aware, chunked RAG routing with auditable provenance."""
+
 import glob
-from typing import List, Dict, Tuple
+import hashlib
+import os
+import re
+from dataclasses import asdict, dataclass
+from typing import Dict, List, Sequence
+
+
+@dataclass(frozen=True)
+class RAGChunk:
+    chunk_id: str
+    source: str
+    tier: str
+    score: int
+    text: str
+
 
 class RAGRouter:
-    """
-    v11.0 — Enhanced RAG Router
-    
-    Changes from v10:
-    - Supports .txt AND .md files
-    - Increased top-file limit from 3 → 7 for richer context
-    - Tiered scoring: methodology files get priority over examples
-    - Improved keyword matching for v1 RAG files
-    - Added Tax and Regulatory category routes
-    """
-    
+    """Route relevant methodology chunks without loading whole files."""
+
+    GLOBAL_FILES = (
+        "editorial_constitution", "global lawyer leadership framework",
+        "¿cómo rankeamos abogado_as__", "volume_0_first_principles",
+        "volume_ii_editorial_reasoning_engine",
+    )
+    MAX_CHUNKS = 16
+    MAX_CONTEXT_CHARS = 42000
+    CHUNK_CHARS = 2800
+
     def __init__(self, knowledge_dir: str = None):
-        if not knowledge_dir:
-            knowledge_dir = os.path.join(os.path.dirname(__file__), '..', 'rag_knowledge')
-        self.knowledge_dir = knowledge_dir
-        # v11.0: Support both .txt and .md files
-        self.files = (
-            glob.glob(os.path.join(self.knowledge_dir, '*.txt')) +
-            glob.glob(os.path.join(self.knowledge_dir, '*.md'))
-        )
-        
+        self.knowledge_dir = knowledge_dir or os.path.join(os.path.dirname(__file__), "..", "rag_knowledge")
+        self.files = sorted(glob.glob(os.path.join(self.knowledge_dir, "*.txt")) + glob.glob(os.path.join(self.knowledge_dir, "*.md")))
+        self.last_manifest: List[Dict] = []
+
     def _read_file(self, filepath: str) -> str:
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                return f.read()
-        except Exception as e:
-            print(f"Error reading {filepath}: {e}")
+            with open(filepath, "r", encoding="utf-8") as source:
+                return source.read()
+        except OSError as exc:
+            print(f"[RAG ROUTER] Could not read {filepath}: {exc}")
             return ""
 
-    def get_rag_context(self, practice_area: str, directory: str) -> str:
-        practice_area = str(practice_area).lower()
-        directory = str(directory).lower()
-        
-        # Define keywords for practice areas — 360-Degree Coverage (v25.1)
-        pa_keywords = []
-        if any(k in practice_area for k in ["bank", "financ", "capital market", "fintech"]):
-            pa_keywords = ["banking", "bank", "finance"]
-        elif any(k in practice_area for k in ["tax", "fiscal", "tributar"]):
-            pa_keywords = ["tax ", " tax", "tax_", "tax.", "tax-", "fiscal"]
-        elif any(k in practice_area for k in ["labour", "labor", "employ", "trabajo"]):
-            pa_keywords = ["labour", "labor", "employment"]
-        elif any(k in practice_area for k in ["corp", "m&a", "merger", "sociedad"]):
-            pa_keywords = ["corporate", "m&a", "corporate_ma"]
-        elif any(k in practice_area for k in ["dispute", "litig", "arbitrat", "resoluc", "juicio", "amparo"]):
-            pa_keywords = ["dispute", "litigation", "arbitrat"]
-        elif any(k in practice_area for k in ["competi", "antitrust", "competenc"]):
-            pa_keywords = ["competition", "antitrust"]
-        elif any(k in practice_area for k in ["intellectual", "patent", "trademark", "marca", "tmt", "tech", "data protection", "privacy"]):
-            pa_keywords = ["intellectual property", " pi ", "ip ", "_ip_"]
-        elif any(k in practice_area for k in ["regulat", "public", "admin", "gobierno", "derecho publico"]):
-            pa_keywords = ["regulatory", "public", "administrative"]
-        elif any(k in practice_area for k in ["energy", "project", "infra", "mineri", "mining", "environ", "ambienta"]):
-            pa_keywords = ["energy", "project", "infrastructure", "regulatory"]
-        elif any(k in practice_area for k in ["real estate", "property", "real_estate", "inmobiliario", "urban"]):
-            pa_keywords = ["real estate", "real_estate", "inmobiliario", "real property"]
-        else:
-            # v25.1: 360-Degree Catch-All Fallback for unmapped or niche practices
-            pa_keywords = ["regulatory", "dispute", "corporate"]
-            
-        # Define keywords for directories — EXPANDED
-        dir_keywords = []
-        if "chamber" in directory:
-            dir_keywords = ["chamber"]
-        elif "500" in directory or "legal 500" in directory:
-            dir_keywords = ["500", "legal500"]
-        elif "iflr" in directory:
-            dir_keywords = ["iflr"]
-        elif "leader" in directory:
-            dir_keywords = ["leader"]
-            
-        # Global documents to ALWAYS include
-        global_files = [
-            "editorial_constitution.txt",
-            "global lawyer leadership framework",
-            "¿cómo rankeamos abogado_as__",
-            "volume_0_first_principles",
-            "volume_ii_editorial_reasoning_engine"
+    @staticmethod
+    def _practice_keywords(practice_area: str) -> Sequence[str]:
+        practice = practice_area.lower()
+        routes = [
+            (("bank", "financ", "capital market", "fintech"), ("banking", "finance")),
+            (("tax", "fiscal", "tributar"), ("tax", "fiscal")),
+            (("labour", "labor", "employ", "trabajo"), ("labour", "labor", "employment")),
+            (("corp", "m&a", "merger", "sociedad"), ("corporate", "m&a", "corporate_ma")),
+            (("dispute", "litig", "arbitrat", "amparo"), ("dispute", "litigation", "arbitrat")),
+            (("competi", "antitrust"), ("competition", "antitrust")),
+            (("intellectual", "patent", "trademark", "privacy", "data protection"), ("intellectual", "privacy", "data")),
+            (("regulat", "public", "admin"), ("regulatory", "public", "administrative")),
+            (("energy", "project", "infra", "mining", "environ"), ("energy", "project", "infrastructure")),
+            (("real estate", "property", "inmobiliario", "urban"), ("real estate", "real_estate", "property", "inmobiliario")),
         ]
-        
-        selected_files = []
-        global_context = ""
-        
-        for f in self.files:
-            basename = os.path.basename(f)
-            lower_name = basename.lower()
-            
-            # Extract globals
-            is_global = False
-            for gf in global_files:
-                if gf in lower_name:
-                    global_context += f"\n--- GLOBAL KNOWLEDGE: {basename} ---\n" + self._read_file(f)
-                    is_global = True
-                    break
-            
-            if is_global:
-                continue
-                
-            # Score specific files with TIERED SCORING (v11.0)
-            score = 0
-            
-            # Match Practice Area
-            pa_match = False
-            for pak in pa_keywords:
-                if pak in lower_name:
-                    # v11.0: Extra check for 'tax' to prevent matching 'taxonomy'
-                    if pak.strip() == 'tax' or (pak in ['tax ', ' tax', 'tax_', 'tax.', 'tax-']):
-                        # Make sure it's actually a Tax file, not 'taxonomy'
-                        import re as _re
-                        if _re.search(r'\btax\b', lower_name) and 'taxonomy' not in lower_name:
-                            score += 10
-                            pa_match = True
-                            break
-                    else:
-                        score += 10
-                        pa_match = True
-                        break
-                    
-            # Match Directory
-            dir_match = False
-            for dk in dir_keywords:
-                if dk in lower_name:
-                    score += 10
-                    dir_match = True
-                    break
-            
-            # v11.0: TIERED BONUS — methodology/rubric files get priority over examples
-            if pa_match:
-                # Tier 1: Core methodology and taxonomy (most important)
-                if any(k in lower_name for k in ["methodology", "taxonomy", "matrix", "intelligence engine", "universal", "master"]):
-                    score += 5
-                # Tier 2: Scoring rubrics and overlays
-                elif any(k in lower_name for k in ["scoring", "rubric", "overlay", "directory_overlay"]):
-                    score += 4
-                # Tier 3: Strong/weak matter examples and rewrites
-                elif any(k in lower_name for k in ["strong", "weak", "rewrite", "example"]):
-                    score += 2
-                # Tier 4: Multi-ranking / cross-directory layers
-                elif any(k in lower_name for k in ["multi-ranking", "intelligence layer"]):
-                    score += 3
-            
-            # Keep if it matches the Practice Area at least
-            if pa_match:
-                selected_files.append((score, f, basename))
+        for triggers, keywords in routes:
+            if any(trigger in practice for trigger in triggers):
+                return keywords
+        return ()
 
-        # Sort selected by score descending
-        selected_files.sort(key=lambda x: x[0], reverse=True)
-        
-        specific_context = ""
-        # v11.0: Take the top 7 highest scoring specific documents (was 3)
-        top_files = selected_files[:7]
-        
-        print(f"[RAG ROUTER v11.0] Practice: {practice_area} | Directory: {directory}")
-        print(f"[RAG ROUTER v11.0] Found {len(selected_files)} matching files, selecting top {len(top_files)}:")
-        for score, filepath, basename in top_files:
-            print(f"  → Score {score}: {basename}")
-            specific_context += f"\n--- SPECIFIC KNOWLEDGE (Relevance Score: {score}): {basename} ---\n" + self._read_file(filepath)
-            
-        # Combine
-        final_rag = (
-            "================ RAG KNOWLEDGE BASE (v11.0) =================\n"
-            "CRITICAL INSTRUCTION: You MUST evaluate the submission strictly according to these guidelines. "
-            "Do not use generic knowledge if it conflicts with these rules.\n"
-            "The following documents contain practice-area-specific methodology, taxonomy, scoring rubrics, "
-            "examples of strong and weak matters, and directory-specific editorial logic. "
-            "USE THEM as your primary reference for analysis.\n"
-            + specific_context + "\n" + global_context +
-            "\n================ END RAG KNOWLEDGE BASE =================\n"
-        )
-        return final_rag
+    @staticmethod
+    def _directory_keywords(directory: str) -> Sequence[str]:
+        value = directory.lower()
+        if "chamber" in value:
+            return ("chamber",)
+        if "500" in value:
+            return ("legal 500", "legal500")
+        if "iflr" in value:
+            return ("iflr",)
+        if "leader" in value:
+            return ("leader",)
+        return ()
+
+    @classmethod
+    def _split_chunks(cls, text: str) -> List[str]:
+        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
+        chunks: List[str] = []
+        current = ""
+        for paragraph in paragraphs:
+            units = re.split(r"(?<=[.!?])\s+", paragraph) if len(paragraph) > cls.CHUNK_CHARS else [paragraph]
+            for unit in units:
+                candidate = f"{current}\n\n{unit}".strip() if current else unit
+                if current and len(candidate) > cls.CHUNK_CHARS:
+                    chunks.append(current)
+                    current = unit
+                else:
+                    current = candidate
+        if current:
+            chunks.append(current)
+        return chunks
+
+    @staticmethod
+    def _tier(filename: str) -> str:
+        lower = filename.lower()
+        if any(token in lower for token in ("methodology", "taxonomy", "matrix", "constitution", "principles", "framework")):
+            return "methodology"
+        if any(token in lower for token in ("scoring", "rubric", "overlay")):
+            return "rubric"
+        if any(token in lower for token in ("example", "strong", "weak", "rewrite")):
+            return "example"
+        return "reference"
+
+    def retrieve(self, practice_area: str, directory: str) -> List[RAGChunk]:
+        practice_keywords = self._practice_keywords(str(practice_area))
+        directory_keywords = self._directory_keywords(str(directory))
+        candidates: List[RAGChunk] = []
+        for filepath in self.files:
+            filename = os.path.basename(filepath)
+            lower_name = filename.lower()
+            is_global = any(token in lower_name for token in self.GLOBAL_FILES)
+            practice_match = any(token in lower_name for token in practice_keywords)
+            if not is_global and not practice_match:
+                continue
+            tier = self._tier(filename)
+            file_score = (20 if is_global else 60) + {"methodology": 15, "rubric": 10, "reference": 5, "example": 0}[tier]
+            if any(token in lower_name for token in directory_keywords):
+                file_score += 10
+            for index, text in enumerate(self._split_chunks(self._read_file(filepath)), start=1):
+                lower_text = text.lower()
+                score = file_score + min(12, 3 * sum(token in lower_text for token in practice_keywords)) + min(6, 3 * sum(token in lower_text for token in directory_keywords))
+                digest = hashlib.sha1(f"{filename}:{index}:{text}".encode("utf-8")).hexdigest()[:12]
+                candidates.append(RAGChunk(f"rag-{digest}", filename, tier, score, text))
+        candidates.sort(key=lambda chunk: (-chunk.score, chunk.source, chunk.chunk_id))
+        selected: List[RAGChunk] = []
+        total_chars = 0
+        for chunk in candidates:
+            if len(selected) >= self.MAX_CHUNKS:
+                break
+            if selected and total_chars + len(chunk.text) > self.MAX_CONTEXT_CHARS:
+                continue
+            selected.append(chunk)
+            total_chars += len(chunk.text)
+        self.last_manifest = [{key: value for key, value in asdict(chunk).items() if key != "text"} for chunk in selected]
+        return selected
+
+    def get_rag_context(self, practice_area: str, directory: str) -> str:
+        chunks = self.retrieve(practice_area, directory)
+        print(f"[RAG ROUTER] practice={practice_area} directory={directory} chunks={len(chunks)} sources={len(set(c.source for c in chunks))}")
+        blocks = [
+            "RAG METHODOLOGY CONTEXT — NOT SUBMISSION EVIDENCE",
+            "Use these chunks only for evaluation method and directory criteria. Examples, names, figures, and facts in RAG must never become claims about the submitted firm. Every submission fact must come from the canonical evidence ledger.",
+        ]
+        for chunk in chunks:
+            blocks.append(f"[RAG {chunk.chunk_id} | source={chunk.source} | tier={chunk.tier} | score={chunk.score}]\n{chunk.text}")
+        return "\n\n".join(blocks)
+
+    def get_rag_manifest(self) -> List[Dict]:
+        return list(self.last_manifest)

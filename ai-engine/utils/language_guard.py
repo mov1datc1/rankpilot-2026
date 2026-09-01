@@ -20,6 +20,12 @@ from typing import Any, Dict, List, Union
 # ─────────────────────────────────────────────
 
 EPISTEMIC_REPLACEMENTS = [
+    ("demonstrative capacity", "evidentiary value"),
+    ("Demonstrative capacity", "Evidentiary value"),
+    ("applicable guard", "available evidence"),
+    ("ranking-architecture guard", "ranking architecture"),
+    ("precedent testing", "comparative assessment"),
+    ("precedent-testing", "comparative assessment"),
     # ═══ PROHIBITED EDITORIAL TERMS (v7.1) ═══
     # These terms are banned across ALL prompts but may still leak
     ("high-sophistication firm", "a sophisticated practice"),
@@ -398,6 +404,12 @@ def apply_epistemic_filter(text: str) -> str:
     result = text
     for forbidden, replacement in EPISTEMIC_REPLACEMENTS:
         result = result.replace(forbidden, replacement)
+
+    result = re.sub(
+        r"(?i)(?:^|(?<=[.!?])\s+)[^.!?]*(?:guardrail|engine restriction|model limitation|system threshold|prompt rule)[^.!?]*[.!?]",
+        " The available evidence does not support a firmer conclusion.",
+        result,
+    )
     
     return result
 

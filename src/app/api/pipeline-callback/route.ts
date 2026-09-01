@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
             source: 'builder',
             practiceArea: submission.practiceArea,
             jurisdiction: submission.guideRegion,
-            isConfidential: m.is_confidential || false,
+            isConfidential: m.is_confidential || m.publish_status === 'confidential' || m.publish_status === 'non_publishable',
             crossBorder: m.is_cross_border ? (m.cross_border_jurisdictions || 'Yes') : '',
             teamMembers: m.team_members || '',
             otherFirms: m.other_firms || '',
@@ -193,6 +193,16 @@ export async function POST(request: NextRequest) {
           reasoning_trace: pyData.data?.reasoning_trace || existingChambersData.reasoning_trace,
           pipeline_manifest: pyData.data?.pipeline_manifest || existingChambersData.pipeline_manifest,
           enhanced_b7: pyData.data?.enhanced_b7 || existingChambersData.enhanced_b7,
+          enhanced_c2: pyData.data?.enhanced_c2 ?? existingChambersData.enhanced_c2,
+          canonical_submission: pyData.data?.canonical_submission || existingChambersData.canonical_submission,
+          strategic_objective: pyData.data?.strategic_objective || existingChambersData.strategic_objective,
+          gaps: pyData.data?.gaps || existingChambersData.gaps,
+          interrogation_questions: pyData.data?.interrogation_questions || existingChambersData.interrogation_questions,
+          matter_evidence_gaps: pyData.data?.matter_evidence_gaps || existingChambersData.matter_evidence_gaps,
+          optimized_submission: pyData.data?.optimized_submission || existingChambersData.optimized_submission,
+          strategic_audit: pyData.data?.strategic_audit || existingChambersData.strategic_audit,
+          artifact_validation: pyData.data?.artifact_validation || existingChambersData.artifact_validation,
+          evidence_reconciliation: pyData.data?.evidence_reconciliation || existingChambersData.evidence_reconciliation,
           // v19.0: Clone-and-Replace DOCX — base64-encoded cloned DOCX with AI enhancements
           // This preserves the original formatting (colors, bold, logos, diversity sections)
           // and only replaces B10 + D2/E2 cells with enhanced content
@@ -205,7 +215,7 @@ export async function POST(request: NextRequest) {
           ...(extractedDept.department_description ? { departmentDesc: extractedDept.department_description } : {}),
           ...(extractedLawyers.length ? {
             lawyers: extractedLawyers.map((l: any) => ({
-              name: l.name, url: l.url || '', currentRank: l.current_ranking || 'Not Ranked',
+              name: l.name, url: l.url || '', currentRank: l.current_ranking || '',
               suggestedRank: l.suggested_ranking || '', focus: l.key_focus || '',
               bio: l.bio || '', standoutWork: l.standout_work || '',
               isPartner: l.is_partner || false, isRanked: l.is_ranked || false,

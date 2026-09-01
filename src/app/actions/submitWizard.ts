@@ -122,13 +122,13 @@ export async function submitWizardData(formData: any) {
     // Persist AI analysis and strategic_context back into chambersData
     const aiAnalysis = data?.data?.analysis || {};
     const aiStrategicContext = data?.data?.strategic_context || {};
-    const aiMatters = data?.data?.matters || [];
-
     await prisma.submission.update({
       where: { id: newSubmission.id },
       data: {
         chambersData: {
           ...formData,
+          ...(data?.data || {}),
+          lawyers: data?.data?.metadata?.lawyers || (formData as any).lawyers || [],
           analysis: aiAnalysis,
           strategicContext: aiStrategicContext
         },

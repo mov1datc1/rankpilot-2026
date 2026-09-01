@@ -1,0 +1,333 @@
+"""Build the immutable canonical submission from deterministic and extracted data."""
+
+import os
+import re
+import unicodedata
+from typing import Dict, List, Tuple
+from urllib.parse import urlparse
+
+from core.contracts import (
+    CanonicalSubmission,
+    DocumentManifest,
+    EvidenceClaim,
+    EvidenceSupport,
+    GapRecord,
+    GapSeverity,
+    LawyerRecord,
+    MatterRecord,
+    SourceSpan,
+    StrategicObjective,
+)
+from utils.evidence_validation import reconcile_matter_register
+from utils.doc_parser import DocumentParser
+
+
+def _slug(value: str) -> str:
+    value = re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
+    return value or "unknown"
+
+
+def merge_lawyer_roster(source_lawyers: List[Dict], extracted_lawyers: List[Dict]) -> List[Dict]:
+    """Make the deterministic B9 roster authoritative while retaining safe detail."""
+
+    def normalized(value: str) -> str:
+        plain = unicodedata.normalize("NFKD", value or "")
+        return re.sub(r"[^a-z0-9]+", " ", plain.encode("ascii", "ignore").decode().lower()).strip()
+
+    extracted_by_name = {
+        normalized(str(item.get("name") or "")): item
+        for item in extracted_lawyers
+        if item.get("name")
+    }
+    merged = []
+    for source in source_lawyers:
+        key = normalized(str(source.get("name") or ""))
+        model = dict(extracted_by_name.get(key, {}))
+        model["name"] = source.get("name")
+        model["is_ranked"] = source.get("is_ranked")
+        model["current_ranking"] = (
+            model.get("current_ranking") or source.get("current_ranking")
+        )
+        if source.get("is_partner") is not None:
+            model["is_partner"] = source.get("is_partner")
+        model["source_excerpt"] = source.get("source_excerpt", "")
+        merged.append(model)
+    return merged
+
+
+def reconcile_extracted_matters_to_source(
+    extracted_matters: List[Dict], source_labels: List[str], source_text: str
+) -> Tuple[List[Dict], Dict]:
+    """Select exactly one grounded extraction record per numbered source label."""
+
+    def normalized_label(value: str) -> str:
+        match = re.search(
+            r"(publishable|confidential|non[- ]publishable)\s+matter\s+(\d+)",
+            value or "",
+            re.I,
+        )
+        if not match:
+            return ""
+        kind = match.group(1).casefold().replace(" ", "-")
+        return f"{kind}:{int(match.group(2))}"
+
+    expected = [(label, normalized_label(label)) for label in source_labels]
+    sections = DocumentParser.extract_numbered_matter_sections(source_text)
+    selected: List[Dict] = []
+    used_indices = set()
+    missing = []
+    duplicate_labels = []
+
+    for exact_label, key in expected:
+        candidates = [
+            (index, matter)
+            for index, matter in enumerate(extracted_matters)
+            if normalized_label(str(matter.get("source_label") or "")) == key
+        ]
+        if not candidates:
+            missing.append(exact_label)
+            continue
+        if len(candidates) > 1:
+            duplicate_labels.append(exact_label)
+        source_span = str(sections.get(exact_label.casefold(), {}).get("text") or "").casefold()
+        index, chosen = max(
+            candidates,
+            key=lambda item: (
+                bool(str(item[1].get("client") or "").strip())
+                and str(item[1].get("client") or "").casefold() in source_span,
+                bool(str(item[1].get("source_excerpt") or "").strip())
+                and str(item[1].get("source_excerpt") or "").strip() in source_text,
+                -item[0],
+            ),
+        )
+        used_indices.add(index)
+        grounded = dict(chosen)
+        grounded["source_label"] = exact_label
+        is_confidential = not exact_label.casefold().startswith("publishable")
+        grounded["publish_status"] = "confidential" if is_confidential else "publishable"
+        grounded["is_confidential"] = is_confidential
+        grounded["_confidentiality_locked"] = is_confidential
+        selected.append(grounded)
+
+    dropped = [
+        str(matter.get("source_label") or matter.get("client") or f"record-{index + 1}")
+        for index, matter in enumerate(extracted_matters)
+        if index not in used_indices
+    ]
+    report = {
+        "passed": not missing and len(selected) == len(source_labels),
+        "source_count": len(source_labels),
+        "selected_count": len(selected),
+        "missing_labels": missing,
+        "duplicate_labels": duplicate_labels,
+        "dropped_records": dropped,
+    }
+    return selected, report
+
+
+def build_strategic_objective(context: Dict, metadata: Dict) -> StrategicObjective:
+    """Resolve objective fields from explicit request context, never portfolio frequency."""
+
+    directory = context.get("directory") or "Unspecified directory"
+    practice = context.get("practice_area") or metadata.get("practice_area") or "Unspecified practice"
+    ranking_unit = context.get("ranking_unit") or context.get("jurisdiction") or metadata.get("location") or "Unspecified ranking unit"
+    current = context.get("current_status") or "Unspecified current position"
+    primary = context.get("primary_objective") or "Assess current ranking position"
+    priority = context.get("strategic_priority") or primary
+    return StrategicObjective(
+        directory=str(directory),
+        practice_area=str(practice),
+        ranking_unit=str(ranking_unit),
+        current_position=str(current),
+        target=str(primary),
+        priority=str(priority),
+    )
+
+
+def infer_transaction_role(source_text: str) -> Tuple[str, str]:
+    """Infer only roles made semantically unequivocal by acquisition syntax."""
+
+    acquisition = re.search(
+        r"\b(?:acquisition|acquired)\b[\s\S]{0,220}?\bfrom\s+([A-Z][^\n.;,]{1,100})",
+        source_text,
+        re.IGNORECASE,
+    )
+    if acquisition:
+        return "buyer", acquisition.group(1).strip()
+    return "", ""
+
+
+def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[str]]:
+    """Create canonical state and fail-closed reconciliation errors."""
+
+    pipeline_manifest = state.get("pipeline_manifest", {})
+    doc_info = pipeline_manifest.get("document", {})
+    source_info = doc_info.get("source_matters", {})
+    metadata = state.get("metadata", {})
+    context = state.get("submission_context", {})
+    file_path = state.get("file_path", "")
+    parsed_path = urlparse(file_path).path if str(file_path).startswith(("http://", "https://")) else str(file_path)
+    extension = os.path.splitext(parsed_path)[1].lower().lstrip(".") or "docx"
+    if extension not in {"doc", "docx", "pdf"}:
+        extension = "docx"
+
+    manifest = DocumentManifest(
+        source_sha256=doc_info.get("file_hash", ""),
+        source_format=extension,
+        total_matters=int(source_info.get("total", 0)),
+        publishable_matters=int(source_info.get("publishable", 0)),
+        confidential_matters=int(source_info.get("confidential", 0)),
+        matter_labels=list(source_info.get("matter_labels", [])),
+    )
+    objective = build_strategic_objective(context, metadata)
+
+    matters: List[MatterRecord] = []
+    spans: List[SourceSpan] = []
+    gaps: List[GapRecord] = []
+    source_claims: List[EvidenceClaim] = []
+    status_counters = {"publishable": 0, "confidential": 0}
+    source_sections = DocumentParser.extract_numbered_matter_sections(state.get("doc_text", ""))
+
+    for index, raw in enumerate(state.get("matters", []), start=1):
+        raw_status = raw.get("publish_status", "publishable")
+        status = "confidential" if raw.get("is_confidential") or raw_status in {"confidential", "non_publishable"} else "publishable"
+        status_counters[status] += 1
+        fallback_label = f"{'Publishable' if status == 'publishable' else 'Confidential'} Matter {status_counters[status]}"
+        source_label = str(raw.get("source_label") or fallback_label).strip()
+        matter_id = f"matter-{index:02d}"
+        deterministic_section = source_sections.get(source_label.lower(), {})
+        excerpt = str(deterministic_section.get("text") or "").strip()
+        model_excerpt = str(raw.get("source_excerpt") or "").strip()
+        if not excerpt and model_excerpt and model_excerpt in state.get("doc_text", ""):
+            excerpt = model_excerpt
+        span_ids: List[str] = []
+        if excerpt:
+            span_id = f"{matter_id}-source"
+            spans.append(
+                SourceSpan(
+                    span_id=span_id,
+                    section=source_label,
+                    text=excerpt,
+                    matter_id=matter_id,
+                    confidentiality=status,
+                )
+            )
+            span_ids.append(span_id)
+        else:
+            gaps.append(
+                GapRecord(
+                    gap_id=f"{matter_id}-missing-source",
+                    severity=GapSeverity.BLOCKING_FACTUAL,
+                    subject_id=matter_id,
+                    description="The extracted matter has no verbatim source excerpt.",
+                    question="The system must recover the exact source passage for this matter before optimization.",
+                )
+            )
+
+        inferred_role, inferred_counterparty = infer_transaction_role(excerpt)
+        client_role = raw.get("client_role") or inferred_role or None
+        counterparty = raw.get("counterparty") or inferred_counterparty or None
+        if inferred_role and span_ids:
+            source_claims.append(
+                EvidenceClaim(
+                    claim_id=f"{matter_id}-client-role",
+                    text=(
+                        f"{raw.get('client') or 'The client'} acted as {inferred_role}"
+                        + (f" and the counterparty was {inferred_counterparty}" if inferred_counterparty else "")
+                    ),
+                    evidence_ids=span_ids,
+                    support=EvidenceSupport.SEMANTIC,
+                    semantic_role=inferred_role,
+                )
+            )
+
+        matters.append(
+            MatterRecord(
+                matter_id=matter_id,
+                source_label=source_label,
+                publish_status=status,
+                client=str(raw.get("client") or "Unknown client"),
+                title=str(raw.get("title") or ""),
+                source_span_ids=span_ids,
+                lead_lawyers=[name.strip() for name in str(raw.get("lead_partner") or "").split(",") if name.strip()],
+                client_role=client_role,
+                counterparty=counterparty,
+                matter_value=raw.get("matter_value") or raw.get("value") or None,
+                value_type="unknown" if (raw.get("matter_value") or raw.get("value")) else None,
+                completion_status=raw.get("completion_date") or None,
+            )
+        )
+
+    lawyers: List[LawyerRecord] = []
+    document_text = state.get("doc_text", "")
+    for index, raw in enumerate(metadata.get("lawyers", []), start=1):
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+        lawyer_span_ids: List[str] = []
+        name_position = document_text.casefold().find(name.casefold())
+        if name_position >= 0:
+            line_start = document_text.rfind("\n", 0, name_position) + 1
+            line_end = document_text.find("\n", name_position)
+            if line_end < 0:
+                line_end = len(document_text)
+            lawyer_span_id = f"lawyer-{index:02d}-source"
+            spans.append(
+                SourceSpan(
+                    span_id=lawyer_span_id,
+                    section="Lawyer roster",
+                    text=document_text[line_start:line_end].strip() or name,
+                    confidentiality="internal",
+                )
+            )
+            lawyer_span_ids.append(lawyer_span_id)
+        else:
+            gaps.append(
+                GapRecord(
+                    gap_id=f"lawyer-{index:02d}-missing-source",
+                    severity=GapSeverity.BLOCKING_FACTUAL,
+                    subject_id=f"lawyer-{index:02d}",
+                    description=f"Extracted lawyer {name!r} is not present verbatim in the source.",
+                    question="Please confirm the lawyer's exact source spelling and ranking status.",
+                )
+            )
+        lawyers.append(
+            LawyerRecord(
+                lawyer_id=_slug(name),
+                name=name,
+                is_partner=raw.get("is_partner"),
+                is_ranked=raw.get("is_ranked"),
+                current_ranking=raw.get("current_ranking"),
+                source_span_ids=lawyer_span_ids,
+            )
+        )
+
+    canonical = CanonicalSubmission(
+        manifest=manifest,
+        objective=objective,
+        source_spans=spans,
+        matters=matters,
+        lawyers=lawyers,
+        source_claims=source_claims,
+        gaps=gaps,
+    )
+    errors = list(reconcile_matter_register(manifest, matters).errors)
+    source_lawyer_names = {
+        _slug(str(item.get("name") or ""))
+        for item in pipeline_manifest.get("source_lawyers", [])
+        if item.get("name")
+    }
+    canonical_lawyer_names = {lawyer.lawyer_id for lawyer in lawyers}
+    if source_lawyer_names != canonical_lawyer_names:
+        missing = sorted(source_lawyer_names - canonical_lawyer_names)
+        extra = sorted(canonical_lawyer_names - source_lawyer_names)
+        if missing:
+            errors.append(f"Missing source lawyers: {', '.join(missing)}")
+        if extra:
+            errors.append(f"Unexpected lawyers outside source roster: {', '.join(extra)}")
+    errors.extend(
+        f"Missing verbatim source evidence for {gap.subject_id}"
+        for gap in gaps
+        if gap.severity == GapSeverity.BLOCKING_FACTUAL
+    )
+    return canonical, errors

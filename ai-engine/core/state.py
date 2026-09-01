@@ -10,6 +10,7 @@ class AgentState(TypedDict):
     # Datos crudos extraídos del documento
     metadata: Dict[str, str] # firm_name, practice_area, etc.
     matters: List[Dict]       # Lista de casos detectados
+    _original_extracted_matters: List[Dict]  # Immutable extraction snapshot for reconciliation/recovery
     # Resultados del análisis de Fase 2
     analysis: Dict            # tier, confidence, dominant_model
     # Control de flujo
@@ -91,12 +92,26 @@ class AgentState(TypedDict):
     # =====================================================
     pipeline_manifest: Dict
 
+    # Canonical evidence contracts — established before strategic reasoning.
+    canonical_submission: Dict
+    strategic_objective: Dict
+    evidence_ledger: Dict
+    gaps: List[Dict]
+    interrogation_questions: List[str]
+    evidence_reconciliation: Dict
+    requires_user_input: bool
+    optimized_submission: Dict
+    strategic_audit: Dict
+    artifact_validation: Dict
+    matter_evidence_gaps: Dict
+
     # =====================================================
     # v17.3: ORIGINAL B10 — Firm's Department Narrative
     # Extracted from raw doc_text during ingestion.
     # Used by the B7 Enhancement Pipeline to EXPAND (never summarize).
     # =====================================================
     original_b10: str
+    original_c2: str
     
     # v17.3: ENHANCED B7 — AI-expanded version of B10
     # Produced by optimization_node's B7 Enhancement Pipeline.

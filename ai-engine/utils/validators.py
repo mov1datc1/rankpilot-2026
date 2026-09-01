@@ -413,8 +413,8 @@ def validate_matter_enhancement(original_text: str, enhanced_text: str,
     field_labels = {'Title', 'Client', 'Value', 'Summary', 'Significance', 'Lead', 'Partner', 'None', 'The', 'This', 'That', 'These', 'Their', 'There'}
     orig_proper = set(re.findall(r'(?<!\. )\b[A-Z][a-z]{2,}\b', original_text)) - field_labels
     enhanced_proper = set(re.findall(r'(?<!\. )\b[A-Z][a-z]{2,}\b', enhanced_text)) - field_labels
-    # v17.0: Lower threshold to 50% — enhancement EXPANDS text 3-5x, adding new entities is expected
-    # The key check is that CORE entities (client name, jurisdiction) are preserved, not ALL capitalized words
+    # Legacy preservation check. Novel entities are separately rejected by the
+    # canonical artifact validation layer; this check only detects omissions.
     if orig_proper:
         proper_ratio = len(orig_proper & enhanced_proper) / len(orig_proper)
     else:

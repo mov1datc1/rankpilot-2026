@@ -37,6 +37,54 @@ from docx import Document
 from docx.table import Table, _Cell
 from docx.text.paragraph import Paragraph
 from copy import deepcopy
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+
+
+DEFAULT_CONTENT_WIDTH_DXA = 9360
+
+
+def _normalize_docx_table_widths(doc: Document, content_width_dxa: int = DEFAULT_CONTENT_WIDTH_DXA):
+    """Force every table, grid column, and cell to explicit positive DXA widths."""
+
+    tables = [
+        Table(element, doc)
+        for element in doc.element.body.iter(qn("w:tbl"))
+    ]
+    for table in tables:
+        table.autofit = False
+        table_pr = table._tbl.tblPr
+        table_width = table_pr.find(qn("w:tblW"))
+        if table_width is None:
+            table_width = OxmlElement("w:tblW")
+            table_pr.insert(0, table_width)
+        table_width.set(qn("w:type"), "dxa")
+        table_width.set(qn("w:w"), str(content_width_dxa))
+
+        grid = table._tbl.tblGrid
+        grid_columns = list(grid.iterchildren(qn("w:gridCol")))
+        column_count = len(grid_columns) or max((len(row.cells) for row in table.rows), default=1)
+        if not grid_columns:
+            for _ in range(column_count):
+                column = OxmlElement("w:gridCol")
+                grid.append(column)
+            grid_columns = list(grid.iterchildren(qn("w:gridCol")))
+        base_width = content_width_dxa // column_count
+        widths = [base_width] * column_count
+        widths[-1] += content_width_dxa - sum(widths)
+        for column, width in zip(grid_columns, widths):
+            column.set(qn("w:w"), str(width))
+
+        for row in table.rows:
+            for index, cell in enumerate(row.cells):
+                width = widths[min(index, len(widths) - 1)]
+                tc_pr = cell._tc.get_or_add_tcPr()
+                tc_width = tc_pr.find(qn("w:tcW"))
+                if tc_width is None:
+                    tc_width = OxmlElement("w:tcW")
+                    tc_pr.append(tc_width)
+                tc_width.set(qn("w:type"), "dxa")
+                tc_width.set(qn("w:w"), str(width))
 
 
 # =====================================================
@@ -324,7 +372,7 @@ def _append_matter_table(doc: Document, matter_idx: int, matter: Dict, is_confid
     if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
         r5.cells[0].paragraphs[0].runs[0].bold = True
     r6 = table.add_row()
-    r6.cells[0].text = str(matter.get("value", "") or "N/A")
+    r6.cells[0].text = str(matter.get("matter_value") or matter.get("value", "") or "N/A")
     
     # 4. Lead partner
     r7 = table.add_row()
@@ -440,7 +488,7 @@ def clone_and_replace(
         for idx, m in enumerate(pub_matters):
             client_name = m.get("client", "")
             opt_text = m.get("optimized_text") or m.get("summary", "")
-            val_text = str(m.get("value", "") or "N/A")
+            val_text = str(m.get("matter_value") or m.get("value", "") or "N/A")
             partner_text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
 
             if idx < len(sec_d_tables):
@@ -466,7 +514,7 @@ def clone_and_replace(
         for idx, m in enumerate(conf_matters):
             client_name = m.get("client", "")
             opt_text = m.get("optimized_text") or m.get("summary", "")
-            val_text = str(m.get("value", "") or "N/A")
+            val_text = str(m.get("matter_value") or m.get("value", "") or "N/A")
             partner_text = str(m.get("lead_partner", "") or m.get("leadPartner", "") or "")
 
             if idx < len(sec_e_tables):
@@ -568,7 +616,7 @@ def clone_and_replace(
                 if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
                     r5.cells[0].paragraphs[0].runs[0].bold = True
                 r6 = t_pub.add_row()
-                r6.cells[0].text = str(m.get("value", "") or "N/A")
+                r6.cells[0].text = str(m.get("matter_value") or m.get("value", "") or "N/A")
                 r7 = t_pub.add_row()
                 r7.cells[0].text = "D4 Lead partner / lawyers involved:"
                 if r7.cells[0].paragraphs and r7.cells[0].paragraphs[0].runs:
@@ -605,7 +653,7 @@ def clone_and_replace(
                 if r5.cells[0].paragraphs and r5.cells[0].paragraphs[0].runs:
                     r5.cells[0].paragraphs[0].runs[0].bold = True
                 r6 = t_conf.add_row()
-                r6.cells[0].text = str(m.get("value", "") or "N/A")
+                r6.cells[0].text = str(m.get("matter_value") or m.get("value", "") or "N/A")
                 r7 = t_conf.add_row()
                 r7.cells[0].text = "E4 Lead partner / lawyers involved:"
                 if r7.cells[0].paragraphs and r7.cells[0].paragraphs[0].runs:
@@ -628,6 +676,7 @@ def clone_and_replace(
     print(f"[DOCX CLONER] ════════════════════════════════════════\n")
     
     # Save to bytes
+    _normalize_docx_table_widths(doc)
     buffer = io.BytesIO()
     doc.save(buffer)
     buffer.seek(0)
@@ -750,4 +799,3 @@ def clone_and_replace_from_state(
         if temp_file and os.path.exists(temp_file):
             os.remove(temp_file)
             print(f"[DOCX CLONER] Cleaned up temp file")
-
