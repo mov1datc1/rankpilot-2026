@@ -3,7 +3,19 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.6 — conservative latency reduction)
+> Last updated: **2026-09-01** (v26.7 — authoritative legacy DOC extraction)
+
+## v26.7 — AUTHORITATIVE LEGACY DOC EXTRACTION (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Production `.doc` conversion | Use `antiword` in the Render image before the raw OLE fallback, preserving Chambers field labels and table order | `Dockerfile`, `doc_parser.py` |
+| OLE evidence boundaries | Remove container metadata before `SUBMISSION FORM` and after the Chambers postamble; stop Publishable Matter 10 before Section E | `doc_parser.py` |
+| Source identity authority | A1/A2/A3 override a mismatched UI practice/region before canonical analysis and report persistence | `doc_parser.py`, `nodes.py`, `canonical_builder.py` |
+| Blank-field authority | Explicitly blank D/E fields clear model inferences, preventing lawyer names from becoming jurisdictions | `doc_parser.py`, `canonical_builder.py` |
+| Leadership and lawyer evidence | Preserve all B7 co-heads and compare lawyer names accent/punctuation-insensitively | `nodes.py` |
+| Optimizer response selection | When the model emits concatenated JSON objects, select the complete object containing both prose and evidence quotes | `nodes.py` |
+| Client-safe Audit | Remove SDK response metadata, encrypted reasoning and validation internals before persistence/delivery | `nodes.py` |
 
 ## v26.6 — CONSERVATIVE LATENCY REDUCTION (2026-09-01)
 
