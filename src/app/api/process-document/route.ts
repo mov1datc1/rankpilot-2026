@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { documentUrl, text, context } = body;
+    const { documentUrl, text, context, originalFileName } = body;
     submissionId = body.submissionId || '';
 
     if (!submissionId && !documentUrl && !text) {
@@ -149,7 +149,8 @@ export async function POST(request: NextRequest) {
           practice_area: submission.practiceArea,
           current_status: submission.currentBand,
           primary_objective: (submission.chambersData as any)?.primaryObjective || '',
-          secondary_objective: (submission.chambersData as any)?.secondaryObjective || ''
+          secondary_objective: (submission.chambersData as any)?.secondaryObjective || '',
+          original_file_name: originalFileName || ''
         },
         callback_url: callbackUrl,
         webhook_secret: webhookSecret,

@@ -3,7 +3,24 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-08-31** (v26.1 — live 31-08 regression validation, source-label/lawyer reconciliation, evidence-mapped rewriting, B10 propagation)
+> Last updated: **2026-08-31** (v26.2 — immutable DOCX fields, generated-source rejection, Sol release judge, fail-closed delivery)
+
+## v26.2 — IMMUTABLE OUTPUT & RELEASE APPROVAL (2026-08-31)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Generated-output source guard | Reject embedded provenance and legacy RankPilot output markers before extraction | `doc_parser.py`, `nodes.py`, `graph.py` |
+| Standalone exact register | Ignore inline matter references; reject duplicate or gapped headings while preserving physical source order | `doc_parser.py` |
+| D/E field lock | Restore client, value, jurisdiction, lawyers, firms and dates from each exact numbered source section | `canonical_builder.py` |
+| Summary-only DOCX mutation | Preserve table order and every non-D2/E2 value; mismatches throw instead of inserting/reordering | `docx_cloner.py` |
+| Sol final judge | GPT-5.6 Sol, xhigh, Responses API, strict Structured Outputs, complete two-artifact/source comparison | `model_factory.py`, `constitutional_validator.py` |
+| Fail-closed delivery | Any contract, judge, clone or OOXML failure blocks callback persistence and DOCX export | `main.py`, `pipeline-callback/route.ts`, `generate-docx/route.ts` |
+| Client Audit hygiene | Pipeline manifest/model/RAG diagnostics suppressed from client-facing Audit | `generate-docx/route.ts` |
+
+> Supersedes v25.0/v25.2 physical Hero table reordering. Source table identity
+> and order are immutable; strategic emphasis is expressed in prose and Audit.
+
+---
 
 ## v26.1 — LIVE OWNER VALIDATION: ARAQUEREYNA + RAMOS CASTILLO (2026-08-31)
 

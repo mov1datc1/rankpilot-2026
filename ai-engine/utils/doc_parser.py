@@ -6,6 +6,7 @@ import hashlib
 import tempfile
 import urllib.request
 from urllib.parse import urlparse
+from collections import Counter
 
 class DocumentParser:
     """
@@ -14,6 +15,18 @@ class DocumentParser:
     v14.0: Added Trust Layer — programmatic matter counting and document stats.
     """
     
+    @staticmethod
+    def _collapse_exact_repetition(value: str) -> str:
+        """Collapse SDT text duplicated two to four times by Word XML traversal."""
+
+        candidate = (value or "").strip()
+        for repetitions in (4, 3, 2):
+            if len(candidate) % repetitions == 0:
+                unit = candidate[: len(candidate) // repetitions]
+                if unit and unit * repetitions == candidate:
+                    return unit.strip()
+        return candidate
+
     @staticmethod
     def parse(file_path: str) -> str:
         is_url = file_path.startswith('http://') or file_path.startswith('https://')
@@ -111,6 +124,12 @@ class DocumentParser:
         doc = Document(file_path)
         body = doc._body._element
         text_lines = []
+        word_ns = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+
+        def xml_text(elem) -> str:
+            # ``itertext()`` repeats content from nested Word SDT/run wrappers.
+            # Reading only w:t leaves returns the text exactly once.
+            return ''.join(node.text or '' for node in elem.findall(f'.//{word_ns}t'))
 
         def clean_text(raw: str) -> str:
             if not raw:
@@ -118,9 +137,7 @@ class DocumentParser:
             parts = [p.strip() for p in raw.split('\n') if p.strip()]
             cleaned_parts = []
             for p in parts:
-                half = len(p) // 2
-                if len(p) > 4 and len(p) % 2 == 0 and p[:half] == p[half:]:
-                    p = p[:half]
+                p = DocumentParser._collapse_exact_repetition(p)
                 if not cleaned_parts or p != cleaned_parts[-1]:
                     cleaned_parts.append(p)
             return ' '.join(cleaned_parts)
@@ -129,14 +146,14 @@ class DocumentParser:
             for child in elem:
                 tag = child.tag.split('}')[-1]
                 if tag == 'p':
-                    p_txt = clean_text(''.join(child.itertext()).strip())
+                    p_txt = clean_text(xml_text(child).strip())
                     if p_txt:
                         text_lines.append(p_txt)
                 elif tag == 'tbl':
                     for row in child.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tr'):
                         row_cells = []
                         for cell in row.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tc'):
-                            c_txt = clean_text(''.join(cell.itertext()).strip())
+                            c_txt = clean_text(xml_text(cell).strip())
                             if c_txt and (not row_cells or c_txt != row_cells[-1]):
                                 row_cells.append(c_txt)
                         if row_cells:
@@ -181,6 +198,163 @@ class DocumentParser:
     # Rule 71: Pipeline Manifest
     # =====================================================
 
+    MATTER_HEADER_PATTERN = re.compile(
+        r'^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\s*$',
+        re.IGNORECASE,
+    )
+
+    @staticmethod
+    def _canonical_matter_label(kind: str, number: int) -> str:
+        normalized = (kind or "").casefold().replace(" ", "-")
+        if normalized == "publishable":
+            prefix = "Publishable"
+        elif normalized == "confidential":
+            prefix = "Confidential"
+        else:
+            prefix = "Non-publishable"
+        return f"{prefix} Matter {int(number)}"
+
+    @staticmethod
+    def validate_matter_labels(labels: list) -> dict:
+        """Validate uniqueness, numbering and section order for source headings."""
+
+        normalized = []
+        errors = []
+        for raw in labels or []:
+            match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(str(raw).strip())
+            if not match:
+                continue
+            normalized.append(
+                DocumentParser._canonical_matter_label(match.group(1), int(match.group(2)))
+            )
+
+        duplicate_labels = sorted(
+            label for label, count in Counter(normalized).items() if count > 1
+        )
+        if duplicate_labels:
+            errors.append(
+                "Duplicate standalone matter headings: " + ", ".join(duplicate_labels)
+            )
+
+        section_numbers = {"Publishable": [], "Confidential": []}
+        section_order = []
+        for label in normalized:
+            match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(label)
+            if not match:
+                continue
+            kind = "Publishable" if match.group(1).casefold() == "publishable" else "Confidential"
+            section_numbers[kind].append(int(match.group(2)))
+            section_order.append(kind)
+
+        for kind, numbers in section_numbers.items():
+            if not numbers:
+                continue
+            unique_numbers = list(dict.fromkeys(numbers))
+            expected = list(range(1, len(unique_numbers) + 1))
+            if sorted(unique_numbers) != expected:
+                errors.append(
+                    f"{kind} matter headings must be contiguous from 1: "
+                    f"found {sorted(unique_numbers)}, expected {expected}"
+                )
+
+        if "Confidential" in section_order:
+            first_confidential = section_order.index("Confidential")
+            if "Publishable" in section_order[first_confidential + 1:]:
+                errors.append("Publishable matter headings appear after the confidential section")
+
+        return {
+            "passed": not errors,
+            "errors": errors,
+            "duplicate_labels": duplicate_labels,
+            "normalized_labels": normalized,
+        }
+
+    @staticmethod
+    def detect_rankpilot_generated_source(
+        text: str, file_path: str = "", local_file_path: str = ""
+    ) -> dict:
+        """Reject RankPilot outputs as source evidence for another pipeline run."""
+
+        reasons = []
+        source = text or ""
+        source_lower = source.casefold()
+        explicit_markers = (
+            "rankpilot — strategic audit letter",
+            "pipeline manifest — trust layer",
+            "canonical evidence reconciliation:",
+            "rankpilot-generated-output",
+        )
+        for marker in explicit_markers:
+            if marker in source_lower:
+                reasons.append(f"RankPilot output marker found: {marker}")
+
+        source_name = os.path.basename(urlparse(str(file_path)).path).casefold()
+        if source_name.startswith(("rankpilot_submission_form_", "rankpilot_strategic_audit_")):
+            reasons.append("RankPilot-generated output filename detected")
+
+        # Legacy generated submissions predate the embedded provenance marker.
+        # The combination below is emitted by RankPilot's generated lawyer table
+        # and does not occur in the firm's original Chambers form.
+        if (
+            "current ranking:" in source_lower
+            and "suggested ranking: suggested for ranking" in source_lower
+        ):
+            reasons.append("Legacy RankPilot-generated lawyer table detected")
+
+        provenance_path = local_file_path or file_path
+        if (
+            provenance_path
+            and str(provenance_path).lower().endswith(".docx")
+            and os.path.exists(provenance_path)
+        ):
+            try:
+                doc = Document(provenance_path)
+                keywords = (doc.core_properties.keywords or "").casefold()
+                if "rankpilot-generated-output" in keywords:
+                    reasons.append("DOCX provenance identifies a RankPilot-generated output")
+            except Exception:
+                pass
+
+        return {"passed": not reasons, "errors": reasons, "is_generated_output": bool(reasons)}
+
+    @staticmethod
+    def extract_matter_fields(section_text: str) -> dict:
+        """Recover source D/E fields from one exact numbered matter section."""
+
+        normalized = re.sub(r"\s+\|\s+", "\n", section_text or "")
+        field_pattern = re.compile(
+            r"(?ims)^\s*[DE]([1-9])\b[^\n]*\n(.*?)(?=^\s*[DE][1-9]\b|\Z)"
+        )
+        fields = {}
+        for match in field_pattern.finditer(normalized):
+            value = match.group(2).strip()
+            value = re.sub(r"(?im)^\s*IMPORTANT:.*$", "", value).strip()
+            instruction_patterns = (
+                r"(?i)^this will be publishable\b.*$",
+                r"(?i)^if you cannot reveal the client name\b.*$",
+                r"(?i)^please say why this matter was important\b.*$",
+                r"(?i)^also, tell us exactly what role\b.*$",
+                r"(?i)^include currency and amount in figures\b.*$",
+                r"(?i)^e\.g\.\s*link to press coverage\b.*$",
+            )
+            clean_lines = [
+                line for line in value.splitlines()
+                if line.strip()
+                and not any(re.match(pattern, line.strip()) for pattern in instruction_patterns)
+            ]
+            value = "\n".join(clean_lines).strip()
+            fields[int(match.group(1))] = value
+        return {
+            "client": fields.get(1, ""),
+            "summary": fields.get(2, ""),
+            "matter_value": fields.get(3, ""),
+            "cross_border_jurisdictions": fields.get(4, ""),
+            "lead_partner": fields.get(5, ""),
+            "team_members": fields.get(6, ""),
+            "other_firms": fields.get(7, ""),
+            "completion_date": fields.get(8, ""),
+        }
+
     @staticmethod
     def _count_matter_labels_in_text(text: str) -> dict:
         """Count numbered Chambers matter labels in normalized document text.
@@ -189,35 +363,24 @@ class DocumentParser:
         parser has normalized their text.  Labels are de-duplicated by section
         and number, so repeated headers cannot inflate the manifest.
         """
-        pattern = re.compile(
-            r'\b(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\b',
-            re.IGNORECASE,
-        )
-        seen = set()
         labels = []
-        for match in pattern.finditer(text or ""):
-            raw_kind = match.group(1).lower().replace(" ", "-")
-            number = int(match.group(2))
-            if raw_kind == "publishable":
-                kind = "Publishable"
-            elif raw_kind == "confidential":
-                kind = "Confidential"
-            else:
-                kind = "Non-publishable"
-            key = (kind.lower(), number)
-            if key in seen:
-                continue
-            seen.add(key)
-            labels.append(f"{kind} Matter {number}")
+        for line in (text or "").splitlines():
+            match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(line.strip())
+            if match:
+                labels.append(
+                    DocumentParser._canonical_matter_label(match.group(1), int(match.group(2)))
+                )
 
         publishable = sum(label.startswith("Publishable") for label in labels)
         confidential = len(labels) - publishable
-        return {
+        result = {
             "total": len(labels),
             "publishable": publishable,
             "confidential": confidential,
             "matter_labels": labels,
         }
+        result["label_validation"] = DocumentParser.validate_matter_labels(labels)
+        return result
 
     @staticmethod
     def extract_numbered_matter_sections(text: str) -> dict:
@@ -403,49 +566,48 @@ class DocumentParser:
             matter_labels = []
             seen_table_indices = set()
             
-            # Pattern 1: Chambers format — "Publishable Matter 1", "Confidential Matter 2"
-            chambers_pattern = re.compile(
-                r'(?:Publishable|Confidential|Non-publishable)\s+Matter\s+\d+',
-                re.IGNORECASE
-            )
-            
-            # Pattern 2: Legal 500 format — "Publishable matter" or "Non-publishable matter N"
-            # In Legal 500, each matter is its own table. The first cell is the label.
-            legal500_pattern = re.compile(
-                r'^(?:Publishable|Non-publishable|Confidential)\s+matter(?:\s+\d+)?$',
-                re.IGNORECASE
-            )
-            
-            # Scan all table elements in XML tree (including those inside w:sdt content controls)
+            # Only a standalone first paragraph/cell can open a matter table. A
+            # label mentioned in a client, narrative or audit note is not a new
+            # matter and must never inflate the source manifest.
             all_tbl_elems = doc._body._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl')
             for ti, tbl_elem in enumerate(all_tbl_elems):
                 if ti in seen_table_indices:
                     continue
-                tbl_text = ''.join(tbl_elem.itertext()).strip()
-                chambers_match = chambers_pattern.search(tbl_text)
-                if chambers_match:
-                    label = chambers_match.group(0).strip()
-                    matter_labels.append(label)
+                paragraphs = tbl_elem.findall(
+                    './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'
+                )
+                heading = ""
+                for paragraph in paragraphs:
+                    paragraph_text = DocumentParser._collapse_exact_repetition(
+                        ''.join(
+                            node.text or ''
+                            for node in paragraph.findall(
+                                './/{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t'
+                            )
+                        ).strip()
+                    )
+                    match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(paragraph_text)
+                    if match:
+                        heading = paragraph_text
+                        break
+                match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(heading)
+                if match:
+                    matter_labels.append(
+                        DocumentParser._canonical_matter_label(
+                            match.group(1), int(match.group(2))
+                        )
+                    )
                     seen_table_indices.add(ti)
-                    continue
-                
-                legal500_match = legal500_pattern.search(tbl_text)
-                if legal500_match:
-                    label = legal500_match.group(0).strip()
-                    matter_labels.append(f"{label} (Table {ti})")
-                    seen_table_indices.add(ti)
-                    continue
             
             # Also scan paragraphs for matter headers (some templates use headings)
-            seen_para_labels = set()
             for para in doc.paragraphs:
-                txt = para.text.strip()
-                chambers_match = chambers_pattern.search(txt)
-                if chambers_match:
-                    label = chambers_match.group(0).strip()
-                    if label not in seen_para_labels and label not in [l.split(' (Table')[0] for l in matter_labels]:
-                        seen_para_labels.add(label)
-                        matter_labels.append(label)
+                txt = DocumentParser._collapse_exact_repetition(para.text.strip())
+                match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(txt)
+                if match:
+                    label = DocumentParser._canonical_matter_label(
+                        match.group(1), int(match.group(2))
+                    )
+                    matter_labels.append(label)
             
             # Classify
             publishable = sum(1 for l in matter_labels 
@@ -457,13 +619,15 @@ class DocumentParser:
                              or 'non-publishable' in l.lower() 
                              or 'non publishable' in l.lower())
             
-            return {
+            result = {
                 "total": len(matter_labels),
                 "publishable": publishable,
                 "confidential": confidential,
                 "matter_labels": matter_labels,
                 "count_method": "docx_xml",
             }
+            result["label_validation"] = DocumentParser.validate_matter_labels(matter_labels)
+            return result
         except Exception as e:
             print(f"[MATTER COUNTER] Error counting matters: {e}")
             return {"total": 0, "publishable": 0, "confidential": 0, "matter_labels": [], "error": str(e)}
@@ -472,7 +636,7 @@ class DocumentParser:
                 os.remove(temp_file)
 
     @staticmethod
-    def get_document_stats(file_path: str) -> dict:
+    def get_document_stats(file_path: str, source_file_name: str = "") -> dict:
         """
         Rule 71: Generate document-level statistics for the Pipeline Manifest.
         Provides ground truth about what the system actually read.
@@ -490,7 +654,7 @@ class DocumentParser:
         is_url = file_path.startswith('http://') or file_path.startswith('https://')
         parsed_path = urlparse(file_path).path if is_url else file_path
         extension = os.path.splitext(parsed_path)[1].lower()
-        file_name = os.path.basename(parsed_path)
+        file_name = source_file_name or os.path.basename(parsed_path)
         
         stats = {
             "file_name": file_name,
@@ -512,27 +676,45 @@ class DocumentParser:
                 out_file.write(response.read())
             temp_file = local_path
         
+        source_text = ""
         try:
             # File hash
             with open(local_path, 'rb') as f:
                 stats["file_hash"] = hashlib.sha256(f.read()).hexdigest()
             
             if extension == '.docx':
-                doc_text = DocumentParser._parse_docx(local_path)
-                stats["word_count"] = len(doc_text.split())
-                stats["paragraph_count"] = len([l for l in doc_text.splitlines() if l.strip()])
+                source_text = DocumentParser._parse_docx(local_path)
+                stats["word_count"] = len(source_text.split())
+                stats["paragraph_count"] = len([l for l in source_text.splitlines() if l.strip()])
                 doc = Document(local_path)
                 stats["table_count"] = len(doc._body._element.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tbl'))
-                stats["source_matters"] = DocumentParser.count_source_matters(file_path)
+                stats["source_matters"] = DocumentParser.count_source_matters(local_path)
             elif extension == '.doc':
-                text = DocumentParser._parse_doc(local_path)
-                stats["word_count"] = len(text.split())
-                stats["paragraph_count"] = len([line for line in text.splitlines() if line.strip()])
-                stats["source_matters"] = DocumentParser.count_source_matters(file_path)
+                source_text = DocumentParser._parse_doc(local_path)
+                stats["word_count"] = len(source_text.split())
+                stats["paragraph_count"] = len([line for line in source_text.splitlines() if line.strip()])
+                stats["source_matters"] = DocumentParser.count_source_matters(local_path)
             elif extension == '.pdf':
-                text = DocumentParser._parse_pdf(local_path)
-                stats["word_count"] = len(text.split())
-                stats["paragraph_count"] = text.count('\n\n') + 1
+                source_text = DocumentParser._parse_pdf(local_path)
+                stats["word_count"] = len(source_text.split())
+                stats["paragraph_count"] = source_text.count('\n\n') + 1
+
+            label_validation = stats.get("source_matters", {}).get(
+                "label_validation", {"passed": True, "errors": []}
+            )
+            provenance_validation = DocumentParser.detect_rankpilot_generated_source(
+                source_text, source_file_name or file_path, local_path
+            )
+            errors = list(label_validation.get("errors", [])) + list(
+                provenance_validation.get("errors", [])
+            )
+            stats["source_validation"] = {
+                "passed": not errors,
+                "errors": errors,
+                "label_validation": label_validation,
+                "provenance_validation": provenance_validation,
+            }
+            stats["source_format"] = extension.lstrip(".")
         except Exception as e:
             stats["error"] = str(e)
         finally:

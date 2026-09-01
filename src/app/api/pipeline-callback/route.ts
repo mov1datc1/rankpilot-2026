@@ -58,6 +58,13 @@ export async function POST(request: NextRequest) {
           status: 'Error',
           chambersData: {
             ...existingCD,
+            release_verdict: {
+              passed: false,
+              status: 'blocked',
+              code: pipeline_error.code || 'PIPELINE_ERROR',
+              errors: [pipeline_error.message || 'Unknown pipeline error'],
+            },
+            cloned_docx_b64: null,
             _pipeline_error: {
               code: pipeline_error.code || 'PIPELINE_ERROR',
               message: pipeline_error.message || 'Unknown pipeline error',
@@ -77,6 +84,53 @@ export async function POST(request: NextRequest) {
     }
 
     const pyData = pipeline_result;
+    const releaseVerdict = pyData.data?.release_verdict || {};
+    const sourceValidation = pyData.data?.source_validation || {};
+    const evidenceReconciliation = pyData.data?.evidence_reconciliation || {};
+    const artifactValidation = pyData.data?.artifact_validation || {};
+    const constitutionalValidation = pyData.data?.constitutional_validation || {};
+    const sourceCloneReady = releaseVerdict?.delivery_mode === 'source_clone'
+      && releaseVerdict?.docx_clone_passed === true
+      && releaseVerdict?.ooxml_validation_passed === true
+      && Boolean(pyData.data?.cloned_docx_b64);
+    const canonicalBuilderReady = releaseVerdict?.delivery_mode === 'canonical_docx_builder'
+      && releaseVerdict?.builder_contract_passed === true;
+    const releaseFailures = [
+      ['source_validation', sourceValidation?.passed === true],
+      ['evidence_reconciliation', evidenceReconciliation?.passed === true],
+      ['artifact_validation', artifactValidation?.passed === true],
+      ['constitutional_validation', constitutionalValidation?.passed === true],
+      ['release_verdict', releaseVerdict?.passed === true],
+      ['docx_delivery', sourceCloneReady || canonicalBuilderReady],
+      ['matter_rollbacks', !(artifactValidation?.matter_rollbacks?.length > 0)],
+    ].filter(([, passed]) => !passed).map(([name]) => name);
+
+    if (releaseFailures.length > 0) {
+      console.error(`[PIPELINE CALLBACK] Release blocked for ${submission_id}: ${releaseFailures.join(', ')}`);
+      const existingCD = (submission.chambersData as any) || {};
+      await prisma.submission.update({
+        where: { id: submission_id },
+        data: {
+          status: 'Error',
+          chambersData: {
+            ...existingCD,
+            release_verdict: releaseVerdict,
+            cloned_docx_b64: null,
+            source_validation: sourceValidation,
+            constitutional_validation: constitutionalValidation,
+            pipeline_manifest: pyData.data?.pipeline_manifest || existingCD.pipeline_manifest,
+            _pipeline_error: {
+              code: releaseVerdict?.code || 'RELEASE_NOT_APPROVED',
+              message: 'Pipeline output was not approved for delivery',
+              details: releaseFailures,
+              timestamp: new Date().toISOString(),
+            },
+          },
+        },
+      });
+      return NextResponse.json({ status: 'error_saved', releaseFailures }, { status: 422 });
+    }
+
     const extractedData = pyData.data?.metadata;
     const extractedMatters = pyData.data?.matters;
     let analysisData = pyData.data?.analysis;
@@ -203,10 +257,13 @@ export async function POST(request: NextRequest) {
           strategic_audit: pyData.data?.strategic_audit || existingChambersData.strategic_audit,
           artifact_validation: pyData.data?.artifact_validation || existingChambersData.artifact_validation,
           evidence_reconciliation: pyData.data?.evidence_reconciliation || existingChambersData.evidence_reconciliation,
+          source_validation: sourceValidation,
+          constitutional_validation: constitutionalValidation,
+          release_verdict: releaseVerdict,
           // v19.0: Clone-and-Replace DOCX — base64-encoded cloned DOCX with AI enhancements
           // This preserves the original formatting (colors, bold, logos, diversity sections)
           // and only replaces B10 + D2/E2 cells with enhanced content
-          cloned_docx_b64: pyData.data?.cloned_docx_b64 || existingChambersData.cloned_docx_b64 || null,
+          cloned_docx_b64: sourceCloneReady ? pyData.data?.cloned_docx_b64 : null,
           ...(extractedDept.department_name ? { departmentName: extractedDept.department_name } : {}),
           ...(extractedDept.num_partners ? { numPartners: extractedDept.num_partners } : {}),
           ...(extractedDept.num_lawyers ? { numLawyers: extractedDept.num_lawyers } : {}),

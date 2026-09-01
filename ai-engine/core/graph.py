@@ -67,7 +67,7 @@ def create_rankpilot_graph():
                                                [all checks pass?]
                                                YES → writing → END
                                                NO  → optimization (retry, max 2)
-                                               MAX → writing → END (with warnings)
+                                               MAX → blocked → END (no deliverables)
     """
     
     # 1. Initialize the StateGraph
@@ -105,17 +105,25 @@ def create_rankpilot_graph():
 
     # 3. Entry sequence (unchanged start)
     workflow.set_entry_point("ingestion")
-    workflow.add_edge("ingestion", "extraction")
+    def route_after_ingestion(state: AgentState):
+        verdict = state.get("release_verdict", {})
+        return "blocked" if verdict and not verdict.get("passed", False) else "extraction"
+
+    workflow.add_conditional_edges(
+        "ingestion",
+        route_after_ingestion,
+        {"extraction": "extraction", "blocked": END},
+    )
     workflow.add_edge("extraction", "evidence_reconciliation")
     workflow.add_edge("evidence_reconciliation", "pre_flight")
     
-    # Pre-Flight Gate: if critical checks fail, skip to writing
+    # Pre-Flight Gate: critical failures terminate without deliverables.
     def route_after_pre_flight(state: AgentState):
         """Rule 74: Pre-Flight Gate halts pipeline on critical failures."""
         analysis = state.get("analysis", {})
         if isinstance(analysis, dict) and analysis.get("pre_flight_failed"):
-            print("[PRE-FLIGHT GATE] Pipeline HALTED — routing to writing for error report")
-            return "writing"
+            print("[PRE-FLIGHT GATE] Pipeline HALTED — no deliverables will be released")
+            return "blocked"
         return "context_engine"
     
     workflow.add_conditional_edges(
@@ -123,7 +131,7 @@ def create_rankpilot_graph():
         route_after_pre_flight,
         {
             "context_engine": "context_engine",
-            "writing": "writing",
+            "blocked": END,
         }
     )
     
@@ -213,17 +221,18 @@ def create_rankpilot_graph():
     # 10. Constitutional Validation Gate — conditional routing
     def route_after_constitutional_validation(state: AgentState):
         """v18.6: Route based on constitutional validation results.
-        If passed or max retries exhausted → writing → END.
-        If failed with retries remaining → back to optimization."""
-        route = state.get("constitutional_route", "end")
+        Passed candidates go to writing; exhausted or non-retryable failures end."""
+        route = state.get("constitutional_route", "blocked")
         retry_count = state.get("constitutional_retry_count", 0)
         
         if route == "optimization" and retry_count <= 2:
             print(f"[CONSTITUTIONAL GATE] Routing back to optimization (retry {retry_count}/2)")
             return "optimization"
-        else:
-            print(f"[CONSTITUTIONAL GATE] Routing to writing (route={route}, retries={retry_count})")
+        if route == "writing":
+            print(f"[CONSTITUTIONAL GATE] Release approved; routing to writing")
             return "writing"
+        print(f"[CONSTITUTIONAL GATE] Release blocked (route={route}, retries={retry_count})")
+        return "blocked"
     
     workflow.add_conditional_edges(
         "constitutional_validation",
@@ -231,6 +240,7 @@ def create_rankpilot_graph():
         {
             "optimization": "optimization",
             "writing": "writing",
+            "blocked": END,
         }
     )
 

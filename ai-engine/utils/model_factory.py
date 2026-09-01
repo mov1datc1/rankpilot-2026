@@ -11,24 +11,29 @@ from typing import Dict, Literal
 from langchain_openai import ChatOpenAI
 
 
-ModelPurpose = Literal["extraction", "standard", "editorial"]
+ModelPurpose = Literal["extraction", "standard", "editorial", "judge"]
 
 DEFAULT_MODEL = "gpt-5.6-terra"
 DEFAULT_REASONING: Dict[ModelPurpose, str] = {
     "extraction": "low",
     "standard": "medium",
     "editorial": "high",
+    "judge": "xhigh",
 }
 
 
 def get_model_settings(purpose: ModelPurpose = "standard", model_override: str = "") -> Dict:
     """Return an auditable configuration without creating a network client."""
 
-    model_name = model_override or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL)
+    if purpose == "judge":
+        model_name = model_override or os.environ.get("OPENAI_JUDGE_MODEL", "gpt-5.6-sol")
+    else:
+        model_name = model_override or os.environ.get("OPENAI_MODEL", DEFAULT_MODEL)
     env_name = {
         "extraction": "REASONING_EFFORT_EXTRACTION",
         "standard": "REASONING_EFFORT",
         "editorial": "REASONING_EFFORT_EDITORIAL",
+        "judge": "REASONING_EFFORT_JUDGE",
     }[purpose]
     reasoning = os.environ.get(env_name, DEFAULT_REASONING[purpose])
     allowed_reasoning = {"none", "low", "medium", "high", "xhigh", "max"}

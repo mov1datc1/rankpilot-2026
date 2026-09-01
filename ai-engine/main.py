@@ -40,6 +40,36 @@ def safe_json_dumps(obj) -> str:
     except (TypeError, ValueError):
         return json.dumps(obj, indent=2, default=str, ensure_ascii=True)
 
+
+class PipelineReleaseError(RuntimeError):
+    def __init__(self, code: str, message: str, details=None):
+        super().__init__(message)
+        self.code = code
+        self.details = details or []
+
+
+def _assert_release_approved(result: dict) -> None:
+    """Reject every incomplete, degraded or unjudged release candidate."""
+
+    checks = {
+        "source_validation": result.get("source_validation", {}),
+        "evidence_reconciliation": result.get("evidence_reconciliation", {}),
+        "artifact_validation": result.get("artifact_validation", {}),
+        "constitutional_validation": result.get("constitutional_validation", {}),
+        "release_verdict": result.get("release_verdict", {}),
+    }
+    failed = [name for name, check in checks.items() if check.get("passed") is not True]
+    rollbacks = checks["artifact_validation"].get("matter_rollbacks") or []
+    if rollbacks:
+        failed.append("artifact_validation.matter_rollbacks")
+    if failed:
+        verdict = checks["release_verdict"]
+        raise PipelineReleaseError(
+            str(verdict.get("code") or "RELEASE_NOT_APPROVED"),
+            "The pipeline did not approve this candidate for delivery",
+            verdict.get("errors") or failed,
+        )
+
 # 1. Instancia de la API para comunicación con el Backend
 api = FastAPI(title="RankPilot AI Core", version="1.0.0")
 
@@ -64,6 +94,7 @@ def run_rankpilot(user_input: str, thread_id: str, is_file: bool = False):
     if is_file:
         initial_state = {"file_path": user_input, "messages": []}
         output = graph_app.invoke(initial_state, config)
+        _assert_release_approved(output)
     else:
         output = graph_app.invoke(
             {"messages": [HumanMessage(content=user_input)]}, 
@@ -135,6 +166,8 @@ async def process_document(request: Request):
         "editorial_memory": "",
         "current_step": "ingestion",
         "pipeline_manifest": {},
+        "source_validation": {},
+        "release_verdict": {},
         "canonical_submission": {},
         "strategic_objective": {},
         "evidence_ledger": {},
@@ -167,6 +200,7 @@ async def process_document(request: Request):
     
     try:
         result = graph_app.invoke(initial_state, config)
+        _assert_release_approved(result)
     except Exception as e:
         error_msg = traceback.format_exc()
         print(f"[PIPELINE ERROR] LangGraph execution failed for thread {thread_id}:")
@@ -229,6 +263,9 @@ async def process_document(request: Request):
                 "artifact_validation": result.get("artifact_validation", {}),
                 "matter_evidence_gaps": result.get("matter_evidence_gaps", {}),
                 "evidence_reconciliation": result.get("evidence_reconciliation", {}),
+                "source_validation": result.get("source_validation", {}),
+                "constitutional_validation": result.get("constitutional_validation", {}),
+                "release_verdict": result.get("release_verdict", {}),
             }
         }
 
@@ -273,6 +310,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
     try:
         print(f"[ASYNC PIPELINE] Starting pipeline for thread {thread_id}...")
         result = graph_app.invoke(initial_state, config)
+        _assert_release_approved(result)
         print(f"[ASYNC PIPELINE] Pipeline completed for thread {thread_id}")
 
         # Build response data (same logic as /process endpoint)
@@ -319,6 +357,9 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                 "artifact_validation": result.get("artifact_validation", {}),
                 "matter_evidence_gaps": result.get("matter_evidence_gaps", {}),
                 "evidence_reconciliation": result.get("evidence_reconciliation", {}),
+                "source_validation": result.get("source_validation", {}),
+                "constitutional_validation": result.get("constitutional_validation", {}),
+                "release_verdict": result.get("release_verdict", {}),
             }
         }
 
@@ -328,6 +369,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
         # with AI-enhanced content. Preserves ALL formatting.
         # =====================================================
         try:
+            from urllib.parse import urlparse
             file_path = result.get("file_path", "")
             enhanced_b7 = result.get("enhanced_b7", "")
             enhanced_c2 = result.get("enhanced_c2", "")
@@ -340,27 +382,53 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                 or ""
             )
             
-            docx_bytes = clone_and_replace_from_state(
-                file_path=file_path,
-                enhanced_b7=enhanced_b7,
-                matters=matters,
-                enhanced_c2=enhanced_c2,
-                hero_matter=hero_matter,
-            )
-            
-            if docx_bytes:
+            source_extension = os.path.splitext(urlparse(file_path).path)[1].lower()
+            docx_bytes = None
+            if source_extension == ".docx":
+                docx_bytes = clone_and_replace_from_state(
+                    file_path=file_path,
+                    enhanced_b7=enhanced_b7,
+                    matters=matters,
+                    enhanced_c2=enhanced_c2,
+                    hero_matter=hero_matter,
+                )
+
+            if source_extension == ".docx" and docx_bytes:
                 ooxml_errors = validate_docx_ooxml(docx_bytes)
                 if ooxml_errors:
                     raise ValueError("DOCX OOXML validation failed: " + "; ".join(ooxml_errors))
                 # Base64 encode the DOCX for transport via webhook
                 docx_b64 = base64.b64encode(docx_bytes).decode('utf-8')
                 response_data["data"]["cloned_docx_b64"] = docx_b64
+                response_data["data"]["release_verdict"] = {
+                    **response_data["data"]["release_verdict"],
+                    "docx_clone_passed": True,
+                    "ooxml_validation_passed": True,
+                    "delivery_mode": "source_clone",
+                }
                 print(f"[DOCX CLONER] ✅ Generated cloned DOCX: {len(docx_bytes)} bytes")
+            elif source_extension == ".doc":
+                # Legacy binary Word cannot be cloned safely without changing
+                # its container. The callback persists canonical data and the
+                # TypeScript `docx` builder creates a new positive-DXA OOXML
+                # package at download time.
+                response_data["data"]["release_verdict"] = {
+                    **response_data["data"]["release_verdict"],
+                    "delivery_mode": "canonical_docx_builder",
+                    "builder_contract_passed": True,
+                    "source_format": "doc",
+                }
+                print("[DOCX BUILDER] Legacy .doc approved for canonical DXA DOCX builder")
             else:
-                print("[DOCX CLONER] No cloned DOCX generated (no original file or no enhanced content)")
+                raise ValueError(
+                    f"No approved DOCX delivery path for source format {source_extension or 'unknown'}"
+                )
         except Exception as docx_err:
-            print(f"[DOCX CLONER] Warning: Clone-and-replace failed: {docx_err}")
-            # Non-fatal — the pipeline results are still valid
+            raise PipelineReleaseError(
+                "DOCX_RELEASE_VALIDATION_FAILED",
+                f"Clone-and-replace failed: {docx_err}",
+                [str(docx_err)],
+            ) from docx_err
 
         # Apply epistemic language guard
         response_data["data"] = filter_pipeline_output(response_data["data"])
@@ -405,9 +473,9 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
                     "secret": webhook_secret,
                     "submission_id": thread_id,
                     "pipeline_error": {
-                        "code": "PIPELINE_EXECUTION_ERROR",
+                        "code": e.code if isinstance(e, PipelineReleaseError) else "PIPELINE_EXECUTION_ERROR",
                         "message": str(e),
-                        "details": error_msg[:2000],
+                        "details": e.details if isinstance(e, PipelineReleaseError) else error_msg[:2000],
                     },
                 },
                 headers={"Content-Type": "application/json"},
@@ -475,6 +543,8 @@ async def process_document_async(request: Request):
         "editorial_memory": "",
         "current_step": "ingestion",
         "pipeline_manifest": {},
+        "source_validation": {},
+        "release_verdict": {},
         "canonical_submission": {},
         "strategic_objective": {},
         "evidence_ledger": {},

@@ -62,7 +62,7 @@ function ProcessingContent() {
           console.log('[PROCESSING PAGE] No documentUrl provided — entering status polling mode');
         } else {
           // Fire-and-forget: this returns in <5 seconds
-          const body: any = { submissionId };
+          const body: any = { submissionId, originalFileName: docName };
           if (documentUrl) body.documentUrl = documentUrl;
           if (rawText) {
             body.text = rawText;
@@ -165,7 +165,7 @@ function ProcessingContent() {
     };
 
     processDocument();
-  }, [submissionId, documentUrl, rawText, router, hasStarted]);
+  }, [submissionId, documentUrl, rawText, docName, router, hasStarted]);
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 0' }}>

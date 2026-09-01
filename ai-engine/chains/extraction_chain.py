@@ -24,7 +24,9 @@ def get_extraction_chain(model_name=None):
     llm = create_chat_model("extraction", model_override=model_name)
     
     # This is where the magic happens: the LLM is forced to follow the schema
-    structured_llm = llm.with_structured_output(SubmissionSchema)
+    structured_llm = llm.with_structured_output(
+        SubmissionSchema, method="json_schema", strict=True
+    )
     
     prompt = ChatPromptTemplate.from_messages([
         ("system", EXTRACTION_SYSTEM_PROMPT),

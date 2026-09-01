@@ -91,6 +91,8 @@ class AgentState(TypedDict):
     # what it extracted, and what it decided at each stage.
     # =====================================================
     pipeline_manifest: Dict
+    source_validation: Dict
+    release_verdict: Dict
 
     # Canonical evidence contracts — established before strategic reasoning.
     canonical_submission: Dict

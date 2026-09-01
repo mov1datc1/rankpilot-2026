@@ -3,6 +3,33 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.2] — 2026-08-31
+
+### Source-locked release gate and independent Sol judge
+
+- **Generated-source rejection:** DOC/DOCX ingestion accepts only standalone,
+  contiguous matter headings and rejects prior RankPilot outputs by embedded
+  provenance or legacy output markers.
+- **Immutable matter fields:** canonical reconciliation restores D/E1–D/E8
+  fields from each exact source section. The DOCX cloner now preserves physical
+  table order and changes only existing B10, C2 and D2/E2 cells.
+- **v25.2 correction:** physical Hero reordering is retired because it could
+  cross-wire clients, values and lawyers. Strategic priority belongs in the
+  prose and Audit, not by moving source tables.
+- **Independent final judge:** `gpt-5.6-sol` at `xhigh` reasoning compares the
+  source, canonical record, optimized submission, Strategic Audit and all
+  deterministic contracts using strict Structured Outputs.
+- **Fail closed:** source, pre-flight, grounding, judge, clone or OOXML failures
+  end without deliverables. The callback stores an error and cannot replace DB
+  matters or mark the submission `Submitted`.
+- **Client-document hygiene:** model profiles, RAG chunks and pipeline/pre-flight
+  diagnostics are no longer rendered in the Strategic Audit.
+- **Legacy `.doc` delivery:** validated canonical records use the TypeScript DXA
+  DOCX builder; `.docx` sources use summary-only source cloning plus package validation.
+- **Regression coverage:** 46 Python tests and TypeScript compilation pass.
+
+---
+
 ## [v25.2] — 2026-08-27
 
 ### 🏆 Physical Table Strategic Re-Ordering & Hero Matter Enforcement (`docx_cloner.py`)

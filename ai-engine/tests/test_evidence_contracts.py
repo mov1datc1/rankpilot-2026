@@ -47,7 +47,7 @@ def matter(index: int, status: str = "publishable") -> MatterRecord:
 
 
 class EvidenceContractTests(unittest.TestCase):
-    def test_legacy_doc_text_count_is_exact(self):
+    def test_legacy_doc_text_count_detects_duplicate_heading(self):
         text = """
         Publishable Matter 1
         Publishable Matter 2
@@ -56,9 +56,82 @@ class EvidenceContractTests(unittest.TestCase):
         Confidential Matter 2
         """
         result = DocumentParser._count_matter_labels_in_text(text)
-        self.assertEqual(4, result["total"])
+        self.assertEqual(5, result["total"])
         self.assertEqual(2, result["publishable"])
-        self.assertEqual(2, result["confidential"])
+        self.assertEqual(3, result["confidential"])
+        self.assertFalse(result["label_validation"]["passed"])
+        self.assertEqual(
+            ["Confidential Matter 2"],
+            result["label_validation"]["duplicate_labels"],
+        )
+
+    def test_inline_matter_reference_is_not_a_heading(self):
+        text = """Publishable Matter 1
+Client A
+Not stated in source (Confidential Matter 2)
+Confidential Matter 1
+Client B
+"""
+        result = DocumentParser._count_matter_labels_in_text(text)
+        self.assertEqual(2, result["total"])
+        self.assertTrue(result["label_validation"]["passed"])
+
+    def test_contiguous_register_preserves_non_numeric_physical_order(self):
+        result = DocumentParser.validate_matter_labels([
+            "Publishable Matter 1",
+            "Confidential Matter 1",
+            "Confidential Matter 3",
+            "Confidential Matter 2",
+        ])
+        self.assertTrue(result["passed"])
+
+    def test_generated_source_is_rejected(self):
+        result = DocumentParser.detect_rankpilot_generated_source(
+            "Current ranking: Band 2\nSuggested ranking: Suggested for ranking"
+        )
+        self.assertFalse(result["passed"])
+        self.assertTrue(result["is_generated_output"])
+        filename_result = DocumentParser.detect_rankpilot_generated_source(
+            "SUBMISSION FORM",
+            "/tmp/RankPilot_Submission_Form_Real_Estate.docx",
+        )
+        self.assertFalse(filename_result["passed"])
+
+    def test_matter_fields_are_recovered_from_exact_source_section(self):
+        fields = DocumentParser.extract_matter_fields("""D1 Name of client
+SANU Corp, C.A. and HAS Higiene, Agua y Saneamiento, C.A.
+D2 Summary
+Joint restructuring mandate.
+D3 Value
+US$14 million
+D4 Cross-border
+Venezuela and Colombia
+D5 Lead partner
+María Carolina Cano
+""")
+        self.assertEqual(
+            "SANU Corp, C.A. and HAS Higiene, Agua y Saneamiento, C.A.",
+            fields["client"],
+        )
+        self.assertEqual("US$14 million", fields["matter_value"])
+        self.assertEqual("María Carolina Cano", fields["lead_partner"])
+
+    def test_matter_field_parser_removes_template_instructions(self):
+        fields = DocumentParser.extract_matter_fields("""D1 Name of client
+this will be publishable. If you cannot reveal the client name, give a general description.
+Gruppo Montenegro (Montenegro S.r.l.)
+D2 Summary
+Please say why this matter was important. Also, tell us exactly what role your department played.
+Advised Gruppo Montenegro on the Pampero acquisition.
+D3 Matter value
+include currency and amount in figures
+Confidential
+""")
+        self.assertEqual("Gruppo Montenegro (Montenegro S.r.l.)", fields["client"])
+        self.assertEqual(
+            "Advised Gruppo Montenegro on the Pampero acquisition.", fields["summary"]
+        )
+        self.assertEqual("Confidential", fields["matter_value"])
 
     def test_numbered_sections_preserve_verbatim_text(self):
         text = """
@@ -134,6 +207,15 @@ B10 What is this department best known for?
         self.assertTrue(merged[0]["is_ranked"])
         self.assertEqual("Juan José Figueroa", merged[1]["name"])
 
+    def test_source_current_ranking_overrides_model_value(self):
+        source = [{"name": "Pedro Sosa", "is_ranked": True, "current_ranking": "Band 2"}]
+        merged = merge_lawyer_roster(
+            source,
+            [{"name": "Pedro Sosa", "is_ranked": False, "current_ranking": "Unranked"}],
+        )
+        self.assertTrue(merged[0]["is_ranked"])
+        self.assertEqual("Band 2", merged[0]["current_ranking"])
+
     def test_numbered_register_drops_unsupported_26th_record(self):
         source = """Publishable Matter 1
 Client A acquisition
@@ -153,6 +235,42 @@ Client B restructuring
         self.assertEqual(2, len(reconciled))
         self.assertEqual(["Publishable Matter 11"], report["dropped_records"])
         self.assertEqual("confidential", reconciled[1]["publish_status"])
+
+    def test_reconciliation_locks_all_non_narrative_source_fields(self):
+        source = """Publishable Matter 1
+D1 Name of client
+Joint Client A and Client B
+D2 Summary
+Source summary.
+D3 Value
+US$20 million
+D4 Cross-border
+Venezuela and Spain
+D5 Lead partner
+Lead Lawyer
+D6 Team
+Associate One
+D7 Other firms
+Firm X
+D8 Completion
+Ongoing
+"""
+        reconciled, report = reconcile_extracted_matters_to_source(
+            [{
+                "source_label": "Publishable Matter 1",
+                "client": "Wrong Client",
+                "matter_value": "Wrong Value",
+                "lead_partner": "Wrong Lawyer",
+            }],
+            ["Publishable Matter 1"],
+            source,
+        )
+        self.assertTrue(report["passed"])
+        locked = reconciled[0]
+        self.assertEqual("Joint Client A and Client B", locked["client"])
+        self.assertEqual("US$20 million", locked["matter_value"])
+        self.assertEqual("Lead Lawyer", locked["lead_partner"])
+        self.assertEqual("Firm X", locked["other_firms"])
 
     def test_numbered_register_fails_when_real_label_is_missing(self):
         reconciled, report = reconcile_extracted_matters_to_source(

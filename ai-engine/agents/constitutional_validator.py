@@ -7,12 +7,14 @@ before the submission is delivered. Two layers:
 Layer 1: Deterministic (regex/count) — ~2 seconds, $0.00
 Layer 2: Editorial Judge (LLM) — ~30 seconds, ~$0.03-0.08
 
-If violations are found, routes back to optimization for retry (max 2 retries).
+If violations are found, routes back to optimization for retry (max 2 retries),
+then blocks delivery. Judge or schema failures block immediately.
 """
 
 import re
 import json
 from typing import Dict, List, Tuple
+from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
 from core.state import AgentState
 
@@ -125,6 +127,24 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     """
     violations = []
     all_text = _get_all_output_text(state)
+
+    contract_checks = (
+        ("SOURCE", state.get("source_validation", {})),
+        ("EVIDENCE", state.get("evidence_reconciliation", {})),
+        ("ARTIFACT", state.get("artifact_validation", {})),
+    )
+    for label, check in contract_checks:
+        if check and not check.get("passed", False):
+            details = check.get("errors") or check.get("matter_rollbacks") or []
+            violations.append(f"[{label}-CONTRACT] {details or 'validation failed'}")
+    artifact = state.get("artifact_validation", {})
+    if artifact.get("matter_rollbacks"):
+        violations.append(
+            f"[ARTIFACT-ROLLBACK] {len(artifact['matter_rollbacks'])} matter(s) failed grounding"
+        )
+    extraction = state.get("pipeline_manifest", {}).get("extraction", {})
+    if extraction and not extraction.get("match", False):
+        violations.append("[REGISTER-CONTRACT] Source and extracted matter registers do not match")
     
     if not all_text.strip():
         violations.append("[CRITICAL] No output text found in state")
@@ -213,119 +233,116 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
 # LAYER 2: EDITORIAL JUDGE (LLM-based quality checks)
 # ═══════════════════════════════════════════════════════════════
 
-EDITORIAL_JUDGE_PROMPT = """You are the final quality auditor for a Chambers & Partners submission generator.
-You must evaluate the submission output against 7 editorial quality rules.
+EDITORIAL_JUDGE_PROMPT = """You are RankPilot's independent final release judge.
+Compare the original Chambers source, deterministic manifest, canonical record,
+optimized submission and Strategic Audit together. Use the structured response
+schema supplied by the API. Return passed=true only if every mandatory check
+passes; include one check record for each category below.
 
-For each rule, respond with PASS or FAIL and a brief explanation.
+REGISTER — No source matter is split, merged, omitted, duplicated, reordered or
+reclassified. Publishable/confidential counts and labels match exactly.
 
-RULES TO CHECK:
+FIELD PROVENANCE — Every client, value, jurisdiction, lead lawyer, team member,
+other firm and date remains attached to its own source matter. Joint clients
+remain joint. No fact, outcome, metric, role or significance was invented.
 
-B1 — STRATEGIC PROPOSITION: Does the B7 read as a strategic proposition about WHY this practice 
-deserves recognition? Or does it read as a generic list of clients/services?
-PASS = B7 establishes a clear thesis about the practice's differentiation
-FAIL = B7 is a generic description that could apply to any firm
+LAWYERS — Every submitted lawyer and source current-ranking status is preserved.
+The Strategic Audit gives each lawyer an evidence-backed proposition or a
+specific evidence question when the source cannot support one.
 
-B3 — INTERPRETATION NOT DECORATION: Does the B7 INTERPRET the practice (explain WHY privacy 
-functions as governance/operational issue) or merely DESCRIBE/DECORATE it (add embellishment 
-without intelligence)?
-PASS = B7 adds editorial intelligence about what the evidence means
-FAIL = B7 uses generic promotional language without real insight
+B10 STRATEGY — B10/B7 states a clear, differentiated, source-backed recognition
+thesis; it is not generic marketing, a client dump or decorative boilerplate.
 
-B4 — CLIENT EXAMPLES: Are client names used as EXAMPLES illustrating patterns (2-3 max), 
-or dumped as a LIST (4+ names in sequence)?
-PASS = 2-3 clients woven into narrative as evidence of patterns
-FAIL = 4+ clients listed sequentially
+MATTER QUALITY — Each optimized matter is accurate, clear, distinct and useful,
+opens on a source fact, preserves material evidence and states outcomes only
+when the source states them.
 
-C2 — FACTUAL OPENING: Does each matter open with a client, mandate,
-challenge or outcome that is actually present in its source evidence?
-PASS = Openings are factual and source-bounded
-FAIL = An opening adds evaluative significance, client stature or work not stated
+STRATEGIC AUDIT — The Audit is decision-useful, objective-aligned and specific
+about strengths, vulnerabilities, ranking case, matters and lawyers. It turns
+real evidence gaps into precise questions. It never exposes pipeline terms,
+pre-flight failures, model profiles, internal diagnostics or architecture.
 
-C3 — DIFFERENTIATION WITHOUT INVENTION: Does ordering reflect each matter's
-distinctive source facts without forcing artificial opening variety?
-PASS = Distinctions arise from source facts; repeated syntax alone is not a failure
-FAIL = Matters are homogenized by adding the same unsupported mechanics
+DETERMINISTIC CONTRACTS — Any failed source, extraction, evidence or artifact
+contract is automatically a release failure and cannot be overruled. DOCX/OOXML
+packaging is validated separately after your editorial approval.
 
-C4 — OUTCOME DISCIPLINE: Are outcomes stated only when the source states them?
-PASS = Source outcomes are preserved; absent outcomes remain omitted
-FAIL = A generic, quantified or institutional outcome was supplied without evidence
-
-C9 — SOURCE-BACKED PATTERN DISCOVERY: Does the B7 foreground patterns that
-recur in the submitted matters while preserving the original narrative?
-PASS = The proposition is traceable to matter evidence
-FAIL = The proposition relies on a pattern absent from the submitted evidence
-
-OUTPUT FORMAT (JSON):
-{
-  "checks": {
-    "B1": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "B3": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "B4": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "C2": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "C3": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "C4": {"result": "PASS|FAIL", "reason": "brief explanation"},
-    "C9": {"result": "PASS|FAIL", "reason": "brief explanation"}
-  },
-  "overall": "PASS|FAIL",
-  "failed_checks": ["list of failed check IDs"],
-  "retry_target": "optimization|writing|none"
-}
-
-If ANY check fails, set overall to FAIL.
-If C2, C3, or C4 fail → retry_target = "optimization" (matter issues)
-If B1, B3, B4, or C9 fail → retry_target = "writing" (B7 issues)
-If both types fail → retry_target = "optimization" (fix matters first)
+Set retryable=true only when another optimization pass can correct wording.
+Identity, register, provenance, tool/schema and deterministic contract failures
+are not retryable. Never treat judge/tool/schema uncertainty as a pass.
 """
 
 
-def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str]:
-    """
-    Layer 2: Editorial quality checks using LLM judge.
-    Returns (passed: bool, violations: list[str], retry_target: str)
-    """
-    enhanced_b7 = state.get("enhanced_b7", "")
-    matters = state.get("matters", [])
-    
-    # Build the submission text for the judge
-    submission_text = f"=== B7 TEXT ===\n{enhanced_b7}\n\n"
-    for i, m in enumerate(matters):
-        opt = m.get("optimized_text", "") or m.get("summary", "")
-        client = m.get("client", m.get("title", f"Matter {i+1}"))
-        submission_text += f"=== MATTER {i+1}: {client} ===\n{opt}\n\n"
-    
+class JudgeCheck(BaseModel):
+    check_id: str = Field(description="Stable concise check identifier")
+    passed: bool
+    reason: str
+
+
+class FinalJudgeVerdict(BaseModel):
+    passed: bool
+    retryable: bool = Field(description="True only when optimization can correct the failure")
+    summary: str
+    violations: List[str]
+    checks: List[JudgeCheck]
+
+
+def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str, Dict]:
+    """Run the independent Sol release judge; every error fails closed."""
+
+    judge_payload = {
+        "source_document": state.get("doc_text", ""),
+        "source_manifest": state.get("pipeline_manifest", {}).get("document", {}),
+        "canonical_submission": state.get("canonical_submission", {}),
+        "optimized_submission": state.get("optimized_submission", {}),
+        "strategic_audit": state.get("strategic_audit", {}),
+        "deterministic_validations": {
+            "source": state.get("source_validation", {}),
+            "extraction": state.get("pipeline_manifest", {}).get("extraction", {}),
+            "evidence": state.get("evidence_reconciliation", {}),
+            "artifact": state.get("artifact_validation", {}),
+        },
+        "objective": state.get("strategic_objective", {}),
+    }
     try:
-        llm_judge = llm.bind(response_format={"type": "json_object"})
-        response = llm_judge.invoke([
+        structured_judge = llm.with_structured_output(
+            FinalJudgeVerdict, method="json_schema", strict=True
+        )
+        result = structured_judge.invoke([
             SystemMessage(content=EDITORIAL_JUDGE_PROMPT),
-            HumanMessage(content=f"Evaluate this submission:\n\n{submission_text}")
+            HumanMessage(content=(
+                "Evaluate this complete release candidate. Return a pass only when both "
+                "deliverables are source-faithful and strategically useful.\n\n"
+                + json.dumps(judge_payload, ensure_ascii=False, default=str)
+            )),
         ])
-        
-        result = json.loads(response.content)
-        checks = result.get("checks", {})
-        overall = result.get("overall", "FAIL")
-        failed = result.get("failed_checks", [])
-        retry_target = result.get("retry_target", "none")
-        
-        violations = []
-        for check_id, check_data in checks.items():
-            if check_data.get("result") == "FAIL":
-                violations.append(f"[{check_id}-EDITORIAL] {check_data.get('reason', 'No reason')}")
-        
-        passed = overall == "PASS"
-        
-        # Log results
-        pass_count = sum(1 for c in checks.values() if c.get("result") == "PASS")
-        total = len(checks)
-        print(f"[CONSTITUTIONAL L2] Editorial Judge: {pass_count}/{total} checks passed")
-        for check_id, check_data in checks.items():
-            status = "✅" if check_data.get("result") == "PASS" else "❌"
-            print(f"  {status} {check_id}: {check_data.get('reason', '')[:100]}")
-        
-        return passed, violations, retry_target
-        
-    except Exception as e:
-        print(f"[CONSTITUTIONAL L2] ⚠️ LLM Judge failed: {e}. Skipping Layer 2.")
-        return True, [], "none"  # Graceful — don't block pipeline on judge failure
+        verdict = result.model_dump() if hasattr(result, "model_dump") else dict(result)
+        violations = list(verdict.get("violations") or [])
+        for check in verdict.get("checks") or []:
+            if not check.get("passed"):
+                violation = f"[{check.get('check_id', 'JUDGE')}] {check.get('reason', '')}"
+                if violation not in violations:
+                    violations.append(violation)
+        if not verdict.get("passed") and not violations:
+            violations.append(
+                "[JUDGE] " + str(verdict.get("summary") or "Release judge returned FAIL")
+            )
+        passed = bool(verdict.get("passed")) and not violations
+        retry_target = "optimization" if (not passed and verdict.get("retryable")) else "none"
+        print(
+            f"[CONSTITUTIONAL L2] Sol release judge: "
+            f"{'PASS' if passed else 'FAIL'} ({len(violations)} violations)"
+        )
+        return passed, violations, retry_target, verdict
+    except Exception as exc:
+        violation = f"[JUDGE-ERROR] Sol release judge failed: {type(exc).__name__}: {exc}"
+        print(f"[CONSTITUTIONAL L2] ❌ {violation}")
+        return False, [violation], "none", {
+            "passed": False,
+            "retryable": False,
+            "summary": violation,
+            "violations": [violation],
+            "checks": [],
+        }
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -360,15 +377,16 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         print("  ✅ All deterministic checks passed")
     
     # ─── LAYER 2: Editorial Judge (only if L1 passed) ───
-    l2_passed = True
+    l2_passed = False
     l2_violations = []
     retry_target = "none"
+    judge_verdict = {}
     
     if l1_passed:
         print("\n[CONSTITUTIONAL L2] Running editorial judge...")
-        from agents.nodes import get_model
-        llm = get_model()
-        l2_passed, l2_violations, retry_target = run_layer2_checks(state, llm)
+        from utils.model_factory import create_chat_model
+        llm = create_chat_model("judge")
+        l2_passed, l2_violations, retry_target, judge_verdict = run_layer2_checks(state, llm)
     else:
         # L1 failed — determine retry target from violation types
         b7_violations = [v for v in l1_violations if any(x in v for x in ["B6-", "B7-", "A6-"])]
@@ -378,7 +396,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         elif b7_violations:
             retry_target = "optimization"  # B7 is generated in optimization node
         else:
-            retry_target = "none"  # System-level violations can't be retried
+            retry_target = "none"  # System-level violations cannot be retried
     
     all_violations = l1_violations + l2_violations
     all_passed = l1_passed and l2_passed
@@ -393,14 +411,21 @@ def constitutional_validation_node(state: AgentState) -> Dict:
                 "retry_count": retry_count,
                 "layer1_passed": True,
                 "layer2_passed": True,
+                "judge": judge_verdict,
             },
             "constitutional_retry_count": retry_count,
-            "constitutional_route": "end",
+            "constitutional_route": "writing",
+            "release_verdict": {
+                "passed": True,
+                "status": "approved",
+                "code": "RELEASE_APPROVED",
+                "judge": judge_verdict,
+            },
         }
     
     # Failed — should we retry?
     if retry_count >= max_retries:
-        print(f"\n[CONSTITUTIONAL] ⚠️ FAILED after {max_retries + 1} attempts — delivering with warnings")
+        print(f"\n[CONSTITUTIONAL] ❌ FAILED after {max_retries + 1} attempts — release blocked")
         print(f"  Remaining violations: {len(all_violations)}")
         for v in all_violations:
             print(f"    ⚠️ {v}")
@@ -412,9 +437,39 @@ def constitutional_validation_node(state: AgentState) -> Dict:
                 "max_retries_exhausted": True,
                 "layer1_passed": l1_passed,
                 "layer2_passed": l2_passed,
+                "judge": judge_verdict,
             },
             "constitutional_retry_count": retry_count,
-            "constitutional_route": "end",  # Give up — deliver with warnings
+            "constitutional_route": "blocked",
+            "release_verdict": {
+                "passed": False,
+                "status": "blocked",
+                "code": "CONSTITUTIONAL_VALIDATION_FAILED",
+                "errors": all_violations,
+                "judge": judge_verdict,
+            },
+        }
+
+    if retry_target == "none":
+        print("\n[CONSTITUTIONAL] ❌ Non-retryable validation failure — release blocked")
+        return {
+            "constitutional_validation": {
+                "passed": False,
+                "violations": all_violations,
+                "retry_count": retry_count,
+                "layer1_passed": l1_passed,
+                "layer2_passed": l2_passed,
+                "judge": judge_verdict,
+            },
+            "constitutional_retry_count": retry_count,
+            "constitutional_route": "blocked",
+            "release_verdict": {
+                "passed": False,
+                "status": "blocked",
+                "code": "CONSTITUTIONAL_VALIDATION_FAILED",
+                "errors": all_violations,
+                "judge": judge_verdict,
+            },
         }
     
     # Retry
@@ -427,7 +482,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
     violation_feedback = "CONSTITUTIONAL VALIDATION FAILED. You MUST fix these violations:\n"
     violation_feedback += "\n".join(f"- {v}" for v in all_violations)
     
-    route = retry_target if retry_target in ("optimization", "writing") else "end"
+    route = "optimization"
     
     return {
         "constitutional_validation": {
@@ -437,6 +492,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
             "retry_target": route,
             "layer1_passed": l1_passed,
             "layer2_passed": l2_passed,
+            "judge": judge_verdict,
         },
         "constitutional_retry_count": retry_count + 1,
         "constitutional_route": route,

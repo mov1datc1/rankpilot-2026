@@ -48,6 +48,23 @@ export async function GET(request: NextRequest) {
     }
 
     const chambersData = submission.chambersData as any || {};
+    const releaseVerdict = chambersData.release_verdict || {};
+    const isOriginalSubmissionExport = docType === 'submission' && exportMode === 'original';
+    const sourceCloneReady = releaseVerdict.delivery_mode === 'source_clone'
+      && releaseVerdict.docx_clone_passed === true
+      && releaseVerdict.ooxml_validation_passed === true
+      && Boolean(chambersData.cloned_docx_b64);
+    const canonicalBuilderReady = releaseVerdict.delivery_mode === 'canonical_docx_builder'
+      && releaseVerdict.builder_contract_passed === true;
+    if (!isOriginalSubmissionExport && (
+      releaseVerdict.passed !== true
+      || (!sourceCloneReady && !canonicalBuilderReady)
+    )) {
+      return NextResponse.json(
+        { error: 'This pipeline result was not approved for delivery' },
+        { status: 409 }
+      );
+    }
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
     
@@ -136,7 +153,7 @@ export async function GET(request: NextRequest) {
     // B10 + D2/E2 cells. This preserves ALL formatting (colors, bold,
     // logos, diversity sections, numbering, etc.)
     // ═══════════════════════════════════════════════════════════
-    if (docType === 'submission' && chambersData.cloned_docx_b64) {
+    if (docType === 'submission' && sourceCloneReady) {
       console.log('[DOCX GENERATOR] ✅ Serving cloned DOCX (v19.0 Clone-and-Replace)');
       try {
         const docxBuffer = Buffer.from(chambersData.cloned_docx_b64, 'base64');
@@ -148,8 +165,8 @@ export async function GET(request: NextRequest) {
           },
         });
       } catch (cloneErr: any) {
-        console.error('[DOCX GENERATOR] Failed to decode cloned DOCX, falling back to builder:', cloneErr.message);
-        // Fall through to the TypeScript builder below
+        console.error('[DOCX GENERATOR] Failed to decode approved cloned DOCX:', cloneErr.message);
+        throw new Error('Approved DOCX artifact could not be decoded');
       }
     }
 
@@ -340,7 +357,8 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   );
 
   // ═══ v14.0 TRUST LAYER — Pipeline Manifest ═══
-  if (pipelineManifest?.document) {
+  const includeInternalDiagnostics = false;
+  if (includeInternalDiagnostics && pipelineManifest?.document) {
     const docInfo = pipelineManifest.document || {};
     const sourceMatters = docInfo.source_matters || {};
     const extraction = pipelineManifest.extraction || {};

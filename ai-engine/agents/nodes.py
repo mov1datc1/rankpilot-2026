@@ -728,7 +728,10 @@ def ingestion_node(state: AgentState) -> Dict:
         # Generate document stats BEFORE any LLM processing.
         # This is the ground truth about what the system read.
         # =====================================================
-        doc_stats = DocumentParser.get_document_stats(file_path)
+        source_file_name = str(
+            state.get("submission_context", {}).get("original_file_name") or ""
+        )
+        doc_stats = DocumentParser.get_document_stats(file_path, source_file_name)
         source_matters = doc_stats.get("source_matters", {})
         
         print(f"[PIPELINE MANIFEST] Document: {doc_stats.get('file_name')}")
@@ -749,6 +752,33 @@ def ingestion_node(state: AgentState) -> Dict:
             "rag_files_loaded": [],  # Populated by context_engine
             "validation": {},  # Populated by extraction validator
         }
+        source_validation = dict(
+            doc_stats.get("source_validation") or {"passed": True, "errors": []}
+        )
+        if file_path.lower().split("?", 1)[0].endswith((".doc", ".docx")) and not source_matters.get("total"):
+            source_validation.setdefault("errors", []).append(
+                "No standalone numbered matter headings were found in the source document"
+            )
+            source_validation["passed"] = False
+        source_lawyers = DocumentParser.extract_lawyer_roster(text)
+        manifest["source_lawyers"] = source_lawyers
+        manifest["source_validation"] = source_validation
+        if not source_validation.get("passed"):
+            errors = list(source_validation.get("errors") or ["Source validation failed"])
+            print(f"[SOURCE VALIDATION ❌] {'; '.join(errors)}")
+            return {
+                "doc_text": text,
+                "pipeline_manifest": manifest,
+                "source_validation": source_validation,
+                "release_verdict": {
+                    "passed": False,
+                    "status": "blocked",
+                    "code": "SOURCE_VALIDATION_FAILED",
+                    "errors": errors,
+                },
+                "current_step": "blocked",
+                "messages": [("assistant", "La fuente no superó la validación determinística.")],
+            }
         
     except Exception as e:
         print(f"[INGESTION ERROR] Failed to parse document: {e}")
@@ -817,6 +847,7 @@ def ingestion_node(state: AgentState) -> Dict:
         "original_b10": original_b10,
         "original_c2": original_c2,
         "pipeline_manifest": manifest,
+        "source_validation": source_validation,
         "messages": [("assistant", "Document ingested. Analyzing structural signals...")]
     }
 
@@ -953,6 +984,7 @@ def extraction_node(state: AgentState) -> Dict:
         "extraction": get_model_profile("extraction"),
         "standard": get_model_profile("standard"),
         "editorial": get_model_profile("editorial"),
+        "judge": get_model_profile("judge"),
     }
     manifest["source_lawyers"] = deterministic_lawyers
     manifest.setdefault("validation", {})["extraction_match"] = extraction_validation["match"]
@@ -1320,6 +1352,12 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
         
         return {
             "pipeline_manifest": manifest,
+            "release_verdict": {
+                "passed": False,
+                "status": "blocked",
+                "code": "PRE_FLIGHT_FAILED",
+                "errors": list(pre_flight["errors"]),
+            },
             "analysis": {
                 "pre_flight_failed": True,
                 "pre_flight_report": pre_flight,
@@ -1331,7 +1369,7 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
                     "matter_evaluations": [],
                 },
             },
-            "current_step": "writing"  # Skip to writing to output the error report
+            "current_step": "blocked"
         }
     
     print(f"\n{'='*60}")
@@ -3373,7 +3411,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
             "follow_up_question": question,
         })
     artifact_validation = {
-        "passed": not errors,
+        "passed": not errors and not rollbacks,
         "errors": errors,
         "matter_rollbacks": rollbacks,
         "optimized_matter_count": len(generated_matters),

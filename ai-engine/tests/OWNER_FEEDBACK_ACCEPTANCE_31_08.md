@@ -30,6 +30,13 @@ acceptance runner:
 Those documents predate the corrections. They are regression inputs, not evidence
 that newly generated output has passed.
 
+The later Araque file ending `movida-31-8` also fails acceptance. Its physical
+register contains 25 matters but is 11 publishable + 14 confidential rather than
+the required 10 + 15, and its lawyer-table markers identify it as a prior
+RankPilot output rather than an admissible original source. Render logs show the
+run used Terra and bypassed the constitutional judge after pre-flight failure;
+there is no evidence that a Sol judge evaluated that candidate.
+
 ## Acceptance matrix
 
 | Owner observation | Deterministic acceptance condition | Enforcement | Status |
@@ -59,14 +66,14 @@ Production calls are centralized in `utils/model_factory.py`:
 | Extraction | `gpt-5.6-terra` | low | Responses API |
 | Standard analysis/optimization | `gpt-5.6-terra` | medium | Responses API |
 | Editorial reasoning | `gpt-5.6-terra` | high | Responses API |
+| Independent release judge | `gpt-5.6-sol` | xhigh | Responses API + strict Structured Outputs |
 
-The exact profiles are stored in the pipeline manifest and printed in the
-Strategic Audit. This prevents individual nodes from silently selecting another
-model or transport.
+The exact profiles are stored internally in the pipeline manifest. They are not
+printed in the client-facing Strategic Audit.
 
 ## Verification completed
 
-- Python unit/regression suite: 33 tests passed.
+- Python unit/regression suite: 46 tests passed.
 - Python compile check: passed.
 - LangGraph construction: `CompiledStateGraph`.
 - TypeScript: `npx tsc --noEmit` passed.

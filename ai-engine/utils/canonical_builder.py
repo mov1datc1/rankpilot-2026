@@ -46,7 +46,7 @@ def merge_lawyer_roster(source_lawyers: List[Dict], extracted_lawyers: List[Dict
         model["name"] = source.get("name")
         model["is_ranked"] = source.get("is_ranked")
         model["current_ranking"] = (
-            model.get("current_ranking") or source.get("current_ranking")
+            source.get("current_ranking") or model.get("current_ranking")
         )
         if source.get("is_partner") is not None:
             model["is_partner"] = source.get("is_partner")
@@ -103,10 +103,21 @@ def reconcile_extracted_matters_to_source(
         used_indices.add(index)
         grounded = dict(chosen)
         grounded["source_label"] = exact_label
+        section_text = str(sections.get(exact_label.casefold(), {}).get("text") or "")
+        source_fields = DocumentParser.extract_matter_fields(section_text)
+        for field, value in source_fields.items():
+            if value:
+                grounded[field] = value
+        grounded["source_excerpt"] = section_text
         is_confidential = not exact_label.casefold().startswith("publishable")
         grounded["publish_status"] = "confidential" if is_confidential else "publishable"
         grounded["is_confidential"] = is_confidential
         grounded["_confidentiality_locked"] = is_confidential
+        jurisdiction = str(source_fields.get("cross_border_jurisdictions") or "").strip()
+        if jurisdiction:
+            grounded["is_cross_border"] = jurisdiction.casefold() not in {
+                "no", "none", "n/a", "not applicable", "not stated"
+            }
         selected.append(grounded)
 
     dropped = [
@@ -318,7 +329,7 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
         if item.get("name")
     }
     canonical_lawyer_names = {lawyer.lawyer_id for lawyer in lawyers}
-    if source_lawyer_names != canonical_lawyer_names:
+    if source_lawyer_names and source_lawyer_names != canonical_lawyer_names:
         missing = sorted(source_lawyer_names - canonical_lawyer_names)
         extra = sorted(canonical_lawyer_names - source_lawyer_names)
         if missing:
