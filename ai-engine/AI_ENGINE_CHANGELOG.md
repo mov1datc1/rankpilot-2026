@@ -14,6 +14,7 @@
 | Unknown-client placeholder | Treat source-backed blank client and canonical `Unknown client` as the same non-invented placeholder | `evidence_validation.py` |
 | B10 release limit | Preserve the original answer, add only complete source-backed sentences that fit, and include a source-verified department head within 500 words | `objective_alignment.py`, `nodes.py` |
 | Client-safe error copy | Hide internal gate names and present the affected matters, safety reason, recovery step and support reference | `pipeline-error-presentation.ts`, `check-status/route.ts`, processing/report pages |
+| Production health proof | Version the FastAPI health response and expose a credential-free Vercel health proxy | `main.py`, `api/ai-health/route.ts` |
 | Live regression | 50 tests pass; real Araque source reconciles 25/25 matters, 10/15 split, 10 lawyers/6 ranked and 496-word B10 | `tests/test_evidence_contracts.py` |
 
 ## v26.2 — IMMUTABLE OUTPUT & RELEASE APPROVAL (2026-08-31)

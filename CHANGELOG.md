@@ -20,6 +20,8 @@ Format follows [Semantic Versioning](https://semver.org/).
 - **User-facing recovery messages:** internal gate names and raw technical
   details are replaced with a plain-language explanation, affected matter
   numbers, a concrete next step and a support reference on processing/report pages.
+- **Production observability:** `/api/ai-health` safely reports backend
+  availability and release version without exposing the Render URL or credentials.
 
 ## [v26.2] — 2026-08-31
 
