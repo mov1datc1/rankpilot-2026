@@ -2,6 +2,7 @@ FROM python:3.10-slim
 
 # Install system dependencies including pdflatex
 RUN apt-get update && apt-get install -y \
+    antiword \
     texlive-latex-base \
     texlive-fonts-recommended \
     texlive-fonts-extra \

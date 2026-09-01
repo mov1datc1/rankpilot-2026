@@ -105,8 +105,19 @@ def reconcile_extracted_matters_to_source(
         grounded["source_label"] = exact_label
         section_text = str(sections.get(exact_label.casefold(), {}).get("text") or "")
         source_fields = DocumentParser.extract_matter_fields(section_text)
+        observed = set(source_fields.pop("_observed_field_numbers", []))
+        field_numbers = {
+            "client": 1,
+            "summary": 2,
+            "matter_value": 3,
+            "cross_border_jurisdictions": 4,
+            "lead_partner": 5,
+            "team_members": 6,
+            "other_firms": 7,
+            "completion_date": 8,
+        }
         for field, value in source_fields.items():
-            if value:
+            if value or field_numbers[field] in observed:
                 grounded[field] = value
         grounded["source_excerpt"] = section_text
         is_confidential = not exact_label.casefold().startswith("publishable")
@@ -140,8 +151,10 @@ def build_strategic_objective(context: Dict, metadata: Dict) -> StrategicObjecti
     """Resolve objective fields from explicit request context, never portfolio frequency."""
 
     directory = context.get("directory") or "Unspecified directory"
-    practice = context.get("practice_area") or metadata.get("practice_area") or "Unspecified practice"
-    ranking_unit = context.get("ranking_unit") or context.get("jurisdiction") or metadata.get("location") or "Unspecified ranking unit"
+    # Document-extracted identity is authoritative. UI selections express the
+    # requested workflow, but cannot relabel a Corporate M&A source as Banking.
+    practice = metadata.get("practice_area") or context.get("practice_area") or "Unspecified practice"
+    ranking_unit = metadata.get("location") or context.get("ranking_unit") or context.get("jurisdiction") or "Unspecified ranking unit"
     current = context.get("current_status") or "Unspecified current position"
     primary = context.get("primary_objective") or "Assess current ranking position"
     priority = context.get("strategic_priority") or primary

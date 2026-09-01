@@ -32,13 +32,19 @@ from utils.objective_alignment import (  # noqa: E402
 )
 from utils.language_guard import apply_epistemic_filter  # noqa: E402
 from utils.canonical_builder import (  # noqa: E402
+    build_strategic_objective,
     infer_transaction_role,
     merge_lawyer_roster,
     reconcile_extracted_matters_to_source,
 )
 from utils.model_response import coerce_message_text  # noqa: E402
 from utils.objective_alignment import compose_b10_with_budget  # noqa: E402
-from agents.nodes import artifact_validation_node, optimization_node, safe_json_loads  # noqa: E402
+from agents.nodes import (  # noqa: E402
+    artifact_validation_node,
+    optimization_node,
+    safe_json_loads,
+    sanitize_client_audit_payload,
+)
 
 
 class _FakeMessage:
@@ -159,6 +165,103 @@ Confidential
         )
         self.assertEqual("Confidential", fields["matter_value"])
 
+    def test_legacy_form_cleaner_removes_ole_prefix_and_xml_postamble(self):
+        raw = """WordDocument
+binary metadata
+SUBMISSION FORM
+A. PRELIMINARY INFORMATION
+A1 Firm name
+Firm A
+A2 Practice Area
+Corporate M&A
+A3 Location (Jurisdiction)
+Venezuela
+Publishable Matter 1
+D1 Name of client
+Client A
+Ref: PAB006
+Please upload completed submissions online at
+<xs:schema>container metadata</xs:schema>
+"""
+        cleaned = DocumentParser._clean_legacy_doc_text(raw)
+        self.assertTrue(cleaned.startswith("SUBMISSION FORM"))
+        self.assertNotIn("WordDocument", cleaned)
+        self.assertNotIn("Ref: PAB006", cleaned)
+        self.assertNotIn("xs:schema", cleaned)
+
+    def test_source_identity_and_all_department_heads_are_deterministic(self):
+        text = """SUBMISSION FORM
+A1 Firm name
+ARAQUEREYNA
+A2 Practice Area
+CORPORATE M&A
+A3 Location (Jurisdiction)
+Venezuela
+B7 Head or Heads of department
+Name
+Email
+Telephone number
+Pedro Ignacio Sosa Mendoza
+Manuel Reyna\x07 HYPERLINK "mailto:person@example.com"
++58 414 000 0000
+B8 Hires / Departures
+"""
+        self.assertEqual(
+            {
+                "firm_name": "ARAQUEREYNA",
+                "practice_area": "CORPORATE M&A",
+                "jurisdiction": "Venezuela",
+            },
+            DocumentParser.extract_chambers_preliminary_fields(text),
+        )
+        self.assertEqual(
+            ["Pedro Ignacio Sosa Mendoza", "Manuel Reyna"],
+            DocumentParser.extract_department_heads(text),
+        )
+
+    def test_publishable_matter_stops_before_confidential_register_heading(self):
+        text = """Publishable Matter 10
+D1 Name of client
+Client A
+E. CONFIDENTIAL INFORMATION
+CONFIDENTIAL CLIENTS
+Secret Client
+Confidential Matter 1
+E1 Name of client
+Secret Client
+"""
+        section = DocumentParser.extract_numbered_matter_sections(text)[
+            "publishable matter 10"
+        ]["text"]
+        self.assertIn("Client A", section)
+        self.assertNotIn("CONFIDENTIAL CLIENTS", section)
+        self.assertNotIn("Secret Client", section)
+
+    def test_explicit_blank_source_field_clears_model_inference(self):
+        source = """Confidential Matter 1
+E1 Name of client
+Client A
+E2 Summary
+Source summary.
+E3 Matter value
+Confidential
+E4 Is this a cross-border matter?
+E5 Lead partner
+Partner One
+"""
+        matters, report = reconcile_extracted_matters_to_source(
+            [{
+                "source_label": "Confidential Matter 1",
+                "client": "Client A",
+                "summary": "Source summary.",
+                "cross_border_jurisdictions": "Spain and Venezuela",
+            }],
+            ["Confidential Matter 1"],
+            source,
+        )
+        self.assertTrue(report["passed"])
+        self.assertEqual("", matters[0]["cross_border_jurisdictions"])
+
     def test_numbered_sections_preserve_verbatim_text(self):
         text = """
 Publishable Matter 1
@@ -229,6 +332,45 @@ Content Type
             coerce_message_text(content),
         )
         self.assertEqual("Source", safe_json_loads(content)["optimized_text"])
+
+    def test_json_parser_selects_complete_optimizer_object_with_quotes(self):
+        content = (
+            '{"optimized_text":"Incomplete"}'
+            '{"optimized_text":"Grounded","evidence_quotes":["Source quote"]}'
+        )
+        parsed = safe_json_loads(
+            content,
+            expected_keys={"optimized_text", "evidence_quotes"},
+        )
+        self.assertEqual("Grounded", parsed["optimized_text"])
+        self.assertEqual(["Source quote"], parsed["evidence_quotes"])
+
+    def test_source_metadata_overrides_mislabeled_ui_objective(self):
+        objective = build_strategic_objective(
+            {"practice_area": "Banking & Finance", "jurisdiction": "Latin America"},
+            {"practice_area": "CORPORATE M&A", "location": "Venezuela"},
+        )
+        self.assertEqual("CORPORATE M&A", objective.practice_area)
+        self.assertEqual("Venezuela", objective.ranking_unit)
+
+    def test_client_audit_removes_sdk_and_validation_internals(self):
+        payload = sanitize_client_audit_payload({
+            "summary": "Client-safe analysis",
+            "id": "resp_123",
+            "response_metadata": {"model": "internal"},
+            "audit_letter": {
+                "the_state_of_play": "Source-backed conclusion",
+                "encrypted_content": "opaque",
+                "_validation_warnings": ["internal warning"],
+            },
+        })
+        self.assertEqual("Client-safe analysis", payload["summary"])
+        self.assertNotIn("id", payload)
+        self.assertNotIn("response_metadata", payload)
+        self.assertEqual(
+            {"the_state_of_play": "Source-backed conclusion"},
+            payload["audit_letter"],
+        )
 
     def test_b10_budget_keeps_original_and_required_partner(self):
         original = " ".join(f"source{i}" for i in range(450))

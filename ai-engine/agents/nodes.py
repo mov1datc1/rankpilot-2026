@@ -43,6 +43,39 @@ def sanitize_text(text: str) -> str:
     text = text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
     return text
 
+
+_CLIENT_AUDIT_FORBIDDEN_KEYS = {
+    "id",
+    "raw_response",
+    "response_metadata",
+    "usage_metadata",
+    "additional_kwargs",
+    "encrypted_content",
+    "reasoning",
+    "reasoning_content",
+    "validation_warnings",
+    "_validation_warnings",
+    "pipeline_manifest",
+    "ranking_architecture",
+}
+
+
+def sanitize_client_audit_payload(value: Any) -> Any:
+    """Remove SDK, prompt and validation internals from client deliverables."""
+
+    if isinstance(value, dict):
+        return {
+            str(key): sanitize_client_audit_payload(item)
+            for key, item in value.items()
+            if str(key).casefold() not in _CLIENT_AUDIT_FORBIDDEN_KEYS
+            and not str(key).startswith("_")
+        }
+    if isinstance(value, list):
+        return [sanitize_client_audit_payload(item) for item in value]
+    if isinstance(value, tuple):
+        return [sanitize_client_audit_payload(item) for item in value]
+    return value
+
 def strip_markdown(text: str) -> str:
     """v11.0: Remove markdown formatting artifacts from LLM output.
     The output goes to DOCX/PDF where markdown syntax appears as ugly literal characters."""
@@ -577,7 +610,7 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     return enhanced_text
 
 
-def safe_json_loads(text: Any, fallback=None):
+def safe_json_loads(text: Any, fallback=None, expected_keys=None):
     """Parse JSON with multiple fallback strategies."""
     cleaned = coerce_message_text(text).strip()
     if not cleaned:
@@ -596,36 +629,67 @@ def safe_json_loads(text: Any, fallback=None):
     except json.JSONDecodeError as e:
         print(f"[SAFE_JSON_LOADS] Strategy 1 failed: {e}")
     
-    # Strategy 2: Find the first complete JSON object by brace matching
+    # Strategy 2: collect complete top-level JSON objects. Some Responses API
+    # payloads contain more than one JSON object; selecting the first discarded
+    # the later object carrying ``evidence_quotes`` and forced every matter into
+    # source-fallback mode.
     try:
-        start_idx = cleaned.index('{')
-        depth = 0
-        in_string = False
-        escape_next = False
-        end_idx = start_idx
-        for i in range(start_idx, len(cleaned)):
-            c = cleaned[i]
-            if escape_next:
-                escape_next = False
-                continue
-            if c == '\\' and in_string:
-                escape_next = True
-                continue
-            if c == '"' and not escape_next:
-                in_string = not in_string
-                continue
-            if not in_string:
-                if c == '{':
-                    depth += 1
-                elif c == '}':
-                    depth -= 1
-                    if depth == 0:
-                        end_idx = i + 1
-                        break
-        if end_idx > start_idx:
+        candidates = []
+        cursor = 0
+        while cursor < len(cleaned):
+            start_idx = cleaned.find('{', cursor)
+            if start_idx < 0:
+                break
+            depth = 0
+            in_string = False
+            escape_next = False
+            end_idx = start_idx
+            for i in range(start_idx, len(cleaned)):
+                c = cleaned[i]
+                if escape_next:
+                    escape_next = False
+                    continue
+                if c == '\\' and in_string:
+                    escape_next = True
+                    continue
+                if c == '"':
+                    in_string = not in_string
+                    continue
+                if not in_string:
+                    if c == '{':
+                        depth += 1
+                    elif c == '}':
+                        depth -= 1
+                        if depth == 0:
+                            end_idx = i + 1
+                            break
+            if end_idx <= start_idx:
+                break
             json_str = cleaned[start_idx:end_idx]
-            result = json.loads(json_str)
-            print(f"[SAFE_JSON_LOADS] Strategy 2 succeeded: extracted {len(json_str)} chars")
+            try:
+                parsed = json.loads(json_str)
+                if isinstance(parsed, dict):
+                    candidates.append((parsed, len(json_str)))
+            except json.JSONDecodeError:
+                pass
+            cursor = end_idx
+        if candidates:
+            wanted = set(expected_keys or [])
+            if wanted:
+                result, size = max(
+                    candidates,
+                    key=lambda item: (
+                        sum(key in item[0] for key in wanted),
+                        sum(bool(item[0].get(key)) for key in wanted),
+                        item[1],
+                    ),
+                )
+            else:
+                result, size = candidates[0]
+            print(
+                f"[SAFE_JSON_LOADS] Strategy 2 succeeded: selected {size} chars "
+                f"from {len(candidates)} object(s)"
+            )
             return result
     except (json.JSONDecodeError, ValueError) as e:
         print(f"[SAFE_JSON_LOADS] Strategy 2 failed: {e}")
@@ -893,9 +957,18 @@ def extraction_node(state: AgentState) -> Dict:
         ext_meta = {}
 
     ext_dept = data_dict.get("department", {})
+    if not isinstance(ext_dept, dict):
+        ext_dept = {}
     ext_lawyers = data_dict.get("lawyers", [])
     ext_contacts = data_dict.get("contacts", [])
     deterministic_lawyers = DocumentParser.extract_lawyer_roster(doc_text)
+    deterministic_heads = DocumentParser.extract_department_heads(doc_text)
+    if deterministic_heads:
+        ext_dept["department_heads"] = [
+            {"name": name, "email": "", "phone": ""}
+            for name in deterministic_heads
+        ]
+        print(f"[DEPARTMENT HEADS] Source-authoritative B7 roster: {', '.join(deterministic_heads)}")
     if deterministic_lawyers:
         from utils.canonical_builder import merge_lawyer_roster
         ext_lawyers = merge_lawyer_roster(deterministic_lawyers, ext_lawyers)
@@ -993,9 +1066,15 @@ def extraction_node(state: AgentState) -> Dict:
 
     # v24.3: Metadata Context Unification — Fallback to submission_context & doc_text if LLM extraction returned Unknown/Empty
     submission_context = state.get("submission_context", {})
-    resolved_firm = ext_meta.get("firm_name") or ""
-    resolved_practice = ext_meta.get("practice_area") or ""
-    resolved_location = ext_meta.get("location") or ""
+    preliminary = DocumentParser.extract_chambers_preliminary_fields(doc_text)
+    resolved_firm = preliminary.get("firm_name") or ext_meta.get("firm_name") or ""
+    resolved_practice = preliminary.get("practice_area") or ext_meta.get("practice_area") or ""
+    resolved_location = preliminary.get("jurisdiction") or ext_meta.get("location") or ""
+    if preliminary.get("practice_area"):
+        print(
+            "[SOURCE IDENTITY] "
+            f"firm='{resolved_firm}' practice='{resolved_practice}' jurisdiction='{resolved_location}'"
+        )
 
     if not resolved_firm or resolved_firm.lower() in ["unknown", "n/a", "none"]:
         import re as _re_meta
@@ -1272,10 +1351,11 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
             pre_flight["warnings"].extend(mismatches)
             print(f"[PRE-FLIGHT ⚠️] CHECK 4: MISMATCH — {'; '.join(mismatches)}")
         
-        # Auto-correct: fill in detected values if user left blanks
+        # Auto-correct source identity. A UI dropdown cannot relabel the source
+        # practice; downstream analysis and the saved report must follow A2.
         if detected_firm and not state.get("metadata", {}).get("firm_name"):
             pre_flight["auto_corrections"]["firm_name"] = detected_firm
-        if detected_practice and not user_practice:
+        if detected_practice and detected_practice.casefold() != user_practice.casefold():
             pre_flight["auto_corrections"]["practice_area"] = detected_practice
         # v18.1: ALWAYS prefer DOCX-detected jurisdiction over UI dropdown.
         # The UI dropdown has the REGION (e.g., "Latin America") but the DOCX
@@ -2732,7 +2812,11 @@ def optimization_node(state: AgentState) -> Dict:
             for diversity_attempt in range(max_diversity_retries):
                 try:
                     response = llm.invoke(messages)
-                    result = safe_json_loads(response.content, fallback={})
+                    result = safe_json_loads(
+                        response.content,
+                        fallback={},
+                        expected_keys={"optimized_text", "evidence_quotes"},
+                    )
                     if not isinstance(result, dict):
                         raise ValueError("Matter optimizer returned a non-object JSON payload")
                     optimized_text = result.get('optimized_text', matter.get('summary'))
@@ -3145,10 +3229,17 @@ def optimization_node(state: AgentState) -> Dict:
         )
         required_b7_sentences = []
         if dept_heads:
-            first_head = dept_heads[0]
-            if first_head.casefold() in state.get("doc_text", "").casefold():
+            verified_heads = [
+                name for name in dept_heads
+                if name.casefold() in state.get("doc_text", "").casefold()
+            ]
+            if verified_heads:
+                if len(verified_heads) == 1:
+                    leadership = verified_heads[0]
+                else:
+                    leadership = f"{', '.join(verified_heads[:-1])} and {verified_heads[-1]}"
                 required_b7_sentences.append(
-                    f"The department is led by {first_head}."
+                    f"The department is led by {leadership}."
                 )
         enhanced_b7 = compose_b10_with_budget(
             original_b10,
@@ -3404,22 +3495,30 @@ def artifact_validation_node(state: AgentState) -> Dict:
                         }
                     )
 
-    audit = repair_objective_conflicts(
-        state.get("analysis", {}), state.get("strategic_context", {})
+    audit = sanitize_client_audit_payload(
+        repair_objective_conflicts(
+            state.get("analysis", {}), state.get("strategic_context", {})
+        )
     )
     lawyer_accountability = []
     lawyer_questions = []
+    def normalized_person(value: str) -> str:
+        plain = unicodedata.normalize("NFKD", value or "")
+        ascii_value = plain.encode("ascii", "ignore").decode().casefold()
+        return re.sub(r"[^a-z0-9]+", " ", ascii_value).strip()
+
     for lawyer in canonical_payload.get("lawyers", []):
         lawyer_name = lawyer.get("name", "")
+        normalized_lawyer = normalized_person(lawyer_name)
         supporting = [
             matter.get("matter_id")
             for matter in canonical_payload.get("matters", [])
             if any(
-                lawyer_name.casefold() == lead.casefold()
-                or lawyer_name.casefold() in lead.casefold()
-                or lead.casefold() in lawyer_name.casefold()
+                normalized_lawyer == normalized_person(lead)
+                or normalized_lawyer in normalized_person(lead)
+                or normalized_person(lead) in normalized_lawyer
                 for lead in matter.get("lead_lawyers", [])
-                if lead
+                if lead and normalized_lawyer
             )
         ]
         question = ""

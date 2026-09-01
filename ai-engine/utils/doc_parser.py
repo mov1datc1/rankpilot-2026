@@ -3,6 +3,8 @@ from docx import Document
 import os
 import re
 import hashlib
+import shutil
+import subprocess
 import tempfile
 import urllib.request
 from urllib.parse import urlparse
@@ -26,6 +28,42 @@ class DocumentParser:
                 if unit and unit * repetitions == candidate:
                     return unit.strip()
         return candidate
+
+    @staticmethod
+    def _clean_legacy_doc_text(value: str) -> str:
+        """Keep only the logical Chambers form from a legacy OLE ``.doc``.
+
+        Printable-string extraction can expose OLE metadata before the form and
+        embedded XML/custom-property streams after it.  Both are container data,
+        not submission evidence.  Boundaries are accepted only when the expected
+        Chambers preliminary fields and numbered matter register are present.
+        """
+
+        text = (value or "").replace("\r\n", "\n").replace("\r", "\n")
+        start = re.search(r"(?im)^\s*SUBMISSION FORM\s*$", text)
+        if start:
+            candidate = text[start.start():]
+            preliminary = re.search(r"(?im)^\s*A1\s+Firm\s+name\s*$", candidate)
+            matters = re.search(
+                r"(?im)^\s*(?:Publishable|Confidential|Non[- ]publishable)\s+Matter\s+\d+\s*$",
+                candidate,
+            )
+            if preliminary and matters:
+                text = candidate
+
+        first_matter = re.search(
+            r"(?im)^\s*(?:Publishable|Confidential|Non[- ]publishable)\s+Matter\s+\d+\s*$",
+            text,
+        )
+        if first_matter:
+            trailer = re.search(
+                r"(?im)^\s*(?:Ref:\s*[A-Z0-9._/-]+|Please upload completed submissions online at)\s*$",
+                text[first_matter.end():],
+            )
+            if trailer:
+                text = text[:first_matter.end() + trailer.start()]
+
+        return re.sub(r"\n{4,}", "\n\n\n", text).strip()
 
     @staticmethod
     def parse(file_path: str) -> str:
@@ -65,7 +103,33 @@ class DocumentParser:
     @staticmethod
     def _parse_doc(file_path: str) -> str:
         """v24.3: Native Word 97-2003 (.doc) binary OLE extractor with LibreOffice conversion fallback."""
-        # Method 1: Try libreoffice / soffice conversion if installed on system
+        # Method 1: use a native converter when available. ``antiword`` is
+        # installed in the production image; ``textutil`` covers local macOS
+        # validation. These retain table-cell labels that raw OLE strings lose.
+        converter_commands = []
+        if shutil.which("antiword"):
+            converter_commands.append(["antiword", file_path])
+        if shutil.which("catdoc"):
+            converter_commands.append(["catdoc", file_path])
+        if shutil.which("textutil"):
+            converter_commands.append(["textutil", "-convert", "txt", "-stdout", file_path])
+        for command in converter_commands:
+            try:
+                completed = subprocess.run(
+                    command,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=45,
+                )
+                parsed = completed.stdout.decode("utf-8", errors="replace")
+                parsed = DocumentParser._clean_legacy_doc_text(parsed)
+                if len(parsed) > 100 and "SUBMISSION FORM" in parsed:
+                    return parsed
+            except Exception as converter_err:
+                print(f"[DOC PARSER] {command[0]} conversion unavailable: {converter_err}")
+
+        # Method 2: Try libreoffice / soffice conversion if installed on system
         try:
             output_dir = tempfile.mkdtemp()
             docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
@@ -78,11 +142,11 @@ class DocumentParser:
                 except Exception:
                     pass
                 if len(parsed.strip()) > 100:
-                    return parsed
+                    return DocumentParser._clean_legacy_doc_text(parsed)
         except Exception:
             pass
 
-        # Method 2: Pure Python OLE Stream Text Extractor (No external dependencies)
+        # Method 3: Pure Python OLE Stream Text Extractor (last-resort fallback)
         try:
             with open(file_path, 'rb') as f:
                 content = f.read()
@@ -112,7 +176,7 @@ class DocumentParser:
 
             extracted_doc_text = '\n'.join(lines)
             if len(extracted_doc_text.strip()) > 50:
-                return extracted_doc_text
+                return DocumentParser._clean_legacy_doc_text(extracted_doc_text)
         except Exception as doc_err:
             print(f"[DOC PARSER ERROR] OLE binary .doc extraction failed: {doc_err}")
 
@@ -344,7 +408,7 @@ class DocumentParser:
             ]
             value = "\n".join(clean_lines).strip()
             fields[int(match.group(1))] = value
-        return {
+        result = {
             "client": fields.get(1, ""),
             "summary": fields.get(2, ""),
             "matter_value": fields.get(3, ""),
@@ -354,6 +418,10 @@ class DocumentParser:
             "other_firms": fields.get(7, ""),
             "completion_date": fields.get(8, ""),
         }
+        # Internal reconciliation metadata: an explicitly present but blank
+        # source field is authoritative and must clear an LLM-inferred value.
+        result["_observed_field_numbers"] = sorted(fields)
+        return result
 
     @staticmethod
     def _count_matter_labels_in_text(text: str) -> dict:
@@ -410,39 +478,28 @@ class DocumentParser:
             end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             excerpt = text[match.end():end].strip()
 
-            # Legacy .doc extraction reads printable strings from the OLE
-            # container. After the final matter it can expose Word metadata and
-            # duplicated binary strings because there is no following matter
-            # heading to provide a boundary. D8/E8 is the last Chambers matter
-            # field, and its answer is a single completion-date/status line.
-            # Trim only at that deterministic form boundary while preserving an
-            # exact source substring (no rewriting or normalization).
-            last_field_matches = list(re.finditer(
-                r"(?im)(?:^|\|)\s*[DE]8\b[^\n|]*",
+            # The publishable register ends at the Section E heading. Without
+            # this boundary, Publishable Matter 10 absorbs the confidential
+            # client list before Confidential Matter 1.
+            confidential_heading = re.search(
+                r"(?im)^\s*E\.\s+CONFIDENTIAL INFORMATION\s*$",
                 excerpt,
-            ))
-            if last_field_matches:
-                last_field = last_field_matches[-1]
-                line_end = excerpt.find("\n", last_field.end())
-                if line_end < 0:
-                    line_end = len(excerpt)
-                field_line = excerpt[last_field.start():line_end]
-                if "|" in field_line:
-                    excerpt = excerpt[:line_end].strip()
-                else:
-                    # Include the next non-empty line containing the E8/D8
-                    # answer, then stop before any OLE metadata trailer.
-                    cursor = line_end + 1
-                    answer_end = line_end
-                    while cursor < len(excerpt):
-                        next_end = excerpt.find("\n", cursor)
-                        if next_end < 0:
-                            next_end = len(excerpt)
-                        if excerpt[cursor:next_end].strip():
-                            answer_end = next_end
-                            break
-                        cursor = next_end + 1
-                    excerpt = excerpt[:answer_end].strip()
+            )
+            if confidential_heading:
+                excerpt = excerpt[:confidential_heading.start()].strip()
+
+            # Last-resort OLE extraction can append recognizable Office
+            # container metadata after the final matter. Preserve all genuine
+            # D/E fields (including D9/E9 and multiline D8/E8 answers) and cut
+            # only at an explicit metadata marker.
+            metadata_trailer = re.search(
+                r"(?im)^\s*[^\n]{0,80}(?:Microsoft Office Word|"
+                r"Microsoft Word 97-2003 Document|MSWordDoc|Word\.Document\.8|"
+                r"Extracted Text|Content Type)\s*$",
+                excerpt,
+            )
+            if metadata_trailer:
+                excerpt = excerpt[:metadata_trailer.start()].strip()
             sections[label.lower()] = {
                 "label": label,
                 "text": excerpt,
@@ -484,6 +541,63 @@ class DocumentParser:
         ):
             return ""
         return content
+
+    @staticmethod
+    def extract_chambers_preliminary_fields(text: str) -> dict:
+        """Read A1/A2/A3 directly from the normalized Chambers form."""
+
+        source = text or ""
+
+        def answer_after(pattern: str) -> str:
+            header = re.search(pattern, source, re.IGNORECASE | re.MULTILINE)
+            if not header:
+                return ""
+            inline = header.groupdict().get("inline", "").strip(" |:-–—\t")
+            if inline:
+                return inline
+            for line in source[header.end():].splitlines():
+                value = line.strip(" |\t")
+                if value:
+                    return value
+            return ""
+
+        return {
+            "firm_name": answer_after(r"^\s*A1\s+Firm\s+name(?P<inline>[^\n]*)$"),
+            "practice_area": answer_after(r"^\s*A2\s+Practice\s+Area(?P<inline>[^\n]*)$"),
+            "jurisdiction": answer_after(
+                r"^\s*A3\s+Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"
+            ),
+        }
+
+    @staticmethod
+    def extract_department_heads(text: str) -> list:
+        """Recover every B7 department head without promoting emails/phones."""
+
+        header = re.search(
+            r"(?im)^\s*B7\s+Head\s+or\s+Heads\s+of\s+department\s*$",
+            text or "",
+        )
+        if not header:
+            return []
+        tail = (text or "")[header.end():]
+        boundary = re.search(r"(?im)^\s*B8\b", tail)
+        block = tail[:boundary.start()] if boundary else tail[:1200]
+        heads = []
+        for line in block.splitlines():
+            value = re.split(r"\x07|\bHYPERLINK\b|\bmailto:", line, maxsplit=1, flags=re.I)[0].strip()
+            if not value:
+                continue
+            if value.casefold() in {"name", "email", "telephone number"}:
+                continue
+            if (
+                "@" in value
+                or re.search(r"https?://|\+?\d[\d\s()-]{6,}", value, re.I)
+            ):
+                continue
+            if not re.search(r"[A-Za-zÀ-ÖØ-öø-ÿ]", value):
+                continue
+            heads.append(value)
+        return list(dict.fromkeys(heads))
 
     @staticmethod
     def extract_lawyer_roster(text: str) -> list:
@@ -927,6 +1041,24 @@ class DocumentParser:
             "confidence": "low",
             "detection_signals": [],
         }
+
+        if extension == '.doc':
+            try:
+                legacy_text = DocumentParser.parse(file_path)
+                preliminary = DocumentParser.extract_chambers_preliminary_fields(legacy_text)
+                if all(preliminary.values()):
+                    result.update({
+                        "detected_directory": "Chambers",
+                        "detected_firm_name": preliminary["firm_name"],
+                        "detected_practice_area": preliminary["practice_area"],
+                        "detected_jurisdiction": preliminary["jurisdiction"],
+                        "confidence": "high",
+                        "detection_signals": ["Chambers A1/A2/A3 legacy form fields detected"],
+                    })
+                return result
+            except Exception as legacy_err:
+                result["error"] = str(legacy_err)
+                return result
         
         if extension != '.docx':
             return result
