@@ -5,6 +5,8 @@ import json
 import asyncio
 import traceback
 import base64
+import time
+from datetime import datetime, timezone
 import httpx
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
@@ -72,7 +74,7 @@ def _assert_release_approved(result: dict) -> None:
         )
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.3")
+api = FastAPI(title="RankPilot AI Core", version="26.4")
 
 @api.get("/health")
 async def health_check():
@@ -82,7 +84,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "Hola Mundo - RankPilot Core is alive",
-        "version": "26.3",
+        "version": "26.4",
         "environment": "Ubuntu/Docker"
     }
 
@@ -300,6 +302,76 @@ async def process_document(request: Request):
 # Solution: Return immediately, run pipeline in background, call webhook when done.
 # =============================================================================
 
+PIPELINE_PROGRESS = {
+    "ingestion": (7, "Preparando el documento"),
+    "extraction": (15, "Identificando asuntos y abogados"),
+    "evidence_reconciliation": (22, "Verificando el registro contra el archivo"),
+    "pre_flight": (27, "Comprobando integridad del documento"),
+    "context_engine": (33, "Analizando el contexto de la postulación"),
+    "practice_intelligence": (39, "Contrastando la práctica y jurisdicción"),
+    "comprehension": (44, "Construyendo la lectura editorial"),
+    "identity_discovery": (49, "Definiendo el posicionamiento competitivo"),
+    "hypothesis_construction": (54, "Evaluando la tesis de reconocimiento"),
+    "refutation_engine": (59, "Sometiendo la tesis a pruebas de evidencia"),
+    "comparative_analysis": (64, "Comparando fortalezas y brechas"),
+    "editorial_confidence": (69, "Calculando la confianza editorial"),
+    "submission_blueprint": (74, "Diseñando la arquitectura de la postulación"),
+    "narrative_architecture": (79, "Organizando la narrativa estratégica"),
+    "analysis": (83, "Redactando el diagnóstico estratégico"),
+    "evidence_gap_analysis": (86, "Localizando brechas de evidencia"),
+    "optimization": (90, "Optimizando cada asunto con su evidencia"),
+    "artifact_validation": (95, "Validando los asuntos contra la fuente"),
+    "constitutional_validation": (97, "Ejecutando la revisión final de calidad"),
+    "writing": (99, "Preparando los entregables"),
+    "interrogation": (99, "Preparando preguntas de evidencia"),
+}
+
+
+def _estimate_pipeline_minutes(matter_count: int) -> int:
+    """Conservative production estimate calibrated for multi-matter DOCX runs."""
+    if matter_count <= 0:
+        return 25
+    return max(12, min(60, round(8 + (matter_count * 1.2))))
+
+
+def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: str,
+                            thread_id: str, node_name: str, state: dict,
+                            progress: int, started_at: float) -> None:
+    matters = state.get("matters") if isinstance(state, dict) else []
+    matter_count = len(matters) if isinstance(matters, list) else 0
+    _, stage_label = PIPELINE_PROGRESS.get(
+        node_name, (progress, "Procesando el documento")
+    )
+    estimated_minutes = _estimate_pipeline_minutes(matter_count)
+    try:
+        response = sync_requests.post(
+            callback_url,
+            json={
+                "secret": webhook_secret,
+                "submission_id": thread_id,
+                "pipeline_progress": {
+                    "progress": progress,
+                    "stage": node_name,
+                    "stage_label": stage_label,
+                    "matter_count": matter_count,
+                    "estimated_total_minutes": estimated_minutes,
+                    "elapsed_seconds": int(time.time() - started_at),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                },
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=10,
+        )
+        if response.status_code >= 400:
+            print(
+                f"[PIPELINE PROGRESS] Callback rejected for {thread_id}: "
+                f"{response.status_code}"
+            )
+    except Exception as progress_err:
+        # Progress telemetry must never stop the actual pipeline.
+        print(f"[PIPELINE PROGRESS] Non-fatal callback error: {progress_err}")
+
+
 def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_id: str, callback_url: str, webhook_secret: str):
     """
     Synchronous function that runs the full LangGraph pipeline and 
@@ -309,8 +381,39 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
     import requests as sync_requests
 
     try:
+        started_at = time.time()
         print(f"[ASYNC PIPELINE] Starting pipeline for thread {thread_id}...")
-        result = graph_app.invoke(initial_state, config)
+        _send_progress_callback(
+            sync_requests, callback_url, webhook_secret, thread_id,
+            "ingestion", initial_state, 3, started_at,
+        )
+
+        # Stream full state snapshots so the UI receives real node-level
+        # progress. The final values snapshot is identical to invoke() output.
+        result = initial_state
+        pending_node = ""
+        last_progress = 3
+        for stream_mode, payload in graph_app.stream(
+            initial_state,
+            config,
+            stream_mode=["updates", "values"],
+        ):
+            if stream_mode == "updates" and isinstance(payload, dict) and payload:
+                pending_node = next(iter(payload.keys()))
+                continue
+            if stream_mode != "values" or not isinstance(payload, dict):
+                continue
+            result = payload
+            if not pending_node:
+                continue
+            node_progress = PIPELINE_PROGRESS.get(pending_node, (last_progress, ""))[0]
+            last_progress = max(last_progress, node_progress)
+            _send_progress_callback(
+                sync_requests, callback_url, webhook_secret, thread_id,
+                pending_node, result, last_progress, started_at,
+            )
+            pending_node = ""
+
         _assert_release_approved(result)
         print(f"[ASYNC PIPELINE] Pipeline completed for thread {thread_id}")
 

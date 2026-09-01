@@ -72,11 +72,11 @@ export function getPipelineErrorPresentation(error: unknown): PipelineErrorPrese
   if (isQualityReview) {
     return {
       kind: 'QUALITY_REVIEW_REQUIRED',
-      title: 'El documento necesita una revisión adicional',
-      message: 'La revisión de calidad encontró diferencias entre el archivo fuente y el contenido generado. RankPilot no publicó los entregables para evitar cambios o afirmaciones que no estuvieran suficientemente respaldados.',
-      nextStep: 'Tu archivo original permanece intacto. Vuelve a cargar una copia revisada o comparte la referencia con soporte para que podamos revisar el caso.',
-      reference: 'RP-QUALITY-01',
-      canRetry: false,
+      title: 'No pudimos completar la revisión final',
+      message: 'RankPilot terminó el análisis, pero la revisión final no pudo confirmar todos los cambios con el nivel de seguridad requerido. Para proteger la exactitud, no publicamos entregables parciales y tu archivo original permanece intacto.',
+      nextStep: 'No necesitas modificar ni volver a cargar el archivo todavía. Intenta procesarlo nuevamente; si vuelve a ocurrir, comparte la referencia con soporte.',
+      reference: 'RP-REVIEW-01',
+      canRetry: true,
     };
   }
 

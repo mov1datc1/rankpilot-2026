@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   FileText, Download, CheckCircle2, Clock, FileDown, Layers, 
   Trash2, Search, Calendar, ChevronDown, Filter, AlertTriangle 
@@ -40,18 +40,20 @@ export default function ReportsPage() {
   const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    setIsLoading(true);
+  const loadData = useCallback(async (showLoader = true) => {
+    if (showLoader) setIsLoading(true);
     const res = await getUserSubmissionsWithMatters();
     if (res.success && res.data) {
       setSubmissions(res.data);
     }
-    setIsLoading(false);
-  }
+    if (showLoader) setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    const refreshInterval = window.setInterval(() => loadData(false), 12_000);
+    return () => window.clearInterval(refreshInterval);
+  }, [loadData]);
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
     if (format === 'pdf') {
@@ -118,6 +120,7 @@ export default function ReportsPage() {
       return true;
     });
   }, [submissions, searchTerm, dateFilter, customStart, customEnd]);
+  const processingCount = submissions.filter(sub => sub.status === 'Processing').length;
 
   if (isLoading) {
     return (
@@ -147,6 +150,20 @@ export default function ReportsPage() {
           </p>
         </div>
       </div>
+
+      {processingCount > 0 && (
+        <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid #bfdbfe', background: '#eff6ff', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#1e40af' }}>
+          <Clock size={20} />
+          <div>
+            <p style={{ margin: 0, fontWeight: 700 }}>
+              {processingCount === 1 ? '1 análisis continúa en segundo plano' : `${processingCount} análisis continúan en segundo plano`}
+            </p>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: '#475569' }}>
+              Esta lista se actualiza automáticamente. Puedes entrar a “Ver avance” sin reiniciar el trabajo.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Filters Bar */}
       <div style={{ 
@@ -266,6 +283,7 @@ export default function ReportsPage() {
                 const total = sub.matters.length;
                 const optimized = sub.matters.filter(m => m.status === 'AI Optimized').length;
                 const isReady = total > 0 && optimized === total;
+                const isProcessing = sub.status === 'Processing';
                 const cd = sub.chambersData as any;
                 const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || '';
                 const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
@@ -284,21 +302,27 @@ export default function ReportsPage() {
                   statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle; displayStatus = 'Needs Evidence';
                 } else if (sub.status === 'Submitted' && !needsEvidence) {
                   statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
+                } else if (sub.status === 'Processing') {
+                  statusBg = '#DBEAFE'; statusColor = '#1D4ED8'; StatusIcon = Clock; displayStatus = 'Procesando en segundo plano';
                 } else if (sub.status === 'Draft') {
                   statusBg = '#F1F5F9'; statusColor = '#475569'; StatusIcon = Clock; displayStatus = 'Draft';
                 } else if (sub.status === 'Error') {
                   statusBg = '#fee2e2'; statusColor = '#dc2626'; StatusIcon = AlertTriangle; displayStatus = 'Error';
                 }
 
+                const destination = sub.status === 'Processing'
+                  ? `/submissions/processing?id=${sub.id}`
+                  : `/reports/${sub.id}`;
+
                 return (
                   <tr key={sub.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '1.25rem 1.5rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>
+                    <td style={{ padding: '1.25rem 1.5rem' }} onClick={() => window.location.href = destination}>
                       <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '1rem', marginBottom: '0.2rem' }}>
                         {firmName ? `${firmName}` : sub.targetDirectory}
                       </div>
                       <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{sub.targetDirectory} · {sub.practiceArea} · {sub.guideRegion}</div>
                     </td>
-                    <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem' }} onClick={() => window.location.href = `/reports/${sub.id}`}>
+                    <td style={{ padding: '1.25rem 1.5rem', color: '#475569', fontSize: '0.95rem' }} onClick={() => window.location.href = destination}>
                       {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem' }}>
@@ -313,6 +337,14 @@ export default function ReportsPage() {
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        {sub.status === 'Processing' && (
+                          <button
+                            onClick={() => window.location.href = destination}
+                            style={{ padding: '0.5rem 0.8rem', borderRadius: '8px', border: '1px solid #bfdbfe', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem' }}
+                          >
+                            Ver avance
+                          </button>
+                        )}
                         <button
                           title="Download Word (.docx)"
                           disabled={!isReady}
@@ -333,12 +365,13 @@ export default function ReportsPage() {
 
                         <button
                           title="View Strategic Audit Letter"
-                          onClick={() => handleDownload(sub.id, 'pdf')}
+                          disabled={isProcessing}
+                          onClick={() => { if (!isProcessing) handleDownload(sub.id, 'pdf'); }}
                           style={{
                             padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0',
-                            background: '#fff',
-                            color: '#475569',
-                            cursor: 'pointer',
+                            background: isProcessing ? '#fafafa' : '#fff',
+                            color: isProcessing ? '#94a3b8' : '#475569',
+                            cursor: isProcessing ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center'
                           }}
                         >
@@ -348,11 +381,14 @@ export default function ReportsPage() {
                         <a
                           title="Download Chambers Submission DOCX"
                           href={`/api/generate-docx?id=${sub.id}&type=submission`}
+                          aria-disabled={isProcessing}
                           style={{
                             padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #c7d2fe',
                             background: '#eef2ff',
                             color: '#4338ca',
-                            cursor: 'pointer',
+                            cursor: isProcessing ? 'not-allowed' : 'pointer',
+                            pointerEvents: isProcessing ? 'none' : 'auto',
+                            opacity: isProcessing ? 0.5 : 1,
                             transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             gap: '0.375rem', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 600
                           }}

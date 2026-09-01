@@ -132,7 +132,14 @@ def validate_optimized_matter_text(
     errors: List[str] = []
     if not optimized_text.strip():
         return [f"Empty optimized text for {matter.matter_id}"]
-    if matter.client.lower() not in optimized_text.lower():
+    client = matter.client.strip()
+    client_is_unknown = client.casefold() in {
+        "unknown client",
+        "unknown",
+        "not provided",
+        "n/a",
+    }
+    if client and not client_is_unknown and client.casefold() not in optimized_text.casefold():
         errors.append(f"Client omitted from {matter.matter_id}: {matter.client}")
 
     # New numbers are almost always invented metrics, dates, values, counts, or

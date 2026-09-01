@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, Edit3, FileCheck, Loader2, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Upload, FileText, Edit3, FileCheck, Loader2, BookOpen, CheckCircle2, Clock, FileBarChart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { createSubmission } from '@/app/actions/submissions';
+import { createSubmission, getUserSubmissions } from '@/app/actions/submissions';
 import { getLibraryMatters, attachMattersToSubmission } from '@/app/actions/library';
 import { createClient } from '@/utils/supabase/client';
 import PremiumSelect from '@/components/PremiumSelect';
@@ -19,6 +19,35 @@ export default function SubmissionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+  const [processingSubmissions, setProcessingSubmissions] = useState<Array<{
+    id: string;
+    targetDirectory: string;
+    practiceArea: string;
+  }>>([]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshProcessing = async () => {
+      const result = await getUserSubmissions();
+      if (active && result.success && result.data) {
+        setProcessingSubmissions(
+          result.data
+            .filter(submission => submission.status === 'Processing')
+            .map(submission => ({
+              id: submission.id,
+              targetDirectory: submission.targetDirectory,
+              practiceArea: submission.practiceArea,
+            })),
+        );
+      }
+    };
+    refreshProcessing();
+    const interval = window.setInterval(refreshProcessing, 15_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   // Form State
   const [targetDirectory, setTargetDirectory] = useState('Chambers & Partners');
@@ -252,6 +281,40 @@ export default function SubmissionsPage() {
         </h1>
         <p style={{ fontSize: '1.2rem', color: '#64748b', marginTop: '0.25rem' }}>Setup Wizard</p>
       </div>
+
+      {processingSubmissions.length > 0 && (
+        <div style={{ marginBottom: '1.5rem', padding: '1.15rem 1.25rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8' }}>
+              <Clock size={20} />
+            </div>
+            <div>
+              <p style={{ margin: 0, color: '#1e3a8a', fontWeight: 800 }}>
+                {processingSubmissions.length === 1
+                  ? 'Tu análisis continúa en segundo plano'
+                  : `${processingSubmissions.length} análisis continúan en segundo plano`}
+              </p>
+              <p style={{ margin: '0.2rem 0 0', color: '#475569', fontSize: '0.84rem' }}>
+                Volver al Builder no reinicia el procesamiento. Puedes iniciar otro trabajo o consultar el avance.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
+            <button
+              onClick={() => router.push(`/submissions/processing?id=${processingSubmissions[0].id}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid #93c5fd', background: '#fff', color: '#1d4ed8', cursor: 'pointer', fontWeight: 700 }}
+            >
+              <Clock size={15} /> Ver avance
+            </button>
+            <button
+              onClick={() => router.push('/reports')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 0.85rem', borderRadius: '8px', border: 'none', background: '#1d4ed8', color: '#fff', cursor: 'pointer', fontWeight: 700 }}
+            >
+              <FileBarChart size={15} /> Reportes
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Form Section */}
       <div style={{ 

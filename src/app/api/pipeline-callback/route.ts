@@ -23,7 +23,7 @@ function sanitizeText(text: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { secret, submission_id, pipeline_result, pipeline_error } = body;
+    const { secret, submission_id, pipeline_result, pipeline_error, pipeline_progress } = body;
 
     // Validate webhook secret
     const expectedSecret = process.env.PIPELINE_WEBHOOK_SECRET || '';
@@ -48,6 +48,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 });
     }
 
+    // Persist lightweight, non-sensitive progress snapshots. These callbacks
+    // make refresh/navigation resumable and never expose client content.
+    if (pipeline_progress) {
+      if (submission.status !== 'Processing') {
+        return NextResponse.json({ status: 'progress_ignored', submissionStatus: submission.status });
+      }
+      const existingCD = (submission.chambersData as any) || {};
+      const previousProgress = existingCD?._pipeline_progress || {};
+      const nextProgress = Math.max(
+        Number(previousProgress.progress || 0),
+        Math.min(99, Number(pipeline_progress.progress || 0)),
+      );
+      await prisma.submission.update({
+        where: { id: submission_id },
+        data: {
+          chambersData: {
+            ...existingCD,
+            _pipeline_progress: {
+              ...previousProgress,
+              ...pipeline_progress,
+              progress: nextProgress,
+              started_at: previousProgress.started_at || new Date().toISOString(),
+            },
+          },
+        },
+      });
+      return NextResponse.json({ status: 'progress_saved', progress: nextProgress });
+    }
+
     // Handle pipeline ERROR
     if (pipeline_error) {
       console.error(`[PIPELINE CALLBACK] Pipeline failed for ${submission_id}: ${pipeline_error.message}`);
@@ -70,7 +99,14 @@ export async function POST(request: NextRequest) {
               message: pipeline_error.message || 'Unknown pipeline error',
               details: pipeline_error.details || '',
               timestamp: new Date().toISOString(),
-            }
+            },
+            _pipeline_progress: {
+              ...existingCD._pipeline_progress,
+              progress: 100,
+              stage: 'failed',
+              stage_label: 'La revisión de calidad necesita atención',
+              updated_at: new Date().toISOString(),
+            },
           }
         }
       });
@@ -124,6 +160,13 @@ export async function POST(request: NextRequest) {
               message: 'Pipeline output was not approved for delivery',
               details: releaseFailures,
               timestamp: new Date().toISOString(),
+            },
+            _pipeline_progress: {
+              ...existingCD._pipeline_progress,
+              progress: 100,
+              stage: 'failed',
+              stage_label: 'La revisión de calidad necesita atención',
+              updated_at: new Date().toISOString(),
             },
           },
         },
@@ -299,6 +342,15 @@ export async function POST(request: NextRequest) {
             console.log(`[JURISDICTION SAVE] Result: '${finalJ}' | resolved='${resolvedJ}', AI='${aiLocation}', metaLoc='${metaLocation}', sc='${scJurisdiction}'`);
             return finalJ;
           })(),
+          _pipeline_error: null,
+          _pipeline_progress: {
+            ...existingChambersData._pipeline_progress,
+            progress: 100,
+            stage: 'completed',
+            stage_label: 'Entregables listos',
+            updated_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(),
+          },
         },
         status: 'Submitted'
       }

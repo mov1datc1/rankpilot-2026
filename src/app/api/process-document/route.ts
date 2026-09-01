@@ -124,15 +124,55 @@ export async function POST(request: NextRequest) {
     // Solution: Call /process-async, Render processes in background,
     // then POSTs results to /api/pipeline-callback webhook.
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
-    const userInput = documentUrl || text || '';
+    const persistedDocumentUrl = submission?.documentUrl || '';
+    const userInput = documentUrl || persistedDocumentUrl || text || '';
+    if (!userInput) {
+      return NextResponse.json({
+        error: 'No source document is available for this submission.',
+        errorCode: 'SOURCE_NOT_AVAILABLE',
+      }, { status: 400 });
+    }
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app';
     const callbackUrl = `${siteUrl}/api/pipeline-callback`;
     const webhookSecret = process.env.PIPELINE_WEBHOOK_SECRET || '';
+    const processingStartedAt = new Date().toISOString();
+    const existingChambersData = (submission.chambersData as any) || {};
 
-    // Mark submission as Processing
+    // Atomically claim the job. Two tabs/refreshes may arrive together; only
+    // one request is allowed to enqueue work in Render.
+    const claim = await prisma.submission.updateMany({
+      where: {
+        id: submissionId,
+        status: { notIn: ['Processing', 'Submitted'] },
+      },
+      data: { status: 'Processing' },
+    });
+    if (claim.count === 0) {
+      return NextResponse.json({
+        success: true,
+        status: 'processing',
+        submissionId,
+        message: 'Submission is already processing.',
+      });
+    }
+
     await prisma.submission.update({
       where: { id: submissionId },
-      data: { status: 'Processing' }
+      data: {
+        chambersData: {
+          ...existingChambersData,
+          _pipeline_error: null,
+          _pipeline_progress: {
+            progress: 2,
+            stage: 'queued',
+            stage_label: 'Preparando el trabajo en segundo plano',
+            matter_count: 0,
+            estimated_total_minutes: 25,
+            started_at: processingStartedAt,
+            updated_at: processingStartedAt,
+          },
+        },
+      }
     });
 
     // Fire-and-forget: send to Render's async endpoint
@@ -142,7 +182,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         user_input: userInput,
         thread_id: submissionId,
-        is_file: !!documentUrl,
+        is_file: Boolean(documentUrl || persistedDocumentUrl),
         context: {
           directory: submission.targetDirectory,
           jurisdiction: submission.guideRegion,

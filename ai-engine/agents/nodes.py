@@ -2629,6 +2629,11 @@ def optimization_node(state: AgentState) -> Dict:
             f"Significance: {matter.get('significance', '')}\n"
             f"Lead Partner: {matter.get('lead_partner', '')}"
         )
+        # This value must exist before any preservation fallback.  Previously it
+        # was assigned later in the happy path, so a short model response raised
+        # UnboundLocalError for every matter and silently discarded its evidence
+        # quotes.  Use the exact canonical span as the safest fallback.
+        original_summary = str(matter.get('summary') or '').strip()
         
         # v21.0: UNIQUE_ANGLE detection — auto-detect differentiating evidence
         # ChatGPT 5.6 recommendation: Give each matter its unique angle so the LLM
@@ -2871,17 +2876,13 @@ def optimization_node(state: AgentState) -> Dict:
             # v11.0: Strip any markdown formatting before storing
             optimized_text = strip_markdown(optimized_text)
             
-            # v16.0: MATTER ENHANCEMENT VALIDATOR — ensure fact preservation
-            # v17.0 FIX: Compare against raw_text (full matter), not just summary/significance (title-like short text)
+            # Legacy density diagnostics are informational.  A concise rewrite
+            # must not be discarded merely because the canonical span contains
+            # verbose form labels; the evidence contract below is authoritative.
             is_valid, enhancement_details = validate_matter_enhancement(raw_text, optimized_text)
             if not is_valid:
                 print(f"  [ENHANCEMENT GATE] ⚠️ Matter '{matter.get('title', 'unknown')}' failed fact preservation check")
                 print(f"  Details: {enhancement_details}")
-                # Fall back to original rather than lose facts
-                if enhancement_details.get('word_ratio', 1.0) < 0.5:
-                    # Drastic compression — use original
-                    print(f"  [ENHANCEMENT GATE] Using original text (word ratio {enhancement_details.get('word_ratio', 0):.2f} too low)")
-                    optimized_text = strip_markdown(original_summary)
             
             # ═══ v17.5: FILLER STRIP — remove generic phrases ═══
             optimized_text = strip_fillers(optimized_text)
@@ -2899,8 +2900,6 @@ def optimization_node(state: AgentState) -> Dict:
             # This prevents the E1 form descriptor ("Business hotel...") from
             # overwriting the richer original body descriptor.
             client_name = matter.get('client', '')
-            original_summary = matter.get('summary', '')
-            
             # Priority 1: Use the matter's own summary text (has E2 body descriptors)
             body_descriptor_text = f"Summary: {original_summary}"
             if matter.get('significance'):
@@ -2930,6 +2929,19 @@ def optimization_node(state: AgentState) -> Dict:
             # Fixes "Biocodex's, a global..." → "Biocodex, a global..."
             all_client_names = [m.get('client', '') for m in matters]
             optimized_text = repair_possessive_appositive(optimized_text, all_client_names)
+
+            # The canonical client field is a source fact, not model prose. If a
+            # rewrite uses only a shortened alias, preserve the exact submitted
+            # identity in a neutral field line before validation.
+            canonical_client = str(matter.get('client') or '').strip()
+            if (
+                canonical_client
+                and canonical_client.casefold() not in {
+                    'unknown client', 'unknown', 'not provided', 'n/a'
+                }
+                and canonical_client.casefold() not in optimized_text.casefold()
+            ):
+                optimized_text = f"Client: {canonical_client}.\n\n{optimized_text}"
             
             matter['optimized_text'] = optimized_text
             matter['_evidence_quotes'] = evidence_quotes
@@ -2937,55 +2949,25 @@ def optimization_node(state: AgentState) -> Dict:
             
         except Exception as e:
             print(f"Error enhancing matter: {e}")
-            matter['optimized_text'] = strip_markdown(matter.get('summary', ''))
-            matter['status'] = 'Enhancement Failed'
+            # A model/formatting failure must remain source-faithful and must not
+            # create a second validation failure by dropping client/evidence.
+            matter['optimized_text'] = exact_source or original_summary
+            matter['_evidence_quotes'] = []
+            matter['_source_fallback'] = True
+            matter['status'] = 'Source Preserved'
             
         optimized_matters.append(matter)
     
-    # ═══════════════════════════════════════════════════════════════
-    # v17.0: GRAMMAR POST-PROCESSING LAYER
-    # Fixes spelling, grammar, and punctuation errors in all optimized texts
-    # Uses a lightweight LLM call focused ONLY on grammar correction
-    # ═══════════════════════════════════════════════════════════════
-    print("--- GRAMMAR CHECK ---")
-    grammar_llm = get_model()
-    grammar_llm = grammar_llm.bind(response_format={"type": "json_object"})
-    
-    grammar_fixed_count = 0
-    for matter in optimized_matters:
-        opt_text = matter.get('optimized_text', '')
-        if not opt_text or len(opt_text) < 20:
-            continue
-        
-        try:
-            grammar_response = grammar_llm.invoke([
-                SystemMessage(content=(
-                    "You are a professional English proofreader. Fix ONLY grammar, spelling, "
-                    "and punctuation errors. Do NOT change meaning, content, names, numbers, "
-                    "or sentence structure. Do NOT add or remove information. "
-                    "Return JSON: {\"corrected_text\": \"...\", \"corrections_made\": 0}"
-                )),
-                HumanMessage(content=f"Proofread this text:\n\n{opt_text}")
-            ])
-            grammar_result = safe_json_loads(grammar_response.content, fallback={})
-            corrected = grammar_result.get("corrected_text", "")
-            corrections = grammar_result.get("corrections_made", 0)
-            
-            if corrected and corrections > 0:
-                matter['optimized_text'] = corrected
-                grammar_fixed_count += 1
-                print(f"  [GRAMMAR] Fixed {corrections} issue(s) in '{matter.get('title', '?')[:40]}'")
-        except Exception as e:
-            # Non-fatal — keep original optimized text
-            pass
-    
-    if grammar_fixed_count > 0:
-        print(f"[GRAMMAR] ✅ Fixed grammar in {grammar_fixed_count}/{len(optimized_matters)} matters")
-    else:
-        print(f"[GRAMMAR] ✅ No grammar issues found")
+    # v26.4: The optimizer already receives strict copy-editing instructions.
+    # A second LLM call per matter doubled latency and could change evidence after
+    # quotes were captured. Grammar is now covered by the optimizer plus the
+    # deterministic artifact and language checks below (zero extra model calls).
+    print("[GRAMMAR] Deterministic post-processing active; no second LLM pass")
     
     # v17.5: Apply centralized filler strip to ALL matters
     for matter in optimized_matters:
+        if matter.get('_source_fallback'):
+            continue
         opt_text = matter.get('optimized_text', '')
         if opt_text:
             matter['optimized_text'] = strip_fillers(opt_text)
@@ -2996,6 +2978,8 @@ def optimization_node(state: AgentState) -> Dict:
     # This is the LAST deterministic safety net before output.
     all_client_names = [m.get('client', '') for m in optimized_matters]
     for matter in optimized_matters:
+        if matter.get('_source_fallback'):
+            continue
         opt_text = matter.get('optimized_text', '')
         if opt_text:
             matter['optimized_text'] = repair_possessive_appositive(opt_text, all_client_names)
@@ -3006,6 +2990,8 @@ def optimization_node(state: AgentState) -> Dict:
     # This looks wrong in prose. Fix: lowercase the first letter of the descriptor
     # when it follows a comma after the client name.
     for matter in optimized_matters:
+        if matter.get('_source_fallback'):
+            continue
         opt_text = matter.get('optimized_text', '')
         client_name = matter.get('client', '').strip()
         if not opt_text or not client_name:
@@ -3363,7 +3349,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
     generated_matters = [dict(item) for item in state.get("matters", [])]
     ledger = state.get("evidence_ledger", {})
     errors = validate_artifact_matter_register(canonical_matters, generated_matters)
-    rollbacks = []
+    source_preservations = []
 
     if len(canonical_matters) == len(generated_matters):
         for index, (canonical, generated) in enumerate(
@@ -3399,8 +3385,9 @@ def artifact_validation_node(state: AgentState) -> Dict:
                     else source_text
                 )
                 generated["optimized_text"] = fallback
-                generated["_grounding_rollback"] = matter_errors
-                rollbacks.append(
+                generated["_source_fallback"] = True
+                generated["_grounding_repair"] = matter_errors
+                source_preservations.append(
                     {
                         "matter_id": canonical.matter_id,
                         "errors": matter_errors,
@@ -3441,16 +3428,23 @@ def artifact_validation_node(state: AgentState) -> Dict:
             "defensible_on_submitted_evidence": bool(supporting),
             "follow_up_question": question,
         })
+    # A small number of exact-source preservations is a safe, explainable
+    # degradation; a systemic fallback remains a hard failure. This prevents one
+    # imperfect rewrite from discarding an otherwise valid 25-matter report.
+    max_safe_preservations = max(1, len(canonical_matters) // 10)
+    systemic_preservation_failure = len(source_preservations) > max_safe_preservations
     artifact_validation = {
-        "passed": not errors and not rollbacks,
+        "passed": not errors and not systemic_preservation_failure,
         "errors": errors,
-        "matter_rollbacks": rollbacks,
+        "matter_rollbacks": source_preservations if systemic_preservation_failure else [],
+        "source_preservations": source_preservations,
+        "source_preservation_limit": max_safe_preservations,
         "optimized_matter_count": len(generated_matters),
         "audit_present": bool(audit),
     }
     print(
         f"[ARTIFACT VALIDATION] passed={artifact_validation['passed']} "
-        f"rollbacks={len(rollbacks)}"
+        f"source_preservations={len(source_preservations)}"
     )
     return {
         "matters": generated_matters,

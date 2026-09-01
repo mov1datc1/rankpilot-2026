@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sparkles, FileText, CheckCircle2, FileBarChart, Clock, ArrowRight, AlertTriangle, RotateCw } from 'lucide-react';
+import { Sparkles, FileText, CheckCircle2, FileBarChart, Clock, AlertTriangle, RotateCw, Coffee } from 'lucide-react';
 
 function ProcessingContent() {
   const router = useRouter();
@@ -23,46 +23,88 @@ function ProcessingContent() {
   const [supportMsg, setSupportMsg] = useState<string | null>(null);
   const [errorReference, setErrorReference] = useState<string | null>(null);
   const [canRetry, setCanRetry] = useState(true);
-  const [hasStarted, setHasStarted] = useState(false);
+  const [runToken, setRunToken] = useState(0);
   const [matterCount, setMatterCount] = useState<number>(0);
-  const [elapsedMinutes, setElapsedMinutes] = useState<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [progressLabel, setProgressLabel] = useState('Preparando el trabajo en segundo plano');
+  const [estimatedTotalMinutes, setEstimatedTotalMinutes] = useState<number>(0);
   const isFinishedRef = useRef(false);
 
   // v18.0: ASYNC ARCHITECTURE — Fire-and-forget + Resilient Polling
   // Step 1: Send document to Render (returns in <5s)
   // Step 2: Poll /api/check-status every 10s until 'Submitted' or 'Error'
   useEffect(() => {
-    if (!submissionId || hasStarted) return;
-    setHasStarted(true);
+    if (!submissionId) return;
+    isFinishedRef.current = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    const applyStatus = (statusData: any) => {
+      if (statusData?.matterCount > 0) setMatterCount(statusData.matterCount);
+      if (Number.isFinite(statusData?.progress)) setProgress(statusData.progress);
+      if (statusData?.progressLabel) setProgressLabel(statusData.progressLabel);
+      if (statusData?.estimatedTotalMinutes > 0) {
+        setEstimatedTotalMinutes(statusData.estimatedTotalMinutes);
+      }
+      if (Number.isFinite(statusData?.elapsedSeconds)) {
+        setElapsedSeconds(statusData.elapsedSeconds);
+      }
+      const backendProgress = Number(statusData?.progress || 0);
+      if (backendProgress >= 99) setStep(4);
+      else if (backendProgress >= 74) setStep(3);
+      else if (backendProgress >= 22) setStep(2);
+      else setStep(1);
+    };
+
+    const handleTerminalStatus = (statusData: any) => {
+      if (statusData.status === 'Submitted') {
+        isFinishedRef.current = true;
+        if (pollInterval) clearInterval(pollInterval);
+        setErrorMsg(null);
+        setProgress(100);
+        setProgressLabel('Entregables listos');
+        setStep(4);
+        setTimeout(() => router.push(`/reports/${submissionId}`), 800);
+        return true;
+      }
+      if (statusData.status === 'Error') {
+        isFinishedRef.current = true;
+        if (pollInterval) clearInterval(pollInterval);
+        setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
+        setErrorTitle(statusData.errorTitle || 'No pudimos completar el análisis');
+        setErrorMsg(statusData.errorMessage || 'No pudimos completar el análisis. Intenta nuevamente.');
+        setSupportMsg(statusData.errorNextStep || null);
+        setErrorReference(statusData.errorReference || null);
+        setCanRetry(statusData.canRetry !== false);
+        return true;
+      }
+      return false;
+    };
     
     const processDocument = async () => {
       try {
         setStep(1);
-        setProgress(10);
+        setProgress(2);
+        let shouldTriggerPipeline = true;
         
         // Pre-check if submission is ALREADY completed in DB
         try {
           const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
           if (checkRes.ok) {
             const checkData = await checkRes.json();
-            if (checkData.matterCount > 0) setMatterCount(checkData.matterCount);
-            if (checkData.status === 'Submitted') {
-              console.log('[PROCESSING PAGE] Submission already completed — redirecting to reports');
-              isFinishedRef.current = true;
-              setErrorMsg(null);
-              setProgress(100);
-              setStep(4);
-              router.push(`/reports/${submissionId}`);
-              return;
+            applyStatus(checkData);
+            if (handleTerminalStatus(checkData)) return;
+            if (checkData.status === 'Processing') {
+              shouldTriggerPipeline = false;
+              console.log('[PROCESSING PAGE] Resuming persisted background job');
             }
           }
         } catch (checkErr) {
           console.warn('[PROCESSING PAGE] Status pre-check failed, continuing to process-document', checkErr);
         }
 
-        if (!documentUrl && !rawText) {
-          // No input provided and submission not yet Submitted — fallback to polling
-          console.log('[PROCESSING PAGE] No documentUrl provided — entering status polling mode');
+        if (!shouldTriggerPipeline) {
+          // The Render job already owns this submission. Refreshing or returning
+          // from Reports must never submit a duplicate job.
         } else {
           // Fire-and-forget: this returns in <5 seconds
           const body: any = { submissionId, originalFileName: docName };
@@ -101,71 +143,20 @@ function ProcessingContent() {
 
         // Pipeline accepted — now poll for completion
         setStep(2);
-        setProgress(20);
-        const startTime = Date.now();
 
-        const pollInterval = setInterval(async () => {
+        const pollStatus = async () => {
           try {
-            const elapsed = Date.now() - startTime;
-            const mins = Math.floor(elapsed / 60000);
-            setElapsedMinutes(mins);
-
-            // Asymptotic progress curve:
-            // 0 - 10 min: smooth progress from 20% to 90%
-            // 10 - 35 min: slow asymptotic crawl from 90% to 99% (never freezes at 98%)
-            let estimatedProgress = 20;
-            if (elapsed <= 10 * 60 * 1000) {
-              estimatedProgress = Math.min(90, Math.floor(20 + (elapsed / (10 * 60 * 1000)) * 70));
-            } else {
-              const extraMin = (elapsed - 10 * 60 * 1000) / (60 * 1000);
-              const asymptoticAdd = 9 * (1 - Math.exp(-extraMin / 7));
-              estimatedProgress = Math.min(99, Math.floor(90 + asymptoticAdd));
-            }
-            setProgress(estimatedProgress);
-
-            // Update step labels based on elapsed time
-            if (elapsed > 6 * 60 * 1000) setStep(3); // >6min: "Classification"
-            else if (elapsed > 2 * 60 * 1000) setStep(2); // >2min: "Analysis"
-
             const statusRes = await fetch(`/api/check-status?id=${submissionId}`);
+            if (!statusRes.ok) return;
             const statusData = await statusRes.json();
-
-            if (statusData?.matterCount > 0) {
-              setMatterCount(statusData.matterCount);
-            }
-
-            if (statusData.status === 'Submitted') {
-              // Pipeline completed! Jump to 100% Ready, clear any errors and redirect
-              isFinishedRef.current = true;
-              clearInterval(pollInterval);
-              setErrorMsg(null);
-              setProgress(100);
-              setStep(4);
-              setTimeout(() => router.push(`/reports/${submissionId}`), 800);
-            } else if (statusData.status === 'Error') {
-              // Pipeline failed
-              isFinishedRef.current = true;
-              clearInterval(pollInterval);
-              setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
-              setErrorTitle(statusData.errorTitle || 'No pudimos completar el análisis');
-              setErrorMsg(statusData.errorMessage || 'El pipeline encontró un error. Intenta de nuevo.');
-              setSupportMsg(statusData.errorNextStep || null);
-              setErrorReference(statusData.errorReference || null);
-              setCanRetry(statusData.canRetry !== false);
-            }
-            // else: still 'Processing' — keep polling
+            applyStatus(statusData);
+            handleTerminalStatus(statusData);
           } catch (pollErr) {
             console.error('[POLL ERROR]', pollErr);
-            // Don't stop polling on network errors — just retry
           }
-        }, 10_000); // Poll every 10 seconds
-
-        // Extended safety check: Keep polling active up to 60 minutes for ultra-long submissions
-        setTimeout(() => {
-          if (!isFinishedRef.current) {
-            console.log('[PROCESSING PAGE] Processing extended mode active — polling remains active');
-          }
-        }, 30 * 60 * 1000);
+        };
+        await pollStatus();
+        if (!isFinishedRef.current) pollInterval = setInterval(pollStatus, 8_000);
 
       } catch (err: any) {
         console.error(err);
@@ -174,7 +165,22 @@ function ProcessingContent() {
     };
 
     processDocument();
-  }, [submissionId, documentUrl, rawText, docName, router, hasStarted]);
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [submissionId, documentUrl, rawText, docName, router, runToken]);
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+  const remainingMinutes = estimatedTotalMinutes
+    ? Math.max(1, estimatedTotalMinutes - Math.ceil(elapsedSeconds / 60))
+    : 0;
+  const waitingMessage = matterCount > 0
+    ? elapsedMinutes >= 8
+      ? `Seguimos trabajando en ${matterCount} asuntos. Puedes ir por un café: este proceso continúa aunque cierres o actualices la página.`
+      : `Detectamos ${matterCount} asuntos. El tiempo estimado total es de aproximadamente ${estimatedTotalMinutes || 25} minutos.`
+    : elapsedMinutes >= 5
+      ? 'El documento es extenso y continúa procesándose de forma segura en segundo plano.'
+      : 'Estamos leyendo la estructura del documento y calcularemos el tiempo según los asuntos detectados.';
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '2rem 0' }}>
@@ -236,14 +242,14 @@ function ProcessingContent() {
           <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.5rem', textAlign: 'center' }}>
             {step === 4 
               ? '¡Postulación procesada con éxito!' 
-              : (matterCount > 0 ? `Procesando ${matterCount} asuntos (matters)...` : 'Mapping raw data to universal schema...')}
+              : progressLabel}
           </h2>
           <p style={{ fontSize: '1.25rem', color: '#64748b', textAlign: 'center' }}>
             {step === 4 
               ? 'Redirigiendo a la sección de Reportes...' 
               : (matterCount > 0 
-                  ? `Analizando y optimizando individualmente ${matterCount} casos para cumplimiento legal.` 
-                  : 'Extracting key content and signals from the document.')}
+                  ? `RankPilot está analizando y optimizando individualmente ${matterCount} asuntos.`
+                  : 'Extrayendo el contenido y las señales clave del archivo.')}
           </p>
 
           {/* Reassuring badge for large submissions */}
@@ -262,12 +268,8 @@ function ProcessingContent() {
               fontWeight: 500,
               boxShadow: '0 2px 4px rgba(2, 132, 199, 0.05)'
             }}>
-              <Clock size={16} color="#0284c7" />
-              <span>
-                {matterCount > 0
-                  ? `Documento extenso con ${matterCount} asuntos detectado. La optimización profunda de IA toma tiempo adicional para garantizar alta calidad.`
-                  : 'Documento extenso detectado. El procesamiento continuo de IA optimiza cada caso.'}
-              </span>
+              {elapsedMinutes >= 8 ? <Coffee size={17} color="#0284c7" /> : <Clock size={16} color="#0284c7" />}
+              <span>{waitingMessage}</span>
             </div>
           )}
         </div>
@@ -276,13 +278,34 @@ function ProcessingContent() {
         <div style={{ marginBottom: '3rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>
-              {step === 4 ? 'Complete' : 'Processing'}
+              {step === 4 ? 'Completado' : 'Avance real por etapas'}
             </span>
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: step === 4 ? '#16a34a' : '#2563eb' }}>{progress}%</span>
           </div>
           <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, background: step === 4 ? '#16a34a' : '#2563eb', transition: 'width 0.3s ease-out' }}></div>
           </div>
+          {step !== 4 && !errorMsg && (
+            <div style={{ marginTop: '1rem', padding: '1rem 1.15rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div>
+                <p style={{ margin: 0, color: '#334155', fontSize: '0.9rem', fontWeight: 700 }}>
+                  Continúa en segundo plano
+                </p>
+                <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.82rem' }}>
+                  Puedes actualizar, cerrar esta página o seguir trabajando. No se reiniciará.
+                  {elapsedMinutes > 0 ? ` Tiempo transcurrido: ${elapsedMinutes} min.` : ''}
+                  {remainingMinutes > 0 ? ` Estimado restante: ~${remainingMinutes} min.` : ''}
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/reports')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 0.9rem', background: '#fff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}
+              >
+                <FileBarChart size={15} />
+                Seguir en Reportes
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Backend Status / Error Box (Only on real error) */}
@@ -332,7 +355,7 @@ function ProcessingContent() {
                   setErrorCode(null);
                   setSupportMsg(null);
                   setErrorReference(null);
-                  setHasStarted(false);
+                  setRunToken((token) => token + 1);
                   setProgress(0);
                   setStep(1);
                 }}

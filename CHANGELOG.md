@@ -3,6 +3,27 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.4] — 2026-09-01
+
+### Resumable processing and owner live-run repair
+
+- Fixed the live `20bb408a…` failure: a preservation fallback referenced the
+  matter summary before assignment, which discarded evidence quotes and made all
+  25 matters fail the artifact contract after the expensive model work finished.
+- Exact-source fallback now remains grounded, unknown-client placeholders are
+  not required in client prose, and a small number of explained source
+  preservations cannot discard an otherwise valid full report.
+- Removed the redundant second LLM grammar call for every matter; final language,
+  evidence, constitutional and artifact checks remain active.
+- Render streams real node-level progress to a persisted callback, including
+  detected matter count, elapsed time and a matter-calibrated duration estimate.
+- Refreshing, closing the tab, returning to Builder or opening Reports resumes
+  the same server job. Atomic claiming prevents duplicate processing requests.
+- Builder and Reports now identify active background jobs, refresh automatically
+  and link back to progress without restarting the pipeline.
+- Replaced simulated asymptotic percentages with real stage progress and clearer
+  Spanish reassurance, including permission to leave the page or take a coffee.
+
 ## [v26.3] — 2026-09-01
 
 ### Live owner-test processing repairs

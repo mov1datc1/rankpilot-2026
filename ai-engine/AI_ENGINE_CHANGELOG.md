@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.3 — live owner-test processing repairs)
+> Last updated: **2026-09-01** (v26.4 — resumable processing and live-run repair)
+
+## v26.4 — RESUMABLE PROCESSING & LIVE-RUN REPAIR (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| 25-matter artifact failure | Initialize preservation source before every fallback; exceptions preserve the exact canonical span and never discard provenance state | `nodes.py`, `evidence_validation.py` |
+| Safe partial preservation | A small, disclosed exact-source preservation is safe; systemic fallback still blocks release | `nodes.py`, `constitutional_validator.py` |
+| Runtime reduction | Remove 25 redundant post-optimization grammar model calls; keep deterministic language, evidence, artifact and judge checks | `nodes.py` |
+| Real progress | Stream LangGraph node snapshots and send non-sensitive progress/matter-count/ETA callbacks | `main.py`, `pipeline-callback/route.ts` |
+| Browser-independent job | Persist start/progress state, atomically claim one job, and resume polling without retriggering Render | `process-document/route.ts`, `check-status/route.ts` |
+| Professional wait UX | Builder/Reports active-job state, automatic refresh, real phase copy, elapsed/remaining estimate and background-processing reassurance | processing, Builder and Reports pages |
 
 ## v26.3 — LIVE OWNER-TEST PROCESSING REPAIRS (2026-09-01)
 

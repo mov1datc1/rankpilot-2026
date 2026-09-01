@@ -1,6 +1,7 @@
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 AI_ENGINE = Path(__file__).resolve().parents[1]
@@ -37,7 +38,22 @@ from utils.canonical_builder import (  # noqa: E402
 )
 from utils.model_response import coerce_message_text  # noqa: E402
 from utils.objective_alignment import compose_b10_with_budget  # noqa: E402
-from agents.nodes import safe_json_loads  # noqa: E402
+from agents.nodes import optimization_node, safe_json_loads  # noqa: E402
+
+
+class _FakeMessage:
+    content = (
+        '{"optimized_text":"Client A instructed the team on the stated mandate.",'
+        '"evidence_quotes":["Client A instructed the team on the stated mandate."]}'
+    )
+
+
+class _FakeMatterModel:
+    def bind(self, **_kwargs):
+        return self
+
+    def invoke(self, _messages):
+        return _FakeMessage()
 
 
 def matter(index: int, status: str = "publishable") -> MatterRecord:
@@ -368,6 +384,52 @@ Ongoing
         errors = validate_claim_grounding([claim], ["span-1"])
         self.assertEqual(1, len(errors))
         self.assertIn("Unsupported claim", errors[0])
+
+    def test_unknown_client_placeholder_is_not_required_in_client_prose(self):
+        record = MatterRecord(
+            matter_id="matter-01",
+            source_label="Publishable Matter 1",
+            publish_status="publishable",
+            client="Unknown client",
+        )
+        errors = validate_optimized_matter_text(
+            record,
+            "The team advised on the restructuring described in the source.",
+            "The team advised on the restructuring described in the source.",
+        )
+        self.assertFalse(any("Client omitted" in error for error in errors))
+
+    def test_short_grounded_optimization_keeps_evidence_quotes(self):
+        source = (
+            "Publishable Matter 1\nD1 Name of client\nClient A\nD2 Summary\n"
+            "Client A instructed the team on the stated mandate.\n"
+            "D3 Value\nNot provided\nD4 Cross-border\nNot provided"
+        )
+        state = {
+            "matters": [{
+                "title": "Matter 1",
+                "client": "Client A",
+                "summary": "Client A instructed the team on the stated mandate.",
+            }],
+            "canonical_submission": {
+                "matters": [{"source_span_ids": ["matter-span-01"]}],
+            },
+            "evidence_ledger": {"matter-span-01": {"text": source}},
+            "strategic_context": {},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 1}}},
+            "original_b10": "",
+            "original_c2": "",
+        }
+        with patch("agents.nodes.get_model", return_value=_FakeMatterModel()):
+            result = optimization_node(state)
+        optimized = result["matters"][0]
+        self.assertEqual(
+            ["Client A instructed the team on the stated mandate."],
+            optimized["_evidence_quotes"],
+        )
+        self.assertNotEqual("Enhancement Failed", optimized["status"])
 
     def test_unknown_evidence_reference_fails(self):
         claim = EvidenceClaim(

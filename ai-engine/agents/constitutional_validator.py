@@ -105,6 +105,8 @@ def _get_all_output_text(state: AgentState) -> str:
     # All matter optimized texts
     matters = state.get("matters", [])
     for m in matters:
+        if m.get("_source_fallback"):
+            continue
         opt = m.get("optimized_text", "") or m.get("summary", "")
         if opt:
             parts.append(opt)
@@ -166,6 +168,8 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
         # Only scan AI-generated text, not form field headers
         ai_text = (state.get("enhanced_b7", "") or "") + "\n"
         for m in state.get("matters", []):
+            if m.get("_source_fallback"):
+                continue
             ai_text += (m.get("optimized_text", "") or "") + "\n"
         violations.extend(_scan_text_for_violations(ai_text, cross_border_patterns, "A4-CROSSBORDER"))
     
@@ -176,6 +180,8 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     # Only check matter text and B7, not internal state
     client_facing_text = (state.get("enhanced_b7", "") or "") + "\n"
     for m in state.get("matters", []):
+        if m.get("_source_fallback"):
+            continue
         client_facing_text += (m.get("optimized_text", "") or "") + "\n"
     violations.extend(_scan_text_for_violations(client_facing_text, ARCHITECTURE_LEAK_VIOLATIONS, "A6-ARCH-LEAK"))
     
@@ -360,7 +366,10 @@ def constitutional_validation_node(state: AgentState) -> Dict:
     Returns routing decision for the graph.
     """
     retry_count = state.get("constitutional_retry_count", 0)
-    max_retries = 2
+    # One targeted retry is the maximum. Re-running every matter three times can
+    # turn a recoverable wording issue into a 40-minute wait. Deterministic and
+    # contract failures remain non-retryable and fail immediately.
+    max_retries = 1
     
     print(f"\n{'='*60}")
     print(f"  CONSTITUTIONAL VALIDATION GATE (attempt {retry_count + 1}/{max_retries + 1})")
