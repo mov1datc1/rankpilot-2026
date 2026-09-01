@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.5 — verified source preservation)
+> Last updated: **2026-09-01** (v26.6 — conservative latency reduction)
+
+## v26.6 — CONSERVATIVE LATENCY REDUCTION (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Redundant preservation retry | One model rewrite per matter; failures use deterministic exact-source preservation instead of a second serial call | `nodes.py` |
+| Legacy `.doc` final boundary | Stop source spans after the D8/E8 answer so OLE metadata cannot enter the final matter | `doc_parser.py` |
+| Narrative-safe fallback | Prefer literal D2/E2 source text when available; retain the full exact span only as the final fallback | `nodes.py` |
+| ETA calibration | Estimate the reduced call graph while retaining all evidence, judge, release and OOXML checks | `main.py` |
 
 ## v26.5 — VERIFIED SOURCE PRESERVATION (2026-09-01)
 

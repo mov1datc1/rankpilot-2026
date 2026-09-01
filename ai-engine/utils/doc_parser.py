@@ -409,6 +409,40 @@ class DocumentParser:
             label = f"{kind} Matter {int(match.group(2))}"
             end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             excerpt = text[match.end():end].strip()
+
+            # Legacy .doc extraction reads printable strings from the OLE
+            # container. After the final matter it can expose Word metadata and
+            # duplicated binary strings because there is no following matter
+            # heading to provide a boundary. D8/E8 is the last Chambers matter
+            # field, and its answer is a single completion-date/status line.
+            # Trim only at that deterministic form boundary while preserving an
+            # exact source substring (no rewriting or normalization).
+            last_field_matches = list(re.finditer(
+                r"(?im)(?:^|\|)\s*[DE]8\b[^\n|]*",
+                excerpt,
+            ))
+            if last_field_matches:
+                last_field = last_field_matches[-1]
+                line_end = excerpt.find("\n", last_field.end())
+                if line_end < 0:
+                    line_end = len(excerpt)
+                field_line = excerpt[last_field.start():line_end]
+                if "|" in field_line:
+                    excerpt = excerpt[:line_end].strip()
+                else:
+                    # Include the next non-empty line containing the E8/D8
+                    # answer, then stop before any OLE metadata trailer.
+                    cursor = line_end + 1
+                    answer_end = line_end
+                    while cursor < len(excerpt):
+                        next_end = excerpt.find("\n", cursor)
+                        if next_end < 0:
+                            next_end = len(excerpt)
+                        if excerpt[cursor:next_end].strip():
+                            answer_end = next_end
+                            break
+                        cursor = next_end + 1
+                    excerpt = excerpt[:answer_end].strip()
             sections[label.lower()] = {
                 "label": label,
                 "text": excerpt,

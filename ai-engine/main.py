@@ -74,7 +74,7 @@ def _assert_release_approved(result: dict) -> None:
         )
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.5")
+api = FastAPI(title="RankPilot AI Core", version="26.6")
 
 @api.get("/health")
 async def health_check():
@@ -84,7 +84,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.5",
+        "version": "26.6",
         "environment": "Ubuntu/Docker"
     }
 
@@ -328,10 +328,10 @@ PIPELINE_PROGRESS = {
 
 
 def _estimate_pipeline_minutes(matter_count: int) -> int:
-    """Conservative production estimate calibrated for multi-matter DOCX runs."""
+    """Estimate after removing per-matter grammar and preservation retries."""
     if matter_count <= 0:
-        return 25
-    return max(12, min(60, round(8 + (matter_count * 1.2))))
+        return 18
+    return max(10, min(45, round(7 + (matter_count * 0.7))))
 
 
 def _send_progress_callback(sync_requests, callback_url: str, webhook_secret: str,

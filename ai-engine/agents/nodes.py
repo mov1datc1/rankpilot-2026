@@ -2810,68 +2810,17 @@ def optimization_node(state: AgentState) -> Dict:
                     print(f"    Entities: {original_entities}")
             
             if needs_reoptimization:
-                print(f"  [PROBATIVE] Re-optimizing matter '{matter.get('title', 'unknown')}' — ratio: {ratio:.2f}")
-                preservation_prompt = (
-                    "CRITICAL RE-OPTIMIZATION REQUIRED.\n"
-                    "The previous optimization LOST probative evidence (Constitutional Article V violation).\n"
-                    "You MUST preserve ALL of the following from the original:\n"
-                    "- Client name exactly as written\n"
-                    "- The CLIENT DESCRIPTOR phrase (industry/sector description after the client name) — copy VERBATIM\n"
-                    "- All monetary values with currency\n"
-                    "- All jurisdictions mentioned\n"
-                    "- The firm's specific role (not generic 'advised')\n"
-                    "- All team members mentioned\n"
-                    "- The outcome or result\n"
-                    "- ALL numeric counts (e.g., '17 matters', '300 contracts', '8 years') — NEVER compress to 'various' or 'multiple'\n"
-                    "- ALL named sub-entities (e.g., PUREM, Hutchison, ISOCLIMA) — preserve EVERY name\n"
-                    "- Exclusivity signals (e.g., 'exclusive external counsel') — NEVER drop\n"
-                    "- Duration signals (e.g., 'eight-year relationship', 'nearly five decades') — NEVER drop\n\n"
+                # A second serial model call used to run here for every failed
+                # matter. Production logs showed that it repeated the same
+                # omissions, added 10–20 minutes to 25-matter submissions and
+                # was rejected by the same artifact gate. Keep the first
+                # candidate for deterministic repair below; if its provenance
+                # is incomplete, exact source preservation is both faster and
+                # more reliable than another speculative rewrite.
+                print(
+                    f"  [PROBATIVE] Matter '{matter.get('title', 'unknown')}' "
+                    f"requires deterministic preservation — ratio: {ratio:.2f}"
                 )
-                
-                # v19.2: Extract and inject client descriptor as hard requirement
-                client_name = matter.get("client", "")
-                descriptor_match = None
-                if client_name:
-                    import re as _re_local
-                    # Try to find the descriptor pattern: "ClientName, descriptor phrase"
-                    escaped_name = _re_local.escape(client_name.split(",")[0].strip())
-                    desc_pattern = _re_local.compile(
-                        rf'{escaped_name}[^,]*,\s*(.+?)(?:\.|,\s*(?:on |in |for |to |with ))',
-                        _re_local.IGNORECASE
-                    )
-                    desc_match = desc_pattern.search(raw_text)
-                    if desc_match:
-                        descriptor_match = desc_match.group(1).strip()
-                
-                if descriptor_match:
-                    preservation_prompt += (
-                        f"⚠️ CLIENT DESCRIPTOR (MUST APPEAR VERBATIM IN OUTPUT):\n"
-                        f'"{client_name}, {descriptor_match}"\n'
-                        f"This phrase MUST appear word-for-word in your enhanced text. Do NOT paraphrase it.\n\n"
-                    )
-                
-                preservation_prompt += (
-                    "EVIDENCE VS PROSE RULE: If the original contains LISTS of matters, contracts, or entities, "
-                    "these are COMPETITIVE EVIDENCE, not prose. Preserve each item individually.\n\n"
-                    "RESTRUCTURE for editorial impact but do not add or remove evidence.\n\n"
-                    f"Original text:\n{raw_text}\n\n"
-                    f"Previous (rejected) optimization:\n{optimized_text}\n\n"
-                    "Provide a corrected optimization that preserves ALL probative elements."
-                )
-                try:
-                    retry_messages = [
-                        SystemMessage(content=MATTER_OPTIMIZER_PROMPT),
-                        HumanMessage(content=preservation_prompt)
-                    ]
-                    retry_response = llm.invoke(retry_messages)
-                    retry_result = safe_json_loads(retry_response.content, fallback={})
-                    if not isinstance(retry_result, dict):
-                        raise ValueError("Matter optimizer retry returned a non-object JSON payload")
-                    optimized_text = retry_result.get('optimized_text', optimized_text)
-                    evidence_quotes = retry_result.get('evidence_quotes', evidence_quotes)
-                    print(f"  [PROBATIVE] Re-optimization complete. New word count: {len(optimized_text.split())}")
-                except Exception as retry_err:
-                    print(f"  [PROBATIVE] Re-optimization failed: {retry_err}. Keeping original optimization.")
             
             # v11.0: Strip any markdown formatting before storing
             optimized_text = strip_markdown(optimized_text)
@@ -2958,7 +2907,16 @@ def optimization_node(state: AgentState) -> Dict:
                     f"  [SOURCE PRESERVATION] Matter {matter_idx + 1}: "
                     f"rewrite lacked verifiable provenance; preserving source"
                 )
-                matter['optimized_text'] = exact_source
+                # Prefer the submitted D2/E2 answer when it is a literal part
+                # of the canonical span. This avoids copying form labels or a
+                # legacy Word metadata trailer into the narrative cell while
+                # remaining byte-for-byte source grounded.
+                safe_source_text = (
+                    original_summary
+                    if original_summary and original_summary in exact_source
+                    else exact_source
+                )
+                matter['optimized_text'] = safe_source_text
                 matter['_evidence_quotes'] = []
                 matter['_source_fallback'] = True
                 matter['_grounding_repair'] = quote_errors
@@ -3387,16 +3345,28 @@ def artifact_validation_node(state: AgentState) -> Dict:
                 or generated.get("summary")
                 or ""
             )
-            matter_errors = validate_optimized_matter_text(
-                canonical, optimized_text, source_text
+            is_verified_source_fallback = bool(
+                generated.get("_source_fallback")
+                and optimized_text.strip()
+                and optimized_text.strip() in source_text
             )
-            matter_errors.extend(
-                validate_evidence_quotes(
-                    optimized_text,
-                    generated.get("_evidence_quotes", []),
-                    source_text,
+            if is_verified_source_fallback:
+                matter_errors = []
+                source_preservations.append({
+                    "matter_id": canonical.matter_id,
+                    "errors": generated.get("_grounding_repair", []),
+                })
+            else:
+                matter_errors = validate_optimized_matter_text(
+                    canonical, optimized_text, source_text
                 )
-            )
+                matter_errors.extend(
+                    validate_evidence_quotes(
+                        optimized_text,
+                        generated.get("_evidence_quotes", []),
+                        source_text,
+                    )
+                )
             if matter_errors:
                 # Fail safe per matter: preserve the original summary only when it
                 # is a literal source substring; otherwise preserve the full span.

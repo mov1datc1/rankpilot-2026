@@ -3,6 +3,21 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.6] — 2026-09-01
+
+### Conservative latency reduction and legacy DOC boundary repair
+
+- Removed the second serial per-matter re-optimization call. Production logs
+  showed it repeated the same evidence omissions and was rejected by the same
+  deterministic gate; verified source preservation now handles that case.
+- Legacy `.doc` matter spans stop at the submitted D8/E8 completion field, so
+  the final matter cannot absorb Word OLE metadata such as `Microsoft Office`
+  or `Extracted Text`.
+- Source fallback prefers the literal submitted D2/E2 summary contained within
+  the canonical span, avoiding form labels and metadata in narrative cells.
+- Updated the user-facing estimate for the reduced call graph; all evidence,
+  constitutional, release and OOXML gates remain enabled.
+
 ## [v26.5] — 2026-09-01
 
 ### Verified source preservation and English processing UX

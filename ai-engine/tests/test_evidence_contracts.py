@@ -200,6 +200,25 @@ Client Nine
         self.assertIn("Client Seven", sections["publishable matter 7"]["text"])
         self.assertIn("Client Eight", sections["publishable matter 8"]["text"])
 
+    def test_final_legacy_doc_matter_stops_after_completion_field(self):
+        text = """Confidential Matter 1
+E1 Name of client
+Client One
+E2 Summary
+Source-backed matter summary.
+E8 Completion date
+June 2026
+Rob Howe Microsoft Office Word
+Extracted Text
+Content Type
+"""
+        section = DocumentParser.extract_numbered_matter_sections(text)[
+            "confidential matter 1"
+        ]["text"]
+        self.assertIn("June 2026", section)
+        self.assertNotIn("Microsoft Office", section)
+        self.assertNotIn("Extracted Text", section)
+
     def test_responses_api_text_blocks_parse_as_json(self):
         content = [
             {"type": "text", "text": '{"optimized_text":"Source'},
@@ -464,7 +483,10 @@ Ongoing
             result = optimization_node(state)
 
         optimized = result["matters"][0]
-        self.assertEqual(source, optimized["optimized_text"])
+        self.assertEqual(
+            "Client A instructed the team on the stated mandate.",
+            optimized["optimized_text"],
+        )
         self.assertTrue(optimized["_source_fallback"])
         self.assertEqual("Source Preserved", optimized["status"])
 
