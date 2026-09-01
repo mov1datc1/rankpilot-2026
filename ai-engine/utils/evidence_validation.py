@@ -222,6 +222,8 @@ def validate_artifact_matter_register(
         zip(canonical_matters, generated_matters), start=1
     ):
         actual_client = str(actual.get("client") or "").strip()
+        if not actual_client and expected.client.casefold() == "unknown client":
+            actual_client = "Unknown client"
         if actual_client.casefold() != expected.client.casefold():
             errors.append(
                 f"Matter {index} client mismatch: canonical={expected.client!r}, generated={actual_client!r}"

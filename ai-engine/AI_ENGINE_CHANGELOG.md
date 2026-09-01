@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-08-31** (v26.2 — immutable DOCX fields, generated-source rejection, Sol release judge, fail-closed delivery)
+> Last updated: **2026-09-01** (v26.3 — live owner-test processing repairs)
+
+## v26.3 — LIVE OWNER-TEST PROCESSING REPAIRS (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Flattened DOCX matter headings | Recover evidence when a physical heading is followed by a table pipe or concatenated D/E field; heading must remain at source-line start | `doc_parser.py` |
+| Responses API content blocks | Normalize list-based text blocks before every JSON parse and final response extraction | `model_response.py`, `nodes.py`, `main.py` |
+| Unknown-client placeholder | Treat source-backed blank client and canonical `Unknown client` as the same non-invented placeholder | `evidence_validation.py` |
+| B10 release limit | Preserve the original answer, add only complete source-backed sentences that fit, and include a source-verified department head within 500 words | `objective_alignment.py`, `nodes.py` |
+| Client-safe error copy | Hide internal gate names and present the affected matters, safety reason, recovery step and support reference | `pipeline-error-presentation.ts`, `check-status/route.ts`, processing/report pages |
+| Live regression | 50 tests pass; real Araque source reconciles 25/25 matters, 10/15 split, 10 lawyers/6 ranked and 496-word B10 | `tests/test_evidence_contracts.py` |
 
 ## v26.2 — IMMUTABLE OUTPUT & RELEASE APPROVAL (2026-08-31)
 

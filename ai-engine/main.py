@@ -14,6 +14,7 @@ from agents.nodes import writer_node
 from utils.docx_generator import generate_docx_report
 from utils.language_guard import filter_pipeline_output
 from utils.ooxml_validation import validate_docx_ooxml
+from utils.model_response import coerce_message_text
 from core.docx_cloner import clone_and_replace_from_state
 from utils.editorial_memory import (
     load_memory, save_memory, extract_lessons_from_result, format_memory_for_prompt
@@ -219,7 +220,7 @@ async def process_document(request: Request):
         if messages:
             last_msg = messages[-1]
             if hasattr(last_msg, "content"):
-                response_text = sanitize_unicode(last_msg.content)
+                response_text = sanitize_unicode(coerce_message_text(last_msg.content))
             elif isinstance(last_msg, tuple) and len(last_msg) > 1:
                 response_text = sanitize_unicode(str(last_msg[1]))
             else:
@@ -319,7 +320,7 @@ def _run_pipeline_sync(initial_state: dict, config: dict, context: dict, thread_
         if messages:
             last_msg = messages[-1]
             if hasattr(last_msg, "content"):
-                response_text = sanitize_unicode(last_msg.content)
+                response_text = sanitize_unicode(coerce_message_text(last_msg.content))
             elif isinstance(last_msg, tuple) and len(last_msg) > 1:
                 response_text = sanitize_unicode(str(last_msg[1]))
             else:

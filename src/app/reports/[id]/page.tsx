@@ -6,6 +6,7 @@ import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 import StatusActionButtons from "./StatusActionButtons";
 import SupplementalUpload from "./SupplementalUpload";
+import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation";
 
 
 export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -48,6 +49,9 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const reasoningTrace = chambersData.reasoning_trace || [];
   const comprehension = chambersData.comprehension || {};
   const pipelineError = chambersData._pipeline_error || null;
+  const pipelineErrorView = pipelineError
+    ? getPipelineErrorPresentation(pipelineError)
+    : null;
   const isEmptyAnalysis = !analysis.score && !analysis.summary && !letter.the_state_of_play;
   const submissionBlueprint = chambersData.submission_blueprint || {};
 
@@ -179,28 +183,25 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#991b1b', margin: 0 }}>
-                  {pipelineError ? 'El procesamiento de IA encontró un error' : 'Análisis pendiente de generación'}
+                  {pipelineErrorView?.title || 'Análisis pendiente de generación'}
                 </h3>
-                {pipelineError?.code && (
-                  <span style={{ padding: '0.2rem 0.6rem', background: '#fee2e2', color: '#dc2626', borderRadius: '9999px', fontSize: '0.65rem', fontWeight: 600 }}>
-                    {pipelineError.code}
-                  </span>
-                )}
               </div>
               <p style={{ fontSize: '0.9rem', color: '#b91c1c', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
-                {pipelineError?.message || 'El motor de IA no pudo completar el análisis de este documento. Los datos que se lograron extraer se muestran abajo como vista parcial.'}
+                {pipelineErrorView?.message || 'Todavía no se ha generado el análisis de este documento.'}
               </p>
-              {pipelineError?.details && (
+              {pipelineErrorView?.nextStep && (
                 <p style={{ fontSize: '0.8rem', color: '#92400e', margin: '0 0 1rem', padding: '0.5rem 0.75rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                  💡 Detalle técnico: {pipelineError.details}
+                  <strong>Qué puedes hacer:</strong> {pipelineErrorView.nextStep}
                 </p>
               )}
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <a
-                  href={`/submissions/processing?submissionId=${submission.id}`}
+                  href={pipelineErrorView?.canRetry && submission.documentUrl
+                    ? `/submissions/processing?id=${submission.id}&url=${encodeURIComponent(submission.documentUrl)}`
+                    : '/submissions'}
                   style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
                 >
-                  🔄 Reprocesar documento
+                  {pipelineErrorView?.canRetry ? 'Reintentar procesamiento' : 'Revisar y volver a cargar'}
                 </a>
                 <a
                   href="/submissions"
@@ -210,7 +211,9 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                 </a>
               </div>
               {pipelineError?.timestamp && (
-                <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.75rem 0 0' }}>Error registrado: {new Date(pipelineError.timestamp).toLocaleString()}</p>
+                <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0.75rem 0 0' }}>
+                  Referencia para soporte: {pipelineErrorView?.reference} · Registrado: {new Date(pipelineError.timestamp).toLocaleString()}
+                </p>
               )}
             </div>
           </div>

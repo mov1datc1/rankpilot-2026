@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getPipelineErrorPresentation } from '@/lib/pipeline-error-presentation';
 
 /**
  * v18.0: Status Polling Endpoint
@@ -37,7 +38,9 @@ export async function GET(request: NextRequest) {
 
     const chambersData = (submission.chambersData as any) || {};
     const pipelineError = chambersData?._pipeline_error || null;
-    let sanitizedError = pipelineError?.message || null;
+    const errorPresentation = pipelineError
+      ? getPipelineErrorPresentation(pipelineError)
+      : null;
 
     // Calculate matter count from DB relation and chambersData
     const dbMatterCount = submission._count?.matters || 0;
@@ -59,29 +62,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (sanitizedError) {
-      const lower = sanitizedError.toLowerCase();
-      if (
-        lower.includes('429') ||
-        lower.includes('quota') ||
-        lower.includes('credit') ||
-        lower.includes('rate_limit') ||
-        lower.includes('openai') ||
-        lower.includes('insufficient') ||
-        lower.includes('balance')
-      ) {
-        sanitizedError = 'El servidor de IA está experimentando un ajuste de capacidad temporal. Por favor reintenta en unos momentos o consulta tus entregables.';
-      } else if (lower.includes('{') || lower.includes('traceback') || lower.includes('code:')) {
-        sanitizedError = 'El procesamiento del servidor requirió tiempo adicional. Por favor reintenta o consulta tus entregables.';
-      }
-    }
-
     return NextResponse.json({
       id: submission.id,
       status: submission.status,
       hasError: !!pipelineError,
-      errorMessage: sanitizedError,
-      errorCode: pipelineError?.code ? 'SERVER_CAPACITY_RETRY' : null,
+      errorMessage: errorPresentation?.message || null,
+      errorTitle: errorPresentation?.title || null,
+      errorNextStep: errorPresentation?.nextStep || null,
+      errorReference: errorPresentation?.reference || null,
+      errorCode: errorPresentation?.kind || null,
+      canRetry: errorPresentation?.canRetry ?? true,
       matterCount,
     });
   } catch (error: any) {

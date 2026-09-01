@@ -222,3 +222,45 @@ def build_source_backed_b10_positioning(
         if len(geographies) >= 2:
             sentences.append(f"The documented matters span {', '.join(geographies)}.")
     return " ".join(sentences)
+
+
+def compose_b10_with_budget(
+    original_text: str,
+    strategic_text: str = "",
+    required_sentences: Sequence[str] = (),
+    max_words: int = 500,
+) -> str:
+    """Add complete source-backed sentences without exceeding the B10 limit.
+
+    The original answer is never truncated. The first strategic sentence and
+    required accountability sentences receive priority; lower-priority
+    strategic sentences are included only when they fit as complete sentences.
+    """
+
+    original = str(original_text or "").strip()
+    if not original:
+        return ""
+    remaining = max_words - len(original.split())
+    if remaining <= 0:
+        return original
+
+    strategic_sentences = [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", str(strategic_text or "").strip())
+        if sentence.strip()
+    ]
+    candidates = []
+    if strategic_sentences:
+        candidates.append(strategic_sentences[0])
+    candidates.extend(str(sentence or "").strip() for sentence in required_sentences)
+    candidates.extend(strategic_sentences[1:])
+
+    selected = []
+    for sentence in candidates:
+        if not sentence or sentence in selected:
+            continue
+        sentence_words = len(sentence.split())
+        if sentence_words <= remaining:
+            selected.append(sentence)
+            remaining -= sentence_words
+    return "\n\n".join([*selected, original]) if selected else original

@@ -35,6 +35,9 @@ from utils.canonical_builder import (  # noqa: E402
     merge_lawyer_roster,
     reconcile_extracted_matters_to_source,
 )
+from utils.model_response import coerce_message_text  # noqa: E402
+from utils.objective_alignment import compose_b10_with_budget  # noqa: E402
+from agents.nodes import safe_json_loads  # noqa: E402
 
 
 def matter(index: int, status: str = "publishable") -> MatterRecord:
@@ -154,6 +157,51 @@ Confidential client
             "Confidential client",
             sections["publishable matter 1"]["text"],
         )
+
+    def test_numbered_sections_accept_docx_row_and_concatenated_field_headings(self):
+        text = """Publishable Matter 7 | D1 Name of client | Client Seven
+D2 Summary | Source seven.
+Publishable Matter 8D1 Name of client
+Client Eight
+D2 Summary
+Source eight.
+Confidential Matter 1
+E1 Name of client
+Client Nine
+"""
+        sections = DocumentParser.extract_numbered_matter_sections(text)
+        self.assertEqual(
+            {"publishable matter 7", "publishable matter 8", "confidential matter 1"},
+            set(sections),
+        )
+        self.assertIn("Client Seven", sections["publishable matter 7"]["text"])
+        self.assertIn("Client Eight", sections["publishable matter 8"]["text"])
+
+    def test_responses_api_text_blocks_parse_as_json(self):
+        content = [
+            {"type": "text", "text": '{"optimized_text":"Source'},
+            {"type": "output_text", "text": '","evidence_quotes":[]}'},
+        ]
+        self.assertEqual(
+            '{"optimized_text":"Source","evidence_quotes":[]}',
+            coerce_message_text(content),
+        )
+        self.assertEqual("Source", safe_json_loads(content)["optimized_text"])
+
+    def test_b10_budget_keeps_original_and_required_partner(self):
+        original = " ".join(f"source{i}" for i in range(450))
+        strategic = (
+            "The practice combines documented acquisitions and restructurings. "
+            "A second supporting proposition uses the verified portfolio."
+        )
+        result = compose_b10_with_budget(
+            original,
+            strategic,
+            ["The department is led by Pedro Ignacio Sosa Mendoza."],
+        )
+        self.assertLessEqual(len(result.split()), 500)
+        self.assertIn(original, result)
+        self.assertIn("Pedro Ignacio Sosa Mendoza", result)
 
     def test_c2_source_extraction_does_not_cross_into_matters(self):
         text = """C2 Feedback on our coverage | The guide should address the new regulatory category.
@@ -384,6 +432,21 @@ Ongoing
             [{"client": "Different Client", "publish_status": "publishable"}],
         )
         self.assertTrue(any("client mismatch" in error for error in errors))
+
+    def test_blank_generated_client_matches_canonical_unknown_placeholder(self):
+        unknown = MatterRecord(
+            matter_id="matter-01",
+            source_label="Confidential Matter 1",
+            publish_status="confidential",
+            client="Unknown client",
+        )
+        self.assertEqual(
+            [],
+            validate_artifact_matter_register(
+                [unknown],
+                [{"client": "", "publish_status": "confidential"}],
+            ),
+        )
 
     def test_first_recognition_hero_prioritizes_category_fit(self):
         hero, notes = select_objective_aligned_hero(

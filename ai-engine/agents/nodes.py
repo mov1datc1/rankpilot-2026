@@ -4,7 +4,7 @@ import os
 import time
 import unicodedata
 from datetime import datetime
-from typing import Dict, Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 from difflib import SequenceMatcher
 from dotenv import load_dotenv
 from chains.extraction_chain import get_extraction_chain
@@ -27,6 +27,7 @@ from utils.practice_taxonomy import get_practice_taxonomy, get_practice_context_
 from utils.validators import get_ranking_architecture, validate_analysis_output, validate_matter_enhancement
 from utils.benchmark_scraper import scrape_rankings, get_benchmark_summary
 from utils.model_factory import create_chat_model, get_model_profile
+from utils.model_response import coerce_message_text
 from utils.objective_alignment import repair_objective_conflicts
 
 load_dotenv()
@@ -576,11 +577,11 @@ def verify_client_descriptors(original_raw: str, enhanced_text: str, client_name
     return enhanced_text
 
 
-def safe_json_loads(text: str, fallback=None):
+def safe_json_loads(text: Any, fallback=None):
     """Parse JSON with multiple fallback strategies."""
-    if not text:
+    cleaned = coerce_message_text(text).strip()
+    if not cleaned:
         return fallback or {}
-    cleaned = text.strip()
     if cleaned.startswith('```json'):
         cleaned = cleaned[7:]
     if cleaned.startswith('```'):
@@ -2140,7 +2141,7 @@ WHAT TO DO INSTEAD:
     ])
     
     # v17.0: Debug — log response content stats
-    response_text = response.content or ""
+    response_text = coerce_message_text(response.content)
     finish_reason = response.response_metadata.get("finish_reason", "unknown")
     print(f"[ANALYSIS NODE] Response length: {len(response_text)} chars | finish_reason: {finish_reason}")
     if finish_reason == "length":
@@ -2163,7 +2164,7 @@ WHAT TO DO INSTEAD:
                 SystemMessage(content=analysis_prompt),
                 HMsg(content=f"Analyze this submission data and return your analysis as JSON:\n\n{data_str}")
             ])
-            response_text = response.content or ""
+            response_text = coerce_message_text(response.content)
             finish_reason = response.response_metadata.get("finish_reason", "unknown")
             print(f"[ANALYSIS NODE] Retry response length: {len(response_text)} chars | finish_reason: {finish_reason}")
             if finish_reason == "length":
@@ -2394,7 +2395,8 @@ WHAT TO DO INSTEAD:
             eval_response = eval_chain.invoke({"data": json.dumps(matter_data, indent=2, default=str, ensure_ascii=False)})
             
             eval_finish = eval_response.response_metadata.get("finish_reason", "unknown")
-            print(f"[ANALYSIS NODE] Call 2 response: {len(eval_response.content or '')} chars | finish_reason: {eval_finish}")
+            eval_text = coerce_message_text(eval_response.content)
+            print(f"[ANALYSIS NODE] Call 2 response: {len(eval_text)} chars | finish_reason: {eval_finish}")
             if eval_finish == "length":
                 print(f"[ANALYSIS NODE] ⚠️ Call 2 ALSO TRUNCATED — matter evaluations may be incomplete")
             
@@ -2725,7 +2727,9 @@ def optimization_node(state: AgentState) -> Dict:
             for diversity_attempt in range(max_diversity_retries):
                 try:
                     response = llm.invoke(messages)
-                    result = json.loads(response.content)
+                    result = safe_json_loads(response.content, fallback={})
+                    if not isinstance(result, dict):
+                        raise ValueError("Matter optimizer returned a non-object JSON payload")
                     optimized_text = result.get('optimized_text', matter.get('summary'))
                     evidence_quotes = result.get('evidence_quotes', [])
                 except Exception as invoke_err:
@@ -2855,7 +2859,9 @@ def optimization_node(state: AgentState) -> Dict:
                         HumanMessage(content=preservation_prompt)
                     ]
                     retry_response = llm.invoke(retry_messages)
-                    retry_result = json.loads(retry_response.content)
+                    retry_result = safe_json_loads(retry_response.content, fallback={})
+                    if not isinstance(retry_result, dict):
+                        raise ValueError("Matter optimizer retry returned a non-object JSON payload")
                     optimized_text = retry_result.get('optimized_text', optimized_text)
                     evidence_quotes = retry_result.get('evidence_quotes', evidence_quotes)
                     print(f"  [PROBATIVE] Re-optimization complete. New word count: {len(optimized_text.split())}")
@@ -3149,7 +3155,10 @@ def optimization_node(state: AgentState) -> Dict:
         # connective facts. The insertion is assembled only from patterns,
         # anchors and geographies found in canonical source spans. The original
         # B10 remains intact underneath it.
-        from utils.objective_alignment import build_source_backed_b10_positioning
+        from utils.objective_alignment import (
+            build_source_backed_b10_positioning,
+            compose_b10_with_budget,
+        )
         ledger = state.get("evidence_ledger", {})
         source_universe = "\n\n".join(
             str(span.get("text") or "") for span in ledger.values()
@@ -3169,9 +3178,18 @@ def optimization_node(state: AgentState) -> Dict:
             narrative_arch.get("hero_matter", ""),
             supporting_candidates,
         )
-        enhanced_b7 = (
-            f"{strategic_insert}\n\n{original_b10}"
-            if strategic_insert else original_b10
+        required_b7_sentences = []
+        if dept_heads:
+            first_head = dept_heads[0]
+            if first_head.casefold() in state.get("doc_text", "").casefold():
+                required_b7_sentences.append(
+                    f"The department is led by {first_head}."
+                )
+        enhanced_b7 = compose_b10_with_budget(
+            original_b10,
+            strategic_insert,
+            required_b7_sentences,
+            max_words=500,
         )
         print(
             f"[B7 EVIDENCE MODE] Preserved {original_word_count} source words; "
@@ -3191,6 +3209,19 @@ def optimization_node(state: AgentState) -> Dict:
             enhanced_b7 = sanitize_submission_voice(enhanced_b7)
         except Exception as lg_err:
             print(f"[B7 v23.0] Warning: sanitize_submission_voice error: {lg_err}")
+        if len(enhanced_b7.split()) > 500 and original_b10:
+            from utils.objective_alignment import compose_b10_with_budget
+            cleaned_original = strip_fillers(original_b10)
+            try:
+                cleaned_original = sanitize_submission_voice(cleaned_original)
+            except Exception:
+                pass
+            enhanced_b7 = compose_b10_with_budget(
+                cleaned_original,
+                strip_fillers(strategic_insert),
+                required_b7_sentences,
+                max_words=500,
+            )
     
     if enhanced_b7:
         b7_words_count = len(enhanced_b7.split())

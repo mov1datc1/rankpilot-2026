@@ -388,9 +388,13 @@ class DocumentParser:
 
         The boundary is the next numbered matter header.  This gives the
         evidence ledger source text that predates all LLM transformation.
+        DOCX table flattening can place a heading before a pipe or concatenate
+        it directly with the first D/E field (``Matter 7D1``); both are still
+        physical headings because they occur at the start of a parsed line.
         """
         pattern = re.compile(
-            r'(?im)^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\s*$'
+            r'(?im)^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)'
+            r'(?=\s*$|\s*\||[DE][1-9]\b)'
         )
         matches = list(pattern.finditer(text or ""))
         sections = {}

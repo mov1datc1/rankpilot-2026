@@ -3,6 +3,24 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.3] — 2026-09-01
+
+### Live owner-test processing repairs
+
+- **DOCX evidence recovery:** canonical matter segmentation accepts physical
+  headings flattened before a table separator or concatenated D/E field, while
+  still requiring the heading at the beginning of a source line.
+- **Responses API normalization:** text content blocks are normalized before
+  JSON parsing in analysis, optimization, grammar and final-response paths.
+- **Release-gate repairs:** blank confidential-client placeholders reconcile
+  consistently, and source-backed B10 insertions plus verified department-head
+  attribution fit within the 500-word delivery limit without truncating source.
+- **Regression coverage:** added the owner DOCX-heading, content-block JSON,
+  unknown-client and B10-budget cases.
+- **User-facing recovery messages:** internal gate names and raw technical
+  details are replaced with a plain-language explanation, affected matter
+  numbers, a concrete next step and a support reference on processing/report pages.
+
 ## [v26.2] — 2026-08-31
 
 ### Source-locked release gate and independent Sol judge

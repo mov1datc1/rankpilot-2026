@@ -18,8 +18,11 @@ function ProcessingContent() {
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(1); 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [supportMsg, setSupportMsg] = useState<string | null>(null);
+  const [errorReference, setErrorReference] = useState<string | null>(null);
+  const [canRetry, setCanRetry] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
   const [matterCount, setMatterCount] = useState<number>(0);
   const [elapsedMinutes, setElapsedMinutes] = useState<number>(0);
@@ -89,7 +92,9 @@ function ProcessingContent() {
           
           if (!res.ok) {
             setErrorCode(data.errorCode || 'UNKNOWN');
+            setErrorTitle('No pudimos iniciar el procesamiento');
             setSupportMsg(data.supportMessage || null);
+            setCanRetry(true);
             throw new Error(data.error || 'Fallo en la extraccion de la IA');
           }
         }
@@ -142,7 +147,11 @@ function ProcessingContent() {
               isFinishedRef.current = true;
               clearInterval(pollInterval);
               setErrorCode(statusData.errorCode || 'PIPELINE_ERROR');
+              setErrorTitle(statusData.errorTitle || 'No pudimos completar el análisis');
               setErrorMsg(statusData.errorMessage || 'El pipeline encontró un error. Intenta de nuevo.');
+              setSupportMsg(statusData.errorNextStep || null);
+              setErrorReference(statusData.errorReference || null);
+              setCanRetry(statusData.canRetry !== false);
             }
             // else: still 'Processing' — keep polling
           } catch (pollErr) {
@@ -291,23 +300,19 @@ function ProcessingContent() {
                 <AlertTriangle size={18} color="#e11d48" />
               </div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#9f1239', margin: 0 }}>
-                Aviso de Procesamiento
+                {errorTitle || 'No pudimos completar el procesamiento'}
               </h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: '#881337', margin: '0 0 1.25rem 0', lineHeight: 1.6 }}>
-              {(() => {
-                const lower = (errorMsg || '').toLowerCase();
-                if (lower.includes('429') || lower.includes('quota') || lower.includes('credit') || lower.includes('rate_limit') || lower.includes('openai') || lower.includes('insufficient') || lower.includes('balance')) {
-                  return 'El servidor de IA está experimentando un ajuste de capacidad temporal. Tu postulación se reanudará en unos momentos. Puedes reintentar o consultar tus entregables.';
-                }
-                if (lower.includes('{') || lower.includes('traceback') || lower.includes('code:')) {
-                  return 'El procesamiento requirió tiempo adicional en el servidor. Por favor reintenta o consulta la sección de reportes.';
-                }
-                return errorMsg;
-              })()}
+              {errorMsg}
             </p>
+            {supportMsg && (
+              <div style={{ fontSize: '0.85rem', color: '#78350f', marginBottom: '1.25rem', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', lineHeight: 1.55 }}>
+                <strong>Qué puedes hacer:</strong> {supportMsg}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
+              {canRetry ? <button
                 onClick={async () => {
                   try {
                     const checkRes = await fetch(`/api/check-status?id=${submissionId}`);
@@ -323,7 +328,10 @@ function ProcessingContent() {
                     }
                   } catch {}
                   setErrorMsg(null);
+                  setErrorTitle(null);
                   setErrorCode(null);
+                  setSupportMsg(null);
+                  setErrorReference(null);
                   setHasStarted(false);
                   setProgress(0);
                   setStep(1);
@@ -332,7 +340,13 @@ function ProcessingContent() {
               >
                 <RotateCw size={15} />
                 <span>Reintentar</span>
-              </button>
+              </button> : <button
+                onClick={() => router.push('/submissions')}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
+              >
+                <FileText size={15} />
+                <span>Revisar y volver a cargar</span>
+              </button>}
               <button
                 onClick={() => router.push('/reports')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#ffffff', color: '#475569', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}
@@ -341,6 +355,11 @@ function ProcessingContent() {
                 <span>Ir a Reportes</span>
               </button>
             </div>
+            {errorReference && (
+              <p style={{ fontSize: '0.72rem', color: '#9f1239', margin: '0.9rem 0 0' }}>
+                Referencia para soporte: {errorReference}
+              </p>
+            )}
           </div>
         )}
 
