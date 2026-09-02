@@ -587,6 +587,17 @@ class DocumentParser:
             value = re.split(r"\x07|\bHYPERLINK\b|\bmailto:", line, maxsplit=1, flags=re.I)[0].strip()
             if not value:
                 continue
+            # Native DOCX tables are normalized as pipe-delimited rows.  Do not
+            # promote the column-heading row to a person, and take only the name
+            # cell from an actual B7 data row.
+            cells = [cell.strip() for cell in value.split("|")]
+            normalized_cells = [cell.casefold() for cell in cells if cell]
+            if normalized_cells and all(
+                cell in {"name", "email", "telephone number"}
+                for cell in normalized_cells
+            ):
+                continue
+            value = cells[0] if cells else value
             if value.casefold() in {"name", "email", "telephone number"}:
                 continue
             if (

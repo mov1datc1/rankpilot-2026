@@ -21,6 +21,7 @@ from utils.evidence_validation import (  # noqa: E402
     validate_artifact_matter_register,
     validate_optimized_matter_text,
     validate_evidence_quotes,
+    select_verified_source_preservation,
 )
 from utils.doc_parser import DocumentParser  # noqa: E402
 from utils.objective_alignment import (  # noqa: E402
@@ -218,6 +219,60 @@ B8 Hires / Departures
             ["Pedro Ignacio Sosa Mendoza", "Manuel Reyna"],
             DocumentParser.extract_department_heads(text),
         )
+
+    def test_docx_pipe_table_header_is_not_a_department_head(self):
+        text = """B7 Head or Heads of department
+Name | Email | Telephone number
+José Pablo Ramos Castillo | j.ramos@ramoscastillo.com | (+52) 33 1003 1135
+B8 Hires / Departures
+"""
+        self.assertEqual(
+            ["José Pablo Ramos Castillo"],
+            DocumentParser.extract_department_heads(text),
+        )
+
+    def test_source_preservation_retains_long_form_client_identity(self):
+        canonical_client = (
+            "COMINVI, S.A. DE C.V., a mining-services company, and PROYECTOS, "
+            "DESARROLLOS, URBANIZACIÓN Y CONSTRUCCIÓN, S.A. DE C.V."
+        )
+        preferred_summary = (
+            "COMINVI, S.A. DE C.V. instructed the firm on a real-estate matter."
+        )
+        source_text = (
+            "D1 Name of client\n"
+            f"{canonical_client}\n"
+            "D2 Summary\n"
+            f"{preferred_summary}"
+        )
+        selected, errors = select_verified_source_preservation(
+            MatterRecord(
+                matter_id="matter-11",
+                source_label="Publishable Matter 11",
+                publish_status="publishable",
+                client=canonical_client,
+            ),
+            preferred_summary,
+            source_text,
+        )
+        self.assertEqual(source_text, selected)
+        self.assertEqual([], errors)
+
+    def test_source_preservation_prefers_contract_complete_summary(self):
+        preferred_summary = "Client A instructed the firm on the stated mandate."
+        source_text = f"D1 Name of client\nClient A\nD2 Summary\n{preferred_summary}"
+        selected, errors = select_verified_source_preservation(
+            MatterRecord(
+                matter_id="matter-01",
+                source_label="Publishable Matter 1",
+                publish_status="publishable",
+                client="Client A",
+            ),
+            preferred_summary,
+            source_text,
+        )
+        self.assertEqual(preferred_summary, selected)
+        self.assertEqual([], errors)
 
     def test_publishable_matter_stops_before_confidential_register_heading(self):
         text = """Publishable Matter 10
@@ -721,6 +776,41 @@ Ongoing
         self.assertTrue(result["artifact_validation"]["passed"])
         self.assertEqual([], result["artifact_validation"]["matter_rollbacks"])
         self.assertEqual(1, len(result["artifact_validation"]["source_preservations"]))
+        self.assertEqual(source, result["matters"][0]["optimized_text"])
+
+    def test_artifact_gate_repairs_literal_summary_that_omits_full_client(self):
+        full_client = "Client A, S.A. de C.V., and Project Company B, S.A. de C.V."
+        summary = "Client A instructed the firm on the stated mandate."
+        source = f"D1 Name of client\n{full_client}\nD2 Summary\n{summary}"
+        result = artifact_validation_node({
+            "canonical_submission": {
+                "matters": [{
+                    "matter_id": "matter-11",
+                    "source_label": "Publishable Matter 11",
+                    "publish_status": "publishable",
+                    "client": full_client,
+                    "source_span_ids": ["span-11"],
+                }],
+                "lawyers": [],
+            },
+            "evidence_ledger": {"span-11": {"text": source}},
+            "matters": [{
+                "client": full_client,
+                "publish_status": "publishable",
+                "summary": summary,
+                "optimized_text": summary,
+                "_source_fallback": True,
+                "_evidence_quotes": [],
+            }],
+            "analysis": {},
+            "strategic_context": {},
+            "gaps": [],
+            "interrogation_questions": [],
+            "matter_evidence_gaps": {},
+        })
+
+        self.assertTrue(result["artifact_validation"]["passed"])
+        self.assertEqual([], result["artifact_validation"]["matter_rollbacks"])
         self.assertEqual(source, result["matters"][0]["optimized_text"])
 
     def test_generated_matter_client_change_fails(self):

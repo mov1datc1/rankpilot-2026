@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.8 — real retry execution)
+> Last updated: **2026-09-01** (v26.9 — contract-complete DOCX preservation)
+
+## v26.9 — CONTRACT-COMPLETE DOCX PRESERVATION (2026-09-01)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Long-form client authority | A literal D2/E2 fallback is accepted only when it retains the complete canonical D1/E1 client identity and all deterministic matter invariants | `evidence_validation.py`, `nodes.py` |
+| Full-span safe fallback | When a summary abbreviates a source identity, preserve the exact canonical matter span and revalidate that repaired artifact before release | `evidence_validation.py`, `nodes.py` |
+| Native DOCX B7 rows | Skip pipe-delimited table headings and extract only the name cell from the actual B7 head row | `doc_parser.py` |
+| Real Estate regressions | Fixtures matching the submitted DOCX verify José Pablo Ramos Castillo as B7 head and full-span preservation when matter 11 abbreviates its D1 identity | `test_evidence_contracts.py` |
 
 ## v26.8 — REAL RETRY EXECUTION (2026-09-01)
 

@@ -212,6 +212,40 @@ def validate_evidence_quotes(
     return errors
 
 
+def select_verified_source_preservation(
+    matter: MatterRecord,
+    preferred_text: str,
+    source_text: str,
+) -> tuple[str, List[str]]:
+    """Choose the shortest literal source fallback that preserves its contract.
+
+    A D2/E2 summary is safe to publish without generated evidence quotes only
+    when it is a literal source substring *and* still contains the canonical
+    client and every other deterministic matter invariant.  Otherwise the full
+    canonical source span is preserved.  The returned errors describe only an
+    unresolved fallback; an empty list means the selected text is safe.
+    """
+
+    source = str(source_text or "").strip()
+    preferred = str(preferred_text or "").strip()
+    candidates: List[str] = []
+    if preferred and preferred in source:
+        candidates.append(preferred)
+    if source and source not in candidates:
+        candidates.append(source)
+
+    last_errors: List[str] = [f"No source text available for {matter.matter_id}"]
+    for candidate in candidates:
+        candidate_errors = validate_optimized_matter_text(
+            matter, candidate, source
+        )
+        if not candidate_errors:
+            return candidate, []
+        last_errors = candidate_errors
+
+    return source or preferred, last_errors
+
+
 def validate_artifact_matter_register(
     canonical_matters: Sequence[MatterRecord],
     generated_matters: Sequence[dict],

@@ -2980,7 +2980,11 @@ def optimization_node(state: AgentState) -> Dict:
             # the exact canonical source immediately instead of carrying an
             # ungrounded candidate into the final gate, where it used to make
             # an otherwise valid multi-matter submission fail as a whole.
-            from utils.evidence_validation import validate_evidence_quotes
+            from core.contracts import MatterRecord
+            from utils.evidence_validation import (
+                select_verified_source_preservation,
+                validate_evidence_quotes,
+            )
             quote_errors = validate_evidence_quotes(
                 optimized_text,
                 evidence_quotes,
@@ -2991,19 +2995,43 @@ def optimization_node(state: AgentState) -> Dict:
                     f"  [SOURCE PRESERVATION] Matter {matter_idx + 1}: "
                     f"rewrite lacked verifiable provenance; preserving source"
                 )
-                # Prefer the submitted D2/E2 answer when it is a literal part
-                # of the canonical span. This avoids copying form labels or a
-                # legacy Word metadata trailer into the narrative cell while
-                # remaining byte-for-byte source grounded.
-                safe_source_text = (
-                    original_summary
-                    if original_summary and original_summary in exact_source
-                    else exact_source
+                # Prefer D2/E2 only if it remains contract-complete. Some forms
+                # put a legally significant, long-form client identity in D1
+                # that the summary abbreviates; in that case preserve the full
+                # canonical source span instead of failing the final review.
+                canonical_record_payload = {
+                    key: value
+                    for key, value in {**matter, **canonical_matter}.items()
+                    if key in MatterRecord.model_fields
+                }
+                canonical_record_payload.setdefault(
+                    "matter_id", f"matter-{matter_idx + 1:02d}"
+                )
+                canonical_record_payload.setdefault(
+                    "source_label",
+                    matter.get("source_label") or f"Matter {matter_idx + 1}",
+                )
+                canonical_record_payload.setdefault(
+                    "publish_status",
+                    "confidential" if matter.get("is_confidential") else "publishable",
+                )
+                canonical_record_payload.setdefault(
+                    "client", matter.get("client") or "Unknown client"
+                )
+                canonical_record = MatterRecord.model_validate(
+                    canonical_record_payload
+                )
+                safe_source_text, preservation_errors = (
+                    select_verified_source_preservation(
+                        canonical_record,
+                        original_summary,
+                        exact_source,
+                    )
                 )
                 matter['optimized_text'] = safe_source_text
                 matter['_evidence_quotes'] = []
                 matter['_source_fallback'] = True
-                matter['_grounding_repair'] = quote_errors
+                matter['_grounding_repair'] = quote_errors + preservation_errors
                 matter['status'] = 'Source Preserved'
             else:
                 matter['optimized_text'] = optimized_text
@@ -3406,6 +3434,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
 
     from core.contracts import MatterRecord
     from utils.evidence_validation import (
+        select_verified_source_preservation,
         validate_artifact_matter_register,
         validate_evidence_quotes,
         validate_optimized_matter_text,
@@ -3436,17 +3465,23 @@ def artifact_validation_node(state: AgentState) -> Dict:
                 or generated.get("summary")
                 or ""
             )
-            is_verified_source_fallback = bool(
+            is_literal_source_fallback = bool(
                 generated.get("_source_fallback")
                 and optimized_text.strip()
                 and optimized_text.strip() in source_text
             )
-            if is_verified_source_fallback:
-                matter_errors = []
-                source_preservations.append({
-                    "matter_id": canonical.matter_id,
-                    "errors": generated.get("_grounding_repair", []),
-                })
+            if is_literal_source_fallback:
+                # Literal provenance alone is insufficient: a D2/E2 answer can
+                # omit a longer canonical D1/E1 client identity. Recheck the
+                # deterministic matter contract before accepting the fallback.
+                matter_errors = validate_optimized_matter_text(
+                    canonical, optimized_text, source_text
+                )
+                if not matter_errors:
+                    source_preservations.append({
+                        "matter_id": canonical.matter_id,
+                        "errors": generated.get("_grounding_repair", []),
+                    })
             else:
                 matter_errors = validate_optimized_matter_text(
                     canonical, optimized_text, source_text
@@ -3459,13 +3494,14 @@ def artifact_validation_node(state: AgentState) -> Dict:
                     )
                 )
             if matter_errors:
-                # Fail safe per matter: preserve the original summary only when it
-                # is a literal source substring; otherwise preserve the full span.
+                # Preserve the shortest literal candidate that also retains the
+                # complete canonical matter contract. A shortened source summary
+                # cannot override a longer D1/E1 client identity.
                 original_summary = str(generated.get("summary") or "").strip()
-                fallback = (
-                    original_summary
-                    if original_summary and original_summary in source_text
-                    else source_text
+                fallback, repaired_errors = select_verified_source_preservation(
+                    canonical,
+                    original_summary,
+                    source_text,
                 )
                 generated["optimized_text"] = fallback
                 generated["_source_fallback"] = True
@@ -3481,12 +3517,6 @@ def artifact_validation_node(state: AgentState) -> Dict:
                 # Exact-source preservation is a safe terminal state and must
                 # not be mislabeled as a failed rollback. Only a repair that is
                 # still invalid is allowed to block the release.
-                repaired_errors = validate_optimized_matter_text(
-                    canonical, fallback, source_text
-                )
-                repaired_errors.extend(
-                    validate_evidence_quotes(fallback, [], source_text)
-                )
                 if repaired_errors:
                     unresolved_grounding_failures.append(
                         {
