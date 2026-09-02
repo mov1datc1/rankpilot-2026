@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
 from core.state import AgentState
+from utils.evidence_validation import classify_matter_cross_border
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -165,10 +166,19 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     cross_border = strategic_context.get("cross_border_relevant", True) or inherently_cross_border
     if not cross_border:
         cross_border_patterns = [r'\bcross-border\b', r'\bcross border\b', r'\binternational reach\b']
-        # Only scan AI-generated text, not form field headers
-        ai_text = (state.get("enhanced_b7", "") or "") + "\n"
+        # Scan only generated B7 insertions. The original B10 is preserved
+        # verbatim and cannot become a violation merely because it contains a
+        # source-authored phrase.
+        enhanced_b7 = state.get("enhanced_b7", "") or ""
+        original_b10 = state.get("original_b10", "") or ""
+        generated_b7 = enhanced_b7
+        if original_b10 and original_b10 in generated_b7:
+            generated_b7 = generated_b7.replace(original_b10, "", 1)
+        ai_text = generated_b7 + "\n"
         for m in state.get("matters", []):
             if m.get("_source_fallback"):
+                continue
+            if classify_matter_cross_border(m) is True:
                 continue
             ai_text += (m.get("optimized_text", "") or "") + "\n"
         violations.extend(_scan_text_for_violations(ai_text, cross_border_patterns, "A4-CROSSBORDER"))

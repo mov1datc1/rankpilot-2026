@@ -365,6 +365,19 @@ class DocumentParser:
         ):
             reasons.append("Legacy RankPilot-generated lawyer table detected")
 
+        # Older cloned submissions did not yet carry the DOCX provenance
+        # keyword and may have been renamed by a user. Detect the distinctive
+        # generated C2 positioning formula only when multiple independent
+        # fragments occur together; the firm's original source does not contain
+        # this combination.
+        legacy_positioning_markers = (
+            "chambers and partners should recognize that market leadership is defined by",
+            "senior regulatory memory",
+            "active front-line partner leadership",
+        )
+        if sum(marker in source_lower for marker in legacy_positioning_markers) >= 2:
+            reasons.append("Legacy RankPilot-generated positioning detected")
+
         provenance_path = local_file_path or file_path
         if (
             provenance_path

@@ -74,7 +74,7 @@ def _assert_release_approved(result: dict) -> None:
         )
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.9")
+api = FastAPI(title="RankPilot AI Core", version="26.10")
 
 @api.get("/health")
 async def health_check():
@@ -84,7 +84,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.9",
+        "version": "26.10",
         "environment": "Ubuntu/Docker"
     }
 

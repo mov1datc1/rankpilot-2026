@@ -1865,6 +1865,8 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
     }
 # 3. ANALYSIS NODE (Now thesis-driven via Editorial Reasoning Engine)
 def analysis_node(state: AgentState) -> Dict:
+    from utils.evidence_validation import classify_matter_cross_border
+
     llm = get_model()
     
     # 1. Recuperar contexto para el RAG
@@ -1932,11 +1934,11 @@ def analysis_node(state: AgentState) -> Dict:
                     unique_sectors.add(sector)
             
             # Enhanced cross-border detection: check boolean, jurisdictions field, AND text content
-            is_cb = m.get("is_cross_border", False)
-            has_cb_jurisdictions = bool(m.get("cross_border_jurisdictions"))
+            explicit_cross_border = classify_matter_cross_border(m)
+            is_cb = explicit_cross_border is True
             
             # Text-based cross-border detection: count distinct country mentions
-            if not is_cb and not has_cb_jurisdictions:
+            if explicit_cross_border is None:
                 countries_found = set()
                 for country in COUNTRY_KEYWORDS:
                     if country in all_text:
@@ -1945,7 +1947,7 @@ def analysis_node(state: AgentState) -> Dict:
                     is_cb = True
                     m["is_cross_border"] = True  # Upgrade the detection
             
-            if is_cb or has_cb_jurisdictions:
+            if is_cb:
                 cross_border_count += 1
                 cross_border_matters.append(client or title)
             
@@ -2982,6 +2984,7 @@ def optimization_node(state: AgentState) -> Dict:
             # an otherwise valid multi-matter submission fail as a whole.
             from core.contracts import MatterRecord
             from utils.evidence_validation import (
+                classify_matter_cross_border,
                 select_verified_source_preservation,
                 validate_evidence_quotes,
             )
@@ -2990,6 +2993,14 @@ def optimization_node(state: AgentState) -> Dict:
                 evidence_quotes,
                 exact_source,
             )
+            if (
+                not cross_border_relevant
+                and classify_matter_cross_border(matter) is not True
+                and re.search(r"\b(?:cross-border|cross border|international reach)\b", optimized_text, re.I)
+            ):
+                quote_errors.append(
+                    "Generated matter added cross-border framing without an affirmative source answer"
+                )
             if quote_errors and exact_source:
                 print(
                     f"  [SOURCE PRESERVATION] Matter {matter_idx + 1}: "

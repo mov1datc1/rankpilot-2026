@@ -2,7 +2,7 @@
 
 from collections import Counter
 import re
-from typing import Iterable, List, Sequence
+from typing import Any, Iterable, List, Mapping, Optional, Sequence
 
 from core.contracts import (
     CanonicalSubmission,
@@ -120,6 +120,43 @@ def validate_canonical_submission(submission: CanonicalSubmission) -> List[str]:
     evidence_ids = [span.span_id for span in submission.source_spans]
     errors.extend(validate_claim_grounding(submission.source_claims, evidence_ids))
     return errors
+
+
+def classify_matter_cross_border(matter: Mapping[str, Any]) -> Optional[bool]:
+    """Return explicit source cross-border status, preserving ``False``.
+
+    Chambers forms commonly store the answer ``No`` in the jurisdictions field.
+    Treating that non-empty string as truthy previously turned domestic matters
+    into cross-border evidence. ``None`` means that the source did not answer;
+    callers may then use a conservative secondary inference if appropriate.
+    """
+
+    negative = re.compile(
+        r"^(?:no\b.*|none\b.*|false\b.*|0\b.*|n\s*/?\s*a\b.*|"
+        r"not applicable\b.*|not stated\b.*|not (?:a )?cross[- ]border\b.*|"
+        r"domestic(?:\s+only)?\b.*)$",
+        re.IGNORECASE,
+    )
+    positive = re.compile(r"^(?:yes|true|y)\b", re.IGNORECASE)
+    classifications: List[bool] = []
+    for key in ("is_cross_border", "cross_border_jurisdictions"):
+        value = matter.get(key)
+        if isinstance(value, bool):
+            classifications.append(value)
+            continue
+        normalized = str(value or "").strip()
+        if not normalized:
+            continue
+        if negative.match(normalized):
+            classifications.append(False)
+        elif positive.match(normalized) or normalized:
+            classifications.append(True)
+
+    if True in classifications:
+        return True
+    if False in classifications:
+        return False
+    return None
 
 
 def validate_optimized_matter_text(

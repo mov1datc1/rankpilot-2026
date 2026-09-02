@@ -40,6 +40,22 @@ export function getPipelineErrorPresentation(error: unknown): PipelineErrorPrese
   const code = String(raw.code || '').toUpperCase();
   const details = collectDetailStrings([raw.details, raw.message]).join(' ').toLowerCase();
   const matterNumbers = extractMatterNumbers(raw);
+  const isGeneratedDeliverable = (
+    details.includes('rankpilot-generated')
+    || details.includes('generated positioning detected')
+    || details.includes('generated output filename detected')
+  );
+
+  if (isGeneratedDeliverable) {
+    return {
+      kind: 'DOCUMENT_REVIEW_REQUIRED',
+      title: 'Please upload the original source document',
+      message: 'This file appears to be a previously generated RankPilot deliverable. Reprocessing a generated submission can duplicate edits and weaken source accuracy, so RankPilot stopped before starting the analysis.',
+      nextStep: 'Upload the original Chambers submission completed by the firm, before any RankPilot optimization. You do not need to delete this report.',
+      reference: 'RP-SOURCE-02',
+      canRetry: false,
+    };
+  }
   const isDocumentReview = (
     code === 'PRE_FLIGHT_FAILED'
     || code === 'SOURCE_VALIDATION_FAILED'

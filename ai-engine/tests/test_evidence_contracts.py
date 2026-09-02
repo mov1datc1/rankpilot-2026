@@ -22,6 +22,7 @@ from utils.evidence_validation import (  # noqa: E402
     validate_optimized_matter_text,
     validate_evidence_quotes,
     select_verified_source_preservation,
+    classify_matter_cross_border,
 )
 from utils.doc_parser import DocumentParser  # noqa: E402
 from utils.objective_alignment import (  # noqa: E402
@@ -46,6 +47,7 @@ from agents.nodes import (  # noqa: E402
     safe_json_loads,
     sanitize_client_audit_payload,
 )
+from agents.constitutional_validator import run_layer1_checks  # noqa: E402
 
 
 class _FakeMessage:
@@ -67,6 +69,16 @@ class _FakeMatterModelWithoutQuotes(_FakeMatterModel):
     def invoke(self, _messages):
         return type("Message", (), {
             "content": '{"optimized_text":"Client A instructed the team on the stated mandate."}'
+        })()
+
+
+class _FakeMatterModelWithUnsupportedCrossBorder(_FakeMatterModel):
+    def invoke(self, _messages):
+        return type("Message", (), {
+            "content": (
+                '{"optimized_text":"Client A handled a cross-border mandate.",'
+                '"evidence_quotes":["D4 Is this a cross-border matter?"]}'
+            )
         })()
 
 
@@ -129,6 +141,20 @@ Client B
             "/tmp/RankPilot_Submission_Form_Real_Estate.docx",
         )
         self.assertFalse(filename_result["passed"])
+
+    def test_renamed_legacy_generated_submission_is_rejected_by_content(self):
+        result = DocumentParser.detect_rankpilot_generated_source(
+            """SUBMISSION FORM
+Chambers and Partners should recognize that market leadership is defined by
+high-stakes regulatory risk management and complex institutional governance.
+The firm combines senior regulatory memory with active front-line partner leadership.
+""",
+            "/tmp/Original.docx",
+        )
+        self.assertFalse(result["passed"])
+        self.assertTrue(
+            any("generated positioning" in error for error in result["errors"])
+        )
 
     def test_matter_fields_are_recovered_from_exact_source_section(self):
         fields = DocumentParser.extract_matter_fields("""D1 Name of client
@@ -273,6 +299,50 @@ B8 Hires / Departures
         )
         self.assertEqual(preferred_summary, selected)
         self.assertEqual([], errors)
+
+    def test_explicit_no_is_not_cross_border_evidence(self):
+        self.assertIs(
+            False,
+            classify_matter_cross_border({
+                "is_cross_border": False,
+                "cross_border_jurisdictions": "No.",
+            }),
+        )
+        self.assertIs(
+            False,
+            classify_matter_cross_border({"is_cross_border": "False"}),
+        )
+        self.assertIs(
+            True,
+            classify_matter_cross_border({
+                "cross_border_jurisdictions": "Mexico and the United States",
+            }),
+        )
+        self.assertIsNone(classify_matter_cross_border({}))
+
+    def test_layer1_ignores_original_b10_cross_border_wording(self):
+        source_b10 = "The source describes a cross-border matter."
+        passed, violations = run_layer1_checks({
+            "original_b10": source_b10,
+            "enhanced_b7": source_b10,
+            "matters": [],
+            "strategic_context": {"cross_border_relevant": False},
+            "metadata": {"practice_area": "Real Estate"},
+        })
+        self.assertTrue(passed)
+        self.assertFalse(any("A4-CROSSBORDER" in item for item in violations))
+
+    def test_layer1_rejects_generated_b10_cross_border_insertion(self):
+        source_b10 = "The source describes domestic property litigation."
+        passed, violations = run_layer1_checks({
+            "original_b10": source_b10,
+            "enhanced_b7": "Generated cross-border positioning.\n\n" + source_b10,
+            "matters": [],
+            "strategic_context": {"cross_border_relevant": False},
+            "metadata": {"practice_area": "Real Estate"},
+        })
+        self.assertFalse(passed)
+        self.assertTrue(any("A4-CROSSBORDER" in item for item in violations))
 
     def test_publishable_matter_stops_before_confidential_register_heading(self):
         text = """Publishable Matter 10
@@ -684,6 +754,42 @@ Ongoing
             "Client A instructed the team on the stated mandate.",
             optimized["optimized_text"],
         )
+        self.assertTrue(optimized["_source_fallback"])
+        self.assertEqual("Source Preserved", optimized["status"])
+
+    def test_domestic_matter_rejects_generated_cross_border_framing(self):
+        summary = "Client A instructed the team on the stated domestic mandate."
+        source = (
+            "Publishable Matter 1\nD1 Name of client\nClient A\nD2 Summary\n"
+            f"{summary}\nD4 Is this a cross-border matter?\nNo"
+        )
+        state = {
+            "matters": [{
+                "title": "Matter 1",
+                "client": "Client A",
+                "summary": summary,
+                "cross_border_jurisdictions": "No",
+                "is_cross_border": False,
+            }],
+            "canonical_submission": {
+                "matters": [{"source_span_ids": ["matter-span-01"]}],
+            },
+            "evidence_ledger": {"matter-span-01": {"text": source}},
+            "strategic_context": {"cross_border_relevant": False},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 1}}},
+            "original_b10": "",
+            "original_c2": "",
+        }
+        with patch(
+            "agents.nodes.get_model",
+            return_value=_FakeMatterModelWithUnsupportedCrossBorder(),
+        ):
+            result = optimization_node(state)
+
+        optimized = result["matters"][0]
+        self.assertEqual(summary, optimized["optimized_text"])
         self.assertTrue(optimized["_source_fallback"])
         self.assertEqual("Source Preserved", optimized["status"])
 

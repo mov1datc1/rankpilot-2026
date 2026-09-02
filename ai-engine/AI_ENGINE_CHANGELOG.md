@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-01** (v26.9 — contract-complete DOCX preservation)
+> Last updated: **2026-09-02** (v26.10 — domestic evidence and source-reuse protection)
+
+## v26.10 — DOMESTIC EVIDENCE AND SOURCE-REUSE PROTECTION (2026-09-02)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Explicit domestic answers | Chambers values such as `No`, `No.`, `N/A` and `Not applicable` remain false instead of becoming cross-border evidence through string truthiness | `evidence_validation.py`, `nodes.py` |
+| Matter-level cross-border provenance | In a practice where cross-border positioning is not relevant, generated cross-border language without an affirmative matter answer triggers exact source preservation | `nodes.py` |
+| Source/generated separation | Constitutional A4 scans generated B10 insertions and generated matters, while original B10 and verified source fallbacks cannot create false positives | `constitutional_validator.py` |
+| Legacy output reuse | Renamed legacy RankPilot deliverables are detected from a high-specificity positioning signature before costly processing begins | `doc_parser.py` |
+| Customer recovery guidance | Source-reuse failures explain in English that the original firm-authored Chambers document is required and cannot be retried as-is | `pipeline-error-presentation.ts` |
+| Regression coverage | Domestic classification, generated/source B10 separation, optimizer fallback and renamed-output detection are exercised deterministically | `test_evidence_contracts.py` |
 
 ## v26.9 — CONTRACT-COMPLETE DOCX PRESERVATION (2026-09-01)
 
