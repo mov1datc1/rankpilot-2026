@@ -228,12 +228,14 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
         original = m.get("summary", "") or m.get("original_text", "")
         optimized = m.get("optimized_text", "")
         if original and optimized:
-            # Extract significant numbers from original
-            orig_numbers = set(re.findall(r'\b\d+(?:%|[- ]year|[- ]decade)', original, re.IGNORECASE))
-            for num in orig_numbers:
-                if num not in optimized:
+            # Extract significant numbers from original (e.g. 18%, 18-year, 18 years)
+            orig_matches = set(re.findall(r'\b(\d+)\s*(?:%|[- ]years?|[- ]decades?)', original, re.IGNORECASE))
+            opt_lower = optimized.lower()
+            for num_val in orig_matches:
+                # Check if the numeric digit exists flexibly in optimized prose (e.g. "18" in "18-year")
+                if not re.search(rf'\b{num_val}\b', opt_lower):
                     client = m.get("client", m.get("title", "?"))
-                    violations.append(f"[C6-EVIDENCE] Matter '{client}': evidence '{num}' lost in optimization")
+                    violations.append(f"[C6-EVIDENCE] Matter '{client}': evidence '{num_val}' lost in optimization")
     
     # --- C10: Matter count ---
     input_count = len(state.get("raw_matters", state.get("matters", [])))
