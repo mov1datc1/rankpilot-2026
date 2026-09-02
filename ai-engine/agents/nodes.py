@@ -4,8 +4,9 @@ import os
 import time
 import unicodedata
 from datetime import datetime
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 from difflib import SequenceMatcher
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from chains.extraction_chain import get_extraction_chain
 # Importaciones de LangChain y Core
@@ -31,6 +32,41 @@ from utils.model_response import coerce_message_text
 from utils.objective_alignment import repair_objective_conflicts
 
 load_dotenv()
+
+
+# ═══════════════════════════════════════════════════════════════
+# v26.13: STRUCTURED OUTPUT SCHEMAS
+# These Pydantic models replace the legacy json_object response format.
+# Using with_structured_output() eliminates the reasoning+JSON
+# concatenation problem that caused safe_json_loads Strategy 1 failures
+# on every matter optimization call.
+# ═══════════════════════════════════════════════════════════════
+
+class MatterOptimizationResult(BaseModel):
+    """Schema for matter optimization LLM response."""
+    optimized_text: str = Field(
+        description="Plain-text optimized matter prose, preserving all source facts"
+    )
+    evidence_quotes: List[str] = Field(
+        default_factory=list,
+        description="Verbatim source quotes backing each factual sentence"
+    )
+
+
+class GrammarPatch(BaseModel):
+    """A single grammar correction patch."""
+    original: str = Field(description="The exact text span to replace")
+    replacement: str = Field(description="The corrected text")
+    category: str = Field(description="Type of correction: spelling, punctuation, agreement, etc.")
+
+
+class GrammarPatches(BaseModel):
+    """Schema for B10 grammar patch LLM response."""
+    patches: List[GrammarPatch] = Field(
+        default_factory=list,
+        description="List of grammar corrections to apply"
+    )
+
 
 # --- UTILIDADES DE NODOS ---
 
@@ -2740,8 +2776,8 @@ def optimization_node(state: AgentState) -> Dict:
         # Skip directly to B7 enhancement with empty matters list
     
     llm = get_model()
-    # Require JSON output with 'optimized_text' key
-    llm = llm.bind(response_format={"type": "json_object"})
+    # v26.13: Structured output replaces json_object binding.
+    # The structured_llm is created per-matter invocation below.
     
     optimized_matters = []
     
@@ -2819,19 +2855,50 @@ def optimization_node(state: AgentState) -> Dict:
         exact_source = "\n".join(
             ledger.get(span_id, {}).get("text", "") for span_id in source_span_ids
         ).strip()
-        raw_text = exact_source or (
-            f"Title: {matter.get('title', '')}\n"
-            f"Client: {matter.get('client', '')}\n"
-            f"Value: {matter.get('matter_value') or matter.get('value', '')}\n"
-            f"Summary: {matter.get('summary', '')}\n"
-            f"Significance: {matter.get('significance', '')}\n"
-            f"Lead Partner: {matter.get('lead_partner', '')}"
-        )
+
+        # ═══ v26.13: CLEAN FIELD EXTRACTION ═══
+        # Parse the raw source span into individual D1-D8/E1-E8 fields.
+        # This strips headers, template questions, and pipe artifacts that
+        # contaminated the optimizer input and caused truncated LLM output.
+        from utils.doc_parser import DocumentParser
+        parsed_fields = DocumentParser.extract_matter_fields(exact_source) if exact_source else {}
+
+        # Build clean structured input from parsed fields (preferred) or matter dict (fallback)
+        clean_client = parsed_fields.get("client") or matter.get("client", "")
+        clean_summary = parsed_fields.get("summary") or matter.get("summary", "")
+        clean_value = parsed_fields.get("matter_value") or matter.get("matter_value") or matter.get("value", "")
+        clean_lead = parsed_fields.get("lead_partner") or matter.get("lead_partner", "")
+        clean_team = parsed_fields.get("team_members") or ""
+        clean_other_firms = parsed_fields.get("other_firms") or ""
+        clean_date = parsed_fields.get("completion_date") or ""
+        clean_cross_border = parsed_fields.get("cross_border_jurisdictions") or ""
+
+        # Assemble clean, structured input — no XML artifacts, no template questions
+        raw_parts = [f"Client: {clean_client}"]
+        if clean_summary:
+            raw_parts.append(f"Matter Description: {clean_summary}")
+        if clean_value and clean_value.strip().lower() not in ("n/a", "none", ""):
+            raw_parts.append(f"Value: {clean_value}")
+        if clean_cross_border and clean_cross_border.strip().lower() not in ("no", "no.", "n/a", "none", "not applicable", "not applicable.", ""):
+            raw_parts.append(f"Cross-border Jurisdictions: {clean_cross_border}")
+        if clean_lead:
+            raw_parts.append(f"Lead Partner: {clean_lead}")
+        if clean_team:
+            raw_parts.append(f"Team: {clean_team}")
+        if clean_other_firms:
+            raw_parts.append(f"Other Firms: {clean_other_firms}")
+        if clean_date:
+            raw_parts.append(f"Completion: {clean_date}")
+        raw_text = "\n".join(raw_parts)
+
+        if parsed_fields.get("summary"):
+            print(f"  [CLEAN INPUT v26.13] Matter {matter_idx+1}: {len(raw_text.split())}w clean vs {len(exact_source.split())}w raw")
+
         # This value must exist before any preservation fallback.  Previously it
         # was assigned later in the happy path, so a short model response raised
         # UnboundLocalError for every matter and silently discarded its evidence
         # quotes.  Use the exact canonical span as the safest fallback.
-        original_summary = str(matter.get('summary') or '').strip()
+        original_summary = str(matter.get('summary') or clean_summary or '').strip()
         
         # v21.0: UNIQUE_ANGLE detection — auto-detect differentiating evidence
         # ChatGPT 5.6 recommendation: Give each matter its unique angle so the LLM
@@ -2922,30 +2989,44 @@ def optimization_node(state: AgentState) -> Dict:
         ]
         
         try:
-            # v20.0: Try up to 3 times for opening diversity compliance
+            # v26.13: Structured output eliminates reasoning+JSON concatenation
             optimized_text = None
             evidence_quotes = []
             max_diversity_retries = 1
             
             for diversity_attempt in range(max_diversity_retries):
                 try:
-                    response = llm.invoke(messages)
-                    result = safe_json_loads(
-                        response.content,
-                        fallback={},
-                        expected_keys={"optimized_text", "evidence_quotes"},
+                    # Primary path: structured output with Pydantic schema
+                    structured_llm = llm.with_structured_output(
+                        MatterOptimizationResult, method="json_schema", strict=True
                     )
-                    if not isinstance(result, dict):
-                        raise ValueError("Matter optimizer returned a non-object JSON payload")
-                    optimized_text = result.get('optimized_text', matter.get('summary'))
-                    evidence_quotes = result.get('evidence_quotes', [])
+                    result = structured_llm.invoke(messages)
+                    optimized_text = result.optimized_text
+                    evidence_quotes = list(result.evidence_quotes)
                 except Exception as invoke_err:
                     err_str = str(invoke_err).lower()
                     if any(k in err_str for k in ['quota', '429', 'credit', 'rate_limit', 'insufficient', 'balance']):
                         print(f"  [FATAL LLM ERROR] OpenAI Quota/RateLimit error: {invoke_err} — aborting pipeline immediately")
                         raise invoke_err
-                    if diversity_attempt == max_diversity_retries - 1:
-                        raise invoke_err
+                    # v26.13: Fallback to legacy json_object + safe_json_loads
+                    print(f"  [STRUCTURED OUTPUT FALLBACK] {type(invoke_err).__name__}: {invoke_err}")
+                    try:
+                        fallback_llm = llm.bind(response_format={"type": "json_object"})
+                        response = fallback_llm.invoke(messages)
+                        fallback_result = safe_json_loads(
+                            response.content,
+                            fallback={},
+                            expected_keys={"optimized_text", "evidence_quotes"},
+                        )
+                        if isinstance(fallback_result, dict):
+                            optimized_text = fallback_result.get('optimized_text', matter.get('summary'))
+                            evidence_quotes = fallback_result.get('evidence_quotes', [])
+                    except Exception as fallback_err:
+                        fallback_err_str = str(fallback_err).lower()
+                        if any(k in fallback_err_str for k in ['quota', '429', 'credit', 'rate_limit', 'insufficient', 'balance']):
+                            raise fallback_err
+                        if diversity_attempt == max_diversity_retries - 1:
+                            raise invoke_err
                 
                 if not optimized_text:
                     break
@@ -3487,26 +3568,35 @@ def optimization_node(state: AgentState) -> Dict:
         try:
             import re as _gre
             b7_grammar_llm = get_model()
-            b7_grammar_llm = b7_grammar_llm.bind(response_format={"type": "json_object"})
-            b7_grammar_response = b7_grammar_llm.invoke([
+            grammar_messages = [
                 SystemMessage(content=(
-                    "You are a legal-directory copy editor. Return grammar edits ONLY as a JSON list of patches. "
+                    "You are a legal-directory copy editor. Return grammar edits ONLY as patches. "
                     "You must NOT: add, remove, or alter factual claims; alter client names, individual names, "
                     "firm names, dates, values, currencies, percentages, jurisdictions, regulators, legal instruments; "
                     "alter modal verbs (may, might, can, should, will, must); alter negation (no, not, never, without); "
                     "change certainty, scope, chronology, or legal meaning; improve style, tone, or concision. "
                     "Allowed changes: spelling, punctuation, subject-verb agreement, articles, prepositions, "
-                    "pluralization, capitalization, typography. "
-                    "Return JSON: {\"patches\": [{\"original\": \"...\", \"replacement\": \"...\", \"category\": \"...\"}]}"
+                    "pluralization, capitalization, typography."
                 )),
                 HumanMessage(content=f"Find grammar errors in this text and return patches:\n\n{enhanced_b7}")
-            ])
-            b7_grammar_result = safe_json_loads(
-                b7_grammar_response.content,
-                fallback={},
-                expected_keys={"patches"},
-            )
-            patches = b7_grammar_result.get("patches", [])
+            ]
+            # v26.13: Structured output for grammar patches
+            try:
+                structured_grammar = b7_grammar_llm.with_structured_output(
+                    GrammarPatches, method="json_schema", strict=True
+                )
+                grammar_result = structured_grammar.invoke(grammar_messages)
+                patches = [p.model_dump() for p in grammar_result.patches]
+            except Exception as grammar_struct_err:
+                print(f"  [GRAMMAR STRUCTURED FALLBACK] {grammar_struct_err}")
+                b7_grammar_llm_legacy = b7_grammar_llm.bind(response_format={"type": "json_object"})
+                b7_grammar_response = b7_grammar_llm_legacy.invoke(grammar_messages)
+                b7_grammar_result = safe_json_loads(
+                    b7_grammar_response.content,
+                    fallback={},
+                    expected_keys={"patches"},
+                )
+                patches = b7_grammar_result.get("patches", [])
             
             if patches:
                 # Protected patterns — patches touching these are REJECTED
