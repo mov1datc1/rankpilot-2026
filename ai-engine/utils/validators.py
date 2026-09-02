@@ -382,11 +382,11 @@ def validate_cross_border(text: str, is_relevant: bool) -> Tuple[str, List[str]]
 # ─────────────────────────────────────────────
 
 def validate_matter_enhancement(original_text: str, enhanced_text: str,
-                                 min_preservation: float = 0.95) -> Tuple[bool, dict]:
+                                 min_preservation: float = 0.70) -> Tuple[bool, dict]:
     """Verify that matter enhancement preserved factual content.
     
     Checks:
-    1. Word count: enhanced >= 95% of original
+    1. Word count: enhanced >= 70% of original (allows editorial compression)
     2. Key facts preserved (numbers, names, jurisdictions)
     
     Returns:

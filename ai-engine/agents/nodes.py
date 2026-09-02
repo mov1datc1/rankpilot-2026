@@ -3050,10 +3050,18 @@ def optimization_node(state: AgentState) -> Dict:
             optimized_lower = (optimized_text or '').lower()
             
             # Check client name preservation
-            client_name = matter.get('client', '').lower().strip()
-            if client_name and len(client_name) > 2 and client_name not in optimized_lower:
+            # v26.14: Confidential matters use a multi-sentence descriptor as
+            # "client name" (e.g. "A global leader in the manufacture of...").
+            # Skip verbatim check when the client field is a descriptor.
+            from utils.evidence_validation import is_confidential_descriptor
+            raw_client = matter.get('client', '')
+            client_name = raw_client.lower().strip()
+            is_client_descriptor = is_confidential_descriptor(raw_client)
+            if client_name and len(client_name) > 2 and not is_client_descriptor and client_name not in optimized_lower:
                 needs_reoptimization = True
                 print(f"  [PROBATIVE] Client name '{matter.get('client')}' missing from optimized text")
+            elif is_client_descriptor:
+                print(f"  [PROBATIVE v26.14] Skipped verbatim check for confidential descriptor ({len(client_name.split())}w)")
             
             # Check monetary value preservation
             value_str = matter.get('value', '').strip()
@@ -3082,7 +3090,12 @@ def optimization_node(state: AgentState) -> Dict:
             # The old regex counted "The", "Data", "Protection" as entities, inflating loss metrics
             from agents.entity_extraction import extract_true_entities, extract_entity_names
             client_name_for_entities = matter.get('client', '')
-            known_companies_set = {client_name_for_entities} if client_name_for_entities else set()
+            # v26.14: Don't inject multi-sentence descriptors as "company names" —
+            # they get counted as single entities that can never be found verbatim.
+            if client_name_for_entities and not is_confidential_descriptor(client_name_for_entities):
+                known_companies_set = {client_name_for_entities}
+            else:
+                known_companies_set = set()
             original_entities = extract_entity_names(raw_text, company_names=known_companies_set)
             if len(original_entities) > 1:  # v20.0: lowered threshold (true entities are fewer)
                 preserved = sum(1 for e in original_entities if e.lower() in optimized_lower)
