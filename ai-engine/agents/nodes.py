@@ -3245,6 +3245,7 @@ def optimization_node(state: AgentState) -> Dict:
         # B10 remains intact underneath it.
         from utils.objective_alignment import (
             build_source_backed_b10_positioning,
+            compress_oversized_source_b10,
             compose_b10_with_budget,
         )
         ledger = state.get("evidence_ledger", {})
@@ -3280,14 +3281,24 @@ def optimization_node(state: AgentState) -> Dict:
                 required_b7_sentences.append(
                     f"The department is led by {leadership}."
                 )
-        enhanced_b7 = compose_b10_with_budget(
+        budgeted_original_b10 = compress_oversized_source_b10(
             original_b10,
+            max_words=500,
+        )
+        if budgeted_original_b10 != original_b10:
+            print(
+                f"[B7 SOURCE BUDGET] Removed non-evidentiary boilerplate: "
+                f"{original_word_count}w → {len(budgeted_original_b10.split())}w"
+            )
+        enhanced_b7 = compose_b10_with_budget(
+            budgeted_original_b10,
             strategic_insert,
             required_b7_sentences,
             max_words=500,
         )
         print(
-            f"[B7 EVIDENCE MODE] Preserved {original_word_count} source words; "
+            f"[B7 EVIDENCE MODE] Budgeted {len(budgeted_original_b10.split())} "
+            f"of {original_word_count} source words; "
             f"source-backed strategic insertion={'yes' if strategic_insert else 'no'}"
         )
     elif original_b10:
@@ -3305,8 +3316,14 @@ def optimization_node(state: AgentState) -> Dict:
         except Exception as lg_err:
             print(f"[B7 v23.0] Warning: sanitize_submission_voice error: {lg_err}")
         if len(enhanced_b7.split()) > 500 and original_b10:
-            from utils.objective_alignment import compose_b10_with_budget
-            cleaned_original = strip_fillers(original_b10)
+            from utils.objective_alignment import (
+                compress_oversized_source_b10,
+                compose_b10_with_budget,
+            )
+            cleaned_original = compress_oversized_source_b10(
+                strip_fillers(original_b10),
+                max_words=500,
+            )
             try:
                 cleaned_original = sanitize_submission_voice(cleaned_original)
             except Exception:

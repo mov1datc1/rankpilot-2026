@@ -30,6 +30,7 @@ from utils.objective_alignment import (  # noqa: E402
     validate_thesis_objective,
     build_objective_aligned_thesis,
     build_source_backed_b10_positioning,
+    compress_oversized_source_b10,
     repair_objective_conflicts,
 )
 from utils.language_guard import apply_epistemic_filter  # noqa: E402
@@ -47,7 +48,10 @@ from agents.nodes import (  # noqa: E402
     safe_json_loads,
     sanitize_client_audit_payload,
 )
-from agents.constitutional_validator import run_layer1_checks  # noqa: E402
+from agents.constitutional_validator import (  # noqa: E402
+    constitutional_validation_node,
+    run_layer1_checks,
+)
 
 
 class _FakeMessage:
@@ -511,6 +515,43 @@ Content Type
         self.assertLessEqual(len(result.split()), 500)
         self.assertIn(original, result)
         self.assertIn("Pedro Ignacio Sosa Mendoza", result)
+
+    def test_oversized_b10_removes_only_known_marketing_boilerplate(self):
+        generic_intro = (
+            "We are a firm dedicated to the personalized provision of legal services in "
+            "administrative and tax matters, with a high degree of specialization. "
+            "Our vocation is customer service, seeking at all times to exceed any "
+            "expectations and solve problems in a comprehensive way. "
+            "We do this through experience, optimal preparation, persistence and "
+            "determination that distinguish us, taking as a guiding principle of our "
+            "actions the most solid ethical and moral principles. "
+            "We seek to build a long-term relationship of trust with our clients, "
+            "contributing with determination in the growth and overall vision development "
+            "of their projects, especially in the region of Guadalajara and throughout "
+            "the State of Jalisco, where most of our clients operate. "
+            "Your complete satisfaction is and will always be our goal, and our greatest "
+            "triumph. "
+        )
+        factual_tail = " ".join(f"evidence{i}" for i in range(462))
+        original = generic_intro + factual_tail
+        result = compress_oversized_source_b10(original)
+        self.assertLessEqual(len(result.split()), 500)
+        self.assertIn(factual_tail, result)
+        self.assertNotIn("personalized provision", result)
+        self.assertNotIn("long-term relationship of trust", result)
+
+    @patch(
+        "agents.constitutional_validator.run_layer1_checks",
+        return_value=(False, ["[B6-WORDCOUNT] B7 exceeds 500 words: 589w"]),
+    )
+    def test_b6_word_limit_failure_does_not_retry_all_matters(self, _layer1):
+        result = constitutional_validation_node({"constitutional_retry_count": 0})
+        self.assertEqual("blocked", result["constitutional_route"])
+        self.assertEqual(0, result["constitutional_retry_count"])
+        self.assertEqual(
+            "CONSTITUTIONAL_VALIDATION_FAILED",
+            result["release_verdict"]["code"],
+        )
 
     def test_c2_source_extraction_does_not_cross_into_matters(self):
         text = """C2 Feedback on our coverage | The guide should address the new regulatory category.

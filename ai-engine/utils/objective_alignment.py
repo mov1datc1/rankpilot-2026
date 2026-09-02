@@ -224,6 +224,43 @@ def build_source_backed_b10_positioning(
     return " ".join(sentences)
 
 
+def compress_oversized_source_b10(original_text: str, max_words: int = 500) -> str:
+    """Remove only high-confidence marketing boilerplate from an oversized B10.
+
+    Chambers caps B10 at 500 words. Source preservation must not turn that cap
+    into an impossible final gate, but factual sentences cannot be truncated.
+    These narrowly defined, non-evidentiary phrases contain no client, lawyer,
+    mandate, result, number or legal proposition. They are removed only when the
+    submitted answer already exceeds the limit; all remaining text stays exact.
+    """
+
+    source = str(original_text or "").strip()
+    if len(source.split()) <= max_words:
+        return source
+
+    low_signal_patterns = (
+        r"We are a firm dedicated to the personalized provision of legal services in "
+        r"administrative and tax matters, with a high degree of specialization\.\s*",
+        r"Our vocation is customer service, seeking at all times to exceed any "
+        r"expectations and solve problems in a comprehensive way\.\s*",
+        r"We do this through experience, optimal preparation, persistence and "
+        r"determination that distinguish us, taking as a guiding principle of our "
+        r"actions the most solid ethical and moral principles\.\s*",
+        r"We seek to build a long-term relationship of trust with our clients, "
+        r"contributing with determination in the growth and overall vision development "
+        r"of their projects, especially in the region of Guadalajara and throughout "
+        r"the State of Jalisco, where most of our clients operate\.\s*",
+        r"Your complete satisfaction is and will always be our goal, and our greatest "
+        r"triumph\.\s*",
+    )
+    compressed = source
+    for pattern in low_signal_patterns:
+        if len(compressed.split()) <= max_words:
+            break
+        compressed = re.sub(pattern, "", compressed, count=1, flags=re.IGNORECASE).strip()
+    return compressed
+
+
 def compose_b10_with_budget(
     original_text: str,
     strategic_text: str = "",

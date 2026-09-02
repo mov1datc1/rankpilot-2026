@@ -408,7 +408,10 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         l2_passed, l2_violations, retry_target, judge_verdict = run_layer2_checks(state, llm)
     else:
         # L1 failed — determine retry target from violation types
-        b7_violations = [v for v in l1_violations if any(x in v for x in ["B6-", "B7-", "A6-"])]
+        # A word-limit defect is deterministic and cannot be repaired by
+        # rerunning every matter. B7 partner/architecture wording remains
+        # retryable; B6 fails once if upstream source budgeting ever misses it.
+        b7_violations = [v for v in l1_violations if any(x in v for x in ["B7-", "A6-"])]
         matter_violations = [v for v in l1_violations if any(x in v for x in ["C1-", "C6-", "C10-"])]
         if matter_violations:
             retry_target = "optimization"

@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-02** (v26.10 — domestic evidence and source-reuse protection)
+> Last updated: **2026-09-02** (v26.11 — source-safe B10 budgeting)
+
+## v26.11 — SOURCE-SAFE B10 BUDGETING (2026-09-02)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Oversized source B10 | When the submitted B10 already exceeds Chambers' 500-word limit, remove only identified non-evidentiary marketing boilerplate before adding source-backed positioning | `objective_alignment.py`, `nodes.py` |
+| Evidence preservation | Client facts, lawyers, jurisdictions, results, numbers and legal propositions remain untouched; the real Ramos source composes from 588 source words to a 497-word final B7 | `objective_alignment.py`, `test_evidence_contracts.py` |
+| Deterministic limit failure | A B6 word-limit defect no longer triggers a second full optimization of every matter; upstream budgeting must resolve it or the run stops once | `constitutional_validator.py` |
+| Regression coverage | Oversized B10 compression proves the factual tail is retained while only known generic boilerplate is removed | `test_evidence_contracts.py` |
 
 ## v26.10 — DOMESTIC EVIDENCE AND SOURCE-REUSE PROTECTION (2026-09-02)
 
