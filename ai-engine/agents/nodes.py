@@ -3050,18 +3050,15 @@ def optimization_node(state: AgentState) -> Dict:
             optimized_lower = (optimized_text or '').lower()
             
             # Check client name preservation
-            # v26.14: Confidential matters use a multi-sentence descriptor as
-            # "client name" (e.g. "A global leader in the manufacture of...").
-            # Skip verbatim check when the client field is a descriptor.
-            from utils.evidence_validation import is_confidential_descriptor
+            # v26.14: Extract clean client name from D1 (excluding trailing descriptions).
+            from utils.evidence_validation import extract_clean_client_identity, is_confidential_descriptor
             raw_client = matter.get('client', '')
-            client_name = raw_client.lower().strip()
-            is_client_descriptor = is_confidential_descriptor(raw_client)
-            if client_name and len(client_name) > 2 and not is_client_descriptor and client_name not in optimized_lower:
+            clean_client = extract_clean_client_identity(raw_client)
+            if clean_client and len(clean_client) > 2 and clean_client.lower() not in optimized_lower:
                 needs_reoptimization = True
-                print(f"  [PROBATIVE] Client name '{matter.get('client')}' missing from optimized text")
-            elif is_client_descriptor:
-                print(f"  [PROBATIVE v26.14] Skipped verbatim check for confidential descriptor ({len(client_name.split())}w)")
+                print(f"  [PROBATIVE] Client name '{clean_client}' missing from optimized text")
+            elif not clean_client:
+                print(f"  [PROBATIVE v26.14] Skipped verbatim check for confidential descriptor ({len(raw_client.split())}w)")
             
             # Check monetary value preservation
             value_str = matter.get('value', '').strip()
@@ -3089,10 +3086,10 @@ def optimization_node(state: AgentState) -> Dict:
             # v20.0: Replace naive regex with extract_true_entities() — filters false positives
             # The old regex counted "The", "Data", "Protection" as entities, inflating loss metrics
             from agents.entity_extraction import extract_true_entities, extract_entity_names
-            client_name_for_entities = matter.get('client', '')
+            client_name_for_entities = extract_clean_client_identity(matter.get('client', ''))
             # v26.14: Don't inject multi-sentence descriptors as "company names" —
             # they get counted as single entities that can never be found verbatim.
-            if client_name_for_entities and not is_confidential_descriptor(client_name_for_entities):
+            if client_name_for_entities:
                 known_companies_set = {client_name_for_entities}
             else:
                 known_companies_set = set()

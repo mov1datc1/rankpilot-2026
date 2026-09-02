@@ -159,17 +159,47 @@ def classify_matter_cross_border(matter: Mapping[str, Any]) -> Optional[bool]:
     return None
 
 
+def extract_clean_client_identity(client: str) -> str:
+    """Extract clean company/client name from D1, removing trailing descriptions."""
+    if not client:
+        return ""
+    client = client.strip()
+    # Check if client field is a pure descriptive sentence/paragraph (confidential matter)
+    if re.match(r'^(?:a|an|un|una|it\s+is|this\s+is|leading|global|confidential|major|empresa|compañía)\b', client, re.I):
+        return ""
+
+    pre_clean = re.split(r'\.\s+(?:It|This|The|A|An|Empresa|Compañía|Individual|Wealthy)\b|\n|,?\s+located\s+in\b|(?<=\w)\s+is\s+a\b|(?<=\w)\s+headquartered\b|\.\s*\(wealthy\s+family', client, maxsplit=1, flags=re.I)[0].strip(' .,')
+
+    corp_patterns = [
+        r'\bS\.?\s*A\.?\s*P\.?I\.?\s*DE\s*C\.?V\.?',
+        r'\bS\.?\s*A\.?\s*B\.?\s*DE\s*C\.?V\.?',
+        r'\bS\.?\s*A\.?\s*DE\s*C\.?V\.?',
+        r'\bS\.?\s*DE\s*R\.?L\.?\s*DE\s*C\.?V\.?',
+        r'\bSOCIEDAD\s+ANÓNIMA\s+DE\s+CAPITAL\s+VARIABLE\b',
+        r'\bA\.C\.\b', r'\bA\.C\b',
+        r'\bS\.?\s*A\.(?!\s*(?:DE|de)\b)',
+        r'\bS\.?\s*R\.?L\.(?!\s*(?:DE|de)\b)',
+        r'\bS\.?A\.?P\.?I\.?',
+        r'\bLLC\b', r'\bINC\b', r'\bLTD\b', r'\bCORP\b', r'\bGMBH\b'
+    ]
+    last_end = 0
+    for pat in corp_patterns:
+        for m in re.finditer(pat, pre_clean, re.I):
+            if m.end() > last_end:
+                last_end = m.end()
+    if last_end > 0:
+        return pre_clean[:last_end].strip(' .,')
+
+    if re.match(r'^(?:it|this|the)\s+is\b', pre_clean, re.I):
+        return ""
+    return pre_clean
+
+
 def is_confidential_descriptor(client: str) -> bool:
     """Detect if the client field is a descriptive paragraph for a confidential matter rather than a real client name."""
     if not client:
-        return False
-    clean = client.strip().lower()
-    if clean.startswith(('a ', 'an ', 'un ', 'una ', 'leading ', 'global ', 'confidential ', 'major ', 'empresa ', 'compañía ')):
         return True
-    has_corp_suffix = bool(re.search(r'\b(?:s\.?a\.?|s\.?r\.?l\.?|s\.?\s*de\s*r\.?l\.?|llc|inc|ltd|corp|gmbh|s\.?l\.?)\b', clean, re.I))
-    if len(clean.split()) > 15 and not has_corp_suffix:
-        return True
-    return False
+    return not bool(extract_clean_client_identity(client))
 
 
 def validate_optimized_matter_text(
@@ -189,10 +219,9 @@ def validate_optimized_matter_text(
         "not provided",
         "n/a",
     }
-    # v26.14: Confidential matters have a multi-sentence descriptor instead
-    # of a company name. Don't require verbatim descriptor in optimized text.
-    if client and not client_is_unknown and not is_confidential_descriptor(client) and client.casefold() not in optimized_text.casefold():
-        errors.append(f"Client omitted from {matter.matter_id}: {matter.client}")
+    clean_client = extract_clean_client_identity(client)
+    if clean_client and not client_is_unknown and clean_client.casefold() not in optimized_text.casefold():
+        errors.append(f"Client omitted from {matter.matter_id}: {clean_client}")
 
     # New numbers are almost always invented metrics, dates, values, counts, or
     # deadlines. Formatting punctuation is normalized before comparison.
