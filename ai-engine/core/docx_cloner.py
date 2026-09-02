@@ -433,7 +433,7 @@ def clone_and_replace(
                 
                 print(f"[DOCX CLONER] Found B10 at table {table_idx}, row {row_idx}")
                 print(f"[DOCX CLONER]   Original B10: {len(original_text.split())} words")
-                print(f"[DOCX CLONER]   Enhanced B7:  {len(enhanced_b7.split())} words")
+                print(f"[DOCX CLONER]   Enhanced B10: {len(enhanced_b7.split())} words")
                 
                 _replace_cell_content(data_cell, enhanced_b7)
                 b7_replaced = True

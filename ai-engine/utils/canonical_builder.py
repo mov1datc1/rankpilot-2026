@@ -18,7 +18,7 @@ from core.contracts import (
     SourceSpan,
     StrategicObjective,
 )
-from utils.evidence_validation import reconcile_matter_register
+from utils.evidence_validation import classify_matter_cross_border, reconcile_matter_register
 from utils.doc_parser import DocumentParser
 
 
@@ -126,9 +126,12 @@ def reconcile_extracted_matters_to_source(
         grounded["_confidentiality_locked"] = is_confidential
         jurisdiction = str(source_fields.get("cross_border_jurisdictions") or "").strip()
         if jurisdiction:
-            grounded["is_cross_border"] = jurisdiction.casefold() not in {
-                "no", "none", "n/a", "not applicable", "not stated"
-            }
+            # The explicit D4/E4 source answer is authoritative.  Classify it
+            # in isolation so a stale model boolean cannot overrule values such
+            # as ``No.`` or ``Not applicable.`` through truthiness.
+            grounded["is_cross_border"] = classify_matter_cross_border({
+                "cross_border_jurisdictions": jurisdiction,
+            }) is True
         selected.append(grounded)
 
     dropped = [

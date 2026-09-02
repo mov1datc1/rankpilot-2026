@@ -129,6 +129,8 @@ class AgentState(TypedDict):
     # the Owner's Editorial Constitution before delivery.
     # =====================================================
     constitutional_validation: Dict    # Layer 1 + Layer 2 results
-    constitutional_retry_count: int    # How many retries so far (max 2)
-    constitutional_route: str          # "end" | "optimization" | "writing"
+    constitutional_retry_count: int    # How many targeted retries so far (max 1)
+    constitutional_route: str          # "analysis" | "optimization" | "blocked" | "writing"
+    constitutional_retry_scopes: List[str]
+    constitutional_retry_matter_ids: List[str]
     constitutional_violation_feedback: str  # Injected into retry prompts

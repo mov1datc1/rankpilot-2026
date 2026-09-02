@@ -2210,6 +2210,21 @@ WHAT TO DO INSTEAD:
 
 {analysis_prompt}"""
         print(f"[ANALYSIS NODE v17.0] Live benchmark context injected ({len(benchmark_summary)} chars)")
+
+    retry_scopes = {
+        str(scope).strip().lower()
+        for scope in state.get("constitutional_retry_scopes", [])
+        if str(scope).strip()
+    }
+    if state.get("constitutional_retry_count", 0) > 0 and "audit" in retry_scopes:
+        retry_feedback = str(state.get("constitutional_violation_feedback") or "").strip()
+        analysis_prompt = f"""TARGETED STRATEGIC AUDIT REVISION:
+Revise the Audit to resolve the final-review observations below. Preserve every
+source fact and do not change matter identities, classifications or evidence.
+{retry_feedback}
+
+{analysis_prompt}"""
+        print("[ANALYSIS NODE] Applying targeted final-review feedback to the Audit only")
     
     # v17.0: Force JSON output mode so the LLM returns parseable JSON
     llm_json = llm.bind(response_format={"type": "json_object"})
@@ -2253,7 +2268,11 @@ WHAT TO DO INSTEAD:
                 print(f"[ANALYSIS NODE] ⚠️ RETRY ALSO TRUNCATED — output too large for max_tokens")
         
         try:
-            res_json = safe_json_loads(response.content, fallback={"confidence_score": 50})
+            res_json = safe_json_loads(
+                response.content,
+                fallback={"confidence_score": 50},
+                expected_keys={"score", "score_rationale", "summary", "audit_letter"},
+            )
             
             # v17.1: Unwrap gpt-4o's common pattern of wrapping everything in {"analysis": {...}}
             # The validation code expects score, audit_letter, etc. at the top level
@@ -2380,6 +2399,35 @@ WHAT TO DO INSTEAD:
                             print(f"[SCORE DERIVED] Derived score={score} from {len(dim_scores)} editorial_confidence dimension averages")
             if score is None or (isinstance(score, (int, float)) and score == 0):
                 violations.append("MISSING_SCORE: No score or score is 0")
+
+            # A parsed JSON fragment is not a Strategic Audit. Responses API
+            # output may contain several JSON objects; reject a partial object
+            # here while the inexpensive analysis-only retry can repair it.
+            if not str(res_json.get("score_rationale") or "").strip():
+                violations.append("MISSING_SCORE_RATIONALE: Score has no evidence-based explanation")
+            if not str(res_json.get("summary") or "").strip():
+                violations.append("MISSING_AUDIT_SUMMARY: Strategic Audit summary is empty")
+            required_audit_fields = (
+                "narrative_strategy",
+                "the_state_of_play",
+                "the_unfair_advantage",
+                "the_reality_check",
+                "the_path_to_dominance",
+                "competitive_context",
+                "closing",
+            )
+            if not isinstance(audit_letter, dict):
+                violations.append("MISSING_AUDIT_LETTER: Strategic Audit body is absent")
+            else:
+                missing_audit_fields = [
+                    key for key in required_audit_fields
+                    if not audit_letter.get(key)
+                ]
+                if missing_audit_fields:
+                    violations.append(
+                        "INCOMPLETE_AUDIT_LETTER: Missing "
+                        + ", ".join(missing_audit_fields)
+                    )
             
             # CHECK 6: No "unranked status" bias (Rule #47)
             # Scan key text fields for forbidden phrases
@@ -2447,7 +2495,22 @@ WHAT TO DO INSTEAD:
     # v17.0 CALL 2: MATTER EVALUATIONS (separate LLM call)
     # Prevents JSON truncation by keeping each call under max_tokens
     # ═══════════════════════════════════════════════════════════════
-    if all_matters and len(all_matters) > 0:
+    existing_matter_evals = list(
+        (state.get("analysis", {}) or {}).get("matter_evaluations", []) or []
+    )
+    audit_retry = state.get("constitutional_retry_count", 0) > 0 and "audit" in retry_scopes
+    if all_matters and audit_retry and existing_matter_evals:
+        # Evaluations are grounded in the immutable source matters. A judge
+        # request to revise the Audit narrative must not spend another model
+        # call reevaluating all 33 matters.
+        res_json["matter_evaluations"] = existing_matter_evals
+        if isinstance(res_json.get("audit_letter"), dict):
+            res_json["audit_letter"]["matter_evaluations"] = existing_matter_evals
+        print(
+            f"[ANALYSIS NODE] Reusing {len(existing_matter_evals)} approved "
+            "matter evaluations during targeted Audit retry"
+        )
+    elif all_matters and len(all_matters) > 0:
         print(f"[ANALYSIS NODE] Call 2: Generating matter evaluations for {len(all_matters)} matters...")
         try:
             from agents.prompts import MATTER_EVALUATIONS_PROMPT
@@ -2482,7 +2545,11 @@ WHAT TO DO INSTEAD:
             if eval_finish == "length":
                 print(f"[ANALYSIS NODE] ⚠️ Call 2 ALSO TRUNCATED — matter evaluations may be incomplete")
             
-            eval_json = safe_json_loads(eval_response.content, fallback={})
+            eval_json = safe_json_loads(
+                eval_response.content,
+                fallback={},
+                expected_keys={"matter_evaluations"},
+            )
             
             # Merge matter evaluations into audit_letter
             matter_evals = eval_json.get("matter_evaluations", [])
@@ -2544,6 +2611,25 @@ def evidence_gap_analysis_node(state: AgentState) -> Dict:
 
     from core.schema import EvidenceGapAnalysisOutput
 
+    retry_scopes = {
+        str(scope).strip().lower()
+        for scope in state.get("constitutional_retry_scopes", [])
+        if str(scope).strip()
+    }
+    existing_payload = state.get("matter_evidence_gaps") or {}
+    if (
+        state.get("constitutional_retry_count", 0) > 0
+        and "audit" in retry_scopes
+        and existing_payload
+    ):
+        print("[EVIDENCE GAP ANALYSIS] Reusing source-grounded gap analysis on Audit retry")
+        return {
+            "matter_evidence_gaps": existing_payload,
+            "interrogation_questions": list(
+                dict.fromkeys(state.get("interrogation_questions", []))
+            ),
+        }
+
     canonical = state.get("canonical_submission", {})
     ledger = state.get("evidence_ledger", {})
     evidence_matters = []
@@ -2588,7 +2674,9 @@ If C2/competitive feedback is unsupported, provide one targeted C2 question rath
     print(f"[EVIDENCE GAP ANALYSIS] material gaps={len(payload.get('gaps', []))}")
     return {
         "matter_evidence_gaps": payload,
-        "interrogation_questions": list(state.get("interrogation_questions", [])) + questions,
+        "interrogation_questions": list(dict.fromkeys(
+            list(state.get("interrogation_questions", [])) + questions
+        )),
     }
 
 # 4. INTERROGATOR NODE
@@ -2619,8 +2707,22 @@ def optimization_node(state: AgentState) -> Dict:
     # v18.6: Detect constitutional validation retry
     constitutional_retry = state.get("constitutional_retry_count", 0)
     violation_feedback = state.get("constitutional_violation_feedback", "")
+    retry_scopes = {
+        str(scope).strip().lower()
+        for scope in state.get("constitutional_retry_scopes", [])
+        if str(scope).strip()
+    }
+    retry_matter_ids = {
+        str(matter_id).strip().casefold()
+        for matter_id in state.get("constitutional_retry_matter_ids", [])
+        if str(matter_id).strip()
+    }
+    targeted_retry = constitutional_retry > 0 and bool(retry_scopes)
     if constitutional_retry > 0:
-        print(f"--- OPTIMIZING MATTERS (CONSTITUTIONAL RETRY {constitutional_retry}/2) ---")
+        print(
+            f"--- TARGETED CONSTITUTIONAL RETRY {constitutional_retry}/1 "
+            f"(scopes={sorted(retry_scopes) or ['legacy-full']}) ---"
+        )
         print(f"  Violation feedback: {violation_feedback[:200]}...")
     else:
         print("--- OPTIMIZING MATTERS ---")
@@ -2699,6 +2801,20 @@ def optimization_node(state: AgentState) -> Dict:
         canonical_matters = state.get("canonical_submission", {}).get("matters", [])
         ledger = state.get("evidence_ledger", {})
         canonical_matter = canonical_matters[matter_idx] if matter_idx < len(canonical_matters) else {}
+        matter_identifiers = {
+            str(canonical_matter.get("matter_id") or "").casefold(),
+            str(canonical_matter.get("source_label") or "").casefold(),
+            str(matter.get("matter_id") or "").casefold(),
+            str(matter.get("source_label") or "").casefold(),
+        }
+        reuse_matter = targeted_retry and (
+            "matters" not in retry_scopes
+            or not retry_matter_ids
+            or not (matter_identifiers & retry_matter_ids)
+        )
+        if reuse_matter:
+            optimized_matters.append(dict(matter))
+            continue
         source_span_ids = canonical_matter.get("source_span_ids", [])
         exact_source = "\n".join(
             ledger.get(span_id, {}).get("text", "") for span_id in source_span_ids
@@ -3130,12 +3246,15 @@ def optimization_node(state: AgentState) -> Dict:
     # an expanded, strengthened version.
     # RULE: Output MUST be ≥100% of original word count — NEVER shorter.
     # ═══════════════════════════════════════════════════════════════
-    print("--- B7 ENHANCEMENT ---")
+    print("--- B10 ENHANCEMENT ---")
     original_b10 = state.get("original_b10", "")
     narrative_arch = state.get("narrative_architecture", {})
-    enhanced_b7 = ""
+    reuse_existing_b10 = targeted_retry and "b10" not in retry_scopes
+    enhanced_b7 = state.get("enhanced_b7", "") if reuse_existing_b10 else ""
     
-    if original_b10 and len(original_b10.split()) > 20:
+    if reuse_existing_b10:
+        print("[B10 ENHANCEMENT] Reusing approved B10; retry scope does not include B10")
+    elif original_b10 and len(original_b10.split()) > 20:
         b7_llm = get_model()
         b7_llm = b7_llm.bind(response_format={"type": "json_object"})
         
@@ -3247,6 +3366,7 @@ def optimization_node(state: AgentState) -> Dict:
             build_source_backed_b10_positioning,
             compress_oversized_source_b10,
             compose_b10_with_budget,
+            select_objective_aligned_b10_source,
         )
         ledger = state.get("evidence_ledger", {})
         source_universe = "\n\n".join(
@@ -3281,13 +3401,23 @@ def optimization_node(state: AgentState) -> Dict:
                 required_b7_sentences.append(
                     f"The department is led by {leadership}."
                 )
-        budgeted_original_b10 = compress_oversized_source_b10(
+        objective_aligned_b10 = select_objective_aligned_b10_source(
             original_b10,
+            objective.get("practice_area") or strategic_ctx.get("practice_area", ""),
+            max_words=420,
+        )
+        if objective_aligned_b10 != original_b10:
+            print(
+                f"[B10 OBJECTIVE ALIGNMENT] Removed off-practice source prose: "
+                f"{original_word_count}w → {len(objective_aligned_b10.split())}w"
+            )
+        budgeted_original_b10 = compress_oversized_source_b10(
+            objective_aligned_b10,
             max_words=500,
         )
-        if budgeted_original_b10 != original_b10:
+        if budgeted_original_b10 != objective_aligned_b10:
             print(
-                f"[B7 SOURCE BUDGET] Removed non-evidentiary boilerplate: "
+                f"[B10 SOURCE BUDGET] Removed non-evidentiary boilerplate: "
                 f"{original_word_count}w → {len(budgeted_original_b10.split())}w"
             )
         enhanced_b7 = compose_b10_with_budget(
@@ -3297,31 +3427,38 @@ def optimization_node(state: AgentState) -> Dict:
             max_words=500,
         )
         print(
-            f"[B7 EVIDENCE MODE] Budgeted {len(budgeted_original_b10.split())} "
+            f"[B10 EVIDENCE MODE] Budgeted {len(budgeted_original_b10.split())} "
             f"of {original_word_count} source words; "
             f"source-backed strategic insertion={'yes' if strategic_insert else 'no'}"
         )
     elif original_b10:
-        print(f"[B7 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
+        print(f"[B10 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
         enhanced_b7 = original_b10
     else:
-        print("[B7 ENHANCEMENT] No original B10 found — B7 will use narrative_architecture fallback")
+        print("[B10 ENHANCEMENT] No original B10 found — using narrative_architecture fallback")
         
-    # v17.5 + v23.0: Apply centralized filler strip and submission voice sanitizer to B7
+    # Apply centralized filler strip and submission voice sanitizer to B10.
     if enhanced_b7:
         enhanced_b7 = strip_fillers(enhanced_b7)
         try:
             from utils.language_guard import sanitize_submission_voice
             enhanced_b7 = sanitize_submission_voice(enhanced_b7)
         except Exception as lg_err:
-            print(f"[B7 v23.0] Warning: sanitize_submission_voice error: {lg_err}")
+            print(f"[B10] Warning: sanitize_submission_voice error: {lg_err}")
         if len(enhanced_b7.split()) > 500 and original_b10:
             from utils.objective_alignment import (
                 compress_oversized_source_b10,
                 compose_b10_with_budget,
+                select_objective_aligned_b10_source,
+            )
+            cleaned_original = select_objective_aligned_b10_source(
+                strip_fillers(original_b10),
+                state.get("strategic_objective", {}).get("practice_area")
+                or strategic_ctx.get("practice_area", ""),
+                max_words=420,
             )
             cleaned_original = compress_oversized_source_b10(
-                strip_fillers(original_b10),
+                cleaned_original,
                 max_words=500,
             )
             try:
@@ -3337,7 +3474,7 @@ def optimization_node(state: AgentState) -> Dict:
     
     if enhanced_b7:
         b7_words_count = len(enhanced_b7.split())
-        print(f"[B7 v23.0] Final enhanced B7 word count: {b7_words_count} words")
+        print(f"[B10] Final enhanced B10 word count: {b7_words_count} words")
     
     # ═══════════════════════════════════════════════════════════════
     # v21.1: GRAMMAR PATCH CHECK FOR B7 (upgraded from v21.0.2)
@@ -3345,8 +3482,8 @@ def optimization_node(state: AgentState) -> Dict:
     # specific PATCHES only (original_span → replacement_span).
     # Protected patterns (numbers, currency, names) cannot be modified.
     # ═══════════════════════════════════════════════════════════════
-    if enhanced_b7 and len(enhanced_b7.split()) > 20:
-        print("--- B7 GRAMMAR PATCH CHECK ---")
+    if enhanced_b7 and len(enhanced_b7.split()) > 20 and not reuse_existing_b10:
+        print("--- B10 GRAMMAR PATCH CHECK ---")
         try:
             import re as _gre
             b7_grammar_llm = get_model()
@@ -3364,7 +3501,11 @@ def optimization_node(state: AgentState) -> Dict:
                 )),
                 HumanMessage(content=f"Find grammar errors in this text and return patches:\n\n{enhanced_b7}")
             ])
-            b7_grammar_result = safe_json_loads(b7_grammar_response.content, fallback={})
+            b7_grammar_result = safe_json_loads(
+                b7_grammar_response.content,
+                fallback={},
+                expected_keys={"patches"},
+            )
             patches = b7_grammar_result.get("patches", [])
             
             if patches:
@@ -3399,11 +3540,11 @@ def optimization_node(state: AgentState) -> Dict:
                         applied += 1
                         print(f"  [GRAMMAR PATCH] '{orig}' → '{repl}'")
                 
-                print(f"[B7 GRAMMAR] ✅ Applied {applied}/{len(patches)} safe patches")
+                print(f"[B10 GRAMMAR] ✅ Applied {applied}/{len(patches)} safe patches")
             else:
-                print("[B7 GRAMMAR] ✅ No grammar issues found")
+                print("[B10 GRAMMAR] ✅ No grammar issues found")
         except Exception as b7_gram_err:
-            print(f"[B7 GRAMMAR] Warning: {b7_gram_err} — keeping current B7")
+            print(f"[B10 GRAMMAR] Warning: {b7_gram_err} — keeping current B10")
     
     # ═══════════════════════════════════════════════════════════════
     # v21.0.2: MATTER COUNT ENFORCEMENT (Fix #4 from owner feedback)
@@ -3580,6 +3721,13 @@ def artifact_validation_node(state: AgentState) -> Dict:
             )
         ]
         question = ""
+        proposition = ""
+        if supporting:
+            examples = ", ".join(supporting[:3])
+            proposition = (
+                f"{lawyer_name} is identified as lead lawyer on {len(supporting)} "
+                f"submitted matter{'s' if len(supporting) != 1 else ''}, including {examples}."
+            )
         if not supporting:
             question = (
                 f"Which submitted matters best evidence {lawyer_name}'s personal leadership, "
@@ -3593,6 +3741,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
             "is_ranked": lawyer.get("is_ranked"),
             "supporting_matter_ids": supporting,
             "defensible_on_submitted_evidence": bool(supporting),
+            "evidence_backed_proposition": proposition,
             "follow_up_question": question,
         })
     artifact_validation = {
@@ -3614,6 +3763,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
             "artifact_type": "optimized_submission",
             "matter_count": len(generated_matters),
             "matters": generated_matters,
+            "enhanced_b10": state.get("enhanced_b7", ""),
             "enhanced_b7": state.get("enhanced_b7", ""),
             "enhanced_c2": state.get("enhanced_c2", ""),
         },

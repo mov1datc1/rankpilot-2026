@@ -3,7 +3,20 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-02** (v26.11 — source-safe B10 budgeting)
+> Last updated: **2026-09-02** (v26.12 — targeted final-review repair)
+
+## v26.12 — TARGETED FINAL-REVIEW REPAIR (2026-09-02)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Component-scoped retry | The release judge classifies each failed check as Audit, B10, matter quality, lawyers, provenance, register or deterministic contract; only retryable components are routed back | `constitutional_validator.py`, `graph.py`, `state.py` |
+| Matter-scoped retry | Matter quality retries require exact canonical matter IDs and reuse every unaffected matter; a missing ID blocks safely instead of rerunning the full portfolio | `constitutional_validator.py`, `nodes.py` |
+| Audit resource reuse | An Audit-only repair reuses approved matter evaluations, evidence-gap analysis, matters and B10, eliminating the second 33-matter pass | `nodes.py` |
+| Domestic source authority | Explicit D4/E4 answers such as `No.` override stale model booleans and cannot be released as cross-border matters | `canonical_builder.py` |
+| Clean source preservation | Source fallbacks remove Chambers template questions, collapse duplicated content controls, repair concatenated paragraphs and compose canonical client identity with the cleaned source summary | `doc_parser.py`, `evidence_validation.py` |
+| Real Estate B10 alignment | Mixed-practice source prose is narrowed to source-verbatim Real Estate evidence before source-backed positioning is composed within the 500-word budget | `objective_alignment.py`, `nodes.py` |
+| Complete Strategic Audit | JSON selection requires the complete Audit object, score rationale and every substantive section; lawyer accountability includes a matter-ID-backed proposition | `prompts.py`, `nodes.py` |
+| Regression and real-source validation | 87 automated tests pass; the 33-matter Ramos source verifies clean Matters 10/11/20 and domestic Matters 19/20 | `test_evidence_contracts.py`, `test_release_gate.py` |
 
 ## v26.11 — SOURCE-SAFE B10 BUDGETING (2026-09-02)
 

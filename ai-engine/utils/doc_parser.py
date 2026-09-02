@@ -27,6 +27,19 @@ class DocumentParser:
                 unit = candidate[: len(candidate) // repetitions]
                 if unit and unit * repetitions == candidate:
                     return unit.strip()
+        # Some content controls place a newline between otherwise identical
+        # copies. Compare whitespace-normalized halves while returning the
+        # first source copy verbatim.
+        first_line = candidate.splitlines()[0] if candidate.splitlines() else candidate
+        prefix = first_line[: min(120, len(first_line))]
+        if prefix:
+            next_copy = candidate.find(prefix, len(prefix))
+            if next_copy > 0:
+                first = candidate[:next_copy].strip()
+                second = candidate[next_copy:].strip()
+                normalize = lambda text: re.sub(r"\s+", " ", text).strip()
+                if first and normalize(first) == normalize(second):
+                    return first
         return candidate
 
     @staticmethod
@@ -406,6 +419,14 @@ class DocumentParser:
         for match in field_pattern.finditer(normalized):
             value = match.group(2).strip()
             value = re.sub(r"(?im)^\s*IMPORTANT:.*$", "", value).strip()
+            value = re.sub(
+                r"(?is)Legal/Technical Complexities of Various Types\?\s*"
+                r"Tight deadlines\?\s*A multitude of parties involved in the case "
+                r"across different jurisdictions\?\s*Does your client hold a dominant "
+                r"position in the market\?\s*",
+                "",
+                value,
+            ).strip()
             instruction_patterns = (
                 r"(?i)^this will be publishable\b.*$",
                 r"(?i)^if you cannot reveal the client name\b.*$",
@@ -420,7 +441,23 @@ class DocumentParser:
                 and not any(re.match(pattern, line.strip()) for pattern in instruction_patterns)
             ]
             value = "\n".join(clean_lines).strip()
-            fields[int(match.group(1))] = value
+            value = DocumentParser._collapse_exact_repetition(value)
+            field_number = int(match.group(1))
+            if field_number in {1, 2}:
+                # Word content controls sometimes concatenate adjacent client
+                # or summary paragraphs as ``sentence.Next``. Shield corporate
+                # abbreviations while restoring sentence spacing. The result
+                # remains a deletion/spacing-only derivative of source text.
+                protected_abbreviations = []
+                abbreviation_pattern = re.compile(r"\b(?:[A-Z]\.){2,}")
+                def shield_abbreviation(abbreviation_match):
+                    protected_abbreviations.append(abbreviation_match.group(0))
+                    return f"<RP_ABBR_{len(protected_abbreviations) - 1}>"
+                value = abbreviation_pattern.sub(shield_abbreviation, value)
+                value = re.sub(r"(?<=[.!?])(?=[A-ZÁÉÍÓÚ])", " ", value)
+                for index, abbreviation in enumerate(protected_abbreviations):
+                    value = value.replace(f"<RP_ABBR_{index}>", abbreviation)
+            fields[field_number] = value
         result = {
             "client": fields.get(1, ""),
             "summary": fields.get(2, ""),

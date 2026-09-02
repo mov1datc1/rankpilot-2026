@@ -8,7 +8,11 @@ from unittest.mock import patch
 AI_ENGINE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(AI_ENGINE))
 
-from agents.constitutional_validator import run_layer1_checks, run_layer2_checks  # noqa: E402
+from agents.constitutional_validator import (  # noqa: E402
+    build_judge_retry_plan,
+    run_layer1_checks,
+    run_layer2_checks,
+)
 from utils.model_factory import get_model_profile, get_model_settings  # noqa: E402
 
 
@@ -52,6 +56,76 @@ class ReleaseGateTests(unittest.TestCase):
         })
         self.assertFalse(passed)
         self.assertTrue(any("ARTIFACT-ROLLBACK" in item for item in violations))
+
+    def test_audit_and_b10_retry_does_not_request_matter_optimization(self):
+        route, scopes, matter_ids = build_judge_retry_plan({
+            "passed": False,
+            "retryable": True,
+            "checks": [
+                {
+                    "check_id": "b10_strategy",
+                    "component": "b10_strategy",
+                    "affected_matter_ids": [],
+                    "passed": False,
+                },
+                {
+                    "check_id": "strategic_audit",
+                    "component": "strategic_audit",
+                    "affected_matter_ids": [],
+                    "passed": False,
+                },
+                {
+                    "check_id": "matter_quality",
+                    "component": "matter_quality",
+                    "affected_matter_ids": [],
+                    "passed": True,
+                },
+            ],
+        })
+        self.assertEqual("analysis", route)
+        self.assertEqual(["audit", "b10"], scopes)
+        self.assertEqual([], matter_ids)
+
+    def test_matter_retry_targets_only_reported_matter_ids(self):
+        route, scopes, matter_ids = build_judge_retry_plan({
+            "passed": False,
+            "retryable": True,
+            "checks": [{
+                "check_id": "matter_quality",
+                "component": "matter_quality",
+                "affected_matter_ids": ["matter-10", "matter-11"],
+                "passed": False,
+            }],
+        })
+        self.assertEqual("optimization", route)
+        self.assertEqual(["matters"], scopes)
+        self.assertEqual(["matter-10", "matter-11"], matter_ids)
+
+    def test_matter_quality_without_ids_is_not_allowed_to_rerun_portfolio(self):
+        route, scopes, matter_ids = build_judge_retry_plan({
+            "passed": False,
+            "retryable": True,
+            "checks": [{
+                "check_id": "matter_quality",
+                "component": "matter_quality",
+                "affected_matter_ids": [],
+                "passed": False,
+            }],
+        })
+        self.assertEqual(("none", [], []), (route, scopes, matter_ids))
+
+    def test_field_provenance_failure_is_never_retried(self):
+        route, scopes, matter_ids = build_judge_retry_plan({
+            "passed": False,
+            "retryable": True,
+            "checks": [{
+                "check_id": "field_provenance",
+                "component": "field_provenance",
+                "affected_matter_ids": ["matter-19"],
+                "passed": False,
+            }],
+        })
+        self.assertEqual(("none", [], []), (route, scopes, matter_ids))
 
 
 if __name__ == "__main__":

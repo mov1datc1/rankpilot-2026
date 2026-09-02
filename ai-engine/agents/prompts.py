@@ -854,8 +854,9 @@ This report should be as deep and actionable as a senior editorial briefing.
 
 1. "risk_level": "Low" | "Moderate" | "High"
 2. "score": integer 0-100 based on how well the evidence meets the realistic target
-3. "summary": A 3-sentence editorial assessment. What is the firm's position, what is the gap, and what must change? Written in Chambers editorial voice.
-4. "narrative_strategy": An array of exactly 3 narrative TRANSFORMATIONS showing BEFORE -> AFTER.
+3. "score_rationale": 2-3 sentences explaining the score through specific submitted evidence, strengths and unresolved evidence gaps. Never explain it through current-band status alone.
+4. "summary": A 3-sentence editorial assessment. What is the firm's position, what is the gap, and what must change? Written in Chambers editorial voice.
+5. "narrative_strategy": An array of exactly 3 narrative TRANSFORMATIONS showing BEFORE -> AFTER.
    Each must follow this format: "Current narrative: '[what the submission currently communicates]' -> Target narrative: '[what the submission SHOULD communicate]'"
    Example: "Current narrative: 'We advise Audi.' -> Target narrative: 'We are institutional strategic counsel to the automotive industry, as demonstrated by our multi-decade advisory to global manufacturers across [X] jurisdictions.'"
    This is NOT a list of recommendations. It is a concrete REWRITING PLAN that shows the transformation needed.
@@ -963,6 +964,7 @@ NOTE: matter_evaluations are handled in a SEPARATE call. Do NOT include them her
 {{{{
   "risk_level": "string",
   "score": "integer",
+  "score_rationale": "string",
   "summary": "string",
   "audit_letter": {{{{
     "narrative_strategy": ["string", "string", "string"],

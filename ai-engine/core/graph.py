@@ -225,8 +225,11 @@ def create_rankpilot_graph():
         route = state.get("constitutional_route", "blocked")
         retry_count = state.get("constitutional_retry_count", 0)
         
-        if route == "optimization" and retry_count <= 2:
-            print(f"[CONSTITUTIONAL GATE] Routing back to optimization (retry {retry_count}/2)")
+        if route == "analysis" and retry_count <= 1:
+            print(f"[CONSTITUTIONAL GATE] Routing back to analysis only (retry {retry_count}/1)")
+            return "analysis"
+        if route == "optimization" and retry_count <= 1:
+            print(f"[CONSTITUTIONAL GATE] Routing to targeted optimization (retry {retry_count}/1)")
             return "optimization"
         if route == "writing":
             print(f"[CONSTITUTIONAL GATE] Release approved; routing to writing")
@@ -238,6 +241,7 @@ def create_rankpilot_graph():
         "constitutional_validation",
         route_after_constitutional_validation,
         {
+            "analysis": "analysis",
             "optimization": "optimization",
             "writing": "writing",
             "blocked": END,

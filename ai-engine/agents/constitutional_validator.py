@@ -13,7 +13,7 @@ then blocks delivery. Judge or schema failures block immediately.
 
 import re
 import json
-from typing import Dict, List, Tuple
+from typing import Dict, List, Literal, Tuple
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
 from core.state import AgentState
@@ -198,14 +198,14 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     # --- A7: Filler words ---
     violations.extend(_scan_text_for_violations(client_facing_text, FILLER_VIOLATIONS, "A7-FILLER"))
     
-    # --- B6: B7 word count ---
+    # --- B6: B10 word count ---
     enhanced_b7 = state.get("enhanced_b7", "")
     if enhanced_b7:
         b7_wc = len(enhanced_b7.split())
         if b7_wc > 500:
-            violations.append(f"[B6-WORDCOUNT] B7 exceeds 500 words: {b7_wc}w")
+            violations.append(f"[B6-WORDCOUNT] B10 exceeds 500 words: {b7_wc}w")
     
-    # --- B7: Partner name in B7 ---
+    # --- B7: Partner name in B10 narrative ---
     if enhanced_b7:
         metadata = state.get("metadata", {})
         dept_info = metadata.get("department", {})
@@ -216,7 +216,7 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
                 # Check last name (most reliable match)
                 last_name = first_head.strip().split()[-1] if first_head.strip() else ""
                 if last_name and len(last_name) > 2 and last_name.lower() not in enhanced_b7.lower():
-                    violations.append(f"[B7-PARTNER] Lead partner '{first_head}' not found in B7 text")
+                    violations.append(f"[B7-PARTNER] Lead partner '{first_head}' not found in B10 text")
     
     # Matter length is evidence-conditioned. Grounding and proposition
     # preservation are enforced by the canonical artifact validator, not by a
@@ -285,11 +285,25 @@ packaging is validated separately after your editorial approval.
 Set retryable=true only when another optimization pass can correct wording.
 Identity, register, provenance, tool/schema and deterministic contract failures
 are not retryable. Never treat judge/tool/schema uncertainty as a pass.
+For every check, identify its component and list the canonical matter_id values
+that require revision. Use an empty list when the check is not matter-specific.
 """
 
 
 class JudgeCheck(BaseModel):
     check_id: str = Field(description="Stable concise check identifier")
+    component: Literal[
+        "register",
+        "field_provenance",
+        "lawyers",
+        "b10_strategy",
+        "matter_quality",
+        "strategic_audit",
+        "deterministic_contracts",
+    ]
+    affected_matter_ids: List[str] = Field(
+        description="Canonical matter_id values affected by this check; empty if not matter-specific"
+    )
     passed: bool
     reason: str
 
@@ -300,6 +314,48 @@ class FinalJudgeVerdict(BaseModel):
     summary: str
     violations: List[str]
     checks: List[JudgeCheck]
+
+
+def build_judge_retry_plan(verdict: Dict) -> Tuple[str, List[str], List[str]]:
+    """Route a retry only to the component that owns each failed check."""
+
+    if verdict.get("passed") or not verdict.get("retryable"):
+        return "none", [], []
+
+    scopes = set()
+    matter_ids = set()
+    non_retryable_components = {
+        "register", "field_provenance", "deterministic_contracts"
+    }
+    missing_matter_targets = False
+    for check in verdict.get("checks") or []:
+        if check.get("passed"):
+            continue
+        component = str(check.get("component") or check.get("check_id") or "").casefold()
+        if any(name in component for name in non_retryable_components):
+            return "none", [], []
+        if "strategic_audit" in component or "lawyer" in component:
+            scopes.add("audit")
+        elif "b10" in component:
+            scopes.add("b10")
+        elif "matter" in component:
+            scopes.add("matters")
+            check_matter_ids = {
+                str(value).strip().casefold()
+                for value in check.get("affected_matter_ids") or []
+                if str(value).strip()
+            }
+            if not check_matter_ids:
+                missing_matter_targets = True
+            matter_ids.update(check_matter_ids)
+
+    # Never turn an imprecise matter-quality observation into a full portfolio
+    # rerun. The judge must identify exact canonical IDs before matter prose is
+    # sent back to the optimizer.
+    if not scopes or missing_matter_targets:
+        return "none", [], []
+    route = "analysis" if "audit" in scopes else "optimization"
+    return route, sorted(scopes), sorted(matter_ids)
 
 
 def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str, Dict]:
@@ -343,7 +399,9 @@ def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str, Dic
                 "[JUDGE] " + str(verdict.get("summary") or "Release judge returned FAIL")
             )
         passed = bool(verdict.get("passed")) and not violations
-        retry_target = "optimization" if (not passed and verdict.get("retryable")) else "none"
+        retry_target, retry_scopes, retry_matter_ids = build_judge_retry_plan(verdict)
+        verdict["retry_scopes"] = retry_scopes
+        verdict["retry_matter_ids"] = retry_matter_ids
         print(
             f"[CONSTITUTIONAL L2] Sol release judge: "
             f"{'PASS' if passed else 'FAIL'} ({len(violations)} violations)"
@@ -399,6 +457,8 @@ def constitutional_validation_node(state: AgentState) -> Dict:
     l2_passed = False
     l2_violations = []
     retry_target = "none"
+    retry_scopes = []
+    retry_matter_ids = []
     judge_verdict = {}
     
     if l1_passed:
@@ -406,17 +466,46 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         from utils.model_factory import create_chat_model
         llm = create_chat_model("judge")
         l2_passed, l2_violations, retry_target, judge_verdict = run_layer2_checks(state, llm)
+        retry_scopes = list(judge_verdict.get("retry_scopes") or [])
+        retry_matter_ids = list(judge_verdict.get("retry_matter_ids") or [])
     else:
         # L1 failed — determine retry target from violation types
         # A word-limit defect is deterministic and cannot be repaired by
-        # rerunning every matter. B7 partner/architecture wording remains
+        # rerunning every matter. B10 partner/architecture wording remains
         # retryable; B6 fails once if upstream source budgeting ever misses it.
         b7_violations = [v for v in l1_violations if any(x in v for x in ["B7-", "A6-"])]
-        matter_violations = [v for v in l1_violations if any(x in v for x in ["C1-", "C6-", "C10-"])]
-        if matter_violations:
+        matter_violations = [v for v in l1_violations if "C6-" in v]
+        register_violations = [v for v in l1_violations if "C10-" in v]
+        non_retryable_l1 = any(
+            marker in violation
+            for violation in l1_violations
+            for marker in (
+                "-CONTRACT]", "ARTIFACT-ROLLBACK", "CRITICAL]",
+                "B6-WORDCOUNT", "C10-DROPPED",
+            )
+        )
+        canonical_matters = state.get("canonical_submission", {}).get("matters", [])
+        current_matters = state.get("matters", [])
+        for index, matter in enumerate(current_matters):
+            client = str(matter.get("client") or matter.get("title") or "").strip()
+            if not client or not any(f"Matter '{client}':" in v for v in matter_violations):
+                continue
+            canonical = canonical_matters[index] if index < len(canonical_matters) else {}
+            matter_id = str(
+                canonical.get("matter_id")
+                or matter.get("matter_id")
+                or f"matter-{index + 1:02d}"
+            ).casefold()
+            retry_matter_ids.append(matter_id)
+        if non_retryable_l1 or register_violations:
+            retry_target = "none"
+        elif matter_violations and retry_matter_ids:
             retry_target = "optimization"
+            retry_scopes = ["matters"]
+            retry_matter_ids = sorted(set(retry_matter_ids))
         elif b7_violations:
-            retry_target = "optimization"  # B7 is generated in optimization node
+            retry_target = "optimization"  # B10 is generated in optimization node
+            retry_scopes = ["b10"]
         else:
             retry_target = "none"  # System-level violations cannot be retried
     
@@ -504,7 +593,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
     violation_feedback = "CONSTITUTIONAL VALIDATION FAILED. You MUST fix these violations:\n"
     violation_feedback += "\n".join(f"- {v}" for v in all_violations)
     
-    route = "optimization"
+    route = retry_target
     
     return {
         "constitutional_validation": {
@@ -518,5 +607,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         },
         "constitutional_retry_count": retry_count + 1,
         "constitutional_route": route,
+        "constitutional_retry_scopes": retry_scopes,
+        "constitutional_retry_matter_ids": retry_matter_ids,
         "constitutional_violation_feedback": violation_feedback,
     }

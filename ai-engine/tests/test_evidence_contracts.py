@@ -32,6 +32,7 @@ from utils.objective_alignment import (  # noqa: E402
     build_source_backed_b10_positioning,
     compress_oversized_source_b10,
     repair_objective_conflicts,
+    select_objective_aligned_b10_source,
 )
 from utils.language_guard import apply_epistemic_filter  # noqa: E402
 from utils.canonical_builder import (  # noqa: E402
@@ -44,6 +45,7 @@ from utils.model_response import coerce_message_text  # noqa: E402
 from utils.objective_alignment import compose_b10_with_budget  # noqa: E402
 from agents.nodes import (  # noqa: E402
     artifact_validation_node,
+    evidence_gap_analysis_node,
     optimization_node,
     safe_json_loads,
     sanitize_client_audit_payload,
@@ -82,6 +84,25 @@ class _FakeMatterModelWithUnsupportedCrossBorder(_FakeMatterModel):
             "content": (
                 '{"optimized_text":"Client A handled a cross-border mandate.",'
                 '"evidence_quotes":["D4 Is this a cross-border matter?"]}'
+            )
+        })()
+
+
+class _NeverInvokeModel(_FakeMatterModel):
+    def invoke(self, _messages):
+        raise AssertionError("targeted retry invoked an unaffected model component")
+
+
+class _CountingMatterModel(_FakeMatterModel):
+    def __init__(self):
+        self.calls = 0
+
+    def invoke(self, _messages):
+        self.calls += 1
+        return type("Message", (), {
+            "content": (
+                '{"optimized_text":"Client B handled the source mandate.",'
+                '"evidence_quotes":["Client B handled the source mandate."]}'
             )
         })()
 
@@ -285,7 +306,7 @@ B8 Hires / Departures
             preferred_summary,
             source_text,
         )
-        self.assertEqual(source_text, selected)
+        self.assertEqual(f"Client: {canonical_client}\n\n{preferred_summary}", selected)
         self.assertEqual([], errors)
 
     def test_source_preservation_prefers_contract_complete_summary(self):
@@ -323,6 +344,29 @@ B8 Hires / Departures
             }),
         )
         self.assertIsNone(classify_matter_cross_border({}))
+
+    def test_source_no_with_period_overrides_stale_cross_border_boolean(self):
+        source = """Publishable Matter 1
+D1 Name of client
+Client A
+D2 Summary
+Client A instructed the firm on a domestic property matter.
+D4 Cross-border jurisdictions
+No.
+D5 Lead partner
+Lawyer A
+"""
+        reconciled, report = reconcile_extracted_matters_to_source(
+            [{
+                "source_label": "Publishable Matter 1",
+                "client": "Client A",
+                "is_cross_border": True,
+            }],
+            ["Publishable Matter 1"],
+            source,
+        )
+        self.assertTrue(report["passed"])
+        self.assertFalse(reconciled[0]["is_cross_border"])
 
     def test_layer1_ignores_original_b10_cross_border_wording(self):
         source_b10 = "The source describes a cross-border matter."
@@ -540,9 +584,47 @@ Content Type
         self.assertNotIn("personalized provision", result)
         self.assertNotIn("long-term relationship of trust", result)
 
+    def test_real_estate_b10_drops_explicit_off_practice_prose(self):
+        source = (
+            "We advise on administrative and tax matters. "
+            "One mandate concerns the practice of General Business Law. "
+            "The team used expert real estate identification evidence to protect the "
+            "client's private property. "
+            "Its Amparo Proceedings and Administrative Law experience supports legal defence. "
+            "An energy and natural resources matter concerned a power plant."
+        )
+        result = select_objective_aligned_b10_source(source, "Real Estate")
+        self.assertIn("private property", result)
+        self.assertIn("Amparo Proceedings", result)
+        self.assertNotIn("General Business Law", result)
+        self.assertNotIn("power plant", result)
+
+    def test_matter_parser_removes_template_questions_and_duplicate_copy(self):
+        repeated = (
+            "Client A protected its property. Legal/Technical Complexities of Various Types? "
+            "Tight deadlines? A multitude of parties involved in the case across different "
+            "jurisdictions? Does your client hold a dominant position in the market? "
+            "A suspension protected the property."
+        )
+        section = (
+            "Publishable Matter 1\nD1 Name of client\nClient A\nD2 Summary\n"
+            + repeated + "\n" + repeated + "\nD4 Cross-border jurisdictions\nNo."
+        )
+        fields = DocumentParser.extract_matter_fields(section)
+        self.assertNotIn("Legal/Technical", fields["summary"])
+        self.assertEqual(1, fields["summary"].count("Client A protected its property."))
+
+    def test_matter_parser_repairs_concatenated_client_paragraphs(self):
+        fields = DocumentParser.extract_matter_fields(
+            "D1 Name of client\nFirst client description.PROYECTOS, S.A. DE C.V. "
+            "is the second client.\nD2 Summary\nSource-backed work."
+        )
+        self.assertIn("description. PROYECTOS", fields["client"])
+        self.assertIn("S.A. DE C.V.", fields["client"])
+
     @patch(
         "agents.constitutional_validator.run_layer1_checks",
-        return_value=(False, ["[B6-WORDCOUNT] B7 exceeds 500 words: 589w"]),
+        return_value=(False, ["[B6-WORDCOUNT] B10 exceeds 500 words: 589w"]),
     )
     def test_b6_word_limit_failure_does_not_retry_all_matters(self, _layer1):
         result = constitutional_validation_node({"constitutional_retry_count": 0})
@@ -552,6 +634,28 @@ Content Type
             "CONSTITUTIONAL_VALIDATION_FAILED",
             result["release_verdict"]["code"],
         )
+
+    @patch(
+        "agents.constitutional_validator.run_layer1_checks",
+        return_value=(False, [
+            "[C6-EVIDENCE] Matter 'Client B': evidence '20-year' lost in optimization"
+        ]),
+    )
+    def test_layer1_evidence_retry_targets_only_matching_matter(self, _layer1):
+        result = constitutional_validation_node({
+            "constitutional_retry_count": 0,
+            "matters": [
+                {"client": "Client A", "matter_id": "matter-01"},
+                {"client": "Client B", "matter_id": "matter-02"},
+            ],
+            "canonical_submission": {"matters": [
+                {"matter_id": "matter-01"},
+                {"matter_id": "matter-02"},
+            ]},
+        })
+        self.assertEqual("optimization", result["constitutional_route"])
+        self.assertEqual(["matters"], result["constitutional_retry_scopes"])
+        self.assertEqual(["matter-02"], result["constitutional_retry_matter_ids"])
 
     def test_c2_source_extraction_does_not_cross_into_matters(self):
         text = """C2 Feedback on our coverage | The guide should address the new regulatory category.
@@ -798,6 +902,155 @@ Ongoing
         self.assertTrue(optimized["_source_fallback"])
         self.assertEqual("Source Preserved", optimized["status"])
 
+    def test_audit_only_retry_reuses_matters_and_b10_without_model_calls(self):
+        existing_matter = {
+            "matter_id": "matter-01",
+            "source_label": "Publishable Matter 1",
+            "title": "Matter 1",
+            "client": "Client A",
+            "summary": "Client A instructed the team.",
+            "optimized_text": "Client A instructed the team.",
+            "publish_status": "publishable",
+        }
+        state = {
+            "constitutional_retry_count": 1,
+            "constitutional_retry_scopes": ["audit"],
+            "constitutional_retry_matter_ids": [],
+            "constitutional_violation_feedback": "Complete the Strategic Audit.",
+            "matters": [existing_matter],
+            "canonical_submission": {"matters": [{
+                "matter_id": "matter-01",
+                "source_label": "Publishable Matter 1",
+                "source_span_ids": ["matter-span-01"],
+            }]},
+            "evidence_ledger": {"matter-span-01": {"text": "Client A instructed the team."}},
+            "strategic_context": {},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 1}}},
+            "original_b10": "Original B10 source narrative with enough words to be considered substantive content.",
+            "enhanced_b7": "Previously approved B10 narrative.",
+            "original_c2": "",
+        }
+        with patch("agents.nodes.get_model", return_value=_NeverInvokeModel()):
+            result = optimization_node(state)
+        self.assertEqual(
+            "Client A instructed the team.",
+            result["matters"][0]["optimized_text"],
+        )
+        self.assertEqual("Previously approved B10 narrative.", result["enhanced_b7"])
+
+    def test_empty_target_list_never_reruns_every_matter(self):
+        existing_matter = {
+            "matter_id": "matter-01",
+            "source_label": "Publishable Matter 1",
+            "client": "Client A",
+            "summary": "Source matter.",
+            "optimized_text": "Approved matter.",
+            "publish_status": "publishable",
+        }
+        state = {
+            "constitutional_retry_count": 1,
+            "constitutional_retry_scopes": ["matters"],
+            "constitutional_retry_matter_ids": [],
+            "matters": [existing_matter],
+            "canonical_submission": {"matters": [{
+                "matter_id": "matter-01",
+                "source_label": "Publishable Matter 1",
+                "source_span_ids": ["matter-span-01"],
+            }]},
+            "evidence_ledger": {"matter-span-01": {"text": "Source matter."}},
+            "strategic_context": {},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 1}}},
+            "original_b10": "",
+            "original_c2": "",
+        }
+        with patch("agents.nodes.get_model", return_value=_NeverInvokeModel()):
+            result = optimization_node(state)
+        self.assertEqual("Approved matter.", result["matters"][0]["optimized_text"])
+
+    def test_targeted_retry_invokes_only_the_failed_matter(self):
+        matters = [
+            {
+                "matter_id": f"matter-0{index}",
+                "source_label": f"Publishable Matter {index}",
+                "client": f"Client {name}",
+                "summary": f"Client {name} handled the source mandate.",
+                "optimized_text": f"Approved matter {name}.",
+                "publish_status": "publishable",
+            }
+            for index, name in enumerate(("A", "B", "C"), start=1)
+        ]
+        canonical = [
+            {
+                "matter_id": f"matter-0{index}",
+                "source_label": f"Publishable Matter {index}",
+                "source_span_ids": [f"matter-span-0{index}"],
+            }
+            for index in range(1, 4)
+        ]
+        ledger = {
+            f"matter-span-0{index}": {
+                "text": f"Client {name} handled the source mandate."
+            }
+            for index, name in enumerate(("A", "B", "C"), start=1)
+        }
+        model = _CountingMatterModel()
+        state = {
+            "constitutional_retry_count": 1,
+            "constitutional_retry_scopes": ["matters"],
+            "constitutional_retry_matter_ids": ["matter-02"],
+            "constitutional_violation_feedback": "Revise matter-02 only.",
+            "matters": matters,
+            "canonical_submission": {"matters": canonical},
+            "evidence_ledger": ledger,
+            "strategic_context": {},
+            "narrative_architecture": {},
+            "analysis": {},
+            "pipeline_manifest": {"document": {"source_matters": {"total": 3}}},
+            "original_b10": "",
+            "original_c2": "",
+        }
+        with patch("agents.nodes.get_model", return_value=model):
+            result = optimization_node(state)
+        self.assertEqual(1, model.calls)
+        self.assertEqual("Approved matter A.", result["matters"][0]["optimized_text"])
+        self.assertEqual(
+            "Client B handled the source mandate.",
+            result["matters"][1]["optimized_text"],
+        )
+        self.assertEqual("Approved matter C.", result["matters"][2]["optimized_text"])
+
+    def test_audit_retry_reuses_existing_evidence_gap_analysis(self):
+        payload = {"gaps": [{"targeted_question": "Which outcome is documented?"}]}
+        state = {
+            "constitutional_retry_count": 1,
+            "constitutional_retry_scopes": ["audit"],
+            "matter_evidence_gaps": payload,
+            "interrogation_questions": ["Which outcome is documented?"],
+        }
+        with patch("agents.nodes.get_model", side_effect=AssertionError("model invoked")):
+            result = evidence_gap_analysis_node(state)
+        self.assertEqual(payload, result["matter_evidence_gaps"])
+        self.assertEqual(
+            ["Which outcome is documented?"], result["interrogation_questions"]
+        )
+
+    def test_json_parser_selects_complete_strategic_audit_object(self):
+        content = (
+            '{"score":65}'
+            '{"score":78,"score_rationale":"Evidence supports the score.",'
+            '"summary":"Complete summary.","audit_letter":{"closing":"Complete."}}'
+        )
+        parsed = safe_json_loads(
+            content,
+            expected_keys={"score", "score_rationale", "summary", "audit_letter"},
+        )
+        self.assertEqual(78, parsed["score"])
+        self.assertEqual("Complete summary.", parsed["summary"])
+
     def test_domestic_matter_rejects_generated_cross_border_framing(self):
         summary = "Client A instructed the team on the stated domestic mandate."
         source = (
@@ -958,7 +1211,10 @@ Ongoing
 
         self.assertTrue(result["artifact_validation"]["passed"])
         self.assertEqual([], result["artifact_validation"]["matter_rollbacks"])
-        self.assertEqual(source, result["matters"][0]["optimized_text"])
+        self.assertEqual(
+            f"Client: {full_client}\n\n{summary}",
+            result["matters"][0]["optimized_text"],
+        )
 
     def test_generated_matter_client_change_fails(self):
         errors = validate_artifact_matter_register(

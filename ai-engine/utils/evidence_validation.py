@@ -254,20 +254,49 @@ def select_verified_source_preservation(
     preferred_text: str,
     source_text: str,
 ) -> tuple[str, List[str]]:
-    """Choose the shortest literal source fallback that preserves its contract.
+    """Choose the shortest source-backed fallback that preserves its contract.
 
-    A D2/E2 summary is safe to publish without generated evidence quotes only
-    when it is a literal source substring *and* still contains the canonical
-    client and every other deterministic matter invariant.  Otherwise the full
-    canonical source span is preserved.  The returned errors describe only an
-    unresolved fallback; an empty list means the selected text is safe.
+    A cleaned D2/E2 summary is safe to publish without generated evidence
+    quotes only when its tokens remain in source order and it still contains
+    the canonical client and every other deterministic matter invariant.
+    Otherwise a source-backed client/summary composite or the full canonical
+    span is preserved. The returned errors describe only an unresolved
+    fallback; an empty list means the selected text is safe.
     """
 
     source = str(source_text or "").strip()
     preferred = str(preferred_text or "").strip()
+
+    def source_backed(candidate: str) -> bool:
+        """Accept exact text or a deletion/spacing-only source derivative."""
+
+        if not candidate:
+            return False
+        if candidate in source:
+            return True
+        token_pattern = re.compile(r"[\wÀ-ÖØ-öø-ÿ]+", re.UNICODE)
+        candidate_tokens = [token.casefold() for token in token_pattern.findall(candidate)]
+        source_tokens = [token.casefold() for token in token_pattern.findall(source)]
+        if not candidate_tokens:
+            return False
+        position = 0
+        for token in source_tokens:
+            if token == candidate_tokens[position]:
+                position += 1
+                if position == len(candidate_tokens):
+                    return True
+        return False
+
     candidates: List[str] = []
-    if preferred and preferred in source:
+    if source_backed(preferred):
         candidates.append(preferred)
+        # D1/E1 may contain a legally significant long-form client identity
+        # while D2/E2 begins with an abbreviation. Compose the two literal
+        # source values instead of falling back to the full form section with
+        # field labels and template instructions.
+        client = matter.client.strip()
+        if client and client.casefold() not in preferred.casefold() and source_backed(client):
+            candidates.append(f"Client: {client}\n\n{preferred}")
     if source and source not in candidates:
         candidates.append(source)
 

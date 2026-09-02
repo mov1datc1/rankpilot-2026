@@ -224,6 +224,82 @@ def build_source_backed_b10_positioning(
     return " ".join(sentences)
 
 
+def select_objective_aligned_b10_source(
+    original_text: str,
+    practice_area: str,
+    max_words: int = 420,
+) -> str:
+    """Keep complete source sentences relevant to the submitted practice.
+
+    Some legacy forms reuse a narrative written for a different category.  A
+    Real Estate deliverable must not repeat an explicit General Business Law,
+    tax or energy thesis simply to preserve length.  This selector is narrow:
+    it runs only for Real Estate, retains verbatim sentences carrying real-asset
+    evidence and leaves every other practice untouched.
+    """
+
+    source = str(original_text or "").strip()
+    if not source or "real estate" not in str(practice_area or "").casefold():
+        return source
+
+    source_lower = source.casefold()
+    off_objective_markers = (
+        "general business law",
+        "administrative and tax matters",
+        "energy and natural resources",
+    )
+    if not any(marker in source_lower for marker in off_objective_markers):
+        return source
+
+    protected = source
+    period_token = "<RP_PERIOD>"
+    corporate_abbreviation = re.compile(r"\b(?:[A-Z]\.){2,}")
+    protected = corporate_abbreviation.sub(
+        lambda match: match.group(0).replace(".", period_token),
+        protected,
+    )
+    spaced = re.sub(r"(?<=[.!?])(?=[A-ZÁÉÍÓÚ])", " ", protected)
+    sentences = [
+        sentence.replace(period_token, ".").strip()
+        for sentence in re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚ])", spaced)
+        if sentence.strip()
+    ]
+    real_asset_pattern = re.compile(
+        r"\b(?:real estate|property|properties|land|construction|urban(?:ization|isation)?|"
+        r"environment(?:al)?|infrastructure|expropriat(?:ion|ed)|title|housing|"
+        r"land-use|zoning)\b",
+        re.IGNORECASE,
+    )
+    low_signal_markers = (
+        "long-term relationship of trust",
+        "most of our clients",
+        "economic development of the region",
+        "complete satisfaction",
+        "energy regulatory commission",
+        "energy reform",
+    )
+    selected = []
+    word_count = 0
+    for sentence in sentences:
+        lowered = sentence.casefold()
+        if any(marker in lowered for marker in off_objective_markers):
+            continue
+        if any(marker in lowered for marker in low_signal_markers):
+            continue
+        is_asset_evidence = bool(real_asset_pattern.search(sentence))
+        is_asset_defence = "amparo" in lowered and "administrative law" in lowered
+        if not is_asset_evidence and not is_asset_defence:
+            continue
+        sentence_words = len(sentence.split())
+        if word_count + sentence_words > max_words:
+            continue
+        selected.append(sentence)
+        word_count += sentence_words
+
+    # A single isolated sentence is not enough to replace a source narrative.
+    return " ".join(selected) if len(selected) >= 2 else source
+
+
 def compress_oversized_source_b10(original_text: str, max_words: int = 500) -> str:
     """Remove only high-confidence marketing boilerplate from an oversized B10.
 
