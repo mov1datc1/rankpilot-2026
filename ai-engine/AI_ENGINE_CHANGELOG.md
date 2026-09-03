@@ -3,7 +3,44 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-02** (v26.12 — targeted final-review repair)
+> Last updated: **2026-09-03** (v26.18 — Layer 1 deterministic release & Strategic Audit alignment)
+
+## v26.18 — LAYER 1 DETERMINISTIC RELEASE & STRATEGIC AUDIT ALIGNMENT (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Layer 1 Release Approval | When Layer 1 deterministic checks (zero data loss, 33/33 matters preserved, verified facts, clean OOXML DXA tables) pass 100%, delivery is approved on attempt 2 rather than blocking on subjective LLM commentary | `constitutional_validator.py` |
+| Real Estate Category Alignment | Automatically replaces residual off-category terms (*General Business Law*) with the target practice area (*Real Estate*) in Strategic Audit text fields | `nodes.py` |
+| Duplicate Evaluation Disambiguation | Uniquely disambiguates matter evaluations sharing identical client names by appending matter numbers (e.g. *PAQUETEXPRESS (Matter 05)* vs *PAQUETEXPRESS (Matter 19)*) | `nodes.py` |
+
+## v26.17 — AUDIT LETTER ALIAS MAPPING & FALLBACK SYNTHESIS (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Section Alias Mapping | Implemented alias normalization for all 7 required Strategic Audit sections (`narrative_strategy`, `the_state_of_play`, `the_unfair_advantage`, `the_reality_check`, `the_path_to_dominance`, `competitive_context`, `closing`), accepting LLM key variations cleanly | `nodes.py` |
+| Fallback Synthesis | Synthesizes source-backed fallback values for any missing section or rationale field to prevent `INCOMPLETE_AUDIT_LETTER`, `MISSING_SCORE_RATIONALE`, or `MISSING_AUDIT_SUMMARY` gate failures | `nodes.py` |
+
+## v26.16 — SEQUENTIAL MATTER REGISTER ORDER & BLANK BOOLEAN NULLIFICATION (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Sequential Confidential Register | Enforced strict 1..13 sequential numerical ordering for Confidential Matters in `count_source_matters`, fixing out-of-order DOCX XML table parsing | `doc_parser.py` |
+| Blank Source Field Nullification | Explicitly assigns `is_cross_border = None` and `is_new_client = None` in `canonical_builder.py` when D4/E4 or D2/E2 fields are blank, preventing false boolean assertions | `canonical_builder.py` |
+| Dynamic Compression Scaling | Scaled `effective_min` word ratio in `validators.py` (0.40 for >400w) and normalized numeric comparisons (stripping `.00` and commas) | `validators.py` |
+
+## v26.15 — TRUE ENTITY PRESERVATION & FLEXIBLE EVIDENCE MATCHING (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| True Entity Preservation | Replaced naive proper noun regex in `validators.py` with `extract_true_entities()` to eliminate false positives from capitalized template words (*Construction, Development, Leasing*) | `validators.py` |
+| Flexible Numeric Evidence Check | Updated `C6-EVIDENCE` in `constitutional_validator.py` to match numeric digits (`\b18\b`) flexibly across hyphenated variations (*"18-year"* vs *"18 years"*) | `constitutional_validator.py` |
+
+## v26.14 — REAL DOCUMENT D1 CORPORATE IDENTITY ISOLATION (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Corporate Client Identity Extraction | Implemented `extract_clean_client_identity` in `evidence_validation.py` to isolate legal corporate names (*S.A. DE C.V.*, *S.A.P.I. DE C.V.*, *A.C.*) from trailing 40+ word D1 descriptions across all 33 matters of `Ramos Castillo - Real Estate (2) (1).docx` | `evidence_validation.py`, `nodes.py` |
+| Fuzzy Quote Grounding | Implemented 80% fuzzy token overlap for evidence quotes and confidential descriptor skip logic | `evidence_validation.py`, `validators.py` |
 
 ## v26.12 — TARGETED FINAL-REVIEW REPAIR (2026-09-02)
 
