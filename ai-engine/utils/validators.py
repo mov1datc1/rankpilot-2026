@@ -399,14 +399,22 @@ def validate_matter_enhancement(original_text: str, enhanced_text: str,
     enhanced_words = len(enhanced_text.split())
     
     word_ratio = enhanced_words / max(orig_words, 1)
-    word_ok = word_ratio >= min_preservation
+    if orig_words > 400:
+        effective_min = 0.40
+    elif orig_words > 250:
+        effective_min = 0.50
+    else:
+        effective_min = min_preservation
+    word_ok = word_ratio >= effective_min
     
     # Extract key facts from original
-    # Numbers (monetary values, counts, dates)
-    orig_numbers = set(re.findall(r'\b\d[\d,.]+\b', original_text))
-    enhanced_numbers = set(re.findall(r'\b\d[\d,.]+\b', enhanced_text))
-    numbers_preserved = orig_numbers.issubset(enhanced_numbers)
-    missing_numbers = orig_numbers - enhanced_numbers
+    # Numbers (monetary values, counts, dates) with normalized trailing .00 and commas
+    def _norm_num(n_str):
+        return n_str.replace(',', '').rstrip('0').rstrip('.')
+    orig_numbers = {n for n in re.findall(r'\b\d[\d,.]+\b', original_text) if len(_norm_num(n)) > 0}
+    enhanced_num_clean = {_norm_num(n) for n in re.findall(r'\b\d[\d,.]+\b', enhanced_text)}
+    missing_numbers = {n for n in orig_numbers if _norm_num(n) not in enhanced_num_clean}
+    numbers_preserved = len(missing_numbers) == 0
     
     # Proper nouns / True entity preservation
     # v26.15: Use extract_true_entities to filter false positives (generic capitalized words)

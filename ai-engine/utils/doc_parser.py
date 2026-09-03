@@ -822,6 +822,17 @@ class DocumentParser:
                     )
                     matter_labels.append(label)
             
+            # Sort matter_labels sequentially by category (Publishable 1..N, Confidential 1..M)
+            def _label_sort_key(l):
+                m = re.search(r'(publishable|confidential|non[- ]publishable)\s+matter\s+(\d+)', l, re.I)
+                if not m:
+                    return (2, 0)
+                kind = m.group(1).lower()
+                num = int(m.group(2))
+                cat = 0 if 'publishable' in kind and 'non' not in kind else 1
+                return (cat, num)
+            matter_labels = sorted(matter_labels, key=_label_sort_key)
+
             # Classify
             publishable = sum(1 for l in matter_labels 
                             if 'publishable' in l.lower() 

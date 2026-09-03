@@ -126,12 +126,20 @@ def reconcile_extracted_matters_to_source(
         grounded["_confidentiality_locked"] = is_confidential
         jurisdiction = str(source_fields.get("cross_border_jurisdictions") or "").strip()
         if jurisdiction:
-            # The explicit D4/E4 source answer is authoritative.  Classify it
+            # The explicit D4/E4 source answer is authoritative. Classify it
             # in isolation so a stale model boolean cannot overrule values such
             # as ``No.`` or ``Not applicable.`` through truthiness.
             grounded["is_cross_border"] = classify_matter_cross_border({
                 "cross_border_jurisdictions": jurisdiction,
             }) is True
+        else:
+            grounded["is_cross_border"] = None
+
+        new_client_raw = str(source_fields.get("new_client_status") or "").strip()
+        if new_client_raw:
+            grounded["is_new_client"] = re.search(r'\byes\b|\bsí\b|\bsi\b|\bnew\b', new_client_raw, re.I) is not None
+        else:
+            grounded["is_new_client"] = None
         selected.append(grounded)
 
     dropped = [
