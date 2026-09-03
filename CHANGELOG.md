@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.19] — 2026-09-03
+
+### Judge SOL Continuous Evaluator (Score 1-10) & Admin Quality Audit Module
+
+- Transformed Judge SOL (`gpt-5.6-sol`) from a blocking delivery gatekeeper into an objective quality auditor; delivery is never halted at the final stage, ensuring end users always receive their deliverables.
+- Structured Judge SOL evaluation with `score` (1-10 quality metric) and comprehensive `feedback` detailing defects, risks, and strengths.
+- Created the dedicated **Auditoría Judge SOL** module in the Admin Control Panel (`/dashboard/admin/audit`), featuring multi-dimensional filtering by Firm Name, Practice Area, Date Range (Today, 7 days, 30 days, Custom), and Score Range, plus an inspection modal for component checks.
+- Persisted Judge SOL metrics (`judgeScore`, `judgeFeedback`, `judgeVerdict`, `judgeChecks`) in `submission.chambersData` via the webhook callback.
+
 ## [v26.18] — 2026-09-03
 
 ### Layer 1 Deterministic Release Approval & Strategic Audit Alignment

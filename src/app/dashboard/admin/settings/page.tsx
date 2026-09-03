@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { getSystemConfig } from '@/app/actions/settings';
 import SettingsClient from './SettingsClient';
-import { CreditCard, ShieldAlert, Key, Mail } from 'lucide-react';
+import { CreditCard, ShieldAlert, Key, Mail, ShieldCheck, ExternalLink, Award } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,71 @@ export default async function AdminSettingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      {/* Judge SOL Audit Module Link */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.7))',
+        border: '1px solid rgba(56, 189, 248, 0.25)',
+        borderRadius: '16px',
+        padding: '1.75rem',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <ShieldCheck size={24} color="#38bdf8" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
+                  Auditoría y Calidad de Submissions (Judge SOL)
+                </h3>
+                <span style={{
+                  fontSize: '0.7rem',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38bdf8',
+                  fontWeight: 600,
+                }}>
+                  Evaluador Continuo
+                </span>
+              </div>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                Revisa las calificaciones (1 al 10), el feedback textual y el desglose de calidad de todas las submissions generadas por el Builder.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/dashboard/admin/audit"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.7rem 1.4rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #38bdf8, #2563eb)',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '0.88rem',
+              textDecoration: 'none',
+              boxShadow: '0 0 15px rgba(56, 189, 248, 0.25)',
+            }}
+          >
+            Abrir Auditoría de Submissions <ExternalLink size={16} />
+          </Link>
+        </div>
+      </div>
       
       {/* Stripe Configuration */}
       <div style={sectionStyle}>

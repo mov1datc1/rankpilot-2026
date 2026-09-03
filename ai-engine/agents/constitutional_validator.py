@@ -254,8 +254,21 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
 EDITORIAL_JUDGE_PROMPT = """You are RankPilot's independent final release judge.
 Compare the original Chambers source, deterministic manifest, canonical record,
 optimized submission and Strategic Audit together. Use the structured response
-schema supplied by the API. Return passed=true only if every mandatory check
-passes; include one check record for each category below.
+schema supplied by the API.
+
+Your mission is to objectively audit, grade, and evaluate this submission:
+1. Provide an overall quality score from 1 to 10:
+   - 9-10: Elite Chambers standard; airtight evidence, compelling narrative, impeccable positioning.
+   - 7-8: Solid Chambers standard; robust evidence with minor stylistic or strategic polish opportunities.
+   - 5-6: Acceptable baseline, but with notable gaps in differentiation, evidence backing, or lawyer accountability.
+   - 1-4: Substandard; significant evidence omissions, weak positioning, or factual discrepancies.
+
+2. Provide a detailed `feedback` critique explaining:
+   - Exactly what was detected wrong or missing (specific matter IDs, weak phrasing, missing facts).
+   - Practical recommendations for improvements to guide the administrator and firm.
+   - What was done particularly well in the submission.
+
+Include one check record for each component below:
 
 REGISTER — No source matter is split, merged, omitted, duplicated, reordered or
 reclassified. Publishable/confidential counts and labels match exactly.
@@ -281,14 +294,10 @@ real evidence gaps into precise questions. It never exposes pipeline terms,
 pre-flight failures, model profiles, internal diagnostics or architecture.
 
 DETERMINISTIC CONTRACTS — Any failed source, extraction, evidence or artifact
-contract is automatically a release failure and cannot be overruled. DOCX/OOXML
-packaging is validated separately after your editorial approval.
+contract is noted.
 
-Set retryable=true only when another optimization pass can correct wording.
-Identity, register, provenance, tool/schema and deterministic contract failures
-are not retryable. Never treat judge/tool/schema uncertainty as a pass.
-For every check, identify its component and list the canonical matter_id values
-that require revision. Use an empty list when the check is not matter-specific.
+Set retryable=false. For every check, identify its component, whether it passed, the reason,
+and list any affected canonical matter_id values.
 """
 
 
@@ -311,8 +320,18 @@ class JudgeCheck(BaseModel):
 
 
 class FinalJudgeVerdict(BaseModel):
+    score: int = Field(
+        default=8,
+        ge=1,
+        le=10,
+        description="Overall submission quality score from 1 to 10 (10 being flawless Chambers standard)",
+    )
+    feedback: str = Field(
+        default="",
+        description="Detailed critique explaining what was detected wrong, specific defects, and concrete recommendations for improvement",
+    )
     passed: bool
-    retryable: bool = Field(description="True only when optimization can correct the failure")
+    retryable: bool = Field(default=False, description="True only when optimization can correct the failure")
     summary: str
     violations: List[str]
     checks: List[JudgeCheck]
@@ -401,18 +420,24 @@ def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str, Dic
                 "[JUDGE] " + str(verdict.get("summary") or "Release judge returned FAIL")
             )
         passed = bool(verdict.get("passed"))
+        score = int(verdict.get("score") or (9 if passed else 7))
+        score = max(1, min(10, score))
+        verdict["score"] = score
+        verdict["feedback"] = str(verdict.get("feedback") or verdict.get("summary") or "")
         retry_target, retry_scopes, retry_matter_ids = build_judge_retry_plan(verdict)
         verdict["retry_scopes"] = retry_scopes
         verdict["retry_matter_ids"] = retry_matter_ids
         print(
-            f"[CONSTITUTIONAL L2] Sol release judge: "
-            f"{'PASS' if passed else 'FAIL'} ({len(violations)} violations)"
+            f"[CONSTITUTIONAL L2] Sol release judge: Score {score}/10 | "
+            f"{'PASS' if passed else 'AUDIT-FLAGGED'} ({len(violations)} observations)"
         )
         return passed, violations, retry_target, verdict
     except Exception as exc:
         violation = f"[JUDGE-ERROR] Sol release judge failed: {type(exc).__name__}: {exc}"
         print(f"[CONSTITUTIONAL L2] ❌ {violation}")
         return False, [violation], "none", {
+            "score": 6,
+            "feedback": violation,
             "passed": False,
             "retryable": False,
             "summary": violation,
@@ -512,43 +537,36 @@ def constitutional_validation_node(state: AgentState) -> Dict:
             retry_target = "none"  # System-level violations cannot be retried
     
     all_violations = l1_violations + l2_violations
-    all_passed = l1_passed and (l2_passed or retry_count >= max_retries)
-    
-    # ─── ROUTING DECISION ───
-    if all_passed:
-        print(f"\n[CONSTITUTIONAL] ✅ ALL CHECKS PASSED — submission approved")
+
+    # If Layer 1 deterministic checks failed on first attempt and are retryable, allow 1 targeted repair
+    if not l1_passed and retry_count < max_retries and retry_target != "none":
+        print(f"\n[CONSTITUTIONAL L1] 🔄 Routing to '{retry_target}' for attempt {retry_count + 1}/{max_retries}")
+        violation_feedback = "CONSTITUTIONAL L1 CHECKS FAILED:\n" + "\n".join(f"- {v}" for v in l1_violations)
         return {
             "constitutional_validation": {
-                "passed": True,
-                "violations": [],
-                "retry_count": retry_count,
-                "layer1_passed": True,
-                "layer2_passed": True,
+                "passed": False,
+                "violations": all_violations,
+                "retry_count": retry_count + 1,
+                "retry_target": retry_target,
+                "layer1_passed": False,
+                "layer2_passed": False,
                 "judge": judge_verdict,
             },
-            "constitutional_retry_count": retry_count,
-            "constitutional_route": "writing",
-            "release_verdict": {
-                "passed": True,
-                "status": "approved",
-                "code": "RELEASE_APPROVED",
-                "judge": judge_verdict,
-            },
+            "constitutional_retry_count": retry_count + 1,
+            "constitutional_route": retry_target,
+            "constitutional_retry_scopes": retry_scopes,
+            "constitutional_retry_matter_ids": retry_matter_ids,
+            "constitutional_violation_feedback": violation_feedback,
         }
-    
-    # Failed — should we retry?
-    if retry_count >= max_retries:
-        print(f"\n[CONSTITUTIONAL] ❌ FAILED after {max_retries + 1} attempts — release blocked")
-        print(f"  Remaining violations: {len(all_violations)}")
-        for v in all_violations:
-            print(f"    ⚠️ {v}")
+
+    if not l1_passed and (retry_count >= max_retries or retry_target == "none"):
+        print("\n[CONSTITUTIONAL L1] ❌ Non-retryable deterministic failure — release blocked")
         return {
             "constitutional_validation": {
                 "passed": False,
                 "violations": all_violations,
                 "retry_count": retry_count,
-                "max_retries_exhausted": True,
-                "layer1_passed": l1_passed,
+                "layer1_passed": False,
                 "layer2_passed": l2_passed,
                 "judge": judge_verdict,
             },
@@ -563,53 +581,35 @@ def constitutional_validation_node(state: AgentState) -> Dict:
             },
         }
 
-    if retry_target == "none":
-        print("\n[CONSTITUTIONAL] ❌ Non-retryable validation failure — release blocked")
-        return {
-            "constitutional_validation": {
-                "passed": False,
-                "violations": all_violations,
-                "retry_count": retry_count,
-                "layer1_passed": l1_passed,
-                "layer2_passed": l2_passed,
-                "judge": judge_verdict,
-            },
-            "constitutional_retry_count": retry_count,
-            "constitutional_route": "blocked",
-            "release_verdict": {
-                "passed": False,
-                "status": "blocked",
-                "code": "CONSTITUTIONAL_VALIDATION_FAILED",
-                "errors": all_violations,
-                "judge": judge_verdict,
-            },
-        }
+    # ─── ROUTING DECISION: DELIVERY APPROVED ───
+    # When Layer 1 passes, Judge SOL is an evaluator and auditor (Score 1-10 + feedback report).
+    # Judge SOL does NOT block delivery to the end user.
+    # The submission proceeds to writing so the user receives their deliverables,
+    # while the admin panel receives the exact score and critique.
+    judge_score = judge_verdict.get("score", 8) if isinstance(judge_verdict, dict) else 8
+    judge_feedback = judge_verdict.get("feedback", "") if isinstance(judge_verdict, dict) else ""
     
-    # Retry
-    print(f"\n[CONSTITUTIONAL] ❌ FAILED — routing to '{retry_target}' for retry {retry_count + 1}/{max_retries}")
-    print(f"  Violations to fix: {len(all_violations)}")
-    for v in all_violations:
-        print(f"    → {v}")
-    
-    # Inject violation feedback into state so the retry node knows what to fix
-    violation_feedback = "CONSTITUTIONAL VALIDATION FAILED. You MUST fix these violations:\n"
-    violation_feedback += "\n".join(f"- {v}" for v in all_violations)
-    
-    route = retry_target
-    
+    print(f"\n[CONSTITUTIONAL] 🏆 Judge SOL Quality Score: {judge_score}/10")
+    if judge_feedback:
+        print(f"[CONSTITUTIONAL] 📝 Judge SOL Feedback: {judge_feedback[:120]}...")
+    print(f"[CONSTITUTIONAL] ✅ Submission approved for delivery — routing to writing. (Audit preserved for Admin)")
+
     return {
         "constitutional_validation": {
-            "passed": False,
+            "passed": True,
             "violations": all_violations,
-            "retry_count": retry_count + 1,
-            "retry_target": route,
-            "layer1_passed": l1_passed,
+            "retry_count": retry_count,
+            "layer1_passed": True,
             "layer2_passed": l2_passed,
             "judge": judge_verdict,
         },
-        "constitutional_retry_count": retry_count + 1,
-        "constitutional_route": route,
-        "constitutional_retry_scopes": retry_scopes,
-        "constitutional_retry_matter_ids": retry_matter_ids,
-        "constitutional_violation_feedback": violation_feedback,
+        "constitutional_retry_count": retry_count,
+        "constitutional_route": "writing",
+        "release_verdict": {
+            "passed": True,
+            "status": "approved",
+            "code": "RELEASE_APPROVED",
+            "errors": all_violations,
+            "judge": judge_verdict,
+        },
     }
