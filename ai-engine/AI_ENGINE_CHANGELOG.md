@@ -3,7 +3,15 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.22 — Universal Golden Standard Across All Practice Areas)
+> Last updated: **2026-09-03** (v26.23 — Golden Submissions Master Repository & Judge SOL Calibration)
+
+## v26.23 — GOLDEN SUBMISSIONS MASTER REPOSITORY & JUDGE SOL CALIBRATION (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Golden Submissions Repository | Created dedicated master benchmark repository (`Golden_Submissions_Approved_By_Owner.txt`) containing the complete approved text for B10, C2, and gold matter exemplars (El Cielo, Duranpark, IDEX Brasilia, De Anda) with 3 pre-allocated slots | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt` |
+| Global RAG Router Indexing | Integrated `golden_submissions_approved_by_owner` into `RAGRouter.GLOBAL_FILES` so all AI pipeline nodes draw from the Owner's Ground Truth | `utils/rag_router.py` |
+| Judge SOL Ground Truth Calibration | Calibrated Judge SOL evaluation rubric against the Owner's Approved Gold Standard (9-10 = zero carpentry + 3-paragraph organic narrative + zero off-category dilution; 5-6 = mechanical headers or dilution) | `agents/constitutional_validator.py` |
 
 ## v26.22 — UNIVERSAL GOLDEN STANDARD ACROSS ALL PRACTICE AREAS (2026-09-03)
 

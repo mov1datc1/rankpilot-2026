@@ -256,17 +256,18 @@ Compare the original Chambers source, deterministic manifest, canonical record,
 optimized submission and Strategic Audit together. Use the structured response
 schema supplied by the API.
 
-Your mission is to objectively audit, grade, and evaluate this submission:
+Your mission is to objectively audit, grade, and evaluate this submission against the Owner's Approved Gold Standard (v26.23):
 1. Provide an overall quality score from 1 to 10:
-   - 9-10: Elite Chambers standard; airtight evidence, compelling narrative, impeccable positioning.
-   - 7-8: Solid Chambers standard; robust evidence with minor stylistic or strategic polish opportunities.
-   - 5-6: Acceptable baseline, but with notable gaps in differentiation, evidence backing, or lawyer accountability.
-   - 1-4: Substandard; significant evidence omissions, weak positioning, or factual discrepancies.
+   - 9-10 (Elite Benchmark): Strictly adheres to the Zero Carpentry standard (no visible labels like "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**", etc.), fluid 3-paragraph organic narrative (Asset/Scale/Stakes → Differential Craft/Outcome → Team Leadership/Precedent), high factual density, and zero off-category dilution.
+   - 7-8 (Solid Benchmark): Robust factual accuracy and solid evidence preservation, but contains minor narrative stiffness, boilerplate transitions, or mild matter alignment drift.
+   - 5-6 (Acceptable Baseline): Visible structural carpentry (e.g. bold subheaders/labels), fragmented or bulleted matter narratives, generic lawyering claims without causal mechanisms, or peripheral off-category matters diluting practice focus.
+   - 1-4 (Substandard): Significant evidence omissions, dropped parties, hallucinated claims, or factual distortion.
 
 2. Provide a detailed `feedback` critique explaining:
-   - Exactly what was detected wrong or missing (specific matter IDs, weak phrasing, missing facts).
+   - Structural and Editorial Review: Note whether the submission honors the Zero Carpentry and 3-paragraph standard or exhibits mechanical labeling/bulleting.
+   - Portfolio Curation: Identify whether any submitted matters are off-category dilution candidates that should be pruned or repositioned.
+   - Specific Gaps: Note specific matter IDs, weak phrasing, missing values or lawyer attribution gaps.
    - Practical recommendations for improvements to guide the administrator and firm.
-   - What was done particularly well in the submission.
 
 Include one check record for each component below:
 

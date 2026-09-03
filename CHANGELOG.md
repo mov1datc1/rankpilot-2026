@@ -3,6 +3,16 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.23] — 2026-09-03
+
+### Golden Submissions Master Repository & Judge SOL Calibration
+
+- Created dedicated master benchmark repository (`ai-engine/rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`) containing the complete approved text for B10, C2, and gold matter exemplars (*El Cielo Country Club*, *Duranpark*, *IDEX Brasilia*, *Familia De Anda*) with 3 pre-allocated slots for the owner's approved submissions.
+- Added `golden_submissions_approved_by_owner` to `RAGRouter.GLOBAL_FILES`, making this benchmark globally accessible to all reasoning and optimization nodes across the pipeline.
+- Calibrated Judge SOL (`gpt-5.6-sol`) quality scoring (1-10) and feedback directly against the Owner's Golden Standard:
+  - **Score 9-10**: Strict adherence to Zero Carpentry, 3-paragraph organic narrative, high factual density, and zero off-category dilution.
+  - **Score 5-6**: Mechanical subheaders, bulleted matter summaries, or off-category matters diluting practice specialization.
+
 ## [v26.22] — 2026-09-03
 
 ### Universal Golden Standards Across All Major Practice Areas

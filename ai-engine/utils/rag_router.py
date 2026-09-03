@@ -24,6 +24,7 @@ class RAGRouter:
         "editorial_constitution", "global lawyer leadership framework",
         "¿cómo rankeamos abogado_as__", "volume_0_first_principles",
         "volume_ii_editorial_reasoning_engine",
+        "golden_submissions_approved_by_owner",
     )
     MAX_CHUNKS = 16
     MAX_CONTEXT_CHARS = 42000
