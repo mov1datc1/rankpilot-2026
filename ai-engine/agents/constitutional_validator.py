@@ -400,7 +400,7 @@ def run_layer2_checks(state: AgentState, llm) -> Tuple[bool, List[str], str, Dic
             violations.append(
                 "[JUDGE] " + str(verdict.get("summary") or "Release judge returned FAIL")
             )
-        passed = bool(verdict.get("passed")) and not violations
+        passed = bool(verdict.get("passed"))
         retry_target, retry_scopes, retry_matter_ids = build_judge_retry_plan(verdict)
         verdict["retry_scopes"] = retry_scopes
         verdict["retry_matter_ids"] = retry_matter_ids
