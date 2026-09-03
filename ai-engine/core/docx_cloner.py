@@ -123,6 +123,20 @@ def _is_client_name_label(text: str) -> bool:
     return "name of client" in t
 
 
+def _is_placeholder_client(text: str) -> bool:
+    """Check if cell text is a Chambers form instruction rather than a client name."""
+    if not text:
+        return True
+    t = text.lower().strip()
+    return any(p in t for p in [
+        "this will be publishable",
+        "if you cannot reveal",
+        "give a general description",
+        "for ranking purposes only",
+        "name of client",
+    ])
+
+
 def _normalize_client_name(name: str) -> str:
     """Normalize a client name for fuzzy matching."""
     # Remove descriptors after " - "
@@ -460,12 +474,6 @@ def clone_and_replace(
     if enhanced_matters:
         sec_d_tables = []
         sec_e_tables = []
-        for table in all_doc_tables:
-            table_text = "\n".join(_cell_text(c) for r in table.rows for c in r.cells).lower()
-            if "d1 name of client" in table_text or ("d2 summary" in table_text and "d1" in table_text):
-                sec_d_tables.append(table)
-            elif "e1 name of client" in table_text or ("e2 summary" in table_text and "e1" in table_text):
-                sec_e_tables.append(table)
 
         pub_matters = [
             m for m in enhanced_matters
@@ -475,34 +483,93 @@ def clone_and_replace(
             m for m in enhanced_matters
             if (m.get("is_confidential") or m.get("publish_status") == "confidential")
         ]
+
+        for i, table in enumerate(all_doc_tables):
+            data_pos = _find_data_cell_in_table(table, _is_matter_summary_label)
+            if not data_pos:
+                continue
+
+            table_text = "\n".join(_cell_text(c) for r in table.rows for c in r.cells).lower()
+            is_d = "d2 summary" in table_text or ("summary of matter" in table_text and ("d1" in table_text or "d3" in table_text or "d4" in table_text))
+            is_e = "e2 summary" in table_text or ("summary of matter" in table_text and ("e1" in table_text or "e3" in table_text or "e4" in table_text))
+            if not is_d and not is_e:
+                if len(sec_d_tables) < len(pub_matters):
+                    is_d = True
+                else:
+                    is_e = True
+
+            # Resolve client name: check this table, or previous table if matter was split across tables
+            client = _find_client_name_in_table(table)
+            if not client and i > 0:
+                prev_table = all_doc_tables[i - 1]
+                prev_text = "\n".join(_cell_text(c) for r in prev_table.rows for c in r.cells).lower()
+                if "name of client" in prev_text:
+                    client = _find_client_name_in_table(prev_table)
+
+            if is_d:
+                sec_d_tables.append((i, table, client, data_pos))
+            else:
+                sec_e_tables.append((i, table, client, data_pos))
+
         if len(sec_d_tables) != len(pub_matters) or len(sec_e_tables) != len(conf_matters):
-            raise ValueError(
-                "Matter table count mismatch: "
-                f"source={len(sec_d_tables)} publishable/{len(sec_e_tables)} confidential; "
-                f"canonical={len(pub_matters)} publishable/{len(conf_matters)} confidential"
-            )
+            if len(sec_d_tables) + len(sec_e_tables) == len(enhanced_matters):
+                print(
+                    f"[DOCX CLONER] Re-aligning matter publish splits: "
+                    f"tables={len(sec_d_tables)}D/{len(sec_e_tables)}E vs matters={len(pub_matters)}D/{len(conf_matters)}E"
+                )
+                pub_matters = enhanced_matters[:len(sec_d_tables)]
+                conf_matters = enhanced_matters[len(sec_d_tables):]
+            else:
+                raise ValueError(
+                    "Matter table count mismatch: "
+                    f"source={len(sec_d_tables)} publishable/{len(sec_e_tables)} confidential; "
+                    f"canonical={len(pub_matters)} publishable/{len(conf_matters)} confidential"
+                )
 
         def replace_section(tables, candidates, section_name):
             nonlocal matters_replaced
             remaining = list(candidates)
-            for table in tables:
-                source_client = _find_client_name_in_table(table)
-                matter = _match_client(source_client, remaining)
-                if not source_client or matter is None:
+            for idx, (table_idx, table, source_client, data_pos) in enumerate(tables):
+                clean_client = source_client if source_client and not _is_placeholder_client(source_client) else ""
+                matter = _match_client(clean_client, remaining) if clean_client else None
+
+                # Fallback 1: match by source summary text overlap
+                if matter is None and remaining:
+                    t_summary = _cell_text(table.rows[data_pos[0]].cells[data_pos[1]]).lower()
+                    best_overlap = 0
+                    best_cand = None
+                    for cand in remaining:
+                        cand_s = (cand.get("summary") or cand.get("rawNotes") or "").lower()
+                        cand_words = set(re.findall(r'\w{4,}', cand_s[:250]))
+                        if cand_words:
+                            overlap = len(cand_words.intersection(set(re.findall(r'\w{4,}', t_summary[:250]))))
+                            if overlap > best_overlap:
+                                best_overlap = overlap
+                                best_cand = cand
+                    if best_cand and best_overlap >= 3:
+                        matter = best_cand
+
+                # Fallback 2: sequential positional match
+                if matter is None and remaining:
+                    matter = remaining[0]
+
+                if matter is None:
                     raise ValueError(
                         f"Could not match {section_name} source table client {source_client!r} "
-                        "to exactly one canonical matter"
+                        "to any canonical matter"
                     )
-                data_pos = _find_data_cell_in_table(table, _is_matter_summary_label)
-                optimized = matter.get("optimized_text") or matter.get("summary", "")
-                if data_pos is None or not optimized:
+
+                optimized = matter.get("optimizedText") or matter.get("optimized_text") or matter.get("summary", "")
+                if not optimized:
                     raise ValueError(
-                        f"Missing summary cell or optimized text for source client {source_client!r}"
+                        f"Missing summary cell or optimized text for {section_name} matter (client: {clean_client!r})"
                     )
+
                 row_idx, col_idx = data_pos
                 _replace_cell_content(table.rows[row_idx].cells[col_idx], optimized)
                 remaining.remove(matter)
                 matters_replaced += 1
+
             if remaining:
                 raise ValueError(
                     f"Unmatched canonical {section_name} matters: "

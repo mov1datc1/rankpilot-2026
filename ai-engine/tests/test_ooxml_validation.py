@@ -108,6 +108,52 @@ class OoxmlValidationTests(unittest.TestCase):
         finally:
             os.remove(path)
 
+    def test_cloner_handles_split_tables_and_placeholder_client(self):
+        document = Document()
+        # Table 1: Split table part 1 (Client only)
+        t1 = document.add_table(rows=2, cols=1)
+        t1.cell(0, 0).text = "E1 Name of client (for ranking purposes only)"
+        t1.cell(1, 0).text = "Global Packaging Inc."
+        # Table 2: Split table part 2 (Summary and following fields)
+        t2 = document.add_table(rows=4, cols=1)
+        t2.cell(0, 0).text = "E2 Summary of matter and your department's role"
+        t2.cell(1, 0).text = "Original packaging litigation defense."
+        t2.cell(2, 0).text = "E3 Value of deal / matter"
+        t2.cell(3, 0).text = "US$5 million"
+        # Table 3: Matter with placeholder instruction in client row
+        t3 = document.add_table(rows=4, cols=1)
+        t3.cell(0, 0).text = "E1 Name of client (for ranking purposes only)"
+        t3.cell(1, 0).text = "This will be publishable. If you cannot reveal the client name, give a general description."
+        t3.cell(2, 0).text = "E2 Summary of matter and your department's role"
+        t3.cell(3, 0).text = "Motormexa tax litigation defense."
+
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as temp:
+            path = temp.name
+        try:
+            document.save(path)
+            output = clone_and_replace(path, enhanced_matters=[
+                {
+                    "client": "Global Packaging Inc.",
+                    "summary": "Original packaging litigation defense.",
+                    "optimized_text": "Enhanced packaging defense outcome.",
+                    "is_confidential": True,
+                    "publish_status": "confidential",
+                },
+                {
+                    "client": "MOTORMEXA",
+                    "summary": "Motormexa tax litigation defense.",
+                    "optimized_text": "Enhanced Motormexa tax resolution.",
+                    "is_confidential": True,
+                    "publish_status": "confidential",
+                }
+            ])
+            generated = Document(BytesIO(output))
+            all_text = "\n".join(cell.text for t in generated.tables for row in t.rows for cell in row.cells)
+            self.assertIn("Enhanced packaging defense outcome.", all_text)
+            self.assertIn("Enhanced Motormexa tax resolution.", all_text)
+        finally:
+            os.remove(path)
+
 
 if __name__ == "__main__":
     unittest.main()

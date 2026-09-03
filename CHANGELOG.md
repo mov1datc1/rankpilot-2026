@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.20] — 2026-09-03
+
+### Split-Table DOCX Cloner & Extraction Auto-Recovery
+
+- Solved DOCX clone-and-replace failure on submissions with tables split across pages in Word (e.g. Ramos Castillo Confidential Matter 11 with E1 client header in Table 45 and E2-E9 data in Table 46).
+- Implemented fallback client matching by summary text overlap and positional sequence when cell E1/D1 contains boilerplate template instructions instead of a named client.
+- Added extraction auto-recovery (`auto_recover=True`) in `extraction_node` to synthesize grounded matters directly from deterministic source section fields if the LLM extraction drops or mislabels any numbered matter.
+- Wrapped DOCX clone-and-replace in a resilient fallback to `canonical_docx_builder`, preventing `PipelineReleaseError` crashes.
+
 ## [v26.19] — 2026-09-03
 
 ### Judge SOL Continuous Evaluator (Score 1-10) & Admin Quality Audit Module

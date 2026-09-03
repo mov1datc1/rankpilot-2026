@@ -1028,7 +1028,7 @@ def extraction_node(state: AgentState) -> Dict:
     if source_labels:
         from utils.canonical_builder import reconcile_extracted_matters_to_source
         matters_list, register_report = reconcile_extracted_matters_to_source(
-            matters_list, source_labels, doc_text
+            matters_list, source_labels, doc_text, auto_recover=True
         )
         manifest["extraction_register_reconciliation"] = register_report
         print(

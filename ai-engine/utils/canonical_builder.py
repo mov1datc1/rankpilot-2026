@@ -56,7 +56,7 @@ def merge_lawyer_roster(source_lawyers: List[Dict], extracted_lawyers: List[Dict
 
 
 def reconcile_extracted_matters_to_source(
-    extracted_matters: List[Dict], source_labels: List[str], source_text: str
+    extracted_matters: List[Dict], source_labels: List[str], source_text: str, auto_recover: bool = False
 ) -> Tuple[List[Dict], Dict]:
     """Select exactly one grounded extraction record per numbered source label."""
 
@@ -84,12 +84,51 @@ def reconcile_extracted_matters_to_source(
             for index, matter in enumerate(extracted_matters)
             if normalized_label(str(matter.get("source_label") or "")) == key
         ]
+        source_span = str(sections.get(exact_label.casefold(), {}).get("text") or "").casefold()
+
+        # Fallback 1: Match unused extracted matter whose client name appears in source_span
+        if not candidates and source_span:
+            for index, matter in enumerate(extracted_matters):
+                if index in used_indices:
+                    continue
+                c_name = str(matter.get("client") or "").strip().casefold()
+                if c_name and len(c_name) > 3 and c_name in source_span:
+                    candidates.append((index, matter))
+                    break
+
+        # Fallback 2: Synthesize grounded matter directly from deterministic source section fields if auto_recover is requested
+        if not candidates and auto_recover:
+            section_text = str(sections.get(exact_label.casefold(), {}).get("text") or "")
+            if section_text:
+                source_fields = DocumentParser.extract_matter_fields(section_text)
+                inferred_client = str(source_fields.get("client") or "").strip()
+                if not inferred_client:
+                    summary_text = str(source_fields.get("summary") or "").strip()
+                    if summary_text:
+                        inferred_client = summary_text.split(".")[0][:60].strip()
+                    else:
+                        inferred_client = f"Matter ({exact_label})"
+                synthesized = {
+                    "title": inferred_client,
+                    "client": inferred_client,
+                    "summary": source_fields.get("summary") or "",
+                    "significance": "Matter retained from source document.",
+                    "lead_partner": source_fields.get("lead_partner") or "",
+                    "matter_value": source_fields.get("matter_value") or "",
+                    "team_members": source_fields.get("team_members") or "",
+                    "other_firms": source_fields.get("other_firms") or "",
+                    "completion_date": source_fields.get("completion_date") or "",
+                    "source_label": exact_label,
+                    "source_excerpt": section_text,
+                }
+                candidates.append((-1, synthesized))
+                print(f"[RECONCILIATION RECOVERY] Synthesized grounded matter for {exact_label} from source text (client: {inferred_client!r})")
+
         if not candidates:
             missing.append(exact_label)
             continue
         if len(candidates) > 1:
             duplicate_labels.append(exact_label)
-        source_span = str(sections.get(exact_label.casefold(), {}).get("text") or "").casefold()
         index, chosen = max(
             candidates,
             key=lambda item: (
@@ -100,7 +139,8 @@ def reconcile_extracted_matters_to_source(
                 -item[0],
             ),
         )
-        used_indices.add(index)
+        if index >= 0:
+            used_indices.add(index)
         grounded = dict(chosen)
         grounded["source_label"] = exact_label
         section_text = str(sections.get(exact_label.casefold(), {}).get("text") or "")

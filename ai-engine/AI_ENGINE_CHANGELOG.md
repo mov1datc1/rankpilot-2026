@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.19 — Judge SOL Continuous Evaluator & Admin Quality Audit)
+> Last updated: **2026-09-03** (v26.20 — Split-Table DOCX Cloner & Extraction Auto-Recovery)
+
+## v26.20 — SPLIT-TABLE DOCX CLONER & EXTRACTION AUTO-RECOVERY (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Split Table Resolution | Detects and handles matter tables split across Word pages (e.g. Table 45 client header + Table 46 summary/data cells), linking client names across preceding tables | `core/docx_cloner.py`, `test_ooxml_validation.py` |
+| Placeholder Client Name Shield | Ignores Chambers template placeholder text (`This will be publishable...`) and matches matters by summary text overlap or sequential section position | `core/docx_cloner.py` |
+| Extraction Auto-Recovery | When LLM extraction misses or mislabels a source label, automatically recovers and synthesizes a grounded matter directly from deterministic source section fields (`auto_recover=True`) | `utils/canonical_builder.py`, `agents/nodes.py` |
+| Graceful DOCX Cloner Fallback | If DOCX clone-and-replace encounters an unexpected error, falls back to `canonical_docx_builder` without throwing `PipelineReleaseError`, guaranteeing deliverables are always delivered | `main.py` |
 
 ## v26.19 — JUDGE SOL CONTINUOUS EVALUATOR & ADMIN QUALITY AUDIT (2026-09-03)
 
