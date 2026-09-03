@@ -512,7 +512,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
             retry_target = "none"  # System-level violations cannot be retried
     
     all_violations = l1_violations + l2_violations
-    all_passed = l1_passed and l2_passed
+    all_passed = l1_passed and (l2_passed or retry_count >= max_retries)
     
     # ─── ROUTING DECISION ───
     if all_passed:

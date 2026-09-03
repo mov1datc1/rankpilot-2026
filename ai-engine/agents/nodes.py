@@ -2487,6 +2487,23 @@ source fact and do not change matter identities, classifications or evidence.
             if not audit_letter.get("closing"):
                 audit_letter["closing"] = f"This Strategic Audit provides actionable guidance for maximizing {firm_name}'s Chambers ranking objective."
 
+            # Strategic Audit Alignment Cleanups (v26.18)
+            if "real estate" in str(practice_area or "").casefold():
+                for k, v in list(audit_letter.items()):
+                    if isinstance(v, str):
+                        audit_letter[k] = re_module.sub(r"\bGeneral Business Law\b", "Real Estate", v, flags=re_module.I)
+
+            evals = audit_letter.get("matter_evaluations", []) or res_json.get("matter_evaluations", [])
+            seen_eval_names = {}
+            for ev in evals:
+                if isinstance(ev, dict):
+                    m_name = str(ev.get("matter_name") or ev.get("title") or "").strip()
+                    if m_name in seen_eval_names:
+                        seen_eval_names[m_name] += 1
+                        ev["matter_name"] = f"{m_name} (Matter {seen_eval_names[m_name]})"
+                    else:
+                        seen_eval_names[m_name] = 1
+
             required_audit_fields = (
                 "narrative_strategy",
                 "the_state_of_play",
