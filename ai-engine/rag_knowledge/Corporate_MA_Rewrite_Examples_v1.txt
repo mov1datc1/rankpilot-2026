@@ -6,6 +6,18 @@ This document teaches RankPilot how to transform weak Corporate/M&A descriptions
 
 The goal is not exaggeration. The goal is to surface strategic relevance, firm role, complexity and lawyer leadership.
 
+## Golden 3-Paragraph Standard & Zero Carpentry Benchmark (v26.21)
+
+Every Corporate/M&A matter must embody seamless narrative prose without visible labels or internal scaffolding (**IMPACT:**, **HERO STATEMENT:**, **EXECUTION:**, **THE HEROES:** are strictly prohibited).
+
+### Gold Corporate/M&A Exemplar:
+
+"The firm represented a leading international industrial group as buyer in the USD 280 million cross-border acquisition of a multi-jurisdictional manufacturing conglomerate operating across Mexico, Colombia and Central America. The transaction was of existential commercial significance for the client, consolidating its regional footprint while navigating critical regulatory clearances, minority shareholder buyouts, and extensive pre-closing antitrust scrutiny across three separate competition authorities.
+
+The team designed and executed an integrated transaction architecture that overcame substantial closing obstacles. It negotiated a complex multi-currency share purchase agreement, structured bespoke indemnity escrows to address pre-existing environmental and labor contingencies, and secured unconditional clearance from the Mexican Federal Economic Competition Commission (COFECE) under an expedited timeline. Additionally, the firm coordinated local counsel across two additional jurisdictions, harmonising closing conditions and post-acquisition transitional services agreements.
+
+Lead Partner [Name] directed the transaction strategy, supported by Partner [Name] on merger control clearances and Senior Associate [Name], who assumed end-to-end management of the due diligence stream and multi-jurisdictional closing mechanics. The mandate stands as one of the region’s landmark industrial transactions of the year, establishing a key precedent for cross-border asset integration and antitrust risk allocation in Latin America."
+
 ## Rewrite principle
 
 A strong Corporate/M&A matter should answer:

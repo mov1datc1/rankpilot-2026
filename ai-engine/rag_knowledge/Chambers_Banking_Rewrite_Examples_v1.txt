@@ -270,3 +270,16 @@ RankPilot must not invent:
 - complexity
 
 If facts are missing, RankPilot should mark them as questions.
+
+---
+
+## Golden 3-Paragraph Standard & Zero Carpentry Benchmark (v26.21)
+
+Every Banking & Finance matter must embody seamless narrative prose without visible labels or internal scaffolding (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**` are strictly prohibited).
+
+### Gold Banking & Finance Exemplar:
+"The firm represented an international syndicate of commercial banks and multilateral development agencies as lenders in the structuring and financial closing of a USD 450 million cross-border sustainability-linked syndicated credit facility for a major energy and infrastructure group. The transaction supported a nationwide capital expenditure programme under intense closing deadlines, where failure to achieve financial close would have triggered substantial penalty payments and delayed critical infrastructure delivery.
+
+The team designed and negotiated the comprehensive financing architecture, balancing disparate lender requirements across commercial, multilateral and local banking tranches. The firm drafted the primary credit agreement, structured a bespoke multi-asset collateral package governed by dual-jurisdiction security documents, and negotiated rigorous KPI-linked margin adjustment mechanisms aligned with international LMA green loan principles. The firm also successfully coordinated intercreditor arrangements to resolve competing priority and voting claims between senior commercial lenders and multilateral institutions.
+
+Lead Partner [Name] steered the lender syndicate through complex intercreditor negotiations, supported by Senior Associate [Name] on the drafting of the security perfection instruments and closing conditions precedent. The financing represents one of the largest sustainability-linked facility closures of the year, establishing a benchmark standard for multi-creditor ESG syndications in Latin America."

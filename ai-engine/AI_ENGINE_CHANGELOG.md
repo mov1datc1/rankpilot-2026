@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.21 — Zero Carpentry, 3-Paragraph Matter Flow & Angela's Reference Methodology)
+> Last updated: **2026-09-03** (v26.22 — Universal Golden Standard Across All Practice Areas)
+
+## v26.22 — UNIVERSAL GOLDEN STANDARD ACROSS ALL PRACTICE AREAS (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Corporate & M&A Benchmark | Added Golden 3-Paragraph Standard and cross-border acquisition exemplar to Corporate/M&A RAG matrix | `rag_knowledge/Corporate_MA_Rewrite_Examples_v1.txt` |
+| Banking & Finance Benchmark | Added Golden 3-Paragraph Standard and sustainability-linked syndication exemplar to Banking RAG matrix | `rag_knowledge/Chambers_Banking_Rewrite_Examples_v1.txt` |
+| Dispute Resolution Benchmark | Added Golden 3-Paragraph Standard and infrastructure concession dispute exemplar to Disputes RAG matrix | `rag_knowledge/RAG Disputes — lógica base - Chambers.txt` |
+| Tax Controversy Benchmark | Added Golden 3-Paragraph Standard and federal transfer pricing nullity exemplar to Tax RAG matrix | `rag_knowledge/Rankpilot Tax Guides Context Mapping - Chambers.txt` |
+| Labour & Employment Benchmark | Added Golden 3-Paragraph Standard and collective bargaining restructuring exemplar to Labour RAG matrix | `rag_knowledge/UNIVERSAL CHAMBERS LABOUR LOGIC.txt` |
+| IP & Data Protection Benchmark | Added Golden 3-Paragraph Standard and AI biotech patent litigation exemplar to IP RAG matrix | `rag_knowledge/🧠 RAG MASTER — INTELLECTUAL PROPERTY _ INNOVATION _ AI.txt` |
 
 ## v26.21 — ZERO CARPENTRY, 3-PARAGRAPH MATTER FLOW & ANGELA'S REFERENCE METHODOLOGY (2026-09-03)
 

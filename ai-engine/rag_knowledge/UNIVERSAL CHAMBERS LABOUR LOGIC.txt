@@ -458,5 +458,17 @@ litigation
 advisory
 pensions
 incentives
-…all behave like partially different practices inside Chambers.
 And RankPilot must reason accordingly.
+
+---
+
+## GOLDEN 3-PARAGRAPH STANDARD & ZERO CARPENTRY BENCHMARK (v26.21)
+
+Every Labour & Employment matter must embody seamless narrative prose without visible labels or internal scaffolding (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**` are strictly prohibited).
+
+### Gold Labour & Employment Exemplar:
+"The firm represented a major multinational automotive component manufacturer as employer in the strategic workforce restructuring and collective bargaining renegotiation affecting over 4,500 unionized employees across three Mexican production facilities. The mandate arose amid aggressive inter-union representation challenges under the new Federal Labour Law framework, where an unauthorized wildcat strike or collective conflict threatened the immediate shutdown of critical assembly lines supplying global OEM manufacturers.
+
+The team designed and executed an integrated labor strategy that neutralized strike threats while modernizing collective bargaining agreements. The firm structured direct dialogue protocols with union leadership, aligned wage and benefit packages with revised statutory subcontracting caps, and successfully represented the employer before the Federal Centre for Labour Conciliation and Registration (CFCRL) to certify collective contract legitimization with a 94% affirmative employee vote without a single hour of production stoppage.
+
+Lead Partner [Name] directed the high-stakes collective negotiations, supported by Senior Associate [Name] on the drafting of procedural agreements and representation before federal labor conciliators. The outcome safeguarded the client's manufacturing continuity, prevented hundreds of millions of dollars in supply chain interruption penalties, and established an industry benchmark for collective labor transitions under modern Mexican labor reform."

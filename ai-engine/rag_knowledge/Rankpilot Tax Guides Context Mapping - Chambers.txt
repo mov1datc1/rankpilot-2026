@@ -475,3 +475,16 @@ The winning product is not:
 “AI that reads submissions.”
 It is:
 “AI that understands how Chambers thinks in each specific market.”
+
+---
+
+## GOLDEN 3-PARAGRAPH STANDARD & ZERO CARPENTRY BENCHMARK (v26.21)
+
+Every Tax matter (Litigation or Advisory) must embody seamless narrative prose without visible labels or internal scaffolding (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**` are strictly prohibited).
+
+### Gold Tax Controversy Exemplar:
+"The firm represented a multinational consumer goods corporation as plaintiff in high-stakes contentious tax litigation against the federal tax administration (SAT) challenging tax assessments and audit adjustments exceeding USD 185 million. The disputed determination targeted transfer pricing methodologies and royalty deductions spanning four fiscal years, threatening massive liquidity depletion, tax lien executions against operational bank accounts, and severe financial statement restatements.
+
+The team designed and executed a multi-tiered constitutional and administrative litigation strategy to annul the assessment in full. The firm conducted a forensic accounting and economic reconstruction disproving the tax authority’s benchmarking methods, obtained an immediate judicial stay preventing asset seizures without requiring cash deposit guarantees, and secured an absolute nullity ruling from the Federal Administrative Court based on flagrant procedural and substantive violations committed during the audit.
+
+Lead Partner [Name] directed the contentious trial strategy, supported by Partner [Name] on transfer pricing economic modeling and Senior Associate [Name] on amparo review briefs. The ruling fully extinguished the tax liability, preserved the client’s balance sheet, and established a landmark judicial precedent limiting arbitrary transfer pricing adjustments across multinational supply chains."

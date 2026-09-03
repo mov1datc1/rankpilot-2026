@@ -402,3 +402,16 @@ La RAG Disputes no debe responder solo:
 Debe responder:
 “¿Este asunto pertenece a esta categoría, en esta guía, con este peso, y fortalece o diluye la narrativa del ranking?”
 Esa es la clave.
+
+---
+
+## 6. Golden 3-Paragraph Standard & Zero Carpentry Benchmark (v26.21)
+
+Every Dispute Resolution / Litigation / Arbitration matter must embody seamless narrative prose without visible labels or internal scaffolding (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**` are strictly prohibited).
+
+### Gold Dispute Resolution Exemplar:
+"The firm represented a prominent infrastructure concessionaire as plaintiff in high-stakes administrative litigation against state authorities seeking to unilaterally rescind a 30-year highway operating concession valued at over USD 320 million. The government's attempted termination threatened the immediate expropriation of tolling assets, severe reputational contagion, and catastrophic default under project financing covenants held by international institutional bondholders.
+
+The team devised and executed an aggressive, multi-forum contentious strategy to halt government intervention before irreversible harm occurred. The firm secured an immediate provisional amparo suspension freezing all revocation decrees, assembled complex financial and engineering forensic evidence to disprove alleged maintenance breaches, and persuaded the Collegiate Court to grant definitive relief maintaining the client's undisturbed possession and operational control of the highway corridor.
+
+Lead Partner [Name] directed the constitutional litigation strategy, supported by Senior Associate [Name] on administrative court filings and oral argument before the appellate panel. The outcome preserved the concession’s ongoing commercial viability and established a binding legal precedent constraining the unilateral revocation powers of state administrative bodies."

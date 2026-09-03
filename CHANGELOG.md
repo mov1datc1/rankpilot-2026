@@ -3,6 +3,19 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.22] — 2026-09-03
+
+### Universal Golden Standards Across All Major Practice Areas
+
+- Expanded the Golden 3-Paragraph Standard and Zero Carpentry Benchmark across the top 6 core practice areas in Chambers & Partners:
+  - **Corporate / M&A**: Cross-border multi-jurisdictional acquisition and antitrust integration benchmark.
+  - **Banking & Finance**: Sustainability-linked multi-tranche syndicated facility benchmark.
+  - **Dispute Resolution**: High-stakes public infrastructure concession amparo litigation benchmark.
+  - **Tax**: Multi-year federal transfer pricing nullity controversy benchmark.
+  - **Labour & Employment**: Large-scale collective bargaining and workforce restructuring benchmark.
+  - **IP & Data Protection**: Cross-border AI biotechnology patent litigation and data governance benchmark.
+- All practice areas now share the unified editorial voice, elevated British-inflected legal style, and rigorous zero-label narrative flow approved by the owner.
+
 ## [v26.21] — 2026-09-03
 
 ### Zero Carpentry, 3-Paragraph Matter Flow & Angela's Reference Methodology
