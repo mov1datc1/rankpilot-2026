@@ -3,6 +3,16 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.21] — 2026-09-03
+
+### Zero Carpentry, 3-Paragraph Matter Flow & Angela's Reference Methodology
+
+- Integrated the editorial principles from the owner's manual reference submission (`Ramos Castillo - Real Estate - Optimized`).
+- Enforced the "Zero Carpentry" directive prohibiting visible mechanism labels (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**`, `**BACKGROUND:**`, `**CHALLENGE:**`, `**RESULT:**`) in favor of seamless, elevated narrative prose.
+- Mandated an organic 3-paragraph structure for each matter: (1) Asset scale & existential exposure; (2) Differential legal craft & enforceable outcome; (3) Team leadership & industry precedent.
+- Added Angela's approved gold benchmarks (*El Cielo Country Club*, *Duranpark*, *Familia De Anda*) to system prompts and the Real Estate RAG intelligence matrix.
+- Introduced Practice Alignment & Portfolio Curation directives in the Strategic Audit to distinguish Core Practice Flagships from off-category dilution candidates.
+
 ## [v26.20] — 2026-09-03
 
 ### Split-Table DOCX Cloner & Extraction Auto-Recovery

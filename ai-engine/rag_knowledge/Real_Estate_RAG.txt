@@ -1,19 +1,44 @@
 # Real Estate & Property Development — Chambers & Partners Intelligence Matrix
+# (Approved Reference Benchmark — Angela Revision v26.21)
 
 ## 1. Practice Core & Editorial Identity
 Real Estate in Chambers & Partners evaluates law firms that advise on:
 - Major commercial, residential, industrial, and infrastructure real estate developments.
 - Land-use, zoning, environmental permits, property rights, expropriation challenges, and administrative amparo litigation defending real estate assets.
 - Real estate acquisition, leasing, concession management, and project continuity against government interventions.
+- Core value proposition: Protecting the business value of real estate assets when regulatory intervention, environmental measures, expropriation or litigation threatens to halt a development, deprive an owner of its land or render an investment commercially unviable.
 
 ## 2. National Ranking Positioning vs Regional Self-Limitation
 - **National Recognition Requirement**: To achieve a national ranking in Mexico Real Estate, the submission must emphasize national geographic reach across multiple states (e.g. Jalisco, Guanajuato, Durango, Querétaro, CDMX) and federal administrative/constitutional tribunals.
 - **B10/C2 Anti-Pattern**: NEVER describe the practice as purely local or regional (e.g. "operating primarily in Guadalajara"). Frame headquarters in Guadalajara as a strategic base serving national project developers across Mexico.
+- **C2 Feedback Positioning**: Distinguish the firm from conventional transactional firms (which merely document acquisitions or leases). Position the firm as the elite specialist when regulatory complexity places major assets at risk, firmly supporting a Band placement (e.g. Band 4).
 
-## 3. Hero Matter Strategy & Case Prioritization
-- **Hero Matter Criteria**: The Hero Matter (#1 position in submission and B10 narrative) MUST be the case that best demonstrates real estate asset protection, high-stakes exposure, acquired property rights, and successful project continuity under government or environmental challenges.
-- **Substantive Legal Reasoning**: Always preserve the exact legal mechanism (e.g. acquired rights under municipal zoning decrees, interim amparo relief protecting concession operational continuity, technical/scientific rebuttal of environmental restrictions).
-- **Conciseness vs Lawyering**: NEVER compress away the causal legal mechanism that explains why the firm's work was exceptional. Outcomes show results; substantive legal criteria prove elite lawyering.
+## 3. Portfolio Curation & Practice-Area Alignment ("Menos es Más")
+- **Dilution Warning**: Including peripheral matters (routine corporate tax, labor inspections, public procurement for lighting/tenders, general transport regulations) contaminates the definition of the practice and makes the firm look like a generalist public-law boutique rather than a top-tier Real Estate practice.
+- **Ideal Portfolio Composition**: Focus on a concentrated, high-impact portfolio (up to 10 publishable and 4-10 confidential matters) that tells a coherent story of:
+  `development + ownership + land use + environmental regulation + expropriation + industrial real estate + continuity of strategic assets + national reach`.
+- **Deduplication**: Never submit anonymized duplicates of the same matter across sections.
 
-## 4. Wrong-Fit Practice Exclusion
-- Pure corporate tax, routine labor inspection, or unrelated banking compliance matters do NOT belong in Section D/E of a Real Estate submission. Requisition or reposition peripheral matters to keep the portfolio concentrated on core real estate and public-law property protection.
+## 4. Zero Carpentry & Invisible Narrative Architecture
+- **Prohibition on Visible Labels**: The researcher must perceive the structure without seeing the internal mechanism. NEVER write labels or tags such as `**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**`, `**BACKGROUND:**`, `**CHALLENGE:**`, `**RESULT:**`.
+- **The 3-Paragraph Matter Architecture**:
+  - **Paragraph 1 (The Asset, Scale & Existential Risk)**: Identify the client, the tangible asset, location, economic scale (in MXN and converted USD), and the specific commercial or regulatory threat (expropriation decree, environmental reclassification, work suspension).
+  - **Paragraph 2 (Strategic Craft & Differential Outcome)**: Describe how the firm turned a legal concept (e.g. vested rights, historic property structures, provisional suspension) into the concrete commercial instrument that preserved ownership and allowed work or operations to continue, backed by definitive court judgments.
+  - **Paragraph 3 (Team Leadership & Market Precedent)**: Name the lead partner and key associates with genuine matter ownership, concluding with the broader legal and commercial precedent established for the market.
+
+## 5. Gold Reference Exemplars (Angela Approved Standards)
+
+### Exemplar 1 — Flagship Development & Vested Rights (El Cielo Country Club)
+"El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion (USD 176.6 million) development at existential risk.
+Ramos Castillo prevented public authorities from rewriting the legal history of an operating development. The firm turned vested rights - often treated as an abstract constitutional concept - into the instrument that kept the project commercially alive. The team designed and led two amparo proceedings, assembled the scientific and technical record required to defeat allegations of environmental harm, and proved that later political measures could not extinguish duly acquired development rights. It secured a judgment confirming the legality of the project and validity of its permits, upheld by the Sixth Collegiate Administrative Court; it then obtained a second judgment disapplying the updated ecological programme and achieved enforcement in July 2024.
+José Pablo Ramos Castillo led the strategy, supported by Daniel Rocha Peña and Héctor Alejandro Sánchez Carrera. Their work preserved the development, protected existing purchasers and established a powerful proposition for the wider market: environmental regulation can shape future development, but it cannot arbitrarily erase lawful investment already made in reliance on government authorisations."
+
+### Exemplar 2 — Industrial Logistics & Expropriation Defense (Duranpark)
+"Duranpark develops the Durango Logistics and Industrial Center, a strategic industrial platform built around approximately 207.5 hectares acquired through a trust resolution and notarised deed. When the Public Registry refused registration because the State of Durango had purported to expropriate the same land, the client faced the loss of possession, title and an asset valued at MXN 698.4 million (USD 41.1 million), with the viability of the entire logistics project hanging on the result.
+Ramos Castillo stopped an attempted taking before the State could convert it into an irreversible commercial fact. The decisive achievement was to keep Duranpark in control of the asset while forcing the authorities to defend the decree in court. The firm reconstructed the trust, conveyancing and administrative record; identified the retroactive interference with acquired rights; and coordinated a constitutional challenge against the state authorities responsible for the decree and its registration effects. Most importantly, it obtained a definitive suspension barring any act affecting the property, its possession or its registration while the amparo is determined.
+José Pablo Ramos Castillo led the mandate with Daniel Rocha Peña and Héctor Alejandro Sánchez Carrera. Their intervention protected far more than acreage: it preserved the foundation asset, the client's negotiating position and years of industrial-project planning. The case demonstrates the firm's ability to neutralise sovereign action at speed and to protect major real estate investment beyond its home market."
+
+### Exemplar 3 — Forensic Ownership Recovery (Familia De Anda)
+"The De Anda family owns an 11,283.33 sq m property in Zapopan that had already passed into the State of Jalisco's possession. Earlier proceedings had left the family's legal standing severely compromised, and the matter appeared exhausted: both recovery of land worth approximately MXN 150 million (USD 8.8 million) and any meaningful compensation were in jeopardy.
+Ramos Castillo resurrected a case that appeared legally dead. By reopening the ownership history from first principles, the firm identified a constitutional route that prior analysis had missed. The team examined the matrimonial property regime governing the original owners and found a distinct proprietary interest capable of supporting a new amparo. That analysis restored standing and created a live pathway to restitution or, if return of the land is impossible, full indemnification.
+José Pablo Ramos Castillo led the recovery strategy with Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Their contribution was not incremental: it changed the family's position from a completed taking without an effective remedy to an enforceable constitutional claim. For the firm, the mandate exemplifies forensic ownership analysis; for the market, it shows that historic property structures can still determine whether state action is reversible."

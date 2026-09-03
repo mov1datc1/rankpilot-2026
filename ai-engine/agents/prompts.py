@@ -274,8 +274,8 @@ created by that hire.
 # =====================================================
 
 EDITORIAL_VOICE_DIRECTIVE = """
-### EDITORIAL VOICE DIRECTIVE (v7.1 — APPLIES TO ALL OUTPUT):
-You write as a Chambers EDITOR, not a McKinsey consultant.
+### EDITORIAL VOICE DIRECTIVE (v7.1 / v26.21 — APPLIES TO ALL OUTPUT):
+You write as a senior Chambers EDITOR, not a McKinsey consultant or marketing copywriter.
 PROHIBITED TERMS (never use): "strategic plan", "diversification", "market expansion",
 "high-sophistication firm", "operational excellence", "value proposition", "broaden client base",
 "leverage synergies", "optimize portfolio", "scalable model",
@@ -287,6 +287,15 @@ REQUIRED TERMS (use naturally): "institutional reputation", "market perception",
 "editorial positioning", "submission narrative", "evidence", "differentiation",
 "credibility", "evidentiary value", "ranking narrative", "editorial identity",
 "bench strength", "practice trajectory".
+
+### ZERO CARPENTRY & INVISIBLE ARCHITECTURE (v26.21 — ABSOLUTE STANDARD):
+The internal scaffolding and structural mechanisms of the submission MUST NEVER BE VISIBLE.
+1. ABSOLUTE PROHIBITION ON LABELS AND HEADERS:
+   NEVER write section labels, bold mechanism tags, or bullet-point headers inside matter narratives or editorial sections.
+   PROHIBITED: "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**", "**THE HEROES:**", "**BACKGROUND:**", "**CHALLENGE:**", "**RESULT:**", "**THE STAKES:**", "**LEGAL CRAFT:**", "**MARKET SIGNIFICANCE:**".
+2. ORGANIC NARRATIVE PROSE:
+   The narrative architecture must be perceived as continuous, elegant, seamless paragraphs.
+   The researcher must feel the rigor, scale, and craft without seeing the internal labels.
 """
 
 # =====================================================
@@ -1322,6 +1331,24 @@ Rules:
    guards, validation, missing data or ranking-evidence mechanics.
 8. Return one literal source quote for every material factual sentence. Each
    quote must be copied verbatim from the raw matter; never manufacture a quote.
+9. ZERO CARPENTRY & INVISIBLE ARCHITECTURE (v26.21):
+   NEVER include section headers, bold mechanism labels, bullet points, or metadata tags inside
+   "optimized_text" (e.g. absolutely DO NOT write "**IMPACT:**", "**HERO STATEMENT:**",
+   "**EXECUTION:**", "**THE HEROES:**", "**BACKGROUND:**", "**CHALLENGE:**", "**RESULT:**").
+   The narrative architecture must be perceived as continuous, elegant, seamless paragraphs;
+   the internal scaffolding must remain completely invisible.
+10. THREE-PARAGRAPH EDITORIAL ARCHITECTURE:
+    When evidence permits, weave the narrative into three organic, high-density paragraphs:
+    - Paragraph 1: Tangible asset / transaction, economic scale (values in figures and converted USD if stated), and the commercial exposure or existential threat.
+    - Paragraph 2: Firm's decisive legal intervention and craft (turning legal concepts into commercial protection), the procedural mechanism, and the definitive enforceable outcome.
+    - Paragraph 3: Leadership team, lawyer ownership, and broader market/client precedent.
+
+GOLD REFERENCE BENCHMARK (Approved Chambers Submission Standard):
+"El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion (USD 176.6 million) development at existential risk.
+
+Ramos Castillo prevented public authorities from rewriting the legal history of an operating development. The firm turned vested rights - often treated as an abstract constitutional concept - into the instrument that kept the project commercially alive. The team designed and led two amparo proceedings, assembled the scientific and technical record required to defeat allegations of environmental harm, and proved that later political measures could not extinguish duly acquired development rights. It secured a judgment confirming the legality of the project and validity of its permits, upheld by the Sixth Collegiate Administrative Court; it then obtained a second judgment disapplying the updated ecological programme and achieved enforcement in July 2024.
+
+José Pablo Ramos Castillo led the strategy, supported by Daniel Rocha Peña and Héctor Alejandro Sánchez Carrera. Their work preserved the development, protected existing purchasers and established a powerful proposition for the wider market: environmental regulation can shape future development, but it cannot arbitrarily erase lawful investment already made in reliance on government authorisations."
 
 Return valid JSON only:
 {

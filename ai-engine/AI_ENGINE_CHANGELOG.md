@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.20 — Split-Table DOCX Cloner & Extraction Auto-Recovery)
+> Last updated: **2026-09-03** (v26.21 — Zero Carpentry, 3-Paragraph Matter Flow & Angela's Reference Methodology)
+
+## v26.21 — ZERO CARPENTRY, 3-PARAGRAPH MATTER FLOW & ANGELA'S REFERENCE METHODOLOGY (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Zero Carpentry Directive | Absolute prohibition on visible scaffolding, section tags, or bold labels (`**IMPACT:**`, `**HERO STATEMENT:**`, `**EXECUTION:**`, `**THE HEROES:**`, `**BACKGROUND:**`, `**CHALLENGE:**`, `**RESULT:**`) across all matter and editorial outputs | `agents/prompts.py` (`EDITORIAL_VOICE_DIRECTIVE`, `MATTER_ENHANCER_PROMPT`) |
+| 3-Paragraph Narrative Architecture | Mandates an organic, flowing 3-paragraph structure: (1) Asset, scale in MXN/USD & commercial exposure; (2) Differential legal strategy/craft & enforceable outcome; (3) Leadership team & market precedent | `agents/prompts.py` (`MATTER_ENHANCER_PROMPT`) |
+| Angela Approved Gold Exemplars | Injected Angela's approved Real Estate submission benchmarks (El Cielo Country Club, Duranpark, Familia De Anda) into prompts and RAG matrix | `agents/prompts.py`, `rag_knowledge/Real_Estate_RAG.txt` |
+| Portfolio Curation Directive | Instructs Strategic Audit to evaluate portfolio alignment, distinguish Core Practice Flagships from off-category dilution candidates (e.g. tax/labor/transport in Real Estate), and recommend pruning | `agents/nodes.py` (`analysis_node`) |
 
 ## v26.20 — SPLIT-TABLE DOCX CLONER & EXTRACTION AUTO-RECOVERY (2026-09-03)
 

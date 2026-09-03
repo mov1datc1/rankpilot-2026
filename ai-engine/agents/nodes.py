@@ -2082,6 +2082,11 @@ SCORING FLOOR CALIBRATION:
 - 5+ cross-border matters = minimum confidence "Moderate"
 - Hero matter with USD 100M+ impact = minimum confidence "Moderate"
 
+PRACTICE ALIGNMENT & PORTFOLIO CURATION DIRECTIVE (v26.21):
+- Evaluate the substantive alignment of every matter against the target practice area ({practice_area}).
+- Identify whether peripheral or off-category matters (e.g. routine tax controversies, general labor inspections, or public procurement tenders inside a Real Estate submission) dilute the firm's perceived specialization.
+- In matter evaluations and key recommendations, explicitly advise which matters represent Core Practice Flagships vs which matters are Dilution Candidates that should be pruned or repositioned to prevent the firm from appearing as a generalist boutique.
+
 RANKING ARCHITECTURE VALIDATION LAYER (v17.4 — RAVL):
 """
     # v17.4: 4-Scenario Ranking Architecture Validation
