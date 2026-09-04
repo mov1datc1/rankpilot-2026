@@ -306,7 +306,7 @@ B8 Hires / Departures
             preferred_summary,
             source_text,
         )
-        self.assertEqual(f"Client: {canonical_client}\n\n{preferred_summary}", selected)
+        self.assertEqual(f"{canonical_client}. {preferred_summary}", selected)
         self.assertEqual([], errors)
 
     def test_source_preservation_prefers_contract_complete_summary(self):
@@ -1212,7 +1212,7 @@ Ongoing
         self.assertTrue(result["artifact_validation"]["passed"])
         self.assertEqual([], result["artifact_validation"]["matter_rollbacks"])
         self.assertEqual(
-            f"Client: {full_client}\n\n{summary}",
+            f"{full_client}. {summary}",
             result["matters"][0]["optimized_text"],
         )
 

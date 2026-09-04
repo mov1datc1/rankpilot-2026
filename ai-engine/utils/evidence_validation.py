@@ -251,10 +251,27 @@ def validate_optimized_matter_text(
             no_and = re.split(r'\s+and\s+(?:its\s+)?(?:related\s+)?', clean_client, flags=re.I)[0].strip().casefold()
             if len(no_and) > 2:
                 candidates.add(no_and)
-            corp_re = r'\b(?:s\.?\s*a\.?\s*p\.?\s*i\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*de\s*c\.?\s*v\.?|s\.?\s*de\s*r\.?\s*l\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*p\.?\s*i\.?|s\.?\s*a\.?|s\.?\s*r\.?\s*l\.?|de\s+c\.?v\.?|llc|inc|ltd|corp|gmbh|n\.?a\.?|plc|b\.?v\.?)\b'
+            corp_re = r'\b(?:s\.?\s*a\.?\s*p\.?\s*i\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*de\s*c\.?\s*v\.?|s\.?\s*de\s*r\.?\s*l\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*p\.?\s*i\.?|s\.?\s*a\.?|s\.?\s*r\.?\s*l\.?|de\s+c\.?v\.?|llc|inc|ltd|corp|gmbh|n\.?a\.?|plc|b\.?v\.?|a\.?c\.?)\b'
             no_corp = re.sub(corp_re, '', clean_client, flags=re.I).strip(' .,').casefold()
             if len(no_corp) > 2:
                 candidates.add(no_corp)
+            # Strip location qualifiers like ", located in ..." or ". Located in ..."
+            no_loc = re.split(r',?\s*(?:located\s+in|headquartered\s+in|ubicado\s+en)\b', no_corp, flags=re.I)[0].strip(' .,').casefold()
+            if len(no_loc) > 2:
+                candidates.add(no_loc)
+            # Add distinctive brand tokens (length >= 4, ignoring generic corporate/administrative terms)
+            generic_stop = {
+                'mexico', 'operaciones', 'sociedad', 'anonima', 'capital', 'variable',
+                'empresa', 'constructora', 'reparadora', 'caminos', 'vialidades',
+                'logistica', 'especializada', 'servicios', 'tecnologia', 'grupo',
+                'inmobiliaria', 'desarrollo', 'transportes', 'ejecutivos', 'agroproductos',
+                'semillas', 'international', 'foreign', 'local', 'global', 'counsel',
+                'advisor', 'client', 'located', 'family', 'wealthy', 'state', 'jalisco'
+            }
+            words = re.findall(r'\b[a-záéíóúüñ]{4,}\b', no_loc.lower())
+            for w in words:
+                if w not in generic_stop:
+                    candidates.add(w)
 
             if not any(cand in optimized_text.casefold() for cand in candidates if len(cand) >= 3):
                 errors.append(f"Client omitted from {matter.matter_id}: {clean_client}")
@@ -413,7 +430,9 @@ def select_verified_source_preservation(
         candidates.append(preferred)
         client = matter.client.strip()
         if client and client.casefold() not in preferred.casefold() and source_backed(client):
-            candidates.append(f"Client: {client}\n\n{preferred}")
+            # Zero Carpentry: never inject visible "Client: " labels into narrative prose
+            candidates.append(preferred)
+            candidates.append(f"{client}. {preferred}")
     if source and source not in candidates:
         candidates.append(source)
 
@@ -423,10 +442,96 @@ def select_verified_source_preservation(
             matter, candidate, source
         )
         if not candidate_errors:
-            return candidate, []
+            return strip_carpentry_and_labels(candidate), []
         last_errors = candidate_errors
 
-    return source or preferred, last_errors
+    return strip_carpentry_and_labels(source or preferred), last_errors
+
+
+def strip_carpentry_and_labels(text: str) -> str:
+    """Ensure Zero Carpentry by stripping any visible field labels or markdown scaffolding."""
+    if not text:
+        return ""
+    # Strip markdown bold mechanism headers
+    cleaned = re.sub(
+        r'(?i)\*\*(?:IMPACT|HERO STATEMENT|EXECUTION|THE HEROES|BACKGROUND|CHALLENGE|RESULT|STRATEGY|OUTCOME|TEAM):\*\*\s*',
+        '',
+        text
+    )
+    # Check paragraphs: if first paragraph is just a standalone client line
+    paras = [p.strip() for p in cleaned.split("\n\n") if p.strip()]
+    if paras:
+        first = paras[0]
+        client_label_match = re.match(
+            r'^(?:\*\*)?(?:client|name of client|cliente|d2\s*summary|e2\s*summary|summary\s*of\s*matter|resumen)(?:\*\*)?\s*:\s*(.+)$',
+            first,
+            re.IGNORECASE
+        )
+        if client_label_match:
+            client_val = client_label_match.group(1).strip()
+            if len(paras) > 1:
+                rest_text = " ".join(paras[1:]).lower()
+                tokens = [t for t in re.split(r'[\s,\.]+', client_val) if len(t) > 3 and t.lower() not in ('group', 'company', 'corp', 'de', 'cv', 'sa', 'mexico', 'operaciones')]
+                if any(tok.lower() in rest_text for tok in tokens) or len(tokens) == 0:
+                    paras = paras[1:]
+                else:
+                    paras[0] = client_val
+            else:
+                paras[0] = client_val
+        cleaned = "\n\n".join(paras)
+
+    # Strip any remaining inline "Client: ...", "D2: ...", etc. at line starts
+    cleaned = re.sub(
+        r'(?im)^\s*(?:\*\*)?(?:client|name of client|cliente|d2\s*summary|e2\s*summary|summary\s*of\s*matter|resumen|matter\s*summary)(?:\*\*)?\s*:\s*',
+        '',
+        cleaned
+    )
+    return cleaned.strip()
+
+
+def ensure_three_paragraphs(text: str) -> str:
+    """Ensure consistent 3-paragraph structure (Asset/Scale/Stakes → Craft/Outcome → Team/Precedent)."""
+    if not text:
+        return ""
+    paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+    if len(paras) == 3:
+        return "\n\n".join(paras)
+    if len(paras) > 3:
+        # Condense into exactly 3 paragraphs: P1, all middle paragraphs joined as P2, and last paragraph as P3
+        p1 = paras[0]
+        p2 = " ".join(paras[1:-1])
+        p3 = paras[-1]
+        return f"{p1}\n\n{p2}\n\n{p3}"
+    if len(paras) == 2:
+        # Split the longer paragraph
+        if len(paras[0]) >= len(paras[1]):
+            s = [st.strip() for st in re.split(r'(?<=[.!?])\s+', paras[0]) if st.strip()]
+            if len(s) >= 2:
+                mid = max(1, len(s) // 2)
+                return f"{' '.join(s[:mid])}\n\n{' '.join(s[mid:])}\n\n{paras[1]}"
+        else:
+            s = [st.strip() for st in re.split(r'(?<=[.!?])\s+', paras[1]) if st.strip()]
+            if len(s) >= 2:
+                mid = max(1, len(s) // 2)
+                return f"{paras[0]}\n\n{' '.join(s[:mid])}\n\n{' '.join(s[mid:])}"
+
+    # If 1 paragraph, split organically into 3 paragraphs by sentences
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text.strip()) if s.strip()]
+    if len(sentences) >= 6:
+        p1 = " ".join(sentences[:2])
+        p2 = " ".join(sentences[2:-2])
+        p3 = " ".join(sentences[-2:])
+        return f"{p1}\n\n{p2}\n\n{p3}"
+    elif len(sentences) >= 4:
+        p1 = sentences[0]
+        p2 = " ".join(sentences[1:-1])
+        p3 = sentences[-1]
+        return f"{p1}\n\n{p2}\n\n{p3}"
+    elif len(sentences) == 3:
+        return f"{sentences[0]}\n\n{sentences[1]}\n\n{sentences[2]}"
+    elif len(sentences) == 2:
+        return f"{sentences[0]}\n\n{sentences[1]}"
+    return text.strip()
 
 
 def validate_artifact_matter_register(

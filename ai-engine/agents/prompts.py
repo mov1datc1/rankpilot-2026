@@ -1341,15 +1341,15 @@ Rules:
    The narrative architecture must be perceived as continuous, elegant, seamless paragraphs;
    the internal scaffolding must remain completely invisible.
 10. THREE-PARAGRAPH EDITORIAL ARCHITECTURE:
-    When evidence permits, weave the narrative into three organic, high-density paragraphs:
-    - Paragraph 1: Tangible asset / transaction, economic scale (values in figures and converted USD if stated), and the commercial exposure or existential threat.
+    Every matter MUST be woven into three organic, high-density paragraphs (separated by double newlines):
+    - Paragraph 1: Tangible asset / transaction, economic scale (use strictly source-stated currencies without inventing unsourced USD conversions), and the commercial exposure or existential threat. Mention the client identity naturally in this paragraph.
     - Paragraph 2: Firm's decisive legal intervention and craft (turning legal concepts into commercial protection), the procedural mechanism, and the definitive enforceable outcome.
     - Paragraph 3: Leadership team, lawyer ownership, and broader market/client precedent.
 11. PROCEDURAL ENFORCEMENT & D8/E8 RESOLUTION INTEGRATION (v26.28):
     When the raw matter or D8/E8 contains a recent procedural update, favorable resolution, or enforcement milestone (e.g. "UPDATE 2024", favorable judgment, confirmation by appellate court, enforcement in July 2024, or definitive suspension), ALWAYS weave this definitive procedural outcome into Paragraph 2. NEVER reproduce obsolete or preliminary statuses (such as "awaiting resolution in early 2024") when the record documents that the favorable judgment was rendered or enforced.
 
 GOLD REFERENCE BENCHMARK (Approved Chambers Submission Standard):
-"El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion (USD 176.6 million) development at existential risk.
+"El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion development at existential risk.
 
 Ramos Castillo prevented public authorities from rewriting the legal history of an operating development. The firm turned vested rights - often treated as an abstract constitutional concept - into the instrument that kept the project commercially alive. The team designed and led two amparo proceedings, assembled the scientific and technical record required to defeat allegations of environmental harm, and proved that later political measures could not extinguish duly acquired development rights. It secured a judgment confirming the legality of the project and validity of its permits, upheld by the Sixth Collegiate Administrative Court; it then obtained a second judgment disapplying the updated ecological programme and achieved enforcement in July 2024.
 

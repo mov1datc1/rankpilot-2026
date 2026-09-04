@@ -526,7 +526,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                   )}
                   {Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0 && (
                     <div style={{ marginBottom: '1.25rem' }}>
-                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#166534', marginBottom: '0.5rem' }}>Recommended Core Selection (14 Flagship Mandates):</h4>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#166534', marginBottom: '0.5rem' }}>Official 20-Matter Filing Shortlist (13 Publishable + 7 Confidential):</h4>
                       <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#14532d', fontSize: '0.875rem' }}>
                         {portfolioCuration.recommended_core.map((rec: string, i: number) => (
                           <li key={i} style={{ marginBottom: '0.25rem' }}>{rec}</li>

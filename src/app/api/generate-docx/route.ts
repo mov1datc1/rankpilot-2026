@@ -712,8 +712,8 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
 
     if (Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0) {
       sections.push(
-        subTitle('Recommended Core Selection (14 Flagship Mandates)'),
-        p('Priority matters to retain when pruning down to the official Chambers 20-matter limit:', { color: GRAY, size: 20, spacing: { after: 80 } })
+        subTitle('Official 20-Matter Filing Shortlist (13 Publishable + 7 Confidential)'),
+        p('Curated selection strictly meeting the Chambers 20-matter filing limit while maximizing evidentiary weight, cross-state reach, and economic scale:', { color: GRAY, size: 20, spacing: { after: 80 } })
       );
       for (const rec of portfolioCuration.recommended_core) {
         sections.push(new Paragraph({
