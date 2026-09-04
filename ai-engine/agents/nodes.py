@@ -3143,7 +3143,13 @@ def optimization_node(state: AgentState) -> Dict:
             from utils.evidence_validation import extract_clean_client_identity, is_confidential_descriptor
             raw_client = matter.get('client', '')
             clean_client = extract_clean_client_identity(raw_client)
-            if clean_client and len(clean_client) > 2 and clean_client.lower() not in optimized_lower:
+            client_missing = False
+            if clean_client and len(clean_client) > 2:
+                corp_re = r'\b(?:s\.?\s*a\.?\s*p\.?\s*i\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*de\s*c\.?\s*v\.?|s\.?\s*de\s*r\.?\s*l\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*p\.?\s*i\.?|s\.?\s*a\.?|s\.?\s*r\.?\s*l\.?|de\s+c\.?v\.?|llc|inc|ltd|corp|gmbh|n\.?a\.?|plc|b\.?v\.?)\b'
+                base_client = re.sub(corp_re, '', clean_client, flags=re.I).strip(' .,')
+                if clean_client.lower() not in optimized_lower and (not base_client or len(base_client) < 3 or base_client.lower() not in optimized_lower):
+                    client_missing = True
+            if client_missing:
                 needs_reoptimization = True
                 print(f"  [PROBATIVE] Client name '{clean_client}' missing from optimized text")
             elif not clean_client:

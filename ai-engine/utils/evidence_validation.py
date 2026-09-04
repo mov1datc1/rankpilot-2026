@@ -170,6 +170,15 @@ def extract_clean_client_identity(client: str) -> str:
 
     pre_clean = re.split(r'\.\s+(?:It|This|The|A|An|Empresa|Compañía|Individual|Wealthy)\b|\n|,?\s+located\s+in\b|(?<=\w)\s+is\s+a\b|(?<=\w)\s+headquartered\b|\.\s*\(wealthy\s+family', client, maxsplit=1, flags=re.I)[0].strip(' .,')
 
+    # Remove generic multi-entity appendages like 'and its related corporate legal entities'
+    pre_clean = re.split(r'\s+and\s+(?:its\s+)?(?:related\s+)?(?:corporate\s+)?(?:legal\s+)?(?:entities|affiliates|subsidiaries)\b', pre_clean, maxsplit=1, flags=re.I)[0].strip(' .,')
+
+    # Strip trailing role/descriptor separated by hyphens or dashes (' - International Law Firm', ' — Global Bank')
+    pre_clean = re.split(r'\s+[-–—]\s+(?:International|Foreign|Local|Global|Law\s+Firm|Counsel|Co-counsel|Lead\s+Counsel|Special\s+Counsel|Legal\s+Counsel|Consultant|Advisor|Firm|Client|Bank|Financial)\b', pre_clean, maxsplit=1, flags=re.I)[0].strip(' .,')
+
+    # Strip trailing parentheticals ('(New York)', '(US Counsel)')
+    pre_clean = re.sub(r'\s*\([^)]*\)$', '', pre_clean).strip(' .,')
+
     corp_patterns = [
         r'\bS\.?\s*A\.?\s*P\.?I\.?\s*DE\s*C\.?V\.?',
         r'\bS\.?\s*A\.?\s*B\.?\s*DE\s*C\.?V\.?',
@@ -180,7 +189,8 @@ def extract_clean_client_identity(client: str) -> str:
         r'\bS\.?\s*A\.(?!\s*(?:DE|de)\b)',
         r'\bS\.?\s*R\.?L\.(?!\s*(?:DE|de)\b)',
         r'\bS\.?A\.?P\.?I\.?',
-        r'\bLLC\b', r'\bINC\b', r'\bLTD\b', r'\bCORP\b', r'\bGMBH\b'
+        r'\bLLC\b', r'\bINC\b', r'\bLTD\b', r'\bCORP\b', r'\bGMBH\b',
+        r'\bN\.A\.?\b', r'\bB\.V\.?\b', r'\bPLC\b',
     ]
     last_end = 0
     for pat in corp_patterns:
@@ -220,8 +230,34 @@ def validate_optimized_matter_text(
         "n/a",
     }
     clean_client = extract_clean_client_identity(client)
-    if clean_client and not client_is_unknown and clean_client.casefold() not in optimized_text.casefold():
-        errors.append(f"Client omitted from {matter.matter_id}: {clean_client}")
+    if clean_client and not client_is_unknown:
+        # Check if the client field contains multiple coordinated entities (e.g. "Company A and Company B")
+        # If so, all distinct co-clients must be evidenced in the text.
+        co_clients = re.split(r'\s+and\s+(?=[A-ZÁÉÍÓÚ])', clean_client)
+        if len(co_clients) > 1:
+            for co in co_clients:
+                co_clean = extract_clean_client_identity(co)
+                if co_clean and co_clean.casefold() not in optimized_text.casefold():
+                    errors.append(f"Client omitted from {matter.matter_id}: {clean_client}")
+                    break
+        else:
+            candidates = {clean_client.casefold()}
+            base_dash = re.split(r'\s+[-–—]\s+', clean_client)[0].strip().casefold()
+            if len(base_dash) > 2:
+                candidates.add(base_dash)
+            no_parens = re.sub(r'\s*\([^)]*\)', '', clean_client).strip().casefold()
+            if len(no_parens) > 2:
+                candidates.add(no_parens)
+            no_and = re.split(r'\s+and\s+(?:its\s+)?(?:related\s+)?', clean_client, flags=re.I)[0].strip().casefold()
+            if len(no_and) > 2:
+                candidates.add(no_and)
+            corp_re = r'\b(?:s\.?\s*a\.?\s*p\.?\s*i\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*de\s*c\.?\s*v\.?|s\.?\s*de\s*r\.?\s*l\.?\s*de\s*c\.?\s*v\.?|s\.?\s*a\.?\s*p\.?\s*i\.?|s\.?\s*a\.?|s\.?\s*r\.?\s*l\.?|de\s+c\.?v\.?|llc|inc|ltd|corp|gmbh|n\.?a\.?|plc|b\.?v\.?)\b'
+            no_corp = re.sub(corp_re, '', clean_client, flags=re.I).strip(' .,').casefold()
+            if len(no_corp) > 2:
+                candidates.add(no_corp)
+
+            if not any(cand in optimized_text.casefold() for cand in candidates if len(cand) >= 3):
+                errors.append(f"Client omitted from {matter.matter_id}: {clean_client}")
 
     # New numbers are almost always invented metrics, dates, values, counts, or
     # deadlines. Formatting punctuation is normalized before comparison.

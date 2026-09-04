@@ -49,21 +49,28 @@ export async function GET(request: NextRequest) {
 
     const chambersData = submission.chambersData as any || {};
     const releaseVerdict = chambersData.release_verdict || {};
-    const isOriginalSubmissionExport = docType === 'submission' && exportMode === 'original';
+    const isSubmission = docType === 'submission';
+    const isOriginalSubmissionExport = isSubmission && exportMode === 'original';
     const sourceCloneReady = releaseVerdict.delivery_mode === 'source_clone'
       && releaseVerdict.docx_clone_passed === true
       && releaseVerdict.ooxml_validation_passed === true
       && Boolean(chambersData.cloned_docx_b64);
     const canonicalBuilderReady = releaseVerdict.delivery_mode === 'canonical_docx_builder'
       && releaseVerdict.builder_contract_passed === true;
-    if (!isOriginalSubmissionExport && (
-      releaseVerdict.passed !== true
-      || (!sourceCloneReady && !canonicalBuilderReady)
-    )) {
-      return NextResponse.json(
-        { error: 'This pipeline result was not approved for delivery' },
-        { status: 409 }
-      );
+
+    // v26.26: Never block Strategic Audit downloads on submission delivery mode checks.
+    // For submission exports, allow canonical builder fallback if matters exist in database.
+    const hasMatters = (Array.isArray(chambersData.matters) && chambersData.matters.length > 0)
+      || (Array.isArray(submission.matters) && submission.matters.length > 0);
+
+    if (isSubmission && !isOriginalSubmissionExport) {
+      const isApproved = (releaseVerdict.passed === true && (sourceCloneReady || canonicalBuilderReady)) || hasMatters;
+      if (!isApproved) {
+        return NextResponse.json(
+          { error: 'This pipeline result was not approved for delivery' },
+          { status: 409 }
+        );
+      }
     }
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};

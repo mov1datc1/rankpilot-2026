@@ -3,7 +3,15 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.25 — Table-Delimited Lawyer Roster & Pre-Flight Gate Calibration)
+> Last updated: **2026-09-03** (v26.26 — Strategic Audit & Client Identity Extraction Calibration)
+
+## v26.26 — STRATEGIC AUDIT & CLIENT IDENTITY EXTRACTION CALIBRATION (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Client Identity & Role Suffix Extraction | Enhanced `extract_clean_client_identity` to strip trailing descriptive clauses and roles (e.g. ` - International Law Firm`, ` — Global Bank`, parentheticals like `(New York)`, and appendages like `and its related corporate legal entities`), preventing false-positive client omission detections on international law firms and institutional clients | `utils/evidence_validation.py` |
+| Flexible Corporate Client Matching | Refactored `validate_optimized_matter_text` and `nodes.py` to check client candidates flexibly (including base name before hyphens, names without corporate abbreviations like `N.A.`, `Inc.`, `S.A. DE C.V.`), eliminating spurious grounding failures and unwanted rollbacks in `artifact_validation_node` | `utils/evidence_validation.py`, `agents/nodes.py` |
+| Unblocked DOCX Delivery Gate | Strategic Audit downloads (`docType === 'audit'`) now generate and download without being blocked by submission template delivery modes, and submission export incorporates canonical builder fallback whenever matters exist in database | `src/app/api/generate-docx/route.ts` |
 
 ## v26.25 — TABLE-DELIMITED LAWYER ROSTER & PRE-FLIGHT GATE CALIBRATION (2026-09-03)
 

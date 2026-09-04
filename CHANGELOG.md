@@ -3,7 +3,15 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
-## [v26.25] — 2026-09-03
+## [v26.26] — 2026-09-03
+
+### Strategic Audit & Client Identity Extraction Calibration (AraqueReyna)
+
+- **Client Identity & Descriptor Disambiguation**: Enhanced `extract_clean_client_identity` in `evidence_validation.py` to strip trailing descriptive clauses and roles (e.g. ` - International Law Firm`, ` — Global Bank`, parentheticals like `(New York)`, and appendages like `and its related corporate legal entities`), preventing false-positive client omission detections on international law firms and institutional clients.
+- **Flexible Corporate Client Matching**: Refactored `validate_optimized_matter_text` and `nodes.py` to check client candidates flexibly (including base name before hyphens, names without corporate abbreviations like `N.A.`, `Inc.`, `S.A. DE C.V.`), eliminating spurious grounding failures and unwanted rollbacks in `artifact_validation_node`.
+- **Unblocked DOCX Delivery Gate**:
+  - Strategic Audit downloads (`docType === 'audit'`) now generate and download without being blocked by submission template delivery modes.
+  - Submission DOCX export (`docType === 'submission'`) incorporates canonical DOCX builder fallback whenever matters are present in the database, allowing users to download deliverables immediately without artificial 409 errors.
 
 ### Table-Delimited Lawyer Roster & Pre-Flight Gate Calibration (AraqueReyna)
 

@@ -1319,6 +1319,30 @@ Ongoing
         self.assertEqual("buyer", role)
         self.assertEqual("Diageo", counterparty)
 
+    def test_international_firm_descriptor_client_extraction(self):
+        from utils.evidence_validation import extract_clean_client_identity
+        client = "Debevoise & Plimpton - International Law Firm"
+        clean = extract_clean_client_identity(client)
+        self.assertEqual("Debevoise & Plimpton", clean)
+
+        client_jpm = "JP Morgan Chase Bank, N.A. (New York) and its related corporate legal entities"
+        clean_jpm = extract_clean_client_identity(client_jpm)
+        self.assertIn("JP Morgan Chase Bank", clean_jpm)
+
+    def test_international_firm_client_validation_accepts_clean_variant(self):
+        from utils.evidence_validation import validate_optimized_matter_text
+        matter = MatterRecord(
+            matter_id="matter-02",
+            source_label="Matter 2",
+            publish_status="publishable",
+            client="Debevoise & Plimpton - International Law Firm",
+            source_span_ids=["s1"],
+        )
+        opt_text = "AraqueReyna advised Debevoise & Plimpton on Venezuelan banking and regulatory compliance matters."
+        source_text = "Debevoise & Plimpton advised on regulatory aspects."
+        errors = validate_optimized_matter_text(matter, opt_text, source_text)
+        self.assertEqual([], errors)
+
 
 if __name__ == "__main__":
     unittest.main()
