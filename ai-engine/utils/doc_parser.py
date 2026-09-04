@@ -687,7 +687,9 @@ class DocumentParser:
         }
         candidates = []
         for index, line in enumerate(lines):
-            parts = [p.strip() for p in line.split("|")]
+            parts = [p.strip() for p in re.split(r"[|\t]|\s{2,}", line) if p.strip()]
+            if not parts:
+                continue
             first_col = parts[0]
             normalized = first_col.casefold()
             if (
@@ -712,8 +714,8 @@ class DocumentParser:
                 claimed_chambers_slugs.add(chamber_slugs[0].casefold())
 
             is_partner = None
-            raw_parts = [p.strip() for p in raw_line.split("|")]
-            if len(raw_parts) >= 3:
+            raw_parts = [p.strip() for p in re.split(r"[|\t]|\s{2,}", raw_line) if p.strip()]
+            if len(raw_parts) >= 2:
                 for col in raw_parts[1:]:
                     col_clean = col.strip().upper()
                     if col_clean in ("Y", "YES", "SI", "SÍ"):
