@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.25] — 2026-09-03
+
+### Table-Delimited Lawyer Roster & Pre-Flight Gate Calibration (AraqueReyna)
+
+- **Table-Delimited Lawyer Extraction**: Enhanced `DocumentParser.extract_lawyer_roster` to parse pipe-separated (`|`) table rows from Chambers DOCX templates, correctly extracting lawyer names, partner status (Y/N), and ranked status without falling back to synthetic Chambers URL slugs.
+- **Accent & Verbatim Reconciliation**: Added NFKD accent normalization in `canonical_builder.py` when validating verbatim source presence for lawyer rosters, and ensured fallback to `pipeline_manifest["source_lawyers"]` if metadata is missing.
+- **Resolved Pre-Flight Halt on AraqueReyna**: Fixed the false-positive `Missing source lawyers` error in `evidence_reconciliation_node` that was halting the pipeline at Pre-Flight Gate.
+
 ## [v26.24] — 2026-09-03
 
 ### Judge SOL Quality Defense & Provenance Gate Calibration

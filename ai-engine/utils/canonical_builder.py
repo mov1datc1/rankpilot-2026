@@ -346,12 +346,17 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
 
     lawyers: List[LawyerRecord] = []
     document_text = state.get("doc_text", "")
-    for index, raw in enumerate(metadata.get("lawyers", []), start=1):
+    raw_lawyers = metadata.get("lawyers") or pipeline_manifest.get("source_lawyers") or []
+    for index, raw in enumerate(raw_lawyers, start=1):
         name = str(raw.get("name") or "").strip()
         if not name:
             continue
         lawyer_span_ids: List[str] = []
         name_position = document_text.casefold().find(name.casefold())
+        if name_position < 0:
+            plain_doc = unicodedata.normalize("NFKD", document_text).encode("ascii", "ignore").decode().casefold()
+            plain_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().casefold()
+            name_position = plain_doc.find(plain_name)
         if name_position >= 0:
             line_start = document_text.rfind("\n", 0, name_position) + 1
             line_end = document_text.find("\n", name_position)

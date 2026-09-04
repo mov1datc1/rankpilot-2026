@@ -687,20 +687,22 @@ class DocumentParser:
         }
         candidates = []
         for index, line in enumerate(lines):
-            normalized = line.casefold()
+            parts = [p.strip() for p in line.split("|")]
+            first_col = parts[0]
+            normalized = first_col.casefold()
             if (
-                len(line) <= 80
-                and name_pattern.fullmatch(line)
+                len(first_col) <= 80
+                and name_pattern.fullmatch(first_col)
                 and normalized not in excluded
-                and not normalized.startswith(("current or", "please do", "comments or"))
+                and not normalized.startswith(("current or", "please do", "comments or", "name"))
             ):
-                candidates.append((index, line))
+                candidates.append((index, first_col, line))
 
         roster = []
         claimed_chambers_slugs = set()
-        for position, (line_index, name) in enumerate(candidates):
+        for position, (line_index, name, raw_line) in enumerate(candidates):
             next_index = candidates[position + 1][0] if position + 1 < len(candidates) else len(lines)
-            evidence_block = "\n".join(lines[line_index + 1:next_index]).casefold()
+            evidence_block = "\n".join([raw_line] + lines[line_index + 1:next_index]).casefold()
             chamber_slugs = re.findall(
                 r"chambers\.com/lawyer/([a-z0-9-]+?)-latin-america",
                 evidence_block,
@@ -708,9 +710,22 @@ class DocumentParser:
             )
             if chamber_slugs:
                 claimed_chambers_slugs.add(chamber_slugs[0].casefold())
+
+            is_partner = None
+            raw_parts = [p.strip() for p in raw_line.split("|")]
+            if len(raw_parts) >= 3:
+                for col in raw_parts[1:]:
+                    col_clean = col.strip().upper()
+                    if col_clean in ("Y", "YES", "SI", "SÍ"):
+                        is_partner = True
+                        break
+                    elif col_clean in ("N", "NO"):
+                        is_partner = False
+                        break
+
             roster.append({
                 "name": name,
-                "is_partner": None,
+                "is_partner": is_partner,
                 "is_ranked": "chambers.com/lawyer/" in evidence_block,
                 "current_ranking": "Ranked" if "chambers.com/lawyer/" in evidence_block else None,
                 "source_excerpt": "\n".join(lines[line_index:next_index]),
