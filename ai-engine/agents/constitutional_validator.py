@@ -202,8 +202,11 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     enhanced_b7 = state.get("enhanced_b7", "")
     if enhanced_b7:
         b7_wc = len(enhanced_b7.split())
-        if b7_wc > 500:
-            violations.append(f"[B6-WORDCOUNT] B10 exceeds 500 words: {b7_wc}w")
+        original_b10 = state.get("original_b10", "")
+        original_wc = len(original_b10.split()) if original_b10 else 0
+        max_allowed = max(500, original_wc)
+        if b7_wc > max_allowed:
+            violations.append(f"[B6-WORDCOUNT] B10 exceeds {max_allowed} words: {b7_wc}w (source was {original_wc}w)")
     
     # --- B7: Partner name in B10 narrative ---
     if enhanced_b7:
