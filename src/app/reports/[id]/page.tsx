@@ -85,6 +85,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
 
   const competitiveContext = letter.competitive_context ? String(letter.competitive_context) : '';
   const positioningText = letter.competitive_positioning_text ? String(letter.competitive_positioning_text) : '';
+  const portfolioCuration = (letter as any).portfolio_curation || (chambersData as any)?.analysis?.portfolio_curation || (chambersData as any)?.portfolio_curation || null;
+  const scoreRationale = (chambersData as any)?.analysis?.score_rationale || (letter as any).score_rationale || '';
   
   // Format Date
   const dateStr = submission.createdAt.toLocaleDateString('en-GB', {
@@ -401,6 +403,14 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                   <p style={{ fontSize: '1.125rem', color: '#475569', fontStyle: 'italic', margin: 0 }}>
                     {analysis.summary ? String(analysis.summary) : "Pending analysis generation."}
                   </p>
+                  {scoreRationale && (
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1A237E', margin: '0 0 0.25rem', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+                        Score Rationale & Portfolio Architecture Reconciliation
+                      </p>
+                      <p style={{ fontSize: '0.9rem', color: '#475569', margin: 0, lineHeight: 1.5 }}>{scoreRationale}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -483,6 +493,59 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                   )}
                 </div>
               </div>
+              {/* Portfolio Curation & Chambers 20-Matter Ceiling */}
+              {portfolioCuration && (portfolioCuration.warning || (Array.isArray(portfolioCuration.duplicate_matters) && portfolioCuration.duplicate_matters.length > 0) || (Array.isArray(portfolioCuration.dilution_risks) && portfolioCuration.dilution_risks.length > 0) || (Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0)) && (
+                <div style={{ background: '#fffbeb', borderRadius: '10px', padding: '1.75rem', border: '1.5px solid #fde68a' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#b45309', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>⚠️</span> PORTFOLIO CURATION & CHAMBERS 20-MATTER CEILING
+                  </h3>
+                  {portfolioCuration.warning && (
+                    <p style={{ color: '#991b1b', fontWeight: 600, fontSize: '0.95rem', marginBottom: '1.25rem', background: '#fee2e2', padding: '0.75rem 1rem', borderRadius: '6px', border: '1px solid #fca5a5' }}>
+                      {portfolioCuration.warning}
+                    </p>
+                  )}
+                  {Array.isArray(portfolioCuration.duplicate_matters) && portfolioCuration.duplicate_matters.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#92400e', marginBottom: '0.5rem' }}>Duplicate / Overlapping Matters (Confidential Roster):</h4>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#78350f', fontSize: '0.875rem' }}>
+                        {portfolioCuration.duplicate_matters.map((dup: string, i: number) => (
+                          <li key={i} style={{ marginBottom: '0.25rem' }}>{dup}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(portfolioCuration.dilution_risks) && portfolioCuration.dilution_risks.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#92400e', marginBottom: '0.5rem' }}>Practice Dilution Risks (Off-Category Matters):</h4>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#78350f', fontSize: '0.875rem' }}>
+                        {portfolioCuration.dilution_risks.map((dil: string, i: number) => (
+                          <li key={i} style={{ marginBottom: '0.25rem' }}>{dil}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0 && (
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#166534', marginBottom: '0.5rem' }}>Recommended Core Selection (14 Flagship Mandates):</h4>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#14532d', fontSize: '0.875rem' }}>
+                        {portfolioCuration.recommended_core.map((rec: string, i: number) => (
+                          <li key={i} style={{ marginBottom: '0.25rem' }}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(portfolioCuration.source_vulnerabilities) && portfolioCuration.source_vulnerabilities.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e40af', marginBottom: '0.5rem' }}>Source Document Vulnerabilities to Remedy:</h4>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#1e3a8a', fontSize: '0.875rem' }}>
+                        {portfolioCuration.source_vulnerabilities.map((vuln: string, i: number) => (
+                          <li key={i} style={{ marginBottom: '0.25rem' }}>{vuln}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Matter Evaluations / Case Evaluation */}
               {letter.matter_evaluations && Array.isArray(letter.matter_evaluations) && letter.matter_evaluations.length > 0 && (

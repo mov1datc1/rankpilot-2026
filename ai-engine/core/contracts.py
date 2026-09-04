@@ -71,6 +71,7 @@ class MatterRecord(FrozenContract):
     matter_value: Optional[str] = None
     value_type: Optional[Literal["matter", "transaction", "project", "asset", "exposure", "unknown"]] = None
     completion_status: Optional[str] = None
+    is_new_client: Optional[bool] = None
 
 
 class LawyerRecord(FrozenContract):

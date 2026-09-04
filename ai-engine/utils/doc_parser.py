@@ -22,10 +22,12 @@ class DocumentParser:
         """Collapse SDT text duplicated two to four times by Word XML traversal."""
 
         candidate = (value or "").strip()
+        if candidate.isdigit() or len(candidate) <= 3:
+            return candidate
         for repetitions in (4, 3, 2):
             if len(candidate) % repetitions == 0:
                 unit = candidate[: len(candidate) // repetitions]
-                if unit and unit * repetitions == candidate:
+                if len(unit) >= 3 and unit * repetitions == candidate:
                     return unit.strip()
         # Some content controls place a newline between otherwise identical
         # copies. Compare whitespace-normalized halves while returning the
@@ -659,6 +661,64 @@ class DocumentParser:
                 continue
             heads.append(value)
         return list(dict.fromkeys(heads))
+
+    @staticmethod
+    def extract_d0_e0_client_statuses(text: str) -> dict:
+        """Extract 'New Client (Yes/No)' statuses from D0 and E0 tables.
+
+        Returns a dictionary mapping:
+        - Lowercase matter labels ('publishable matter 1', 'confidential matter 2', ...)
+        - Lowercase client names ('grupo r', 'idex', 'duranpark', ...)
+        to the verbatim Yes/No status string from D0/E0.
+        """
+        statuses = {}
+        source = text or ""
+
+        # 1. Parse D0 block (Publishable Clients)
+        d0_match = re.search(
+            r"(?im)^\s*D0\b[^\n]*\n(.*?)(?=^\s*(?:Publishable\s+Matter\s+\d+|E\.\s+CONFIDENTIAL)\b|\Z)",
+            source,
+            re.DOTALL,
+        )
+        if d0_match:
+            for line in d0_match.group(1).splitlines():
+                parts = [p.strip() for p in line.split("|")]
+                if len(parts) >= 3 and parts[0].isdigit():
+                    num = int(parts[0])
+                    client_desc = parts[1]
+                    val = parts[2].strip()
+                    if re.search(r"^(?:yes|no|sí|si)$", val, re.I):
+                        statuses[f"publishable matter {num}"] = val
+                        clean_name = re.split(r"\s+[-–—]\s+|\.\s+", client_desc)[0].strip()
+                        if clean_name and len(clean_name) >= 3:
+                            statuses[clean_name.casefold()] = val
+                        statuses[client_desc.casefold()] = val
+                elif len(parts) == 2 and re.search(r"^(?:yes|no|sí|si)$", parts[1].strip(), re.I):
+                    statuses[parts[0].strip().casefold()] = parts[1].strip()
+
+        # 2. Parse E0 block (Confidential Clients)
+        e0_match = re.search(
+            r"(?im)^\s*E0\b[^\n]*\n(.*?)(?=^\s*(?:Confidential\s+Matter\s+\d+|F\b)\b|\Z)",
+            source,
+            re.DOTALL,
+        )
+        if e0_match:
+            for line in e0_match.group(1).splitlines():
+                parts = [p.strip() for p in line.split("|")]
+                if len(parts) >= 3 and parts[0].isdigit():
+                    num = int(parts[0])
+                    client_desc = parts[1]
+                    val = parts[2].strip()
+                    if re.search(r"^(?:yes|no|sí|si)$", val, re.I):
+                        statuses[f"confidential matter {num}"] = val
+                        clean_name = re.split(r"\s+[-–—]\s+|\.\s+", client_desc)[0].strip()
+                        if clean_name and len(clean_name) >= 3:
+                            statuses[clean_name.casefold()] = val
+                        statuses[client_desc.casefold()] = val
+                elif len(parts) == 2 and re.search(r"^(?:yes|no|sí|si)$", parts[1].strip(), re.I):
+                    statuses[parts[0].strip().casefold()] = parts[1].strip()
+
+        return statuses
 
     @staticmethod
     def extract_lawyer_roster(text: str) -> list:

@@ -265,7 +265,35 @@ def validate_optimized_matter_text(
     normalize_number = lambda value: re.sub(r"[.,]", "", value.lower())
     source_numbers = {normalize_number(n) for n in number_pattern.findall(source_text)}
     output_numbers = {normalize_number(n) for n in number_pattern.findall(optimized_text)}
-    novel_numbers = sorted(output_numbers - source_numbers)
+    raw_novel = output_numbers - source_numbers
+
+    # Detect valid scaled value representations (e.g. "3 billion", "176.6 million")
+    scale_matches = {
+        re.sub(r"[.,]", "", m.group(1).lower())
+        for m in re.finditer(
+            r"(?<!\w)(\d+(?:[.,]\d+)?)\s*(?:million|billion|millones|mil millones)\b",
+            optimized_text,
+            re.I,
+        )
+    }
+    has_large_source_value = any(
+        len(sn) >= 6 or (sn.isdigit() and int(sn) >= 1_000_000)
+        for sn in source_numbers
+    )
+
+    novel_numbers = []
+    for num in raw_novel:
+        # Allow small narrative counts (e.g. 1 to 20 proceedings/phases/years)
+        if num.isdigit() and int(num) <= 20:
+            continue
+        # Allow numbers that are literal substrings of large source numbers (e.g. "3" in "3000000000")
+        if any(num in sn for sn in source_numbers if len(sn) > len(num)):
+            continue
+        # Allow scale representations when source has high-value figures
+        if has_large_source_value and num in scale_matches:
+            continue
+        novel_numbers.append(num)
+    novel_numbers.sort()
     if novel_numbers:
         errors.append(
             f"Novel numeric claims in {matter.matter_id}: {', '.join(novel_numbers)}"

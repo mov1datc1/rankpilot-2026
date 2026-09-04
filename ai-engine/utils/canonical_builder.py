@@ -73,6 +73,7 @@ def reconcile_extracted_matters_to_source(
 
     expected = [(label, normalized_label(label)) for label in source_labels]
     sections = DocumentParser.extract_numbered_matter_sections(source_text)
+    d0_e0_statuses = DocumentParser.extract_d0_e0_client_statuses(source_text)
     selected: List[Dict] = []
     used_indices = set()
     missing = []
@@ -186,7 +187,13 @@ def reconcile_extracted_matters_to_source(
         else:
             grounded["is_cross_border"] = None
 
-        new_client_raw = str(source_fields.get("new_client_status") or "").strip()
+        client_key = str(grounded.get("client") or "").strip().casefold()
+        new_client_raw = str(
+            source_fields.get("new_client_status")
+            or d0_e0_statuses.get(exact_label.casefold())
+            or (d0_e0_statuses.get(client_key) if client_key else "")
+            or ""
+        ).strip()
         if new_client_raw:
             grounded["is_new_client"] = re.search(r'\byes\b|\bsí\b|\bsi\b|\bnew\b', new_client_raw, re.I) is not None
         else:
@@ -273,6 +280,7 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
     source_claims: List[EvidenceClaim] = []
     status_counters = {"publishable": 0, "confidential": 0}
     source_sections = DocumentParser.extract_numbered_matter_sections(state.get("doc_text", ""))
+    d0_e0_statuses = DocumentParser.extract_d0_e0_client_statuses(state.get("doc_text", ""))
 
     for index, raw in enumerate(state.get("matters", []), start=1):
         raw_status = raw.get("publish_status", "publishable")
@@ -310,6 +318,22 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
                 )
             )
 
+        client_val = str(raw.get("client") or "").strip()
+        if not client_val or client_val.casefold() in {"unknown client", "unknown", "n/a"}:
+            det_fields = DocumentParser.extract_matter_fields(excerpt)
+            if det_fields.get("client"):
+                client_val = det_fields["client"]
+
+        is_new_client = raw.get("is_new_client")
+        if is_new_client is None:
+            new_client_raw = str(
+                d0_e0_statuses.get(source_label.casefold())
+                or (d0_e0_statuses.get(client_val.casefold()) if client_val else "")
+                or ""
+            ).strip()
+            if new_client_raw:
+                is_new_client = re.search(r'\byes\b|\bsí\b|\bsi\b|\bnew\b', new_client_raw, re.I) is not None
+
         inferred_role, inferred_counterparty = infer_transaction_role(excerpt)
         client_role = raw.get("client_role") or inferred_role or None
         counterparty = raw.get("counterparty") or inferred_counterparty or None
@@ -318,7 +342,7 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
                 EvidenceClaim(
                     claim_id=f"{matter_id}-client-role",
                     text=(
-                        f"{raw.get('client') or 'The client'} acted as {inferred_role}"
+                        f"{client_val or 'The client'} acted as {inferred_role}"
                         + (f" and the counterparty was {inferred_counterparty}" if inferred_counterparty else "")
                     ),
                     evidence_ids=span_ids,
@@ -332,7 +356,7 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
                 matter_id=matter_id,
                 source_label=source_label,
                 publish_status=status,
-                client=str(raw.get("client") or "Unknown client"),
+                client=client_val or "Unknown client",
                 title=str(raw.get("title") or ""),
                 source_span_ids=span_ids,
                 lead_lawyers=[name.strip() for name in str(raw.get("lead_partner") or "").split(",") if name.strip()],
@@ -341,6 +365,7 @@ def build_canonical_submission(state: Dict) -> Tuple[CanonicalSubmission, List[s
                 matter_value=raw.get("matter_value") or raw.get("value") or None,
                 value_type="unknown" if (raw.get("matter_value") or raw.get("value")) else None,
                 completion_status=raw.get("completion_date") or None,
+                is_new_client=is_new_client,
             )
         )
 

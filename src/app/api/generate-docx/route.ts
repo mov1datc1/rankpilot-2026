@@ -121,10 +121,17 @@ export async function GET(request: NextRequest) {
         competitive_context: letter.competitive_context
           || (typeof comp === 'string' ? comp : comp.band_alignment || ''),
         narrative_strategy: letter.narrative_strategy || [],
-        the_path_to_dominance: letter.the_path_to_dominance || [],
         matter_evaluations: letter.matter_evaluations || analysis.matter_evaluations || [],
         competitive_positioning_text: letter.competitive_positioning_text || '',
+        portfolio_curation: letter.portfolio_curation || analysis.portfolio_curation || null,
+        score_rationale: letter.score_rationale || analysis.score_rationale || '',
       };
+    }
+    if (!letter.portfolio_curation && analysis.portfolio_curation) {
+      letter.portfolio_curation = analysis.portfolio_curation;
+    }
+    if (!letter.score_rationale && analysis.score_rationale) {
+      letter.score_rationale = analysis.score_rationale;
     }
     
     // v17.1: Derive score from editorial_confidence if missing
@@ -480,7 +487,16 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
   if (analysis.summary) {
     sections.push(
       sectionTitle('Executive Summary'),
-      p(String(analysis.summary), { italics: true, color: GRAY, spacing: { after: 300 } })
+      p(String(analysis.summary), { italics: true, color: GRAY, spacing: { after: 200 } })
+    );
+  }
+
+  // Score Rationale & Portfolio Architecture Reconciliation (v26.28)
+  const scoreRationale = analysis.score_rationale || letter.score_rationale || '';
+  if (scoreRationale) {
+    sections.push(
+      p('Score Rationale & Portfolio Architecture Reconciliation:', { bold: true, color: NAVY, size: 22, spacing: { before: 100, after: 60 } }),
+      p(String(scoreRationale), { italics: true, color: GRAY, spacing: { after: 300 } })
     );
   }
 
@@ -639,6 +655,95 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
         sections.push(p(`Deadline: ${step.deadline}`, { bold: true, color: 'D97706', spacing: { after: 60 } }));
       }
       sections.push(p(desc, { spacing: { after: 200 } }));
+    }
+  }
+
+  // ═══ PORTFOLIO CURATION & 20-MATTER CEILING (v26.28) ═══
+  const portfolioCuration = (letter as any).portfolio_curation || (analysis as any).portfolio_curation || null;
+  if (portfolioCuration && (
+    portfolioCuration.warning ||
+    (Array.isArray(portfolioCuration.duplicate_matters) && portfolioCuration.duplicate_matters.length > 0) ||
+    (Array.isArray(portfolioCuration.dilution_risks) && portfolioCuration.dilution_risks.length > 0) ||
+    (Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0)
+  )) {
+    sections.push(sectionTitle('Portfolio Curation & Chambers 20-Matter Ceiling'));
+
+    if (portfolioCuration.warning) {
+      sections.push(
+        p(portfolioCuration.warning, { bold: true, color: 'DC2626', size: 22, spacing: { after: 140 } })
+      );
+    }
+
+    if (Array.isArray(portfolioCuration.duplicate_matters) && portfolioCuration.duplicate_matters.length > 0) {
+      sections.push(
+        subTitle('Duplicate / Overlapping Matters (Confidential Roster)'),
+        p('Substantially identical mandates consume slots without adding evidentiary weight. Prune one matter per pair:', { color: GRAY, size: 20, spacing: { after: 80 } })
+      );
+      for (const dup of portfolioCuration.duplicate_matters) {
+        sections.push(new Paragraph({
+          children: [
+            new TextRun({ text: '⚠️  ', bold: true }),
+            new TextRun({ text: String(dup), size: 22 }),
+          ],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+      sections.push(emptyRow());
+    }
+
+    if (Array.isArray(portfolioCuration.dilution_risks) && portfolioCuration.dilution_risks.length > 0) {
+      sections.push(
+        subTitle('Practice Dilution Risks (Off-Category Matters)'),
+        p('Matters that do not center on core property development, land-use, or zoning dilute practice positioning:', { color: GRAY, size: 20, spacing: { after: 80 } })
+      );
+      for (const dil of portfolioCuration.dilution_risks) {
+        sections.push(new Paragraph({
+          children: [
+            new TextRun({ text: '📉  ', bold: true }),
+            new TextRun({ text: String(dil), size: 22 }),
+          ],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+      sections.push(emptyRow());
+    }
+
+    if (Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core.length > 0) {
+      sections.push(
+        subTitle('Recommended Core Selection (14 Flagship Mandates)'),
+        p('Priority matters to retain when pruning down to the official Chambers 20-matter limit:', { color: GRAY, size: 20, spacing: { after: 80 } })
+      );
+      for (const rec of portfolioCuration.recommended_core) {
+        sections.push(new Paragraph({
+          children: [
+            new TextRun({ text: '⭐  ', bold: true }),
+            new TextRun({ text: String(rec), size: 22, color: '15803D' }),
+          ],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+      sections.push(emptyRow());
+    }
+
+    if (Array.isArray(portfolioCuration.source_vulnerabilities) && portfolioCuration.source_vulnerabilities.length > 0) {
+      sections.push(
+        subTitle('Source Document Vulnerabilities to Remedy'),
+        p('Factual or textual inconsistencies detected in the source document:', { color: GRAY, size: 20, spacing: { after: 80 } })
+      );
+      for (const vuln of portfolioCuration.source_vulnerabilities) {
+        sections.push(new Paragraph({
+          children: [
+            new TextRun({ text: '🔍  ', bold: true }),
+            new TextRun({ text: String(vuln), size: 22, color: '4338CA' }),
+          ],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+      sections.push(emptyRow());
     }
   }
 

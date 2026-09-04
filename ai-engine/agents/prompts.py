@@ -1007,13 +1007,15 @@ You have already completed the strategic analysis. Now evaluate EACH matter indi
 - Use practice-specific criteria for scoring, NOT generic criteria.
 - Each evaluation must be benchmark-anchored.
 - An improvement note must distinguish what the source proves from the one most material fact to confirm. Phrase missing information as a targeted question; never imply that it occurred.
+- ANTI-REDUNDANCY IN IMPROVEMENT NOTES: If the source already includes transaction value (D3/E3), procedural status/resolutions (D8/E8), or lead partners (D5/E5), DO NOT ask for them in improvement_note. Focus the improvement note strictly on authentic omissions (e.g. unstated currencies, client business sector, or practice area dilution risk).
+- PRACTICE DILUTION EVALUATION: For matters focused on federal tax disputes, labor audits, or transport/fuel permits without a core real estate/property development anchor, classify them as "Dilution Candidate" or "Low-relevance" and explain why they dilute the Real Estate submission.
 
 ### FOR EACH MATTER, PROVIDE:
 - "matter_name": client name or matter title
 - "type": MUST match the source document's publish status EXACTLY ("publishable" | "non_publishable" | "confidential"). NEVER reclassify.
-- "quality_label": "Flagship" | "Strong" | "Good but underdeveloped" | "Low-relevance"
+- "quality_label": "Flagship" | "Strong" | "Good but underdeveloped" | "Dilution Candidate" | "Low-relevance"
 - "score": integer 0-100 — based on practice-specific criteria
-- "improvement_note": 1-2 sentences on what would make this matter stronger
+- "improvement_note": 1-2 sentences on what would make this matter stronger (or why it dilutes the core practice)
 
 ### MANDATORY JSON OUTPUT SCHEMA:
 {{
@@ -1335,6 +1337,7 @@ Rules:
    NEVER include section headers, bold mechanism labels, bullet points, or metadata tags inside
    "optimized_text" (e.g. absolutely DO NOT write "**IMPACT:**", "**HERO STATEMENT:**",
    "**EXECUTION:**", "**THE HEROES:**", "**BACKGROUND:**", "**CHALLENGE:**", "**RESULT:**").
+   NEVER prefix the narrative with "Client: ..." or any other field name.
    The narrative architecture must be perceived as continuous, elegant, seamless paragraphs;
    the internal scaffolding must remain completely invisible.
 10. THREE-PARAGRAPH EDITORIAL ARCHITECTURE:
@@ -1342,6 +1345,8 @@ Rules:
     - Paragraph 1: Tangible asset / transaction, economic scale (values in figures and converted USD if stated), and the commercial exposure or existential threat.
     - Paragraph 2: Firm's decisive legal intervention and craft (turning legal concepts into commercial protection), the procedural mechanism, and the definitive enforceable outcome.
     - Paragraph 3: Leadership team, lawyer ownership, and broader market/client precedent.
+11. PROCEDURAL ENFORCEMENT & D8/E8 RESOLUTION INTEGRATION (v26.28):
+    When the raw matter or D8/E8 contains a recent procedural update, favorable resolution, or enforcement milestone (e.g. "UPDATE 2024", favorable judgment, confirmation by appellate court, enforcement in July 2024, or definitive suspension), ALWAYS weave this definitive procedural outcome into Paragraph 2. NEVER reproduce obsolete or preliminary statuses (such as "awaiting resolution in early 2024") when the record documents that the favorable judgment was rendered or enforced.
 
 GOLD REFERENCE BENCHMARK (Approved Chambers Submission Standard):
 "El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion (USD 176.6 million) development at existential risk.
