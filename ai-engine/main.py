@@ -69,7 +69,25 @@ def _assert_release_approved(result: dict) -> None:
         print(f"[RELEASE AUDIT] ⚠️ Audit checks flagged: {failed}. Delivering results to user and preserving logs for Admin.")
 
 # 1. Instancia de la API para comunicación con el Backend
-api = FastAPI(title="RankPilot AI Core", version="26.23")
+api = FastAPI(title="RankPilot AI Core", version="26.24")
+
+# CORS Configuration
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@api.get("/")
+def read_root():
+    return {
+        "status": "online",
+        "service": "RankPilot Core Engine",
+        "version": "26.24",
+        "environment": "Ubuntu/Docker"
+    }
 
 @api.get("/health")
 async def health_check():
@@ -79,7 +97,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.23",
+        "version": "26.24",
         "environment": "Ubuntu/Docker"
     }
 

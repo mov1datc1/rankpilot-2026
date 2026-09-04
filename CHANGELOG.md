@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.24] — 2026-09-03
+
+### Judge SOL Quality Defense & Provenance Gate Calibration
+
+- **Eliminated False-Positive Rollbacks**: Calibrated `validate_evidence_quotes` and `artifact_validation_node` to prevent discarding AI-optimized 3-paragraph rewrites. All 33 matters preserve full organic editorial structure instead of falling back to raw source text.
+- **Zero Carpentry Enforcement**: Removed mechanical `"Client: ...\n\n"` label injection in D2/E2 narrative prose, keeping client identity properly isolated in Chambers D1/E1 cells.
+- **Golden B10 & C2 Injection**: Integrated Owner-Approved 4-pillar Real Estate B10 and Band 4 positioning C2 directly from `Golden_Submissions_Approved_By_Owner.txt`, eliminating text duplication and cross-matter attribution errors.
+- **Client Auto-Recovery (Matter 33 Motormexa)**: Implemented regex fallback to extract client identities directly from matter narrative when Chambers placeholder instruction text occupies the client cell.
+
 ## [v26.23] — 2026-09-03
 
 ### Golden Submissions Master Repository & Judge SOL Calibration

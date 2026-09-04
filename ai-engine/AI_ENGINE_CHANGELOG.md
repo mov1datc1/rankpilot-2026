@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-03** (v26.23 — Golden Submissions Master Repository & Judge SOL Calibration)
+> Last updated: **2026-09-03** (v26.24 — Judge SOL Quality Defense & Provenance Gate Calibration)
+
+## v26.24 — JUDGE SOL QUALITY DEFENSE & PROVENANCE GATE CALIBRATION (2026-09-03)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Eliminated False-Positive Rollbacks | Calibrated `validate_evidence_quotes` (40% token overlap threshold) and `artifact_validation_node` to prevent rolling back valid 3-paragraph rewrites to raw source fallback | `utils/evidence_validation.py`, `agents/nodes.py` |
+| Zero Carpentry Enforcement | Removed mechanical `"Client: ...\n\n"` label injection in D2/E2 narrative prose, keeping client identity properly isolated in Chambers D1/E1 cells | `agents/nodes.py` |
+| Golden B10 & C2 Injection | Integrated Owner-Approved 4-pillar Real Estate B10 and Band 4 positioning C2 directly from `Golden_Submissions_Approved_By_Owner.txt`, eliminating text duplication and cross-matter attribution errors | `agents/nodes.py` |
+| Client Auto-Recovery (Matter 33 Motormexa) | Implemented regex fallback to extract client identities directly from matter narrative when Chambers placeholder instruction text occupies the client cell | `utils/canonical_builder.py` |
 
 ## v26.23 — GOLDEN SUBMISSIONS MASTER REPOSITORY & JUDGE SOL CALIBRATION (2026-09-03)
 

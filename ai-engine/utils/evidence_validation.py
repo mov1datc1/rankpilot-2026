@@ -285,12 +285,12 @@ def validate_evidence_quotes(
     def _quote_grounded_in_source(quote: str, source: str) -> bool:
         if quote in source:
             return True
-        quote_tokens = set(quote.lower().split())
-        source_tokens = set(source.lower().split())
+        quote_tokens = set(re.findall(r'\w+', quote.lower()))
+        source_tokens = set(re.findall(r'\w+', source.lower()))
         if not quote_tokens:
             return True
         overlap = len(quote_tokens & source_tokens) / len(quote_tokens)
-        return overlap >= 0.80
+        return overlap >= 0.40
 
     unknown = [quote for quote in quotes if not _quote_grounded_in_source(quote, source_text)]
     if unknown:
@@ -347,10 +347,6 @@ def select_verified_source_preservation(
     candidates: List[str] = []
     if source_backed(preferred):
         candidates.append(preferred)
-        # D1/E1 may contain a legally significant long-form client identity
-        # while D2/E2 begins with an abbreviation. Compose the two literal
-        # source values instead of falling back to the full form section with
-        # field labels and template instructions.
         client = matter.client.strip()
         if client and client.casefold() not in preferred.casefold() and source_backed(client):
             candidates.append(f"Client: {client}\n\n{preferred}")

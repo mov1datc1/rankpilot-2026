@@ -159,6 +159,17 @@ def reconcile_extracted_matters_to_source(
         for field, value in source_fields.items():
             if value or field_numbers[field] in observed:
                 grounded[field] = value
+        
+        # v26.24: Auto-recover client name if missing, "Unknown client", or placeholder
+        raw_client = str(grounded.get("client") or "").strip()
+        from core.docx_cloner import _is_placeholder_client
+        if not raw_client or raw_client.casefold() in {"unknown client", "unknown", "n/a", "not provided"} or _is_placeholder_client(raw_client):
+            summary_candidate = str(grounded.get("summary") or section_text).strip()
+            match_client = re.search(r'^(?:Client:\s*)?([A-Z0-9\s,\.\-&]{2,40}?)(?:\.|\s+–|\s+-|\s+is a\b|\s+es una\b|\s+was hired\b)', summary_candidate)
+            if match_client:
+                cand = match_client.group(1).strip()
+                if cand and cand.casefold() not in {"this will be", "confidential", "publishable", "summary of matter", "our firm", "d2 summary", "e2 summary"}:
+                    grounded["client"] = cand
         grounded["source_excerpt"] = section_text
         is_confidential = not exact_label.casefold().startswith("publishable")
         grounded["publish_status"] = "confidential" if is_confidential else "publishable"
