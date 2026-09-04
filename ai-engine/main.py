@@ -9,6 +9,7 @@ import time
 from datetime import datetime, timezone
 import httpx
 from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from core.graph import app as graph_app 
 from langchain_core.messages import HumanMessage
