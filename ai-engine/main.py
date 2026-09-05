@@ -828,3 +828,163 @@ async def optimize_matter_endpoint(request: Request):
     status_code = 200 if result.get("success") else 400
     return JSONResponse(status_code=status_code, content=result)
 
+
+@api.post("/extract")
+async def extract_document_endpoint(request: Request):
+    """
+    Fast extraction endpoint (<1s deterministic, or fallback to extraction_node).
+    Extracts firm metadata, lawyers, department narrative B10, and all matters
+    directly into structured format for immediate preview in Submission Studio.
+    """
+    try:
+        data = await request.json()
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON", "details": str(e)})
+
+    user_input = data.get("user_input") or data.get("documentUrl") or data.get("text") or ""
+    context = data.get("context", {})
+
+    if not user_input:
+        return JSONResponse(status_code=400, content={"error": "Missing user_input (URL, file path, or text)"})
+
+    is_url = user_input.startswith("http://") or user_input.startswith("https://")
+    is_file = is_url or (isinstance(user_input, str) and (user_input.endswith(".docx") or user_input.endswith(".doc") or user_input.endswith(".pdf") or os.path.exists(user_input)))
+
+    try:
+        from utils.doc_parser import DocumentParser
+        from agents.nodes import sanitize_text
+
+        # 1. Parse document text
+        if is_file:
+            doc_text = DocumentParser.parse(user_input)
+        else:
+            doc_text = user_input
+        doc_text = sanitize_text(doc_text)
+
+        # 2. Extract deterministic metadata and sections
+        prelim = DocumentParser.extract_chambers_preliminary_fields(doc_text)
+        heads = DocumentParser.extract_department_heads(doc_text)
+        roster = DocumentParser.extract_lawyer_roster(doc_text)
+        original_c2 = DocumentParser.extract_c2_source(doc_text)
+
+        # Extract B10 narrative
+        original_b10 = ""
+        b10_match = re.search(
+            r'B(?:10|7)\s+What is this department best known for.*?\n',
+            doc_text, re.IGNORECASE
+        )
+        if b10_match:
+            start_idx = b10_match.end()
+            end_match = re.search(
+                r'\n\s*(?:C1\s|C\.\s|D\.\s|B8\s|B9\s|Publishable|CONFIDENTIAL)',
+                doc_text[start_idx:], re.IGNORECASE
+            )
+            if end_match:
+                original_b10 = doc_text[start_idx:start_idx + end_match.start()].strip()
+            else:
+                original_b10 = doc_text[start_idx:start_idx + 3000].strip()
+
+            original_b10 = re.sub(
+                r'(?:Please include:.*?word count limit\)?|Address any feedback.*?word count limit\)?)',
+                '', original_b10, flags=re.IGNORECASE | re.DOTALL
+            ).strip()
+
+        # Extract numbered matters deterministically
+        sections = DocumentParser.extract_numbered_matter_sections(doc_text)
+        matters = []
+
+        if sections:
+            for label_key, sec in sections.items():
+                fields = DocumentParser.extract_matter_fields(sec["text"])
+                is_conf = "confidential" in label_key or "non-publishable" in label_key
+                matters.append({
+                    "id": f"matter-ext-{len(matters) + 1}",
+                    "name": sec["label"],
+                    "title": sec["label"],
+                    "client": fields.get("client", ""),
+                    "value": fields.get("matter_value", ""),
+                    "leadPartner": fields.get("lead_partner", ""),
+                    "lead_partner": fields.get("lead_partner", ""),
+                    "rawNotes": fields.get("summary", ""),
+                    "summary": fields.get("summary", ""),
+                    "teamMembers": fields.get("team_members", ""),
+                    "team_members": fields.get("team_members", ""),
+                    "crossBorder": fields.get("cross_border_jurisdictions", ""),
+                    "otherFirms": fields.get("other_firms", ""),
+                    "completionDate": fields.get("completion_date", ""),
+                    "isConfidential": is_conf,
+                    "publish_status": "non_publishable" if is_conf else "publishable",
+                    "optimizedText": "",
+                })
+        else:
+            # Fallback to extraction_node if no standard numbered headers found
+            from agents.nodes import extraction_node
+            state = {
+                "file_path": user_input if is_file else "",
+                "doc_text": doc_text,
+                "messages": [],
+                "pipeline_manifest": {
+                    "document": {
+                        "source_matters": {"total": 0, "matter_labels": []}
+                    }
+                }
+            }
+            extract_res = extraction_node(state)
+            ext_matters = extract_res.get("matters", [])
+            for idx, m in enumerate(ext_matters):
+                is_conf = m.get("is_confidential", False) or m.get("publish_status") in ("non_publishable", "confidential")
+                matters.append({
+                    "id": f"matter-ext-{idx + 1}",
+                    "name": m.get("title") or f"Matter {idx + 1}",
+                    "title": m.get("title") or f"Matter {idx + 1}",
+                    "client": m.get("client", ""),
+                    "value": m.get("matter_value", ""),
+                    "leadPartner": m.get("lead_partner", ""),
+                    "lead_partner": m.get("lead_partner", ""),
+                    "rawNotes": m.get("summary", ""),
+                    "summary": m.get("summary", ""),
+                    "teamMembers": m.get("team_members", ""),
+                    "team_members": m.get("team_members", ""),
+                    "crossBorder": m.get("cross_border_jurisdictions", ""),
+                    "otherFirms": m.get("other_firms", ""),
+                    "completionDate": m.get("completion_date", ""),
+                    "isConfidential": is_conf,
+                    "publish_status": "non_publishable" if is_conf else "publishable",
+                    "optimizedText": "",
+                })
+            if not prelim.get("firm_name"):
+                prelim = extract_res.get("metadata", {})
+
+        firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
+        practice_area = prelim.get("practice_area") or context.get("practice_area") or ""
+        location = prelim.get("location") or context.get("jurisdiction") or ""
+
+        return JSONResponse(status_code=200, content={
+            "success": True,
+            "metadata": {
+                "firm_name": firm_name,
+                "practice_area": practice_area,
+                "location": location,
+            },
+            "department": {
+                "department_heads": [{"name": h, "email": "", "phone": ""} for h in heads],
+            },
+            "lawyers": roster,
+            "original_b10": original_b10,
+            "original_c2": original_c2,
+            "matters": matters,
+            "total_matters": len(matters),
+            "publishable_count": sum(1 for m in matters if not m.get("isConfidential")),
+            "confidential_count": sum(1 for m in matters if m.get("isConfidential")),
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={
+            "success": False,
+            "error": str(e),
+            "details": traceback.format_exc()[:1500]
+        })
+
+

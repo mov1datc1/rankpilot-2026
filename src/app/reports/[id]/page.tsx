@@ -183,8 +183,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* Pipeline Error / Empty Analysis Banner */}
-        {(pipelineError || (isEmptyAnalysis && submission.status !== 'Submitted')) && (
+        {/* Pipeline Error Banner */}
+        {pipelineError && (
           <div style={{ background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca', padding: '1.5rem 2rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.25rem' }}>⚠️</div>
             <div style={{ flex: 1 }}>

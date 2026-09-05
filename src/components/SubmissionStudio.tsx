@@ -91,6 +91,15 @@ export default function SubmissionStudio({
   const [activeMatterDrawer, setActiveMatterDrawer] = useState<string | null>(null);
   const [matterSuccessMsg, setMatterSuccessMsg] = useState<Record<string, string>>({});
 
+  // Global Optimization State
+  const [isOptimizingAll, setIsOptimizingAll] = useState<boolean>(false);
+  const [optimizeAllProgress, setOptimizeAllProgress] = useState<{
+    current: number;
+    total: number;
+    stage: string;
+  } | null>(null);
+  const [optimizeAllComplete, setOptimizeAllComplete] = useState<boolean>(false);
+
   // Calculations
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
   
@@ -113,6 +122,109 @@ export default function SubmissionStudio({
 
     return { pub, conf, pruned, total: matters.length };
   }, [matters, showCoreOnly]);
+
+  const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
+  const targetMattersCount = Math.min(matters.length, showCoreOnly ? 20 : matters.length);
+  const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
+
+  // Master Action: Optimize entire submission with IA (B10 + all matters in parallel batches)
+  const handleOptimizeAll = async () => {
+    if (isOptimizingAll) return;
+    setIsOptimizingAll(true);
+    setOptimizeAllComplete(false);
+
+    const targetList = showCoreOnly ? matters.slice(0, 20) : matters;
+    const totalSteps = targetList.length + 1; // 1 for B10 + each matter
+
+    setOptimizeAllProgress({
+      current: 0,
+      total: totalSteps,
+      stage: 'Iniciando optimización integral: Sección B10...'
+    });
+
+    // 1. Optimize Section B10
+    try {
+      const b10Res = await fetch('/api/optimize/b10', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          original_b10: b10Text || chambersData.original_b10 || '',
+          directive: b10Directive
+        })
+      });
+      const b10Data = await b10Res.json();
+      if (b10Data.success && b10Data.enhanced_b10) {
+        setB10Text(b10Data.enhanced_b10);
+      }
+    } catch (b10Err) {
+      console.warn('[Global Optimization] B10 error:', b10Err);
+    }
+
+    let completed = 1;
+    setOptimizeAllProgress({
+      current: completed,
+      total: totalSteps,
+      stage: `B10 optimizado. Optimizando ${targetList.length} asuntos en paralelo...`
+    });
+
+    // 2. Optimize matters in concurrent batches of 3
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
+      const batch = targetList.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(async (m, bIdx) => {
+        const actualIdx = i + bIdx;
+        const key = m.id || `matter-${actualIdx}`;
+        const directive = matterDirectives[key] || '';
+
+        try {
+          const res = await fetch('/api/optimize/matter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              submissionId: submission.id,
+              matterId: m.id,
+              matter: m,
+              directive: directive
+            })
+          });
+          const data = await res.json();
+          if (data.success && data.optimized_text) {
+            setMatters(prev => prev.map((item, idx) => {
+              if ((item.id && item.id === m.id) || idx === actualIdx) {
+                return {
+                  ...item,
+                  optimizedText: data.optimized_text,
+                  optimized_text: data.optimized_text
+                };
+              }
+              return item;
+            }));
+          }
+        } catch (mErr) {
+          console.warn(`[Global Optimization] Matter ${actualIdx} error:`, mErr);
+        } finally {
+          completed++;
+          setOptimizeAllProgress({
+            current: Math.min(completed, totalSteps),
+            total: totalSteps,
+            stage: `Optimizando asuntos: ${Math.min(completed - 1, targetList.length)} de ${targetList.length} completados...`
+          });
+        }
+      }));
+    }
+
+    setOptimizeAllProgress({
+      current: totalSteps,
+      total: totalSteps,
+      stage: '¡Optimización Completa! Todos los asuntos y B10 optimizados bajo el estándar Chambers.'
+    });
+    setOptimizeAllComplete(true);
+    setIsOptimizingAll(false);
+    setTimeout(() => {
+      setOptimizeAllProgress(null);
+    }, 6000);
+  };
 
   // Handler: Re-optimize B10 (3s isolated micro-call)
   const handleOptimizeB10 = async () => {
@@ -296,8 +408,31 @@ export default function SubmissionStudio({
           </div>
         </div>
 
-        {/* Master DOCX Downloads */}
+        {/* Master DOCX Downloads & Quick Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <button
+            onClick={handleOptimizeAll}
+            disabled={isOptimizingAll}
+            style={{
+              background: isOptimizingAll ? '#E2E8F0' : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
+              color: isOptimizingAll ? '#64748B' : '#FFFFFF',
+              border: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '7px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
+              boxShadow: isOptimizingAll ? 'none' : '0 2px 4px rgba(79,70,229,0.2)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
+            {isOptimizingAll ? 'Optimizando...' : '✨ Optimizar Todo con IA'}
+          </button>
+
           <a
             href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
             style={{
@@ -599,6 +734,107 @@ export default function SubmissionStudio({
           {/* ── CENTER CANVAS (CARDS & PREVIEW) ── */}
           <div style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
+            {/* ═══ MASTER ACTION HERO BANNER: OPTIMIZAR TODO CON IA ═══ */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1A237E 0%, #283593 50%, #312E81 100%)',
+              borderRadius: '14px',
+              padding: '1.5rem 2rem',
+              color: '#FFFFFF',
+              boxShadow: '0 10px 25px -5px rgba(26, 35, 126, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ flex: 1, minWidth: '280px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      background: 'rgba(255,255,255,0.15)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      color: '#E0E7FF'
+                    }}>
+                      Flujo de Trabajo Interactivo SaaS
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#93C5FD' }}>
+                      • Vista Previa Inmediata
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                    {isFullyOptimized ? 'Submission 100% Optimizado con IA' : 'Optimización Estratégica Integral'}
+                  </h2>
+                  <p style={{ fontSize: '0.85rem', color: '#C7D2FE', margin: '0.35rem 0 0 0', lineHeight: 1.45 }}>
+                    {isFullyOptimized 
+                      ? `Todos los asuntos (${optimizedMattersCount}/${targetMattersCount}) y la narrativa B10 están reescritos en 3 párrafos orgánicos bajo el estándar Chambers.`
+                      : 'Reescribe la Sección B10 bajo los 4 Pilares Institucionales y transforma cada asunto en prosa orgánica de 3 párrafos (Asset/Scale → Craft/Outcome → Team/Precedent).'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    onClick={handleOptimizeAll}
+                    disabled={isOptimizingAll}
+                    style={{
+                      background: isOptimizingAll ? 'rgba(255,255,255,0.2)' : isFullyOptimized ? '#EEF2FF' : '#FFFFFF',
+                      color: isOptimizingAll ? '#FFFFFF' : '#1A237E',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.85rem 1.75rem',
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      boxShadow: isOptimizingAll ? 'none' : '0 4px 12px rgba(0,0,0,0.15)',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {isOptimizingAll ? (
+                      <>
+                        <RefreshCw size={18} className="animate-spin" />
+                        Optimizando Submission...
+                      </>
+                    ) : isFullyOptimized ? (
+                      <>
+                        <RefreshCw size={16} />
+                        ↻ Re-optimizar Todo con IA
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={18} color="#4F46E5" />
+                        ✨ Optimizar Todo el Submission con IA
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Real-time Live Progress Bar */}
+              {optimizeAllProgress && (
+                <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem', color: '#E0E7FF' }}>
+                    <span style={{ fontWeight: 600 }}>{optimizeAllProgress.stage}</span>
+                    <span style={{ fontWeight: 700 }}>{optimizeAllProgress.current} / {optimizeAllProgress.total}</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${Math.min(100, Math.round((optimizeAllProgress.current / Math.max(1, optimizeAllProgress.total)) * 100))}%`,
+                      height: '100%',
+                      background: '#38BDF8',
+                      borderRadius: '4px',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Pre-flight Portfolio Strategy Bar */}
             <div style={{
               background: '#FFFFFF',

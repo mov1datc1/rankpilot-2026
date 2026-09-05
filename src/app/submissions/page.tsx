@@ -17,6 +17,7 @@ export default function SubmissionsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [extractionStatus, setExtractionStatus] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
   const [processingSubmissions, setProcessingSubmissions] = useState<Array<{
@@ -191,7 +192,34 @@ export default function SubmissionsPage() {
         if (selectedMatterIds.size > 0) {
           await attachMattersToSubmission(result.data.id, Array.from(selectedMatterIds));
         }
-        router.push(`/submissions/processing?id=${result.data.id}&url=${encodeURIComponent(documentUrl || '')}&name=${encodeURIComponent(selectedFile?.name || 'Document')}&directory=${encodeURIComponent(targetDirectory)}&region=${encodeURIComponent(guideRegion)}&practice=${encodeURIComponent(practiceArea)}`);
+
+        // Fast extraction directly into Submission Studio (<2s)
+        setExtractionStatus('Extrayendo asuntos y secciones del formulario...');
+        try {
+          const extractRes = await fetch('/api/extract-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              submissionId: result.data.id,
+              documentUrl: documentUrl,
+              context: {
+                directory: targetDirectory,
+                jurisdiction: guideRegion,
+                practiceArea: practiceArea,
+                currentBand: currentBand
+              }
+            })
+          });
+          const extractData = await extractRes.json();
+          if (!extractData.success) {
+            console.warn('[Extraction Warning]', extractData.error);
+          }
+        } catch (extErr) {
+          console.warn('[Extraction Call Error]', extErr);
+        }
+
+        // Redirect straight to interactive Submission Studio!
+        router.push(`/reports/${result.data.id}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);
@@ -231,7 +259,34 @@ export default function SubmissionsPage() {
         if (selectedMatterIds.size > 0) {
           await attachMattersToSubmission(result.data.id, Array.from(selectedMatterIds));
         }
-        router.push(`/submissions/processing?id=${result.data.id}&text=${encodeURIComponent(pasteText)}`);
+
+        // Fast extraction directly into Submission Studio (<2s)
+        setExtractionStatus('Extrayendo asuntos y estructura del texto...');
+        try {
+          const extractRes = await fetch('/api/extract-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              submissionId: result.data.id,
+              text: pasteText,
+              context: {
+                directory: targetDirectory,
+                jurisdiction: guideRegion,
+                practiceArea: practiceArea,
+                currentBand: currentBand
+              }
+            })
+          });
+          const extractData = await extractRes.json();
+          if (!extractData.success) {
+            console.warn('[Extraction Warning]', extractData.error);
+          }
+        } catch (extErr) {
+          console.warn('[Extraction Call Error]', extErr);
+        }
+
+        // Redirect straight to interactive Submission Studio!
+        router.push(`/reports/${result.data.id}`);
       } else {
         alert('Error creating submission: ' + result.error);
         setIsSubmitting(false);
@@ -677,15 +732,15 @@ export default function SubmissionsPage() {
                 onClick={startUploadAudit}
                 disabled={!selectedFileName || isSubmitting}
                 style={{ 
-                  background: selectedFileName && !isSubmitting ? '#3b82f6' : '#94a3b8', 
+                  background: selectedFileName && !isSubmitting ? '#1A237E' : '#94a3b8', 
                   color: '#ffffff', padding: '0.75rem 2rem', 
-                  borderRadius: '8px', fontWeight: 500, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  borderRadius: '8px', fontWeight: 600, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
                   cursor: selectedFileName && !isSubmitting ? 'pointer' : 'not-allowed', transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#2563eb'; }}
-                onMouseOut={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#3b82f6'; }}
+                onMouseOver={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#283593'; }}
+                onMouseOut={(e) => { if (selectedFileName && !isSubmitting) e.currentTarget.style.background = '#1A237E'; }}
               >
-                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Creando Proyecto...</> : 'Start Upload Audit'}
+                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> {extractionStatus || 'Extrayendo datos y abriendo Studio...'}</> : '✨ Cargar y Abrir en Submission Studio'}
               </button>
             </div>
           </div>
@@ -737,13 +792,13 @@ export default function SubmissionsPage() {
                 onClick={startPasteTextAudit}
                 disabled={!pasteText.trim() || isSubmitting}
                 style={{ 
-                  background: pasteText.trim() && !isSubmitting ? '#3b82f6' : '#94a3b8', 
+                  background: pasteText.trim() && !isSubmitting ? '#1A237E' : '#94a3b8', 
                   color: '#ffffff', padding: '0.75rem 2rem', 
-                  borderRadius: '8px', fontWeight: 500, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  borderRadius: '8px', fontWeight: 600, border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
                   cursor: pasteText.trim() && !isSubmitting ? 'pointer' : 'not-allowed'
                 }}
               >
-                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> Processing...</> : 'Process with AI'}
+                {isSubmitting ? <><Loader2 size={18} className="animate-spin" /> {extractionStatus || 'Extrayendo datos y abriendo Studio...'}</> : '✨ Abrir en Submission Studio'}
               </button>
             </div>
           </div>

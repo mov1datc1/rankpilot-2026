@@ -113,8 +113,8 @@ function BuilderContent() {
     for (const draft of unsaved) {
       await saveMatter(draft);
     }
-    // Redirect to processing
-    router.push(`/submissions/processing?id=${submissionId}`);
+    // Redirect directly to Submission Studio
+    router.push(`/reports/${submissionId}`);
   };
 
   // Shared input style
@@ -286,7 +286,7 @@ function BuilderContent() {
             fontWeight: 600, fontSize: '0.95rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
           }}
         >
-          {savingAll ? <><Loader2 size={18} className="animate-spin" /> Saving & Processing...</> : <><Sparkles size={18} /> Save All & Process with AI <ArrowRight size={16} /></>}
+          {savingAll ? <><Loader2 size={18} className="animate-spin" /> Guardando y Abriendo Studio...</> : <><Sparkles size={18} /> Guardar y Abrir en Submission Studio <ArrowRight size={16} /></>}
         </button>
       </div>
 

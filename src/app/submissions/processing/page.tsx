@@ -362,21 +362,28 @@ function ProcessingContent() {
             <div style={{ marginTop: '1rem', padding: '1rem 1.15rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <div>
                 <p style={{ margin: 0, color: '#334155', fontSize: '0.9rem', fontWeight: 700 }}>
-                  Continues in the background
+                  Disponible en el Submission Studio
                 </p>
                 <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.82rem' }}>
-                  You can refresh, close this page, or keep working. Processing will not restart.
-                  {elapsedMinutes > 0 ? ` Elapsed time: ${elapsedMinutes} min.` : ''}
-                  {remainingMinutes > 0 ? ` Estimated time remaining: ~${remainingMinutes} min.` : ''}
+                  Puedes acceder directamente al formulario interactivo para revisar campos o micro-optimizar asuntos individuales.
                 </p>
               </div>
-              <button
-                onClick={() => router.push('/reports')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 0.9rem', background: '#fff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}
-              >
-                <FileBarChart size={15} />
-                Continue in Reports
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => router.push(`/reports/${submissionId}`)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 1rem', background: '#1A237E', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
+                >
+                  <Sparkles size={15} />
+                  Abrir Submission Studio
+                </button>
+                <button
+                  onClick={() => router.push('/reports')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.55rem 0.9rem', background: '#fff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}
+                >
+                  <FileBarChart size={15} />
+                  Ver Reportes
+                </button>
+              </div>
             </div>
           )}
         </div>
