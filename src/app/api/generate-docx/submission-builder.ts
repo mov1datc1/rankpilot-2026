@@ -372,16 +372,19 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // 3. narrative_architecture: Planning meta-text (LAST RESORT — avoid if possible)
   const na = chambersData.narrative_architecture || {};
   let b7Text = '';
-  
-  // Priority 1: Enhanced B7 from AI pipeline (expanded, never summarized)
-  if (chambersData.enhanced_b7 && chambersData.enhanced_b7.length > 50) {
-    b7Text = chambersData.enhanced_b7;
+  // Priority 1: If original mode requested, take firm's raw text
+  if (exportMode === 'original') {
+    b7Text = chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '';
   }
-  // Priority 2: Original firm department description
+  // Priority 2: Enhanced B7 from AI pipeline (expanded, never summarized)
+  else if ((chambersData.enhanced_b7 || chambersData.enhanced_b10) && (chambersData.enhanced_b7 || chambersData.enhanced_b10).length > 20) {
+    b7Text = chambersData.enhanced_b7 || chambersData.enhanced_b10;
+  }
+  // Priority 3: Original firm department description
   else if (chambersData.departmentDesc && chambersData.departmentDesc.length > 50) {
     b7Text = chambersData.departmentDesc;
   }
-  // Priority 3: Original b7 field
+  // Priority 4: Original b7 field
   else if (chambersData.b7 && chambersData.b7.length > 50) {
     b7Text = chambersData.b7;
   }
@@ -583,8 +586,9 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   // ═══ WHAT SETS YOUR PRACTICE APART ═══
   elements.push(new Paragraph({ children: [new PageBreak()] }));
-  elements.push(para('WHAT SETS YOUR PRACTICE APART', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
-  const b7Val = chambersData.b7 || chambersData.departmentDescription || '';
+  const b7Val = exportMode === 'original'
+    ? (chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '')
+    : (chambersData.enhanced_b7 || chambersData.enhanced_b10 || chambersData.departmentDesc || chambersData.b7 || chambersData.departmentDescription || '');
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
   // ═══ LEADING PARTNERS ═══

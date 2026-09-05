@@ -161,13 +161,26 @@ export async function GET(request: NextRequest) {
     const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
     const practiceArea = submission.practiceArea || 'General Practice';
 
+    const requestedTemplate = searchParams.get('template') || searchParams.get('format');
+    const forceMaster = requestedTemplate === 'master_chambers'
+      || requestedTemplate === 'master_legal500'
+      || requestedTemplate === 'chambers'
+      || requestedTemplate === 'legal500'
+      || requestedTemplate === 'canonical'
+      || searchParams.get('engine') === 'master';
+
+    // Route target directory if explicit template passed
+    if (requestedTemplate === 'master_legal500' || requestedTemplate === 'legal500') {
+      submission.targetDirectory = 'Legal 500';
+    } else if (requestedTemplate === 'master_chambers' || requestedTemplate === 'chambers') {
+      submission.targetDirectory = 'Chambers';
+    }
+
     // ═══════════════════════════════════════════════════════════
     // v19.0: CLONE-AND-REPLACE — Serve pre-built DOCX if available
-    // The Python pipeline clones the original DOCX and only replaces
-    // B10 + D2/E2 cells. This preserves ALL formatting (colors, bold,
-    // logos, diversity sections, numbering, etc.)
+    // (Bypassed if master template or explicit canonical builder requested)
     // ═══════════════════════════════════════════════════════════
-    if (docType === 'submission' && sourceCloneReady) {
+    if (docType === 'submission' && sourceCloneReady && !forceMaster) {
       console.log('[DOCX GENERATOR] ✅ Serving cloned DOCX (v19.0 Clone-and-Replace)');
       try {
         const docxBuffer = Buffer.from(chambersData.cloned_docx_b64, 'base64');

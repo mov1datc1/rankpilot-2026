@@ -780,3 +780,51 @@ async def download_file(filepath: str):
         elif filepath.endswith('.docx'):
             return FileResponse(filepath, media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document', filename=os.path.basename(filepath))
     return {"error": "File not found"}
+
+
+@api.post("/optimize/b10")
+async def optimize_b10_endpoint(request: Request):
+    """
+    Endpoint de micro-optimización de 3 segundos para la Sección B10 (narrativa departamental).
+    """
+    try:
+        data = await request.json()
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON", "details": str(e)})
+
+    from agents.micro_optimizer import optimize_b10_micro
+
+    result = optimize_b10_micro(
+        original_b10=data.get("original_b10", ""),
+        practice_area=data.get("practice_area", ""),
+        firm_name=data.get("firm_name", ""),
+        directive=data.get("directive", ""),
+        strategic_context=data.get("strategic_context"),
+        narrative_architecture=data.get("narrative_architecture")
+    )
+    status_code = 200 if result.get("success") else 400
+    return JSONResponse(status_code=status_code, content=result)
+
+
+@api.post("/optimize/matter")
+async def optimize_matter_endpoint(request: Request):
+    """
+    Endpoint de micro-optimización de 3 segundos para un Asunto individual.
+    """
+    try:
+        data = await request.json()
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON", "details": str(e)})
+
+    from agents.micro_optimizer import optimize_matter_micro
+
+    result = optimize_matter_micro(
+        matter=data.get("matter", {}),
+        directive=data.get("directive", ""),
+        practice_area=data.get("practice_area", ""),
+        firm_name=data.get("firm_name", ""),
+        thesis=data.get("thesis", "")
+    )
+    status_code = 200 if result.get("success") else 400
+    return JSONResponse(status_code=status_code, content=result)
+

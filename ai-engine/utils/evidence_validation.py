@@ -452,9 +452,9 @@ def strip_carpentry_and_labels(text: str) -> str:
     """Ensure Zero Carpentry by stripping any visible field labels or markdown scaffolding."""
     if not text:
         return ""
-    # Strip markdown bold mechanism headers
+    # Strip markdown bold or plain mechanism headers
     cleaned = re.sub(
-        r'(?i)\*\*(?:IMPACT|HERO STATEMENT|EXECUTION|THE HEROES|BACKGROUND|CHALLENGE|RESULT|STRATEGY|OUTCOME|TEAM):\*\*\s*',
+        r'(?i)(?:\*\*)?(?:IMPACT|HERO STATEMENT|EXECUTION|THE HEROES|BACKGROUND|CHALLENGE|RESULT|STRATEGY|OUTCOME|TEAM):\s*(?:\*\*)?\s*',
         '',
         text
     )
@@ -469,15 +469,16 @@ def strip_carpentry_and_labels(text: str) -> str:
         )
         if client_label_match:
             client_val = client_label_match.group(1).strip()
-            if len(paras) > 1:
-                rest_text = " ".join(paras[1:]).lower()
+            paras = paras[1:]
+            if paras:
                 tokens = [t for t in re.split(r'[\s,\.]+', client_val) if len(t) > 3 and t.lower() not in ('group', 'company', 'corp', 'de', 'cv', 'sa', 'mexico', 'operaciones')]
-                if any(tok.lower() in rest_text for tok in tokens) or len(tokens) == 0:
-                    paras = paras[1:]
-                else:
-                    paras[0] = client_val
+                rest_text = " ".join(paras).lower()
+                if not any(tok.lower() in rest_text for tok in tokens) and len(tokens) > 0:
+                    first_p = paras[0]
+                    if not first_p.lower().startswith("representing") and not first_p.lower().startswith("acting for"):
+                        paras[0] = f"Representing {client_val}, {first_p[0].lower()}{first_p[1:]}"
             else:
-                paras[0] = client_val
+                paras = [f"Ramos Castillo advised {client_val} on the strategic execution of this mandate."]
         cleaned = "\n\n".join(paras)
 
     # Strip any remaining inline "Client: ...", "D2: ...", etc. at line starts

@@ -7,6 +7,7 @@ import PrintButton from "@/components/PrintButton";
 import StatusActionButtons from "./StatusActionButtons";
 import SupplementalUpload from "./SupplementalUpload";
 import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation";
+import SubmissionStudio from "@/components/SubmissionStudio";
 
 
 export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -101,9 +102,13 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const directoryLabel = isLegal500 ? 'Legal 500' : 'Chambers';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc', paddingBottom: '5rem' }}>
-      {/* Top Navigation */}
-      <div className="print-hidden" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+    <SubmissionStudio
+      submission={submission as any}
+      initialChambersData={chambersData}
+      auditChildren={
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc', paddingBottom: '5rem' }}>
+          {/* Top Navigation */}
+          <div className="print-hidden" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link 
             href="/reports"
@@ -392,12 +397,16 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', color: '#1e293b', lineHeight: 1.6 }}>
               
-              {/* Score Circle + Executive Summary */}
+              {/* Institutional Quality Badge + Executive Summary */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '2rem' }}>
-                <div style={{ flexShrink: 0, width: '80px', height: '80px', borderRadius: '50%', background: `conic-gradient(${score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'} ${score * 3.6}deg, #f1f5f9 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.25rem', color: '#0f172a' }}>
-                    {score}
-                  </div>
+                <div style={{ flexShrink: 0, padding: '0.75rem 1rem', borderRadius: '12px', background: '#EEF2FF', border: '1.5px solid #C7D2FE', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minWidth: '95px' }}>
+                  <span style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>🛡️</span>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1A237E', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+                    Calidad Validada
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#4F46E5', fontWeight: 600 }}>
+                    Nivel Editorial
+                  </span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '1.125rem', color: '#475569', fontStyle: 'italic', margin: 0 }}>
@@ -565,8 +574,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                           </div>
                           <p style={{ color: labelColor, fontWeight: 600, fontSize: '0.85rem', margin: '0 0 0.5rem' }}>{ev.quality_label || 'Pending evaluation'}</p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: mScore >= 70 ? '#16a34a' : mScore >= 40 ? '#d97706' : '#dc2626' }}>{mScore}</span>
-                            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>/100</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.78rem', color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '4px' }}>✓ Verificado para Directorio</span>
                           </div>
                           {ev.improvement_note && (
                             <p style={{ color: '#64748b', fontSize: '0.8rem', margin: 0, fontStyle: 'italic' }}>{ev.improvement_note}</p>
@@ -748,5 +756,8 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
 
       </div>
     </div>
+    }
+  />
   );
 }
+
