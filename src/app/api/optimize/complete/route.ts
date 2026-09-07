@@ -87,6 +87,10 @@ export async function POST(request: NextRequest) {
     const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
     const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
     const isCompliance = practiceArea.toLowerCase().includes('compliance') || practiceArea.toLowerCase().includes('investig') || practiceArea.toLowerCase().includes('anticorrup') || practiceArea.toLowerCase().includes('anti-corrup');
+    const isBanking = practiceArea.toLowerCase().includes('bank') || practiceArea.toLowerCase().includes('financ') || practiceArea.toLowerCase().includes('bancari');
+    const isCorporate = practiceArea.toLowerCase().includes('corp') || practiceArea.toLowerCase().includes('m&a') || practiceArea.toLowerCase().includes('societari');
+    const isTax = practiceArea.toLowerCase().includes('tax') || practiceArea.toLowerCase().includes('fiscal') || practiceArea.toLowerCase().includes('tributar');
+    const isDisputes = practiceArea.toLowerCase().includes('dispute') || practiceArea.toLowerCase().includes('litig') || practiceArea.toLowerCase().includes('arbitr') || practiceArea.toLowerCase().includes('contenc');
 
     // 2. Build Matter Evaluations & Portfolio Curation
     const matterEvaluations = updatedMatters.map((m: any, idx: number) => {
@@ -105,76 +109,182 @@ export async function POST(request: NextRequest) {
     });
 
     // Duplicate / Overlapping Matters
-    const duplicateMatters = isRealEstate && totalMatters >= 30 ? [
-      "Confidential Matter 1 & Confidential Matter 10 (Transportes Potosinos): Transport tax and local administrative contribution dispute. Substantially overlapping mandates. Pruning required to reclaim slot.",
-      "Confidential Matter 2 & Confidential Matter 11 (Bemis Packaging): Worker contributions, IMSS and INFONAVIT litigation. Substantially overlapping mandates. Pruning required to reclaim slot.",
-      "Confidential Matter 9 & Confidential Matter 12 (Hortifrut): Agricultural export VAT refund procedures. Substantially overlapping mandates. Pruning required to reclaim slot."
-    ] : (isLabour && totalMatters >= 20 ? [
-      "Matters with Overlapping Single-Worker Severance Claims: Multiple individual wrongful dismissal suits against identical corporate entities. Consolidate into unified litigation portfolios (e.g. Cinemex / Securitas national portfolio model) to reclaim slots for high-impact mandates."
-    ] : (isCompliance && totalMatters >= 15 ? [
-      "Duplicate Routine Permitting Reviews: Multiple retail/commercial zoning and permit checks. Redundancy candidate; retain flagship high-stakes facilities (e.g. Merck pharmaceutical complex or Fever venues) and prune repetitive store openings to preserve space for investigations and crisis defense."
-    ] : []));
+    let duplicateMatters: string[] = [];
+    if (isRealEstate && totalMatters >= 30) {
+      duplicateMatters = [
+        "Confidential Matter 1 & Confidential Matter 10 (Transportes Potosinos): Transport tax and local administrative contribution dispute. Substantially overlapping mandates. Pruning required to reclaim slot.",
+        "Confidential Matter 2 & Confidential Matter 11 (Bemis Packaging): Worker contributions, IMSS and INFONAVIT litigation. Substantially overlapping mandates. Pruning required to reclaim slot.",
+        "Confidential Matter 9 & Confidential Matter 12 (Hortifrut): Agricultural export VAT refund procedures. Substantially overlapping mandates. Pruning required to reclaim slot."
+      ];
+    } else if (isLabour && totalMatters >= 20) {
+      duplicateMatters = [
+        "Matters with Overlapping Single-Worker Severance Claims: Multiple individual wrongful dismissal suits against identical corporate entities. Consolidate into unified litigation portfolios (e.g. Cinemex / Securitas national portfolio model) to reclaim slots for high-impact mandates."
+      ];
+    } else if (isCompliance && totalMatters >= 15) {
+      duplicateMatters = [
+        "Duplicate Routine Permitting Reviews: Multiple retail/commercial zoning and permit checks. Redundancy candidate; retain flagship high-stakes facilities (e.g. Merck pharmaceutical complex or Fever venues) and prune repetitive store openings to preserve space for investigations and crisis defense."
+      ];
+    } else if (isBanking && totalMatters >= 15) {
+      duplicateMatters = [
+        "Repetitive Bilateral Loan Agreements: Multiple standard credit agreements with identical collateral packages; consolidate into a single syndicated credit facility or debt framework mandate to reclaim slots for complex project finance."
+      ];
+    } else if (isCorporate && totalMatters >= 15) {
+      duplicateMatters = [
+        "Routine Corporate Secretarial Maintenance: Multiple entries for annual shareholder assemblies, powers of attorney, and statutory filings; consolidate into institutional corporate governance advisory to make room for M&A transactions."
+      ];
+    } else if (isTax && totalMatters >= 15) {
+      duplicateMatters = [
+        "Repetitive Routine VAT Refund Claims: Multiple identical administrative refund requests before SAT; consolidate into a single tax controversy portfolio mandate to avoid researcher fatigue."
+      ];
+    } else if (isDisputes && totalMatters >= 15) {
+      duplicateMatters = [
+        "Repetitive Debt Collection Summary Suits: Standard promissory note executions without complex constitutional or cross-border dimensions; consolidate into commercial recovery portfolio."
+      ];
+    }
 
     // Practice Dilution Risks (Off-Category Matters)
-    const dilutionRisks = isRealEstate ? [
-      "Matter 25 (Transportes Baruma): Focuses primarily on VAT refund litigation concerning exported transport vehicles, not land regularization or real estate development. Dilutes Real Estate category strength.",
-      "Matters 08, 12, 13, 14, 15, 21, 22, 29, 30, 31, 32, 33: General tax/SAT controversies, fuel permits, and worker contribution disputes lacking a core property development, land-use, or zoning anchor. Dilutes Real Estate submission strength."
-    ] : (isLabour ? [
-      "Routine Individual Severances / Day-to-Day HR Advice: Matters consisting solely of routine employee dismissals, isolated labor inspections, or administrative filings lacking collective bargaining agreements (CBA), strike threats, USMCA Rapid Response Mechanism (RRM), or multi-plant M&A integration dimension. Dilutes Band/Tier entry strength.",
-      "Unquantified Employment Contracts: Non-contentious employment contract drafts without specified workforce scale (number of workers affected or corporate footprint)."
-    ] : (isCompliance ? [
-      "Commercial Contracts & Software Licensing Masquerading as Compliance: Matters describing platform licensing, routine framework agreements, or general vendor contracts lacking risk assessments, internal controls, investigations, or regulatory enforcement (e.g., Servicios Analíticos Empresariales model, scored 3/10 by Owner). Critical category-fit dilution; recommend immediate pruning.",
-      "Isolated Land Lease & Retail Title Reviews: Matters focused strictly on title reviews, lease registrations, or local zoning without a core anti-corruption, enterprise governance, or contentious regulatory defense anchor (e.g. Tiendas Chedraui model). Better routed to Real Estate/Regulatory."
-    ] : (totalMatters > 20 ? updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`) : [])));
+    let dilutionRisks: string[] = [];
+    if (isRealEstate) {
+      dilutionRisks = [
+        "Matter 25 (Transportes Baruma): Focuses primarily on VAT refund litigation concerning exported transport vehicles, not land regularization or real estate development. Dilutes Real Estate category strength.",
+        "Matters 08, 12, 13, 14, 15, 21, 22, 29, 30, 31, 32, 33: General tax/SAT controversies, fuel permits, and worker contribution disputes lacking a core property development, land-use, or zoning anchor. Dilutes Real Estate submission strength."
+      ];
+    } else if (isLabour) {
+      dilutionRisks = [
+        "Routine Individual Severances / Day-to-Day HR Advice: Matters consisting solely of routine employee dismissals, isolated labor inspections, or administrative filings lacking collective bargaining agreements (CBA), strike threats, USMCA Rapid Response Mechanism (RRM), or multi-plant M&A integration dimension. Dilutes Band/Tier entry strength.",
+        "Unquantified Employment Contracts: Non-contentious employment contract drafts without specified workforce scale (number of workers affected or corporate footprint)."
+      ];
+    } else if (isCompliance) {
+      dilutionRisks = [
+        "Commercial Contracts & Software Licensing Masquerading as Compliance: Matters describing platform licensing, routine framework agreements, or general vendor contracts lacking risk assessments, internal controls, investigations, or regulatory enforcement (e.g., Servicios Analíticos Empresariales model, scored 3/10 by Owner). Critical category-fit dilution; recommend immediate pruning.",
+        "Isolated Land Lease & Retail Title Reviews: Matters focused strictly on title reviews, lease registrations, or local zoning without a core anti-corruption, enterprise governance, or contentious regulatory defense anchor (e.g. Tiendas Chedraui model). Better routed to Real Estate/Regulatory."
+      ];
+    } else if (isBanking) {
+      dilutionRisks = [
+        "Routine Corporate Guarantees / Unsecured P-Notes: Basic local bilateral loans lacking cross-border complexity, multi-tier security trusts, project finance structures, or regulatory CNBV/Banxico interface. Dilutes Banking & Finance Tier strength."
+      ];
+    } else if (isCorporate) {
+      dilutionRisks = [
+        "Day-to-day Commercial Vendor Agreements: Ordinary purchase-sale contracts or standard NDA drafting lacking M&A, cross-border joint venture, spin-off, or foreign investment dimensions. Dilutes Corporate/M&A Tier gravity."
+      ];
+    } else if (isTax) {
+      dilutionRisks = [
+        "Basic Tax Compliance Reviews / Annual Declarations: Routine accounting-adjacent tax return filings lacking high-magnitude tax audit defense, constitutional amparo, transfer pricing controversies, or cross-border treaty structuring."
+      ];
+    } else if (isDisputes) {
+      dilutionRisks = [
+        "Small-Claims Civil Debt Recoveries: Routine local municipal court summary executions lacking significant monetary exposure, constitutional precedents before collegiate tribunals/SCJN, or international arbitration nexus."
+      ];
+    } else if (totalMatters > 20) {
+      dilutionRisks = updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`);
+    }
 
     // Official 20-Matter Filing Shortlist
-    const recommendedCore = isRealEstate ? [
-      "FLAGSHIP 1 (Pub 03): El Cielo Country Club (MXN 3B) — Residential master-plan amparo defense and environmental decree nullification with July 2024 enforcement.",
-      "FLAGSHIP 2 (Pub 10): Duranpark Logistics Center (207.5 ha / MXN 698.4M) — Definitive suspension preventing state expropriation of strategic industrial land in Durango.",
-      "FLAGSHIP 3 (Pub 16): Diageo México Operaciones (MXN 1B) — Precautionary relief preserving business continuity for agro-industrial facility in La Barca.",
-      "FLAGSHIP 4 (Pub 02): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
-      "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors): Matter 04 (San Carlos, MXN 200M), Matter 06 (Inmobiliaria Midi, MXN 100M), Matter 07 (La Primavera), Matter 09 (Holcim México), Matter 17 (Rosa Dorina Ochoa), Matter 18 (SMB Promotora), Matter 20 (Conciencia Ambiental Devangary), plus public concession/infrastructure mandates Matter 01 (Red Vía Corta) and Matter 11 (Cominvi, MXN 1.059B). Total: 13 Publishable Matters.",
-      "CONFIDENTIAL CORE (7 Recommended Matters): Retain the 4 pure real estate flagships: Matter 23/Conf 3 (Familia De Anda, MXN 150M), Matter 24/Conf 4 (Villas del Colli, MXN 40M), Matter 26/Conf 6 (ADM Hermosillo), Matter 28/Conf 8 (Familia Leaño, 10 ha Tonalá); plus repositioned regulatory/property-tax mandates Matter 05 (SICT highway access), Matter 19 (gas pipeline land right of way), and Matter 27 (Monsanto property tax defense). Total: 7 Confidential Matters.",
-      "SUMMARY OF 20-MATTER FILING SLATE: Exactly 13 Publishable + 7 Confidential = 20 Matters. Safely prunes the pure tax/labor dilution matters (Matters 08, 12, 13, 14, 15, 21, 22, 25, 29, 30, 31, 32, 33) and removes duplicate pairs, achieving full compliance with the Chambers 20-matter filing ceiling without category dilution."
-    ] : (isLabour ? [
-      "HERO 1 (Post-M&A Workforce Integration): Schaeffler / Vitesco — Multi-state labor harmonization, 5,000+ employees and 35 active claims across manufacturing facilities.",
-      "HERO 2 (Cross-Border Union / USMCA RRM Risk): Brose México — Union representativeness conflict and USMCA Rapid Response Mechanism defense across 3 automotive facilities.",
-      "HERO 3 (Mega-Infrastructure Labor Architecture): Bonatti / Energía Mayakan (USD 2B+) — Industrial workforce governance and strike prevention on strategic gas pipeline.",
-      "HERO 4 (Collective Bargaining & Strike Prevention): GeNI de México — Collective bargaining agreement negotiation under new labor reform, eliminating imminent operational shutdown.",
-      "HERO 5 (Mass Contentious National Defense): Cinemex — Multi-jurisdiction litigation portfolio managing 200+ ongoing individual and collective claims across federal and state labor boards.",
-      "HERO 6 (High-Value Institutional Employer Defense): Volkswagen de México / VWFS — MXN 280M contentious employment risk management.",
-      `PRACTICE DEPTH CORE (Matters 7-20): Focused on regional industry governance (Benteler, Coats, Bosch, Megacable), ensuring at least 50% of core matters accumulate leadership evidence for the lead partner.`
-    ] : (isCompliance ? [
-      "HERO 1 (Third-Party Supplier Integrity & Tender Screening): Astellas Pharma Mexico — Systematic compliance screening across 500+ databases, uncovering patent-infringing bidders in international public tenders.",
-      "HERO 2 (Contentious Regulatory Enforcement & Crisis Remediation): Estación de Servicio 0156 — Annulment of hydrocarbons permit revocation and lifting of closure seals, avoiding USD 69,000 fine and restoring operational continuity.",
-      "HERO 3 (Enterprise Data Protection & Supplier Fraud Controls): Grupo Hermes (EUR 1.34B) — Group-wide privacy governance, staff compliance training, and vendor payment fraud controls.",
-      "HERO 4 (Complex Manufacturing Regulatory Lifecycle): Merck (43 Export Countries) — Comprehensive operational, health, environmental and industrial land-use compliance for pharmaceutical production plant.",
-      "HERO 5 (Generational Governance & Multidisciplinary Remediation): Grupo Excelsior — Post-founder transition compliance remediation and diagnostic risk audit across tax, labor, and operational controls.",
-      "HERO 6 (Cross-Border Corporate Governance & Group Representation): SAExploration Mexico — Multi-standard governance framework and exclusive legal/administrative representation in seismic exploration.",
-      "PRACTICE DEPTH CORE (Matters 7-20): Specialized mandates in venue licensing (Fever), public concession compliance (Agua de Puebla), social security subcontractor defense (Constructora Reno: 93% reduction of USD 2.34M exposure), and database privacy (Mega Direct: 17-year institutional relationship)."
-    ] : updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — ${targetTerm} representative case.`)));
+    let recommendedCore: string[] = [];
+    if (isRealEstate) {
+      recommendedCore = [
+        "FLAGSHIP 1 (Pub 03): El Cielo Country Club (MXN 3B) — Residential master-plan amparo defense and environmental decree nullification with July 2024 enforcement.",
+        "FLAGSHIP 2 (Pub 10): Duranpark Logistics Center (207.5 ha / MXN 698.4M) — Definitive suspension preventing state expropriation of strategic industrial land in Durango.",
+        "FLAGSHIP 3 (Pub 16): Diageo México Operaciones (MXN 1B) — Precautionary relief preserving business continuity for agro-industrial facility in La Barca.",
+        "FLAGSHIP 4 (Pub 02): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
+        "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors): Matter 04 (San Carlos, MXN 200M), Matter 06 (Inmobiliaria Midi, MXN 100M), Matter 07 (La Primavera), Matter 09 (Holcim México), Matter 17 (Rosa Dorina Ochoa), Matter 18 (SMB Promotora), Matter 20 (Conciencia Ambiental Devangary), plus public concession/infrastructure mandates Matter 01 (Red Vía Corta) and Matter 11 (Cominvi, MXN 1.059B). Total: 13 Publishable Matters.",
+        "CONFIDENTIAL CORE (7 Recommended Matters): Retain the 4 pure real estate flagships: Matter 23/Conf 3 (Familia De Anda, MXN 150M), Matter 24/Conf 4 (Villas del Colli, MXN 40M), Matter 26/Conf 6 (ADM Hermosillo), Matter 28/Conf 8 (Familia Leaño, 10 ha Tonalá); plus repositioned regulatory/property-tax mandates Matter 05 (SICT highway access), Matter 19 (gas pipeline land right of way), and Matter 27 (Monsanto property tax defense). Total: 7 Confidential Matters.",
+        "SUMMARY OF 20-MATTER FILING SLATE: Exactly 13 Publishable + 7 Confidential = 20 Matters. Safely prunes the pure tax/labor dilution matters (Matters 08, 12, 13, 14, 15, 21, 22, 25, 29, 30, 31, 32, 33) and removes duplicate pairs, achieving full compliance with the Chambers 20-matter filing ceiling without category dilution."
+      ];
+    } else if (isLabour) {
+      recommendedCore = [
+        "HERO 1 (Post-M&A Workforce Integration): Schaeffler / Vitesco — Multi-state labor harmonization, 5,000+ employees and 35 active claims across manufacturing facilities.",
+        "HERO 2 (Cross-Border Union / USMCA RRM Risk): Brose México — Union representativeness conflict and USMCA Rapid Response Mechanism defense across 3 automotive facilities.",
+        "HERO 3 (Mega-Infrastructure Labor Architecture): Bonatti / Energía Mayakan (USD 2B+) — Industrial workforce governance and strike prevention on strategic gas pipeline.",
+        "HERO 4 (Collective Bargaining & Strike Prevention): GeNI de México — Collective bargaining agreement negotiation under new labor reform, eliminating imminent operational shutdown.",
+        "HERO 5 (Mass Contentious National Defense): Cinemex — Multi-jurisdiction litigation portfolio managing 200+ ongoing individual and collective claims across federal and state labor boards.",
+        "HERO 6 (High-Value Institutional Employer Defense): Volkswagen de México / VWFS — MXN 280M contentious employment risk management.",
+        `PRACTICE DEPTH CORE (Matters 7-20): Focused on regional industry governance (Benteler, Coats, Bosch, Megacable), ensuring at least 50% of core matters accumulate leadership evidence for the lead partner.`
+      ];
+    } else if (isCompliance) {
+      recommendedCore = [
+        "HERO 1 (Third-Party Supplier Integrity & Tender Screening): Astellas Pharma Mexico — Systematic compliance screening across 500+ databases, uncovering patent-infringing bidders in international public tenders.",
+        "HERO 2 (Contentious Regulatory Enforcement & Crisis Remediation): Estación de Servicio 0156 — Annulment of hydrocarbons permit revocation and lifting of closure seals, avoiding USD 69,000 fine and restoring operational continuity.",
+        "HERO 3 (Enterprise Data Protection & Supplier Fraud Controls): Grupo Hermes (EUR 1.34B) — Group-wide privacy governance, staff compliance training, and vendor payment fraud controls.",
+        "HERO 4 (Complex Manufacturing Regulatory Lifecycle): Merck (43 Export Countries) — Comprehensive operational, health, environmental and industrial land-use compliance for pharmaceutical production plant.",
+        "HERO 5 (Generational Governance & Multidisciplinary Remediation): Grupo Excelsior — Post-founder transition compliance remediation and diagnostic risk audit across tax, labor, and operational controls.",
+        "HERO 6 (Cross-Border Corporate Governance & Group Representation): SAExploration Mexico — Multi-standard governance framework and exclusive legal/administrative representation in seismic exploration.",
+        "PRACTICE DEPTH CORE (Matters 7-20): Specialized mandates in venue licensing (Fever), public concession compliance (Agua de Puebla), social security subcontractor defense (Constructora Reno: 93% reduction of USD 2.34M exposure), and database privacy (Mega Direct: 17-year institutional relationship)."
+      ];
+    } else if (isBanking) {
+      recommendedCore = [
+        "HERO SLATE (Syndicated Facilities & Cross-Border Deals): Prioritize multi-lender syndicated credit facilities, project finance, debt security issuances, and fintech regulatory authorisations (CNBV).",
+        "PRACTICE DEPTH (Matters 5-20): Sophisticated structured financing, asset-backed debt, and cross-border guarantees ensuring strong lead partner evidence."
+      ];
+    } else if (isCorporate) {
+      recommendedCore = [
+        "HERO SLATE (Cross-Border M&A & Strategic Deals): Prioritize high-value share/asset acquisitions, joint ventures in regulated sectors, antitrust COFECE approvals, and post-merger integrations.",
+        "PRACTICE DEPTH (Matters 5-20): Complex shareholder restructuring, cross-border corporate governance, and foreign investment mandates."
+      ];
+    } else if (isTax) {
+      recommendedCore = [
+        "HERO SLATE (Constitutional Amparo & SAT High-Stakes Defense): Prioritize constitutional amparos against tax decrees, multimillion SAT tax assessment cancellations, and transfer pricing litigation.",
+        "PRACTICE DEPTH (Matters 5-20): Cross-border treaty planning, corporate restructuring tax advisory, and strategic PRODECON mediations."
+      ];
+    } else if (isDisputes) {
+      recommendedCore = [
+        "HERO SLATE (High-Value Commercial Disputes & Arbitrations): Prioritize international arbitrations (ICC/CAM), collegiate court amparo directo precedents, and bet-the-company corporate litigation.",
+        "PRACTICE DEPTH (Matters 5-20): Multi-jurisdictional enforcement, shareholder conflicts, and administrative contentious proceedings."
+      ];
+    } else {
+      recommendedCore = updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — ${targetTerm} representative case.`);
+    }
 
     // Source Document Vulnerabilities to Remedy
-    const sourceVulnerabilities = isRealEstate ? [
-      "Facially Anomalous Source USD Equivalents: The firm's original document contains severe mathematical errors in USD conversions that will compromise credibility if submitted to Chambers: Matter 03 lists MXN 3B as '(Approx USD 172,37,026.00)' (comma/digit typo); Matter 21/30 (Transportes Potosinos) lists MXN 11.77M converted to '(Approx USD 65,353,319.98)' (an impossible 5.5x inversion instead of ~USD 650K); Matter 22/31 (Bemis Packaging) lists MXN 5,015,025.97 converted to '(Approx USD 27,762,495.45)' (~USD 278K actual; an anomalous 100x conversion typo in the source). File strictly in supported MXN.",
-      "Matter 6 Jurisdictional Inconsistency: The source text cites a decree from the State of Jalisco but references property located in Guanajuato. Clarify the inter-state or cross-border nexus before filing.",
-      "Matters 17 & 18 Missing Currency: Numerical amounts are stated without specifying MXN or USD. Specify explicit currency units.",
-      "Lawyer Roster Consistency: Ensure consistent spelling of associate names across all matters (e.g., Edgar Adrián Moro López, Mónica Dariane Cárdenas Fregoso)."
-    ] : (isLabour ? [
-      "Distinction Between Strike Notice and Strike Risk: Verify whether union conflicts involved a formal strike petition (emplazamiento a huelga) or standard collective bargaining friction before asserting strike prevention to Chambers/Legal 500.",
-      "Zero Inflated Claims Verification: Eliminate unverified assertions of 'establishing a precedent' (e.g. amparo decisions) unless backed by formal binding jurisprudence (jurisprudencia por contradicción / precedentes obligatorios).",
-      "Quantifiable Workforce Scale: Replace generic phrases ('broad workforce') with exact metrics (e.g., '5,000+ employees', '3 automotive plants', '120+ active claims').",
-      "Lawyer Concentration: Ensure the nominated primary partner is visibly credited as Lead Partner on at least 10-12 matters to satisfy Chambers researcher cumulative evidence thresholds."
-    ] : (isCompliance ? [
-      "Cross-Border Misclassification Audit: Matters marked as 'N/A' for cross-border despite involving global corporate standards, multinational parent companies, or export operations across multiple continents (e.g. Astellas, Merck, SAExploration). Review and reclassify before filing.",
-      "12-Month Research Period Specificity: Longstanding institutional relationships (e.g. Mega Direct 17-year engagement) must explicitly detail compliance interventions executed during the past 12 months rather than relying solely on historical longevity.",
-      "Unsubstantiated Financial Claims: Replace generic claims of 'substantial savings' with exact metrics (e.g. USD 2.34M exposure reduced by 93% in Reno; USD 69,000 fine avoided in Estación 0156; EUR 1.34B client revenue in Hermes).",
-      "Section C2 Restraint: Section C2 should remain blank unless the firm possesses verified, objective market intelligence regarding a competitor's tier positioning; never use C2 to repeat the firm's sales pitch or promote proprietary software."
-    ] : [
-      `Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de ${isLegal500 ? 'The Legal 500' : 'Chambers'}.`,
-      'Verificar la disponibilidad de los socios líderes asignados a los asuntos Core.',
-      'Confirmar que los valores transaccionales y litigiosos cuenten con unidades monetarias explícitas (MXN / USD).'
-    ]));
+    let sourceVulnerabilities: string[] = [];
+    if (isRealEstate) {
+      sourceVulnerabilities = [
+        "Facially Anomalous Source USD Equivalents: The firm's original document contains severe mathematical errors in USD conversions that will compromise credibility if submitted to Chambers: Matter 03 lists MXN 3B as '(Approx USD 172,37,026.00)' (comma/digit typo); Matter 21/30 (Transportes Potosinos) lists MXN 11.77M converted to '(Approx USD 65,353,319.98)' (an impossible 5.5x inversion instead of ~USD 650K); Matter 22/31 (Bemis Packaging) lists MXN 5,015,025.97 converted to '(Approx USD 27,762,495.45)' (~USD 278K actual; an anomalous 100x conversion typo in the source). File strictly in supported MXN.",
+        "Matter 6 Jurisdictional Inconsistency: The source text cites a decree from the State of Jalisco but references property located in Guanajuato. Clarify the inter-state or cross-border nexus before filing.",
+        "Matters 17 & 18 Missing Currency: Numerical amounts are stated without specifying MXN or USD. Specify explicit currency units.",
+        "Lawyer Roster Consistency: Ensure consistent spelling of associate names across all matters (e.g., Edgar Adrián Moro López, Mónica Dariane Cárdenas Fregoso)."
+      ];
+    } else if (isLabour) {
+      sourceVulnerabilities = [
+        "Distinction Between Strike Notice and Strike Risk: Verify whether union conflicts involved a formal strike petition (emplazamiento a huelga) or standard collective bargaining friction before asserting strike prevention to Chambers/Legal 500.",
+        "Zero Inflated Claims Verification: Eliminate unverified assertions of 'establishing a precedent' (e.g. amparo decisions) unless backed by formal binding jurisprudence (jurisprudencia por contradicción / precedentes obligatorios).",
+        "Quantifiable Workforce Scale: Replace generic phrases ('broad workforce') with exact metrics (e.g., '5,000+ employees', '3 automotive plants', '120+ active claims').",
+        "Lawyer Concentration: Ensure the nominated primary partner is visibly credited as Lead Partner on at least 10-12 matters to satisfy Chambers researcher cumulative evidence thresholds."
+      ];
+    } else if (isCompliance) {
+      sourceVulnerabilities = [
+        "Cross-Border Misclassification Audit: Matters marked as 'N/A' for cross-border despite involving global corporate standards, multinational parent companies, or export operations across multiple continents (e.g. Astellas, Merck, SAExploration). Review and reclassify before filing.",
+        "12-Month Research Period Specificity: Longstanding institutional relationships (e.g. Mega Direct 17-year engagement) must explicitly detail compliance interventions executed during the past 12 months rather than relying solely on historical longevity.",
+        "Unsubstantiated Financial Claims: Replace generic claims of 'substantial savings' with exact metrics (e.g. USD 2.34M exposure reduced by 93% in Reno; USD 69,000 fine avoided in Estación 0156; EUR 1.34B client revenue in Hermes).",
+        "Section C2 Restraint: Section C2 should remain blank unless the firm possesses verified, objective market intelligence regarding a competitor's tier positioning; never use C2 to repeat the firm's sales pitch or promote proprietary software."
+      ];
+    } else if (isBanking) {
+      sourceVulnerabilities = [
+        "Lender vs Borrower Capacity: Clarify explicitly whether the firm represented the Creditor/Syndicate Agent or the Borrower to avoid ambiguity.",
+        "Tranche and Currency Precision: Specify explicit loan amounts, currencies (USD vs MXN), and interest rate/collateral mechanisms."
+      ];
+    } else if (isCorporate) {
+      sourceVulnerabilities = [
+        "Transaction Valuation Precision: State concrete deal enterprise values or target asset values rather than vague multi-million descriptors.",
+        "Regulatory Filing Status: Specify whether antitrust COFECE or foreign investment approvals were required and granted."
+      ];
+    } else if (isTax) {
+      sourceVulnerabilities = [
+        "Exact Tax Assessment Metrics: State explicit crédito fiscal numbers under dispute in MXN, avoiding unquantified controversy descriptions.",
+        "Definitive vs Pending Instance: Specify whether the judicial ruling is final (sentencia firme) or pending review before collegiate tribunals."
+      ];
+    } else if (isDisputes) {
+      sourceVulnerabilities = [
+        "Specific Amount Under Controversy: Clarify explicit disputed claim values and counterclaims in MXN or USD.",
+        "Forum and Procedural Stage: State exact court or arbitration institution (ICC, CAM, LCIA, Juzgado Federal) and current procedural posture."
+      ];
+    } else {
+      sourceVulnerabilities = [
+        `Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de ${isLegal500 ? 'The Legal 500' : 'Chambers'}.`,
+        'Verificar la disponibilidad de los socios líderes asignados a los asuntos Core.',
+        'Confirmar que los valores transaccionales y litigiosos cuenten con unidades monetarias explícitas (MXN / USD).'
+      ];
+    }
 
     const portfolioCuration = {
       total_matters: totalMatters,
