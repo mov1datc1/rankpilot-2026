@@ -47,6 +47,12 @@ function labelCell(children: Paragraph[], opts: { width?: number; columnSpan?: n
   });
 }
 
+function formatCellContent(text: string, size: number = 20): Paragraph[] {
+  if (!text) return [para('', { size })];
+  const lines = text.split('\n');
+  return lines.map(line => para(line, { size }));
+}
+
 // Simple 2-row table: label on top, yellow value below (single column = full width)
 function fieldTable(label: string, value: string, labelPrefix?: string): Table {
   const labelChildren = labelPrefix
@@ -55,7 +61,7 @@ function fieldTable(label: string, value: string, labelPrefix?: string): Table {
   return new Table({
     rows: [
       new TableRow({ children: [labelCell(labelChildren, { width: PAGE_WIDTH_DXA })] }),
-      new TableRow({ children: [yellowCell([para(value || '', { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell(formatCellContent(value || '', 20), { width: PAGE_WIDTH_DXA })] }),
     ],
     width: { size: PAGE_WIDTH_DXA, type: WidthType.DXA },
     layout: TableLayoutType.FIXED,
@@ -141,7 +147,7 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
   for (const [label, value] of fields) {
     rows.push(
       new TableRow({ children: [labelCell([para(label, { size: 18 })], { width: PAGE_WIDTH_DXA })] }),
-      new TableRow({ children: [yellowCell([para(value, { size: 20 })], { width: PAGE_WIDTH_DXA })] }),
+      new TableRow({ children: [yellowCell(formatCellContent(value, 20), { width: PAGE_WIDTH_DXA })] }),
     );
   }
 
