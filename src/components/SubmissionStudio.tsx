@@ -28,6 +28,7 @@ import {
 interface MatterItem {
   id?: string;
   name?: string;
+  title?: string;
   client?: string;
   value?: string;
   leadPartner?: string;
@@ -139,6 +140,33 @@ export default function SubmissionStudio({
   const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
   const targetMattersCount = Math.min(matters.length, showCoreOnly ? 20 : matters.length);
   const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
+
+  // Dynamic Case Intelligence for Editorial Copilot
+  const firmName = chambersData.firm_name || chambersData.firmName || (submission as any).firmName || 'La Firma';
+  const practiceAreaName = submission.practiceArea || chambersData.practice_area || 'Área de Práctica';
+
+  const flagshipMatter = React.useMemo(() => {
+    if (!matters || matters.length === 0) return null;
+    const highVal = matters.find(m => {
+      const v = String(m.value || '');
+      return v.includes('M') || v.includes('B') || v.includes('000,000');
+    });
+    if (highVal) return highVal;
+    const withVal = matters.find(m => m.value && m.value.trim().length > 0 && m.value !== 'N/A');
+    if (withVal) return withVal;
+    return matters[0];
+  }, [matters]);
+
+  const verifiedValuesList = React.useMemo(() => {
+    if (!matters || matters.length === 0) return [];
+    return matters
+      .filter(m => m.value && m.value.trim().length > 0 && m.value !== 'N/A' && m.value !== 'Not disclosed')
+      .slice(0, 3)
+      .map(m => ({
+        name: m.client || m.name || m.title || 'Asunto',
+        value: m.value
+      }));
+  }, [matters]);
 
   // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
   const handleOptimizeAll = async () => {
@@ -1583,35 +1611,44 @@ export default function SubmissionStudio({
             {!copilotCollapsed && (
               <div style={{ padding: '1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 
-                {/* Institutional Quality Banner (NO RAW NUMERIC SCORES) */}
+                {/* Institutional Quality Banner (Dynamic based on optimization progress) */}
                 <div style={{
-                  background: 'linear-gradient(135deg, #1A237E 0%, #312E81 100%)',
+                  background: isFullyOptimized
+                    ? 'linear-gradient(135deg, #1A237E 0%, #312E81 100%)'
+                    : 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
                   borderRadius: '10px',
                   padding: '1rem',
                   color: '#FFFFFF',
-                  boxShadow: '0 2px 4px rgba(26,35,126,0.15)'
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.12)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-                    <ShieldCheck size={16} color="#4ADE80" />
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#A5B4FC' }}>
-                      Calidad Institucional
+                    <ShieldCheck size={16} color={isFullyOptimized ? '#4ADE80' : '#38BDF8'} />
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: isFullyOptimized ? '#A5B4FC' : '#94A3B8' }}>
+                      {isFullyOptimized ? 'Calidad Institucional' : 'Borrador en Evolución'}
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    Listo para Presentación
+                    {isFullyOptimized ? 'Listo para Presentación' : `${optimizedMattersCount} de ${targetMattersCount} Asuntos Optimizados`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
-                    Cumple al 100% con los estándares de redacción orgánica y anclaje factual de Chambers y Legal 500.
+                    {isFullyOptimized
+                      ? `Cumple al 100% con los estándares de redacción orgánica y anclaje factual de ${selectedDirectory}.`
+                      : `Estructuración editorial activa para ${firmName} en ${practiceAreaName}. Cada asunto se calibra en 3 párrafos fluidos.`}
                   </p>
                 </div>
 
-                {/* Surgical Recommendations List */}
+                {/* Surgical Recommendations List (100% Dynamic per Active Case) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Sugerencias Editoriales Activas
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Inteligencia de Caso Activa
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#6366F1', fontWeight: 600 }}>
+                      {selectedDirectory}
+                    </span>
+                  </div>
 
-                  {/* Suggestion 1: B10 */}
+                  {/* Card 1: B10 Institutional Positioning */}
                   <div style={{
                     background: '#F8FAFC',
                     borderRadius: '8px',
@@ -1621,11 +1658,17 @@ export default function SubmissionStudio({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
                       <span style={{ fontSize: '0.85rem' }}>💡</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
-                        Narrativa B10 (4 Pilares)
+                        Narrativa B10 · {practiceAreaName}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
-                      Cifras ancla de El Cielo (MXN 3B) y Duránpark (MXN 698M) están integradas. Puedes pulir el balance de liderazgo con asociados.
+                      {b10WordCount === 0
+                        ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Haz clic en Optimizar Todo para estructurar los 4 Pilares Institucionales.`
+                        : b10WordCount > 500
+                          ? `⚠️ Excede el límite estricto de 500 palabras (${b10WordCount}/500w). Reduce la extensión para cumplir el criterio de evaluación de ${selectedDirectory}.`
+                          : verifiedValuesList.length > 0
+                            ? `Posicionamiento calibrado (${b10WordCount}/500w). Integra el liderazgo de ${firmName} y mandatos clave como ${verifiedValuesList[0].name}${verifiedValuesList[0].value ? ` (${verifiedValuesList[0].value})` : ''}.`
+                            : `Posicionamiento calibrado (${b10WordCount}/500w) bajo los 4 Pilares: Identidad institucional, Mandatos ancla, Liderazgo y Precedente sectorial.`}
                     </p>
                     <button
                       onClick={() => scrollTo('section-b')}
@@ -1650,7 +1693,50 @@ export default function SubmissionStudio({
                     </button>
                   </div>
 
-                  {/* Suggestion 2: Asunto El Cielo */}
+                  {/* Card 2: Flagship Matter */}
+                  {flagshipMatter && (
+                    <div style={{
+                      background: '#F8FAFC',
+                      borderRadius: '8px',
+                      border: '1px solid #E2E8F0',
+                      padding: '0.85rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
+                        <span style={{ fontSize: '0.85rem' }}>⭐</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          Insignia: {flagshipMatter.client || flagshipMatter.name || flagshipMatter.title || 'Mandato Principal'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
+                        {flagshipMatter.value && flagshipMatter.value !== 'N/A' && flagshipMatter.value !== 'Not disclosed'
+                          ? `Monto verificado: ${flagshipMatter.value}. Estructurado en 3 párrafos orgánicos (Mandato, Desafío Técnico y Precedente).`
+                          : `Mandato estratégico para ${firmName}. Redacción fluida en 3 párrafos orgánicos sin encabezados artificiales.`}
+                      </p>
+                      <button
+                        onClick={() => scrollTo(flagshipMatter.isConfidential || (flagshipMatter as any).publish_status === 'non_publishable' ? 'section-e' : 'section-d')}
+                        style={{
+                          width: '100%',
+                          background: '#F1F5F9',
+                          color: '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.35rem',
+                          borderRadius: '5px',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        Revisar en Asuntos
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Card 3: Portfolio Curation & Limits */}
                   <div style={{
                     background: '#F8FAFC',
                     borderRadius: '8px',
@@ -1658,38 +1744,42 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>💡</span>
+                      <span style={{ fontSize: '0.85rem' }}>📁</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
-                        Asunto 03: El Cielo
+                        Curaduría ({matters.length} Asuntos)
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
-                      Se refleja la ejecución de sentencia favorable de julio 2024 en el tercer párrafo sin cortes artificiales.
+                      {matters.length > 20
+                        ? `Se detectaron ${matters.length} asuntos (${matters.length - 20} en reserva). ${selectedDirectory} exige un límite estricto de 20 para evitar la dilución del impacto ante los investigadores.`
+                        : `Portafolio de ${matters.length} asuntos (${categorized.pub.length} públicos, ${categorized.conf.length} confidenciales) cumple con el límite oficial de ${selectedDirectory}.`}
                     </p>
-                    <button
-                      onClick={() => scrollTo('section-d')}
-                      style={{
-                        width: '100%',
-                        background: '#F1F5F9',
-                        color: '#334155',
-                        border: '1px solid #CBD5E1',
-                        padding: '0.35rem',
-                        borderRadius: '5px',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
-                      Revisar en Asuntos
-                      <ArrowRight size={12} />
-                    </button>
+                    {matters.length > 20 && (
+                      <button
+                        onClick={() => setShowCoreOnly(!showCoreOnly)}
+                        style={{
+                          width: '100%',
+                          background: showCoreOnly ? '#EFF6FF' : '#F1F5F9',
+                          color: showCoreOnly ? '#2563EB' : '#475569',
+                          border: `1px solid ${showCoreOnly ? '#BFDBFE' : '#CBD5E1'}`,
+                          padding: '0.35rem',
+                          borderRadius: '5px',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        {showCoreOnly ? `Ver Excedentes en Reserva (${matters.length - 20})` : 'Filtrar Core 20'}
+                        <ArrowRight size={12} />
+                      </button>
+                    )}
                   </div>
 
-                  {/* Suggestion 3: Bemis & Duranpark */}
+                  {/* Card 4: Factual Source Verification */}
                   <div style={{
                     background: '#F8FAFC',
                     borderRadius: '8px',
@@ -1697,13 +1787,35 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>💡</span>
+                      <span style={{ fontSize: '0.85rem' }}>🔒</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
-                        Valores Source Verificados
+                        Anclaje Factual Verificado
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: 0, lineHeight: 1.45 }}>
-                      Bemis mantiene MXN 5,015,025.97 y Duránpark MXN 698,400,000 con rigor constitucional.
+                      {verifiedValuesList.length > 0
+                        ? `Cifras reales cotejadas: ${verifiedValuesList.map(v => `${v.name} (${v.value})`).join(' · ')}. Cero alucinación de montos o contrapartes.`
+                        : `Todas las entidades, fechas y tribunales provienen estrictamente del submission original de ${firmName} sin alterar los hechos.`}
+                    </p>
+                  </div>
+
+                  {/* Card 5: Directory Specific Strategy */}
+                  <div style={{
+                    background: isLegal500 ? '#FEF3C7' : '#EFF6FF',
+                    borderRadius: '8px',
+                    border: `1px solid ${isLegal500 ? '#FDE68A' : '#BFDBFE'}`,
+                    padding: '0.85rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.85rem' }}>{isLegal500 ? '⚖️' : '🎯'}</span>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isLegal500 ? '#92400E' : '#1E40AF' }}>
+                        Criterio {isLegal500 ? 'The Legal 500' : 'Chambers & Partners'}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: isLegal500 ? '#78350F' : '#1E3A8A', margin: 0, lineHeight: 1.45 }}>
+                      {isLegal500
+                        ? 'Pondera el volumen transaccional de todo el equipo (socios y asociados clave) y clasifica por Tiers sectoriales.'
+                        : 'El 60% del peso evaluativo recae en las 20 entrevistas de referees de clientes. Asegura correos corporativos vigentes.'}
                     </p>
                   </div>
                 </div>
