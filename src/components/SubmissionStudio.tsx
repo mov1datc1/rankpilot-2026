@@ -1119,10 +1119,10 @@ export default function SubmissionStudio({
                   <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#4F46E5', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>B</span>
                   <div>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                      B10 / B7: Posicionamiento Institucional del Departamento
+                      B10: Posicionamiento Institucional del Departamento
                     </h3>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
-                      ¿Por qué destaca este departamento? (Límite estricto de 500 palabras)
+                      ¿Por qué destaca este departamento? — What is this department best known for? (Límite estricto de 500 palabras)
                     </p>
                   </div>
                 </div>

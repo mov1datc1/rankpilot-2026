@@ -132,9 +132,9 @@ function DepartmentContent() {
         </div>
       </div>
 
-      {/* ═══ B4: Department Heads ═══ */}
+      {/* ═══ B7: Department Heads ═══ */}
       <div style={sectionCard}>
-        {sectionHeader(<Briefcase size={18} />, 'B4 — Department Heads / Key Partners', 'Names and contact info')}
+        {sectionHeader(<Briefcase size={18} />, 'B7 — Head or Heads of Department', 'Names and contact info of department leadership')}
         {departmentHeads.map((h, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <input style={inputStyle} placeholder="Name" value={h.name} onChange={e => { const a = [...departmentHeads]; a[i].name = e.target.value; setDepartmentHeads(a); }} />
@@ -146,9 +146,9 @@ function DepartmentContent() {
         {addBtn(() => setDepartmentHeads([...departmentHeads, { name: '', email: '', phone: '' }]), 'Add Head')}
       </div>
 
-      {/* ═══ B5: Hires / Departures ═══ */}
+      {/* ═══ B8: Hires / Departures ═══ */}
       <div style={sectionCard}>
-        {sectionHeader(<UserPlus size={18} />, 'B5 — Hires / Departures', 'Partner movements in the last 12 months')}
+        {sectionHeader(<UserPlus size={18} />, 'B8 — Hires / Departures of Partners in Last 12 Months', 'Partner movements in the last 12 months')}
         {hires.length === 0 && <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.75rem' }}>No hires or departures added yet.</p>}
         {hires.map((h, i) => (
           <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -165,9 +165,9 @@ function DepartmentContent() {
         {addBtn(() => setHires([...hires, { name: '', status: '', firm: '' }]), 'Add Hire/Departure')}
       </div>
 
-      {/* ═══ B6: Lawyer Profiles ═══ */}
+      {/* ═══ B9: Lawyer Profiles ═══ */}
       <div style={sectionCard}>
-        {sectionHeader(<Users size={18} />, 'B6 — Lawyer Profiles', 'Ranked and unranked lawyers in this practice area')}
+        {sectionHeader(<Users size={18} />, 'B9 — Ranked & Unranked Lawyers', 'Individual lawyer profiles in this practice area')}
         {lawyers.map((l, i) => (
           <div key={i} style={{ border: '1px solid #f1f5f9', borderRadius: '8px', padding: '1rem', marginBottom: '0.75rem', background: '#fafbfc' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
@@ -226,9 +226,9 @@ function DepartmentContent() {
         {addBtn(() => setLawyers([...lawyers, { name: '', url: '', currentRank: 'Not Ranked', suggestedRank: '', focus: '', bio: '', standoutWork: '', isPartner: false, isRanked: false }]), 'Add Lawyer')}
       </div>
 
-      {/* ═══ B7: Department Description ═══ */}
+      {/* ═══ B10: Department Description ═══ */}
       <div style={sectionCard}>
-        {sectionHeader(<Building2 size={18} />, 'B7 — What is this department best known for?', 'Industry expertise, key work types, recent growth (500 words max)')}
+        {sectionHeader(<Building2 size={18} />, 'B10 — What is this department best known for?', 'Industry expertise, key work types, recent growth (500 words max)')}
         <textarea
           value={departmentDesc}
           onChange={e => setDepartmentDesc(e.target.value)}

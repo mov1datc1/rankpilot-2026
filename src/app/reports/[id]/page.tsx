@@ -710,7 +710,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               {/* Ready-to-Use Positioning Text */}
               {positioningText && (
                 <div style={{ background: '#eff6ff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #bfdbfe' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e40af', marginBottom: '0.5rem' }}>Ready-to-Use Positioning Text (B7/C2)</h3>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e40af', marginBottom: '0.5rem' }}>Ready-to-Use Positioning Text (B10 / C2)</h3>
                   <p style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '1rem' }}>AI-generated paragraph ready to copy-paste into your Chambers submission:</p>
                   <div style={{ background: '#ffffff', border: '1px solid #dbeafe', borderRadius: '8px', padding: '1.25rem' }}>
                     <p style={{ color: '#1e293b', lineHeight: 1.7, margin: 0, fontSize: '0.95rem' }}>{positioningText}</p>

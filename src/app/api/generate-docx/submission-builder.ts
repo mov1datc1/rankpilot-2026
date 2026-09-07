@@ -274,31 +274,31 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B4 Department Heads
+  // B7 Department Heads (Official Chambers Latin America template: B7 Head or Heads of department)
   const heads = chambersData.departmentHeads || chambersData.lawyers || [];
   const headRows = heads.length > 0
     ? heads.map((h: any) => [h.name || '', h.email || '', h.phone || ''])
     : [['', '', '']];
   // Pad to at least 4 rows
   while (headRows.length < 4) headRows.push(['', '', '']);
-  elements.push(dataTable('Department Head(s) or Key Partners', ['Name', 'Email', 'Telephone number'], headRows, { labelPrefix: 'B4' }));
+  elements.push(dataTable('Head or Heads of department', ['Name', 'Email', 'Telephone number'], headRows, { labelPrefix: 'B7' }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // B5 Hires/Departures
+  // B8 Hires/Departures (Official Chambers Latin America template: B8 Hires / Departures)
   const hires = chambersData.hires || [];
   const hireRows = hires.length > 0
     ? hires.map((h: any) => [h.name || '', h.status || '', h.firm || ''])
     : [['', '', ''], ['', '', ''], ['', '', '']];
-  elements.push(dataTable('Hires / Departures of partners in last 12 months \n(state if they joined or left, and name of the other firm)', ['Name', 'Joined / Departed', 'Joined From / Destination (firm)'], hireRows, { labelPrefix: 'B5' }));
+  elements.push(dataTable('Hires / Departures of partners in last 12 months \n(state if they joined or left, and name of the other firm)', ['Name', 'Joined / Departed', 'Joined From / Destination (firm)'], hireRows, { labelPrefix: 'B8' }));
 
-  // B6 Lawyer bios table — 5 columns with explicit DXA widths for Google Docs
+  // B9 Lawyer bios table — 5 columns with explicit DXA widths for Google Docs (Official Chambers: B9)
   elements.push(new Paragraph({ children: [new PageBreak()] }));
   const lawyers = chambersData.lawyers || [];
   // Column widths: Name(1500) + Comments(4260) + Partner(1000) + Ranked(1000) + Leave(1600) = 9360
   const b6ColWidths = [1500, 4260, 1000, 1000, 1600];
   const b6HeaderRow = new TableRow({
     children: [labelCell([new Paragraph({ children: [
-      txt('B6', { size: 14 }), txt(' ', { size: 14 }),
+      txt('B9', { size: 14 }), txt(' ', { size: 14 }),
       txt('Information regarding Ranked and Unranked lawyers (including associates) in this practice area.', { bold: true, size: 14 }),
       txt('\nPlease do not repeat additional biographical information which is available on your website or via other sources. You may include a link to these biographies.', { italics: true, size: 14 }),
     ] })], { columnSpan: 5, width: PAGE_WIDTH_DXA })],
@@ -404,7 +404,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ].filter(Boolean);
     b7Text = parts.join('\n\n');
   }
-  elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B7'));
+  elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B10'));
 
   // ═══ SECTION C ═══
   elements.push(new Paragraph({ children: [new PageBreak()] }));
