@@ -213,6 +213,18 @@ export default function SubmissionStudio({
   const hiresList: any[] = chambersData.hires || chambersData.department?.hires_departures || [];
   const lawyersList: any[] = chambersData.lawyers || [];
 
+  const c2Text = chambersData.analysis?.audit_letter?.competitive_positioning_text
+    || chambersData.analysis?.competitive_positioning_text
+    || chambersData.competitive_positioning_text
+    || chambersData.enhanced_c2
+    || chambersData.feedback
+    || chambersData.c2
+    || 'We would be happy to discuss the market during a telephone interview.';
+
+  const pubClients = React.useMemo(() => {
+    return [...new Set(categorized.pub.map(m => m.client).filter(Boolean))] as string[];
+  }, [categorized.pub]);
+
   // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
   const handleOptimizeAll = async () => {
     if (isOptimizingAll) return;
@@ -1392,6 +1404,47 @@ export default function SubmissionStudio({
               </div>
             </div>
 
+            {/* ═══ SECTION C: MARKET FEEDBACK & POSITIONING (C1 - C2) ═══ */}
+            <div id="section-c" style={{
+              background: '#FFFFFF',
+              borderRadius: '12px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#EEF2FF', color: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>C</span>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                      Sección C: Visión de Mercado & Retroalimentación (C1 – C2)
+                    </h3>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0 }}>
+                      Retroalimentación estratégica y defensibilidad de banda ante los investigadores de Chambers
+                    </p>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.72rem', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '9999px', fontWeight: 600 }}>
+                  Strategic Positioning
+                </span>
+              </div>
+
+              {/* C2 Box */}
+              <div style={{ background: '#F8FAFC', padding: '1rem 1.25rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Award size={14} color="#4F46E5" /> C2 — Feedback on our coverage of this practice area (Optional)
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#64748B' }}>
+                    {c2Text.includes('telephone interview') ? 'Respuesta estándar segura' : 'Posicionamiento estratégico calibrado'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.84rem', lineHeight: 1.6, color: '#1E293B', margin: 0, whiteSpace: 'pre-line' }}>
+                  {c2Text}
+                </p>
+              </div>
+            </div>
+
             {/* ═══ SECTION D: PUBLISHABLE WORK HIGHLIGHTS ═══ */}
             <div id="section-d" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1407,6 +1460,43 @@ export default function SubmissionStudio({
                   </div>
                 </div>
               </div>
+
+              {/* D0: Publishable Clients List */}
+              {pubClients.length > 0 && (
+                <div style={{
+                  background: '#F0FDF4',
+                  borderRadius: '8px',
+                  border: '1px solid #BBF7D0',
+                  padding: '0.85rem 1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      D0 — Publishable Clients ({pubClients.length})
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#15803D' }}>
+                      Acreditados para publicación oficial
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {pubClients.map((clientName, cIdx) => (
+                      <span key={cIdx} style={{
+                        fontSize: '0.74rem',
+                        background: '#FFFFFF',
+                        border: '1px solid #86EFAC',
+                        color: '#14532D',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontWeight: 600
+                      }}>
+                        {clientName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {categorized.pub.map((m, idx) => {
                 const key = m.id || `matter-pub-${idx}`;
