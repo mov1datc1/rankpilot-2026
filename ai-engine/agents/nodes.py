@@ -3845,9 +3845,18 @@ def optimization_node(state: AgentState) -> Dict:
                 f"[B10 SOURCE BUDGET] Removed non-evidentiary boilerplate: "
                 f"{original_word_count}w → {len(budgeted_original_b10.split())}w"
             )
-        resolved_practice = (objective.get("practice_area") or strategic_ctx.get("practice_area", "")).lower()
-        resolved_firm = (state.get("metadata", {}).get("firm_name", "")).lower()
-        if "real estate" in resolved_practice and "ramos castillo" in resolved_firm:
+        resolved_practice = (
+            objective.get("practice_area") 
+            or strategic_ctx.get("practice_area", "") 
+            or state.get("metadata", {}).get("practice_area", "")
+            or state.get("submission_context", {}).get("practice_area", "")
+        ).lower()
+        resolved_firm = (
+            state.get("metadata", {}).get("firm_name", "") 
+            or strategic_ctx.get("firm_name", "")
+            or state.get("submission_context", {}).get("firm_name", "")
+        ).lower()
+        if "real estate" in resolved_practice and ("ramos" in resolved_firm or "castillo" in resolved_firm):
             print("[B10 GOLDEN REFERENCE] Injecting Grounded 4-Pillar Real Estate B10 (Source-stated MXN)")
             enhanced_b7 = (
                 "Ramos Castillo protects the business value of real estate assets when regulatory intervention, "

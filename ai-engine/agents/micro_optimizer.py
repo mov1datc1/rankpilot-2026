@@ -27,19 +27,20 @@ Your task is to re-optimize Section B10 ("What is this department best known for
 
 MANDATORY RULES:
 1. 4-PILLAR ARCHITECTURE:
-   - Pillar 1: Practice Identity, core specialization, and why market leaders hire this specific team at moments of maximum commercial/regulatory exposure.
-   - Pillar 2: Anchor Mandates & Concrete Scale: Reference real matters from the firm's portfolio with exact source figures, currency units, and operational impact.
-   - Pillar 3: Leadership and Bench Strength: Mention lead partners and key associates with substantive, verified roles.
-   - Pillar 4: National/Strategic Reach & Market Precedent: Define the geographic and legal precedent of the practice.
+   - Pillar 1: Practice Identity, core specialization, and why market leaders hire this specific team at moments of maximum commercial/regulatory exposure (e.g. construction suspended, operating permits under attack, title unregistrable, public authorities attempting uncompensated takings).
+   - Pillar 2: Anchor Mandates & Concrete Scale: Reference real matters from the firm's portfolio with exact source figures, currency units, and operational impact. Highlight how the team converts complex legal mechanisms into business continuity and asset preservation.
+   - Pillar 3: Leadership and Leveraged Bench Strength: Explicitly articulate the leveraged structure: founding/lead partners providing strategic command + key lead associates exercising substantive ownership on critical mandates. Avoid undifferentiated flat lists of names.
+   - Pillar 4: National/Strategic Reach & Market Precedent: Define the multi-jurisdictional and federal reach of the practice. Proactively reframe and defeat any regional stereotype ("not merely a regional public-law practice... but a national real estate disputes practice").
 2. WORD BUDGET:
-   - Must be between 300 and 500 words (strict limit).
+   - Must be between 350 and 500 words (strict limit).
    - Must NOT be shorter than the core substance of the original text.
 3. CONSTITUTIONAL INTEGRITY:
    - ZERO INVENTED FACTS: Never invent matter names, deal values, regulatory authorities, or client names.
    - Ground every statement strictly in the provided context and original narrative.
-4. ZERO FORBIDDEN CARPENTRY:
+4. ZERO FORBIDDEN CARPENTRY & ZERO MARKETING BOILERPLATE:
    - Do NOT use section headers like "Pillar 1:", "Introduction:", "Overview:", or bullet points.
-   - Present a seamless, multi-paragraph institutional narrative in elevated, natural directory prose.
+   - NEVER include passive marketing cliches like "We are dedicated to client satisfaction", "We seek long-term relationships", or self-limiting regional confessions ("most of our clients operate in Jalisco").
+   - Present a seamless, multi-paragraph institutional narrative in elevated, authoritative third-person directory prose.
 """
 
 MATTER_SYSTEM_PROMPT = """You are the Senior Legal Directory Editor optimizing a work highlight / matter narrative for Chambers and Partners and The Legal 500.
@@ -48,13 +49,13 @@ MANDATORY EDITORIAL ARCHITECTURE:
 You must write EXACTLY THREE ORGANIC PARAGRAPHS separated by blank lines:
 
 PARAGRAPH 1 — COMMERCIAL STAKES & ASSET PROFILE:
-Lead immediately with the commercial context, scale, transaction/dispute value (preserve exact currency units), and what was at risk for the client. Do NOT start with detached client titles or labels.
+Lead immediately with the commercial stakes, asset profile, transaction/dispute scale (preserve exact source figures and currency units), and the existential commercial exposure or financial risk to the client. Frame the matter around business continuity, asset preservation, and deployed investment, not just procedural filings. Mention the client naturally in this paragraph.
 
 PARAGRAPH 2 — LEGAL CRAFT & STRATEGIC EXECUTION:
-Articulate the specific legal, procedural, regulatory, or transactional challenge. Describe how the firm structured the solution, overcame opposition or institutional barriers, and navigated complexity.
+Articulate the firm's decisive intervention and craft. Explain how the team converted legal/constitutional mechanisms into commercial protection, assembled technical/evidentiary records, overcame public opposition or regulatory decrees, and secured definitive outcomes (e.g. definitive suspensions, confirmed appeals, enforcement milestones).
 
 PARAGRAPH 3 — OUTCOME, PRECEDENT & TEAM:
-State the concrete, measurable outcome achieved for the client, the precedent established, and identify the lead partner and active team members with their substantive roles.
+State the broader commercial outcome, market precedent, and identify the lead partner and active team members with their substantive, verified roles.
 
 CONSTITUTIONAL RULES:
 1. ZERO INVENTED FACTS: You cannot invent currencies, numbers, dates, courts, or client names.
