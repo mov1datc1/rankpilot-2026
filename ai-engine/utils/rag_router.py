@@ -47,17 +47,17 @@ class RAGRouter:
     def _practice_keywords(practice_area: str) -> Sequence[str]:
         practice = practice_area.lower()
         routes = [
-            (("bank", "financ", "capital market", "fintech"), ("banking", "finance")),
+            (("bank", "financ", "bancari", "capital market", "fintech"), ("banking", "finance", "bank")),
             (("tax", "fiscal", "tributar"), ("tax", "fiscal")),
             (("labour", "labor", "employ", "trabajo"), ("labour", "labor", "employment")),
-            (("corp", "m&a", "merger", "sociedad"), ("corporate", "m&a", "corporate_ma")),
-            (("dispute", "litig", "arbitrat", "amparo"), ("dispute", "litigation", "arbitrat")),
-            (("competi", "antitrust"), ("competition", "antitrust")),
-            (("intellectual", "patent", "trademark", "privacy", "data protection"), ("intellectual", "privacy", "data")),
-            (("regulat", "public", "admin"), ("regulatory", "public", "administrative")),
-            (("energy", "project", "infra", "mining", "environ"), ("energy", "project", "infrastructure")),
-            (("real estate", "property", "inmobiliario", "urban"), ("real estate", "real_estate", "property", "inmobiliario")),
-            (("compliance", "investig", "anticorrup", "anti-corrup", "white-collar", "penal empresarial"), ("compliance", "investigations", "anticorruption")),
+            (("corp", "m&a", "merger", "sociedad", "societario"), ("corporate", "m&a", "corporate_ma")),
+            (("dispute", "litig", "arbitrat", "amparo", "contencios"), ("dispute", "litigation", "arbitrat")),
+            (("competi", "antitrust", "competencia", "cofece"), ("competition", "antitrust")),
+            (("intellectual", "propiedad intelectual", "patent", "patente", "trademark", "marca", "copyright", "privacy", "data protection", "pi"), ("intellectual", "privacy", "data", "pi")),
+            (("regulat", "public", "admin", "regulatorio"), ("regulatory", "public", "administrative")),
+            (("energy", "project", "infra", "mining", "environ", "energía", "minero", "ambiental"), ("energy", "project", "infrastructure")),
+            (("real estate", "property", "inmobiliario", "urban", "bienes raíces"), ("real estate", "real_estate", "real property", "inmobiliario")),
+            (("compliance", "investig", "anticorrup", "anti-corrup", "white-collar", "penal empresarial", "integridad"), ("compliance", "investigations", "anticorruption")),
         ]
         for triggers, keywords in routes:
             if any(trigger in practice for trigger in triggers):
