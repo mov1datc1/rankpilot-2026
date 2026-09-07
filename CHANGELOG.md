@@ -3,6 +3,33 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.30] — 2026-09-07
+
+### Dynamic Submission Studio, Context-Aware Editorial Copilot & Audit Depuration
+
+- **Dynamic Editorial Copilot Sidebar Engine**:
+  - Replaced legacy hardcoded placeholder cards ("El Cielo", "Duránpark", "Bemis") with 100% dynamic, context-aware intelligence tailored to any law firm, practice area, and matter portfolio.
+  - **Dynamic Institutional Quality Banner**: Tracks optimization progress in real-time (`Listo para Presentación` when complete vs `Borrador en Evolución: X de Y Asuntos Optimizados`).
+  - **Contextual B10 Card**: Live word counter evaluation against strict 500-word limit (`X/500w`), warning banners when exceeding, and confirmation of 4 Institutional Pillars (Identidad, Mandatos ancla, Liderazgo, Precedente) with direct navigation to the B10 Canvas.
+  - **Flagship Matter Detection**: Automatically isolates the leading or highest-value matter in the portfolio and verifies its 3-paragraph organic narrative structure (Mandato → Desafío Técnico → Precedente).
+  - **Portfolio Curation & Core 20 vs Excedentes**: Automatically identifies portfolio volume (e.g. 24 matters with 4 in reserve), alerts about researcher impact dilution, and provides an instant toggle to view reserve surplus or filter Core 20.
+  - **Factual Source Verification**: Dynamically extracts disclosed matter values without hallucinating unverified figures.
+  - **Directory Strategy Guidance**: Tailors guidance specifically to target directory (60% client referee weighting for Chambers vs full-team transactional depth and Tier rankings for The Legal 500).
+
+- **Streamlined Strategic Audit Action Bar**:
+  - Depurated the outdated, cluttered secondary navigation bar that created an awkward double-header in the Strategic Audit Report view.
+  - Removed redundant buttons (`Chambers DOCX AI`, `Chambers DOCX Original`, duplicate `< Back to Reports`) that were already present in the primary top bar.
+  - Introduced a clean, dedicated Audit Action Bar with:
+    - **Descargar Audit PDF**: Enhanced `PrintButton` with custom label, modern indigo styling, and clean `@media print` isolation.
+    - **Audit DOCX**: Direct download of the Strategic Audit report in editable Word format.
+    - **StatusActionButtons**: Compact submission status lifecycle selector (`Draft`, `Optimized`, `Submitted`, `Accepted`, `Rejected`).
+    - **Directory Badge**: Visual tag identifying Chambers vs The Legal 500 criteria.
+
+- **Unified Submission Studio Architecture & Global Optimization**:
+  - Integrated interactive previsualizer with sticky real-time progress bar for "Optimizar Todo" (percentage, stage indicator, and estimated countdown).
+  - Directory-specific master document downloads (`Chambers Master DOCX` and `Legal 500 Master DOCX`).
+  - Individual matter drawer for micro-optimizations with custom editorial directives, live word counts, and instant preview.
+
 ## [v26.26] — 2026-09-03
 
 ### Strategic Audit & Client Identity Extraction Calibration (AraqueReyna)
