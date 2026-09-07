@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2, FileText } from "lucide-react";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
 import StatusActionButtons from "./StatusActionButtons";
@@ -106,59 +106,92 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
       submission={submission as any}
       initialChambersData={chambersData}
       auditChildren={
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f8fafc', paddingBottom: '5rem' }}>
-          {/* Top Navigation */}
-          <div className="print-hidden" style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Link 
-            href="/reports"
-            style={{ color: '#64748b', textDecoration: 'none', padding: '0.375rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}
-          >
-            <ChevronLeft style={{ width: '16px', height: '16px', marginRight: '0.25rem' }} />
-            Back to Reports
-          </Link>
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0' }}></div>
-          <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>RankPilot: Strategic Audit</h1>
-            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0 }}>{submission.targetDirectory} | {submission.practiceArea}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: '5rem', gap: '1.25rem' }}>
+          {/* Strategic Audit Action Bar (Clean & Focused) */}
+          <div className="print-hidden" style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            padding: '0.85rem 1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '0.85rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: '#EEF2FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#4F46E5',
+                flexShrink: 0
+              }}>
+                <FileText size={18} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h2 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                    Strategic Audit Report
+                  </h2>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    background: '#EFF6FF',
+                    color: '#2563EB',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em'
+                  }}>
+                    {directoryLabel}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
+                  {submission.practiceArea} · {submission.guideRegion || 'Jurisdicción General'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
+
+              <div style={{ height: '22px', width: '1px', background: '#E2E8F0', margin: '0 0.2rem' }} />
+
+              {/* Descargar Audit en PDF */}
+              <PrintButton label="Descargar Audit PDF" />
+
+              {/* Descargar Audit en DOCX */}
+              <a 
+                href={`/api/generate-docx?id=${submission.id}&type=audit`} 
+                style={{
+                  background: '#F8FAFC',
+                  color: '#334155',
+                  textDecoration: 'none',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '7px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  border: '1px solid #CBD5E1',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Descargar informe de auditoría estratégica en formato Word DOCX"
+              >
+                <Download style={{ width: '14px', height: '14px' }} />
+                Audit DOCX
+              </a>
+            </div>
           </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
-          
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.375rem' }}></div>
-          
-          <PrintButton />
-          
-          <div style={{ height: '24px', width: '1px', background: '#e2e8f0', margin: '0 0.375rem' }}></div>
-          
-          <a 
-            href={`/api/generate-docx?id=${submission.id}&type=audit`} 
-            style={{ background: '#f1f5f9', color: '#0f172a', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', whiteSpace: 'nowrap' }}
-          >
-            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            Audit DOCX
-          </a>
 
-          <a 
-            href={`/api/generate-docx?id=${submission.id}&type=submission&mode=optimized`} 
-            style={{ background: '#1A237E', color: '#ffffff', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}
-          >
-            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            {directoryLabel} DOCX (AI)
-          </a>
-          
-          <a 
-            href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`} 
-            style={{ background: '#f1f5f9', color: '#475569', textDecoration: 'none', padding: '0.5rem 1rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 500, display: 'inline-flex', alignItems: 'center', border: '1px solid #cbd5e1', whiteSpace: 'nowrap' }}
-          >
-            <Download style={{ width: '14px', height: '14px', marginRight: '0.375rem' }} />
-            {directoryLabel} DOCX (Original)
-          </a>
-        </div>
-      </div>
-
-      <div className="print-area" style={{ maxWidth: '64rem', margin: '2rem auto 0', width: '100%', padding: '0 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="print-area" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Evaluation Context Banner */}
         <div style={{ background: '#f0f4ff', borderRadius: '12px', border: '1px solid #c7d2fe', padding: '1rem 1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
