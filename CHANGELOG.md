@@ -3,6 +3,24 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.34] — 2026-09-07
+
+### Chambers Template Standardization — Strict Alignment of Sections B7 to B10
+
+- **Separation & Disambiguation of B7 vs B10**:
+  - Resolved the legacy confusion where the department positioning essay was labeled `B10 / B7` in the UI and `B7` in legacy export scripts.
+  - Formally aligned all UI labels, form views, and Word export builders with the official **Chambers & Partners Latin America** submission template:
+    - **B7: Head or Heads of Department** (`Name | Email | Telephone number` for practice leadership).
+    - **B8: Hires / Departures of Partners in Last 12 Months** (Partner movements, incoming/outgoing firms).
+    - **B9: Information Regarding Ranked and Unranked Lawyers** (Individual profiles, bios, current & suggested rankings).
+    - **B10: What is this Department Best Known For?** (500-word limit institutional narrative across the 4 Pillars).
+- **UI & Studio Updates**:
+  - In [SubmissionStudio.tsx](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/components/SubmissionStudio.tsx): Cleaned `B10 / B7` to `B10: Posicionamiento Institucional del Departamento` with bilingual subtitle (*¿Por qué destaca este departamento? — What is this department best known for?*).
+  - In [reports/[id]/page.tsx](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/reports/[id]/page.tsx): Updated positioning block header from `(B7/C2)` to `(B10 / C2)`.
+  - In [submissions/department/page.tsx](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/submissions/department/page.tsx): Realigned section cards to match official Chambers numbering: B7 (Heads), B8 (Hires/Departures), B9 (Lawyer Profiles), and B10 (Department Description).
+- **DOCX Generator Correction ([submission-builder.ts](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts))**:
+  - Exported Chambers DOCX tables now accurately render official Chambers tags: `B7` on Department Heads table, `B8` on Hires/Departures, `B9` on Lawyer bios, and `B10` on the 500-word narrative box.
+
 ## [v26.33] — 2026-09-07
 
 ### Owner Golden Benchmark Integration — Slot 3: Compliance & Investigations (González de Araujo Consultores)
