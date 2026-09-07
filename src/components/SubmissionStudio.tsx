@@ -32,6 +32,7 @@ interface MatterItem {
   client?: string;
   value?: string;
   leadPartner?: string;
+  lead_partner?: string;
   teamMembers?: string;
   crossBorder?: string;
   completionDate?: string;
@@ -167,6 +168,50 @@ export default function SubmissionStudio({
         value: m.value
       }));
   }, [matters]);
+
+  // Department & Leadership Data for Section B Desglose (B1 - B9)
+  const departmentName = chambersData.departmentName 
+    || chambersData.department?.department_name 
+    || chambersData.department?.name 
+    || submission.practiceArea 
+    || 'Departamento Legal';
+
+  const numPartners = chambersData.numPartners 
+    ?? chambersData.department?.num_partners 
+    ?? chambersData.department?.numPartners 
+    ?? null;
+
+  const numLawyers = chambersData.numLawyers 
+    ?? chambersData.department?.num_lawyers 
+    ?? chambersData.department?.numLawyers 
+    ?? null;
+
+  const primaryLeadPartner = matters.find(m => m.leadPartner || m.lead_partner)?.leadPartner 
+    || matters.find(m => m.leadPartner || m.lead_partner)?.lead_partner 
+    || '';
+
+  const departmentHeads: any[] = React.useMemo(() => {
+    if (chambersData.departmentHeads && chambersData.departmentHeads.length > 0) {
+      return chambersData.departmentHeads;
+    }
+    if (chambersData.department?.department_heads && chambersData.department?.department_heads.length > 0) {
+      return chambersData.department?.department_heads;
+    }
+    if (chambersData.contacts && chambersData.contacts.length > 0) {
+      return chambersData.contacts;
+    }
+    if (primaryLeadPartner) {
+      return [{
+        name: primaryLeadPartner,
+        email: chambersData.contacts?.[0]?.email || `${primaryLeadPartner.toLowerCase().replace(/[^a-z0-9]/g, '.')}@${firmName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: chambersData.contacts?.[0]?.phone || 'Socio Líder Asignado'
+      }];
+    }
+    return [];
+  }, [chambersData, primaryLeadPartner, firmName]);
+
+  const hiresList: any[] = chambersData.hires || chambersData.department?.hires_departures || [];
+  const lawyersList: any[] = chambersData.lawyers || [];
 
   // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
   const handleOptimizeAll = async () => {
@@ -1106,8 +1151,116 @@ export default function SubmissionStudio({
               </div>
             </div>
 
-            {/* ═══ SECTION B: DEPARTMENT & B10 (THE HERO CARD) ═══ */}
+            {/* ═══ SECTION B: DEPARTMENT STRUCTURE & LEADERSHIP (B1 - B9) ═══ */}
             <div id="section-b" style={{
+              background: '#FFFFFF',
+              borderRadius: '12px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#EEF2FF', color: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>B</span>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                      Estructura del Departamento & Liderazgo (B1 – B9)
+                    </h3>
+                    <p style={{ fontSize: '0.72rem', color: '#64748B', margin: 0 }}>
+                      Desglose institucional de equipo, socios directores y movimientos conforme a la plantilla oficial de Chambers
+                    </p>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.72rem', background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0', padding: '2px 8px', borderRadius: '9999px', fontWeight: 600 }}>
+                  Chambers Structure
+                </span>
+              </div>
+
+              {/* Grid with B1, B2/B3, B8, B9 */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '0.15rem' }}>
+                    B1. Nombre del Departamento
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>
+                    {departmentName}
+                  </span>
+                </div>
+
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '0.15rem' }}>
+                    B2 & B3. Socios & Abogados
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>
+                    {numPartners !== null ? `${numPartners} Socios` : 'Socios registrados'} · {numLawyers !== null ? `${numLawyers} Abogados` : 'Equipo legal'}
+                  </span>
+                </div>
+
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '0.15rem' }}>
+                    B8. Movimientos (12 meses)
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>
+                    {hiresList.length > 0 ? `${hiresList.length} movimiento(s)` : 'Sin movimientos de socios'}
+                  </span>
+                </div>
+
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748B', display: 'block', marginBottom: '0.15rem' }}>
+                    B9. Abogados Evaluados
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F172A' }}>
+                    {lawyersList.length > 0 ? `${lawyersList.length} abogados en roster` : 'Acreditados en mandatos'}
+                  </span>
+                </div>
+              </div>
+
+              {/* B7: Head or Heads of Department (Special Chambers Table Row) */}
+              <div style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Briefcase size={14} color="#4F46E5" /> B7. Head or Heads of Department (Directores / Socios Líderes)
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#64748B' }}>
+                    Contacto de entrevistas para investigadores de Chambers
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {departmentHeads.length > 0 ? (
+                    departmentHeads.map((h: any, idx: number) => (
+                      <div key={idx} style={{
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 2fr 1.5fr',
+                        background: '#FFFFFF',
+                        padding: '0.55rem 0.85rem',
+                        borderRadius: '6px',
+                        border: '1px solid #EEF2FF',
+                        fontSize: '0.82rem',
+                        alignItems: 'center'
+                      }}>
+                        <div style={{ fontWeight: 700, color: '#0F172A' }}>
+                          {h.name || 'Socio Director'}
+                        </div>
+                        <div style={{ color: '#4F46E5', fontSize: '0.78rem' }}>
+                          {h.email || '—'}
+                        </div>
+                        <div style={{ color: '#64748B', textAlign: 'right', fontSize: '0.78rem' }}>
+                          {h.phone || '—'}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ fontSize: '0.8rem', color: '#64748B', fontStyle: 'italic', padding: '0.25rem 0' }}>
+                      Datos de contacto de socios líderes extraídos de los mandatos y plantilla preliminar.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ═══ SECTION B10: STRATEGIC DEPARTMENT POSITIONING (THE HERO CARD) ═══ */}
+            <div id="section-b10" style={{
               background: '#FFFFFF',
               borderRadius: '12px',
               border: '1.5px solid #C7D2FE',
@@ -1671,7 +1824,7 @@ export default function SubmissionStudio({
                             : `Posicionamiento calibrado (${b10WordCount}/500w) bajo los 4 Pilares: Identidad institucional, Mandatos ancla, Liderazgo y Precedente sectorial.`}
                     </p>
                     <button
-                      onClick={() => scrollTo('section-b')}
+                      onClick={() => scrollTo('section-b10')}
                       style={{
                         width: '100%',
                         background: '#EEF2FF',
