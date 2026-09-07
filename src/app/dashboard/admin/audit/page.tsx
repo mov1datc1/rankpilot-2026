@@ -67,7 +67,9 @@ export default async function AuditPage() {
       judgeScore = Math.max(1, Math.min(10, Math.round(cd.constitutional_validation.judge.score)));
     } else if (typeof cd.release_verdict?.judge?.score === 'number') {
       judgeScore = Math.max(1, Math.min(10, Math.round(cd.release_verdict.judge.score)));
-    } else if (sub.status === 'Submitted') {
+    } else if (typeof cd.analysis?.score === 'number') {
+      judgeScore = Math.max(1, Math.min(10, Math.round(cd.analysis.score)));
+    } else if (sub.status === 'Submitted' || sub.status === 'Optimized') {
       judgeScore = 8;
     } else if (sub.status === 'Error') {
       judgeScore = 4;
@@ -80,11 +82,13 @@ export default async function AuditPage() {
       cd.constitutional_validation?.judge?.summary ||
       cd.release_verdict?.judge?.feedback ||
       cd.release_verdict?.judge?.summary ||
+      cd.analysis?.summary ||
+      cd.analysis?.audit_letter?.score_rationale ||
       cd._pipeline_error?.message ||
       (Array.isArray(cd.constitutional_validation?.violations) && cd.constitutional_validation.violations.length > 0
         ? cd.constitutional_validation.violations.join('\n')
         : '') ||
-      (sub.status === 'Submitted'
+      (sub.status === 'Submitted' || sub.status === 'Optimized'
         ? 'Entrega completada y validada según estándares editoriales de Chambers.'
         : sub.status === 'Processing'
         ? 'Procesamiento y auditoría en curso por el motor de IA.'
