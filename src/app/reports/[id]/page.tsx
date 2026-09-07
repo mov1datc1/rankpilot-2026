@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2, FileText } from "lucide-react";
 import Link from "next/link";
 import PrintButton from "@/components/PrintButton";
-import StatusActionButtons from "./StatusActionButtons";
 import SupplementalUpload from "./SupplementalUpload";
 import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation";
 import SubmissionStudio from "@/components/SubmissionStudio";
@@ -159,7 +158,19 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <StatusActionButtons submissionId={submission.id} currentStatus={submission.status} />
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.35rem 0.75rem',
+                background: '#F8FAFC',
+                borderRadius: '7px',
+                border: '1px solid #E2E8F0',
+                fontSize: '0.78rem'
+              }}>
+                <span style={{ color: '#64748B', fontWeight: 500 }}>Status:</span>
+                <strong style={{ color: '#0F172A', fontWeight: 700 }}>{submission.status || 'Optimized'}</strong>
+              </div>
 
               <div style={{ height: '22px', width: '1px', background: '#E2E8F0', margin: '0 0.2rem' }} />
 
