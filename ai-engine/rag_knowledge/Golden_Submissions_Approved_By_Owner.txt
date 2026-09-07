@@ -147,6 +147,86 @@ Led by Eduardo Garduño and Fernanda Priego, the mandate extends beyond courtroo
   - Chambers: Curate a tight sequence (Hero 1-6 establishing transaction/infrastructure scale, followed by national litigation portfolios) to justify a specific Band entry (Band 5) and proven individual rankings.
 
 ===============================================================================
-SLOT 3: [RESERVED FOR 3RD APPROVED SUBMISSION — DISPUTES / TAX / IP]
+SLOT 3: COMPLIANCE & INVESTIGATIONS (GONZÁLEZ DE ARAUJO CONSULTORES)
 ===============================================================================
-(Will be populated upon receipt and analysis of the third approved reference document from Owner).
+
+1. Submission Metadata
+- Firm: González de Araujo Consultores
+- Practice Area: Compliance / Regulatory Remediation & Investigations
+- Jurisdiction: Mexico / Latin America
+- Target Directory: Chambers Latin America 2026 / 2027
+- Source: Approved by Owner (Ángela Castillo) — "Optimización - González de Araujo - Compliance"
+- Status: Gold Standard Ground Truth (Band Entry & Individual Rankings)
+
+2. Core Institutional Pillars (B10 Overview Architecture — 500 Words)
+González de Araujo's compliance practice is anchored in four mutually reinforcing pillars:
+- Pillar 1 (Preventive Compliance & Technology Intelligence): Translates complex regulatory standards into operational internal controls, supported by proprietary data-driven risk intelligence (AIDA / AIDA Suppliers scanning 500+ global databases).
+- Pillar 2 (Third-Party Risk Management & Supplier Integrity): In-depth background and compliance screening of supply chains across litigation, tax, regulatory, reputational, and anti-corruption vectors (e.g. Astellas Pharma, Grupo Hermes, Grupo Fertinal).
+- Pillar 3 (Contentious Regulatory Enforcement & Crisis Remediation): Defending clients when regulatory non-compliance threatens business continuity, overturning permit revocations, closure orders, and administrative sanctions (e.g. Estación de Servicio 0156).
+- Pillar 4 (Corporate Governance & Organizational Transformation): Embedding compliance frameworks into corporate structures during generational transitions, reorganizations, and cross-border operations (e.g. Grupo Excelsior, SAExploration).
+
+3. Leadership & Bench Architecture (Lawyer Concentration Rule)
+- Primary Flagship Candidate: Arturo González de Araujo Muriel (Founding & Managing Partner)
+  - Strategy: Lead partner across all major risk assessment, AIDA technology deployment, and multidisciplinary mandates. Cumulative evidence built across pharma (Astellas, Merck), energy (SAExploration), and diversified groups (Hermes).
+- Second Differentiated Candidate (Regulatory Contentious): Damián Ortega Quintero
+  - Strategy: Positioned as the enforcement and crisis specialist who overturns government sanctions and permit revocations when regulatory exposure escalates.
+- Senior Bench Strength & Governance: Ernesto Zavala Valle (30+ years experience, corporate governance and internal controls) and Jaime Huerta (19+ years experience, corporate structuring).
+
+4. The 5-Category Portfolio Curation Taxonomy (Rankings Decoded / Ángela Castillo Standard)
+Every matter in a Compliance submission must be classified into one of five strategic buckets:
+- Category 1: CORE PORTFOLIO (Sufficiently evidenced, high practice nexus, ready for submission):
+  * Astellas Pharma Mexico: Pharma supply chain integrity, public tender patent infringement screening.
+  * Estación de Servicio 0156: Hydrocarbons permit revocation annulment, closure seal removal, USD 69,000 fine avoided, post-crisis regularisation.
+  * Grupo Hermes (EUR 1.34B revenue): Group-wide data protection training and AIDA supplier payment fraud controls.
+  * Merck (94 years in Mexico, 43 export countries): Comprehensive regulatory lifecycle for pharmaceutical manufacturing complex.
+  * Grupo Fertinal: Supplier compliance protocols for PEMEX fertilizer subsidiary.
+  * Grupo Excelsior: Multidisciplinary post-founder transition compliance remediation and AIDA diagnosis.
+  * SAExploration Mexico: Full governance framework and exclusive legal/administrative representation.
+  * Grupo Fever: Regulatory licensing and compliance for immersive entertainment venues.
+  * Concesiones Integrales (Agua de Puebla): Utility concession regulatory compliance and operational risk.
+  * Constructora y Operadora Reno: Social security subcontractor compliance dispute saving 93% of USD 2.34M exposure.
+  * Mega Direct: 17-year institutional relationship in database compliance, marketing regulations, and privacy.
+  * Grupo Moldequipo: Corporate governance remediation following internal investigations.
+- Category 2: UPGRADE CANDIDATES (Promising matters requiring kick-off factual confirmation):
+  * Edificaciones y Proyectos Torres: Public procurement integrity screening; needs confirmation on specific tender controls.
+  * Grupo Industrial Acerero: Industrial environmental compliance; needs confirmation on specific permits or emissions standards.
+  * Grupo A&O: Group-wide corporate alignment; needs specific regulation and savings numbers.
+  * CombuserV: Fuel station administrative proceedings; needs confirmation of outcome and operational risk.
+- Category 3: REDUNDANCY RISKS (Good matters overshadowed by stronger peers):
+  * Tiendas Chedraui: Regulatory reviews for retail openings ("Supercitos"/"Selecto"); strong work but redundant against Merck and Fever in regulatory permitting.
+  * Biocodex Mexico: Pharma distribution compliance; overshadowed by Astellas and Merck.
+- Category 4: CATEGORY-FIT RISKS (Real Estate / Tax / Commercial work disguised as Compliance):
+  * Chedraui: Land use, leases, and title review (textbook Real Estate/Urban).
+  * Constructora Reno: IMSS tax assessment challenge (textbook Fiscal/Social Security litigation, unless coupled with subcontractor due diligence protocols).
+- Category 5: DISCARD (Off-Category Dilution — Score < 4/10):
+  * Servicios Analíticos Empresariales: Software consulting, licensing, and commercial framework contracts. Zero compliance, investigations, or anti-corruption nexus. Must be pruned to protect submission strength.
+
+5. Gold Matter Exemplars (Zero Carpentry — 3-Paragraph Flow)
+
+Matter 1: Astellas Pharma Mexico (Third-Party Compliance & Supply Chain Integrity)
+González de Araujo advises Astellas Pharma Mexico on a comprehensive third-party compliance programme designed to identify legal, regulatory, financial and reputational risks associated with current and prospective suppliers. Astellas is part of a global pharmaceutical group operating in more than 70 countries, requiring rigorous supply-chain oversight due to strict industry regulations and the handling of controlled substances.
+The firm conducts systematic background and compliance assessments of suppliers, examining judicial proceedings, adverse media, financial stability, tax compliance and illicit-activity indicators. The programme has already identified material vulnerabilities before engagement, including uncovering suppliers attempting to participate in an international public tender without holding the necessary patent rights for the relevant medicines.
+The mandate is powered by AIDA Suppliers, the firm’s proprietary technology-enabled solution, combining data-driven risk indicators across 500+ global databases with qualitative legal analysis. Led by Arturo González de Araujo with Ernesto Zavala and Damián Ortega, the engagement provides ongoing preventive oversight that protects Astellas from financial, regulatory and reputational exposure.
+
+Matter 2: Estación de Servicio 0156 (Contentious Enforcement Defense & Remediation)
+González de Araujo advised a Mexican fuel service-station operator in a critical regulatory compliance and remediation matter after alleged non-compliance resulted in the revocation of its hydrocarbons sales permit and the administrative closure of its station. Compliance with energy, environmental and consumer-protection regulations is vital to the commercial survival of fuel retail businesses in Mexico.
+The firm challenged the permit revocation before administrative tribunals and secured its definitive annulment. When the issuing authority appealed, the team successfully upheld the favourable ruling on review. Concurrently, the firm challenged the consumer-protection authority's closure measures, proving that the client had operated in full compliance with applicable standards and securing the prompt removal of closure seals.
+The intervention enabled the station to resume operations, eliminated an immediate threat of business shutdown and avoided an approximately USD 69,000 sanction. Following resolution of the enforcement crisis, González de Araujo’s mandate evolved into ongoing corporate and accounting regularisation to ensure permanent alignment with energy and tax authorities, led by Arturo González de Araujo, Damián Ortega and Ernesto Zavala.
+
+Matter 3: Grupo Hermes (Enterprise Data Protection & Supplier Anti-Fraud Governance)
+González de Araujo advises Grupo Hermes, a major diversified Mexican conglomerate active across infrastructure, energy, automotive and tourism with reported revenues of EUR 1.34 billion, on the implementation of group-wide compliance structures covering data protection, internal training and third-party risk mitigation.
+The firm initially designed and deployed an enterprise-wide data protection programme to harmonise information-handling practices across the group’s constituent entities. To embed compliance operationally, the team conducted structured training programmes for executives and operational staff. The mandate subsequently expanded into third-party risk management through the integration of AIDA Suppliers to evaluate supplier integrity.
+The team is currently assisting Grupo Hermes in designing enhanced controls to prevent unauthorised payments and mitigate fiscal liabilities arising from transactions with non-compliant suppliers. Led by Arturo González de Araujo and Ernesto Zavala, the engagement demonstrates the practice's ability to provide end-to-end corporate governance and third-party risk mitigation for top-tier diversified holding groups.
+
+Matter 4: Merck (Pharmaceutical Manufacturing Regulatory Lifecycle)
+González de Araujo advises Merck, which has operated in Mexico for over 90 years, on the multi-layered regulatory framework required to ensure compliant and uninterrupted operations at its pharmaceutical production complex in the State of Mexico, which exports medicines to 43 countries across four continents.
+The operation of the plant requires continuous coordination across multiple government levels, encompassing industrial land-use authorisations, environmental permits, health registrations and operational licences. The firm manages the preparation, technical substantiation and filing of all necessary documentation before municipal, state and federal authorities.
+González de Araujo successfully secured all requisite licences for construction, land regularisation and factory expansion, allowing production to launch on schedule. The team, led by Arturo González de Araujo, Damián Ortega and Ernesto Zavala, continues to provide ongoing regulatory compliance counsel to ensure the production complex maintains operational continuity without regulatory disruption.
+
+6. Strategic Curation & Editorial Guardrails (Owner's Hard Rules for Compliance)
+- RULE 1: Prestigious Client ≠ Strong Compliance Matter: High-profile corporate clients (e.g. Chedraui, Merck, Hermes) only strengthen a submission if the narrative proves specific compliance craft (investigations, risk remediation, permitting under crisis, third-party due diligence). Never rely on a brand name to compensate for routine commercial work.
+- RULE 2: Cross-Border Verification: When a submission states "N/A" for cross-border but the matter involves international parent companies, global supplier standards, or export operations across multiple continents (e.g. Astellas, Merck, SAExploration), flag as a potential misclassification and confirm with the firm before filing.
+- RULE 3: 12-Month Recent Period Specificity: In longstanding institutional relationships (e.g. Mega Direct 17 years), do not dwell exclusively on historical origins; explicitly specify the compliance mandates and legal interventions executed during the past 12 months.
+- RULE 4: Zero Inflated Claims & Quantifiable Metrics: Eliminate unproven assertions of "substantial savings" or "establishing a precedent". State exact financial metrics (e.g. USD 2.34M exposure reduced by 93% in Reno; USD 69,000 fine avoided in Estación 0156; EUR 1.34B client revenue in Hermes).
+- RULE 5: C2 Restraint: Leave Section C2 blank unless the firm possesses verified, objective market intelligence regarding a competitor's tier positioning. Never use C2 to repeat the firm's own marketing pitch or promote proprietary software (AIDA).
+

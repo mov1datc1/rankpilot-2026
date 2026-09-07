@@ -1,0 +1,45 @@
+===============================================================================
+UNIVERSAL CHAMBERS COMPLIANCE & INVESTIGATIONS LOGIC (v26.33)
+GROUND TRUTH BENCHMARK: GONZÁLEZ DE ARAUJO CONSULTORES — APPROVED BY OWNER
+===============================================================================
+
+1. HOW CHAMBERS EVALUATES COMPLIANCE & INVESTIGATIONS
+Chambers evaluates Compliance very differently from general corporate or regulatory practices.
+While general practices focus on transactional volume or routine permits, Chambers Compliance searches for:
+- Systemic Risk Prevention: Translating high-level regulatory mandates into living operational controls.
+- Third-Party & Supply Chain Integrity: Deep screening for anti-corruption, illicit activity, patent infringements, and tax fraud.
+- Crisis Defense & Regulatory Enforcement: Intervening when non-compliance threatens business continuity (e.g. permit revocations, closure seals, criminal exposure).
+- Post-Crisis Governance Remediation: Restructuring corporate architectures following investigations, shareholder disputes, or generational transitions.
+
+2. CORE INSTITUTIONAL PILLARS (DEPARTMENT OVERVIEW ARCHITECTURE)
+A Chambers Band-worthy Compliance department must demonstrate competence across four pillars:
+- PILLAR 1: Preventive Compliance & Technology Intelligence (Enterprise risk diagnostics, global database screening, risk mapping).
+- PILLAR 2: Third-Party Risk Management & Anti-Corruption (Integrity due diligence of suppliers, distributors, and joint venture partners).
+- PILLAR 3: Contentious Enforcement & Sanctions Defense (Annulment of permit revocations, lifting of closure seals, litigation before administrative boards).
+- PILLAR 4: Corporate Governance & Business Continuity (Internal controls, codes of conduct, compliance regularisation across holding companies).
+
+3. THE 5-CATEGORY PORTFOLIO CURATION TAXONOMY (RANKINGS DECODED STANDARD)
+Portfolio optimisation does not simply mean ordering matters by raw score. It requires ensuring full portfolio coverage and incremental evidentiary value across five strategic categories:
+
+1. CORE PORTFOLIO (Sufficiently evidenced, high practice nexus, ready for submission):
+   - Hero matters with direct impact on client continuity (e.g. Astellas, Estación 0156, Grupo Hermes, Merck, Fertinal, Excelsior, SAExploration).
+   - High factual density, quantified metrics, and clear lawyer leadership attribution.
+
+2. UPGRADE CANDIDATES (Promising matters requiring kick-off factual confirmation):
+   - Matters with strong foundations that need specific factual questions answered before filing (e.g. confirming public procurement integrity controls, specific environmental emissions standards, or quantifiable savings).
+
+3. REDUNDANCY RISKS (Good matters overshadowed by stronger peers):
+   - Where multiple matters demonstrate the exact same capability (e.g. retail permits or supplier screening), retain the flagship with the highest stakes/brand and consider de-emphasizing the weaker clone.
+
+4. CATEGORY-FIT RISKS (Off-category work masquerading as Compliance):
+   - Matters describing real estate leasing, urban zoning, routine tax refunds, or labour severances without a core anti-corruption, governance, or compliance enforcement anchor.
+
+5. DISCARD (Zero Practice Nexus — Score < 4/10):
+   - Routine commercial agreements, software licensing, and general vendor contracts lacking risk assessment, controls, investigation, or regulatory remediation.
+
+4. STRATEGIC EDITORIAL GUARDRAILS (CRITICAL FAILURE MODES)
+- Prestigious Client ≠ Strong Compliance Matter: A famous multinational brand (e.g. Chedraui, Merck, Hermes) will not impress a Chambers researcher if the matter only describes routine commercial contracts. Proof of compliance craft is mandatory.
+- Cross-Border Misclassification Audit: Submissions frequently mark "N/A" for cross-border despite handling international group standards or multi-jurisdictional supply chains. Always verify international nexus.
+- 12-Month Research Period Specificity: Longstanding client relationships must highlight interventions conducted during the last 12 months rather than relying purely on historical longevity.
+- Zero Inflated Claims: Ban unverified claims of "establishing a precedent" or "substantial savings" without explicit numerical backing.
+- Section C2 Discipline: Never use C2 to repeat the firm's promotional pitch or describe proprietary tools (e.g. AIDA). Leave blank unless holding objective competitor market intelligence.

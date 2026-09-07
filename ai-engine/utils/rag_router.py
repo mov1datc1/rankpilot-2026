@@ -57,6 +57,7 @@ class RAGRouter:
             (("regulat", "public", "admin"), ("regulatory", "public", "administrative")),
             (("energy", "project", "infra", "mining", "environ"), ("energy", "project", "infrastructure")),
             (("real estate", "property", "inmobiliario", "urban"), ("real estate", "real_estate", "property", "inmobiliario")),
+            (("compliance", "investig", "anticorrup", "anti-corrup", "white-collar", "penal empresarial"), ("compliance", "investigations", "anticorruption")),
         ]
         for triggers, keywords in routes:
             if any(trigger in practice for trigger in triggers):

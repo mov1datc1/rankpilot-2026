@@ -3,6 +3,30 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.33] — 2026-09-07
+
+### Owner Golden Benchmark Integration — Slot 3: Compliance & Investigations (González de Araujo Consultores)
+
+- **Ingestion of Owner's Approved Compliance Benchmark (González de Araujo Consultores)**:
+  - Extracted and integrated the full reference package from `Angela_revision/feedback_owner/Gonzalez_de_Araujo/`:
+    - `Optimizacion_Gonzalez_de_Araujo_Compliance_Approved.docx` (Submission-ready Chambers 2026/2027 compliance submission).
+    - `Prompts_Optimizacion_Compliance_Gonzalez_de_Araujo.docx` (771-paragraph deep editorial analysis, matter scoring 3/10 to 8.5/10, and Rankings Decoded methodology).
+    - `Chambers_Latin_America_2026_Compliance_Gonzalez_de_Araujo_Original.docx` (Original firm draft with 35 raw tables).
+  - Populated **Slot 3** of `ai-engine/rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`, completing the tripartite Master Benchmark repository across **Real Estate / Admin Litigation** (Slot 1), **Labour & Employment** (Slot 2), and **Compliance & Investigations** (Slot 3).
+- **Universal Chambers Compliance Logic (`UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt`)**:
+  - Authored dedicated RAG knowledge file covering:
+    - 4 Core Institutional Pillars: Preventive Compliance, Third-Party Supplier Integrity, Contentious Regulatory Enforcement & Crisis Defense, and Corporate Governance/Business Continuity.
+    - Specialized routing in `ai-engine/utils/rag_router.py` triggered on `compliance`, `investigations`, `anticorruption`, `white-collar`, and `penal empresarial`.
+- **The 5-Category Portfolio Curation Taxonomy (Rankings Decoded Standard)**:
+  - Formalized the owner's strategic classification model:
+    1. **CORE PORTFOLIO**: Tested, high-nexus matters ready for submission (Astellas, Estación 0156, Hermes, Merck, Fertinal, Excelsior, SAExploration).
+    2. **UPGRADE CANDIDATES**: High-potential matters requiring kick-off factual confirmation (Edificaciones Torres, Acerero, A&O, CombuserV).
+    3. **REDUNDANCY RISKS**: Good matters overshadowed by stronger peers (Chedraui retail permitting vs Merck/Fever).
+    4. **CATEGORY-FIT RISKS**: Off-category work disguised as compliance (leasing contracts, tax disputes without subcontractor due diligence).
+    5. **DISCARD**: Off-category dilution with zero compliance nexus (e.g. Servicios Analíticos Empresariales scored 3/10 for pure software licensing).
+- **Dynamic Compliance Strategic Audit (`src/app/api/optimize/complete/route.ts`)**:
+  - Implemented specialized Compliance heuristics: 6-Hero-Matter sequence, cross-border misclassification audits, 12-month research period specificity vs historical longevity, and Section C2 discipline (restricting C2 from promotional sales pitches).
+
 ## [v26.32] — 2026-09-07
 
 ### Directory-Aware Optimization & Practice Curation Engine (Chambers vs Legal 500)

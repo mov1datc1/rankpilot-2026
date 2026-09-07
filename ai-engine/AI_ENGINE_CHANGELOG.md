@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-07** (v26.32 — Directory-Aware Prompt Router & Practice Curation)
+> Last updated: **2026-09-07** (v26.33 — Owner Golden Benchmark Slot 3: Compliance & Investigations)
+
+## v26.33 — OWNER GOLDEN BENCHMARK SLOT 3: COMPLIANCE & INVESTIGATIONS (2026-09-07)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Slot 3 Master Repository Completion | Ingested Owner-Approved Compliance & Investigations submission (González de Araujo Consultores) into Slot 3 of `Golden_Submissions_Approved_By_Owner.txt`, completing the 3-pillar Ground Truth Benchmark across Real Estate, Labour, and Compliance | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt` |
+| Universal Compliance Logic & Router | Authored `UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt` and integrated compliance keywords into `RAGRouter._practice_keywords` for automatic methodology routing | `rag_knowledge/UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt`, `utils/rag_router.py` |
+| 5-Category Portfolio Curation Taxonomy | Formalized Owner's 5-bucket curation taxonomy: CORE PORTFOLIO, UPGRADE CANDIDATES, REDUNDANCY RISKS, CATEGORY-FIT RISKS, and DISCARD across the AI Strategic Audit | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`, `src/app/api/optimize/complete/route.ts` |
+| Compliance Strategic Audit & Dilution Guard | Implemented native Compliance heuristics in `/api/optimize/complete`: 6-Hero-Matter slate, pruning software/commercial licensing (Servicios Analíticos 3/10 model), cross-border misclassification audits, 12-month research period specificity, and C2 discipline | `src/app/api/optimize/complete/route.ts` |
 
 ## v26.32 — DIRECTORY-AWARE PROMPT ROUTER & PRACTICE CURATION (2026-09-07)
 

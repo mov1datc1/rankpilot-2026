@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
     const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
+    const isCompliance = practiceArea.toLowerCase().includes('compliance') || practiceArea.toLowerCase().includes('investig') || practiceArea.toLowerCase().includes('anticorrup') || practiceArea.toLowerCase().includes('anti-corrup');
 
     // 2. Build Matter Evaluations & Portfolio Curation
     const matterEvaluations = updatedMatters.map((m: any, idx: number) => {
@@ -110,7 +111,9 @@ export async function POST(request: NextRequest) {
       "Confidential Matter 9 & Confidential Matter 12 (Hortifrut): Agricultural export VAT refund procedures. Substantially overlapping mandates. Pruning required to reclaim slot."
     ] : (isLabour && totalMatters >= 20 ? [
       "Matters with Overlapping Single-Worker Severance Claims: Multiple individual wrongful dismissal suits against identical corporate entities. Consolidate into unified litigation portfolios (e.g. Cinemex / Securitas national portfolio model) to reclaim slots for high-impact mandates."
-    ] : []);
+    ] : (isCompliance && totalMatters >= 15 ? [
+      "Duplicate Routine Permitting Reviews: Multiple retail/commercial zoning and permit checks. Redundancy candidate; retain flagship high-stakes facilities (e.g. Merck pharmaceutical complex or Fever venues) and prune repetitive store openings to preserve space for investigations and crisis defense."
+    ] : []));
 
     // Practice Dilution Risks (Off-Category Matters)
     const dilutionRisks = isRealEstate ? [
@@ -119,7 +122,10 @@ export async function POST(request: NextRequest) {
     ] : (isLabour ? [
       "Routine Individual Severances / Day-to-Day HR Advice: Matters consisting solely of routine employee dismissals, isolated labor inspections, or administrative filings lacking collective bargaining agreements (CBA), strike threats, USMCA Rapid Response Mechanism (RRM), or multi-plant M&A integration dimension. Dilutes Band/Tier entry strength.",
       "Unquantified Employment Contracts: Non-contentious employment contract drafts without specified workforce scale (number of workers affected or corporate footprint)."
-    ] : (totalMatters > 20 ? updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`) : []));
+    ] : (isCompliance ? [
+      "Commercial Contracts & Software Licensing Masquerading as Compliance: Matters describing platform licensing, routine framework agreements, or general vendor contracts lacking risk assessments, internal controls, investigations, or regulatory enforcement (e.g., Servicios Analíticos Empresariales model, scored 3/10 by Owner). Critical category-fit dilution; recommend immediate pruning.",
+      "Isolated Land Lease & Retail Title Reviews: Matters focused strictly on title reviews, lease registrations, or local zoning without a core anti-corruption, enterprise governance, or contentious regulatory defense anchor (e.g. Tiendas Chedraui model). Better routed to Real Estate/Regulatory."
+    ] : (totalMatters > 20 ? updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`) : [])));
 
     // Official 20-Matter Filing Shortlist
     const recommendedCore = isRealEstate ? [
@@ -138,7 +144,15 @@ export async function POST(request: NextRequest) {
       "HERO 5 (Mass Contentious National Defense): Cinemex — Multi-jurisdiction litigation portfolio managing 200+ ongoing individual and collective claims across federal and state labor boards.",
       "HERO 6 (High-Value Institutional Employer Defense): Volkswagen de México / VWFS — MXN 280M contentious employment risk management.",
       `PRACTICE DEPTH CORE (Matters 7-20): Focused on regional industry governance (Benteler, Coats, Bosch, Megacable), ensuring at least 50% of core matters accumulate leadership evidence for the lead partner.`
-    ] : updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — ${targetTerm} representative case.`));
+    ] : (isCompliance ? [
+      "HERO 1 (Third-Party Supplier Integrity & Tender Screening): Astellas Pharma Mexico — Systematic compliance screening across 500+ databases, uncovering patent-infringing bidders in international public tenders.",
+      "HERO 2 (Contentious Regulatory Enforcement & Crisis Remediation): Estación de Servicio 0156 — Annulment of hydrocarbons permit revocation and lifting of closure seals, avoiding USD 69,000 fine and restoring operational continuity.",
+      "HERO 3 (Enterprise Data Protection & Supplier Fraud Controls): Grupo Hermes (EUR 1.34B) — Group-wide privacy governance, staff compliance training, and vendor payment fraud controls.",
+      "HERO 4 (Complex Manufacturing Regulatory Lifecycle): Merck (43 Export Countries) — Comprehensive operational, health, environmental and industrial land-use compliance for pharmaceutical production plant.",
+      "HERO 5 (Generational Governance & Multidisciplinary Remediation): Grupo Excelsior — Post-founder transition compliance remediation and diagnostic risk audit across tax, labor, and operational controls.",
+      "HERO 6 (Cross-Border Corporate Governance & Group Representation): SAExploration Mexico — Multi-standard governance framework and exclusive legal/administrative representation in seismic exploration.",
+      "PRACTICE DEPTH CORE (Matters 7-20): Specialized mandates in venue licensing (Fever), public concession compliance (Agua de Puebla), social security subcontractor defense (Constructora Reno: 93% reduction of USD 2.34M exposure), and database privacy (Mega Direct: 17-year institutional relationship)."
+    ] : updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — ${targetTerm} representative case.`)));
 
     // Source Document Vulnerabilities to Remedy
     const sourceVulnerabilities = isRealEstate ? [
@@ -151,11 +165,16 @@ export async function POST(request: NextRequest) {
       "Zero Inflated Claims Verification: Eliminate unverified assertions of 'establishing a precedent' (e.g. amparo decisions) unless backed by formal binding jurisprudence (jurisprudencia por contradicción / precedentes obligatorios).",
       "Quantifiable Workforce Scale: Replace generic phrases ('broad workforce') with exact metrics (e.g., '5,000+ employees', '3 automotive plants', '120+ active claims').",
       "Lawyer Concentration: Ensure the nominated primary partner is visibly credited as Lead Partner on at least 10-12 matters to satisfy Chambers researcher cumulative evidence thresholds."
+    ] : (isCompliance ? [
+      "Cross-Border Misclassification Audit: Matters marked as 'N/A' for cross-border despite involving global corporate standards, multinational parent companies, or export operations across multiple continents (e.g. Astellas, Merck, SAExploration). Review and reclassify before filing.",
+      "12-Month Research Period Specificity: Longstanding institutional relationships (e.g. Mega Direct 17-year engagement) must explicitly detail compliance interventions executed during the past 12 months rather than relying solely on historical longevity.",
+      "Unsubstantiated Financial Claims: Replace generic claims of 'substantial savings' with exact metrics (e.g. USD 2.34M exposure reduced by 93% in Reno; USD 69,000 fine avoided in Estación 0156; EUR 1.34B client revenue in Hermes).",
+      "Section C2 Restraint: Section C2 should remain blank unless the firm possesses verified, objective market intelligence regarding a competitor's tier positioning; never use C2 to repeat the firm's sales pitch or promote proprietary software."
     ] : [
       `Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de ${isLegal500 ? 'The Legal 500' : 'Chambers'}.`,
       'Verificar la disponibilidad de los socios líderes asignados a los asuntos Core.',
       'Confirmar que los valores transaccionales y litigiosos cuenten con unidades monetarias explícitas (MXN / USD).'
-    ]);
+    ]));
 
     const portfolioCuration = {
       total_matters: totalMatters,
