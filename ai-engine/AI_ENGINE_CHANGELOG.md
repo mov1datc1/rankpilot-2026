@@ -3,7 +3,16 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-07** (v26.30 — Dynamic Studio, Context-Aware Copilot & Strategic Audit Toolbar Depuration)
+> Last updated: **2026-09-07** (v26.31 — Owner Golden Benchmark Slot 2: Labour & Employment)
+
+## v26.31 — OWNER GOLDEN BENCHMARK SLOT 2: LABOUR & EMPLOYMENT (2026-09-07)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Slot 2 Master Repository Population | Ingested Owner-Approved Labour & Employment submission (DeForest Abogados) into Slot 2 of `Golden_Submissions_Approved_By_Owner.txt`, globally indexed via `RAGRouter.GLOBAL_FILES` for all 15 AI pipeline nodes | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt` |
+| Labour 4-Pillar Architecture & C2 Band 5 Defense | Integrated approved B10 and C2 blueprints: post-M&A workforce integration (Schaeffler 5k employees), USMCA RRM collective disputes (Brose), sovereign energy infrastructure (Bonatti Mayakan USD 2B+), and nationwide litigation (>20 jurisdictions, 27 lawyers) | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`, `rag_knowledge/UNIVERSAL CHAMBERS LABOUR LOGIC.txt` |
+| Cumulative Individual Evidence Rule | Concentrates 4–6 matters behind Candidate 1 (Eduardo Garduño) and 3–4 behind Candidate 2 (Javier Atzin Vallejo) rather than diluting credits evenly, establishing undeniable ranking gravity | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt` |
+| Employee-Side & Placeholder Guardrails | Enforced strict caution on employee-side/claimant matters (e.g. Enerflex) in employer submissions, and prohibited hollow placeholders (SKF, Penske) lacking verifiable transaction facts | `rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`, `rag_knowledge/UNIVERSAL CHAMBERS LABOUR LOGIC.txt` |
 
 ## v26.30 — DYNAMIC STUDIO, CONTEXT-AWARE COPILOT & STRATEGIC AUDIT TOOLBAR (2026-09-07)
 

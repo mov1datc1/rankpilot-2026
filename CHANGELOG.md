@@ -3,6 +3,26 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.31] — 2026-09-07
+
+### Owner Golden Benchmark Integration — Slot 2: Labour & Employment (DeForest Abogados)
+
+- **Ingestion of Owner's Approved Labour & Employment Benchmark (DeForest Abogados)**:
+  - Extracted and integrated the full reference package from `Angela_revision/feedback_owner/Labour & Employment/`:
+    - `DeForest Labour Chambers 2027.docx` (Submission-ready Chambers Band 5 defense)
+    - `LABOUR & EMPLOYMENT LEGAL 500 - DEFOREST (4).docx` (Full Legal 500 submission benchmark)
+    - `Prompts - Labour & Employment - DeForest - Chambers.docx` (Complete editorial dialogue, prompt strategy, and lawyer candidate prioritization).
+  - Populated **Slot 2** of `ai-engine/rag_knowledge/Golden_Submissions_Approved_By_Owner.txt`, making it globally accessible to all 15 reasoning and optimization nodes across the AI pipeline via `RAGRouter.GLOBAL_FILES`.
+- **Authoritative Labour & Employment Blueprints**:
+  - **B10 Department Overview**: 4 Institutional Pillars (Post-M&A workforce integration, collective bargaining/USMCA RRM defense, sovereign energy infrastructure lifecycle, and nationwide litigation management across >20 jurisdictions with 27 dedicated employment lawyers).
+  - **C2 Ranking Positioning & Band 5 Defense**: Multi-layered evidentiary framework proving full-service employer scope, high client sophistication (Schaeffler, Volkswagen, Bosch, Brose, Bonatti), and national execution bench.
+  - **Individual Candidate Strategy (Cumulative Evidence Rule)**: Prohibits diluting matter credits evenly across partners; concentrates 4–6 headline matters behind Candidate 1 (Eduardo Garduño) and 3–4 behind Candidate 2 (Javier Atzin Vallejo) to establish undeniable market gravity.
+  - **Gold 3-Paragraph Matter Exemplars**: Full approved texts for Schaeffler/Vitesco (5,000-employee post-M&A integration), Brose México (USMCA Rapid Response Mechanism union dispute), Bonatti/Energía Mayakan (USD 2B+ pipeline expansion & strike prevention), GeNI México (automotive supply chain continuity), and Cinemex (~200 claims / MXN 60.5M+ nationwide litigation).
+- **Strategic Curation Guardrails**:
+  - **Employee-side Caution**: Matters acting for employees (e.g. Enerflex) must emphasize mediation craft and compliance rather than plaintiff-style aggression to safeguard employer-side credibility.
+  - **No Hollow Placeholders**: Institutional names without substantive facts (e.g. SKF, Penske) must be flagged as provisional or pruned.
+  - **Legal 500 vs Chambers Translation**: Legal 500 emphasizes total team volume and associate involvement across tiers; Chambers requires deep narrative proof behind 1-2 flagship candidates.
+
 ## [v26.30] — 2026-09-07
 
 ### Dynamic Submission Studio, Context-Aware Editorial Copilot & Audit Depuration

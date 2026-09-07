@@ -63,9 +63,88 @@ José Pablo Ramos Castillo directed the rapid-response strategy, with Edgar Adri
 - AI Rule: When evaluating submissions, RankPilot must actively identify dilution candidates and advise clients to prune them.
 
 ===============================================================================
-SLOT 2: [RESERVED FOR 2ND APPROVED SUBMISSION — CORPORATE / M&A OR BANKING]
+SLOT 2: LABOUR & EMPLOYMENT (APPROVED REFERENCE: DEFOREST ABOGADOS)
 ===============================================================================
-(Will be populated upon receipt and analysis of the second approved reference document from Owner).
+
+1. Practice Identity & Value Proposition
+- Core Focus: High-stakes employer-side workforce integration, collective bargaining agreement (CBA) disputes, USMCA Rapid Response Mechanism (RRM) risk mitigation, strike prevention in strategic infrastructure, nationwide multi-jurisdictional litigation management, and preventive workforce governance.
+- National Scope: 27 dedicated employment lawyers (4 partners, 23 non-partners) operating across more than 20 Mexican jurisdictions, combining senior labour expertise with multi-plant and multi-state operational execution.
+- Core Thesis: Elevating labour law from routine individual dismissals to strategic workforce continuity: post-acquisition workforce harmonisation, protecting manufacturing supply chains from USMCA international sanctions, averting strikes on multi-billion dollar energy projects, and managing institutional litigation portfolios under unified criteria.
+
+2. B10 Department Overview Blueprint (Approved Text & Structure)
+"DeForest Abogados has developed one of the most substantial employer-side Labour & Employment teams within Mexico’s regional full-service market, with 27 lawyers — four partners and 23 non-partners — dedicating at least half of their practice to employment matters. Operating across more than 20 Mexican jurisdictions, the team combines senior labour expertise with the bench strength and geographic reach required to manage complex, multi-site mandates for major Mexican and multinational employers.
+
+The practice covers the full spectrum of contentious, collective and advisory employment work, but is increasingly distinguished by mandates in which labour risk intersects directly with major corporate transactions, industrial operations and business continuity. Recent examples include leading the Mexican labour integration following Schaeffler’s acquisition of Vitesco, two major German automotive technology and components businesses with extensive manufacturing operations in Mexico. DeForest is harmonising employment agreements, collective bargaining arrangements, internal regulations, mixed commissions and company-wide labour policies across multiple plants and a workforce of more than 5,000 employees, while simultaneously managing 35 legacy labour claims.
+
+The team is also entrusted with sensitive collective labour matters where the principal exposure is operational rather than purely monetary. For Brose, a major German automotive supplier operating manufacturing facilities for vehicle components and systems in Mexico, DeForest is handling a union representation dispute affecting approximately 400 unionised employees across a three-plant Querétaro operation, against the backdrop of wider representativeness proceedings in the Bajío and threats to trigger the USMCA Rapid Response Mechanism. The firm’s strategy has so far preserved operational continuity, avoided work stoppages and prevented escalation to international mechanisms.
+
+Its infrastructure and energy work provides a further measure of the practice’s sophistication and geographic capability. DeForest acts for Bonatti, an international engineering and construction contractor specialising in energy infrastructure, across major pipeline and energy projects in Mexico, including the Energía Mayakan Pipeline Expansion, a project valued at more than USD2 billion and spanning five states. The team has managed the employment lifecycle of project workforces, resolved the substantial majority of more than 20 labour matters through conciliation and prevented an imminent strike in Tabasco that threatened operational shutdown and significant contractual consequences.
+
+Alongside these strategic mandates, DeForest has the resources to manage significant litigation portfolios on a national and multi-regional basis. Its current work includes more than 120 labour matters for Megacable, a major Mexican telecommunications provider, in Puebla and Querétaro; more than 50 lawsuits for Securitas de México, a nationwide private-security services provider, across an expanding footprint including Puebla, Mexico City, Torreón and Veracruz; and a portfolio for Volkswagen de México and Volkswagen Financial Services — part of a major global automotive group with longstanding manufacturing operations in Mexico — carrying approximately MXN280 million in exposure across local and federal jurisdictions. These mandates combine litigation management with preventive employment advice, internal regulations, employment documentation, disciplinary mechanisms and workforce governance.
+
+This combination of scale and specialisation is supported by a genuinely multi-layered team. Eduardo Garduño leads the practice from Puebla and is supported by Javier Atzin Vallejo in Querétaro and Jaime Bustamante in Mexico City, alongside practitioners with complementary strengths in collective labour, social security, regulatory compliance, amparo and employment litigation. The wider team includes specialists such as José Alberto Díaz, Erick Pérez and Andrés Cabrera, providing the practice with senior and mid-level capability beyond its principal partners and enabling DeForest to deploy teams according to the industry, jurisdiction and nature of the employment risk.
+
+The result is a practice capable of operating at two levels simultaneously: handling the recurring contentious and advisory employment needs expected of a full-service Labour & Employment team, while also taking responsibility for complex workforce situations involving post-acquisition integration, collective bargaining and union representation, threatened strikes, major infrastructure projects and geographically dispersed litigation portfolios. DeForest considers that the scale, breadth and sophistication of this work, together with its 27-lawyer bench and national execution capability, now support recognition alongside firms ranked in Band 5 of the Mexican Labour & Employment market."
+
+3. C2 Feedback & Ranking Positioning Blueprint (Approved Text — Band 5 Defense)
+"We appreciate Chambers’ current market assessment and recognise that national rankings require sustained evidence of both practice strength and market validation. We believe, however, that the nature of DeForest’s Labour & Employment practice has evolved materially and that the current body of work now supports consideration for Band 5.
+
+The practice today combines the core capabilities visible across the entry band — employer-side advisory, litigation, collective labour, terminations, compliance and workforce governance — with a number of mandates that demonstrate additional sophistication and scale. These include the labour integration of more than 5,000 employees following Schaeffler’s acquisition of Vitesco; a union-representation dispute for Brose involving approximately 400 unionised employees and potential USMCA Rapid Response Mechanism exposure; labour strategy for Bonatti on the USD2 billion Energía Mayakan Pipeline Expansion across five states; and major litigation portfolios for employers such as Cinemex, Megacable, Securitas and Volkswagen.
+
+The practice also has the institutional capacity to execute this work nationally. DeForest has 27 lawyers who dedicate at least half of their time to Labour & Employment matters — four partners and 23 non-partners — and provides integrated advisory, litigation and compliance services across more than 20 Mexican jurisdictions. This scale is supported by identifiable senior leadership in Puebla, Querétaro and Mexico City and by specialists in collective labour, social security, constitutional proceedings and regulatory compliance.
+
+For these reasons, we believe DeForest is now comparable with firms recognised in Band 5 not simply by the volume of its work, but by the combination of client sophistication, matter complexity, national execution, bench strength and senior involvement. We submit this progression respectfully and recognise that continued individual and market validation remains important to consolidating that position."
+
+4. Individual Candidate Strategy (Cumulative Evidence Rule)
+- Core Principle: "Do not ask who the best lawyers are, ask which candidate we can prove to Chambers with cumulative, matter-level evidence."
+- Primary Candidate: Eduardo Garduño (Puebla lead; anchor matters: Schaeffler/Vitesco 5,000-worker post-M&A integration, Volkswagen MXN 280M contentious portfolio, GeNI strike prevention, Coats workforce restructuring).
+- Secondary Candidate: Javier Atzin Vallejo (Querétaro/Bajío industrial & infrastructure lead; anchor matters: Brose USMCA RRM union dispute, Bonatti USD 2B+ Mayakan energy pipeline, Mextypsa Metro Line 4 amparo, Bosch 17,000-employee governance).
+- Institutional Anchor: Jaime Bustamante (Mexico City senior partner; former Legal Director at ManpowerGroup; anchor matters: American Axle & Manufacturing Mexican counsel, FEMSA/Ramsa compliance redesign, Grupo Radio Centro executive investigation).
+
+5. Gold Matter Exemplars (Zero Carpentry — 3-Paragraph Flow)
+
+Exemplar A — Post-M&A Workforce Integration (Schaeffler / Vitesco)
+"DeForest advises Schaeffler, a major German automotive and industrial-components group, on the labour integration of Vitesco Technologies’ Mexican operations following Schaeffler’s acquisition of the company. The transaction created a significant post-acquisition workforce integration exercise spanning manufacturing facilities across Puebla, the State of Mexico, Guanajuato and Jalisco and affecting more than 5,000 employees.
+
+Led by Eduardo Garduño, DeForest assumed responsibility for harmonising the employment structures inherited from the two businesses into a coherent labour framework. The team has standardised individual employment agreements and internal work regulations, aligned collective bargaining arrangements, unified mandatory mixed commissions and company-wide employment policies, and ensured consistent implementation of Mexico’s labour-reform requirements across the combined operation.
+
+The mandate extends beyond documentation and compliance into the management of legacy employment risk. In parallel with the harmonisation process, DeForest manages 35 active labour claims involving former employees and suppliers, ensuring that the litigation strategy is consistent with the newly integrated corporate and workforce structure. The project has progressively expanded to additional Mexican facilities, including the Santa Anita plant in Jalisco, making DeForest a continuing labour adviser to the combined operation."
+
+Exemplar B — Union Representativeness & USMCA Rapid Response Risk (Brose México)
+"DeForest advises Brose México, part of an international automotive supplier group, in a sensitive collective labour dispute affecting one of the company’s three manufacturing plants in Querétaro and approximately 400 unionised employees. The dispute arose from a challenge by an external union to the ownership of the plant’s existing collective bargaining agreement.
+
+The matter is particularly significant in the context of increased union-representation activity across Mexico’s Bajío industrial corridor. The challenge forms part of a broader series of representativeness proceedings associated with Transformación Sindical and has included threats to trigger the USMCA Rapid Response Mechanism, creating potential consequences extending beyond the domestic collective labour proceedings.
+
+Led by Javier Atzin Vallejo, DeForest has managed the dispute through strategic negotiation and dialogue while protecting the continuity of Brose’s manufacturing operations. The team has so far avoided work stoppages and prevented escalation to international mechanisms while the underlying proceeding remains ongoing. The mandate demonstrates the firm's capacity to resolve industrial conflict where operational exposure far exceeds purely financial claims."
+
+Exemplar C — Major Energy Infrastructure Lifecycle & Strike Prevention (Bonatti / Mayakan)
+"DeForest acts as Mexican labour counsel to Bonatti, an international engineering and construction contractor specialising in energy infrastructure, across a portfolio of major pipeline and energy projects in Mexico. The mandate includes the Energía Mayakan Pipeline Expansion, a project valued at more than USD2 billion and spanning five Mexican states, for which DeForest managed the employment lifecycle of the project workforce from contracting through construction and demobilisation.
+
+For Mayakan, the team designed project-based employment documentation and the termination strategy intended to minimise post-project liabilities. More than 20 labour matters arose during execution, 18 of which were resolved through conciliation. Across the wider portfolio, only three matters proceeded to litigation and have since been closed, with DeForest estimating that its strategy reduced the client’s potential labour costs by approximately 80%.
+
+In Tabasco, DeForest also intervened in a project involving operation and maintenance services for ENI México, preventing an imminent strike that would have halted operations under a project connected to a strategic CFE energy-supply tender and exposed Bonatti to significant contractual and reputational consequences. Led by Javier Atzin Vallejo, the mandate demonstrates the practice’s ability to safeguard sovereign energy infrastructure from industrial disruptions."
+
+Exemplar D — Automotive Supply Chain Continuity & Strike Aversion (GeNI México)
+"DeForest acts as full-service labour counsel to GeNI de México, a German automotive manufacturer supplying components to major OEMs including Volkswagen, Audi, Ford and General Motors. The firm was called upon when severely deteriorated relations between the company and its union escalated during the mandatory biennial review of the collective bargaining agreement and culminated in a formal announcement of an intended strike.
+
+Led by Eduardo Garduño, DeForest designed and led the collective bargaining strategy, restructuring the negotiation around both workforce expectations and the company’s operational requirements. The resulting agreement prevented the threatened shutdown and established revised terms intended to provide greater stability to the labour relationship.
+
+The commercial significance extended beyond GeNI itself. A stoppage could have interrupted the supply of components into the production chains of several major automotive manufacturers. DeForest’s intervention protected not only the client’s plant operations but continuity within a wider automotive supply chain, while introducing process optimisations that generated substantial operational efficiencies."
+
+Exemplar E — Institutional Scale Litigation Management (Cinemex)
+"DeForest manages a major nationwide employment litigation portfolio for Cinemex, one of Mexico’s principal cinema exhibition businesses, which employs more than 11,000 people nationwide. The portfolio developed against the backdrop of pandemic-era cinema closures and the subsequent increase in employment claims, requiring the client to manage significant litigation simultaneously across jurisdictions operating under differing post-reform judicial criteria.
+
+DeForest currently oversees approximately 90–100 active lawsuits in Mexico City and more than 100 additional claims elsewhere in Mexico, with aggregate exposure exceeding MXN60.5 million. The firm has established a unified national defence strategy designed to maintain consistency across proceedings, reduce the risk of contradictory positions and provide the client with centralised oversight of its employment exposure.
+
+Led by Eduardo Garduño and Fernanda Priego, the mandate extends beyond courtroom defense into conciliation hearings, executive terminations, and reviewing employment documentation to address recurring sources of claims. The engagement demonstrates the team’s ability to manage employment risk at institutional scale across Mexico’s evolving labour-court system."
+
+6. Strategic Curation & Editorial Guardrails (Owner's Hard Rules)
+- Cumulative Evidence Rule: Never distribute matters evenly across lawyers. Concentrate 4–6 anchor matters behind Candidate 1 (Eduardo) and 3–4 behind Candidate 2 (Javier) to establish undeniable market gravity.
+- Employee-Side Caution: If the firm has a massive monetary judgment acting for an employee/individual (e.g. Enerflex-Pemex MXN 2.16B judgment), mark with strategic caution. In employer-side submissions, highlights must emphasize mediation craft and compliance rather than aggressive plaintiff postures that alarm corporate general counsel.
+- No Hollow Placeholders: Institutional names without substantive facts (e.g. SKF, Penske) must be flagged as provisional or pruned. Never invent facts, dates, or outcomes.
+- Legal 500 vs Chambers Divergence:
+  - Legal 500: Showcase team volume, regional office spread, full lawyer rosters, and associate leadership across tiers.
+  - Chambers: Curate a tight sequence (Hero 1-6 establishing transaction/infrastructure scale, followed by national litigation portfolios) to justify a specific Band entry (Band 5) and proven individual rankings.
 
 ===============================================================================
 SLOT 3: [RESERVED FOR 3RD APPROVED SUBMISSION — DISPUTES / TAX / IP]
