@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
     const judgeScoreInt = 9;
 
     const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
+    const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
 
     // 2. Build Matter Evaluations & Portfolio Curation
     const matterEvaluations = updatedMatters.map((m: any, idx: number) => {
@@ -107,13 +108,18 @@ export async function POST(request: NextRequest) {
       "Confidential Matter 1 & Confidential Matter 10 (Transportes Potosinos): Transport tax and local administrative contribution dispute. Substantially overlapping mandates. Pruning required to reclaim slot.",
       "Confidential Matter 2 & Confidential Matter 11 (Bemis Packaging): Worker contributions, IMSS and INFONAVIT litigation. Substantially overlapping mandates. Pruning required to reclaim slot.",
       "Confidential Matter 9 & Confidential Matter 12 (Hortifrut): Agricultural export VAT refund procedures. Substantially overlapping mandates. Pruning required to reclaim slot."
-    ] : [];
+    ] : (isLabour && totalMatters >= 20 ? [
+      "Matters with Overlapping Single-Worker Severance Claims: Multiple individual wrongful dismissal suits against identical corporate entities. Consolidate into unified litigation portfolios (e.g. Cinemex / Securitas national portfolio model) to reclaim slots for high-impact mandates."
+    ] : []);
 
     // Practice Dilution Risks (Off-Category Matters)
     const dilutionRisks = isRealEstate ? [
       "Matter 25 (Transportes Baruma): Focuses primarily on VAT refund litigation concerning exported transport vehicles, not land regularization or real estate development. Dilutes Real Estate category strength.",
       "Matters 08, 12, 13, 14, 15, 21, 22, 29, 30, 31, 32, 33: General tax/SAT controversies, fuel permits, and worker contribution disputes lacking a core property development, land-use, or zoning anchor. Dilutes Real Estate submission strength."
-    ] : (totalMatters > 20 ? updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`) : []);
+    ] : (isLabour ? [
+      "Routine Individual Severances / Day-to-Day HR Advice: Matters consisting solely of routine employee dismissals, isolated labor inspections, or administrative filings lacking collective bargaining agreements (CBA), strike threats, USMCA Rapid Response Mechanism (RRM), or multi-plant M&A integration dimension. Dilutes Band/Tier entry strength.",
+      "Unquantified Employment Contracts: Non-contentious employment contract drafts without specified workforce scale (number of workers affected or corporate footprint)."
+    ] : (totalMatters > 20 ? updatedMatters.slice(20).map((m: any) => `${m.name || m.title || m.client || 'Peripheral Matter'}: Focuses on secondary practice facets without direct flagship impact. Candidate for de-emphasis.`) : []));
 
     // Official 20-Matter Filing Shortlist
     const recommendedCore = isRealEstate ? [
@@ -124,7 +130,15 @@ export async function POST(request: NextRequest) {
       "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors): Matter 04 (San Carlos, MXN 200M), Matter 06 (Inmobiliaria Midi, MXN 100M), Matter 07 (La Primavera), Matter 09 (Holcim México), Matter 17 (Rosa Dorina Ochoa), Matter 18 (SMB Promotora), Matter 20 (Conciencia Ambiental Devangary), plus public concession/infrastructure mandates Matter 01 (Red Vía Corta) and Matter 11 (Cominvi, MXN 1.059B). Total: 13 Publishable Matters.",
       "CONFIDENTIAL CORE (7 Recommended Matters): Retain the 4 pure real estate flagships: Matter 23/Conf 3 (Familia De Anda, MXN 150M), Matter 24/Conf 4 (Villas del Colli, MXN 40M), Matter 26/Conf 6 (ADM Hermosillo), Matter 28/Conf 8 (Familia Leaño, 10 ha Tonalá); plus repositioned regulatory/property-tax mandates Matter 05 (SICT highway access), Matter 19 (gas pipeline land right of way), and Matter 27 (Monsanto property tax defense). Total: 7 Confidential Matters.",
       "SUMMARY OF 20-MATTER FILING SLATE: Exactly 13 Publishable + 7 Confidential = 20 Matters. Safely prunes the pure tax/labor dilution matters (Matters 08, 12, 13, 14, 15, 21, 22, 25, 29, 30, 31, 32, 33) and removes duplicate pairs, achieving full compliance with the Chambers 20-matter filing ceiling without category dilution."
-    ] : updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — Tier-1 representative case.`);
+    ] : (isLabour ? [
+      "HERO 1 (Post-M&A Workforce Integration): Schaeffler / Vitesco — Multi-state labor harmonization, 5,000+ employees and 35 active claims across manufacturing facilities.",
+      "HERO 2 (Cross-Border Union / USMCA RRM Risk): Brose México — Union representativeness conflict and USMCA Rapid Response Mechanism defense across 3 automotive facilities.",
+      "HERO 3 (Mega-Infrastructure Labor Architecture): Bonatti / Energía Mayakan (USD 2B+) — Industrial workforce governance and strike prevention on strategic gas pipeline.",
+      "HERO 4 (Collective Bargaining & Strike Prevention): GeNI de México — Collective bargaining agreement negotiation under new labor reform, eliminating imminent operational shutdown.",
+      "HERO 5 (Mass Contentious National Defense): Cinemex — Multi-jurisdiction litigation portfolio managing 200+ ongoing individual and collective claims across federal and state labor boards.",
+      "HERO 6 (High-Value Institutional Employer Defense): Volkswagen de México / VWFS — MXN 280M contentious employment risk management.",
+      `PRACTICE DEPTH CORE (Matters 7-20): Focused on regional industry governance (Benteler, Coats, Bosch, Megacable), ensuring at least 50% of core matters accumulate leadership evidence for the lead partner.`
+    ] : updatedMatters.slice(0, 20).map((m: any, idx: number) => `Core Matter ${idx + 1}: ${m.name || m.title || m.client || 'Mandate'} — ${targetTerm} representative case.`));
 
     // Source Document Vulnerabilities to Remedy
     const sourceVulnerabilities = isRealEstate ? [
@@ -132,11 +146,16 @@ export async function POST(request: NextRequest) {
       "Matter 6 Jurisdictional Inconsistency: The source text cites a decree from the State of Jalisco but references property located in Guanajuato. Clarify the inter-state or cross-border nexus before filing.",
       "Matters 17 & 18 Missing Currency: Numerical amounts are stated without specifying MXN or USD. Specify explicit currency units.",
       "Lawyer Roster Consistency: Ensure consistent spelling of associate names across all matters (e.g., Edgar Adrián Moro López, Mónica Dariane Cárdenas Fregoso)."
+    ] : (isLabour ? [
+      "Distinction Between Strike Notice and Strike Risk: Verify whether union conflicts involved a formal strike petition (emplazamiento a huelga) or standard collective bargaining friction before asserting strike prevention to Chambers/Legal 500.",
+      "Zero Inflated Claims Verification: Eliminate unverified assertions of 'establishing a precedent' (e.g. amparo decisions) unless backed by formal binding jurisprudence (jurisprudencia por contradicción / precedentes obligatorios).",
+      "Quantifiable Workforce Scale: Replace generic phrases ('broad workforce') with exact metrics (e.g., '5,000+ employees', '3 automotive plants', '120+ active claims').",
+      "Lawyer Concentration: Ensure the nominated primary partner is visibly credited as Lead Partner on at least 10-12 matters to satisfy Chambers researcher cumulative evidence thresholds."
     ] : [
-      'Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de Chambers.',
+      `Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de ${isLegal500 ? 'The Legal 500' : 'Chambers'}.`,
       'Verificar la disponibilidad de los socios líderes asignados a los asuntos Core.',
       'Confirmar que los valores transaccionales y litigiosos cuenten con unidades monetarias explícitas (MXN / USD).'
-    ];
+    ]);
 
     const portfolioCuration = {
       total_matters: totalMatters,

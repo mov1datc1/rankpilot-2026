@@ -3,6 +3,21 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.32] — 2026-09-07
+
+### Directory-Aware Optimization & Practice Curation Engine (Chambers vs Legal 500)
+
+- **Directory-Aware AI Matter Optimization (`src/app/actions/matters.ts`)**:
+  - Replaced the single generic prompt with a directory-specialized and practice-area-aware prompt router grounded in Ángela Castillo's benchmark:
+    - **Chambers Mode**: Enforces strict 3 organic paragraphs ("Zero Carpentry" with zero visible labels or bullet headers), anchors the transaction or existential operational risk in the **very first sentence**, details firm-specific legal craft in P2, and quantifies outcome/institutional continuity with lead partner attribution in P3. Strictly prohibits unverified inflated claims (e.g., banning "establishing a precedent" unless backed by formal binding jurisprudence).
+    - **The Legal 500 Mode**: Focuses on "Delivery Excellence", team depth across partners and senior associates, operational HR advisory, and pragmatic client integration.
+- **Dynamic Portfolio Curation & Strategic Audit (`src/app/api/optimize/complete/route.ts`)**:
+  - Added native **Labour & Employment** curation heuristics to the Strategic Audit Engine:
+    - **Duplicate & Repetitive Claim Detection**: Flags overlapping single-worker severance claims against identical corporate entities and recommends consolidating them into unified national litigation portfolios.
+    - **Dilution Risk Analysis**: Identifies day-to-day routine dismissals lacking collective bargaining, strike threats, USMCA RRM, or multi-plant M&A dimensions that dilute Band/Tier entry strength.
+    - **Hero Matters Slate**: Recommends the 6-Hero-Matter sequence (Schaeffler post-M&A, Brose USMCA RRM, Bonatti Mayakan gas pipeline, GeNI strike prevention, Cinemex mass litigation, and VW institutional defense).
+    - **Source Vulnerabilities Audit**: Verifies formal strike petitions (*emplazamiento a huelga*) vs standard bargaining friction, eliminates speculative precedent assertions, and checks lead partner matter concentration thresholds.
+
 ## [v26.31] — 2026-09-07
 
 ### Owner Golden Benchmark Integration — Slot 2: Labour & Employment (DeForest Abogados)

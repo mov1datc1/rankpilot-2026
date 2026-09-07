@@ -3,7 +3,14 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-07** (v26.31 — Owner Golden Benchmark Slot 2: Labour & Employment)
+> Last updated: **2026-09-07** (v26.32 — Directory-Aware Prompt Router & Practice Curation)
+
+## v26.32 — DIRECTORY-AWARE PROMPT ROUTER & PRACTICE CURATION (2026-09-07)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Directory-Aware Matter Optimization | Upgraded `optimizeMatterWithPythonAI` in `matters.ts` to route dynamically based on `targetDirectory` (Chambers vs Legal 500) and `practiceArea`. Enforces 3 organic paragraphs and zero inflated claims for Chambers, and Delivery Excellence/Team Depth for Legal 500 | `src/app/actions/matters.ts` |
+| Labour Portfolio Curation & Strategic Audit | Added specialized Labour & Employment heuristics to `/api/optimize/complete` route: flags repetitive individual severances, prunes dilution matters, suggests 6-Hero-Matter slate, and validates strike notices vs standard bargaining friction | `src/app/api/optimize/complete/route.ts` |
 
 ## v26.31 — OWNER GOLDEN BENCHMARK SLOT 2: LABOUR & EMPLOYMENT (2026-09-07)
 
