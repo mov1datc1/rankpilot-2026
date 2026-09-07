@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Download, 
   Sparkles, 
@@ -60,10 +61,12 @@ export default function SubmissionStudio({
   initialChambersData,
   auditChildren
 }: SubmissionStudioProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'studio' | 'audit'>('studio');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [copilotCollapsed, setCopilotCollapsed] = useState<boolean>(false);
   const [showCoreOnly, setShowCoreOnly] = useState<boolean>(true);
+  const [submissionStatus, setSubmissionStatus] = useState<string>(submission.status || 'Draft');
   
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});
@@ -73,6 +76,16 @@ export default function SubmissionStudio({
     if (dbMatters.length > 0) return dbMatters;
     return chambersData.matters || [];
   });
+
+  // Directory Determination
+  const selectedDirectory = (
+    submission.targetDirectory || 
+    chambersData.directory || 
+    chambersData.targetDirectory || 
+    initialChambersData?.strategicContext?.directory || 
+    'Chambers'
+  ).toString();
+  const isLegal500 = selectedDirectory.toLowerCase().includes('500') || selectedDirectory.toLowerCase().includes('legal5');
 
   // B10 Narrative State
   const initialB10 = chambersData.enhanced_b7 
@@ -127,22 +140,23 @@ export default function SubmissionStudio({
   const targetMattersCount = Math.min(matters.length, showCoreOnly ? 20 : matters.length);
   const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
 
-  // Master Action: Optimize entire submission with IA (B10 + all matters in parallel batches)
+  // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
   const handleOptimizeAll = async () => {
     if (isOptimizingAll) return;
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
 
     const targetList = showCoreOnly ? matters.slice(0, 20) : matters;
-    const totalSteps = targetList.length + 1; // 1 for B10 + each matter
+    const totalSteps = targetList.length + 2; // B10 + matters + audit synthesis
 
     setOptimizeAllProgress({
       current: 0,
       total: totalSteps,
-      stage: 'Iniciando optimización integral: Sección B10...'
+      stage: 'Iniciando optimización integral: Sección B10 (Posicionamiento Institucional)...'
     });
 
     // 1. Optimize Section B10
+    let currentB10Text = b10Text;
     try {
       const b10Res = await fetch('/api/optimize/b10', {
         method: 'POST',
@@ -155,6 +169,7 @@ export default function SubmissionStudio({
       });
       const b10Data = await b10Res.json();
       if (b10Data.success && b10Data.enhanced_b10) {
+        currentB10Text = b10Data.enhanced_b10;
         setB10Text(b10Data.enhanced_b10);
       }
     } catch (b10Err) {
@@ -165,11 +180,12 @@ export default function SubmissionStudio({
     setOptimizeAllProgress({
       current: completed,
       total: totalSteps,
-      stage: `B10 optimizado. Optimizando ${targetList.length} asuntos en paralelo...`
+      stage: `Sección B10 optimizada. Optimizando ${targetList.length} asuntos en paralelo...`
     });
 
     // 2. Optimize matters in concurrent batches of 3
     const BATCH_SIZE = 3;
+    let latestMatters = [...matters];
     for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
       const batch = targetList.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(async (m, bIdx) => {
@@ -190,23 +206,27 @@ export default function SubmissionStudio({
           });
           const data = await res.json();
           if (data.success && data.optimized_text) {
-            setMatters(prev => prev.map((item, idx) => {
-              if ((item.id && item.id === m.id) || idx === actualIdx) {
-                return {
-                  ...item,
-                  optimizedText: data.optimized_text,
-                  optimized_text: data.optimized_text
-                };
-              }
-              return item;
-            }));
+            setMatters(prev => {
+              const updated = prev.map((item, idx) => {
+                if ((item.id && item.id === m.id) || idx === actualIdx) {
+                  return {
+                    ...item,
+                    optimizedText: data.optimized_text,
+                    optimized_text: data.optimized_text
+                  };
+                }
+                return item;
+              });
+              latestMatters = updated;
+              return updated;
+            });
           }
         } catch (mErr) {
           console.warn(`[Global Optimization] Matter ${actualIdx} error:`, mErr);
         } finally {
           completed++;
           setOptimizeAllProgress({
-            current: Math.min(completed, totalSteps),
+            current: Math.min(completed, totalSteps - 1),
             total: totalSteps,
             stage: `Optimizando asuntos: ${Math.min(completed - 1, targetList.length)} de ${targetList.length} completados...`
           });
@@ -214,10 +234,38 @@ export default function SubmissionStudio({
       }));
     }
 
+    // 3. Finalize & Synthesize Strategic Audit Report + Judge SOL
+    setOptimizeAllProgress({
+      current: totalSteps - 1,
+      total: totalSteps,
+      stage: 'Generando Evaluación de Calidad Judge SOL y Strategic Audit Report...'
+    });
+
+    try {
+      const compRes = await fetch('/api/optimize/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          b10Text: currentB10Text,
+          matters: latestMatters,
+          targetDirectory: selectedDirectory
+        })
+      });
+      const compData = await compRes.json();
+      if (compData.success && compData.chambersData) {
+        setChambersData(compData.chambersData);
+        setSubmissionStatus('Optimized');
+        router.refresh();
+      }
+    } catch (cErr) {
+      console.warn('[Global Optimization] Complete API error:', cErr);
+    }
+
     setOptimizeAllProgress({
       current: totalSteps,
       total: totalSteps,
-      stage: '¡Optimización Completa! Todos los asuntos y B10 optimizados bajo el estándar Chambers.'
+      stage: '¡Optimización Completa! Submission optimizado y registrado.'
     });
     setOptimizeAllComplete(true);
     setIsOptimizingAll(false);
@@ -430,49 +478,51 @@ export default function SubmissionStudio({
             }}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            {isOptimizingAll ? 'Optimizando...' : '✨ Optimizar Todo con IA'}
+            {isOptimizingAll ? 'Optimizando...' : '✨ Optimizar Todo'}
           </button>
 
-          <a
-            href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
-            style={{
-              background: '#1A237E',
-              color: '#FFFFFF',
-              textDecoration: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '7px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: '0 2px 4px rgba(26,35,126,0.15)',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Download size={14} />
-            Chambers Master DOCX
-          </a>
-
-          <a
-            href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`}
-            style={{
-              background: '#0F172A',
-              color: '#FFFFFF',
-              textDecoration: 'none',
-              padding: '0.5rem 0.9rem',
-              borderRadius: '7px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Download size={14} />
-            Legal 500 Master DOCX
-          </a>
+          {!isLegal500 ? (
+            <a
+              href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
+              style={{
+                background: '#1A237E',
+                color: '#FFFFFF',
+                textDecoration: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '7px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                boxShadow: '0 2px 4px rgba(26,35,126,0.15)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Download size={14} />
+              Chambers Master DOCX
+            </a>
+          ) : (
+            <a
+              href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`}
+              style={{
+                background: '#0F172A',
+                color: '#FFFFFF',
+                textDecoration: 'none',
+                padding: '0.5rem 0.9rem',
+                borderRadius: '7px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Download size={14} />
+              Legal 500 Master DOCX
+            </a>
+          )}
 
           <a
             href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`}
@@ -497,9 +547,100 @@ export default function SubmissionStudio({
         </div>
       </div>
 
+      {/* ═══ GLOBAL OPTIMIZATION PROGRESS BANNER ═══ */}
+      {optimizeAllProgress && (
+        <div style={{
+          position: 'sticky',
+          top: '57px',
+          zIndex: 25,
+          background: 'linear-gradient(90deg, #1E1B4B 0%, #312E81 100%)',
+          color: '#FFFFFF',
+          padding: '0.85rem 2rem',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+          borderBottom: '1px solid #4338CA'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <RefreshCw size={18} className="animate-spin" style={{ color: '#38BDF8' }} />
+              <div>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF', marginRight: '0.5rem' }}>
+                  Optimizando Submission Global:
+                </span>
+                <span style={{ fontSize: '0.85rem', color: '#E0E7FF' }}>
+                  {optimizeAllProgress.stage}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '4px', color: '#BAE6FD', fontWeight: 600 }}>
+                ~{Math.max(2, Math.round((optimizeAllProgress.total - optimizeAllProgress.current) * 1.5))}s restantes
+              </span>
+              <span style={{ fontWeight: 800, fontSize: '1rem', color: '#38BDF8' }}>
+                {Math.min(100, Math.round((optimizeAllProgress.current / Math.max(1, optimizeAllProgress.total)) * 100))}%
+              </span>
+            </div>
+          </div>
+          <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{
+              width: `${Math.min(100, Math.round((optimizeAllProgress.current / Math.max(1, optimizeAllProgress.total)) * 100))}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #38BDF8 0%, #818CF8 100%)',
+              borderRadius: '4px',
+              transition: 'width 0.3s ease'
+            }} />
+          </div>
+        </div>
+      )}
+
       {/* ═══ AUDIT TAB VIEW ═══ */}
       {activeTab === 'audit' && (
         <div style={{ maxWidth: '64rem', margin: '2rem auto', width: '100%', padding: '0 2rem' }}>
+          {(!chambersData.analysis?.score && !chambersData.analysis?.audit_letter?.the_state_of_play) && (
+            <div style={{
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: '12px',
+              padding: '1.25rem 1.5rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Sparkles size={20} color="#2563EB" />
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#1E3A8A' }}>
+                    Strategic Audit Report Pendiente
+                  </h4>
+                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#1E40AF' }}>
+                    Ejecuta la optimización integral para calcular la calificación Judge SOL (1-10) y generar el informe estratégico completo.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleOptimizeAll}
+                disabled={isOptimizingAll}
+                style={{
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '0.6rem 1.2rem',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
+                }}
+              >
+                ✨ Optimizar Todo y Generar Audit
+              </button>
+            </div>
+          )}
           {auditChildren}
         </div>
       )}
@@ -803,12 +944,12 @@ export default function SubmissionStudio({
                     ) : isFullyOptimized ? (
                       <>
                         <RefreshCw size={16} />
-                        ↻ Re-optimizar Todo con IA
+                        ↻ Re-optimizar Todo
                       </>
                     ) : (
                       <>
                         <Sparkles size={18} color="#4F46E5" />
-                        ✨ Optimizar Todo el Submission con IA
+                        ✨ Optimizar Todo el Submission
                       </>
                     )}
                   </button>
