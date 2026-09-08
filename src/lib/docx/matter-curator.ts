@@ -27,24 +27,46 @@ export interface CuratedMattersResult {
  */
 export function extractApproximateValue(valueStr: string): number {
   if (!valueStr) return 0;
-  const str = String(valueStr).toLowerCase().replace(/,/g, '');
-  
-  // Look for billion/billion dollars/millones
-  const numMatch = str.match(/([0-9]+(?:\.[0-9]+)?)/);
+  let s = String(valueStr).toLowerCase();
+
+  // 1. Check if written explicitly with billion / million words
+  const wordMatch = s.match(/([0-9]+(?:[\.,][0-9]+)?)\s*(billion|billón|mil millones|million|millón|millones)/i);
+  if (wordMatch) {
+    const rawVal = parseFloat(wordMatch[1].replace(',', '.'));
+    const unit = wordMatch[2].toLowerCase();
+    if (unit.includes('billion') || unit.includes('billón') || unit.includes('mil millones')) {
+      return rawVal * 1000000000;
+    }
+    if (unit.includes('million') || unit.includes('millón') || unit.includes('millones')) {
+      return rawVal * 1000000;
+    }
+  }
+
+  // 2. Remove apostrophes (e.g. $1,000'000,000.00)
+  s = s.replace(/'/g, '');
+
+  // 3. Handle Latin / European dot thousand separators: e.g. 3.000.000.000,00 or 1.300.000.000,00
+  if (/\d+\.\d{3}\.\d{3}/.test(s)) {
+    s = s.replace(/\./g, '').replace(/,/g, '.');
+  } else {
+    s = s.replace(/,/g, '');
+  }
+
+  const numMatch = s.match(/([0-9]+(?:\.[0-9]+)?)/);
   if (!numMatch) return 0;
   let baseNum = parseFloat(numMatch[1]);
-  
-  if (str.includes('billion') || str.includes('billón') || str.includes('000000000')) {
+
+  if (s.includes('billion') || s.includes('billón') || s.includes('000000000')) {
     if (baseNum < 1000) baseNum *= 1000000000;
-  } else if (str.includes('million') || str.includes('millón') || str.includes('millones') || str.includes('000000')) {
+  } else if (s.includes('million') || s.includes('millón') || s.includes('millones') || s.includes('000000')) {
     if (baseNum < 1000000) baseNum *= 1000000;
   }
-  
+
   // USD conversion multiplier estimate (x17) if primarily USD
-  if (str.includes('usd') && !str.includes('mxn')) {
+  if (s.includes('usd') && !s.includes('mxn')) {
     baseNum *= 17;
   }
-  
+
   return baseNum;
 }
 
@@ -58,58 +80,100 @@ export function calculateStrategicTier(
   evaluationsMap: Map<string, any> = new Map()
 ): number {
   let score = 50; // base score
-  
-  const client = (matter.client || matter.name || '').toLowerCase();
+
+  const client = (matter.client || matter.clientName || matter.name || '').toLowerCase();
   const title = (matter.title || '').toLowerCase();
-  const summary = (matter.summary || matter.rawNotes || matter.optimizedText || '').toLowerCase();
+  const summary = (matter.summary || matter.rawNotes || matter.optimizedText || matter.description || '').toLowerCase();
   const combined = `${client} ${title} ${summary}`;
-  
+
   // 1. Check evaluation score if available from AI audit
   const evalData = evaluationsMap.get(client) || evaluationsMap.get(title);
   if (evalData) {
-    if (evalData.quality_label === 'Flagship Matter') score += 40;
-    if (typeof evalData.score === 'number') score += evalData.score * 0.2;
+    if (evalData.quality_label === 'Flagship Matter') score += 30;
+    if (typeof evalData.score === 'number') score += evalData.score * 0.1;
   }
-  
+
   // 2. High-profile landmark anchors (Real Estate flagships from Angela's specification)
-  if (combined.includes('el cielo') || combined.includes('cielo country club')) score += 100;
-  if (combined.includes('duranpark')) score += 95;
-  if (combined.includes('idex') || combined.includes('brasilia')) score += 90;
-  if (combined.includes('diageo')) score += 85;
-  if (combined.includes('san carlos') || combined.includes('edificaciones')) score += 75;
-  if (combined.includes('la primavera')) score += 70;
-  if (combined.includes('familia de anda') || combined.includes('de anda')) score += 80;
-  if (combined.includes('villas del colli')) score += 75;
-  if (combined.includes('hermosillo') || combined.includes('nom-247')) score += 70;
-  if (combined.includes('familia leaño') || combined.includes('leaño')) score += 65;
-  
-  // 3. Scale / deal value impact
+  if (combined.includes('el cielo') || combined.includes('cielo country club')) score += 160;
+  if (combined.includes('duranpark')) score += 140;
+  if (combined.includes('idex') || combined.includes('brasilia')) score += 135;
+  if (combined.includes('diageo')) score += 130;
+  if (combined.includes('san carlos') || combined.includes('edificaciones')) score += 120;
+  if (combined.includes('la primavera')) score += 115;
+  if (combined.includes('inmobiliaria midi') || combined.includes('midi')) score += 110;
+  if (combined.includes('holcim')) score += 105;
+  if (combined.includes('ochoa gamboa') || combined.includes('dorina')) score += 95;
+  if (combined.includes('smb promotora') || combined.includes('smb')) score += 90;
+
+  // Confidential landmark anchors
+  if (combined.includes('villas del colli')) score += 130;
+  if (combined.includes('familia de anda') || combined.includes('de anda')) score += 125;
+  if (combined.includes('hermosillo') || combined.includes('nom-247')) score += 120;
+  if (combined.includes('familia leaño') || combined.includes('leaño')) score += 100;
+
+  // 3. Scale / deal value impact (after normalized extraction)
   const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
-  if (approxValue >= 1000000000) score += 30; // 1B+
+  if (approxValue >= 2000000000) score += 35; // 2B+
+  else if (approxValue >= 1000000000) score += 30; // 1B+
+  else if (approxValue >= 500000000) score += 25; // 500M+
   else if (approxValue >= 100000000) score += 20; // 100M+
   else if (approxValue >= 10000000) score += 10; // 10M+
-  
+
   // 4. Precedent & appellate enforcement indicators
   if (combined.includes('enforced in july 2024') || combined.includes('ejecutoria') || combined.includes('suspensión definitiva') || combined.includes('definitive suspension')) {
     score += 15;
   }
-  
+
   // 5. Practice dilution penalties (off-category cases in Real Estate)
   const safePractice = typeof practiceArea === 'string' ? practiceArea : '';
   const isRealEstate = safePractice.toLowerCase().includes('real estate') || safePractice.toLowerCase().includes('inmobiliario');
   if (isRealEstate) {
-    // Pure vehicle/transport VAT refunds
-    if (combined.includes('baruma') || combined.includes('transportes ejecutivos')) score -= 45;
-    // Pure SAT / tax disputes without land/property element
-    if ((combined.includes('sat') || combined.includes('iva') || combined.includes('vat refund')) && !combined.includes('property tax') && !combined.includes('predial')) {
-      score -= 35;
+    // A. Public procurement / infrastructure / lighting concession (e.g. Grupo R, COMINVI)
+    if (combined.includes('grupo r') || combined.includes('concesión') || combined.includes('concesion') || combined.includes('alumbrado público')) {
+      score -= 130;
     }
-    // Pure IMSS / INFONAVIT worker labor disputes
-    if (combined.includes('imss') || combined.includes('infonavit') || combined.includes('cuotas obrero')) {
-      score -= 30;
+    if (combined.includes('cominvi') || combined.includes('isseg') || combined.includes('licitación') || combined.includes('licitacion')) {
+      score -= 120;
+    }
+
+    // B. Pure roadworks / general construction tax credits
+    if (combined.includes('elar constructora') || combined.includes('operadora de vialidades')) {
+      score -= 110;
+    }
+
+    // C. Logistics, freight & vehicle circulation (Paquetexpress, Baruma, Transportes Potosinos)
+    if (combined.includes('paquetexpress') || combined.includes('baruma') || combined.includes('transportes ejecutivos') || combined.includes('transportes potosinos')) {
+      score -= 110;
+    }
+
+    // D. Pure tax / SAT / ISR / IVA disputes without real property element
+    const taxRegex = /\b(sat|iva|crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales)\b/i;
+    if (taxRegex.test(combined) && !combined.includes('predial') && !combined.includes('property tax') && !combined.includes('terreno') && !combined.includes('expropiación')) {
+      score -= 110;
+    }
+
+    // E. Medical device sales tax credit (Integración de Tecnología Médica)
+    if (combined.includes('tecnología médica') || combined.includes('tecnologia medica') || combined.includes('medical devices')) {
+      score -= 110;
+    }
+
+    // F. Labor & IMSS / Infonavit (Bemis Packaging)
+    const laborRegex = /\b(imss|infonavit|cuotas obrero|seguridad social)\b/i;
+    if (laborRegex.test(combined)) {
+      score -= 90;
+    }
+
+    // G. Trivial / Minor property tax disputes (Monsanto 2M)
+    if (combined.includes('monsanto')) {
+      score -= 60;
+    }
+
+    // H. Empty or deficient narrative
+    if (combined.includes('devangary')) {
+      score -= 80;
     }
   }
-  
+
   return score;
 }
 

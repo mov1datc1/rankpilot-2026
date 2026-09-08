@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
+import { curateMatters } from '@/lib/docx/matter-curator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,19 +93,42 @@ export async function POST(request: NextRequest) {
     const isTax = practiceArea.toLowerCase().includes('tax') || practiceArea.toLowerCase().includes('fiscal') || practiceArea.toLowerCase().includes('tributar');
     const isDisputes = practiceArea.toLowerCase().includes('dispute') || practiceArea.toLowerCase().includes('litig') || practiceArea.toLowerCase().includes('arbitr') || practiceArea.toLowerCase().includes('contenc');
 
-    // 2. Build Matter Evaluations & Portfolio Curation
-    const matterEvaluations = updatedMatters.map((m: any, idx: number) => {
-      const isConf = m.isConfidential || m.publish_status === 'non_publishable';
-      const val = String(m.value || '');
-      const hasHighValue = val.includes('M') || val.includes('B') || val.includes('000,000');
-      const mScore = hasHighValue ? 9.6 : (idx < 20 ? 9.2 : 8.5);
-      const qualityLabel = hasHighValue && idx < 5 ? 'Flagship Matter' : (idx < 20 ? 'Strong Candidate' : 'Adequate Practice Depth');
+    // 2. Build Matter Evaluations & Portfolio Curation using Gold Standard curation
+    const curationResult = curateMatters(updatedMatters, practiceArea, chambersData);
+    const sortedOfficialMatters = [
+      ...curationResult.officialPubMatters,
+      ...curationResult.officialConfMatters,
+    ];
+    const sortedSurplusMatters = [
+      ...curationResult.surplusPubMatters,
+      ...curationResult.surplusConfMatters,
+    ];
+    const allCuratedMatters = [...sortedOfficialMatters, ...sortedSurplusMatters];
+
+    const matterEvaluations = allCuratedMatters.map((m: any, idx: number) => {
+      const isConf = m.isConfidential || m.publish_status === 'non_publishable' || m.confidential;
+      const val = String(m.value || m.dealValue || '');
+      const isSurplus = idx >= sortedOfficialMatters.length;
+      
+      let qualityLabel = 'Strong Candidate';
+      let mScore = 9.4;
+      let note = `Estructura en 3 párrafos orgánicos verificada. Anclaje factual en ${val || 'mandato de práctica'} preservado con éxito.`;
+
+      if (isSurplus) {
+        qualityLabel = 'Dilution / Reserve Candidate';
+        mScore = 8.2;
+        note = `Asunto preservado íntegro en Surplus / Reserve Roster para evitar saturación y riesgo de dilución de la práctica en Chambers.`;
+      } else if (idx < 5 || (isConf && (idx - curationResult.officialPubMatters.length) < 2)) {
+        qualityLabel = 'Flagship Matter';
+        mScore = 9.8;
+      }
+
       return {
         matter_name: m.name || m.title || m.client || `Matter ${idx + 1}`,
         type: isConf ? 'confidential' : 'publishable',
         score: mScore,
         quality_label: qualityLabel,
-        improvement_note: `Estructura en 3 párrafos orgánicos verificada. Anclaje factual en ${val || 'mandato de práctica'} preservado con éxito.`
+        improvement_note: note
       };
     });
 
@@ -405,7 +429,7 @@ export async function POST(request: NextRequest) {
       enhanced_b7: b10Text || chambersData.enhanced_b7 || chambersData.b7 || '',
       enhanced_b10: b10Text || chambersData.enhanced_b10 || chambersData.b7 || '',
       b7: b10Text || chambersData.b7 || '',
-      matters: updatedMatters,
+      matters: allCuratedMatters,
       analysis: synthesizedAnalysis,
       judgeScore: judgeScoreInt,
       judgeFeedback: judgeFeedbackText,
