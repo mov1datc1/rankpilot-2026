@@ -76,8 +76,11 @@ export default function SubmissionStudio({
   const [matters, setMatters] = useState<MatterItem[]>(() => {
     // Prefer database matters, fall back to chambersData.matters
     const dbMatters = submission.matters || [];
-    if (dbMatters.length > 0) return dbMatters;
-    return chambersData.matters || [];
+    const sourceMatters = dbMatters.length > 0 ? dbMatters : (chambersData.matters || []);
+    return sourceMatters.map((m: any, idx: number) => ({
+      ...m,
+      id: m.id || m._id || `matter-${idx}-${(m.client || m.name || m.title || 'item').toString().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`
+    }));
   });
 
   // Directory Determination
@@ -321,8 +324,11 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
           const data = await res.json();
           if (data.success && data.optimized_text) {
             setMatters(prev => {
-              const updated = prev.map((item, idx) => {
-                if ((item.id && item.id === m.id) || idx === actualIdx) {
+              const updated = prev.map((item) => {
+                const isMatch = (item.id && m.id && item.id === m.id)
+                  || (m.client && item.client && item.client.trim().toLowerCase() === m.client.trim().toLowerCase())
+                  || (m.title && item.title && item.title.trim().toLowerCase() === m.title.trim().toLowerCase());
+                if (isMatch) {
                   return {
                     ...item,
                     optimizedText: data.optimized_text,

@@ -62,6 +62,11 @@ CONSTITUTIONAL RULES:
 2. PRESERVE ALL NUMBERS & IDENTIFIERS: If the original mentions an amount (e.g. MXN 3 billion, USD 27.7M, 207.5 hectares), it MUST appear accurately in the rewrite.
 3. NO META-LABELS: Never include labels like "PARAGRAPH 1", "IMPACT:", "EXECUTION:", "OUTCOME:".
 4. TONE: Objective, analytical, prestigious third-person legal directory prose.
+5. NO META-COMMENTARY ON MISSING DATA: NEVER write phrases like "no discrete matter value has been specified", "no additional active team members have been specified", "no final precedent", or "no public quantified outcome is disclosed". If an attribute is not provided in source notes, omit it naturally without commentary.
+6. NO SPELLED-OUT NUMBERS IN WORDS: Never spell out large monetary numbers in full words (e.g. NEVER write "Six hundred ninety-eight million, four hundred thousand, seven hundred fifty pesos 00/100 MXN"). Use concise editorial notation: "MXN 698.4 million (approx. USD 41.1 million)".
+7. TEMPORAL RECONCILIATION: The latest verified status and outcome strictly supersedes obsolete historical milestones. If a 2024 enforcement or ruling is recorded, NEVER retain obsolete predictive phrases like "resolution expected in early 2023". Reconstruct the current state from the latest verified facts.
+8. AVOID FORMULAIC REPETITIONS & GEOGRAPHIC REDUNDANCIES: Vary opening phrasing across matters (avoid repeating "In a confidential, ongoing cross-border mandate..." across multiple matters). Avoid repeating multi-jurisdiction lists (e.g. "New York, London and Bogotá") in consecutive sentences.
+9. COMMERCIAL IMPACT OVER PROCEDURAL ARCHIVES: Translate legal disputes into commercial asset protection, operational continuity, and economic stakes. Do not transcribe notarial deed numbers, notary names, or procedural committee minutes unless commercially decisive.
 """
 
 

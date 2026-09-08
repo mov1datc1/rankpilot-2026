@@ -90,12 +90,17 @@ export async function POST(request: NextRequest) {
 
       // 2. Update inside submission.chambersData.matters array
       const currentChambersMatters = chambersData.matters || [];
+      const targetClient = (targetMatter.client || targetMatter.name || '').trim().toLowerCase();
       const updatedChambersMatters = currentChambersMatters.map((m: any) => {
-        if ((matterId && m.id === matterId) || (m.client && m.client === targetMatter.client)) {
+        const mClient = (m.client || m.name || '').trim().toLowerCase();
+        const isMatch = (matterId && m.id === matterId) 
+          || (targetClient && mClient && mClient === targetClient);
+        if (isMatch) {
           return {
             ...m,
             optimized_text: result.optimized_text,
-            optimizedText: result.optimized_text
+            optimizedText: result.optimized_text,
+            status: 'Approved'
           };
         }
         return m;
