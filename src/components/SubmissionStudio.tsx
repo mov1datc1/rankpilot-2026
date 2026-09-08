@@ -165,28 +165,38 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
   const firmName = chambersData.firm_name || chambersData.firmName || (submission as any).firmName || 'La Firma';
   const practiceAreaName = submission.practiceArea || chambersData.practice_area || 'Área de Práctica';
 
+  // Helper to extract clean company/entity name from potentially verbose client strings
+  const formatEntityName = (rawName: string): string => {
+    if (!rawName) return 'Mandato Principal';
+    const firstSegment = rawName.split(/[\.\n]/)[0].trim();
+    if (firstSegment.length > 38) {
+      return firstSegment.substring(0, 35) + '...';
+    }
+    return firstSegment;
+  };
+
+  // Flagship Matter: strictly the #1 curated matter from curateMatters
   const flagshipMatter = React.useMemo(() => {
-    if (!matters || matters.length === 0) return null;
-    const highVal = matters.find(m => {
-      const v = String(m.value || '');
-      return v.includes('M') || v.includes('B') || v.includes('000,000');
-    });
-    if (highVal) return highVal;
-    const withVal = matters.find(m => m.value && m.value.trim().length > 0 && m.value !== 'N/A');
-    if (withVal) return withVal;
-    return matters[0];
-  }, [matters]);
+    if (categorized.pub && categorized.pub.length > 0) {
+      return categorized.pub[0];
+    }
+    if (categorized.conf && categorized.conf.length > 0) {
+      return categorized.conf[0];
+    }
+    return matters[0] || null;
+  }, [categorized, matters]);
 
   const verifiedValuesList = React.useMemo(() => {
-    if (!matters || matters.length === 0) return [];
-    return matters
+    const list = [...(categorized.pub || []), ...(categorized.conf || [])];
+    if (list.length === 0) return [];
+    return list
       .filter(m => m.value && m.value.trim().length > 0 && m.value !== 'N/A' && m.value !== 'Not disclosed')
       .slice(0, 3)
       .map(m => ({
-        name: m.client || m.name || m.title || 'Asunto',
+        name: formatEntityName(m.client || m.name || m.title || 'Asunto'),
         value: m.value
       }));
-  }, [matters]);
+  }, [categorized]);
 
   // Department & Leadership Data for Section B Desglose (B1 - B9)
   const departmentName = chambersData.departmentName 
@@ -1929,7 +1939,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                         : b10WordCount > 500
                           ? `⚠️ Excede el límite estricto de 500 palabras (${b10WordCount}/500w). Reduce la extensión para cumplir el criterio de evaluación de ${selectedDirectory}.`
                           : verifiedValuesList.length > 0
-                            ? `Posicionamiento calibrado (${b10WordCount}/500w). Integra el liderazgo de ${firmName} y mandatos clave como ${verifiedValuesList[0].name}${verifiedValuesList[0].value ? ` (${verifiedValuesList[0].value})` : ''}.`
+                            ? `Posicionamiento calibrado (${b10WordCount}/500w). Integra el liderazgo de ${firmName} y mandatos clave como ${verifiedValuesList.map(v => `${v.name}${v.value ? ` (${v.value})` : ''}`).slice(0, 2).join(' y ')}.`
                             : `Posicionamiento calibrado (${b10WordCount}/500w) bajo los 4 Pilares: Identidad institucional, Mandatos ancla, Liderazgo y Precedente sectorial.`}
                     </p>
                     <button
@@ -1966,7 +1976,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
                         <span style={{ fontSize: '0.85rem' }}>⭐</span>
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          Insignia: {flagshipMatter.client || flagshipMatter.name || flagshipMatter.title || 'Mandato Principal'}
+                          Insignia: {formatEntityName(flagshipMatter.client || flagshipMatter.name || flagshipMatter.title)}
                         </span>
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
