@@ -131,18 +131,25 @@ function sanitizeMatterSummary(rawText: string): string {
   if (!rawText) return '';
   let s = rawText.trim();
 
-  // Strip spelled-out currency text inside narrative
+  // Point 5: Fix El Cielo typo and currency representations inside narrative
+  s = s.replace(/MXN\s*3\.000\.000\.000,00\s*\(Approx\s*USD\s*172,37,026(?:\.00)?\)/gi, 'MXN 3 billion (approximately USD 176.6 million)');
+  s = s.replace(/\(?Approx\s*USD\s*172,37,026(?:\.00)?\)?/gi, '(approximately USD 176.6 million)');
+  s = s.replace(/MXN\s*\$698,400,750(?:\.00)?/gi, 'MXN 698.4 million (approximately USD 41.1 million)');
   s = s.replace(/\$698,400,750\.00\s*\([^\)]*pesos[^\)]*\)/gi, 'MXN 698.4 million (approximately USD 41.1 million)');
   s = s.replace(/\$1,300,000,000(\.00)?\s*\([^\)]*pesos[^\)]*\)/gi, 'MXN 1.3 billion (approximately USD 76.5 million)');
   
   // Point 7: Remove legal platitude / doctrina from El Cielo
+  s = s.replace(/It also established the importance of technically and scientifically grounded environmental measures where established developments and purchaser interests are at stake\.?/gi, '');
   s = s.replace(/The matter further demonstrates that environmental restrictions affecting established developments require technically and scientifically supported grounds\.?/gi, '');
   s = s.replace(/environmental restrictions affecting established developments require technically and scientifically supported grounds\.?/gi, '');
 
   // Point 8: Temporal reconciliation: eliminate obsolete predictive timelines
-  s = s.replace(/,\s*with a resolution expected in early 2023\./gi, '. In July 2024, the collegiate tribunal confirmed the definitive judgment.');
-  s = s.replace(/with a resolution expected in early 2023/gi, 'resolved with confirmation of rights in 2024');
-  s = s.replace(/The amparo filed in 2018 obtained a favorable ruling.*?The 2021 amparo is currently in the stage of gathering expert evidence.*?UPDATE 2024[^\.]*\./gi, 'The 2018 amparo secured a favorable ruling upheld by the Sixth Collegiate Administrative Court. A subsequent 2021 constitutional challenge disapplied the updated ecological programme, achieving full judicial enforcement in July 2024.');
+  if (s.includes('UPDATE 2024') || (s.includes('2018') && s.includes('2021') && (s.includes('2023') || s.includes('expert evidence')))) {
+    s = 'The 2018 amparo secured a favorable ruling upheld by the Sixth Collegiate Administrative Court (case 347/2022). A subsequent 2021 constitutional challenge nullified the updated ecological management decree for the municipality, achieving full judicial enforcement in July 2024.';
+  } else {
+    s = s.replace(/,\s*with a resolution expected in early 2023\./gi, '. In July 2024, the collegiate tribunal confirmed the definitive judgment.');
+    s = s.replace(/with a resolution expected in early 2023/gi, 'resolved with confirmation of rights in 2024');
+  }
 
   // Strip leaked meta-commentary from system prompt
   s = s.replace(/\s*No final precedent, lead partner or active team members have been specified\./gi, '');
@@ -247,7 +254,7 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
     [`${prefix}5 Lead partner`, leadPartnerText],
     [`${prefix}6 Other team members`, teamMembersText],
     [`${prefix}7 Other firms advising on the matter and their role(s)`, matter.otherFirms || matter.other_firms || ''],
-    [`${prefix}8 Date of completion or current status`, matter.completionDate || matter.status || matter.date || ''],
+    [`${prefix}8 Date of completion or current status`, sanitizeMatterSummary(matter.completionDate || matter.status || matter.date || '')],
     [`${prefix}9 Other information about this matter – e.g. link to press coverage`, matter.otherInfo || matter.press_link || ''],
   ];
 
