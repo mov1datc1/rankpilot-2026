@@ -171,11 +171,39 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
   // Helper to extract clean company/entity name from potentially verbose client strings
   const formatEntityName = (rawName: string): string => {
     if (!rawName) return 'Mandato Principal';
-    const firstSegment = rawName.split(/[\.\n]/)[0].trim();
-    if (firstSegment.length > 38) {
-      return firstSegment.substring(0, 35) + '...';
+    // Remove newlines and trim
+    let clean = rawName.split(/[\n\r]/)[0].trim();
+    // If separated by dash or bullet or semicolon, take the corporate entity name
+    if (clean.includes(' - ')) clean = clean.split(' - ')[0].trim();
+    if (clean.includes(' — ')) clean = clean.split(' — ')[0].trim();
+    if (clean.includes(' | ')) clean = clean.split(' | ')[0].trim();
+    if (clean.length > 38) {
+      return clean.substring(0, 35) + '...';
     }
-    return firstSegment;
+    return clean;
+  };
+
+  // Helper to sanitize and format monetary values cleanly for copilot badges
+  const formatCleanValue = (val: string): string => {
+    if (!val || val === 'N/A' || val === 'Not disclosed') return '';
+    let s = String(val).trim();
+    // Fix El Cielo comma typo: Approx USD 172,37,026.00 -> approx. USD 176.6M
+    if (s.includes('172,37,026') || s.includes('3.000.000.000') || s.includes('3,000,000,000')) {
+      return 'MXN 3B (approx. USD 176.6M)';
+    }
+    // Fix Duranpark spelled out words
+    if (s.includes('698,400,750') || s.includes('Six hundred ninety-eight million')) {
+      return 'MXN 698.4M (approx. USD 41.1M)';
+    }
+    // Strip redundant spelled-out numbers in parentheses e.g. (Six hundred... pesos 00/100 MXN)
+    s = s.replace(/\s*\([A-Z][a-z]+(\s+[a-z]+)*\s+pesos[^)]*\)/gi, '');
+    s = s.replace(/\s*\([A-Z\s]+pesos[^)]*\)/gi, '');
+    // If string has a spelled out parenthetical with words like million, pesos, hundred, thousand, strip it
+    s = s.replace(/\s*\([^)]*(?:million|pesos|hundred|thousand)[^)]*\)/gi, '');
+    if (s.length > 35) {
+      s = s.substring(0, 32) + '...';
+    }
+    return s.trim();
   };
 
   // Flagship Matter: strictly the #1 curated matter from curateMatters
@@ -197,7 +225,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
       .slice(0, 3)
       .map(m => ({
         name: formatEntityName(m.client || m.name || m.title || 'Asunto'),
-        value: m.value
+        value: formatCleanValue(m.value) || m.value
       }));
   }, [categorized]);
 
@@ -1987,7 +2015,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                         {flagshipMatter.value && flagshipMatter.value !== 'N/A' && flagshipMatter.value !== 'Not disclosed'
-                          ? `Monto verificado: ${flagshipMatter.value}. Estructurado en 3 párrafos orgánicos (Mandato, Desafío Técnico y Precedente).`
+                          ? `Monto verificado: ${formatCleanValue(flagshipMatter.value) || flagshipMatter.value}. Estructurado en 3 párrafos orgánicos (Mandato, Desafío Técnico y Precedente).`
                           : `Mandato estratégico para ${firmName}. Redacción fluida en 3 párrafos orgánicos sin encabezados artificiales.`}
                       </p>
                       <button
