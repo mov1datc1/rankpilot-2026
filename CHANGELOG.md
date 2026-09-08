@@ -3,6 +3,29 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.35] — 2026-09-08
+
+### End-to-End Editorial Integrity & Chambers Deliverable Hardening (Angela Castillo Regression Test)
+
+- **Strategic Audit Dynamic Calibration (Unranked to Entry Candidate)**:
+  - Fixed over-ranking bias: unranked practices (e.g. Ramos Castillo Real Estate) now calibrate dynamically to `Target: Band 4 / Entry`, `Risk Level: Moderate Risk (Entry Candidate)`, and `Archetype: Emerging Practice / Market Challenger` instead of default `Market Dominant / Band 1`.
+  - Eradicated unverified `60% of rankings` claim regarding client referee feedback across all audit generation routes (`ai-engine/agents/nodes.py`, `src/app/api/optimize/complete/route.ts`), replacing it with official qualitative directory criteria.
+  - Eliminated cross-jurisdiction template leakages (conditioned flagships and vulnerabilities dynamically so MXN/environmental facts never leak into Venezuelan Banking & Finance or other areas).
+- **Chambers Deliverable & Internal Intelligence Separation (Strict 20-Matter Ceiling)**:
+  - Fixed the 47-table bloat in Chambers Submission DOCX export ([submission-builder.ts](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts)). Surplus matters (e.g. 13 reserve matters) are now strictly retained in the UI Studio and Strategic Audit, while the official Chambers submission DOCX contains **strictly up to 20 matters (13 Publishable + 7 Confidential = 34 tables total)**.
+- **Lawyer Positioning & Section B9 / C2 Synchronization**:
+  - Injected complete strategic lawyer bios into Table B9 with explicit ranking asks: **José Pablo Ramos Castillo (Band 4)**, **Edgar Adrián Moro López (Associate to Watch)**, and **Mónica Dariane Cárdenas Fregoso (Associate to Watch)** for Ramos Castillo; **Pedro Luis Planchart (Band 1)**, **Gustavo J. Reyna (Senior Statesperson)**, and **Juan José Figueroa (Up and Coming)** for AraqueReyna.
+  - Aligned Table C2 positioning with a 4-pillar narrative demonstrating nationwide reach (Jalisco, Durango, Guanajuato; SUDEBAN/JP Morgan Chase) and concluding in explicit band petitions.
+- **Client Descriptors & D0/E0 Cleanup**:
+  - Implemented `cleanClientDescriptor` in [submission-builder.ts](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts) to strip corporate marketing fluff and multi-paragraph mission statements from client names in D0 and E0, leaving concise, single-line functional descriptors (e.g. `DURANPARK, S.A. DE C.V. — developer of the Durango Logistics and Industrial Center.`).
+- **Currency Sanitization & Temporal Reconciliation**:
+  - Normalization of monetary amounts: eliminated spelled-out legal amounts in parentheses (`Six hundred ninety-eight million...`) and corrected comma errors (`172,37,026.00` -> `approx. USD 176.6 million`).
+  - Implemented `Temporal Reconciliation` rule in matter summaries and completion dates (D8): obsolete predictive dates (`expected early 2023. UPDATE 2024`) are superseded by the latest verified resolution (`enforced in July 2024`).
+  - Stripped redundant legal platitudes and doctrinal assertions (e.g. environmental restrictions technical justification) in El Cielo.
+- **Editorial Copilot UI Polish**:
+  - Updated `formatEntityName` in [SubmissionStudio.tsx](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/components/SubmissionStudio.tsx) to preserve Latin American corporate legal suffixes (`S.A. DE C.V.`, `S.A.P.I.`, `C.A.`) without cutting at periods.
+  - Added `formatCleanValue` to display clean, executive badges (`MXN 3B (approx. USD 176.6M)` and `MXN 698.4M (approx. USD 41.1M)`) in the live sidebar.
+
 ## [v26.34] — 2026-09-07
 
 ### Chambers Template Standardization — Strict Alignment of Sections B7 to B10

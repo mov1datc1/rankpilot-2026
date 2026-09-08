@@ -3,7 +3,19 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-07** (v26.33 — Owner Golden Benchmark Slot 3: Compliance & Investigations)
+> Last updated: **2026-09-08** (v26.35 — Editorial Integrity, Dynamic Calibration & Deliverable Hardening)
+
+## v26.35 — EDITORIAL INTEGRITY, DYNAMIC CALIBRATION & DELIVERABLE HARDENING (2026-09-08)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Dynamic Strategic Audit Calibration | Unranked practices calibrate dynamically to `Target: Band 4 / Entry`, `Risk Level: Moderate Risk (Entry Candidate)`, and `Archetype: Emerging Practice / Market Challenger` instead of default `Market Dominant / Band 1` | `src/app/api/optimize/complete/route.ts`, `ai-engine/agents/nodes.py` |
+| Eradication of 60% Referee Claim | Removed unproven `60% of rankings` claim across all prompt and audit synthesis routes; replaced with official Chambers qualitative methodology | `ai-engine/agents/nodes.py`, `src/app/api/optimize/complete/route.ts` |
+| Chambers Deliverable 20-Matter Ceiling | Isolated surplus/reserve matters from Chambers official submission form DOCX (strictly up to 20 matters: 13 Pub + 7 Conf = 34 tables total, resolving 47-table bloat) | `src/app/api/generate-docx/submission-builder.ts` |
+| Strategic Lawyer Positioning (Table B9 & C2) | Injected complete strategic lawyer bios into Table B9 with explicit ranking asks (José Pablo Band 4, Edgar Moro Associate to Watch, Mónica Cárdenas Associate to Watch; Pedro Luis Planchart Band 1, Gustavo Reyna Senior Statesperson) and synchronized C2 nationwide narrative | `src/app/api/generate-docx/submission-builder.ts` |
+| Client Descriptors & D0/E0 Cleanup | Created `cleanClientDescriptor` to strip marketing propaganda from D0/E0 client names, generating clean single-line functional descriptors | `src/app/api/generate-docx/submission-builder.ts` |
+| Currency Normalization & Temporal Reconciliation | Eliminated spelled-out legal text in parentheses, corrected comma typos (`172,37,026.00` -> `approx. USD 176.6M`), and superseded obsolete historical timelines (`expected early 2023. UPDATE 2024` -> `enforced in July 2024`) | `src/app/api/generate-docx/submission-builder.ts` |
+| Editorial Copilot Dynamic UI Sanitization | Enhanced `formatEntityName` to preserve Latin American legal abbreviations (`S.A. DE C.V.`, `S.A.P.I.`, `C.A.`) and formatted badges with `formatCleanValue` in live studio | `src/components/SubmissionStudio.tsx` |
 
 ## v26.33 — OWNER GOLDEN BENCHMARK SLOT 3: COMPLIANCE & INVESTIGATIONS (2026-09-07)
 
