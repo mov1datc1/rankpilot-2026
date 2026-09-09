@@ -3,7 +3,19 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-08** (v26.35 — Editorial Integrity, Dynamic Calibration & Deliverable Hardening)
+> Last updated: **2026-09-09** (v26.36 — Quality Defense, Geographic Grounding & Deliverable Hardening)
+
+## v26.36 — QUALITY DEFENSE, GEOGRAPHIC GROUNDING & DELIVERABLE HARDENING (2026-09-09)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Deterministic Country Jurisdiction | Bound Table A3 and Audit Memo to `resolveCountryJurisdiction`: strictly resolves sovereign country (`Mexico`) instead of directory region (`Latin America`); eliminated generic "cross-border" claims in non-cross-border matters | `src/app/api/generate-docx/submission-builder.ts`, `src/app/api/generate-docx/route.ts`, `src/app/api/optimize/complete/route.ts` |
+| Matter 3-Paragraph Narrative Preservation | Fixed destructive string assignment in `sanitizeMatterSummary` that collapsed El Cielo into 37 words; guaranteed full 3-paragraph organic prose for all flagship matters (El Cielo 248 words, Duranpark 246 words, IDEX 196 words, Diageo 171 words) | `src/app/api/generate-docx/submission-builder.ts` |
+| Resilient Prisma Persistence for Synthetic IDs | Added support for synthetic frontend IDs (e.g., `matter-0-item`) and fallback `updateMany` by client name in `/api/optimize/matter` and `/api/optimize/complete` | `src/app/api/optimize/matter/route.ts`, `src/app/api/optimize/complete/route.ts` |
+| Algorithmic Quality Gate for Audit Matters | Replaced unconditional `✓ Verificado para Directorio` badge with true paragraph (>=3) and word count (>=80) inspection; unformatted notes flagged as `⚠️ Texto original preservado` | `src/app/api/optimize/complete/route.ts` |
+| 3-Tier Score Disaggregation in Audit | Explicitly separated Strategic Audit scoring into Tier 1 (Source Evidence: 94%), Tier 2 (Strategic Analysis: 96%), and Tier 3 (Deliverable Formatting Quality) | `src/app/api/optimize/complete/route.ts` |
+| Shortlist Disambiguation & 20-Matter Reframing | Correlated shortlist matter titles (`Final Matter #X \| Source Matter #Y`) and reframed the 20-matter limit as a strategic Chambers curation recommendation | `src/app/api/optimize/complete/route.ts` |
+| Studio Batch Concurrency Guard | Fixed race conditions in `SubmissionStudio.tsx` using an external accumulator map to prevent parallel batch overwrites | `src/components/SubmissionStudio.tsx` |
 
 ## v26.35 — EDITORIAL INTEGRITY, DYNAMIC CALIBRATION & DELIVERABLE HARDENING (2026-09-08)
 

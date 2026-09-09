@@ -3,6 +3,28 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.36] — 2026-09-09
+
+### Quality Defense, Geographic Grounding & Deliverable Hardening (Angela Castillo 9-Sept Feedback)
+
+- **Deterministic Country Jurisdiction (`resolveCountryJurisdiction`)**:
+  - Centralized sovereign country detection (`resolveCountryJurisdiction`): Table A3 *Location (Jurisdiction)* now strictly resolves to `Mexico` for Ramos Castillo instead of directory guide region `Latin America`.
+  - Updated Strategic Audit memo header to: `Chambers & Partners (Editorial) · Latin America (Chambers Guide) · Mexico (Jurisdiction) · Real Estate (Practice Area)`.
+  - Replaced unwarranted "cross-border" or "across Latin America" claims in the audit thesis statement with asset defense across Mexican states.
+- **Narrative Organic Prose Preservation & Truncation Elimination**:
+  - Eliminated root-cause destructive assignment in `sanitizeMatterSummary` that collapsed El Cielo into a 37-word single sentence; guaranteed complete 3-paragraph organic prose for all flagship matters (El Cielo: 248 words, Duranpark: 246 words, IDEX: 196 words, Diageo: 171 words).
+  - Preserved critical economic facts: MXN 3B (USD 176.6M), July 2024 enforcement, and active associate roles.
+- **Resilient Prisma Persistence for Synthetic IDs**:
+  - Added support for synthetic frontend IDs (e.g., `matter-0-item`) and fallback `updateMany` by client name in `/api/optimize/matter` and `/api/optimize/complete`.
+- **Algorithmic Quality Gate for Strategic Audit Matters**:
+  - Replaced unconditional `✓ Verificado para Directorio` badge in `matterEvaluations` with algorithmic paragraph (>=3) and word count (>=80) inspection; unformatted notes flagged as `⚠️ Texto original preservado — Pendiente de estructuración a 3 párrafos`.
+- **3-Tier Score Disaggregation in Strategic Audit**:
+  - Explicitly separated Strategic Audit scoring into Tier 1 (Source Evidence: 94%), Tier 2 (Strategic Analysis: 96%), and Tier 3 (Deliverable Formatting Quality).
+- **Shortlist Disambiguation & 20-Matter Reframing**:
+  - Correlated shortlist matter titles (`Final Matter #X | Source Matter #Y`) and reframed the 20-matter limit as a strategic Chambers curation recommendation.
+- **Studio Batch Concurrency Guard**:
+  - Fixed race conditions in `SubmissionStudio.tsx` using an external accumulator map to prevent parallel batch overwrites.
+
 ## [v26.35] — 2026-09-08
 
 ### End-to-End Editorial Integrity & Chambers Deliverable Hardening (Angela Castillo Regression Test)
