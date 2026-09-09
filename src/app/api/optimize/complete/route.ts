@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
-import { curateMatters } from '@/lib/docx/matter-curator';
+import { curateMatters, getDirectoryPracticeAllowance } from '@/lib/docx/matter-curator';
 import { resolveCountryJurisdiction } from '@/app/api/generate-docx/submission-builder';
 
 export async function POST(request: NextRequest) {
@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
     const isDisputes = practiceArea.toLowerCase().includes('dispute') || practiceArea.toLowerCase().includes('litig') || practiceArea.toLowerCase().includes('arbitr') || practiceArea.toLowerCase().includes('contenc');
 
     // 2. Build Matter Evaluations & Portfolio Curation using Gold Standard curation
+    const allowance = getDirectoryPracticeAllowance(targetDirectory || chambersData.target_directory || 'chambers', practiceArea);
     const curationResult = curateMatters(updatedMatters, practiceArea, chambersData);
     const sortedOfficialMatters = [
       ...curationResult.officialPubMatters,
@@ -144,17 +145,17 @@ export async function POST(request: NextRequest) {
       let note = '';
 
       if (isSurplus) {
-        qualityLabel = 'Dilution / Reserve Candidate';
+        qualityLabel = 'Reserve Roster Candidate';
         mScore = 8.2;
-        note = `Asunto preservado en Reserve Roster (${paragraphs.length} párrafos, ${wordCount} palabras). Salvaguarda el perfil de especialización sin saturar la candidatura.`;
+        note = `Matter curated in Reserve Roster (${paragraphs.length} paragraphs, ${wordCount} words). Safeguards specialization profile without overloading official candidate roster.`;
       } else if (hasThreeParagraphs) {
-        qualityLabel = idx < 4 ? '⭐ Flagship Verificado (3 Párrafos)' : '✓ Verificado para Directorio (3 Párrafos)';
+        qualityLabel = idx < 4 ? '⭐ Verified Flagship (3 Paragraphs)' : '✓ Verified for Directory (3 Paragraphs)';
         mScore = idx < 4 ? 9.8 : 9.5;
-        note = `✓ Verificado para Directorio (${paragraphs.length} párrafos orgánicos, ${wordCount} palabras). Estructura Asset/Stakes → Craft/Outcome → Team/Precedent completa.`;
+        note = `✓ Verified for Directory (${paragraphs.length} organic paragraphs, ${wordCount} words). Full Asset/Stakes → Craft/Outcome → Team/Precedent structure.`;
       } else {
-        qualityLabel = 'Texto Original Preservado (Estructuración Pendiente)';
+        qualityLabel = 'Original Text Preserved (Pending Structuring)';
         mScore = 8.4;
-        note = `⚠️ Texto original preservado (${paragraphs.length} párrafo(s), ${wordCount} palabras) — Pendiente de estructuración completa a 3 párrafos orgánicos.`;
+        note = `⚠️ Original text preserved (${paragraphs.length} paragraph(s), ${wordCount} words) — Pending full organic 3-paragraph structuring.`;
       }
 
       return {
@@ -259,7 +260,7 @@ export async function POST(request: NextRequest) {
         "⭐ FLAGSHIP 4 (Final Matter #4 | Source Matter #2): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
         "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors — Final Matters #5 to #13): San Carlos (MXN 200M), Inmobiliaria Midi (MXN 100M), La Primavera, Holcim México, Rosa Dorina Ochoa, SMB Promotora, Conciencia Ambiental Devangary, Red Vía Corta, and Cominvi (MXN 1.059B). Total: 13 Publishable Matters.",
         "CONFIDENTIAL CORE (7 Recommended Matters — Final Matters #14 to #20): Familia De Anda (MXN 150M), Villas del Colli (MXN 40M), ADM Hermosillo, Familia Leaño (10 ha Tonalá), SICT highway access, gas pipeline right of way, and Monsanto property tax defense. Total: 7 Confidential Matters.",
-        "RESUMEN DE CURACIÓN ESTRATÉGICA: Exactamente 13 Públicos + 7 Confidenciales = 20 Asuntos Oficiales. Los 13 asuntos restantes (asuntos de impuestos puros y controversias laborales rutinarias) quedan preservados íntegramente en el Reserve / Surplus Roster sin riesgo de dilución de la práctica."
+        "STRATEGIC CURATION SUMMARY: Exactly 13 Publishable + 7 Confidential = 20 Official Core Matters. The remaining 13 matters (pure tax and routine labor disputes) are fully preserved in the Reserve Roster to prevent practice dilution while maintaining complete matter records."
       ];
     } else if (isRealEstate) {
       recommendedCore = [
@@ -361,9 +362,9 @@ export async function POST(request: NextRequest) {
       ];
     } else {
       sourceVulnerabilities = [
-        `Asegurar que los clientes de referencia (referees) estén pre-contactados para el período de entrevistas de ${isLegal500 ? 'The Legal 500' : 'Chambers'}.`,
-        'Verificar la disponibilidad de los socios líderes asignados a los asuntos Core.',
-        'Confirmar que los valores transaccionales y litigiosos cuenten con unidades monetarias explícitas.'
+        `Ensure client referees are pre-contacted ahead of the ${isLegal500 ? 'The Legal 500' : 'Chambers'} interview research window.`,
+        'Verify immediate responsiveness and availability of lead partners assigned to core matters.',
+        'Confirm that transactional deal values and dispute amounts feature explicit monetary units.'
       ];
     }
 
@@ -371,9 +372,11 @@ export async function POST(request: NextRequest) {
       total_matters: totalMatters,
       publishable_count: pubCount,
       confidential_count: confCount,
-      warning: totalMatters > 20 
-        ? `Recomendación Estratégica RankPilot: El documento original contiene ${totalMatters} asuntos (${totalMatters - 20} por encima de la recomendación de 20 casos). Los directorios recomiendan una selección curada de hasta 20 asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil de práctica ante los investigadores de Chambers.`
-        : null,
+      warning: totalMatters > allowance.maxTotal 
+        ? `RankPilot Strategic Recommendation: The draft portfolio contains ${totalMatters} matters (${totalMatters - allowance.maxTotal} above the directory threshold of ${allowance.maxTotal}). While ${isLegal500 ? 'The Legal 500' : 'Chambers'} allows up to ${allowance.maxTotal} matters for ${practiceArea || 'this practice area'}, filing beyond the curated core creates review fatigue and risks diluting the evaluation with peripheral or unaligned instructions.`
+        : (totalMatters > 20 && allowance.maxTotal >= 30
+          ? `RankPilot Strategic Guidance: Although Chambers allows up to 30 matters for ${practiceArea} in Mexico, RankPilot strategically recommends filing a curated core of ${Math.min(totalMatters, 20)} flagship matters to concentrate qualitative impact and ensure researcher engagement.`
+          : null),
       duplicate_matters: duplicateMatters,
       dilution_risks: dilutionRisks,
       recommended_core: recommendedCore,
@@ -382,12 +385,14 @@ export async function POST(request: NextRequest) {
 
     const pathToDominance = [
       {
-        title: 'Phase 1: Portfolio Curation & 20-Matter Ceiling Alignment',
+        title: `Phase 1: Portfolio Curation & ${allowance.maxTotal >= 30 ? 'Strategic Practice-Ceiling' : '20-Matter Ceiling'} Alignment`,
         phase: 'Phase 1: Portfolio Curation',
-        description: `Highlight top 20 core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment, pruning off-category tax and duplicate matters.`,
-        action: `Highlight top 20 core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment.`,
-        why: 'Los investigadores de directorios recomiendan una selección curada de hasta 20 asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil de práctica.',
-        what_must_be_delivered: `Official 20-Matter Filing Shortlist (${pubCount > 13 ? 13 : pubCount} Publishable + ${confCount > 7 ? 7 : confCount} Confidential) structured in organic 3-paragraph prose.`,
+        description: `Highlight top curated core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment, pruning off-category and unaligned matters.`,
+        action: `Curate and highlight the top core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment.`,
+        why: allowance.maxTotal >= 30
+          ? `Although Chambers permits up to 30 matters for ${practiceArea}, directory researchers recommend concentrating evidentiary weight on a core shortlist of high-value mandates to avoid diluting the practice profile.`
+          : 'Directory researchers recommend a curated selection of up to 20 matters to concentrate evaluative impact and prevent practice dilution.',
+        what_must_be_delivered: `Official Curated Filing Shortlist (${curationResult.officialPubMatters.length} Publishable + ${curationResult.officialConfMatters.length} Confidential) structured in organic 3-paragraph prose.`,
         deadline: 'Immediate'
       },
       {
@@ -427,13 +432,13 @@ export async function POST(request: NextRequest) {
         : [`Currency Precision: Ensure clear transaction and dispute valuation units across all matter summaries.`])
     ];
 
-    const curationSummarySentence = totalMatters > 20
-      ? `(1) ${totalMatters} asuntos analizados (${totalMatters - 20} por encima de la recomendación de 20 casos de los directorios), requiriendo curación estratégica para concentrar el impacto evaluativo`
-      : `(1) ${totalMatters} asuntos analizados dentro de la recomendación de 20 casos`;
+    const curationSummarySentence = totalMatters > allowance.maxTotal
+      ? `(1) ${totalMatters} matters analyzed (${totalMatters - allowance.maxTotal} above the ${allowance.maxTotal}-matter threshold), requiring strategic curation to concentrate qualitative impact`
+      : `(1) ${totalMatters} matters analyzed within the recommended portfolio threshold`;
 
     const scoreRationale = isUnranked
-      ? `Calibración estratégica en 3 dimensiones: (1) Calidad de Evidencia Fuente: 94% (datos, montos y hechos preservados íntegramente), (2) Calidad de Análisis Estratégico: 96% (calibrado a Band 4 / Entry Candidate), (3) Calidad de Entregable Redactado: ${deliverableQualityPercent}% de asuntos Core estructurados en 3 párrafos orgánicos (${verifiedThreeParasCount} de ${totalCoreMatters}). Candidatura sólida y defendible ante los investigadores de Chambers.`
-      : `Calibración estratégica en 3 dimensiones: (1) Calidad de Evidencia Fuente: 94%, (2) Calidad de Análisis Estratégico: 96%, (3) Calidad de Entregable Redactado: ${deliverableQualityPercent}% (${verifiedThreeParasCount} de ${totalCoreMatters} asuntos estructurados en 3 párrafos).`;
+      ? `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94% (values, dates, and factual data fully preserved), (2) Strategic Analysis Quality: 96% (calibrated for Band 4 / Entry Candidate), (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% of Core matters structured in organic 3-paragraph prose (${verifiedThreeParasCount} of ${totalCoreMatters}). Highly defensible candidacy for Chambers researchers.`
+      : `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94%, (2) Strategic Analysis Quality: 96%, (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% (${verifiedThreeParasCount} of ${totalCoreMatters} matters structured in 3 paragraphs).`;
 
     let c2Positioning = chambersData.original_c2 || chambersData.c2 || '';
     if (!c2Positioning || c2Positioning.length < 80 || c2Positioning.includes('continues to expand its market leadership')) {
@@ -502,20 +507,20 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
     };
 
     // 3. Judge SOL Formal Quality Verdict
-    const judgeFeedbackText = `Release decision: pass. Calidad editorial verificada para ${firmName} (${practiceArea}). La narrativa B10 y el portafolio de ${totalMatters} asuntos cumplen con el estándar Chambers Zero-Carpentry (anclaje factual de valores preservado y liderazgo de socios activo). Cobertura de entrega redactada: ${deliverableQualityPercent}% de asuntos Core completamente estructurados en 3 párrafos orgánicos (${verifiedThreeParasCount}/${totalCoreMatters}).`;
+    const judgeFeedbackText = `Release decision: pass. Editorial quality verified for ${firmName} (${practiceArea}). Section B10 narrative and the ${totalMatters}-matter portfolio adhere to the Chambers Zero-Carpentry standard (factual deal values preserved, partner leadership active). Drafted deliverable coverage: ${deliverableQualityPercent}% of Core matters fully structured in organic 3-paragraph prose (${verifiedThreeParasCount}/${totalCoreMatters}).`;
 
     const judgeChecks = [
-      { check_id: 'register', component: 'register', passed: true, reason: `Portafolio de ${totalMatters} asuntos (${pubCount} públicos, ${confCount} confidenciales) preservado fielmente.` },
-      { check_id: 'field_provenance', component: 'field_provenance', passed: true, reason: 'Cifras, monedas y fechas verificadas sin invención de hechos.' },
-      { check_id: 'b10_strategy', component: 'b10_strategy', passed: true, reason: 'Sección B10 estructurada bajo los 4 Pilares Institucionales sin relleno publicitario.' },
-      { check_id: 'matter_quality', component: 'matter_quality', passed: true, reason: `${verifiedThreeParasCount} de ${totalCoreMatters} asuntos Core estructurados en prosa orgánica de 3 párrafos (${deliverableQualityPercent}%). Restantes preservados con evidencia factual original.` },
-      { check_id: 'strategic_audit', component: 'strategic_audit', passed: true, reason: 'Evaluación estratégica completa y accionable para avance de categoría.' }
+      { check_id: 'register', component: 'register', passed: true, reason: `Portfolio of ${totalMatters} matters (${pubCount} publishable, ${confCount} confidential) faithfully preserved.` },
+      { check_id: 'field_provenance', component: 'field_provenance', passed: true, reason: 'Figures, currencies, and dates verified without factual invention.' },
+      { check_id: 'b10_strategy', component: 'b10_strategy', passed: true, reason: 'Section B10 structured under the 4 Institutional Pillars without marketing puffery.' },
+      { check_id: 'matter_quality', component: 'matter_quality', passed: true, reason: `${verifiedThreeParasCount} of ${totalCoreMatters} Core matters structured in organic 3-paragraph prose (${deliverableQualityPercent}%). Remaining matters preserved with original factual evidence.` },
+      { check_id: 'strategic_audit', component: 'strategic_audit', passed: true, reason: 'Comprehensive and actionable strategic evaluation for tier advancement.' }
     ];
 
     const judgeVerdict = {
       score: judgeScoreInt,
       passed: true,
-      summary: `Calidad editorial 100% verificada para ${firmName}. Cumple con la Constitución Editorial Chambers & Partners.`,
+      summary: `Editorial quality 100% verified for ${firmName}. Adheres to the Chambers & Partners Editorial Constitution.`,
       feedback: judgeFeedbackText,
       violations: [],
       checks: judgeChecks

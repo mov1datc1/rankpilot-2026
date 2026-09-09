@@ -1910,15 +1910,27 @@ def build_portfolio_curation(all_matters: list, practice_area: str, firm_name: s
     )
     conf_count = total_count - pub_count
 
-    # 1. Warning on 20-matter ceiling
+    # 1. Practice-aware ceiling alignment (Chambers allows up to 30 matters for Real Estate and Disputes)
+    is_re_or_disputes = any(
+        pa in str(practice_area).lower()
+        for pa in ["real estate", "inmobiliario", "dispute", "litig", "arbitr", "contenc"]
+    )
+    max_allowed = 30 if is_re_or_disputes else 20
+
     warning = ""
-    if total_count > 20:
+    if total_count > max_allowed:
         warning = (
             f"⚠️ PORTFOLIO CEILING OVERFLOW: The firm uploaded {total_count} matters "
-            f"({pub_count} publishable, {conf_count} confidential). Chambers & Partners enforces "
-            "an absolute maximum of 20 matters per submission form. Submitting excess matters creates "
-            "severe editorial rejection risk or arbitrary researcher truncation. The firm MUST prune "
-            "this portfolio to at most 20 matters."
+            f"({pub_count} publishable, {conf_count} confidential). Chambers & Partners allows "
+            f"up to {max_allowed} matters for {practice_area or 'this section'}. Submitting excess matters creates "
+            "review fatigue and arbitrary researcher truncation risk. The firm should prune "
+            f"this portfolio to at most {max_allowed} matters."
+        )
+    elif total_count > 20 and is_re_or_disputes:
+        warning = (
+            f"ℹ️ STRATEGIC PORTFOLIO GUIDANCE: Although Chambers allows up to 30 matters for {practice_area} "
+            f"in Mexico, the draft portfolio contains {total_count} matters. RankPilot strategically recommends "
+            "concentrating evidentiary weight on a curated core of flagship mandates to avoid diluting qualitative impact."
         )
 
     # 2. Duplicate detection in confidential roster
@@ -1993,7 +2005,7 @@ def build_portfolio_curation(all_matters: list, practice_area: str, firm_name: s
             "FLAGSHIP 4 (Pub 02): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
             "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors): Matter 04 (San Carlos, MXN 200M), Matter 06 (Inmobiliaria Midi, MXN 100M), Matter 07 (La Primavera), Matter 09 (Holcim México), Matter 17 (Rosa Dorina Ochoa), Matter 18 (SMB Promotora), Matter 20 (Conciencia Ambiental Devangary), plus public concession/works mandates Matter 01 (Red Vía Corta) and Matter 11 (Cominvi, MXN 1.059B, demonstrating land/works nexus). Total: 13 Publishable Matters.",
             "CONFIDENTIAL CORE (7 Recommended Matters): Retain the 4 pure real estate flagships: Matter 23/Conf 3 (Familia De Anda, MXN 150M), Matter 24/Conf 4 (Villas del Colli, MXN 40M), Matter 26/Conf 6 (ADM Hermosillo), Matter 28/Conf 8 (Familia Leaño, 10 ha Tonalá); plus repositioned regulatory/property-tax mandates Matter 05 (SICT highway access), Matter 19 (gas pipeline land right of way), and Matter 27 (Monsanto property tax defense). Total: 7 Confidential Matters.",
-            "SUMMARY OF 20-MATTER FILING SLATE: Exactly 13 Publishable + 7 Confidential = 20 Matters. Safely prunes the pure tax/labor dilution matters and removes duplicate pairs, achieving full compliance with the Chambers 20-matter filing ceiling without category dilution.",
+            "SUMMARY OF CURATED CORE FILING SLATE: Exactly 13 Publishable + 7 Confidential = 20 Curated Core Matters. Safely prunes off-category tax/labor dilution matters and removes duplicate pairs, focusing the submission on core real estate mandates without category dilution (with remaining matters preserved in the reserve roster).",
         ]
     else:
         # Dynamic curation for any other firm
@@ -2004,7 +2016,7 @@ def build_portfolio_curation(all_matters: list, practice_area: str, firm_name: s
         recommended_core = [
             f"PUBLISHABLE CORE ({len(top_pub)} Matters): Designated official publishable filing shortlist.",
             f"CONFIDENTIAL CORE ({len(top_conf)} Matters): Designated official confidential filing shortlist.",
-            f"SUMMARY OF 20-MATTER FILING SLATE: Exactly {min(13, len(top_pub))} Publishable + {min(7, len(top_conf))} Confidential = {min(20, len(top_pub) + len(top_conf))} Matters meeting Chambers 20-matter ceiling.",
+            f"SUMMARY OF {min(max_allowed, len(top_pub) + len(top_conf))}-MATTER FILING SLATE: Exactly {min(13, len(top_pub))} Publishable + {min(7, len(top_conf))} Confidential = {min(max_allowed, len(top_pub) + len(top_conf))} Matters meeting Chambers portfolio guidelines.",
         ]
 
     # 5. Source Vulnerabilities to Remedy

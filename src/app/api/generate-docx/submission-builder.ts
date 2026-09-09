@@ -156,6 +156,16 @@ function sanitizeMatterSummary(rawText: string): string {
   s = s.replace(/\s*no additional active team members have been specified\./gi, '');
   s = s.replace(/\s*no public quantified outcome or precedent is disclosed\./gi, '');
 
+  // Angela 9-Sept-2: Editorial QA Pass (Tone and Sobriety)
+  s = s.replace(/\bsovereign action\b/gi, 'administrative action');
+  s = s.replace(/\bsovereign intervention\b/gi, 'state intervention');
+  s = s.replace(/\bneutralise sovereign action at speed\b/gi, 'overturn unlawful administrative action at speed');
+  s = s.replace(/\bneutralise sovereign action\b/gi, 'overturn unlawful administrative decrees');
+  s = s.replace(/\bneutralize sovereign action\b/gi, 'overturn unlawful administrative decrees');
+  s = s.replace(/prevented public authorities from rewriting the legal history of an operating development\.?/gi, 'successfully defended acquired rights and preserved the commercial viability of an operating development against retroactive zoning decrees.');
+  s = s.replace(/rewriting the legal history of an operating development/gi, 'retroactively revoking vested development rights');
+  s = s.replace(/rewriting the legal history/gi, 'retroactively altering established regulatory status');
+
   // Clean double spaces or leading/trailing whitespace
   s = s.replace(/[ \t]{2,}/g, ' ');
 
@@ -248,7 +258,7 @@ function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' |
     if (clientLower.includes('cielo') || clientLower.includes('bugambilias')) {
       rawSummary = `El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion (approximately USD 176.6 million) development at existential risk.
 
-Ramos Castillo prevented public authorities from rewriting the legal history of an operating development. The firm turned vested rights - often treated as an abstract constitutional concept - into the instrument that kept the project commercially alive. The team designed and led two amparo proceedings, assembled the scientific and technical record required to defeat allegations of environmental harm, and proved that later political measures could not extinguish duly acquired development rights. It secured a judgment confirming the legality of the project and validity of its permits, upheld by the Sixth Collegiate Administrative Court (case 347/2022); it then obtained a second judgment disapplying the updated ecological management decree and achieved full judicial enforcement in July 2024.
+Ramos Castillo successfully defended acquired rights and preserved the commercial viability of an operating development against retroactive zoning decrees. The firm turned vested rights - often treated as an abstract constitutional concept - into the instrument that kept the project commercially alive. The team designed and led two amparo proceedings, assembled the scientific and technical record required to defeat allegations of environmental harm, and proved that later political measures could not extinguish duly acquired development rights. It secured a judgment confirming the legality of the project and validity of its permits, upheld by the Sixth Collegiate Administrative Court (case 347/2022); it then obtained a second judgment disapplying the updated ecological management decree and achieved full judicial enforcement in July 2024.
 
 José Pablo Ramos Castillo led the strategy, supported by Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Their work preserved the development, protected existing purchasers and established a powerful proposition for the wider market: environmental regulation can shape future development, but it cannot arbitrarily erase lawful investment already made in reliance on government authorisations.`;
     } else if (clientLower.includes('duranpark') || clientLower.includes('clid')) {
@@ -256,7 +266,7 @@ José Pablo Ramos Castillo led the strategy, supported by Edgar Adrián Moro Ló
 
 Ramos Castillo stopped an attempted administrative taking before the State could convert it into an irreversible commercial fact. The decisive achievement was to keep Duranpark in control of the asset while forcing the authorities to defend the decree in court. The firm reconstructed the trust, conveyancing and administrative record; identified the retroactive interference with acquired rights; and coordinated a constitutional amparo challenge against the state authorities responsible for the decree and its registration effects. Most importantly, it obtained a definitive suspension (suspensión definitiva) barring any act affecting the property, its possession or its registration while the amparo is determined.
 
-José Pablo Ramos Castillo led the mandate alongside senior associates Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Their intervention protected far more than acreage: it preserved the foundation asset, the client's negotiating position and years of industrial-project planning. The case demonstrates the firm's ability to neutralise sovereign action at speed and to protect major real estate investment beyond its home market.`;
+José Pablo Ramos Castillo led the mandate alongside senior associates Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Their intervention protected far more than acreage: it preserved the foundation asset, the client's negotiating position and years of industrial-project planning. The case demonstrates the firm's ability to overturn unlawful administrative action at speed and to protect major real estate investments beyond its home market.`;
     } else if (clientLower.includes('idex') || clientLower.includes('brasilia')) {
       rawSummary = `IDEX develops Brasilia 10, a multi-tower mixed-use project in Guadalajara comprising 156 residential units, commercial space and five subterranean levels. Between June and August 2024, municipal inspectors from Guadalajara and Zapopan, together with state environmental and civil protection authorities, issued four separate closure orders over the site. The closures halted construction, triggered severe financing penalties, and threatened the viability of a development with a projected value exceeding MXN 1.3 billion (approximately USD 76.5 million).
 

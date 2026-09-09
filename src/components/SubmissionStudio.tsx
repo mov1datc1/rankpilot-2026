@@ -161,7 +161,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
   }, [matters, showCoreOnly, submission.practiceArea, chambersData]);
 
   const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
-  const targetMattersCount = Math.min(matters.length, showCoreOnly ? 20 : matters.length);
+  const targetMattersCount = matters.length;
   const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
 
   // Dynamic Case Intelligence for Editorial Copilot
@@ -291,7 +291,8 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
 
-    const targetList = showCoreOnly ? matters.slice(0, 20) : matters;
+    // v26.37: Optimize ALL matters across the submission (both publishable and confidential)
+    const targetList = matters;
     const totalSteps = targetList.length + 2; // B10 + matters + audit synthesis
 
     setOptimizeAllProgress({
@@ -325,11 +326,11 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     setOptimizeAllProgress({
       current: completed,
       total: totalSteps,
-      stage: `Sección B10 optimizada. Optimizando ${targetList.length} asuntos en paralelo...`
+      stage: `Sección B10 optimizada. Optimizando los ${targetList.length} asuntos (públicos y confidenciales)...`
     });
 
-    // 2. Optimize matters in concurrent batches of 3
-    const BATCH_SIZE = 3;
+    // 2. Optimize matters in concurrent batches of 4
+    const BATCH_SIZE = 4;
     const optimizedMap: Record<string, string> = {};
     for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
       const batch = targetList.slice(i, i + BATCH_SIZE);
@@ -354,6 +355,8 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
             const optText = data.optimized_text;
             if (m.id) optimizedMap[m.id] = optText;
             if (m.client) optimizedMap[`client:${m.client.trim().toLowerCase()}`] = optText;
+            const cleanClient = (m.client || m.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (cleanClient) optimizedMap[`clean_client:${cleanClient}`] = optText;
             if (m.title) optimizedMap[`title:${m.title.trim().toLowerCase()}`] = optText;
             optimizedMap[`idx:${actualIdx}`] = optText;
           }
@@ -373,9 +376,11 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     // Merge all optimized matters deterministically without race conditions
     const latestMatters = matters.map((item, idx) => {
       const clientKey = item.client ? `client:${item.client.trim().toLowerCase()}` : '';
+      const cleanItemClient = (item.client || item.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const titleKey = item.title ? `title:${item.title.trim().toLowerCase()}` : '';
       const optText = (item.id && optimizedMap[item.id])
         || (clientKey && optimizedMap[clientKey])
+        || (cleanItemClient && optimizedMap[`clean_client:${cleanItemClient}`])
         || (titleKey && optimizedMap[titleKey])
         || optimizedMap[`idx:${idx}`]
         || item.optimizedText

@@ -21,6 +21,18 @@ def coerce_message_text(content: Any) -> str:
         return content.decode("utf-8", errors="replace")
     if isinstance(content, (list, tuple)):
         return "".join(coerce_message_text(item) for item in content)
+    if hasattr(content, "content") and not isinstance(content, Mapping):
+        return coerce_message_text(content.content)
+    text_val = getattr(content, "text", None)
+    if callable(text_val):
+        try:
+            res = text_val()
+            if res:
+                return coerce_message_text(res)
+        except Exception:
+            pass
+    elif text_val is not None:
+        return coerce_message_text(text_val)
     if isinstance(content, Mapping):
         for key in ("text", "output_text"):
             if key in content:
@@ -32,7 +44,4 @@ def coerce_message_text(content: Any) -> str:
         if "value" in content and len(content) <= 3:
             return coerce_message_text(content["value"])
         return json.dumps(content, ensure_ascii=False, default=str)
-    text_value = getattr(content, "text", None)
-    if text_value is not None:
-        return coerce_message_text(text_value)
     return str(content)

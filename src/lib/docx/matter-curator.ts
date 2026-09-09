@@ -178,6 +178,32 @@ export function calculateStrategicTier(
 }
 
 /**
+ * Resolves directory and practice-specific maximum matter allowances.
+ * Chambers allows up to 30 matters in Real Estate and Dispute Resolution/Litigation.
+ * Most other practices follow a 20-matter ceiling (e.g. 13 pub / 7 conf).
+ */
+export function getDirectoryPracticeAllowance(
+  directory: string = '',
+  practiceArea: string = ''
+): { maxTotal: number; maxPub: number; maxConf: number } {
+  const p = (practiceArea || '').toLowerCase();
+  const d = (directory || '').toLowerCase();
+  const isChambers = !d.includes('500') && !d.includes('legal');
+
+  if (
+    isChambers &&
+    (p.includes('real estate') ||
+      p.includes('inmobiliario') ||
+      p.includes('dispute') ||
+      p.includes('litig') ||
+      p.includes('arbitr'))
+  ) {
+    return { maxTotal: 30, maxPub: 20, maxConf: 10 };
+  }
+  return { maxTotal: 20, maxPub: 13, maxConf: 7 };
+}
+
+/**
  * Curates and sorts matters for Chambers & Legal 500 export.
  */
 export function curateMatters(
@@ -186,19 +212,37 @@ export function curateMatters(
   chambersData: any = {},
   options: { maxTotal?: number; maxPub?: number; maxConf?: number } = {}
 ): CuratedMattersResult {
-  const maxTotal = options.maxTotal || 20;
-  const maxPub = options.maxPub || 13;
-  const maxConf = options.maxConf || 7;
+  const allowance = getDirectoryPracticeAllowance(
+    chambersData?.targetDirectory || chambersData?.directory || '',
+    practiceArea
+  );
+  const maxTotal = options.maxTotal || allowance.maxTotal;
+  const maxPub = options.maxPub || allowance.maxPub;
+  const maxConf = options.maxConf || allowance.maxConf;
   
   // Build evaluation lookup map from strategic audit if available
   const evaluationsMap = new Map<string, any>();
   const evals = chambersData?.analysis?.matter_evaluations 
     || chambersData?.analysis?.audit_letter?.matter_evaluations 
+    || chambersData?.matter_evaluations
     || [];
   if (Array.isArray(evals)) {
     for (const ev of evals) {
       if (ev.client) evaluationsMap.set(String(ev.client).toLowerCase(), ev);
       if (ev.matter_name) evaluationsMap.set(String(ev.matter_name).toLowerCase(), ev);
+    }
+  }
+
+  // Extract explicit audit dilution exclusions
+  const auditExclusions = new Set<string>();
+  const dilutionRisks = chambersData?.analysis?.portfolio_curation?.dilution_risks 
+    || chambersData?.strategic_audit?.portfolio_curation?.dilution_risks 
+    || chambersData?.portfolio_curation?.dilution_risks
+    || [];
+  if (Array.isArray(dilutionRisks)) {
+    for (const d of dilutionRisks) {
+      const match = String(d).match(/^([^:]+):/);
+      if (match) auditExclusions.add(match[1].trim().toLowerCase());
     }
   }
   
@@ -223,7 +267,7 @@ export function curateMatters(
     }
   }
   
-  // Attach scores and sort both arrays by strategic tier descending
+  // Attach scores
   for (const m of rawPub) {
     m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap);
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
@@ -233,15 +277,38 @@ export function curateMatters(
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
   }
 
+  // v26.37: Synchronize Audit exclusions with final submission
+  const isExcluded = (m: any): boolean => {
+    if (m.isExcluded || m.status === 'Excluded' || m.status === 'Pruned') return true;
+    const client = (m.client || m.clientName || m.name || '').toLowerCase();
+    const title = (m.title || '').toLowerCase();
+    for (const exc of auditExclusions) {
+      if (exc && (client.includes(exc) || title.includes(exc))) return true;
+    }
+    const evalMatch = evaluationsMap.get(client) || evaluationsMap.get(title);
+    if (evalMatch && (evalMatch.action === 'exclude' || evalMatch.quality_label === 'Dilution Risk')) {
+      return true;
+    }
+    // Severe dilution penalties (e.g. pure tax, IMSS labor, vehicle VAT)
+    if (typeof m._strategicTier === 'number' && m._strategicTier < 0) return true;
+    return false;
+  };
+
   rawPub.sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
   rawConf.sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
   
-  // Partition into official slate vs surplus
-  const officialPubMatters = rawPub.slice(0, maxPub);
-  const surplusPubMatters = rawPub.slice(maxPub);
-  
-  const officialConfMatters = rawConf.slice(0, maxConf);
-  const surplusConfMatters = rawConf.slice(maxConf);
+  const qualifiedPub = rawPub.filter(m => !isExcluded(m));
+  const excludedPub = rawPub.filter(m => isExcluded(m));
+
+  const qualifiedConf = rawConf.filter(m => !isExcluded(m));
+  const excludedConf = rawConf.filter(m => isExcluded(m));
+
+  // Partition into official slate vs surplus (Reserve / Excluded)
+  const officialPubMatters = qualifiedPub.slice(0, maxPub);
+  const surplusPubMatters = [...qualifiedPub.slice(maxPub), ...excludedPub];
+
+  const officialConfMatters = qualifiedConf.slice(0, maxConf);
+  const surplusConfMatters = [...qualifiedConf.slice(maxConf), ...excludedConf];
   
   return {
     officialPubMatters,
