@@ -6,7 +6,7 @@ import {
   AlignmentType, BorderStyle, Table, TableRow, TableCell,
   WidthType, ShadingType, VerticalAlign, TableLayoutType
 } from 'docx';
-import { buildSubmissionDoc } from './submission-builder';
+import { buildSubmissionDoc, resolveCountryJurisdiction } from './submission-builder';
 
 // Letter page width (8.5") minus 1" margins on both sides, in twentieths
 // of a point. Google Docs requires explicit DXA table/grid/cell widths.
@@ -143,23 +143,16 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // v17.1.6: FIXED PRIORITY — AI-detected country FIRST
-    // analysis.location = AI-detected "Venezuela" (country)
-    // context.jurisdiction = UI dropdown "Latin America" (region)
-    // chambersData.detectedJurisdiction = previously saved (might be stale)
-    const detectedJurisdiction = analysis.location
-      || chambersData.detectedJurisdiction
-      || chambersData.metadata?.jurisdiction 
-      || context.jurisdiction
-      || analysis.practice_area_location;
-    console.log(`[DOCX JURISDICTION] detectedJurisdiction='${detectedJurisdiction}' | analysis.location='${analysis.location}' | chambersData.detectedJurisdiction='${chambersData.detectedJurisdiction}' | context.jurisdiction='${context.jurisdiction}' | guideRegion='${submission.guideRegion}'`);
+    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
+    const practiceArea = submission.practiceArea || 'General Practice';
+
+    // v26.36: Deterministic country jurisdiction resolution (e.g., Mexico instead of generic Latin America)
+    const detectedJurisdiction = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
+    console.log(`[DOCX JURISDICTION] detectedJurisdiction='${detectedJurisdiction}' | analysis.location='${analysis.location}' | guideRegion='${submission.guideRegion}'`);
     // Always inject
     if (detectedJurisdiction) {
       chambersData.detectedJurisdiction = detectedJurisdiction;
     }
-    
-    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
-    const practiceArea = submission.practiceArea || 'General Practice';
 
     const requestedTemplate = searchParams.get('template') || searchParams.get('format');
     const forceMaster = requestedTemplate === 'master_chambers'
@@ -351,30 +344,22 @@ function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, co
     fieldLabel('Re: ', (() => {
       const directory = submission.targetDirectory || 'Chambers & Partners';
       const region = submission.guideRegion || '';
-      // v21.0.2: Priority chain for jurisdiction (Fix #2 from owner feedback)
-      // 1. resolved_jurisdiction from pipeline context (most accurate — e.g., "Venezuela")
-      // 2. detectedJurisdiction from DOCX template
-      // 3. guideRegion from UI dropdown (may be generic like "Latin America")
-      const resolvedJurisdiction = (submission.chambersData as any)?.strategic_context?.resolved_jurisdiction || '';
-      const detectedJurisdiction = (submission.chambersData as any)?.detectedJurisdiction || '';
-      const jurisdiction = resolvedJurisdiction || detectedJurisdiction || '';
+      // v26.36: Resolve country jurisdiction deterministically (e.g. Mexico)
+      const jurisdiction = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
       const practice = practiceArea || '';
       
-      // Build hierarchy: Directory (Editorial) · Jurisdiction · Practice Area
-      // v21.0.2: If we have a specific jurisdiction, DON'T show the generic region
-      // Owner feedback: "Dice Latin America pero debería decir Venezuela"
-      const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america'];
-      const regionIsGeneric = genericRegions.includes(region.toLowerCase().trim());
-      
+      // Build hierarchy: Directory (Editorial) · Latin America (Chambers Guide) · Jurisdiction · Practice Area
       const parts: string[] = [`${directory} (Editorial)`];
-      if (jurisdiction) {
-        parts.push(`${jurisdiction} (Jurisdiction)`);
-        // Only show region separately if it's NOT generic AND different from jurisdiction
-        if (region && !regionIsGeneric && region.toLowerCase() !== jurisdiction.toLowerCase()) {
+      if (region && region.toLowerCase().includes('latin')) {
+        parts.push('Latin America (Chambers Guide)');
+      } else if (region && region.toLowerCase() !== jurisdiction.toLowerCase()) {
+        const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america'];
+        if (!genericRegions.includes(region.toLowerCase().trim())) {
           parts.push(`${region} (Region)`);
         }
-      } else if (region) {
-        parts.push(`${region} (Region/Jurisdiction)`);
+      }
+      if (jurisdiction) {
+        parts.push(`${jurisdiction} (Jurisdiction)`);
       }
       if (practice) parts.push(`${practice} (Practice Area)`);
       return parts.join(' · ');

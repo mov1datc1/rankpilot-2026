@@ -78,14 +78,40 @@ export async function POST(request: NextRequest) {
 
     if (result.success && result.optimized_text) {
       // 1. Update in prisma Matter table if matterId exists
-      if (matterId) {
-        await prisma.matter.update({
-          where: { id: matterId },
-          data: {
-            optimizedText: result.optimized_text,
-            status: 'Approved'
-          }
-        });
+      if (matterId && matterId.length > 20) {
+        try {
+          await prisma.matter.update({
+            where: { id: matterId },
+            data: {
+              optimizedText: result.optimized_text,
+              status: 'Approved'
+            }
+          });
+        } catch (dbErr) {
+          // Ignore id mismatch
+        }
+      }
+
+      // Also update by client name in submission
+      const clientLookup = (targetMatter.client || targetMatter.name || '').trim();
+      if (clientLookup) {
+        try {
+          await prisma.matter.updateMany({
+            where: {
+              submissionId: submission.id,
+              OR: [
+                { client: { equals: clientLookup, mode: 'insensitive' } },
+                { name: { equals: clientLookup, mode: 'insensitive' } }
+              ]
+            },
+            data: {
+              optimizedText: result.optimized_text,
+              status: 'Approved'
+            }
+          });
+        } catch (dbErr2) {
+          // Ignore
+        }
       }
 
       // 2. Update inside submission.chambersData.matters array

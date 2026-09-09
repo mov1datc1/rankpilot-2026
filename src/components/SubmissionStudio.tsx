@@ -330,7 +330,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
 
     // 2. Optimize matters in concurrent batches of 3
     const BATCH_SIZE = 3;
-    let latestMatters = [...matters];
+    const optimizedMap: Record<string, string> = {};
     for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
       const batch = targetList.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(async (m, bIdx) => {
@@ -351,23 +351,11 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
           });
           const data = await res.json();
           if (data.success && data.optimized_text) {
-            setMatters(prev => {
-              const updated = prev.map((item) => {
-                const isMatch = (item.id && m.id && item.id === m.id)
-                  || (m.client && item.client && item.client.trim().toLowerCase() === m.client.trim().toLowerCase())
-                  || (m.title && item.title && item.title.trim().toLowerCase() === m.title.trim().toLowerCase());
-                if (isMatch) {
-                  return {
-                    ...item,
-                    optimizedText: data.optimized_text,
-                    optimized_text: data.optimized_text
-                  };
-                }
-                return item;
-              });
-              latestMatters = updated;
-              return updated;
-            });
+            const optText = data.optimized_text;
+            if (m.id) optimizedMap[m.id] = optText;
+            if (m.client) optimizedMap[`client:${m.client.trim().toLowerCase()}`] = optText;
+            if (m.title) optimizedMap[`title:${m.title.trim().toLowerCase()}`] = optText;
+            optimizedMap[`idx:${actualIdx}`] = optText;
           }
         } catch (mErr) {
           console.warn(`[Global Optimization] Matter ${actualIdx} error:`, mErr);
@@ -381,6 +369,27 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
         }
       }));
     }
+
+    // Merge all optimized matters deterministically without race conditions
+    const latestMatters = matters.map((item, idx) => {
+      const clientKey = item.client ? `client:${item.client.trim().toLowerCase()}` : '';
+      const titleKey = item.title ? `title:${item.title.trim().toLowerCase()}` : '';
+      const optText = (item.id && optimizedMap[item.id])
+        || (clientKey && optimizedMap[clientKey])
+        || (titleKey && optimizedMap[titleKey])
+        || optimizedMap[`idx:${idx}`]
+        || item.optimizedText
+        || item.optimized_text;
+      if (optText) {
+        return {
+          ...item,
+          optimizedText: optText,
+          optimized_text: optText
+        };
+      }
+      return item;
+    });
+    setMatters(latestMatters);
 
     // 3. Finalize & Synthesize Strategic Audit Report + Judge SOL
     setOptimizeAllProgress({
