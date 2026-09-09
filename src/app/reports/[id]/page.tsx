@@ -7,6 +7,7 @@ import PrintButton from "@/components/PrintButton";
 import SupplementalUpload from "./SupplementalUpload";
 import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation";
 import SubmissionStudio from "@/components/SubmissionStudio";
+import { resolveCountryJurisdiction, sanitizeJurisdictionText } from "@/lib/jurisdiction";
 
 
 export default async function ReportDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +42,10 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const letter = analysis.audit_letter || {};
   const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || submission.practiceArea || 'The Firm';
 
+  // v26.37: Precise country-level jurisdiction resolution (e.g. Mexico instead of Latin America)
+  const resolvedJurisdiction = resolveCountryJurisdiction(firmName, submission.practiceArea, chambersData, submission);
+  chambersData.detectedJurisdiction = resolvedJurisdiction;
+
   // Editorial Reasoning Engine data
   const competitiveIdentity = chambersData.competitive_identity || {};
   const editorialConfidence = chambersData.editorial_confidence || {};
@@ -61,30 +66,71 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
   const detectedTier = context.starting_position ? String(context.starting_position) : "Not classified";
   const target = context.target_realistic ? String(context.target_realistic) : "Target pending";
 
-  // Editorial Intelligence metrics
-  const identityStatement = competitiveIdentity.identity_statement || `${firmName} - ${submission.practiceArea || 'Practice'} Market Leader`;
+  // Editorial Intelligence metrics (with jurisdiction harmonization)
+  const rawIdentityStatement = competitiveIdentity.identity_statement || `${firmName} - ${submission.practiceArea || 'Practice'} Market Leader`;
+  const identityStatement = sanitizeJurisdictionText(rawIdentityStatement, resolvedJurisdiction);
   const identityCoherence = String(competitiveIdentity.identity_coherence || 'coherent').toLowerCase();
   const confidence = String(editorialConfidence.overall_confidence || 'High');
   const passesDefensibility = editorialConfidence.passes_defensibility_test !== false;
-  const thesis = narrativeArch.thesis_statement || '';
+  const thesis = sanitizeJurisdictionText(narrativeArch.thesis_statement || '', resolvedJurisdiction);
   const heroMatter = narrativeArch.hero_matter || '';
   const bandAlignment = comparativeAnalysis.band_alignment || '';
 
-  // Safely parse arrays that AI might hallucinate as strings
-  const realityCheck = Array.isArray(letter.the_reality_check) 
+  // Safely parse arrays that AI might hallucinate as strings and sanitize
+  const rawRealityCheck = Array.isArray(letter.the_reality_check) 
     ? letter.the_reality_check 
     : (typeof letter.the_reality_check === 'string' ? [letter.the_reality_check] : []);
+  const realityCheck = rawRealityCheck.map((item: any) => {
+    if (typeof item === 'string') return sanitizeJurisdictionText(item, resolvedJurisdiction);
+    if (item && typeof item === 'object') {
+      return {
+        ...item,
+        defect: sanitizeJurisdictionText(item.defect, resolvedJurisdiction),
+        issue: sanitizeJurisdictionText(item.issue, resolvedJurisdiction),
+        description: sanitizeJurisdictionText(item.description, resolvedJurisdiction)
+      };
+    }
+    return item;
+  });
     
-  const pathToDominance = Array.isArray(letter.the_path_to_dominance)
+  const rawPathToDominance = Array.isArray(letter.the_path_to_dominance)
     ? letter.the_path_to_dominance
     : [];
+  const pathToDominance = rawPathToDominance.map((step: any) => {
+    if (typeof step === 'string') return sanitizeJurisdictionText(step, resolvedJurisdiction);
+    if (step && typeof step === 'object') {
+      return {
+        ...step,
+        action: sanitizeJurisdictionText(step.action, resolvedJurisdiction),
+        why: sanitizeJurisdictionText(step.why, resolvedJurisdiction),
+        deliverable: sanitizeJurisdictionText(step.deliverable, resolvedJurisdiction)
+      };
+    }
+    return step;
+  });
 
   const recommendedRewrites = Array.isArray(letter.recommended_rewrites)
     ? letter.recommended_rewrites
     : [];
 
-  const competitiveContext = letter.competitive_context ? String(letter.competitive_context) : '';
-  const positioningText = letter.competitive_positioning_text ? String(letter.competitive_positioning_text) : '';
+  const stateOfPlay = sanitizeJurisdictionText(letter.the_state_of_play ? String(letter.the_state_of_play) : '', resolvedJurisdiction);
+  const rawUnfairAdvantage = letter.the_unfair_advantage;
+  const unfairAdvantage = Array.isArray(rawUnfairAdvantage)
+    ? rawUnfairAdvantage.map((adv: any) => {
+        if (typeof adv === 'string') return sanitizeJurisdictionText(adv, resolvedJurisdiction);
+        if (adv && typeof adv === 'object') {
+          return {
+            ...adv,
+            text: sanitizeJurisdictionText(adv.text, resolvedJurisdiction),
+            description: sanitizeJurisdictionText(adv.description, resolvedJurisdiction)
+          };
+        }
+        return adv;
+      })
+    : sanitizeJurisdictionText(rawUnfairAdvantage ? String(rawUnfairAdvantage) : '', resolvedJurisdiction);
+
+  const competitiveContext = sanitizeJurisdictionText(letter.competitive_context ? String(letter.competitive_context) : '', resolvedJurisdiction);
+  const positioningText = sanitizeJurisdictionText(letter.competitive_positioning_text ? String(letter.competitive_positioning_text) : '', resolvedJurisdiction);
   const portfolioCuration = (letter as any)?.portfolio_curation || (analysis as any)?.portfolio_curation || (chambersData as any)?.analysis?.portfolio_curation || (chambersData as any)?.portfolio_curation || null;
   const scoreRationale = (analysis as any)?.score_rationale || (letter as any)?.score_rationale || (chambersData as any)?.analysis?.score_rationale || '';
   
@@ -152,7 +198,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                   </span>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
-                  {submission.practiceArea} · {submission.guideRegion || 'Jurisdicción General'}
+                  {submission.practiceArea} · {resolvedJurisdiction}{submission.guideRegion && submission.guideRegion.toLowerCase() !== resolvedJurisdiction.toLowerCase() ? ` (${submission.guideRegion})` : ''}
                 </p>
               </div>
             </div>
@@ -218,8 +264,17 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
           <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Jurisdiction</span>
-            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.guideRegion || 'N/A'}</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{resolvedJurisdiction}</span>
           </div>
+          {submission.guideRegion && submission.guideRegion.toLowerCase() !== resolvedJurisdiction.toLowerCase() && (
+            <>
+              <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Guide / Region</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e1b4b' }}>{submission.guideRegion}</span>
+              </div>
+            </>
+          )}
           <div style={{ width: '1px', height: '20px', background: '#c7d2fe' }}></div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Band</span>
@@ -429,11 +484,11 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                 <p style={{ margin: 0 }}><strong>Re:</strong> {(() => {
                   const directory = submission.targetDirectory || 'Chambers & Partners';
                   const region = submission.guideRegion || '';
-                  const jurisdiction = chambersData?.detectedJurisdiction || '';
+                  const jurisdiction = resolvedJurisdiction;
                   const practice = submission.practiceArea || '';
                   const parts: string[] = [`${directory} (Editorial)`];
-                  if (region) parts.push(`${region} (Region)`);
-                  if (jurisdiction && jurisdiction !== region) parts.push(`${jurisdiction} (Jurisdiction)`);
+                  if (region && region.toLowerCase() !== jurisdiction.toLowerCase()) parts.push(`${region} (Chambers Guide)`);
+                  if (jurisdiction) parts.push(`${jurisdiction} (Jurisdiction)`);
                   if (practice) parts.push(`${practice} (Practice Area)`);
                   return parts.join(' · ');
                 })()}</p>
@@ -488,7 +543,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '1rem' }}>THE STATE OF PLAY</h3>
                 <div style={{ whiteSpace: 'pre-line' }}>
-                  <p style={{ margin: 0 }}>{letter.the_state_of_play ? String(letter.the_state_of_play) : "Pending."}</p>
+                  <p style={{ margin: 0 }}>{stateOfPlay || "Pending."}</p>
                 </div>
               </div>
 
@@ -496,9 +551,9 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
               <div style={{ background: '#eef2ff', borderRadius: '8px', padding: '1.5rem', border: '1px solid #c7d2fe' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A237E', marginBottom: '1rem' }}>THE UNFAIR ADVANTAGE <span style={{ fontWeight: 400, color: '#6366f1' }}>(THE WEAPON)</span></h3>
                 <div>
-                  {Array.isArray(letter.the_unfair_advantage) ? (
+                  {Array.isArray(unfairAdvantage) ? (
                     <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                      {letter.the_unfair_advantage.map((adv: any, i: number) => (
+                      {unfairAdvantage.map((adv: any, i: number) => (
                         <li key={i} style={{ color: '#1e293b', lineHeight: 1.6 }}>
                           {typeof adv === 'object' ? (adv?.description || adv?.text || JSON.stringify(adv)) : String(adv)}
                         </li>
@@ -506,7 +561,7 @@ export default async function ReportDetail({ params }: { params: Promise<{ id: s
                     </ul>
                   ) : (
                     <p style={{ margin: 0, color: '#1e293b', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
-                      {letter.the_unfair_advantage ? String(letter.the_unfair_advantage) : "Pending."}
+                      {unfairAdvantage ? String(unfairAdvantage) : "Pending."}
                     </p>
                   )}
                 </div>

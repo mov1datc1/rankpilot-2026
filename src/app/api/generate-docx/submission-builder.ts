@@ -4,6 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters } from '@/lib/docx/matter-curator';
+import { resolveCountryJurisdiction } from '@/lib/jurisdiction';
 
 const YELLOW = 'FFFFCC';
 const FONT = 'Times New Roman';
@@ -351,51 +352,7 @@ function validateConfidentiality(matters: any[]): { pubMatters: any[], confMatte
   return { pubMatters, confMatters };
 }
 
-export function resolveCountryJurisdiction(
-  firmName?: string,
-  practiceArea?: string,
-  chambersData?: any,
-  submission?: any
-): string {
-  const firmLower = (firmName || chambersData?.firm_name || chambersData?.firmName || '').toLowerCase();
-  const rawLoc = (chambersData?.analysis?.location || chambersData?.detectedJurisdiction || submission?.guideRegion || chambersData?.jurisdiction || '').trim();
-  const rawLocLower = rawLoc.toLowerCase();
-
-  // 1. Explicit firm-to-country mapping
-  if (firmLower.includes('ramos') || firmLower.includes('castillo') || firmLower.includes('deforest')) {
-    return 'Mexico';
-  }
-  if (firmLower.includes('araque') || firmLower.includes('reyna')) {
-    return 'Venezuela';
-  }
-
-  // 2. If already a country (and not a generic continental region)
-  const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america', 'caribbean'];
-  if (rawLoc && !genericRegions.includes(rawLocLower)) {
-    return rawLoc;
-  }
-
-  // 3. Inspect matter descriptions and client details
-  const matters = submission?.matters || chambersData?.matters || [];
-  let mexicoScore = 0;
-  let vzlaScore = 0;
-  for (const m of matters) {
-    const text = JSON.stringify(m).toLowerCase();
-    if (text.includes('mxn') || text.includes('jalisco') || text.includes('guadalajara') || text.includes('durango') || text.includes('mexico') || text.includes('guanajuato') || text.includes('amparo')) {
-      mexicoScore++;
-    }
-    if (text.includes('sudeban') || text.includes('caracas') || text.includes('venezuela') || text.includes('veb') || text.includes('bcv')) {
-      vzlaScore++;
-    }
-  }
-
-  if (mexicoScore > vzlaScore && mexicoScore > 0) return 'Mexico';
-  if (vzlaScore > mexicoScore && vzlaScore > 0) return 'Venezuela';
-
-  if (rawLocLower.includes('latin')) return 'Mexico';
-
-  return rawLoc || 'Mexico';
-}
+export { resolveCountryJurisdiction };
 
 function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
