@@ -1159,7 +1159,9 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                   {showCoreOnly ? 'Mostrando Selección Principal de 20 Asuntos' : `Mostrando los ${matters.length} Asuntos del Documento`}
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>
-                  Chambers y Legal 500 recomiendan un límite de 20 asuntos para maximizar el impacto de los investigadores.
+                  {paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
+                    ? 'RankPilot recomienda priorizar un núcleo curado de 20 asuntos (aunque Chambers permite hasta 30 en esta práctica) para concentrar el impacto evaluativo.'
+                    : 'Chambers y Legal 500 recomiendan una selección curada de hasta 20 asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil.'}
                 </p>
               </div>
 
