@@ -166,6 +166,11 @@ function sanitizeMatterSummary(rawText: string): string {
   s = s.replace(/rewriting the legal history of an operating development/gi, 'retroactively revoking vested development rights');
   s = s.replace(/rewriting the legal history/gi, 'retroactively altering established regulatory status');
 
+  // Strip leaked LLM reasoning blocks or JSON artifacts
+  s = s.replace(/\{"id":\s*"rs_[^"]*"[^}]*\}\s*/gi, '');
+  s = s.replace(/\{"id":\s*"[^"]*",\s*"summary":\s*\[\],\s*"type":\s*"reasoning"[\s\S]*?\}\s*/gi, '');
+  s = s.replace(/\{[^{}]*"type":\s*"reasoning"[^{}]*\}\s*/gi, '');
+
   // Clean double spaces or leading/trailing whitespace
   s = s.replace(/[ \t]{2,}/g, ' ');
 
@@ -375,12 +380,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ? submission.matters
     : (chambersData.matters || []);
   
-  // v26.30: Strategic Curation & Flagship Sorting (Chambers 20-Matter Ceiling Alignment)
-  const curation = curateMatters(rawMattersList, practiceArea, chambersData, {
-    maxTotal: 20,
-    maxPub: 13,
-    maxConf: 7,
-  });
+  // v26.38: Strategic Curation & Flagship Sorting (Practice Allowance Engine: up to 30 for Real Estate)
+  const curation = curateMatters(rawMattersList, practiceArea, chambersData);
 
   const pubMatters = exportMode === 'all'
     ? [...curation.officialPubMatters, ...curation.surplusPubMatters]

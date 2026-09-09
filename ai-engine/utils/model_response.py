@@ -34,6 +34,14 @@ def coerce_message_text(content: Any) -> str:
     elif text_val is not None:
         return coerce_message_text(text_val)
     if isinstance(content, Mapping):
+        # Filter out reasoning/thought blocks completely (e.g. OpenAI/OpenRouter reasoning tokens)
+        block_type = str(content.get("type", "")).lower()
+        if (
+            block_type in {"reasoning", "thought", "reasoning_content", "thinking"}
+            or "encrypted_content" in content
+            or str(content.get("id", "")).startswith("rs_")
+        ):
+            return ""
         for key in ("text", "output_text"):
             if key in content:
                 return coerce_message_text(content[key])

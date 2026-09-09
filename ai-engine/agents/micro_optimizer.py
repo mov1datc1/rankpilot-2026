@@ -19,7 +19,8 @@ from utils.language_guard import sanitize_submission_voice
 
 
 def get_micro_model():
-    return create_chat_model("standard")
+    # Uses low reasoning effort for 2-3 second execution to prevent HTTP timeouts
+    return create_chat_model("extraction")
 
 
 B10_SYSTEM_PROMPT = """You are the Senior Directory Editor for Chambers and Partners and The Legal 500.

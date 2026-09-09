@@ -94,22 +94,24 @@ export function calculateStrategicTier(
   }
 
   // 2. High-profile landmark anchors (Real Estate flagships from Angela's specification)
-  if (combined.includes('el cielo') || combined.includes('cielo country club')) score += 160;
-  if (combined.includes('duranpark')) score += 140;
-  if (combined.includes('idex') || combined.includes('brasilia')) score += 135;
-  if (combined.includes('diageo')) score += 130;
-  if (combined.includes('san carlos') || combined.includes('edificaciones')) score += 120;
-  if (combined.includes('la primavera')) score += 115;
-  if (combined.includes('inmobiliaria midi') || combined.includes('midi')) score += 110;
-  if (combined.includes('holcim')) score += 105;
-  if (combined.includes('ochoa gamboa') || combined.includes('dorina')) score += 95;
-  if (combined.includes('smb promotora') || combined.includes('smb')) score += 90;
+  let isRealEstateAnchor = false;
+  if (combined.includes('el cielo') || combined.includes('cielo country club')) { score += 160; isRealEstateAnchor = true; }
+  if (combined.includes('duranpark')) { score += 140; isRealEstateAnchor = true; }
+  if (combined.includes('idex') || combined.includes('brasilia')) { score += 135; isRealEstateAnchor = true; }
+  if (combined.includes('diageo')) { score += 130; isRealEstateAnchor = true; }
+  if (combined.includes('san carlos') || combined.includes('edificaciones')) { score += 120; isRealEstateAnchor = true; }
+  if (combined.includes('la primavera')) { score += 115; isRealEstateAnchor = true; }
+  if (combined.includes('inmobiliaria midi') || combined.includes('midi')) { score += 110; isRealEstateAnchor = true; }
+  if (combined.includes('holcim')) { score += 105; isRealEstateAnchor = true; }
+  if (combined.includes('ochoa gamboa') || combined.includes('dorina')) { score += 95; isRealEstateAnchor = true; }
+  if (combined.includes('smb promotora') || combined.includes('smb')) { score += 90; isRealEstateAnchor = true; }
+  if (combined.includes('balken')) { score += 85; isRealEstateAnchor = true; }
 
   // Confidential landmark anchors
-  if (combined.includes('villas del colli')) score += 130;
-  if (combined.includes('familia de anda') || combined.includes('de anda')) score += 125;
-  if (combined.includes('hermosillo') || combined.includes('nom-247')) score += 120;
-  if (combined.includes('familia leaño') || combined.includes('leaño')) score += 100;
+  if (combined.includes('villas del colli')) { score += 130; isRealEstateAnchor = true; }
+  if (combined.includes('familia de anda') || combined.includes('de anda')) { score += 125; isRealEstateAnchor = true; }
+  if (combined.includes('hermosillo') || combined.includes('nom-247')) { score += 120; isRealEstateAnchor = true; }
+  if (combined.includes('familia leaño') || combined.includes('leaño')) { score += 100; isRealEstateAnchor = true; }
 
   // 3. Scale / deal value impact (after normalized extraction)
   const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
@@ -127,50 +129,91 @@ export function calculateStrategicTier(
   // 5. Practice dilution penalties (off-category cases in Real Estate)
   const safePractice = typeof practiceArea === 'string' ? practiceArea : '';
   const isRealEstate = safePractice.toLowerCase().includes('real estate') || safePractice.toLowerCase().includes('inmobiliario');
-  if (isRealEstate) {
-    // A. Public procurement / infrastructure / lighting concession (e.g. Grupo R, COMINVI)
-    if (combined.includes('grupo r') || combined.includes('concesión') || combined.includes('concesion') || combined.includes('alumbrado público')) {
-      score -= 130;
-    }
-    if (combined.includes('cominvi') || combined.includes('isseg') || combined.includes('licitación') || combined.includes('licitacion')) {
-      score -= 120;
-    }
-
-    // B. Pure roadworks / general construction tax credits
-    if (combined.includes('elar constructora') || combined.includes('operadora de vialidades')) {
-      score -= 110;
-    }
-
-    // C. Logistics, freight & vehicle circulation (Paquetexpress, Baruma, Transportes Potosinos)
-    if (combined.includes('paquetexpress') || combined.includes('baruma') || combined.includes('transportes ejecutivos') || combined.includes('transportes potosinos')) {
-      score -= 110;
+  if (isRealEstate && !isRealEstateAnchor) {
+    // A. Public procurement / infrastructure / lighting concession / underground mining
+    if (
+      combined.includes('grupo r') ||
+      combined.includes('concesión') ||
+      combined.includes('concesion') ||
+      combined.includes('alumbrado público') ||
+      combined.includes('cominvi') ||
+      combined.includes('isseg') ||
+      combined.includes('licitación') ||
+      combined.includes('licitacion') ||
+      combined.includes('mining')
+    ) {
+      score -= 150;
     }
 
-    // D. Pure tax / SAT / ISR / IVA disputes without real property element
-    const taxRegex = /\b(sat|iva|crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales)\b/i;
-    if (taxRegex.test(combined) && !combined.includes('predial') && !combined.includes('property tax') && !combined.includes('terreno') && !combined.includes('expropiación')) {
-      score -= 110;
+    // B. Pure roadworks / highway concessions / paving
+    if (
+      combined.includes('elar constructora') ||
+      combined.includes('operadora de vialidades') ||
+      combined.includes('vialidades en los altos')
+    ) {
+      score -= 150;
     }
 
-    // E. Medical device sales tax credit (Integración de Tecnología Médica)
-    if (combined.includes('tecnología médica') || combined.includes('tecnologia medica') || combined.includes('medical devices')) {
-      score -= 110;
+    // C. Logistics, freight, trucking, vehicle circulation & SICT fines
+    const transportRegex = /\b(transportation of goods|transportes|paquetexpress|baruma|logmine|freight|trucking|logistics|logística|logistica|sict|traffic restriction|circulación|fletes)\b/i;
+    if (transportRegex.test(combined) && !combined.includes('terreno') && !combined.includes('desarrollo inmobiliario')) {
+      score -= 150;
     }
 
-    // F. Labor & IMSS / Infonavit (Bemis Packaging)
-    const laborRegex = /\b(imss|infonavit|cuotas obrero|seguridad social)\b/i;
+    // D. Pure tax / SAT / fiscal disputes / tax credits (without real property/predial/expropriation nexus)
+    const taxRegex = /\b(sat|iva|crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales|tax credit|tax credits|fiscal process|fiscal dispute|fiscal disputes|tax administration)\b/i;
+    if (taxRegex.test(combined) && !combined.includes('predial') && !combined.includes('property tax') && !combined.includes('terreno') && !combined.includes('expropiación') && !combined.includes('expropriation')) {
+      score -= 150;
+    }
+
+    // E. Medical device sales & hospital supplies
+    if (
+      combined.includes('tecnología médica') ||
+      combined.includes('tecnologia medica') ||
+      combined.includes('medical devices') ||
+      combined.includes('medical-hospital')
+    ) {
+      score -= 150;
+    }
+
+    // F. Labor, IMSS, Infonavit & Ministry of Labor fines
+    const laborRegex = /\b(imss|infonavit|cuotas obrero|seguridad social|ministry of labor|stps|inspections by the ministry of labor)\b/i;
     if (laborRegex.test(combined)) {
-      score -= 90;
+      score -= 150;
     }
 
-    // G. Trivial / Minor property tax disputes (Monsanto 2M)
-    if (combined.includes('monsanto')) {
-      score -= 60;
+    // G. Packaging manufacture & industrial materials
+    if (
+      combined.includes('manufacture of packaging') ||
+      combined.includes('packaging solutions') ||
+      combined.includes('bemis packaging')
+    ) {
+      score -= 150;
     }
 
-    // H. Empty or deficient narrative
+    // H. Automotive dealership & vehicle distribution
+    if (
+      combined.includes('motormexa') ||
+      combined.includes('automotive dealership') ||
+      combined.includes('distribuidora de autos') ||
+      combined.includes('dealership')
+    ) {
+      score -= 150;
+    }
+
+    // I. Agricultural berry farming & seeds without real estate anchor
+    if (
+      combined.includes('hortifrut') ||
+      combined.includes('production and marketing of berries') ||
+      combined.includes('semillas agroproductos') ||
+      combined.includes('monsanto')
+    ) {
+      score -= 150;
+    }
+
+    // J. Empty or deficient narrative
     if (combined.includes('devangary')) {
-      score -= 80;
+      score -= 150;
     }
   }
 
