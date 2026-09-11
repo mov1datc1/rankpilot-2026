@@ -136,13 +136,18 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
   
   // Categorize matters into publishable (D), confidential (E), and pruned (surplus) using strategic curation
-  const categorized = React.useMemo(() => {
-    const curation = curateMatters(matters, submission.practiceArea || chambersData.practice_area || '', chambersData, {
+  const curation = React.useMemo(() => {
+    return curateMatters(matters, submission.practiceArea || chambersData.practice_area || '', chambersData, {
       maxTotal: 20,
       maxPub: 13,
       maxConf: 7,
     });
+  }, [matters, submission.practiceArea, chambersData]);
 
+  const coreCount = curation.officialPubMatters.length + curation.officialConfMatters.length;
+  const surplusCount = curation.surplusPubMatters.length + curation.surplusConfMatters.length;
+
+  const categorized = React.useMemo(() => {
     if (showCoreOnly) {
       return {
         pub: curation.officialPubMatters,
@@ -158,7 +163,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
         total: matters.length,
       };
     }
-  }, [matters, showCoreOnly, submission.practiceArea, chambersData]);
+  }, [curation, showCoreOnly, matters.length]);
 
   const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
   const targetMattersCount = matters.length;
@@ -1156,12 +1161,12 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                   </span>
                 </div>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>
-                  {showCoreOnly ? 'Mostrando Selección Principal de 20 Asuntos' : `Mostrando los ${matters.length} Asuntos del Documento`}
+                  {showCoreOnly ? `Mostrando Selección Principal de ${coreCount} Asuntos` : `Mostrando los ${matters.length} Asuntos del Documento`}
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>
                   {paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
-                    ? 'RankPilot recomienda priorizar un núcleo curado de 20 asuntos (aunque Chambers permite hasta 30 en esta práctica) para concentrar el impacto evaluativo.'
-                    : 'Chambers y Legal 500 recomiendan una selección curada de hasta 20 asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil.'}
+                    ? `RankPilot recomienda priorizar un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
+                    : `Chambers y Legal 500 recomiendan una selección curada de hasta ${coreCount} asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil.`}
                 </p>
               </div>
 
@@ -1181,7 +1186,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                     boxShadow: showCoreOnly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
                   }}
                 >
-                  Core 20 (Recomendado)
+                  Core {coreCount} (Recomendado)
                 </button>
                 <button
                   onClick={() => setShowCoreOnly(false)}
@@ -2095,7 +2100,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                           gap: '0.25rem'
                         }}
                       >
-                        {showCoreOnly ? `Ver Excedentes en Reserva (${matters.length - 20})` : 'Filtrar Core 20'}
+                        {showCoreOnly ? `Ver Excedentes en Reserva (${surplusCount})` : `Filtrar Core ${coreCount}`}
                         <ArrowRight size={12} />
                       </button>
                     )}
