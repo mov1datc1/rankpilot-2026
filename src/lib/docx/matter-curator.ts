@@ -93,25 +93,31 @@ export function calculateStrategicTier(
     if (typeof evalData.score === 'number') score += evalData.score * 0.1;
   }
 
-  // 2. High-profile landmark anchors (Real Estate flagships from Angela's specification)
+  // 2. High-profile landmark anchors (Real Estate flagships from Strategic Audit & Angela's specification)
   let isRealEstateAnchor = false;
+  // Publishable 13 Core Anchors
   if (combined.includes('el cielo') || combined.includes('cielo country club')) { score += 160; isRealEstateAnchor = true; }
-  if (combined.includes('duranpark')) { score += 140; isRealEstateAnchor = true; }
-  if (combined.includes('idex') || combined.includes('brasilia')) { score += 135; isRealEstateAnchor = true; }
-  if (combined.includes('diageo')) { score += 130; isRealEstateAnchor = true; }
-  if (combined.includes('san carlos') || combined.includes('edificaciones')) { score += 120; isRealEstateAnchor = true; }
-  if (combined.includes('la primavera')) { score += 115; isRealEstateAnchor = true; }
-  if (combined.includes('inmobiliaria midi') || combined.includes('midi')) { score += 110; isRealEstateAnchor = true; }
-  if (combined.includes('holcim')) { score += 105; isRealEstateAnchor = true; }
-  if (combined.includes('ochoa gamboa') || combined.includes('dorina')) { score += 95; isRealEstateAnchor = true; }
-  if (combined.includes('smb promotora') || combined.includes('smb')) { score += 90; isRealEstateAnchor = true; }
-  if (combined.includes('balken')) { score += 85; isRealEstateAnchor = true; }
+  else if (combined.includes('duranpark')) { score += 140; isRealEstateAnchor = true; }
+  else if (combined.includes('diageo')) { score += 130; isRealEstateAnchor = true; }
+  else if (combined.includes('idex') || combined.includes('brasilia')) { score += 125; isRealEstateAnchor = true; }
+  else if (combined.includes('san carlos') || combined.includes('edificaciones')) { score += 120; isRealEstateAnchor = true; }
+  else if (combined.includes('inmobiliaria midi') || combined.includes('midi')) { score += 115; isRealEstateAnchor = true; }
+  else if (combined.includes('la primavera')) { score += 110; isRealEstateAnchor = true; }
+  else if (combined.includes('holcim')) { score += 105; isRealEstateAnchor = true; }
+  else if (combined.includes('ochoa gamboa') || combined.includes('dorina')) { score += 100; isRealEstateAnchor = true; }
+  else if (combined.includes('smb promotora') || combined.includes('smb')) { score += 95; isRealEstateAnchor = true; }
+  else if (combined.includes('devangary') || combined.includes('conciencia ambiental')) { score += 90; isRealEstateAnchor = true; }
+  else if (combined.includes('vialidades en los altos') || combined.includes('red vía corta') || combined.includes('red via corta') || combined.includes('operadora de vialidades')) { score += 85; isRealEstateAnchor = true; }
+  else if (combined.includes('cominvi')) { score += 80; isRealEstateAnchor = true; }
 
-  // Confidential landmark anchors
-  if (combined.includes('villas del colli')) { score += 130; isRealEstateAnchor = true; }
-  if (combined.includes('familia de anda') || combined.includes('de anda')) { score += 125; isRealEstateAnchor = true; }
-  if (combined.includes('hermosillo') || combined.includes('nom-247')) { score += 120; isRealEstateAnchor = true; }
-  if (combined.includes('familia leaño') || combined.includes('leaño')) { score += 100; isRealEstateAnchor = true; }
+  // Confidential 7 Core Anchors
+  else if (combined.includes('familia de anda') || combined.includes('de anda')) { score += 140; isRealEstateAnchor = true; }
+  else if (combined.includes('villas del colli')) { score += 135; isRealEstateAnchor = true; }
+  else if (combined.includes('hermosillo') || combined.includes('nom-247')) { score += 130; isRealEstateAnchor = true; }
+  else if (combined.includes('familia leaño') || combined.includes('leaño')) { score += 120; isRealEstateAnchor = true; }
+  else if (combined.includes('sict') || (combined.includes('transportation of goods') && combined.includes('guadalajara') && !combined.includes('potosinos'))) { score += 110; isRealEstateAnchor = true; }
+  else if (combined.includes('gas pipeline') || combined.includes('pipeline') || combined.includes('confidential matter 13') || (matter.name === 'Confidential Matter 13')) { score += 105; isRealEstateAnchor = true; }
+  else if (combined.includes('monsanto') || combined.includes('semillas agroproductos')) { score += 100; isRealEstateAnchor = true; }
 
   // 3. Scale / deal value impact (after normalized extraction)
   const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
@@ -136,7 +142,6 @@ export function calculateStrategicTier(
       combined.includes('concesión') ||
       combined.includes('concesion') ||
       combined.includes('alumbrado público') ||
-      combined.includes('cominvi') ||
       combined.includes('isseg') ||
       combined.includes('licitación') ||
       combined.includes('licitacion') ||
@@ -204,15 +209,8 @@ export function calculateStrategicTier(
     // I. Agricultural berry farming & seeds without real estate anchor
     if (
       combined.includes('hortifrut') ||
-      combined.includes('production and marketing of berries') ||
-      combined.includes('semillas agroproductos') ||
-      combined.includes('monsanto')
+      combined.includes('production and marketing of berries')
     ) {
-      score -= 150;
-    }
-
-    // J. Empty or deficient narrative
-    if (combined.includes('devangary')) {
       score -= 150;
     }
   }
@@ -222,27 +220,12 @@ export function calculateStrategicTier(
 
 /**
  * Resolves directory and practice-specific maximum matter allowances.
- * Chambers allows up to 30 matters in Real Estate and Dispute Resolution/Litigation.
- * Most other practices follow a 20-matter ceiling (e.g. 13 pub / 7 conf).
+ * Chambers standard official filing portfolio is 20 matters (13 pub / 7 conf).
  */
 export function getDirectoryPracticeAllowance(
   directory: string = '',
   practiceArea: string = ''
 ): { maxTotal: number; maxPub: number; maxConf: number } {
-  const p = (practiceArea || '').toLowerCase();
-  const d = (directory || '').toLowerCase();
-  const isChambers = !d.includes('500') && !d.includes('legal');
-
-  if (
-    isChambers &&
-    (p.includes('real estate') ||
-      p.includes('inmobiliario') ||
-      p.includes('dispute') ||
-      p.includes('litig') ||
-      p.includes('arbitr'))
-  ) {
-    return { maxTotal: 30, maxPub: 20, maxConf: 10 };
-  }
   return { maxTotal: 20, maxPub: 13, maxConf: 7 };
 }
 

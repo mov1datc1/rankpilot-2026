@@ -166,6 +166,71 @@ function sanitizeMatterSummary(rawText: string): string {
   s = s.replace(/rewriting the legal history of an operating development/gi, 'retroactively revoking vested development rights');
   s = s.replace(/rewriting the legal history/gi, 'retroactively altering established regulatory status');
 
+  // Angela 10-Sept: Transversal Rule & Merit Attribution to Lawyers/Team
+  // 1. Diageo: Remove promotional 'marquee' and attribute capability to team
+  s = s.replace(/\bmarquee global corporate client\b/gi, 'global corporate client');
+  s = s.replace(/Their intervention preserved business continuity for a marquee global corporate client, proving the practice's ability to shield critical industrial operations from unlawful municipal interference\.?/gi,
+    'The team acted with immediate strategic coordination to secure precautionary relief, preserving business continuity for a global corporate client and demonstrating the practice\'s proven ability to shield critical industrial facilities from unlawful municipal interference.');
+  s = s.replace(/Their intervention preserved business continuity for a global corporate client, proving the practice's ability to shield critical industrial operations from unlawful municipal interference\.?/gi,
+    'The team acted with immediate strategic coordination to secure precautionary relief, preserving business continuity for a global corporate client and demonstrating the practice\'s proven ability to shield critical industrial facilities from unlawful municipal interference.');
+
+  // 2. La Primavera: Active team transformation & cadastral reconstruction (merit to lawyers, not evidence)
+  s = s.replace(/The ongoing matter has converted an apparent fait accompli into an enforceable claim for restitution of the land or full compensation, preserving a route to recover the client’s asset or its economic equivalent\.?/gi,
+    'The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation, preserving a route to recover the client’s asset or its complete economic equivalent.');
+  s = s.replace(/The ongoing matter has converted an apparent fait accompli[^\.]*\./gi,
+    'The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation.');
+  s = s.replace(/It also illustrates the capacity of precise property and cadastral evidence to challenge facially regular public action\.?/gi,
+    'The team identified a crucial cadastral inconsistency that had gone unnoticed, forensically reconstructed historical property and boundary records, and converted that evidence into a viable strategy to recover the land or obtain full financial compensation.');
+
+  // 3. Holcim: Team argumentative strategy kept plants running
+  s = s.replace(/The matter illustrates the use of constitutional and administrative-law protections to safeguard licensed infrastructure against irregular public-law measures with potentially business-critical consequences\.?/gi,
+    'The team’s argumentative strategy secured crucial suspensions, neutralizing the operational shutdown and keeping three manufacturing plants running without interruption.');
+  s = s.replace(/The matter illustrates the use of constitutional and administrative-law protections[^\.]*\./gi,
+    'The team’s argumentative strategy secured crucial suspensions, neutralizing the operational shutdown and keeping three manufacturing plants running without interruption.');
+
+  // 4. Rosa Dorina: Team questioned technical cartography and defended private title
+  s = s.replace(/At the evidentiary stage, the matter is positioned to protect the client’s landholding and establish that administrative cartography cannot operate as an unreviewable mechanism for the absorption of private title\.?/gi,
+    'The team questioned seemingly objective technical cartography, reconstructed historical riverbed, federal zone, and registry boundaries, and successfully opened a viable legal pathway to defend private ownership or secure fair market compensation.');
+  s = s.replace(/establish that administrative cartography cannot operate as an unreviewable mechanism for the absorption of private title\.?/gi,
+    'The team questioned seemingly objective technical cartography, reconstructed historical riverbed, federal zone, and registry boundaries, and successfully opened a viable legal pathway to defend private ownership or secure fair market compensation.');
+
+  // 5. SMB Promotora: Urgent amparo under extreme time pressure overcoming admissibility doubts
+  s = s.replace(/The matter illustrates the commercial importance of prompt constitutional litigation in preventing municipal collection measures from causing portfolio-wide consequences disproportionate to the amount in dispute\.?/gi,
+    'The team identified and executed an urgent constitutional strategy under extreme time pressure, successfully overcoming threshold admissibility doubts before municipal collection measures could compromise the client’s development portfolio.');
+  s = s.replace(/The matter illustrates the commercial importance of prompt constitutional litigation[^\.]*\./gi,
+    'The team identified and executed an urgent constitutional strategy under extreme time pressure, successfully overcoming threshold admissibility doubts before municipal collection measures could compromise the client’s development portfolio.');
+
+  // 6. Familia De Anda: Reopening property analysis from first principles
+  s = s.replace(/It also illustrates the continuing relevance of historic ownership and matrimonial-property structures in assessing the reversibility of state action\.?/gi,
+    'By reopening the property analysis from first principles, the team uncovered a previously overlooked matrimonial property regime, establishing legal standing and reviving a recovery claim that appeared lost.');
+  s = s.replace(/illustrates the continuing relevance of historic ownership and matrimonial-property structures[^\.]*\./gi,
+    'By reopening the property analysis from first principles, the team uncovered a previously overlooked matrimonial property regime, establishing legal standing and reviving a recovery claim that appeared lost.');
+
+  // 7. ADM Hermosillo: Challenged validity of regulatory framework itself
+  s = s.replace(/Rather than limiting its response to transaction-by-transaction compliance, the firm pursued a constitutional strategy directed at the regulatory source of the burden\.?/gi,
+    'Rather than addressing the requirements piecemeal, the team challenged the validity of the regulatory framework itself.');
+  s = s.replace(/directed at the regulatory source of the burden/gi, 'challenging the validity of the regulatory framework itself');
+  s = s.replace(/regulatory source of the burden/gi, 'validity of the regulatory framework itself');
+
+  // 8. San Carlos: Active interim-relief strategy
+  s = s.replace(/It illustrates the importance of effective interim-relief strategy in preserving development assets against litigation-driven disruption\.?/gi,
+    'The team’s decisive interim-relief strategy overturned the site closure and preserved the investment viability of the development.');
+
+  // 9. Villas del Colli: Active team constitutional standard
+  s = s.replace(/The matter establishes an important boundary between legitimate environmental planning and public power exercised without procedural accountability, while providing a precedent for other owners affected by comparable land-use restrictions\.?/gi,
+    'The team established that environmental planning decrees cannot arbitrarily bypass procedural due process or impose de facto confiscations on legitimate property holders, preserving commercial development viability for the client.');
+
+  // 10. Transversal Active Attribution Engine: Eliminate passive instrument attribution across ALL matters
+  s = s.replace(/(?:The matter|The dispute|The case|It)\s+(?:also\s+)?(?:illustrates|demonstrates)\s+the\s+importance\s+of\s+([^\.]+)\./gi, (match, p1) => {
+    return `The team successfully deployed targeted legal strategy to address ${p1.trim()}, securing essential commercial protection for the client.`;
+  });
+  s = s.replace(/(?:The matter|The dispute|The case|It)\s+(?:also\s+)?(?:illustrates|demonstrates)\s+the\s+use\s+of\s+([^\.]+)\./gi, (match, p1) => {
+    return `The team’s agile application of ${p1.trim()} delivered decisive protection for the client’s operations.`;
+  });
+  s = s.replace(/(?:The matter|The dispute|The case)\s+illustrates\s+([^\.]+)\./gi, (match, p1) => {
+    return `The team’s strategic intervention in this matter resolved ${p1.trim()}, safeguarding the client’s commercial interests.`;
+  });
+
   // Strip leaked LLM reasoning blocks or JSON artifacts
   s = s.replace(/\{"id":\s*"rs_[^"]*"[^}]*\}\s*/gi, '');
   s = s.replace(/\{"id":\s*"[^"]*",\s*"summary":\s*\[\],\s*"type":\s*"reasoning"[\s\S]*?\}\s*/gi, '');
@@ -213,6 +278,15 @@ function cleanClientDescriptor(rawClient: string): string {
   if (sLower.includes('holcim')) {
     return 'HOLCIM MÉXICO OPERACIONES, S.A. DE C.V. — a global leader in sustainable building solutions.';
   }
+  if (sLower.includes('devangary') || sLower.includes('conciencia ambiental')) {
+    return 'CONCIENCIA AMBIENTAL DEVANGARY, A.C. — an environmental non-profit association and landholder in Baja California Sur.';
+  }
+  if (sLower.includes('vialidades en los altos') || sLower.includes('red vía corta') || sLower.includes('red via corta') || sLower.includes('operadora de vialidades')) {
+    return 'L&E OPERADORA DE VIALIDADES EN LOS ALTOS, S.A.P.I. DE C.V. — highway infrastructure concessionaire in the State of Jalisco.';
+  }
+  if (sLower.includes('cominvi')) {
+    return 'COMINVI, S.A. DE C.V. — specialist underground infrastructure and mining works contractor.';
+  }
   if (sLower.includes('de anda') || sLower.includes('familia de anda')) {
     return 'FAMILIA DE ANDA — private owners of a significant property in Zapopan, Jalisco.';
   }
@@ -224,6 +298,15 @@ function cleanClientDescriptor(rawClient: string): string {
   }
   if (sLower.includes('leaño') || sLower.includes('familia leaño')) {
     return 'FAMILIA LEAÑO — private owners of approximately ten hectares affected by municipal and federal acts.';
+  }
+  if (sLower.includes('sict') || (sLower.includes('transportation of goods') && sLower.includes('guadalajara') && !sLower.includes('potosinos'))) {
+    return 'Confidential Client — Guadalajara-based cargo transportation and nationwide logistics company.';
+  }
+  if (sLower.includes('gas pipeline') || sLower.includes('pipeline') || sLower.includes('confidential matter 13') || (rawClient.trim() === 'Confidential Matter 13')) {
+    return 'Confidential Client — private owner of strategic industrial land subject to natural gas pipeline rights of way.';
+  }
+  if (sLower.includes('monsanto') || sLower.includes('semillas agroproductos')) {
+    return 'SEMILLAS AGROPRODUCTOS MONSANTO, S. DE R.L. DE C.V. — agricultural producer and agribusiness facility landowner in Tlajomulco.';
   }
 
   // Generic cleaning:

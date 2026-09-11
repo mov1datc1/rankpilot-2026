@@ -68,6 +68,16 @@ CONSTITUTIONAL RULES:
 7. TEMPORAL RECONCILIATION: The latest verified status and outcome strictly supersedes obsolete historical milestones. If a 2024 enforcement or ruling is recorded, NEVER retain obsolete predictive phrases like "resolution expected in early 2023". Reconstruct the current state from the latest verified facts.
 8. AVOID FORMULAIC REPETITIONS & GEOGRAPHIC REDUNDANCIES: Vary opening phrasing across matters (avoid repeating "In a confidential, ongoing cross-border mandate..." across multiple matters). Avoid repeating multi-jurisdiction lists (e.g. "New York, London and Bogotá") in consecutive sentences.
 9. COMMERCIAL IMPACT OVER PROCEDURAL ARCHIVES: Translate legal disputes into commercial asset protection, operational continuity, and economic stakes. Do not transcribe notarial deed numbers, notary names, or procedural committee minutes unless commercially decisive.
+10. TRANSVERSAL REASONING RULE — LAWYER & TEAM MERIT ATTRIBUTION (Angela Directive):
+    Every matter narrative MUST establish strict causality:
+    Problem → lawyer insight/judgment → legal technique deployed → result → commercial/client impact.
+    NEVER attribute merit or causal agency to legal instruments, doctrines, or cadastral/evidentiary records.
+    - FORBIDDEN: "The matter illustrates the importance of [doctrine]...", "The case demonstrates the capacity of cadastral evidence...", "It also illustrates the continuing relevance of historic ownership...".
+    - MANDATORY: Attribute the breakthrough to the lawyers' judgment, forensic insight, and tactical execution (e.g. "The team identified a crucial cadastral inconsistency that had gone unnoticed, forensically reconstructed historical title records, and converted that evidence into a viable recovery strategy", "The team's argumentative strategy secured crucial suspensions, keeping three manufacturing plants running without interruption").
+    - FORBIDDEN PROMOTIONAL / BOMBASTIC PHRASES:
+      * NEVER write "marquee global corporate client" (use "global corporate client").
+      * NEVER write "regulatory source of the burden" (use "validity of the regulatory framework itself").
+      * NEVER write "apparent fait accompli" (use "The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation").
 """
 
 

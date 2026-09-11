@@ -1347,6 +1347,16 @@ Rules:
     - Paragraph 3: Leadership team, lawyer ownership, and broader market/client precedent.
 11. PROCEDURAL ENFORCEMENT & D8/E8 RESOLUTION INTEGRATION (v26.28):
     When the raw matter or D8/E8 contains a recent procedural update, favorable resolution, or enforcement milestone (e.g. "UPDATE 2024", favorable judgment, confirmation by appellate court, enforcement in July 2024, or definitive suspension), ALWAYS weave this definitive procedural outcome into Paragraph 2. NEVER reproduce obsolete or preliminary statuses (such as "awaiting resolution in early 2024") when the record documents that the favorable judgment was rendered or enforced.
+12. TRANSVERSAL REASONING RULE — LAWYER & TEAM MERIT ATTRIBUTION (Angela Directive):
+    Every matter narrative MUST establish strict causality:
+    Problem → lawyer insight/judgment → legal technique deployed → result → commercial/client impact.
+    NEVER attribute merit or causal agency to legal instruments, doctrines, or cadastral/evidentiary records.
+    - FORBIDDEN: "The matter illustrates the importance of [doctrine]...", "The case demonstrates the capacity of cadastral evidence...", "It also illustrates the continuing relevance of historic ownership...".
+    - MANDATORY: Attribute the breakthrough to the lawyers' judgment, forensic insight, and tactical execution (e.g. "The team identified a crucial cadastral inconsistency that had gone unnoticed, forensically reconstructed historical title records, and converted that evidence into a viable recovery strategy", "The team's argumentative strategy secured crucial suspensions, keeping three manufacturing plants running without interruption").
+    - FORBIDDEN PROMOTIONAL / BOMBASTIC PHRASES:
+      * NEVER write "marquee global corporate client" (use "global corporate client").
+      * NEVER write "regulatory source of the burden" (use "validity of the regulatory framework itself").
+      * NEVER write "apparent fait accompli" (use "The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation").
 
 GOLD REFERENCE BENCHMARK (Approved Chambers Submission Standard):
 "El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion development at existential risk.
