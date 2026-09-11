@@ -4,6 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
+import { runArtifactIntegrityCheck } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction } from '@/lib/jurisdiction';
 
 const YELLOW = 'FFFFCC';
@@ -622,6 +623,22 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ? [...curation.officialConfMatters, ...curation.surplusConfMatters]
     : curation.officialConfMatters;
 
+  // v26.41: Final Artifact Integrity Check before generating deliverable
+  const integrityReport = runArtifactIntegrityCheck(
+    curation.officialPubMatters,
+    curation.officialConfMatters,
+    [...curation.surplusPubMatters, ...curation.surplusConfMatters],
+    {
+      practiceArea,
+      firmName,
+      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || []
+    }
+  );
+  if (!integrityReport.passed) {
+    console.error('[ARTIFACT-INTEGRITY-CHECK] Submission failed integrity validation:', integrityReport.criticalErrors);
+    throw new Error(`Final Artifact Integrity Check failed: ${integrityReport.criticalErrors.map(e => e.description).join('; ')}`);
+  }
+
   // ═══ TITLE PAGE ═══
   elements.push(
     para('Chambers', { bold: true, size: 40, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 0 } }),
@@ -1067,6 +1084,22 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   const confMatters = exportMode === 'all'
     ? [...curationL500.officialConfMatters, ...curationL500.surplusConfMatters]
     : curationL500.officialConfMatters;
+
+  // v26.41: Final Artifact Integrity Check before generating Legal 500 deliverable
+  const integrityReportL500 = runArtifactIntegrityCheck(
+    curationL500.officialPubMatters,
+    curationL500.officialConfMatters,
+    [...curationL500.surplusPubMatters, ...curationL500.surplusConfMatters],
+    {
+      practiceArea,
+      firmName,
+      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || []
+    }
+  );
+  if (!integrityReportL500.passed) {
+    console.error('[ARTIFACT-INTEGRITY-CHECK] Legal 500 submission failed integrity validation:', integrityReportL500.criticalErrors);
+    throw new Error(`Final Artifact Integrity Check failed: ${integrityReportL500.criticalErrors.map(e => e.description).join('; ')}`);
+  }
 
   // ═══ LEGAL 500 TITLE PAGE ═══
   elements.push(
