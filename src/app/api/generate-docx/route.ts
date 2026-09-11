@@ -783,12 +783,12 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
 
   if (matterEvals.length > 0) {
     sections.push(sectionTitle('Case Evaluation — Matter Scores'));
-    const evalRows = matterEvals.map((ev: Record<string, unknown>) => [
-      ev.matter_name || 'Unknown',
-      ev.type || 'publishable',
-      ev.quality_label || 'Pending',
+    const evalRows: string[][] = matterEvals.map((ev: any) => [
+      String(ev.matter_name || 'Unknown'),
+      String(ev.type || 'publishable'),
+      String(ev.quality_label || 'Pending'),
       `${typeof ev.score === 'number' ? ev.score : 0}/100`,
-      ev.improvement_note || ''
+      String(ev.improvement_note || '')
     ]);
     sections.push(makeTable(['Matter', 'Type', 'Quality Label', 'Score', 'Improvement Note'], evalRows));
     sections.push(emptyRow());
