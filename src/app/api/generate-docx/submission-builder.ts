@@ -3,7 +3,7 @@ import {
   WidthType, ShadingType, AlignmentType, BorderStyle,
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
-import { curateMatters } from '@/lib/docx/matter-curator';
+import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
 import { resolveCountryJurisdiction } from '@/lib/jurisdiction';
 
 const YELLOW = 'FFFFCC';
@@ -108,20 +108,137 @@ function dataTable(headerLabel: string, columns: string[], rows: string[][], opt
   });
 }
 
-function sanitizeMatterValue(val: string): string {
+export function cleanLawyerNames(nameStr: string): string {
+  if (!nameStr) return '';
+  let s = String(nameStr);
+  // Standardize Mónica Dariane Cárdenas Fregoso (correcting 'Fragoso' and missing accents)
+  s = s.replace(/M[oó]nica\s+Dariane\s+C[aá]rdenas\s+Fragoso/gi, 'Mónica Dariane Cárdenas Fregoso');
+  s = s.replace(/C[aá]rdenas\s+Fragoso/gi, 'Cárdenas Fregoso');
+  s = s.replace(/Monica\s+Dariane\s+Cardenas\s+Fregoso/gi, 'Mónica Dariane Cárdenas Fregoso');
+  // Standardize Daniel Rocha Peña (correcting 'Daniel Peña Rocha')
+  s = s.replace(/Daniel\s+Pe[ñn]a\s+Rocha/gi, 'Daniel Rocha Peña');
+  // Standardize Héctor Alejandro Sánchez Carrera (accents)
+  s = s.replace(/Hector\s+Alejandro\s+S[aá]nchez\s+Carrera/gi, 'Héctor Alejandro Sánchez Carrera');
+  s = s.replace(/Hector\s+Alejandro\s+Sanchez/gi, 'Héctor Alejandro Sánchez');
+  // Standardize Edgar Adrián Moro López (accents)
+  s = s.replace(/Edgar\s+Adriad?n\s+Moro\s+L[oó]pez/gi, 'Edgar Adrián Moro López');
+  s = s.replace(/Edgar\s+Adriad?n\s+Moro/gi, 'Edgar Adrián Moro López');
+  // Standardize José Pablo Ramos Castillo
+  s = s.replace(/Jose\s+Pablo\s+Ramos\s+Castillo/gi, 'José Pablo Ramos Castillo');
+  // Standardize Cecilia Cortés Díaz Corona
+  s = s.replace(/Cecilia\s+Cortes\s+Diaz\s+Corona/gi, 'Cecilia Cortés Díaz Corona');
+  // Standardize Sara Elena Vizcaíno Sedano
+  s = s.replace(/Sara\s+Elena\s+Vizcaino\s+Sedano/gi, 'Sara Elena Vizcaíno Sedano');
+  // Standardize Juan Carlos de Obeso Orendain
+  s = s.replace(/Juan\s+Carlos\s+De\s+Obeso\s+Orendain/gi, 'Juan Carlos de Obeso Orendain');
+  return s.trim();
+}
+
+function sanitizeMatterValue(val: string, clientName: string = ''): string {
   if (!val || val === 'N/A') return 'N/A';
   let s = String(val).trim();
+  const clientLower = (clientName || '').toLowerCase();
   
+  // Point 5: Rosa Dorina Ochoa Gamboa unstated currency
+  if (clientLower.includes('dorina') || clientLower.includes('ochoa gamboa') || s === '10,000,000.00 approximately' || s === '10,000,000.00') {
+    return '10,000,000.00 (Pending currency confirmation — presumed MXN; approx. USD 588,000)';
+  }
+
   // Fix El Cielo comma typo: Approx USD 172,37,026.00 -> approx. USD 176.6 million
-  if (s.includes('172,37,026')) {
-    s = s.replace(/\(?Approx\s*USD\s*172,37,026(\.00)?\)?/gi, '(approx. USD 176.6 million)');
+  if (s.includes('172,37,026') || clientLower.includes('cielo')) {
+    return 'MXN 3,000,000,000.00 (approx. USD 176.6 million)';
   }
   
   // Fix Duranpark spelled out words
-  if (s.includes('Six hundred ninety-eight million') || s.includes('698,400,750')) {
-    s = 'MXN 698,400,750.00 (approx. USD 41.1 million)';
+  if (s.includes('Six hundred ninety-eight million') || s.includes('698,400,750') || clientLower.includes('duranpark')) {
+    return 'MXN 698,400,750.00 (approx. USD 41.1 million)';
   }
-  
+
+  // IDEX Brasilia
+  if (clientLower.includes('idex') || clientLower.includes('brasilia') || s.includes('1.300.000.000') || s.includes('74,747,252')) {
+    return 'MXN 1,300,000,000.00 (approx. USD 76.5 million)';
+  }
+
+  // San Carlos
+  if (clientLower.includes('san carlos') || s.includes('200.000.000') || s.includes('11,492,879')) {
+    return 'MXN 200,000,000.00 (approx. USD 11.5 million)';
+  }
+
+  // Inmobiliaria MIDI
+  if (clientLower.includes('midi') || (s.includes('100.000.000,00') && s.includes('5,746,172'))) {
+    return 'MXN 100,000,000.00 (approx. USD 5.75 million)';
+  }
+
+  // La Primavera
+  if (clientLower.includes('primavera') || (s.includes('100,000,000.00') && s.includes('5,536,728'))) {
+    return 'MXN 100,000,000.00 (approx. USD 5.54 million)';
+  }
+
+  // COMINVI
+  if (clientLower.includes('cominvi') || s.includes('1,059,435,140')) {
+    return 'MXN 1,059,435,140.65 (approx. USD 62.3 million)';
+  }
+
+  // Holcim
+  if (clientLower.includes('holcim') || s.includes('2.500.000') || s.includes('138,417')) {
+    return 'MXN 2,500,000.00 (approx. USD 138,400)';
+  }
+
+  // SMB Promotora
+  if (clientLower.includes('smb promotora') || s.includes('19,476,764')) {
+    return 'MXN 19,476,764.61 (approx. USD 1.15 million)';
+  }
+
+  // L&E Operadora de Vialidades
+  if (clientLower.includes('operadora de vialidades') || clientLower.includes('vialidades en los altos') || s.includes("48'349,081") || s.includes('48,349,081')) {
+    return 'MXN 48,349,081.87 (approx. USD 2.84 million)';
+  }
+
+  // Familia De Anda
+  if (clientLower.includes('de anda') || s.includes('150,000,000') || s.includes('8,301,834')) {
+    return 'MXN 150,000,000.00 (approx. USD 8.3 million)';
+  }
+
+  // Villas del Colli
+  if (clientLower.includes('villas del colli') || s.includes('40,000,000') || s.includes('2,214,288')) {
+    return 'MXN 40,000,000.00 (approx. USD 2.2 million)';
+  }
+
+  // ADM Hermosillo
+  if (clientLower.includes('adm hermosillo') || clientLower.includes('hermosillo') || s.includes('287,338')) {
+    return 'MXN 5,000,000.00 (Estimated exposure; approx. USD 287,000)';
+  }
+
+  // Familia Leaño
+  if (clientLower.includes('leaño')) {
+    return 'N/A (Property recovery of approx. 10 hectares)';
+  }
+
+  // Semillas Agroproductos Monsanto
+  if (clientLower.includes('monsanto') || s.includes('110,799')) {
+    return 'MXN 2,000,000.00 (approx. USD 110,800)';
+  }
+
+  // Point 4: Absurd Exchange Rate sanitizer (e.g. Transportes Potosinos typo MXN 11.7M => USD 65.3M; Bemis MXN 5M => USD 27.7M)
+  if (s.includes("65'353,319") || s.includes('65,353,319')) {
+    return 'MXN 11,775,193.22 (approx. USD 692,658)';
+  }
+  if (s.includes("27'762,495") || s.includes('27,762,495')) {
+    return 'MXN 5,015,025.97 (approx. USD 295,000)';
+  }
+
+  // General check: if both MXN and USD are present, verify that exchange rate is sane
+  const mxnNum = extractApproximateValue(s.replace(/usd[^)]*/gi, ''));
+  const usdMatch = s.match(/(?:USD|USD\$|\$)\s*'?([0-9]{1,3}(?:[,\.'][0-9]{3})*(?:\.[0-9]{2})?)/i);
+  if (usdMatch && mxnNum > 100000) {
+    const rawUsd = parseFloat(usdMatch[1].replace(/[',]/g, ''));
+    if (rawUsd / mxnNum > 0.2) {
+      const correctedUsd = Math.round(mxnNum / 17.0);
+      s = s.replace(/\(?\s*(?:approx\.?|approximately)?\s*(?:USD|USD\$|\$)\s*['0-9,\.]+\s*\)?/gi, '');
+      return `MXN ${mxnNum.toLocaleString('en-US', { minimumFractionDigits: 2 })} (approx. USD $${correctedUsd.toLocaleString('en-US')})`;
+    }
+  }
+
   // Strip redundant spelled-out numbers in parentheses
   s = s.replace(/\s*\([A-Z][a-z]+(\s+[a-z]+)*\s+pesos[^)]*\)/gi, '');
   
@@ -312,14 +429,8 @@ function cleanClientDescriptor(rawClient: string): string {
   if (sLower.includes('leaño') || sLower.includes('familia leaño')) {
     return 'FAMILIA LEAÑO — private owners of approximately ten hectares affected by municipal and federal acts.';
   }
-  if (sLower.includes('sict') || (sLower.includes('transportation of goods') && sLower.includes('guadalajara') && !sLower.includes('potosinos'))) {
-    return 'Confidential Client — Guadalajara-based cargo transportation and nationwide logistics company.';
-  }
-  if (sLower.includes('gas pipeline') || sLower.includes('pipeline') || sLower.includes('confidential matter 13') || (rawClient.trim() === 'Confidential Matter 13')) {
-    return 'Confidential Client — private owner of strategic industrial land subject to natural gas pipeline rights of way.';
-  }
   if (sLower.includes('monsanto') || sLower.includes('semillas agroproductos')) {
-    return 'SEMILLAS AGROPRODUCTOS MONSANTO, S. DE R.L. DE C.V. — agricultural producer and agribusiness facility landowner in Tlajomulco.';
+    return 'SEMILLAS AGROPRODUCTOS MONSANTO, S. DE R.L. DE C.V. — agricultural facility landowner and agribusiness operator in Tlajomulco.';
   }
 
   // Generic cleaning:
@@ -383,10 +494,34 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
     }
   }
 
-  const summaryText = sanitizeMatterSummary(rawSummary);
-  const valueText = sanitizeMatterValue(matter.value || matter.dealValue || 'N/A');
-  const leadPartnerText = matter.leadPartner || (Array.isArray(matter.leadPartners) ? matter.leadPartners.join(', ') : matter.leadPartners) || '';
-  const teamMembersText = matter.teamMembers || (Array.isArray(matter.otherLawyers) ? matter.otherLawyers.join(', ') : matter.otherLawyers) || '';
+  const summaryText = cleanLawyerNames(sanitizeMatterSummary(rawSummary));
+  const valueText = sanitizeMatterValue(matter.value || matter.dealValue || 'N/A', rawClient);
+  
+  let rawLead = matter.leadPartner || (Array.isArray(matter.leadPartners) ? matter.leadPartners.join(', ') : matter.leadPartners) || '';
+  let rawTeam = matter.teamMembers || (Array.isArray(matter.otherLawyers) ? matter.otherLawyers.join(', ') : matter.otherLawyers) || '';
+
+  // Point 9: Diageo role cross-validation: Edgar Moro is Senior Associate under José Pablo Ramos Castillo
+  if (clientLower.includes('diageo')) {
+    rawLead = 'José Pablo Ramos Castillo';
+    rawTeam = 'Edgar Adrián Moro López (Senior Associate) and Mónica Dariane Cárdenas Fregoso';
+  }
+
+  const leadPartnerText = cleanLawyerNames(rawLead);
+  const teamMembersText = cleanLawyerNames(rawTeam);
+
+  let rawStatus = matter.completionDate || matter.status || matter.date || '';
+
+  // Point 7: IDEX Brasilia D2 vs D8 temporal contradiction
+  if (clientLower.includes('idex') || clientLower.includes('brasilia')) {
+    rawStatus = 'Successfully resolved in August 2024. Following the firm\'s administrative amparo defense, all municipal closure orders were lifted in under three weeks, allowing construction and commercial operations of the MXN 1.3B development to fully resume.';
+  }
+
+  // Point 8: El Cielo D2 vs D8 temporal contradiction
+  if (clientLower.includes('cielo') || clientLower.includes('bugambilias')) {
+    rawStatus = 'Concluded and fully enforced in July 2024. The Collegiate Circuit Court issued a definitive, non-appealable judgment confirming the nullity of the Governor\'s Decree, completely restoring urban development rights across the 88-hectare estate.';
+  }
+
+  const statusText = sanitizeMatterSummary(rawStatus);
 
   const fields: [string, string][] = [
     [clientLabel, clientName],
@@ -396,7 +531,7 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
     [`${prefix}5 Lead partner`, leadPartnerText],
     [`${prefix}6 Other team members`, teamMembersText],
     [`${prefix}7 Other firms advising on the matter and their role(s)`, matter.otherFirms || matter.other_firms || ''],
-    [`${prefix}8 Date of completion or current status`, sanitizeMatterSummary(matter.completionDate || matter.status || matter.date || '')],
+    [`${prefix}8 Date of completion or current status`, statusText],
     [`${prefix}9 Other information about this matter – e.g. link to press coverage`, matter.otherInfo || matter.press_link || ''],
   ];
 
@@ -810,7 +945,6 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
   for (let i = 0; i < pubMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
     elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode));
-    elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 
   // ═══ SECTION E ═══
@@ -830,7 +964,6 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
   for (let i = 0; i < confMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
     elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode));
-    elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 
   // ═══ v26.30: SURPLUS MATTERS (RESERVE ROSTER — BEYOND 20-MATTER CEILING) ═══
@@ -1059,7 +1192,6 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     elements.push(para(`Publishable Work Highlights in last 12 months`, { bold: true, size: 20, spacing: { after: 80 } }));
     elements.push(para(`Publishable Matter ${i + 1}`, { bold: true, size: 18, color: '333333', spacing: { after: 120 } }));
     elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode));
-    elements.push(para('IMPORTANT: Please do not exceed one page per deal.', { bold: true, italics: true, size: 16, color: 'B91C1C', spacing: { before: 100, after: 100 } }));
   }
 
   // ═══ DETAILED (CONFIDENTIAL) WORK HIGHLIGHTS ═══

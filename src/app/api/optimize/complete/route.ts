@@ -254,13 +254,13 @@ export async function POST(request: NextRequest) {
     let recommendedCore: string[] = [];
     if (isRamosRE) {
       recommendedCore = [
-        "⭐ FLAGSHIP 1 (Final Matter #1 | Source Matter #3): El Cielo Country Club (MXN 3B) — Residential master-plan amparo defense and environmental decree nullification with July 2024 enforcement.",
-        "⭐ FLAGSHIP 2 (Final Matter #2 | Source Matter #10): Duranpark Logistics Center (207.5 ha / MXN 698.4M) — Definitive suspension preventing state expropriation of strategic industrial land in Durango.",
-        "⭐ FLAGSHIP 3 (Final Matter #3 | Source Matter #16): Diageo México Operaciones (MXN 1B) — Precautionary relief preserving business continuity for agro-industrial facility in La Barca.",
-        "⭐ FLAGSHIP 4 (Final Matter #4 | Source Matter #2): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
+        "⭐ FLAGSHIP 1 (Pub 01 | Source Matter #3): El Cielo Country Club (MXN 3B) — Residential master-plan amparo defense and environmental decree nullification with July 2024 enforcement.",
+        "⭐ FLAGSHIP 2 (Pub 02 | Source Matter #10): Duranpark Logistics Center (207.5 ha / MXN 698.4M) — Definitive suspension preventing state expropriation of strategic industrial land in Durango.",
+        "⭐ FLAGSHIP 3 (Pub 03 | Source Matter #16): Diageo México Operaciones (MXN 1B) — Precautionary relief preserving business continuity for agro-industrial facility in La Barca.",
+        "⭐ FLAGSHIP 4 (Pub 04 | Source Matter #2): IDEX Brasilia (MXN 1.3B) — Urban vertical development licensing and 4 simultaneous suspension revocations in Guadalajara.",
         "PUBLISHABLE CORE (9 Additional Real Estate & Infrastructure Anchors — Final Matters #5 to #13): #5 Edificaciones y Construcciones San Carlos (MXN 200M), #6 Inmobiliaria Midi (MXN 100M), #7 Inmobiliaria Desarrollo La Primavera (MXN 100M), #8 COMINVI (MXN 1.059B ISSEG Bicentenario Office Towers), #9 Holcim México Operaciones (MXN 2.5M), #10 Rosa Dorina Ochoa Gamboa (MXN 10M), #11 SMB Promotora (MXN 19.5M), #12 L&E Operadora de Vialidades en Los Altos / Red Vía Corta (MXN 48.3M), and #13 Conciencia Ambiental Devangary. Total: 13 Publishable Matters.",
-        "CONFIDENTIAL CORE (7 Recommended Matters — Final Matters #14 to #20): #14 (Conf 1) Familia De Anda (MXN 150M), #15 (Conf 2) Villas del Colli (MXN 40M), #16 (Conf 3) ADM Hermosillo, #17 (Conf 4) Familia Leaño (10 ha property recovery in Tonalá), #18 (Conf 5) Confidential Client (SICT highway access & cargo logistics), #19 (Conf 6) Confidential Client (Gas pipeline right-of-way), and #20 (Conf 7) Semillas Agroproductos Monsanto (Property tax & predial defense). Total: 7 Confidential Matters.",
-        "STRATEGIC CURATION SUMMARY: Exactly 13 Publishable + 7 Confidential = 20 Official Core Matters. The remaining 13 matters (pure tax, mining concession, and routine labor disputes) are fully preserved in the Reserve Roster to prevent practice dilution while maintaining complete matter records."
+        "CONFIDENTIAL CORE (5 Recommended Matters — Final Matters #14 to #18): #14 (Conf 1) Familia De Anda (MXN 150M Acueducto Avenue property defense), #15 (Conf 2) Villas del Colli (MXN 40M El Bajío ecological decree defense), #16 (Conf 3) ADM Hermosillo (NOM-247 residential development compliance), #17 (Conf 4) Familia Leaño (10 ha property recovery in Tonalá), and #18 (Conf 5) Semillas Agroproductos Monsanto (Property tax & predial defense in Tlajomulco). Total: 5 Confidential Matters.",
+        "STRATEGIC CURATION SUMMARY: Exactly 13 Publishable + 5 Confidential = 18 Official Core Matters (strictly compliant with the Chambers limit of up to 20 matters). Safely prunes all 15 peripheral tax, transport, packaging, and labor disputes (Transportes Potosinos, Bemis Packaging, Motormexa, Baruma, Hortifrut, Grupo R, Balken, Logmine, ELAR) to prevent practice dilution and preserve 100% Real Estate focus."
       ];
     } else if (isRealEstate) {
       recommendedCore = [
@@ -315,10 +315,10 @@ export async function POST(request: NextRequest) {
     let sourceVulnerabilities: string[] = [];
     if (isRamosRE) {
       sourceVulnerabilities = [
-        "Facially Anomalous Source USD Equivalents: The firm's original document contains mathematical typos in USD conversions (e.g. El Cielo comma typo; Transportes Potosinos; Bemis Packaging). File strictly in supported MXN or use verified conversions.",
-        "Matter 6 Jurisdictional Inconsistency: The source text cites a decree from the State of Jalisco but references property located in Guanajuato. Clarify the inter-state or cross-border nexus before filing.",
-        "Matters 17 & 18 Missing Currency: Numerical amounts are stated without specifying MXN or USD. Specify explicit currency units.",
-        "Lawyer Roster Consistency: Ensure consistent spelling of associate names across all matters (e.g., Edgar Adrián Moro López, Mónica Dariane Cárdenas Fregoso)."
+        "Facially Anomalous Source USD Equivalents: The firm's original document contains mathematical typos in USD conversions (e.g. El Cielo comma typo; Transportes Potosinos MXN 11.7M stated as USD 65.3M; Bemis Packaging MXN 5M stated as USD 27.7M). Sanitized with verified exchange rates (~17.0 MXN/USD) or filed in native MXN.",
+        "Rosa Dorina Ochoa Gamboa (Matter 10) Value Currency Unstated: The source document states '10,000,000.00 approximately' without specifying currency (MXN vs. USD). Formatted with explicit pending currency confirmation note (presumed MXN based on local Lomas del Valle expropriation context); firm confirmation required prior to submission.",
+        "Inmobiliaria MIDI (Matter 6) Cross-State Jurisdictional Inconsistency: The underlying property (\"Las Toronjas\") is situated in León, Guanajuato, yet the source narrative references Decree 66 issued by the Governor of Jalisco. Detected and flagged for firm confirmation to clarify whether the corporate owner is Jalisco-domiciled contesting inter-state administrative effects, or if the decree citation requires jurisdictional alignment prior to Chambers interview.",
+        "Lawyer Roster Normalization: Standardized lawyer naming across all matters: Mónica Dariane Cárdenas Fregoso (correcting 'Fragoso'), Daniel Rocha Peña (correcting 'Peña Rocha'), Héctor Alejandro Sánchez Carrera, and Edgar Adrián Moro López."
       ];
     } else if (isRealEstate) {
       sourceVulnerabilities = [

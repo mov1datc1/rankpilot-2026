@@ -149,7 +149,7 @@ export function calculateStrategicTier(
     return 880;
   }
 
-  // Confidential 7 Core Anchors
+  // Confidential 5 Real Estate Core Anchors (Vetted genuine real estate matters)
   if (combined.includes('familia de anda') || combined.includes('de anda')) {
     matter._isCanonicalAnchor = true;
     return 1000;
@@ -158,7 +158,7 @@ export function calculateStrategicTier(
     matter._isCanonicalAnchor = true;
     return 990;
   }
-  if (combined.includes('hermosillo') || combined.includes('nom-247')) {
+  if (combined.includes('adm hermosillo') || combined.includes('hermosillo') || combined.includes('nom-247')) {
     matter._isCanonicalAnchor = true;
     return 980;
   }
@@ -166,17 +166,9 @@ export function calculateStrategicTier(
     matter._isCanonicalAnchor = true;
     return 970;
   }
-  if (combined.includes('sict') || (combined.includes('transportation of goods') && combined.includes('guadalajara') && !combined.includes('potosinos'))) {
-    matter._isCanonicalAnchor = true;
-    return 960;
-  }
-  if (combined.includes('gas pipeline') || combined.includes('pipeline') || combined.includes('confidential matter 13') || (matter.name === 'Confidential Matter 13')) {
-    matter._isCanonicalAnchor = true;
-    return 950;
-  }
   if (combined.includes('monsanto') || combined.includes('semillas agroproductos')) {
     matter._isCanonicalAnchor = true;
-    return 940;
+    return 960;
   }
 
   // 3. Scale / deal value impact (for non-anchor candidate matters)
@@ -354,9 +346,7 @@ export function curateMatters(
       combinedKey.includes('adm hermosillo') ||
       combinedKey.includes('hermosillo') ||
       combinedKey.includes('leaño') ||
-      combinedKey.includes('monsanto') ||
-      (combinedKey.includes('gas pipeline') || (combinedKey.includes('pipeline') && combinedKey.includes('right of way'))) ||
-      (combinedKey.includes('sict') && !combinedKey.includes('potosinos'))
+      combinedKey.includes('monsanto')
     ) {
       isConfidential = true;
     } else if (
