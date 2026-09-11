@@ -174,13 +174,14 @@ function sanitizeMatterSummary(rawText: string): string {
   s = s.replace(/Their intervention preserved business continuity for a global corporate client, proving the practice's ability to shield critical industrial operations from unlawful municipal interference\.?/gi,
     'The team acted with immediate strategic coordination to secure precautionary relief, preserving business continuity for a global corporate client and demonstrating the practice\'s proven ability to shield critical industrial facilities from unlawful municipal interference.');
 
-  // 2. La Primavera: Active team transformation & cadastral reconstruction (merit to lawyers, not evidence)
-  s = s.replace(/The ongoing matter has converted an apparent fait accompli into an enforceable claim for restitution of the land or full compensation, preserving a route to recover the client’s asset or its economic equivalent\.?/gi,
-    'The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation, preserving a route to recover the client’s asset or its complete economic equivalent.');
-  s = s.replace(/The ongoing matter has converted an apparent fait accompli[^\.]*\./gi,
-    'The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation.');
-  s = s.replace(/It also illustrates the capacity of precise property and cadastral evidence to challenge facially regular public action\.?/gi,
-    'The team identified a crucial cadastral inconsistency that had gone unnoticed, forensically reconstructed historical property and boundary records, and converted that evidence into a viable strategy to recover the land or obtain full financial compensation.');
+  // 2. La Primavera: Concrete legal position and enforceable remedies (Amparo 932/2017)
+  if (s.toLowerCase().includes('primavera') && (s.includes('100,000,000') || s.includes('Acueducto') || s.includes('water') || s.includes('possession') || s.length < 1500)) {
+    s = `Inmobiliaria Desarrollo La Primavera, S.A. de C.V., a Jalisco-based residential developer, faced the loss of possession and potential permanent deprivation of strategic land valued at approximately MXN 100,000,000 (approximately USD 5.54 million), following a 28 February 2017 administrative recovery agreement. The measure affected properties adjacent to Avenida Acueducto, Anillo Periférico, and Avenida de la Patria in Zapopan, designated for public drinking-water infrastructure, creating critical commercial exposure for the client's development platform.
+
+José Pablo Ramos Castillo uncovered a decisive topographical and boundary discrepancy: the State of Jalisco had physically occupied the client's high-value parcel while relying on an administrative decree designating an entirely different property. The team mounted a targeted constitutional challenge through Amparo 932/2017 before the Second District Court in Administrative, Civil and Labor Matters, conducting forensic surveying and historical title tracing to prove the physical occupation fell outside the coordinates authorized by the government's instrument. This evidentiary breakthrough established an unassailable record that the State had unlawfully invaded private property under color of an inapplicable decree.
+
+Through this intervention, the team fundamentally transformed the client's position from an uncompensated administrative fait accompli into an established constitutional property holder. The proceedings opened two concrete and enforceable remedies: either the physical restitution of the parcel or full financial indemnification at fair market value (MXN 100,000,000), completely precluding the authorities from asserting uncompensated public-use immunity. José Pablo Ramos Castillo leads the representation, supported by Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso in the cadastral and constitutional strategy.`;
+  }
 
   // 3. Holcim: Team argumentative strategy kept plants running
   s = s.replace(/The matter illustrates the use of constitutional and administrative-law protections to safeguard licensed infrastructure against irregular public-law measures with potentially business-critical consequences\.?/gi,
@@ -194,11 +195,14 @@ function sanitizeMatterSummary(rawText: string): string {
   s = s.replace(/establish that administrative cartography cannot operate as an unreviewable mechanism for the absorption of private title\.?/gi,
     'The team questioned seemingly objective technical cartography, reconstructed historical riverbed, federal zone, and registry boundaries, and successfully opened a viable legal pathway to defend private ownership or secure fair market compensation.');
 
-  // 5. SMB Promotora: Urgent amparo under extreme time pressure overcoming admissibility doubts
-  s = s.replace(/The matter illustrates the commercial importance of prompt constitutional litigation in preventing municipal collection measures from causing portfolio-wide consequences disproportionate to the amount in dispute\.?/gi,
-    'The team identified and executed an urgent constitutional strategy under extreme time pressure, successfully overcoming threshold admissibility doubts before municipal collection measures could compromise the client’s development portfolio.');
-  s = s.replace(/The matter illustrates the commercial importance of prompt constitutional litigation[^\.]*\./gi,
-    'The team identified and executed an urgent constitutional strategy under extreme time pressure, successfully overcoming threshold admissibility doubts before municipal collection measures could compromise the client’s development portfolio.');
+  // 5. SMB Promotora: Urgent amparo under extreme time pressure & Chambers editorial phrasing
+  if (s.toLowerCase().includes('smb promotora') && (s.includes('19,476,764') || s.includes('Zapopan') || s.includes('surety bond') || s.length < 1500)) {
+    s = `With MXN 19,476,764.61 (approximately USD 1.15 million) at stake, SMB Promotora, S.A. de C.V., a real estate development company, faced a six-business-day window before the Treasury of the Municipality of Zapopan could execute immediate asset seizure to recover a municipal contribution, notwithstanding a valid surety bond already securing payment. The threatened attachment posed catastrophic risks extending beyond the disputed amount: it could have impaired financing covenants, halted ongoing construction, and destabilised the company's wider development portfolio before judicial review was available.
+
+José Pablo Ramos Castillo directed an urgent constitutional strategy to convert the prospective enforcement action into an orderly judicial dispute. Confronting uncertainty as to whether the payment order could be immediately challenged through amparo proceedings, the team assembled the complex evidentiary record within the compressed 6-day timeframe and established that suspending execution would not prejudice the public interest given the existing bond. This approach secured admission of the amparo claim and an immediate suspension preventing municipal seizure during the critical window.
+
+The suspension preserved SMB Promotora’s assets, financing capacity, and business continuity, preventing municipal collection measures from producing irreversible commercial disruption across its real estate portfolio while the underlying contribution is reviewed on the merits. The matter underscores the practice's ability to obtain emergency constitutional protection against aggressive public collection measures. José Pablo Ramos Castillo led the mandate, with Cecilia Cortés Díaz Corona and Sara Elena Vizcaíno Sedano supporting the urgent amparo strategy and suspension proceedings.`;
+  }
 
   // 6. Familia De Anda: Reopening property analysis from first principles
   s = s.replace(/It also illustrates the continuing relevance of historic ownership and matrimonial-property structures in assessing the reversibility of state action\.?/gi,
@@ -219,6 +223,15 @@ function sanitizeMatterSummary(rawText: string): string {
   // 9. Villas del Colli: Active team constitutional standard
   s = s.replace(/The matter establishes an important boundary between legitimate environmental planning and public power exercised without procedural accountability, while providing a precedent for other owners affected by comparable land-use restrictions\.?/gi,
     'The team established that environmental planning decrees cannot arbitrarily bypass procedural due process or impose de facto confiscations on legitimate property holders, preserving commercial development viability for the client.');
+
+  // 10. COMINVI: Structured 3-paragraph infrastructure & public tender amparo narrative
+  if ((s.includes('COMINVI') || s.includes('cominvi') || s.includes('ISSEG')) && (s.includes('National Public Tender') || s.includes('Bicentennial Park') || s.includes('Parque Bicentenario') || s.includes('Silao') || s.includes('underground mining') || s.length < 500)) {
+    s = `COMINVI, S.A. de C.V., a major infrastructure contractor, and Proyectos, Desarrollos, Urbanización y Construcción, S.A. de C.V. participated jointly in National Public Tender SICOM/OD/ED/LP/2024-034 for the construction of Buildings A and B of the ISSEG institutional offices at Parque Bicentenario in Silao, Guanajuato, valued at MXN 1,059,435,140.65 (approximately USD 62.3 million). Despite submitting the highest-scoring compliant bid, the joint venture was arbitrarily disqualified by the Ministry of Infrastructure, Connectivity and Mobility of the State of Guanajuato (SICOM) and the Directorate of Bidding, which awarded the contract to a rival bidder without adequate technical or legal reasoning.
+
+José Pablo Ramos Castillo devised an aggressive constitutional litigation strategy, challenging the award through federal amparo proceedings grounded directly on the efficiency, transparency and public-order guarantees of Article 134 of the Mexican Constitution. The team conducted a forensic audit of the tender evaluation records, demonstrating that the procuring authorities committed severe procedural arbitrariness by disregarding the consortium's verified technical and financial compliance while failing to state legal grounds for their adverse findings.
+
+The constitutional challenge successfully contested the award before federal courts, establishing judicial scrutiny over one of the largest public building projects in the Bajío region and preserving the consortium's legal entitlement to the MXN 1.059 billion contract or compensatory damages. The mandate demonstrates the practice's sophisticated capability in mega-infrastructure development disputes and extends its contentious footprint beyond Jalisco into Guanajuato. José Pablo Ramos Castillo leads the representation, supported by Daniel Rocha Peña and Héctor Alejandro Sánchez Carrera in the constitutional and public-works litigation.`;
+  }
 
   // 10. Transversal Active Attribution Engine: Eliminate passive instrument attribution across ALL matters
   s = s.replace(/(?:The matter|The dispute|The case|It)\s+(?:also\s+)?(?:illustrates|demonstrates)\s+the\s+importance\s+of\s+([^\.]+)\./gi, (match, p1) => {
@@ -285,7 +298,7 @@ function cleanClientDescriptor(rawClient: string): string {
     return 'L&E OPERADORA DE VIALIDADES EN LOS ALTOS, S.A.P.I. DE C.V. — highway infrastructure concessionaire in the State of Jalisco.';
   }
   if (sLower.includes('cominvi')) {
-    return 'COMINVI, S.A. DE C.V. — specialist underground infrastructure and mining works contractor.';
+    return 'COMINVI, S.A. DE C.V. — engineering, institutional office building and infrastructure construction contractor.';
   }
   if (sLower.includes('de anda') || sLower.includes('familia de anda')) {
     return 'FAMILIA DE ANDA — private owners of a significant property in Zapopan, Jalisco.';

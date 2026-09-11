@@ -1353,10 +1353,15 @@ Rules:
     NEVER attribute merit or causal agency to legal instruments, doctrines, or cadastral/evidentiary records.
     - FORBIDDEN: "The matter illustrates the importance of [doctrine]...", "The case demonstrates the capacity of cadastral evidence...", "It also illustrates the continuing relevance of historic ownership...".
     - MANDATORY: Attribute the breakthrough to the lawyers' judgment, forensic insight, and tactical execution (e.g. "The team identified a crucial cadastral inconsistency that had gone unnoticed, forensically reconstructed historical title records, and converted that evidence into a viable recovery strategy", "The team's argumentative strategy secured crucial suspensions, keeping three manufacturing plants running without interruption").
-    - FORBIDDEN PROMOTIONAL / BOMBASTIC PHRASES:
+    - FORBIDDEN PROMOTIONAL / BOMBASTIC / UNNATURAL PHRASES:
       * NEVER write "marquee global corporate client" (use "global corporate client").
       * NEVER write "regulatory source of the burden" (use "validity of the regulatory framework itself").
-      * NEVER write "apparent fait accompli" (use "The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation").
+      * NEVER write "apparent fait accompli" (use "Through amparo proceedings, the team established the State's de facto occupation as an unlawful taking outside the decree's legal boundaries, shifting the client's position to an established constitutional property holder and opening an enforceable remedy for physical restitution or full market indemnification").
+      * NEVER write "whether the payment order was immediately challengeable" (use "whether the payment order could be immediately challenged through amparo proceedings").
+    - CONCRETE LEGAL POSITIONS & REMEDIES (La Primavera / Boundary Taker disputes):
+      Always articulate the 3 concrete outcomes: (1) what legal position the team established (e.g. proving via expert surveying that physical occupation fell outside decree coordinates, substantiating unlawful state taking), (2) what changed for the client (establishing definitive constitutional standing), and (3) what remedy was opened (physical restitution of the land or full fair market indemnification).
+    - INSTITUTIONAL CONSTRUCTION & INFRASTRUCTURE TENDERS (COMINVI / Guanajuato ISSEG):
+      Highlight institutional building construction scale (e.g., Office Buildings A & B at Parque Bicentenario, Silao, Gto, MXN 1.059B), Article 134 constitutional amparo grounds, and inter-state regional reach outside Jalisco.
 
 GOLD REFERENCE BENCHMARK (Approved Chambers Submission Standard):
 "El Cielo Country Club is an established, high-end residential community on Cerro de Bugambilias, south of Guadalajara, combining homes and urban infrastructure with extensive conserved land. Successive state and municipal measures sought to reclassify the development as a protected natural area and apply a new ecological programme to land that had already been authorised and sold. The measures placed valid permits, purchasers' acquired rights and an approximately MXN 3 billion development at existential risk.

@@ -3,6 +3,28 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.39] — 2026-09-11
+
+### Full Strategic Alignment, Audit-to-Submission 1:1 Traceability & Editorial Polish (Angela Castillo 11-Sept Feedback)
+
+- **Audit-to-Submission Single Source of Truth & Traceability (1:1 Synchronization)**:
+  - Fixed matter ordering and identification discrepancies between Strategic Audit Letter and Submission Form:
+    - *Flagship 4 / Core 5*: Fixed canonical priority scoring in `matter-curator.ts` so IDEX Brasilia (#4) and San Carlos (#5) strictly maintain their recommended order without deal-value perturbation.
+    - *Core 9 / Core 10*: Fixed priority so Holcim México (#9) and Rosa Dorina Ochoa (#10) strictly maintain order across both documents.
+    - *Audit Table Traceability*: Case Evaluation table now dynamically reconstructs rows based on the canonical curated shortlist (`Publishable Matter 1: El Cielo` ... `Publishable Matter 8: COMINVI` ... `Publishable Matter 13: Devangary`; `Confidential Matter 1: Familia De Anda` ... `Confidential Matter 7: Monsanto`), eliminating confusing source matter numbers.
+- **COMINVI Re-anchored to Core Publishable (#8)**:
+  - Resolved false negative identified by Angela: COMINVI (National Public Tender SICOM/OD/ED/LP/2024-034 for ISSEG Office Buildings A & B in Silao, Guanajuato, MXN 1.059B / USD 62.3M) re-anchored to Publishable Core #8.
+  - Formatted into structured 3-paragraph Chambers narrative highlighting high-complexity institutional office building construction, Article 134 constitutional amparo challenge, and strategic interstate footprint outside Jalisco.
+- **La Primavera Narrative Upgrade (Concrete Legal Position & Enforceable Remedies)**:
+  - Articulated the 3 concrete outcomes in `submission-builder.ts`:
+    1. *Legal position established*: Through Amparo 932/2017 before the Second District Court, proved via specialist surveying and title tracing that the State of Jalisco's physical occupation fell outside the 28 Feb 2017 decree coordinates, substantiating an unlawful state invasion of private property.
+    2. *What changed for client*: Transformed position from an uncompensated administrative fait accompli into an established constitutional property holder.
+    3. *Remedies opened*: Opened two concrete, enforceable remedies: physical restitution of the parcel or full financial indemnification at fair market value (MXN 100,000,000 / USD 5.54M).
+- **SMB Promotora Editorial Refinement**:
+  - Replaced unnatural Chambers phrasing `"whether the payment order was immediately challengeable"` with the natural phrasing `"whether the payment order could be immediately challenged through amparo proceedings"`.
+- **Familia Leaño Confirmed**:
+  - Verified and anchored as Confidential Matter 4 (10-hectare property recovery / indemnification).
+
 ## [v26.37] — 2026-09-10
 
 ### Audit-Submission 20-Matter Portfolio Sync & Transversal Lawyer Merit Attribution (Angela Castillo 10-Sept Regression Test)

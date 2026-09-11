@@ -94,32 +94,92 @@ export function calculateStrategicTier(
   }
 
   // 2. High-profile landmark anchors (Real Estate flagships from Strategic Audit & Angela's specification)
-  let isRealEstateAnchor = false;
-  // Publishable 13 Core Anchors
-  if (combined.includes('el cielo') || combined.includes('cielo country club')) { score += 160; isRealEstateAnchor = true; }
-  else if (combined.includes('duranpark')) { score += 140; isRealEstateAnchor = true; }
-  else if (combined.includes('diageo')) { score += 130; isRealEstateAnchor = true; }
-  else if (combined.includes('idex') || combined.includes('brasilia')) { score += 125; isRealEstateAnchor = true; }
-  else if (combined.includes('san carlos') || combined.includes('edificaciones')) { score += 120; isRealEstateAnchor = true; }
-  else if (combined.includes('inmobiliaria midi') || combined.includes('midi')) { score += 115; isRealEstateAnchor = true; }
-  else if (combined.includes('la primavera')) { score += 110; isRealEstateAnchor = true; }
-  else if (combined.includes('holcim')) { score += 105; isRealEstateAnchor = true; }
-  else if (combined.includes('ochoa gamboa') || combined.includes('dorina')) { score += 100; isRealEstateAnchor = true; }
-  else if (combined.includes('smb promotora') || combined.includes('smb')) { score += 95; isRealEstateAnchor = true; }
-  else if (combined.includes('devangary') || combined.includes('conciencia ambiental')) { score += 90; isRealEstateAnchor = true; }
-  else if (combined.includes('vialidades en los altos') || combined.includes('red vía corta') || combined.includes('red via corta') || combined.includes('operadora de vialidades')) { score += 85; isRealEstateAnchor = true; }
-  else if (combined.includes('cominvi')) { score += 80; isRealEstateAnchor = true; }
+  // Publishable 13 Core Anchors (Dominant score hierarchy to guarantee 100% deterministic order)
+  if (combined.includes('el cielo') || combined.includes('cielo country club')) {
+    matter._isCanonicalAnchor = true;
+    return 1000;
+  }
+  if (combined.includes('duranpark')) {
+    matter._isCanonicalAnchor = true;
+    return 990;
+  }
+  if (combined.includes('diageo')) {
+    matter._isCanonicalAnchor = true;
+    return 980;
+  }
+  if (combined.includes('idex') || combined.includes('brasilia')) {
+    matter._isCanonicalAnchor = true;
+    return 970;
+  }
+  if (combined.includes('san carlos') || combined.includes('edificaciones')) {
+    matter._isCanonicalAnchor = true;
+    return 960;
+  }
+  if (combined.includes('inmobiliaria midi') || combined.includes('midi')) {
+    matter._isCanonicalAnchor = true;
+    return 950;
+  }
+  if (combined.includes('la primavera') || combined.includes('desarrollo la primavera')) {
+    matter._isCanonicalAnchor = true;
+    return 940;
+  }
+  // COMINVI (ISSEG Bicentenario Offices Silao, Gto - MXN 1.059B): Angela explicitly confirmed in 2nd half of publishable matters
+  if (combined.includes('cominvi') || (combined.includes('isseg') && (combined.includes('edificio') || combined.includes('bicentenario') || combined.includes('silao')))) {
+    matter._isCanonicalAnchor = true;
+    return 930;
+  }
+  if (combined.includes('holcim')) {
+    matter._isCanonicalAnchor = true;
+    return 920;
+  }
+  if (combined.includes('ochoa gamboa') || combined.includes('dorina')) {
+    matter._isCanonicalAnchor = true;
+    return 910;
+  }
+  if (combined.includes('smb promotora') || combined.includes('smb')) {
+    matter._isCanonicalAnchor = true;
+    return 900;
+  }
+  if (combined.includes('vialidades en los altos') || combined.includes('red vía corta') || combined.includes('red via corta') || combined.includes('operadora de vialidades')) {
+    matter._isCanonicalAnchor = true;
+    return 890;
+  }
+  if (combined.includes('devangary') || combined.includes('conciencia ambiental')) {
+    matter._isCanonicalAnchor = true;
+    return 880;
+  }
 
   // Confidential 7 Core Anchors
-  else if (combined.includes('familia de anda') || combined.includes('de anda')) { score += 140; isRealEstateAnchor = true; }
-  else if (combined.includes('villas del colli')) { score += 135; isRealEstateAnchor = true; }
-  else if (combined.includes('hermosillo') || combined.includes('nom-247')) { score += 130; isRealEstateAnchor = true; }
-  else if (combined.includes('familia leaño') || combined.includes('leaño')) { score += 120; isRealEstateAnchor = true; }
-  else if (combined.includes('sict') || (combined.includes('transportation of goods') && combined.includes('guadalajara') && !combined.includes('potosinos'))) { score += 110; isRealEstateAnchor = true; }
-  else if (combined.includes('gas pipeline') || combined.includes('pipeline') || combined.includes('confidential matter 13') || (matter.name === 'Confidential Matter 13')) { score += 105; isRealEstateAnchor = true; }
-  else if (combined.includes('monsanto') || combined.includes('semillas agroproductos')) { score += 100; isRealEstateAnchor = true; }
+  if (combined.includes('familia de anda') || combined.includes('de anda')) {
+    matter._isCanonicalAnchor = true;
+    return 1000;
+  }
+  if (combined.includes('villas del colli')) {
+    matter._isCanonicalAnchor = true;
+    return 990;
+  }
+  if (combined.includes('hermosillo') || combined.includes('nom-247')) {
+    matter._isCanonicalAnchor = true;
+    return 980;
+  }
+  if (combined.includes('familia leaño') || combined.includes('leaño')) {
+    matter._isCanonicalAnchor = true;
+    return 970;
+  }
+  if (combined.includes('sict') || (combined.includes('transportation of goods') && combined.includes('guadalajara') && !combined.includes('potosinos'))) {
+    matter._isCanonicalAnchor = true;
+    return 960;
+  }
+  if (combined.includes('gas pipeline') || combined.includes('pipeline') || combined.includes('confidential matter 13') || (matter.name === 'Confidential Matter 13')) {
+    matter._isCanonicalAnchor = true;
+    return 950;
+  }
+  if (combined.includes('monsanto') || combined.includes('semillas agroproductos')) {
+    matter._isCanonicalAnchor = true;
+    return 940;
+  }
 
-  // 3. Scale / deal value impact (after normalized extraction)
+  // 3. Scale / deal value impact (for non-anchor candidate matters)
   const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
   if (approxValue >= 2000000000) score += 35; // 2B+
   else if (approxValue >= 1000000000) score += 30; // 1B+
@@ -135,7 +195,7 @@ export function calculateStrategicTier(
   // 5. Practice dilution penalties (off-category cases in Real Estate)
   const safePractice = typeof practiceArea === 'string' ? practiceArea : '';
   const isRealEstate = safePractice.toLowerCase().includes('real estate') || safePractice.toLowerCase().includes('inmobiliario');
-  if (isRealEstate && !isRealEstateAnchor) {
+  if (isRealEstate) {
     // A. Public procurement / infrastructure / lighting concession / underground mining
     if (
       combined.includes('grupo r') ||
@@ -284,8 +344,40 @@ export function curateMatters(
     if (key) seenTitles.add(key);
     
     const publishStatus = (m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase();
-    const isConfidential = m.isConfidential || m.is_confidential || m.confidential || (publishStatus === 'confidential' || publishStatus === 'non_publishable');
+    let isConfidential = m.isConfidential || m.is_confidential || m.confidential || (publishStatus === 'confidential' || publishStatus === 'non_publishable');
     
+    // Canonical overrides for known practice anchors to ensure strict partition
+    const combinedKey = `${m.client || ''} ${m.title || ''} ${m.name || ''} ${m.summary || ''}`.toLowerCase();
+    if (
+      combinedKey.includes('de anda') ||
+      combinedKey.includes('villas del colli') ||
+      combinedKey.includes('adm hermosillo') ||
+      combinedKey.includes('hermosillo') ||
+      combinedKey.includes('leaño') ||
+      combinedKey.includes('monsanto') ||
+      (combinedKey.includes('gas pipeline') || (combinedKey.includes('pipeline') && combinedKey.includes('right of way'))) ||
+      (combinedKey.includes('sict') && !combinedKey.includes('potosinos'))
+    ) {
+      isConfidential = true;
+    } else if (
+      combinedKey.includes('el cielo') ||
+      combinedKey.includes('duranpark') ||
+      combinedKey.includes('diageo') ||
+      combinedKey.includes('idex') ||
+      combinedKey.includes('san carlos') ||
+      combinedKey.includes('midi') ||
+      combinedKey.includes('la primavera') ||
+      combinedKey.includes('cominvi') ||
+      (combinedKey.includes('isseg') && (combinedKey.includes('silao') || combinedKey.includes('bicentenario') || combinedKey.includes('edificio'))) ||
+      combinedKey.includes('holcim') ||
+      combinedKey.includes('dorina') ||
+      combinedKey.includes('smb promotora') ||
+      combinedKey.includes('devangary') ||
+      combinedKey.includes('vialidades en los altos')
+    ) {
+      isConfidential = false;
+    }
+
     if (isConfidential) {
       rawConf.push(m);
     } else {
@@ -305,6 +397,8 @@ export function curateMatters(
 
   // v26.37: Synchronize Audit exclusions with final submission
   const isExcluded = (m: any): boolean => {
+    // Canonical anchors are vetted directory matters and MUST never be excluded
+    if (m._isCanonicalAnchor) return false;
     if (m.isExcluded || m.status === 'Excluded' || m.status === 'Pruned') return true;
     const client = (m.client || m.clientName || m.name || '').toLowerCase();
     const title = (m.title || '').toLowerCase();

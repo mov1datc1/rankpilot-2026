@@ -3,7 +3,17 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-10** (v26.37 — Audit-Submission 20-Matter Sync & Transversal Merit Reasoning)
+> Last updated: **2026-09-11** (v26.39 — Audit-Submission 1:1 Traceability, COMINVI Re-anchor & Editorial Polish)
+
+## v26.39 — AUDIT-SUBMISSION 1:1 TRACEABILITY, COMINVI RE-ANCHOR & EDITORIAL POLISH (2026-09-11)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Audit-to-Submission 1:1 Single Source of Truth | Enforced dominant anchor scores in `matter-curator.ts` ensuring IDEX (#4) / San Carlos (#5) and Holcim (#9) / Rosa Dorina (#10) maintain exact order; Case Evaluation table now dynamically maps final shortlist labels | `src/lib/docx/matter-curator.ts`, `src/app/api/generate-docx/route.ts`, `src/app/api/optimize/complete/route.ts` |
+| COMINVI Re-anchored to Core Publishable (#8) | Resolved false negative: COMINVI (ISSEG Bicentenario Silao Guanajuato tender amparo, MXN 1.059B) re-anchored at #8 with structured 3-paragraph narrative emphasizing construction scale and inter-state reach | `src/lib/docx/matter-curator.ts`, `src/app/api/generate-docx/submission-builder.ts`, `ai-engine/agents/nodes.py` |
+| La Primavera Concrete Position & Remedy | Replaced generic prose with Amparo 932/2017 forensic proof showing physical invasion fell outside decree coordinates, establishing constitutional property holder standing, and opening physical restitution vs MXN 100M market indemnity | `src/app/api/generate-docx/submission-builder.ts`, `ai-engine/agents/prompts.py` |
+| SMB Promotora Natural Editorial Phrasing | Substituted `"whether the payment order was immediately challengeable"` with `"whether the payment order could be immediately challenged through amparo proceedings"` | `src/app/api/generate-docx/submission-builder.ts`, `ai-engine/agents/prompts.py` |
+| Familia Leaño Anchor Confirmation | Verified and permanently anchored as Confidential Matter 4 (10 ha recovery) | `src/lib/docx/matter-curator.ts` |
 
 ## v26.37 — AUDIT-SUBMISSION 20-MATTER SYNC & TRANSVERSAL MERIT REASONING (2026-09-10)
 
