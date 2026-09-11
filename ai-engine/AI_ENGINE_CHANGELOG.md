@@ -3,7 +3,17 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-09** (v26.36 — Quality Defense, Geographic Grounding & Deliverable Hardening)
+> Last updated: **2026-09-10** (v26.37 — Audit-Submission 20-Matter Sync & Transversal Merit Reasoning)
+
+## v26.37 — AUDIT-SUBMISSION 20-MATTER SYNC & TRANSVERSAL MERIT REASONING (2026-09-10)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Single Source of Truth: Audit-to-Submission 20-Matter Sync | Eliminated -150 dilution penalty in `matter-curator.ts` for contentious real estate & infrastructure anchors (*Devangary, Red Vía Corta, Cominvi, SICT Logistics, Gas Pipeline/Motormexa, Monsanto*); guaranteed submission generator consumes exactly the 13 Pub + 7 Conf = 20 matters curated by the Strategic Audit | `src/lib/docx/matter-curator.ts`, `src/app/api/generate-docx/submission-builder.ts`, `src/app/api/optimize/complete/route.ts` |
+| Transversal Reasoning Rule (Team/Lawyer Merit Attribution) | Rule 12 in `MATTER_ENHANCER_PROMPT` and Rule 10 in `MATTER_SYSTEM_PROMPT`: enforces `Problem → Lawyer insight/judgment → Legal technique deployed → Result → Commercial/Client impact`. Strictly prohibits attributing merit to legal doctrines, instruments, or evidence | `ai-engine/agents/prompts.py`, `ai-engine/agents/micro_optimizer.py`, `src/app/api/generate-docx/submission-builder.ts` |
+| Mandatory Matter Narrative Rewrites | Executed specific rewrites requested by Angela: Diageo (stripped "marquee", active team relief), La Primavera (team cadastral reconstruction and title defense), Holcim (argumentative strategy preserving 3 concrete plants), Rosa Dorina (challenging technical cartography), SMB Promotora (emergency 6-day amparo), Familia De Anda (matrimonial property regime), ADM Hermosillo (facial regulatory challenge) | `src/app/api/generate-docx/submission-builder.ts` |
+| Strategic Audit Shortlist & Table Synchronization | Synced Path to Dominance Step 1 (`What must be delivered: Official Curated Filing Shortlist (13 Publishable + 7 Confidential)...`) and Case Evaluation table to evaluate all 33 matters with top 20 core matters on top | `src/app/api/generate-docx/route.ts` |
+| Vercel Turbopack Build Type Hardening | Typed `evalRows` elements as `string[][]` with `String(...)` casting for `makeTable` in `generate-docx/route.ts`, eliminating TypeScript compilation failure on Vercel | `src/app/api/generate-docx/route.ts` |
 
 ## v26.36 — QUALITY DEFENSE, GEOGRAPHIC GROUNDING & DELIVERABLE HARDENING (2026-09-09)
 

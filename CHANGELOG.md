@@ -3,6 +3,33 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.37] — 2026-09-10
+
+### Audit-Submission 20-Matter Portfolio Sync & Transversal Lawyer Merit Attribution (Angela Castillo 10-Sept Regression Test)
+
+- **Audit-to-Submission 20-Matter Portfolio Synchronization (Single Source of Truth)**:
+  - Fixed discrepancy where the Strategic Audit curated 20 matters (13 Publishable + 7 Confidential) but the generated Submission DOCX contained only 14 matters due to negative sector dilution penalties (-150) in `matter-curator.ts`.
+  - Added explicit anchor bonuses (+80 to +110) in `calculateStrategicTier` and protected core contentious real estate/infrastructure anchors (`isRealEstateAnchor = true`): *Conciencia Ambiental Devangary*, *L&E Operadora de Vialidades en Los Altos / Red Vía Corta*, *Cominvi*, *SICT highway access litigation*, *Gas pipeline right of way / Motormexa*, and *Semillas Agroproductos Monsanto property tax defense*.
+  - Standardized Chambers allowance to `{ maxTotal: 20, maxPub: 13, maxConf: 7 }`.
+  - End-to-end propagation: the Submission Generator consumes exactly the 20-matter curated portfolio established by the Strategic Audit, eliminating matter drop-off.
+  - Strategic Audit Path to Dominance Step 1 and Case Evaluation Table now dynamically reflect the full 20 core matters (13 Publishable + 7 Confidential) alongside the 13 reserve matters.
+- **Transversal Reasoning Rule (Lawyer & Team Merit Attribution)**:
+  - Enforced strict causal narrative architecture across prompts (`ai-engine/agents/prompts.py`, `ai-engine/agents/micro_optimizer.py`) and DOCX sanitization (`submission-builder.ts`):
+    `Problem → Lawyer insight/judgment → Legal technique deployed → Result → Commercial/Client impact`.
+  - Strictly prohibited attributing merit to legal instruments, doctrines, or evidence (e.g. *"The matter illustrates the importance of..."*, *"the capacity of precise property and cadastral evidence..."*).
+  - Specific mandatory rewrites executed:
+    - *Diageo*: Stripped promotional *"marquee global corporate client"* (replaced with *"global corporate client"*), attributing protective relief directly to lead associate Edgar Adrián Moro López under José Pablo Ramos Castillo.
+    - *La Primavera*: Replaced *"apparent fait accompli"* and evidence capacity with team's forensic cadastral and title reconstruction proving state occupation and securing restitution/compensation standing.
+    - *Holcim*: Attributed operational survival of 3 concrete plants to team's argumentative strategy and immediate judicial suspensions.
+    - *Rosa Dorina*: Replaced unreviewable cartography doctrine with team's technical questioning of riverbed/federal zone boundaries.
+    - *SMB Promotora*: Attributed emergency amparo admission and asset protection under 6-day pressure to team's strategy.
+    - *Familia De Anda*: Attributed revival of an apparently lost claim to team's first-principles analysis of the matrimonial property regime.
+    - *ADM Hermosillo*: Replaced piecemeal compliance with team challenging the validity of NOM-247-SE-2021 itself.
+    - *San Carlos* & *Villas del Colli*: Attributed active interim relief and constitutional bounds to the team.
+- **Build & Vercel Type Hardening**:
+  - In `src/app/api/generate-docx/route.ts`: Fixed TypeScript typing for `evalRows` (`string[][]`) passed to `makeTable`, resolving Vercel Turbopack build failure.
+  - Clean client descriptors added for all 6 newly anchored matters in `cleanClientDescriptor`.
+
 ## [v26.36] — 2026-09-09
 
 ### Quality Defense, Geographic Grounding & Deliverable Hardening (Angela Castillo 9-Sept Feedback)
