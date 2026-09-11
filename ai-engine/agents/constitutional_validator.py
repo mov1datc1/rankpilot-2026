@@ -259,17 +259,19 @@ Compare the original Chambers source, deterministic manifest, canonical record,
 optimized submission and Strategic Audit together. Use the structured response
 schema supplied by the API.
 
-Your mission is to objectively audit, grade, and evaluate this submission against the Owner's Approved Gold Standard (v26.23):
+Your mission is to objectively audit, grade, and evaluate this submission against the Owner's Approved Gold Standard (v26.40 — Chambers & Partners Editorial Constitution):
 1. Provide an overall quality score from 1 to 10:
-   - 9-10 (Elite Benchmark): Strictly adheres to the Zero Carpentry standard (no visible labels like "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**", etc.), fluid 3-paragraph organic narrative (Asset/Scale/Stakes → Differential Craft/Outcome → Team Leadership/Precedent), high factual density, and zero off-category dilution.
-   - 7-8 (Solid Benchmark): Robust factual accuracy and solid evidence preservation, but contains minor narrative stiffness, boilerplate transitions, or mild matter alignment drift.
-   - 5-6 (Acceptable Baseline): Visible structural carpentry (e.g. bold subheaders/labels), fragmented or bulleted matter narratives, generic lawyering claims without causal mechanisms, or peripheral off-category matters diluting practice focus.
+   - 9-10 (Elite Benchmark): Strictly adheres to Zero Carpentry (no visible labels like "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**"), fluid 3-paragraph organic narrative with rigorous causal attribution (Problem/Risk → Team's concrete technical/legal intervention → Specific legal outcome → Commercial/asset impact), high factual density, 1:1 sync between Audit Letter and Submission Form, zero off-category dilution (max 20 matters with pure tax/labor/transport pruned), and natural Chambers English phrasing.
+   - 7-8 (Solid Benchmark): Robust factual accuracy and evidence preservation, but contains minor narrative stiffness, boilerplate transitions, or mild matter alignment drift.
+   - 5-6 (Acceptable Baseline): Visible structural carpentry, fragmented/bulleted narratives, generic claims without causal mechanisms, off-category dilution matters present, or numbering discrepancies between Audit and Submission.
    - 1-4 (Substandard): Significant evidence omissions, dropped parties, hallucinated claims, or factual distortion.
 
 2. Provide a detailed `feedback` critique explaining:
-   - Structural and Editorial Review: Note whether the submission honors the Zero Carpentry and 3-paragraph standard or exhibits mechanical labeling/bulleting.
-   - Portfolio Curation: Identify whether any submitted matters are off-category dilution candidates that should be pruned or repositioned.
-   - Specific Gaps: Note specific matter IDs, weak phrasing, missing values or lawyer attribution gaps.
+   - Audit-to-Submission Traceability: Confirm whether the Strategic Audit Letter matter order, numbering, and labels match the Submission Form 1:1.
+   - Causal Attribution & Transversal Reasoning: Note whether each Core matter clearly articulates what the team actively did, what legal position was created, and what concrete commercial/asset outcome was secured (avoiding passive instrument attribution).
+   - Borderline Matter Relevance: Assess whether matters involving infrastructure, construction, or substantial out-of-state reach (e.g. COMINVI) are appropriately credited for practice area scale and national standing.
+   - Portfolio Hygiene & 20-Matter Cap: Note whether peripheral off-category dilution matters (e.g. pure tax credits, local transport regulations, minor labor claims) were cleanly pruned, preserving up to 20 high-impact matters.
+   - Editorial Craft & Zero Carpentry: Verify absence of mechanical bold labels and verify natural Chambers phrasing (e.g. "whether the payment order could be immediately challenged through amparo proceedings").
    - Practical recommendations for improvements to guide the administrator and firm.
 
 Include one check record for each component below:
@@ -300,6 +302,17 @@ pre-flight failures, model profiles, internal diagnostics or architecture.
 DETERMINISTIC CONTRACTS — Any failed source, extraction, evidence or artifact
 contract is noted.
 
+AUDIT_SUBMISSION_SYNC — Audit Letter matter evaluations and the Submission Form matter
+highlights share identical matter ordering, numbering, and matter titles 1:1 without discrepancies.
+
+CAUSAL_ATTRIBUTION — Matters adhere to the 4-stage causal model (Problem/Risk → Concrete Legal Strategy/Action → Judicial/Regulatory Outcome → Commercial/Asset Impact), explicitly crediting the team's intervention rather than passive court rulings.
+
+BORDERLINE_RELEVANCE — Practice area boundaries are evaluated strategically: matters offering material evidence of infrastructure scale, high economic value, or out-of-state geographic presence are credited appropriately rather than being mechanically discarded.
+
+PORTFOLIO_HYGIENE — The portfolio maximizes evidentiary space up to the 20-matter cap without being diluted by peripheral non-practice matters (e.g., pure tax disputes, transport fines, or generic administrative filings).
+
+EDITORIAL_CRAFT — Delivery adheres to Zero Carpentry (no visible bold structural labels) and exhibits natural international Chambers English phrasing.
+
 Set retryable=false. For every check, identify its component, whether it passed, the reason,
 and list any affected canonical matter_id values.
 """
@@ -315,6 +328,11 @@ class JudgeCheck(BaseModel):
         "matter_quality",
         "strategic_audit",
         "deterministic_contracts",
+        "audit_submission_sync",
+        "causal_attribution",
+        "borderline_relevance",
+        "portfolio_hygiene",
+        "editorial_craft",
     ]
     affected_matter_ids: List[str] = Field(
         description="Canonical matter_id values affected by this check; empty if not matter-specific"
@@ -359,11 +377,21 @@ def build_judge_retry_plan(verdict: Dict) -> Tuple[str, List[str], List[str]]:
         component = str(check.get("component") or check.get("check_id") or "").casefold()
         if any(name in component for name in non_retryable_components):
             return "none", [], []
-        if "strategic_audit" in component or "lawyer" in component:
+        if (
+            "strategic_audit" in component
+            or "lawyer" in component
+            or "audit_submission_sync" in component
+            or "borderline_relevance" in component
+            or "portfolio_hygiene" in component
+        ):
             scopes.add("audit")
         elif "b10" in component:
             scopes.add("b10")
-        elif "matter" in component:
+        elif (
+            "matter" in component
+            or "causal_attribution" in component
+            or "editorial_craft" in component
+        ):
             scopes.add("matters")
             check_matter_ids = {
                 str(value).strip().casefold()

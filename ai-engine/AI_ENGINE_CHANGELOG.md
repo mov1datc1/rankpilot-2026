@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-11** (v26.39 — Audit-Submission 1:1 Traceability, COMINVI Re-anchor & Editorial Polish)
+> Last updated: **2026-09-11** (v26.40 — Judge SOL Chambers Constitution v26.40 Upgrade)
+
+## v26.40 — JUDGE SOL CHAMBERS CONSTITUTION UPGRADE (2026-09-11)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Judge SOL Editorial Constitution Upgrade (v26.40) | Upgraded `EDITORIAL_JUDGE_PROMPT` in `ai-engine/agents/constitutional_validator.py` from legacy v26.23 to v26.40, introducing 10 strict component audits | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
+| Audit-to-Submission 1:1 Traceability Audit | New `audit_submission_sync` check enforcing identical matter ordering, numbering, and titles between Audit Letter and Submission Form | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
+| Causal Attribution & Active Team Merit | New `causal_attribution` check validating the 4-stage causal model (*Problem/Risk → Concrete Legal Strategy → Judicial/Regulatory Outcome → Commercial/Asset Impact*), barring passive court rulings | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
+| Strategic Borderline Matter Calibration | New `borderline_relevance` check ensuring high-value infrastructure/interstate matters (COMINVI MXN 1.059B) are credited for practice scale | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
+| Portfolio Hygiene & 20-Matter Optimization | New `portfolio_hygiene` check verifying maximum 20-matter cap with peripheral non-practice dilution pruned | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
+| Editorial Craft & Zero Carpentry | New `editorial_craft` check ensuring zero artificial bold section labels and natural Chambers English phrasing | `ai-engine/agents/constitutional_validator.py`, `src/app/api/optimize/complete/route.ts` |
 
 ## v26.39 — AUDIT-SUBMISSION 1:1 TRACEABILITY, COMINVI RE-ANCHOR & EDITORIAL POLISH (2026-09-11)
 

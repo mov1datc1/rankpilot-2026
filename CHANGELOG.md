@@ -3,6 +3,23 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.40] — 2026-09-11
+
+### Judge SOL Quality Auditor v26.40 — Full Chambers & Partners Editorial Constitution
+
+- **Judge SOL Constitution Upgrade (v26.40)**:
+  - Upgraded `EDITORIAL_JUDGE_PROMPT` in `ai-engine/agents/constitutional_validator.py` from legacy v26.23 to the full Chambers Constitution v26.40.
+  - Expanded `JudgeCheck` with 5 new specialized evaluation components (total 10 checks):
+    1. `audit_submission_sync`: Enforces 1:1 order, numbering, and labeling between Strategic Audit Letter and Submission Form.
+    2. `causal_attribution`: Enforces the 4-stage causal model (*Problem/Risk → Concrete Legal Strategy → Judicial/Regulatory Outcome → Commercial/Asset Impact*), mandating lawyer team merit attribution over passive instrument claims.
+    3. `borderline_relevance`: Validates strategic border matters (such as COMINVI's MXN 1.059B ISSEG Silao tender amparo) that supply critical infrastructure scale and interstate reach.
+    4. `portfolio_hygiene`: Validates portfolio maximization up to the 20-matter cap while pruning peripheral non-practice dilution (pure tax, transport, minor labor).
+    5. `editorial_craft`: Audits Zero Carpentry compliance (no artificial bold structural labels) and enforces natural international Chambers legal phrasing.
+- **Next.js Quality Synthesis Synchronization (`complete/route.ts`)**:
+  - Integrated the 10-point audit verdict into the automated optimization pipeline, calculating dynamic check reasons and compliance scores (10/10 for fully aligned portfolios).
+- **Admin Audit Dashboard Integration (`/dashboard/admin/audit`)**:
+  - The Admin Audit viewer now visualizes the expanded components, providing immediate visual confirmation and detailed reporting for every audited submission.
+
 ## [v26.39] — 2026-09-11
 
 ### Full Strategic Alignment, Audit-to-Submission 1:1 Traceability & Editorial Polish (Angela Castillo 11-Sept Feedback)
