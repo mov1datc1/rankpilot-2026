@@ -649,12 +649,9 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
       }
       if (typeof step === 'object' && step.what_must_be_delivered) {
         let whatText = String(step.what_must_be_delivered);
-        if (whatText.includes('10 Publishable + 4 Confidential')) {
-          whatText = whatText.replace('10 Publishable + 4 Confidential', '13 Publishable + 5 Confidential');
-        }
-        if (whatText.includes('13 Publishable + 7 Confidential')) {
-          whatText = whatText.replace('13 Publishable + 7 Confidential', '13 Publishable + 5 Confidential');
-        }
+        whatText = whatText.replace('10 Publishable + 4 Confidential', '12 Publishable + 4 Confidential');
+        whatText = whatText.replace('13 Publishable + 7 Confidential', '12 Publishable + 4 Confidential');
+        whatText = whatText.replace('13 Publishable + 5 Confidential', '12 Publishable + 4 Confidential');
         sections.push(p(`What must be delivered: ${whatText}`, { color: '15803D', spacing: { after: 60 } }));
       }
       if (typeof step === 'object' && step.deadline) {
