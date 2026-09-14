@@ -138,18 +138,14 @@ export function calculateStrategicTier(
   }
   if (combined.includes('smb promotora') || combined.includes('smb')) {
     matter._isCanonicalAnchor = true;
-    return 900;
-  }
-  if (combined.includes('vialidades en los altos') || combined.includes('red vía corta') || combined.includes('red via corta') || combined.includes('operadora de vialidades')) {
-    matter._isCanonicalAnchor = true;
-    return 890;
+    return 905;
   }
   if (combined.includes('devangary') || combined.includes('conciencia ambiental')) {
     matter._isCanonicalAnchor = true;
-    return 880;
+    return 900;
   }
 
-  // Confidential 5 Real Estate Core Anchors (Vetted genuine real estate matters)
+  // Confidential 4 Real Estate Core Anchors (Vetted genuine real estate matters)
   if (combined.includes('familia de anda') || combined.includes('de anda')) {
     matter._isCanonicalAnchor = true;
     return 1000;
@@ -165,10 +161,6 @@ export function calculateStrategicTier(
   if (combined.includes('familia leaño') || combined.includes('leaño')) {
     matter._isCanonicalAnchor = true;
     return 970;
-  }
-  if (combined.includes('monsanto') || combined.includes('semillas agroproductos')) {
-    matter._isCanonicalAnchor = true;
-    return 960;
   }
 
   // 3. Scale / deal value impact (for non-anchor candidate matters)
@@ -264,6 +256,24 @@ export function calculateStrategicTier(
       combined.includes('production and marketing of berries')
     ) {
       score -= 150;
+    }
+
+    // J. Highway concession tax disputes (Income Tax / Withholding Tax / VAT - Angela Castillo directive)
+    if (
+      combined.includes('vialidades en los altos') ||
+      combined.includes('red vía corta') ||
+      combined.includes('red via corta') ||
+      combined.includes('operadora de vialidades')
+    ) {
+      score -= 200;
+    }
+
+    // K. Agricultural property tax refund / predial nullity litigation (Angela Castillo directive)
+    if (
+      combined.includes('monsanto') ||
+      combined.includes('semillas agroproductos')
+    ) {
+      score -= 200;
     }
   }
 

@@ -289,6 +289,42 @@ export function runArtifactIntegrityCheck(
       }
     }
 
+    // Check 2b: Real Estate Core Purity (Angela Castillo directive: Pure Real Estate substantive merit)
+    const isRamosRE = (options.firmName || '').toLowerCase().includes('ramos') && (options.practiceArea || '').toLowerCase().includes('real estate');
+    if (isRamosRE) {
+      if (
+        clientLower.includes('vialidades en los altos') ||
+        clientLower.includes('red vía corta') ||
+        clientLower.includes('red via corta') ||
+        clientLower.includes('operadora de vialidades') ||
+        mName.toLowerCase().includes('vialidades en los altos') ||
+        mName.toLowerCase().includes('red vía corta') ||
+        mName.toLowerCase().includes('red via corta')
+      ) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: mName,
+          field: 'Real Estate Core Purity',
+          description: 'L&E Operadora / Red Vía Corta is an Income Tax / SAT dispute excluded from Real Estate Core. Must remain in Reserve Roster.',
+          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
+        });
+      }
+      if (
+        clientLower.includes('monsanto') ||
+        clientLower.includes('semillas agroproductos') ||
+        mName.toLowerCase().includes('monsanto') ||
+        mName.toLowerCase().includes('semillas agroproductos')
+      ) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: mName,
+          field: 'Real Estate Core Purity',
+          description: 'Semillas Agroproductos Monsanto is a property tax (predial) refund dispute excluded from Real Estate Core. Must remain in Reserve Roster.',
+          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
+        });
+      }
+    }
+
     // Check 3: Matter-to-Client Relational Consistency
     // E.g. client is a landowner, but summary describes motorcycle manufacturing or tax fines
     if (clientLower.includes('adm hermosillo') && summary.toLowerCase().includes('motorcycle')) {
