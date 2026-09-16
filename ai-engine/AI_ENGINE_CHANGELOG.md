@@ -3,7 +3,26 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-11** (v26.40 — Judge SOL Chambers Constitution v26.40 Upgrade)
+> Last updated: **2026-09-15** (v26.42 — Golden Regression Case Acceptance & Multi-Practice Readiness)
+
+## v26.42 — GOLDEN REGRESSION CASE ACCEPTANCE & MULTI-PRACTICE READINESS (2026-09-15)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Golden Regression Case Formal Sign-off | Angela Castillo confirmed end-to-end PASS across all dimensions: Evidence Ingestion, Grounding, Strategic Audit, Band Calibration, Portfolio Curation, Hero Selection, Traceability, Audit-to-Submission Propagation, B9/B10/C2, and Final Execution | `CHANGELOG.md`, `walkthrough.md` |
+| Editorial Validation Wording Calibration | Softened absolute "Full compliance" claim to `"Editorially validated against RankPilot's Chambers submission framework"` to eliminate perception of directory certification | `src/app/api/optimize/complete/route.ts`, `src/app/api/generate-docx/route.ts` |
+| Directory Ceiling vs. RankPilot Methodology Demarcation | Disentangled official directory template limits (up to 20/30 matters) from RankPilot's strategic methodology (concentrating evidentiary weight on a vetted flagship core); eliminated unproven informal claims about researchers and "review fatigue" | `ai-engine/agents/nodes.py`, `src/app/api/optimize/complete/route.ts`, `src/app/api/generate-docx/route.ts` |
+| Partner Profile Template Alignment (B6 → B9) | Realigned partner & associate biography references in the strategic plan from legacy B6 to official Chambers template Section B9 | `src/app/api/optimize/complete/route.ts`, `src/app/api/generate-docx/route.ts` |
+| Turbopack Workspace Root Configuration | Configured `turbopack: { root: __dirname }` in `next.config.ts`, eliminating lockfile inference ambiguity and speeding build times to 3.5s | `next.config.ts` |
+
+## v26.41 — FINAL ARTIFACT INTEGRITY CHECK & 16-MATTER SUBSTANTIVE CORE (2026-09-14)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Source Upload Discrepancy Forensic Proof | Proved 100% pipeline determinism: Angela's test ingested a 14-matter export (66 KB), whereas Jonathan's test ingested the 33-matter master draft (120 KB) | `src/lib/docx/matter-curator.ts`, `walkthrough.md` |
+| Pure Real Estate Substantive Classification | Pruned *L&E Operadora / Red Vía Corta* (SAT tax litigation) and *Monsanto* (predial refund) from Core to Reserve Roster via `-200` dilution penalty; anchored COMINVI (ISSEG Bicentenario office tower tender) and Devangary (zoning/environmental defense); established 12 Pub + 4 Conf = 16 matters | `src/lib/docx/matter-curator.ts`, `src/app/api/optimize/complete/route.ts`, `ai-engine/agents/nodes.py` |
+| Dual-Labeling Traceability | Deployed `⭐ FLAGSHIP X [Source Matter #Y → Final Core #Z]` across Audit Shortlist, complete route, and Python engine nodes | `src/app/api/generate-docx/route.ts`, `src/app/api/optimize/complete/route.ts`, `ai-engine/agents/nodes.py` |
+| Programmatic Final Artifact Integrity Check | Implemented `artifact-integrity-check.ts` pre-flight validator blocking template leakage, audit re-infiltration, client mismatches, and mathematical FX conversion anomalies | `src/lib/docx/artifact-integrity-check.ts`, `src/app/api/generate-docx/submission-builder.ts` |
 
 ## v26.40 — JUDGE SOL CHAMBERS CONSTITUTION UPGRADE (2026-09-11)
 
