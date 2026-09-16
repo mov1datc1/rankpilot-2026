@@ -484,9 +484,12 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
 
   // Executive Summary
   if (analysis.summary) {
+    let summaryText = String(analysis.summary)
+      .replace(/Full compliance with (Chambers & Partners|The Legal 500) editorial guidelines verified\.?/gi, 
+        (match, p1) => `Editorially validated against RankPilot's ${p1.includes('Legal 500') ? 'Legal 500' : 'Chambers'} submission framework.`);
     sections.push(
       sectionTitle('Executive Summary'),
-      p(String(analysis.summary), { italics: true, color: GRAY, spacing: { after: 200 } })
+      p(summaryText, { italics: true, color: GRAY, spacing: { after: 200 } })
     );
   }
 
@@ -625,8 +628,11 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
       p('Editorial observations on the submission\'s competitive positioning:', { color: GRAY, spacing: { after: 100 } })
     );
     for (const item of realityCheck) {
+      let itemText = typeof item === 'object' ? JSON.stringify(item) : String(item);
+      itemText = itemText.replace(/filing beyond the curated core creates review fatigue and risks diluting the evaluation with peripheral or unaligned instructions\.?/gi,
+        "Under RankPilot's editorial methodology, filing uncurated peripheral mandates risks diluting the evaluation; we strategically recommend prioritizing our vetted core to maximize qualitative impact.");
       sections.push(new Paragraph({
-        children: [new TextRun({ text: `•  ${typeof item === 'object' ? JSON.stringify(item) : String(item)}`, size: 22 })],
+        children: [new TextRun({ text: `•  ${itemText}`, size: 22 })],
         indent: { left: 400 },
         spacing: { after: 80 },
       }));
@@ -639,16 +645,21 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     sections.push(sectionTitle('The Path to Dominance'));
     for (let i = 0; i < path.length; i++) {
       const step = path[i];
-      const title = typeof step === 'object' ? (step.title || 'Strategic Step') : 'Strategic Step';
-      const desc = typeof step === 'object' ? (step.description || JSON.stringify(step)) : String(step);
+      let title = typeof step === 'object' ? (step.title || 'Strategic Step') : 'Strategic Step';
+      let desc = typeof step === 'object' ? (step.description || JSON.stringify(step)) : String(step);
+      title = title.replace(/\bB6\b/g, 'B9');
+      desc = desc.replace(/\bB6\b/g, 'B9');
       sections.push(
         p(`STEP ${i + 1}: ${title}`, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } })
       );
       if (typeof step === 'object' && step.why) {
-        sections.push(p(`Why: ${step.why}`, { italics: true, color: '6366F1', spacing: { after: 60 } }));
+        let whyText = String(step.why).replace(/\bB6\b/g, 'B9');
+        whyText = whyText.replace(/directory researchers recommend.*prevent practice dilution\.?/gi,
+          "While the submission template establishes an upper limit of up to 20 matters, RankPilot's editorial methodology strategically prioritizes a curated core of flagship mandates to concentrate evaluative impact.");
+        sections.push(p(`Why: ${whyText}`, { italics: true, color: '6366F1', spacing: { after: 60 } }));
       }
       if (typeof step === 'object' && step.what_must_be_delivered) {
-        let whatText = String(step.what_must_be_delivered);
+        let whatText = String(step.what_must_be_delivered).replace(/\bB6\b/g, 'B9');
         whatText = whatText.replace('10 Publishable + 4 Confidential', '12 Publishable + 4 Confidential');
         whatText = whatText.replace('13 Publishable + 7 Confidential', '12 Publishable + 4 Confidential');
         whatText = whatText.replace('13 Publishable + 5 Confidential', '12 Publishable + 4 Confidential');
@@ -672,8 +683,11 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     sections.push(sectionTitle('Portfolio Curation & Chambers 20-Matter Ceiling'));
 
     if (portfolioCuration.warning) {
+      let warnText = String(portfolioCuration.warning);
+      warnText = warnText.replace(/filing beyond the curated core creates review fatigue and risks diluting the evaluation with peripheral or unaligned instructions\.?/gi,
+        "Under RankPilot's editorial methodology, filing uncurated peripheral mandates risks diluting the evaluation; we strategically recommend prioritizing our vetted core to maximize qualitative impact.");
       sections.push(
-        p(portfolioCuration.warning, { bold: true, color: 'DC2626', size: 22, spacing: { after: 140 } })
+        p(warnText, { bold: true, color: 'DC2626', size: 22, spacing: { after: 140 } })
       );
     }
 

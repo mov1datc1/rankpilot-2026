@@ -373,9 +373,9 @@ export async function POST(request: NextRequest) {
       publishable_count: pubCount,
       confidential_count: confCount,
       warning: totalMatters > allowance.maxTotal 
-        ? `RankPilot Strategic Recommendation: The draft portfolio contains ${totalMatters} matters (${totalMatters - allowance.maxTotal} above the directory threshold of ${allowance.maxTotal}). While ${isLegal500 ? 'The Legal 500' : 'Chambers'} allows up to ${allowance.maxTotal} matters for ${practiceArea || 'this practice area'}, filing beyond the curated core creates review fatigue and risks diluting the evaluation with peripheral or unaligned instructions.`
+        ? `RankPilot Strategic Recommendation: The ${isLegal500 ? 'The Legal 500' : 'Chambers'} submission template provides slots for up to ${allowance.maxTotal} matters (the firm uploaded ${totalMatters} draft matters). Under RankPilot's editorial methodology, filing uncurated peripheral mandates risks diluting the evaluation; we strategically recommend prioritizing our vetted ${Math.min(totalMatters, isRamosRE ? 16 : allowance.maxTotal)}-matter core to maximize qualitative impact.`
         : (totalMatters > 20 && allowance.maxTotal >= 30
-          ? `RankPilot Strategic Guidance: Although Chambers allows up to 30 matters for ${practiceArea} in Mexico, RankPilot strategically recommends filing a curated core of ${Math.min(totalMatters, 20)} flagship matters to concentrate qualitative impact and ensure researcher engagement.`
+          ? `RankPilot Strategic Guidance: Although the directory template accommodates up to 30 matters for ${practiceArea} in Mexico, RankPilot's editorial methodology strategically recommends prioritizing a curated core of ${Math.min(totalMatters, 20)} flagship matters to concentrate qualitative impact and ensure clear positioning.`
           : null),
       duplicate_matters: duplicateMatters,
       dilution_risks: dilutionRisks,
@@ -390,8 +390,8 @@ export async function POST(request: NextRequest) {
         description: `Highlight top curated core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment, pruning off-category and unaligned matters.`,
         action: `Curate and highlight the top core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment.`,
         why: allowance.maxTotal >= 30
-          ? `Although Chambers permits up to 30 matters for ${practiceArea}, directory researchers recommend concentrating evidentiary weight on a core shortlist of high-value mandates to avoid diluting the practice profile.`
-          : 'Directory researchers recommend a curated selection of up to 20 matters to concentrate evaluative impact and prevent practice dilution.',
+          ? `Although the submission form permits up to 30 matters for ${practiceArea}, RankPilot's editorial methodology strategically prioritizes a vetted shortlist of flagship mandates to avoid diluting the practice profile.`
+          : 'While the submission template establishes an upper limit of up to 20 matters, RankPilot\'s editorial methodology strategically prioritizes a curated core of flagship mandates to concentrate evaluative impact.',
         what_must_be_delivered: `Official Curated Filing Shortlist (${curationResult.officialPubMatters.length} Publishable + ${curationResult.officialConfMatters.length} Confidential) structured in organic 3-paragraph prose.`,
         deadline: 'Immediate'
       },
@@ -405,12 +405,12 @@ export async function POST(request: NextRequest) {
         deadline: 'Pre-Submission'
       },
       {
-        title: 'Phase 3: Key Partner Leadership & B6 Cross-Referencing',
+        title: 'Phase 3: Key Partner Leadership & B9 Cross-Referencing',
         phase: 'Phase 3: Key Partner Visibility',
-        description: 'Align lead partner bio highlights in Section B6 directly with the anchor mandates positioned in Section B10 and Section D.',
+        description: 'Align lead partner bio highlights in Section B9 directly with the anchor mandates positioned in Section B10 and Section D.',
         action: 'Cross-reference partner litigation and transactional achievements to establish individual ranking momentum.',
         why: 'Editorial researchers correlate departmental market reputation with individual partner prominence.',
-        what_must_be_delivered: 'Updated B6 partner biographies highlighting deal scale and landmark precedents.',
+        what_must_be_delivered: 'Updated B9 partner biographies highlighting deal scale and landmark precedents.',
         deadline: 'Research Window'
       }
     ];
@@ -487,7 +487,7 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
     const synthesizedAnalysis = {
       score: calculatedScore,
       risk_level: riskLevel,
-      summary: `Strategic Audit Report for ${firmName} (${practiceArea}). Full compliance with ${isLegal500 ? 'The Legal 500' : 'Chambers & Partners'} editorial guidelines verified.`,
+      summary: `Strategic Audit Report for ${firmName} (${practiceArea}). Editorially validated against RankPilot's ${isLegal500 ? 'Legal 500' : 'Chambers'} submission framework.`,
       firm_name: firmName,
       practice_area: practiceArea,
       location: location,

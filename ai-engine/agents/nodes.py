@@ -1921,16 +1921,16 @@ def build_portfolio_curation(all_matters: list, practice_area: str, firm_name: s
     if total_count > max_allowed:
         warning = (
             f"⚠️ PORTFOLIO CEILING OVERFLOW: The firm uploaded {total_count} matters "
-            f"({pub_count} publishable, {conf_count} confidential). Chambers & Partners allows "
-            f"up to {max_allowed} matters for {practice_area or 'this section'}. Submitting excess matters creates "
-            "review fatigue and arbitrary researcher truncation risk. The firm should prune "
-            f"this portfolio to at most {max_allowed} matters."
+            f"({pub_count} publishable, {conf_count} confidential). The Chambers submission template provides slots "
+            f"for up to {max_allowed} matters for {practice_area or 'this section'}. Under RankPilot's editorial methodology, "
+            f"filing uncurated peripheral mandates risks diluting qualitative impact; the firm should prioritize a curated core "
+            f"of at most {max_allowed} matters."
         )
     elif total_count > 20 and is_re_or_disputes:
         warning = (
-            f"ℹ️ STRATEGIC PORTFOLIO GUIDANCE: Although Chambers allows up to 30 matters for {practice_area} "
-            f"in Mexico, the draft portfolio contains {total_count} matters. RankPilot strategically recommends "
-            "concentrating evidentiary weight on a curated core of flagship mandates to avoid diluting qualitative impact."
+            f"ℹ️ STRATEGIC PORTFOLIO GUIDANCE: Although the directory template accommodates up to 30 matters for {practice_area} "
+            f"in Mexico, the draft portfolio contains {total_count} matters. Under RankPilot's editorial methodology, we strategically "
+            "recommend concentrating evidentiary weight on a curated core of flagship mandates to avoid diluting qualitative impact."
         )
 
     # 2. Duplicate detection in confidential roster
