@@ -3,7 +3,21 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-15** (v26.42 — Golden Regression Case Acceptance & Multi-Practice Readiness)
+> Last updated: **2026-09-16** (v26.43 — Universal Ingestion, Anti-Contamination Gates & Multi-Practice Parity)
+
+## v26.43 — UNIVERSAL INGESTION, ANTI-CONTAMINATION GATES & MULTI-PRACTICE PARITY (2026-09-16)
+
+| Change | Enforcement | Files |
+|---|---|---|
+| Universal Ingestion (Dual-Format Support) | Support both Form A (`(Publishable\|Confidential) Matter X` with `[DE]` codes) and Form B (`MATTER NUMBER XX` with field headers like `Matter’s Context:`, `Firm’s role:`, `Confidential (Y/N):`) | `ai-engine/utils/doc_parser.py`, `ai-engine/main.py` |
+| Human Numbering Auto-Healing | Auto-heals non-contiguous numbering or duplicate numbers (e.g. duplicate `Confidential Matter 6` in Araquereyna) to sequential indexing without pipeline aborts | `ai-engine/utils/doc_parser.py` |
+| Linux Antiword Table Border Normalization | Strips leading/trailing table border pipes (`\|`) produced by `antiword` in Ubuntu/Docker environments; updates `MATTER_HEADER_PATTERN` and section extraction to match pipe boundaries | `ai-engine/utils/doc_parser.py`, `ai-engine/main.py` |
+| Cross-Practice Contamination Gate | Replaced static Real Estate text with dynamic `getPracticeDilutionDescription(practiceArea)` for Labour, Tax, Corporate, Banking, and Disputes | `src/app/api/generate-docx/route.ts`, `src/app/api/optimize/complete/route.ts` |
+| Canonical Practice Nomenclature | Enforced `Labour & Employment` across all dropdowns, builders, canonicalizers, and template generators | `src/lib/constants.ts`, `src/app/reports/[id]/page.tsx`, `src/app/api/generate-docx/route.ts` |
+| Hero Matter Dynamic Resolution | Replaced static `"Anchor Mandate"` with dynamic resolution from highest evidentiary weight mandate (Schaeffler for DeForest, Gruppo Montenegro for Araquereyna) | `src/app/api/optimize/complete/route.ts`, `src/app/api/generate-docx/route.ts` |
+| Evidentiary Interrogation Framework | Added practice-specific partner questions (`Exact Question for Partners`) into the Strategic Audit DOCX to target factual gaps | `src/app/api/optimize/complete/route.ts`, `src/app/api/generate-docx/route.ts` |
+| Quality Delivery Gate UX | Replaced raw HTTP 409 JSON responses with branded HTML Quality Gate Card detailing blocking issues and recovery steps | `src/app/api/generate-docx/route.ts` |
+| Multi-Practice Validation Sign-off | DeForest Labour (17 curated matters, Band 4 / Entry, Score 91) and Araquereyna Tax (19 curated matters, Band 1, Score 94) verified with zero regressions on Ramos Castillo Real Estate | `analizar/Submission_revision/Angela_revision/` |
 
 ## v26.42 — GOLDEN REGRESSION CASE ACCEPTANCE & MULTI-PRACTICE READINESS (2026-09-15)
 

@@ -3,6 +3,30 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.43] — 2026-09-16
+
+### Universal Ingestion, Anti-Contamination Gates & Multi-Practice Parity (DeForest Labour & Araquereyna Tax)
+
+- **Universal Multi-Template Ingestion Engine (`doc_parser.py`)**:
+  - *Dual-Format Ingestion*: Seamlessly extracts both Chambers Form A (`(Publishable|Confidential) Matter X` with `[DE][1-9]` codes) and Form B (`MATTER NUMBER XX` with field headers like `Matter’s Context:`, `Firm’s role and main output:`, `Confidential (Y/N):`).
+  - *Duplicate Label Auto-Healing*: Normalized non-contiguous or human-error duplicated headings (e.g. duplicate `Confidential Matter 6` in Araquereyna), transforming pipeline-aborting errors into non-fatal auto-healed warnings.
+  - *Linux / Antiword Table Border Normalization*: Fixed table-border parsing when `.doc` binary files are parsed via `antiword` in Linux Docker containers (Render), stripping leading/trailing pipe characters (`|`) and ensuring 100% matter header detection.
+- **Cross-Practice Neutrality & Zero Contamination**:
+  - *Dynamic Dilution Gate*: Eradicated static Real Estate wording (`land-use`, `zoning`, `property development`) across all shared generators (`generate-docx`, `complete/route.ts`). Implemented dynamic `getPracticeDilutionDescription` covering *Labour & Employment*, *Tax*, *Corporate/M&A*, *Banking & Finance*, and *Dispute Resolution*.
+  - *Canonical Practice Nomenclature*: Enforced universal `Labour & Employment` standardization across dropdowns, canonicalizers, and template builders, eliminating variants (`Labor & Employment`, `Employment & Labour`, `Labor`).
+  - *National Jurisdiction Precision*: Calibrated national jurisdiction dynamically (e.g. `Mexico`, `Venezuela`) instead of falling back to broad regional buckets ("Latin America").
+- **Strategic Calibration & Evidentiary Interrogation (Angela Castillo Benchmark Parity)**:
+  - *Band Calibration & Strategic Justification*: Embedded Table 2 dedicated to directory band justification (DeForest: *Band 4 / Entry Standard*, Score 91/100, *Emerging Practice / Market Challenger*; Araquereyna: *Band 1 Standard*, Score 94/100, *Market Dominant*).
+  - *Matter Evidence Interrogation Engine*: Injected practice-specific partner questions (*Exact Question for Partners*) into the Strategic Audit DOCX, identifying evidentiary gaps (e.g., controversy amounts in USD/VES, definitive vs. pending instance status, bilateral treaties).
+  - *Hero Matter Dynamic Resolution*: Eliminated legacy `'Anchor Mandate'` placeholder, resolving the flagship matter name dynamically from the highest evidentiary weight mandate (DeForest: *Schaeffler / Vitesco – Post-M&A Workforce Integration*; Araquereyna: *Gruppo Montenegro / Ron Pampero Acquisition*).
+  - *Zero Carpentry 3-Paragraph Prose*: Enforced 3-paragraph organic narrative structure across all curated core matters (Asset/Scale → Legal Craft/Intervention → Commercial Impact & Precedent).
+- **Quality Delivery Gate UX (HTTP 409)**:
+  - Replaced raw JSON error responses on unapproved deliveries with a branded, actionable HTML Quality Delivery Gate card in the browser, highlighting blocking issues and required actions.
+- **Multi-Practice End-to-End Validation**:
+  - *DeForest Abogados (Labour & Employment)* `(16-jonathan-1)`: 100% PASS across all 11 feedback points (Audit 17 KB, Submission 28 KB with 31 tables, 17 curated core matters).
+  - *Araquereyna (Tax)* `(16-jonathan-1)`: 100% PASS (Audit 15 KB, Submission 32 KB with 33 tables, 19 curated core matters, Band 1 justification).
+  - *Ramos Castillo (Real Estate)*: 100% Golden Regression parity preserved.
+
 ## [v26.42] — 2026-09-15
 
 ### Golden Regression Case Acceptance & Multi-Practice Generalization Readiness (Angela Castillo Final Validation)
