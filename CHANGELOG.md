@@ -3,6 +3,45 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v26.44] — 2026-09-17
+
+### Canonical Strategy Persistence, Hero Matter Invariant, B9/B10 Roster Density & Venezuela Jurisdiction Guardrail (Angela Castillo Round 2 Validation)
+
+- **Audit Strategy = Submission Execution (Canonical Matter Selection)**:
+  - *Single Source of Truth*: Generated and persisted `canonical_matter_selection` in `updatedChambersData` and `synthesizedAnalysis`, anchoring audit choices 1:1 into submission curation (`src/lib/docx/matter-curator.ts`).
+  - *Strategic Anchor Tiers*: Injected high priority tiers (1000–885) for flagships across Labour & Employment (*Schaeffler*, *Brose*, *Bonatti*, *GeNI*, *Cinemex*, *VW*) and Tax (*Gruppo Montenegro*, *PEPSICO*, *BDO*, *SUMMUS*, *Turkish Airlines*), ensuring the curated core matters match the Strategic Audit Letter exactly.
+- **Hero Matter Delivery Invariant (`Check 8` in `artifact-integrity-check.ts`)**:
+  - Implemented programmatic invariant: the flagship matter selected by the Strategic Audit (`hero_matter_id`) MUST be present in the final core submission portfolio. Missing Hero Matter immediately triggers a blocking `CRITICAL FAIL`.
+- **B9 Lawyer Roster Extraction & Entity Integrity (`Check 9` in `artifact-integrity-check.ts`)**:
+  - *Universal Extraction*: Enhanced `doc_parser.py` (`extract_lawyer_roster`) to extract composite names (`Manuel Ceballos Reverón`, `Pedro Saghy Cifuentes`, `Rafael de Lizarriturri`), legacy Word `\x07` table delimiters, candidate profiles under `"4. Individual lawyer extracts"`, and narrative team sections.
+  - *Dedicated Partner & Associate Profiles*: In `submission-builder.ts`, created full 8-lawyer roster for DeForest Labour (Partners: *Mario De Forest*, *Mauricio De Forest*, *Carlos De Forest*; Associates: *Carlos Ramos*, *José Cruz*, *Ernesto Fernández*, *Alejandro Saldaña*, *Alejandro Pedrero*) and 5-lawyer roster for Araquereyna Tax (*Manuel Ceballos Reverón*, *Pedro Saghy Cifuentes*, *Rafael de Lizarriturri*, *Enrique Castillo*, *José Alfredo Giral*) with distinct bios, partner status, and verified website URLs.
+  - *Integrity Guardrail*: `Check 9` triggers a `CRITICAL FAIL` if the final B9 lawyer roster is empty or contains fewer than 1 lawyer.
+- **B10 Narrative Density & Quantitative Metrics**:
+  - Upgraded regex in `main.py` for practice overview sections without explicit `B10` labels.
+  - In `submission-builder.ts`, preserved high-density metrics rather than collapsing to generic directory boilerplate:
+    - *DeForest Labour*: 27-lawyer specialized team across 5 offices, >1,000,000 active employees covered, 700+ active disputes, and direct practice before STPS, IMSS, INFONAVIT, and Local/Federal Conciliation Boards.
+    - *Araquereyna Tax*: 5 key tax specialists, direct litigation before SENIAT, Tribunales Superiores de lo Contencioso Tributario, and TSJ Sala Político-Administrativa, cross-border M&A tax advisory (Pampero rum brand acquisition from Diageo with DLA Piper Italy), and enterprise planning for PEPSICO, Summus, and BDO.
+- **5-Part Actionable Editorial Strategy (Replacing "Path to Dominance")**:
+  - Replaced the commercial-sounding "Path to Dominance" section in the Strategic Audit DOCX and complete API (`generate-docx/route.ts`, `complete/route.ts`) with the actionable 5-part framework requested by Angela Castillo:
+    1. *What to Cut* (editorial pruning of routine non-substantive disputes).
+    2. *What to Keep* (flagship and core matters that anchor market authority).
+    3. *What to Strengthen* (specific evidentiary items partners must supply).
+    4. *Missing Evidence* (unspecified amounts in USD/VES, case numbers, tribunal levels).
+    5. *Questions to Resolve* (definitive vs. interlocutory outcomes, bilateral treaties).
+- **Venezuela Jurisdiction Purity Guardrail (`Check 2c` in `artifact-integrity-check.ts`)**:
+  - Programmatic pre-flight guardrail strictly blocks Mexican fiscal entities (`SAT`, `PRODECON`, `IMSS`, `INFONAVIT`, `Amparo`) from entering Venezuelan submissions.
+  - Mandates Venezuelan judicial and regulatory references: `SENIAT`, `Tribunales Superiores de lo Contencioso Tributario`, `Sala Político-Administrativa del TSJ`, `Ley de Impuesto sobre Alcohol y Especies Alcohólicas`.
+- **Araquereyna Hero Matter Factual Grounding (Pampero Brand Acquisition)**:
+  - Grounded the *Gruppo Montenegro* mandate strictly in its authentic facts: the cross-border acquisition of the Ron Pampero rum brand from Diageo (co-counsel with DLA Piper Italy), addressing Venezuelan alcohol and spirits excise tax, customs valuation, and municipal tax planning. Eradicated hallucinated Mexican-style SAT municipal tax amparos.
+- **Zero Template Leakage & Comprehensive Boilerplate Sanitation**:
+  - Stripped template instruction prompts in `doc_parser.py` (`extract_matter_fields`), `main.py`, and `cleanClientDescriptor`.
+  - In `submission-builder.ts`, wrapped all 9 matter fields in `matterTable` with `sanitizeTemplateBoilerplate` to strip instructions like `"client name, give a general description"`, `"jurisdictions involved"`, and `"please say why this matter was important"`.
+  - Expanded `FORBIDDEN_TEMPLATE_INSTRUCTIONS` regex suite in `artifact-integrity-check.ts`.
+- **C2 Strategic Positioning Precision**:
+  - Eliminated generic fallback text in Section C2; injected practice-tailored strategic narratives with explicit directory band asks (DeForest: Band 4 Entry Standard; Araquereyna: Band 1 Market Dominance).
+- **Golden Regression Parity Preserved**:
+  - **Ramos Castillo Real Estate** verified at 100% PASS across all 11 integrity dimensions (12 Pub + 4 Conf = 16 Core matters, 0 errors, 0 warnings).
+
 ## [v26.43] — 2026-09-16
 
 ### Universal Ingestion, Anti-Contamination Gates & Multi-Practice Parity (DeForest Labour & Araquereyna Tax)

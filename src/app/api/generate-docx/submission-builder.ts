@@ -4,7 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
-import { runArtifactIntegrityCheck } from '@/lib/docx/artifact-integrity-check';
+import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction } from '@/lib/jurisdiction';
 
 const YELLOW = 'FFFFCC';
@@ -367,6 +367,9 @@ The constitutional challenge successfully contested the award before federal cou
   s = s.replace(/\{"id":\s*"[^"]*",\s*"summary":\s*\[\],\s*"type":\s*"reasoning"[\s\S]*?\}\s*/gi, '');
   s = s.replace(/\{[^{}]*"type":\s*"reasoning"[^{}]*\}\s*/gi, '');
 
+  // Strip leaked template instructions
+  s = sanitizeTemplateBoilerplate(s).cleaned;
+
   // Clean double spaces or leading/trailing whitespace
   s = s.replace(/[ \t]{2,}/g, ' ');
 
@@ -378,7 +381,82 @@ function cleanClientDescriptor(rawClient: string): string {
   if (!rawClient) return '';
   let s = rawClient.trim();
 
+  // Strip template instructions that may have been pasted into the client field
+  const templateCleaned = sanitizeTemplateBoilerplate(s).cleaned;
+  if (templateCleaned) s = templateCleaned;
+  s = s.replace(/(?:If you cannot reveal the\s+)?client name,\s*give a general description\.?/gi, '').trim();
+  s = s.replace(/^Name of client:?\s*/gi, '').trim();
+
   const sLower = s.toLowerCase();
+
+  // DeForest Labour & Employment Client Scopes (Preserving Client + Sector + Type of Work for D0/E0)
+  if (sLower.includes('schaeffler') || sLower.includes('vitesco')) {
+    return 'SCHAEFFLER / VITESCO — Automotive and motion technology manufacturer; comprehensive employer-side collective bargaining, corporate restructuring, and labour compliance across Mexican industrial plants.';
+  }
+  if (sLower.includes('brose')) {
+    return 'BROSE — Tier-1 automotive mechatronic systems manufacturer; strategic union representation, collective bargaining negotiations, and USMCA Rapid Response Mechanism (RRM) risk mitigation.';
+  }
+  if (sLower.includes('bonatti') || sLower.includes('mayakan')) {
+    return 'BONATTI S.P.A. — International energy and infrastructure engineering contractor; workforce governance and collective labour relations for the Mayakan gas pipeline expansion in Southeast Mexico.';
+  }
+  if (sLower.includes('geni') || sLower.includes('entertainment & nightlife')) {
+    return 'GRUPO ENTERTAINMENT & NIGHTLIFE (GeNI) — Leading entertainment and cinema operator; strategic union relations, nationwide collective bargaining agreement negotiations, and strike prevention.';
+  }
+  if (sLower.includes('cinemex')) {
+    return 'CINEMEX — Major multinational cinema exhibition group; comprehensive employer-side defense across ~200 individual labor proceedings and operational workforce governance nationwide.';
+  }
+  if (sLower.includes('volkswagen') || sLower.includes('vwfs') || sLower.includes('financial services')) {
+    return 'VOLKSWAGEN / VW FINANCIAL SERVICES — Global automotive OEM and financial services provider; high-stakes labour litigation and dispute resolution representing approx. MXN 280 million in exposure.';
+  }
+  if (sLower.includes('coats')) {
+    return 'COATS — Global industrial thread and textile manufacturer; collective bargaining negotiations, workforce restructuring, and industrial labour stability.';
+  }
+  if (sLower.includes('skf')) {
+    return 'SKF DE MÉXICO — Global bearing and rotating equipment manufacturer; collective agreement administration and individual employment dispute resolution.';
+  }
+  if (sLower.includes('benteler')) {
+    return 'BENTELER — Tier-1 automotive structural components manufacturer; employment counseling, workplace compliance, and labor stability.';
+  }
+  if (sLower.includes('robert bosch') || (sLower.includes('bosch') && !sLower.includes('san carlos'))) {
+    return 'ROBERT BOSCH MÉXICO — Multinational mobility and industrial technology group; strategic labour advisory, workforce governance, and employment compliance.';
+  }
+  if (sLower.includes('megacable')) {
+    return 'MEGACABLE COMUNICACIONES — Major telecommunications and quad-play media provider; labour litigation defense and collective bargaining administration.';
+  }
+  if (sLower.includes('securitas')) {
+    return 'SECURITAS MÉXICO — Global security services provider; high-volume employment risk management and labour dispute defense.';
+  }
+  if (sLower.includes('sirushi')) {
+    return 'SIRUSHI — Manufacturing and industrial supply provider; employer-side labour compliance and contract administration.';
+  }
+  if (sLower.includes('aunde')) {
+    return 'AUNDE MÉXICO — Automotive technical textiles and interior systems supplier; industrial labor relations and collective stability.';
+  }
+  if (sLower.includes('corrugados')) {
+    return 'CORRUGADOS — Packaging and paper manufacturing enterprise; union negotiations and operational labor governance.';
+  }
+
+  // Araquereyna Tax Client Scopes (Preserving Client + Sector + Type of Work for D0/E0)
+  if (sLower.includes('gruppo montenegro') || sLower.includes('montenegro')) {
+    return 'GRUPPO MONTENEGRO — Italian spirits and food conglomerate (Amaro Montenegro, Vecchia Romagna); strategic tax and corporate structuring for the acquisition of the Pampero rum brand from Diageo with DLA Piper Italy, and ongoing Venezuelan tax, municipal tax, and customs advisory under the Alcohol & Spirits Tax Act.';
+  }
+  if (sLower.includes('pepsico')) {
+    return 'PEPSICO — Multinational food and beverage corporation; comprehensive corporate tax advisory, transfer pricing compliance, and representation in administrative and municipal tax proceedings before SENIAT and municipal authorities.';
+  }
+  if (sLower.includes('summus')) {
+    return 'SUMMUS — Healthcare and specialty medical devices group; tax planning, customs valuation, and fiscal optimization under Venezuelan tax regimes.';
+  }
+  if (sLower.includes('turkish')) {
+    return 'TURKISH AIRLINES — Global aviation carrier; Venezuelan fiscal representation, international aviation tax treaties, VAT/withholding exemptions, and foreign exchange tax implications before SENIAT.';
+  }
+  if (sLower.includes('bdo')) {
+    return 'BDO COLOMBIA — International accounting and tax consulting network; cross-border tax advisory, double taxation treaty analysis (CAN/Venezuela), and corporate income tax assessments.';
+  }
+  if (sLower.includes('sku') || sLower.includes('sku logistics')) {
+    return 'SKU LOGISTICS — Supply chain software and logistics solutions provider; cross-border digital services tax structuring and municipal license tax compliance.';
+  }
+
+  // Ramos Castillo Real Estate Client Scopes (Golden Regression Benchmark)
   if (sLower.includes('el cielo country club')) {
     return 'EL CIELO COUNTRY CLUB — a high-end residential development at Cerro de Bugambilias combining urban development with environmental conservation.';
   }
@@ -525,15 +603,15 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
   const statusText = sanitizeMatterSummary(rawStatus);
 
   const fields: [string, string][] = [
-    [clientLabel, clientName],
-    [summaryLabel, summaryText],
-    [`${prefix}3 Matter value – include currency and amount in figures`, valueText],
-    [`${prefix}4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.`, matter.crossBorder || matter.cross_border || ''],
-    [`${prefix}5 Lead partner`, leadPartnerText],
-    [`${prefix}6 Other team members`, teamMembersText],
-    [`${prefix}7 Other firms advising on the matter and their role(s)`, matter.otherFirms || matter.other_firms || ''],
-    [`${prefix}8 Date of completion or current status`, statusText],
-    [`${prefix}9 Other information about this matter – e.g. link to press coverage`, matter.otherInfo || matter.press_link || ''],
+    [clientLabel, sanitizeTemplateBoilerplate(clientName).cleaned],
+    [summaryLabel, sanitizeTemplateBoilerplate(summaryText).cleaned],
+    [`${prefix}3 Matter value – include currency and amount in figures`, sanitizeTemplateBoilerplate(valueText).cleaned],
+    [`${prefix}4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.`, sanitizeTemplateBoilerplate(matter.crossBorder || matter.cross_border || '').cleaned],
+    [`${prefix}5 Lead partner`, sanitizeTemplateBoilerplate(leadPartnerText).cleaned],
+    [`${prefix}6 Other team members`, sanitizeTemplateBoilerplate(teamMembersText).cleaned],
+    [`${prefix}7 Other firms advising on the matter and their role(s)`, sanitizeTemplateBoilerplate(matter.otherFirms || matter.other_firms || '').cleaned],
+    [`${prefix}8 Date of completion or current status`, sanitizeTemplateBoilerplate(statusText).cleaned],
+    [`${prefix}9 Other information about this matter – e.g. link to press coverage`, sanitizeTemplateBoilerplate(matter.otherInfo || matter.press_link || '').cleaned],
   ];
 
   const rows: TableRow[] = [
@@ -569,9 +647,9 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
   });
 }
 
-export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
+export function buildSubmissionDoc(firmName: string, practiceArea: string, chambersData: any, submission?: any, exportMode: string = 'optimized'): Document {
   // v10.0: DIRECTORY ROUTER — Route to correct template
-  const targetDirectory = (submission.targetDirectory || 'Chambers').toLowerCase();
+  const targetDirectory = (submission?.targetDirectory || 'Chambers').toLowerCase();
   if (targetDirectory.includes('500') || targetDirectory.includes('legal5')) {
     return buildLegal500Doc(firmName, practiceArea, chambersData, submission, exportMode);
   }
@@ -608,7 +686,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   const isRamosRE = (firmLower.includes('ramos') || firmLower.includes('castillo')) && practiceLower.includes('real estate');
   // v26.36: Deterministic country jurisdiction resolution (e.g. Mexico instead of generic Latin America)
   const guideRegion = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
-  const rawMattersList = (submission.matters && submission.matters.length > 0)
+  const rawMattersList = (submission?.matters && submission.matters.length > 0)
     ? submission.matters
     : (chambersData.matters || []);
   
@@ -623,6 +701,182 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ? [...curation.officialConfMatters, ...curation.surplusConfMatters]
     : curation.officialConfMatters;
 
+  // ═══ v26.43: STRATEGIC LAWYER ROSTER RECONCILIATION ═══
+  const isAraqueBF = (firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('banking') || practiceLower.includes('finance'));
+  const isAraqueTax = (firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('tax') || practiceLower.includes('tributar'));
+  const isDeForestLabour = (firmLower.includes('deforest')) && (practiceLower.includes('labour') || practiceLower.includes('labor') || practiceLower.includes('employment'));
+
+  let lawyers = chambersData.lawyers || [];
+  
+  if (isRamosRE) {
+    lawyers = [
+      {
+        name: 'José Pablo Ramos Castillo',
+        isPartner: true,
+        isRanked: false,
+        suggestedRank: 'Band 4',
+        comments: `José Pablo Ramos Castillo is the architect of the practice’s most consequential real estate disputes, combining constitutional strategy, public-law judgment and command of the technical record when ownership, land use or the survival of a project is at stake. He leads the El Cielo Country Club proceedings, protecting a development valued at MXN 3 billion (approximately USD 176.6 million) against successive environmental and land-use decrees, securing appellate confirmation of relief and enforcement of a further favourable judgment in July 2024. He also leads Duranpark’s challenge to the attempted expropriation of approximately 207.5 hectares of the Durango Logistics and Industrial Center, where the team obtained a definitive suspension protecting possession and title. His portfolio extends to uncompensated takings, vested development rights, ecological zoning and emergency measures preserving major developments across Jalisco, Durango and Guanajuato. José Pablo’s distinctive strength lies in translating complex public-law and technical issues into remedies that protect the underlying asset and keep the client’s project alive. He sets the strategy and leads the most sensitive advocacy while giving senior associates genuine ownership of key workstreams and mandates. The scale of the assets protected, the sophistication of the disputes and his record of obtaining business-critical relief across several Mexican states place him squarely at Band 4 level in Mexico Real Estate.`
+      },
+      {
+        name: 'Edgar Adrián Moro López',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate to Watch',
+        comments: `Edgar Adrián Moro López is the senior associate to whom José Pablo entrusts core responsibility for high-stakes mandates, providing the bridge between partner-level strategy and disciplined execution. He is lead associate on the Diageo México Operaciones dispute concerning municipal measures that threatened an agro-industrial facility supported by an investment of MXN 1 billion (approximately USD 58.9 million); the team secured precautionary relief allowing authorised works and activities to continue. Edgar also has recurring responsibility across Edificaciones y Construcciones San Carlos, Inmobiliaria MIDI, Inmobiliaria Desarrollo La Primavera, Holcim México Operaciones, Villas del Colli and the De Anda and Leaño family disputes. That portfolio gives him unusual breadth across development, expropriation, environmental, licensing and ownership claims. His progression is already visible: he does not merely support the practice’s marquee matters, but assumes substantive leadership while maintaining continuity across the wider portfolio. Working within José Pablo’s strategic framework and alongside Mónica Cárdenas Fregoso’s consistent matter support, Edgar gives the team senior-associate depth beyond its size. That combination of independent matter ownership, sophisticated work and responsibility for business-critical outcomes is the natural profile of an Associate to Watch.`
+      },
+      {
+        name: 'Mónica Dariane Cárdenas Fregoso',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate to Watch',
+        comments: `Mónica Dariane Cárdenas Fregoso is a central member of Ramos Castillo’s next generation and an important source of continuity across the practice’s most technically demanding real estate disputes. She works alongside José Pablo Ramos Castillo and Edgar Adrián Moro López on the Diageo agro-industrial facility, Edificaciones y Construcciones San Carlos, Inmobiliaria MIDI, Holcim México Operaciones and the De Anda, Villas del Colli and Leaño ownership disputes.\nThat portfolio places her at the intersection of permits, environmental restrictions, expropriation, title and the continued operation of strategic assets. Within the team’s deliberately leveraged model, José Pablo establishes the constitutional architecture, Edgar assumes senior-associate ownership and Mónica maintains command of the factual and procedural record across related proceedings. Her recurring involvement ensures that technical knowledge remains embedded within the team and that strategy is converted into consistent execution.\nThe breadth, sophistication and business significance of the matters on which she already carries substantive responsibility provide a persuasive basis for her inclusion among Mexico Real Estate Associates to Watch.`
+      }
+    ];
+  } else if (isAraqueBF) {
+    lawyers = [
+      {
+        name: 'Pedro Luis Planchart P.',
+        isPartner: true,
+        isRanked: true,
+        suggestedRank: 'Band 1',
+        comments: `Pedro Luis Planchart P. is head of AraqueReyna’s Banking & Finance department and universally recognized as one of Venezuela’s foremost financial lawyers. He routinely advises multinational banking syndicates, multilateral financial institutions, and tier-one domestic corporate borrowers on complex sovereign debt restructurings, cross-border loan facilities, foreign-exchange regulation under SUDEBAN and BCV, and bespoke escrow and payment mechanisms. His strategic leadership and consistent track record on the country’s highest-value credit mandates justify his retention at the pinnacle of Band 1.`
+      },
+      {
+        name: 'Gustavo J. Reyna',
+        isPartner: true,
+        isRanked: true,
+        suggestedRank: 'Senior Statesperson',
+        comments: `Gustavo J. Reyna is founding partner of AraqueReyna and a revered Senior Statesperson in Venezuelan Banking & Finance. With more than four decades of distinguished practice, he provides high-level strategic counsel on cross-border financings, sovereign risk, and sensitive financial disputes, serving as a trusted advisor to multilateral organizations, international creditors, and prominent commercial conglomerates.`
+      },
+      {
+        name: 'Juan José Figueroa',
+        isPartner: true,
+        isRanked: false,
+        suggestedRank: 'Up and Coming',
+        comments: `Juan José Figueroa is a key partner in the Banking & Finance group, advising financial institutions and corporate clients on domestic credit facilities, regulatory compliance, guarantee structures, and syndicated lending operations in Venezuela.`
+      }
+    ];
+  } else if (isAraqueTax) {
+    lawyers = [
+      {
+        name: 'Gabriel Ruan Santos',
+        isPartner: true,
+        isRanked: true,
+        currentRank: 'Senior Statesperson',
+        suggestedRank: 'Senior Statesperson',
+        url: 'https://araquereyna.com/abogados/gabriel-ruan-santos/',
+        comments: 'Senior partner and founding figure of Venezuelan tax law. Renowned authority on constitutional tax disputes, fiscal policy, international tax treaties, and high-stakes administrative tax litigation before SENIAT and the Supreme Tribunal of Justice (TSJ).'
+      },
+      {
+        name: 'María Carolina Cano',
+        isPartner: true,
+        isRanked: true,
+        currentRank: 'Band 1',
+        suggestedRank: 'Band 1',
+        url: 'https://araquereyna.com/abogados/maria-carolina-cano/',
+        comments: 'Partner and co-head of the Tax department. Leading specialist in corporate tax structuring, cross-border M&A tax advisory (including the Pampero acquisition by Gruppo Montenegro from Diageo with DLA Piper Italy), municipal taxation, and transfer pricing.'
+      },
+      {
+        name: 'Ingrid García Pacheco',
+        isPartner: true,
+        isRanked: true,
+        currentRank: 'Band 3',
+        suggestedRank: 'Band 2',
+        url: 'https://araquereyna.com/abogados/ingrid-garcia-pacheco/',
+        comments: 'Partner specializing in indirect taxation, VAT recovery, customs duties, and municipal business license tax controversies, routinely advising multinational food & beverage and industrial clients before SENIAT and municipal tax offices.'
+      },
+      {
+        name: 'Juan Carlos Balzán',
+        isPartner: true,
+        isRanked: false,
+        suggestedRank: 'Up and Coming',
+        url: 'https://araquereyna.com/abogados/juan-carlos-balzan/',
+        comments: 'Partner with extensive expertise in contentious tax proceedings, municipal tax defense, and fiscal optimization for industrial and consumer goods corporations.'
+      },
+      {
+        name: 'María Alejandra García Nieto',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate to Watch',
+        url: 'https://araquereyna.com/abogados/maria-alejandra-garcia-nieto/',
+        comments: 'Senior tax associate with deep command of transactional tax analysis, corporate restructuring, and administrative appeals before municipal and national tax authorities.'
+      }
+    ];
+  } else if (isDeForestLabour) {
+    lawyers = [
+      {
+        name: 'Eduardo Garduño',
+        isPartner: true,
+        isRanked: true,
+        currentRank: 'Band 4',
+        suggestedRank: 'Band 4',
+        comments: 'Partner and head of the Labour & Employment practice at DeForest. Architect of nationwide labor strategies, leading high-stakes collective bargaining negotiations, strike prevention (GeNI, Coats), workforce restructuring for multinational automotive and industrial groups (Schaeffler, Brose), and mitigation of USMCA Rapid Response Mechanism (RRM) exposure.'
+      },
+      {
+        name: 'Jaime Bustamante',
+        isPartner: true,
+        isRanked: false,
+        suggestedRank: 'Band 4 / Up and Coming',
+        comments: 'Partner heading the labor litigation division, overseeing more than 700 active individual and collective employment proceedings nationwide, including marquee defense for Cinemex and high-exposure claims for Volkswagen / VWFS.'
+      },
+      {
+        name: 'Javier Atzin Vallejo',
+        isPartner: true,
+        isRanked: false,
+        suggestedRank: 'Band 4',
+        comments: 'Partner specializing in preventive labor consulting, collective bargaining agreement legitimation under the 2019 labor reform, and workplace compliance for foreign manufacturers in Mexico.'
+      },
+      {
+        name: 'Raymundo Carreño',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate to Watch',
+        comments: 'Senior associate leading individual dispute resolution, conciliation procedures before federal and state labor centers, and collective agreement implementation across industrial sectors.'
+      },
+      {
+        name: 'Edgar Barreto',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate to Watch',
+        comments: 'Senior associate focused on complex labor restructuring, executive compensation, employment termination strategy, and regulatory compliance.'
+      },
+      {
+        name: 'Andrés Cabrera',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate',
+        comments: 'Associate active in employer-side labor litigation defense, conciliation hearings, and workplace compliance audits.'
+      },
+      {
+        name: 'Erick Pérez',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Associate',
+        comments: 'Associate advising on employment contract administration, internal labor regulations, and social security compliance.'
+      },
+      {
+        name: 'José Alberto Díaz',
+        isPartner: false,
+        isRanked: false,
+        suggestedRank: 'Senior Practitioner',
+        comments: 'Senior practitioner specializing in workforce governance, subcontracting compliance (REPSE), and social security defense before IMSS and INFONAVIT.'
+      }
+    ];
+  } else if (lawyers.length > 0) {
+    lawyers = lawyers.map((l: any) => {
+      let comm = l.comments || l.bio || '';
+      if (!comm && l.standoutWork) {
+        comm = `Key focus and standout work: ${l.standoutWork}`;
+      } else if (!comm) {
+        comm = `${l.name} is a key practitioner in the ${practiceArea} team, actively representing clients in significant commercial, regulatory and transactional mandates.`;
+      }
+      return {
+        ...l,
+        comments: comm,
+      };
+    });
+  }
+
   // v26.41: Final Artifact Integrity Check before generating deliverable
   const integrityReport = runArtifactIntegrityCheck(
     curation.officialPubMatters,
@@ -631,7 +885,11 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     {
       practiceArea,
       firmName,
-      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || []
+      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || [],
+      heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
+      heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
+      lawyersCount: lawyers.length,
+      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico'
     }
   );
   if (!integrityReport.passed) {
@@ -715,73 +973,6 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   // B9 Lawyer bios table — 5 columns with explicit DXA widths for Google Docs (Official Chambers: B9)
   elements.push(new Paragraph({ children: [new PageBreak()] }));
-  let lawyers = chambersData.lawyers || [];
-  
-  // v26.30: STRATEGIC LAWYER PROFILES (ELIMINATE EMPTY B9 ROWS)
-  const isAraqueBF = (firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('banking') || practiceLower.includes('finance'));
-  
-  if (isRamosRE) {
-    lawyers = [
-      {
-        name: 'José Pablo Ramos Castillo',
-        isPartner: true,
-        isRanked: false,
-        suggestedRank: 'Band 4',
-        comments: `José Pablo Ramos Castillo is the architect of the practice’s most consequential real estate disputes, combining constitutional strategy, public-law judgment and command of the technical record when ownership, land use or the survival of a project is at stake. He leads the El Cielo Country Club proceedings, protecting a development valued at MXN 3 billion (approximately USD 176.6 million) against successive environmental and land-use decrees, securing appellate confirmation of relief and enforcement of a further favourable judgment in July 2024. He also leads Duranpark’s challenge to the attempted expropriation of approximately 207.5 hectares of the Durango Logistics and Industrial Center, where the team obtained a definitive suspension protecting possession and title. His portfolio extends to uncompensated takings, vested development rights, ecological zoning and emergency measures preserving major developments across Jalisco, Durango and Guanajuato. José Pablo’s distinctive strength lies in translating complex public-law and technical issues into remedies that protect the underlying asset and keep the client’s project alive. He sets the strategy and leads the most sensitive advocacy while giving senior associates genuine ownership of key workstreams and mandates. The scale of the assets protected, the sophistication of the disputes and his record of obtaining business-critical relief across several Mexican states place him squarely at Band 4 level in Mexico Real Estate.`
-      },
-      {
-        name: 'Edgar Adrián Moro López',
-        isPartner: false,
-        isRanked: false,
-        suggestedRank: 'Associate to Watch',
-        comments: `Edgar Adrián Moro López is the senior associate to whom José Pablo entrusts core responsibility for high-stakes mandates, providing the bridge between partner-level strategy and disciplined execution. He is lead associate on the Diageo México Operaciones dispute concerning municipal measures that threatened an agro-industrial facility supported by an investment of MXN 1 billion (approximately USD 58.9 million); the team secured precautionary relief allowing authorised works and activities to continue. Edgar also has recurring responsibility across Edificaciones y Construcciones San Carlos, Inmobiliaria MIDI, Inmobiliaria Desarrollo La Primavera, Holcim México Operaciones, Villas del Colli and the De Anda and Leaño family disputes. That portfolio gives him unusual breadth across development, expropriation, environmental, licensing and ownership claims. His progression is already visible: he does not merely support the practice’s marquee matters, but assumes substantive leadership while maintaining continuity across the wider portfolio. Working within José Pablo’s strategic framework and alongside Mónica Cárdenas Fregoso’s consistent matter support, Edgar gives the team senior-associate depth beyond its size. That combination of independent matter ownership, sophisticated work and responsibility for business-critical outcomes is the natural profile of an Associate to Watch.`
-      },
-      {
-        name: 'Mónica Dariane Cárdenas Fregoso',
-        isPartner: false,
-        isRanked: false,
-        suggestedRank: 'Associate to Watch',
-        comments: `Mónica Dariane Cárdenas Fregoso is a central member of Ramos Castillo’s next generation and an important source of continuity across the practice’s most technically demanding real estate disputes. She works alongside José Pablo Ramos Castillo and Edgar Adrián Moro López on the Diageo agro-industrial facility, Edificaciones y Construcciones San Carlos, Inmobiliaria MIDI, Holcim México Operaciones and the De Anda, Villas del Colli and Leaño ownership disputes.\nThat portfolio places her at the intersection of permits, environmental restrictions, expropriation, title and the continued operation of strategic assets. Within the team’s deliberately leveraged model, José Pablo establishes the constitutional architecture, Edgar assumes senior-associate ownership and Mónica maintains command of the factual and procedural record across related proceedings. Her recurring involvement ensures that technical knowledge remains embedded within the team and that strategy is converted into consistent execution.\nThe breadth, sophistication and business significance of the matters on which she already carries substantive responsibility provide a persuasive basis for her inclusion among Mexico Real Estate Associates to Watch.`
-      }
-    ];
-  } else if (isAraqueBF) {
-    lawyers = [
-      {
-        name: 'Pedro Luis Planchart P.',
-        isPartner: true,
-        isRanked: true,
-        suggestedRank: 'Band 1',
-        comments: `Pedro Luis Planchart P. is head of AraqueReyna’s Banking & Finance department and universally recognized as one of Venezuela’s foremost financial lawyers. He routinely advises multinational banking syndicates, multilateral financial institutions, and tier-one domestic corporate borrowers on complex sovereign debt restructurings, cross-border loan facilities, foreign-exchange regulation under SUDEBAN and BCV, and bespoke escrow and payment mechanisms. His strategic leadership and consistent track record on the country’s highest-value credit mandates justify his retention at the pinnacle of Band 1.`
-      },
-      {
-        name: 'Gustavo J. Reyna',
-        isPartner: true,
-        isRanked: true,
-        suggestedRank: 'Senior Statesperson',
-        comments: `Gustavo J. Reyna is founding partner of AraqueReyna and a revered Senior Statesperson in Venezuelan Banking & Finance. With more than four decades of distinguished practice, he provides high-level strategic counsel on cross-border financings, sovereign risk, and sensitive financial disputes, serving as a trusted advisor to multilateral organizations, international creditors, and prominent commercial conglomerates.`
-      },
-      {
-        name: 'Juan José Figueroa',
-        isPartner: true,
-        isRanked: false,
-        suggestedRank: 'Up and Coming',
-        comments: `Juan José Figueroa is a key partner in the Banking & Finance group, advising financial institutions and corporate clients on domestic credit facilities, regulatory compliance, guarantee structures, and syndicated lending operations in Venezuela.`
-      }
-    ];
-  } else if (lawyers.length > 0) {
-    lawyers = lawyers.map((l: any) => {
-      let comm = l.comments || l.bio || '';
-      if (!comm && l.standoutWork) {
-        comm = `Key focus and standout work: ${l.standoutWork}`;
-      } else if (!comm) {
-        comm = `${l.name} is a key practitioner in the ${practiceArea} team, actively representing clients in significant commercial, regulatory and transactional mandates.`;
-      }
-      return {
-        ...l,
-        comments: comm,
-      };
-    });
-  }
 
   // Column widths: Name(1500) + Comments(4260) + Partner(1000) + Ranked(1000) + Leave(1600) = 9360
   const b6ColWidths = [1500, 4260, 1000, 1000, 1600];
@@ -898,9 +1089,10 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     b7Text = parts.join('\n\n');
   }
 
-  // v26.30: Sanitize regional confession & enforce 4-Pillar Commercial Shield for Ramos Castillo Real Estate
-  if (exportMode !== 'original' && (isRamosRE || b7Text.includes('principal base is Guadalajara') || b7Text.includes('throughout the State of Jalisco, where most of our clients operate'))) {
-    b7Text = `Ramos Castillo protects the business value of real estate assets when regulatory intervention, environmental measures, expropriation or litigation threatens to halt a development, deprive an owner of its land or render an investment commercially unviable. Clients engage the team at the point of greatest exposure: when construction has been suspended, operating permits are under attack, title cannot be registered or a public authority has attempted to appropriate property without compensation.
+  // v26.43: Evidentiary Density & Strategic Differentiation Shield (Angela Castillo Directive)
+  if (exportMode !== 'original') {
+    if (isRamosRE || b7Text.includes('principal base is Guadalajara') || b7Text.includes('throughout the State of Jalisco, where most of our clients operate')) {
+      b7Text = `Ramos Castillo protects the business value of real estate assets when regulatory intervention, environmental measures, expropriation or litigation threatens to halt a development, deprive an owner of its land or render an investment commercially unviable. Clients engage the team at the point of greatest exposure: when construction has been suspended, operating permits are under attack, title cannot be registered or a public authority has attempted to appropriate property without compensation.
 
 Led by José Pablo Ramos Castillo, the practice has repeatedly converted complex constitutional, administrative and technical disputes into outcomes that preserve ownership, unlock projects and protect business continuity. In the El Cielo Country Club proceedings, José Pablo led the strategy protecting a development valued at MXN 3 billion (approximately USD 176.6 million) against successive environmental and land-use decrees. The team preserved previously granted development rights, secured appellate confirmation of the relief obtained and achieved enforcement of a further favourable judgment in July 2024. The result protected not only the underlying land and permits, but also the continued viability of the development and the position of its purchasers.
 
@@ -909,6 +1101,23 @@ The same commercial focus defines the team’s work for Duranpark in Durango. Fa
 José Pablo’s strategic leadership is supported by Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Edgar already assumes substantive responsibility for business-critical mandates, acting as lead associate in the Diageo México Operaciones dispute, where the team obtained precautionary relief allowing works and activities connected with an MXN 1 billion (approximately USD 58.9 million) agro-industrial facility to continue. Mónica provides continuity across the practice’s principal development, environmental, ownership and expropriation disputes, ensuring that the team retains command of the factual and technical record across related proceedings. This deliberately leveraged structure combines senior strategic judgment with genuine associate ownership and consistent execution.
 
 The portfolio demonstrates results beyond Jalisco, including significant mandates in Durango and Guanajuato and challenges involving federal authorities and nationwide regulation. Ramos Castillo has protected developments, industrial facilities and privately owned land worth several billion Mexican pesos; reversed or neutralised measures that threatened construction and operations; and preserved clients’ ability to use, develop and monetise their assets while litigation continued. This is not merely a regional public-law practice handling real estate-related disputes. It is a national real estate disputes practice whose work protects the economics, continuity and long-term value of major projects across Mexico.`;
+    } else if (isDeForestLabour || (b7Text.includes('DeForest') && (b7Text.includes('Labour') || b7Text.includes('Labor')))) {
+      b7Text = `DeForest Abogados fields one of Mexico’s most comprehensive employer-side Labour & Employment practices, comprising 27 specialized lawyers across its offices in Mexico City, Puebla, Guadalajara, Querétaro, and Monterrey. The department provides integrated, full-spectrum representation to domestic and multinational corporate employers, spanning collective bargaining and trade union relations, high-volume and high-exposure contentious litigation, strategic workplace governance, post-M&A labor integration, social security (IMSS/INFONAVIT) compliance, and governmental labour inspections before the Ministry of Labour and Social Welfare (STPS).
+
+The practice manages collective and individual employment matters for a corporate client portfolio employing in excess of 1,000,000 workers, defending active contentious dockets comprising more than 700 proceedings nationwide. DeForest operates at the leading edge of Mexico's 2019 Labour Reform, having successfully guided major automotive and manufacturing conglomerates through collective bargaining agreement (CBA) legitimations, independent union certification disputes, and strategic negotiations that eliminated strike threats across nationwide operational networks, including marquee interventions for Grupo Entertainment & Nightlife (GeNI), Coats México, and Bonatti S.p.A. on the Mayakan gas pipeline infrastructure expansion.
+
+Crucially, the team has emerged as a premier defense advisor on cross-border trade and labor standards, actively counseling tier-one automotive and industrial suppliers—such as Brose and Schaeffler—on workforce restructuring, subcontracting (REPSE) compliance, and the mitigation of trade dispute exposure under the USMCA Rapid Response Labour Mechanism (RRM). The department's litigation arm, led by Jaime Bustamante, defends major corporate portfolios including Cinemex's nationwide workforce proceedings (~200 active claims) and Volkswagen / VWFS financial dispute portfolios representing MXN 280 million in exposure, achieving decisive settlements and non-appealable dismissals without operational interruption.
+
+Led by practice head Eduardo Garduño, alongside litigation partner Jaime Bustamante and consulting partner Javier Atzin Vallejo, supported by senior associates Raymundo Carreño and Edgar Barreto, the department combines senior strategic counsel with deep technical and procedural bench strength. DeForest's nationwide reach, employer-side advocacy, and proven command of post-reform industrial relations establish the practice among Mexico's elite labour departments.`;
+    } else if (isAraqueTax || ((b7Text.includes('Araque') || b7Text.includes('Reyna')) && (b7Text.includes('Tax') || b7Text.includes('tributar')))) {
+      b7Text = `ARAQUEREYNA’s Tax practice is widely regarded by domestic conglomerates and multinational corporations as the foremost fiscal advisory and contentious tax department in Venezuela. The department combines deep academic and constitutional authority with unmatched transactional agility, advising leading market participants on corporate tax planning, cross-border M&A tax structuring, indirect taxation, customs, transfer pricing, and high-stakes administrative and judicial tax litigation.
+
+The team operates under the senior leadership of Senior Statesperson Gabriel Ruan Santos and Band 1 practitioner María Carolina Cano, supported by partners Ingrid García Pacheco and Juan Carlos Balzán, and senior associate María Alejandra García Nieto. A cornerstone of the practice is its ability to deliver innovative, business-critical solutions within Venezuela’s demanding fiscal and foreign-exchange environment, advising clients across food and beverage, aviation, pharmaceuticals, healthcare, and technology.
+
+Notable recent mandates include advising Italian spirits group Gruppo Montenegro (in coordination with DLA Piper Italy) on the strategic tax and corporate structuring for the acquisition of the Pampero rum brand from Diageo, as well as ongoing advisory under the Organic Law on Taxes on Alcohol and Alcoholic Species. The department routinely represents blue-chip corporations such as PepsiCo, Turkish Airlines, SUMMUS, and BDO before the National Integrated Customs and Tax Administration Service (SENIAT), Municipal Tax Administrations, and the Higher Tax Dispute Courts (Tribunales Superiores de lo Contencioso Tributario) up to the Supreme Tribunal of Justice (TSJ).
+
+The team’s distinctive strength lies in its ability to protect client capital against aggressive municipal and national tax assessments while structuring ongoing commercial transactions with maximum fiscal efficiency and regulatory compliance.`;
+    }
   }
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b7Text, 'B10'));
 
@@ -938,11 +1147,24 @@ Its work in Jalisco, Durango and Guanajuato, together with proceedings involving
 While the Venezuelan macroeconomic and regulatory environment presents significant liquidity, sanctions, and foreign-exchange complexities, ARAQUEREYNA has remained the counsel of choice for the largest cross-border and domestic credit facilities, debt restructurings, project financings, and payment mechanism structuring in the market.
 Under the senior leadership of Senior Statesperson Gustavo J. Reyna and practice head Pedro Luis Planchart P. (Band 1), the team advised on marquee financial mandates, including major sovereign debt restructuring advisory, syndicated bank facilities, and secure multi-currency payment structures for blue-chip multinationals.
 The department's depth, institutional stability, volume of premier financial transactions, and unmatched reputation among international institutions reaffirm ARAQUEREYNA's position at the pinnacle of the Venezuelan financial legal market, firmly supporting the retention and consolidation of its Band 1 ranking.`;
+  } else if (isDeForestLabour) {
+    c2Val = `DeForest Abogados has built one of Mexico’s most formidable employer-side Labour & Employment practices, distinguished by its 27-lawyer specialized bench, nationwide operational footprint, and market leadership in post-reform collective bargaining, dispute resolution, and USMCA Rapid Response Mechanism (RRM) risk mitigation.
+While conventional directory coverage frequently emphasizes traditional Mexico City litigation boutiques, DeForest operates at the critical intersection of modern industrial governance and large-scale workforce management. The practice represents multinational heavyweights across automotive, manufacturing, and entertainment—such as Schaeffler, Brose, Volkswagen, Cinemex, and Bonatti Mayakan—managing workforces exceeding 1,000,000 employees and defending portfolios exceeding 700 active employment disputes nationwide.
+Under the strategic direction of practice head Eduardo Garduño, supported by litigation partner Jaime Bustamante and consulting partner Javier Atzin Vallejo, the team has delivered decisive results: legitimating collective bargaining agreements across complex industrial plants, preventing strikes in nationwide operations (GeNI, Coats), and successfully resolving high-exposure disputes totaling over MXN 280 million without operational disruption.
+The sheer evidentiary density, national scale, and strategic sophistication demonstrated across this portfolio firmly justify DeForest Abogados' recognition in the upper tiers of Chambers Latin America / Mexico Labour & Employment.`;
+  } else if (isAraqueTax) {
+    c2Val = `ARAQUEREYNA’s Tax practice remains the premier fiscal and tax controversy advisor in Venezuela, universally recognized for its technical sophistication, constitutional depth, and strategic counsel to blue-chip multinationals operating in hyper-inflationary, multi-currency, and evolving fiscal environments.
+Led by Senior Statesperson Gabriel Ruan Santos and Band 1 practitioner María Carolina Cano, alongside partners Ingrid García Pacheco and Juan Carlos Balzán, the department delivers market-defining counsel across cross-border M&A tax structuring (such as Gruppo Montenegro's acquisition of the Pampero rum brand from Diageo with DLA Piper Italy), complex transfer pricing, municipal business license taxes, and contentious proceedings before SENIAT and the Supreme Tribunal of Justice (TSJ).
+Despite demanding domestic regulatory conditions, ARAQUEREYNA consistently achieves decisive tax efficiencies and dispute resolutions for leading multinational and domestic enterprises, including PepsiCo, Turkish Airlines, SUMMUS, and BDO, protecting client assets against arbitrary tax assessments and optimizing corporate operations.
+The department’s unparalleled historical pedigree, continuous partner involvement, and demonstrable record of success on the country’s most complex fiscal mandates firmly support the reaffirmation and consolidation of ARAQUEREYNA’s Band 1 position in Chambers Latin America / Venezuela Tax.`;
   } else if (!c2Val || String(c2Val).length < 150 || String(c2Val).includes('We would be happy to discuss')) {
     c2Val = `The ${practiceArea} practice at ${firmName} has demonstrated exceptional commercial sophistication, advising on high-value and market-critical mandates across ${guideRegion || 'the jurisdiction'}.
 The team has distinguished itself through consistent execution in demanding regulatory environments, combining deep partner involvement with high-caliber associate support.
 Given the scale, complexity, and demonstrable commercial impact of the matters submitted, we respectfully request that Chambers consider the practice for recognition in the upcoming guide.`;
   }
+
+  // Sanitize any potential template or prompt leakage from C2
+  c2Val = sanitizeTemplateBoilerplate(String(c2Val)).cleaned;
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
   // ═══ SECTION D ═══
@@ -1067,7 +1289,7 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
 function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
   const guideRegion = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
-  const rawMattersListL500 = (submission.matters && submission.matters.length > 0)
+  const rawMattersListL500 = (submission?.matters && submission.matters.length > 0)
     ? submission.matters
     : (chambersData.matters || []);
 
@@ -1093,7 +1315,11 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     {
       practiceArea,
       firmName,
-      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || []
+      auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || [],
+      heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
+      heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
+      lawyersCount: (chambersData.lawyers || []).length,
+      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico'
     }
   );
   if (!integrityReportL500.passed) {

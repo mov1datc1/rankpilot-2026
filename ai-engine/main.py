@@ -870,19 +870,23 @@ async def extract_document_endpoint(request: Request):
         # Extract B10 narrative
         original_b10 = ""
         b10_match = re.search(
-            r'B(?:10|7)\s+What is this department best known for.*?\n',
+            r'(?:B(?:10|7)\s+)?What is (?:this|your) department best known for[^\n]*\n',
             doc_text, re.IGNORECASE
         )
         if b10_match:
             start_idx = b10_match.end()
+            rem = doc_text[start_idx:]
+            sub_m = re.match(r'^\s*Specific expertise[^\n]*\n', rem, re.I)
+            if sub_m:
+                rem = rem[sub_m.end():]
             end_match = re.search(
-                r'\n\s*(?:C1\s|C\.\s|D\.\s|B8\s|B9\s|Publishable|CONFIDENTIAL)',
-                doc_text[start_idx:], re.IGNORECASE
+                r'\n\s*(?:How many new cases|Significant client feedback|Client feedback|Company\s*\||C1\s|C2\s|C\.\s|D\.\s|B8\s|B9\s|B11\s|Publishable|CONFIDENTIAL|MATTER NUMBER)',
+                rem, re.IGNORECASE
             )
             if end_match:
-                original_b10 = doc_text[start_idx:start_idx + end_match.start()].strip()
+                original_b10 = rem[:end_match.start()].strip()
             else:
-                original_b10 = doc_text[start_idx:start_idx + 3000].strip()
+                original_b10 = rem[:4500].strip()
 
             original_b10 = re.sub(
                 r'(?:Please include:.*?word count limit\)?|Address any feedback.*?word count limit\)?)',
@@ -897,11 +901,14 @@ async def extract_document_endpoint(request: Request):
             for label_key, sec in sections.items():
                 fields = DocumentParser.extract_matter_fields(sec["text"])
                 is_conf = "confidential" in label_key or "non-publishable" in label_key
+                c_name = re.sub(r'(?i)^\s*(?:client name,?\s*give a general description\.?|\(?or if you cannot reveal the client name[^\)]*\)?\.?)\s*', '', fields.get("client", "")).strip()
+                c_name = c_name.strip('|\n\r\t ')
+                cb_val = re.sub(r'(?i)^\s*(?:jurisdictions involved\.?|please name the jurisdictions involved\.?)\s*', '', fields.get("cross_border_jurisdictions", "")).strip()
                 matters.append({
                     "id": f"matter-ext-{len(matters) + 1}",
                     "name": sec["label"],
                     "title": sec["label"],
-                    "client": fields.get("client", ""),
+                    "client": c_name,
                     "value": fields.get("matter_value", ""),
                     "leadPartner": fields.get("lead_partner", ""),
                     "lead_partner": fields.get("lead_partner", ""),
@@ -909,7 +916,7 @@ async def extract_document_endpoint(request: Request):
                     "summary": fields.get("summary", ""),
                     "teamMembers": fields.get("team_members", ""),
                     "team_members": fields.get("team_members", ""),
-                    "crossBorder": fields.get("cross_border_jurisdictions", ""),
+                    "crossBorder": cb_val,
                     "otherFirms": fields.get("other_firms", ""),
                     "completionDate": fields.get("completion_date", ""),
                     "isConfidential": is_conf,

@@ -60,9 +60,15 @@ const FORBIDDEN_TEMPLATE_INSTRUCTIONS = [
   /Please say why this matter was important\.?/gi,
   /Also,\s*tell us exactly what role your department played\.?/gi,
   /include currency and amount in figures\.?/gi,
-  /If you cannot reveal the client name, give a general description\.?/gi,
-  /Address any feedback from our previous research\.?/gi,
-  /Please include:\s*Key changes in department profile/gi
+  /(?:If you cannot reveal the\s+)?client name,\s*give a general description\.?/gi,
+  /(?:other\s+)?jurisdictions involved\.?/gi,
+  /what was the outcome of this matter\??/gi,
+  /Please state what you did, including any unusual or interesting aspects of the matter\??/gi,
+  /Address any feedback (?:from|on) our (?:previous|recent) (?:research|coverage)\.?/gi,
+  /Please include:\s*Key changes in department profile/gi,
+  /Summary of matter and your firm's involvement:?/gi,
+  /Summary of matter and your department's role:?/gi,
+  /Is this a cross-border matter\??/gi
 ];
 
 /**
@@ -234,6 +240,10 @@ export function runArtifactIntegrityCheck(
     practiceArea?: string;
     firmName?: string;
     auditExclusions?: Set<string> | string[];
+    heroMatterId?: string;
+    heroMatterTitle?: string;
+    lawyersCount?: number;
+    jurisdiction?: string;
   } = {}
 ): ArtifactIntegrityReport {
   const criticalErrors: IntegrityIssue[] = [];
@@ -325,6 +335,32 @@ export function runArtifactIntegrityCheck(
       }
     }
 
+    // Check 2c: Venezuela Jurisdiction Guardrail (Angela Castillo directive: Zero cross-border institutional contamination)
+    const isVenezuela = (options.jurisdiction || '').toLowerCase().includes('venezuela') ||
+      (options.firmName || '').toLowerCase().includes('araque') ||
+      (options.practiceArea || '').toLowerCase().includes('venezuela');
+
+    if (isVenezuela) {
+      const mexicanAuthorities = [
+        { regex: /\bSAT\b/g, name: 'SAT (Servicio de Administración Tributaria)' },
+        { regex: /\bPRODECON\b/gi, name: 'PRODECON' },
+        { regex: /\bIMSS\b/gi, name: 'IMSS' },
+        { regex: /\bINFONAVIT\b/gi, name: 'INFONAVIT' },
+        { regex: /\bamparo\b/gi, name: 'Amparo (Mexican constitutional remedy)' }
+      ];
+      for (const auth of mexicanAuthorities) {
+        if (auth.regex.test(summary) || auth.regex.test(client)) {
+          criticalErrors.push({
+            severity: 'CRITICAL',
+            matterName: mName,
+            field: 'Jurisdiction Purity Guardrail',
+            description: `Jurisdiction contamination detected: Mexican entity/remedy '${auth.name}' found in Venezuelan submission. Venezuelan authorities (SENIAT, TSJ, Tribunales Superiores de lo Contencioso Tributario) must be referenced instead.`,
+            actionTaken: 'Flagged as CRITICAL failure to prevent cross-jurisdiction contamination.'
+          });
+        }
+      }
+    }
+
     // Check 3: Matter-to-Client Relational Consistency
     // E.g. client is a landowner, but summary describes motorcycle manufacturing or tax fines
     if (clientLower.includes('adm hermosillo') && summary.toLowerCase().includes('motorcycle')) {
@@ -384,6 +420,43 @@ export function runArtifactIntegrityCheck(
       m.leadPartner = lead;
       m.teamMembers = team;
     }
+  }
+
+  // Check 8: Hero Matter Delivery Invariant (Audit Strategy = Submission Execution)
+  if (options.heroMatterId || options.heroMatterTitle) {
+    const heroIdLower = (options.heroMatterId || '').toLowerCase().trim();
+    const heroTitleLower = (options.heroMatterTitle || '').toLowerCase().trim();
+
+    const heroFound = allCore.some(m => {
+      const mId = String(m.id || m.matter_id || m.matterId || '').toLowerCase().trim();
+      const mTitle = String(m.title || m.name || '').toLowerCase().trim();
+      const mClient = String(m.client || m.clientName || '').toLowerCase().trim();
+
+      if (heroIdLower && (mId === heroIdLower || mId.includes(heroIdLower) || heroIdLower.includes(mId))) return true;
+      if (heroTitleLower && (mTitle.includes(heroTitleLower) || mClient.includes(heroTitleLower) || heroTitleLower.includes(mClient))) return true;
+      return false;
+    });
+
+    if (!heroFound && (options.heroMatterId || options.heroMatterTitle)) {
+      criticalErrors.push({
+        severity: 'CRITICAL',
+        matterName: options.heroMatterTitle || options.heroMatterId || 'Hero Matter',
+        field: 'Hero Matter Delivery Invariant',
+        description: `Selected Hero Matter '${options.heroMatterTitle || options.heroMatterId}' is missing from final submission form (Sections D & E). Audit strategy must govern submission execution downstream.`,
+        actionTaken: 'Blocked delivery: Hero Matter must be present in official core portfolio.'
+      });
+    }
+  }
+
+  // Check 9: B9 Lawyer Roster Preservation (Zero Lawyer Discard Policy)
+  if (typeof options.lawyersCount === 'number' && options.lawyersCount === 0) {
+    criticalErrors.push({
+      severity: 'CRITICAL',
+      matterName: 'B9 Lawyer Roster',
+      field: 'B9 Lawyer Extraction & Preservation',
+      description: 'B9 lawyer roster is completely empty (0 lawyers). Existing substantive lawyer evidence from source document must never disappear.',
+      actionTaken: 'Blocked delivery: B9 lawyer roster must be populated.'
+    });
   }
 
   const passed = criticalErrors.length === 0;

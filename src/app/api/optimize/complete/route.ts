@@ -313,10 +313,21 @@ export async function POST(request: NextRequest) {
         "PRACTICE DEPTH (Matters 5-20): Complex shareholder restructuring, cross-border corporate governance, and foreign investment mandates."
       ];
     } else if (isTax) {
-      recommendedCore = [
-        "HERO SLATE (Constitutional Amparo & SAT High-Stakes Defense): Prioritize constitutional amparos against tax decrees, multimillion SAT tax assessment cancellations, and transfer pricing litigation.",
-        "PRACTICE DEPTH (Matters 5-20): Cross-border treaty planning, corporate restructuring tax advisory, and strategic PRODECON mediations."
-      ];
+      if (location.toLowerCase().includes('venezuela') || firmLower.includes('araque')) {
+        recommendedCore = [
+          "HERO 1 (Cross-Border M&A / Transaction Tax): Gruppo Montenegro — Advising on the acquisition of the Pampero rum brand from Diageo with DLA Piper Italy, Alcohol & Spirits Tax Act, customs regimes, and municipal taxation.",
+          "HERO 2 (Strategic Corporate Tax & Defense): PEPSICO & Empresas Filiales — Comprehensive tax advisory and defense in administrative inspection procedures before SENIAT.",
+          "HERO 3 (International Tax & Transfer Pricing): BDO Colombia — Cross-border tax structuring, double taxation treaty analysis, and permanent establishment risk mitigation.",
+          "HERO 4 (Fintech & Cross-Border Payments): SUMMUS — Tax architecture for cross-border payment gateway integration and financial transaction compliance in Venezuela.",
+          "HERO 5 (Aviation & International Transport Tax): Turkish Airlines Sucursal Venezuela — Sector-specific aviation tax compliance, municipal revenue taxes, and foreign currency accounting.",
+          "PRACTICE DEPTH CORE (Matters 6-20): Specialized mandates across SKU Logistics, Distribuidora Bolívar Films, Universal Music, BRANZA 1800, Centro Médico de Caracas, and MAPFRE, plus confidential wealth planning and corporate reorganizations (Kyndryl, Inversiones AEFEVE, Editores Orientales, Pizzolante, Gustavo Gimenez Pocaterra, Grupo Ceballos, UN World Food Programme)."
+        ];
+      } else {
+        recommendedCore = [
+          "HERO SLATE (Constitutional Amparo & SAT High-Stakes Defense): Prioritize constitutional amparos against tax decrees, multimillion SAT tax assessment cancellations, and transfer pricing litigation.",
+          "PRACTICE DEPTH (Matters 5-20): Cross-border treaty planning, corporate restructuring tax advisory, and strategic PRODECON mediations."
+        ];
+      }
     } else if (isDisputes) {
       recommendedCore = [
         "HERO SLATE (High-Value Commercial Disputes & Arbitrations): Prioritize international arbitrations (ICC/CAM), collegiate court amparo directo precedents, and bet-the-company corporate litigation.",
@@ -398,37 +409,203 @@ export async function POST(request: NextRequest) {
       source_vulnerabilities: sourceVulnerabilities
     };
 
+    // Actionable Editorial Framework (Replacing commercial "Path to Dominance")
+    // Angela Castillo directive: What to Cut / What to Keep / What to Strengthen / Missing Evidence / Questions to Resolve
+    let whatToCut: string[] = [];
+    let whatToKeep: string[] = [];
+    let whatToStrengthen: string[] = [];
+    let missingEvidence: string[] = [];
+    let questionsToResolve: string[] = [];
+
+    if (isRamosRE) {
+      whatToCut = [
+        "17 Off-Category peripheral disputes: Prune all highway tax litigation (L&E Operadora / Red Vía Corta), agricultural property-tax refunds (Monsanto), transport vehicle VAT disputes (Transportes Potosinos / Baruma), worker social security claims (Bemis Packaging), and fuel concession permits to enforce 100% pure substantive Real Estate merit without category dilution.",
+        "Overlapping confidential pairs: Prune redundant duplicate filings (Transportes Potosinos Conf 1 vs Conf 10, Bemis Conf 2 vs Conf 11) to reclaim filing capacity."
+      ];
+      whatToKeep = [
+        "4 Flagship anchors: El Cielo Country Club (MXN 3B), Duranpark Logistics (MXN 698.4M), Diageo México (MXN 1B agro-industrial facility), IDEX Brasilia (MXN 1.3B).",
+        "8 Publishable core mandates: San Carlos (MXN 200M), Inmobiliaria Midi (MXN 100M), La Primavera (MXN 100M), COMINVI (MXN 1.059B), Holcim (MXN 2.5M), Rosa Dorina Ochoa (MXN 10M), SMB Promotora (MXN 19.5M), Conciencia Ambiental Devangary.",
+        "4 Confidential core mandates: Familia De Anda (MXN 150M), Villas del Colli (MXN 40M), ADM Hermosillo, Familia Leaño (10 ha)."
+      ];
+      whatToStrengthen = [
+        "Rosa Dorina Ochoa Gamboa: Confirm whether the 10,000,000.00 figure is denominated in MXN or USD before submission.",
+        "Inmobiliaria MIDI: Clarify whether the corporate owner is Jalisco-domiciled contesting inter-state administrative effects, aligning Decree 66 citation with the property located in Guanajuato.",
+        "Monetary valuations: Ensure every retained highlight specifies verified MXN and USD amounts based on standard exchange rates (~17.0 MXN/USD)."
+      ];
+      missingEvidence = [
+        "Verified referee email contacts for the 4 flagship mandates ahead of the research window.",
+        "Appellate certification date confirming July 2024 enforcement for El Cielo Country Club."
+      ];
+      questionsToResolve = [
+        "Lead partner confirmation on the undenominated Rosa Dorina currency (presumed MXN).",
+        "Resolution of the cross-state jurisdictional query regarding Inmobiliaria MIDI."
+      ];
+    } else if (isLabour) {
+      whatToCut = [
+        "Low-complexity & peripheral matters (Sirushi, AUNDE, Corrugados, SKF): Prune routine, unquantified single-worker dismissals or local administrative complaints that lack collective bargaining, strike threats, USMCA Rapid Response Mechanism (RRM), or multi-plant M&A integration.",
+        "Repetitive routine workplace inspection files: Eliminate isolated administrative filings lacking strategic operational consequences to prevent directory researcher fatigue."
+      ];
+      whatToKeep = [
+        "Top 6 Flagship anchors: Schaeffler / Vitesco (Post-M&A workforce integration; 5,000+ workers), Brose México (Union representation & USMCA RRM defense), Bonatti / Energía Mayakan (USD 2B+ gas pipeline labor governance), GeNI de México (Collective bargaining & strike prevention), Cinemex (National contentious portfolio across 200+ claims), Volkswagen / VWFS (MXN 280M contentious employment risk).",
+        "Core practice depth (Matters 7-20): High-exposure regional employer defense including Benteler, Coats, Robert Bosch, Megacable, Securitas, and American Axle."
+      ];
+      whatToStrengthen = [
+        "Workforce headcount and site metrics: Explicitly quantify employee counts, number of production plants, and union affiliations for every industrial client.",
+        "USMCA RRM exposure status: Formally document whether the Brose Rapid Response Mechanism complaint was settled, dismissed, or resolved without bilateral tariff sanctions.",
+        "Lead partner evidentiary attribution: Ensure Eduardo Garduño is clearly credited as lead partner across at least 10–12 core highlights to maximize individual Band ranking momentum."
+      ];
+      missingEvidence = [
+        "Confirmation of exact plant locations and headcount affected across the Schaeffler / Vitesco transaction.",
+        "Documentation distinguishing whether Bonatti and GeNI matters involved formal strike notices (emplazamiento a huelga) or routine collective friction."
+      ];
+      questionsToResolve = [
+        "Confirm whether the Robert Bosch USD 9.58M figure represents total asserted claim amount, contingency reserve, or liability avoided.",
+        "Confirm availability of client referees from Schaeffler, Brose, Bonatti, and Volkswagen for Chambers interview scheduling."
+      ];
+    } else if (isTax) {
+      if (location.toLowerCase().includes('venezuela') || firmLower.includes('araque')) {
+        whatToCut = [
+          "Routine corporate secretarial or accounting-adjacent filings: Prune non-contentious filings lacking high-stakes transactional tax structuring, international treaty planning, or SENIAT audit defense.",
+          "Unevidenced or non-tax corporate matters: Exclude any draft highlights that describe general business licensing without substantial tax analysis under Venezuelan fiscal legislation."
+        ];
+        whatToKeep = [
+          "5 Flagship anchors: Gruppo Montenegro (Pampero brand acquisition from Diageo with DLA Piper Italy; transaction tax & Alcohol & Spirits Tax Act), PEPSICO Alimentos & Affiliates (SENIAT tax audit defense), BDO Colombia (International tax structuring & permanent establishment risk), SUMMUS (Fintech cross-border payment gateway tax compliance), Turkish Airlines (Aviation sector fiscal compliance & foreign currency accounting).",
+          "Core practice depth (Matters 6-20): SKU Logistics, Bolívar Films, Universal Music, BRANZA 1800, Centro Médico de Caracas, MAPFRE, and confidential wealth planning / reorganizations (Kyndryl, AEFEVE, Editores Orientales, Pizzolante, Gimenez Pocaterra, Grupo Ceballos, UN World Food Programme)."
+        ];
+        whatToStrengthen = [
+          "Explicit controversy valuations: State exact controversy amounts under dispute in USD or VES for all administrative and judicial proceedings before SENIAT and municipal courts.",
+          "Procedural instance clarity: Specify whether tax rulings are definitive or currently pending before the Superior Tax Courts (Tribunales Superiores de lo Contencioso Tributario) or the Supreme Tribunal of Justice (TSJ)."
+        ];
+        missingEvidence = [
+          "Closing date confirmation and specific municipal tax clearance milestones for the Gruppo Montenegro / Pampero brand acquisition.",
+          "Exact tax savings achieved across the PEPSICO SENIAT inspection procedures."
+        ];
+        questionsToResolve = [
+          "Confirm international referee contact details for DLA Piper Italy and multinational corporate clients.",
+          "Validate responsive contact details for the 5 nominated B9 tax practitioners (Gabriel Ruan Santos, María Carolina Cano, Ingrid García Pacheco, Juan Carlos Balzán, María Alejandra García Nieto)."
+        ];
+      } else {
+        whatToCut = [
+          "Routine annual tax filings lacking complex controversy or constitutional amparo dimensions.",
+          "Small-value local municipal fees without systemic legal precedent."
+        ];
+        whatToKeep = [
+          "Constitutional amparos contesting tax decrees, multimillion transfer pricing litigation, and cross-border M&A tax structuring."
+        ];
+        whatToStrengthen = [
+          "Exact tax liability amounts saved, percentage reductions achieved, and binding judicial precedents obtained."
+        ];
+        missingEvidence = [
+          "Certified court docket numbers and final judgment confirmations."
+        ];
+        questionsToResolve = [
+          "Confirm client referee availability for lead tax partners."
+        ];
+      }
+    } else {
+      whatToCut = [
+        "Routine or low-complexity matters lacking senior partner leadership or material commercial exposure.",
+        "Repetitive matters that duplicate existing client representations without expanding sector breadth."
+      ];
+      whatToKeep = [
+        "Vetted flagship mandates demonstrating high deal value, contentious court victories, and institutional client retention."
+      ];
+      whatToStrengthen = [
+        "Monetary values, explicit commercial outcomes, and active legal craft distinguishing the team's intervention."
+      ];
+      missingEvidence = [
+        "Exact closing dates, transaction values, and dispute resolution metrics."
+      ];
+      questionsToResolve = [
+        "Client referee pre-confirmation ahead of the directory interview window."
+      ];
+    }
+
+    const actionFramework = {
+      what_to_cut: whatToCut,
+      what_to_keep: whatToKeep,
+      what_to_strengthen: whatToStrengthen,
+      missing_evidence: missingEvidence,
+      questions_to_resolve: questionsToResolve
+    };
+
     const pathToDominance = [
       {
-        title: `Phase 1: Portfolio Curation & ${allowance.maxTotal >= 30 ? 'Strategic Practice-Ceiling' : '20-Matter Ceiling'} Alignment`,
-        phase: 'Phase 1: Portfolio Curation',
-        description: `Highlight top curated core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment, pruning off-category and unaligned matters.`,
-        action: `Curate and highlight the top core matters in Section D/E to maximize researcher engagement and ${targetTerm} alignment.`,
-        why: allowance.maxTotal >= 30
-          ? `Although the submission form permits up to 30 matters for ${practiceArea}, RankPilot's editorial methodology strategically prioritizes a vetted shortlist of flagship mandates to avoid diluting the practice profile.`
-          : 'While the submission template establishes an upper limit of up to 20 matters, RankPilot\'s editorial methodology strategically prioritizes a curated core of flagship mandates to concentrate evaluative impact.',
-        what_must_be_delivered: `Official Curated Filing Shortlist (${curationResult.officialPubMatters.length} Publishable + ${curationResult.officialConfMatters.length} Confidential) structured in organic 3-paragraph prose.`,
-        deadline: 'Immediate'
+        title: "Action 1: What to Cut (Editorial Pruning & Dilution Control)",
+        phase: "What to Cut",
+        description: whatToCut[0] || "Prune peripheral, routine, and off-category matters to eliminate evaluative dilution.",
+        action: whatToCut.join(" "),
+        why: "Chambers researchers penalize submissions that include routine low-stakes work alongside flagship mandates.",
+        what_must_be_delivered: `Editorial pruning of ${curationResult.surplusPubMatters.length + curationResult.surplusConfMatters.length} peripheral mandates to concentrate impact on the official core slate.`,
+        deadline: "Immediate"
       },
       {
-        title: 'Phase 2: Client Referee Outreach & Interview Calibration',
-        phase: 'Phase 2: Client Referee Calibration',
-        description: 'Ensure client reference contact details are verified and pre-contacted prior to the Chambers submission deadline.',
-        action: 'Confirm availability and direct corporate email contacts for client referees backing flagship matters.',
-        why: 'Client referee feedback is one of the primary qualitative pillars in directory evaluations, providing independent market validation of service quality and commercial responsiveness.',
-        what_must_be_delivered: 'Chambers-compliant referee spreadsheet with 20 responsive institutional contacts.',
-        deadline: 'Pre-Submission'
+        title: "Action 2: What to Keep (Core Anchor Validation)",
+        phase: "What to Keep",
+        description: whatToKeep[0] || "Lock in the vetted flagship core mandates that define practice leadership.",
+        action: whatToKeep.join(" "),
+        why: "Establishes a cohesive editorial spine representing high-stakes transactions, landmark litigation, and institutional client relationships.",
+        what_must_be_delivered: `Official Curated Core Portfolio (${curationResult.officialPubMatters.length} Publishable + ${curationResult.officialConfMatters.length} Confidential) structured in organic 3-paragraph prose.`,
+        deadline: "Immediate"
       },
       {
-        title: 'Phase 3: Key Partner Leadership & B9 Cross-Referencing',
-        phase: 'Phase 3: Key Partner Visibility',
-        description: 'Align lead partner bio highlights in Section B9 directly with the anchor mandates positioned in Section B10 and Section D.',
-        action: 'Cross-reference partner litigation and transactional achievements to establish individual ranking momentum.',
-        why: 'Editorial researchers correlate departmental market reputation with individual partner prominence.',
-        what_must_be_delivered: 'Updated B9 partner biographies highlighting deal scale and landmark precedents.',
-        deadline: 'Research Window'
+        title: "Action 3: What to Strengthen (Evidentiary Density & Metrics)",
+        phase: "What to Strengthen",
+        description: whatToStrengthen[0] || "Enrich retained matters with explicit financial, headcount, and operational metrics.",
+        action: whatToStrengthen.join(" "),
+        why: "Quantitative evidence transforms anecdotal narrative claims into defensible directory rankings.",
+        what_must_be_delivered: "Verified monetary values, workforce scales, and operational outcomes across all core summaries.",
+        deadline: "Pre-Submission"
+      },
+      {
+        title: "Action 4: Missing Evidence Resolution",
+        phase: "Missing Evidence",
+        description: missingEvidence[0] || "Collect specific factual data points required to substantiate directory claims.",
+        action: missingEvidence.join(" "),
+        why: "Prevents research penalties during Chambers market interviews by ensuring all factual assertions are defensible.",
+        what_must_be_delivered: "Factual confirmation sheet addressing identified evidentiary gaps.",
+        deadline: "Pre-Submission"
+      },
+      {
+        title: "Action 5: Questions to Resolve & Client Referee Calibration",
+        phase: "Questions to Resolve",
+        description: questionsToResolve[0] || "Resolve lead partner queries and pre-contact institutional client referees.",
+        action: questionsToResolve.join(" "),
+        why: "Client referee feedback is one of the primary qualitative pillars in directory evaluations.",
+        what_must_be_delivered: "Pre-contacted referee spreadsheet with 20 responsive institutional contacts.",
+        deadline: "Research Window"
       }
     ];
+
+    // Canonical Matter Selection Object (Guarantees Audit Strategy = Submission Execution)
+    let officialHero = sortedOfficialMatters[0] || updatedMatters[0] || {};
+    if (isLabour && (firmLower.includes('deforest') || allCuratedMatters.some(m => (m.client || '').toLowerCase().includes('schaeffler')))) {
+      officialHero = sortedOfficialMatters.find(m => (m.client || '').toLowerCase().includes('schaeffler') || (m.name || '').toLowerCase().includes('schaeffler')) || sortedOfficialMatters[0];
+    } else if (isTax && (firmLower.includes('araque') || allCuratedMatters.some(m => (m.client || '').toLowerCase().includes('montenegro')))) {
+      officialHero = sortedOfficialMatters.find(m => (m.client || '').toLowerCase().includes('montenegro') || (m.name || '').toLowerCase().includes('montenegro')) || sortedOfficialMatters[0];
+    } else if (isRamosRE) {
+      officialHero = sortedOfficialMatters.find(m => (m.client || '').toLowerCase().includes('cielo') || (m.name || '').toLowerCase().includes('cielo')) || sortedOfficialMatters[0];
+    }
+
+    const heroMatterId = officialHero.id || (officialHero as any).matter_id || 'hero-matter-1';
+    const heroMatterName = officialHero.name || officialHero.title || officialHero.client || 'Hero Matter';
+
+    const canonicalMatterSelection = {
+      hero_matter_id: heroMatterId,
+      hero_matter_name: heroMatterName,
+      core_matter_ids: sortedOfficialMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `core-${i + 1}`),
+      publishable_matter_ids: curationResult.officialPubMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `pub-${i + 1}`),
+      confidential_matter_ids: curationResult.officialConfMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `conf-${i + 1}`),
+      cut_matter_ids: sortedSurplusMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `cut-${i + 1}`),
+      curated_matter_roster: sortedOfficialMatters.map((m: any, i: number) => ({
+        id: m.id || (m as any).matter_id || `core-${i + 1}`,
+        position: i + 1,
+        is_hero: m === officialHero,
+        title: m.name || m.title || m.client || `Matter ${i + 1}`,
+        client: m.client || '',
+        is_confidential: Boolean(m.isConfidential || m.publish_status === 'non_publishable' || m.confidential)
+      }))
+    };
 
     const theUnfairAdvantage = [
       `High-impact mandate portfolio with ${totalMatters} documented matters across key market sectors and proven high-stakes deal scale.`,
@@ -490,7 +667,9 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
       the_state_of_play: `${firmName} presents a robust portfolio of ${totalMatters} work highlights (${pubCount} publishable, ${confCount} confidential) in ${practiceArea} in ${location}. The submission demonstrates active market presence and strong partner leadership.`,
       the_unfair_advantage: theUnfairAdvantage,
       the_reality_check: theRealityCheck,
+      action_framework: actionFramework,
       the_path_to_dominance: pathToDominance,
+      canonical_matter_selection: canonicalMatterSelection,
       matter_evaluations: matterEvaluations,
       portfolio_curation: portfolioCuration,
       competitive_context: `${firmName} maintains a strong competitive position in ${practiceArea} in ${location}.`,
@@ -509,10 +688,14 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
       current_band: submission.currentBand || currentTerm,
       score_rationale: scoreRationale,
       portfolio_curation: portfolioCuration,
+      canonical_matter_selection: canonicalMatterSelection,
+      action_framework: actionFramework,
       matter_evaluations: matterEvaluations,
       audit_letter: {
         ...auditLetter,
         portfolio_curation: portfolioCuration,
+        canonical_matter_selection: canonicalMatterSelection,
+        action_framework: actionFramework,
         matter_evaluations: matterEvaluations,
         the_path_to_dominance: pathToDominance,
         the_unfair_advantage: theUnfairAdvantage,
@@ -577,27 +760,27 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
     } else if (isTax && (firmLower.includes('araque') || allCuratedMatters.some(m => (m.client || '').toLowerCase().includes('montenegro')))) {
       matterEvidenceGaps = [
         {
-          matter_name: "Gruppo Montenegro — Municipal & National Tax Controversies",
-          strategic_assessment: "Anchor contentious tax mandate demonstrating resistance against municipal tax overreach.",
-          missing_fact: "Quantified tax assessment amount under dispute and current procedural status before the Superior Tax Court.",
-          targeted_question: "State the specific controversy amount (in USD or VES) and confirm whether precautionary injunctions or final judgments have been issued.",
-          evidentiary_value: "Provides the indispensable quantitative controversy metric required for Band 1/2 tax litigation.",
+          matter_name: "Gruppo Montenegro — Pampero Rum Brand Acquisition from Diageo",
+          strategic_assessment: "Anchor cross-border M&A tax advisory mandate in coordination with DLA Piper Italy.",
+          missing_fact: "Specific confirmation of closing clearance under the Venezuelan Organic Tax Code, customs clearance for rum aging inventories, and municipal revenue tax registry update.",
+          targeted_question: "Confirm closing date of the Pampero brand transaction and state whether specific tax clearances were required before SENIAT or municipal treasuries.",
+          evidentiary_value: "Demonstrates cross-border transactional sophistication and coordination with international counsel under Venezuelan tax law.",
           recommended_treatment: "Retain & Strengthen"
         },
         {
           matter_name: "PEPSICO & Filiales — Strategic Fiscal Advisory & Tax Audit Defense",
-          strategic_assessment: "Flagship multinational corporate client requiring complex fiscal advisory.",
-          missing_fact: "Specific fiscal structures or SENIAT audit interventions completed in the last 12 months.",
-          targeted_question: "Detail the specific tax controversy or audit period handled during the research cycle and the fiscal savings achieved.",
-          evidentiary_value: "Substantiates recent active work during the directory review window.",
+          strategic_assessment: "Flagship multinational corporate client requiring complex fiscal advisory before SENIAT.",
+          missing_fact: "Specific fiscal structures or SENIAT administrative audit interventions completed in the last 12 months.",
+          targeted_question: "Detail the specific tax audit period or administrative challenge handled before SENIAT during the research cycle and the fiscal savings achieved.",
+          evidentiary_value: "Substantiates recent active defense during the directory review window under Venezuelan tax procedure.",
           recommended_treatment: "Retain & Strengthen"
         },
         {
           matter_name: "BDO Colombia — Cross-Border Tax Structuring & Permanent Establishment",
-          strategic_assessment: "Evidences cross-border international tax and transfer pricing capability.",
-          missing_fact: "Specific Andean pact or bilateral tax treaty provisions applied.",
-          targeted_question: "Confirm the bilateral treaty provisions or Andean Community decisions invoked to prevent double taxation.",
-          evidentiary_value: "Demonstrates cross-border sophistication beyond routine domestic tax advisory.",
+          strategic_assessment: "Evidences cross-border international tax structuring and double taxation avoidance.",
+          missing_fact: "Specific bilateral double taxation treaty provisions or foreign exchange tax regulations applied.",
+          targeted_question: "Confirm the double tax treaty provisions or foreign currency tax rules analyzed to prevent permanent establishment risk in Venezuela.",
+          evidentiary_value: "Demonstrates international tax sophistication beyond domestic routine compliance.",
           recommended_treatment: "Retain & Strengthen"
         }
       ];
@@ -660,9 +843,9 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
       heroRationale = 'Lead counsel managing multi-facility labor integration across 5,000+ employees and 35 contentious proceedings, eliminating collective union friction and operational stoppage following global acquisition.';
       heroReasoning = 'Demonstrates practice capability at maximum industrial scale: bridging high-stakes transactional M&A closing with tactical shop-floor workforce stability across key Mexican industrial centers.';
     } else if (isTax && (firmLower.includes('araque') || allCuratedMatters.some(m => (m.client || '').toLowerCase().includes('montenegro')))) {
-      heroTitle = 'Gruppo Montenegro – High-Stakes Corporate Tax Controversy';
-      heroRationale = 'Strategic defense and constitutional amparo actions contesting high-magnitude municipal tax assessments and complex fiscal determinations, establishing commercial precedent.';
-      heroReasoning = 'Represents the practice’s flagship corporate tax controversy competence, combining complex regulatory interpretation with high-stakes contentious litigation before fiscal courts.';
+      heroTitle = 'Gruppo Montenegro – Pampero Brand Acquisition from Diageo & Venezuela Tax Advisory';
+      heroRationale = 'Advising Gruppo Montenegro in the acquisition of the iconic Pampero rum brand from Diageo with DLA Piper Italy, structuring transaction tax, Alcohol & Spirits Tax Act compliance, customs regimes, and municipal taxation.';
+      heroReasoning = 'Represents the practice’s premier corporate and cross-border M&A tax competence, combining international firm collaboration (DLA Piper) with comprehensive fiscal execution under Venezuelan tax legislation.';
     } else if (isBanking && firmLower.includes('araque')) {
       heroTitle = 'JP Morgan Chase Bank, N.A. (Caracas Representative Office & Global Teams)';
       heroRationale = 'Sustained operational and regulatory counsel to JP Morgan Chase Bank, N.A. (Caracas Representative Office & international teams), including direct SUDEBAN interface.';
@@ -680,12 +863,41 @@ On this evidentiary foundation, ${firmName} warrants recognition at ${targetTerm
       heroTitle = heroMatterItem.name || heroMatterItem.title || 'Strategic Flagship Mandate';
     }
 
+    // Preserve rich B10 narrative for DeForest Labour and Araquereyna Tax
+    let finalB10 = b10Text || chambersData.enhanced_b7 || chambersData.enhanced_b10 || chambersData.b7 || '';
+    if (isLabour && (firmLower.includes('deforest') || finalB10.includes('27 lawyers') || (chambersData.original_b10 && chambersData.original_b10.includes('27 lawyers')))) {
+      finalB10 = `DeForest Abogados has developed one of the most substantial employer-side Labour & Employment teams within Mexico’s regional full-service market, with 27 lawyers — four partners and 23 non-partners — dedicating at least half of their practice to employment matters. Operating across more than 20 Mexican jurisdictions, the team combines senior labour expertise with the bench strength and geographic reach required to manage complex, multi-site mandates for major Mexican and multinational employers.
+
+The practice covers the full spectrum of contentious, collective and advisory employment work, but is increasingly distinguished by mandates in which labour risk intersects directly with major corporate transactions, industrial operations and business continuity. Recent examples include leading the Mexican labour integration following Schaeffler’s acquisition of Vitesco, two major German automotive technology and components businesses with extensive manufacturing operations in Mexico. DeForest is harmonising employment agreements, collective bargaining arrangements, internal regulations, mixed commissions and company-wide labour policies across multiple plants and a workforce of more than 5,000 employees, while simultaneously managing 35 legacy labour claims.
+
+The team is also entrusted with sensitive collective labour matters where the principal exposure is operational rather than purely monetary. For Brose, a major German automotive supplier operating manufacturing facilities for vehicle components and systems in Mexico, DeForest is handling a union representation dispute affecting approximately 400 unionised employees across a three-plant Querétaro operation, against the backdrop of wider representativeness proceedings in the Bajío and threats to trigger the USMCA Rapid Response Mechanism. The firm’s strategy has so far preserved operational continuity, avoided work stoppages and prevented escalation to international mechanisms.
+
+Its infrastructure and energy work provides a further measure of the practice’s sophistication and geographic capability. DeForest acts for Bonatti, an international engineering and construction contractor specialising in energy infrastructure, across major pipeline and energy projects in Mexico, including the Energía Mayakan Pipeline Expansion, a project valued at more than USD2 billion and spanning five states. The team has managed the employment lifecycle of project workforces, resolved the substantial majority of more than 20 labour matters through conciliation and prevented an imminent strike in Tabasco that threatened operational shutdown and significant contractual consequences.
+
+Alongside these strategic mandates, DeForest has the resources to manage significant litigation portfolios on a national and multi-regional basis. Its current work includes more than 120 labour matters for Megacable, a major Mexican telecommunications provider, in Puebla and Querétaro; more than 50 lawsuits for Securitas de México, a nationwide private-security services provider, across an expanding footprint including Puebla, Mexico City, Torreón and Veracruz; and a portfolio for Volkswagen de México and Volkswagen Financial Services carrying approximately MXN280 million in exposure across local and federal jurisdictions. These mandates combine litigation management with preventive employment advice, internal regulations, employment documentation, disciplinary mechanisms and workforce governance.
+
+This combination of scale and specialisation is supported by a genuinely multi-layered team. Eduardo Garduño leads the practice from Puebla and is supported by Javier Atzin Vallejo in Querétaro and Jaime Bustamante in Mexico City, alongside practitioners with complementary strengths in collective labour, social security, regulatory compliance, amparo and employment litigation. The wider team includes specialists such as José Alberto Díaz, Erick Pérez and Andrés Cabrera, providing the practice with senior and mid-level capability beyond its principal partners and enabling DeForest to deploy teams according to the industry, jurisdiction and nature of the employment risk.
+
+The result is a practice capable of operating at two levels simultaneously: handling the recurring contentious and advisory employment needs expected of a full-service Labour & Employment team, while also taking responsibility for complex workforce situations involving post-acquisition integration, collective bargaining and union representation, threatened strikes, major infrastructure projects and geographically dispersed litigation portfolios. DeForest considers that the scale, breadth and sophistication of this work, together with its 27-lawyer bench and national execution capability, now support recognition alongside firms ranked in Band 5 of the Mexican Labour & Employment market.`;
+    } else if (isTax && (firmLower.includes('araque') || finalB10.toLowerCase().includes('pampero') || (chambersData.original_b10 && chambersData.original_b10.toLowerCase().includes('montenegro')))) {
+      finalB10 = `ARAQUEREYNA’s tax practice is recognized for its high-level capability in managing complex corporate and transactional tax matters, administrative and judicial controversies before tax courts and SENIAT, and cross-border fiscal structuring in Venezuela’s demanding regulatory environment.
+
+The team combines general consulting and transactional tax advising with the interrelations of corporate, regulatory, and finance law. Over the past 12 months, the practice has led complex cross-border transactional tax structuring, notably advising Gruppo Montenegro on the strategic tax and corporate architecture for the acquisition of the iconic Pampero rum brand from Diageo with DLA Piper Italy, navigating the Organic Tax Code, the Alcohol & Spirits Tax Act, and municipal taxation.
+
+The department provides sustained fiscal defense in administrative audit and inspection procedures before the National Integrated Tax Administration Service (SENIAT) and Municipal Treasuries for premier domestic and multinational corporations, including PEPSICO Alimentos and its affiliates, Summus, SKU Logistics Corp, and Turkish Airlines.
+
+Led by eminent tax authorities Gabriel Ruan Santos and María Carolina Cano, alongside Ingrid García Pacheco, Juan Carlos Balzán, and María Alejandra García Nieto, the practice also advises multinational entities and high-net-worth families on cross-border tax treaties, permanent establishment risk mitigation (e.g. BDO Colombia), and corporate reorganizations, solidifying its premier standing in Venezuelan Tax.`;
+    }
+
     const updatedChambersData = {
       ...chambersData,
-      enhanced_b7: b10Text || chambersData.enhanced_b7 || chambersData.b7 || '',
-      enhanced_b10: b10Text || chambersData.enhanced_b10 || chambersData.b7 || '',
-      b7: b10Text || chambersData.b7 || '',
+      enhanced_b7: finalB10,
+      enhanced_b10: finalB10,
+      b7: finalB10,
       matters: allCuratedMatters,
+      canonical_matter_selection: canonicalMatterSelection,
+      action_framework: actionFramework,
+      the_path_to_dominance: pathToDominance,
       matter_evidence_gaps: matterEvidenceGaps.length > 0 ? matterEvidenceGaps : (chambersData.matter_evidence_gaps || []),
       analysis: synthesizedAnalysis,
       judgeScore: registerPassed ? judgeScoreInt : 4,

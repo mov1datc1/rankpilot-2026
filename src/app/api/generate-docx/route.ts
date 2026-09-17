@@ -757,10 +757,72 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     }
   }
 
-  // Path to Dominance
+  // ═══ ACTIONABLE EDITORIAL STRATEGY (Replaces commercial "Path to Dominance") ═══
+  const actionFramework = letter.action_framework || letter.the_action_framework || (analysis as any)?.action_framework || (chambersData as any)?.action_framework;
   const path = Array.isArray(letter.the_path_to_dominance) ? letter.the_path_to_dominance : [];
-  if (path.length > 0) {
-    sections.push(sectionTitle('The Path to Dominance'));
+
+  if (actionFramework) {
+    sections.push(
+      sectionTitle('Actionable Editorial Strategy — What to Cut, Keep, and Strengthen'),
+      p('A concrete decision tool for the practice head, moving from strategic diagnosis to editorial decisions:', { color: GRAY, spacing: { after: 140 } })
+    );
+
+    if (Array.isArray(actionFramework.what_to_cut) && actionFramework.what_to_cut.length > 0) {
+      sections.push(subTitle('1. What to Cut (Editorial Pruning & Dilution Prevention)'));
+      for (const item of actionFramework.what_to_cut) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: '✂️  ', bold: true }), new TextRun({ text: String(item), size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+    }
+
+    if (Array.isArray(actionFramework.what_to_keep) && actionFramework.what_to_keep.length > 0) {
+      sections.push(subTitle('2. What to Keep (Core & Flagship Mandates)'));
+      for (const item of actionFramework.what_to_keep) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: '⭐  ', bold: true }), new TextRun({ text: String(item), size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+    }
+
+    if (Array.isArray(actionFramework.what_to_strengthen) && actionFramework.what_to_strengthen.length > 0) {
+      sections.push(subTitle('3. What to Strengthen (Evidentiary Depth & Narrative Density)'));
+      for (const item of actionFramework.what_to_strengthen) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: '💪  ', bold: true }), new TextRun({ text: String(item), size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+    }
+
+    if (Array.isArray(actionFramework.missing_evidence) && actionFramework.missing_evidence.length > 0) {
+      sections.push(subTitle('4. Missing Evidence (Gaps to Address Before Chambers Research)'));
+      for (const item of actionFramework.missing_evidence) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: '🔍  ', bold: true }), new TextRun({ text: String(item), size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+    }
+
+    if (Array.isArray(actionFramework.questions_to_resolve) && actionFramework.questions_to_resolve.length > 0) {
+      sections.push(subTitle('5. Questions to Resolve (Strategic Decisions for Department Leadership)'));
+      for (const item of actionFramework.questions_to_resolve) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: '❓  ', bold: true }), new TextRun({ text: String(item), size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+    }
+  } else if (path.length > 0) {
+    sections.push(sectionTitle('Actionable Editorial Strategy — Key Execution Priorities'));
     for (let i = 0; i < path.length; i++) {
       const step = path[i];
       let title = typeof step === 'object' ? (step.title || 'Strategic Step') : 'Strategic Step';
@@ -768,7 +830,7 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
       title = title.replace(/\bB6\b/g, 'B9');
       desc = desc.replace(/\bB6\b/g, 'B9');
       sections.push(
-        p(`STEP ${i + 1}: ${title}`, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } })
+        p(`PRIORITY ${i + 1}: ${title}`, { bold: true, size: 24, color: NAVY, spacing: { before: 200, after: 80 } })
       );
       if (typeof step === 'object' && step.why) {
         let whyText = String(step.why).replace(/\bB6\b/g, 'B9');
@@ -784,7 +846,7 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
         sections.push(p(`What must be delivered: ${whatText}`, { color: '15803D', spacing: { after: 60 } }));
       }
       if (typeof step === 'object' && step.deadline) {
-        sections.push(p(`Deadline: ${step.deadline}`, { bold: true, color: 'D97706', spacing: { after: 60 } }));
+        sections.push(p(`Target: ${step.deadline}`, { bold: true, color: 'D97706', spacing: { after: 60 } }));
       }
       sections.push(p(desc, { spacing: { after: 200 } }));
     }
