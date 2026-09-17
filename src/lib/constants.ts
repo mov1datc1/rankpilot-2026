@@ -32,7 +32,7 @@ export const PRACTICE_AREAS = [
   'Corporate / M&A',
   'Data Protection & Privacy',
   'Dispute Resolution',
-  'Employment & Labour',
+  'Labour & Employment',
   'Energy & Natural Resources',
   'Environment',
   'FinTech',

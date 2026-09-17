@@ -117,9 +117,9 @@ export default function MattersAssistantPage() {
   const [jurisdiction, setJurisdiction] = useState('Mexico');
   const [looseNotes, setLooseNotes] = useState('');
 
-  // Upload State
+  // Upload State (Multi-Source Corpus Support)
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const supabase = createClient();
 
@@ -165,30 +165,39 @@ export default function MattersAssistantPage() {
   };
 
   const handleProcessMatter = async () => {
-    if (!selectedFile && !looseNotes.trim()) {
-      alert('Please upload a file or paste some text notes.');
+    if (selectedFiles.length === 0 && !looseNotes.trim()) {
+      alert('Please upload one or more files or paste some text notes.');
       return;
     }
     
     setIsSubmitting(true);
     try {
-      let documentUrl = undefined;
+      let primaryUrl = undefined;
+      const uploadedSources: { url: string; fileName: string; fileType: string }[] = [];
       
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
+      for (const file of selectedFiles) {
+        const fileExt = file.name.split('.').pop() || '';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('documents')
-          .upload(`matters/${fileName}`, selectedFile);
+          .upload(`matters/${fileName}`, file);
           
-        if (uploadError) throw new Error('Failed to upload file: ' + uploadError.message);
+        if (uploadError) throw new Error(`Failed to upload ${file.name}: ` + uploadError.message);
         
         const { data: { publicUrl } } = supabase.storage
           .from('documents')
           .getPublicUrl(`matters/${fileName}`);
           
-        documentUrl = publicUrl;
+        uploadedSources.push({
+          url: publicUrl,
+          fileName: file.name,
+          fileType: fileExt
+        });
+      }
+
+      if (uploadedSources.length > 0) {
+        primaryUrl = uploadedSources[0].url;
       }
 
       // We call the process-document route which will hit the Python Engine
@@ -196,23 +205,30 @@ export default function MattersAssistantPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: documentUrl,
+          url: primaryUrl,
           text: looseNotes,
-          is_file: !!documentUrl,
-          context: { directory, practiceArea, jurisdiction, guideRegion }
+          is_file: !!primaryUrl,
+          context: { 
+            directory, 
+            practiceArea, 
+            jurisdiction, 
+            guideRegion,
+            sources: uploadedSources
+          }
         })
       });
 
       if (!res.ok) throw new Error('Failed to process matter with AI.');
 
       // Clear the form
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setLooseNotes('');
       
       // Reload Repository
       await loadMatters();
       setActiveTab('repository');
-      alert('Matter processed and added to your repository successfully!');
+      const countMsg = uploadedSources.length > 0 ? ` with ${uploadedSources.length} source document(s)` : '';
+      alert(`Matter corpus${countMsg} processed and added to your repository successfully!`);
     } catch (error: any) {
       alert(error.message);
     }
@@ -408,35 +424,41 @@ export default function MattersAssistantPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  style={{ border: selectedFile ? '2px solid #1A237E' : '2px dashed #D1D5DB', borderRadius: '0.75rem', padding: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: selectedFile ? '#E8EAF6' : '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s' }}
+                  style={{ border: selectedFiles.length > 0 ? '2px solid #1A237E' : '2px dashed #D1D5DB', borderRadius: '0.75rem', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: selectedFiles.length > 0 ? '#E8EAF6' : '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s' }}
                 >
                   <input 
                     type="file" 
                     ref={fileInputRef} 
                     style={{ display: 'none' }} 
                     accept=".docx,.pdf,.doc,.txt"
+                    multiple
                     onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setSelectedFile(e.target.files[0]);
+                      if (e.target.files) {
+                        const newFiles = Array.from(e.target.files);
+                        setSelectedFiles(prev => {
+                          const combined = [...prev, ...newFiles];
+                          return combined.slice(0, 15); // Support up to 15 corpus sources
+                        });
                       }
                     }}
                   />
                   
-                  {selectedFile ? (
+                  {selectedFiles.length > 0 ? (
                     <>
                       <FileCheck style={{ color: '#1A237E', width: '2.5rem', height: '2.5rem', marginBottom: '0.75rem' }} />
-                      <h4 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#1A237E', margin: '0 0 0.25rem 0' }}>Ready to Process</h4>
-                      <p style={{ fontSize: '0.875rem', color: '#1A237E', margin: 0, fontWeight: 500 }}>{selectedFile.name}</p>
-                      <p style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.5rem' }}>Click to select a different file</p>
+                      <h4 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#1A237E', margin: '0 0 0.25rem 0' }}>{selectedFiles.length} Source Document(s) Attached</h4>
+                      <p style={{ fontSize: '0.875rem', color: '#1A237E', margin: 0, fontWeight: 500 }}>Corpus multi-source ready (Up to 15 documents)</p>
+                      <p style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.5rem' }}>Click or drop to add more files to this matter workspace</p>
                     </>
                   ) : (
                     <>
                       <CloudUpload style={{ color: '#1A237E', width: '2.5rem', height: '2.5rem', marginBottom: '0.75rem' }} />
-                      <h4 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.25rem 0' }}>Drag files here or click</h4>
-                      <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Maximum 1 file per matter · up to 25MB</p>
+                      <h4 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: '#111827', margin: '0 0 0.25rem 0' }}>Drag corpus files here or click</h4>
+                      <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Corpus Workspace · Up to 15 files (Word, PDF, DOC, TXT) per matter</p>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                         <span style={{ background: '#ffffff', border: '1px solid #E5E7EB', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', color: '#1A237E' }}>PDF</span>
                         <span style={{ background: '#ffffff', border: '1px solid #E5E7EB', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', color: '#1A237E' }}>DOCX</span>
+                        <span style={{ background: '#ffffff', border: '1px solid #E5E7EB', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', color: '#1A237E' }}>DOC</span>
                         <span style={{ background: '#ffffff', border: '1px solid #E5E7EB', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', color: '#1A237E' }}>TXT</span>
                       </div>
                     </>
@@ -459,10 +481,49 @@ export default function MattersAssistantPage() {
               </div>
 
               {/* Sidebar Sources */}
-              <div style={{ background: '#F9FAFB', borderRadius: '0.75rem', border: '1px solid #E5E7EB', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '300px' }}>
-                <FileText style={{ color: '#D1D5DB', width: '3rem', height: '3rem', marginBottom: '0.75rem' }} />
-                <h4 style={{ fontWeight: 'bold', color: '#374151', margin: 0 }}>No sources yet</h4>
-                <p style={{ fontSize: '0.875rem', color: '#6B7280', textAlign: 'center', marginTop: '0.5rem', margin: '0.5rem 0 0 0' }}>Add files or paste text to get started.</p>
+              <div style={{ background: '#F9FAFB', borderRadius: '0.75rem', border: '1px solid #E5E7EB', padding: '1.25rem', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '300px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FolderOpen style={{ color: '#1A237E', width: '1.25rem', height: '1.25rem' }} />
+                    <h4 style={{ fontWeight: 700, color: '#111827', margin: 0, fontSize: '0.95rem' }}>Corpus Sources</h4>
+                  </div>
+                  <span style={{ background: '#E0E7FF', color: '#3730A3', fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                    {selectedFiles.length} / 15
+                  </span>
+                </div>
+
+                {selectedFiles.length === 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, textAlign: 'center', padding: '1rem' }}>
+                    <FileText style={{ color: '#D1D5DB', width: '2.5rem', height: '2.5rem', marginBottom: '0.75rem' }} />
+                    <h5 style={{ fontWeight: 600, color: '#4B5563', margin: 0, fontSize: '0.875rem' }}>No sources in corpus</h5>
+                    <p style={{ fontSize: '0.8rem', color: '#9CA3AF', margin: '0.35rem 0 0 0' }}>Attach multiple Word docs, PDFs, emails, or partner notes to build a multi-source matter.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', maxHeight: '340px' }}>
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff', border: '1px solid #E5E7EB', borderRadius: '0.5rem', padding: '0.5rem 0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                          <FileText size={16} style={{ color: '#1A237E', flexShrink: 0 }} />
+                          <div style={{ overflow: 'hidden' }}>
+                            <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1F2937', margin: 0, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{file.name}</p>
+                            <span style={{ fontSize: '0.7rem', color: '#6B7280' }}>{(file.size / 1024).toFixed(0)} KB</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFiles(prev => prev.filter((_, i) => i !== idx));
+                          }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: '0.25rem' }}
+                          title="Remove source"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -471,13 +532,13 @@ export default function MattersAssistantPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem' }}>
             <button 
               onClick={handleProcessMatter}
-              disabled={isSubmitting || (!selectedFile && !looseNotes.trim())}
+              disabled={isSubmitting || (selectedFiles.length === 0 && !looseNotes.trim())}
               style={{ 
-                background: (!selectedFile && !looseNotes.trim()) ? '#9CA3AF' : '#1A237E', 
+                background: (selectedFiles.length === 0 && !looseNotes.trim()) ? '#9CA3AF' : '#1A237E', 
                 color: '#ffffff', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', fontWeight: 'bold', 
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', 
                 display: 'flex', alignItems: 'center', gap: '0.5rem', border: 'none',
-                cursor: (!selectedFile && !looseNotes.trim()) || isSubmitting ? 'not-allowed' : 'pointer',
+                cursor: (selectedFiles.length === 0 && !looseNotes.trim()) || isSubmitting ? 'not-allowed' : 'pointer',
                 transition: 'background 0.2s'
               }} 
             >

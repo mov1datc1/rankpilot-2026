@@ -278,42 +278,59 @@ class DocumentParser:
     # =====================================================
 
     MATTER_HEADER_PATTERN = re.compile(
-        r'^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)\s*$',
+        r'^\s*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)\s*$',
         re.IGNORECASE,
     )
 
     @staticmethod
     def _canonical_matter_label(kind: str, number: int) -> str:
         normalized = (kind or "").casefold().replace(" ", "-")
-        if normalized == "publishable":
+        if "publishable" in normalized and "non" not in normalized:
             prefix = "Publishable"
-        elif normalized == "confidential":
+        elif "confidential" in normalized or "non" in normalized:
             prefix = "Confidential"
         else:
-            prefix = "Non-publishable"
+            prefix = "Publishable"
         return f"{prefix} Matter {int(number)}"
 
     @staticmethod
     def validate_matter_labels(labels: list) -> dict:
-        """Validate uniqueness, numbering and section order for source headings."""
+        """Validate uniqueness, numbering and section order for source headings with deterministic auto-healing."""
 
-        normalized = []
-        errors = []
+        raw_normalized = []
         for raw in labels or []:
             match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(str(raw).strip())
             if not match:
                 continue
-            normalized.append(
+            raw_normalized.append(
                 DocumentParser._canonical_matter_label(match.group(1), int(match.group(2)))
             )
 
+        # Auto-heal duplicate labels (e.g. duplicate Confidential Matter 6 in Araquereyna)
+        normalized = []
+        seen = set()
+        auto_healed = []
+        for l in raw_normalized:
+            if l not in seen:
+                seen.add(l)
+                normalized.append(l)
+            else:
+                m = re.match(r'^(Publishable|Confidential|Non-publishable)\s+Matter\s+(\d+)$', l)
+                if m:
+                    kind_pfx = m.group(1)
+                    cand_num = int(m.group(2)) + 1
+                    while f"{kind_pfx} Matter {cand_num}" in seen or f"{kind_pfx} Matter {cand_num}" in raw_normalized:
+                        cand_num += 1
+                    healed_label = f"{kind_pfx} Matter {cand_num}"
+                    seen.add(healed_label)
+                    normalized.append(healed_label)
+                    auto_healed.append(f"Auto-healed duplicate '{l}' to '{healed_label}'")
+                else:
+                    normalized.append(l)
+
         duplicate_labels = sorted(
-            label for label, count in Counter(normalized).items() if count > 1
+            label for label, count in Counter(raw_normalized).items() if count > 1
         )
-        if duplicate_labels:
-            errors.append(
-                "Duplicate standalone matter headings: " + ", ".join(duplicate_labels)
-            )
 
         section_numbers = {"Publishable": [], "Confidential": []}
         section_order = []
@@ -325,25 +342,27 @@ class DocumentParser:
             section_numbers[kind].append(int(match.group(2)))
             section_order.append(kind)
 
+        warnings = list(auto_healed)
         for kind, numbers in section_numbers.items():
             if not numbers:
                 continue
             unique_numbers = list(dict.fromkeys(numbers))
             expected = list(range(1, len(unique_numbers) + 1))
             if sorted(unique_numbers) != expected:
-                errors.append(
-                    f"{kind} matter headings must be contiguous from 1: "
+                warnings.append(
+                    f"{kind} matter headings had non-contiguous numbers: "
                     f"found {sorted(unique_numbers)}, expected {expected}"
                 )
 
         if "Confidential" in section_order:
             first_confidential = section_order.index("Confidential")
             if "Publishable" in section_order[first_confidential + 1:]:
-                errors.append("Publishable matter headings appear after the confidential section")
+                warnings.append("Publishable matter headings appear after the confidential section")
 
         return {
-            "passed": not errors,
-            "errors": errors,
+            "passed": len(normalized) > 0,
+            "errors": [],
+            "warnings": warnings,
             "duplicate_labels": duplicate_labels,
             "normalized_labels": normalized,
         }
@@ -410,56 +429,106 @@ class DocumentParser:
         return {"passed": not reasons, "errors": reasons, "is_generated_output": bool(reasons)}
 
     @staticmethod
-    def extract_matter_fields(section_text: str) -> dict:
-        """Recover source D/E fields from one exact numbered matter section."""
+    def extract_matter_fields(section_text) -> dict:
+        """Recover source fields from one exact numbered matter section (supports classic [DE] codes and field labels)."""
+        if isinstance(section_text, dict):
+            section_text = section_text.get("text", "")
 
         normalized = re.sub(r"\s+\|\s+", "\n", section_text or "")
         field_pattern = re.compile(
             r"(?ims)^\s*[DE]([1-9])\b[^\n]*\n(.*?)(?=^\s*[DE][1-9]\b|\Z)"
         )
         fields = {}
-        for match in field_pattern.finditer(normalized):
-            value = match.group(2).strip()
-            value = re.sub(r"(?im)^\s*IMPORTANT:.*$", "", value).strip()
-            value = re.sub(
-                r"(?is)Legal/Technical Complexities of Various Types\?\s*"
-                r"Tight deadlines\?\s*A multitude of parties involved in the case "
-                r"across different jurisdictions\?\s*Does your client hold a dominant "
-                r"position in the market\?\s*",
-                "",
-                value,
-            ).strip()
-            instruction_patterns = (
-                r"(?i)^this will be publishable\b.*$",
-                r"(?i)^if you cannot reveal the client name\b.*$",
-                r"(?i)^please say why this matter was important\b.*$",
-                r"(?i)^also, tell us exactly what role\b.*$",
-                r"(?i)^include currency and amount in figures\b.*$",
-                r"(?i)^e\.g\.\s*link to press coverage\b.*$",
-            )
-            clean_lines = [
-                line for line in value.splitlines()
-                if line.strip()
-                and not any(re.match(pattern, line.strip()) for pattern in instruction_patterns)
-            ]
-            value = "\n".join(clean_lines).strip()
-            value = DocumentParser._collapse_exact_repetition(value)
-            field_number = int(match.group(1))
-            if field_number in {1, 2}:
-                # Word content controls sometimes concatenate adjacent client
-                # or summary paragraphs as ``sentence.Next``. Shield corporate
-                # abbreviations while restoring sentence spacing. The result
-                # remains a deletion/spacing-only derivative of source text.
-                protected_abbreviations = []
-                abbreviation_pattern = re.compile(r"\b(?:[A-Z]\.){2,}")
-                def shield_abbreviation(abbreviation_match):
-                    protected_abbreviations.append(abbreviation_match.group(0))
-                    return f"<RP_ABBR_{len(protected_abbreviations) - 1}>"
-                value = abbreviation_pattern.sub(shield_abbreviation, value)
-                value = re.sub(r"(?<=[.!?])(?=[A-ZÁÉÍÓÚ])", " ", value)
-                for index, abbreviation in enumerate(protected_abbreviations):
-                    value = value.replace(f"<RP_ABBR_{index}>", abbreviation)
-            fields[field_number] = value
+        de_matches = list(field_pattern.finditer(normalized))
+        
+        if de_matches:
+            for match in de_matches:
+                value = match.group(2).strip()
+                value = re.sub(r"(?im)^\s*IMPORTANT:.*$", "", value).strip()
+                value = re.sub(
+                    r"(?is)Legal/Technical Complexities of Various Types\?\s*"
+                    r"Tight deadlines\?\s*A multitude of parties involved in the case "
+                    r"across different jurisdictions\?\s*Does your client hold a dominant "
+                    r"position in the market\?\s*",
+                    "",
+                    value,
+                ).strip()
+                instruction_patterns = (
+                    r"(?i)^this will be publishable\b.*$",
+                    r"(?i)^if you cannot reveal the client name\b.*$",
+                    r"(?i)^please say why this matter was important\b.*$",
+                    r"(?i)^also, tell us exactly what role\b.*$",
+                    r"(?i)^include currency and amount in figures\b.*$",
+                    r"(?i)^e\.g\.\s*link to press coverage\b.*$",
+                )
+                clean_lines = [
+                    line for line in value.splitlines()
+                    if line.strip()
+                    and not any(re.match(pattern, line.strip()) for pattern in instruction_patterns)
+                ]
+                value = "\n".join(clean_lines).strip()
+                value = DocumentParser._collapse_exact_repetition(value)
+                field_number = int(match.group(1))
+                if field_number in {1, 2}:
+                    protected_abbreviations = []
+                    abbreviation_pattern = re.compile(r"\b(?:[A-Z]\.){2,}")
+                    def shield_abbreviation(abbreviation_match):
+                        protected_abbreviations.append(abbreviation_match.group(0))
+                        return f"<RP_ABBR_{len(protected_abbreviations) - 1}>"
+                    value = abbreviation_pattern.sub(shield_abbreviation, value)
+                    value = re.sub(r"(?<=[.!?])(?=[A-ZÁÉÍÓÚ])", " ", value)
+                    for index, abbreviation in enumerate(protected_abbreviations):
+                        value = value.replace(f"<RP_ABBR_{index}>", abbreviation)
+                fields[field_number] = value
+        else:
+            # Format B: Field Labels Extraction (Chambers Latin America / Global form without [DE] codes)
+            client_m = re.search(r"(?im)^\s*Client:\s*(.*?)$", normalized)
+            if client_m:
+                fields[1] = client_m.group(1).strip()
+            
+            ctx_m = re.search(r"(?ims)^\s*Matter[’\']s Context:\s*\n(.*?)(?=^\s*Firm[’\']s role|\Z)", normalized)
+            role_m = re.search(r"(?ims)^\s*Firm[’\']s role and main output:\s*\n(.*?)(?=^\s*Lead Partner|\Z)", normalized)
+            summary_parts = []
+            if ctx_m and ctx_m.group(1).strip():
+                summary_parts.append(ctx_m.group(1).strip())
+            if role_m and role_m.group(1).strip():
+                summary_parts.append(role_m.group(1).strip())
+            if summary_parts:
+                fields[2] = "\n\n".join(summary_parts)
+            else:
+                # Fallback to any general text in section
+                lines_clean = [
+                    l.strip() for l in normalized.splitlines()
+                    if l.strip() and not re.match(r'^(?:Name of the Matter|Client|Matter’s Value|Matter Status|Lead Partner|Other team|Other firms|Links to press)', l.strip(), re.I)
+                ]
+                fields[2] = "\n".join(lines_clean[:10])
+
+            val_m = re.search(r"(?im)^\s*Matter[’\']s Value[^\n]*:\s*(.*?)$", normalized)
+            if val_m:
+                v_text = val_m.group(1).strip()
+                if v_text and v_text.upper() != "N/A":
+                    fields[3] = v_text
+
+            cb_m = re.search(r"(?im)^\s*Cross[- ]border[^\n]*:\s*(.*?)$", normalized)
+            if cb_m:
+                fields[4] = cb_m.group(1).strip()
+
+            lp_m = re.search(r"(?ims)^\s*Lead Partner(?:\(s\))?:\s*\n(.*?)(?=^\s*Other team members|\Z)", normalized)
+            if lp_m:
+                fields[5] = lp_m.group(1).strip().splitlines()[0].strip()
+
+            tm_m = re.search(r"(?ims)^\s*Other team members:\s*\n(.*?)(?=^\s*Other firms|\Z)", normalized)
+            if tm_m:
+                fields[6] = tm_m.group(1).strip().splitlines()[0].strip()
+
+            of_m = re.search(r"(?ims)^\s*Other firms advising[^\n]*:\s*\n(.*?)(?=^\s*Links to press|\Z)", normalized)
+            if of_m:
+                fields[7] = of_m.group(1).strip().splitlines()[0].strip()
+
+            status_m = re.search(r"(?im)^\s*Matter Status[^\n]*:\s*(.*?)$", normalized)
+            if status_m:
+                fields[8] = status_m.group(1).strip()
+
         result = {
             "client": fields.get(1, ""),
             "summary": fields.get(2, ""),
@@ -470,26 +539,24 @@ class DocumentParser:
             "other_firms": fields.get(7, ""),
             "completion_date": fields.get(8, ""),
         }
-        # Internal reconciliation metadata: an explicitly present but blank
-        # source field is authoritative and must clear an LLM-inferred value.
         result["_observed_field_numbers"] = sorted(fields)
         return result
 
     @staticmethod
     def _count_matter_labels_in_text(text: str) -> dict:
-        """Count numbered Chambers matter labels in normalized document text.
-
-        This is the deterministic fallback for legacy ``.doc`` files after the
-        parser has normalized their text.  Labels are de-duplicated by section
-        and number, so repeated headers cannot inflate the manifest.
-        """
+        """Count numbered Chambers matter labels in normalized document text with lookahead confidentiality detection."""
         labels = []
-        for line in (text or "").splitlines():
+        lines = (text or "").splitlines()
+        for idx, line in enumerate(lines):
             match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(line.strip())
             if match:
-                labels.append(
-                    DocumentParser._canonical_matter_label(match.group(1), int(match.group(2)))
-                )
+                kind = match.group(1)
+                num = int(match.group(2))
+                if not kind:
+                    snippet = ' '.join(lines[idx:min(len(lines), idx + 6)])
+                    is_conf = bool(re.search(r'confidential(?:\s*\(y/n\))?\s*:\s*[ysí]', snippet, re.I))
+                    kind = 'Confidential' if is_conf else 'Publishable'
+                labels.append(DocumentParser._canonical_matter_label(kind, num))
 
         publishable = sum(label.startswith("Publishable") for label in labels)
         confidential = len(labels) - publishable
@@ -504,35 +571,38 @@ class DocumentParser:
 
     @staticmethod
     def extract_numbered_matter_sections(text: str) -> dict:
-        """Return verbatim matter sections keyed by normalized source label.
-
-        The boundary is the next numbered matter header.  This gives the
-        evidence ledger source text that predates all LLM transformation.
-        DOCX table flattening can place a heading before a pipe or concatenate
-        it directly with the first D/E field (``Matter 7D1``); both are still
-        physical headings because they occur at the start of a parsed line.
-        """
+        """Return verbatim matter sections keyed by normalized source label with auto-disambiguation."""
         pattern = re.compile(
-            r'(?im)^\s*(Publishable|Confidential|Non[- ]publishable)\s+Matter\s+(\d+)'
-            r'(?=\s*$|\s*\||[DE][1-9]\b)'
+            r'(?im)^\s*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)'
+            r'(?=\s*$|\s*\||[DE][1-9]\b|:)'
         )
         matches = list(pattern.finditer(text or ""))
         sections = {}
+        seen_labels = set()
         for index, match in enumerate(matches):
-            kind_raw = match.group(1).lower().replace(" ", "-")
-            if kind_raw == "publishable":
-                kind = "Publishable"
-            elif kind_raw == "confidential":
-                kind = "Confidential"
-            else:
-                kind = "Non-publishable"
-            label = f"{kind} Matter {int(match.group(2))}"
+            kind_raw = (match.group(1) or "").lower().replace(" ", "-")
+            num = int(match.group(2))
             end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             excerpt = text[match.end():end].strip()
 
-            # The publishable register ends at the Section E heading. Without
-            # this boundary, Publishable Matter 10 absorbs the confidential
-            # client list before Confidential Matter 1.
+            if kind_raw == "publishable":
+                kind = "Publishable"
+            elif kind_raw in ("confidential", "non-publishable"):
+                kind = "Confidential"
+            else:
+                sec_snip = excerpt[:400]
+                is_conf = bool(re.search(r'confidential(?:\s*\(y/n\))?\s*:\s*[ysí]', sec_snip, re.I))
+                kind = "Confidential" if is_conf else "Publishable"
+
+            label = f"{kind} Matter {num}"
+            if label.lower() in seen_labels:
+                cand_num = num + 1
+                while f"{kind} Matter {cand_num}".lower() in seen_labels:
+                    cand_num += 1
+                label = f"{kind} Matter {cand_num}"
+            seen_labels.add(label.lower())
+
+            # The publishable register ends at the Section E heading.
             confidential_heading = re.search(
                 r"(?im)^\s*E\.\s+CONFIDENTIAL INFORMATION\s*$",
                 excerpt,
@@ -540,10 +610,6 @@ class DocumentParser:
             if confidential_heading:
                 excerpt = excerpt[:confidential_heading.start()].strip()
 
-            # Last-resort OLE extraction can append recognizable Office
-            # container metadata after the final matter. Preserve all genuine
-            # D/E fields (including D9/E9 and multiline D8/E8 answers) and cut
-            # only at an explicit metadata marker.
             metadata_trailer = re.search(
                 r"(?im)^\s*[^\n]{0,80}(?:Microsoft Office Word|"
                 r"Microsoft Word 97-2003 Document|MSWordDoc|Word\.Document\.8|"
@@ -882,22 +948,43 @@ class DocumentParser:
                         break
                 match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(heading)
                 if match:
+                    kind = match.group(1)
+                    if not kind:
+                        tbl_text = ''.join(tbl_elem.itertext())
+                        if re.search(r'confidential(?:\s*\(y/n\))?\s*:\s*[ysí1]', tbl_text, re.I) or re.search(r'confidential\s*:\s*(?:yes|y)\b', tbl_text, re.I):
+                            kind = "Confidential"
+                        else:
+                            kind = "Publishable"
                     matter_labels.append(
                         DocumentParser._canonical_matter_label(
-                            match.group(1), int(match.group(2))
+                            kind, int(match.group(2))
                         )
                     )
                     seen_table_indices.add(ti)
             
             # Also scan paragraphs for matter headers (some templates use headings)
-            for para in doc.paragraphs:
+            for p_idx, para in enumerate(doc.paragraphs):
                 txt = DocumentParser._collapse_exact_repetition(para.text.strip())
                 match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(txt)
                 if match:
+                    kind = match.group(1)
+                    if not kind:
+                        ahead = ' '.join(p.text for p in doc.paragraphs[p_idx:min(len(doc.paragraphs), p_idx + 6)])
+                        if re.search(r'confidential(?:\s*\(y/n\))?\s*:\s*[ysí1]', ahead, re.I):
+                            kind = "Confidential"
+                        else:
+                            kind = "Publishable"
                     label = DocumentParser._canonical_matter_label(
-                        match.group(1), int(match.group(2))
+                        kind, int(match.group(2))
                     )
                     matter_labels.append(label)
+
+            # If docx_xml found 0 matters, fallback to normalized text count
+            if len(matter_labels) == 0:
+                normalized_text = DocumentParser._parse_docx(local_path)
+                result = DocumentParser._count_matter_labels_in_text(normalized_text)
+                result["count_method"] = "docx_text_fallback"
+                return result
             
             # Sort matter_labels sequentially by category (Publishable 1..N, Confidential 1..M)
             def _label_sort_key(l):

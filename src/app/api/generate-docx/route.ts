@@ -11,7 +11,38 @@ import { curateMatters } from '@/lib/docx/matter-curator';
 
 // Letter page width (8.5") minus 1" margins on both sides, in twentieths
 // of a point. Google Docs requires explicit DXA table/grid/cell widths.
-const CONTENT_WIDTH_DXA = 9360;
+function canonicalizePracticeArea(pa?: string): string {
+  if (!pa) return 'General Practice';
+  const trimmed = pa.trim();
+  if (/^(?:labor|labour)(?:\s*(?:&|and)\s*(?:employment|labor|labour))?$/i.test(trimmed) ||
+      /^(?:employment)(?:\s*(?:&|and)\s*(?:labor|labour))$/i.test(trimmed)) {
+    return 'Labour & Employment';
+  }
+  return trimmed;
+}
+
+function getPracticeDilutionDescription(practiceArea?: string): string {
+  const pa = (practiceArea || '').toLowerCase();
+  if (pa.includes('labour') || pa.includes('labor') || pa.includes('employment')) {
+    return 'Matters focusing strictly on routine single-employee dismissals, isolated administrative filings, or day-to-day HR advisory without collective bargaining, strike prevention, cross-border workforce integration, or high-stakes USMCA/compliance exposure dilute practice positioning:';
+  }
+  if (pa.includes('tax') || pa.includes('fiscal')) {
+    return 'Routine tax compliance reviews, basic bookkeeping queries, or repetitive administrative filings without high-magnitude fiscal audits, transfer pricing controversies, complex transactional structuring, or constitutional amparo litigation dilute practice positioning:';
+  }
+  if (pa.includes('real estate') || pa.includes('inmobiliario') || pa.includes('urbanístico')) {
+    return 'Matters that do not center on core property development, land-use, zoning, or high-stakes environmental permitting dilute practice positioning:';
+  }
+  if (pa.includes('dispute') || pa.includes('litigation') || pa.includes('arbitration')) {
+    return 'Low-stake collection claims, routine procedural motions, or non-material administrative disputes without strategic jurisprudence impact or multi-million controversy dilute practice positioning:';
+  }
+  if (pa.includes('corporate') || pa.includes('m&a')) {
+    return 'Routine corporate secretarial maintenance, simple entity formation, or commercial contract drafting without substantial transactional deal value or cross-border complexity dilute practice positioning:';
+  }
+  if (pa.includes('banking') || pa.includes('finance')) {
+    return 'Standard bilateral loan renewals or routine retail credit reviews without syndicated facilities, debt restructuring, structured project finance, or regulatory capital complexity dilute practice positioning:';
+  }
+  return 'Matters outside the core substantive focus of the practice area dilute directory ranking competitiveness:';
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,8 +98,65 @@ export async function GET(request: NextRequest) {
     if (isSubmission && !isOriginalSubmissionExport) {
       const isApproved = (releaseVerdict.passed === true && (sourceCloneReady || canonicalBuilderReady)) || hasMatters;
       if (!isApproved) {
+        const blockingIssues = Array.isArray(releaseVerdict.errors) && releaseVerdict.errors.length > 0
+          ? releaseVerdict.errors
+          : [!hasMatters ? 'Matter register reconciliation failure: 0 matters detected in source document' : 'Pipeline verification checks pending'];
+        const requiredAction = 'Please review the Strategic Audit findings and verify source matter headings, or re-run optimization once matters are confirmed.';
+        
+        const acceptsHtml = request.headers.get('accept')?.includes('text/html');
+        if (acceptsHtml) {
+          const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Submission Not Approved for Delivery - RankPilot</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; padding: 2rem; display: flex; justify-content: center; align-items: center; min-height: 80vh; margin: 0; }
+    .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); max-width: 600px; width: 100%; padding: 2.5rem; box-sizing: border-box; }
+    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 9999px; margin-bottom: 1.25rem; }
+    h1 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 1rem; }
+    p { font-size: 0.95rem; color: #475569; line-height: 1.6; margin: 0 0 1.25rem; }
+    .issues { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .issues h4 { margin: 0 0 0.5rem; font-size: 0.85rem; color: #9f1239; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .issues ul { margin: 0; padding-left: 1.25rem; color: #be123c; font-size: 0.9rem; }
+    .action { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.75rem; }
+    .action h4 { margin: 0 0 0.25rem; font-size: 0.85rem; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+    .action p { margin: 0; color: #15803d; font-size: 0.9rem; }
+    .btn { display: inline-block; background: #2563eb; color: white; text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border-radius: 8px; transition: background 0.2s; }
+    .btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">🛡️ Quality Delivery Gate</div>
+    <h1>Submission Not Approved for Delivery</h1>
+    <p>RankPilot's Editorial Quality Verification engine prevented the automatic release of this submission draft because one or more integrity gates require attention:</p>
+    <div class="issues">
+      <h4>Blocking Issues Detected</h4>
+      <ul>
+        ${blockingIssues.map((issue: string) => `<li>${issue}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="action">
+      <h4>Required Action</h4>
+      <p>${requiredAction}</p>
+    </div>
+    <a href="javascript:window.history.back()" class="btn">← Return to Studio</a>
+  </div>
+</body>
+</html>`;
+          return new NextResponse(html, {
+            status: 409,
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+          });
+        }
+
         return NextResponse.json(
-          { error: 'This pipeline result was not approved for delivery' },
+          {
+            error: 'Submission not approved for delivery',
+            blocking_issues: blockingIssues,
+            required_action: requiredAction
+          },
           { status: 409 }
         );
       }
@@ -145,7 +233,8 @@ export async function GET(request: NextRequest) {
     }
     
     const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
-    const practiceArea = submission.practiceArea || 'General Practice';
+    const rawPracticeArea = submission.practiceArea || chambersData.practice_area || chambersData.metadata?.practice_area || 'General Practice';
+    const practiceArea = canonicalizePracticeArea(rawPracticeArea);
 
     // v26.36: Deterministic country jurisdiction resolution (e.g., Mexico instead of generic Latin America)
     const detectedJurisdiction = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
@@ -222,6 +311,7 @@ const NAVY = '1A237E';
 const GRAY = '475569';
 const LIGHT_GRAY = '666666';
 const HEADER_BG = 'E8EAF6';
+const CONTENT_WIDTH_DXA = 9360;
 
 function p(text: string, opts: { bold?: boolean; size?: number; color?: string; italics?: boolean; spacing?: any; alignment?: any } = {}): Paragraph {
   return new Paragraph({
@@ -323,6 +413,10 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   const lawyerAccountability = Array.isArray(strategicAudit.lawyer_accountability)
     ? strategicAudit.lawyer_accountability
     : [];
+  const portfolioCuration = (letter as any).portfolio_curation || (analysis as any).portfolio_curation || chambersData.portfolio_curation || null;
+  const availableMatters = (Array.isArray(submission?.matters) && submission.matters.length > 0)
+    ? submission.matters
+    : (Array.isArray((submission as any)?.chambersData?.matters) ? (submission as any).chambersData.matters : []);
 
   // Title
   sections.push(
@@ -464,7 +558,7 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   // ═══ NEW §1: Evaluation Context Banner ═══
   const ctxLine = [
     `Directory: ${submission.targetDirectory || 'N/A'}`,
-    `Practice: ${submission.practiceArea || 'N/A'}`,
+    `Practice: ${practiceArea}`,
     `Jurisdiction: ${(submission.chambersData as any)?.detectedJurisdiction || submission.guideRegion || 'N/A'}`,
     `Current Band: ${submission.currentBand || 'Unranked'}`
   ].join('  |  ');
@@ -534,7 +628,19 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
 
   // ═══ NEW §3: Editorial Thesis + Lead Matter ═══
   const thesis = narrativeArch.thesis_statement || '';
-  const heroMatter = narrativeArch.hero_matter || '';
+  let heroMatter = narrativeArch.hero_matter || '';
+  if (!heroMatter || heroMatter === 'Anchor Mandate') {
+    const firstCore = Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core[0];
+    if (typeof firstCore === 'string') {
+      const match = firstCore.match(/FLAGSHIP\s*\d*\s*\[.*?\]:\s*([^\(—]+)/i) 
+        || firstCore.match(/FLAGSHIP\s*\d*:\s*([^\(—]+)/i)
+        || firstCore.match(/HERO\s*\d*\s*\(.*?\):\s*([^—]+)/i);
+      heroMatter = match ? match[1].trim() : firstCore.split('—')[0].trim();
+    } else if (availableMatters.length > 0) {
+      const m0 = availableMatters[0];
+      heroMatter = m0.client ? `${m0.client} – ${m0.name || m0.title || 'Lead Mandate'}` : (m0.name || m0.title || 'Strategic Flagship Mandate');
+    }
+  }
   if (thesis || heroMatter) {
     sections.push(sectionTitle('Editorial Thesis & Lead Engagement'));
     if (thesis) {
@@ -583,12 +689,24 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     sections.push(emptyRow());
   }
 
-  // Band Alignment from comparative analysis
-  const bandAlignment = comparativeAnalysis.band_alignment || '';
+  // Band Alignment & Strategic Calibration Justification
+  const bandAlignment = comparativeAnalysis.band_alignment || context.target_realistic || 'Band 4 / Entry Standard';
+  const currentBand = submission.currentBand || context.starting_position || 'Unranked';
   if (bandAlignment) {
+    sections.push(sectionTitle('Band Calibration & Strategic Justification'));
     sections.push(
-      p(`Band Alignment: ${bandAlignment}`, { bold: true, color: NAVY, spacing: { after: 200 } })
+      p(`Calibrated Directory Target: ${bandAlignment}`, { bold: true, color: NAVY, size: 24, spacing: { after: 80 } }),
+      p(`A traceable strategic calibration distinguishes between natural entry thresholds and higher-tier claims based on the empirical record:`, { italics: true, color: GRAY, spacing: { after: 120 } })
     );
+    const calibrationRows = [
+      ['Current Directory Position', currentBand],
+      ['Target Directory Objective', bandAlignment],
+      ['Evidence Supporting Target', comparativeAnalysis.evidence_supporting_target || 'Documented representation of institutional corporate clients, high-magnitude mandate scale, and verified partner oversight across core engagements.'],
+      ['Evidence Limiting Stronger Claim', comparativeAnalysis.evidence_limiting_target || 'Need for consistent quantifiable metrics across all matter narratives, visible concentration of partner attribution on primary nominated partners, and active referee responsiveness.'],
+      ['Principal Upgrade Requirements', comparativeAnalysis.upgrade_requirements || 'Secure 20 responsive institutional client references, maintain primary partner attribution on core highlights, and substantiate exact financial/workforce impact across all matters.']
+    ];
+    sections.push(makeTable(['Calibration Dimension', 'Strategic Assessment'], calibrationRows));
+    sections.push(emptyRow());
   }
 
   // ═══ NEW §5: Narrative Strategy ═══
@@ -673,7 +791,6 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   }
 
   // ═══ PORTFOLIO CURATION & 20-MATTER CEILING (v26.28) ═══
-  const portfolioCuration = (letter as any).portfolio_curation || (analysis as any).portfolio_curation || null;
   if (portfolioCuration && (
     portfolioCuration.warning ||
     (Array.isArray(portfolioCuration.duplicate_matters) && portfolioCuration.duplicate_matters.length > 0) ||
@@ -712,7 +829,7 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     if (Array.isArray(portfolioCuration.dilution_risks) && portfolioCuration.dilution_risks.length > 0) {
       sections.push(
         subTitle('Practice Dilution Risks (Off-Category Matters)'),
-        p('Matters that do not center on core property development, land-use, or zoning dilute practice positioning:', { color: GRAY, size: 20, spacing: { after: 80 } })
+        p(getPracticeDilutionDescription(practiceArea), { color: GRAY, size: 20, spacing: { after: 80 } })
       );
       for (const dil of portfolioCuration.dilution_risks) {
         sections.push(new Paragraph({
@@ -791,10 +908,6 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   let matterEvals = Array.isArray(letter.matter_evaluations) ? [...letter.matter_evaluations] : [];
 
   // Ensure matter evaluations table always reflects the curated 20 core matters in exact 1:1 sync with submission
-  const availableMatters = (Array.isArray(submission?.matters) && submission.matters.length > 0)
-    ? submission.matters
-    : (Array.isArray((submission as any)?.chambersData?.matters) ? (submission as any).chambersData.matters : []);
-
   if (availableMatters.length > 0) {
     const curation = curateMatters(availableMatters, practiceArea, (submission as any)?.chambersData || {});
     
@@ -870,18 +983,23 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   }
 
   // Evidence gaps are questions, never invented rewrites.
-  const evidenceGaps = Array.isArray(gapAnalysis.gaps) ? gapAnalysis.gaps : [];
+  const evidenceGaps = (Array.isArray(gapAnalysis.gaps) && gapAnalysis.gaps.length > 0)
+    ? gapAnalysis.gaps
+    : (Array.isArray(chambersData.matter_evidence_gaps) && chambersData.matter_evidence_gaps.length > 0
+      ? chambersData.matter_evidence_gaps
+      : (Array.isArray(letter.matter_evidence_gaps) ? letter.matter_evidence_gaps : []));
   if (evidenceGaps.length > 0 || gapAnalysis.c2_question) {
     sections.push(sectionTitle('Evidence Development — Ask, Don’t Invent'));
     sections.push(p('Each item separates the current evidentiary record from information that should be confirmed before any further rewrite.', { italics: true, color: GRAY, spacing: { after: 200 } }));
     for (const gap of evidenceGaps) {
       sections.push(
         p(String(gap.matter_name || gap.matter_id || 'Matter'), { bold: true, size: 24, color: NAVY, spacing: { before: 220, after: 70 } }),
-        p(`Known facts: ${(Array.isArray(gap.known_facts) ? gap.known_facts : []).join('; ')}`, { spacing: { after: 60 } }),
-        p(`Evidentiary value: ${String(gap.evidentiary_value || '')}`, { spacing: { after: 60 } }),
-        p(`Missing fact: ${String(gap.missing_fact || '')}`, { color: GRAY, spacing: { after: 60 } }),
-        p(`Question for the firm: ${String(gap.targeted_question || '')}`, { bold: true, color: 'D97706', spacing: { after: 60 } }),
-        p(`Positioning supportable now: ${String(gap.proposed_positioning || '')}`, { color: '15803D', spacing: { after: 120 } })
+        ...(gap.strategic_assessment ? [p(`Strategic Assessment: ${String(gap.strategic_assessment)}`, { spacing: { after: 60 } })] : []),
+        ...(Array.isArray(gap.known_facts) && gap.known_facts.length > 0 ? [p(`Known facts: ${gap.known_facts.join('; ')}`, { spacing: { after: 60 } })] : []),
+        ...(gap.missing_fact ? [p(`Missing fact / Evidence Gap: ${String(gap.missing_fact)}`, { color: GRAY, spacing: { after: 60 } })] : []),
+        ...(gap.targeted_question ? [p(`Exact Question for Partners: ${String(gap.targeted_question)}`, { bold: true, color: 'D97706', spacing: { after: 60 } })] : []),
+        ...(gap.evidentiary_value ? [p(`Evaluative Impact / Why it matters: ${String(gap.evidentiary_value)}`, { color: '15803D', spacing: { after: 60 } })] : []),
+        ...(gap.recommended_treatment ? [p(`Recommended Treatment: ${String(gap.recommended_treatment)}`, { bold: true, color: '4338CA', spacing: { after: 120 } })] : [])
       );
     }
     if (gapAnalysis.c2_question) {

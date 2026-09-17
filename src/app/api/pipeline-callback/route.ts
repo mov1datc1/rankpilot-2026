@@ -20,6 +20,16 @@ function sanitizeText(text: string): string {
     .replace(/[\uD800-\uDFFF]/g, '');
 }
 
+function canonicalizePracticeArea(pa?: string): string {
+  if (!pa) return '';
+  const trimmed = pa.trim();
+  if (/^(?:labor|labour)(?:\s*(?:&|and)\s*(?:employment|labor|labour))?$/i.test(trimmed) ||
+      /^(?:employment)(?:\s*(?:&|and)\s*(?:labor|labour))$/i.test(trimmed)) {
+    return 'Labour & Employment';
+  }
+  return trimmed;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -199,8 +209,9 @@ export async function POST(request: NextRequest) {
       firmId = firm.id;
     }
 
-    // Auto-correct practiceArea from extracted metadata
-    const extractedPracticeArea = extractedData?.practice_area || extractedData?.firm_metadata?.practice_area;
+    // Auto-correct and canonicalize practiceArea from extracted metadata
+    const rawPracticeArea = extractedData?.practice_area || extractedData?.firm_metadata?.practice_area || submission.practiceArea;
+    const extractedPracticeArea = canonicalizePracticeArea(rawPracticeArea);
     const submissionUpdates: Record<string, any> = {};
     if (extractedPracticeArea && extractedPracticeArea !== submission.practiceArea) {
       console.log(`[PRACTICE_AREA_CORRECTION] "${submission.practiceArea}" → "${extractedPracticeArea}"`);
@@ -265,6 +276,7 @@ export async function POST(request: NextRequest) {
       data: {
         chambersData: {
           ...existingChambersData,
+          matters: (extractedMatters && extractedMatters.length > 0) ? extractedMatters : (existingChambersData.matters || []),
           metadata: extractedData || existingChambersData.metadata,
           analysis: analysisData || existingChambersData.analysis,
           strategicContext: strategicContext || existingChambersData.strategicContext,
