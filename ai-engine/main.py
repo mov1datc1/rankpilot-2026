@@ -98,7 +98,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.26",
+        "version": "26.43",
         "environment": "Ubuntu/Docker"
     }
 

@@ -55,6 +55,21 @@ class DocumentParser:
         """
 
         text = (value or "").replace("\r\n", "\n").replace("\r", "\n")
+
+        # v26.43: Strip table column border pipes produced by antiword in Linux environments
+        if "|" in text:
+            cleaned_lines = []
+            for line in text.splitlines():
+                l = line.strip()
+                if l.startswith("|") and l.endswith("|"):
+                    l = l[1:-1].strip()
+                elif l.startswith("|"):
+                    l = l[1:].strip()
+                elif l.endswith("|"):
+                    l = l[:-1].strip()
+                cleaned_lines.append(l)
+            text = "\n".join(cleaned_lines)
+
         start = re.search(r"(?im)^\s*SUBMISSION FORM\s*$", text)
         if start:
             candidate = text[start.start():]
@@ -278,7 +293,7 @@ class DocumentParser:
     # =====================================================
 
     MATTER_HEADER_PATTERN = re.compile(
-        r'^\s*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)\s*$',
+        r'^[\s|]*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)[\s|]*$',
         re.IGNORECASE,
     )
 
@@ -548,7 +563,8 @@ class DocumentParser:
         labels = []
         lines = (text or "").splitlines()
         for idx, line in enumerate(lines):
-            match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(line.strip())
+            clean_line = line.strip().strip('|').strip()
+            match = DocumentParser.MATTER_HEADER_PATTERN.fullmatch(clean_line)
             if match:
                 kind = match.group(1)
                 num = int(match.group(2))
@@ -573,7 +589,7 @@ class DocumentParser:
     def extract_numbered_matter_sections(text: str) -> dict:
         """Return verbatim matter sections keyed by normalized source label with auto-disambiguation."""
         pattern = re.compile(
-            r'(?im)^\s*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)'
+            r'(?im)^[\s|]*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)'
             r'(?=\s*$|\s*\||[DE][1-9]\b|:)'
         )
         matches = list(pattern.finditer(text or ""))
