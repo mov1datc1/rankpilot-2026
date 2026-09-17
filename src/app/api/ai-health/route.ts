@@ -27,6 +27,7 @@ export async function GET() {
       status: health?.status === 'online' ? 'online' : 'unavailable',
       version: health?.version || null,
       service: 'ai-engine',
+      apiUrl: configuredUrl,
     });
   } catch {
     return NextResponse.json(
