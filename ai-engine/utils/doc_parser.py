@@ -703,12 +703,26 @@ class DocumentParser:
                     return value
             return ""
 
+        firm = answer_after(r"^\s*(?:A1\s+)?Firm(?:’s|\'s)?\s+Name(?P<inline>[^\n]*)$")
+        practice = ""
+        for line in source.splitlines()[:10]:
+            l = line.strip()
+            l_lower = l.lower()
+            if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation"]):
+                if not l_lower.startswith("practice area description"):
+                    practice = l
+                    break
+        if not practice:
+            practice = answer_after(r"^\s*(?:A2\s+)?Practice\s+Area(?!\s+Description)(?P<inline>[^\n]*)$")
+
+        jurisdiction = answer_after(
+            r"^\s*(?:A3\s+)?Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"
+        )
+
         return {
-            "firm_name": answer_after(r"^\s*A1\s+Firm\s+name(?P<inline>[^\n]*)$"),
-            "practice_area": answer_after(r"^\s*A2\s+Practice\s+Area(?P<inline>[^\n]*)$"),
-            "jurisdiction": answer_after(
-                r"^\s*A3\s+Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"
-            ),
+            "firm_name": firm,
+            "practice_area": practice,
+            "jurisdiction": jurisdiction,
         }
 
     @staticmethod

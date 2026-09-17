@@ -701,10 +701,15 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ? [...curation.officialConfMatters, ...curation.surplusConfMatters]
     : curation.officialConfMatters;
 
-  // ═══ v26.43: STRATEGIC LAWYER ROSTER RECONCILIATION ═══
+  // ═══ v26.44: STRATEGIC LAWYER ROSTER RECONCILIATION ═══
+  const rawMattersStr = JSON.stringify(rawMattersList || []).toLowerCase();
+  const rawLawyersStr = JSON.stringify(chambersData.lawyers || []).toLowerCase();
+
   const isAraqueBF = (firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('banking') || practiceLower.includes('finance'));
-  const isAraqueTax = (firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('tax') || practiceLower.includes('tributar'));
-  const isDeForestLabour = (firmLower.includes('deforest')) && (practiceLower.includes('labour') || practiceLower.includes('labor') || practiceLower.includes('employment'));
+  const isAraqueTax = ((firmLower.includes('araque') || firmLower.includes('reyna')) && (practiceLower.includes('tax') || practiceLower.includes('tributar')))
+    || (practiceLower.includes('tax') && (rawMattersStr.includes('montenegro') || rawMattersStr.includes('pampero') || rawLawyersStr.includes('ruan') || guideRegion.toLowerCase().includes('venezuela')));
+  const isDeForestLabour = ((firmLower.includes('deforest')) && (practiceLower.includes('labour') || practiceLower.includes('labor') || practiceLower.includes('employment')))
+    || ((practiceLower.includes('labour') || practiceLower.includes('labor') || practiceLower.includes('employment')) && (rawMattersStr.includes('schaeffler') || rawMattersStr.includes('bustamante') || rawMattersStr.includes('deforest') || rawLawyersStr.includes('garduño') || rawLawyersStr.includes('bustamante')));
 
   let lawyers = chambersData.lawyers || [];
   

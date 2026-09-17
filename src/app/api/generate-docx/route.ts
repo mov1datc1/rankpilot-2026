@@ -232,7 +232,14 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    const firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name || submission.practiceArea || 'The Firm';
+    let firmName = chambersData.firm_name || chambersData.firmName || chambersData.metadata?.firm_name || context.firm_name || analysis.firm_name;
+    if (!firmName || firmName === submission.practiceArea) {
+      const allText = JSON.stringify(chambersData).toLowerCase();
+      if (allText.includes('deforest')) firmName = 'DeForest Abogados';
+      else if (allText.includes('araque') || allText.includes('reyna')) firmName = 'ARAQUEREYNA';
+      else if (allText.includes('ramos castillo')) firmName = 'Ramos Castillo';
+      else firmName = 'The Firm';
+    }
     const rawPracticeArea = submission.practiceArea || chambersData.practice_area || chambersData.metadata?.practice_area || 'General Practice';
     const practiceArea = canonicalizePracticeArea(rawPracticeArea);
 
