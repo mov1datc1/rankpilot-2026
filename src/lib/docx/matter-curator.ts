@@ -77,7 +77,8 @@ export function extractApproximateValue(valueStr: string): number {
 export function calculateStrategicTier(
   matter: any,
   practiceArea: string = '',
-  evaluationsMap: Map<string, any> = new Map()
+  evaluationsMap: Map<string, any> = new Map(),
+  auditExclusions: Set<string> = new Set()
 ): number {
   let score = 50; // base score
 
@@ -89,8 +90,20 @@ export function calculateStrategicTier(
   // 1. Check evaluation score if available from AI audit
   const evalData = evaluationsMap.get(client) || evaluationsMap.get(title);
   if (evalData) {
-    if (evalData.quality_label === 'Flagship Matter') score += 30;
+    if (evalData.quality_label === 'Flagship Matter') score += 50;
     if (typeof evalData.score === 'number') score += evalData.score * 0.1;
+  }
+
+  // 2. Landmark anchor / flagship / hero indicators
+  if (matter._isCanonicalAnchor || matter.isHero || matter.is_flagship || matter.isFlagship) {
+    score += 50;
+  }
+
+  // 3. Strategic exclusions from audit (AI identified dilution risks)
+  for (const exclusion of auditExclusions) {
+    if (exclusion && combined.includes(exclusion)) {
+      score -= 300;
+    }
   }
 
   const safePractice = typeof practiceArea === 'string' ? practiceArea.toLowerCase() : '';
@@ -98,346 +111,76 @@ export function calculateStrategicTier(
   const isLabour = safePractice.includes('labour') || safePractice.includes('labor') || safePractice.includes('employment') || safePractice.includes('laboral');
   const isTax = safePractice.includes('tax') || safePractice.includes('fiscal') || safePractice.includes('tributario');
 
-  // 2. High-profile landmark anchors (Practice-specific flagships from Strategic Audit)
-  if (isRealEstate) {
-    // Publishable 13 Core Anchors (Ramos Castillo Real Estate)
-    if (combined.includes('el cielo') || combined.includes('cielo country club')) {
-      matter._isCanonicalAnchor = true;
-      return 1000;
-    }
-    if (combined.includes('duranpark')) {
-      matter._isCanonicalAnchor = true;
-      return 990;
-    }
-    if (combined.includes('diageo')) {
-      matter._isCanonicalAnchor = true;
-      return 980;
-    }
-    if (combined.includes('idex') || combined.includes('brasilia')) {
-      matter._isCanonicalAnchor = true;
-      return 970;
-    }
-    if (combined.includes('san carlos') || combined.includes('edificaciones')) {
-      matter._isCanonicalAnchor = true;
-      return 960;
-    }
-    if (combined.includes('inmobiliaria midi') || combined.includes('midi')) {
-      matter._isCanonicalAnchor = true;
-      return 950;
-    }
-    if (combined.includes('la primavera') || combined.includes('desarrollo la primavera')) {
-      matter._isCanonicalAnchor = true;
-      return 940;
-    }
-    if (combined.includes('cominvi') || (combined.includes('isseg') && (combined.includes('edificio') || combined.includes('bicentenario') || combined.includes('silao')))) {
-      matter._isCanonicalAnchor = true;
-      return 930;
-    }
-    if (combined.includes('holcim')) {
-      matter._isCanonicalAnchor = true;
-      return 920;
-    }
-    if (combined.includes('ochoa gamboa') || combined.includes('dorina')) {
-      matter._isCanonicalAnchor = true;
-      return 910;
-    }
-    if (combined.includes('smb promotora') || combined.includes('smb')) {
-      matter._isCanonicalAnchor = true;
-      return 905;
-    }
-    if (combined.includes('devangary') || combined.includes('conciencia ambiental')) {
-      matter._isCanonicalAnchor = true;
-      return 900;
-    }
+  // 4. Scale / deal value impact
+  const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
+  if (approxValue >= 2000000000) score += 40; // 2B+
+  else if (approxValue >= 1000000000) score += 35; // 1B+
+  else if (approxValue >= 500000000) score += 30; // 500M+
+  else if (approxValue >= 100000000) score += 25; // 100M+
+  else if (approxValue >= 10000000) score += 15; // 10M+
 
-    // Confidential 4 Real Estate Core Anchors
-    if (combined.includes('familia de anda') || combined.includes('de anda')) {
-      matter._isCanonicalAnchor = true;
-      return 1000;
-    }
-    if (combined.includes('villas del colli')) {
-      matter._isCanonicalAnchor = true;
-      return 990;
-    }
-    if (combined.includes('adm hermosillo') || combined.includes('hermosillo') || combined.includes('nom-247')) {
-      matter._isCanonicalAnchor = true;
-      return 980;
-    }
-    if (combined.includes('familia leaño') || combined.includes('leaño')) {
-      matter._isCanonicalAnchor = true;
-      return 970;
-    }
-  } else if (isLabour) {
-    // Labour & Employment Flagship Anchors (DeForest approved golden slate)
-    if (combined.includes('schaeffler') || combined.includes('vitesco')) {
-      matter._isCanonicalAnchor = true;
-      return 1000;
-    }
-    if (combined.includes('brose')) {
-      matter._isCanonicalAnchor = true;
-      return 990;
-    }
-    if (combined.includes('bonatti') || combined.includes('mayakan')) {
-      matter._isCanonicalAnchor = true;
-      return 980;
-    }
-    if (combined.includes('geni')) {
-      matter._isCanonicalAnchor = true;
-      return 970;
-    }
-    if (combined.includes('cinemex')) {
-      matter._isCanonicalAnchor = true;
-      return 960;
-    }
-    if (combined.includes('volkswagen') || combined.includes('vw financial') || combined.includes('vwfs')) {
-      matter._isCanonicalAnchor = true;
-      return 950;
-    }
-    if (combined.includes('benteler')) {
-      matter._isCanonicalAnchor = true;
-      return 940;
-    }
-    if (combined.includes('robert bosch') || combined.includes('bosch')) {
-      matter._isCanonicalAnchor = true;
-      return 935;
-    }
-    if (combined.includes('coats')) {
-      matter._isCanonicalAnchor = true;
-      return 930;
-    }
-    if (combined.includes('omron')) {
-      matter._isCanonicalAnchor = true;
-      return 925;
-    }
-    if (combined.includes('american axle')) {
-      matter._isCanonicalAnchor = true;
-      return 920;
-    }
-    if (combined.includes('securitas')) {
-      matter._isCanonicalAnchor = true;
-      return 915;
-    }
-    if (combined.includes('skf')) {
-      matter._isCanonicalAnchor = true;
-      return 910;
-    }
-    if (combined.includes('corrugados')) {
-      matter._isCanonicalAnchor = true;
-      return 905;
-    }
-    if (combined.includes('sirushi')) {
-      matter._isCanonicalAnchor = true;
-      return 900;
-    }
-    if (combined.includes('aunde')) {
-      matter._isCanonicalAnchor = true;
-      return 895;
-    }
-    if (combined.includes('natividad')) {
-      matter._isCanonicalAnchor = true;
-      return 890;
-    }
-  } else if (isTax) {
-    // Tax Flagship Anchors (Araquereyna Tax approved golden slate)
-    if (combined.includes('montenegro') || combined.includes('pampero')) {
-      matter._isCanonicalAnchor = true;
-      return 1000;
-    }
-    if (combined.includes('pepsico')) {
-      matter._isCanonicalAnchor = true;
-      return 990;
-    }
-    if (combined.includes('bdo colombia') || combined.includes('bdo')) {
-      matter._isCanonicalAnchor = true;
-      return 980;
-    }
-    if (combined.includes('summus')) {
-      matter._isCanonicalAnchor = true;
-      return 970;
-    }
-    if (combined.includes('turkish airlines')) {
-      matter._isCanonicalAnchor = true;
-      return 960;
-    }
-    if (combined.includes('sku logistics')) {
-      matter._isCanonicalAnchor = true;
-      return 950;
-    }
-    if (combined.includes('bolívar films') || combined.includes('bolivar films')) {
-      matter._isCanonicalAnchor = true;
-      return 940;
-    }
-    if (combined.includes('universal music')) {
-      matter._isCanonicalAnchor = true;
-      return 930;
-    }
-    if (combined.includes('branza 1800') || combined.includes('branza')) {
-      matter._isCanonicalAnchor = true;
-      return 920;
-    }
-    if (combined.includes('centro médico') || combined.includes('centro medico')) {
-      matter._isCanonicalAnchor = true;
-      return 910;
-    }
-    if (combined.includes('mapfre')) {
-      matter._isCanonicalAnchor = true;
-      return 905;
-    }
-    if (combined.includes('tecnipiscinas')) {
-      matter._isCanonicalAnchor = true;
-      return 900;
-    }
-    // Confidential Tax Anchors
-    if (combined.includes('kyndryl')) {
-      matter._isCanonicalAnchor = true;
-      return 950;
-    }
-    if (combined.includes('aefeve')) {
-      matter._isCanonicalAnchor = true;
-      return 940;
-    }
-    if (combined.includes('editores orientales')) {
-      matter._isCanonicalAnchor = true;
-      return 930;
-    }
-    if (combined.includes('pizzolante')) {
-      matter._isCanonicalAnchor = true;
-      return 920;
-    }
-    if (combined.includes('gimenez pocaterra') || combined.includes('gustavo gimenez')) {
-      matter._isCanonicalAnchor = true;
-      return 910;
-    }
-    if (combined.includes('zuloaga')) {
-      matter._isCanonicalAnchor = true;
-      return 905;
-    }
-    if (combined.includes('otaola')) {
-      matter._isCanonicalAnchor = true;
-      return 900;
-    }
-    if (combined.includes('ceballos')) {
-      matter._isCanonicalAnchor = true;
-      return 895;
-    }
-    if (combined.includes('programa mundial alimentos') || combined.includes('united nations') || combined.includes('world food')) {
-      matter._isCanonicalAnchor = true;
-      return 890;
-    }
-    if (combined.includes('venelin') || combined.includes('limpieza')) {
-      matter._isCanonicalAnchor = true;
-      return 885;
-    }
+  // 5. Precedent & appellate enforcement indicators
+  if (combined.includes('ejecutoria') || combined.includes('suspensión definitiva') || combined.includes('definitive suspension') || combined.includes('enforced in') || combined.includes('supreme court') || combined.includes('appellate') || combined.includes('amparo')) {
+    score += 20;
   }
 
-  // 3. Scale / deal value impact (for non-anchor candidate matters)
-  const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
-  if (approxValue >= 2000000000) score += 35; // 2B+
-  else if (approxValue >= 1000000000) score += 30; // 1B+
-  else if (approxValue >= 500000000) score += 25; // 500M+
-  else if (approxValue >= 100000000) score += 20; // 100M+
-  else if (approxValue >= 10000000) score += 10; // 10M+
-
-  // 4. Precedent & appellate enforcement indicators
-  if (combined.includes('enforced in july 2024') || combined.includes('ejecutoria') || combined.includes('suspensión definitiva') || combined.includes('definitive suspension')) {
+  // 6. Cross-border and multi-jurisdiction impact
+  if (combined.includes('cross-border') || combined.includes('multinational') || combined.includes('usmca') || combined.includes('rapid response') || combined.includes('double taxation') || combined.includes('treaty')) {
     score += 15;
   }
 
-  // 5. Practice dilution penalties (off-category cases in Real Estate)
+  // 7. Practice dilution penalties (off-category cases in Real Estate)
   if (isRealEstate) {
-    // A. Public procurement / infrastructure / lighting concession / underground mining
-    if (
-      combined.includes('grupo r') ||
-      combined.includes('concesión') ||
-      combined.includes('concesion') ||
-      combined.includes('alumbrado público') ||
-      combined.includes('isseg') ||
-      combined.includes('licitación') ||
-      combined.includes('licitacion') ||
-      combined.includes('mining')
-    ) {
+    // Pure roadworks / highway concessions / paving without real estate nexus
+    if (combined.includes('concesión') || combined.includes('concesion') || combined.includes('alumbrado público') || combined.includes('paving')) {
       score -= 150;
     }
 
-    // B. Pure roadworks / highway concessions / paving
-    if (
-      combined.includes('elar constructora') ||
-      combined.includes('operadora de vialidades') ||
-      combined.includes('vialidades en los altos')
-    ) {
+    // Logistics, freight, trucking, vehicle circulation & SICT fines
+    const transportRegex = /\b(transportation of goods|transportes|paquetexpress|freight|trucking|logistics|logística|logistica|sict|traffic restriction|circulación|fletes)\b/i;
+    if (transportRegex.test(combined) && !combined.includes('terreno') && !combined.includes('desarrollo inmobiliario') && !combined.includes('industrial center') && !combined.includes('logistics and industrial center')) {
       score -= 150;
     }
 
-    // C. Logistics, freight, trucking, vehicle circulation & SICT fines
-    const transportRegex = /\b(transportation of goods|transportes|paquetexpress|baruma|logmine|freight|trucking|logistics|logística|logistica|sict|traffic restriction|circulación|fletes)\b/i;
-    if (transportRegex.test(combined) && !combined.includes('terreno') && !combined.includes('desarrollo inmobiliario')) {
-      score -= 150;
-    }
-
-    // D. Pure tax / SAT / fiscal disputes / tax credits (without real property/predial/expropriation nexus)
+    // Pure tax / SAT / fiscal disputes (without real property/predial/expropriation nexus)
     const taxRegex = /\b(sat|iva|crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales|tax credit|tax credits|fiscal process|fiscal dispute|fiscal disputes|tax administration)\b/i;
     if (taxRegex.test(combined) && !combined.includes('predial') && !combined.includes('property tax') && !combined.includes('terreno') && !combined.includes('expropiación') && !combined.includes('expropriation')) {
       score -= 150;
     }
 
-    // E. Medical device sales & hospital supplies
-    if (
-      combined.includes('tecnología médica') ||
-      combined.includes('tecnologia medica') ||
-      combined.includes('medical devices') ||
-      combined.includes('medical-hospital')
-    ) {
+    // Medical device sales & hospital supplies
+    if (combined.includes('tecnología médica') || combined.includes('tecnologia medica') || combined.includes('medical devices') || combined.includes('medical-hospital')) {
       score -= 150;
     }
 
-    // F. Labor, IMSS, Infonavit & Ministry of Labor fines
+    // Labor, IMSS, Infonavit & Ministry of Labor fines
     const laborRegex = /\b(imss|infonavit|cuotas obrero|seguridad social|ministry of labor|stps|inspections by the ministry of labor)\b/i;
     if (laborRegex.test(combined)) {
       score -= 150;
     }
 
-    // G. Packaging manufacture & industrial materials
-    if (
-      combined.includes('manufacture of packaging') ||
-      combined.includes('packaging solutions') ||
-      combined.includes('bemis packaging')
-    ) {
+    // Packaging manufacture & industrial materials
+    if (combined.includes('manufacture of packaging') || combined.includes('packaging solutions')) {
       score -= 150;
     }
 
-    // H. Automotive dealership & vehicle distribution
-    if (
-      combined.includes('motormexa') ||
-      combined.includes('automotive dealership') ||
-      combined.includes('distribuidora de autos') ||
-      combined.includes('dealership')
-    ) {
+    // Automotive dealership & vehicle distribution
+    if (combined.includes('automotive dealership') || combined.includes('distribuidora de autos') || combined.includes('dealership')) {
       score -= 150;
     }
 
-    // I. Agricultural berry farming & seeds without real estate anchor
-    if (
-      combined.includes('hortifrut') ||
-      combined.includes('production and marketing of berries')
-    ) {
+    // Agricultural berry farming & seeds without real estate anchor
+    if (combined.includes('production and marketing of berries') || combined.includes('berry farming')) {
       score -= 150;
     }
 
-    // J. Highway concession tax disputes (Income Tax / Withholding Tax / VAT - Angela Castillo directive)
-    if (
-      combined.includes('vialidades en los altos') ||
-      combined.includes('red vía corta') ||
-      combined.includes('red via corta') ||
-      combined.includes('operadora de vialidades')
-    ) {
+    // Highway concession tax disputes (Income Tax / Withholding Tax / VAT)
+    if (combined.includes('operadora de vialidades') || combined.includes('toll concession') || combined.includes('vialidades')) {
       score -= 200;
     }
 
-    // K. Agricultural property tax refund / predial nullity litigation (Angela Castillo directive)
-    if (
-      combined.includes('monsanto') ||
-      combined.includes('semillas agroproductos')
-    ) {
+    // Municipal property tax / predial refund disputes
+    if (/\b(predial|property tax)\b/i.test(combined) && /\b(refund|devoluci[oó]n|nullity|nulidad)\b/i.test(combined)) {
       score -= 200;
     }
   }
@@ -532,8 +275,9 @@ export function curateMatters(
     || [];
   if (Array.isArray(dilutionRisks)) {
     for (const d of dilutionRisks) {
-      const match = String(d).match(/^([^:]+):/);
-      if (match) auditExclusions.add(match[1].trim().toLowerCase());
+      const str = String(d).trim().toLowerCase();
+      const riskTerm = str.includes(':') ? str.split(':')[0].trim() : str;
+      if (riskTerm) auditExclusions.add(riskTerm);
     }
   }
   
@@ -549,37 +293,7 @@ export function curateMatters(
     if (key) seenTitles.add(key);
     
     const publishStatus = (m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase();
-    let isConfidential = m.isConfidential || m.is_confidential || m.confidential || (publishStatus === 'confidential' || publishStatus === 'non_publishable');
-    
-    // Canonical overrides for known practice anchors to ensure strict partition
-    const combinedKey = `${m.client || ''} ${m.title || ''} ${m.name || ''} ${m.summary || ''}`.toLowerCase();
-    if (
-      combinedKey.includes('de anda') ||
-      combinedKey.includes('villas del colli') ||
-      combinedKey.includes('adm hermosillo') ||
-      combinedKey.includes('hermosillo') ||
-      combinedKey.includes('leaño') ||
-      combinedKey.includes('monsanto')
-    ) {
-      isConfidential = true;
-    } else if (
-      combinedKey.includes('el cielo') ||
-      combinedKey.includes('duranpark') ||
-      combinedKey.includes('diageo') ||
-      combinedKey.includes('idex') ||
-      combinedKey.includes('san carlos') ||
-      combinedKey.includes('midi') ||
-      combinedKey.includes('la primavera') ||
-      combinedKey.includes('cominvi') ||
-      (combinedKey.includes('isseg') && (combinedKey.includes('silao') || combinedKey.includes('bicentenario') || combinedKey.includes('edificio'))) ||
-      combinedKey.includes('holcim') ||
-      combinedKey.includes('dorina') ||
-      combinedKey.includes('smb promotora') ||
-      combinedKey.includes('devangary') ||
-      combinedKey.includes('vialidades en los altos')
-    ) {
-      isConfidential = false;
-    }
+    const isConfidential = Boolean(m.isConfidential || m.is_confidential || m.confidential || (publishStatus === 'confidential' || publishStatus === 'non_publishable'));
 
     if (isConfidential) {
       rawConf.push(m);
@@ -590,11 +304,11 @@ export function curateMatters(
   
   // Attach scores
   for (const m of rawPub) {
-    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap);
+    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions);
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
   }
   for (const m of rawConf) {
-    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap);
+    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions);
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
   }
 

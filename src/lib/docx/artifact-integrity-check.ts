@@ -202,29 +202,29 @@ export function harmonizeLawyerRoles(
   rawLead: string,
   rawTeam: string
 ): { lead: string; team: string; issue?: IntegrityIssue } {
-  const cLower = clientName.toLowerCase();
+  let lead = cleanLawyerNames(rawLead);
+  let team = cleanLawyerNames(rawTeam);
 
-  // Diageo case: Edgar Moro is Senior Associate under José Pablo Ramos Castillo
-  if (cLower.includes('diageo')) {
-    const lead = 'José Pablo Ramos Castillo';
-    const team = 'Edgar Adrián Moro López (Senior Associate) and Mónica Dariane Cárdenas Fregoso';
-    const changed = (rawLead !== lead || rawTeam !== team);
+  // If Lead Partner field contains an explicit Associate title, sanitize it
+  const assocMatch = lead.match(/\((?:Senior\s+)?Associat?e?\)/i) || lead.match(/\((?:Asociad[oa](?:\s+Senior)?)\)/i);
+  if (assocMatch) {
+    const cleanedLead = lead.replace(/\s*\((?:Senior\s+)?Associat?e?\)/gi, '').replace(/\s*\((?:Asociad[oa](?:\s+Senior)?)\)/gi, '').trim();
     return {
-      lead,
+      lead: cleanedLead,
       team,
-      issue: changed ? {
+      issue: {
         severity: 'SANITIZED',
         matterName: clientName,
         field: 'D5/D6 Lawyer Roles',
-        description: 'Senior associate listed as Lead Partner in client draft contradicted B9 leadership profile.',
-        actionTaken: 'Realigned Lead Partner to José Pablo Ramos Castillo and Senior Associate to Edgar Adrián Moro López.'
-      } : undefined
+        description: 'Associate/Senior Associate title detected in Lead Partner field contradicted leadership profile.',
+        actionTaken: `Sanitized associate designation from Lead Partner field to maintain directory hierarchy.`
+      }
     };
   }
 
   return {
-    lead: cleanLawyerNames(rawLead),
-    team: cleanLawyerNames(rawTeam)
+    lead,
+    team
   };
 }
 
@@ -244,6 +244,7 @@ export function runArtifactIntegrityCheck(
     heroMatterTitle?: string;
     lawyersCount?: number;
     jurisdiction?: string;
+    guideRegion?: string;
   } = {}
 ): ArtifactIntegrityReport {
   const criticalErrors: IntegrityIssue[] = [];
@@ -300,36 +301,29 @@ export function runArtifactIntegrityCheck(
     }
 
     // Check 2b: Real Estate Core Purity (Angela Castillo directive: Pure Real Estate substantive merit)
-    const isRamosRE = (options.firmName || '').toLowerCase().includes('ramos') && (options.practiceArea || '').toLowerCase().includes('real estate');
-    if (isRamosRE) {
-      if (
-        clientLower.includes('vialidades en los altos') ||
-        clientLower.includes('red vía corta') ||
-        clientLower.includes('red via corta') ||
-        clientLower.includes('operadora de vialidades') ||
-        mName.toLowerCase().includes('vialidades en los altos') ||
-        mName.toLowerCase().includes('red vía corta') ||
-        mName.toLowerCase().includes('red via corta')
-      ) {
+    // Pure property tax (predial) refunds, income tax, or highway toll concessions belong in Reserve, not Core Real Estate.
+    const isRealEstate = (options.practiceArea || '').toLowerCase().includes('real estate') || (options.practiceArea || '').toLowerCase().includes('inmobiliario');
+    if (isRealEstate) {
+      const combinedLower = `${clientLower} ${mName.toLowerCase()} ${summary.toLowerCase()}`;
+      
+      const isHighwayConcession = /\b(toll concession|concesi[oó]n de peaje|vialidades|concesi[oó]n carretera)\b/i.test(combinedLower) && /\b(income tax|impuesto sobre la renta|sat|peaje)\b/i.test(combinedLower);
+      const isPredialRefund = /\b(predial|property tax)\b/i.test(combinedLower) && /\b(refund|devoluci[oó]n|nullity|nulidad)\b/i.test(combinedLower);
+
+      if (isHighwayConcession) {
         criticalErrors.push({
           severity: 'CRITICAL',
           matterName: mName,
           field: 'Real Estate Core Purity',
-          description: 'L&E Operadora / Red Vía Corta is an Income Tax / SAT dispute excluded from Real Estate Core. Must remain in Reserve Roster.',
+          description: 'Highway toll concession / Income Tax dispute detected in Real Estate Core. Substantively unaligned; must remain in Reserve Roster.',
           actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
         });
       }
-      if (
-        clientLower.includes('monsanto') ||
-        clientLower.includes('semillas agroproductos') ||
-        mName.toLowerCase().includes('monsanto') ||
-        mName.toLowerCase().includes('semillas agroproductos')
-      ) {
+      if (isPredialRefund) {
         criticalErrors.push({
           severity: 'CRITICAL',
           matterName: mName,
           field: 'Real Estate Core Purity',
-          description: 'Semillas Agroproductos Monsanto is a property tax (predial) refund dispute excluded from Real Estate Core. Must remain in Reserve Roster.',
+          description: 'Municipal property tax (predial) refund dispute detected in Real Estate Core. Substantively unaligned; must remain in Reserve Roster.',
           actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
         });
       }
@@ -337,7 +331,7 @@ export function runArtifactIntegrityCheck(
 
     // Check 2c: Venezuela Jurisdiction Guardrail (Angela Castillo directive: Zero cross-border institutional contamination)
     const isVenezuela = (options.jurisdiction || '').toLowerCase().includes('venezuela') ||
-      (options.firmName || '').toLowerCase().includes('araque') ||
+      (options.guideRegion || '').toLowerCase().includes('venezuela') ||
       (options.practiceArea || '').toLowerCase().includes('venezuela');
 
     if (isVenezuela) {

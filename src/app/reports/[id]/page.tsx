@@ -97,14 +97,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
       if (firstMatter?.title || firstMatter?.matter_name) {
         heroMatter = firstMatter.title || firstMatter.matter_name;
       } else {
-        const pArea = canonicalizePracticeArea(submission.practiceArea);
-        if (pArea.includes('Labour')) {
-          heroMatter = 'Schaeffler / Vitesco – Post-M&A Workforce Integration';
-        } else if (pArea.includes('Tax')) {
-          heroMatter = 'Gruppo Montenegro – High-Stakes Corporate Tax Controversy';
-        } else {
-          heroMatter = 'Flagship Mandate';
-        }
+        heroMatter = `${(submission as any).firm_name || (submission as any).title || 'Practice'} Flagship Mandate`;
       }
     }
   }

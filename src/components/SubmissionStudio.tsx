@@ -111,16 +111,26 @@ export default function SubmissionStudio({
     || chambersData.b7 
     || chambersData.departmentDesc 
     || '';
-  if ((firmLowerSS.includes('ramos') || firmLowerSS.includes('castillo')) && paLowerSS.includes('real estate') && (initialB10.includes('principal base is Guadalajara') || initialB10.includes('region of Guadalajara') || initialB10.length < 50)) {
-    initialB10 = `Ramos Castillo protects the business value of real estate assets when regulatory intervention, environmental measures, expropriation or litigation threatens to halt a development, deprive an owner of its land or render an investment commercially unviable. Clients engage the team at the point of greatest exposure: when construction has been suspended, operating permits are under attack, title cannot be registered or a public authority has attempted to appropriate property without compensation.
+  if (initialB10.length < 50 || initialB10.includes('principal base is Guadalajara') || initialB10.includes('region of Guadalajara')) {
+    const firmDisplay = chambersData.firm_name || chambersData.firmName || (submission as any).firmName || 'The firm';
+    const paDisplay = submission.practiceArea || chambersData.practice_area || 'Practice';
+    const jurDisplay = chambersData.jurisdiction || chambersData.guideRegion || 'the jurisdiction';
+    const mattersList: any[] = chambersData.matters || submission.matters || [];
+    const lawyersList: any[] = chambersData.lawyers || [];
+    
+    const leadLawyers = lawyersList.filter((l: any) => l.isPartner || l.ranking || (l.role && String(l.role).toLowerCase().includes('partner'))).map((l: any) => l.name || l.fullName).filter(Boolean);
+    const topClients = mattersList.slice(0, 4).map((m: any) => m.client || m.clientName || m.name).filter(Boolean);
 
-Led by José Pablo Ramos Castillo, the practice has repeatedly converted complex constitutional, administrative and technical disputes into outcomes that preserve ownership, unlock projects and protect business continuity. In the El Cielo Country Club proceedings, José Pablo led the strategy protecting a development valued at MXN 3 billion (approximately USD 176.6 million) against successive environmental and land-use decrees. The team preserved previously granted development rights, secured appellate confirmation of the relief obtained and achieved enforcement of a further favourable judgment in July 2024. The result protected not only the underlying land and permits, but also the continued viability of the development and the position of its purchasers.
+    const leadStr = leadLawyers.length > 0 ? `Led by ${leadLawyers.slice(0, 3).join(', ')}, ` : '';
+    const clientsStr = topClients.length > 0 ? ` with representative instructions for ${topClients.join(', ')}` : '';
 
-The same commercial focus defines the team’s work for Duranpark in Durango. Faced with the attempted expropriation of approximately 207.5 hectares forming part of the Durango Logistics and Industrial Center, Ramos Castillo secured a definitive suspension preventing measures affecting possession, title or registration. The intervention protected an asset valued at MXN 698.4 million (approximately USD 41.1 million) while preserving the client’s ability to pursue the project and defend its investment.
+    initialB10 = `${firmDisplay} delivers specialized, strategic counsel in ${paDisplay} across ${jurDisplay}. Clients engage the team for business-critical mandates requiring sophisticated regulatory, transactional, and contentious expertise.
 
-José Pablo’s strategic leadership is supported by Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso. Edgar already assumes substantive responsibility for business-critical mandates, acting as lead associate in the Diageo México Operaciones dispute, where the team obtained precautionary relief allowing works and activities connected with an MXN 1 billion (approximately USD 58.9 million) agro-industrial facility to continue. Mónica provides continuity across the practice’s principal development, environmental, ownership and expropriation disputes, ensuring that the team retains command of the factual and technical record across related proceedings. This deliberately leveraged structure combines senior strategic judgment with genuine associate ownership and consistent execution.
+${leadStr}the practice has repeatedly converted complex legal challenges into outcomes that protect commercial value, ensure regulatory compliance, and support long-term investment continuity${clientsStr}.
 
-The portfolio demonstrates results beyond Jalisco, including significant mandates in Durango and Guanajuato and challenges involving federal authorities and nationwide regulation. Ramos Castillo has protected developments, industrial facilities and privately owned land worth several billion Mexican pesos; reversed or neutralised measures that threatened construction and operations; and preserved clients’ ability to use, develop and monetise their assets while litigation continued. This is not merely a regional public-law practice handling real estate-related disputes. It is a national real estate disputes practice whose work protects the economics, continuity and long-term value of major projects across Mexico.`;
+The department combines deep substantive command with rigorous execution across its senior partners and specialized associates, ensuring direct partner involvement and consistent technical depth on every mandate.
+
+The practice regularly represents domestic conglomerates, financial institutions, and multinational corporations in high-stakes matters, maintaining an established reputation for excellence across ${jurDisplay}.`;
   }
   const [b10Text, setB10Text] = useState<string>(initialB10);
   const [b10Directive, setB10Directive] = useState<string>('');
