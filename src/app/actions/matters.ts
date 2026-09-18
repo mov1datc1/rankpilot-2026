@@ -426,3 +426,72 @@ export async function deleteCaseFolder(data: {
     return { success: false, error: error.message };
   }
 }
+
+// ── Import Matters from Matter Assistant / Library to a Submission ──
+export async function importMattersToSubmission(submissionId: string, matterIds: string[]) {
+  try {
+    const user = await getAuthenticatedUser();
+
+    const submission = await prisma.submission.findUnique({
+      where: { id: submissionId }
+    });
+
+    if (!submission || submission.userId !== user.id) {
+      throw new Error('No tienes permiso para modificar este submission.');
+    }
+
+    const sourceMatters = await prisma.matter.findMany({
+      where: { id: { in: matterIds }, userId: user.id }
+    });
+
+    if (sourceMatters.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    let importedCount = 0;
+    for (const sm of sourceMatters) {
+      if (!sm.submissionId) {
+        // Standalone library matter -> link directly
+        await prisma.matter.update({
+          where: { id: sm.id },
+          data: { submissionId }
+        });
+      } else {
+        // Belongs to another submission -> clone cleanly to avoid corrupting previous submissions
+        await prisma.matter.create({
+          data: {
+            submissionId,
+            userId: user.id,
+            firmId: sm.firmId,
+            name: sm.name,
+            client: sm.client,
+            value: sm.value,
+            leadPartner: sm.leadPartner,
+            rawNotes: sm.rawNotes,
+            optimizedText: sm.optimizedText,
+            status: sm.status || 'Draft',
+            isConfidential: sm.isConfidential,
+            crossBorder: sm.crossBorder,
+            teamMembers: sm.teamMembers,
+            otherFirms: sm.otherFirms,
+            completionDate: sm.completionDate,
+            otherInfo: sm.otherInfo,
+            isNewClient: sm.isNewClient,
+            source: 'assistant',
+            practiceArea: sm.practiceArea || submission.practiceArea,
+            jurisdiction: sm.jurisdiction,
+            description: sm.description,
+            tags: sm.tags,
+          }
+        });
+      }
+      importedCount++;
+    }
+
+    return { success: true, count: importedCount };
+  } catch (error: any) {
+    console.error('Error importing matters to submission:', error);
+    return { success: false, error: error.message };
+  }
+}
+

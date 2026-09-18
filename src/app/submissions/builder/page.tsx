@@ -16,9 +16,11 @@ import {
   X,
   CheckCircle2,
   AlertTriangle,
-  Bookmark
+  Bookmark,
+  BookOpen
 } from 'lucide-react';
-import { createMatter } from '@/app/actions/matters';
+import { createMatter, getMattersBySubmission } from '@/app/actions/matters';
+import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 
 type MatterDraft = {
   id: string;
@@ -107,14 +109,42 @@ function BuilderContent() {
   const [savingAll, setSavingAll] = useState(false);
   const [activeHelp, setActiveHelp] = useState<HelpInfo | null>(null);
 
+  const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(true);
+
+  const loadMattersFromDb = async () => {
+    if (!submissionId) return;
+    setIsLoadingExisting(true);
+    const res = await getMattersBySubmission(submissionId);
+    if (res.success && res.data && res.data.length > 0) {
+      const loaded: MatterDraft[] = res.data.map(m => ({
+        id: m.id,
+        name: m.name || '',
+        client: m.client || '',
+        value: m.value || '',
+        leadPartner: m.leadPartner || '',
+        rawNotes: m.rawNotes || m.optimizedText || '',
+        isConfidential: m.isConfidential || false,
+        crossBorder: m.crossBorder || '',
+        teamMembers: m.teamMembers || '',
+        otherFirms: m.otherFirms || '',
+        completionDate: m.completionDate || '',
+        otherInfo: m.otherInfo || '',
+        isNewClient: m.isNewClient || false,
+        saved: true,
+      }));
+      setMatters(loaded);
+    }
+    setIsLoadingExisting(false);
+  };
+
   useEffect(() => {
     if (!submissionId) {
       router.push('/submissions');
       return;
     }
-    // Start with one empty matter
-    addMatter();
-  }, []);
+    loadMattersFromDb();
+  }, [submissionId]);
 
   const addMatter = () => {
     setMatters(prev => [...prev, {
@@ -292,6 +322,78 @@ function BuilderContent() {
           </p>
         </div>
       </div>
+
+      {/* Empty State Banner (If 0 matters) */}
+      {matters.length === 0 && !isLoadingExisting && (
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: '12px',
+          border: '1.5px dashed #CBD5E1',
+          padding: '2.5rem 1.5rem',
+          textAlign: 'center',
+          marginBottom: '2rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            background: '#EEF2FF',
+            color: '#4F46E5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem auto'
+          }}>
+            <BookOpen size={26} />
+          </div>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.4rem 0' }}>
+            Este submission no tiene asuntos registrados aún
+          </h3>
+          <p style={{ fontSize: '0.86rem', color: '#64748B', maxWidth: '540px', margin: '0 auto 1.5rem auto', lineHeight: 1.55 }}>
+            Puedes importar casos ya redactados o extraídos en tu <strong>Matter Assistant</strong> con un solo clic, o comenzar a capturar los asuntos de la firma manualmente uno por uno.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowAssistantModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.65rem 1.35rem',
+                background: '#4F46E5',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.25)'
+              }}
+            >
+              <BookOpen size={16} /> Importar desde Matter Assistant
+            </button>
+            <button
+              onClick={addMatter}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.65rem 1.35rem',
+                background: '#F1F5F9',
+                color: '#334155',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.88rem'
+              }}
+            >
+              <Plus size={16} /> Agregar Asunto Manualmente
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Matter Cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -651,24 +753,45 @@ function BuilderContent() {
 
       {/* Action Buttons */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <button
-          onClick={addMatter}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.75rem 1.4rem',
-            background: '#F1F5F9',
-            color: '#334155',
-            borderRadius: '8px',
-            border: '1px solid #CBD5E1',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.88rem'
-          }}
-        >
-          <Plus size={16} /> Agregar Otro Asunto
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={addMatter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.4rem',
+              background: '#F1F5F9',
+              color: '#334155',
+              borderRadius: '8px',
+              border: '1px solid #CBD5E1',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.88rem'
+            }}
+          >
+            <Plus size={16} /> Agregar Otro Asunto
+          </button>
+
+          <button
+            onClick={() => setShowAssistantModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.4rem',
+              background: '#EEF2FF',
+              color: '#4F46E5',
+              borderRadius: '8px',
+              border: '1px solid #C7D2FE',
+              cursor: 'pointer',
+              fontWeight: 700,
+              fontSize: '0.88rem'
+            }}
+          >
+            <BookOpen size={16} /> Importar desde Matter Assistant
+          </button>
+        </div>
 
         <button
           onClick={saveAllAndProcess}
@@ -795,6 +918,16 @@ function BuilderContent() {
           </div>
         </div>
       )}
+
+      {/* ═══ IMPORT FROM MATTER ASSISTANT MODAL ═══ */}
+      <ImportFromAssistantModal
+        isOpen={showAssistantModal}
+        onClose={() => setShowAssistantModal(false)}
+        submissionId={submissionId}
+        onMattersImported={async () => {
+          await loadMattersFromDb();
+        }}
+      />
 
       <style dangerouslySetInnerHTML={{__html: `
         .animate-spin { animation: spin 1s linear infinite; }

@@ -30,9 +30,11 @@ import {
   Copy,
   Bookmark,
   ShieldAlert,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
+import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 
 interface MatterItem {
   id?: string;
@@ -141,6 +143,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
   const [optimizeAllComplete, setOptimizeAllComplete] = useState<boolean>(false);
   const [showReadinessModal, setShowReadinessModal] = useState<boolean>(false);
   const [partnerChecklistCopied, setPartnerChecklistCopied] = useState<boolean>(false);
+  const [showAssistantModal, setShowAssistantModal] = useState<boolean>(false);
 
   // Evidence Readiness Engine (v27.0)
   const readiness: EvidenceReadinessResult = React.useMemo(() => {
@@ -709,6 +712,29 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
 
         {/* Master DOCX Downloads & Quick Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {/* Import from Matter Assistant Button */}
+          <button
+            onClick={() => setShowAssistantModal(true)}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#334155',
+              padding: '0.45rem 0.75rem',
+              borderRadius: '7px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Importar asuntos guardados en el Matter Assistant a este submission"
+          >
+            <BookOpen size={13} color="#4F46E5" />
+            Importar Asuntos
+          </button>
+
           {/* Evidence Readiness Interactive Badge */}
           <button
             onClick={() => setShowReadinessModal(true)}
@@ -2548,6 +2574,50 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                   </button>
                 </div>
               )}
+              <div style={{
+                background: '#EEF2FF',
+                border: '1px solid #C7D2FE',
+                borderRadius: '8px',
+                padding: '0.85rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <BookOpen size={18} color="#4F46E5" />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#312E81' }}>
+                      ¿Tienes asuntos guardados en tu Matter Assistant?
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#4338CA' }}>
+                      Importa mandatos de tu biblioteca institucional para alcanzar los 10 a 20 asuntos recomendados por Chambers.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowReadinessModal(false);
+                    setShowAssistantModal(true);
+                  }}
+                  style={{
+                    background: '#4F46E5',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <BookOpen size={13} /> Importar desde Assistant
+                </button>
+              </div>
 
             </div>
 
@@ -2634,6 +2704,17 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
           </div>
         </div>
       )}
+
+      {/* ═══ IMPORT FROM MATTER ASSISTANT MODAL ═══ */}
+      <ImportFromAssistantModal
+        isOpen={showAssistantModal}
+        onClose={() => setShowAssistantModal(false)}
+        submissionId={submission.id}
+        currentPracticeArea={practiceAreaName}
+        onMattersImported={() => {
+          window.location.reload();
+        }}
+      />
 
     </div>
   );
