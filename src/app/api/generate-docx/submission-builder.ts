@@ -220,6 +220,16 @@ function sanitizeMatterValue(val: string, clientName: string = ''): string {
     return 'MXN 2,000,000.00 (approx. USD 110,800)';
   }
 
+  // Cinemex value discrepancy
+  if (clientLower.includes('cinemex')) {
+    return 'US$ 553,278.59 [SOURCE VALUE CONFLICT — CONFIRM BEFORE DELIVERY: Source documents report conflicting values between US$ 553,278.59 and MXN 60.5 million (~USD 3.45M). Confirm whether USD 553k represents an individual claim reserve and MXN 60.5M the aggregate portfolio exposure before delivery.]';
+  }
+
+  // Volkswagen MXN 280M
+  if (clientLower.includes('volkswagen') || clientLower.includes('vwfs') || s.includes('280,000,000') || s.includes('280 million')) {
+    return 'MXN 280,000,000.00 (approx. USD 16.0 million)';
+  }
+
   // Point 4: Absurd Exchange Rate sanitizer (e.g. Transportes Potosinos typo MXN 11.7M => USD 65.3M; Bemis MXN 5M => USD 27.7M)
   if (s.includes("65'353,319") || s.includes('65,353,319')) {
     return 'MXN 11,775,193.22 (approx. USD 692,658)';
@@ -400,7 +410,7 @@ function cleanClientDescriptor(rawClient: string): string {
     return 'BONATTI S.P.A. — International energy and infrastructure engineering contractor; workforce governance and collective labour relations for the Mayakan gas pipeline expansion in Southeast Mexico.';
   }
   if (sLower.includes('geni') || sLower.includes('entertainment & nightlife')) {
-    return 'GRUPO ENTERTAINMENT & NIGHTLIFE (GeNI) — Leading entertainment and cinema operator; strategic union relations, nationwide collective bargaining agreement negotiations, and strike prevention.';
+    return 'GeNI de México, S.A de C.V. [SOURCE ENTITY CONFLICT — CONFIRM BEFORE DELIVERY: Contradictory sector descriptions in source documentation (automotive tier supplier to VW/Audi/Ford/GM vs. entertainment/cinema operator). Sector must be confirmed by firm prior to filing].';
   }
   if (sLower.includes('cinemex')) {
     return 'CINEMEX — Major multinational cinema exhibition group; comprehensive employer-side defense across ~200 individual labor proceedings and operational workforce governance nationwide.';
@@ -529,7 +539,7 @@ function cleanClientDescriptor(rawClient: string): string {
 }
 
 // 20-row matter table matching Chambers template exactly (single-column with full width)
-function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any, exportMode: string): Table {
+function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any, exportMode: string, isDeForestLabour: boolean = false): Table {
   const isConf = prefix === 'E';
   const clientLabel = isConf
     ? `${prefix}1 Name of client (for ranking purposes only)`
@@ -573,8 +583,18 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
     }
   }
 
-  const summaryText = cleanLawyerNames(sanitizeMatterSummary(rawSummary));
+  let summaryText = cleanLawyerNames(sanitizeMatterSummary(rawSummary));
   const valueText = sanitizeMatterValue(matter.value || matter.dealValue || 'N/A', rawClient);
+
+  // Point 3 & 7: Cinemex value conflict banner
+  if (clientLower.includes('cinemex') && !summaryText.includes('SOURCE VALUE CONFLICT')) {
+    summaryText = `[SOURCE VALUE CONFLICT — CONFIRM BEFORE DELIVERY: Discrepancy detected in source document between US$ 553,278.59 and MXN 60.5 million (~USD 3.45 million). Confirm exact exposure category prior to submission.]\n\n` + summaryText;
+  }
+
+  // Point 6: GeNI entity conflict banner (Ask, Don't Resolve)
+  if (clientLower.includes('geni') && !summaryText.includes('SOURCE ENTITY CONFLICT')) {
+    summaryText = `[SOURCE ENTITY CONFLICT — CONFIRM BEFORE DELIVERY: Contradictory sector descriptions detected in source materials (automotive component supplier to VW/Audi/Ford/GM vs. entertainment/cinema operator). Confirm primary corporate activity before submission.]\n\n` + summaryText;
+  }
   
   let rawLead = matter.leadPartner || (Array.isArray(matter.leadPartners) ? matter.leadPartners.join(', ') : matter.leadPartners) || '';
   let rawTeam = matter.teamMembers || (Array.isArray(matter.otherLawyers) ? matter.otherLawyers.join(', ') : matter.otherLawyers) || '';
@@ -614,6 +634,14 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
     [`${prefix}9 Other information about this matter – e.g. link to press coverage`, sanitizeTemplateBoilerplate(matter.otherInfo || matter.press_link || '').cleaned],
   ];
 
+  // Point 5: Explicit Hero Matter naming requested by Angela Castillo
+  let matterHeaderTitle = `${type} Matter ${matterNum}`;
+  if (isConf && matterNum === 1 && (clientLower.includes('schaeffler') || clientLower.includes('vitesco'))) {
+    matterHeaderTitle = 'Hero Matter: Schaeffler / Vitesco — Confidential Matter #1';
+  } else if (!isConf && (isDeForestLabour || (matter.isConfidential === undefined && matter.confidential === undefined && matter.publishStatus === undefined && matter.publish_status === undefined))) {
+    matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED — Status unstated in source; verify before filing]`;
+  }
+
   const rows: TableRow[] = [
     // Row 0: Section header
     new TableRow({
@@ -625,7 +653,7 @@ Senior associate Edgar Adrián Moro López assumed lead associate responsibility
     // Row 1: Matter number
     new TableRow({
       children: [yellowCell(
-        [para(`${type} Matter ${matterNum}`, { bold: true, size: 22 })],
+        [para(matterHeaderTitle, { bold: true, size: 22 })],
         { width: PAGE_WIDTH_DXA }
       )],
     }),
@@ -815,42 +843,48 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
         isRanked: true,
         currentRank: 'Band 4',
         suggestedRank: 'Band 4',
-        comments: 'Partner and head of the Labour & Employment practice at DeForest. Architect of nationwide labor strategies, leading high-stakes collective bargaining negotiations, strike prevention (GeNI, Coats), workforce restructuring for multinational automotive and industrial groups (Schaeffler, Brose), and mitigation of USMCA Rapid Response Mechanism (RRM) exposure.'
+        url: 'https://deforest.mx/abogados/eduardo-garduno/',
+        comments: 'Partner and head of the Labour & Employment practice at DeForest. With over two decades advising domestic and multinational employers alongside senior public-sector experience, Eduardo translates complex regulatory environments into stable operational frameworks. Architect of nationwide labor strategies, leading high-stakes collective bargaining negotiations under the 2019 reform, strike prevention (GeNI, Coats), workforce restructuring for multinational automotive and industrial groups (Schaeffler, Brose), and mitigation of USMCA Rapid Response Mechanism (RRM) exposure. He serves as President of the Labor Committee of ANADE Puebla, lecturer at Universidad Anáhuac Puebla, and regular speaker at CLAUZ, CANACINTRA, and the American Chamber of Commerce (AmCham Guadalajara).'
       },
       {
         name: 'Jaime Bustamante',
         isPartner: true,
         isRanked: false,
         suggestedRank: 'Band 4 / Up and Coming',
-        comments: 'Partner heading the labor litigation division, overseeing more than 700 active individual and collective employment proceedings nationwide, including marquee defense for Cinemex and high-exposure claims for Volkswagen / VWFS.'
+        url: 'https://deforest.mx/abogados/jaime-bustamante/',
+        comments: 'Partner heading the labor litigation division. Former Legal Director for Mexico, Central and South America at ManpowerGroup, where he oversaw one of the largest corporate workforces in Latin America. Brings unmatched capability in mass litigation management, high-pressure workforce transitions, and collective bargaining negotiations. Oversees more than 700 active contentious proceedings nationwide, including Cinemex\'s ~200 claims and Volkswagen / VWFS MXN 280M contentious risk. Serves as Vice President of the Labor, Social Security and HR Commission at CONCAMIN, reinforcing his standing as a national authority on regulatory reform and cross-border labor exposure.'
       },
       {
         name: 'Javier Atzin Vallejo',
         isPartner: true,
         isRanked: false,
         suggestedRank: 'Band 4',
-        comments: 'Partner specializing in preventive labor consulting, collective bargaining agreement legitimation under the 2019 labor reform, and workplace compliance for foreign manufacturers in Mexico.'
+        url: 'https://deforest.mx/abogados/javier-atzin-vallejo/',
+        comments: 'Partner leading preventive labor consulting and the firm\'s Querétaro practice. Technical specialist at the intersection of labor law, social security, and regulatory compliance. Directs complex multi-plant compliance audits, collective bargaining agreement legitimations under the 2019 reform, post-acquisition labor harmonizations, and subcontracting (REPSE) frameworks for advanced manufacturing, industrial, and infrastructure clients (including Bonatti Mayakan USD 2.5B gas pipeline and Benteler). Key reference point across the Bajío industrial corridor.'
       },
       {
         name: 'Raymundo Carreño',
-        isPartner: false,
+        isPartner: true,
         isRanked: false,
-        suggestedRank: 'Associate to Watch',
-        comments: 'Senior associate leading individual dispute resolution, conciliation procedures before federal and state labor centers, and collective agreement implementation across industrial sectors.'
+        suggestedRank: 'Senior Statesperson / Band 4',
+        url: 'https://deforest.mx/abogados/raymundo-carreno/',
+        comments: 'Senior Counsel and Partner with nearly forty years of experience at Volkswagen de México, including his distinguished tenure as General Legal Director. Embodies extraordinary institutional depth in corporate labor relations, major regulatory transitions, landmark union negotiations, and automotive restructurings that have defined Mexico\'s industrial sector. Provides senior strategic counsel across high-stakes collective negotiations, operational continuity, and corporate governance for major automotive and manufacturing conglomerates.'
       },
       {
         name: 'Edgar Barreto',
         isPartner: false,
         isRanked: false,
         suggestedRank: 'Associate to Watch',
-        comments: 'Senior associate focused on complex labor restructuring, executive compensation, employment termination strategy, and regulatory compliance.'
+        url: 'https://deforest.mx/abogados/edgar-barreto/',
+        comments: 'Senior Associate bringing more than two decades of specialized experience in labor litigation, social security (IMSS), and internal workplace governance for large-scale employers. Focuses on early contingency mitigation, documentation harmonization in high-volume environments, and continuous advisory for industrial manufacturing plants. His command of IMSS procedures and STPS labor inspection frameworks makes him an essential asset in reducing recurrent employer liability and defending high-volume dockets (Securitas 50+ claims).'
       },
       {
-        name: 'Andrés Cabrera',
+        name: 'Andrés Cabrera Gómez',
         isPartner: false,
         isRanked: false,
-        suggestedRank: 'Associate',
-        comments: 'Associate active in employer-side labor litigation defense, conciliation hearings, and workplace compliance audits.'
+        suggestedRank: 'Associate to Watch',
+        url: 'https://deforest.mx/abogados/andres-cabrera/',
+        comments: 'Senior Associate leading the firm\'s practice execution across the Bajío industrial corridor. Recognized for swift, clear litigation defense and tactical sensitivity to local dynamics across federal and state labor tribunals under the post-reform judicial system. Coordinates on-the-ground procedural execution, conciliation center hearings, and collective agreement implementation across Querétaro, Guanajuato, and San Luis Potosí.'
       },
       {
         name: 'Erick Pérez',
@@ -1109,11 +1143,11 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     } else if (isDeForestLabour || (b7Text.includes('DeForest') && (b7Text.includes('Labour') || b7Text.includes('Labor')))) {
       b7Text = `DeForest Abogados fields one of Mexico’s most comprehensive employer-side Labour & Employment practices, comprising 27 specialized lawyers across its offices in Mexico City, Puebla, Guadalajara, Querétaro, and Monterrey. The department provides integrated, full-spectrum representation to domestic and multinational corporate employers, spanning collective bargaining and trade union relations, high-volume and high-exposure contentious litigation, strategic workplace governance, post-M&A labor integration, social security (IMSS/INFONAVIT) compliance, and governmental labour inspections before the Ministry of Labour and Social Welfare (STPS).
 
-The practice manages collective and individual employment matters for a corporate client portfolio employing in excess of 1,000,000 workers, defending active contentious dockets comprising more than 700 proceedings nationwide. DeForest operates at the leading edge of Mexico's 2019 Labour Reform, having successfully guided major automotive and manufacturing conglomerates through collective bargaining agreement (CBA) legitimations, independent union certification disputes, and strategic negotiations that eliminated strike threats across nationwide operational networks, including marquee interventions for Grupo Entertainment & Nightlife (GeNI), Coats México, and Bonatti S.p.A. on the Mayakan gas pipeline infrastructure expansion.
+The practice manages collective and individual employment matters for a corporate client portfolio employing in excess of 1,000,000 workers, defending active contentious dockets comprising more than 700 proceedings nationwide. DeForest operates at the leading edge of Mexico's 2019 Labour Reform, having successfully guided major automotive and manufacturing conglomerates through collective bargaining agreement (CBA) legitimations, independent union certification disputes, and strategic negotiations that eliminated strike threats across nationwide operational networks, including marquee interventions for GeNI de México, Coats México, and Bonatti S.p.A. on the Mayakan gas pipeline infrastructure expansion.
 
-Crucially, the team has emerged as a premier defense advisor on cross-border trade and labor standards, actively counseling tier-one automotive and industrial suppliers—such as Brose and Schaeffler—on workforce restructuring, subcontracting (REPSE) compliance, and the mitigation of trade dispute exposure under the USMCA Rapid Response Labour Mechanism (RRM). The department's litigation arm, led by Jaime Bustamante, defends major corporate portfolios including Cinemex's nationwide workforce proceedings (~200 active claims) and Volkswagen / VWFS financial dispute portfolios representing MXN 280 million in exposure, achieving decisive settlements and non-appealable dismissals without operational interruption.
+Crucially, the team has emerged as a premier defense advisor on cross-border trade and labor standards, actively counseling tier-one automotive and industrial suppliers—such as Brose and Schaeffler—on workforce restructuring, subcontracting (REPSE) compliance, and the mitigation of trade dispute exposure under the USMCA Rapid Response Labour Mechanism (RRM). The department's litigation arm, led by Jaime Bustamante, defends major corporate portfolios including Cinemex's nationwide workforce proceedings (~200 active claims) and Volkswagen / VWFS financial dispute portfolios representing MXN 280 million in exposure (approximately USD 16.0 million), achieving decisive settlements and non-appealable dismissals without operational interruption.
 
-Led by practice head Eduardo Garduño, alongside litigation partner Jaime Bustamante and consulting partner Javier Atzin Vallejo, supported by senior associates Raymundo Carreño and Edgar Barreto, the department combines senior strategic counsel with deep technical and procedural bench strength. DeForest's nationwide reach, employer-side advocacy, and proven command of post-reform industrial relations establish the practice among Mexico's elite labour departments.`;
+Led by practice head Eduardo Garduño (strategic collective bargaining, post-M&A workforce restructuring, and USMCA/CBA compliance under the 2019 reform), alongside litigation partner Jaime Bustamante (high-exposure contentious labor litigation, mass-claims defense, and federal amparo proceedings) and consulting partner Javier Atzin Vallejo (preventive labor consulting, complex STPS compliance audits, and multi-plant subcontracting/REPSE frameworks), supported by senior counsel Raymundo Carreño (corporate labor governance and automotive industry relations; former General Legal Director of Volkswagen de México for nearly 40 years) and senior associates Edgar Barreto (IMSS and social security litigation) and Andrés Cabrera Gómez (Bajío tribunal advocacy and conciliation execution), the department combines senior strategic counsel with deep technical and procedural bench strength. DeForest's nationwide reach, employer-side advocacy, and proven command of post-reform industrial relations establish the practice among Mexico's elite labour departments.`;
     } else if (isAraqueTax || ((b7Text.includes('Araque') || b7Text.includes('Reyna')) && (b7Text.includes('Tax') || b7Text.includes('tributar')))) {
       b7Text = `ARAQUEREYNA’s Tax practice is widely regarded by domestic conglomerates and multinational corporations as the foremost fiscal advisory and contentious tax department in Venezuela. The department combines deep academic and constitutional authority with unmatched transactional agility, advising leading market participants on corporate tax planning, cross-border M&A tax structuring, indirect taxation, customs, transfer pricing, and high-stakes administrative and judicial tax litigation.
 
@@ -1155,7 +1189,7 @@ The department's depth, institutional stability, volume of premier financial tra
   } else if (isDeForestLabour) {
     c2Val = `DeForest Abogados has built one of Mexico’s most formidable employer-side Labour & Employment practices, distinguished by its 27-lawyer specialized bench, nationwide operational footprint, and market leadership in post-reform collective bargaining, dispute resolution, and USMCA Rapid Response Mechanism (RRM) risk mitigation.
 While conventional directory coverage frequently emphasizes traditional Mexico City litigation boutiques, DeForest operates at the critical intersection of modern industrial governance and large-scale workforce management. The practice represents multinational heavyweights across automotive, manufacturing, and entertainment—such as Schaeffler, Brose, Volkswagen, Cinemex, and Bonatti Mayakan—managing workforces exceeding 1,000,000 employees and defending portfolios exceeding 700 active employment disputes nationwide.
-Under the strategic direction of practice head Eduardo Garduño, supported by litigation partner Jaime Bustamante and consulting partner Javier Atzin Vallejo, the team has delivered decisive results: legitimating collective bargaining agreements across complex industrial plants, preventing strikes in nationwide operations (GeNI, Coats), and successfully resolving high-exposure disputes totaling over MXN 280 million without operational disruption.
+Under the strategic direction of practice head Eduardo Garduño (collective bargaining and post-M&A integration), supported by litigation partner Jaime Bustamante (mass-litigation defense and amparos) and consulting partner Javier Atzin Vallejo (preventive compliance and STPS audits), the team has delivered decisive results: legitimating collective bargaining agreements across complex industrial plants, preventing strikes in nationwide operations (GeNI, Coats), and successfully resolving high-exposure disputes totaling over MXN 280 million (approximately USD 16.0 million) without operational disruption.
 The sheer evidentiary density, national scale, and strategic sophistication demonstrated across this portfolio firmly justify DeForest Abogados' recognition in the upper tiers of Chambers Latin America / Mexico Labour & Employment.`;
   } else if (isAraqueTax) {
     c2Val = `ARAQUEREYNA’s Tax practice remains the premier fiscal and tax controversy advisor in Venezuela, universally recognized for its technical sophistication, constitutional depth, and strategic counsel to blue-chip multinationals operating in hyper-inflationary, multi-currency, and evolving fiscal environments.
@@ -1177,10 +1211,19 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
   elements.push(para('D. PUBLISHABLE INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
   elements.push(para("All information in section 'D' is considered PUBLISHABLE. Do not include any confidential information in this section. Confidential information can be included in section 'E'. Information in section 'D' may be printed in Chambers and Partners publications.", { italics: true, size: 16, spacing: { after: 200 } }));
 
-  // D0 Publishable Clients
+  // D0 Publishable Clients — Strict Confidentiality Control (Angela Castillo Directive)
+  // YES = confidential, NO = publishable, BLANK/UNKNOWN = confirmation required (Never infer publishability)
   const pubClients = [...new Set(pubMatters.map((m: any) => m.client).filter(Boolean))];
   const d0Rows = pubClients.length > 0
-    ? pubClients.map((c, i) => [String(i + 1), cleanClientDescriptor(String(c)), 'No'])
+    ? pubClients.map((c, i) => {
+        const associatedMatter = pubMatters.find((m: any) => m.client === c);
+        const isConfUnstated = isDeForestLabour || (associatedMatter && (associatedMatter.isConfidential === undefined && associatedMatter.confidential === undefined && associatedMatter.publishStatus === undefined && associatedMatter.publish_status === undefined));
+        let desc = cleanClientDescriptor(String(c));
+        if (isConfUnstated && !desc.includes('CONFIRMATION REQUIRED')) {
+          desc = `${desc} [CONFIRMATION REQUIRED — Confidentiality unstated in source: confirm publishability before delivery]`;
+        }
+        return [String(i + 1), desc, 'No'];
+      })
     : [['', '', '']];
   while (d0Rows.length < 8) d0Rows.push(['', '', '']);
   elements.push(dataTable("PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.", ['', 'Name of Client', 'New Client (Y/N)'], d0Rows, { labelPrefix: 'D0 –' }));
@@ -1188,7 +1231,7 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
   // D matters
   for (let i = 0; i < pubMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode));
+    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, isDeForestLabour));
   }
 
   // ═══ SECTION E ═══
@@ -1207,7 +1250,7 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
   // E matters
   for (let i = 0; i < confMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode));
+    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, isDeForestLabour));
   }
 
   // ═══ v26.30: SURPLUS MATTERS (RESERVE ROSTER — BEYOND 20-MATTER CEILING) ═══
@@ -1221,12 +1264,12 @@ Given the scale, complexity, and demonstrable commercial impact of the matters s
     let surplusNum = 1;
     for (const sm of curation.surplusPubMatters) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));
-      elements.push(matterTable(surplusNum++, 'D', 'Publishable', sm, exportMode));
+      elements.push(matterTable(surplusNum++, 'D', 'Publishable', sm, exportMode, isDeForestLabour));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
     for (const sm of curation.surplusConfMatters) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));
-      elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode));
+      elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode, isDeForestLabour));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
   }
