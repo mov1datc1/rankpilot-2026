@@ -59,7 +59,7 @@ PARAGRAPH 3 — OUTCOME, PRECEDENT & TEAM:
 State the broader commercial outcome, market precedent, and identify the lead partner and active team members with their substantive, verified roles.
 
 CONSTITUTIONAL RULES:
-1. ZERO INVENTED FACTS: You cannot invent currencies, numbers, dates, courts, or client names.
+1. ZERO INVENTED FACTS: You cannot invent currencies, numbers, dates, courts, regulatory authorities, or client names. If a critical fact is missing from the raw notes (such as the specific tribunal, outcome milestone, or transaction value), DO NOT invent it. Instead, formulate the sentence naturally and use an actionable partner placeholder: e.g. '[Confirm: competent tribunal/authority]', '[Confirm: final outcome/settlement stage]', or '[Confirm: estimated controversy value in USD]'.
 2. PRESERVE ALL NUMBERS & IDENTIFIERS: If the original mentions an amount (e.g. MXN 3 billion, USD 27.7M, 207.5 hectares), it MUST appear accurately in the rewrite.
 3. NO META-LABELS: Never include labels like "PARAGRAPH 1", "IMPACT:", "EXECUTION:", "OUTCOME:".
 4. TONE: Objective, analytical, prestigious third-person legal directory prose.

@@ -3,6 +3,42 @@
 All notable changes to this project are documented in this file.
 Format follows [Semantic Versioning](https://semver.org/).
 
+## [v27.0] — 2026-09-17
+
+### Evidence Readiness Engine, Quality Gate Modal & Universal Ingestion Architecture
+
+- **Evidence Readiness Engine (`src/lib/docx/evidence-readiness.ts`)**:
+  - Implemented 0–100% data maturity health scoring evaluating 5 substantive directory dimensions:
+    1. *Matter Count (30 pts)*: Calibrates volume against Chambers 10–20 matter benchmark.
+    2. *Client Specificity (20 pts)*: Audits authentic entity naming vs. vague placeholders.
+    3. *Evidentiary Substance & Concrete Outcomes (25 pts)*: Checks for verifiable legal milestones, closing decrees, or judgments (>120 chars).
+    4. *Financial & Scale Metrics (15 pts)*: Detects quantified figures in USD/local currency or impact indicators.
+    5. *Team Attribution & B10 Overview (10 pts)*: Validates lead partner assignments and practice narrative.
+  - Three operational readiness tiers: 🟢 *Listo para Chambers* (≥80%), 🟡 *Información Incompleta* (50–79%), 🔴 *Datos Insuficientes* (<50%).
+- **Interactive Quality Gate Modal & Partner Inquiry Questionnaire (`SubmissionStudio.tsx`)**:
+  - Replaces silent/blind optimization with a proactive SaaS modal whenever data readiness is below 80%.
+  - Presents 3 deterministic user pathways:
+    1. *✍️ Completar Datos Ahora*: Directly navigates and highlights missing fields.
+    2. *💾 Guardar Borrador y Consultar con Socios*: Generates an automated, professional partner inquiry questionnaire listing exact missing client names, values, outcomes, and lead partners, copied to clipboard with a single click.
+    3. *⚡ Optimizar con Advertencias (Cero Alucinación)*: Only permitted if score ≥ 35%, enforcing actionable placeholders (`[Confirm: ...]`) instead of fabricated facts.
+  - Topbar and hero banner evidence readiness badges showing live score and gaps breakdown.
+- **Matter Micro-Badges on Cards (`SubmissionStudio.tsx`)**:
+  - Added visual health tags on each matter card in Section D (Publishable) and Section E (Confidential):
+    - `✓ Evidencia Completa` (Green)
+    - `⚠ Falta Monto` (Yellow)
+    - `✕ Sin Cliente` (Red)
+    - `⚠ Sin Socio` (Indigo)
+    - `⚠ Evidencia Débil` (Red)
+- **Universal Multi-Input Ingestion Intelligence (`ai-engine/agents/prompts.py`)**:
+  - Upgraded `EXTRACTION_SYSTEM_PROMPT` to parse unstructured pitches, emails, litigation memos, and client updates.
+  - Reconstructs missing metadata from context (e.g. infers client from email recipient, practice area from litigation context) while preserving factual truth.
+- **Strict Zero-Hallucination Fallback (`ai-engine/agents/micro_optimizer.py`)**:
+  - Mandated explicit bracketed action placeholders (e.g., `[Confirm: Competent Tribunal...]`, `[Confirm: Transaction Value...]`) when essential data is absent, prohibiting LLM invention of laws or financial numbers.
+- **Builder Page UX Overhaul (`src/app/submissions/builder/page.tsx`)**:
+  - Added visual tags: `[OBLIGATORIO]` and `[RECOMENDADO TIER 1]`.
+  - Interactive `(?)` Chambers guidance modal on each field explaining why directories need it, recommended examples, and editorial rejection risks.
+  - Real-time Evidence Readiness progress bar tracking matters against the 10-matter Chambers benchmark.
+
 ## [v26.44] — 2026-09-17
 
 ### Canonical Strategy Persistence, Hero Matter Invariant, B9/B10 Roster Density & Venezuela Jurisdiction Guardrail (Angela Castillo Round 2 Validation)

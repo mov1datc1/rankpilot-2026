@@ -770,6 +770,13 @@ LAWYERS
 UNKNOWN DATA
 - Empty, absent, or unreadable facts remain null/empty.
 - Never replace missing data with a likely value.
+
+UNSTRUCTURED / FREE-TEXT / PITCH / EMAIL CORPUS
+- When the input text does not contain standard Chambers numbered tables (e.g. it is an email thread, memo, pitch deck, or list of matters):
+  - Identify distinct corporate transactions, regulatory proceedings, disputes, or advisory mandates described in the text.
+  - For each mandate, extract: title, client name, deal value (if mentioned), lead lawyer, and summary of facts.
+  - Extract all lawyers mentioned with their partner or associate status if stated.
+  - If a firm name or practice area is mentioned in the text, extract them into metadata.
 """
 
 # --- ANALYSIS LAYER (FASE 2) — v7.0 Editorial Reliability ---

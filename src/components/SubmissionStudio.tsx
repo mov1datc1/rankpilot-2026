@@ -23,8 +23,16 @@ import {
   RefreshCw,
   Eye,
   Check,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  AlertCircle,
+  HelpCircle,
+  Copy,
+  Bookmark,
+  ShieldAlert,
+  X
 } from 'lucide-react';
+import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 
 interface MatterItem {
   id?: string;
@@ -131,6 +139,13 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     stage: string;
   } | null>(null);
   const [optimizeAllComplete, setOptimizeAllComplete] = useState<boolean>(false);
+  const [showReadinessModal, setShowReadinessModal] = useState<boolean>(false);
+  const [partnerChecklistCopied, setPartnerChecklistCopied] = useState<boolean>(false);
+
+  // Evidence Readiness Engine (v27.0)
+  const readiness: EvidenceReadinessResult = React.useMemo(() => {
+    return calculateEvidenceReadiness(matters, chambersData.lawyers || [], b10Text);
+  }, [matters, chambersData.lawyers, b10Text]);
 
   // Calculations
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
@@ -290,9 +305,78 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
     return [...new Set(categorized.pub.map(m => m.client).filter(Boolean))] as string[];
   }, [categorized.pub]);
 
+  // Evidence Readiness Micro-Badges Helper
+  const getMatterBadges = (m: MatterItem) => {
+    const badges: { label: string; color: string; bg: string; icon?: string }[] = [];
+    const text = m.optimizedText || m.optimized_text || m.rawNotes || '';
+    const hasClient = Boolean(m.client && m.client.trim() !== '' && (m.isConfidential || m.client.toLowerCase() !== 'confidencial'));
+    const hasValue = Boolean(m.value && m.value.trim() !== '' && !m.value.toLowerCase().includes('n/a'));
+    const hasLead = Boolean((m.leadPartner || m.lead_partner || '').trim() !== '');
+    const hasSubstance = text.length >= 120;
+
+    if (!hasClient) {
+      badges.push({ label: 'Falta Cliente', color: '#DC2626', bg: '#FEE2E2', icon: '✕' });
+    }
+    if (!hasValue) {
+      badges.push({ label: 'Sin Monto', color: '#D97706', bg: '#FEF3C7', icon: '⚠' });
+    }
+    if (!hasLead) {
+      badges.push({ label: 'Sin Socio', color: '#4338CA', bg: '#EEF2FF', icon: '○' });
+    }
+    if (!hasSubstance) {
+      badges.push({ label: 'Evidencia Débil', color: '#DC2626', bg: '#FEE2E2', icon: '⚠' });
+    }
+    if (hasClient && hasValue && hasLead && hasSubstance) {
+      badges.push({ label: 'Evidencia Completa', color: '#16A34A', bg: '#DCFCE7', icon: '✓' });
+    }
+    return badges;
+  };
+
+  // Generate and Copy Partner Inquiry Questionnaire to Clipboard
+  const handleCopyPartnerQuestionnaire = () => {
+    let text = `SOLICITUD DE INFORMACIÓN PARA SUBMISSION CHAMBERS / LEGAL 500\n`;
+    text += `Firma: ${firmName} | Práctica: ${practiceAreaName}\n`;
+    text += `Diagnóstico de Preparación de Evidencia: ${readiness.score}% (${readiness.label})\n`;
+    text += `Fecha: ${new Date().toLocaleDateString('es-MX')}\n\n`;
+    text += `Estimados Socios y Asociados:\n`;
+    text += `Para completar la postulación oficial de la práctica ante el directorio y asegurar la mejor evaluación editorial, necesitamos solventar los siguientes datos faltantes antes de optimizar:\n\n`;
+
+    const incompleteMatters = readiness.matterStatuses.filter(s => !s.isComplete);
+    if (incompleteMatters.length > 0) {
+      text += `ASUNTOS CON INFORMACIÓN PENDIENTE (${incompleteMatters.length}):\n`;
+      incompleteMatters.forEach((item, i) => {
+        text += `\n${i + 1}. Asunto: "${item.name}"\n`;
+        text += `   Datos faltantes: ${item.missingFields.join(', ')}\n`;
+        text += `   Preguntas a responder:\n`;
+        if (!item.hasClient) text += `   - ¿Quién es el cliente corporativo o qué descripción sectorial podemos usar si es confidencial?\n`;
+        if (!item.hasValue) text += `   - ¿Cuál es el monto estimado de la operación / litigio o la escala económica (USD o MXN)?\n`;
+        if (!item.hasOutcome) text += `   - ¿Cuál fue el resultado concreto obtenido, hito de cierre o precedente alcanzado?\n`;
+        if (!item.hasLeadPartner) text += `   - ¿Quién es el socio líder y asociados clave asignados a este asunto?\n`;
+      });
+    } else {
+      text += `Todos los asuntos cargados tienen los campos indispensables completos.\n`;
+    }
+
+    text += `\nFavor de enviar estos datos a la brevedad para incorporar al borrador de RankPilot.\n`;
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setPartnerChecklistCopied(true);
+      setTimeout(() => setPartnerChecklistCopied(false), 4000);
+    }
+  };
+
   // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
-  const handleOptimizeAll = async () => {
+  const handleOptimizeAll = async (bypassReadiness: boolean = false) => {
     if (isOptimizingAll) return;
+
+    // v27.0 Evidence Readiness Gate: Block or alert if data is insufficient/incomplete
+    if (!bypassReadiness && readiness.level !== 'optimal') {
+      setShowReadinessModal(true);
+      return;
+    }
+    setShowReadinessModal(false);
+
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
 
@@ -625,8 +709,31 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
 
         {/* Master DOCX Downloads & Quick Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {/* Evidence Readiness Interactive Badge */}
           <button
-            onClick={handleOptimizeAll}
+            onClick={() => setShowReadinessModal(true)}
+            style={{
+              background: readiness.bgColor,
+              border: `1px solid ${readiness.color}40`,
+              color: readiness.color,
+              padding: '0.45rem 0.75rem',
+              borderRadius: '7px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Haz clic para ver el Diagnóstico de Suficiencia de Evidencia"
+          >
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.color }} />
+            {readiness.score}% • {readiness.label}
+          </button>
+
+          <button
+            onClick={() => handleOptimizeAll(false)}
             disabled={isOptimizingAll}
             style={{
               background: isOptimizingAll ? '#E2E8F0' : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
@@ -789,7 +896,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                 </div>
               </div>
               <button
-                onClick={handleOptimizeAll}
+                onClick={() => handleOptimizeAll(false)}
                 disabled={isOptimizingAll}
                 style={{
                   background: '#2563EB',
@@ -1080,11 +1187,51 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                       ? `Todos los asuntos (${optimizedMattersCount}/${targetMattersCount}) y la narrativa B10 están reescritos en 3 párrafos orgánicos bajo el estándar Chambers.`
                       : 'Reescribe la Sección B10 bajo los 4 Pilares Institucionales y transforma cada asunto en prosa orgánica de 3 párrafos (Asset/Scale → Craft/Outcome → Team/Precedent).'}
                   </p>
+
+                  {/* Evidence Readiness Interactive Bar */}
+                  <div
+                    onClick={() => setShowReadinessModal(true)}
+                    style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      borderRadius: '8px',
+                      padding: '0.5rem 0.85rem',
+                      marginTop: '0.75rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem'
+                    }}
+                    title="Haz clic para ver el Diagnóstico de Suficiencia de Evidencia"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{
+                        background: readiness.color,
+                        color: '#FFFFFF',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '4px'
+                      }}>
+                        {readiness.score}%
+                      </span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E0E7FF' }}>
+                        Salud de Evidencia: {readiness.label}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: '#C7D2FE' }}>
+                        ({readiness.missingElements.mattersWithoutClient} sin cliente, {readiness.missingElements.mattersWithoutValue} sin monto)
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: '#93C5FD', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                      Diagnóstico y Checklist →
+                    </span>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <button
-                    onClick={handleOptimizeAll}
+                    onClick={() => handleOptimizeAll(false)}
                     disabled={isOptimizingAll}
                     style={{
                       background: isOptimizingAll ? 'rgba(255,255,255,0.2)' : isFullyOptimized ? '#EEF2FF' : '#FFFFFF',
@@ -1603,7 +1750,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                     {/* Matter Header */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                           <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#DCFCE7', color: '#16A34A', padding: '2px 8px', borderRadius: '4px' }}>
                             D{idx + 1} · Público
                           </span>
@@ -1614,9 +1761,26 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                           )}
                           {m.leadPartner && (
                             <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                              Socio líder: <strong style={{ color: '#0F172A' }}>{m.leadPartner}</strong>
+                              Socio: <strong style={{ color: '#0F172A' }}>{m.leadPartner}</strong>
                             </span>
                           )}
+                          {/* Evidence Readiness Badges */}
+                          {getMatterBadges(m).map((badge, bIdx) => (
+                            <span key={bIdx} style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              background: badge.bg,
+                              color: badge.color,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px'
+                            }}>
+                              {badge.icon && <span>{badge.icon}</span>}
+                              {badge.label}
+                            </span>
+                          ))}
                         </div>
                         <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                           {m.client || m.name || `Asunto ${idx + 1}`}
@@ -1784,7 +1948,7 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                       {/* Matter Header */}
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '4px' }}>
                               E{idx + 1} · Confidencial
                             </span>
@@ -1793,6 +1957,23 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
                                 {m.value}
                               </span>
                             )}
+                            {/* Evidence Readiness Badges */}
+                            {getMatterBadges(m).map((badge, bIdx) => (
+                              <span key={bIdx} style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                background: badge.bg,
+                                color: badge.color,
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}>
+                                {badge.icon && <span>{badge.icon}</span>}
+                                {badge.label}
+                              </span>
+                            ))}
                           </div>
                           <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
                             {m.client || m.name || `Asunto Confidencial ${idx + 1}`}
@@ -2151,6 +2332,306 @@ The portfolio demonstrates results beyond Jalisco, including significant mandate
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* ═══ EVIDENCE READINESS & QUALITY GATE MODAL (v27.0) ═══ */}
+      {showReadinessModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '740px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+            border: '1px solid #E2E8F0',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid #E2E8F0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#F8FAFC'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: readiness.bgColor,
+                  color: readiness.color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {readiness.level === 'optimal' ? <Check size={22} /> : <AlertTriangle size={22} />}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                      Diagnóstico de Madurez de Evidencia
+                    </h3>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      background: readiness.bgColor,
+                      color: readiness.color,
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      border: `1px solid ${readiness.color}30`
+                    }}>
+                      {readiness.score}% · {readiness.label}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>
+                    Estándar Chambers and Partners & The Legal 500
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowReadinessModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#94A3B8',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              
+              {/* Executive Assessment Card */}
+              <div style={{
+                background: readiness.bgColor,
+                border: `1px solid ${readiness.color}40`,
+                borderRadius: '10px',
+                padding: '1rem 1.25rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                  <Info size={18} color={readiness.color} style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: readiness.color, margin: 0 }}>
+                      {readiness.level === 'optimal'
+                        ? 'Portafolio Sólido y Defendible'
+                        : readiness.level === 'warning'
+                        ? 'Atención: Datos Incompletos para Evaluación Tier-1'
+                        : 'Acción Requerida: Evidencia Insuficiente'}
+                    </h4>
+                    <p style={{ fontSize: '0.8rem', color: '#334155', margin: '0.25rem 0 0 0', lineHeight: 1.5 }}>
+                      {readiness.summary}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5-Dimensional Quality Checklist */}
+              <div>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>
+                  Criterios de Evaluación Editorial
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {readiness.actionableChecklist.map((item) => (
+                    <div key={item.id} style={{
+                      background: item.done ? '#F0FDF4' : '#F8FAFC',
+                      border: `1px solid ${item.done ? '#BBF7D0' : '#E2E8F0'}`,
+                      borderRadius: '8px',
+                      padding: '0.75rem 1rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                        <span style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: item.done ? '#16A34A' : '#CBD5E1',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          flexShrink: 0,
+                          marginTop: '2px'
+                        }}>
+                          {item.done ? '✓' : '!'}
+                        </span>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: item.done ? '#14532D' : '#1E293B' }}>
+                            {item.label}
+                          </div>
+                          <div style={{ fontSize: '0.73rem', color: item.done ? '#15803D' : '#64748B', marginTop: '2px' }}>
+                            {item.impact}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#475569', fontStyle: 'italic', marginTop: '2px' }}>
+                            💡 {item.guidance}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Partner Questionnaire Helper Notice */}
+              {readiness.level !== 'optimal' && (
+                <div style={{
+                  background: '#EFF6FF',
+                  border: '1px solid #BFDBFE',
+                  borderRadius: '8px',
+                  padding: '0.85rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <Bookmark size={18} color="#2563EB" />
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E40AF' }}>
+                        ¿Necesitas consultar a los socios del despacho?
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#3B82F6' }}>
+                        Copia un cuestionario pre-redactado con las preguntas exactas para los asuntos incompletos.
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCopyPartnerQuestionnaire}
+                    style={{
+                      background: partnerChecklistCopied ? '#16A34A' : '#2563EB',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.45rem 0.85rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {partnerChecklistCopied ? <Check size={14} /> : <Copy size={14} />}
+                    {partnerChecklistCopied ? '¡Copiado al Portapapeles!' : 'Copiar Cuestionario'}
+                  </button>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1px solid #E2E8F0',
+              background: '#F8FAFC',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem'
+            }}>
+              <button
+                onClick={() => setShowReadinessModal(false)}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  color: '#475569',
+                  padding: '0.6rem 1rem',
+                  borderRadius: '7px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Volver al Editor
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                {readiness.level === 'critical' ? (
+                  <button
+                    onClick={() => {
+                      setShowReadinessModal(false);
+                      const el = document.getElementById('section-d');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    style={{
+                      background: '#4F46E5',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '0.6rem 1.25rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    Completar Datos en Asuntos →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleOptimizeAll(true);
+                    }}
+                    style={{
+                      background: readiness.level === 'warning'
+                        ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                        : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '0.6rem 1.25rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <Sparkles size={14} />
+                    {readiness.level === 'warning'
+                      ? 'Optimizar con Advertencias (Cero Alucinación) →'
+                      : 'Continuar con Optimización Completa →'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+          </div>
         </div>
       )}
 
