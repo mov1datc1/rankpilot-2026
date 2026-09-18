@@ -900,7 +900,12 @@ async def extract_document_endpoint(request: Request):
         if sections:
             for label_key, sec in sections.items():
                 fields = DocumentParser.extract_matter_fields(sec["text"])
-                is_conf = "confidential" in label_key or "non-publishable" in label_key
+                conf_status = fields.get("confidentiality_status") or sec.get("confidentiality_status") or "confirmation_required"
+                is_conf = (conf_status == "confidential") or ("confidential" in label_key or "non-publishable" in label_key)
+                if is_conf and conf_status != "confidential":
+                    conf_status = "confidential"
+                is_unconfirmed = (conf_status == "confirmation_required")
+
                 c_name = re.sub(r'(?i)^\s*(?:client name,?\s*give a general description\.?|\(?or if you cannot reveal the client name[^\)]*\)?\.?)\s*', '', fields.get("client", "")).strip()
                 c_name = c_name.strip('|\n\r\t ')
                 cb_val = re.sub(r'(?i)^\s*(?:jurisdictions involved\.?|please name the jurisdictions involved\.?)\s*', '', fields.get("cross_border_jurisdictions", "")).strip()
@@ -920,7 +925,10 @@ async def extract_document_endpoint(request: Request):
                     "otherFirms": fields.get("other_firms", ""),
                     "completionDate": fields.get("completion_date", ""),
                     "isConfidential": is_conf,
-                    "publish_status": "non_publishable" if is_conf else "publishable",
+                    "confidentialityStatus": conf_status,
+                    "confidentialityConfirmed": not is_unconfirmed,
+                    "publish_status": "non_publishable" if is_conf else ("confirmation_required" if is_unconfirmed else "publishable"),
+                    "valueConflict": fields.get("value_conflict") or "",
                     "optimizedText": "",
                 })
         else:
@@ -940,6 +948,8 @@ async def extract_document_endpoint(request: Request):
             ext_matters = extract_res.get("matters", [])
             for idx, m in enumerate(ext_matters):
                 is_conf = m.get("is_confidential", False) or m.get("publish_status") in ("non_publishable", "confidential")
+                conf_status = m.get("confidentiality_status") or ("confidential" if is_conf else "confirmation_required")
+                is_unconfirmed = (conf_status == "confirmation_required")
                 matters.append({
                     "id": f"matter-ext-{idx + 1}",
                     "name": m.get("title") or f"Matter {idx + 1}",
@@ -956,7 +966,10 @@ async def extract_document_endpoint(request: Request):
                     "otherFirms": m.get("other_firms", ""),
                     "completionDate": m.get("completion_date", ""),
                     "isConfidential": is_conf,
-                    "publish_status": "non_publishable" if is_conf else "publishable",
+                    "confidentialityStatus": conf_status,
+                    "confidentialityConfirmed": not is_unconfirmed,
+                    "publish_status": "non_publishable" if is_conf else ("confirmation_required" if is_unconfirmed else "publishable"),
+                    "valueConflict": m.get("value_conflict") or "",
                     "optimizedText": "",
                 })
             if not prelim.get("firm_name"):

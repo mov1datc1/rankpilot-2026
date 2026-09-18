@@ -103,6 +103,8 @@ export async function POST(request: NextRequest) {
     const createdMatters = [];
     for (let idx = 0; idx < extractedMatters.length; idx++) {
       const m = extractedMatters[idx];
+      const confStatus = m.confidentialityStatus || (m.isConfidential ? 'confidential' : (m.confidentialityConfirmed === false ? 'confirmation_required' : 'publishable'));
+      const isConf = confStatus === 'confidential';
       const created = await prisma.matter.create({
         data: {
           submissionId: submission.id,
@@ -114,7 +116,8 @@ export async function POST(request: NextRequest) {
           rawNotes: m.rawNotes || m.summary || '',
           optimizedText: m.optimizedText || '',
           status: 'Draft',
-          isConfidential: Boolean(m.isConfidential),
+          isConfidential: isConf,
+          otherInfo: m.valueConflict || (confStatus !== 'publishable' ? `conf:${confStatus}` : null),
           crossBorder: m.crossBorder || '',
           teamMembers: m.teamMembers || m.team_members || '',
           otherFirms: m.otherFirms || '',
@@ -144,26 +147,36 @@ export async function POST(request: NextRequest) {
       b7: extractedB10 || existingChambers.b7 || '',
       department: extractedDept,
       lawyers: extractedLawyers,
-      matters: createdMatters.map(m => ({
-        id: m.id,
-        name: m.name,
-        title: m.name,
-        client: m.client,
-        value: m.value,
-        leadPartner: m.leadPartner,
-        lead_partner: m.leadPartner,
-        rawNotes: m.rawNotes,
-        summary: m.rawNotes,
-        isConfidential: m.isConfidential,
-        publish_status: m.isConfidential ? 'non_publishable' : 'publishable',
-        crossBorder: m.crossBorder,
-        teamMembers: m.teamMembers,
-        team_members: m.teamMembers,
-        otherFirms: m.otherFirms,
-        completionDate: m.completionDate,
-        optimizedText: m.optimizedText || '',
-        optimized_text: m.optimizedText || ''
-      }))
+      matters: createdMatters.map((m, idx) => {
+        const rawM = extractedMatters[idx] || {};
+        const confStatus = rawM.confidentialityStatus || (m.isConfidential ? 'confidential' : (rawM.confidentialityConfirmed === false ? 'confirmation_required' : 'publishable'));
+        const isConf = confStatus === 'confidential';
+        const isUnconfirmed = confStatus === 'confirmation_required';
+        return {
+          id: m.id,
+          name: m.name,
+          title: m.name,
+          client: m.client,
+          value: m.value,
+          leadPartner: m.leadPartner,
+          lead_partner: m.leadPartner,
+          rawNotes: m.rawNotes,
+          summary: m.rawNotes,
+          isConfidential: isConf,
+          confidentialityStatus: confStatus,
+          confidentialityConfirmed: !isUnconfirmed,
+          publish_status: isConf ? 'non_publishable' : (isUnconfirmed ? 'confirmation_required' : 'publishable'),
+          valueConflict: rawM.valueConflict || '',
+          source_label: rawM.source_label || rawM.sourceLabel || '',
+          crossBorder: m.crossBorder,
+          teamMembers: m.teamMembers,
+          team_members: m.teamMembers,
+          otherFirms: m.otherFirms,
+          completionDate: m.completionDate,
+          optimizedText: m.optimizedText || '',
+          optimized_text: m.optimizedText || ''
+        };
+      })
     };
 
     // Update submission record

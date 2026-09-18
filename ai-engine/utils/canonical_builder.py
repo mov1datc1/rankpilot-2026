@@ -158,7 +158,10 @@ def reconcile_extracted_matters_to_source(
             "completion_date": 8,
         }
         for field, value in source_fields.items():
-            if value or field_numbers[field] in observed:
+            if field in field_numbers:
+                if value or field_numbers[field] in observed:
+                    grounded[field] = value
+            else:
                 grounded[field] = value
         
         # v26.24: Auto-recover client name if missing, "Unknown client", or placeholder
@@ -172,10 +175,31 @@ def reconcile_extracted_matters_to_source(
                 if cand and cand.casefold() not in {"this will be", "confidential", "publishable", "summary of matter", "our firm", "d2 summary", "e2 summary"}:
                     grounded["client"] = cand
         grounded["source_excerpt"] = section_text
-        is_confidential = not exact_label.casefold().startswith("publishable")
-        grounded["publish_status"] = "confidential" if is_confidential else "publishable"
-        grounded["is_confidential"] = is_confidential
-        grounded["_confidentiality_locked"] = is_confidential
+        sec_conf_status = sections.get(exact_label.casefold(), {}).get("confidentiality_status")
+        field_conf_status = source_fields.get("confidentiality_status")
+        if exact_label.casefold().startswith("confidential") or exact_label.casefold().startswith("non-publishable"):
+            conf_status = "confidential"
+        elif field_conf_status == "confidential":
+            conf_status = "confidential"
+        elif sec_conf_status == "confirmation_required":
+            conf_status = "confirmation_required"
+        elif exact_label.casefold().startswith("publishable"):
+            conf_status = "publishable"
+        else:
+            conf_status = field_conf_status or sec_conf_status or "confirmation_required"
+
+        is_conf = (conf_status == "confidential")
+        is_unconfirmed = (conf_status == "confirmation_required")
+        grounded["confidentiality_status"] = conf_status
+        grounded["confidentialityStatus"] = conf_status
+        grounded["confidentialityConfirmed"] = not is_unconfirmed
+        grounded["is_confidential"] = is_conf
+        grounded["publish_status"] = "confidential" if is_conf else ("confirmation_required" if is_unconfirmed else "publishable")
+        grounded["_confidentiality_locked"] = is_conf
+        val_conflict = source_fields.get("value_conflict") or chosen.get("value_conflict") or chosen.get("valueConflict")
+        if val_conflict:
+            grounded["value_conflict"] = val_conflict
+            grounded["valueConflict"] = val_conflict
         jurisdiction = str(source_fields.get("cross_border_jurisdictions") or "").strip()
         if jurisdiction:
             # The explicit D4/E4 source answer is authoritative. Classify it

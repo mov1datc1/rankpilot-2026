@@ -374,9 +374,10 @@ class DocumentParser:
             if "Publishable" in section_order[first_confidential + 1:]:
                 warnings.append("Publishable matter headings appear after the confidential section")
 
+        errors = [f"Duplicate matter headings detected: {duplicate_labels}"] if duplicate_labels else []
         return {
-            "passed": len(normalized) > 0,
-            "errors": [],
+            "passed": len(normalized) > 0 and not duplicate_labels,
+            "errors": errors,
             "warnings": warnings,
             "duplicate_labels": duplicate_labels,
             "normalized_labels": normalized,
@@ -505,12 +506,28 @@ class DocumentParser:
                 fields[field_number] = value
         else:
             # Format B: Field Labels Extraction (Chambers Latin America / Global form without [DE] codes)
-            client_m = re.search(r"(?im)^\s*Client:\s*(.*?)$", normalized)
+            conf_m = re.search(r"(?i)(?:Confidential|Confidencial)(?:\s*\(y/n\))?[ \t]*:[ \t]*([^\r\n\|]*)", normalized)
+            if conf_m:
+                c_val = conf_m.group(1).strip().upper()
+                if c_val in ('Y', 'YES', 'SÍ', 'SI', '1', 'TRUE'):
+                    confidentiality_status = "confidential"
+                    is_confidential = True
+                elif c_val in ('N', 'NO', '0', 'FALSE'):
+                    confidentiality_status = "publishable"
+                    is_confidential = False
+                else:
+                    confidentiality_status = "confirmation_required"
+                    is_confidential = False
+            else:
+                confidentiality_status = "confirmation_required"
+                is_confidential = False
+
+            client_m = re.search(r"(?im)^\s*Client:[ \t]*([^\r\n]*)$", normalized)
             if client_m:
                 fields[1] = client_m.group(1).strip()
             
-            ctx_m = re.search(r"(?ims)^\s*Matter[’\']s Context:\s*\n(.*?)(?=^\s*Firm[’\']s role|\Z)", normalized)
-            role_m = re.search(r"(?ims)^\s*Firm[’\']s role and main output:\s*\n(.*?)(?=^\s*Lead Partner|\Z)", normalized)
+            ctx_m = re.search(r"(?ims)^\s*Matter[’\']s Context:[ \t]*\n(.*?)(?=^\s*Firm[’\']s role|\Z)", normalized)
+            role_m = re.search(r"(?ims)^\s*Firm[’\']s role and main output:[ \t]*\n(.*?)(?=^\s*Lead Partner|\Z)", normalized)
             summary_parts = []
             if ctx_m and ctx_m.group(1).strip():
                 summary_parts.append(ctx_m.group(1).strip())
@@ -526,41 +543,55 @@ class DocumentParser:
                 ]
                 fields[2] = "\n".join(lines_clean[:10])
 
-            val_m = re.search(r"(?im)^\s*Matter[’\']s Value[^\n]*:\s*(.*?)$", normalized)
+            val_m = re.search(r"(?im)^\s*Matter[’\']s Value[^\n]*:[ \t]*([^\r\n]*)$", normalized)
             if val_m:
                 v_text = val_m.group(1).strip()
                 if v_text and v_text.upper() != "N/A":
                     fields[3] = v_text
 
-            cb_m = re.search(r"(?im)^\s*Cross[- ]border[^\n]*:\s*(.*?)$", normalized)
+            cb_m = re.search(r"(?im)^\s*Cross[- ]border[^\n]*:[ \t]*([^\r\n]*)$", normalized)
             if cb_m:
                 fields[4] = cb_m.group(1).strip()
 
-            lp_m = re.search(r"(?ims)^\s*Lead Partner(?:\(s\))?:\s*\n(.*?)(?=^\s*Other team members|\Z)", normalized)
+            lp_m = re.search(r"(?ims)^\s*Lead Partner(?:\(s\))?:[ \t]*\n(.*?)(?=^\s*Other team members|\Z)", normalized)
             if lp_m:
                 fields[5] = lp_m.group(1).strip().splitlines()[0].strip()
 
-            tm_m = re.search(r"(?ims)^\s*Other team members:\s*\n(.*?)(?=^\s*Other firms|\Z)", normalized)
+            tm_m = re.search(r"(?ims)^\s*Other team members:[ \t]*\n(.*?)(?=^\s*Other firms|\Z)", normalized)
             if tm_m:
                 fields[6] = tm_m.group(1).strip().splitlines()[0].strip()
 
-            of_m = re.search(r"(?ims)^\s*Other firms advising[^\n]*:\s*\n(.*?)(?=^\s*Links to press|\Z)", normalized)
+            of_m = re.search(r"(?ims)^\s*Other firms advising[^\n]*:[ \t]*\n(.*?)(?=^\s*Links to press|\Z)", normalized)
             if of_m:
                 fields[7] = of_m.group(1).strip().splitlines()[0].strip()
 
-            status_m = re.search(r"(?im)^\s*Matter Status[^\n]*:\s*(.*?)$", normalized)
+            status_m = re.search(r"(?im)^\s*Matter Status[^\n]*:[ \t]*([^\r\n]*)$", normalized)
             if status_m:
                 fields[8] = status_m.group(1).strip()
 
+        # Value discrepancy detection right at extraction (e.g. Cinemex USD 553k vs MXN 60.5M)
+        matter_val_str = fields.get(3, "")
+        summary_str = fields.get(2, "")
+        value_conflict = None
+        has_usd_val = bool(re.search(r'US[D\$]\s*[\d\.,]+', matter_val_str, re.I))
+        has_mxn_sum = bool(re.search(r'MXN\s*[\d\.]+\s*(?:million|millones|m\b)', summary_str, re.I))
+        if has_usd_val and has_mxn_sum:
+            mxn_match = re.search(r'(MXN\s*[\d\.]+\s*(?:million|millones|m\b)?)', summary_str, re.I)
+            mxn_val = mxn_match.group(1) if mxn_match else "MXN figure"
+            value_conflict = f"SOURCE VALUE CONFLICT: Discrepancy detected between table ({matter_val_str}) and narrative ({mxn_val})."
+
         result = {
             "client": fields.get(1, ""),
-            "summary": fields.get(2, ""),
-            "matter_value": fields.get(3, ""),
+            "summary": summary_str,
+            "matter_value": matter_val_str,
             "cross_border_jurisdictions": fields.get(4, ""),
             "lead_partner": fields.get(5, ""),
             "team_members": fields.get(6, ""),
             "other_firms": fields.get(7, ""),
             "completion_date": fields.get(8, ""),
+            "is_confidential": is_confidential if 'is_confidential' in locals() else False,
+            "confidentiality_status": confidentiality_status if 'confidentiality_status' in locals() else "confirmation_required",
+            "value_conflict": value_conflict,
         }
         result["_observed_field_numbers"] = sorted(fields)
         return result
@@ -609,14 +640,30 @@ class DocumentParser:
             end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             excerpt = text[match.end():end].strip()
 
+            conf_status = "confirmation_required"
             if kind_raw == "publishable":
                 kind = "Publishable"
+                conf_status = "publishable"
             elif kind_raw in ("confidential", "non-publishable"):
                 kind = "Confidential"
+                conf_status = "confidential"
             else:
                 sec_snip = excerpt[:400]
-                is_conf = bool(re.search(r'confidential(?:\s*\(y/n\))?\s*:\s*[ysí]', sec_snip, re.I))
-                kind = "Confidential" if is_conf else "Publishable"
+                conf_m = re.search(r'(?i)(?:Confidential|Confidencial)(?:\s*\(y/n\))?[ \t]*:[ \t]*([^\r\n\|]*)', sec_snip)
+                if conf_m:
+                    c_val = conf_m.group(1).strip().upper()
+                    if c_val in ('Y', 'YES', 'SÍ', 'SI', '1', 'TRUE'):
+                        kind = "Confidential"
+                        conf_status = "confidential"
+                    elif c_val in ('N', 'NO', '0', 'FALSE'):
+                        kind = "Publishable"
+                        conf_status = "publishable"
+                    else:
+                        kind = "Publishable"
+                        conf_status = "confirmation_required"
+                else:
+                    kind = "Publishable"
+                    conf_status = "confirmation_required"
 
             label = f"{kind} Matter {num}"
             if label.lower() in seen_labels:
@@ -645,6 +692,7 @@ class DocumentParser:
             sections[label.lower()] = {
                 "label": label,
                 "text": excerpt,
+                "confidentiality_status": conf_status,
             }
         return sections
 
