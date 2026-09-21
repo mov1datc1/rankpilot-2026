@@ -88,6 +88,8 @@ export function sanitizeTemplateBoilerplate(text: string): { cleaned: string; fo
 
   // Clean double spaces and lingering orphan punctuation
   cleaned = cleaned.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  // Strip enclosing table pipe delimiters from legacy doc tables
+  cleaned = cleaned.replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
   return { cleaned, found };
 }
 

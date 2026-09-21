@@ -109,9 +109,14 @@ function dataTable(headerLabel: string, columns: string[], rows: string[][], opt
   });
 }
 
+export function cleanTablePipes(str: any): string {
+  if (!str || typeof str !== 'string') return typeof str === 'number' ? String(str) : '';
+  return str.replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
+}
+
 export function cleanLawyerNames(nameStr: string): string {
   if (!nameStr) return '';
-  let s = String(nameStr);
+  let s = cleanTablePipes(nameStr);
   // Standardize Mónica Dariane Cárdenas Fregoso (correcting 'Fragoso' and missing accents)
   s = s.replace(/M[oó]nica\s+Dariane\s+C[aá]rdenas\s+Fragoso/gi, 'Mónica Dariane Cárdenas Fregoso');
   s = s.replace(/C[aá]rdenas\s+Fragoso/gi, 'Cárdenas Fregoso');
@@ -132,12 +137,12 @@ export function cleanLawyerNames(nameStr: string): string {
   s = s.replace(/Sara\s+Elena\s+Vizcaino\s+Sedano/gi, 'Sara Elena Vizcaíno Sedano');
   // Standardize Juan Carlos de Obeso Orendain
   s = s.replace(/Juan\s+Carlos\s+De\s+Obeso\s+Orendain/gi, 'Juan Carlos de Obeso Orendain');
-  return s.trim();
+  return cleanTablePipes(s);
 }
 
 function sanitizeMatterValue(val: string, clientName: string = ''): string {
   if (!val || val === 'N/A') return 'N/A';
-  let s = String(val).trim();
+  let s = cleanTablePipes(val);
   // Unstated currency edge case (e.g. raw numbers without currency prefix)
   if ((s === '10,000,000.00 approximately' || s === '10,000,000.00' || /^10,?000,?000(?:\.00)?\s*(?:approximately)?$/i.test(s)) && !/(mxn|usd|eur|veb|cop|pen|clp|\$)/i.test(s)) {
     return '10,000,000.00 (Pending currency confirmation — presumed MXN; approx. USD 588,000)';
@@ -355,7 +360,7 @@ function sanitizeMatterSummary(rawText: string): string {
 // Dynamic client descriptor cleaner for D0 / E0 to eliminate marketing fluff and extract real sector descriptions
 function cleanClientDescriptor(rawClient: string, matter?: any): string {
   if (!rawClient) return '';
-  let s = rawClient.trim();
+  let s = cleanTablePipes(rawClient);
 
   // Strip template instructions that may have been pasted into the client field
   const templateCleaned = sanitizeTemplateBoilerplate(s).cleaned;
@@ -471,10 +476,10 @@ The intervention successfully achieved the client's strategic objectives, mitiga
   const teamMembersText = cleanLawyerNames(rawTeam);
 
   const rawStatus = matter.completionDate || matter.status || matter.date || 'Active / Concluded';
-  const statusText = sanitizeMatterSummary(rawStatus);
+  const statusText = cleanTablePipes(sanitizeMatterSummary(rawStatus));
 
-  let crossBorderVal = matter.crossBorder || matter.cross_border || '';
-  const crossBorderLower = crossBorderVal.trim().toLowerCase();
+  let crossBorderVal = cleanTablePipes(matter.crossBorder || matter.cross_border || '');
+  const crossBorderLower = crossBorderVal.toLowerCase();
   const summaryToCheck = (summaryText + ' ' + (matter.rawNotes || '') + ' ' + (matter.summary || '')).toLowerCase();
   const mentionsCrossBorderTreaty = summaryToCheck.includes('double taxation') || 
     summaryToCheck.includes('doble tributación') || 
@@ -487,6 +492,14 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     crossBorderVal = `${crossBorderVal} [SOURCE CROSS-BORDER CONFLICT: Narrative describes cross-border double taxation treaty and investment protection structuring. Confirm cross-border status prior to submission.]`;
   }
 
+  // Field 9: Other information / press link — never leak internal developer tokens (conf:...)
+  let otherInfoVal = cleanTablePipes(matter.otherInfo || matter.press_link || '');
+  if (otherInfoVal.startsWith('conf:') || otherInfoVal.includes('confirmation_required') || otherInfoVal.toLowerCase() === 'confidential') {
+    otherInfoVal = '';
+  }
+
+  const otherFirmsText = cleanTablePipes(matter.otherFirms || matter.other_firms || '');
+
   const fields: [string, string][] = [
     [clientLabel, sanitizeTemplateBoilerplate(clientName).cleaned],
     [summaryLabel, sanitizeTemplateBoilerplate(summaryText).cleaned],
@@ -494,17 +507,26 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     [`${prefix}4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.`, sanitizeTemplateBoilerplate(crossBorderVal).cleaned],
     [`${prefix}5 Lead partner`, sanitizeTemplateBoilerplate(leadPartnerText).cleaned],
     [`${prefix}6 Other team members`, sanitizeTemplateBoilerplate(teamMembersText).cleaned],
-    [`${prefix}7 Other firms advising on the matter and their role(s)`, sanitizeTemplateBoilerplate(matter.otherFirms || matter.other_firms || '').cleaned],
+    [`${prefix}7 Other firms advising on the matter and their role(s)`, sanitizeTemplateBoilerplate(otherFirmsText).cleaned],
     [`${prefix}8 Date of completion or current status`, sanitizeTemplateBoilerplate(statusText).cleaned],
-    [`${prefix}9 Other information about this matter – e.g. link to press coverage`, sanitizeTemplateBoilerplate(matter.otherInfo || matter.press_link || '').cleaned],
+    [`${prefix}9 Other information about this matter – e.g. link to press coverage`, sanitizeTemplateBoilerplate(otherInfoVal).cleaned],
   ];
 
   // Explicit Hero Matter naming for flagship mandate #1
+  const isMatterConfUnstated = Boolean(
+    matter.confidentialityStatus === 'confirmation_required' ||
+    matter.publish_status === 'confirmation_required' ||
+    matter.publishStatus === 'confirmation_required' ||
+    matter.confidentialityConfirmed === false ||
+    String(matter.otherInfo || '').includes('confirmation_required') ||
+    (matter.isConfidential === undefined && matter.confidential === undefined && matter.publishStatus === undefined && matter.publish_status === undefined)
+  );
+
   let matterHeaderTitle = `${type} Matter ${matterNum}`;
   if (matterNum === 1 && (!isConf || matter.isHero || matter.quality_label === 'Flagship Matter' || matter._isCanonicalAnchor)) {
     const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
     matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #1`;
-  } else if (!isConf && (matter.isConfidential === undefined && matter.confidential === undefined && matter.publishStatus === undefined && matter.publish_status === undefined)) {
+  } else if (!isConf && isMatterConfUnstated) {
     matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED — Status unstated in source; verify before filing]`;
   }
 
@@ -1058,7 +1080,16 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   const d0Rows = pubClients.length > 0
     ? pubClients.map((c, i) => {
         const associatedMatter = pubMatters.find((m: any) => m.client === c);
-        const isConfUnstated = Boolean(associatedMatter && (associatedMatter.isConfidential === undefined && associatedMatter.confidential === undefined && associatedMatter.publishStatus === undefined && associatedMatter.publish_status === undefined));
+        const isConfUnstated = Boolean(
+          associatedMatter && (
+            associatedMatter.confidentialityStatus === 'confirmation_required' ||
+            associatedMatter.publish_status === 'confirmation_required' ||
+            associatedMatter.publishStatus === 'confirmation_required' ||
+            associatedMatter.confidentialityConfirmed === false ||
+            String(associatedMatter.otherInfo || '').includes('confirmation_required') ||
+            (associatedMatter.isConfidential === undefined && associatedMatter.confidential === undefined && associatedMatter.publishStatus === undefined && associatedMatter.publish_status === undefined)
+          )
+        );
         let desc = cleanClientDescriptor(String(c));
         if (isConfUnstated && !desc.includes('CONFIRMATION REQUIRED')) {
           desc = `${desc} [CONFIRMATION REQUIRED — Confidentiality unstated in source: confirm publishability before delivery]`;
