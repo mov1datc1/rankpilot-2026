@@ -239,8 +239,42 @@ The practice regularly represents domestic conglomerates, financial institutions
     return s.trim();
   };
 
-  // Flagship Matter: strictly the #1 curated matter from curateMatters
+  // Flagship Matter: strictly the hero matter (if designated) or top curated matter
   const flagshipMatter = React.useMemo(() => {
+    const all = [...(categorized.pub || []), ...(categorized.conf || []), ...(categorized.pruned || []), ...(matters || [])];
+    
+    // 1. Explicit Hero Matter ID
+    const heroId = chambersData?.hero_matter_id 
+      || chambersData?.canonical_matter_selection?.hero_matter_id
+      || (submission as any)?.hero_matter_id;
+    if (heroId) {
+      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(heroId).toLowerCase());
+      if (found) return found;
+    }
+
+    // 2. Explicit Hero Matter Title / Client Name
+    const rawHeroTitle = chambersData?.hero_matter_title 
+      || chambersData?.hero_matter_name
+      || chambersData?.hero_matter
+      || chambersData?.canonical_matter_selection?.hero_matter_title
+      || chambersData?.narrative_architecture?.hero_matter
+      || (submission as any)?.hero_matter;
+    if (rawHeroTitle && typeof rawHeroTitle === 'string' && rawHeroTitle.trim().length > 2 && rawHeroTitle !== 'Anchor Mandate' && rawHeroTitle !== 'Strategic Flagship Mandate') {
+      const heroLower = rawHeroTitle.toLowerCase().trim();
+      const found = all.find(m => {
+        const client = String(m.client || m.clientName || '').toLowerCase().trim();
+        const title = String(m.title || m.name || '').toLowerCase().trim();
+        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
+               (title && (title.includes(heroLower) || heroLower.includes(title)));
+      });
+      if (found) return found;
+    }
+
+    // 3. Matter explicitly flagged with isHero / is_hero / hero
+    const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
+    if (heroFlagged) return heroFlagged;
+
+    // 4. Default fallback: first publishable matter, or first confidential matter
     if (categorized.pub && categorized.pub.length > 0) {
       return categorized.pub[0];
     }
@@ -248,7 +282,7 @@ The practice regularly represents domestic conglomerates, financial institutions
       return categorized.conf[0];
     }
     return matters[0] || null;
-  }, [categorized, matters]);
+  }, [categorized, matters, chambersData, submission]);
 
   const verifiedValuesList = React.useMemo(() => {
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
