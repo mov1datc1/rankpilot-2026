@@ -1,7 +1,31 @@
 # CHANGELOG — RankPilot 2026
 
 All notable changes to this project are documented in this file.
-Format follows [Semantic Versioning](https://semver.org/).
+## [v28.0] — 2026-09-21
+
+### Multi-Firm Dynamic Editorial Engine, Angela Castillo 8-Point Compliance, 3-State Confidentiality & UI Flagship Resolution
+
+- **Fully Dynamic Multi-Firm Architecture (`src/lib/docx/matter-curator.ts`, `submission-builder.ts`, `complete/route.ts`)**:
+  - Eliminated all firm-specific hardcoding (`if (isDeforest)`, `if (isAraquereyna)`).
+  - Generalised curation, candidate roadmap generation, B10 synthesis, and conflict detection into a 100% agnostic, dynamic engine applicable to any global law firm and practice area.
+- **Angela Castillo 8-Point Editorial Compliance Engine**:
+  - *B9 Individual Rankings Strategy*: Full lawyer rosters with bios, contact details, partner status, suggested ranking targets (*Associate to Watch*, *Band 4*), and explicit attribution of real handled mandates.
+  - *B10 Capabilities Calibrated (<500 words)*: Automatically enforces strict word limits across all practices (DeForest Labour: 382w DOCX / 474w Studio; Araquereyna Tax: 440w DOCX / 429w Studio) structured around the 4 Institutional Pillars (Strategic Scope, Mandate/Client Breadth, Leadership Bench, and Cross-Border/Affiliations).
+  - *1:1 Curation Reconciliation Table (Table 3 in Strategic Audit)*: Full 1:1 accountability for all source matters (e.g. 22 matters for Araquereyna, 32 matters for DeForest), clearly demarcating Core inclusions (10–12 Pub + 4–7 Conf) from strategic Reserve roster matters with explicit rationale ("Held in reserve roster under Chambers confidential ceiling...").
+  - *Lawyer Candidate Strategic Roadmaps (Table 5 in Strategic Audit)*: Programmatic roadmap mapping each listed lawyer with current tier, target rank, strategic rationale, real supporting mandates, and high-impact partner action items.
+  - *D0 / E0 Confidentiality Control & 3-State Confidentiality*: Distinguishes explicit Publishable, explicit Confidential, and Unstated status. Injects `[CONFIRMATION REQUIRED — Confidentiality unstated in source: confirm publishability before delivery]` in Table D0 and matter headers whenever confidentiality was omitted in the source document.
+  - *Automated Conflict & Discrepancy Warning Banners*:
+    - `[SOURCE VALUE CONFLICT]`: Injected on monetary exposure discrepancies.
+    - `[SOURCE ENTITY CONFLICT]`: Injected when corporate descriptions or sectors contradict source materials.
+    - `[SOURCE CROSS-BORDER CONFLICT]`: Injected when a matter is marked "No" for cross-border but substantive prose describes international double taxation treaties, bilateral investment treaties, or offshore structuring.
+  - *Organic 3-Paragraph Matter Prose*: Standardized all curated matters into fluid, three-paragraph narratives (Asset/Scale $\to$ Craft/Outcome $\to$ Team/Precedent) between 110–180 words, eliminating rigid bullet points and robotic labels.
+- **Dynamic Hero Matter Resolution in Submission Studio (`SubmissionStudio.tsx`)**:
+  - Enhanced `flagshipMatter` `useMemo` in the Submission Studio sidebar to dynamically resolve the designated Hero Matter via `hero_matter_id`, `hero_matter_title`, or `isHero` across all matter pools (public, confidential, surplus), resolving the issue where the sidebar defaulted blindly to the first publishable matter.
+- **Legacy Document Formatting & Internal Token Sanitization (`submission-builder.ts`, `artifact-integrity-check.ts`)**:
+  - Integrated `cleanTablePipes` to cleanly strip enclosing table pipe delimiters (`|`) and orphaned newlines originating from legacy `.doc` ASCII table extractions across lawyer names, matter values, completion dates, and partner team lists.
+  - Sanitized Field D9 / E9 (*"Other information about this matter – e.g. link to press coverage"*) to suppress internal database tags (`conf:confirmation_required`, `conf:confidential`), ensuring clean DOCX generation without internal developer token leakage.
+- **Matter Assistant Integration (`src/app/api/submissions/import-matters/route.ts`)**:
+  - Enabled seamless import of matters from the centralized Matters Assistant library directly into active Submissions and Studio with full metadata preservation.
 
 ## [v27.0] — 2026-09-17
 
