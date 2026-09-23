@@ -68,10 +68,8 @@ function BuilderContent() {
   const [primaryObjective, setPrimaryObjective] = useState<string>('First-time recognition');
   const [secondaryObjective, setSecondaryObjective] = useState<string>('Highlight Cross-Border Mandates');
 
-  // Draft Modality States (Single file or pasted text)
-  const [draftMode, setDraftMode] = useState<'upload' | 'paste'>('upload');
+  // Draft Modality States (Single file)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [pastedText, setPastedText] = useState('');
   const draftFileInputRef = useRef<HTMLInputElement>(null);
 
   // Scratch / Multi-Doc Modality States
@@ -124,12 +122,8 @@ function BuilderContent() {
     setErrorMessage('');
 
     if (modality === 'draft') {
-      if (draftMode === 'upload' && !selectedFile) {
-        setErrorMessage('Por favor selecciona un archivo DOCX o DOC con el borrador.');
-        return;
-      }
-      if (draftMode === 'paste' && !pastedText.trim()) {
-        setErrorMessage('Por favor pega el texto del borrador de tu submission.');
+      if (!selectedFile) {
+        setErrorMessage('Por favor selecciona un archivo Word (.docx o .doc) con el borrador oficial.');
         return;
       }
     } else {
@@ -162,7 +156,7 @@ function BuilderContent() {
       const sourcesPayload: Array<{ url: string; name: string; text?: string }> = [];
 
       // 2. Upload Files to Supabase Storage
-      if (modality === 'draft' && draftMode === 'upload' && selectedFile) {
+      if (modality === 'draft' && selectedFile) {
         setBuildStepText('Subiendo documento de borrador a almacenamiento seguro...');
         const ext = selectedFile.name.split('.').pop() || 'docx';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
@@ -206,7 +200,7 @@ function BuilderContent() {
       const extractPayload: any = {
         submissionId,
         documentUrl: primaryDocUrl || (sourcesPayload.length > 0 ? sourcesPayload[0].url : ''),
-        text: draftMode === 'paste' ? pastedText : (freeformNotes || ''),
+        text: freeformNotes || '',
         sources: sourcesPayload,
         context: {
           directory: targetDirectory,
@@ -776,108 +770,52 @@ function BuilderContent() {
                   Borrador Oficial del Submission
                 </h3>
                 <p style={{ fontSize: '0.88rem', color: '#64748B', marginTop: '0.2rem', marginBottom: 0 }}>
-                  Sube el archivo Word oficial de tu firma (.docx / .doc) o pega el texto estructurado del borrador.
+                  Sube el archivo Word oficial de tu firma (.docx / .doc) estructurado bajo la plantilla del directorio.
                 </p>
               </div>
 
-              {/* Tab switch for Draft (Upload vs Paste) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setDraftMode('upload')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: draftMode === 'upload' ? '#EFF6FF' : '#F8FAFC',
-                    color: draftMode === 'upload' ? '#2563eb' : '#64748B'
-                  }}
-                >
-                  Subir Documento Word (.docx / .doc)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDraftMode('paste')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                    background: draftMode === 'paste' ? '#EFF6FF' : '#F8FAFC',
-                    color: draftMode === 'paste' ? '#2563eb' : '#64748B'
-                  }}
-                >
-                  Pegar Texto del Borrador
-                </button>
-              </div>
-
-              {draftMode === 'upload' ? (
-                <div
-                  onClick={() => draftFileInputRef.current?.click()}
-                  style={{
-                    border: '2px dashed #CBD5E1',
-                    borderRadius: '12px',
-                    padding: '2.5rem 1.5rem',
-                    textAlign: 'center',
-                    background: selectedFile ? '#F0FDF4' : '#F8FAFC',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <input
-                    type="file"
-                    ref={draftFileInputRef}
-                    onChange={handleDraftFileSelect}
-                    accept=".docx,.doc"
-                    style={{ display: 'none' }}
-                  />
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: selectedFile ? '#DCFCE7' : '#EFF6FF', color: selectedFile ? '#16A34A' : '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
-                    {selectedFile ? <FileCheck size={24} /> : <Upload size={24} />}
+              <div
+                onClick={() => draftFileInputRef.current?.click()}
+                style={{
+                  border: '2px dashed #CBD5E1',
+                  borderRadius: '12px',
+                  padding: '2.5rem 1.5rem',
+                  textAlign: 'center',
+                  background: selectedFile ? '#F0FDF4' : '#F8FAFC',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <input
+                  type="file"
+                  ref={draftFileInputRef}
+                  onChange={handleDraftFileSelect}
+                  accept=".docx,.doc"
+                  style={{ display: 'none' }}
+                />
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: selectedFile ? '#DCFCE7' : '#EFF6FF', color: selectedFile ? '#16A34A' : '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+                  {selectedFile ? <FileCheck size={24} /> : <Upload size={24} />}
+                </div>
+                {selectedFile ? (
+                  <div>
+                    <span style={{ fontSize: '1rem', fontWeight: 700, color: '#15803D', display: 'block' }}>
+                      {selectedFile.name}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#166534', marginTop: '0.2rem', display: 'block' }}>
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Haz clic para cambiar de archivo
+                    </span>
                   </div>
-                  {selectedFile ? (
-                    <div>
-                      <span style={{ fontSize: '1rem', fontWeight: 700, color: '#15803D', display: 'block' }}>
-                        {selectedFile.name}
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: '#166534', marginTop: '0.2rem', display: 'block' }}>
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Haz clic para cambiar de archivo
-                      </span>
-                    </div>
-                  ) : (
-                    <div>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A', display: 'block' }}>
-                        Selecciona o arrastra el borrador oficial en .docx o .doc
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.25rem', display: 'block' }}>
-                        Compatible con plantillas de Chambers &amp; Partners, The Legal 500 y Leaders League
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <textarea
-                    rows={9}
-                    value={pastedText}
-                    onChange={e => setPastedText(e.target.value)}
-                    placeholder="Pega aquí el contenido de las tablas o secciones oficiales de tu borrador..."
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.88rem',
-                      lineHeight: '1.5',
-                      fontFamily: 'monospace'
-                    }}
-                  />
-                </div>
-              )}
+                ) : (
+                  <div>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A', display: 'block' }}>
+                      Selecciona o arrastra el borrador oficial en .docx o .doc
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.25rem', display: 'block' }}>
+                      Compatible con plantillas de Chambers &amp; Partners, The Legal 500 y Leaders League
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             /* If Modality B: Dispersed Documents Form */
