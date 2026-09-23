@@ -44,7 +44,7 @@ interface UploadedSourceFile {
   type: string;
 }
 
-export default function BuilderPage() {
+function BuilderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -787,3 +787,17 @@ export default function BuilderPage() {
     </div>
   );
 }
+
+export default function BuilderPage() {
+  return (
+    <React.Suspense fallback={
+      <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '4rem 1.5rem', textAlign: 'center', color: '#64748B' }}>
+        <Loader2 size={28} className="animate-spin" style={{ margin: '0 auto 0.75rem auto', color: '#4F46E5' }} />
+        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Cargando Builder...</span>
+      </div>
+    }>
+      <BuilderContent />
+    </React.Suspense>
+  );
+}
+

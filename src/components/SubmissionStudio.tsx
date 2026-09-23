@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { curateMatters } from '@/lib/docx/matter-curator';
 import { 
   Download, 
@@ -77,10 +77,17 @@ export default function SubmissionStudio({
   auditChildren
 }: SubmissionStudioProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [showValidationWizard, setShowValidationWizard] = useState<boolean>(() => {
-    return searchParams?.get('validate') === 'true';
-  });
+  const [showValidationWizard, setShowValidationWizard] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('validate') === 'true') {
+        setShowValidationWizard(true);
+      }
+    }
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'studio' | 'audit'>('studio');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [copilotCollapsed, setCopilotCollapsed] = useState<boolean>(false);
