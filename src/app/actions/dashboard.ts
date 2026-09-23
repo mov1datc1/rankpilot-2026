@@ -27,11 +27,12 @@ export async function getDashboardStats() {
       return t > 0 && t === o;
     }).length;
 
-    const recentSubmissions = submissions.slice(0, 5).map(s => ({
+    const recentSubmissions = submissions.slice(0, 8).map(s => ({
       id: s.id,
       targetDirectory: s.targetDirectory,
       practiceArea: s.practiceArea,
       guideRegion: s.guideRegion,
+      status: s.status,
       mattersCount: s.matters.length,
       optimizedCount: s.matters.filter(m => m.status === 'AI Optimized').length,
       createdAt: s.createdAt,

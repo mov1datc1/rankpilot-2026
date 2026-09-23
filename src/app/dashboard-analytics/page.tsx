@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart2, FileText, Zap, CheckCircle2, Clock, TrendingUp, ArrowUpRight, AlertTriangle } from 'lucide-react';
+import { BarChart2, FileText, Zap, CheckCircle2, Clock, TrendingUp, ArrowUpRight, AlertTriangle, Globe } from 'lucide-react';
 import { getDashboardStats } from '@/app/actions/dashboard';
 import Link from 'next/link';
 
@@ -10,6 +10,7 @@ type RecentSub = {
   targetDirectory: string;
   practiceArea: string;
   guideRegion: string;
+  status?: string;
   mattersCount: number;
   optimizedCount: number;
   createdAt: Date | string;
@@ -90,6 +91,95 @@ export default function DashboardAnalyticsPage() {
           );
         })}
       </div>
+
+      {/* Submissions Recientes en Proceso Cards */}
+      {stats.recentSubmissions.length > 0 && (
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 2px 4px -1px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>
+                Submissions Recientes en Proceso
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0.2rem 0 0 0' }}>
+                Acceso directo a las postulaciones y borradores activos de tu equipo
+              </p>
+            </div>
+            <span style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: '#2563eb',
+              background: '#eff6ff',
+              padding: '0.3rem 0.65rem',
+              borderRadius: '9999px'
+            }}>
+              {stats.recentSubmissions.length} disponibles
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+            {stats.recentSubmissions.slice(0, 6).map((sub) => {
+              const cd = sub.chambersData as any;
+              const fName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || 'Firma Legal';
+              const isOptimized = sub.status === 'Optimized' || (sub.mattersCount > 0 && sub.mattersCount === sub.optimizedCount);
+              const statusDisplay = sub.status || (isOptimized ? 'Optimized' : 'In Progress');
+
+              return (
+                <div
+                  key={sub.id}
+                  onClick={() => window.location.href = `/reports/${sub.id}`}
+                  style={{
+                    padding: '1.15rem',
+                    borderRadius: '12px',
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = '#2563eb';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37,99,235,0.08)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {sub.targetDirectory}
+                    </span>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      background: isOptimized ? '#ECFDF5' : '#EFF6FF',
+                      color: isOptimized ? '#065F46' : '#1E40AF',
+                      fontWeight: 600
+                    }}>
+                      {statusDisplay}
+                    </span>
+                  </div>
+                  <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#0F172A', margin: '0.35rem 0 0.4rem 0', lineHeight: 1.3 }}>
+                    {fName} • {sub.practiceArea}
+                  </h4>
+                  <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Globe size={13} color="#94A3B8" /> {sub.guideRegion}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Recent Submissions Table */}
       <div style={{

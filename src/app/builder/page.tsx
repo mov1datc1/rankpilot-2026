@@ -9,20 +9,18 @@ import {
   Sparkles, 
   CheckCircle2, 
   AlertCircle, 
-  Clock, 
   ArrowRight, 
   ArrowLeft,
   FileSpreadsheet, 
   X, 
   Loader2, 
   Briefcase, 
-  Globe, 
   Target,
   FileCode,
   Edit2
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createSubmission, getUserSubmissions } from '@/app/actions/submissions';
+import { createSubmission } from '@/app/actions/submissions';
 import { createClient } from '@/utils/supabase/client';
 import PremiumSelect from '@/components/PremiumSelect';
 import { 
@@ -69,7 +67,6 @@ function BuilderContent() {
   const [currentBand, setCurrentBand] = useState<string>('Unranked');
   const [primaryObjective, setPrimaryObjective] = useState<string>('First-time recognition');
   const [secondaryObjective, setSecondaryObjective] = useState<string>('Highlight Cross-Border Mandates');
-  const [deadline, setDeadline] = useState<string>('');
 
   // Draft Modality States (Single file or pasted text)
   const [draftMode, setDraftMode] = useState<'upload' | 'paste'>('upload');
@@ -86,17 +83,6 @@ function BuilderContent() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildStepText, setBuildStepText] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
-  // Recent Submissions
-  const [recentSubmissions, setRecentSubmissions] = useState<any[]>([]);
-
-  useEffect(() => {
-    getUserSubmissions().then(res => {
-      if (res.success && res.data) {
-        setRecentSubmissions(res.data);
-      }
-    });
-  }, []);
 
   // Smart objective defaults based on band
   useEffect(() => {
@@ -163,7 +149,6 @@ function BuilderContent() {
         practiceArea,
         guideRegion: `${guideRegion} — ${country}`,
         currentBand,
-        deadline: deadline || undefined,
         primaryObjective,
         secondaryObjective
       });
@@ -517,7 +502,7 @@ function BuilderContent() {
                 {calibrationSubStep === 4 && '4. Área de Práctica'}
                 {calibrationSubStep === 5 && '5. Banda o Tier Actual de la Firma'}
                 {calibrationSubStep === 6 && '6. Objetivo Estratégico Primario'}
-                {calibrationSubStep === 7 && '7. Objetivo Secundario y Fecha Límite'}
+                {calibrationSubStep === 7 && '7. Objetivo Estratégico Secundario'}
               </h2>
             </div>
 
@@ -645,35 +630,16 @@ function BuilderContent() {
 
             {/* SUBSTEP 7 */}
             {calibrationSubStep === 7 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                <div>
-                  <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.85rem' }}>
-                    ¿Qué objetivo editorial secundario deseas potenciar?
-                  </p>
+              <div>
+                <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.85rem' }}>
+                  ¿Qué objetivo editorial secundario deseas potenciar?
+                </p>
+                <div style={{ maxWidth: '450px' }}>
                   <PremiumSelect
                     label="Objetivo Secundario"
                     value={secondaryObjective}
                     onChange={setSecondaryObjective}
                     options={SUBMISSION_OBJECTIVES}
-                  />
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.85rem' }}>
-                    Fecha límite oficial de entrega (Opcional):
-                  </p>
-                  <input
-                    type="date"
-                    value={deadline}
-                    onChange={e => setDeadline(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '0.88rem',
-                      color: '#0F172A',
-                      background: '#FFFFFF'
-                    }}
                   />
                 </div>
               </div>
@@ -1101,63 +1067,6 @@ function BuilderContent() {
                 </>
               )}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* RECENT SUBMISSIONS HISTORY */}
-      {recentSubmissions.length > 0 && (
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: '12px',
-          border: '1px solid #E2E8F0',
-          padding: '1.5rem',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0F172A', margin: 0 }}>
-              Submissions Recientes en Proceso
-            </h3>
-            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-              {recentSubmissions.length} disponibles
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.85rem' }}>
-            {recentSubmissions.slice(0, 6).map((sub: any) => {
-              const fName = sub.chambersData?.firm_name || sub.chambersData?.firmName || 'Firma Legal';
-              return (
-                <div
-                  key={sub.id}
-                  onClick={() => router.push(`/reports/${sub.id}`)}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    border: '1px solid #E2E8F0',
-                    background: '#F8FAFC',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#2563eb')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase' }}>
-                      {sub.targetDirectory}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', background: '#EFF6FF', color: '#1E40AF', fontWeight: 600 }}>
-                      {sub.status || 'Draft'}
-                    </span>
-                  </div>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: '0.4rem 0 0.2rem 0' }}>
-                    {fName} • {sub.practiceArea}
-                  </h4>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Globe size={12} /> {sub.guideRegion}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
