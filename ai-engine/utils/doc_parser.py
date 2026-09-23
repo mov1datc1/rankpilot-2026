@@ -743,25 +743,35 @@ class DocumentParser:
             if not header:
                 return ""
             inline = header.groupdict().get("inline", "").strip(" |:-–—\t")
-            if inline:
+            if inline and not inline.startswith("===") and not inline.startswith("---") and "SOURCE DOCUMENT" not in inline:
                 return inline
             for line in source[header.end():].splitlines():
                 value = line.strip(" |\t")
-                if value:
+                if value and not value.startswith("===") and not value.startswith("---") and "SOURCE DOCUMENT" not in value and "END DOCUMENT" not in value:
                     return value
             return ""
 
         firm = answer_after(r"^\s*(?:A1\s+)?Firm(?:’s|\'s)?\s+Name(?P<inline>[^\n]*)$")
-        practice = ""
-        for line in source.splitlines()[:10]:
-            l = line.strip()
-            l_lower = l.lower()
-            if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation"]):
-                if not l_lower.startswith("practice area description"):
-                    practice = l
-                    break
+        
+        # Priority 1: Check explicit A2 Practice Area header directly from Chambers form
+        practice = answer_after(r"^\s*(?:A2\s+)?Practice\s+Area(?!\s+Description)(?P<inline>[^\n]*)$")
+
+        # Priority 2: Fallback to scanning header lines if A2 header wasn't found
         if not practice:
-            practice = answer_after(r"^\s*(?:A2\s+)?Practice\s+Area(?!\s+Description)(?P<inline>[^\n]*)$")
+            for line in source.splitlines()[:25]:
+                l = line.strip()
+                if not l or l.startswith("===") or l.startswith("---") or "SOURCE DOCUMENT" in l or "END DOCUMENT" in l:
+                    continue
+                l_lower = l.lower()
+                if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation", "m&a", "mergers", "energy", "intellectual property", "dispute resolution", "competition"]):
+                    if not l_lower.startswith("practice area description"):
+                        clean_l = re.sub(r'(?i)^\s*(?:submission\s+[-–—:]*|practice\s+area\s*[-–—:]*|area\s*[-–—:]*)\s*', '', l).strip()
+                        practice = clean_l or l
+                        break
+
+        # Safety: Sanitize practice area if any delimiter artifact leaked
+        if "SOURCE DOCUMENT" in practice or practice.startswith("===") or "END DOCUMENT" in practice:
+            practice = ""
 
         jurisdiction = answer_after(
             r"^\s*(?:A3\s+)?Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"

@@ -858,25 +858,35 @@ async def extract_document_endpoint(request: Request):
         sources = data.get("sources") or context.get("sources") or []
         doc_texts = []
         if sources and isinstance(sources, list) and len(sources) > 0:
-            for s in sources:
-                s_url = s.get("url") if isinstance(s, dict) else str(s)
-                s_name = s.get("name") if isinstance(s, dict) else os.path.basename(s_url)
-                s_text = s.get("text") if isinstance(s, dict) else ""
-                if s_url:
-                    try:
-                        parsed = DocumentParser.parse(s_url)
-                        if parsed and parsed.strip():
-                            doc_texts.append(f"=== SOURCE DOCUMENT: {s_name} ===\n{parsed.strip()}\n=== END DOCUMENT: {s_name} ===")
-                    except Exception as err:
-                        logger.warning(f"Failed parsing source document {s_name}: {err}")
-                elif s_text and s_text.strip():
-                    doc_texts.append(f"=== SOURCE NOTE: {s_name} ===\n{s_text.strip()}\n=== END NOTE: {s_name} ===")
-            if doc_texts:
-                doc_text = "\n\n".join(doc_texts)
-            elif is_file:
-                doc_text = DocumentParser.parse(user_input)
+            if len(sources) == 1 and sources[0].get("url"):
+                # Single document (e.g. Modality A Draft) — parse directly without artificial delimiter
+                s_url = sources[0].get("url")
+                try:
+                    parsed = DocumentParser.parse(s_url)
+                    doc_text = parsed.strip() if parsed else ""
+                except Exception as err:
+                    logger.warning(f"Failed parsing single source document: {err}")
+                    doc_text = ""
             else:
-                doc_text = user_input
+                for s in sources:
+                    s_url = s.get("url") if isinstance(s, dict) else str(s)
+                    s_name = s.get("name") if isinstance(s, dict) else os.path.basename(s_url)
+                    s_text = s.get("text") if isinstance(s, dict) else ""
+                    if s_url:
+                        try:
+                            parsed = DocumentParser.parse(s_url)
+                            if parsed and parsed.strip():
+                                doc_texts.append(f"=== SOURCE DOCUMENT: {s_name} ===\n{parsed.strip()}\n=== END DOCUMENT: {s_name} ===")
+                        except Exception as err:
+                            logger.warning(f"Failed parsing source document {s_name}: {err}")
+                    elif s_text and s_text.strip():
+                        doc_texts.append(f"=== SOURCE NOTE: {s_name} ===\n{s_text.strip()}\n=== END NOTE: {s_name} ===")
+                if doc_texts:
+                    doc_text = "\n\n".join(doc_texts)
+                elif is_file:
+                    doc_text = DocumentParser.parse(user_input)
+                else:
+                    doc_text = user_input
         elif is_file:
             doc_text = DocumentParser.parse(user_input)
         else:
@@ -998,14 +1008,20 @@ async def extract_document_endpoint(request: Request):
                 prelim = extract_res.get("metadata", {})
 
         firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
-        practice_area = prelim.get("practice_area") or context.get("practice_area") or ""
-        location = prelim.get("location") or context.get("jurisdiction") or ""
+        raw_practice = prelim.get("practice_area") or ""
+        if "SOURCE DOCUMENT" in raw_practice or raw_practice.startswith("===") or "END DOCUMENT" in raw_practice:
+            raw_practice = ""
+        calibrated_practice = context.get("practice_area") or context.get("practiceArea") or ""
+        practice_area = raw_practice or calibrated_practice
+        location = prelim.get("jurisdiction") or prelim.get("location") or context.get("jurisdiction") or ""
 
         return JSONResponse(status_code=200, content={
             "success": True,
             "metadata": {
                 "firm_name": firm_name,
                 "practice_area": practice_area,
+                "extracted_practice_area": raw_practice,
+                "calibrated_practice_area": calibrated_practice,
                 "location": location,
             },
             "department": {

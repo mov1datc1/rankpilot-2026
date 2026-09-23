@@ -16,7 +16,8 @@ import {
   Users, 
   Briefcase, 
   FileText,
-  X
+  X,
+  Check
 } from 'lucide-react';
 
 export interface PostIngestionWizardModalProps {
@@ -33,6 +34,8 @@ export interface PostIngestionWizardModalProps {
   initialData: {
     firmName?: string;
     practiceArea?: string;
+    calibratedPracticeArea?: string;
+    extractedPracticeArea?: string;
     location?: string;
     b10Text?: string;
     lawyers?: any[];
@@ -48,13 +51,31 @@ export default function PostIngestionWizardModal({
   initialData,
   targetDirectory = 'Chambers & Partners'
 }: PostIngestionWizardModalProps) {
+  const sanitizeStr = (s?: string) => {
+    if (!s) return '';
+    if (s.includes('SOURCE DOCUMENT') || s.startsWith('===')) return '';
+    return s.trim();
+  };
+
   // Local state for all fields being validated
-  const [firmName, setFirmName] = useState(initialData.firmName || '');
-  const [practiceArea, setPracticeArea] = useState(initialData.practiceArea || '');
-  const [location, setLocation] = useState(initialData.location || '');
+  const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
+  const [practiceArea, setPracticeArea] = useState(sanitizeStr(initialData.practiceArea));
+  const [location, setLocation] = useState(sanitizeStr(initialData.location));
   const [b10Text, setB10Text] = useState(initialData.b10Text || '');
   const [lawyers, setLawyers] = useState<any[]>(initialData.lawyers || []);
   const [matters, setMatters] = useState<any[]>(initialData.matters || []);
+
+  const calibratedPractice = sanitizeStr(initialData.calibratedPracticeArea);
+  const extractedPractice = sanitizeStr(initialData.extractedPracticeArea || initialData.practiceArea);
+
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const hasPracticeDiscrepancy = Boolean(
+    calibratedPractice && 
+    extractedPractice && 
+    norm(calibratedPractice) !== norm(extractedPractice) &&
+    !norm(calibratedPractice).includes(norm(extractedPractice)) &&
+    !norm(extractedPractice).includes(norm(calibratedPractice))
+  );
 
   // Wizard Navigation:
   // Step 1: Firm & Practice Data
@@ -75,9 +96,9 @@ export default function PostIngestionWizardModal({
   // Sync when initialData changes
   useEffect(() => {
     if (initialData) {
-      setFirmName(initialData.firmName || '');
-      setPracticeArea(initialData.practiceArea || '');
-      setLocation(initialData.location || '');
+      setFirmName(sanitizeStr(initialData.firmName));
+      setPracticeArea(sanitizeStr(initialData.practiceArea));
+      setLocation(sanitizeStr(initialData.location));
       setB10Text(initialData.b10Text || '');
       setLawyers(initialData.lawyers || []);
       setMatters(initialData.matters || []);
@@ -239,6 +260,73 @@ export default function PostIngestionWizardModal({
                   </p>
                 </div>
               </div>
+
+              {/* Discrepancy Alert between Calibration and Extracted Document */}
+              {hasPracticeDiscrepancy && (
+                <div style={{
+                  background: '#FFFBEB',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '10px',
+                  padding: '1rem 1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertTriangle size={18} color="#D97706" />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400E' }}>
+                      Discrepancia en Área de Práctica Detectada
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: '#78350F', margin: 0, lineHeight: 1.45 }}>
+                    En la calibración estratégica seleccionaste <strong>{calibratedPractice}</strong>, pero en el documento identificamos <strong>{extractedPractice}</strong>. Selecciona qué área deseas oficializar para este submission:
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPracticeArea(extractedPractice)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: practiceArea === extractedPractice ? '#2563eb' : '#FFFFFF',
+                        color: practiceArea === extractedPractice ? '#FFFFFF' : '#1E293B',
+                        border: '1px solid ' + (practiceArea === extractedPractice ? '#2563eb' : '#CBD5E1'),
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: practiceArea === extractedPractice ? '0 1px 3px rgba(37,99,235,0.2)' : 'none'
+                      }}
+                    >
+                      {practiceArea === extractedPractice && <Check size={14} />}
+                      <span>Usar del Documento: {extractedPractice}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPracticeArea(calibratedPractice)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: practiceArea === calibratedPractice ? '#2563eb' : '#FFFFFF',
+                        color: practiceArea === calibratedPractice ? '#FFFFFF' : '#1E293B',
+                        border: '1px solid ' + (practiceArea === calibratedPractice ? '#2563eb' : '#CBD5E1'),
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: practiceArea === calibratedPractice ? '0 1px 3px rgba(37,99,235,0.2)' : 'none'
+                      }}
+                    >
+                      {practiceArea === calibratedPractice && <Check size={14} />}
+                      <span>Mantener de Calibración: {calibratedPractice}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {!isEditingInline ? (
                 <div style={{

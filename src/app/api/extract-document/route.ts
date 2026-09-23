@@ -97,6 +97,16 @@ export async function POST(request: NextRequest) {
     const extractedDept = extractData.department || {};
     const extractedLawyers = extractData.lawyers || [];
 
+    const sanitizePractice = (val?: string) => {
+      if (!val) return '';
+      if (val.includes('SOURCE DOCUMENT') || val.startsWith('===')) return '';
+      return val.trim();
+    };
+
+    const cleanExtractedPractice = sanitizePractice(extractedMeta.extracted_practice_area || extractedMeta.practice_area);
+    const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || submission.practiceArea;
+    const finalPracticeArea = cleanExtractedPractice || calibratedPractice || submission.practiceArea;
+
     // Delete any old draft matters for this submission before populating
     await prisma.matter.deleteMany({
       where: { submissionId: submission.id }
@@ -126,7 +136,7 @@ export async function POST(request: NextRequest) {
           otherFirms: m.otherFirms || '',
           completionDate: m.completionDate || '',
           source: 'builder',
-          practiceArea: extractedMeta.practice_area || submission.practiceArea,
+          practiceArea: finalPracticeArea,
           jurisdiction: extractedMeta.location || submission.guideRegion
         }
       });
@@ -141,8 +151,10 @@ export async function POST(request: NextRequest) {
       firmName: extractedMeta.firm_name || existingChambers.firmName || '',
       metadata: {
         ...(existingChambers.metadata || {}),
-        firm_name: extractedMeta.firm_name || '',
-        practice_area: extractedMeta.practice_area || submission.practiceArea,
+        firm_name: extractedMeta.firm_name || existingChambers.firm_name || '',
+        practice_area: finalPracticeArea,
+        extracted_practice_area: cleanExtractedPractice,
+        calibrated_practice_area: calibratedPractice,
         location: extractedMeta.location || submission.guideRegion
       },
       original_b10: extractedB10 || existingChambers.original_b10 || '',
@@ -188,7 +200,7 @@ export async function POST(request: NextRequest) {
       data: {
         status: 'Draft',
         documentUrl: sourceInput.startsWith('http') ? sourceInput : submission.documentUrl,
-        practiceArea: extractedMeta.practice_area || submission.practiceArea,
+        practiceArea: finalPracticeArea,
         chambersData: updatedChambersData,
         updatedAt: new Date()
       }

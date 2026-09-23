@@ -2803,7 +2803,15 @@ The practice regularly represents domestic conglomerates, financial institutions
         targetDirectory={selectedDirectory}
         initialData={{
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
-          practiceArea: submission.practiceArea || chambersData.practice_area || '',
+          practiceArea: (() => {
+            const raw = chambersData?.metadata?.extracted_practice_area || chambersData?.practice_area || submission.practiceArea || '';
+            return (raw.includes('SOURCE DOCUMENT') || raw.startsWith('===')) ? (submission.practiceArea || '') : raw;
+          })(),
+          calibratedPracticeArea: chambersData?.metadata?.calibrated_practice_area || submission.practiceArea || '',
+          extractedPracticeArea: (() => {
+            const raw = chambersData?.metadata?.extracted_practice_area || chambersData?.practice_area || '';
+            return (raw.includes('SOURCE DOCUMENT') || raw.startsWith('===')) ? '' : raw;
+          })(),
           location: chambersData.location || chambersData.jurisdiction || submission.guideRegion || '',
           b10Text: b10Text,
           lawyers: chambersData.lawyers || [],
