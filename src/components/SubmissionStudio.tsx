@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { curateMatters } from '@/lib/docx/matter-curator';
 import { 
   Download, 
@@ -35,6 +35,8 @@ import {
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
+import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
+import { updateSubmissionValidatedData } from '@/app/actions/submissions';
 
 interface MatterItem {
   id?: string;
@@ -75,6 +77,10 @@ export default function SubmissionStudio({
   auditChildren
 }: SubmissionStudioProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [showValidationWizard, setShowValidationWizard] = useState<boolean>(() => {
+    return searchParams?.get('validate') === 'true';
+  });
   const [activeTab, setActiveTab] = useState<'studio' | 'audit'>('studio');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [copilotCollapsed, setCopilotCollapsed] = useState<boolean>(false);
@@ -800,6 +806,29 @@ The practice regularly represents domestic conglomerates, financial institutions
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.color }} />
             {readiness.score}% • {readiness.label}
+          </button>
+
+          <button
+            onClick={() => setShowValidationWizard(true)}
+            style={{
+              background: '#FFFFFF',
+              color: '#4F46E5',
+              border: '1px solid #C7D2FE',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '7px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(79,70,229,0.06)',
+              transition: 'all 0.15s ease'
+            }}
+            title="Revisar y validar los datos fácticos extraídos paso a paso"
+          >
+            <CheckCircle2 size={13} />
+            Validar Datos Extraídos
           </button>
 
           <button
@@ -2757,6 +2786,44 @@ The practice regularly represents domestic conglomerates, financial institutions
         currentPracticeArea={practiceAreaName}
         onMattersImported={() => {
           window.location.reload();
+        }}
+      />
+
+      {/* ═══ POST-INGESTION PROGRESSIVE VALIDATION WIZARD ═══ */}
+      <PostIngestionWizardModal
+        isOpen={showValidationWizard}
+        onClose={() => setShowValidationWizard(false)}
+        targetDirectory={selectedDirectory}
+        initialData={{
+          firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
+          practiceArea: submission.practiceArea || chambersData.practice_area || '',
+          location: chambersData.location || chambersData.jurisdiction || submission.guideRegion || '',
+          b10Text: b10Text,
+          lawyers: chambersData.lawyers || [],
+          matters: matters
+        }}
+        onComplete={async (data) => {
+          setShowValidationWizard(false);
+          if (data.firmName) {
+            setChambersData((prev: any) => ({ ...prev, firm_name: data.firmName, firmName: data.firmName }));
+          }
+          if (data.b10Text) {
+            setB10Text(data.b10Text);
+            setChambersData((prev: any) => ({ ...prev, original_b10: data.b10Text, enhanced_b7: data.b10Text, b7: data.b10Text }));
+          }
+          if (data.lawyers) {
+            setChambersData((prev: any) => ({ ...prev, lawyers: data.lawyers }));
+          }
+          if (data.matters) {
+            setMatters(data.matters);
+            setChambersData((prev: any) => ({ ...prev, matters: data.matters }));
+          }
+          // Persist to database in background
+          try {
+            await updateSubmissionValidatedData(submission.id, data);
+          } catch (err) {
+            console.warn('[PostIngestionWizard] Error persisting validated data:', err);
+          }
         }}
       />
 

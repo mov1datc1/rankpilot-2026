@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const sourceInput = userInput || submission.documentUrl || '';
-    if (!sourceInput) {
+    const sources = body.sources || context?.sources || [];
+    const sourceInput = userInput || submission.documentUrl || (sources.length > 0 ? sources[0].url : '');
+    if (!sourceInput && sources.length === 0) {
       return NextResponse.json({ error: 'No source document available to extract' }, { status: 400 });
     }
 
@@ -61,11 +62,13 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_input: sourceInput,
+        sources: sources,
         context: {
           directory: submission.targetDirectory,
           jurisdiction: submission.guideRegion,
           practice_area: submission.practiceArea,
           firm_name: context?.firm_name || '',
+          sources: sources,
           ...context
         }
       })
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
           optimizedText: m.optimizedText || '',
           status: 'Draft',
           isConfidential: isConf,
-          otherInfo: m.valueConflict || (confStatus !== 'publishable' ? `conf:${confStatus}` : null),
+          otherInfo: m.valueConflict || m.otherInfo || m.press_link || null,
           crossBorder: m.crossBorder || '',
           teamMembers: m.teamMembers || m.team_members || '',
           otherFirms: m.otherFirms || '',

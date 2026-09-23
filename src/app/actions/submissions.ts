@@ -169,3 +169,62 @@ export async function updateSubmissionDepartment(submissionId: string, deptData:
     return { success: false, error: error.message };
   }
 }
+
+// ── Update Validated Submission Data (Post-Ingestion Wizard) ──
+export async function updateSubmissionValidatedData(submissionId: string, data: {
+  firmName?: string;
+  practiceArea?: string;
+  location?: string;
+  b10Text?: string;
+  lawyers?: any[];
+  matters?: any[];
+}) {
+  try {
+    const user = await getAuthenticatedUser();
+    const existing = await prisma.submission.findUnique({ where: { id: submissionId } });
+    if (!existing || existing.userId !== user.id) {
+      throw new Error('No tienes permiso para actualizar este submission.');
+    }
+
+    const chambers = (existing.chambersData as any) || {};
+    const updatedChambers = {
+      ...chambers,
+      ...(data.firmName ? { firm_name: data.firmName, firmName: data.firmName } : {}),
+      ...(data.b10Text ? { original_b10: data.b10Text, enhanced_b7: data.b10Text, b7: data.b10Text } : {}),
+      ...(data.lawyers ? { lawyers: data.lawyers } : {}),
+      ...(data.matters ? { matters: data.matters } : {})
+    };
+
+    if (data.matters && Array.isArray(data.matters)) {
+      for (const m of data.matters) {
+        if (m.id && !m.id.startsWith('matter-ext-') && !m.id.startsWith('matter-')) {
+          await prisma.matter.updateMany({
+            where: { id: m.id, submissionId },
+            data: {
+              client: m.client || '',
+              value: m.value || '',
+              leadPartner: m.leadPartner || m.lead_partner || '',
+              isConfidential: m.isConfidential ?? false,
+              rawNotes: m.rawNotes || m.summary || ''
+            }
+          });
+        }
+      }
+    }
+
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        chambersData: updatedChambers,
+        ...(data.practiceArea ? { practiceArea: data.practiceArea } : {}),
+        updatedAt: new Date()
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating validated data:', error);
+    return { success: false, error: error.message };
+  }
+}
+

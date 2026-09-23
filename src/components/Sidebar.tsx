@@ -22,10 +22,9 @@ interface SidebarProps {
 export default function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
   
-  // Reordered: Matter Assistant → Builder → Reports → Dashboard
+  // Unified navigation: Builder → Reports → Dashboard
   const platformLinks = [
-    { name: 'Matters Assistant', href: '/matters-assistant', icon: BookOpen },
-    { name: 'Builder', href: '/submissions', icon: Home },
+    { name: 'Builder', href: '/builder', icon: Home },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Dashboard', href: '/dashboard-analytics', icon: BarChart2 },
   ];
@@ -68,7 +67,7 @@ export default function Sidebar({ userRole }: SidebarProps) {
         <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>PLATFORM</p>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {platformLinks.map((link) => {
-            const isActive = pathname.startsWith(link.href) && link.href !== '#';
+            const isActive = (pathname.startsWith(link.href) || (link.href === '/builder' && pathname.startsWith('/submissions'))) && link.href !== '#';
             const Icon = link.icon;
             return (
               <Link key={link.name} href={link.href} style={{

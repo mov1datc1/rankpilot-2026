@@ -67,8 +67,7 @@ export default function Topbar() {
             
             // Add module links
             const modules = [
-              { name: 'Matter Assistant', href: '/matters-assistant', type: 'Module' },
-              { name: 'Builder', href: '/submissions', type: 'Module' },
+              { name: 'Builder', href: '/builder', type: 'Module' },
               { name: 'Reports', href: '/reports', type: 'Module' },
               { name: 'Dashboard', href: '/dashboard-analytics', type: 'Module' },
               { name: 'Settings', href: '/dashboard/admin', type: 'Module' },

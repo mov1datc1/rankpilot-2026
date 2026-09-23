@@ -854,8 +854,30 @@ async def extract_document_endpoint(request: Request):
         from utils.doc_parser import DocumentParser
         from agents.nodes import sanitize_text
 
-        # 1. Parse document text
-        if is_file:
+        # 1. Parse document text (supporting single source or multi-document corpus)
+        sources = data.get("sources") or context.get("sources") or []
+        doc_texts = []
+        if sources and isinstance(sources, list) and len(sources) > 0:
+            for s in sources:
+                s_url = s.get("url") if isinstance(s, dict) else str(s)
+                s_name = s.get("name") if isinstance(s, dict) else os.path.basename(s_url)
+                s_text = s.get("text") if isinstance(s, dict) else ""
+                if s_url:
+                    try:
+                        parsed = DocumentParser.parse(s_url)
+                        if parsed and parsed.strip():
+                            doc_texts.append(f"=== SOURCE DOCUMENT: {s_name} ===\n{parsed.strip()}\n=== END DOCUMENT: {s_name} ===")
+                    except Exception as err:
+                        logger.warning(f"Failed parsing source document {s_name}: {err}")
+                elif s_text and s_text.strip():
+                    doc_texts.append(f"=== SOURCE NOTE: {s_name} ===\n{s_text.strip()}\n=== END NOTE: {s_name} ===")
+            if doc_texts:
+                doc_text = "\n\n".join(doc_texts)
+            elif is_file:
+                doc_text = DocumentParser.parse(user_input)
+            else:
+                doc_text = user_input
+        elif is_file:
             doc_text = DocumentParser.parse(user_input)
         else:
             doc_text = user_input

@@ -1,6 +1,28 @@
 # CHANGELOG — RankPilot 2026
 
 All notable changes to this project are documented in this file.
+## [v29.0] — 2026-09-23
+
+### Unified Builder Architecture, Dual-Modality Ingestion (Draft vs Multi-Doc) & Progressive Validation Wizard
+
+- **Unified Builder Navigation & Architecture (`src/app/builder/page.tsx`, `Sidebar.tsx`, `Topbar.tsx`)**:
+  - Consolidated separate "Matters Assistant" and "Builder" entry points into a single, unified **Builder** module (`/builder`).
+  - Added visual dual-modality selector:
+    - *Modalidad A (Draft Estructurado)*: Para firmas con plantilla oficial en Word (.docx/.doc) o borrador estructurado pegado.
+    - *Modalidad B (Documentos Dispersos / Desde Cero)*: Para consolidar múltiples PDFs, Word, hilos de correo y notas en mandatos oficiales de Chambers.
+- **Institutional Strategic Calibration Wizard (7 Parámetros)**:
+  - Stepper de configuración pre-ingestión: (1) Directorio Target, (2) País, (3) Región / Guía, (4) Área de Práctica, (5) Banda o Tier Actual, (6) Objetivo Primario, (7) Objetivo Secundario.
+- **Multi-Document Corpus Ingestion (`ai-engine/main.py`, `src/app/api/extract-document/route.ts`)**:
+  - Actualizado el endpoint `/extract` en Python y la ruta en Next.js para soportar arreglos de fuentes (`sources`).
+  - Concatena y delimita archivos múltiples preservando el origen de cada archivo sin sobreescribir ni truncar texto.
+  - **Regla Estricta de Pureza Verbatim**: Se garantiza que durante la extracción `optimizedText = ""` en el 100% de los asuntos; la IA organiza y clasifica fácticos sin optimizar prematuramente.
+- **Post-Ingestion Progressive Validation Wizard (`PostIngestionWizardModal.tsx`, `SubmissionStudio.tsx`)**:
+  - Erradica la fricción cognitiva de enfrentarse a más de 50 campos en una matriz densa y evita clics a ciegas en "Optimizar Todo".
+  - Agrupa la validación en pantallas limpias de 2 a 3 campos con acciones rápidas: `✓ Confirmar` y `✏️ Editar y Confirmar`.
+  - Indicador numérico explícito en el pie de pantalla: `Paso X de Y` con barra de progreso estilizada.
+  - Persistencia bidireccional automática en Prisma y `chambersData` mediante la acción de servidor `updateSubmissionValidatedData`.
+  - Integración fluida en `SubmissionStudio.tsx` mediante el parámetro `?validate=true` y botón de reapertura en cabecera *"Validar Datos Extraídos"*.
+
 ## [v28.0] — 2026-09-21
 
 ### Multi-Firm Dynamic Editorial Engine, Angela Castillo 8-Point Compliance, 3-State Confidentiality & UI Flagship Resolution
