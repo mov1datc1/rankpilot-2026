@@ -1,6 +1,19 @@
 # CHANGELOG — RankPilot 2026
 
 All notable changes to this project are documented in this file.
+## [v29.1] — 2026-09-23
+
+### Builder Distraction Reduction & Dashboard Hub Relocation
+
+- **Deadline Field Deprecation in Strategic Calibration (`src/app/builder/page.tsx`)**:
+  - Eliminated the unnecessary `Fecha límite oficial de entrega (Opcional)` date picker from Step 7 of the wizard.
+  - Substep 7 is now exclusively focused on the `Objetivo Estratégico Secundario`, presenting a clean and direct selection without clutter.
+- **Relocation of Recent Submissions to Dashboard (`src/app/builder/page.tsx`, `src/app/dashboard-analytics/page.tsx`, `src/app/actions/dashboard.ts`)**:
+  - Removed the `Submissions Recientes en Proceso` card list from the bottom of the Builder page to eliminate visual distraction and maintain 100% focus during submission creation.
+  - Transferred and integrated the visual card grid into the **Dashboard** module (`/dashboard-analytics`), placed above the detailed table.
+  - Cards feature live status pills (`Optimized`, `In Progress`, `Draft`), target directory uppercase badges, matter practice area & firm title, and region with globe icon.
+  - Updated `getDashboardStats` server action to return submission `status` and expanded recent submissions limit to 8.
+
 ## [v29.0] — 2026-09-23
 
 ### Unified Builder Architecture, Dual-Modality Ingestion (Draft vs Multi-Doc) & Progressive Validation Wizard
