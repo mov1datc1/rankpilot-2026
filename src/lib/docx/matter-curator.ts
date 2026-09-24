@@ -268,6 +268,19 @@ export function curateMatters(
       }
     }
     
+    const heroId = canonicalSelection.hero_matter_id || chambersData?.hero_matter_id;
+    const heroTitle = canonicalSelection.hero_matter_title || chambersData?.hero_matter_title || chambersData?.narrative_architecture?.hero_matter;
+    for (const m of orderedCore) {
+      if ((heroId && String(m.id).toLowerCase() === String(heroId).toLowerCase()) ||
+          (heroTitle && typeof heroTitle === 'string' && (
+            (m.client && heroTitle.toLowerCase().includes(m.client.toLowerCase())) ||
+            (m.name && heroTitle.toLowerCase().includes(m.name.toLowerCase()))
+          ))) {
+        m.isHero = true;
+        m.is_hero = true;
+      }
+    }
+
     const officialPubMatters = orderedCore.filter(m => !m.isConfidential && m.publish_status !== 'non_publishable').slice(0, maxPub);
     const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, maxConf);
     
@@ -377,6 +390,12 @@ export function curateMatters(
 
   const officialConfMatters = qualifiedConf.slice(0, maxConf);
   const surplusConfMatters = [...qualifiedConf.slice(maxConf), ...excludedConf];
+  
+  const allOfficialScored = [...officialPubMatters, ...officialConfMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
+  if (allOfficialScored.length > 0 && !allOfficialScored.some(m => m.isHero)) {
+    allOfficialScored[0].isHero = true;
+    allOfficialScored[0].is_hero = true;
+  }
   
   return {
     officialPubMatters,

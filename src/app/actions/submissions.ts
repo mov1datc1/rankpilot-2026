@@ -243,9 +243,15 @@ export async function updateDesignatedHeroMatter(submissionId: string, heroMatte
       ...chambers,
       hero_matter_id: heroMatterId,
       hero_matter_title: heroMatterTitle,
+      hero_matter_name: heroMatterTitle,
       narrative_architecture: {
         ...narrativeArch,
         hero_matter: heroMatterTitle
+      },
+      canonical_matter_selection: {
+        ...(chambers.canonical_matter_selection || {}),
+        hero_matter_id: heroMatterId,
+        hero_matter_title: heroMatterTitle
       }
     };
 

@@ -437,15 +437,66 @@ export async function POST(request: NextRequest) {
       }
     ];
 
-    // Canonical Matter Selection Object (Guarantees Audit Strategy = Submission Execution)
-    const officialHero = sortedOfficialMatters[0] || updatedMatters[0] || {};
+    // Select the highest-scoring flagship matter across both publishable and confidential registers
+    const allOfficialMatters = [...curationResult.officialPubMatters, ...curationResult.officialConfMatters];
+    const topScoredOfficial = [...allOfficialMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0))[0];
+    
+    // 1. Check Strategic Audit Hero Matter (narrative_architecture.hero_matter)
+    const auditHeroTitle = chambersData.narrative_architecture?.hero_matter
+      || analysis?.narrative_architecture?.hero_matter
+      || chambersData?.strategic_audit?.narrative_architecture?.hero_matter;
+    
+    let auditHeroMatch: any = null;
+    if (auditHeroTitle && typeof auditHeroTitle === 'string' && auditHeroTitle.trim().length > 2 &&
+        auditHeroTitle !== 'Anchor Mandate' && auditHeroTitle !== 'Strategic Flagship Mandate' &&
+        !auditHeroTitle.toLowerCase().includes('solana')) {
+      const heroLower = auditHeroTitle.toLowerCase().trim();
+      auditHeroMatch = allOfficialMatters.find(m => {
+        const client = (m.client || m.clientName || '').toLowerCase().trim();
+        const name = (m.name || m.title || '').toLowerCase().trim();
+        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
+               (name && (name.includes(heroLower) || heroLower.includes(name)));
+      });
+    }
 
+    // 2. Check if user explicitly designated a hero matter
+    const explicitHero = allOfficialMatters.find(m => 
+      (chambersData.hero_matter_id && String(m.id) === String(chambersData.hero_matter_id)) ||
+      (chambersData.hero_matter_title && (
+        (m.client && chambersData.hero_matter_title.toLowerCase().includes(m.client.toLowerCase())) ||
+        (m.name && chambersData.hero_matter_title.toLowerCase().includes(m.name.toLowerCase()))
+      ))
+    );
+
+    const officialHero = auditHeroMatch || explicitHero || topScoredOfficial || updatedMatters[0] || {};
     const heroMatterId = officialHero.id || (officialHero as any).matter_id || 'hero-matter-1';
-    const heroMatterName = officialHero.name || officialHero.title || officialHero.client || 'Hero Matter';
+    const heroClient = officialHero.client || officialHero.clientName || 'Hero Client';
+    const heroMatterName = officialHero.name || officialHero.title || `${heroClient} Flagship Mandate`;
+    const heroMatterTitle = auditHeroTitle && auditHeroMatch ? auditHeroTitle : `${heroClient} – ${heroMatterName}`;
+    
+    // Mark the hero matter explicitly on the object
+    officialHero.isHero = true;
+    officialHero.is_hero = true;
+
+    // Ensure the hero matter is positioned at the top of its respective register (Section D #1 or Section E #1)
+    if (officialHero.id) {
+      if (curationResult.officialConfMatters.some(m => String(m.id) === String(officialHero.id))) {
+        curationResult.officialConfMatters = [
+          officialHero,
+          ...curationResult.officialConfMatters.filter(m => String(m.id) !== String(officialHero.id))
+        ];
+      } else if (curationResult.officialPubMatters.some(m => String(m.id) === String(officialHero.id))) {
+        curationResult.officialPubMatters = [
+          officialHero,
+          ...curationResult.officialPubMatters.filter(m => String(m.id) !== String(officialHero.id))
+        ];
+      }
+    }
 
     const canonicalMatterSelection = {
       hero_matter_id: heroMatterId,
       hero_matter_name: heroMatterName,
+      hero_matter_title: heroMatterTitle,
       core_matter_ids: sortedOfficialMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `core-${i + 1}`),
       publishable_matter_ids: curationResult.officialPubMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `pub-${i + 1}`),
       confidential_matter_ids: curationResult.officialConfMatters.map((m: any, i: number) => m.id || (m as any).matter_id || `conf-${i + 1}`),
@@ -453,7 +504,7 @@ export async function POST(request: NextRequest) {
       curated_matter_roster: sortedOfficialMatters.map((m: any, i: number) => ({
         id: m.id || (m as any).matter_id || `core-${i + 1}`,
         position: i + 1,
-        is_hero: m === officialHero,
+        is_hero: m.id === heroMatterId || m === officialHero,
         title: m.name || m.title || m.client || `Matter ${i + 1}`,
         client: m.client || '',
         is_confidential: Boolean(m.isConfidential || m.publish_status === 'non_publishable' || m.confidential)
@@ -612,31 +663,16 @@ export async function POST(request: NextRequest) {
       checks: judgeChecks
     };
 
-    // Select the highest-scoring matter across both publishable and confidential registers
-    const allOfficialMatters = [...curationResult.officialPubMatters, ...curationResult.officialConfMatters];
-    const topScoredMatter = [...allOfficialMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0))[0];
-    
-    // Check if user explicitly designated a hero matter
-    const explicitHero = allOfficialMatters.find(m => 
-      (chambersData.hero_matter_id && String(m.id) === String(chambersData.hero_matter_id)) ||
-      (chambersData.hero_matter_title && (
-        (m.client && chambersData.hero_matter_title.toLowerCase().includes(m.client.toLowerCase())) ||
-        (m.name && chambersData.hero_matter_title.toLowerCase().includes(m.name.toLowerCase()))
-      ))
-    );
+    // Unified Hero Matter attributes
+    const heroMatterItem = officialHero;
+    let heroRationale = chambersData.narrative_architecture?.hero_matter_rationale
+      || `Combines high-value asset/transaction exposure with decisive legal craft and business-critical outcome.`;
+    let heroReasoning = chambersData.narrative_architecture?.hero_selection_reasoning
+      || `Represents the highest evidentiary weight and strategic category fit in the portfolio.`;
+    let heroTitle = heroMatterTitle;
 
-    const heroMatterItem = explicitHero || topScoredMatter || updatedMatters[0] || {};
-    let heroRationale = `Combines high-value asset/transaction exposure with decisive legal craft and business-critical outcome.`;
-    let heroReasoning = `Represents the highest evidentiary weight and strategic category fit in the portfolio.`;
-    let heroTitle = '';
-
-    if (chambersData.narrative_architecture?.hero_matter && 
-        chambersData.narrative_architecture.hero_matter !== 'Anchor Mandate' && 
-        chambersData.narrative_architecture.hero_matter !== 'Strategic Flagship Mandate' &&
-        !chambersData.narrative_architecture.hero_matter.toLowerCase().includes('solana')) {
-      heroTitle = chambersData.narrative_architecture.hero_matter;
-      heroRationale = chambersData.narrative_architecture.hero_matter_rationale || heroRationale;
-      heroReasoning = chambersData.narrative_architecture.hero_selection_reasoning || heroReasoning;
+    if (auditHeroTitle && auditHeroMatch) {
+      heroTitle = auditHeroTitle;
     } else if (heroMatterItem.client && heroMatterItem.client !== 'Unknown Client') {
       const mName = heroMatterItem.name || heroMatterItem.title || '';
       heroTitle = mName && !mName.toLowerCase().includes(heroMatterItem.client.toLowerCase())
@@ -672,6 +708,9 @@ export async function POST(request: NextRequest) {
 
     const updatedChambersData = {
       ...chambersData,
+      hero_matter_id: heroMatterId,
+      hero_matter_title: heroTitle || heroMatterTitle,
+      hero_matter_name: heroMatterName,
       enhanced_b7: finalB10,
       enhanced_b10: finalB10,
       b7: finalB10,

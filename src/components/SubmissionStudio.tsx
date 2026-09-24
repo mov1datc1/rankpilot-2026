@@ -267,27 +267,46 @@ The practice regularly represents domestic conglomerates, financial institutions
     return s.trim();
   };
 
-  // Flagship Matter: strictly the hero matter (if designated) or top curated matter
+  // Flagship Matter: strictly the hero matter (if designated) or top curated matter (1:1 with Hero Matter)
   const flagshipMatter = React.useMemo(() => {
     const all = [...(categorized.pub || []), ...(categorized.conf || []), ...(categorized.pruned || []), ...(matters || [])];
     
-    // 1. Explicit Hero Matter ID
+    // 1. Strategic Audit Hero Matter from narrative_architecture (Supreme 1:1 alignment with Strategic Audit)
+    const auditHeroTitle = chambersData?.narrative_architecture?.hero_matter 
+      || chambersData?.analysis?.narrative_architecture?.hero_matter
+      || (submission as any)?.narrative_architecture?.hero_matter;
+      
+    if (auditHeroTitle && typeof auditHeroTitle === 'string' && auditHeroTitle.trim().length > 2 && 
+        auditHeroTitle !== 'Anchor Mandate' && auditHeroTitle !== 'Strategic Flagship Mandate' && 
+        !auditHeroTitle.toLowerCase().includes('solana')) {
+      const heroLower = auditHeroTitle.toLowerCase().trim();
+      const found = all.find(m => {
+        const client = String(m.client || m.clientName || '').toLowerCase().trim();
+        const title = String(m.title || m.name || '').toLowerCase().trim();
+        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
+               (title && (title.includes(heroLower) || heroLower.includes(title)));
+      });
+      if (found) return found;
+    }
+
+    // 2. Explicit Hero Matter ID designated by user or canonical selection
     const heroId = chambersData?.hero_matter_id 
-      || chambersData?.canonical_matter_selection?.hero_matter_id
-      || (submission as any)?.hero_matter_id;
+      || (submission as any)?.hero_matter_id
+      || chambersData?.canonical_matter_selection?.hero_matter_id;
     if (heroId) {
       const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(heroId).toLowerCase());
       if (found) return found;
     }
 
-    // 2. Explicit Hero Matter Title / Client Name
+    // 3. Explicit Hero Matter Title / Name
     const rawHeroTitle = chambersData?.hero_matter_title 
       || chambersData?.hero_matter_name
       || chambersData?.hero_matter
       || chambersData?.canonical_matter_selection?.hero_matter_title
-      || chambersData?.narrative_architecture?.hero_matter
       || (submission as any)?.hero_matter;
-    if (rawHeroTitle && typeof rawHeroTitle === 'string' && rawHeroTitle.trim().length > 2 && rawHeroTitle !== 'Anchor Mandate' && rawHeroTitle !== 'Strategic Flagship Mandate') {
+    if (rawHeroTitle && typeof rawHeroTitle === 'string' && rawHeroTitle.trim().length > 2 && 
+        rawHeroTitle !== 'Anchor Mandate' && rawHeroTitle !== 'Strategic Flagship Mandate' &&
+        !rawHeroTitle.toLowerCase().includes('solana')) {
       const heroLower = rawHeroTitle.toLowerCase().trim();
       const found = all.find(m => {
         const client = String(m.client || m.clientName || '').toLowerCase().trim();
@@ -298,25 +317,24 @@ The practice regularly represents domestic conglomerates, financial institutions
       if (found) return found;
     }
 
-    // 3. Matter explicitly flagged with isHero / is_hero / hero
+    // 4. Matter explicitly flagged with isHero / is_hero / hero
     const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
     if (heroFlagged) return heroFlagged;
 
-    // 4. In Draft / un-optimized state, DO NOT arbitrarily assign an uncurated matter as Insignia!
+    // 5. In Draft / un-optimized state, DO NOT arbitrarily assign an uncurated matter as Insignia!
     const isOptimized = optimizedMattersCount > 0 || submission.status === 'Optimized';
     if (!isOptimized) {
       return null;
     }
 
-    // 5. Default fallback ONLY after optimization: first publishable matter, or first confidential matter
-    if (categorized.pub && categorized.pub.length > 0) {
-      return categorized.pub[0];
-    }
-    if (categorized.conf && categorized.conf.length > 0) {
-      return categorized.conf[0];
+    // 6. Dynamic top-tier fallback from curation (NEVER arbitrarily return categorized.pub[0]!)
+    const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
+    if (allCurated.length > 0) {
+      const sortedByTier = [...allCurated].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
+      return sortedByTier[0];
     }
     return null;
-  }, [categorized, matters, chambersData, submission, optimizedMattersCount]);
+  }, [categorized, matters, chambersData, submission, optimizedMattersCount, curation]);
 
   const verifiedValuesList = React.useMemo(() => {
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
@@ -701,7 +719,17 @@ The practice regularly represents domestic conglomerates, financial institutions
     const updatedChambersData = {
       ...chambersData,
       hero_matter_id: heroId,
-      hero_matter_title: heroTitle
+      hero_matter_title: heroTitle,
+      hero_matter_name: heroTitle,
+      narrative_architecture: {
+        ...(chambersData.narrative_architecture || {}),
+        hero_matter: heroTitle
+      },
+      canonical_matter_selection: {
+        ...(chambersData.canonical_matter_selection || {}),
+        hero_matter_id: heroId,
+        hero_matter_title: heroTitle
+      }
     };
     setChambersData(updatedChambersData);
 

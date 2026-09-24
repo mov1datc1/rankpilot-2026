@@ -424,8 +424,15 @@ function cleanClientDescriptor(rawClient: string, matter?: any): string {
   return s;
 }
 
-// 20-row matter table matching Chambers template exactly (single-column with full width)
-function matterTable(matterNum: number, prefix: 'D' | 'E', type: 'Publishable' | 'Confidential', matter: any, exportMode: string, lawyers: any[] = []): Table {
+function matterTable(
+  matterNum: number, 
+  prefix: 'D' | 'E', 
+  type: 'Publishable' | 'Confidential', 
+  matter: any, 
+  exportMode: string, 
+  lawyers: any[] = [],
+  heroContext: { heroId?: string; heroTitle?: string } = {}
+): Table {
   const isConf = prefix === 'E';
   const clientLabel = isConf
     ? `${prefix}1 Name of client (for ranking purposes only)`
@@ -528,14 +535,16 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     matter.is_hero || 
     matter.hero || 
     matter.quality_label === 'Flagship Matter' || 
-    matter._isCanonicalAnchor
+    matter._isCanonicalAnchor ||
+    (heroContext?.heroId && String(matter.id).toLowerCase() === String(heroContext.heroId).toLowerCase()) ||
+    (heroContext?.heroTitle && typeof heroContext.heroTitle === 'string' && heroContext.heroTitle.trim().length > 2 && (
+      (matter.client && heroContext.heroTitle.toLowerCase().includes(matter.client.toLowerCase())) ||
+      (matter.name && heroContext.heroTitle.toLowerCase().includes(matter.name.toLowerCase()))
+    ))
   );
   if (isExplicitHero) {
     const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
     matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #${matterNum}`;
-  } else if (matterNum === 1 && exportMode !== 'original' && !isConf) {
-    const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
-    matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #1`;
   } else if (!isConf && isMatterConfUnstated) {
     matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED — Status unstated in source; verify before filing]`;
   }
@@ -1110,10 +1119,18 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   while (d0Rows.length < 8) d0Rows.push(['', '', '']);
   elements.push(dataTable("PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.", ['', 'Name of Client', 'New Client (Y/N)'], d0Rows, { labelPrefix: 'D0 –' }));
 
+  // Resolve canonical Hero Matter context
+  const docHeroId = chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id;
+  const docHeroTitle = chambersData?.hero_matter_title 
+    || chambersData?.canonical_matter_selection?.hero_matter_title
+    || chambersData?.narrative_architecture?.hero_matter
+    || chambersData?.analysis?.narrative_architecture?.hero_matter;
+  const heroContext = { heroId: docHeroId, heroTitle: docHeroTitle };
+
   // D matters
   for (let i = 0; i < pubMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers));
+    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers, heroContext));
   }
 
   // ═══ SECTION E ═══
@@ -1132,7 +1149,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // E matters
   for (let i = 0; i < confMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers));
+    elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers, heroContext));
   }
 
   // ═══ v26.30: SURPLUS MATTERS (RESERVE ROSTER — BEYOND 20-MATTER CEILING) ═══
@@ -1146,12 +1163,12 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     let surplusNum = 1;
     for (const sm of curation.surplusPubMatters) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));
-      elements.push(matterTable(surplusNum++, 'D', 'Publishable', sm, exportMode, lawyers));
+      elements.push(matterTable(surplusNum++, 'D', 'Publishable', sm, exportMode, lawyers, heroContext));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
     for (const sm of curation.surplusConfMatters) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));
-      elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode, lawyers));
+      elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode, lawyers, heroContext));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
   }
@@ -1365,12 +1382,20 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   while (d0Rows.length < 4) d0Rows.push(['', '', '']);
   elements.push(dataTable('PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], d0Rows));
 
+  // Resolve canonical Hero Matter context
+  const l500HeroId = chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id;
+  const l500HeroTitle = chambersData?.hero_matter_title 
+    || chambersData?.canonical_matter_selection?.hero_matter_title
+    || chambersData?.narrative_architecture?.hero_matter
+    || chambersData?.analysis?.narrative_architecture?.hero_matter;
+  const l500HeroContext = { heroId: l500HeroId, heroTitle: l500HeroTitle };
+
   // Publishable matters
   for (let i = 0; i < pubMatters.length; i++) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
     elements.push(para(`Publishable Work Highlights in last 12 months`, { bold: true, size: 20, spacing: { after: 80 } }));
     elements.push(para(`Publishable Matter ${i + 1}`, { bold: true, size: 18, color: '333333', spacing: { after: 120 } }));
-    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers));
+    elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers, l500HeroContext));
   }
 
   // ═══ DETAILED (CONFIDENTIAL) WORK HIGHLIGHTS ═══
@@ -1388,7 +1413,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
     for (let i = 0; i < confMatters.length; i++) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));
-      elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers));
+      elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers, l500HeroContext));
     }
   }
 
