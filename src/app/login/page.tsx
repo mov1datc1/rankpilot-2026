@@ -27,7 +27,7 @@ export default function LoginPage() {
     if (error) {
       setMessage(`Error: ${error.message}`);
     } else {
-      window.location.href = '/submissions';
+      window.location.href = '/builder';
     }
     setLoading(false);
   };
@@ -45,7 +45,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/submissions`,
+        emailRedirectTo: `${window.location.origin}/builder`,
       },
     });
 

@@ -65,9 +65,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect to submissions if logged in and trying to access /login
+  // Redirect to builder if logged in and trying to access /login
   if (user && request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/submissions', request.url))
+    return NextResponse.redirect(new URL('/builder', request.url))
   }
 
   return response

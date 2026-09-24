@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPERADMIN')) {
-    redirect('/submissions');
+    redirect('/builder');
   }
 
   return (

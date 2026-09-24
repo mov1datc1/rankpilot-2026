@@ -423,7 +423,7 @@ function ProcessingContent() {
                 <RotateCw size={15} className={isRetrying ? 'animate-spin' : ''} />
                 <span>{isRetrying ? 'Restarting…' : 'Retry'}</span>
               </button> : <button
-                onClick={() => router.push('/submissions')}
+                onClick={() => router.push('/builder')}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)' }}
               >
                 <FileText size={15} />

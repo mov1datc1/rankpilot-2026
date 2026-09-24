@@ -18,7 +18,7 @@ export default async function AuditPage() {
   });
 
   if (!dbUser || (dbUser.role !== 'ADMIN' && dbUser.role !== 'SUPERADMIN')) {
-    redirect('/submissions');
+    redirect('/builder');
   }
 
   // Fetch all submissions with user info

@@ -350,16 +350,16 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
                 <a
                   href={pipelineErrorView?.canRetry && submission.documentUrl
                     ? `/submissions/processing?id=${submission.id}&url=${encodeURIComponent(submission.documentUrl)}&retry=1`
-                    : '/submissions'}
+                    : '/builder'}
                   style={{ padding: '0.5rem 1.25rem', background: '#2563eb', color: '#fff', borderRadius: '8px', border: 'none', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}
                 >
                   {pipelineErrorView?.canRetry ? 'Retry processing' : 'Review and upload again'}
                 </a>
                 <a
-                  href="/submissions"
+                  href="/reports"
                   style={{ padding: '0.5rem 1.25rem', background: '#f1f5f9', color: '#475569', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer', textDecoration: 'none' }}
                 >
-                  ← Back to Submissions
+                  ← Back to Reports
                 </a>
               </div>
               {pipelineError?.timestamp && (
@@ -500,7 +500,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <SupplementalUpload submissionId={id} />
                 <a
-                  href="/submissions"
+                  href="/builder"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                     padding: '0.65rem 1.25rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600,

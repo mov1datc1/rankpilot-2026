@@ -140,7 +140,7 @@ function BuilderContent() {
 
   useEffect(() => {
     if (!submissionId) {
-      router.push('/submissions');
+      router.push('/builder');
       return;
     }
     loadMattersFromDb();
