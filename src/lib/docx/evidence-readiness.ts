@@ -200,20 +200,20 @@ export function calculateEvidenceReadiness(
   let level: 'critical' | 'warning' | 'optimal' = 'optimal';
   let color = '#10B981';
   let bgColor = '#ECFDF5';
-  let label = 'Listo para Chambers';
-  let summary = 'La información recopilada cuenta con masa crítica, métricas y resultados suficientes para un submission altamente competitivo.';
+  let label = 'Óptima';
+  let summary = 'La información recopilada cuenta con masa crítica, métricas y resultados suficientes para una postulación altamente competitiva.';
 
   if (score < 50 || totalMatters < 3) {
     level = 'critical';
     color = '#EF4444';
     bgColor = '#FEF2F2';
-    label = 'Datos Insuficientes';
-    summary = 'La información actual es demasiado raquítica o preliminar. Optimizar ahora generaría un borrador con severas lagunas editoriales ante Chambers.';
+    label = 'Insuficiente';
+    summary = 'La información actual es preliminar. Optimizar ahora generaría un borrador con severas lagunas editoriales ante el directorio.';
   } else if (score < 80) {
     level = 'warning';
     color = '#F59E0B';
     bgColor = '#FFFBEB';
-    label = 'Información Incompleta';
+    label = 'Incompleta';
     summary = 'Hay asuntos estructurados, pero faltan montos económicos clave, resultados concretos o socios líderes en varios expedientes.';
   }
 

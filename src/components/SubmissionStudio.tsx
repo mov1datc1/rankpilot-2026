@@ -809,8 +809,9 @@ The practice regularly represents domestic conglomerates, financial institutions
 
         {/* Master DOCX Downloads & Quick Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Evidence Readiness Interactive Badge */}
+          {/* Evidence Quality Interactive Badge */}
           <button
+            type="button"
             onClick={() => setShowReadinessModal(true)}
             style={{
               background: readiness.bgColor,
@@ -826,10 +827,19 @@ The practice regularly represents domestic conglomerates, financial institutions
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title="Haz clic para ver el Diagnóstico de Suficiencia de Evidencia"
+            title={`Diagnóstico de Calidad de Evidencia (${readiness.score}%). Haz clic en cualquier momento para ver qué campos faltan o cómo mejorar tu postulación antes de optimizar o descargar.`}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = readiness.color;
+              e.currentTarget.style.boxShadow = `0 1px 4px ${readiness.color}25`;
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = `${readiness.color}40`;
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.color }} />
-            {readiness.score}% • {readiness.label}
+            <span>{readiness.score}% Calidad</span>
+            <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
           {/* Grouped Tools Dropdown */}

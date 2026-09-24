@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
 import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2, FileText } from "lucide-react";
 import Link from "next/link";
-import PrintButton from "@/components/PrintButton";
+import AuditDownloadDropdown from "@/components/AuditDownloadDropdown";
 import SupplementalUpload from "./SupplementalUpload";
 import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation";
 import SubmissionStudio from "@/components/SubmissionStudio";
@@ -247,31 +247,8 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
 
               <div style={{ height: '22px', width: '1px', background: '#E2E8F0', margin: '0 0.2rem' }} />
 
-              {/* Descargar Audit en PDF */}
-              <PrintButton label="Descargar Audit PDF" />
-
-              {/* Descargar Audit en DOCX */}
-              <a 
-                href={`/api/generate-docx?id=${submission.id}&type=audit`} 
-                style={{
-                  background: '#F8FAFC',
-                  color: '#334155',
-                  textDecoration: 'none',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '7px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  border: '1px solid #CBD5E1',
-                  transition: 'all 0.15s ease'
-                }}
-                title="Descargar informe de auditoría estratégica en formato Word DOCX"
-              >
-                <Download style={{ width: '14px', height: '14px' }} />
-                Audit DOCX
-              </a>
+              {/* Dropdown unificado de descarga del reporte */}
+              <AuditDownloadDropdown submissionId={submission.id} />
             </div>
           </div>
 
