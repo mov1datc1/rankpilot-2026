@@ -78,7 +78,8 @@ export function calculateStrategicTier(
   matter: any,
   practiceArea: string = '',
   evaluationsMap: Map<string, any> = new Map(),
-  auditExclusions: Set<string> = new Set()
+  auditExclusions: Set<string> = new Set(),
+  chambersData: any = {}
 ): number {
   let score = 50; // base score
 
@@ -94,9 +95,15 @@ export function calculateStrategicTier(
     if (typeof evalData.score === 'number') score += evalData.score * 0.1;
   }
 
-  // 2. Landmark anchor / flagship / hero indicators
-  if (matter._isCanonicalAnchor || matter.isHero || matter.is_flagship || matter.isFlagship) {
-    score += 50;
+  // 2. Explicit Hero Matter designated by user, curation, or canonical anchor
+  const heroId = chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id;
+  const heroTitle = chambersData?.hero_matter_title || chambersData?.hero_matter_name;
+  if (heroId && String(matter.id).toLowerCase() === String(heroId).toLowerCase()) {
+    score += 1000;
+  } else if (heroTitle && typeof heroTitle === 'string' && heroTitle.trim().length > 2 && (client.includes(heroTitle.toLowerCase()) || title.includes(heroTitle.toLowerCase()))) {
+    score += 1000;
+  } else if (matter._isCanonicalAnchor || matter.isHero || matter.is_flagship || matter.isFlagship) {
+    score += 500;
   }
 
   // 3. Strategic exclusions from audit (AI identified dilution risks)
@@ -126,7 +133,23 @@ export function calculateStrategicTier(
 
   // 6. Cross-border and multi-jurisdiction impact
   if (combined.includes('cross-border') || combined.includes('multinational') || combined.includes('usmca') || combined.includes('rapid response') || combined.includes('double taxation') || combined.includes('treaty')) {
-    score += 15;
+    score += 20;
+  }
+
+  // 6b. Labour & Employment strategic weight indicators
+  if (isLabour) {
+    // Massive workforce volume / headcount (>1,000 employees, nation-wide coverage)
+    if (combined.includes('11,000') || combined.includes('10,000') || combined.includes('5,000') || combined.includes('2,000') || combined.includes('1,200') || combined.includes('workforce') || combined.includes('plantilla') || combined.includes('nationwide')) {
+      score += 25;
+    }
+    // High-stakes M&A labor integration / multinational acquisition
+    if (combined.includes('acquisition') || combined.includes('adquisición') || combined.includes('adquisicion') || combined.includes('vitesco') || combined.includes('schaeffler') || combined.includes('restructuring')) {
+      score += 35;
+    }
+    // Collective disputes, strike management, union ownership, USMCA / T-MEC MLRR
+    if (combined.includes('collective') || combined.includes('colectivo') || combined.includes('cct') || combined.includes('sindicato') || combined.includes('huelga') || combined.includes('strike') || combined.includes('usmca') || combined.includes('t-mec') || combined.includes('rapid response') || combined.includes('mlrr') || combined.includes('titularidad')) {
+      score += 30;
+    }
   }
 
   // 7. Practice dilution penalties (off-category cases in Real Estate)
@@ -304,11 +327,11 @@ export function curateMatters(
   
   // Attach scores
   for (const m of rawPub) {
-    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions);
+    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions, chambersData);
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
   }
   for (const m of rawConf) {
-    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions);
+    m._strategicTier = calculateStrategicTier(m, practiceArea, evaluationsMap, auditExclusions, chambersData);
     m._approxValueUsd = extractApproximateValue(m.value || m.dealValue || '');
   }
 

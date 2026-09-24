@@ -228,3 +228,35 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
   }
 }
 
+// ── Designate Hero / Insignia Matter ──
+export async function updateDesignatedHeroMatter(submissionId: string, heroMatterId: string, heroMatterTitle: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    const existing = await prisma.submission.findUnique({ where: { id: submissionId } });
+    if (!existing || existing.userId !== user.id) {
+      throw new Error('No tienes permiso para actualizar este submission.');
+    }
+
+    const chambers = (existing.chambersData as any) || {};
+    const updatedChambers = {
+      ...chambers,
+      hero_matter_id: heroMatterId,
+      hero_matter_title: heroMatterTitle
+    };
+
+    await prisma.submission.update({
+      where: { id: submissionId },
+      data: {
+        chambersData: updatedChambers,
+        updatedAt: new Date()
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating hero matter:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+

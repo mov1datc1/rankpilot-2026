@@ -31,12 +31,13 @@ import {
   Bookmark,
   ShieldAlert,
   X,
-  BookOpen
+  BookOpen,
+  Star
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
-import { updateSubmissionValidatedData } from '@/app/actions/submissions';
+import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
 interface MatterItem {
   id?: string;
@@ -93,6 +94,20 @@ export default function SubmissionStudio({
   const [copilotCollapsed, setCopilotCollapsed] = useState<boolean>(false);
   const [showCoreOnly, setShowCoreOnly] = useState<boolean>(true);
   const [submissionStatus, setSubmissionStatus] = useState<string>(submission.status || 'Draft');
+  const [showToolsMenu, setShowToolsMenu] = useState<boolean>(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown="tools"]') && !target.closest('[data-dropdown="download"]')) {
+        setShowToolsMenu(false);
+        setShowDownloadMenu(false);
+      }
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
   
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});
@@ -287,15 +302,21 @@ The practice regularly represents domestic conglomerates, financial institutions
     const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
     if (heroFlagged) return heroFlagged;
 
-    // 4. Default fallback: first publishable matter, or first confidential matter
+    // 4. In Draft / un-optimized state, DO NOT arbitrarily assign an uncurated matter as Insignia!
+    const isOptimized = optimizedMattersCount > 0 || submission.status === 'Optimized';
+    if (!isOptimized) {
+      return null;
+    }
+
+    // 5. Default fallback ONLY after optimization: first publishable matter, or first confidential matter
     if (categorized.pub && categorized.pub.length > 0) {
       return categorized.pub[0];
     }
     if (categorized.conf && categorized.conf.length > 0) {
       return categorized.conf[0];
     }
-    return matters[0] || null;
-  }, [categorized, matters, chambersData, submission]);
+    return null;
+  }, [categorized, matters, chambersData, submission, optimizedMattersCount]);
 
   const verifiedValuesList = React.useMemo(() => {
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
@@ -665,6 +686,33 @@ The practice regularly represents domestic conglomerates, financial institutions
     }
   };
 
+  // Designate an Insignia / Flagship Matter manually
+  const handleSetHeroMatter = async (matter: MatterItem) => {
+    const heroId = matter.id || '';
+    const heroTitle = matter.client || matter.name || matter.title || 'Asunto Insignia';
+    
+    // Update local matters state with isHero
+    setMatters(prev => prev.map(m => ({
+      ...m,
+      isHero: (m.id && m.id === heroId) || (m.client && m.client === matter.client)
+    })));
+
+    // Update chambersData in state
+    const updatedChambersData = {
+      ...chambersData,
+      hero_matter_id: heroId,
+      hero_matter_title: heroTitle
+    };
+    setChambersData(updatedChambersData);
+
+    // Persist via Server Action
+    try {
+      await updateDesignatedHeroMatter(submission.id, heroId, heroTitle);
+    } catch (err) {
+      console.error('Failed to persist designated hero matter:', err);
+    }
+  };
+
   // Scroll to anchor helper
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -718,29 +766,21 @@ The practice regularly represents domestic conglomerates, financial institutions
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.45rem 1rem',
+                gap: '0.45rem',
+                padding: '0.45rem 0.95rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: activeTab === 'studio' ? '#FFFFFF' : 'transparent',
                 color: activeTab === 'studio' ? '#1A237E' : '#64748B',
                 fontWeight: activeTab === 'studio' ? 600 : 500,
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
-                boxShadow: activeTab === 'studio' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: activeTab === 'studio' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
-              <Zap size={14} color={activeTab === 'studio' ? '#4F46E5' : '#64748B'} />
-              Studio Interactivo
-              <span style={{
-                background: '#EEF2FF',
-                color: '#4F46E5',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                padding: '1px 6px',
-                borderRadius: '4px'
-              }}>PRO</span>
+              <FileText size={14} color={activeTab === 'studio' ? '#4F46E5' : '#64748B'} />
+              <span>Formulario Submission</span>
             </button>
 
             <button
@@ -748,50 +788,27 @@ The practice regularly represents domestic conglomerates, financial institutions
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.45rem 1rem',
+                gap: '0.45rem',
+                padding: '0.45rem 0.95rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: activeTab === 'audit' ? '#FFFFFF' : 'transparent',
                 color: activeTab === 'audit' ? '#1A237E' : '#64748B',
                 fontWeight: activeTab === 'audit' ? 600 : 500,
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
-                boxShadow: activeTab === 'audit' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: activeTab === 'audit' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
-              <FileText size={14} color={activeTab === 'audit' ? '#1A237E' : '#64748B'} />
-              Strategic Audit Report
+              <Award size={14} color={activeTab === 'audit' ? '#1A237E' : '#64748B'} />
+              <span>Strategic Audit Report</span>
             </button>
           </div>
         </div>
 
         {/* Master DOCX Downloads & Quick Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          {/* Import from Matter Assistant Button */}
-          <button
-            onClick={() => setShowAssistantModal(true)}
-            style={{
-              background: '#FFFFFF',
-              border: '1px solid #CBD5E1',
-              color: '#334155',
-              padding: '0.45rem 0.75rem',
-              borderRadius: '7px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-            title="Importar asuntos guardados en el Matter Assistant a este submission"
-          >
-            <BookOpen size={13} color="#4F46E5" />
-            Importar Asuntos
-          </button>
-
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Evidence Readiness Interactive Badge */}
           <button
             onClick={() => setShowReadinessModal(true)}
@@ -815,115 +832,300 @@ The practice regularly represents domestic conglomerates, financial institutions
             {readiness.score}% • {readiness.label}
           </button>
 
-          <button
-            onClick={() => setShowValidationWizard(true)}
-            style={{
-              background: '#FFFFFF',
-              color: '#4F46E5',
-              border: '1px solid #C7D2FE',
-              padding: '0.45rem 0.85rem',
-              borderRadius: '7px',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(79,70,229,0.06)',
-              transition: 'all 0.15s ease'
-            }}
-            title="Revisar y validar los datos fácticos extraídos paso a paso"
-          >
-            <CheckCircle2 size={13} />
-            Validar Datos Extraídos
-          </button>
+          {/* Grouped Tools Dropdown */}
+          <div style={{ position: 'relative' }} data-dropdown="tools">
+            <button
+              onClick={() => {
+                setShowToolsMenu(prev => !prev);
+                setShowDownloadMenu(false);
+              }}
+              style={{
+                background: showToolsMenu ? '#F1F5F9' : '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                color: '#334155',
+                padding: '0.45rem 0.8rem',
+                borderRadius: '7px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title="Herramientas y opciones de preparación del submission"
+            >
+              <Sliders size={14} color="#4F46E5" />
+              <span>Herramientas</span>
+              <ChevronDown size={14} style={{ transform: showToolsMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+            </button>
 
+            {showToolsMenu && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                zIndex: 100,
+                width: '265px',
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                padding: '0.4rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowValidationWizard(true);
+                    setShowToolsMenu(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <CheckCircle2 size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Validar Datos Extraídos</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Revisión guiada paso a paso</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAssistantModal(true);
+                    setShowToolsMenu(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <BookOpen size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Importar Asuntos</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Cargar desde Matter Assistant</div>
+                  </div>
+                </button>
+
+                <div style={{ height: '1px', background: '#F1F5F9', margin: '4px 0' }} />
+
+                <a
+                  href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`}
+                  onClick={() => setShowToolsMenu(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FileText size={16} color="#64748B" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Ver Borrador Original</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>DOCX con textos originales sin optimizar</div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Primary CTA: Optimizar Todo */}
           <button
             onClick={() => handleOptimizeAll(false)}
             disabled={isOptimizingAll}
             style={{
-              background: isOptimizingAll ? '#E2E8F0' : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
-              color: isOptimizingAll ? '#64748B' : '#FFFFFF',
+              background: isOptimizingAll 
+                ? '#CBD5E1' 
+                : isFullyOptimized 
+                  ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
+                  : 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
+              color: '#FFFFFF',
               border: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.5rem 1.15rem',
               borderRadius: '7px',
-              fontSize: '0.8rem',
+              fontSize: '0.82rem',
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.45rem',
               cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
-              boxShadow: isOptimizingAll ? 'none' : '0 2px 4px rgba(79,70,229,0.2)',
+              boxShadow: isOptimizingAll 
+                ? 'none' 
+                : isFullyOptimized 
+                  ? '0 2px 6px rgba(5,150,105,0.25)' 
+                  : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
+            title={isFullyOptimized ? 'Todos los asuntos están optimizados. Haz clic para re-optimizar si realizaste cambios.' : 'Ejecutar optimización editorial integral bajo estándares Chambers'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            {isOptimizingAll ? 'Optimizando...' : '✨ Optimizar Todo'}
+            <span>{isOptimizingAll ? 'Optimizando Asuntos...' : isFullyOptimized ? '✓ Optimizado' : '✨ Optimizar Todo'}</span>
           </button>
 
-          {!isLegal500 ? (
-            <a
-              href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
+          {/* Unified Download Dropdown */}
+          <div style={{ position: 'relative' }} data-dropdown="download">
+            <button
+              onClick={() => {
+                setShowDownloadMenu(prev => !prev);
+                setShowToolsMenu(false);
+              }}
               style={{
                 background: '#1A237E',
                 color: '#FFFFFF',
-                textDecoration: 'none',
+                border: 'none',
                 padding: '0.5rem 1rem',
                 borderRadius: '7px',
-                fontSize: '0.8rem',
+                fontSize: '0.82rem',
                 fontWeight: 600,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: '0 2px 4px rgba(26,35,126,0.15)',
+                gap: '0.45rem',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(26,35,126,0.2)',
                 transition: 'all 0.15s ease'
               }}
             >
               <Download size={14} />
-              Chambers Master DOCX
-            </a>
-          ) : (
-            <a
-              href={`/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`}
-              style={{
-                background: '#0F172A',
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                padding: '0.5rem 0.9rem',
-                borderRadius: '7px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Download size={14} />
-              Legal 500 Master DOCX
-            </a>
-          )}
+              <span>Descargar</span>
+              <ChevronDown size={14} style={{ transform: showDownloadMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+            </button>
 
-          <a
-            href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`}
-            style={{
-              background: '#F1F5F9',
-              color: '#475569',
-              textDecoration: 'none',
-              padding: '0.5rem 0.85rem',
-              borderRadius: '7px',
-              fontSize: '0.8rem',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              border: '1px solid #E2E8F0'
-            }}
-            title="Descargar documento con los textos originales antes de optimizar"
-          >
-            <Download size={14} />
-            Original
-          </a>
+            {showDownloadMenu && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                zIndex: 100,
+                width: '280px',
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                padding: '0.4rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px'
+              }}>
+                {/* Official Master DOCX */}
+                <a
+                  href={isLegal500
+                    ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`
+                    : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
+                  onClick={() => setShowDownloadMenu(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    background: '#F8FAFC',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#EEF2FF')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#F8FAFC')}
+                >
+                  <Download size={16} color="#1A237E" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1A237E' }}>
+                      {isLegal500 ? 'Legal 500 Master DOCX' : 'Chambers Master DOCX'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      Formulario oficial optimizado en 3 párrafos
+                    </div>
+                  </div>
+                </a>
+
+                {/* Strategic Audit Report DOCX */}
+                <a
+                  href={`/api/generate-docx?id=${submission.id}&type=audit`}
+                  onClick={() => setShowDownloadMenu(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FileText size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>
+                      Strategic Audit Report DOCX
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      Carta ejecutiva para socios con conciliación 1:1
+                    </div>
+                  </div>
+                </a>
+
+                <div style={{ height: '1px', background: '#F1F5F9', margin: '4px 0' }} />
+
+                {/* Borrador Original */}
+                <a
+                  href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`}
+                  onClick={() => setShowDownloadMenu(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.6rem',
+                    padding: '0.6rem 0.75rem',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FileText size={16} color="#64748B" style={{ marginTop: '2px', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#475569' }}>
+                      Borrador Original DOCX
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      Documento con textos literales sin optimizar
+                    </div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1841,25 +2043,52 @@ The practice regularly represents domestic conglomerates, financial institutions
                 const paragraphs = rawText.split(/\n\s*\n/).filter(Boolean);
                 const isOptimizingThis = optimizingMatterId === key;
                 const isDrawerOpen = activeMatterDrawer === key;
+                const isHeroThisMatter = Boolean(
+                  (flagshipMatter && (
+                    (flagshipMatter.id && m.id && String(flagshipMatter.id) === String(m.id)) ||
+                    (flagshipMatter.client && m.client && flagshipMatter.client.toLowerCase() === m.client.toLowerCase()) ||
+                    (flagshipMatter.name && m.name && flagshipMatter.name.toLowerCase() === m.name.toLowerCase())
+                  )) ||
+                  m.isHero ||
+                  (m as any).is_hero ||
+                  (m as any).hero
+                );
 
                 return (
                   <div key={key} style={{
                     background: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid #E2E8F0',
+                    border: isHeroThisMatter ? '2px solid #F59E0B' : '1px solid #E2E8F0',
                     padding: '1.5rem',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                    boxShadow: isHeroThisMatter ? '0 4px 12px rgba(245, 158, 11, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1rem'
+                    gap: '1rem',
+                    transition: 'all 0.2s ease'
                   }}>
                     {/* Matter Header */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                      <div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                           <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#DCFCE7', color: '#16A34A', padding: '2px 8px', borderRadius: '4px' }}>
                             D{idx + 1} · Público
                           </span>
+                          {isHeroThisMatter && (
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: '#FEF3C7',
+                              color: '#92400E',
+                              border: '1px solid #FCD34D',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              ⭐ Asunto Insignia
+                            </span>
+                          )}
                           {m.value && (
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
                               {m.value}
@@ -1893,25 +2122,76 @@ The practice regularly represents domestic conglomerates, financial institutions
                         </h4>
                       </div>
 
-                      <button
-                        onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
-                        style={{
-                          background: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          padding: '0.35rem 0.75rem',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          color: '#475569',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}
-                      >
-                        <Sparkles size={12} color="#4F46E5" />
-                        {isDrawerOpen ? 'Cerrar Ajuste' : 'Ajustar con IA'}
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                        {isHeroThisMatter ? (
+                          <span style={{
+                            padding: '0.35rem 0.65rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: '#92400E',
+                            background: '#FEF3C7',
+                            border: '1px solid #FCD34D',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            ⭐ Insignia Principal
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSetHeroMatter(m)}
+                            title="Designar este asunto como el Mandato Insignia / Flagship de la postulación"
+                            style={{
+                              background: '#FFFFFF',
+                              border: '1px solid #CBD5E1',
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#475569',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#FCD34D';
+                              e.currentTarget.style.color = '#92400E';
+                              e.currentTarget.style.background = '#FFFBEB';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#CBD5E1';
+                              e.currentTarget.style.color = '#475569';
+                              e.currentTarget.style.background = '#FFFFFF';
+                            }}
+                          >
+                            <span>⭐</span>
+                            Hacer Insignia
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
+                          style={{
+                            background: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: '#475569',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          <Sparkles size={12} color="#4F46E5" />
+                          {isDrawerOpen ? 'Cerrar Ajuste' : 'Ajustar con IA'}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Matter Body (3 Organic Paragraphs) */}
@@ -2039,25 +2319,52 @@ The practice regularly represents domestic conglomerates, financial institutions
                   const paragraphs = rawText.split(/\n\s*\n/).filter(Boolean);
                   const isOptimizingThis = optimizingMatterId === key;
                   const isDrawerOpen = activeMatterDrawer === key;
+                  const isHeroThisMatter = Boolean(
+                    (flagshipMatter && (
+                      (flagshipMatter.id && m.id && String(flagshipMatter.id) === String(m.id)) ||
+                      (flagshipMatter.client && m.client && flagshipMatter.client.toLowerCase() === m.client.toLowerCase()) ||
+                      (flagshipMatter.name && m.name && flagshipMatter.name.toLowerCase() === m.name.toLowerCase())
+                    )) ||
+                    m.isHero ||
+                    (m as any).is_hero ||
+                    (m as any).hero
+                  );
 
                   return (
                     <div key={key} style={{
                       background: '#FFFFFF',
                       borderRadius: '12px',
-                      border: '1px solid #FEF3C7',
+                      border: isHeroThisMatter ? '2px solid #F59E0B' : '1px solid #FEF3C7',
                       padding: '1.5rem',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      boxShadow: isHeroThisMatter ? '0 4px 12px rgba(245, 158, 11, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '1rem'
+                      gap: '1rem',
+                      transition: 'all 0.2s ease'
                     }}>
                       {/* Matter Header */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        <div>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                        <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '4px' }}>
                               E{idx + 1} · Confidencial
                             </span>
+                            {isHeroThisMatter && (
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                background: '#FEF3C7',
+                                color: '#92400E',
+                                border: '1px solid #FCD34D',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                ⭐ Asunto Insignia
+                              </span>
+                            )}
                             {m.value && (
                               <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
                                 {m.value}
@@ -2086,25 +2393,76 @@ The practice regularly represents domestic conglomerates, financial institutions
                           </h4>
                         </div>
 
-                        <button
-                          onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
-                          style={{
-                            background: '#F8FAFC',
-                            border: '1px solid #E2E8F0',
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '6px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            color: '#475569',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem'
-                          }}
-                        >
-                          <Sparkles size={12} color="#4F46E5" />
-                          {isDrawerOpen ? 'Cerrar' : 'Ajustar con IA'}
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                          {isHeroThisMatter ? (
+                            <span style={{
+                              padding: '0.35rem 0.65rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#92400E',
+                              background: '#FEF3C7',
+                              border: '1px solid #FCD34D',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              ⭐ Insignia Principal
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSetHeroMatter(m)}
+                              title="Designar este asunto como el Mandato Insignia / Flagship de la postulación"
+                              style={{
+                                background: '#FFFFFF',
+                                border: '1px solid #CBD5E1',
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#475569',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                transition: 'all 0.15s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = '#FCD34D';
+                                e.currentTarget.style.color = '#92400E';
+                                e.currentTarget.style.background = '#FFFBEB';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = '#CBD5E1';
+                                e.currentTarget.style.color = '#475569';
+                                e.currentTarget.style.background = '#FFFFFF';
+                              }}
+                            >
+                              <span>⭐</span>
+                              Hacer Insignia
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
+                            style={{
+                              background: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#475569',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}
+                          >
+                            <Sparkles size={12} color="#4F46E5" />
+                            {isDrawerOpen ? 'Cerrar' : 'Ajustar con IA'}
+                          </button>
+                        </div>
                       </div>
 
                       {/* Matter Body */}
@@ -2308,7 +2666,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                   </div>
 
                   {/* Card 2: Flagship Matter */}
-                  {flagshipMatter && (
+                  {flagshipMatter ? (
                     <div style={{
                       background: '#F8FAFC',
                       borderRadius: '8px',
@@ -2345,6 +2703,44 @@ The practice regularly represents domestic conglomerates, financial institutions
                         }}
                       >
                         Revisar en Asuntos
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{
+                      background: '#FAFAFA',
+                      borderRadius: '8px',
+                      border: '1px dashed #CBD5E1',
+                      padding: '0.85rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
+                        <span style={{ fontSize: '0.85rem' }}>⭐</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>
+                          Insignia: Por calibrar
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
+                        Se identificará automáticamente al ejecutar <strong>Optimizar Todo</strong> (evaluando escala, volumen y precedentes), o puedes elegirlo manualmente con el botón <strong>⭐ Hacer Insignia</strong> en cualquier asunto.
+                      </p>
+                      <button
+                        onClick={() => scrollTo('section-d')}
+                        style={{
+                          width: '100%',
+                          background: '#FFFFFF',
+                          color: '#475569',
+                          border: '1px solid #E2E8F0',
+                          padding: '0.35rem',
+                          borderRadius: '5px',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        Elegir Asunto Insignia
                         <ArrowRight size={12} />
                       </button>
                     </div>

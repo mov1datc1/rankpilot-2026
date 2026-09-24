@@ -19,6 +19,7 @@ import {
   X,
   Check
 } from 'lucide-react';
+import { getCanonicalPracticeArea } from '@/lib/constants';
 
 export interface PostIngestionWizardModalProps {
   isOpen: boolean;
@@ -57,25 +58,30 @@ export default function PostIngestionWizardModal({
     return s.trim();
   };
 
-  // Local state for all fields being validated
+  const calibratedPractice = sanitizeStr(initialData.calibratedPracticeArea);
+  const extractedPractice = sanitizeStr(initialData.extractedPracticeArea || initialData.practiceArea);
+
+  // Canonical normalization eliminates false discrepancies (e.g. Labour vs Labor, Tax vs Taxation)
+  const canonCalibrated = getCanonicalPracticeArea(calibratedPractice);
+  const canonExtracted = getCanonicalPracticeArea(extractedPractice);
+
+  const hasPracticeDiscrepancy = Boolean(
+    calibratedPractice && 
+    extractedPractice && 
+    canonCalibrated !== canonExtracted
+  );
+
+  // Local state for all fields being validated (defaults to official calibrated if equivalent)
+  const initialPractice = hasPracticeDiscrepancy 
+    ? sanitizeStr(initialData.practiceArea)
+    : (calibratedPractice || sanitizeStr(initialData.practiceArea));
+
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
-  const [practiceArea, setPracticeArea] = useState(sanitizeStr(initialData.practiceArea));
+  const [practiceArea, setPracticeArea] = useState(initialPractice);
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
   const [b10Text, setB10Text] = useState(initialData.b10Text || '');
   const [lawyers, setLawyers] = useState<any[]>(initialData.lawyers || []);
   const [matters, setMatters] = useState<any[]>(initialData.matters || []);
-
-  const calibratedPractice = sanitizeStr(initialData.calibratedPracticeArea);
-  const extractedPractice = sanitizeStr(initialData.extractedPracticeArea || initialData.practiceArea);
-
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const hasPracticeDiscrepancy = Boolean(
-    calibratedPractice && 
-    extractedPractice && 
-    norm(calibratedPractice) !== norm(extractedPractice) &&
-    !norm(calibratedPractice).includes(norm(extractedPractice)) &&
-    !norm(extractedPractice).includes(norm(calibratedPractice))
-  );
 
   // Wizard Navigation:
   // Step 1: Firm & Practice Data

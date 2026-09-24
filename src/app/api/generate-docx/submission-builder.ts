@@ -523,7 +523,17 @@ The intervention successfully achieved the client's strategic objectives, mitiga
   );
 
   let matterHeaderTitle = `${type} Matter ${matterNum}`;
-  if (matterNum === 1 && (!isConf || matter.isHero || matter.quality_label === 'Flagship Matter' || matter._isCanonicalAnchor)) {
+  const isExplicitHero = Boolean(
+    matter.isHero || 
+    matter.is_hero || 
+    matter.hero || 
+    matter.quality_label === 'Flagship Matter' || 
+    matter._isCanonicalAnchor
+  );
+  if (isExplicitHero) {
+    const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
+    matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #${matterNum}`;
+  } else if (matterNum === 1 && exportMode !== 'original' && !isConf) {
     const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
     matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #1`;
   } else if (!isConf && isMatterConfUnstated) {
