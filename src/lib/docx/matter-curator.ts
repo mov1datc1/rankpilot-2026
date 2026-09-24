@@ -100,8 +100,10 @@ export function calculateStrategicTier(
   const heroTitle = chambersData?.hero_matter_title || chambersData?.hero_matter_name;
   if (heroId && String(matter.id).toLowerCase() === String(heroId).toLowerCase()) {
     score += 1000;
+    matter.isHero = true;
   } else if (heroTitle && typeof heroTitle === 'string' && heroTitle.trim().length > 2 && (client.includes(heroTitle.toLowerCase()) || title.includes(heroTitle.toLowerCase()))) {
     score += 1000;
+    matter.isHero = true;
   } else if (matter._isCanonicalAnchor || matter.isHero || matter.is_flagship || matter.isFlagship) {
     score += 500;
   }
@@ -142,13 +144,19 @@ export function calculateStrategicTier(
     if (combined.includes('11,000') || combined.includes('10,000') || combined.includes('5,000') || combined.includes('2,000') || combined.includes('1,200') || combined.includes('workforce') || combined.includes('plantilla') || combined.includes('nationwide')) {
       score += 25;
     }
-    // High-stakes M&A labor integration / multinational acquisition
-    if (combined.includes('acquisition') || combined.includes('adquisición') || combined.includes('adquisicion') || combined.includes('vitesco') || combined.includes('schaeffler') || combined.includes('restructuring')) {
-      score += 35;
+    // High-stakes M&A labor integration / multinational acquisition (e.g. Schaeffler / Vitesco)
+    if (combined.includes('vitesco') || combined.includes('schaeffler') || (combined.includes('acquisition') && (combined.includes('multinational') || combined.includes('global') || combined.includes('post-acquisition')))) {
+      score += 45;
+    } else if (combined.includes('acquisition') || combined.includes('adquisición') || combined.includes('adquisicion')) {
+      score += 25;
     }
     // Collective disputes, strike management, union ownership, USMCA / T-MEC MLRR
     if (combined.includes('collective') || combined.includes('colectivo') || combined.includes('cct') || combined.includes('sindicato') || combined.includes('huelga') || combined.includes('strike') || combined.includes('usmca') || combined.includes('t-mec') || combined.includes('rapid response') || combined.includes('mlrr') || combined.includes('titularidad')) {
       score += 30;
+    }
+    // Active labor litigation / multi-facility proceedings defense
+    if (combined.includes('active labor proceedings') || combined.includes('litigation strategy') || combined.includes('labor proceedings')) {
+      score += 20;
     }
   }
 

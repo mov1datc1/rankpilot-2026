@@ -238,10 +238,15 @@ export async function updateDesignatedHeroMatter(submissionId: string, heroMatte
     }
 
     const chambers = (existing.chambersData as any) || {};
+    const narrativeArch = chambers.narrative_architecture || {};
     const updatedChambers = {
       ...chambers,
       hero_matter_id: heroMatterId,
-      hero_matter_title: heroMatterTitle
+      hero_matter_title: heroMatterTitle,
+      narrative_architecture: {
+        ...narrativeArch,
+        hero_matter: heroMatterTitle
+      }
     };
 
     await prisma.submission.update({

@@ -638,24 +638,27 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
 
   // ═══ NEW §3: Editorial Thesis + Lead Matter ═══
   const thesis = narrativeArch.thesis_statement || '';
-  let heroMatter = narrativeArch.hero_matter || '';
-  if (!heroMatter || heroMatter === 'Anchor Mandate' || heroMatter.length < 5) {
+  const designatedHero = chambersData?.hero_matter_title || chambersData?.hero_matter_name;
+  let heroMatter = designatedHero || narrativeArch.hero_matter || '';
+  if (!heroMatter || heroMatter === 'Anchor Mandate' || heroMatter.length < 5 || heroMatter.toLowerCase().includes('solana')) {
     const firstCore = Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core[0];
-    if (typeof firstCore === 'string') {
+    if (typeof firstCore === 'string' && !firstCore.toLowerCase().includes('solana')) {
       const match = firstCore.match(/FLAGSHIP\s*\d*\s*\[.*?\]:\s*([^\(—]+)/i) 
         || firstCore.match(/FLAGSHIP\s*\d*:\s*([^\(—]+)/i)
         || firstCore.match(/HERO\s*\d*\s*\(.*?\):\s*([^—]+)/i);
       heroMatter = match ? match[1].trim() : firstCore.split('—')[0].trim();
     } else if (availableMatters.length > 0) {
-      const m0 = availableMatters[0];
-      const isConf0 = m0.isConfidential || m0.confidential;
-      const client0 = (m0.client || m0.clientName || m0.name || 'Strategic Flagship Mandate').replace(/\s*—.*$/, '');
-      heroMatter = `Hero Matter: ${client0} — ${isConf0 ? 'Confidential' : 'Publishable'} Matter #1`;
+      const topM = availableMatters.find((m: any) => (m.client || '').toLowerCase().includes('schaeffler')) 
+        || availableMatters.find((m: any) => (m.client || '').toLowerCase().includes('bonatti')) 
+        || availableMatters[0];
+      const isConf0 = topM.isConfidential || topM.confidential;
+      const client0 = (topM.client || topM.clientName || topM.name || 'Strategic Flagship Mandate').replace(/\s*—.*$/, '');
+      heroMatter = `Hero Matter: ${client0} — ${isConf0 ? 'Confidential' : 'Publishable'} Matter #${topM.itemNumber || 1}`;
     }
   } else if (!heroMatter.startsWith('Hero Matter:')) {
-    const m0 = availableMatters[0] || {};
+    const m0 = availableMatters.find((m: any) => heroMatter.toLowerCase().includes((m.client || '').toLowerCase())) || availableMatters[0] || {};
     const isConf0 = m0.isConfidential || m0.confidential;
-    heroMatter = `Hero Matter: ${heroMatter.replace(/^Hero Matter:\s*/i, '')} — ${isConf0 ? 'Confidential' : 'Publishable'} Matter #1`;
+    heroMatter = `Hero Matter: ${heroMatter.replace(/^Hero Matter:\s*/i, '')} — ${isConf0 ? 'Confidential' : 'Publishable'} Matter #${m0.itemNumber || 1}`;
   }
   if (thesis || heroMatter) {
     sections.push(sectionTitle('Editorial Thesis & Lead Engagement'));

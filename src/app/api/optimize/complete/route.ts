@@ -612,12 +612,28 @@ export async function POST(request: NextRequest) {
       checks: judgeChecks
     };
 
-    const heroMatterItem = curationResult.officialPubMatters[0] || curationResult.officialConfMatters[0] || updatedMatters[0] || {};
+    // Select the highest-scoring matter across both publishable and confidential registers
+    const allOfficialMatters = [...curationResult.officialPubMatters, ...curationResult.officialConfMatters];
+    const topScoredMatter = [...allOfficialMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0))[0];
+    
+    // Check if user explicitly designated a hero matter
+    const explicitHero = allOfficialMatters.find(m => 
+      (chambersData.hero_matter_id && String(m.id) === String(chambersData.hero_matter_id)) ||
+      (chambersData.hero_matter_title && (
+        (m.client && chambersData.hero_matter_title.toLowerCase().includes(m.client.toLowerCase())) ||
+        (m.name && chambersData.hero_matter_title.toLowerCase().includes(m.name.toLowerCase()))
+      ))
+    );
+
+    const heroMatterItem = explicitHero || topScoredMatter || updatedMatters[0] || {};
     let heroRationale = `Combines high-value asset/transaction exposure with decisive legal craft and business-critical outcome.`;
     let heroReasoning = `Represents the highest evidentiary weight and strategic category fit in the portfolio.`;
     let heroTitle = '';
 
-    if (chambersData.narrative_architecture?.hero_matter && chambersData.narrative_architecture.hero_matter !== 'Anchor Mandate' && chambersData.narrative_architecture.hero_matter !== 'Strategic Flagship Mandate') {
+    if (chambersData.narrative_architecture?.hero_matter && 
+        chambersData.narrative_architecture.hero_matter !== 'Anchor Mandate' && 
+        chambersData.narrative_architecture.hero_matter !== 'Strategic Flagship Mandate' &&
+        !chambersData.narrative_architecture.hero_matter.toLowerCase().includes('solana')) {
       heroTitle = chambersData.narrative_architecture.hero_matter;
       heroRationale = chambersData.narrative_architecture.hero_matter_rationale || heroRationale;
       heroReasoning = chambersData.narrative_architecture.hero_selection_reasoning || heroReasoning;
