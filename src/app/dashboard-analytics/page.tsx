@@ -215,14 +215,17 @@ export default function DashboardAnalyticsPage() {
             </thead>
             <tbody>
               {stats.recentSubmissions.map((sub) => {
-                const progress = sub.mattersCount > 0 ? Math.round((sub.optimizedCount / sub.mattersCount) * 100) : 0;
-                const isReady = sub.mattersCount > 0 && progress === 100;
+                const isOptimizedSub = sub.status === 'Optimized';
+                const progress = isOptimizedSub 
+                  ? 100 
+                  : (sub.mattersCount > 0 ? Math.min(100, Math.round((sub.optimizedCount / sub.mattersCount) * 100)) : 0);
+                const isReady = isOptimizedSub || (sub.mattersCount > 0 && progress === 100);
                 const cd = sub.chambersData as any;
                 const firmName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || '';
                 const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
                 const needsEvidence = editorialConf === 'insufficient' || editorialConf === 'low';
 
-                let statusLabel = isReady ? 'Analyzed' : 'In Progress';
+                let statusLabel = isOptimizedSub ? 'Optimized' : (isReady ? 'Analyzed' : (sub.status || 'In Progress'));
                 let statusBg = isReady ? '#ECFDF5' : '#FEF3C7';
                 let statusColor = isReady ? '#065F46' : '#92400E';
                 let StatusIcon = isReady ? CheckCircle2 : Clock;
@@ -254,7 +257,7 @@ export default function DashboardAnalyticsPage() {
                         <div style={{ flex: 1, height: '6px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', maxWidth: '120px' }}>
                           <div style={{ height: '100%', width: `${progress}%`, background: isReady ? '#16a34a' : '#2563eb', borderRadius: '999px' }} />
                         </div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#2563eb' }}>{progress}%</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isReady ? '#16a34a' : '#2563eb' }}>{progress}%</span>
                       </div>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
