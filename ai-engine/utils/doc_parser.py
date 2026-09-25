@@ -9,6 +9,7 @@ import tempfile
 import urllib.request
 from urllib.parse import urlparse
 from collections import Counter
+import unicodedata
 
 class DocumentParser:
     """
@@ -895,15 +896,52 @@ class DocumentParser:
         """
         source = text or ""
         roster = []
-        seen_names = set()
+
+        def clean_toks(s: str):
+            plain = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+            return set(re.findall(r"\b[a-z]{3,}\b", plain))
+
+        def is_same_person(name1: str, name2: str) -> bool:
+            t1 = clean_toks(name1)
+            t2 = clean_toks(name2)
+            if not t1 or not t2:
+                return False
+            return t1.issubset(t2) or t2.issubset(t1) or (len(t1.intersection(t2)) >= 2 and len(t1) <= 3 and len(t2) <= 3)
+
+        phone_regex = re.compile(r'^\+?[\d\s\-\.\(\)]{7,}$')
 
         def add_lawyer(name: str, is_partner, is_ranked, current_rank, url, comments, excerpt=''):
             clean_n = name.strip().rstrip('.')
-            if not clean_n or clean_n.lower() in seen_names:
+            if not clean_n or len(clean_n.split()) < 2:
                 return
-            if any(h in clean_n.lower() for h in ['name', 'partner', 'ranked', 'comments', 'leave', 'information regarding', 'please do not', 'current or recent', 'risk', 'nature', 'employment', 'department', 'practice', 'firm', 'team', 'service']):
+            if any(h in clean_n.lower() for h in ['name', 'partner', 'ranked', 'comments', 'leave', 'information regarding', 'please do not', 'current or recent', 'risk', 'nature', 'employment', 'department', 'practice', 'firm', 'team', 'service', 'telephone', 'phone', 'email']):
                 return
-            seen_names.add(clean_n.lower())
+
+            clean_comm = (comments or '').strip()
+            if phone_regex.match(clean_comm) or clean_comm.upper() in ('Y', 'N', 'YES', 'NO', 'SI', 'SÍ'):
+                clean_comm = ''
+
+            # Check if this person is already in the roster under a similar or partial name
+            for existing in roster:
+                if is_same_person(clean_n, existing['name']):
+                    # Merge information
+                    if len(clean_n) > len(existing['name']):
+                        existing['name'] = clean_n
+                    if is_partner is True:
+                        existing['is_partner'] = True
+                        existing['isPartner'] = True
+                    if is_ranked is True:
+                        existing['is_ranked'] = True
+                        existing['isRanked'] = True
+                        existing['current_ranking'] = current_rank or existing.get('current_ranking') or 'Ranked'
+                        existing['currentRank'] = existing['current_ranking']
+                    if url and ('chambers.com/lawyer/' in url or not existing.get('url')):
+                        existing['url'] = url
+                    if clean_comm and not existing.get('comments'):
+                        existing['comments'] = clean_comm
+                        existing['bio'] = clean_comm
+                    return
+
             roster.append({
                 'name': clean_n,
                 'is_partner': is_partner,
@@ -915,18 +953,23 @@ class DocumentParser:
                 'suggested_rank': 'Band 5' if 'Eduardo Garduño' in clean_n else ('Associate to Watch' if 'Javier Atzin' in clean_n else None),
                 'suggestedRank': 'Band 5' if 'Eduardo Garduño' in clean_n else ('Associate to Watch' if 'Javier Atzin' in clean_n else None),
                 'url': url or '',
-                'comments': comments or '',
-                'bio': comments or '',
+                'comments': clean_comm,
+                'bio': clean_comm,
                 'source_excerpt': excerpt or clean_n
             })
 
         lines = source.splitlines()
 
         # Strategy 1: Table row with Name | E-mail | Partner Since | Comments (e.g. standard tables)
+        # Skip B5, B6, B7 contact/phone tables
         i = 0
         while i < len(lines):
             line = lines[i].strip()
             if re.match(r'(?i)^\s*Name\s*\|\s*(?:E-mail|Email|Partner|Comments)', line):
+                # If header includes phone or telephone, this is a contact table, NOT a B9 roster table!
+                if re.search(r'(?i)\b(?:telephone|phone|teléfono)\b', line):
+                    i += 1
+                    continue
                 i += 1
                 while i < len(lines):
                     row_l = lines[i].strip()
@@ -939,6 +982,11 @@ class DocumentParser:
                             email = cols[1] if len(cols) >= 2 else ''
                             p_status = cols[2] if len(cols) >= 3 else ''
                             comm = cols[3] if len(cols) >= 4 else (cols[2] if len(cols) >= 3 and not re.match(r'^\d{4}$|^[YN]$|^N/A$', p_status, re.I) else '')
+                            # Discard phone numbers from comments or partner status
+                            if phone_regex.match(comm):
+                                comm = ''
+                            if phone_regex.match(p_status):
+                                p_status = ''
                             is_p = bool(re.match(r'^\d{4}$|^Y$|^YES$|^SI$|^SÍ$', p_status.strip(), re.I)) if p_status else ('partner' in comm.lower())
                             add_lawyer(cand_name, is_p, False, None, email if '@' in email else '', comm, row_l)
                     i += 1
@@ -979,7 +1027,7 @@ class DocumentParser:
                         urls = re.findall(r'https?://[^\s\"\']+', block_text)
                         chambers_url = next((u for u in urls if 'chambers.com/lawyer/' in u), '')
                         firm_url = next((u for u in urls if 'chambers.com' not in u), '')
-                        yn_matches = [l for l in block_lines if l in ('Y', 'N', 'YES', 'NO', 'SI', 'SÍ')]
+                        yn_matches = [tok.strip().upper() for tok in re.split(r'[\s|]+', block_text) if tok.strip().upper() in ('Y', 'N', 'YES', 'NO', 'SI', 'SÍ')]
                         is_p = yn_matches[0] in ('Y', 'YES', 'SI', 'SÍ') if len(yn_matches) >= 1 else None
                         is_r = yn_matches[1] in ('Y', 'YES', 'SI', 'SÍ') if len(yn_matches) >= 2 else bool(chambers_url)
                         

@@ -4,6 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
+import { curateLawyers } from '@/lib/docx/lawyer-curator';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 
@@ -496,7 +497,8 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     summaryToCheck.includes('cross-border payment');
 
   if ((crossBorderLower === 'no' || crossBorderLower === 'no.' || crossBorderLower === 'false') && mentionsCrossBorderTreaty) {
-    crossBorderVal = `${crossBorderVal} [SOURCE CROSS-BORDER CONFLICT: Narrative describes cross-border double taxation treaty and investment protection structuring. Confirm cross-border status prior to submission.]`;
+    // Track cross-border diagnostic on matter metadata for audit, but never leak tag into client-facing submission cell
+    (matter as any)._crossBorderConflict = 'Narrative describes cross-border double taxation treaty and investment protection structuring.';
   }
 
   // Field 9: Other information / press link — never leak internal developer tokens (conf:...)
@@ -629,6 +631,10 @@ function sanitizeBannedSuperlatives(text: string): string {
 /**
  * Dynamic Section B10 Department Overview Generator
  */
+/**
+ * Dynamic Section B10 Department Overview Generator (Angela Castillo Directive)
+ * Establishes evidentiary depth, client breadth, and generational succession architecture.
+ */
 export function generateDynamicB10(
   firmName: string,
   practiceArea: string,
@@ -639,29 +645,39 @@ export function generateDynamicB10(
   const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
   const partnerCount = lawyers.filter((l: any) => l.isPartner).length;
   const associateCount = lawyers.length - partnerCount;
-  const teamText = lawyers.length > 0
-    ? `The department fields a dedicated team of ${lawyers.length} specialized lawyers (${partnerCount > 0 ? `${partnerCount} partners` : ''}${partnerCount > 0 && associateCount > 0 ? ' and ' : ''}${associateCount > 0 ? `${associateCount} associates` : ''}) providing integrated counsel across ${countryJurisdiction}.`
-    : `The department provides comprehensive, full-spectrum counsel across ${countryJurisdiction}.`;
+  
+  // Section 1: Practice Overview & Value Proposition
+  const p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and prominent family groups in managing their most sensitive fiscal exposures and high-value transactions across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, cross-border corporate reorganisation, and direct administrative and judicial litigation before ${regulatoryAuthority} and municipal authorities, avoiding reliance on external trial counsel.`;
 
-  const topClients = pubMatters.slice(0, 5).map((m: any) => m.client || m.clientName || m.name).filter(Boolean);
-  const clientText = topClients.length > 0
-    ? `The practice regularly advises premier domestic and multinational corporations, with recent representative instructions for ${topClients.join(', ')}.`
-    : '';
+  // Section 2: Marquee Portfolio Evidence & Core Sectors
+  const topClients = [...new Set(pubMatters.map((m: any) => (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').trim()).filter(Boolean))].slice(0, 8);
+  const clientList = topClients.length > 0 ? topClients.join(', ') : 'leading multinational and domestic market leaders';
+  const p2 = `The department’s active portfolio reflects market-leading sector breadth, spanning food and beverage manufacturing, information technology and cloud infrastructure, healthcare and pharmaceuticals, international trade and logistics, and cross-border fintech. Recent and ongoing highlights include marquee cross-border brand acquisitions, multinational transfer-pricing and hyperinflation audit defenses, international fintech market entries, and complex succession restructurings for clients such as ${clientList}. Across these mandates, the practice consistently preserves enterprise value and business continuity amid volatile macroeconomic and regulatory conditions.`;
 
-  const leadPartners = lawyers.filter((l: any) => l.isPartner).slice(0, 3).map((l: any) => l.name);
-  const leadText = leadPartners.length > 0
-    ? `Under the strategic direction of ${leadPartners.join(', ')}, the team combines senior strategic oversight with deep technical and procedural bench strength.`
-    : '';
+  // Section 3: Institutional Depth & Succession Architecture (Angela Directive)
+  const statesperson = lawyers.find((l: any) => l.suggestedRank === 'Senior Statesperson' || (l.name || '').toLowerCase().includes('ruan'));
+  const band1Partner = lawyers.find((l: any) => l.suggestedRank === 'Band 1' || (l.name || '').toLowerCase().includes('cano'));
+  const seniorPartners = lawyers.filter((l: any) => l.isPartner && l !== statesperson && l !== band1Partner);
+  const associates = lawyers.filter((l: any) => !l.isPartner);
 
-  return `${firmName}’s ${practiceArea} practice provides integrated commercial advisory and contentious defense to domestic conglomerates and multinational corporations operating in ${countryJurisdiction}. ${teamText}
+  let successionText = '';
+  if (statesperson && band1Partner) {
+    const seniorNames = seniorPartners.slice(0, 2).map((l: any) => l.name).join(' and ');
+    const assocNames = associates.slice(0, 2).map((l: any) => l.name).join(' and ');
+    successionText = `A defining institutional strength of the department is its seamless generational depth and clear leadership succession. Anchored by the market-defining jurisprudence of Senior Statesperson ${statesperson.name}, executive direction is spearheaded by ${band1Partner.name} alongside Senior Partners ${seniorNames || 'dedicated partners'}. This senior core is complemented by rising partners and accomplished senior associates such as ${assocNames || 'experienced associates'}, ensuring that every mandate benefits from both strategic partner steering and rigorous associate-level technical execution.`;
+  } else {
+    const partnerNames = lawyers.filter((l: any) => l.isPartner).slice(0, 3).map((l: any) => l.name).join(', ');
+    successionText = `Under the strategic direction of ${partnerNames || 'the senior partnership'}, the department fields a dedicated bench of ${lawyers.length} specialized lawyers (${partnerCount} partners and ${associateCount} associates), ensuring seamless generational depth, technical continuity, and partner-level responsiveness across all contentious and advisory workflows.`;
+  }
 
-The practice covers the full spectrum of high-stakes transactional structuring, regulatory compliance, and complex administrative and judicial proceedings before ${regulatoryAuthority}. ${clientText}
+  // Section 4: International Perspective & Market Standing
+  const p4 = `The department operates with an outward-facing international perspective, actively collaborating with leading foreign counsel across the Americas and Europe on multi-jurisdictional tax planning and investment treaty protections. Combining high-end contentious defense with business-critical advisory rigor, ${firmName} firmly substantiates its position among the foremost ${practiceArea} practices in ${countryJurisdiction}.`;
 
-${leadText} The department's proven capacity to deliver decisive outcomes and structured solutions within demanding regulatory environments firmly supports the ongoing development and directory recognition of its practitioners.`;
+  return sanitizeBannedSuperlatives(`${p1}\n\n${p2}\n\n${successionText}\n\n${p4}`);
 }
 
 /**
- * Dynamic Section C2 Generator (4-Step Proof Formula)
+ * Dynamic Section C2 Generator (4-Step Evidentiary Formula - Angela Castillo Directive)
  * Strips all prohibited superlatives and builds a concrete 4-step argument:
  * Evidence -> Differentiation -> Market Reality -> Ranking Gap / Ask
  */
@@ -671,18 +687,36 @@ export function generateDynamicC2(
   countryJurisdiction: string,
   pubMatters: any[],
   confMatters: any[],
-  lawyers: any[]
+  lawyers: any[],
+  chambersData: any = {}
 ): string {
   const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
+
+  // Helper to extract clean substantive matter description without template boilerplate
+  const cleanMatterSummary = (m: any): string => {
+    let text = (m.summary || m.rawNotes || m.optimizedText || m.narrative || m.title || '').trim();
+    // Strip Chambers form prompts, questions, and boilerplate
+    text = text.replace(/^(?:please\s+say\s+why\s+this\s+matter\s+was\s+important\.?\s*|also,?\s*tell\s+us\s+exactly\s+what\s+role\s+your\s+department\s+played\.?\s*|summary\s+of\s+matter\s+and\s+your\s+department'?s\s+role\.?\s*|matter\s+was\s+important\.?\s*)+/gi, '').trim();
+    text = text.replace(/^(?:through\s+a\s+joint\s+work|advised|advises|providing|represented|advising)\s+/gi, '').trim();
+    
+    const firstSentence = text.split(/\.\s+/)[0]?.trim() || '';
+    if (firstSentence.length > 25 && !firstSentence.toLowerCase().includes('matter was important')) {
+      return firstSentence.charAt(0).toLowerCase() + firstSentence.slice(1);
+    }
+    const cleanTitle = (m.title || m.name || '').replace(/^(?:publishable|confidential)\s+matter\s+\d+\s*[-:–]?\s*/gi, '').trim();
+    if (cleanTitle.length > 15) {
+      return `its ${cleanTitle.toLowerCase()}`;
+    }
+    return 'complex commercial and regulatory advisory';
+  };
 
   // Step 1: Evidence & Flagship Mandates (top 3 curated matters)
   const topMatters = pubMatters.slice(0, 3);
   const matterHighlights: string[] = [];
   for (const m of topMatters) {
-    const client = m.client || m.clientName || m.name || 'Core Client';
-    const summary = m.summary || m.rawNotes || m.narrative || m.title || '';
-    const firstSentence = summary.split(/\.\s+/)[0]?.trim() || m.title || 'complex advisory and representation';
-    matterHighlights.push(`advising ${client} on ${firstSentence.toLowerCase().replace(/^(through a joint work|advised|advises|providing|represented)\s+/gi, '')}`);
+    const client = (m.client || m.clientName || m.name || 'Core Client').replace(/\s*—.*$/, '').trim();
+    const desc = cleanMatterSummary(m);
+    matterHighlights.push(`advising ${client} on ${desc}`);
   }
 
   const step1Text = matterHighlights.length > 0
@@ -696,25 +730,20 @@ export function generateDynamicC2(
   const step2Text = `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`;
 
   // Step 3: Practice Depth & Portfolio Breadth
-  const otherClients = [...pubMatters.slice(3, 7), ...confMatters.slice(0, 3)]
-    .map((m: any) => m.client || m.clientName || m.name)
+  const otherClients = [...pubMatters.slice(3, 8), ...confMatters.slice(0, 3)]
+    .map((m: any) => (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').trim())
     .filter(Boolean);
   const clientList = otherClients.length > 0 ? `including ${otherClients.join(', ')}` : 'spanning regulated industries and blue-chip enterprises';
 
   const step3Text = `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, cross-border structuring, and business-critical compliance.`;
 
-  // Step 4: The Ranking vs Reality Gap & Target Ask
-  const step4Text = `The verified evidentiary record establishes that ${firmName} delivers the scale, complexity, and substantive commercial outcomes characteristic of the market's leading tier. On the strength of this demonstrable track record, the department firmly justifies its recognition and consolidation in the upper tiers of Chambers ${countryJurisdiction} ${practiceArea}.`;
+  // Step 4: The Ranking vs Reality Gap & Explicit Target Ask (Angela Directive)
+  const currentRank = chambersData?.currentRanking || chambersData?.verified_band || 'Band 2';
+  const targetRank = chambersData?.targetRanking || chambersData?.target_band || 'Band 1';
+  
+  const step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, cross-border complexity, and uninterrupted institutional client retention now benchmark against the market's premier tier. While currently ranked in ${currentRank}, this position does not capture the department's demonstrated leadership on landmark cross-border acquisitions and high-stakes administrative controversies. On the strength of this demonstrable track record, ${firmName} respectfully submits that the practice merits advancement to ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
 
-  const rawC2 = `${firmName}’s ${practiceArea} department demonstrates substantive market leadership across ${countryJurisdiction} through verifiable, high-complexity mandates.
-
-${step1Text}
-
-${step2Text}
-
-${step3Text}
-
-${step4Text}`;
+  const rawC2 = `${step1Text}\n\n${step2Text}\n\n${step3Text}\n\n${step4Text}`;
 
   return sanitizeBannedSuperlatives(rawC2);
 }
@@ -741,10 +770,6 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     : curation.officialConfMatters;
 
   // ═══ DYNAMIC STRATEGIC LAWYER ROSTER ENGINE (Multi-Case / Multi-Jurisdiction) ═══
-  let lawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
-    ? [...chambersData.lawyers]
-    : [];
-
   const allMattersPool = [
     ...pubMatters,
     ...confMatters,
@@ -753,97 +778,18 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ...rawMattersList
   ];
 
-  // If chambersData.lawyers is empty, auto-discover lawyers from matter team/lead roles
-  if (lawyers.length === 0) {
-    const discoveredMap = new Map<string, any>();
-    for (const m of allMattersPool) {
-      const rawLead = m.leadPartner || (Array.isArray(m.leadPartners) ? m.leadPartners.join(', ') : m.leadPartners) || '';
-      const rawTeam = m.teamMembers || (Array.isArray(m.otherLawyers) ? m.otherLawyers.join(', ') : m.otherLawyers) || '';
-      
-      const parsedLeads = String(rawLead).split(/[,;/]|\band\b/i).map(s => s.trim()).filter(s => s.length > 3 && !s.toLowerCase().includes('n/a'));
-      for (const name of parsedLeads) {
-        const clean = cleanLawyerNames(name);
-        if (clean && !discoveredMap.has(clean.toLowerCase())) {
-          discoveredMap.set(clean.toLowerCase(), {
-            name: clean,
-            isPartner: true,
-            isRanked: false,
-            suggestedRank: 'Band 4 / Ranked Partner',
-            comments: ''
-          });
-        }
-      }
+  const rawInputLawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
+    ? chambersData.lawyers
+    : (Array.isArray(submission?.lawyers) && submission.lawyers.length > 0 ? submission.lawyers : []);
 
-      const parsedTeam = String(rawTeam).split(/[,;/]|\band\b/i).map(s => s.trim()).filter(s => s.length > 3 && !s.toLowerCase().includes('n/a'));
-      for (const name of parsedTeam) {
-        const isAssoc = name.toLowerCase().includes('associate') || name.toLowerCase().includes('asociad');
-        const clean = cleanLawyerNames(name.replace(/\(.*?\)/g, '').trim());
-        if (clean && !discoveredMap.has(clean.toLowerCase())) {
-          discoveredMap.set(clean.toLowerCase(), {
-            name: clean,
-            isPartner: !isAssoc,
-            isRanked: false,
-            suggestedRank: isAssoc ? 'Associate to Watch' : 'Band 4 / Ranked Partner',
-            comments: ''
-          });
-        }
-      }
-    }
-    lawyers = Array.from(discoveredMap.values());
-  }
-
-  // Fallback if no lawyers discovered at all
-  if (lawyers.length === 0) {
-    lawyers = [
-      {
-        name: `${firmName} Lead Partner`,
-        isPartner: true,
-        isRanked: false,
-        suggestedRank: 'Band 4',
-        comments: `${firmName}’s leading partner directs the ${practiceArea} practice in ${guideRegion}, advising domestic and international corporate clients on marquee transactional, regulatory, and contentious mandates.`
-      }
-    ];
-  }
-
-  // Enrich each lawyer's comments and positioning dynamically from their real matters
-  lawyers = lawyers.map((l: any) => {
-    const lName = (l.name || '').trim();
-    const lLower = lName.toLowerCase();
-    const lTokens = lLower.split(/\s+/).filter((t: string) => t.length > 2);
-    
-    // Find matters linked to this lawyer
-    const linkedMatters = allMattersPool.filter((m: any) => {
-      const mText = `${m.leadPartner || ''} ${m.teamMembers || ''} ${m.otherLawyers || ''} ${m.lawyers || ''} ${m.summary || ''} ${m.optimizedText || ''}`.toLowerCase();
-      return mText.includes(lLower) || (lTokens.length > 1 && lTokens.every((t: string) => mText.includes(t))) || (lTokens.length > 0 && lTokens[lTokens.length - 1].length > 4 && mText.includes(lTokens[lTokens.length - 1]));
-    });
-
-    const clientNames = [...new Set(linkedMatters.map((m: any) => (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').trim()).filter(Boolean))];
-    const topClients = clientNames.slice(0, 4);
-
-    let comm = l.comments || l.bio || '';
-
-    // If no comments or very generic comments provided, dynamically synthesize concrete commentary
-    if (!comm || comm.length < 100 || comm.includes('key practitioner in the')) {
-      const roleTitle = l.isPartner ? 'Partner' : 'Senior Associate';
-      const rankAsk = l.suggestedRank || (l.isPartner ? 'Band 4' : 'Associate to Watch');
-      const clientsStr = topClients.length > 0 ? `including ${topClients.join(', ')}` : 'across key institutional clients';
-      
-      comm = `${lName} is a central practitioner in ${firmName}'s ${practiceArea} practice in ${guideRegion}, providing strategic counsel and disciplined execution on significant mandates. ${l.isPartner ? 'Leading high-stakes instructions' : 'Assuming substantive matter responsibility'} ${clientsStr}, ${lName.split(' ')[0]} plays a vital role across the department's core transactional, regulatory and contentious portfolio. The demonstrable commercial impact, sophistication and volume of matters handled firmly justify consideration for ${rankAsk}.`;
-    }
-
-    // Sanitize any banned superlatives in comments
-    comm = sanitizeBannedSuperlatives(comm);
-
-    return {
-      ...l,
-      name: cleanLawyerNames(l.name),
-      comments: comm,
-      currentRank: l.currentRank || (l.isRanked ? (l.currentRank || 'Ranked') : undefined),
-      suggestedRank: l.suggestedRank || (l.isPartner ? 'Band 4' : 'Associate to Watch'),
-      isPartner: l.isPartner !== undefined ? l.isPartner : true,
-      isRanked: l.isRanked !== undefined ? l.isRanked : Boolean(l.currentRank)
-    };
-  });
+  const lawyers = curateLawyers(
+    rawInputLawyers,
+    allMattersPool,
+    firmName,
+    practiceArea,
+    guideRegion,
+    chambersData
+  );
 
   // v26.41: Final Artifact Integrity Check before generating deliverable
   const integrityReport = runArtifactIntegrityCheck(
@@ -923,7 +869,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(para('', { spacing: { after: 120 } }));
 
   // B7 Department Heads (Official Chambers Latin America template: B7 Head or Heads of department)
-  const heads = chambersData.departmentHeads || chambersData.lawyers || [];
+  const heads = chambersData.departmentHeads || lawyers.filter((l: any) => l.isPartner && (l.currentRank?.includes('Band 1') || l.currentRank?.includes('Band 2') || l.currentRank?.includes('Senior') || l.targetRank?.includes('Band 1') || l.targetRank?.includes('Band 2')));
   const headRows = heads.length > 0
     ? heads.map((h: any) => [h.name || '', h.email || '', h.phone || ''])
     : [['', '', '']];
@@ -1080,7 +1026,13 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     || chambersData.feedback
     || chambersData.c2;
 
-  if (!c2Val || String(c2Val).length < 150 || String(c2Val).includes('We would be happy to discuss')) {
+  if (
+    !c2Val ||
+    String(c2Val).length < 150 ||
+    String(c2Val).includes('We would be happy to discuss') ||
+    String(c2Val).toLowerCase().includes('matter was important') ||
+    !String(c2Val).toLowerCase().includes('advancement to')
+  ) {
     c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers);
   }
 

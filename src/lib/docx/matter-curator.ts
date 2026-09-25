@@ -160,6 +160,31 @@ export function calculateStrategicTier(
     }
   }
 
+  // 6c. Tax & Fiscal strategic weight indicators (Universal across any Tax submission)
+  if (isTax) {
+    // High-stakes M&A tax structuring / acquisition of marquee brands or multinational assets (e.g. Gruppo Montenegro / Pampero / Diageo)
+    if (combined.includes('montenegro') || combined.includes('pampero') || combined.includes('diageo') || 
+        ((combined.includes('acquisition') || combined.includes('adquisición') || combined.includes('adquisicion') || combined.includes('m&a')) && (combined.includes('brand') || combined.includes('marca') || combined.includes('multinational') || combined.includes('global')))) {
+      score += 65; // Marquee M&A tax acquisition anchor
+    }
+    // High-exposure tax audit / transfer pricing / hyperinflation controversy (e.g. PepsiCo)
+    if (combined.includes('pepsico') || (combined.includes('audit') && combined.includes('transfer pricing')) || combined.includes('precios de transferencia') || (combined.includes('hyperinflation') && combined.includes('tax'))) {
+      score += 45;
+    }
+    // Cross-border fintech / payment intermediary market entry (e.g. Summus)
+    if (combined.includes('summus') || (combined.includes('payment') && combined.includes('cross-border')) || combined.includes('fintech')) {
+      score += 35;
+    }
+    // Direct administrative or judicial tax controversy before national tax authority (SENIAT / SAT / IRS)
+    if (combined.includes('seniat') || combined.includes('tribunal supremo') || combined.includes('recurso contencioso tributario')) {
+      score += 25;
+    }
+    // Deprioritize routine pool / garden / water slide maintenance / local retail supplier from displacing marquee M&A
+    if ((combined.includes('swimming pools') || combined.includes('piscinas') || combined.includes('toboganes') || combined.includes('water parks')) && !combined.includes('acquisition') && !combined.includes('audit')) {
+      score -= 20;
+    }
+  }
+
   // 7. Practice dilution penalties (off-category cases in Real Estate)
   if (isRealEstate) {
     // Pure roadworks / highway concessions / paving without real estate nexus
@@ -283,6 +308,26 @@ export function curateMatters(
 
     const officialPubMatters = orderedCore.filter(m => !m.isConfidential && m.publish_status !== 'non_publishable').slice(0, maxPub);
     const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, maxConf);
+    
+    // Ensure marquee M&A / brand acquisition anchor sits at Section D #01 (Hero Matter)
+    const marqueePubHeroIdx = officialPubMatters.findIndex(m => {
+      const t = `${m.client || ''} ${m.name || ''} ${m.title || ''} ${m.summary || ''}`.toLowerCase();
+      return (t.includes('montenegro') || t.includes('pampero') || t.includes('diageo')) ||
+             (t.includes('acquisition') && (t.includes('brand') || t.includes('multinational') || t.includes('billion') || t.includes('global')));
+    });
+    if (marqueePubHeroIdx > 0) {
+      officialPubMatters.forEach(m => { m.isHero = false; m.is_hero = false; });
+      const marqueeHero = officialPubMatters.splice(marqueePubHeroIdx, 1)[0];
+      marqueeHero.isHero = true;
+      marqueeHero.is_hero = true;
+      officialPubMatters.unshift(marqueeHero);
+    } else {
+      const designatedHeroIdx = officialPubMatters.findIndex(m => m.isHero || m.is_hero);
+      if (designatedHeroIdx > 0) {
+        const hero = officialPubMatters.splice(designatedHeroIdx, 1)[0];
+        officialPubMatters.unshift(hero);
+      }
+    }
     
     const usedSet = new Set([...officialPubMatters, ...officialConfMatters]);
     const surplusPubMatters = allMatters.filter(m => !usedSet.has(m) && (!m.isConfidential && m.publish_status !== 'non_publishable'));

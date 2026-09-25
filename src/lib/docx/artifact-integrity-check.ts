@@ -32,6 +32,18 @@ export function cleanLawyerNames(nameStr: string): string {
   return s.trim();
 }
 
+export function sanitizeBannedSuperlatives(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\bthe premier\b/gi, 'a leading')
+    .replace(/\bpremier\b/gi, 'leading')
+    .replace(/\buniversally recognized\b/gi, 'widely recognized')
+    .replace(/\bmarket-defining counsel\b/gi, 'strategic counsel')
+    .replace(/\bunparalleled historical pedigree\b/gi, 'established institutional standing')
+    .replace(/\bunrivaled\b/gi, 'substantive')
+    .replace(/\bpinnacle of\b/gi, 'forefront of');
+}
+
 export interface IntegrityIssue {
   severity: 'CRITICAL' | 'WARNING' | 'SANITIZED';
   matterName: string;
@@ -68,7 +80,9 @@ const FORBIDDEN_TEMPLATE_INSTRUCTIONS = [
   /Please include:\s*Key changes in department profile/gi,
   /Summary of matter and your firm's involvement:?/gi,
   /Summary of matter and your department's role:?/gi,
-  /Is this a cross-border matter\??/gi
+  /Is this a cross-border matter\??/gi,
+  /(?:on\s+)?matter was important\.?/gi,
+  /(?:why\s+this\s+)?matter was important\.?/gi
 ];
 
 /**

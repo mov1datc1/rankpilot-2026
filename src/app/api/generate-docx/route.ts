@@ -8,6 +8,7 @@ import {
 } from 'docx';
 import { buildSubmissionDoc, resolveCountryJurisdiction } from './submission-builder';
 import { curateMatters } from '@/lib/docx/matter-curator';
+import { curateLawyers } from '@/lib/docx/lawyer-curator';
 
 // Letter page width (8.5") minus 1" margins on both sides, in twentieths
 // of a point. Google Docs requires explicit DXA table/grid/cell widths.
@@ -1226,69 +1227,31 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     recommendedAction: string;
   }
 
-  const dynamicLawyers = (Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0)
+  const rawLawyersList = (Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0)
     ? chambersData.lawyers
     : (Array.isArray(submission.lawyers) && submission.lawyers.length > 0)
       ? submission.lawyers
       : [];
 
-  const individualPlans: IndividualCandidatePlan[] = dynamicLawyers.slice(0, 6).map((l: any) => {
-    const lName = l.name || 'Key Practitioner';
-    const lNameLower = lName.toLowerCase();
-    const lParts = lNameLower.split(/\s+/).filter((p: string) => p.length > 2);
-    
-    // Find supporting matters for this lawyer
-    const lawyerMatters = availableMatters.filter((m: any) => {
-      const mStr = `${m.leadPartner || ''} ${m.teamMembers || ''} ${m.lawyers || ''}`.toLowerCase();
-      return mStr.includes(lNameLower) || lParts.some((p: string) => p.length > 4 && mStr.includes(p));
-    });
+  const curatedLawyersList = curateLawyers(
+    rawLawyersList,
+    availableMatters,
+    firmName,
+    practiceArea,
+    jurisdiction,
+    chambersData
+  );
 
-    const matterClients = lawyerMatters.slice(0, 4).map((m: any) => {
-      const c = m.client || m.clientName || m.name;
-      const val = m.value ? ` (${m.value})` : '';
-      return `${c}${val}`;
-    }).filter(Boolean);
-
-    const suppMatters = l.supportingMatters || (matterClients.length > 0
-      ? `Key lead mandates for ${matterClients.join(', ')}.`
-      : 'Core practice mandates across active department portfolio.');
-
-    const currentRank = l.currentRank || l.currentRanking || 'Unranked';
-    let targetRank = l.suggestedRank || l.targetRank || l.targetRanking || '';
-    if (!targetRank) {
-      if (currentRank.includes('Senior Statesperson')) {
-        targetRank = `Senior Statesperson (${practiceArea} — ${jurisdiction})`;
-      } else if (currentRank.includes('Band 1')) {
-        targetRank = `Band 1 / Star Individual (${practiceArea} — ${jurisdiction})`;
-      } else if (currentRank.includes('Band 2')) {
-        targetRank = `Band 1 (${practiceArea} — ${jurisdiction})`;
-      } else if (currentRank.includes('Band 3')) {
-        targetRank = `Band 2 (${practiceArea} — ${jurisdiction})`;
-      } else if (currentRank.includes('Band 4')) {
-        targetRank = `Band 3 (${practiceArea} — ${jurisdiction})`;
-      } else if (l.isPartner) {
-        targetRank = `Band 4 / Up and Coming (${practiceArea} — ${jurisdiction})`;
-      } else {
-        targetRank = `Associate to Watch (${practiceArea} — ${jurisdiction})`;
-      }
-    }
-
-    const strategicRationale = l.strategicRationale || l.comments || `${l.isPartner ? 'Partner' : 'Senior practitioner'} leading key mandates across ${practiceArea}, demonstrating significant commercial, regulatory, and contentious expertise.`;
-    const marketEvidence = l.marketEvidence || l.marketStanding || `Established professional standing and sustained client recognition across ${jurisdiction}.`;
-    const evidenceGaps = l.evidenceGaps || 'Confirm specific matter outcomes, quantifiable economic impact, and active client referee availability for directory outreach.';
-    const recommendedAction = l.recommendedAction || `Highlight partner prominence on flagship mandates (${matterClients.slice(0, 2).join(', ') || 'core portfolio'}) and submit 3 dedicated client referees.`;
-
-    return {
-      name: lName,
-      currentRanking: currentRank,
-      targetRanking: targetRank,
-      strategicRationale,
-      supportingMatters: suppMatters,
-      marketEvidence,
-      evidenceGaps,
-      recommendedAction
-    };
-  });
+  const individualPlans: IndividualCandidatePlan[] = curatedLawyersList.slice(0, 6).map(l => ({
+    name: l.name,
+    currentRanking: l.currentRank,
+    targetRanking: l.targetRank,
+    strategicRationale: l.strategicRationale,
+    supportingMatters: l.supportingMatters,
+    marketEvidence: l.marketEvidence,
+    evidenceGaps: l.evidenceGaps,
+    recommendedAction: l.recommendedAction
+  }));
 
   if (individualPlans.length > 0) {
     // 1. Executive Master Table
