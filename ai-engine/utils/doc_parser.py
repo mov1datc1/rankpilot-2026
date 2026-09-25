@@ -71,7 +71,7 @@ class DocumentParser:
                 cleaned_lines.append(l)
             text = "\n".join(cleaned_lines)
 
-        start = re.search(r"(?im)^\s*SUBMISSION FORM\s*$", text)
+        start = re.search(r"(?im)^\s*(?:SUBMISSION FORM|CHAMBERS (?:AND|&) PARTNERS|FORMULARIO DE POSTULACI[OÓ]N)\s*$", text)
         if start:
             candidate = text[start.start():]
             preliminary = re.search(r"(?im)^\s*A1\s+Firm\s+name\s*$", candidate)
@@ -82,17 +82,18 @@ class DocumentParser:
             if preliminary and matters:
                 text = candidate
 
-        first_matter = re.search(
+        all_matters = list(re.finditer(
             r"(?im)^\s*(?:Publishable|Confidential|Non[- ]publishable)\s+Matter\s+\d+\s*$",
             text,
-        )
-        if first_matter:
+        ))
+        if all_matters:
+            last_matter = all_matters[-1]
             trailer = re.search(
                 r"(?im)^\s*(?:Ref:\s*[A-Z0-9._/-]+|Please upload completed submissions online at)\s*$",
-                text[first_matter.end():],
+                text[last_matter.end():],
             )
             if trailer:
-                text = text[:first_matter.end() + trailer.start()]
+                text = text[:last_matter.end() + trailer.start()]
 
         return re.sub(r"\n{4,}", "\n\n\n", text).strip()
 
@@ -133,17 +134,42 @@ class DocumentParser:
 
     @staticmethod
     def _parse_doc(file_path: str) -> str:
-        """v24.3: Native Word 97-2003 (.doc) binary OLE extractor with LibreOffice conversion fallback."""
-        # Method 1: use a native converter when available. ``antiword`` is
-        # installed in the production image; ``textutil`` covers local macOS
-        # validation. These retain table-cell labels that raw OLE strings lose.
+        """Native Word 97-2003 (.doc) binary OLE extractor with multi-tier conversion."""
+        # Tier 1: Try libreoffice / soffice conversion to .docx if available
+        # This provides 100% table and XML fidelity via python-docx
+        lo_bin = shutil.which("libreoffice") or shutil.which("soffice")
+        if lo_bin:
+            try:
+                output_dir = tempfile.mkdtemp()
+                docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
+                completed = subprocess.run(
+                    [lo_bin, "--headless", "--convert-to", "docx", file_path, "--outdir", output_dir],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=60
+                )
+                if completed.returncode == 0 and os.path.exists(docx_path):
+                    parsed = DocumentParser._parse_docx(docx_path)
+                    try:
+                        os.remove(docx_path)
+                        os.rmdir(output_dir)
+                    except Exception:
+                        pass
+                    if len(parsed.strip()) > 100:
+                        return parsed.strip()
+            except Exception as lo_err:
+                print(f"[DOC PARSER] LibreOffice conversion error: {lo_err}")
+
+        # Tier 2: Use native converters (antiword, catdoc, textutil)
         converter_commands = []
         if shutil.which("antiword"):
-            converter_commands.append(["antiword", file_path])
+            # -w 0 disables word wrapping so table lines and composite names stay contiguous
+            converter_commands.append(["antiword", "-w", "0", file_path])
         if shutil.which("catdoc"):
-            converter_commands.append(["catdoc", file_path])
+            converter_commands.append(["catdoc", "-w", file_path])
         if shutil.which("textutil"):
             converter_commands.append(["textutil", "-convert", "txt", "-stdout", file_path])
+
         for command in converter_commands:
             try:
                 completed = subprocess.run(
@@ -155,27 +181,10 @@ class DocumentParser:
                 )
                 parsed = completed.stdout.decode("utf-8", errors="replace")
                 parsed = DocumentParser._clean_legacy_doc_text(parsed)
-                if len(parsed) > 100 and "SUBMISSION FORM" in parsed:
+                if len(parsed.strip()) > 100:
                     return parsed
             except Exception as converter_err:
                 print(f"[DOC PARSER] {command[0]} conversion unavailable: {converter_err}")
-
-        # Method 2: Try libreoffice / soffice conversion if installed on system
-        try:
-            output_dir = tempfile.mkdtemp()
-            docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
-            ret = os.system(f'soffice --headless --convert-to docx "{file_path}" --outdir "{output_dir}" >/dev/null 2>&1')
-            if ret == 0 and os.path.exists(docx_path):
-                parsed = DocumentParser._parse_docx(docx_path)
-                try:
-                    os.remove(docx_path)
-                    os.rmdir(output_dir)
-                except Exception:
-                    pass
-                if len(parsed.strip()) > 100:
-                    return DocumentParser._clean_legacy_doc_text(parsed)
-        except Exception:
-            pass
 
         # Method 3: Pure Python OLE Stream Text Extractor (last-resort fallback)
         try:
@@ -629,7 +638,7 @@ class DocumentParser:
     def extract_numbered_matter_sections(text: str) -> dict:
         """Return verbatim matter sections keyed by normalized source label with auto-disambiguation."""
         pattern = re.compile(
-            r'(?im)^[\s|]*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?)\s+(\d+)'
+            r'(?im)^[\s|]*(?:(Publishable|Confidential|Non[- ]publishable)\s+Matter|MATTER(?:\s+NUMBER|\s+NO\.?)?|(?:Asunto|Caso)(?:\s+n[uú]mero|\s+no\.?)?)\s+(\d+)'
             r'(?=\s*$|\s*\||[DE][1-9]\b|:)'
         )
         matches = list(pattern.finditer(text or ""))
@@ -1350,7 +1359,7 @@ class DocumentParser:
             "ranked_lawyers": [],
         }
         
-        if extension != '.docx':
+        if extension not in ('.docx', '.doc'):
             return result
         
         local_path = file_path
@@ -1365,6 +1374,40 @@ class DocumentParser:
             temp_file = local_path
         
         try:
+            if extension == '.doc':
+                source_text = DocumentParser.parse(local_path)
+                explicit_patterns = [
+                    (r'current\s+rank(?:ing|s)', 'explicit'),
+                    (r'our\s+(?:current\s+)?coverage', 'explicit'),
+                    (r'currently\s+(?:ranked|listed|included)', 'explicit'),
+                    (r'(?:Band|Tier)\s+\d', 'explicit'),
+                    (r'maintain\s+(?:our|the)\s+(?:current\s+)?rank', 'explicit'),
+                    (r'we\s+(?:are|remain)\s+ranked', 'explicit'),
+                ]
+                for pattern, ev_type in explicit_patterns:
+                    match = re.search(pattern, source_text, re.IGNORECASE)
+                    if match:
+                        result["has_ranking_evidence"] = True
+                        result["evidence_type"] = ev_type
+                        start = max(0, match.start() - 50)
+                        end = min(len(source_text), match.end() + 100)
+                        result["evidence_text"] = source_text[start:end].strip()
+                        band_match = re.search(r'(?:Band|Tier)\s+(\d)', source_text[start:end], re.IGNORECASE)
+                        if band_match:
+                            result["detected_band"] = f"Band {band_match.group(1)}"
+                        break
+
+                # Extract ranked lawyers from B9 roster
+                roster = DocumentParser.extract_lawyer_roster(source_text)
+                ranked = [l['name'] for l in roster if l.get('is_ranked') or l.get('isRanked')]
+                if ranked:
+                    result["ranked_lawyers"] = ranked
+                    result["has_ranking_evidence"] = True
+                    if result["evidence_type"] == "none":
+                        result["evidence_type"] = "implicit"
+                        result["evidence_text"] = f"B9 table lists {len(ranked)} lawyers with ranking indicators"
+                return result
+
             doc = Document(local_path)
             all_text_blocks = []
             
@@ -1486,13 +1529,13 @@ class DocumentParser:
             try:
                 legacy_text = DocumentParser.parse(file_path)
                 preliminary = DocumentParser.extract_chambers_preliminary_fields(legacy_text)
-                if all(preliminary.values()):
+                if any(preliminary.values()) or "SUBMISSION FORM" in legacy_text.upper():
                     result.update({
                         "detected_directory": "Chambers",
-                        "detected_firm_name": preliminary["firm_name"],
-                        "detected_practice_area": preliminary["practice_area"],
-                        "detected_jurisdiction": preliminary["jurisdiction"],
-                        "confidence": "high",
+                        "detected_firm_name": preliminary.get("firm_name") or "",
+                        "detected_practice_area": preliminary.get("practice_area") or "",
+                        "detected_jurisdiction": preliminary.get("jurisdiction") or "",
+                        "confidence": "high" if all(preliminary.values()) else "medium",
                         "detection_signals": ["Chambers A1/A2/A3 legacy form fields detected"],
                     })
                 return result
