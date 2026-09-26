@@ -245,6 +245,52 @@ def run_layer1_checks(state: AgentState) -> Tuple[bool, List[str]]:
     output_count = len([m for m in matters if m.get("optimized_text")])
     if input_count > 0 and output_count < input_count:
         violations.append(f"[C10-DROPPED] {input_count - output_count} matters dropped: {input_count} input → {output_count} output")
+
+    # --- D1: Lawyer contact leaks & boolean flags ---
+    raw_lawyers = state.get("metadata", {}).get("lawyers") or state.get("pipeline_manifest", {}).get("source_lawyers") or []
+    for l in raw_lawyers:
+        if isinstance(l, dict):
+            l_name = str(l.get("name", "")).strip()
+            l_comments = str(l.get("comments") or l.get("bio") or "").strip()
+            l_rank = str(l.get("current_ranking") or l.get("currentRank") or "").strip()
+            if re.search(r'^\+?[\d\s\-\.\(\)]{7,}$', l_name) or re.search(r'^\+?[\d\s\-\.\(\)]{7,}$', l_comments):
+                violations.append(f"[D1-LAWYER-PHONE] Phone number leaked into lawyer roster: '{l_name or l_comments}'")
+            if re.search(r'^[YN]$|^YES$|^NO$', l_comments, re.IGNORECASE) or re.search(r'^[YN]$|^YES$|^NO$', l_rank, re.IGNORECASE):
+                violations.append(f"[D1-LAWYER-BOOLEAN] Unparsed boolean flag (Y/N) in lawyer commentary: '{l_comments or l_rank}'")
+
+    # --- D2: Template placeholder leaks ---
+    TEMPLATE_LEAK_PATTERNS = [
+        r'\bmatter was important\b',
+        r'\bplease say why this matter was important\b',
+        r'\bplease include:\b',
+        r'\(word count limit\)',
+    ]
+    violations.extend(_scan_text_for_violations(client_facing_text, TEMPLATE_LEAK_PATTERNS, "D2-TEMPLATE-LEAK"))
+
+    # --- D3: Structural carpentry labels ---
+    CARPENTRY_PATTERNS = [
+        r'\*\*hero statement:\*\*',
+        r'\*\*impact:\*\*',
+        r'\*\*execution:\*\*',
+        r'\*\*legal mechanism:\*\*',
+    ]
+    violations.extend(_scan_text_for_violations(client_facing_text, CARPENTRY_PATTERNS, "D3-CARPENTRY"))
+
+    # --- D4: Jurisdictional regulatory authority consistency ---
+    jurisdiction = (
+        state.get("metadata", {}).get("location")
+        or state.get("submission_context", {}).get("location")
+        or state.get("strategic_context", {}).get("jurisdiction")
+        or ""
+    ).lower()
+    if ("venezuela" in jurisdiction or "colombia" in jurisdiction) and "mexico" not in jurisdiction:
+        if re.search(r'\bSAT\b', all_text):
+            violations.append(f"[D4-JURISDICTION] Mexican tax authority 'SAT' detected in non-Mexican submission ({jurisdiction.title()}); authority must be SENIAT/DIAN")
+    elif "mexico" in jurisdiction:
+        if re.search(r'\bSENIAT\b', all_text):
+            violations.append("[D4-JURISDICTION] Venezuelan authority 'SENIAT' detected in Mexican submission")
+        if re.search(r'\bDIAN\b', all_text):
+            violations.append("[D4-JURISDICTION] Colombian authority 'DIAN' detected in Mexican submission")
     
     passed = len(violations) == 0
     return passed, violations
@@ -261,17 +307,19 @@ schema supplied by the API.
 
 Your mission is to objectively audit, grade, and evaluate this submission against the Owner's Approved Gold Standard (v26.40 — Chambers & Partners Editorial Constitution):
 1. Provide an overall quality score from 1 to 10:
-   - 9-10 (Elite Benchmark): Strictly adheres to Zero Carpentry (no visible labels like "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**"), fluid 3-paragraph organic narrative with rigorous causal attribution (Problem/Risk → Team's concrete technical/legal intervention → Specific legal outcome → Commercial/asset impact), high factual density, 1:1 sync between Audit Letter and Submission Form, zero off-category dilution (max 20 matters with pure tax/labor/transport pruned), and natural Chambers English phrasing.
-   - 7-8 (Solid Benchmark): Robust factual accuracy and evidence preservation, but contains minor narrative stiffness, boilerplate transitions, or mild matter alignment drift.
-   - 5-6 (Acceptable Baseline): Visible structural carpentry, fragmented/bulleted narratives, generic claims without causal mechanisms, off-category dilution matters present, or numbering discrepancies between Audit and Submission.
-   - 1-4 (Substandard): Significant evidence omissions, dropped parties, hallucinated claims, or factual distortion.
+   - 9-10 (Elite Benchmark): Strictly adheres to Zero Carpentry (no visible labels like "**IMPACT:**", "**HERO STATEMENT:**", "**EXECUTION:**"), fluid 3-paragraph organic narrative with rigorous causal attribution (Problem/Risk → Team's concrete technical/legal intervention → Specific legal outcome → Commercial/asset impact), high factual density, 1:1 sync between Audit Letter and Submission Form, zero off-category dilution (max 20 matters with pure tax/labor/transport pruned), clean lawyer roster (zero phone leaks, zero boolean flags, zero split names), and natural Chambers English phrasing.
+   - 7-8 (Solid Benchmark): Robust factual accuracy and evidence preservation, clean lawyer roster, but contains minor narrative stiffness, boilerplate transitions, or mild matter alignment drift.
+   - 5-6 (Acceptable Baseline with Observations): Minor structural carpentry, formulaic repetitive boilerplate ('operational continuity', 'tax exposure'), or non-fatal matter ordering drift.
+   - 1-4 (Critical Defect / Blocked Delivery): Phone numbers leaked into lawyer names or commentary, boolean flags (Y/N) in commentary, split lawyer names, foreign regulatory authorities (e.g. Mexico's SAT mentioned in Venezuela/Colombia), placeholder template leaks ('matter was important'), unrendered debug tags ('[SOURCE CROSS-BORDER CONFLICT]'), missing B10/C2, or matter register reconciliation failure.
 
 2. Provide a detailed `feedback` critique explaining:
    - Audit-to-Submission Traceability: Confirm whether the Strategic Audit Letter matter order, numbering, and labels match the Submission Form 1:1.
    - Causal Attribution & Transversal Reasoning: Note whether each Core matter clearly articulates what the team actively did, what legal position was created, and what concrete commercial/asset outcome was secured (avoiding passive instrument attribution).
+   - Lawyer Roster & Evidentiary Depth: Check whether each lawyer has a clean, professional name, valid ranking proposition, and zero raw phone numbers or unparsed boolean tokens in commentary.
+   - Jurisdictional Consistency: Check that all regulatory bodies and courts match the target country (e.g. SENIAT in Venezuela, SAT in Mexico, DIAN in Colombia); foreign tax authority contamination is a fatal flaw.
    - Borderline Matter Relevance: Assess whether matters involving infrastructure, construction, or substantial out-of-state reach (e.g. COMINVI) are appropriately credited for practice area scale and national standing.
    - Portfolio Hygiene & 20-Matter Cap: Note whether peripheral off-category dilution matters (e.g. pure tax credits, local transport regulations, minor labor claims) were cleanly pruned, preserving up to 20 high-impact matters.
-   - Editorial Craft & Zero Carpentry: Verify absence of mechanical bold labels and verify natural Chambers phrasing (e.g. "whether the payment order could be immediately challenged through amparo proceedings").
+   - Editorial Craft & Zero Carpentry: Verify absence of mechanical bold labels and verify natural Chambers phrasing.
    - Practical recommendations for improvements to guide the administrator and firm.
 
 Include one check record for each component below:
@@ -281,9 +329,13 @@ reclassified. Publishable/confidential counts and labels match exactly.
 
 FIELD PROVENANCE — Every client, value, jurisdiction, lead lawyer, team member,
 other firm and date remains attached to its own source matter. Joint clients
-remain joint. No fact, outcome, metric, role or significance was invented.
+remain joint. Regulatory authorities and legal forums strictly match the host
+country (e.g. SENIAT in Venezuela, SAT in Mexico, DIAN in Colombia); foreign authority
+contamination fails this check. No fact, outcome, metric, role or significance was invented.
 
 LAWYERS — Every submitted lawyer and source current-ranking status is preserved.
+Roster is strictly sanitized: ZERO phone numbers or contact details in names or comments,
+ZERO unparsed boolean flags (Y/N/N/A), and ZERO split/fragmented names.
 The Strategic Audit gives each lawyer an evidence-backed proposition or a
 specific evidence question when the source cannot support one.
 
@@ -325,6 +377,7 @@ class JudgeCheck(BaseModel):
         "field_provenance",
         "lawyers",
         "b10_strategy",
+        "c2_positioning",
         "matter_quality",
         "strategic_audit",
         "deterministic_contracts",
@@ -333,6 +386,9 @@ class JudgeCheck(BaseModel):
         "borderline_relevance",
         "portfolio_hygiene",
         "editorial_craft",
+        "jurisdiction_consistency",
+        "artifact_integrity",
+        "hero_matter",
     ]
     affected_matter_ids: List[str] = Field(
         description="Canonical matter_id values affected by this check; empty if not matter-specific"

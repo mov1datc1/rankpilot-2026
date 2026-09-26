@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { curateMatters, getDirectoryPracticeAllowance } from '@/lib/docx/matter-curator';
+import { curateLawyers } from '@/lib/docx/lawyer-curator';
+import { evaluateJudgeSolSubmission } from '@/lib/audit/judge-sol-evaluator';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { generateDynamicB10, generateDynamicC2 } from '@/app/api/generate-docx/submission-builder';
 
@@ -124,7 +126,6 @@ export async function POST(request: NextRequest) {
 
     const calculatedScore = isUnranked ? 91 : 94;
     const riskLevel = isUnranked ? 'Moderate Risk (Entry Candidate)' : 'Low Risk';
-    const judgeScoreInt = isUnranked ? 8 : 9;
 
     const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
     const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
@@ -620,48 +621,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3. Judge SOL Formal Quality Verdict (v26.40 — Chambers & Partners Editorial Constitution)
-    const registerPassed = totalMatters > 0;
-    const syncPassed = registerPassed;
-    const causalPassed = verifiedThreeParasCount >= Math.min(totalCoreMatters, 5);
-    const borderlinePassed = totalMatters > 0;
-    const portfolioHygienePassed = totalMatters <= 20;
-    const editorialCraftPassed = !b10Text.includes('**HERO STATEMENT:**') && !b10Text.includes('**IMPACT:**') && !b10Text.includes('**EXECUTION:**');
-
-    const judgeFeedbackText = registerPassed 
-      ? `Release decision: pass. Editorial quality verified for ${firmName} (${practiceArea}) under Chambers Constitution v26.40. Audit-to-Submission 1:1 sync confirmed. Core portfolio exhibits rigorous causal attribution (Problem → Legal Craft → Outcome → Commercial Impact) with Zero Carpentry. Deliverable coverage: ${deliverableQualityPercent}% of Core matters fully structured in organic 3-paragraph prose (${verifiedThreeParasCount}/${totalCoreMatters}).`
-      : `Release decision: blocked. Matter register reconciliation failure: 0 matters detected in extraction register. Strategic conclusions remain provisional.`;
-
-    const judgeChecks = [
-      { 
-        check_id: 'register', 
-        component: 'register', 
-        passed: registerPassed, 
-        reason: registerPassed 
-          ? `Portfolio of ${totalMatters} matters (${pubCount} publishable, ${confCount} confidential) faithfully preserved.`
-          : 'Matter register reconciliation failure: 0 matters registered from source document.' 
-      },
-      { check_id: 'field_provenance', component: 'field_provenance', passed: registerPassed, reason: 'Figures, currencies, and dates verified without factual invention.' },
-      { check_id: 'b10_strategy', component: 'b10_strategy', passed: true, reason: 'Section B10 structured under the 4 Institutional Pillars without marketing puffery.' },
-      { check_id: 'matter_quality', component: 'matter_quality', passed: registerPassed, reason: registerPassed ? `${verifiedThreeParasCount} of ${totalCoreMatters} Core matters structured in organic 3-paragraph prose (${deliverableQualityPercent}%). Remaining matters preserved with original factual evidence.` : 'No matters available for prose structure verification.' },
-      { check_id: 'strategic_audit', component: 'strategic_audit', passed: true, reason: 'Comprehensive and actionable strategic evaluation for tier advancement.' },
-      { check_id: 'audit_submission_sync', component: 'audit_submission_sync', passed: syncPassed, reason: 'Matter evaluations in Strategic Audit Letter and Submission Form matter highlights match 1:1 in order, numbering, and titles.' },
-      { check_id: 'causal_attribution', component: 'causal_attribution', passed: causalPassed, reason: 'Core matters articulate active legal craft and team merit (Problem/Risk → Technical Intervention → Legal Outcome → Commercial Impact).' },
-      { check_id: 'borderline_relevance', component: 'borderline_relevance', passed: borderlinePassed, reason: 'Borderline matters offering material infrastructure scale, high economic value, or out-of-state reach are strategically credited.' },
-      { check_id: 'portfolio_hygiene', component: 'portfolio_hygiene', passed: portfolioHygienePassed, reason: `Portfolio curated up to official cap (${totalMatters}/20) with off-category dilution pruned (${curationResult.surplusPubMatters.length + curationResult.surplusConfMatters.length} excluded).` },
-      { check_id: 'editorial_craft', component: 'editorial_craft', passed: editorialCraftPassed, reason: 'Zero Carpentry validated (no artificial labels or bold structural headers); natural Chambers legal phrasing enforced.' }
-    ];
-
-    const judgeVerdict = {
-      score: registerPassed ? judgeScoreInt : 4,
-      passed: registerPassed,
-      summary: registerPassed 
-        ? `Editorial quality 100% verified for ${firmName}. Adheres to Chambers & Partners Editorial Constitution v26.40.`
-        : `Submission readiness blocked: matter register reconciliation failure for ${firmName}.`,
-      feedback: judgeFeedbackText,
-      violations: registerPassed ? [] : ['Matter register reconciliation failure (0 matters detected)'],
-      checks: judgeChecks
-    };
+    // 3. Curate Lawyers & Establish Strategic Evidentiary Roster
+    const rawLawyersList = Array.isArray(chambersData.lawyers) ? chambersData.lawyers : [];
+    const curatedLawyersList = curateLawyers(
+      rawLawyersList,
+      allCuratedMatters,
+      firmName,
+      practiceArea,
+      location,
+      chambersData
+    );
 
     // Unified Hero Matter attributes
     const heroMatterItem = officialHero;
@@ -697,9 +666,46 @@ export async function POST(request: NextRequest) {
         practiceArea,
         location,
         curationResult.officialPubMatters,
-        chambersData.lawyers || []
+        curatedLawyersList
       );
     }
+
+    let finalC2 = chambersData.enhanced_c2 || chambersData.c2 || '';
+    if (!finalC2 || finalC2.trim().length === 0) {
+      finalC2 = generateDynamicC2(
+        firmName,
+        practiceArea,
+        location,
+        curationResult.officialPubMatters,
+        curatedLawyersList,
+        targetDirectory
+      );
+    }
+
+    // 4. Judge SOL Calibrated Evaluation (10-Point Audit Calibration Matrix)
+    const judgeEvaluation = evaluateJudgeSolSubmission({
+      matters: allCuratedMatters,
+      chambersData: {
+        ...chambersData,
+        lawyers: rawLawyersList, // audit source lawyer pool for phone leaks/split names/flags
+      },
+      practiceArea,
+      firmName,
+      location,
+      auditLetterText: typeof synthesizedAnalysis === 'string' ? synthesizedAnalysis : JSON.stringify(synthesizedAnalysis),
+      b10Text: finalB10,
+      c2Text: finalC2,
+    });
+
+    const judgeVerdict = {
+      score: judgeEvaluation.score,
+      passed: judgeEvaluation.passed,
+      status: judgeEvaluation.status,
+      summary: judgeEvaluation.summary,
+      feedback: judgeEvaluation.feedback,
+      violations: judgeEvaluation.violations,
+      checks: judgeEvaluation.checks,
+    };
 
     const topClientList = Array.from(new Set(
       allCuratedMatters.map((m: any) => m.client || m.clientName).filter(Boolean)
@@ -714,39 +720,44 @@ export async function POST(request: NextRequest) {
       enhanced_b7: finalB10,
       enhanced_b10: finalB10,
       b7: finalB10,
+      enhanced_c2: finalC2,
+      c2: finalC2,
+      lawyers: curatedLawyersList,
       matters: allCuratedMatters,
       canonical_matter_selection: canonicalMatterSelection,
       action_framework: actionFramework,
       the_path_to_dominance: pathToDominance,
       matter_evidence_gaps: matterEvidenceGaps.length > 0 ? matterEvidenceGaps : (chambersData.matter_evidence_gaps || []),
       analysis: synthesizedAnalysis,
-      judgeScore: registerPassed ? judgeScoreInt : 4,
-      judgeFeedback: judgeFeedbackText,
-      judgeChecks: judgeChecks,
+      judgeScore: judgeEvaluation.score,
+      judgeFeedback: judgeEvaluation.feedback,
+      judgeChecks: judgeEvaluation.checks,
       constitutional_validation: {
-        passed: registerPassed,
-        violations: registerPassed ? [] : ['Matter register reconciliation failure'],
-        judge: judgeVerdict
+        passed: judgeEvaluation.passed,
+        violations: judgeEvaluation.violations,
+        judge: judgeVerdict,
       },
       release_verdict: {
-        passed: registerPassed,
-        status: registerPassed ? 'passed' : 'blocked',
-        submission_readiness: registerPassed ? 'Ready for Delivery' : 'Blocked — matter register reconciliation failure',
-        passes_defensibility_test: registerPassed,
-        judge: judgeVerdict
+        passed: judgeEvaluation.passed,
+        status: judgeEvaluation.status,
+        submission_readiness: judgeEvaluation.passed
+          ? 'Ready for Delivery'
+          : (judgeEvaluation.status === 'blocked' ? 'Blocked — critical quality gate failure' : 'Review Recommended — observations flagged'),
+        passes_defensibility_test: judgeEvaluation.passed,
+        judge: judgeVerdict,
       },
       editorial_confidence: {
-        overall_confidence: registerPassed ? 'High' : 'Insufficient',
-        passes_defensibility_test: registerPassed,
-        evidence_completeness_score: registerPassed ? 94 : 0,
-        matter_quality_score: registerPassed ? 96 : 0,
-        final_deliverable_score: registerPassed ? deliverableQualityPercent : 0,
+        overall_confidence: judgeEvaluation.score >= 8 ? 'High' : (judgeEvaluation.score >= 6 ? 'Medium' : 'Insufficient'),
+        passes_defensibility_test: judgeEvaluation.passed,
+        evidence_completeness_score: judgeEvaluation.passed ? 94 : Math.min(90, judgeEvaluation.score * 10),
+        matter_quality_score: Math.min(100, judgeEvaluation.score * 10),
+        final_deliverable_score: Math.min(100, judgeEvaluation.score * 10),
         verified_matters_count: verifiedThreeParasCount,
         total_core_matters: totalCoreMatters,
-        leadership_visibility_score: registerPassed ? 92 : 0,
-        narrative_cohesion_score: registerPassed ? 95 : 0,
-        differentiation_score: registerPassed ? 93 : 0,
-        institutional_depth_score: registerPassed ? 94 : 0
+        leadership_visibility_score: judgeEvaluation.passed ? 92 : 0,
+        narrative_cohesion_score: judgeEvaluation.passed ? 95 : 0,
+        differentiation_score: judgeEvaluation.passed ? 93 : 0,
+        institutional_depth_score: judgeEvaluation.passed ? 94 : 0
       },
       comparative_analysis: {
         band_alignment: isUnranked ? 'Band 4 / Entry Standard' : `${targetTerm} Standard`,

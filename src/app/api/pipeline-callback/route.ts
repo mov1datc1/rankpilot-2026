@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { evaluateJudgeSolSubmission } from '@/lib/audit/judge-sol-evaluator';
 
 /**
  * v18.0: Pipeline Callback Webhook
@@ -152,13 +153,35 @@ export async function POST(request: NextRequest) {
     const canonicalBuilderReady = releaseVerdict?.delivery_mode === 'canonical_docx_builder'
       && releaseVerdict?.builder_contract_passed === true;
     const judgeData = constitutionalValidation?.judge || releaseVerdict?.judge || {};
-    const judgeScore = typeof judgeData.score === 'number'
+    let judgeScore: number | null = typeof judgeData.score === 'number'
       ? judgeData.score
-      : (typeof (pyData.data as any)?.judge_score === 'number' ? (pyData.data as any).judge_score : 8);
-    const judgeFeedback = String(
+      : (typeof (pyData.data as any)?.judge_score === 'number' ? (pyData.data as any).judge_score : null);
+    let judgeFeedback = String(
       judgeData.feedback || judgeData.summary || (pyData.data as any)?.judge_feedback || ''
     );
-    const judgeChecks = Array.isArray(judgeData.checks) ? judgeData.checks : [];
+    let judgeChecks = Array.isArray(judgeData.checks) ? judgeData.checks : [];
+
+    // Fallback to calibrated Judge SOL evaluator if Python judge did not return checks or score
+    if (judgeScore === null || judgeChecks.length === 0) {
+      const evaluation = evaluateJudgeSolSubmission({
+        matters: Array.isArray(pyData.data?.matters) ? pyData.data.matters : [],
+        chambersData: {
+          ...(submission.chambersData as any || {}),
+          lawyers: pyData.data?.metadata?.lawyers || [],
+          enhanced_b7: pyData.data?.enhanced_b7,
+          enhanced_c2: pyData.data?.enhanced_c2,
+        },
+        practiceArea: (submission as any).practiceArea || 'General Practice',
+        firmName: (submission.chambersData as any)?.firmName || pyData.data?.strategic_context?.firm_name || pyData.data?.metadata?.firm_name || 'Firm',
+        location: (submission as any).guideRegion || '',
+        auditLetterText: typeof pyData.data?.analysis === 'string' ? pyData.data?.analysis : JSON.stringify(pyData.data?.analysis || {}),
+        b10Text: pyData.data?.enhanced_b7 || '',
+        c2Text: pyData.data?.enhanced_c2 || '',
+      });
+      if (judgeScore === null) judgeScore = evaluation.score;
+      if (!judgeFeedback) judgeFeedback = evaluation.feedback;
+      if (judgeChecks.length === 0) judgeChecks = evaluation.checks as any;
+    }
 
     const releaseFailures = [
       ['source_validation', sourceValidation?.passed === true],
