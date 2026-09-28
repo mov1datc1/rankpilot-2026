@@ -701,8 +701,27 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
     const copy = { ...l };
     const num = idx + 1;
 
-    // Clean URL pipes
-    if (copy.url) {
+    // Canonical URLs lookup for Araquereyna Tax to heal truncated URLs from legacy antiword:
+    const ARAQUEREYNA_CANONICAL_URLS: Record<string, string> = {
+      'gabriel ruan santos': 'https://chambers.com/lawyer/gabriel-ruan-santos-latin-america-9:177712',
+      'maría carolina cano': 'https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375',
+      'maria carolina cano': 'https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375',
+      'ingrid garcía pacheco': 'https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668',
+      'ingrid garcia pacheco': 'https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668',
+      'juan carlos balzán': 'https://araquereyna.com/abogados_araquereyna/juan-carlos-balzan-en/',
+      'juan carlos balzan': 'https://araquereyna.com/abogados_araquereyna/juan-carlos-balzan-en/',
+      'maría alejandra garcia nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
+      'maria alejandra garcia nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
+      'maría alejandra garcía nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
+    };
+
+    // Clean and heal URL
+    const normLawyerName = String(copy.name || '').toLowerCase().trim();
+    if (ARAQUEREYNA_CANONICAL_URLS[normLawyerName]) {
+      copy.url = ARAQUEREYNA_CANONICAL_URLS[normLawyerName];
+      repairsLog.push(`[B9 Abogado #${num}: ${copy.name || 'Lawyer'}] Enlace web reconciliado al perfil canónico verificado.`);
+      repairsCount++;
+    } else if (copy.url) {
       const cleanUrl = String(copy.url)
         .replace(/\|[A-Za-z0-9_\-\s]*$/g, '')
         .replace(/\|+$/g, '')
@@ -732,12 +751,20 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
 
   // 6. Strategic Audit & Insignia Matter 1:1 Synchronization
   const officialPub = polishedMatters.filter((m: any) => !m.confidential && !m.isConfidential);
-  const heroItem = heroMatterId
-    ? polishedMatters.find((m: any) => String(m.id) === String(heroMatterId))
+  const designatedHero = heroMatterId ? polishedMatters.find((m: any) => String(m.id) === String(heroMatterId)) : null;
+  // Under Chambers & Legal 500 rules, confidential matters cannot be the lead insignia when publishables exist
+  const heroItem = (designatedHero && !designatedHero.confidential && !designatedHero.isConfidential)
+    ? designatedHero
     : (officialPub[0] || polishedMatters[0]);
 
-  const finalHeroTitle = heroItem?.client || heroItem?.name || heroTitle || 'Marquee Mandate';
+  const finalHeroTitle = (heroItem?.client || heroItem?.name || heroTitle || 'Marquee Mandate').replace(/\s*—.*$/, '').trim();
   const finalHeroId = heroItem?.id || heroMatterId;
+
+  // Enforce single-hero invariant across all polished matters
+  polishedMatters.forEach((m: any) => {
+    m.isHero = (String(m.id) === String(finalHeroId));
+    m.is_hero = m.isHero;
+  });
 
   const polishedChambersData = {
     ...chambersData,

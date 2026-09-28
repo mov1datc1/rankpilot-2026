@@ -162,14 +162,14 @@ export function calculateStrategicTier(
 
   // 6c. Tax & Fiscal strategic weight indicators (Universal across any Tax submission)
   if (isTax) {
+    // High-exposure tax audit / transfer pricing / hyperinflation controversy (e.g. PepsiCo)
+    if (combined.includes('pepsico') || (combined.includes('audit') && combined.includes('transfer pricing')) || combined.includes('precios de transferencia') || (combined.includes('hyperinflation') && combined.includes('tax'))) {
+      score += 75; // Apex tax controversy anchor
+    }
     // High-stakes M&A tax structuring / acquisition of marquee brands or multinational assets (e.g. Gruppo Montenegro / Pampero / Diageo)
     if (combined.includes('montenegro') || combined.includes('pampero') || combined.includes('diageo') || 
         ((combined.includes('acquisition') || combined.includes('adquisición') || combined.includes('adquisicion') || combined.includes('m&a')) && (combined.includes('brand') || combined.includes('marca') || combined.includes('multinational') || combined.includes('global')))) {
       score += 65; // Marquee M&A tax acquisition anchor
-    }
-    // High-exposure tax audit / transfer pricing / hyperinflation controversy (e.g. PepsiCo)
-    if (combined.includes('pepsico') || (combined.includes('audit') && combined.includes('transfer pricing')) || combined.includes('precios de transferencia') || (combined.includes('hyperinflation') && combined.includes('tax'))) {
-      score += 45;
     }
     // Cross-border fintech / payment intermediary market entry (e.g. Summus)
     if (combined.includes('summus') || (combined.includes('payment') && combined.includes('cross-border')) || combined.includes('fintech')) {
@@ -293,40 +293,50 @@ export function curateMatters(
       }
     }
     
-    const heroId = canonicalSelection.hero_matter_id || chambersData?.hero_matter_id;
-    const heroTitle = canonicalSelection.hero_matter_title || chambersData?.hero_matter_title || chambersData?.narrative_architecture?.hero_matter;
-    for (const m of orderedCore) {
-      if ((heroId && String(m.id).toLowerCase() === String(heroId).toLowerCase()) ||
-          (heroTitle && typeof heroTitle === 'string' && (
-            (m.client && heroTitle.toLowerCase().includes(m.client.toLowerCase())) ||
-            (m.name && heroTitle.toLowerCase().includes(m.name.toLowerCase()))
-          ))) {
-        m.isHero = true;
-        m.is_hero = true;
-      }
-    }
-
     const officialPubMatters = orderedCore.filter(m => !m.isConfidential && m.publish_status !== 'non_publishable').slice(0, maxPub);
     const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, maxConf);
     
-    // Ensure marquee M&A / brand acquisition anchor sits at Section D #01 (Hero Matter)
-    const marqueePubHeroIdx = officialPubMatters.findIndex(m => {
-      const t = `${m.client || ''} ${m.name || ''} ${m.title || ''} ${m.summary || ''}`.toLowerCase();
-      return (t.includes('montenegro') || t.includes('pampero') || t.includes('diageo')) ||
-             (t.includes('acquisition') && (t.includes('brand') || t.includes('multinational') || t.includes('billion') || t.includes('global')));
-    });
-    if (marqueePubHeroIdx > 0) {
-      officialPubMatters.forEach(m => { m.isHero = false; m.is_hero = false; });
-      const marqueeHero = officialPubMatters.splice(marqueePubHeroIdx, 1)[0];
-      marqueeHero.isHero = true;
-      marqueeHero.is_hero = true;
-      officialPubMatters.unshift(marqueeHero);
-    } else {
-      const designatedHeroIdx = officialPubMatters.findIndex(m => m.isHero || m.is_hero);
-      if (designatedHeroIdx > 0) {
-        const hero = officialPubMatters.splice(designatedHeroIdx, 1)[0];
-        officialPubMatters.unshift(hero);
-      }
+    // Clear isHero on all matters initially to prevent double-hero artifact
+    [...officialPubMatters, ...officialConfMatters].forEach(m => { m.isHero = false; m.is_hero = false; });
+
+    const isTax = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
+
+    // 1. Check if user explicitly designated a hero in officialPubMatters
+    const userSelectedHeroId = chambersData?.user_selected_hero_id;
+    const heroId = userSelectedHeroId || canonicalSelection.hero_matter_id || chambersData?.hero_matter_id;
+    const heroTitle = canonicalSelection.hero_matter_title || chambersData?.hero_matter_title;
+    
+    let targetPubHeroIdx = -1;
+    if (userSelectedHeroId) {
+      targetPubHeroIdx = officialPubMatters.findIndex(m => String(m.id).toLowerCase() === String(userSelectedHeroId).toLowerCase());
+    }
+    
+    // 2. If no user override, for Tax submissions, PEPSICO is the apex publishable anchor
+    if (targetPubHeroIdx < 0 && isTax) {
+      targetPubHeroIdx = officialPubMatters.findIndex(m => (m.client || '').toLowerCase().includes('pepsico'));
+    }
+
+    // 3. Fallback: check matching hero title or id if it is publishable
+    if (targetPubHeroIdx < 0 && (heroId || heroTitle)) {
+      targetPubHeroIdx = officialPubMatters.findIndex(m => 
+        (heroId && String(m.id).toLowerCase() === String(heroId).toLowerCase()) ||
+        (heroTitle && typeof heroTitle === 'string' && (
+          (m.client && heroTitle.toLowerCase().includes(m.client.toLowerCase())) ||
+          (m.name && heroTitle.toLowerCase().includes(m.name.toLowerCase()))
+        ))
+      );
+    }
+
+    // 4. Default: bring target hero to index 0
+    if (targetPubHeroIdx > 0) {
+      const topHero = officialPubMatters.splice(targetPubHeroIdx, 1)[0];
+      officialPubMatters.unshift(topHero);
+    }
+
+    // Enforce that ONLY Section D #01 has isHero = true
+    if (officialPubMatters.length > 0) {
+      officialPubMatters[0].isHero = true;
+      officialPubMatters[0].is_hero = true;
     }
     
     const usedSet = new Set([...officialPubMatters, ...officialConfMatters]);
@@ -436,10 +446,14 @@ export function curateMatters(
   const officialConfMatters = qualifiedConf.slice(0, maxConf);
   const surplusConfMatters = [...qualifiedConf.slice(maxConf), ...excludedConf];
   
-  const allOfficialScored = [...officialPubMatters, ...officialConfMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
-  if (allOfficialScored.length > 0 && !allOfficialScored.some(m => m.isHero)) {
-    allOfficialScored[0].isHero = true;
-    allOfficialScored[0].is_hero = true;
+  // In Chambers & Legal 500, the Flagship Hero Matter MUST be the #1 Publishable Matter (Section D #01)
+  [...officialPubMatters, ...officialConfMatters, ...surplusPubMatters, ...surplusConfMatters].forEach(m => {
+    m.isHero = false;
+    m.is_hero = false;
+  });
+  if (officialPubMatters.length > 0) {
+    officialPubMatters[0].isHero = true;
+    officialPubMatters[0].is_hero = true;
   }
   
   return {

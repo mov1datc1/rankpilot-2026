@@ -267,75 +267,46 @@ The practice regularly represents domestic conglomerates, financial institutions
     return s.trim();
   };
 
+  const [userDesignatedHeroId, setUserDesignatedHeroId] = useState<string | null>(null);
+
   // Flagship Matter: strictly the hero matter (if designated) or top curated matter (1:1 with Hero Matter)
   const flagshipMatter = React.useMemo(() => {
     const all = [...(categorized.pub || []), ...(categorized.conf || []), ...(categorized.pruned || []), ...(matters || [])];
     
-    // 1. Explicit Hero Matter ID designated by user via "⭐ Hacer Insignia" button or canonical selection
-    const explicitHeroId = chambersData?.hero_matter_id 
-      || (submission as any)?.hero_matter_id
-      || chambersData?.canonical_matter_selection?.hero_matter_id;
-    if (explicitHeroId) {
-      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(explicitHeroId).toLowerCase());
+    // 1. Explicit Hero Matter ID designated by user via "⭐ Hacer Insignia" button in current session
+    if (userDesignatedHeroId) {
+      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(userDesignatedHeroId).toLowerCase());
       if (found) return found;
     }
 
-    // 2. Matter explicitly flagged with isHero / is_hero / hero by user action
-    const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
-    if (heroFlagged) return heroFlagged;
+    // 2. Explicit Hero Matter ID intentionally saved by user previously
+    const userSelectedHeroId = chambersData?.user_selected_hero_id;
+    if (userSelectedHeroId) {
+      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(userSelectedHeroId).toLowerCase());
+      if (found) return found;
+    }
 
     // 3. In Draft / un-optimized state, DO NOT prematurely assign an uncurated matter as Insignia!
-    // Wait until "Optimizar Todo" runs so everything is 1:1 between Audit Letter and Submission Studio.
-    const isOptimized = optimizedMattersCount > 0 || submission.status === 'Optimized';
+    // If 0 matters are optimized, show "Por calibrar" until "Optimizar Todo" runs.
+    const isOptimized = optimizedMattersCount > 0;
     if (!isOptimized) {
       return null;
     }
 
-    // 4. Strategic Audit Hero Matter from narrative_architecture (1:1 alignment with Strategic Audit after optimization)
-    const auditHeroTitle = chambersData?.narrative_architecture?.hero_matter 
-      || chambersData?.analysis?.narrative_architecture?.hero_matter
-      || (submission as any)?.narrative_architecture?.hero_matter;
-      
-    if (auditHeroTitle && typeof auditHeroTitle === 'string' && auditHeroTitle.trim().length > 2 && 
-        auditHeroTitle !== 'Anchor Mandate' && auditHeroTitle !== 'Strategic Flagship Mandate' && 
-        !auditHeroTitle.toLowerCase().includes('solana')) {
-      const heroLower = auditHeroTitle.toLowerCase().trim();
-      const found = all.find(m => {
-        const client = String(m.client || m.clientName || '').toLowerCase().trim();
-        const title = String(m.title || m.name || '').toLowerCase().trim();
-        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
-               (title && (title.includes(heroLower) || heroLower.includes(title)));
-      });
-      if (found) return found;
+    // 4. In optimized state, the Flagship Matter MUST strictly match Section D #01 (top publishable matter)!
+    // Under Chambers and Legal 500 guidelines, confidential matters cannot be the lead insignia when publishables exist.
+    if (curation.officialPubMatters && curation.officialPubMatters.length > 0) {
+      return curation.officialPubMatters[0];
     }
 
-    // 5. Explicit Hero Matter Title / Name
-    const rawHeroTitle = chambersData?.hero_matter_title 
-      || chambersData?.hero_matter_name
-      || chambersData?.hero_matter
-      || chambersData?.canonical_matter_selection?.hero_matter_title
-      || (submission as any)?.hero_matter;
-    if (rawHeroTitle && typeof rawHeroTitle === 'string' && rawHeroTitle.trim().length > 2 && 
-        rawHeroTitle !== 'Anchor Mandate' && rawHeroTitle !== 'Strategic Flagship Mandate' &&
-        !rawHeroTitle.toLowerCase().includes('solana')) {
-      const heroLower = rawHeroTitle.toLowerCase().trim();
-      const found = all.find(m => {
-        const client = String(m.client || m.clientName || '').toLowerCase().trim();
-        const title = String(m.title || m.name || '').toLowerCase().trim();
-        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
-               (title && (title.includes(heroLower) || heroLower.includes(title)));
-      });
-      if (found) return found;
-    }
-
-    // 6. Dynamic top-tier fallback from curation (evaluating scale, volume, and precedent)
+    // 5. Fallback if no publishable matters exist at all
     const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
     if (allCurated.length > 0) {
       const sortedByTier = [...allCurated].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
       return sortedByTier[0];
     }
     return null;
-  }, [categorized, matters, chambersData, submission, optimizedMattersCount, curation]);
+  }, [categorized, matters, chambersData, submission, optimizedMattersCount, curation, userDesignatedHeroId]);
 
   const verifiedValuesList = React.useMemo(() => {
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
@@ -716,6 +687,8 @@ The practice regularly represents domestic conglomerates, financial institutions
     const heroId = matter.id || '';
     const heroTitle = matter.client || matter.name || matter.title || 'Asunto Insignia';
     
+    setUserDesignatedHeroId(heroId);
+
     // Update local matters state with isHero
     setMatters(prev => prev.map(m => ({
       ...m,
@@ -725,6 +698,7 @@ The practice regularly represents domestic conglomerates, financial institutions
     // Update chambersData in state
     const updatedChambersData = {
       ...chambersData,
+      user_selected_hero_id: heroId,
       hero_matter_id: heroId,
       hero_matter_title: heroTitle,
       hero_matter_name: heroTitle,

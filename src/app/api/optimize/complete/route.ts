@@ -438,59 +438,45 @@ export async function POST(request: NextRequest) {
       }
     ];
 
-    // Select the highest-scoring flagship matter across both publishable and confidential registers
-    const allOfficialMatters = [...curationResult.officialPubMatters, ...curationResult.officialConfMatters];
-    const topScoredOfficial = [...allOfficialMatters].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0))[0];
+    // Select the premier flagship Hero Matter strictly from Publishable Section D #01
+    const officialPubMatters = curationResult.officialPubMatters;
+    const officialConfMatters = curationResult.officialConfMatters;
+    const allOfficialMatters = [...officialPubMatters, ...officialConfMatters];
     
-    // 1. Check Strategic Audit Hero Matter (narrative_architecture.hero_matter)
-    const auditHeroTitle = chambersData.narrative_architecture?.hero_matter
-      || analysis?.narrative_architecture?.hero_matter
-      || chambersData?.strategic_audit?.narrative_architecture?.hero_matter;
-    
-    let auditHeroMatch: any = null;
-    if (auditHeroTitle && typeof auditHeroTitle === 'string' && auditHeroTitle.trim().length > 2 &&
-        auditHeroTitle !== 'Anchor Mandate' && auditHeroTitle !== 'Strategic Flagship Mandate' &&
-        !auditHeroTitle.toLowerCase().includes('solana')) {
-      const heroLower = auditHeroTitle.toLowerCase().trim();
-      auditHeroMatch = allOfficialMatters.find(m => {
-        const client = (m.client || m.clientName || '').toLowerCase().trim();
-        const name = (m.name || m.title || '').toLowerCase().trim();
-        return (client && (client.includes(heroLower) || heroLower.includes(client))) ||
-               (name && (name.includes(heroLower) || heroLower.includes(name)));
-      });
+    // Clear isHero on all matters first to prevent double-hero artifact
+    allOfficialMatters.forEach(m => { m.isHero = false; m.is_hero = false; });
+
+    // 1. Check if user explicitly designated a hero via "⭐ Hacer Insignia" in the Studio
+    const userSelectedId = chambersData?.user_selected_hero_id;
+    const userExplicitHero = userSelectedId ? allOfficialMatters.find(m => String(m.id).toLowerCase() === String(userSelectedId).toLowerCase()) : null;
+
+    // 2. Default hero MUST come from officialPubMatters (Section D #01) under directory rules
+    let officialHero: any = null;
+    if (userExplicitHero && !userExplicitHero.isConfidential && userExplicitHero.publish_status !== 'non_publishable') {
+      officialHero = userExplicitHero;
+    } else if (officialPubMatters.length > 0) {
+      officialHero = officialPubMatters[0];
+    } else {
+      officialHero = officialConfMatters[0] || allOfficialMatters[0] || {};
     }
 
-    // 2. Check if user explicitly designated a hero matter
-    const explicitHero = allOfficialMatters.find(m => 
-      (chambersData.hero_matter_id && String(m.id) === String(chambersData.hero_matter_id)) ||
-      (chambersData.hero_matter_title && (
-        (m.client && chambersData.hero_matter_title.toLowerCase().includes(m.client.toLowerCase())) ||
-        (m.name && chambersData.hero_matter_title.toLowerCase().includes(m.name.toLowerCase()))
-      ))
-    );
-
-    const officialHero = auditHeroMatch || explicitHero || topScoredOfficial || updatedMatters[0] || {};
     const heroMatterId = officialHero.id || (officialHero as any).matter_id || 'hero-matter-1';
-    const heroClient = officialHero.client || officialHero.clientName || 'Hero Client';
+    const heroClient = (officialHero.client || officialHero.clientName || 'Hero Client').replace(/\s*—.*$/, '').trim();
     const heroMatterName = officialHero.name || officialHero.title || `${heroClient} Flagship Mandate`;
-    const heroMatterTitle = auditHeroTitle && auditHeroMatch ? auditHeroTitle : `${heroClient} – ${heroMatterName}`;
+    const heroMatterTitle = `${heroClient} – ${heroMatterName}`;
     
-    // Mark the hero matter explicitly on the object
+    // Mark the hero matter explicitly on the object and ONLY on this object
     officialHero.isHero = true;
     officialHero.is_hero = true;
 
-    // Ensure the hero matter is positioned at the top of its respective register (Section D #1 or Section E #1)
+    // Ensure the hero matter is positioned at the top of Section D (or Section E only if zero publishable matters)
     if (officialHero.id) {
-      if (curationResult.officialConfMatters.some(m => String(m.id) === String(officialHero.id))) {
-        curationResult.officialConfMatters = [
-          officialHero,
-          ...curationResult.officialConfMatters.filter(m => String(m.id) !== String(officialHero.id))
-        ];
-      } else if (curationResult.officialPubMatters.some(m => String(m.id) === String(officialHero.id))) {
-        curationResult.officialPubMatters = [
-          officialHero,
-          ...curationResult.officialPubMatters.filter(m => String(m.id) !== String(officialHero.id))
-        ];
+      const pubHeroIdx = curationResult.officialPubMatters.findIndex(m => String(m.id) === String(officialHero.id));
+      if (pubHeroIdx > 0) {
+        curationResult.officialPubMatters.splice(pubHeroIdx, 1);
+        curationResult.officialPubMatters.unshift(officialHero);
+      } else if (pubHeroIdx < 0 && !officialHero.isConfidential && officialHero.publish_status !== 'non_publishable') {
+        curationResult.officialPubMatters.unshift(officialHero);
       }
     }
 
@@ -640,9 +626,7 @@ export async function POST(request: NextRequest) {
       || `Represents the highest evidentiary weight and strategic category fit in the portfolio.`;
     let heroTitle = heroMatterTitle;
 
-    if (auditHeroTitle && auditHeroMatch) {
-      heroTitle = auditHeroTitle;
-    } else if (heroMatterItem.client && heroMatterItem.client !== 'Unknown Client') {
+    if (heroMatterItem && heroMatterItem.client && heroMatterItem.client !== 'Unknown Client') {
       const mName = heroMatterItem.name || heroMatterItem.title || '';
       heroTitle = mName && !mName.toLowerCase().includes(heroMatterItem.client.toLowerCase())
         ? `${heroMatterItem.client} – ${mName}`
@@ -655,7 +639,7 @@ export async function POST(request: NextRequest) {
       }
       heroReasoning = `Demonstrates the practice’s core competence: translating complex mandates into decisive commercial preservation and strategic results in ${practiceArea}.`;
     } else {
-      heroTitle = heroMatterItem.name || heroMatterItem.title || `${firmName} Flagship Mandate`;
+      heroTitle = heroMatterItem?.name || heroMatterItem?.title || `${firmName} Flagship Mandate`;
     }
 
     // Dynamic Section B10 / Department Overview
