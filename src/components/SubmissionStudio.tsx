@@ -203,7 +203,26 @@ The practice regularly represents domestic conglomerates, financial institutions
   const coreCount = curation.officialPubMatters.length + curation.officialConfMatters.length;
   const surplusCount = curation.surplusPubMatters.length + curation.surplusConfMatters.length;
 
+  const rawPubMatters = React.useMemo(() => matters.filter(m => !m.isConfidential), [matters]);
+  const rawConfMatters = React.useMemo(() => matters.filter(m => m.isConfidential), [matters]);
+
+  const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
+  const hasRunOptimization = optimizedMattersCount > 0;
+  const targetMattersCount = matters.length;
+  const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
+
   const categorized = React.useMemo(() => {
+    // Before AI optimization runs, do not prematurely prune or hide confidential/surplus matters.
+    // Present all extracted matters verbatim tagged as 'Por calibrar con IA'.
+    if (!hasRunOptimization) {
+      return {
+        pub: rawPubMatters,
+        conf: rawConfMatters,
+        pruned: [],
+        total: matters.length,
+      };
+    }
+
     if (showCoreOnly) {
       return {
         pub: curation.officialPubMatters,
@@ -219,11 +238,7 @@ The practice regularly represents domestic conglomerates, financial institutions
         total: matters.length,
       };
     }
-  }, [curation, showCoreOnly, matters.length]);
-
-  const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
-  const targetMattersCount = matters.length;
-  const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
+  }, [hasRunOptimization, rawPubMatters, rawConfMatters, curation, showCoreOnly, matters.length]);
 
   // Dynamic Case Intelligence for Editorial Copilot
   const firmName = chambersData.firm_name || chambersData.firmName || (submission as any).firmName || 'La Firma';
@@ -1440,35 +1455,62 @@ The practice regularly represents domestic conglomerates, financial institutions
                 )}
               </button>
 
-              {categorized.pruned.length > 0 && (
-                <button
-                  onClick={() => scrollTo('section-pruned')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.55rem 0.75rem',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#64748B',
-                    fontSize: '0.8rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <Sliders size={16} color="#94A3B8" />
-                    {!sidebarCollapsed && <span>En Reserva (Excedentes)</span>}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <span style={{ fontSize: '0.65rem', background: '#F1F5F9', color: '#64748B', padding: '1px 6px', borderRadius: '4px' }}>
-                      {categorized.pruned.length}
-                    </span>
-                  )}
-                </button>
+              {!sidebarCollapsed && (
+                hasRunOptimization ? (
+                  categorized.pruned.length > 0 && (
+                    <button
+                      onClick={() => scrollTo('section-pruned')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#64748B',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        width: '100%'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Sliders size={16} color="#94A3B8" />
+                        <span>En Reserva (Excedentes)</span>
+                      </div>
+                      <span style={{ fontSize: '0.65rem', background: '#F1F5F9', color: '#64748B', padding: '1px 6px', borderRadius: '4px' }}>
+                        {categorized.pruned.length}
+                      </span>
+                    </button>
+                  )
+                ) : (
+                  matters.length > 20 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.55rem 0.75rem',
+                        borderRadius: '6px',
+                        color: '#94A3B8',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        width: '100%'
+                      }}
+                      title="Al optimizar con IA, el Audit Estratégico seleccionará los mejores asuntos y derivará excedentes a reserva."
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Sliders size={16} color="#CBD5E1" />
+                        <span>Reserva</span>
+                      </div>
+                      <span style={{ fontSize: '0.6rem', background: '#FEF3C7', color: '#B45309', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                        Por calibrar con IA
+                      </span>
+                    </div>
+                  )
+                )
               )}
             </div>
 
@@ -1641,59 +1683,99 @@ The practice regularly represents domestic conglomerates, financial institutions
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              flexWrap: 'wrap',
+              gap: '1rem'
             }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4F46E5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ flex: 1, minWidth: '280px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: hasRunOptimization ? '#4F46E5' : '#D97706', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Curaduría Estratégica de Portafolio
                   </span>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: hasRunOptimization ? '#EEF2FF' : '#FEF3C7',
+                    color: hasRunOptimization ? '#4338CA' : '#B45309',
+                    border: `1px solid ${hasRunOptimization ? '#C7D2FE' : '#FDE68A'}`
+                  }}>
+                    {hasRunOptimization ? '✓ Calibrado con IA' : '⏳ Por calibrar con IA'}
+                  </span>
                 </div>
-                <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>
-                  {showCoreOnly ? `Mostrando Selección Principal de ${coreCount} Asuntos` : `Mostrando los ${matters.length} Asuntos del Documento`}
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
+                  {!hasRunOptimization
+                    ? `Portafolio Extraído: ${matters.length} Asuntos (${rawPubMatters.length} Públicos, ${rawConfMatters.length} Confidenciales)`
+                    : showCoreOnly
+                      ? `Mostrando Selección Principal de ${coreCount} Asuntos (Calibrado con IA)`
+                      : `Mostrando los ${matters.length} Asuntos del Portafolio Completo`
+                  }
                 </h2>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0 }}>
-                  {paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
-                    ? `RankPilot recomienda priorizar un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
-                    : `Chambers y Legal 500 recomiendan una selección curada de hasta ${coreCount} asuntos para concentrar el impacto evaluativo y evitar la dilución del perfil.`}
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, maxWidth: '640px', lineHeight: 1.45 }}>
+                  {!hasRunOptimization
+                    ? `Se han extraído ${matters.length} asuntos íntegros del documento fuente. Al ejecutar 'Optimizar Todo', el Audit Estratégico evaluará la trascendencia, impacto económico y nexo de práctica para seleccionar el Core oficial de hasta ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) y derivar ${surplusCount} asuntos a reserva auditada.`
+                    : (paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
+                      ? `RankPilot ha priorizado un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
+                      : `Chambers y Legal 500 recomiendan una selección curada de hasta ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar la dilución del perfil.`
+                    )
+                  }
                 </p>
               </div>
 
-              {/* Shortlist Toggle Switch */}
-              <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
-                <button
-                  onClick={() => setShowCoreOnly(true)}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: showCoreOnly ? '#FFFFFF' : 'transparent',
-                    color: showCoreOnly ? '#1A237E' : '#64748B',
-                    fontWeight: showCoreOnly ? 700 : 500,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    boxShadow: showCoreOnly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-                  }}
-                >
-                  Core {coreCount} (Recomendado)
-                </button>
-                <button
-                  onClick={() => setShowCoreOnly(false)}
-                  style={{
-                    padding: '0.4rem 0.85rem',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: !showCoreOnly ? '#FFFFFF' : 'transparent',
-                    color: !showCoreOnly ? '#1A237E' : '#64748B',
-                    fontWeight: !showCoreOnly ? 700 : 500,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    boxShadow: !showCoreOnly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-                  }}
-                >
-                  Todos ({matters.length})
-                </button>
-              </div>
+              {/* Shortlist Toggle Switch or Pending Badge */}
+              {hasRunOptimization ? (
+                <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
+                  <button
+                    onClick={() => setShowCoreOnly(true)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: showCoreOnly ? '#FFFFFF' : 'transparent',
+                      color: showCoreOnly ? '#1A237E' : '#64748B',
+                      fontWeight: showCoreOnly ? 700 : 500,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: showCoreOnly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    Core {coreCount} (Recomendado)
+                  </button>
+                  <button
+                    onClick={() => setShowCoreOnly(false)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: !showCoreOnly ? '#FFFFFF' : 'transparent',
+                      color: !showCoreOnly ? '#1A237E' : '#64748B',
+                      fontWeight: !showCoreOnly ? 700 : 500,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      boxShadow: !showCoreOnly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    Todos ({matters.length})
+                  </button>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#FEF3C7',
+                  border: '1px solid #FDE68A',
+                  borderRadius: '8px',
+                  padding: '0.5rem 0.85rem',
+                  color: '#92400E',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
+                }}>
+                  <span>⚡ Calibración pendiente al Optimizar con IA</span>
+                </div>
+              )}
             </div>
 
             {/* ═══ SECTION A: PRELIMINARY INFORMATION ═══ */}
@@ -2024,9 +2106,22 @@ The practice regularly represents domestic conglomerates, financial institutions
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#16A34A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>D</span>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                      D. Asuntos Públicos ({categorized.pub.length})
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                        D. Asuntos Públicos ({categorized.pub.length})
+                      </h3>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: hasRunOptimization ? '#DCFCE7' : '#FEF3C7',
+                        color: hasRunOptimization ? '#166534' : '#B45309',
+                        border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
+                      }}>
+                        {hasRunOptimization ? '✓ Calibrado' : '⏳ Por calibrar con IA'}
+                      </span>
+                    </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
                       Estructurados en 3 párrafos orgánicos: Escala y Riesgo → Desafío Jurídico → Resultado y Precedente
                     </p>
@@ -2338,9 +2433,22 @@ The practice regularly represents domestic conglomerates, financial institutions
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#D97706', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.75rem' }}>E</span>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                      E. Asuntos Confidenciales ({categorized.conf.length})
-                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                        E. Asuntos Confidenciales ({categorized.conf.length})
+                      </h3>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: hasRunOptimization ? '#DCFCE7' : '#FEF3C7',
+                        color: hasRunOptimization ? '#166534' : '#B45309',
+                        border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
+                      }}>
+                        {hasRunOptimization ? '✓ Calibrado (Máx. 7 Chambers)' : '⏳ Por calibrar con IA'}
+                      </span>
+                    </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
                       Para uso exclusivo de la investigación de rankings — No se publican en el directorio.
                     </p>
@@ -2792,13 +2900,27 @@ The practice regularly represents domestic conglomerates, financial institutions
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
                         Curaduría ({matters.length} Asuntos)
                       </span>
+                      <span style={{
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
+                        padding: '1px 5px',
+                        borderRadius: '3px',
+                        background: hasRunOptimization ? '#DCFCE7' : '#FEF3C7',
+                        color: hasRunOptimization ? '#166534' : '#B45309'
+                      }}>
+                        {hasRunOptimization ? 'Calibrado' : 'Por calibrar con IA'}
+                      </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
-                      {matters.length > 20
-                        ? `Se detectaron ${matters.length} asuntos (${matters.length - 20} en reserva). ${selectedDirectory} exige un límite estricto de 20 para evitar la dilución del impacto ante los investigadores.`
-                        : `Portafolio de ${matters.length} asuntos (${categorized.pub.length} públicos, ${categorized.conf.length} confidenciales) cumple con el límite oficial de ${selectedDirectory}.`}
+                      {!hasRunOptimization
+                        ? `Se han extraído ${matters.length} asuntos íntegros (${rawPubMatters.length} públicos, ${rawConfMatters.length} confidenciales). Al ejecutar la optimización, el Audit Estratégico seleccionará el Core óptimo de hasta 20 asuntos y derivará excedentes a reserva.`
+                        : (matters.length > 20
+                          ? `Se seleccionó un Core oficial de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos, ${curation.officialConfMatters.length} confidenciales) y ${surplusCount} en reserva auditada según las reglas de ${selectedDirectory}.`
+                          : `Portafolio de ${matters.length} asuntos (${categorized.pub.length} públicos, ${categorized.conf.length} confidenciales) cumple con el límite oficial de ${selectedDirectory}.`
+                        )
+                      }
                     </p>
-                    {matters.length > 20 && (
+                    {hasRunOptimization && matters.length > 20 && (
                       <button
                         onClick={() => setShowCoreOnly(!showCoreOnly)}
                         style={{
