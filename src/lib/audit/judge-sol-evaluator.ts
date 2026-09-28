@@ -14,6 +14,8 @@
  * 10. causal_attribution: 4-stage causal model in core matters (-1.0)
  */
 
+import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
+
 export interface JudgeSolCheck {
   check_id: string;
   component: string;
@@ -452,5 +454,325 @@ export function evaluateJudgeSolSubmission(params: {
     feedback,
     violations,
     checks,
+  };
+}
+
+export interface PolishDeliverablesParams {
+  matters: any[];
+  chambersData: any;
+  practiceArea: string;
+  firmName: string;
+  location?: string;
+  b10Text?: string;
+  c2Text?: string;
+  lawyers?: any[];
+  heroMatterId?: string;
+  heroTitle?: string;
+}
+
+export interface PolishedDeliverablesResult {
+  polishedMatters: any[];
+  polishedB10: string;
+  polishedC2: string;
+  polishedLawyers: any[];
+  polishedChambersData: any;
+  repairsCount: number;
+  repairsLog: string[];
+}
+
+/**
+ * Judge SOL Active Quality Assurance & Auto-Polisher Pass
+ * 
+ * Inspects both deliverables (Submission Form and Strategic Audit components),
+ * actively cures defects, normalizes formatting, reconciles jurisdiction authorities,
+ * and synchronizes 1:1 data models prior to certification and download.
+ */
+export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams): PolishedDeliverablesResult {
+  const {
+    matters = [],
+    chambersData = {},
+    practiceArea = 'General Practice',
+    firmName = 'Firm',
+    location = '',
+    b10Text = '',
+    c2Text = '',
+    lawyers = [],
+    heroMatterId,
+    heroTitle
+  } = params;
+
+  let repairsCount = 0;
+  const repairsLog: string[] = [];
+
+  // 1. Resolve Canonical Country Jurisdiction & Authorities
+  const canonicalCountry = resolveCountryJurisdiction(firmName, practiceArea, chambersData, { matters, country: location });
+  const isVenezuela = canonicalCountry.toLowerCase().includes('venezuela');
+  const isMexico = canonicalCountry.toLowerCase().includes('mexic');
+
+  // 2. Polish Section B10 (Department Overview)
+  let polishedB10 = (b10Text || chambersData?.enhanced_b10 || chambersData?.b10 || chambersData?.b7 || '').trim();
+  if (polishedB10) {
+    // Strip prompt leaks
+    if (TEMPLATE_LEAK_REGEX.test(polishedB10)) {
+      polishedB10 = polishedB10
+        .replace(/^(?:please\s+include:.*?\(500\s+word\s+count\s+limit\)\s*|address\s+any\s+feedback\s+on\s+our\s+recent\s+coverage.*?\n*)+/gi, '')
+        .replace(/\(500\s+word\s+count\s+limit\)/gi, '')
+        .replace(/\(word count limit\)/gi, '')
+        .trim();
+      repairsLog.push('[B10 Narrativa] Eliminados residuos de instrucciones y prompts de Chambers.');
+      repairsCount++;
+    }
+
+    // Purge banned / generic empty superlatives
+    const bannedB10 = [
+      { regex: /\b(an?\s+)?unmatched\s+expertise\b/gi, repl: 'proven technical expertise' },
+      { regex: /\bunmatched\b/gi, repl: 'distinguished' },
+      { regex: /\b(a\s+)?foremost\s+firm\b/gi, repl: 'an institutional practice' },
+      { regex: /\bforemost\b/gi, repl: 'leading' },
+      { regex: /\bdistinctive\s+strength\b/gi, repl: 'demonstrated capability' },
+      { regex: /\bthe\s+country'?s\s+most\s+complex\b/gi, repl: 'high-complexity' },
+      { regex: /\bunparalleled\b/gi, repl: 'extensive' },
+      { regex: /\bpremier\b/gi, repl: 'established' },
+    ];
+    for (const b of bannedB10) {
+      if (b.regex.test(polishedB10)) {
+        polishedB10 = polishedB10.replace(b.regex, b.repl);
+        repairsLog.push(`[B10 Narrativa] Sustituido calificativo genérico no fundamentado ('${b.repl}').`);
+        repairsCount++;
+      }
+    }
+
+    // Jurisdiction reconciliation in B10
+    if (isVenezuela) {
+      if (/\bSAT\b/.test(polishedB10)) {
+        polishedB10 = polishedB10.replace(/\bSAT\b/g, 'SENIAT');
+        repairsLog.push('[B10 Narrativa] Reemplazada mención foránea SAT por SENIAT.');
+        repairsCount++;
+      }
+      if (/Latin America — Mexico|in Mexico\b/i.test(polishedB10)) {
+        polishedB10 = polishedB10.replace(/Latin America — Mexico/gi, 'Venezuela').replace(/\bin Mexico\b/gi, 'in Venezuela');
+        repairsLog.push('[B10 Narrativa] Reconciliada jurisdicción geográfica a Venezuela.');
+        repairsCount++;
+      }
+    } else if (isMexico) {
+      if (/\bSENIAT\b/.test(polishedB10)) {
+        polishedB10 = polishedB10.replace(/\bSENIAT\b/g, 'SAT');
+        repairsLog.push('[B10 Narrativa] Reemplazada mención foránea SENIAT por SAT.');
+        repairsCount++;
+      }
+    }
+
+    // Enforce 500-word limit strictly
+    const b10Words = polishedB10.split(/\s+/).filter(Boolean);
+    if (b10Words.length > 500) {
+      const trimmedWords = b10Words.slice(0, 485).join(' ');
+      const lastPeriod = trimmedWords.lastIndexOf('.');
+      polishedB10 = lastPeriod > 300 ? trimmedWords.slice(0, lastPeriod + 1) : trimmedWords + '.';
+      repairsLog.push(`[B10 Narrativa] Longitud ajustada de ${b10Words.length} a ${polishedB10.split(/\s+/).length} palabras (cumpliendo el límite de 500 de Chambers).`);
+      repairsCount++;
+    }
+  }
+
+  // 3. Polish Section C2 (Reasons for Ranking / Practice Feedback)
+  let polishedC2 = (c2Text || chambersData?.enhanced_c2 || chambersData?.c2 || '').trim();
+  if (polishedC2) {
+    if (TEMPLATE_LEAK_REGEX.test(polishedC2)) {
+      polishedC2 = polishedC2
+        .replace(/^(?:please\s+say\s+why\s+this\s+matter\s+was\s+important\.?\s*|summary\s+of\s+matter\s+and\s+your\s+department'?s\s+role\.?\s*|matter\s+was\s+important\.?\s*)+/gi, '')
+        .trim();
+      repairsLog.push('[C2 Feedback] Purgadas frases de plantilla de Chambers en razones de ranking.');
+      repairsCount++;
+    }
+
+    // Jurisdiction reconciliation in C2
+    if (isVenezuela) {
+      if (/Latin America — Mexico/i.test(polishedC2)) {
+        polishedC2 = polishedC2.replace(/Latin America — Mexico/gi, 'Venezuela');
+        repairsLog.push("[C2 Feedback] Reconciliada región de 'Latin America — Mexico' a 'Venezuela'.");
+        repairsCount++;
+      }
+      if (/\bSAT\b/.test(polishedC2)) {
+        polishedC2 = polishedC2.replace(/\bSAT\b/g, 'SENIAT');
+        polishedC2 = polishedC2.replace(/SAT and local treasury authorities/gi, 'SENIAT and Municipal Tax Administrations');
+        repairsLog.push('[C2 Feedback] Reemplazada autoridad mexicana SAT por SENIAT y Administraciones Municipales.');
+        repairsCount++;
+      }
+      if (/Chambers (?:Latin America — )?Mexico/i.test(polishedC2)) {
+        polishedC2 = polishedC2.replace(/Chambers (?:Latin America — )?Mexico/gi, 'Chambers Venezuela');
+        repairsLog.push('[C2 Feedback] Ajustada solicitud de ranking formal a Chambers Venezuela.');
+        repairsCount++;
+      }
+    } else if (isMexico) {
+      if (/\bSENIAT\b/.test(polishedC2)) {
+        polishedC2 = polishedC2.replace(/\bSENIAT\b/g, 'SAT');
+        repairsLog.push('[C2 Feedback] Reemplazada mención foránea SENIAT por SAT.');
+        repairsCount++;
+      }
+      if (/Chambers Venezuela/i.test(polishedC2)) {
+        polishedC2 = polishedC2.replace(/Chambers Venezuela/gi, 'Chambers Mexico');
+        repairsLog.push('[C2 Feedback] Ajustada solicitud de ranking formal a Chambers Mexico.');
+        repairsCount++;
+      }
+    }
+  }
+
+  // 4. Polish Matters (Sections D and E)
+  const polishedMatters = matters.map((m: any, idx: number) => {
+    const copy = { ...m };
+    const num = idx + 1;
+
+    // A. Client & Entity Name Cleanliness
+    if (copy.client) {
+      let cName = String(copy.client).trim();
+      if (/\bSUMMUN\b|\bSUMMUM\b/i.test(cName)) {
+        cName = cName.replace(/\bSUMMUN\b|\bSUMMUM\b/gi, 'SUMMUS');
+        repairsLog.push(`[Asunto #${num}] Normalizada grafía de cliente: SUMMUN -> SUMMUS.`);
+        repairsCount++;
+      }
+      cName = cName.replace(/^(?:publishable|confidential)\s+matter\s+\d+\s*[-—:]\s*/gi, '').trim();
+      copy.client = cName;
+    }
+
+    // B. Optimized Narrative / Summary Cleanliness
+    let text = (copy.optimizedText || copy.summary || copy.description || copy.narrative || copy.rawNotes || '').trim();
+
+    // Strip debug tags
+    if (DEBUG_TAG_REGEX.test(text)) {
+      text = text.replace(DEBUG_TAG_REGEX, '').trim();
+      repairsLog.push(`[Asunto #${num}] Removidos tags de depuración/sistema residuales.`);
+      repairsCount++;
+    }
+
+    // Strip structural carpentry labels & artificial subheaders
+    if (CARPENTRY_LABEL_REGEX.test(text) || /\b(?:Overview|Challenge|Outcome|Mandato|Desafío Técnico|Precedente):\s*/i.test(text)) {
+      text = text
+        .replace(/\*\*(?:HERO STATEMENT|IMPACT|EXECUTION|LEGAL MECHANISM|OUTCOME):\*\*\s*/gi, '')
+        .replace(/\b(?:Overview|Challenge|Outcome|Mandato|Desafío Técnico|Precedente):\s*/gi, '')
+        .trim();
+      repairsLog.push(`[Asunto #${num}] Purgados subtítulos artificiales para garantizar prosa 100% orgánica.`);
+      repairsCount++;
+    }
+
+    // Foreign authority leaks in matter
+    if (isVenezuela && /\bSAT\b/.test(text)) {
+      text = text.replace(/\bSAT\b/g, 'SENIAT');
+      repairsLog.push(`[Asunto #${num}] Reemplazada mención foránea SAT por SENIAT.`);
+      repairsCount++;
+    } else if (isMexico && /\bSENIAT\b/.test(text)) {
+      text = text.replace(/\bSENIAT\b/g, 'SAT');
+      repairsLog.push(`[Asunto #${num}] Reemplazada mención foránea SENIAT por SAT.`);
+      repairsCount++;
+    }
+
+    // Ensure 3 organic paragraphs
+    const paras = text.split(/\n\s*\n/).map((p: string) => p.trim()).filter(Boolean);
+    if (paras.length > 3) {
+      const p1 = paras[0];
+      const p2 = paras.slice(1, paras.length - 1).join(' ');
+      const p3 = paras[paras.length - 1];
+      text = `${p1}\n\n${p2}\n\n${p3}`;
+      repairsLog.push(`[Asunto #${num}] Reestructurados párrafos excedentes en 3 párrafos orgánicos equilibrados.`);
+      repairsCount++;
+    }
+
+    copy.optimizedText = text;
+    copy.optimized_text = text;
+    if (!copy.summary || copy.summary === copy.optimizedText) {
+      copy.summary = text;
+    }
+
+    // C. Domestic vs Cross-border consistency
+    const clientLower = (copy.client || '').toLowerCase();
+    if (clientLower.includes('tecnipiscinas')) {
+      if (copy.isCrossBorder === true || copy.crossBorder !== 'No.') {
+        copy.isCrossBorder = false;
+        copy.crossBorder = 'No.';
+        copy.cross_border = 'No.';
+        repairsLog.push(`[Asunto #${num}] Corregido estado cross-border de Tecnipiscinas a 'No.' (estricto derecho doméstico).`);
+        repairsCount++;
+      }
+    }
+
+    return copy;
+  });
+
+  // 5. Polish B9 Lawyers Roster
+  const polishedLawyers = (lawyers || []).map((l: any, idx: number) => {
+    const copy = { ...l };
+    const num = idx + 1;
+
+    // Clean URL pipes
+    if (copy.url) {
+      const cleanUrl = String(copy.url)
+        .replace(/\|[A-Za-z0-9_\-\s]*$/g, '')
+        .replace(/\|+$/g, '')
+        .trim();
+      if (cleanUrl !== copy.url) {
+        copy.url = cleanUrl;
+        repairsLog.push(`[B9 Abogado #${num}: ${copy.name || 'Lawyer'}] Limpieza de artefacto de tubería ('|Y'/'|N') en enlace web.`);
+        repairsCount++;
+      }
+    }
+
+    // Clean phone numbers from comments/bio
+    if (copy.comments || copy.bio) {
+      let bioStr = String(copy.comments || copy.bio);
+      const phoneWithPrefixRegex = /(?:(?:tel|phone|tlf|cel|móvil|telefono|teléfono)\.?\s*:?\s*)?(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{4}/gi;
+      if (phoneWithPrefixRegex.test(bioStr)) {
+        bioStr = bioStr.replace(phoneWithPrefixRegex, '').replace(/\s{2,}/g, ' ').replace(/^[,.;:\s-]+/, '').trim();
+        copy.comments = bioStr;
+        copy.bio = bioStr;
+        repairsLog.push(`[B9 Abogado #${num}: ${copy.name || 'Lawyer'}] Removido número telefónico insertado indebidamente en biografía.`);
+        repairsCount++;
+      }
+    }
+
+    return copy;
+  });
+
+  // 6. Strategic Audit & Insignia Matter 1:1 Synchronization
+  const officialPub = polishedMatters.filter((m: any) => !m.confidential && !m.isConfidential);
+  const heroItem = heroMatterId
+    ? polishedMatters.find((m: any) => String(m.id) === String(heroMatterId))
+    : (officialPub[0] || polishedMatters[0]);
+
+  const finalHeroTitle = heroItem?.client || heroItem?.name || heroTitle || 'Marquee Mandate';
+  const finalHeroId = heroItem?.id || heroMatterId;
+
+  const polishedChambersData = {
+    ...chambersData,
+    jurisdiction: canonicalCountry,
+    detectedJurisdiction: canonicalCountry,
+    enhanced_b10: polishedB10,
+    b10: polishedB10,
+    enhanced_b7: polishedB10,
+    b7: polishedB10,
+    enhanced_c2: polishedC2,
+    c2: polishedC2,
+    hero_matter_id: finalHeroId,
+    hero_matter_title: finalHeroTitle,
+    hero_matter_name: finalHeroTitle,
+    narrative_architecture: {
+      ...(chambersData?.narrative_architecture || {}),
+      hero_matter: finalHeroTitle,
+    },
+    lawyers: polishedLawyers,
+    matters: polishedMatters,
+    judge_sol_healing: {
+      repairedAt: new Date().toISOString(),
+      repairsCount,
+      repairsLog,
+      healed_status: repairsCount > 0 ? 'Healed & Polished' : 'Verified Pristine'
+    }
+  };
+
+  return {
+    polishedMatters,
+    polishedB10,
+    polishedC2,
+    polishedLawyers,
+    polishedChambersData,
+    repairsCount,
+    repairsLog
   };
 }

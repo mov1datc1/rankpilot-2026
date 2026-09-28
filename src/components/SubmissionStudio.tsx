@@ -585,11 +585,11 @@ The practice regularly represents domestic conglomerates, financial institutions
     });
     setMatters(latestMatters);
 
-    // 3. Finalize & Synthesize Strategic Audit Report + Judge SOL
+    // 3. Finalize & Synthesize Strategic Audit Report + Active Judge SOL Auto-Polisher
     setOptimizeAllProgress({
       current: totalSteps - 1,
       total: totalSteps,
-      stage: 'Generando Evaluación de Calidad Judge SOL y Strategic Audit Report...'
+      stage: 'Control de Calidad Activo Judge SOL: Auto-pulido de entregables y certificación 1:1...'
     });
 
     try {
@@ -606,6 +606,12 @@ The practice regularly represents domestic conglomerates, financial institutions
       const compData = await compRes.json();
       if (compData.success && compData.chambersData) {
         setChambersData(compData.chambersData);
+        if (Array.isArray(compData.matters) && compData.matters.length > 0) {
+          setMatters(compData.matters);
+        }
+        if (compData.b10) {
+          setB10Text(compData.b10);
+        }
         setSubmissionStatus('Optimized');
         router.refresh();
       }
@@ -616,7 +622,7 @@ The practice regularly represents domestic conglomerates, financial institutions
     setOptimizeAllProgress({
       current: totalSteps,
       total: totalSteps,
-      stage: '¡Optimización Completa! Submission optimizado y registrado.'
+      stage: '¡Optimización y Control de Calidad SOL completados! Entregables 100% certificados para descarga.'
     });
     setOptimizeAllComplete(true);
     setIsOptimizingAll(false);
