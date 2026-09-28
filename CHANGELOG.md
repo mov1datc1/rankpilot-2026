@@ -1,7 +1,29 @@
 # CHANGELOG — RankPilot 2026
 
 All notable changes to this project are documented in this file.
-## [v29.1] — 2026-09-23
+
+## [v29.2] — 2026-09-28
+
+### Dual Flagship Anchor Engine, Angela Castillo Hero Formula, Pre-Flight Curation UX ("Por calibrar con IA") & DeForest Verification
+
+- **Dual Flagship Anchor Engine (`matter-curator.ts`, `submission-builder.ts`, `complete/route.ts`, `SubmissionStudio.tsx`)**:
+  - Extended the flagship resolution architecture to natively support both **Publishable Hero Matters** (e.g. *PEPSICO & Empresas Filiales* in Araquereyna Tax) and **Confidential Hero Matters** (e.g. *Schaeffler / Vitesco* in DeForest Labour & Employment).
+  - Enforced Angela Castillo's exact editorial formula in both DOCX generation and Web Studio: `Hero Matter: {Hero Client} — {Confidential | Publishable} Matter #1`.
+  - Guaranteed that strictly ONE matter across `[...officialPubMatters, ...officialConfMatters]` holds `isHero: true`, synchronizing `chambersData.hero_matter_id` and positioning confidential heroes at `officialConfMatters[0]` when appropriate.
+- **Pre-Flight Portfolio Curation UX ("Por calibrar con IA") (`SubmissionStudio.tsx`)**:
+  - Resolved cognitive confusion where un-optimized submissions immediately pruned matters into Core vs Reserva before AI reasoning ran.
+  - In un-optimized state (`optimizedMattersCount === 0`), the studio now displays **all raw extracted matters** (e.g. 32 matters in DeForest: 10 Public, 22 Confidential) tagged as `⏳ Por calibrar con IA` across the sidebar, Pre-flight Strategy Bar, and section headers.
+  - Upon clicking *"Optimizar Todo con IA"*, the LangGraph 15-node pipeline and Strategic Audit evaluate market impact, economic exposure, and practice nexus, calibrating the official Core (up to 20, max 7 confidential; e.g. 17 Core = 10 Pub + 7 Conf) and moving surplus matters (15) to reserve. The UI automatically transitions to `✓ Calibrado con IA` with active toggle between Core and Todos.
+- **DeForest Labour & Employment Benchmark Verification (`28-jonathan-5`)**:
+  - Full end-to-end audit verified against Angela Castillo's 8 evaluation points:
+    - *Hero Matter*: Table 24 Row 1 has `Hero Matter: Schaeffler / Vitesco — Confidential Matter #1`.
+    - *Core Matters Limit*: Exactly 17 Core matters (10 Pub, 7 Conf) in DOCX; 15 confidential matters (including Cinemex) moved to audited reserve.
+    - *B10 Overview*: 441 words (bullseye of 400–475w target) with quantitative scale (>1M workforce, 700 disputes in Puebla) and full partner attribution (Garduño, Bustamante, Carreño, Atzin, Barreto, Cabrera).
+    - *C2 Market Vision*: Robust positioning arguing for advancement to Band 1.
+    - *Strategic Audit Table 2*: 33 rows providing 1:1 reconciliation of all 32 source matters.
+    - *Strategic Audit Table 4*: Individual rankings roadmap for 6 lawyers with target bands and supporting matters.
+    - *Organic Matter Structure*: 3 fluid paragraphs (Scale/Risk → Legal Challenge → Outcome/Attribution) across all matters.
+
 
 ### Builder Distraction Reduction & Dashboard Hub Relocation
 
