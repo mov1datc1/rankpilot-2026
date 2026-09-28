@@ -423,11 +423,32 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   const lawyerAccountability = Array.isArray(strategicAudit.lawyer_accountability)
     ? strategicAudit.lawyer_accountability
     : [];
-  const portfolioCuration = (letter as any).portfolio_curation || (analysis as any).portfolio_curation || chambersData.portfolio_curation || null;
   const availableMatters = (Array.isArray(submission?.matters) && submission.matters.length > 0)
     ? submission.matters
     : (Array.isArray((submission as any)?.chambersData?.matters) ? (submission as any).chambersData.matters : []);
   const jurisdiction = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
+
+  let portfolioCuration = (letter as any).portfolio_curation || (analysis as any).portfolio_curation || chambersData.portfolio_curation || null;
+  if (!portfolioCuration && availableMatters.length > 0) {
+    const curationFallback = curateMatters(availableMatters, practiceArea, chambersData);
+    const dynamicRecCoreFallback: string[] = [];
+    const allOfficialFallback = [...curationFallback.officialPubMatters, ...curationFallback.officialConfMatters];
+    allOfficialFallback.slice(0, 4).forEach((m: any, idx: number) => {
+      const client = (m.client || m.clientName || m.name || `Client ${idx + 1}`).trim();
+      const valStr = m.value ? ` (${m.value})` : '';
+      const summarySnippet = (m.optimizedText || m.summary || m.description || m.rawNotes || '').split(/\.\s+/)[0]?.trim() || 'Strategic commercial and contentious representation.';
+      const sourceNum = m.sourceNumber || m.sourceLabel || `${idx + 1}`;
+      dynamicRecCoreFallback.push(`⭐ FLAGSHIP ${idx + 1} [Source Matter #${sourceNum} → Final Core #${idx + 1}]: ${client}${valStr} — ${summarySnippet}`);
+    });
+    portfolioCuration = {
+      warning: availableMatters.length > 20
+        ? `Under RankPilot's editorial methodology, filing uncurated peripheral mandates beyond the 20-matter ceiling risks diluting the evaluation; we strategically recommend prioritizing our vetted core of ${curationFallback.totalOfficialCount} matters to maximize qualitative impact.`
+        : undefined,
+      recommended_core: dynamicRecCoreFallback,
+      duplicate_matters: [],
+      dilution_risks: []
+    };
+  }
 
   // Title
   sections.push(
@@ -642,7 +663,7 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   const designatedHero = chambersData?.hero_matter_title || chambersData?.hero_matter_name;
   let heroMatter = designatedHero || narrativeArch.hero_matter || '';
   if (!heroMatter || heroMatter === 'Anchor Mandate' || heroMatter.length < 5 || heroMatter.toLowerCase().includes('solana')) {
-    const firstCore = Array.isArray(portfolioCuration.recommended_core) && portfolioCuration.recommended_core[0];
+    const firstCore = Array.isArray(portfolioCuration?.recommended_core) && portfolioCuration.recommended_core[0];
     if (typeof firstCore === 'string' && !firstCore.toLowerCase().includes('solana')) {
       const match = firstCore.match(/FLAGSHIP\s*\d*\s*\[.*?\]:\s*([^\(—]+)/i) 
         || firstCore.match(/FLAGSHIP\s*\d*:\s*([^\(—]+)/i)

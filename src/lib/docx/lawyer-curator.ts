@@ -190,6 +190,9 @@ function cleanRawLeadString(rawStr: string): string[] {
     }
 
     let rawUrl = (raw.url || '').trim();
+    // Strip trailing table cell separators, pipes, and boolean flags (e.g. "|Y", "|N", "|")
+    rawUrl = rawUrl.replace(/\|[A-Za-z0-9_\-\s]*$/g, '').trim();
+    rawUrl = rawUrl.replace(/\|+$/g, '').trim();
     if (rawUrl.includes('@') && !rawUrl.startsWith('http')) {
       // It's an email address, not a web link
       rawUrl = '';

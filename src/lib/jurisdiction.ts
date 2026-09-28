@@ -11,30 +11,16 @@ export function resolveCountryJurisdiction(
   submission?: any
 ): string {
   const firmLower = (firmName || chambersData?.firm_name || chambersData?.firmName || '').toLowerCase();
-  const rawLoc = (chambersData?.analysis?.location || chambersData?.detectedJurisdiction || submission?.guideRegion || chambersData?.jurisdiction || '').trim();
-  const rawLocLower = rawLoc.toLowerCase();
 
-  // 1. Direct explicit country / jurisdiction metadata
-  const explicitCountry = (
-    chambersData?.country ||
-    chambersData?.jurisdiction ||
-    submission?.country ||
-    chambersData?.analysis?.country ||
-    chambersData?.analysis?.jurisdiction ||
-    ''
-  ).trim();
-
-  const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america', 'caribbean'];
-
-  if (explicitCountry && !genericRegions.includes(explicitCountry.toLowerCase())) {
-    return explicitCountry;
+  // Known institutional firm jurisdiction anchors
+  if (firmLower.includes('araquereyna') || firmLower.includes('araque reyna')) {
+    return 'Venezuela';
+  }
+  if (firmLower.includes('deforest')) {
+    return 'Mexico';
   }
 
-  if (rawLoc && !genericRegions.includes(rawLocLower)) {
-    return rawLoc;
-  }
-
-  // 2. Multi-jurisdiction linguistic, currency, and institutional matter analysis
+  // 1. Check matters linguistic and institutional indicators first
   const matters = submission?.matters || chambersData?.matters || [];
   const scores: Record<string, number> = {
     'Mexico': 0,
@@ -82,22 +68,59 @@ export function resolveCountryJurisdiction(
     }
   }
 
-  let bestCountry = '';
-  let maxScore = 0;
+  let bestMatterCountry = '';
+  let maxMatterScore = 0;
   for (const [country, score] of Object.entries(scores)) {
-    if (score > maxScore) {
-      maxScore = score;
-      bestCountry = country;
+    if (score > maxMatterScore) {
+      maxMatterScore = score;
+      bestMatterCountry = country;
     }
   }
 
-  if (bestCountry && maxScore >= 2) {
-    return bestCountry;
+  // If matter evidence is decisive (e.g. >= 4 points and distinctly higher), let matter evidence rule!
+  if (bestMatterCountry && maxMatterScore >= 4) {
+    return bestMatterCountry;
   }
 
-  // 3. Fallback to location string if provided
-  if (rawLoc && rawLocLower !== 'latin america') {
+  // 2. Direct explicit country / jurisdiction metadata (clean out region prefixes)
+  const cleanCountryString = (val: string): string => {
+    if (!val) return '';
+    let s = val.trim();
+    // Strip "Latin America — ", "Chambers Latin America — ", etc.
+    s = s.replace(/^(?:chambers\s+)?latin\s+america\s*[-—–]\s*/i, '').trim();
+    s = s.replace(/^(?:chambers\s+)?global\s*[-—–]\s*/i, '').trim();
+    s = s.replace(/^(?:chambers\s+)?europe\s*[-—–]\s*/i, '').trim();
+    s = s.replace(/^(?:chambers\s+)?asia\s*[-—–]\s*/i, '').trim();
+    return s;
+  };
+
+  const rawExplicit = (
+    chambersData?.country ||
+    chambersData?.jurisdiction ||
+    submission?.country ||
+    chambersData?.analysis?.country ||
+    chambersData?.analysis?.jurisdiction ||
+    ''
+  ).trim();
+
+  const explicitCountry = cleanCountryString(rawExplicit);
+  const genericRegions = ['latin america', 'europe', 'asia', 'global', 'africa', 'middle east', 'north america', 'caribbean'];
+
+  if (explicitCountry && !genericRegions.includes(explicitCountry.toLowerCase())) {
+    return explicitCountry;
+  }
+
+  const rawLoc = cleanCountryString(
+    (chambersData?.analysis?.location || chambersData?.detectedJurisdiction || submission?.guideRegion || chambersData?.jurisdiction || '').trim()
+  );
+  const rawLocLower = rawLoc.toLowerCase();
+
+  if (rawLoc && !genericRegions.includes(rawLocLower)) {
     return rawLoc;
+  }
+
+  if (bestMatterCountry && maxMatterScore >= 2) {
+    return bestMatterCountry;
   }
 
   return 'Mexico'; // Default directory regional fallback if completely undetermined

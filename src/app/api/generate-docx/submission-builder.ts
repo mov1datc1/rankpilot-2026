@@ -911,7 +911,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   if (lawyers.length > 0) {
     for (const l of lawyers) {
       const bioParts: Paragraph[] = [];
-      if (l.url) bioParts.push(para(l.url, { size: 18 }));
+      if (l.url) bioParts.push(para(l.url.replace(/\|[A-Za-z0-9_\-\s]*$/g, '').replace(/\|+$/g, '').trim(), { size: 18 }));
       if (l.currentRank) bioParts.push(para(`Current ranking: ${l.currentRank}`, { size: 18, spacing: { before: 100, after: 40 } }));
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));

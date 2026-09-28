@@ -677,8 +677,9 @@ export async function POST(request: NextRequest) {
         practiceArea,
         location,
         curationResult.officialPubMatters,
+        curationResult.officialConfMatters,
         curatedLawyersList,
-        targetDirectory
+        chambersData
       );
     }
 

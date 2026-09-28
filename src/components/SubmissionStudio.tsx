@@ -271,7 +271,27 @@ The practice regularly represents domestic conglomerates, financial institutions
   const flagshipMatter = React.useMemo(() => {
     const all = [...(categorized.pub || []), ...(categorized.conf || []), ...(categorized.pruned || []), ...(matters || [])];
     
-    // 1. Strategic Audit Hero Matter from narrative_architecture (Supreme 1:1 alignment with Strategic Audit)
+    // 1. Explicit Hero Matter ID designated by user via "⭐ Hacer Insignia" button or canonical selection
+    const explicitHeroId = chambersData?.hero_matter_id 
+      || (submission as any)?.hero_matter_id
+      || chambersData?.canonical_matter_selection?.hero_matter_id;
+    if (explicitHeroId) {
+      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(explicitHeroId).toLowerCase());
+      if (found) return found;
+    }
+
+    // 2. Matter explicitly flagged with isHero / is_hero / hero by user action
+    const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
+    if (heroFlagged) return heroFlagged;
+
+    // 3. In Draft / un-optimized state, DO NOT prematurely assign an uncurated matter as Insignia!
+    // Wait until "Optimizar Todo" runs so everything is 1:1 between Audit Letter and Submission Studio.
+    const isOptimized = optimizedMattersCount > 0 || submission.status === 'Optimized';
+    if (!isOptimized) {
+      return null;
+    }
+
+    // 4. Strategic Audit Hero Matter from narrative_architecture (1:1 alignment with Strategic Audit after optimization)
     const auditHeroTitle = chambersData?.narrative_architecture?.hero_matter 
       || chambersData?.analysis?.narrative_architecture?.hero_matter
       || (submission as any)?.narrative_architecture?.hero_matter;
@@ -289,16 +309,7 @@ The practice regularly represents domestic conglomerates, financial institutions
       if (found) return found;
     }
 
-    // 2. Explicit Hero Matter ID designated by user or canonical selection
-    const heroId = chambersData?.hero_matter_id 
-      || (submission as any)?.hero_matter_id
-      || chambersData?.canonical_matter_selection?.hero_matter_id;
-    if (heroId) {
-      const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(heroId).toLowerCase());
-      if (found) return found;
-    }
-
-    // 3. Explicit Hero Matter Title / Name
+    // 5. Explicit Hero Matter Title / Name
     const rawHeroTitle = chambersData?.hero_matter_title 
       || chambersData?.hero_matter_name
       || chambersData?.hero_matter
@@ -317,17 +328,7 @@ The practice regularly represents domestic conglomerates, financial institutions
       if (found) return found;
     }
 
-    // 4. Matter explicitly flagged with isHero / is_hero / hero
-    const heroFlagged = all.find(m => m.isHero || (m as any).is_hero || (m as any).hero);
-    if (heroFlagged) return heroFlagged;
-
-    // 5. In Draft / un-optimized state, DO NOT arbitrarily assign an uncurated matter as Insignia!
-    const isOptimized = optimizedMattersCount > 0 || submission.status === 'Optimized';
-    if (!isOptimized) {
-      return null;
-    }
-
-    // 6. Dynamic top-tier fallback from curation (NEVER arbitrarily return categorized.pub[0]!)
+    // 6. Dynamic top-tier fallback from curation (evaluating scale, volume, and precedent)
     const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
     if (allCurated.length > 0) {
       const sortedByTier = [...allCurated].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
