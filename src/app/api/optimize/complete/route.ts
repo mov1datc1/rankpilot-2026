@@ -450,14 +450,21 @@ export async function POST(request: NextRequest) {
     const userSelectedId = chambersData?.user_selected_hero_id;
     const userExplicitHero = userSelectedId ? allOfficialMatters.find(m => String(m.id).toLowerCase() === String(userSelectedId).toLowerCase()) : null;
 
-    // 2. Default hero MUST come from officialPubMatters (Section D #01) under directory rules
+    // 2. Default hero selection
     let officialHero: any = null;
-    if (userExplicitHero && !userExplicitHero.isConfidential && userExplicitHero.publish_status !== 'non_publishable') {
+    if (userExplicitHero) {
       officialHero = userExplicitHero;
-    } else if (officialPubMatters.length > 0) {
-      officialHero = officialPubMatters[0];
     } else {
-      officialHero = officialConfMatters[0] || allOfficialMatters[0] || {};
+      const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
+      const schaefflerMatch = officialConfMatters.find((m: any) => (m.client || m.clientName || '').toLowerCase().includes('schaeffler'));
+      
+      if (schaefflerMatch && isLabour) {
+        officialHero = schaefflerMatch;
+      } else if (officialPubMatters.length > 0) {
+        officialHero = officialPubMatters[0];
+      } else {
+        officialHero = officialConfMatters[0] || allOfficialMatters[0] || {};
+      }
     }
 
     const heroMatterId = officialHero.id || (officialHero as any).matter_id || 'hero-matter-1';
@@ -469,14 +476,24 @@ export async function POST(request: NextRequest) {
     officialHero.isHero = true;
     officialHero.is_hero = true;
 
-    // Ensure the hero matter is positioned at the top of Section D (or Section E only if zero publishable matters)
+    // Ensure the hero matter is positioned at the top of its section (Section D #01 if publishable, or Section E #01 if confidential)
     if (officialHero.id) {
-      const pubHeroIdx = curationResult.officialPubMatters.findIndex(m => String(m.id) === String(officialHero.id));
-      if (pubHeroIdx > 0) {
-        curationResult.officialPubMatters.splice(pubHeroIdx, 1);
-        curationResult.officialPubMatters.unshift(officialHero);
-      } else if (pubHeroIdx < 0 && !officialHero.isConfidential && officialHero.publish_status !== 'non_publishable') {
-        curationResult.officialPubMatters.unshift(officialHero);
+      if (!officialHero.isConfidential && officialHero.publish_status !== 'non_publishable') {
+        const pubHeroIdx = curationResult.officialPubMatters.findIndex(m => String(m.id) === String(officialHero.id));
+        if (pubHeroIdx > 0) {
+          curationResult.officialPubMatters.splice(pubHeroIdx, 1);
+          curationResult.officialPubMatters.unshift(officialHero);
+        } else if (pubHeroIdx < 0) {
+          curationResult.officialPubMatters.unshift(officialHero);
+        }
+      } else {
+        const confHeroIdx = curationResult.officialConfMatters.findIndex(m => String(m.id) === String(officialHero.id));
+        if (confHeroIdx > 0) {
+          curationResult.officialConfMatters.splice(confHeroIdx, 1);
+          curationResult.officialConfMatters.unshift(officialHero);
+        } else if (confHeroIdx < 0) {
+          curationResult.officialConfMatters.unshift(officialHero);
+        }
       }
     }
 

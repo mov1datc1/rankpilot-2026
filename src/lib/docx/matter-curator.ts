@@ -299,25 +299,35 @@ export function curateMatters(
     // Clear isHero on all matters initially to prevent double-hero artifact
     [...officialPubMatters, ...officialConfMatters].forEach(m => { m.isHero = false; m.is_hero = false; });
 
+    const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
     const isTax = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
+    const schaefflerConfIdx = officialConfMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
 
-    // 1. Check if user explicitly designated a hero in officialPubMatters
+    // 1. Check if user explicitly designated a hero in matters
     const userSelectedHeroId = chambersData?.user_selected_hero_id;
     const heroId = userSelectedHeroId || canonicalSelection.hero_matter_id || chambersData?.hero_matter_id;
     const heroTitle = canonicalSelection.hero_matter_title || chambersData?.hero_matter_title;
     
     let targetPubHeroIdx = -1;
+    let targetConfHeroIdx = -1;
     if (userSelectedHeroId) {
       targetPubHeroIdx = officialPubMatters.findIndex(m => String(m.id).toLowerCase() === String(userSelectedHeroId).toLowerCase());
+      targetConfHeroIdx = officialConfMatters.findIndex(m => String(m.id).toLowerCase() === String(userSelectedHeroId).toLowerCase());
     }
     
-    // 2. If no user override, for Tax submissions, PEPSICO is the apex publishable anchor
-    if (targetPubHeroIdx < 0 && isTax) {
-      targetPubHeroIdx = officialPubMatters.findIndex(m => (m.client || '').toLowerCase().includes('pepsico'));
+    // 2. Firm / Practice Flagship Anchors:
+    // For Labour, Schaeffler / Vitesco is the portfolio flagship anchor (Confidential #1)
+    // For Tax, PEPSICO is the apex publishable anchor (Publishable #1)
+    if (targetPubHeroIdx < 0 && targetConfHeroIdx < 0) {
+      if (schaefflerConfIdx >= 0 && isLabour) {
+        targetConfHeroIdx = schaefflerConfIdx;
+      } else if (isTax) {
+        targetPubHeroIdx = officialPubMatters.findIndex(m => (m.client || '').toLowerCase().includes('pepsico'));
+      }
     }
 
-    // 3. Fallback: check matching hero title or id if it is publishable
-    if (targetPubHeroIdx < 0 && (heroId || heroTitle)) {
+    // 3. Fallback: check matching hero title or id
+    if (targetPubHeroIdx < 0 && targetConfHeroIdx < 0 && (heroId || heroTitle)) {
       targetPubHeroIdx = officialPubMatters.findIndex(m => 
         (heroId && String(m.id).toLowerCase() === String(heroId).toLowerCase()) ||
         (heroTitle && typeof heroTitle === 'string' && (
@@ -325,18 +335,34 @@ export function curateMatters(
           (m.name && heroTitle.toLowerCase().includes(m.name.toLowerCase()))
         ))
       );
+      if (targetPubHeroIdx < 0) {
+        targetConfHeroIdx = officialConfMatters.findIndex(m => 
+          (heroId && String(m.id).toLowerCase() === String(heroId).toLowerCase()) ||
+          (heroTitle && typeof heroTitle === 'string' && (
+            (m.client && heroTitle.toLowerCase().includes(m.client.toLowerCase())) ||
+            (m.name && heroTitle.toLowerCase().includes(m.name.toLowerCase()))
+          ))
+        );
+      }
     }
 
-    // 4. Default: bring target hero to index 0
-    if (targetPubHeroIdx > 0) {
-      const topHero = officialPubMatters.splice(targetPubHeroIdx, 1)[0];
-      officialPubMatters.unshift(topHero);
-    }
-
-    // Enforce that ONLY Section D #01 has isHero = true
-    if (officialPubMatters.length > 0) {
-      officialPubMatters[0].isHero = true;
-      officialPubMatters[0].is_hero = true;
+    // 4. Default position hero at index 0 of its category and set isHero exclusively
+    if (targetConfHeroIdx >= 0) {
+      if (targetConfHeroIdx > 0) {
+        const topHero = officialConfMatters.splice(targetConfHeroIdx, 1)[0];
+        officialConfMatters.unshift(topHero);
+      }
+      officialConfMatters[0].isHero = true;
+      officialConfMatters[0].is_hero = true;
+    } else {
+      if (targetPubHeroIdx > 0) {
+        const topHero = officialPubMatters.splice(targetPubHeroIdx, 1)[0];
+        officialPubMatters.unshift(topHero);
+      }
+      if (officialPubMatters.length > 0) {
+        officialPubMatters[0].isHero = true;
+        officialPubMatters[0].is_hero = true;
+      }
     }
     
     const usedSet = new Set([...officialPubMatters, ...officialConfMatters]);
@@ -446,14 +472,28 @@ export function curateMatters(
   const officialConfMatters = qualifiedConf.slice(0, maxConf);
   const surplusConfMatters = [...qualifiedConf.slice(maxConf), ...excludedConf];
   
-  // In Chambers & Legal 500, the Flagship Hero Matter MUST be the #1 Publishable Matter (Section D #01)
+  // Ensure exactly one flagship hero is selected
   [...officialPubMatters, ...officialConfMatters, ...surplusPubMatters, ...surplusConfMatters].forEach(m => {
     m.isHero = false;
     m.is_hero = false;
   });
-  if (officialPubMatters.length > 0) {
+
+  const schaefflerConfIdx = officialConfMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
+  const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
+
+  if (schaefflerConfIdx >= 0 && isLabour) {
+    if (schaefflerConfIdx > 0) {
+      const topConf = officialConfMatters.splice(schaefflerConfIdx, 1)[0];
+      officialConfMatters.unshift(topConf);
+    }
+    officialConfMatters[0].isHero = true;
+    officialConfMatters[0].is_hero = true;
+  } else if (officialPubMatters.length > 0) {
     officialPubMatters[0].isHero = true;
     officialPubMatters[0].is_hero = true;
+  } else if (officialConfMatters.length > 0) {
+    officialConfMatters[0].isHero = true;
+    officialConfMatters[0].is_hero = true;
   }
   
   return {

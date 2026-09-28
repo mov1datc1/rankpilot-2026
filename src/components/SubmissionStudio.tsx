@@ -293,14 +293,29 @@ The practice regularly represents domestic conglomerates, financial institutions
       return null;
     }
 
-    // 4. In optimized state, the Flagship Matter MUST strictly match Section D #01 (top publishable matter)!
-    // Under Chambers and Legal 500 guidelines, confidential matters cannot be the lead insignia when publishables exist.
+    // 4. In optimized state, look for the designated hero matter in curated matters
+    const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
+    const explicitHero = allCurated.find(m => m.isHero || m.is_hero || m.quality_label === 'Flagship Matter');
+    if (explicitHero) {
+      return explicitHero;
+    }
+
+    // 5. Practice flagship anchors (Schaeffler for Labour, PepsiCo for Tax)
+    const schaefflerMatch = allCurated.find(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
+    if (schaefflerMatch) {
+      return schaefflerMatch;
+    }
+    const pepsicoMatch = allCurated.find(m => (m.client || m.name || '').toLowerCase().includes('pepsico'));
+    if (pepsicoMatch) {
+      return pepsicoMatch;
+    }
+
+    // 6. Default to Section D #01 (top publishable matter)
     if (curation.officialPubMatters && curation.officialPubMatters.length > 0) {
       return curation.officialPubMatters[0];
     }
 
-    // 5. Fallback if no publishable matters exist at all
-    const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
+    // 7. Fallback if no publishable matters exist at all
     if (allCurated.length > 0) {
       const sortedByTier = [...allCurated].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
       return sortedByTier[0];

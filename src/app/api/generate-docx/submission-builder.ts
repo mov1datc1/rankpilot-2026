@@ -533,7 +533,7 @@ The intervention successfully achieved the client's strategic objectives, mitiga
 
   let matterHeaderTitle = `${type} Matter ${matterNum}`;
   const isExplicitHero = Boolean(
-    !isConf && matterNum === 1 && (
+    matterNum === 1 && (
       matter.isHero || 
       matter.is_hero || 
       matter.hero || 
@@ -547,7 +547,8 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     )
   );
   if (isExplicitHero) {
-    const heroClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '');
+    const rawClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '').trim();
+    const heroClient = rawClient.toLowerCase().includes('schaeffler') ? 'Schaeffler / Vitesco' : rawClient;
     matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #${matterNum}`;
   } else if (!isConf && isMatterConfUnstated) {
     matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED — Status unstated in source; verify before filing]`;
