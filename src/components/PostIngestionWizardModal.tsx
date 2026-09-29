@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { getCanonicalPracticeArea } from '@/lib/constants';
+import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
 
 export interface PostIngestionWizardModalProps {
   isOpen: boolean;
@@ -65,15 +66,27 @@ export default function PostIngestionWizardModal({
   const canonCalibrated = getCanonicalPracticeArea(calibratedPractice);
   const canonExtracted = getCanonicalPracticeArea(extractedPractice);
 
-  const hasPracticeDiscrepancy = Boolean(
+  const hasHeaderDiscrepancy = Boolean(
     calibratedPractice && 
     extractedPractice && 
     canonCalibrated !== canonExtracted
   );
 
-  // Local state for all fields being validated (defaults to official calibrated if equivalent)
-  const initialPractice = hasPracticeDiscrepancy 
-    ? sanitizeStr(initialData.practiceArea)
+  const [matters, setMatters] = useState<any[]>(initialData.matters || []);
+
+  // Substantive matter-level topic classifier
+  const substantiveDiscrepancy = React.useMemo(() => {
+    return detectPracticeAreaDiscrepancy(calibratedPractice, matters);
+  }, [calibratedPractice, matters]);
+
+  const hasMaterialDiscrepancy = hasHeaderDiscrepancy || substantiveDiscrepancy.hasDiscrepancy;
+  const suggestedPractice = substantiveDiscrepancy.hasDiscrepancy
+    ? substantiveDiscrepancy.suggestedPractice
+    : (extractedPractice || calibratedPractice);
+
+  // Local state for all fields being validated
+  const initialPractice = hasMaterialDiscrepancy 
+    ? (substantiveDiscrepancy.hasDiscrepancy ? substantiveDiscrepancy.suggestedPractice : (extractedPractice || calibratedPractice))
     : (calibratedPractice || sanitizeStr(initialData.practiceArea));
 
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
@@ -81,7 +94,6 @@ export default function PostIngestionWizardModal({
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
   const [b10Text, setB10Text] = useState(initialData.b10Text || '');
   const [lawyers, setLawyers] = useState<any[]>(initialData.lawyers || []);
-  const [matters, setMatters] = useState<any[]>(initialData.matters || []);
 
   // Wizard Navigation:
   // Step 1: Firm & Practice Data
@@ -267,70 +279,195 @@ export default function PostIngestionWizardModal({
                 </div>
               </div>
 
-              {/* Discrepancy Alert between Calibration and Extracted Document */}
-              {hasPracticeDiscrepancy && (
+              {/* Strategic Sufficiency Gate Alert if matters < 5 */}
+              {matters.length < 5 && (
+                <div style={{
+                  background: '#FEF2F2',
+                  border: '1.5px solid #FECACA',
+                  borderRadius: '12px',
+                  padding: '1.1rem 1.25rem',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.85rem'
+                }}>
+                  <ShieldAlert size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#991B1B' }}>
+                        Volumen de Evidencia Estratégicamente Insuficiente ({matters.length} mandatos detectados)
+                      </h4>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        background: '#FEE2E2',
+                        color: '#991B1B',
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        border: '1px solid #FECACA'
+                      }}>
+                        Gating Activo · Fail-Closed
+                      </span>
+                    </div>
+                    <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.8rem', color: '#B91C1C', lineHeight: 1.5 }}>
+                      Chambers & Partners exige una masa crítica de <strong>10 a 20 mandatos</strong> para evaluar la solidez del departamento. Con una muestra de {matters.length} asunto(s), RankPilot procesará y auditará la evidencia recibida, pero <strong>retendrá la calificación numérica formal</strong> y emitirá un dictamen de suficiencia insuficiente para proteger la credibilidad estratégica de la firma.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Material Practice Discrepancy Interactive Decision Gate */}
+              {hasMaterialDiscrepancy && (
                 <div style={{
                   background: '#FFFBEB',
-                  border: '1px solid #FDE68A',
-                  borderRadius: '10px',
-                  padding: '1rem 1.25rem',
+                  border: '1.5px solid #FDE68A',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.65rem'
+                  gap: '0.85rem'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <AlertTriangle size={18} color="#D97706" />
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400E' }}>
-                      Discrepancia en Área de Práctica Detectada
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <AlertTriangle size={18} color="#D97706" />
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#92400E' }}>
+                        {substantiveDiscrepancy.headline || 'Discrepancia Material en Área de Práctica'}
+                      </span>
+                    </div>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      background: '#FEF3C7',
+                      color: '#B45309',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      border: '1px solid #FDE68A'
+                    }}>
+                      Decisión Estratégica Requerida
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.82rem', color: '#78350F', margin: 0, lineHeight: 1.45 }}>
-                    En la calibración estratégica seleccionaste <strong>{calibratedPractice}</strong>, pero en el documento identificamos <strong>{extractedPractice}</strong>. Selecciona qué área deseas oficializar para este submission:
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.2rem' }}>
+
+                  {substantiveDiscrepancy.substantiveFindings && substantiveDiscrepancy.substantiveFindings.length > 0 ? (
+                    <div style={{ background: '#FFFFFF', borderRadius: '8px', border: '1px solid #FDE68A', padding: '0.85rem 1rem' }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', margin: '0 0 0.4rem 0', letterSpacing: '0.04em' }}>
+                        Hallazgos del Análisis Sustantivo de la Evidencia:
+                      </p>
+                      <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.8rem', color: '#78350F', lineHeight: 1.5 }}>
+                        {substantiveDiscrepancy.substantiveFindings.map((finding, idx) => (
+                          <li key={idx} style={{ marginBottom: '0.25rem' }}>{finding}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.82rem', color: '#78350F', margin: 0, lineHeight: 1.45 }}>
+                      En la calibración estratégica seleccionaste <strong>{calibratedPractice}</strong>, pero en el documento identificamos <strong>{extractedPractice}</strong>. Selecciona qué área deseas oficializar para este submission:
+                    </p>
+                  )}
+
+                  {substantiveDiscrepancy.chambersImpact && (
+                    <p style={{ fontSize: '0.78rem', color: '#B45309', margin: 0, lineHeight: 1.45, fontStyle: 'italic' }}>
+                      <strong>Impacto en Directorios:</strong> {substantiveDiscrepancy.chambersImpact}
+                    </p>
+                  )}
+
+                  {/* 3-Button Action Suite requested by partner Angela Castillo */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginTop: '0.25rem' }}>
+                    {/* Action 1: Switch Practice (Recommended) */}
                     <button
                       type="button"
-                      onClick={() => setPracticeArea(extractedPractice)}
+                      onClick={() => setPracticeArea(suggestedPractice)}
                       style={{
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
                         fontWeight: 600,
-                        background: practiceArea === extractedPractice ? '#2563eb' : '#FFFFFF',
-                        color: practiceArea === extractedPractice ? '#FFFFFF' : '#1E293B',
-                        border: '1px solid ' + (practiceArea === extractedPractice ? '#2563eb' : '#CBD5E1'),
+                        background: practiceArea === suggestedPractice ? '#2563EB' : '#FFFFFF',
+                        color: practiceArea === suggestedPractice ? '#FFFFFF' : '#1E293B',
+                        border: '1.5px solid ' + (practiceArea === suggestedPractice ? '#2563EB' : '#CBD5E1'),
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.35rem',
-                        boxShadow: practiceArea === extractedPractice ? '0 1px 3px rgba(37,99,235,0.2)' : 'none'
+                        justifyContent: 'space-between',
+                        transition: 'all 0.15s ease',
+                        boxShadow: practiceArea === suggestedPractice ? '0 2px 4px rgba(37,99,235,0.2)' : 'none'
                       }}
                     >
-                      {practiceArea === extractedPractice && <Check size={14} />}
-                      <span>Usar del Documento: {extractedPractice}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Sparkles size={16} color={practiceArea === suggestedPractice ? '#FFFFFF' : '#2563EB'} />
+                        <span>Cambiar práctica a <strong>{suggestedPractice}</strong> (Recomendado)</span>
+                      </div>
+                      {practiceArea === suggestedPractice ? (
+                        <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '4px' }}>✓ Confirmado</span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Alinear submission</span>
+                      )}
                     </button>
+
+                    {/* Action 2: Continue with Calibrated (With dilution caveat) */}
                     <button
                       type="button"
                       onClick={() => setPracticeArea(calibratedPractice)}
                       style={{
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
                         fontWeight: 600,
-                        background: practiceArea === calibratedPractice ? '#2563eb' : '#FFFFFF',
-                        color: practiceArea === calibratedPractice ? '#FFFFFF' : '#1E293B',
-                        border: '1px solid ' + (practiceArea === calibratedPractice ? '#2563eb' : '#CBD5E1'),
+                        background: practiceArea === calibratedPractice ? '#475569' : '#FFFFFF',
+                        color: practiceArea === calibratedPractice ? '#FFFFFF' : '#475569',
+                        border: '1.5px solid ' + (practiceArea === calibratedPractice ? '#475569' : '#CBD5E1'),
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.35rem',
-                        boxShadow: practiceArea === calibratedPractice ? '0 1px 3px rgba(37,99,235,0.2)' : 'none'
+                        justifyContent: 'space-between',
+                        transition: 'all 0.15s ease',
+                        boxShadow: practiceArea === calibratedPractice ? '0 2px 4px rgba(71,85,105,0.2)' : 'none'
                       }}
                     >
-                      {practiceArea === calibratedPractice && <Check size={14} />}
-                      <span>Mantener de Calibración: {calibratedPractice}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={15} color={practiceArea === calibratedPractice ? '#FFFFFF' : '#D97706'} />
+                        <span>Continuar con <strong>{calibratedPractice}</strong> (Con advertencia de dilución)</span>
+                      </div>
+                      {practiceArea === calibratedPractice ? (
+                        <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '4px' }}>✓ Mantener</span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Riesgo documentado en Audit</span>
+                      )}
+                    </button>
+
+                    {/* Action 3: Review Extracted Evidence */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingInline(false);
+                        setCurrentStep(4);
+                      }}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: 500,
+                        background: '#F8FAFC',
+                        color: '#334155',
+                        border: '1px dashed #94A3B8',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        transition: 'background 0.15s ease'
+                      }}
+                    >
+                      <span>Revisar y editar mandatos extraídos antes de confirmar</span>
+                      <ArrowRight size={14} />
                     </button>
                   </div>
+
+                  {practiceArea === calibratedPractice && substantiveDiscrepancy.warningIfContinued && (
+                    <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', padding: '0.6rem 0.85rem', marginTop: '0.2rem' }}>
+                      <p style={{ fontSize: '0.75rem', color: '#9F1239', margin: 0, lineHeight: 1.45 }}>
+                        ⚠️ <strong>Advertencia de Dilución:</strong> {substantiveDiscrepancy.warningIfContinued}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

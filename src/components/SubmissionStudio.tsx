@@ -853,9 +853,9 @@ The practice regularly represents domestic conglomerates, financial institutions
             type="button"
             onClick={() => setShowReadinessModal(true)}
             style={{
-              background: readiness.bgColor,
-              border: `1px solid ${readiness.color}40`,
-              color: readiness.color,
+              background: matters.length < 5 ? '#FEF2F2' : readiness.bgColor,
+              border: matters.length < 5 ? '1.5px solid #FECACA' : `1px solid ${readiness.color}40`,
+              color: matters.length < 5 ? '#DC2626' : readiness.color,
               padding: '0.45rem 0.75rem',
               borderRadius: '7px',
               fontSize: '0.78rem',
@@ -866,18 +866,19 @@ The practice regularly represents domestic conglomerates, financial institutions
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title={`Diagnóstico de Calidad de Evidencia (${readiness.score}%). Haz clic en cualquier momento para ver qué campos faltan o cómo mejorar tu postulación antes de optimizar o descargar.`}
+            title={matters.length < 5 ? `Muestra de evidencia insuficiente (${matters.length} mandatos). Chambers exige 10 a 20 mandatos. Haz clic para ver el diagnóstico.` : `Diagnóstico de Calidad de Evidencia (${readiness.score}%). Haz clic en cualquier momento para ver qué campos faltan o cómo mejorar tu postulación antes de optimizar o descargar.`}
             onMouseEnter={e => {
-              e.currentTarget.style.borderColor = readiness.color;
-              e.currentTarget.style.boxShadow = `0 1px 4px ${readiness.color}25`;
+              const c = matters.length < 5 ? '#DC2626' : readiness.color;
+              e.currentTarget.style.borderColor = c;
+              e.currentTarget.style.boxShadow = `0 1px 4px ${c}25`;
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = `${readiness.color}40`;
+              e.currentTarget.style.borderColor = matters.length < 5 ? '#FECACA' : `${readiness.color}40`;
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.color }} />
-            <span>{readiness.score}% Calidad</span>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: matters.length < 5 ? '#DC2626' : readiness.color }} />
+            <span>{matters.length < 5 ? `Insuficiente (${matters.length}/10)` : `${readiness.score}% Calidad`}</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
@@ -3374,6 +3375,9 @@ The practice regularly represents domestic conglomerates, financial institutions
           if (data.firmName) {
             setChambersData((prev: any) => ({ ...prev, firm_name: data.firmName, firmName: data.firmName }));
           }
+          if (data.practiceArea) {
+            setChambersData((prev: any) => ({ ...prev, practice_area: data.practiceArea }));
+          }
           if (data.b10Text) {
             setB10Text(data.b10Text);
             setChambersData((prev: any) => ({ ...prev, original_b10: data.b10Text, enhanced_b7: data.b10Text, b7: data.b10Text }));
@@ -3388,6 +3392,10 @@ The practice regularly represents domestic conglomerates, financial institutions
           // Persist to database in background
           try {
             await updateSubmissionValidatedData(submission.id, data);
+            if (data.practiceArea && data.practiceArea !== (submission.practiceArea || '')) {
+              window.location.reload();
+              return;
+            }
           } catch (err) {
             console.warn('[PostIngestionWizard] Error persisting validated data:', err);
           }

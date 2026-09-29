@@ -753,12 +753,18 @@ class DocumentParser:
             if not header:
                 return ""
             inline = header.groupdict().get("inline", "").strip(" |:-–—\t")
-            if inline and not inline.startswith("===") and not inline.startswith("---") and "SOURCE DOCUMENT" not in inline:
+            if inline and len(inline) < 100 and not inline.startswith("===") and not inline.startswith("---") and "SOURCE DOCUMENT" not in inline and "?" not in inline:
                 return inline
             for line in source[header.end():].splitlines():
                 value = line.strip(" |\t")
-                if value and not value.startswith("===") and not value.startswith("---") and "SOURCE DOCUMENT" not in value and "END DOCUMENT" not in value:
+                if not value or value.startswith("===") or value.startswith("---") or "SOURCE DOCUMENT" in value or "END DOCUMENT" in value:
+                    continue
+                # Preliminary headers (Firm, Practice, Location) are short identifiers (<100 chars, no question marks, not paragraphs)
+                if len(value) <= 100 and "?" not in value and not value.lower().startswith("what ") and not value.lower().startswith("who "):
                     return value
+                else:
+                    # If the line is a long narrative paragraph, it is NOT the field answer
+                    break
             return ""
 
         firm = answer_after(r"^\s*(?:A1\s+)?Firm(?:’s|\'s)?\s+Name(?P<inline>[^\n]*)$")
@@ -770,22 +776,27 @@ class DocumentParser:
         if not practice:
             for line in source.splitlines()[:25]:
                 l = line.strip()
-                if not l or l.startswith("===") or l.startswith("---") or "SOURCE DOCUMENT" in l or "END DOCUMENT" in l:
+                if not l or len(l) > 80 or l.startswith("===") or l.startswith("---") or "SOURCE DOCUMENT" in l or "END DOCUMENT" in l:
+                    continue
+                if "?" in l or l.lower().startswith("who is") or l.lower().startswith("what does"):
                     continue
                 l_lower = l.lower()
-                if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation", "m&a", "mergers", "energy", "intellectual property", "dispute resolution", "competition"]):
+                if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation", "m&a", "mergers", "energy", "intellectual property", "dispute resolution", "competition", "environment"]):
                     if not l_lower.startswith("practice area description"):
                         clean_l = re.sub(r'(?i)^\s*(?:submission\s+[-–—:]*|practice\s+area\s*[-–—:]*|area\s*[-–—:]*)\s*', '', l).strip()
-                        practice = clean_l or l
-                        break
+                        if clean_l and len(clean_l) <= 80:
+                            practice = clean_l
+                            break
 
-        # Safety: Sanitize practice area if any delimiter artifact leaked
-        if "SOURCE DOCUMENT" in practice or practice.startswith("===") or "END DOCUMENT" in practice:
+        # Safety: Sanitize practice area if any delimiter artifact leaked or too long
+        if not practice or len(practice) > 80 or "SOURCE DOCUMENT" in practice or practice.startswith("===") or "END DOCUMENT" in practice or "?" in practice:
             practice = ""
 
         jurisdiction = answer_after(
             r"^\s*(?:A3\s+)?Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"
         )
+        if len(jurisdiction) > 80 or "?" in jurisdiction:
+            jurisdiction = ""
 
         return {
             "firm_name": firm,

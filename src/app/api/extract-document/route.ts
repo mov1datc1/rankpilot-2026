@@ -99,13 +99,16 @@ export async function POST(request: NextRequest) {
 
     const sanitizePractice = (val?: string) => {
       if (!val) return '';
-      if (val.includes('SOURCE DOCUMENT') || val.startsWith('===')) return '';
-      return val.trim();
+      const trimmed = val.trim();
+      if (trimmed.length > 80 || trimmed.includes('\n') || trimmed.includes('?') || trimmed.includes('SOURCE DOCUMENT') || trimmed.startsWith('===') || trimmed.startsWith('---')) {
+        return '';
+      }
+      return trimmed;
     };
 
     const cleanExtractedPractice = sanitizePractice(extractedMeta.extracted_practice_area || extractedMeta.practice_area);
-    const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || submission.practiceArea;
-    const finalPracticeArea = cleanExtractedPractice || calibratedPractice || submission.practiceArea;
+    const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || sanitizePractice(submission.practiceArea);
+    const finalPracticeArea = cleanExtractedPractice || calibratedPractice || 'General Practice';
 
     // Delete any old draft matters for this submission before populating
     await prisma.matter.deleteMany({

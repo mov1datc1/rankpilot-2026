@@ -9,6 +9,8 @@ import {
 import { buildSubmissionDoc, resolveCountryJurisdiction } from './submission-builder';
 import { curateMatters } from '@/lib/docx/matter-curator';
 import { curateLawyers } from '@/lib/docx/lawyer-curator';
+import { buildSafeContentDisposition } from '@/lib/headers';
+import { evaluateStrategicSufficiency } from '@/lib/audit/evidence-sufficiency-gate';
 
 // Letter page width (8.5") minus 1" margins on both sides, in twentieths
 // of a point. Google Docs requires explicit DXA table/grid/cell widths.
@@ -244,7 +246,13 @@ export async function GET(request: NextRequest) {
       }
     }
     const rawPracticeArea = submission.practiceArea || chambersData.practice_area || chambersData.metadata?.practice_area || 'General Practice';
-    const practiceArea = canonicalizePracticeArea(rawPracticeArea);
+    let safePracticeArea = rawPracticeArea;
+    if (safePracticeArea.length > 80 || safePracticeArea.includes('\n') || safePracticeArea.includes('?') || safePracticeArea.includes('SOURCE DOCUMENT') || safePracticeArea.startsWith('===')) {
+      safePracticeArea = chambersData?.metadata?.calibrated_practice_area
+        || chambersData?.strategicContext?.practice_area
+        || 'Energy & Natural Resources';
+    }
+    const practiceArea = canonicalizePracticeArea(safePracticeArea);
 
     // v26.36: Deterministic country jurisdiction resolution (e.g., Mexico instead of generic Latin America)
     const detectedJurisdiction = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
@@ -281,7 +289,7 @@ export async function GET(request: NextRequest) {
         return new NextResponse(new Uint8Array(docxBuffer), {
           headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'Content-Disposition': `attachment; filename="RankPilot_${prefix}_${practiceArea.replace(/\s+/g, '_')}.docx"`,
+            'Content-Disposition': buildSafeContentDisposition(prefix, practiceArea, 'docx'),
           },
         });
       } catch (cloneErr: any) {
@@ -304,7 +312,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(uint8, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="RankPilot_${prefix}_${practiceArea.replace(/\s+/g, '_')}.docx"`,
+        'Content-Disposition': buildSafeContentDisposition(prefix, practiceArea, 'docx'),
       },
     });
   } catch (error: any) {
@@ -598,15 +606,70 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     p(ctxLine, { bold: true, color: '4338CA', size: 20, spacing: { after: 300 } })
   );
 
+  // Strategic Sufficiency Gate (Angela's Defensibility Gating)
+  const strategicSufficiency = chambersData.strategic_sufficiency || evaluateStrategicSufficiency({
+    matters: availableMatters,
+    practiceArea,
+    b10Text: chambersData.b10 || chambersData.original_b10 || chambersData.enhanced_b7,
+    lawyers: chambersData.lawyers || submission.lawyers,
+    firmName
+  });
+  const isStrategicallyInsufficient = strategicSufficiency.status === 'insufficient';
+
   // Score Summary
   const riskLevel = analysis.risk_level || 'Pending';
   const score = analysis.score || 0;
   const archetype = context.archetype || 'Pending';
   const target = context.target_realistic || 'Pending';
 
-  sections.push(
-    p(`Risk Level: ${riskLevel}  |  Score: ${score}/100  |  Archetype: ${archetype}  |  Target: ${target}`, { italics: true, color: GRAY, spacing: { after: 300 } })
-  );
+  if (isStrategicallyInsufficient) {
+    sections.push(
+      p(`Audit Status: WITHHELD (Insufficient Evidence Base)  |  Matters: ${availableMatters.length}/20  |  Score: Unrated  |  Band Projection: Withheld`, { bold: true, color: 'DC2626', size: 20, spacing: { after: 300 } })
+    );
+  } else {
+    sections.push(
+      p(`Risk Level: ${riskLevel}  |  Score: ${score}/100  |  Archetype: ${archetype}  |  Target: ${target}`, { italics: true, color: GRAY, spacing: { after: 300 } })
+    );
+  }
+
+  // Strategic Sufficiency Advisory (Point 1 of Angela's Framework)
+  if (isStrategicallyInsufficient) {
+    sections.push(
+      sectionTitle('⚠️ STRATEGIC SUFFICIENCY GATE: AUDIT WITHHELD'),
+      p(strategicSufficiency.headline, { bold: true, size: 24, color: 'B91C1C', spacing: { after: 120 } }),
+      p('RankPilot Strategic Defensibility Protocol: In accordance with Chambers & Partners editorial standards, the platform has intentionally failed closed on band predictions and competitiveness scoring. A submission cannot be responsibly certified or ranked with insufficient evidentiary volume.', { italics: true, color: GRAY, spacing: { after: 200 } }),
+
+      subTitle('1. Evidencia Recibida (Audit Intake)'),
+      p(`• Total de asuntos registrados: ${strategicSufficiency.receivedEvidence.totalMatters} (${strategicSufficiency.receivedEvidence.publishableCount} publicables, ${strategicSufficiency.receivedEvidence.confidentialCount} confidenciales).`, { spacing: { after: 40 } }),
+      p(`• Clientes identificados: ${strategicSufficiency.receivedEvidence.clients.join(', ') || 'N/A'}.`, { spacing: { after: 40 } }),
+      p(`• Estado de Sección B10 (Department Overview): ${strategicSufficiency.receivedEvidence.hasDepartmentB10 ? `Registrada (${strategicSufficiency.receivedEvidence.b10WordCount} palabras).` : 'Vacía / No incluida en el documento fuente.'}`, { spacing: { after: 40 } }),
+      p(`• Abogados en roster (B9): ${strategicSufficiency.receivedEvidence.lawyerCount} candidatos registrados.`, { spacing: { after: 120 } }),
+
+      subTitle('2. Evidencia Faltante (Déficit Frente al Estándar Chambers)'),
+      p(`• Estándar de mercado: Chambers & Partners permite hasta 20 asuntos destacados (mínimo competitivo recomendado: 10–20 mandatos).`, { spacing: { after: 40 } }),
+      p(`• Déficit crítico: Se requiere incorporar al menos ${strategicSufficiency.missingEvidence.matterDeficit} asuntos representativos adicionales para sustentar masa crítica, recurrencia anual y diversidad de industrias.`, { spacing: { after: 40 } }),
+      ...strategicSufficiency.missingEvidence.missingSections.map((s: string) => p(`• Sección faltante: ${s}`, { color: 'B45309', spacing: { after: 40 } })),
+
+      subTitle('3. Por Qué No Se Puede Evaluar Defendiblemente la Candidatura'),
+      p(strategicSufficiency.defensibilityRationale, { spacing: { after: 140 } }),
+
+      subTitle('4. Hoja de Ruta y Acciones Requeridas para Desbloquear'),
+      ...strategicSufficiency.requiredActions.map((act: string, idx: number) => p(`${idx + 1}. ${act}`, { bold: true, color: NAVY, spacing: { after: 50 } })),
+      emptyRow()
+    );
+
+    if (strategicSufficiency.practiceDiscrepancy?.hasDiscrepancy) {
+      sections.push(
+        subTitle('5. Advertencia Material de Coherencia de Área de Práctica'),
+        p(`Selected Practice Area: ${strategicSufficiency.practiceDiscrepancy.calibratedPractice}  vs.  Extracted Substantive Focus: ${strategicSufficiency.practiceDiscrepancy.detectedPractice}`, { bold: true, color: 'B45309', spacing: { after: 60 } }),
+        p(strategicSufficiency.practiceDiscrepancy.headline, { bold: true, color: NAVY, spacing: { after: 60 } }),
+        ...strategicSufficiency.practiceDiscrepancy.substantiveFindings.map((f: string) => p(`• ${f}`, { spacing: { after: 40 } })),
+        p(`Impacto editorial en Chambers: ${strategicSufficiency.practiceDiscrepancy.chambersImpact}`, { italics: true, color: GRAY, spacing: { after: 60 } }),
+        p(strategicSufficiency.practiceDiscrepancy.warningIfContinued, { bold: true, color: 'DC2626', spacing: { after: 160 } }),
+        emptyRow()
+      );
+    }
+  }
 
   // Executive Summary
   if (analysis.summary) {
@@ -628,12 +691,12 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     );
   }
 
-  // v17.1: Insufficient Evidence Warning (owner praised this in v15)
+  // v17.1: Insufficient Evidence Warning (if not already handled by Strategic Sufficiency Gate)
   const evidenceScore = editorialConfidence.evidence_completeness_score || 0;
   const overallConf = String(editorialConfidence.overall_confidence || '').toLowerCase();
   const evidenceThresholdMet = editorialConfidence.evidence_threshold_met !== false;
   const matterRegisterReconciled = pipelineManifest?.extraction?.match === true;
-  if (!matterRegisterReconciled || !evidenceThresholdMet) {
+  if (!isStrategicallyInsufficient && (!matterRegisterReconciled || !evidenceThresholdMet)) {
     sections.push(
       sectionTitle('⚠️ Insufficient Evidence for Full Analysis'),
       p(matterRegisterReconciled

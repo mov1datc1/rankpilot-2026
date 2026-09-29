@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2, FileText } from "lucide-react";
+import { ChevronLeft, Download, Zap, RefreshCw, CheckCircle2, FileText, ShieldAlert, AlertTriangle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import AuditDownloadDropdown from "@/components/AuditDownloadDropdown";
 import SupplementalUpload from "./SupplementalUpload";
@@ -9,6 +9,7 @@ import { getPipelineErrorPresentation } from "@/lib/pipeline-error-presentation"
 import SubmissionStudio from "@/components/SubmissionStudio";
 import { resolveCountryJurisdiction, sanitizeJurisdictionText } from "@/lib/jurisdiction";
 import { curateMatters } from "@/lib/docx/matter-curator";
+import { evaluateStrategicSufficiency } from "@/lib/audit/evidence-sufficiency-gate";
 
 
 function canonicalizePracticeArea(pa?: string): string {
@@ -71,24 +72,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const isEmptyAnalysis = !analysis.score && !analysis.summary && !letter.the_state_of_play;
   const submissionBlueprint = chambersData.submission_blueprint || {};
 
-  const score = analysis.score || 0;
-  const riskLevel = analysis.risk_level ? String(analysis.risk_level) : "Pending";
-  const archetype = context.archetype ? String(context.archetype) : "Strategic model pending";
-  const detectedTier = context.starting_position ? String(context.starting_position) : "Not classified";
-  const target = context.target_realistic ? String(context.target_realistic) : "Target pending";
-
-  // Editorial Intelligence metrics (with jurisdiction harmonization)
-  const rawIdentityStatement = competitiveIdentity.identity_statement || `${firmName} - ${submission.practiceArea || 'Practice'} Market Leader`;
-  const identityStatement = sanitizeJurisdictionText(rawIdentityStatement, resolvedJurisdiction);
-  const identityCoherence = String(competitiveIdentity.identity_coherence || 'coherent').toLowerCase();
-  const confidence = String(editorialConfidence.overall_confidence || 'High');
-  const passesDefensibility = editorialConfidence.passes_defensibility_test !== false;
-  const thesis = sanitizeJurisdictionText(narrativeArch.thesis_statement || '', resolvedJurisdiction);
-  
-  // Priority 1: User-designated Hero Matter via "⭐ Hacer Insignia" in SubmissionStudio
-  const designatedHeroTitle = chambersData.hero_matter_title || chambersData.hero_matter_name;
-  
-  // Convert prisma matters or chambersData matters into normalized matters for curation
+  // Convert prisma matters or chambersData matters into normalized matters for curation & audit
   const allRawMatters = Array.isArray(submission.matters) && submission.matters.length > 0
     ? submission.matters.map((m: any) => ({
         ...m,
@@ -98,6 +82,33 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
         isConfidential: Boolean(m.isConfidential || m.is_confidential)
       }))
     : (Array.isArray(chambersData.matters) ? chambersData.matters : []);
+
+  // Strategic Sufficiency Gate (Angela Castillo feedback: fail-closed on < 5 matters)
+  const strategicSufficiency = evaluateStrategicSufficiency({
+    matters: allRawMatters,
+    practiceArea: submission.practiceArea || '',
+    b10Text: chambersData.b10Text || chambersData.original_b10 || chambersData.enhanced_b7 || '',
+    lawyers: chambersData.lawyers || [],
+    firmName
+  });
+  const isInsufficientEvidence = strategicSufficiency.status === 'insufficient';
+
+  const score = isInsufficientEvidence ? null : (analysis.score || 0);
+  const riskLevel = isInsufficientEvidence ? "High (Evidencia Insuficiente)" : (analysis.risk_level ? String(analysis.risk_level) : "Pending");
+  const archetype = context.archetype ? String(context.archetype) : "Strategic model pending";
+  const detectedTier = isInsufficientEvidence ? "Unrated — Insufficient Evidence Base" : (context.starting_position ? String(context.starting_position) : "Not classified");
+  const target = isInsufficientEvidence ? "Retenido — Requiere 10–20 Mandatos" : (context.target_realistic ? String(context.target_realistic) : "Target pending");
+
+  // Editorial Intelligence metrics (with jurisdiction harmonization)
+  const rawIdentityStatement = competitiveIdentity.identity_statement || `${firmName} - ${submission.practiceArea || 'Practice'} Market Leader`;
+  const identityStatement = sanitizeJurisdictionText(rawIdentityStatement, resolvedJurisdiction);
+  const identityCoherence = String(competitiveIdentity.identity_coherence || 'coherent').toLowerCase();
+  const confidence = isInsufficientEvidence ? "Insuficiente (Fail-Closed)" : String(editorialConfidence.overall_confidence || 'High');
+  const passesDefensibility = isInsufficientEvidence ? false : (editorialConfidence.passes_defensibility_test !== false);
+  const thesis = sanitizeJurisdictionText(narrativeArch.thesis_statement || '', resolvedJurisdiction);
+  
+  // Priority 1: User-designated Hero Matter via "⭐ Hacer Insignia" in SubmissionStudio
+  const designatedHeroTitle = chambersData.hero_matter_title || chambersData.hero_matter_name;
 
   let heroMatter = designatedHeroTitle || '';
   let heroMatterRationale = narrativeArch.hero_matter_rationale || '';
@@ -391,18 +402,26 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.75rem' }}>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Editorial Confidence</h3>
-            <p style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: (confidence.toLowerCase().includes('high') || confidence.includes('9') || confidence.includes('8')) ? '#16a34a' : confidence.toLowerCase().includes('mod') ? '#d97706' : '#16a34a' }}>
-              {confidence ? (confidence.includes('%') ? confidence : confidence.charAt(0).toUpperCase() + confidence.slice(1)) : 'High'}
+            <p style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: isInsufficientEvidence ? '#dc2626' : ((confidence.toLowerCase().includes('high') || confidence.includes('9') || confidence.includes('8')) ? '#16a34a' : confidence.toLowerCase().includes('mod') ? '#d97706' : '#16a34a') }}>
+              {isInsufficientEvidence ? 'Insuficiente (Fail-Closed)' : (confidence ? (confidence.includes('%') ? confidence : confidence.charAt(0).toUpperCase() + confidence.slice(1)) : 'High')}
             </p>
-            {passesDefensibility && <p style={{ fontSize: '0.65rem', color: '#16a34a', margin: '0.25rem 0 0', fontWeight: 600 }}>✓ Defensible</p>}
+            {isInsufficientEvidence ? (
+              <p style={{ fontSize: '0.65rem', color: '#dc2626', margin: '0.25rem 0 0', fontWeight: 600 }}>✕ Retenido por Muestra Insuficiente</p>
+            ) : passesDefensibility ? (
+              <p style={{ fontSize: '0.65rem', color: '#16a34a', margin: '0.25rem 0 0', fontWeight: 600 }}>✓ Defensible</p>
+            ) : null}
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Band Alignment</h3>
-            <p style={{ fontSize: '1rem', fontWeight: 600, color: bandAlignment ? '#0f172a' : '#94a3b8', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>{bandAlignment || detectedTier}</p>
+            <p style={{ fontSize: '1rem', fontWeight: 600, color: isInsufficientEvidence ? '#dc2626' : (bandAlignment ? '#0f172a' : '#94a3b8'), margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+              {isInsufficientEvidence ? 'Unrated — Insufficient Evidence Base' : (bandAlignment || detectedTier)}
+            </p>
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Risk Level</h3>
-            <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : riskLevel === 'Pending' ? '#94a3b8' : '#d97706' }}>{riskLevel}</p>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: isInsufficientEvidence ? '#dc2626' : (riskLevel === 'Low' ? '#16a34a' : riskLevel === 'High' ? '#dc2626' : riskLevel === 'Pending' ? '#94a3b8' : '#d97706') }}>
+              {isInsufficientEvidence ? 'Crítico (Evidencia Insuficiente)' : riskLevel}
+            </p>
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Archetype</h3>
@@ -410,7 +429,9 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
           </div>
           <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
             <h3 style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Target</h3>
-            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: target === 'Pending' ? '#94a3b8' : '#1A237E', margin: 0 }}>{target}</p>
+            <p style={{ fontSize: '1.1rem', fontWeight: 600, color: isInsufficientEvidence ? '#94a3b8' : (target === 'Pending' ? '#94a3b8' : '#1A237E'), margin: 0 }}>
+              {isInsufficientEvidence ? 'Retenido' : target}
+            </p>
           </div>
         </div>
 
@@ -469,8 +490,170 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
 
-        {/* Insufficient Evidence Warning Banner */}
-        {(confidence === 'insufficient' || confidence === 'low') && (
+        {/* Strategic Sufficiency Gate Alert Banner & 4 Explanatory Cards */}
+        {isInsufficientEvidence ? (
+          <div style={{
+            background: '#FFF7ED',
+            borderRadius: '14px',
+            border: '2px solid #FDBA74',
+            padding: '1.75rem 2rem',
+            boxShadow: '0 4px 12px rgba(234, 88, 12, 0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem'
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '10px',
+                background: '#FFEDD5',
+                border: '1.5px solid #FDBA74',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <ShieldAlert size={24} color="#C2410C" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#9A3412', margin: 0 }}>
+                    Strategic Evidence Sufficiency Gate · Fail-Closed
+                  </h3>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    background: '#FFEDD5',
+                    color: '#C2410C',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    border: '1px solid #FDBA74',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em'
+                  }}>
+                    Calificación Retenida
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.92rem', color: '#C2410C', fontWeight: 600, margin: '0.35rem 0 0 0' }}>
+                  &ldquo;Insufficient evidence to produce a defensible Strategic Audit or competitive submission.&rdquo;
+                </p>
+                <p style={{ fontSize: '0.83rem', color: '#7C2D12', margin: '0.35rem 0 0 0', lineHeight: 1.5 }}>
+                  <strong>Diferenciación metodológica clave:</strong> No se trata de un fallo técnico de extracción (el pipeline procesó correctamente {strategicSufficiency.receivedEvidence.totalMatters} mandatos), sino de una <strong>insuficiencia probatoria sustantiva</strong>. RankPilot retiene deliberadamente notas numéricas y recomendaciones de banda artificiales para proteger la credibilidad del despacho ante Chambers &amp; Partners.
+                </p>
+              </div>
+            </div>
+
+            {/* 4 Explanatory Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
+              {/* Card 1: Qué evidencia recibió */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid #FED7AA', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                    1. Evidencia Recibida
+                  </h4>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.55 }}>
+                  <p style={{ margin: '0 0 0.35rem 0' }}>
+                    <strong>Mandatos detectados:</strong> {strategicSufficiency.receivedEvidence.totalMatters} ({strategicSufficiency.receivedEvidence.publishableCount} publicables, {strategicSufficiency.receivedEvidence.confidentialCount} confidenciales).
+                  </p>
+                  <p style={{ margin: '0 0 0.35rem 0' }}>
+                    <strong>Clientes identificados:</strong> {strategicSufficiency.receivedEvidence.clients.length > 0 ? strategicSufficiency.receivedEvidence.clients.join(', ') : 'Ninguno identificado formalmente'}.
+                  </p>
+                  <p style={{ margin: '0 0 0.35rem 0' }}>
+                    <strong>Reseña Dpto. (B10):</strong> {strategicSufficiency.receivedEvidence.hasDepartmentB10 ? `✓ Sí (${strategicSufficiency.receivedEvidence.b10WordCount} palabras)` : '✕ Ausente o incompleta'}.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    <strong>Práctica detectada:</strong> {strategicSufficiency.receivedEvidence.detectedPractice} (Calibrada: {strategicSufficiency.receivedEvidence.calibratedPractice}).
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 2: Qué evidencia falta */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid #FED7AA', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AlertTriangle size={16} color="#EA580C" />
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                    2. Evidencia Faltante
+                  </h4>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.55 }}>
+                  <p style={{ margin: '0 0 0.35rem 0' }}>
+                    <strong>Déficit para masa crítica:</strong> Faltan al menos <strong>{strategicSufficiency.missingEvidence.matterDeficit} asuntos</strong> para el estándar recomendado (10 a 20 mandatos).
+                  </p>
+                  <p style={{ margin: '0 0 0.35rem 0' }}>
+                    <strong>Secciones ausentes:</strong> {strategicSufficiency.missingEvidence.missingSections.join(' · ')}.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    <strong>Benchmark Chambers:</strong> {strategicSufficiency.missingEvidence.benchmarkComparison}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 3: Por qué no puede evaluar defensiblemente */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid #FED7AA', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldAlert size={16} color="#DC2626" />
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                    3. Justificación de Defendibilidad
+                  </h4>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#475569', lineHeight: 1.55, margin: 0 }}>
+                  {strategicSufficiency.defensibilityRationale}
+                </p>
+              </div>
+
+              {/* Card 4: Acciones para continuar */}
+              <div style={{ background: '#FFFFFF', borderRadius: '10px', border: '1px solid #FED7AA', padding: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Sparkles size={16} color="#4F46E5" />
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#9A3412', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                    4. Acciones Requeridas para Continuar
+                  </h4>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.8rem', color: '#475569', lineHeight: 1.55 }}>
+                  {strategicSufficiency.requiredActions.map((act, i) => (
+                    <li key={i} style={{ marginBottom: '0.2rem' }}>{act}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Practice Area Discrepancy Box if present */}
+            {strategicSufficiency.practiceDiscrepancy.hasDiscrepancy && (
+              <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '8px', padding: '0.85rem 1.15rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.3rem' }}>
+                  <AlertTriangle size={15} color="#B45309" />
+                  <strong style={{ fontSize: '0.82rem', color: '#92400E' }}>
+                    {strategicSufficiency.practiceDiscrepancy.headline}
+                  </strong>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: '#78350F', margin: 0, lineHeight: 1.45 }}>
+                  {strategicSufficiency.practiceDiscrepancy.chambersImpact} {strategicSufficiency.practiceDiscrepancy.warningIfContinued}
+                </p>
+              </div>
+            )}
+
+            {/* CTA Action Buttons */}
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.25rem' }}>
+              <SupplementalUpload submissionId={id} />
+              <Link
+                href="/builder"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.6rem 1.1rem', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600,
+                  background: '#FFFFFF', color: '#9A3412',
+                  textDecoration: 'none', cursor: 'pointer',
+                  border: '1.5px solid #FDBA74',
+                }}
+              >
+                🔄 Ajustar Calibración o Cargar Otro Archivo
+              </Link>
+            </div>
+          </div>
+        ) : (confidence === 'insufficient' || confidence === 'low') ? (
           <div style={{ background: '#FFF7ED', borderRadius: '12px', border: '1px solid #FED7AA', padding: '1.5rem 2rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FFEDD5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.25rem' }}>⚠️</div>
             <div style={{ flex: 1 }}>
@@ -514,7 +697,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* The Audit Letter Paper */}
         <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
@@ -541,6 +724,24 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
                 <p style={{ margin: 0 }}><strong>Date:</strong> {dateStr}</p>
               </div>
             </div>
+
+            {isInsufficientEvidence && (
+              <div style={{
+                background: '#FEF2F2',
+                border: '1.5px solid #FECACA',
+                borderRadius: '8px',
+                padding: '0.85rem 1.25rem',
+                marginBottom: '1.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <ShieldAlert size={18} color="#DC2626" style={{ flexShrink: 0 }} />
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#991B1B', lineHeight: 1.45 }}>
+                  <strong>DICTAMEN PROVISIONAL · CALIFICACIONES RETENIDAS (FAIL-CLOSED):</strong> Este documento constituye un diagnóstico técnico sobre una muestra limitada de {strategicSufficiency.receivedEvidence.totalMatters} mandatos. Conforme a los estándares de Chambers &amp; Partners, las notas de competitividad y recomendaciones de Banda quedan formalmente retenidas hasta incorporar un mínimo de 10 mandatos representativos.
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', color: '#1e293b', lineHeight: 1.6 }}>
               

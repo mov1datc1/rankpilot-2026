@@ -83,11 +83,12 @@ export async function GET(request: NextRequest) {
     }
 
     const pdfBuffer = await downloadRes.arrayBuffer();
+    const { buildSafeContentDisposition } = await import('@/lib/headers');
 
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="RankPilot_Report_${submission.practiceArea.replace(/\s+/g, '_')}.pdf"`,
+        'Content-Disposition': buildSafeContentDisposition('Report', submission.practiceArea, 'pdf'),
       },
     });
 

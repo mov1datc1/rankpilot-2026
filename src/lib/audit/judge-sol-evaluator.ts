@@ -15,6 +15,7 @@
  */
 
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
+import { evaluateStrategicSufficiency, StrategicSufficiencyAudit } from './evidence-sufficiency-gate';
 
 export interface JudgeSolCheck {
   check_id: string;
@@ -33,6 +34,7 @@ export interface JudgeSolEvaluationResult {
   violations: string[];
   checks: JudgeSolCheck[];
   curatedLawyers?: any[];
+  strategicSufficiency?: StrategicSufficiencyAudit;
 }
 
 const PHONE_REGEX = /^\+?[\d\s\-\.\(\)]{7,}$/;
@@ -412,21 +414,62 @@ export function evaluateJudgeSolSubmission(params: {
     });
   }
 
+  // 11. STRATEGIC SUFFICIENCY GATE (Angela's Defensibility Gating)
+  const strategicSufficiency = evaluateStrategicSufficiency({
+    matters,
+    practiceArea,
+    b10Text,
+    lawyers: rawLawyers,
+    firmName
+  });
+
+  const isStrategicallyInsufficient = strategicSufficiency.status === 'insufficient';
+  if (isStrategicallyInsufficient) {
+    totalPenalty += 7.0;
+    violations.push(`Evidencia insuficiente para auditoría estratégica: ${strategicSufficiency.headline}`);
+    checks.push({
+      check_id: 'strategic_sufficiency',
+      component: 'strategic_sufficiency',
+      passed: false,
+      reason: strategicSufficiency.headline + ' ' + strategicSufficiency.defensibilityRationale,
+      penalty: 7.0,
+    });
+  } else if (strategicSufficiency.status === 'provisional') {
+    totalPenalty += 1.5;
+    violations.push('Dataset provisional: se recomienda ampliar el volumen de mandatos para máxima competitividad.');
+    checks.push({
+      check_id: 'strategic_sufficiency',
+      component: 'strategic_sufficiency',
+      passed: true,
+      reason: strategicSufficiency.headline,
+      penalty: 1.5,
+    });
+  } else {
+    checks.push({
+      check_id: 'strategic_sufficiency',
+      component: 'strategic_sufficiency',
+      passed: true,
+      reason: 'Volumen y solidez probatoria de asuntos verificados para evaluación estratégica.',
+      penalty: 0,
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // MATHEMATICAL SCORE & VERDICT CALCULATION
   // ═══════════════════════════════════════════════════════════════
   const rawScore = 10.0 - totalPenalty;
   const finalScore = Math.max(1, Math.min(10, Math.round(rawScore)));
 
-  // Critical gating: If register fails, score is capped at 4. If foreign authority leak occurs, score is capped at 5.
+  // Critical gating: If register fails, foreign authority leak occurs, or evidence is insufficient, release is blocked
   let calibratedScore = finalScore;
   if (!registerPassed) calibratedScore = Math.min(calibratedScore, 4);
   if (!jurisdictionPassed) calibratedScore = Math.min(calibratedScore, 5);
+  if (isStrategicallyInsufficient) calibratedScore = Math.min(calibratedScore, 3);
 
-  const passed = registerPassed && jurisdictionPassed && calibratedScore >= 7 && violations.length === 0;
+  const passed = registerPassed && jurisdictionPassed && !isStrategicallyInsufficient && calibratedScore >= 7 && violations.length === 0;
 
   let status: 'passed' | 'with_observations' | 'blocked' = 'passed';
-  if (calibratedScore < 5 || !registerPassed) {
+  if (calibratedScore < 5 || !registerPassed || isStrategicallyInsufficient) {
     status = 'blocked';
   } else if (calibratedScore >= 5 && calibratedScore < 8) {
     status = 'with_observations';
@@ -434,17 +477,26 @@ export function evaluateJudgeSolSubmission(params: {
     status = 'passed';
   }
 
-  const summary = status === 'passed'
-    ? `Calidad editorial certificada para ${firmName} (${calibratedScore}/10). Cumple la Constitución Editorial Chambers v26.40.`
-    : status === 'with_observations'
-    ? `Entrega con observaciones estratégicas para ${firmName} (${calibratedScore}/10). Requiere atención a los puntos señalados.`
-    : `Entrega bloqueada para ${firmName} (${calibratedScore}/10). Deficiencias críticas impiden el release.`;
+  const summary = isStrategicallyInsufficient
+    ? `Auditoría retenida: ${strategicSufficiency.headline}`
+    : (status === 'passed'
+      ? `Calidad editorial certificada para ${firmName} (${calibratedScore}/10). Cumple la Constitución Editorial Chambers v26.40.`
+      : status === 'with_observations'
+      ? `Entrega con observaciones estratégicas para ${firmName} (${calibratedScore}/10). Requiere atención a los puntos señalados.`
+      : `Entrega bloqueada para ${firmName} (${calibratedScore}/10). Deficiencias críticas impiden el release.`);
 
-  const feedback = [
-    summary,
-    violations.length > 0 ? `\nObservaciones detectadas (${violations.length}):\n` + violations.map(v => `• ${v}`).join('\n') : '',
-    `\nDesglose de Puntuación: Base 10.0 | Penalizaciones acumuladas: -${totalPenalty.toFixed(1)} pts | Calificación Final: ${calibratedScore}/10.`,
-  ].filter(Boolean).join('\n');
+  const feedback = isStrategicallyInsufficient
+    ? [
+        `⚠️ AUDITORÍA ESTRATÉGICA EN ESTADO PROVISIONAL / EVIDENCIA INSUFICIENTE`,
+        `"${strategicSufficiency.headline}"`,
+        `\n1. EVIDENCIA RECIBIDA:\n• ${strategicSufficiency.receivedEvidence.totalMatters} asuntos (${strategicSufficiency.receivedEvidence.publishableCount} publicables, ${strategicSufficiency.receivedEvidence.confidentialCount} confidenciales). Clientes: ${strategicSufficiency.receivedEvidence.clients.join(', ')}.\n• ${strategicSufficiency.receivedEvidence.hasDepartmentB10 ? 'Narrativa B10 incluida.' : 'Sin narrativa de departamento (B1-B10 ausente en documento fuente).'}\n\n2. EVIDENCIA FALTANTE:\n• ${strategicSufficiency.missingEvidence.benchmarkComparison}\n• ${strategicSufficiency.missingEvidence.missingSections.join('\n• ')}\n\n3. EVALUACIÓN DE DEFENDIBILIDAD:\n${strategicSufficiency.defensibilityRationale}\n\n4. ACCIONES REQUERIDAS:\n• ${strategicSufficiency.requiredActions.join('\n• ')}`,
+        `\nDesglose de Puntuación: Base 10.0 | Penalizaciones acumuladas: -${totalPenalty.toFixed(1)} pts | Calificación Final: ${calibratedScore}/10 (Retenida por evidencia insuficiente).`
+      ].join('\n')
+    : [
+        summary,
+        violations.length > 0 ? `\nObservaciones detectadas (${violations.length}):\n` + violations.map(v => `• ${v}`).join('\n') : '',
+        `\nDesglose de Puntuación: Base 10.0 | Penalizaciones acumuladas: -${totalPenalty.toFixed(1)} pts | Calificación Final: ${calibratedScore}/10.`,
+      ].filter(Boolean).join('\n');
 
   return {
     score: calibratedScore,
@@ -454,6 +506,7 @@ export function evaluateJudgeSolSubmission(params: {
     feedback,
     violations,
     checks,
+    strategicSufficiency
   };
 }
 

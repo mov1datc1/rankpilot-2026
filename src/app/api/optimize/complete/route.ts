@@ -561,7 +561,7 @@ export async function POST(request: NextRequest) {
       closing: `This Strategic Audit provides verified editorial alignment for ${firmName}'s ${targetTerm} objective.`
     };
 
-    const synthesizedAnalysis = {
+    const synthesizedAnalysis: any = {
       score: calculatedScore,
       risk_level: riskLevel,
       summary: `Strategic Audit Report for ${firmName} (${practiceArea}). Editorially validated against RankPilot's ${isLegal500 ? 'Legal 500' : 'Chambers'} submission framework.`,
@@ -733,6 +733,15 @@ export async function POST(request: NextRequest) {
     )).slice(0, 5);
     const clientsSnippet = topClientList.length > 0 ? ` (${topClientList.join(', ')})` : '';
 
+    const isInsufficient = judgeEvaluation.strategicSufficiency?.status === 'insufficient';
+
+    if (isInsufficient) {
+      synthesizedAnalysis.score = null;
+      synthesizedAnalysis.risk_level = 'High Risk (Insufficient Evidence Base)';
+      synthesizedAnalysis.band_recommendation = 'Unrated — Insufficient Evidence Base';
+      synthesizedAnalysis.target_band = 'Unrated (Requires Minimum 10 Matters)';
+    }
+
     const updatedChambersData = {
       ...chambersData,
       ...polishedResult.polishedChambersData,
@@ -751,9 +760,10 @@ export async function POST(request: NextRequest) {
       the_path_to_dominance: pathToDominance,
       matter_evidence_gaps: matterEvidenceGaps.length > 0 ? matterEvidenceGaps : (chambersData.matter_evidence_gaps || []),
       analysis: synthesizedAnalysis,
-      judgeScore: judgeEvaluation.score,
+      judgeScore: isInsufficient ? null : judgeEvaluation.score,
       judgeFeedback: judgeEvaluation.feedback,
       judgeChecks: judgeEvaluation.checks,
+      strategic_sufficiency: judgeEvaluation.strategicSufficiency,
       judge_sol_healing: {
         repairedAt: new Date().toISOString(),
         repairsCount: polishedResult.repairsCount,
@@ -768,24 +778,31 @@ export async function POST(request: NextRequest) {
       release_verdict: {
         passed: judgeEvaluation.passed,
         status: judgeEvaluation.status,
-        submission_readiness: judgeEvaluation.passed
-          ? 'Ready for Delivery — Quality Certified by Judge SOL'
-          : (judgeEvaluation.status === 'blocked' ? 'Blocked — critical quality gate failure' : 'Review Recommended — observations flagged'),
+        submission_readiness: isInsufficient
+          ? 'Withheld — Strategically Insufficient Evidence'
+          : (judgeEvaluation.passed
+            ? 'Ready for Delivery — Quality Certified by Judge SOL'
+            : (judgeEvaluation.status === 'blocked' ? 'Blocked — critical quality gate failure' : 'Review Recommended — observations flagged')),
         passes_defensibility_test: judgeEvaluation.passed,
         judge: judgeVerdict,
       },
       editorial_confidence: {
-        overall_confidence: judgeEvaluation.score >= 8 ? 'High' : (judgeEvaluation.score >= 6 ? 'Medium' : 'Insufficient'),
+        overall_confidence: isInsufficient
+          ? 'insufficient'
+          : (judgeEvaluation.score >= 8 ? 'High' : (judgeEvaluation.score >= 6 ? 'Medium' : 'Insufficient')),
         passes_defensibility_test: judgeEvaluation.passed,
-        evidence_completeness_score: judgeEvaluation.passed ? 94 : Math.min(90, judgeEvaluation.score * 10),
+        evidence_status: isInsufficient ? 'insufficient' : (judgeEvaluation.strategicSufficiency?.status || 'sufficient'),
+        evidence_completeness_score: isInsufficient
+          ? Math.round((updatedMatters.length / 20) * 100)
+          : (judgeEvaluation.passed ? 94 : Math.min(90, judgeEvaluation.score * 10)),
         matter_quality_score: Math.min(100, judgeEvaluation.score * 10),
-        final_deliverable_score: Math.min(100, judgeEvaluation.score * 10),
+        final_deliverable_score: isInsufficient ? null : Math.min(100, judgeEvaluation.score * 10),
         verified_matters_count: verifiedThreeParasCount,
         total_core_matters: totalCoreMatters,
-        leadership_visibility_score: judgeEvaluation.passed ? 92 : 0,
-        narrative_cohesion_score: judgeEvaluation.passed ? 95 : 0,
-        differentiation_score: judgeEvaluation.passed ? 93 : 0,
-        institutional_depth_score: judgeEvaluation.passed ? 94 : 0
+        leadership_visibility_score: isInsufficient ? 0 : (judgeEvaluation.passed ? 92 : 0),
+        narrative_cohesion_score: isInsufficient ? 0 : (judgeEvaluation.passed ? 95 : 0),
+        differentiation_score: isInsufficient ? 0 : (judgeEvaluation.passed ? 93 : 0),
+        institutional_depth_score: isInsufficient ? 0 : (judgeEvaluation.passed ? 94 : 0)
       },
       comparative_analysis: {
         band_alignment: isUnranked ? 'Band 4 / Entry Standard' : `${targetTerm} Standard`,
