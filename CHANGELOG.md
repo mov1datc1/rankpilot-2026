@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [v29.3] — 2026-09-29
+
+### Evidence Readiness & Frictionless Gating UX, Auto-Save Reassurance & Angela Castillo Regression Resolution (Ramos Castillo Benchmark `29-jonathan-1`)
+
+- **Evidence Readiness & Frictionless Gating UX (`src/lib/docx/evidence-readiness.ts`, `src/components/SubmissionStudio.tsx`)**:
+  - *Differentiated Readiness Gating*: Decoupled gating into strictly **Critical** (`matters.length < 5` or `score < 50`) vs **Optimal / Suficiente** (`matters.length >= 10` and `score >= 75`).
+  - *Elimination of Artificial Blockers on Sufficient Portfolios*: Solved the friction where a 99% complete submission with 33 matters (Ramos Castillo) was treated as blocked. The system now badges it as `99% · Excelente` (green) and allows instant 1-click optimization via `✨ Proceder con Optimización (99%) →` in the modal and direct execution from the hero banner without intercepting modals.
+  - *Draft Mode Guardrail Calibration*: The internal test draft checkbox (*"Deseo probar la redacción con IA en Modo Borrador Interno..."*) now strictly appears only when matters are genuinely insufficient (< 5 matters, e.g. Energy case with 3 matters). Never appears on high-volume portfolios.
+  - *Matter Quick Navigation*: Added `[ 📝 Completar Asunto Faltante ]` button that smoothly scrolls and highlights the specific incomplete matter card.
+
+- **Auto-Save Reassurance & Non-Destructive Workflow (`src/components/SubmissionStudio.tsx`)**:
+  - *Reassurance Card in Diagnostic Modal*: Clarified that progress is auto-saved in real-time, removing user anxiety when they do not have missing client names or deal values on hand.
+  - *Save & Exit Actions*: Added `[ 💾 Guardar y Salir al Dashboard ]` buttons in the modal body, modal footer, hero banner (`[ 💾 Guardar y Continuar Después ]`), and top header bar (`[ 💾 Guardar Borrador ]` with check toast), invoking `updateSubmissionValidatedData` and routing safely to `/reports`.
+
+- **Full Resolution of Angela Castillo's 10-Point Feedback on Ramos Castillo Real Estate (`29-jonathan-1`)**:
+  - *Locked Facts & Zero Ranking Hallucination (C2/C10)*: Completely eradicated the *"While currently ranked in Band 2... merits Band 1"* hallucination. Locked current band to `Unranked` and target to `Band 4 / Entry Standard` across Strategic Audit, B9, and C2.
+  - *B9 Individual Leadership vs Client Catalog*: Rewrote José Pablo Ramos Castillo's profile to emphasize personal first-chair direction on *El Cielo (MXN 3B)*, *Duranpark (207.5 ha, MXN 698M)*, and *IDEX (MXN 1.3B)*, eliminating client company boilerplate.
+  - *B10 Practice Grounding & Dilution Elimination*: Purged energy/fuel/power-grid references from Grupo R in B10; focused 100% on real estate constitutional litigation, zoning defense, and high-density development.
+  - *100% Hard Gate Confidentiality*: Zero leaks of confidential clients (*Familia De Anda, Leaño, Villas del Colli, ADM*) into B9, B10, C2, or Section D.
+  - *10 Core (7 Pub, 3 Conf) + 23 Reserve Traceability*: Perfect 1:1 reconciliation in the Strategic Audit table and official Chambers Submission tables.
+  - *Category Purity*: *Conciencia Ambiental Devangary* successfully routed to Reserve (*Surplus Pub #03*) to preserve Real Estate category focus.
+
 ## [v29.2] — 2026-09-28
 
 ### Dual Flagship Anchor Engine, Angela Castillo Hero Formula, Pre-Flight Curation UX ("Por calibrar con IA") & DeForest Verification
@@ -1167,3 +1189,9 @@ Directory → Jurisdiction → Practice → Editorial Page → Ranking Structure
 | DB garbage on re-process | Orphan matters accumulating | ✅ **FIXED** | v17.1.5 |
 | Grammar errors | "would benefit from provide" | ✅ **FIXED** | v17.1 |
 | Matter repo not saving | Matters not saved to firm folder | ✅ **FIXED** | v17.1.2a |
+| Ranking Hallucination (C2) | "While ranked in Band 2... merits Band 1" when unranked | ✅ **FIXED** | v29.3 |
+| B9 Client Catalog | B9 listed company bios instead of lawyer's personal leadership | ✅ **FIXED** | v29.3 |
+| B10 Practice Dilution | Grupo R described with energy/gas stations in Real Estate B10 | ✅ **FIXED** | v29.3 |
+| Confidentiality Hard Gate | Risk of confidential matter names leaking into public B9/B10 | ✅ **FIXED** | v29.3 |
+| Readiness Friction (99%) | 99% submission blocked from optimizing without draft checkbox | ✅ **FIXED** | v29.3 |
+| Draft Auto-Save Anxiety | User didn't know data was saved when exiting without full info | ✅ **FIXED** | v29.3 |
