@@ -32,7 +32,8 @@ import {
   ShieldAlert,
   X,
   BookOpen,
-  Star
+  Star,
+  Save
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
@@ -243,6 +244,43 @@ The practice regularly represents domestic conglomerates, financial institutions
       await updateSubmissionValidatedData(submission.id, { matters: updated });
     } catch (err) {
       console.error('Error saving matter field:', err);
+    }
+  };
+
+  const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
+  const [draftSavedToast, setDraftSavedToast] = useState<boolean>(false);
+
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    try {
+      await updateSubmissionValidatedData(submission.id, {
+        matters: matters,
+        b10Text: b10Text,
+        practiceArea: currentPracticeArea,
+        firmName: chambersData.firm_name || chambersData.firmName || ''
+      });
+      setDraftSavedToast(true);
+      setTimeout(() => setDraftSavedToast(false), 3500);
+    } catch (e) {
+      console.error('Error saving draft:', e);
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  const handleSaveDraftAndExit = async () => {
+    setIsSavingDraft(true);
+    try {
+      await updateSubmissionValidatedData(submission.id, {
+        matters: matters,
+        b10Text: b10Text,
+        practiceArea: currentPracticeArea,
+        firmName: chambersData.firm_name || chambersData.firmName || ''
+      });
+    } catch (e) {
+      console.error('Error saving draft and exit:', e);
+    } finally {
+      router.push('/reports');
     }
   };
 
@@ -938,6 +976,36 @@ The practice regularly represents domestic conglomerates, financial institutions
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: matters.length < 5 ? '#DC2626' : readiness.color }} />
             <span>{matters.length < 5 ? `Insuficiente (${matters.length}/10)` : `${readiness.score}% Calidad`}</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
+          </button>
+
+          {/* Quick Save Draft Action */}
+          <button
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft}
+            style={{
+              background: draftSavedToast ? '#DCFCE7' : '#FFFFFF',
+              border: `1px solid ${draftSavedToast ? '#86EFAC' : '#CBD5E1'}`,
+              color: draftSavedToast ? '#166534' : '#475569',
+              padding: '0.45rem 0.8rem',
+              borderRadius: '7px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: isSavingDraft ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Guardar borrador actual. Recuerda que los cambios también se respaldan automáticamente."
+          >
+            {isSavingDraft ? (
+              <RefreshCw size={13} className="animate-spin" />
+            ) : draftSavedToast ? (
+              <Check size={13} color="#16A34A" />
+            ) : (
+              <Save size={13} color="#64748B" />
+            )}
+            <span>{isSavingDraft ? 'Guardando...' : draftSavedToast ? '✓ Borrador Guardado' : 'Guardar Borrador'}</span>
           </button>
 
           {/* Grouped Tools Dropdown */}
@@ -1673,6 +1741,30 @@ The practice regularly represents domestic conglomerates, financial institutions
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    onClick={() => handleSaveDraftAndExit()}
+                    disabled={isSavingDraft || isOptimizingAll}
+                    title="Guarda los cambios actuales y vuelve al panel de submissions para continuar más tarde"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.12)',
+                      color: '#FFFFFF',
+                      border: '1px solid rgba(255, 255, 255, 0.28)',
+                      borderRadius: '10px',
+                      padding: '0.85rem 1.35rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      cursor: (isSavingDraft || isOptimizingAll) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Save size={16} />
+                    {isSavingDraft ? 'Guardando...' : 'Guardar y Continuar Después'}
+                  </button>
+
                   <button
                     onClick={() => handleOptimizeAll(false)}
                     disabled={isOptimizingAll}
@@ -3591,6 +3683,66 @@ The practice regularly represents domestic conglomerates, financial institutions
                 </div>
               )}
 
+              {/* REASSURANCE CARD: AUTO-SAVED DRAFT NOTIFICATION */}
+              <div style={{
+                background: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                borderRadius: '10px',
+                padding: '0.85rem 1.15rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: '#DCFCE7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Save size={18} color="#16A34A" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#15803D' }}>
+                      ¿No tienes la información completa en este momento?
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: '0.15rem' }}>
+                      Tu borrador se guarda en tiempo real. Puedes salir con tranquilidad y retomarlo más tarde desde tu listado de submissions.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowReadinessModal(false);
+                    handleSaveDraftAndExit();
+                  }}
+                  disabled={isSavingDraft}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #86EFAC',
+                    color: '#15803D',
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '6px',
+                    fontSize: '0.76rem',
+                    fontWeight: 700,
+                    cursor: isSavingDraft ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <Save size={13} />
+                  {isSavingDraft ? 'Guardando...' : 'Guardar y Salir al Dashboard'}
+                </button>
+              </div>
+
             </div>
 
             {/* Modal Actions Footer */}
@@ -3603,21 +3755,46 @@ The practice regularly represents domestic conglomerates, financial institutions
               justifyContent: 'space-between',
               gap: '0.75rem'
             }}>
-              <button
-                onClick={() => setShowReadinessModal(false)}
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #CBD5E1',
-                  color: '#475569',
-                  padding: '0.6rem 1rem',
-                  borderRadius: '7px',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Volver al Editor
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setShowReadinessModal(false)}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    color: '#475569',
+                    padding: '0.6rem 1rem',
+                    borderRadius: '7px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Volver al Editor
+                </button>
+                <button
+                  onClick={() => {
+                    setShowReadinessModal(false);
+                    handleSaveDraftAndExit();
+                  }}
+                  disabled={isSavingDraft}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #86EFAC',
+                    color: '#166534',
+                    padding: '0.6rem 1rem',
+                    borderRadius: '7px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: isSavingDraft ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  <Save size={14} color="#16A34A" />
+                  {isSavingDraft ? 'Guardando...' : 'Guardar y Salir'}
+                </button>
+              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {readiness.level === 'optimal' ? (
