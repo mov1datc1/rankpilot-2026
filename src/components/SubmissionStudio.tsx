@@ -182,11 +182,69 @@ The practice regularly represents domestic conglomerates, financial institutions
   const [showReadinessModal, setShowReadinessModal] = useState<boolean>(false);
   const [partnerChecklistCopied, setPartnerChecklistCopied] = useState<boolean>(false);
   const [showAssistantModal, setShowAssistantModal] = useState<boolean>(false);
+  const [allowDraftOptimization, setAllowDraftOptimization] = useState<boolean>(false);
+  const [isSwitchingPractice, setIsSwitchingPractice] = useState<boolean>(false);
+  const [editingMatterField, setEditingMatterField] = useState<{ matterId: string; field: string; value: string } | null>(null);
 
   // Evidence Readiness Engine (v27.0)
+  const currentPracticeArea = submission.practiceArea || chambersData.practice_area || '';
   const readiness: EvidenceReadinessResult = React.useMemo(() => {
-    return calculateEvidenceReadiness(matters, chambersData.lawyers || [], b10Text);
-  }, [matters, chambersData.lawyers, b10Text]);
+    return calculateEvidenceReadiness(matters, chambersData.lawyers || [], b10Text, {
+      practiceArea: currentPracticeArea,
+      calibratedPracticeArea: chambersData?.metadata?.calibrated_practice_area || ''
+    });
+  }, [matters, chambersData.lawyers, b10Text, currentPracticeArea, chambersData?.metadata?.calibrated_practice_area]);
+
+  const jumpToMatter = (matterId: string) => {
+    setShowReadinessModal(false);
+    setTimeout(() => {
+      const el = document.getElementById(`matter-card-${matterId}`) || document.getElementById('section-d');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.outline = '3px solid #4F46E5';
+        el.style.boxShadow = '0 0 25px rgba(79, 70, 229, 0.45)';
+        setTimeout(() => {
+          el.style.outline = '';
+          el.style.boxShadow = '';
+        }, 3500);
+      }
+    }, 150);
+  };
+
+  const handleSwitchPracticeArea = async (newPractice: string) => {
+    if (isSwitchingPractice) return;
+    setIsSwitchingPractice(true);
+    try {
+      await updateSubmissionValidatedData(submission.id, {
+        practiceArea: newPractice
+      });
+      setChambersData((prev: any) => ({
+        ...prev,
+        practice_area: newPractice,
+        metadata: { ...(prev.metadata || {}), practice_area: newPractice, calibrated_practice_area: newPractice }
+      }));
+      window.location.reload();
+    } catch (err) {
+      console.error('Error switching practice area:', err);
+      setIsSwitchingPractice(false);
+    }
+  };
+
+  const handleUpdateMatterField = async (matterId: string, field: string, value: string) => {
+    const updated = matters.map(m => {
+      if (m.id === matterId) {
+        return { ...m, [field]: value };
+      }
+      return m;
+    });
+    setMatters(updated);
+    setEditingMatterField(null);
+    try {
+      await updateSubmissionValidatedData(submission.id, { matters: updated });
+    } catch (err) {
+      console.error('Error saving matter field:', err);
+    }
+  };
 
   // Calculations
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
@@ -2185,7 +2243,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                 );
 
                 return (
-                  <div key={key} style={{
+                  <div key={key} id={`matter-card-${m.id || key}`} style={{
                     background: '#FFFFFF',
                     borderRadius: '12px',
                     border: isHeroThisMatter ? '2px solid #F59E0B' : '1px solid #E2E8F0',
@@ -2219,10 +2277,59 @@ The practice regularly represents domestic conglomerates, financial institutions
                               ⭐ Asunto Insignia
                             </span>
                           )}
-                          {m.value && (
+                          {m.value ? (
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
                               {m.value}
                             </span>
+                          ) : (
+                            editingMatterField?.matterId === (m.id || key) && editingMatterField?.field === 'value' ? (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <input
+                                  type="text"
+                                  placeholder="Ej. USD 3,400,000"
+                                  value={editingMatterField.value}
+                                  onChange={(e) => setEditingMatterField({ ...editingMatterField, value: e.target.value })}
+                                  style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid #4F46E5', width: '120px' }}
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateMatterField(m.id || key, 'value', editingMatterField.value);
+                                    if (e.key === 'Escape') setEditingMatterField(null);
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleUpdateMatterField(m.id || key, 'value', editingMatterField.value)}
+                                  style={{ background: '#16A34A', color: '#FFF', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '0.68rem', cursor: 'pointer' }}
+                                >
+                                  ✓
+                                </button>
+                                <button
+                                  onClick={() => setEditingMatterField(null)}
+                                  style={{ background: '#94A3B8', color: '#FFF', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '0.68rem', cursor: 'pointer' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingMatterField({ matterId: m.id || key, field: 'value', value: '' })}
+                                style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 600,
+                                  background: '#FEF3C7',
+                                  color: '#B45309',
+                                  border: '1px dashed #F59E0B',
+                                  padding: '2px 7px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
+                                title="Agregar cuantía económica estimada para este asunto"
+                              >
+                                + Agregar Monto
+                              </button>
+                            )
                           )}
                           {m.leadPartner && (
                             <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
@@ -2474,7 +2581,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                   );
 
                   return (
-                    <div key={key} style={{
+                    <div key={key} id={`matter-card-${m.id || key}`} style={{
                       background: '#FFFFFF',
                       borderRadius: '12px',
                       border: isHeroThisMatter ? '2px solid #F59E0B' : '1px solid #FEF3C7',
@@ -2508,10 +2615,59 @@ The practice regularly represents domestic conglomerates, financial institutions
                                 ⭐ Asunto Insignia
                               </span>
                             )}
-                            {m.value && (
+                            {m.value ? (
                               <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
                                 {m.value}
                               </span>
+                            ) : (
+                              editingMatterField?.matterId === (m.id || key) && editingMatterField?.field === 'value' ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <input
+                                    type="text"
+                                    placeholder="Ej. USD 3,400,000"
+                                    value={editingMatterField.value}
+                                    onChange={(e) => setEditingMatterField({ ...editingMatterField, value: e.target.value })}
+                                    style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', border: '1px solid #4F46E5', width: '120px' }}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleUpdateMatterField(m.id || key, 'value', editingMatterField.value);
+                                      if (e.key === 'Escape') setEditingMatterField(null);
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => handleUpdateMatterField(m.id || key, 'value', editingMatterField.value)}
+                                    style={{ background: '#16A34A', color: '#FFF', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '0.68rem', cursor: 'pointer' }}
+                                  >
+                                    ✓
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingMatterField(null)}
+                                    style={{ background: '#94A3B8', color: '#FFF', border: 'none', borderRadius: '3px', padding: '2px 6px', fontSize: '0.68rem', cursor: 'pointer' }}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setEditingMatterField({ matterId: m.id || key, field: 'value', value: '' })}
+                                  style={{
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    background: '#FEF3C7',
+                                    color: '#B45309',
+                                    border: '1px dashed #F59E0B',
+                                    padding: '2px 7px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                  title="Agregar cuantía económica estimada para este asunto"
+                                >
+                                  + Agregar Monto
+                                </button>
+                              )
                             )}
                             {/* Evidence Readiness Badges */}
                             {getMatterBadges(m).map((badge, bIdx) => (
@@ -3014,7 +3170,7 @@ The practice regularly represents domestic conglomerates, financial institutions
             background: '#FFFFFF',
             borderRadius: '16px',
             width: '100%',
-            maxWidth: '740px',
+            maxWidth: '780px',
             maxHeight: '90vh',
             overflowY: 'auto',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
@@ -3047,7 +3203,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                      Diagnóstico de Madurez de Evidencia
+                      Diagnóstico de Madurez & Asistente de Validación
                     </h3>
                     <span style={{
                       fontSize: '0.75rem',
@@ -3058,7 +3214,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                       borderRadius: '6px',
                       border: `1px solid ${readiness.color}30`
                     }}>
-                      {readiness.score}% · {readiness.label}
+                      {readiness.score}% · {readiness.label} ({matters.length}/10 Asuntos)
                     </span>
                   </div>
                   <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>
@@ -3102,27 +3258,158 @@ The practice regularly represents domestic conglomerates, financial institutions
                         ? 'Portafolio Sólido y Defendible'
                         : readiness.level === 'warning'
                         ? 'Atención: Datos Incompletos para Evaluación Tier-1'
-                        : 'Acción Requerida: Evidencia Insuficiente'}
+                        : 'Acción Requerida: Evidencia Insuficiente para Chambers'}
                     </h4>
                     <p style={{ fontSize: '0.8rem', color: '#334155', margin: '0.25rem 0 0 0', lineHeight: 1.5 }}>
                       {readiness.summary}
                     </p>
+                    {matters.length < 10 && (
+                      <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.65rem', background: '#FFFFFF', borderRadius: '6px', border: `1px solid ${readiness.color}30`, fontSize: '0.74rem', color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>⚠️</span>
+                        <span><strong>Alerta Chambers:</strong> Se exigen mínimo 10 asuntos para evaluar la solvencia de la práctica. Con {matters.length} asuntos, los investigadores desestiman el submission en primera ronda.</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
+              {/* PRACTICE AREA DISCREPANCY CARD (Angela / Energy vs Environmental case) */}
+              {readiness.practiceDiscrepancy && readiness.practiceDiscrepancy.hasDiscrepancy && (
+                <div style={{
+                  background: '#FFFBEB',
+                  border: '1.5px solid #F59E0B',
+                  borderRadius: '10px',
+                  padding: '1rem 1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.6rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <AlertTriangle size={18} color="#D97706" />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400E' }}>
+                        Discrepancia Temática de Práctica Detectada
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, background: '#FDE68A', color: '#B45309', padding: '2px 8px', borderRadius: '4px' }}>
+                      Criterio de Categoría
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: '#78350F', margin: 0, lineHeight: 1.5 }}>
+                    La evidencia analizada presenta alta consistencia con <strong>{readiness.practiceDiscrepancy.suggestedPractice}</strong> (debido a normativas ambientales, inspecciones PROFEPA/CONAGUA, residuos peligrosos o amparos ecológicos), mientras que la postulación está clasificada en <strong>{currentPracticeArea}</strong>. Chambers desestima asuntos fuera de categoría.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
+                    <button
+                      onClick={() => handleSwitchPracticeArea(readiness.practiceDiscrepancy.suggestedPractice)}
+                      disabled={isSwitchingPractice}
+                      style={{
+                        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '7px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: isSwitchingPractice ? 'not-allowed' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'
+                      }}
+                    >
+                      <Sparkles size={13} />
+                      {isSwitchingPractice ? 'Alineando Área...' : `⚡ Alinear Área a "${readiness.practiceDiscrepancy.suggestedPractice}" en 1 Clic`}
+                    </button>
+                    <span style={{ fontSize: '0.72rem', color: '#92400E' }}>
+                      Actualiza la sección A y metadatos sin perder tus asuntos.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* MATTERS NEEDING DATA ATTENTION (Lista quirúrgica con botón Completar Asunto) */}
+              {readiness.mattersNeedingAttention && readiness.mattersNeedingAttention.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                      Asuntos que Requieren Datos Inmediatos ({readiness.mattersNeedingAttention.length})
+                    </h4>
+                    <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      Haz clic en &quot;Completar Asunto&quot; para saltar al editor
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', maxHeight: '180px', overflowY: 'auto', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.5rem' }}>
+                    {readiness.mattersNeedingAttention.map((mStatus, idx) => (
+                      <div key={mStatus.id || idx} style={{
+                        background: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        padding: '0.5rem 0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            background: mStatus.statusBadge.bgColor,
+                            color: mStatus.statusBadge.color,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {mStatus.statusBadge.label}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {mStatus.name}
+                          </span>
+                          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                            {mStatus.missingFields.map((f, fIdx) => (
+                              <span key={fIdx} style={{ fontSize: '0.67rem', color: '#B91C1C', background: '#FEE2E2', padding: '1px 5px', borderRadius: '3px' }}>
+                                Falta: {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => jumpToMatter(mStatus.id)}
+                          style={{
+                            background: '#EEF2FF',
+                            color: '#4F46E5',
+                            border: '1px solid #C7D2FE',
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '5px',
+                            fontSize: '0.73rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          Completar Asunto →
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 5-Dimensional Quality Checklist */}
               <div>
-                <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.6rem' }}>
                   Criterios de Evaluación Editorial
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {readiness.actionableChecklist.map((item) => (
                     <div key={item.id} style={{
                       background: item.done ? '#F0FDF4' : '#F8FAFC',
                       border: `1px solid ${item.done ? '#BBF7D0' : '#E2E8F0'}`,
                       borderRadius: '8px',
-                      padding: '0.75rem 1rem',
+                      padding: '0.65rem 0.85rem',
                       display: 'flex',
                       alignItems: 'flex-start',
                       justifyContent: 'space-between',
@@ -3130,15 +3417,15 @@ The practice regularly represents domestic conglomerates, financial institutions
                     }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                         <span style={{
-                          width: '20px',
-                          height: '20px',
+                          width: '18px',
+                          height: '18px',
                           borderRadius: '50%',
                           background: item.done ? '#16A34A' : '#CBD5E1',
                           color: '#FFFFFF',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.7rem',
+                          fontSize: '0.68rem',
                           fontWeight: 700,
                           flexShrink: 0,
                           marginTop: '2px'
@@ -3146,13 +3433,13 @@ The practice regularly represents domestic conglomerates, financial institutions
                           {item.done ? '✓' : '!'}
                         </span>
                         <div>
-                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: item.done ? '#14532D' : '#1E293B' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: item.done ? '#14532D' : '#1E293B' }}>
                             {item.label}
                           </div>
-                          <div style={{ fontSize: '0.73rem', color: item.done ? '#15803D' : '#64748B', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.72rem', color: item.done ? '#15803D' : '#64748B', marginTop: '1px' }}>
                             {item.impact}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#475569', fontStyle: 'italic', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.7rem', color: '#475569', fontStyle: 'italic', marginTop: '1px' }}>
                             💡 {item.guidance}
                           </div>
                         </div>
@@ -3162,26 +3449,70 @@ The practice regularly represents domestic conglomerates, financial institutions
                 </div>
               </div>
 
-              {/* Partner Questionnaire Helper Notice */}
-              {readiness.level !== 'optimal' && (
+              {/* Helpers for Quota and Partner Questionnaire */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                {/* Assistant Helper */}
+                <div style={{
+                  background: '#EEF2FF',
+                  border: '1px solid #C7D2FE',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <BookOpen size={16} color="#4F46E5" />
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#312E81' }}>
+                        ¿Faltan asuntos para llegar a 10?
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#4338CA' }}>
+                        Importa desde tu biblioteca de mandatos.
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowReadinessModal(false);
+                      setShowAssistantModal(true);
+                    }}
+                    style={{
+                      background: '#4F46E5',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Importar Mandatos
+                  </button>
+                </div>
+
+                {/* Partner Questionnaire Helper */}
                 <div style={{
                   background: '#EFF6FF',
                   border: '1px solid #BFDBFE',
                   borderRadius: '8px',
-                  padding: '0.85rem 1rem',
+                  padding: '0.75rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '1rem'
+                  gap: '0.75rem'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <Bookmark size={18} color="#2563EB" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Bookmark size={16} color="#2563EB" />
                     <div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E40AF' }}>
-                        ¿Necesitas consultar a los socios del despacho?
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1E40AF' }}>
+                        ¿Consultar a los socios?
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: '#3B82F6' }}>
-                        Copia un cuestionario pre-redactado con las preguntas exactas para los asuntos incompletos.
+                      <div style={{ fontSize: '0.7rem', color: '#3B82F6' }}>
+                        Copia cuestionario listo para WhatsApp/Email.
                       </div>
                     </div>
                   </div>
@@ -3192,65 +3523,73 @@ The practice regularly represents domestic conglomerates, financial institutions
                       color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '6px',
-                      padding: '0.45rem 0.85rem',
-                      fontSize: '0.75rem',
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.72rem',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
-                      whiteSpace: 'nowrap'
+                      gap: '0.25rem'
                     }}
                   >
-                    {partnerChecklistCopied ? <Check size={14} /> : <Copy size={14} />}
-                    {partnerChecklistCopied ? '¡Copiado al Portapapeles!' : 'Copiar Cuestionario'}
+                    {partnerChecklistCopied ? <Check size={12} /> : <Copy size={12} />}
+                    {partnerChecklistCopied ? '¡Copiado!' : 'Copiar'}
                   </button>
                 </div>
-              )}
-              <div style={{
-                background: '#EEF2FF',
-                border: '1px solid #C7D2FE',
-                borderRadius: '8px',
-                padding: '0.85rem 1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1rem'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <BookOpen size={18} color="#4F46E5" />
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#312E81' }}>
-                      ¿Tienes asuntos guardados en tu Matter Assistant?
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#4338CA' }}>
-                      Importa mandatos de tu biblioteca institucional para alcanzar los 10 a 20 asuntos recomendados por Chambers.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowReadinessModal(false);
-                    setShowAssistantModal(true);
-                  }}
-                  style={{
-                    background: '#4F46E5',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.45rem 0.85rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <BookOpen size={13} /> Importar desde Assistant
-                </button>
               </div>
+
+              {/* EXPLICIT DRAFT MODE GUARDRAIL (Si la evidencia no es óptima) */}
+              {readiness.level !== 'optimal' && (
+                <div style={{
+                  background: '#FFF1F2',
+                  border: '1px solid #FECDD3',
+                  borderRadius: '10px',
+                  padding: '0.85rem 1.15rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem'
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.78rem', color: '#9F1239', fontWeight: 600, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={allowDraftOptimization}
+                      onChange={(e) => setAllowDraftOptimization(e.target.checked)}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                    />
+                    <span>
+                      Deseo probar la redacción con IA en <strong>Modo Borrador Interno (No Certificable)</strong> a pesar de contar con solo {matters.length} asuntos.
+                    </span>
+                  </label>
+                  {allowDraftOptimization && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', paddingTop: '0.5rem', borderTop: '1px dashed #FECDD3' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#BE123C' }}>
+                        ⚠️ El Strategic Audit y el DOCX quedarán rotulados como <strong>BORRADOR NO CERTIFICABLE</strong> (Insuficiente: {matters.length}/10 asuntos).
+                      </span>
+                      <button
+                        onClick={() => {
+                          setShowReadinessModal(false);
+                          handleOptimizeAll(true);
+                        }}
+                        style={{
+                          background: '#DC2626',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          padding: '0.45rem 1rem',
+                          borderRadius: '6px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)'
+                        }}
+                      >
+                        Optimizar como Borrador de Prueba ⚠️
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
 
@@ -3281,7 +3620,30 @@ The practice regularly represents domestic conglomerates, financial institutions
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                {readiness.level === 'critical' ? (
+                {readiness.level === 'optimal' ? (
+                  <button
+                    onClick={() => {
+                      handleOptimizeAll(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '0.65rem 1.25rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                    }}
+                  >
+                    <Sparkles size={14} />
+                    Continuar con Optimización Completa →
+                  </button>
+                ) : (
                   <button
                     onClick={() => {
                       setShowReadinessModal(false);
@@ -3292,43 +3654,18 @@ The practice regularly represents domestic conglomerates, financial institutions
                       background: '#4F46E5',
                       color: '#FFFFFF',
                       border: 'none',
-                      padding: '0.6rem 1.25rem',
+                      padding: '0.65rem 1.25rem',
                       borderRadius: '7px',
                       fontSize: '0.82rem',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.4rem'
+                      gap: '0.4rem',
+                      boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)'
                     }}
                   >
-                    Completar Datos en Asuntos →
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      handleOptimizeAll(true);
-                    }}
-                    style={{
-                      background: readiness.level === 'warning'
-                        ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
-                        : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      padding: '0.6rem 1.25rem',
-                      borderRadius: '7px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem'
-                    }}
-                  >
-                    <Sparkles size={14} />
-                    {readiness.level === 'warning'
-                      ? 'Optimizar con Advertencias (Cero Alucinación) →'
-                      : 'Continuar con Optimización Completa →'}
+                    📝 Ir a Completar Datos en Asuntos (Recomendado) →
                   </button>
                 )}
               </div>

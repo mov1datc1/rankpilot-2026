@@ -41,6 +41,9 @@ export interface EvidenceReadinessResult {
     missingB10: boolean;
   };
   matterStatuses: MatterCompletenessStatus[];
+  insufficientMattersCount: number;
+  mattersNeedingAttention: MatterCompletenessStatus[];
+  practiceDiscrepancy?: any;
   actionableChecklist: {
     id: string;
     label: string;
@@ -53,7 +56,11 @@ export interface EvidenceReadinessResult {
 export function calculateEvidenceReadiness(
   matters: any[] = [],
   lawyers: any[] = [],
-  b10Text: string = ''
+  b10Text: string = '',
+  options?: {
+    practiceArea?: string;
+    calibratedPracticeArea?: string;
+  }
 ): EvidenceReadinessResult {
   const totalMatters = matters.length;
   const blockers: string[] = [];
@@ -141,6 +148,7 @@ export function calculateEvidenceReadiness(
     countScore = 30;
   } else if (totalMatters >= 5) {
     countScore = 15 + Math.round(((totalMatters - 5) / 5) * 15);
+    warnings.push(`Se detectaron ${totalMatters} asuntos (Chambers recomienda un mínimo de 10 a 20 para evaluar la solidez del departamento).`);
   } else if (totalMatters > 0) {
     countScore = Math.round((totalMatters / 5) * 15);
     blockers.push(`Se detectaron solo ${totalMatters} asuntos (Chambers exige un mínimo de 10 a 20 para evaluar la solidez del departamento).`);
@@ -194,6 +202,20 @@ export function calculateEvidenceReadiness(
     warnings.push('La Sección B10 (Reseña del Departamento) está vacía o incompleta.');
   }
 
+  // 6. Practice Area Discrepancy Check (if practiceArea provided)
+  let practiceDiscrepancy: any = null;
+  if (options?.practiceArea && matters.length > 0) {
+    try {
+      const { detectPracticeAreaDiscrepancy } = require('@/lib/audit/practice-area-classifier');
+      practiceDiscrepancy = detectPracticeAreaDiscrepancy(options.practiceArea, matters);
+      if (practiceDiscrepancy && practiceDiscrepancy.hasDiscrepancy) {
+        warnings.push(`Discrepancia temática detectada: El contenido corresponde a "${practiceDiscrepancy.suggestedPractice}", pero la postulación está configurada en "${options.practiceArea}".`);
+      }
+    } catch (e) {
+      // classifier optional fallback
+    }
+  }
+
   const rawScore = countScore + clientScore + substanceScore + valueScore + teamScore;
   const score = Math.min(100, Math.max(0, rawScore));
 
@@ -203,18 +225,25 @@ export function calculateEvidenceReadiness(
   let label = 'Óptima';
   let summary = 'La información recopilada cuenta con masa crítica, métricas y resultados suficientes para una postulación altamente competitiva.';
 
-  if (score < 50 || totalMatters < 3) {
+  // Strict gating:
+  // - Critical: blockers present OR score < 50 OR totalMatters < 5 (e.g. 1-4 matters is completely unviable for Chambers)
+  // - Warning: totalMatters < 10 (5-9 matters) OR score < 80 OR warnings present
+  if (blockers.length > 0 || score < 50 || totalMatters < 5) {
     level = 'critical';
     color = '#EF4444';
     bgColor = '#FEF2F2';
     label = 'Insuficiente';
-    summary = 'La información actual es preliminar. Optimizar ahora generaría un borrador con severas lagunas editoriales ante el directorio.';
-  } else if (score < 80) {
+    summary = totalMatters < 5
+      ? `Evidencia insuficiente (${totalMatters}/10 asuntos mínimos requeridos por Chambers). La evaluación editorial desestimará el submission sin masa crítica.`
+      : 'La información actual es preliminar. Optimizar ahora generaría un borrador con severas lagunas editoriales ante el directorio.';
+  } else if (totalMatters < 10 || score < 80 || warnings.length > 0) {
     level = 'warning';
     color = '#F59E0B';
     bgColor = '#FFFBEB';
     label = 'Incompleta';
-    summary = 'Hay asuntos estructurados, pero faltan montos económicos clave, resultados concretos o socios líderes en varios expedientes.';
+    summary = totalMatters < 10
+      ? `Portafolio incompleto (${totalMatters}/10 asuntos mínimos). Se requiere confirmar datos antes de optimizar.`
+      : 'Hay asuntos estructurados, pero faltan montos económicos clave, resultados concretos o socios líderes en varios expedientes.';
   }
 
   const actionableChecklist = [
@@ -255,6 +284,19 @@ export function calculateEvidenceReadiness(
     }
   ];
 
+  if (practiceDiscrepancy && practiceDiscrepancy.hasDiscrepancy) {
+    actionableChecklist.unshift({
+      id: 'practice-alignment',
+      label: `Alinear Área de Práctica: "${options?.practiceArea}" vs "${practiceDiscrepancy.suggestedPractice}"`,
+      done: false,
+      impact: 'Crítico — Chambers penaliza expedientes asignados al área temática equivocada.',
+      guidance: `Cambiar la práctica a "${practiceDiscrepancy.suggestedPractice}" para máxima relevancia ante los investigadores.`
+    });
+  }
+
+  const mattersNeedingAttention = matterStatuses.filter(m => !m.isComplete);
+  const insufficientMattersCount = Math.max(0, 10 - totalMatters);
+
   return {
     score,
     level,
@@ -263,7 +305,7 @@ export function calculateEvidenceReadiness(
     label,
     summary,
     canOptimize: level === 'optimal',
-    canOptimizeWithWarnings: level === 'warning',
+    canOptimizeWithWarnings: false, // Default is false to prevent accidental 1-click bypass without explicit draft acknowledgment
     blockers,
     warnings,
     missingElements: {
@@ -276,6 +318,9 @@ export function calculateEvidenceReadiness(
       missingB10: !hasB10,
     },
     matterStatuses,
+    insufficientMattersCount,
+    mattersNeedingAttention,
+    practiceDiscrepancy,
     actionableChecklist,
   };
 }

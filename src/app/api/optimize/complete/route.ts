@@ -124,8 +124,16 @@ export async function POST(request: NextRequest) {
       : (isUnranked ? 'Band 4 / Entry' : 'Band 1');
     const currentTerm = isUnranked ? 'Unranked' : (isLegal500 ? 'Tier 2/3' : 'Band 2/3');
 
-    const calculatedScore = isUnranked ? 91 : 94;
-    const riskLevel = isUnranked ? 'Moderate Risk (Entry Candidate)' : 'Low Risk';
+    let calculatedScore = isUnranked ? 91 : 94;
+    let riskLevel = isUnranked ? 'Moderate Risk (Entry Candidate)' : 'Low Risk';
+
+    if (totalMatters < 5) {
+      calculatedScore = 48;
+      riskLevel = `Critical Risk — Insufficient Evidence Portfolio (${totalMatters}/10 minimum matters)`;
+    } else if (totalMatters < 10) {
+      calculatedScore = 65;
+      riskLevel = `High Risk — Incomplete Evidence Portfolio (${totalMatters}/10 minimum matters)`;
+    }
 
     const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
     const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
@@ -340,11 +348,13 @@ export async function POST(request: NextRequest) {
       total_matters: totalMatters,
       publishable_count: pubCount,
       confidential_count: confCount,
-      warning: totalMatters > allowance.maxTotal 
-        ? `RankPilot Strategic Recommendation: The ${isLegal500 ? 'The Legal 500' : 'Chambers'} submission template provides slots for up to ${allowance.maxTotal} matters (the firm uploaded ${totalMatters} draft matters). Under RankPilot's editorial methodology, filing uncurated peripheral mandates risks diluting the evaluation; we strategically recommend prioritizing our vetted ${Math.min(totalMatters, curationResult.totalOfficialCount)}-matter core to maximize qualitative impact.`
-        : (totalMatters > 20 && allowance.maxTotal >= 30
-          ? `RankPilot Strategic Guidance: Although the directory template accommodates up to 30 matters for ${practiceArea} in ${location}, RankPilot's editorial methodology strategically recommends prioritizing a curated core of ${Math.min(totalMatters, 20)} flagship matters to concentrate qualitative impact and ensure clear positioning.`
-          : null),
+      warning: totalMatters < 10
+        ? `INSUFFICIENT EVIDENCE WARNING (DRAFT ONLY): The submission contains only ${totalMatters} matters. Chambers & Partners requires at least 10 to 20 matters to benchmark departmental depth. Submissions with fewer than 10 matters are routinely disqualified or unranked during research.`
+        : (totalMatters > allowance.maxTotal 
+          ? `RankPilot Strategic Recommendation: The ${isLegal500 ? 'The Legal 500' : 'Chambers'} submission template provides slots for up to ${allowance.maxTotal} matters (the firm uploaded ${totalMatters} draft matters). Under RankPilot's editorial methodology, filing uncurated peripheral mandates risks diluting the evaluation; we strategically recommend prioritizing our vetted ${Math.min(totalMatters, curationResult.totalOfficialCount)}-matter core to maximize qualitative impact.`
+          : (totalMatters > 20 && allowance.maxTotal >= 30
+            ? `RankPilot Strategic Guidance: Although the directory template accommodates up to 30 matters for ${practiceArea} in ${location}, RankPilot's editorial methodology strategically recommends prioritizing a curated core of ${Math.min(totalMatters, 20)} flagship matters to concentrate qualitative impact and ensure clear positioning.`
+            : null)),
       duplicate_matters: duplicateMatters,
       dilution_risks: dilutionRisks,
       recommended_core: recommendedCore,
@@ -373,6 +383,7 @@ export async function POST(request: NextRequest) {
     ];
 
     const missingEvidence: string[] = [
+      ...(totalMatters < 10 ? [`Critical Evidence Gap: Submission has only ${totalMatters} matters. At least ${10 - totalMatters} additional matter(s) are strictly required to satisfy the Chambers 10-matter minimum threshold.`] : []),
       "Verified referee email contacts for the top flagship mandates ahead of the directory research window.",
       "Final closing dates or non-appealable judicial decree dates for completed matters."
     ];
