@@ -567,8 +567,8 @@ The practice regularly represents domestic conglomerates, financial institutions
   const handleOptimizeAll = async (bypassReadiness: boolean = false) => {
     if (isOptimizingAll) return;
 
-    // v27.0 Evidence Readiness Gate: Block or alert if data is insufficient/incomplete
-    if (!bypassReadiness && readiness.level !== 'optimal') {
+    // v27.0 Evidence Readiness Gate: Block ONLY on critical insufficiency (< 5 matters or score < 50)
+    if (!bypassReadiness && readiness.level === 'critical') {
       setShowReadinessModal(true);
       return;
     }
@@ -3631,8 +3631,8 @@ The practice regularly represents domestic conglomerates, financial institutions
                 </div>
               </div>
 
-              {/* EXPLICIT DRAFT MODE GUARDRAIL (Si la evidencia no es óptima) */}
-              {readiness.level !== 'optimal' && (
+              {/* EXPLICIT DRAFT MODE GUARDRAIL (Solo para casos verdaderamente críticos: < 5 asuntos o score < 50) */}
+              {(matters.length < 5 || readiness.score < 50 || readiness.level === 'critical') && (
                 <div style={{
                   background: '#FFF1F2',
                   border: '1px solid #FECDD3',
@@ -3680,6 +3680,40 @@ The practice regularly represents domestic conglomerates, financial institutions
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* High-capacity portfolio advisory (ej. Ramos Castillo con 33 asuntos) */}
+              {matters.length >= 10 && readiness.mattersNeedingAttention.length > 0 && (
+                <div style={{
+                  background: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: '10px',
+                  padding: '0.85rem 1.15rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: '#DCFCE7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Sparkles size={18} color="#16A34A" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#15803D' }}>
+                      Portafolio Apto para Optimización ({matters.length} Asuntos disponibles)
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: '0.15rem' }}>
+                      Cuentas con {matters.length - readiness.mattersNeedingAttention.length} asuntos completamente estructurados (supera el mínimo de 10). Puedes optimizar ahora mismo: el Strategic Audit seleccionará los mejores asuntos para el Core y enviará los excedentes a la reserva auditada.
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -3797,30 +3831,36 @@ The practice regularly represents domestic conglomerates, financial institutions
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                {readiness.level === 'optimal' ? (
+                {readiness.mattersNeedingAttention.length > 0 && readiness.level !== 'critical' && (
                   <button
                     onClick={() => {
-                      handleOptimizeAll(true);
+                      if (readiness.mattersNeedingAttention[0]) {
+                        jumpToMatter(readiness.mattersNeedingAttention[0].id);
+                      } else {
+                        setShowReadinessModal(false);
+                        const el = document.getElementById('section-d');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }
                     }}
                     style={{
-                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      padding: '0.65rem 1.25rem',
+                      background: '#F1F5F9',
+                      border: '1px solid #CBD5E1',
+                      color: '#334155',
+                      padding: '0.65rem 1rem',
                       borderRadius: '7px',
                       fontSize: '0.82rem',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
+                      gap: '0.4rem'
                     }}
                   >
-                    <Sparkles size={14} />
-                    Continuar con Optimización Completa →
+                    📝 Completar Asunto Faltante
                   </button>
-                ) : (
+                )}
+
+                {readiness.level === 'critical' ? (
                   <button
                     onClick={() => {
                       setShowReadinessModal(false);
@@ -3828,7 +3868,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
                     style={{
-                      background: '#4F46E5',
+                      background: '#DC2626',
                       color: '#FFFFFF',
                       border: 'none',
                       padding: '0.65rem 1.25rem',
@@ -3839,10 +3879,34 @@ The practice regularly represents domestic conglomerates, financial institutions
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.4rem',
-                      boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)'
+                      boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)'
                     }}
                   >
-                    📝 Ir a Completar Datos en Asuntos (Recomendado) →
+                    ⚠️ Completar Asuntos Requeridos ({matters.length}/10) →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowReadinessModal(false);
+                      handleOptimizeAll(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '0.65rem 1.35rem',
+                      borderRadius: '7px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)'
+                    }}
+                  >
+                    <Sparkles size={14} />
+                    Proceder con Optimización ({readiness.score}%) →
                   </button>
                 )}
               </div>

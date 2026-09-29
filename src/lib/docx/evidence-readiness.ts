@@ -227,7 +227,8 @@ export function calculateEvidenceReadiness(
 
   // Strict gating:
   // - Critical: blockers present OR score < 50 OR totalMatters < 5 (e.g. 1-4 matters is completely unviable for Chambers)
-  // - Warning: totalMatters < 10 (5-9 matters) OR score < 80 OR warnings present
+  // - Warning: totalMatters < 10 (5-9 matters) OR score < 75
+  // - Optimal / Sufficient: totalMatters >= 10 AND score >= 75
   if (blockers.length > 0 || score < 50 || totalMatters < 5) {
     level = 'critical';
     color = '#EF4444';
@@ -236,14 +237,22 @@ export function calculateEvidenceReadiness(
     summary = totalMatters < 5
       ? `Evidencia insuficiente (${totalMatters}/10 asuntos mínimos requeridos por Chambers). La evaluación editorial desestimará el submission sin masa crítica.`
       : 'La información actual es preliminar. Optimizar ahora generaría un borrador con severas lagunas editoriales ante el directorio.';
-  } else if (totalMatters < 10 || score < 80 || warnings.length > 0) {
+  } else if (totalMatters < 10 || score < 75) {
     level = 'warning';
     color = '#F59E0B';
     bgColor = '#FFFBEB';
-    label = 'Incompleta';
+    label = totalMatters < 10 ? `Incompleta (${totalMatters}/10 Asuntos)` : 'Mejorable';
     summary = totalMatters < 10
-      ? `Portafolio incompleto (${totalMatters}/10 asuntos mínimos). Se requiere confirmar datos antes de optimizar.`
+      ? `Portafolio incompleto (${totalMatters}/10 asuntos mínimos). Se recomienda agregar asuntos antes de optimizar.`
       : 'Hay asuntos estructurados, pero faltan montos económicos clave, resultados concretos o socios líderes en varios expedientes.';
+  } else {
+    level = 'optimal';
+    color = '#10B981';
+    bgColor = '#ECFDF5';
+    label = score >= 90 ? 'Excelente' : 'Muy Buena';
+    summary = warnings.length > 0
+      ? `Portafolio robusto (${totalMatters} asuntos). Se detectaron ${warnings.length} detalle(s) secundario(s), pero la evidencia cuenta con solidez suficiente para optimizar.`
+      : 'La información recopilada cuenta con masa crítica, métricas y resultados suficientes para una postulación altamente competitiva.';
   }
 
   const actionableChecklist = [
@@ -297,6 +306,9 @@ export function calculateEvidenceReadiness(
   const mattersNeedingAttention = matterStatuses.filter(m => !m.isComplete);
   const insufficientMattersCount = Math.max(0, 10 - totalMatters);
 
+  const canOptimize = level === 'optimal' || (totalMatters >= 10 && score >= 70);
+  const canOptimizeWithWarnings = level === 'warning';
+
   return {
     score,
     level,
@@ -304,8 +316,8 @@ export function calculateEvidenceReadiness(
     bgColor,
     label,
     summary,
-    canOptimize: level === 'optimal',
-    canOptimizeWithWarnings: false, // Default is false to prevent accidental 1-click bypass without explicit draft acknowledgment
+    canOptimize,
+    canOptimizeWithWarnings,
     blockers,
     warnings,
     missingElements: {
