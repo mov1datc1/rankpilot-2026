@@ -7,6 +7,7 @@ import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curato
 import { curateLawyers } from '@/lib/docx/lawyer-curator';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
+import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 
 const YELLOW = 'FFFFCC';
 const FONT = 'Times New Roman';
@@ -643,19 +644,50 @@ export function generateDynamicB10(
   practiceArea: string,
   countryJurisdiction: string,
   pubMatters: any[],
-  lawyers: any[]
+  lawyers: any[],
+  chambersData: any = {},
+  submission: any = {}
 ): string {
   const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
   const partnerCount = lawyers.filter((l: any) => l.isPartner).length;
   const associateCount = lawyers.length - partnerCount;
-  
+  const isRealEstate = /real\s*estate|inmobiliari/i.test(practiceArea);
+  const isLabour = /labou?r|empleo|laboral/i.test(practiceArea);
+  const isTax = /tax|tributari|fiscal/i.test(practiceArea);
+
+  // Filter out off-category matters and strictly retain only publishable, practice-aligned matters
+  const validPubMatters = pubMatters.filter((m: any) => {
+    if (m.isConfidential || m.confidential || m.publish_status === 'non_publishable' || m.publishStatus === 'non_publishable') return false;
+    if (isRealEstate && m.isOffCategory) return false;
+    return true;
+  });
+
   // Section 1: Practice Overview & Value Proposition
-  const p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and prominent family groups in managing their most sensitive fiscal exposures and high-value transactions across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, cross-border corporate reorganisation, and direct administrative and judicial litigation before ${regulatoryAuthority} and municipal authorities, avoiding reliance on external trial counsel.`;
+  let p1 = '';
+  if (isRealEstate) {
+    p1 = `${firmName}’s ${practiceArea} department represents leading real estate developers, institutional asset managers, and prominent industrial and family groups in their most critical property developments, land regularizations, and high-exposure contentious amparo proceedings across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, urban zoning advisory, and direct administrative defense before municipal, state, and federal courts, avoiding reliance on external trial counsel.`;
+  } else if (isLabour) {
+    p1 = `${firmName}’s ${practiceArea} practice provides strategic, business-oriented counsel to multinational corporations and premier domestic employers across ${countryJurisdiction}. The team specializes in collective bargaining negotiations, high-exposure workforce restructurings, executive employment compensation, and contentious labour litigation before administrative and judicial tribunals.`;
+  } else if (isTax) {
+    p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and prominent family groups in managing their most sensitive fiscal exposures and high-value transactions across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, cross-border corporate reorganisation, and direct administrative and judicial litigation before ${regulatoryAuthority} and municipal authorities, avoiding reliance on external trial counsel.`;
+  } else {
+    p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and institutional clients in managing their most critical commercial transactions and high-value regulatory exposures across ${countryJurisdiction}. The practice combines deep industry expertise with direct contentious advocacy before ${regulatoryAuthority} and judicial courts.`;
+  }
 
   // Section 2: Marquee Portfolio Evidence & Core Sectors
-  const topClients = [...new Set(pubMatters.map((m: any) => (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').trim()).filter(Boolean))].slice(0, 8);
+  const topClients = [...new Set(validPubMatters.map((m: any) => sanitizeClientName(m.client || m.clientName || m.name || '').cleanClient.replace(/\s*—.*$/, '').trim()).filter(Boolean))].slice(0, 8);
   const clientList = topClients.length > 0 ? topClients.join(', ') : 'leading multinational and domestic market leaders';
-  const p2 = `The department’s active portfolio reflects market-leading sector breadth, spanning food and beverage manufacturing, information technology and cloud infrastructure, healthcare and pharmaceuticals, international trade and logistics, and cross-border fintech. Recent and ongoing highlights include marquee cross-border brand acquisitions, multinational transfer-pricing and hyperinflation audit defenses, international fintech market entries, and complex succession restructurings for clients such as ${clientList}. Across these mandates, the practice consistently preserves enterprise value and business continuity amid volatile macroeconomic and regulatory conditions.`;
+  
+  let p2 = '';
+  if (isRealEstate) {
+    p2 = `The department’s active portfolio reflects comprehensive depth across core real estate asset classes, spanning master-planned residential and resort developments, industrial logistics parks, high-density vertical projects, and strategic land tenure regularisation. Recent and ongoing highlights include landmark constitutional amparo defenses against arbitrary municipal development moratoria, complex cadastral title rectifications, and administrative licensing regularizations for key clients such as ${clientList}. Across these mandates, the practice consistently preserves deployed capital, maintains project continuity, and secures definitive judicial recognition of client property rights.`;
+  } else if (isLabour) {
+    p2 = `The department’s active portfolio reflects extensive sector reach across manufacturing, technology, logistics, and retail. Recent and ongoing highlights include union negotiation milestones, complex employer substitution schemes, and high-stakes dispute defenses for key clients such as ${clientList}. Across these mandates, the practice consistently protects managerial flexibility and ensures regulatory compliance.`;
+  } else if (isTax) {
+    p2 = `The department’s active portfolio reflects market-leading sector breadth, spanning food and beverage manufacturing, information technology and cloud infrastructure, healthcare and pharmaceuticals, international trade and logistics, and cross-border fintech. Recent and ongoing highlights include marquee cross-border brand acquisitions, multinational transfer-pricing and hyperinflation audit defenses, international fintech market entries, and complex succession restructurings for clients such as ${clientList}. Across these mandates, the practice consistently preserves enterprise value and business continuity amid volatile macroeconomic and regulatory conditions.`;
+  } else {
+    p2 = `The department’s active portfolio reflects substantive sector breadth across major commercial and industrial spheres. Recent highlights include landmark transactional advisory, regulatory compliance programs, and high-stakes contentious defenses for clients such as ${clientList}.`;
+  }
 
   // Section 3: Institutional Depth & Succession Architecture (Angela Directive)
   const statesperson = lawyers.find((l: any) => l.suggestedRank === 'Senior Statesperson' || (l.name || '').toLowerCase().includes('ruan'));
@@ -673,8 +705,13 @@ export function generateDynamicB10(
     successionText = `Under the strategic direction of ${partnerNames || 'the senior partnership'}, the department fields a dedicated bench of ${lawyers.length} specialized lawyers (${partnerCount} partners and ${associateCount} associates), ensuring seamless generational depth, technical continuity, and partner-level responsiveness across all contentious and advisory workflows.`;
   }
 
-  // Section 4: International Perspective & Market Standing
-  const p4 = `The department operates with an outward-facing international perspective, actively collaborating with leading foreign counsel across the Americas and Europe on multi-jurisdictional tax planning and investment treaty protections. Combining high-end contentious defense with business-critical advisory rigor, ${firmName} firmly substantiates its position among the foremost ${practiceArea} practices in ${countryJurisdiction}.`;
+  // Section 4: Market Standing & Defensibility
+  let p4 = '';
+  if (isRealEstate) {
+    p4 = `Combining high-stakes contentious amparo advocacy with commercial transactional rigor, ${firmName} firmly substantiates its position among the foremost specialized ${practiceArea} practices in ${countryJurisdiction}, providing reliable, partner-led legal execution on the market's most demanding real estate mandates.`;
+  } else {
+    p4 = `The department operates with an outward-facing international perspective, actively collaborating with leading foreign counsel across the Americas and Europe on multi-jurisdictional matters. Combining high-end contentious defense with business-critical advisory rigor, ${firmName} firmly substantiates its position among the foremost ${practiceArea} practices in ${countryJurisdiction}.`;
+  }
 
   return sanitizeBannedSuperlatives(`${p1}\n\n${p2}\n\n${successionText}\n\n${p4}`);
 }
@@ -691,9 +728,13 @@ export function generateDynamicC2(
   pubMatters: any[],
   confMatters: any[],
   lawyers: any[],
-  chambersData: any = {}
+  chambersData: any = {},
+  submission: any = {}
 ): string {
   const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
+  const isRealEstate = /real\s*estate|inmobiliari/i.test(practiceArea);
+  const isLabour = /labou?r|empleo|laboral/i.test(practiceArea);
+  const isTax = /tax|tributari|fiscal/i.test(practiceArea);
 
   // Helper to extract clean substantive matter description without template boilerplate
   const cleanMatterSummary = (m: any): string => {
@@ -701,6 +742,18 @@ export function generateDynamicC2(
     const allText = `${m.description || ''} ${m.summary || ''} ${m.optimizedText || ''} ${m.rawNotes || ''} ${m.narrative || ''} ${m.title || ''}`.toLowerCase();
     
     // Domain-grounded high-impact descriptions for known landmark mandates
+    if (client.includes('cielo') || allText.includes('cielo country club')) {
+      return 'strategic constitutional amparo defense protecting a MXN 3bn master-planned development against arbitrary municipal construction suspensions';
+    }
+    if (client.includes('duranpark') || allText.includes('duranpark')) {
+      return 'high-stakes property title defense protecting a 207.5ha industrial logistics center valued at MXN 698.4m';
+    }
+    if (client.includes('idex') || client.includes('brasilia') || allText.includes('brasilia 10')) {
+      return 'contentious urban zoning amparo defense and license regularization for a MXN 1.3bn high-density vertical development';
+    }
+    if (client.includes('san carlos') || allText.includes('san carlos')) {
+      return 'strategic land title defense and property regularization for a major urban parcel';
+    }
     if (client.includes('pepsico') || allText.includes('pepsico')) {
       return 'high-exposure SENIAT tax controversy, hyperinflation adjustments, and cross-border transfer pricing across Ireland and Uruguay';
     }
@@ -742,41 +795,71 @@ export function generateDynamicC2(
     if (cleanTitle.length > 10 && !cleanTitle.toLowerCase().includes('matter')) {
       return `its ${cleanTitle.toLowerCase()}`;
     }
-    return 'strategic tax and regulatory structuring';
+    if (isRealEstate) return 'high-stakes real estate development, urban zoning defense, and property title regularization';
+    if (isLabour) return 'strategic collective bargaining, workforce restructuring, and labour litigation';
+    return 'strategic legal and regulatory counsel';
   };
 
-  // Step 1: Evidence & Flagship Mandates (top 3 curated matters)
-  const topMatters = pubMatters.slice(0, 3);
+  // Step 1: Evidence & Flagship Mandates (strictly publishable practice matters)
+  const eligiblePubMatters = pubMatters.filter((m: any) => {
+    if (m.isConfidential || m.confidential || m.publish_status === 'non_publishable' || m.publishStatus === 'non_publishable') return false;
+    if (isRealEstate && m.isOffCategory) return false;
+    return true;
+  });
+
+  const topMatters = eligiblePubMatters.slice(0, 3);
   const matterHighlights: string[] = [];
   for (const m of topMatters) {
-    const client = (m.client || m.clientName || m.name || 'Core Client').replace(/\s*—.*$/, '').trim();
+    const rawClient = m.client || m.clientName || m.name || 'Core Client';
+    const client = sanitizeClientName(rawClient).cleanClient.replace(/\s*—.*$/, '').trim();
     const desc = cleanMatterSummary(m);
-    matterHighlights.push(`advising ${client} on ${desc}`);
+    if (client) {
+      matterHighlights.push(`advising ${client} on ${desc}`);
+    }
   }
 
   const step1Text = matterHighlights.length > 0
     ? `During the current research cycle, the team led marquee mandates across ${countryJurisdiction}, notably ${matterHighlights.join('; ')}.`
-    : `The department has consistently led market-defining mandates across ${countryJurisdiction}, advising domestic conglomerates and multinational market leaders.`;
+    : `The department has consistently led market-defining mandates across ${countryJurisdiction}, advising domestic conglomerates and market leaders.`;
 
   // Step 2: Institutional Differentiation & Direct Execution
   const partnerNames = lawyers.filter((l: any) => l.isPartner).map((l: any) => l.name).slice(0, 3);
   const partnerText = partnerNames.length > 0 ? partnerNames.join(', ') : 'the senior partnership';
 
-  const step2Text = `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`;
+  const step2Text = isRealEstate
+    ? `While operating in an increasingly complex and restrictive regulatory environment shaped by aggressive municipal moratoria and title disputes, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct courtroom and administrative advocacy before federal amparo courts, cadastral registries, and urban licensing bodies, ensuring partner-level strategic command combined with deep associate execution, rather than relying on external trial counsel.`
+    : `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`;
 
-  // Step 3: Practice Depth & Portfolio Breadth
-  const otherClients = [...pubMatters.slice(3, 8), ...confMatters.slice(0, 3)]
-    .map((m: any) => (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').trim())
+  // Step 3: Practice Depth & Portfolio Breadth (STRICT CONFIDENTIALITY: ZERO CONFIDENTIAL LEAKS)
+  // NEVER include confMatters here! Only publishable matters!
+  const otherClients = eligiblePubMatters.slice(3, 8)
+    .map((m: any) => sanitizeClientName(m.client || m.clientName || m.name || '').cleanClient.replace(/\s*—.*$/, '').trim())
     .filter(Boolean);
-  const clientList = otherClients.length > 0 ? `including ${otherClients.join(', ')}` : 'spanning regulated industries and blue-chip enterprises';
+  const clientList = otherClients.length > 0 ? `including ${otherClients.join(', ')}` : 'spanning premier commercial developers, industrial operators, and blue-chip enterprises';
 
-  const step3Text = `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, cross-border structuring, and business-critical compliance.`;
+  const step3Text = isRealEstate
+    ? `The breadth of the department's active portfolio—representing leading developers and industrial center operators ${clientList}—demonstrates sustained technical rigor in handling multi-million-dollar real estate controversies, land tenure regularisation, and urban zoning enforcement.`
+    : `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, commercial structuring, and business-critical compliance.`;
 
   // Step 4: The Ranking vs Reality Gap & Explicit Target Ask (Angela Directive)
-  const currentRank = chambersData?.currentRanking || chambersData?.verified_band || 'Band 2';
-  const targetRank = chambersData?.targetRanking || chambersData?.target_band || 'Band 1';
-  
-  const step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, cross-border complexity, and uninterrupted institutional client retention now benchmark against the market's premier tier. While currently ranked in ${currentRank}, this position does not capture the department's demonstrated leadership on landmark cross-border acquisitions and high-stakes administrative controversies. On the strength of this demonstrable track record, ${firmName} respectfully submits that the practice merits advancement to ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
+  // LOCKED FACTS: Downstream layers must NEVER re-interpret or hallucinate band positions!
+  const isUnranked = Boolean(
+    !submission.currentBand ||
+    submission.currentBand.toLowerCase().includes('unranked') ||
+    submission.currentBand.toLowerCase().includes('not ranked') ||
+    chambersData.currentRanking?.toLowerCase().includes('unranked') ||
+    chambersData.current_band?.toLowerCase().includes('unranked')
+  );
+
+  const currentRank = isUnranked ? 'Unranked' : (submission.currentBand || chambersData.currentRanking || chambersData.current_band || 'Band 4');
+  const targetRank = submission.targetBand || chambersData.targetRanking || chambersData.target_band || (isUnranked ? 'Band 4 / Entry Standard' : 'Band 1');
+
+  let step4Text = '';
+  if (isUnranked) {
+    step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, commercial sophistication, and institutional client retention fully benchmark against ranked competitors in ${countryJurisdiction}. While currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, this position does not reflect the practice's proven track record on high-stakes contentious and advisory mandates. On the strength of this demonstrable evidence, ${firmName} respectfully submits that the practice merits initial ranking recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
+  } else {
+    step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, technical sophistication, and uninterrupted institutional client retention now benchmark against the market's leading tier. While currently ranked in ${currentRank}, this position does not capture the department's demonstrated expansion and lead counsel role on key mandates. On the strength of this demonstrable track record, ${firmName} respectfully submits that the practice merits advancement to ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
+  }
 
   const rawC2 = `${step1Text}\n\n${step2Text}\n\n${step3Text}\n\n${step4Text}`;
 
@@ -1056,8 +1139,23 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   // v26.43: Evidentiary Density & Strategic Differentiation Shield (Angela Castillo Directive)
   let b10Text = b7Text;
-  if (!b10Text || b10Text.trim().length < 150 || b10Text.includes('principal base is Guadalajara') || b10Text.includes('throughout the State of Jalisco, where most of our clients operate')) {
-    b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers);
+  const isRealEstateArea = /real\s*estate|inmobiliari/i.test(practiceArea);
+  const containsOffCategoryEnergy = isRealEstateArea && (
+    b10Text.toLowerCase().includes('clean-energy') ||
+    b10Text.toLowerCase().includes('public lighting') ||
+    b10Text.toLowerCase().includes('public-lighting') ||
+    b10Text.toLowerCase().includes('fuel service') ||
+    b10Text.toLowerCase().includes('national electric system')
+  );
+
+  if (
+    !b10Text ||
+    b10Text.trim().length < 150 ||
+    b10Text.includes('principal base is Guadalajara') ||
+    b10Text.includes('throughout the State of Jalisco, where most of our clients operate') ||
+    containsOffCategoryEnergy
+  ) {
+    b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
   b10Text = sanitizeBannedSuperlatives(b10Text);
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
@@ -1070,21 +1168,48 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('If you have used barristers / advocates in the UK, Australia, Hong Kong, India, Malaysia, New Zealand or Sri Lanka please provide the information below (Optional)', ['Barrister/advocate name', 'Firm / Set', 'Comments'], emptyBarRows, { labelPrefix: 'C1' }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // C2 Feedback (v26.30: 4-Part Strategic Argument with the Explicit Band Ask)
+  // C2 Feedback (v26.30: 4-Part Strategic Argument with Explicit Locked Band Ask)
   let c2Val = chambersData.analysis?.audit_letter?.competitive_positioning_text
     || chambersData.analysis?.competitive_positioning_text
     || chambersData.competitive_positioning_text
     || chambersData.feedback
     || chambersData.c2;
 
+  const isUnrankedFirm = Boolean(
+    !submission.currentBand ||
+    submission.currentBand.toLowerCase().includes('unranked') ||
+    submission.currentBand.toLowerCase().includes('not ranked') ||
+    chambersData.currentRanking?.toLowerCase().includes('unranked') ||
+    chambersData.current_band?.toLowerCase().includes('unranked')
+  );
+
+  const c2LowerText = String(c2Val || '').toLowerCase();
+  const hasRankingHallucination = isUnrankedFirm && (
+    c2LowerText.includes('currently ranked in band 2') ||
+    c2LowerText.includes('currently ranked in band 1') ||
+    c2LowerText.includes('currently ranked in band 3') ||
+    c2LowerText.includes('advancement to band 1')
+  );
+
+  // Check if C2 contains any confidential client names
+  const allConfMattersForGate = [...curation.officialConfMatters, ...(curation.surplusConfMatters || [])];
+  const containsConfLeak = allConfMattersForGate.some((cm: any) => {
+    const rawName = (cm.client || cm.clientName || cm.name || '').trim();
+    if (rawName.length < 4) return false;
+    const cleanEntity = rawName.split(/[\—\-\:\.]/)[0].trim();
+    return cleanEntity.length >= 4 && c2LowerText.includes(cleanEntity.toLowerCase());
+  });
+
   if (
     !c2Val ||
     String(c2Val).length < 150 ||
     String(c2Val).includes('We would be happy to discuss') ||
     String(c2Val).toLowerCase().includes('matter was important') ||
-    !String(c2Val).toLowerCase().includes('advancement to')
+    hasRankingHallucination ||
+    containsConfLeak ||
+    (!c2LowerText.includes('advancement to') && !c2LowerText.includes('initial ranking'))
   ) {
-    c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers);
+    c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
   }
 
   // Sanitize any potential template or prompt leakage from C2
@@ -1174,6 +1299,38 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode, lawyers, heroContext));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
+  }
+
+  // ═══ FINAL DELIVERABLE ARTIFACT VALIDATION (Angela Castillo Directive) ═══
+  const finalPublicSections = [
+    { name: 'B10 Department Overview', content: b10Text },
+    { name: 'C2 Feedback & Positioning', content: String(c2Val) },
+    { name: 'D0 Publishable Clients', content: pubClients.join(', ') },
+    { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${l.comments || ''} ${l.standoutWork || ''}`).join(' ') }
+  ];
+
+  const finalDeliveryCheck = runArtifactIntegrityCheck(
+    curation.officialPubMatters,
+    curation.officialConfMatters,
+    [...curation.surplusPubMatters, ...curation.surplusConfMatters],
+    {
+      practiceArea,
+      firmName,
+      heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
+      heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
+      lawyersCount: lawyers.length,
+      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico',
+      currentBand: submission.currentBand || chambersData.currentRanking || chambersData.current_band || 'Unranked',
+      targetBand: submission.targetBand || chambersData.targetRanking || chambersData.target_band || 'Band 4 / Entry Standard',
+      c2Text: String(c2Val),
+      b10Text: b10Text,
+      publicSections: finalPublicSections
+    }
+  );
+
+  if (!finalDeliveryCheck.passed) {
+    console.error('[FINAL-ARTIFACT-VALIDATION] Delivery blocked due to critical integrity issues:', finalDeliveryCheck.criticalErrors);
+    throw new Error(`Final Deliverable Validation failed: ${finalDeliveryCheck.criticalErrors.map(e => e.description).join('; ')}`);
   }
 
   // Build document with header/footer and cross-platform compatibility (v8.0)

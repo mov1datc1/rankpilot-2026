@@ -13,6 +13,9 @@
  *    matters (pure tax, labor, or vehicle VAT refunds without real estate/land nexus).
  */
 
+import { classifyMatterPractice } from '@/lib/audit/practice-area-classifier';
+import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
+
 export interface CuratedMattersResult {
   officialPubMatters: any[];
   officialConfMatters: any[];
@@ -93,6 +96,18 @@ export function calculateStrategicTier(
   if (evalData) {
     if (evalData.quality_label === 'Flagship Matter') score += 50;
     if (typeof evalData.score === 'number') score += evalData.score * 0.1;
+  }
+
+  // 1b. Separate Practice Relevance Scoring (Matter Strength != Practice Relevance)
+  const classification = classifyMatterPractice(matter, practiceArea);
+  matter.practiceRelevanceScore = classification.relevanceScore;
+  matter.practiceClassification = classification.classification;
+  matter.primaryDetectedPractice = classification.primaryPractice;
+  matter.isOffCategory = classification.isOffCategory;
+  if (classification.isOffCategory) {
+    score -= 400; // Off-category matter heavily demoted to prevent displacing core practice mandates
+  } else if (classification.classification === 'core') {
+    score += 40;
   }
 
   // 2. Explicit Hero Matter designated by user, curation, or canonical anchor
@@ -412,6 +427,15 @@ export function curateMatters(
   const seenTitles = new Set<string>();
   
   for (const m of allMatters) {
+    // Surgically clean client names from embedded company marketing copy
+    const clientCleaned = sanitizeClientName(m.client || m.clientName || m.name || '');
+    if (clientCleaned.wasModified) {
+      m.client = clientCleaned.cleanClient;
+      if (clientCleaned.clientDescription && !m.clientDescription) {
+        m.clientDescription = clientCleaned.clientDescription;
+      }
+    }
+
     const key = (m.title || m.client || m.name || '').trim().toLowerCase();
     // Skip duplicate titles if exact match
     if (key && seenTitles.has(key)) continue;
@@ -442,6 +466,10 @@ export function curateMatters(
     // Canonical anchors are vetted directory matters and MUST never be excluded
     if (m._isCanonicalAnchor) return false;
     if (m.isExcluded || m.status === 'Excluded' || m.status === 'Pruned') return true;
+    // Off-category exclusion (e.g. Energy concessions or environmental amparo in Real Estate)
+    if (m.isOffCategory === true || (typeof m.practiceRelevanceScore === 'number' && m.practiceRelevanceScore < 50)) {
+      return true;
+    }
     const client = (m.client || m.clientName || m.name || '').toLowerCase();
     const title = (m.title || '').toLowerCase();
     for (const exc of auditExclusions) {

@@ -110,17 +110,25 @@ export async function POST(request: NextRequest) {
     const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || sanitizePractice(submission.practiceArea);
     const finalPracticeArea = cleanExtractedPractice || calibratedPractice || 'General Practice';
 
+    // ═══ JUDGE SOL EXTRACTION SANITY & SURGICAL HEALER ═══
+    const { judgeSolExtractionAudit } = await import('@/lib/audit/extraction-auditor');
+    const extractionAudit = judgeSolExtractionAudit({
+      matters: extractedMatters,
+      practiceArea: finalPracticeArea,
+      firmName: extractedMeta.firm_name || context?.firm_name || ''
+    });
+    const healedMatters = extractionAudit.healedMatters;
+
     // Delete any old draft matters for this submission before populating
     await prisma.matter.deleteMany({
       where: { submissionId: submission.id }
     });
 
-    // Create matters in database
+    // Create matters in database with surgically cleaned client names and validated confidentiality
     const createdMatters = [];
-    for (let idx = 0; idx < extractedMatters.length; idx++) {
-      const m = extractedMatters[idx];
-      const confStatus = m.confidentialityStatus || (m.isConfidential ? 'confidential' : (m.confidentialityConfirmed === false ? 'confirmation_required' : 'publishable'));
-      const isConf = confStatus === 'confidential';
+    for (let idx = 0; idx < healedMatters.length; idx++) {
+      const m = healedMatters[idx];
+      const isConf = Boolean(m.isConfidential);
       const created = await prisma.matter.create({
         data: {
           submissionId: submission.id,
@@ -133,7 +141,7 @@ export async function POST(request: NextRequest) {
           optimizedText: m.optimizedText || '',
           status: 'Draft',
           isConfidential: isConf,
-          otherInfo: m.valueConflict || m.otherInfo || m.press_link || null,
+          otherInfo: m.valueConflict || m.otherInfo || m.press_link || (m.practiceRelevanceRationale ? `[Relevance: ${m.practiceRelevanceScore}% - ${m.primaryDetectedPractice}] ${m.practiceRelevanceRationale}` : null),
           crossBorder: m.crossBorder || '',
           teamMembers: m.teamMembers || m.team_members || '',
           otherFirms: m.otherFirms || '',
@@ -143,13 +151,19 @@ export async function POST(request: NextRequest) {
           jurisdiction: extractedMeta.location || submission.guideRegion
         }
       });
-      createdMatters.push(created);
+      createdMatters.push({
+        ...created,
+        practiceRelevanceScore: m.practiceRelevanceScore,
+        practiceClassification: m.practiceClassification,
+        primaryDetectedPractice: m.primaryDetectedPractice
+      });
     }
 
     // Merge into chambersData
     const existingChambers = (submission.chambersData as any) || {};
     const updatedChambersData = {
       ...existingChambers,
+      judge_sol_extraction_audit: extractionAudit.reviewAudit,
       firm_name: extractedMeta.firm_name || existingChambers.firm_name || '',
       firmName: extractedMeta.firm_name || existingChambers.firmName || '',
       metadata: {
@@ -166,33 +180,38 @@ export async function POST(request: NextRequest) {
       department: extractedDept,
       lawyers: extractedLawyers,
       matters: createdMatters.map((m, idx) => {
-        const rawM = extractedMatters[idx] || {};
-        const confStatus = rawM.confidentialityStatus || (m.isConfidential ? 'confidential' : (rawM.confidentialityConfirmed === false ? 'confirmation_required' : 'publishable'));
-        const isConf = confStatus === 'confidential';
-        const isUnconfirmed = confStatus === 'confirmation_required';
+        const healedM = healedMatters[idx] || {};
+        const isConf = Boolean(m.isConfidential);
         return {
           id: m.id,
           name: m.name,
           title: m.name,
           client: m.client,
+          clientDescription: healedM.clientDescription || '',
           value: m.value,
           leadPartner: m.leadPartner,
           lead_partner: m.leadPartner,
           rawNotes: m.rawNotes,
           summary: m.rawNotes,
           isConfidential: isConf,
-          confidentialityStatus: confStatus,
-          confidentialityConfirmed: !isUnconfirmed,
-          publish_status: isConf ? 'non_publishable' : (isUnconfirmed ? 'confirmation_required' : 'publishable'),
-          valueConflict: rawM.valueConflict || '',
-          source_label: rawM.source_label || rawM.sourceLabel || '',
+          confidential: isConf,
+          confidentialityStatus: isConf ? 'confidential' : 'publishable',
+          confidentialityConfirmed: true,
+          publish_status: isConf ? 'non_publishable' : 'publishable',
+          publishStatus: isConf ? 'confidential' : 'publishable',
+          valueConflict: healedM.valueConflict || '',
+          source_label: healedM.source_label || healedM.sourceLabel || '',
           crossBorder: m.crossBorder,
           teamMembers: m.teamMembers,
           team_members: m.teamMembers,
           otherFirms: m.otherFirms,
           completionDate: m.completionDate,
           optimizedText: m.optimizedText || '',
-          optimized_text: m.optimizedText || ''
+          optimized_text: m.optimizedText || '',
+          practiceRelevanceScore: healedM.practiceRelevanceScore ?? 75,
+          practiceClassification: healedM.practiceClassification ?? 'core',
+          primaryDetectedPractice: healedM.primaryDetectedPractice ?? finalPracticeArea,
+          practiceRelevanceRationale: healedM.practiceRelevanceRationale ?? ''
         };
       })
     };

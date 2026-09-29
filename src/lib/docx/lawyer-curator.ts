@@ -1,4 +1,5 @@
 import { cleanLawyerNames, sanitizeBannedSuperlatives } from './artifact-integrity-check';
+import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 
 export interface CuratedLawyer {
   name: string;
@@ -249,7 +250,8 @@ function cleanRawLeadString(rawStr: string): string[] {
     const clientList: string[] = [];
     const clientSet = new Set<string>();
     for (const m of linkedMatters) {
-      let client = (m.client || m.clientName || m.name || '').replace(/\s*—.*$/, '').replace(/\|.*$/, '').trim();
+      const { cleanClient } = sanitizeClientName(m.client || m.clientName || m.name || '');
+      let client = cleanClient.replace(/\s*—.*$/, '').replace(/\|.*$/, '').trim();
       if (client && client.length > 2 && !clientSet.has(client.toLowerCase()) && !client.toLowerCase().includes('n/a') && !client.toLowerCase().includes('confidential')) {
         clientSet.add(client.toLowerCase());
         const val = m.value && m.value !== 'N/A' && m.value.length > 2 ? ` (${m.value})` : '';
@@ -337,6 +339,10 @@ function cleanRawLeadString(rawStr: string): string[] {
     } else if (nNorm.includes('llamozas')) {
       bioCommentary = `Associate Isabella Llamozas provides vital technical and operational support across contentious tax proceedings and corporate tax compliance, demonstrating substantive involvement in high-stakes administrative defenses and client advisory across the department's active portfolio, justifying recognition as Associate to Watch.`;
       strategicRationale = `Substantive technical contributor across contentious proceedings and corporate tax advisory.`;
+    } else if (nNorm.includes('jose pablo') || nNorm.includes('ramos castillo')) {
+      const cleanRank = targetRank.split('(')[0].trim() || 'Band 4 / Up and Coming';
+      bioCommentary = `${lName} directs the ${practiceArea} practice at ${firmName}, leading substantive contentious and regulatory instructions where commercial value and regulatory exposure intersect. Over the research cycle, he led the constitutional strategy protecting the MXN 3bn El Cielo Country Club development against municipal and state revocation decrees, directing amparo proceedings to secure definitive suspensions that preserved project continuity. Demonstrating transactional and title defense capability, he steered the defense of the 207.5-hectare Durango Logistics and Industrial Center for Duranpark (MXN 698.4m) against agrarian nullity claims, and directed regulatory structuring for IDEX's MXN 1.3bn Brasilia vertical residential project. This demonstrated track record of first-chair leadership across multi-billion-peso developments firmly justifies consideration for ${cleanRank}.`;
+      strategicRationale = `Partner leading substantive instructions across Real Estate, demonstrating established first-chair execution across multi-billion-peso commercial developments (El Cielo, IDEX, Duranpark).`;
     } else {
       // Dynamic evidentiary synthesis for any practice area or jurisdiction
       const roleTitle = l.isPartner ? 'Partner' : 'Senior Associate';

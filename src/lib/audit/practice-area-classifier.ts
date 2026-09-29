@@ -179,3 +179,164 @@ export function detectPracticeAreaDiscrepancy(
     warningIfContinued: ''
   };
 }
+
+export interface MatterPracticeClassification {
+  relevanceScore: number; // 0 - 100
+  classification: 'core' | 'supporting' | 'off_category';
+  primaryPractice: string;
+  relevanceRationale: string;
+  isOffCategory: boolean;
+}
+
+/**
+ * Classifies an individual matter's practice relevance independently of matter strength.
+ * Enforces the rule: Matter Strength != Practice Relevance.
+ * (e.g., A matter with 95/100 sophistication in Energy concessions has only 30/100 relevance for Real Estate).
+ */
+export function classifyMatterPractice(
+  matter: any,
+  targetPracticeArea: string = ''
+): MatterPracticeClassification {
+  const normTarget = (targetPracticeArea || '').toLowerCase().trim();
+  const client = (matter.client || matter.clientName || matter.name || '').toLowerCase();
+  const title = (matter.title || '').toLowerCase();
+  const summary = (matter.summary || matter.rawNotes || matter.optimizedText || matter.description || '').toLowerCase();
+  const text = `${client} ${title} ${summary}`;
+
+  const isRealEstate = normTarget.includes('real estate') || normTarget.includes('inmobiliario');
+
+  if (isRealEstate) {
+    // 1. Off-category: Energy infrastructure, public lighting, fuel stations, electric grid
+    if (
+      text.includes('alumbrado público') || 
+      text.includes('alumbrado publico') || 
+      text.includes('public lighting') ||
+      text.includes('fuel service stations') ||
+      text.includes('estaciones de servicio') ||
+      text.includes('clean-energy') ||
+      text.includes('national electric system') ||
+      text.includes('sistema eléctrico nacional') ||
+      text.includes('sistema electrico nacional') ||
+      (text.includes('concesión') && (text.includes('zapopan') || text.includes('energía') || text.includes('alumbrado')))
+    ) {
+      return {
+        relevanceScore: 30,
+        classification: 'off_category',
+        primaryPractice: 'Energy & Natural Resources / Public Law',
+        relevanceRationale: 'Mandate centers on public lighting infrastructure, fuel stations, and energy generation. In Chambers, this benchmarks under Energy or Public Concessions, not Real Estate.',
+        isOffCategory: true,
+      };
+    }
+
+    // 2. Off-category: Pure environmental amparo / ecology / fauna conservation
+    if (
+      (text.includes('conciencia ambiental') || text.includes('devangary') || text.includes('environmental amparo') || text.includes('protección de ecosistemas') || text.includes('servicios ambientales') || text.includes('environmental services')) &&
+      !text.includes('desarrollo inmobiliario') &&
+      !text.includes('fraccionamiento') &&
+      !text.includes('parque industrial') &&
+      !text.includes('licencia de construcción')
+    ) {
+      return {
+        relevanceScore: 35,
+        classification: 'off_category',
+        primaryPractice: 'Environment',
+        relevanceRationale: 'Mandate represents pure environmental amparo and ecosystem conservation litigation. In Chambers, this benchmarks under Environment, not Real Estate.',
+        isOffCategory: true,
+      };
+    }
+
+    // 3. Off-category: Freight logistics, vehicle circulation, SICT fines
+    if (
+      text.includes('paquetexpress') ||
+      text.includes('transportes potosinos') ||
+      (text.includes('transportation of goods') && !text.includes('parque industrial') && !text.includes('industrial center')) ||
+      (text.includes('circulación') && text.includes('sict'))
+    ) {
+      return {
+        relevanceScore: 25,
+        classification: 'off_category',
+        primaryPractice: 'Transportation & Logistics / Administrative',
+        relevanceRationale: 'Mandate concerns transport regulation, vehicular circulation, and logistics fines without real property acquisition or development.',
+        isOffCategory: true,
+      };
+    }
+
+    // 4. Off-category: Pure tax / SAT credits / VAT refunds
+    if (
+      (text.includes('sat') || text.includes('devolución de iva') || text.includes('crédito fiscal')) &&
+      !text.includes('predial') &&
+      !text.includes('expropiación') &&
+      !text.includes('terreno') &&
+      !text.includes('desarrollo')
+    ) {
+      return {
+        relevanceScore: 20,
+        classification: 'off_category',
+        primaryPractice: 'Tax',
+        relevanceRationale: 'Mandate involves federal tax audits and SAT litigation without real estate property nexus.',
+        isOffCategory: true,
+      };
+    }
+
+    // 5. Off-category: Medical technology / hospital supplies
+    if (text.includes('tecnología médica') || text.includes('tecnologia medica') || text.includes('medical device')) {
+      return {
+        relevanceScore: 15,
+        classification: 'off_category',
+        primaryPractice: 'Life Sciences / Commercial',
+        relevanceRationale: 'Mandate relates to medical equipment distribution and commercial supply.',
+        isOffCategory: true,
+      };
+    }
+
+    // 6. Core Real Estate Mandates
+    let reScore = 75;
+    if (
+      text.includes('desarrollo inmobiliario') ||
+      text.includes('real estate development') ||
+      text.includes('el cielo') ||
+      text.includes('idex') ||
+      text.includes('brasilia') ||
+      text.includes('duranpark') ||
+      text.includes('san carlos') ||
+      text.includes('parque industrial') ||
+      text.includes('industrial center') ||
+      text.includes('housing project') ||
+      text.includes('desarrollo de vivienda') ||
+      text.includes('condominio')
+    ) {
+      reScore += 20;
+    }
+    if (
+      text.includes('expropiación') ||
+      text.includes('expropriation') ||
+      text.includes('amparo') ||
+      text.includes('suspensión definitiva') ||
+      text.includes('clausura') ||
+      text.includes('uso de suelo') ||
+      text.includes('zoning') ||
+      text.includes('hectáreas') ||
+      text.includes('superficie') ||
+      text.includes('regularización de predios')
+    ) {
+      reScore += 10;
+    }
+
+    return {
+      relevanceScore: Math.min(100, reScore),
+      classification: reScore >= 75 ? 'core' : 'supporting',
+      primaryPractice: 'Real Estate',
+      relevanceRationale: 'Substantive focus on commercial/residential development, zoning regularisation, and contentious real property protection.',
+      isOffCategory: false,
+    };
+  }
+
+  // Generic fallback
+  return {
+    relevanceScore: 75,
+    classification: 'core',
+    primaryPractice: targetPracticeArea || 'General Practice',
+    relevanceRationale: 'Matter aligned with target practice area scope.',
+    isOffCategory: false,
+  };
+}

@@ -261,6 +261,11 @@ export function runArtifactIntegrityCheck(
     lawyersCount?: number;
     jurisdiction?: string;
     guideRegion?: string;
+    currentBand?: string;
+    targetBand?: string;
+    c2Text?: string;
+    b10Text?: string;
+    publicSections?: { name: string; content: string }[];
   } = {}
 ): ArtifactIntegrityReport {
   const criticalErrors: IntegrityIssue[] = [];
@@ -340,6 +345,30 @@ export function runArtifactIntegrityCheck(
           matterName: mName,
           field: 'Real Estate Core Purity',
           description: 'Municipal property tax (predial) refund dispute detected in Real Estate Core. Substantively unaligned; must remain in Reserve Roster.',
+          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
+        });
+      }
+
+      // Off-category Energy / Lighting concession
+      const isEnergyConcession = /\b(clean-energy|national electric system|sistema el[ée]ctrico nacional|public lighting|alumbrado p[uú]blico|estaciones de servicio|fuel service stations)\b/i.test(combinedLower) || (combinedLower.includes('concesi') && combinedLower.includes('zapopan'));
+      if (isEnergyConcession) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: mName,
+          field: 'Real Estate Core Purity',
+          description: 'Energy infrastructure / public lighting concession detected in Real Estate Core. Benchmarks under Energy or Public Concessions; must remain in Reserve Roster.',
+          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
+        });
+      }
+
+      // Off-category Pure Environmental Amparo
+      const isPureEnvironmental = (combinedLower.includes('conciencia ambiental') || combinedLower.includes('devangary')) && !combinedLower.includes('desarrollo inmobiliario');
+      if (isPureEnvironmental) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: mName,
+          field: 'Real Estate Core Purity',
+          description: 'Pure environmental amparo / ecosystem litigation detected in Real Estate Core. Benchmarks under Environment; must remain in Reserve Roster.',
           actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
         });
       }
@@ -467,6 +496,90 @@ export function runArtifactIntegrityCheck(
       description: 'B9 lawyer roster is completely empty (0 lawyers). Existing substantive lawyer evidence from source document must never disappear.',
       actionTaken: 'Blocked delivery: B9 lawyer roster must be populated.'
     });
+  }
+
+  // Check 10: Ranking Integrity Invariant (Angela Castillo Critical Audit Rule)
+  // Canonical currentBand and targetBand must never be distorted by downstream generation.
+  if (options.c2Text) {
+    const c2Lower = options.c2Text.toLowerCase();
+    const isUnranked = Boolean(
+      (options.currentBand && options.currentBand.toLowerCase().includes('unranked')) ||
+      (options.currentBand && options.currentBand.toLowerCase().includes('not ranked'))
+    );
+
+    if (isUnranked && (c2Lower.includes('currently ranked in band 2') || c2Lower.includes('currently ranked in band 1') || c2Lower.includes('currently ranked in band 3'))) {
+      criticalErrors.push({
+        severity: 'CRITICAL',
+        matterName: 'Section C2 Feedback',
+        field: 'Ranking Integrity Invariant',
+        description: `Audit determined firm is Unranked, but Section C2 claims 'currently ranked in Band 2/1/3'. Downstream generation cannot alter locked ranking facts.`,
+        actionTaken: 'Blocked delivery: C2 ranking narrative must align with canonical Unranked status.'
+      });
+    }
+
+    const targetIsBand4 = Boolean(options.targetBand && (options.targetBand.toLowerCase().includes('band 4') || options.targetBand.toLowerCase().includes('entry')));
+    if (targetIsBand4 && c2Lower.includes('advancement to band 1')) {
+      criticalErrors.push({
+        severity: 'CRITICAL',
+        matterName: 'Section C2 Feedback',
+        field: 'Target Integrity Invariant',
+        description: `Audit calibrated target as 'Band 4 / Entry', but Section C2 claims 'advancement to Band 1'. Downstream generation cannot hallucinate higher-tier claims.`,
+        actionTaken: 'Blocked delivery: Target band ask must align with canonical Band 4 / Entry calibration.'
+      });
+    }
+  }
+
+  // Check 11: Confidentiality Hard Gate (Angela Castillo Directive)
+  // Compare all confidential client names against all public sections (D0, B9, B10, C2).
+  const confMattersList = [...officialConfMatters, ...surplusMatters.filter((m: any) => m.isConfidential || m.confidential || m.publish_status === 'non_publishable')];
+  const confClientNames: string[] = [];
+  for (const cm of confMattersList) {
+    const rawC = (cm.client || cm.clientName || cm.name || '').trim();
+    if (rawC.length >= 4) {
+      confClientNames.push(rawC);
+      // Also extract clean entity if formatted like "Familia de Anda — ..."
+      const prefix = rawC.split(/[\—\-\:\.]/)[0].trim();
+      if (prefix.length >= 4 && prefix.toLowerCase() !== 'confidential') {
+        confClientNames.push(prefix);
+      }
+    }
+  }
+
+  if (options.publicSections && options.publicSections.length > 0 && confClientNames.length > 0) {
+    for (const sec of options.publicSections) {
+      const contentLower = (sec.content || '').toLowerCase();
+      for (const confClient of confClientNames) {
+        const confLower = confClient.toLowerCase();
+        // Guard against short generic tokens
+        if (confLower.length < 4 || confLower === 'confidential' || confLower === 'client' || confLower === 'private') continue;
+        
+        // Exact word boundary or distinct inclusion check
+        const regex = new RegExp(`\\b${confLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(contentLower)) {
+          criticalErrors.push({
+            severity: 'CRITICAL',
+            matterName: confClient,
+            field: `Confidentiality Hard Gate — Section ${sec.name}`,
+            description: `Confidential client '${confClient}' detected inside public section '${sec.name}'. Zero confidential evidence may leak into public sections.`,
+            actionTaken: 'Blocked delivery: Confidential client leak detected in publishable deliverable.'
+          });
+        }
+      }
+    }
+  }
+
+  // Check 12: Practice Evidence Grounding in Institutional Positioning (B10)
+  if (options.b10Text && (options.practiceArea || '').toLowerCase().includes('real estate')) {
+    const b10Lower = options.b10Text.toLowerCase();
+    if (b10Lower.includes('clean-energy generator') || b10Lower.includes('public lighting') || b10Lower.includes('public-lighting operator') || b10Lower.includes('fuel service stations')) {
+      criticalErrors.push({
+        severity: 'CRITICAL',
+        matterName: 'Section B10 Department Overview',
+        field: 'Practice Evidence Grounding',
+        description: 'Energy infrastructure / clean-energy / public lighting evidence detected in Real Estate B10. Real Estate positioning must only be supported by Real Estate practice evidence.',
+        actionTaken: 'Blocked delivery: Practice positioning must be supported solely by practice-relevant evidence.'
+      });
+    }
   }
 
   const passed = criticalErrors.length === 0;

@@ -42,6 +42,10 @@ MANDATORY RULES:
    - Do NOT use section headers like "Pillar 1:", "Introduction:", "Overview:", or bullet points.
    - NEVER include passive marketing cliches like "We are dedicated to client satisfaction", "We seek long-term relationships", or self-limiting regional confessions ("most of our clients operate in Jalisco").
    - Present a seamless, multi-paragraph institutional narrative in elevated, authoritative third-person directory prose.
+5. PRACTICE RELEVANCE PURITY (Angela Castillo Directive):
+   - What is this department demonstrably known for within the target PRACTICE AREA?
+   - Ground the narrative solely in legal and regulatory work relevant to the specified practice area (e.g., for Real Estate: land acquisition, urban zoning, real estate development, contentious property amparos, asset restitution).
+   - DO NOT cite unrelated industry operations of the client (e.g., fuel stations, public lighting, renewable energy generation) to claim practice breadth if the underlying legal mandate was not energy or infrastructure work.
 """
 
 MATTER_SYSTEM_PROMPT = """You are the Senior Legal Directory Editor optimizing a work highlight / matter narrative for Chambers and Partners and The Legal 500.
@@ -78,6 +82,11 @@ CONSTITUTIONAL RULES:
       * NEVER write "marquee global corporate client" (use "global corporate client").
       * NEVER write "regulatory source of the burden" (use "validity of the regulatory framework itself").
       * NEVER write "apparent fait accompli" (use "The team transformed what appeared to be an irreversible government taking into a viable claim for restitution or full compensation").
+11. FACTUAL GROUNDING GUARDRAIL (RankPilot may improve the narrative. It must NEVER improve or extrapolate the facts - Angela Castillo Rule):
+    Do not invent or extrapolate commercial, operational, or financial consequences that are not explicitly stated or unequivocally supported in the source notes.
+    - If the source notes say an injunction or amparo suspension prevented an embargo/seizure, state clearly that it prevented that embargo/seizure.
+    - NEVER extrapolate this into unverified tropes such as "preserved financing capacity", "destabilised the company's wider operating platform", or "threatened credit facilities" unless the source notes explicitly substantiate that debt financing or banking facilities were in jeopardy.
+    - If a company's general business lines are mentioned (e.g. operates gas stations or renewable energy), DO NOT use that corporate profile to claim the legal work was an energy infrastructure mandate when the actual legal work was an administrative municipal amparo or local property dispute.
 """
 
 

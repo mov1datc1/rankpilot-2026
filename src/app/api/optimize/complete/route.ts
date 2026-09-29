@@ -541,8 +541,24 @@ export async function POST(request: NextRequest) {
       : `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94%, (2) Strategic Analysis Quality: 96%, (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% (${verifiedThreeParasCount} of ${totalCoreMatters} matters structured in 3 paragraphs).`;
 
     let c2Positioning = chambersData.original_c2 || chambersData.c2 || '';
-    if (!c2Positioning || c2Positioning.length < 80 || c2Positioning.includes('continues to expand its market leadership')) {
-      c2Positioning = generateDynamicC2(firmName, practiceArea, location, curationResult.officialPubMatters, curationResult.officialConfMatters, chambersData.lawyers || []);
+    const c2LowerPos = (c2Positioning || '').toLowerCase();
+    const hasCorruptRankPos = isUnranked && (
+      c2LowerPos.includes('currently ranked in band 2') ||
+      c2LowerPos.includes('currently ranked in band 1') ||
+      c2LowerPos.includes('advancement to band 1')
+    );
+
+    if (!c2Positioning || c2Positioning.length < 80 || c2Positioning.includes('continues to expand its market leadership') || hasCorruptRankPos) {
+      c2Positioning = generateDynamicC2(
+        firmName,
+        practiceArea,
+        location,
+        curationResult.officialPubMatters,
+        curationResult.officialConfMatters,
+        chambersData.lawyers || [],
+        chambersData,
+        submission
+      );
     }
 
     const auditLetter = {
