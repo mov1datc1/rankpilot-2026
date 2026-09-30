@@ -378,6 +378,31 @@ def sanitize_submission_voice(text: str) -> str:
         '',
         result
     )
+    result = re.sub(
+        r'(?i)(?:while\s+)?(?:the\s+)?available\s+mandate\s+record\s+does\s+not\s+state\s+[^.!?]*[.!?]?',
+        '',
+        result
+    )
+    result = re.sub(
+        r'(?i)(?:while\s+)?(?:the\s+)?available\s+(?:evidence|record|dossier|documentation)\s+does\s+not\s+(?:state|disclose|contain|provide)\s+[^.!?]*[.!?]?',
+        '',
+        result
+    )
+    result = re.sub(
+        r'(?i)(?:although\s+|while\s+)?no\s+discrete\s+matter\s+value\s+has\s+been\s+specified[^.!?]*[.!?]?',
+        '',
+        result
+    )
+    result = re.sub(
+        r'(?i)(?:although\s+|while\s+)?monetary\s+amounts\s+are\s+not\s+stated[^.!?]*[.!?]?',
+        '',
+        result
+    )
+    result = re.sub(
+        r'(?i)\[(?:Relevance|Strategic Tier|Confirm|Pending|Dilution Risk|Off-Category)[^\]]*\]',
+        '',
+        result
+    )
     
     # Static string replacements
     for forbidden, replacement in SUBMISSION_VOICE_REPLACEMENTS:

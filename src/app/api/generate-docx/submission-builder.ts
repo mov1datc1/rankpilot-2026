@@ -502,9 +502,24 @@ The intervention successfully achieved the client's strategic objectives, mitiga
     (matter as any)._crossBorderConflict = 'Narrative describes cross-border double taxation treaty and investment protection structuring.';
   }
 
-  // Field 9: Other information / press link — never leak internal developer tokens (conf:...)
+  // Field 9: Other information / press link — never leak internal developer tokens (conf:...) or metadata tags ([Relevance:...])
   let otherInfoVal = cleanTablePipes(matter.otherInfo || matter.press_link || '');
   if (otherInfoVal.startsWith('conf:') || otherInfoVal.includes('confirmation_required') || otherInfoVal.toLowerCase() === 'confidential') {
+    otherInfoVal = '';
+  }
+  // Strip metadata tags e.g. [Relevance: 95% - Real Estate] or [Strategic Tier: ...]
+  otherInfoVal = otherInfoVal.replace(/\[(?:Relevance|Strategic Tier|Confirm|Pending|Dilution Risk|Off-Category)[^\]]*\]/gi, '').trim();
+  // If what remains has no external URL or press mention, and looks like internal audit/evaluation notes, blank it
+  const hasUrl = /https?:\/\/|www\./i.test(otherInfoVal);
+  if (!hasUrl && (
+    otherInfoVal.toLowerCase().includes('relevance') ||
+    otherInfoVal.toLowerCase().includes('tier') ||
+    otherInfoVal.toLowerCase().includes('secondary practice') ||
+    otherInfoVal.toLowerCase().includes('off-category') ||
+    otherInfoVal.toLowerCase().includes('held in reserve') ||
+    otherInfoVal.toLowerCase().includes('unconfirmed') ||
+    otherInfoVal.toLowerCase().includes('requires confirmation')
+  )) {
     otherInfoVal = '';
   }
 
@@ -1148,16 +1163,28 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     b10Text.toLowerCase().includes('national electric system')
   );
 
+  const containsAuditorCommentary = (
+    b10Text.toLowerCase().includes('available mandate record') ||
+    b10Text.toLowerCase().includes('mandate record does not state') ||
+    b10Text.toLowerCase().includes('available records do not state') ||
+    b10Text.toLowerCase().includes('available evidence does not state') ||
+    b10Text.toLowerCase().includes('no discrete matter value has been specified') ||
+    b10Text.toLowerCase().includes('monetary amounts are not stated') ||
+    b10Text.toLowerCase().includes('missing evidence') ||
+    b10Text.toLowerCase().includes('outcome requires confirmation')
+  );
+
   if (
     !b10Text ||
     b10Text.trim().length < 150 ||
     b10Text.includes('principal base is Guadalajara') ||
     b10Text.includes('throughout the State of Jalisco, where most of our clients operate') ||
-    containsOffCategoryEnergy
+    containsOffCategoryEnergy ||
+    containsAuditorCommentary
   ) {
     b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
-  b10Text = sanitizeBannedSuperlatives(b10Text);
+  b10Text = sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned;
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
 
   // ═══ SECTION C ═══

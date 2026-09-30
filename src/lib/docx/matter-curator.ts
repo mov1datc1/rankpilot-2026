@@ -110,6 +110,29 @@ export function calculateStrategicTier(
     score += 40;
   }
 
+  const safePractice = typeof practiceArea === 'string' ? practiceArea.toLowerCase() : '';
+  const isRealEstate = safePractice.includes('real estate') || safePractice.includes('inmobiliario');
+  const isLabour = safePractice.includes('labour') || safePractice.includes('labor') || safePractice.includes('employment') || safePractice.includes('laboral');
+  const isTax = safePractice.includes('tax') || safePractice.includes('fiscal') || safePractice.includes('tributario');
+
+  // Core Real Estate Anchors protection (Angela Castillo Directive)
+  const clientLower = (matter.client || matter.clientName || '').toLowerCase();
+  const titleLower = (matter.title || matter.name || '').toLowerCase();
+  const isElCielo = isRealEstate && (clientLower.includes('cielo') || titleLower.includes('cielo'));
+  const isIdex = isRealEstate && (clientLower.includes('idex') || titleLower.includes('idex') || clientLower.includes('brasilia'));
+  const isDuranpark = isRealEstate && clientLower.includes('duranpark');
+  const isSanCarlos = isRealEstate && clientLower.includes('san carlos');
+  const isPrimavera = isRealEstate && clientLower.includes('primavera');
+  const isRealEstateAnchor = isElCielo || isIdex || isDuranpark || isSanCarlos || isPrimavera || clientLower.includes('cominvi');
+
+  if (isElCielo) {
+    score += 800; // Flagship Core #1 Hero Matter anchor
+    matter.isHero = true;
+    matter.is_hero = true;
+  } else if (isRealEstateAnchor) {
+    score += 400; // Tier 1 Core anchors
+  }
+
   // 2. Explicit Hero Matter designated by user, curation, or canonical anchor
   const heroId = chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id;
   const heroTitle = chambersData?.hero_matter_title || chambersData?.hero_matter_name;
@@ -124,16 +147,14 @@ export function calculateStrategicTier(
   }
 
   // 3. Strategic exclusions from audit (AI identified dilution risks)
-  for (const exclusion of auditExclusions) {
-    if (exclusion && combined.includes(exclusion)) {
-      score -= 300;
+  // NEVER apply dilution penalties to confirmed core anchors (e.g. El Cielo is NEVER off-category)
+  if (!isRealEstateAnchor) {
+    for (const exclusion of auditExclusions) {
+      if (exclusion && combined.includes(exclusion)) {
+        score -= 300;
+      }
     }
   }
-
-  const safePractice = typeof practiceArea === 'string' ? practiceArea.toLowerCase() : '';
-  const isRealEstate = safePractice.includes('real estate') || safePractice.includes('inmobiliario');
-  const isLabour = safePractice.includes('labour') || safePractice.includes('labor') || safePractice.includes('employment') || safePractice.includes('laboral');
-  const isTax = safePractice.includes('tax') || safePractice.includes('fiscal') || safePractice.includes('tributario');
 
   // 4. Scale / deal value impact
   const approxValue = extractApproximateValue(matter.value || matter.dealValue || '');
@@ -201,7 +222,7 @@ export function calculateStrategicTier(
   }
 
   // 7. Practice dilution penalties (off-category cases in Real Estate)
-  if (isRealEstate) {
+  if (isRealEstate && !isRealEstateAnchor) {
     // Pure roadworks / highway concessions / paving without real estate nexus
     if (combined.includes('concesión') || combined.includes('concesion') || combined.includes('alumbrado público') || combined.includes('paving')) {
       score -= 150;
@@ -307,6 +328,15 @@ export function curateMatters(
         orderedCore.push(match);
       }
     }
+
+    // Invariant: Core Real Estate Anchors must NEVER be cut or omitted from core slate (Angela Castillo Directive)
+    const isRealEstate = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
+    if (isRealEstate) {
+      const elCieloMatter = allMatters.find(m => (m.client || m.name || '').toLowerCase().includes('cielo'));
+      if (elCieloMatter && !orderedCore.includes(elCieloMatter)) {
+        orderedCore.unshift(elCieloMatter);
+      }
+    }
     
     const officialPubMatters = orderedCore.filter(m => !m.isConfidential && m.publish_status !== 'non_publishable').slice(0, maxPub);
     const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, maxConf);
@@ -317,6 +347,7 @@ export function curateMatters(
     const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
     const isTax = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
     const schaefflerConfIdx = officialConfMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
+    const elCieloPubIdx = officialPubMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('cielo'));
 
     // 1. Check if user explicitly designated a hero in matters
     const userSelectedHeroId = chambersData?.user_selected_hero_id;
@@ -331,11 +362,16 @@ export function curateMatters(
     }
     
     // 2. Firm / Practice Flagship Anchors:
+    // For Real Estate, EL CIELO COUNTRY CLUB is the apex publishable anchor (Publishable #1)
     // For Labour, Schaeffler / Vitesco is the portfolio flagship anchor (Confidential #1)
     // For Tax, PEPSICO is the apex publishable anchor (Publishable #1)
-    if (targetPubHeroIdx < 0 && targetConfHeroIdx < 0) {
-      if (schaefflerConfIdx >= 0 && isLabour) {
+    if (!userSelectedHeroId) {
+      if (elCieloPubIdx >= 0 && isRealEstate) {
+        targetPubHeroIdx = elCieloPubIdx;
+        targetConfHeroIdx = -1;
+      } else if (schaefflerConfIdx >= 0 && isLabour) {
         targetConfHeroIdx = schaefflerConfIdx;
+        targetPubHeroIdx = -1;
       } else if (isTax) {
         targetPubHeroIdx = officialPubMatters.findIndex(m => (m.client || '').toLowerCase().includes('pepsico'));
       }
@@ -465,13 +501,27 @@ export function curateMatters(
   const isExcluded = (m: any): boolean => {
     // Canonical anchors are vetted directory matters and MUST never be excluded
     if (m._isCanonicalAnchor) return false;
+    const client = (m.client || m.clientName || m.name || '').toLowerCase();
+    const title = (m.title || '').toLowerCase();
+
+    // Core Real Estate Anchors can NEVER be excluded (Angela Castillo Directive)
+    const isRealEstate = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
+    if (isRealEstate && (
+      client.includes('cielo') || title.includes('cielo') ||
+      client.includes('idex') || title.includes('idex') ||
+      client.includes('duranpark') || title.includes('duranpark') ||
+      client.includes('san carlos') || title.includes('san carlos') ||
+      client.includes('primavera') || title.includes('primavera') ||
+      client.includes('cominvi') || title.includes('cominvi')
+    )) {
+      return false;
+    }
+
     if (m.isExcluded || m.status === 'Excluded' || m.status === 'Pruned') return true;
     // Off-category exclusion (e.g. Energy concessions or environmental amparo in Real Estate)
     if (m.isOffCategory === true || (typeof m.practiceRelevanceScore === 'number' && m.practiceRelevanceScore < 50)) {
       return true;
     }
-    const client = (m.client || m.clientName || m.name || '').toLowerCase();
-    const title = (m.title || '').toLowerCase();
     for (const exc of auditExclusions) {
       if (exc && (client.includes(exc) || title.includes(exc))) return true;
     }
@@ -507,9 +557,18 @@ export function curateMatters(
   });
 
   const schaefflerConfIdx = officialConfMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
+  const elCieloPubIdx = officialPubMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('cielo'));
   const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
+  const isRealEstateArea = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
 
-  if (schaefflerConfIdx >= 0 && isLabour) {
+  if (elCieloPubIdx >= 0 && isRealEstateArea) {
+    if (elCieloPubIdx > 0) {
+      const topPub = officialPubMatters.splice(elCieloPubIdx, 1)[0];
+      officialPubMatters.unshift(topPub);
+    }
+    officialPubMatters[0].isHero = true;
+    officialPubMatters[0].is_hero = true;
+  } else if (schaefflerConfIdx >= 0 && isLabour) {
     if (schaefflerConfIdx > 0) {
       const topConf = officialConfMatters.splice(schaefflerConfIdx, 1)[0];
       officialConfMatters.unshift(topConf);

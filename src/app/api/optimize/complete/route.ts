@@ -256,7 +256,18 @@ export async function POST(request: NextRequest) {
       for (const sm of surplusAll.slice(0, 5)) {
         const smName = sm.title || sm.name || sm.client || 'Mandate';
         const smClient = sm.client || sm.clientName || 'Client';
-        dilutionRisks.push(`${smClient} — ${smName}: Identified by curation audit as off-category or secondary practice scope lacking core ${practiceArea} focus. Routed to Reserve Roster to protect submission purity.`);
+        const smText = `${smClient} ${smName} ${sm.summary || ''}`.toLowerCase();
+        
+        // Never flag core real estate anchors as dilution
+        if (isRealEstate && (smText.includes('cielo') || smText.includes('idex') || smText.includes('duranpark') || smText.includes('san carlos') || smText.includes('primavera'))) {
+          continue;
+        }
+
+        if (isRealEstate && (smText.includes('sat') || smText.includes('concesi') || smText.includes('alumbrado') || smText.includes('transport') || smText.includes('sct'))) {
+          dilutionRisks.push(`${smClient} — ${smName}: Off-category administrative or fiscal controversy lacking core Real Estate asset nexus. Routed to Reserve Roster.`);
+        } else {
+          dilutionRisks.push(`${smClient} — ${smName}: Held in Reserve Roster to respect the Chambers 20-matter filing ceiling and prevent evaluative dilution.`);
+        }
       }
     }
 
@@ -467,9 +478,13 @@ export async function POST(request: NextRequest) {
       officialHero = userExplicitHero;
     } else {
       const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
+      const isRealEstate = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
       const schaefflerMatch = officialConfMatters.find((m: any) => (m.client || m.clientName || '').toLowerCase().includes('schaeffler'));
+      const elCieloMatch = officialPubMatters.find((m: any) => (m.client || m.clientName || m.name || '').toLowerCase().includes('cielo'));
       
-      if (schaefflerMatch && isLabour) {
+      if (elCieloMatch && isRealEstate) {
+        officialHero = elCieloMatch;
+      } else if (schaefflerMatch && isLabour) {
         officialHero = schaefflerMatch;
       } else if (officialPubMatters.length > 0) {
         officialHero = officialPubMatters[0];

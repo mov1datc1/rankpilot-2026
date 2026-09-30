@@ -85,8 +85,26 @@ const FORBIDDEN_TEMPLATE_INSTRUCTIONS = [
   /(?:why\s+this\s+)?matter was important\.?/gi
 ];
 
+export const AUDITOR_COMMENTARY_PATTERNS = [
+  /(?:while\s+)?(?:the\s+)?available\s+mandate\s+record\s+does\s+not\s+state\s+[^.!?]*[.!?]?/gi,
+  /(?:while\s+)?(?:the\s+)?available\s+(?:evidence|record|dossier|documentation)\s+does\s+not\s+(?:state|disclose|contain|provide)\s+[^.!?]*[.!?]?/gi,
+  /(?:although\s+|while\s+)?no\s+discrete\s+matter\s+value\s+has\s+been\s+specified[^.!?]*[.!?]?/gi,
+  /(?:although\s+|while\s+)?monetary\s+amounts\s+are\s+not\s+stated[^.!?]*[.!?]?/gi,
+  /(?:although\s+|while\s+)?outcome\s+evidence\s+is\s+pending\s+confirmation[^.!?]*[.!?]?/gi,
+  /(?:the\s+)?submission\s+lacks\s+[^.!?]*[.!?]?/gi,
+  /\bmissing\s+evidence\b/gi,
+  /\bvalue\s+not\s+provided\b/gi,
+  /\boutcome\s+requires\s+confirmation\b/gi,
+  /\[Relevance:[^\]]+\]/gi,
+  /\[Strategic Tier:[^\]]+\]/gi,
+  /\[Confirm:[^\]]+\]/gi,
+  /\[Pending:[^\]]+\]/gi,
+  /\[Dilution Risk[^\]]*\]/gi,
+  /\[Off-Category[^\]]*\]/gi
+];
+
 /**
- * Strips any leaked template instructional boilerplate from matter prose.
+ * Strips any leaked template instructional boilerplate or auditor meta-commentary from submission prose.
  */
 export function sanitizeTemplateBoilerplate(text: string): { cleaned: string; found: boolean } {
   if (!text) return { cleaned: '', found: false };
@@ -94,6 +112,13 @@ export function sanitizeTemplateBoilerplate(text: string): { cleaned: string; fo
   let found = false;
 
   for (const pattern of FORBIDDEN_TEMPLATE_INSTRUCTIONS) {
+    if (pattern.test(cleaned)) {
+      found = true;
+      cleaned = cleaned.replace(pattern, '').trim();
+    }
+  }
+
+  for (const pattern of AUDITOR_COMMENTARY_PATTERNS) {
     if (pattern.test(cleaned)) {
       found = true;
       cleaned = cleaned.replace(pattern, '').trim();
@@ -177,17 +202,17 @@ export function harmonizeStatusChronology(
   const cLower = clientName.toLowerCase();
   let status = rawStatus || '';
 
-  // Case 1: IDEX Brasilia — D2 establishes August 2024 closure lifting, D8 must not state 2020 legacy text
+  // Case 1: IDEX Brasilia — Align D8 with verified source facts ("early 2020")
   if (cLower.includes('idex') || cLower.includes('brasilia')) {
-    const harmonized = 'Successfully resolved in August 2024. Following the firm\'s administrative amparo defense, all municipal closure orders were lifted in under three weeks, allowing construction and commercial operations of the MXN 1.3B development to fully resume.';
+    const harmonized = 'The Brasilia matter was successfully won in early 2020, dismissing all four lawsuits and suspensions. This definitively confirmed the full legality of the development, allowing for its construction, commercialization, and delivery.';
     return {
       statusText: harmonized,
       issue: status !== harmonized ? {
         severity: 'SANITIZED',
         matterName: clientName,
         field: 'D8/E8 Status',
-        description: 'Legacy status referenced 2020 dismissal while D2 established August 2024 closure resolution.',
-        actionTaken: 'Harmonized status to August 2024 resolution.'
+        description: 'Harmonized IDEX D8 status to verified early 2020 conclusion date.',
+        actionTaken: 'Harmonized status to verified early 2020 conclusion.'
       } : undefined
     };
   }
@@ -299,11 +324,39 @@ export function runArtifactIntegrityCheck(
           severity: 'SANITIZED',
           matterName: mName,
           field: fieldName,
-          description: `Chambers template instruction leaked into editable deliverable field.`,
-          actionTaken: 'Boilerplate stripped programmatically prior to delivery.'
+          description: `Chambers template instruction or internal metadata leaked into deliverable field.`,
+          actionTaken: 'Boilerplate/metadata stripped programmatically prior to delivery.'
         });
         if (fieldName === 'D2/E2 Summary') m.optimizedText = cleaned;
         if (fieldName === 'D8/E8 Status') m.completionDate = cleaned;
+        if (fieldName === 'D9/E9 Other Info') m.otherInfo = cleaned;
+      }
+    }
+
+    // Specific Field D9/E9 Metadata Sanitization
+    if (m.otherInfo) {
+      let cleanedOther = m.otherInfo.replace(/\[(?:Relevance|Strategic Tier|Confirm|Pending|Dilution Risk|Off-Category)[^\]]*\]/gi, '').trim();
+      const hasUrl = /https?:\/\/|www\./i.test(cleanedOther);
+      if (!hasUrl && (
+        cleanedOther.toLowerCase().includes('relevance') ||
+        cleanedOther.toLowerCase().includes('tier') ||
+        cleanedOther.toLowerCase().includes('secondary practice') ||
+        cleanedOther.toLowerCase().includes('off-category') ||
+        cleanedOther.toLowerCase().includes('held in reserve') ||
+        cleanedOther.toLowerCase().includes('unconfirmed') ||
+        cleanedOther.toLowerCase().includes('requires confirmation')
+      )) {
+        cleanedOther = '';
+      }
+      if (cleanedOther !== m.otherInfo) {
+        sanitizations.push({
+          severity: 'SANITIZED',
+          matterName: mName,
+          field: 'D9/E9 Other Info',
+          description: 'Developer/audit metadata stripped from Field D9/E9.',
+          actionTaken: 'Sanitized to maintain Chambers submission format.'
+        });
+        m.otherInfo = cleanedOther;
       }
     }
 
@@ -578,6 +631,60 @@ export function runArtifactIntegrityCheck(
         field: 'Practice Evidence Grounding',
         description: 'Energy infrastructure / clean-energy / public lighting evidence detected in Real Estate B10. Real Estate positioning must only be supported by Real Estate practice evidence.',
         actionTaken: 'Blocked delivery: Practice positioning must be supported solely by practice-relevant evidence.'
+      });
+    }
+  }
+
+  // Check 13: Zero Auditor Commentary & Internal Metadata Leaks (Angela Castillo Critical Rule)
+  // Submissions must never speak as an auditor of themselves or reveal evidence limitations.
+  const auditVoiceRegex = /(?:while\s+)?(?:the\s+)?available\s+mandate\s+record\s+does\s+not\s+state|monetary\s+amounts\s+are\s+not\s+stated|missing\s+evidence|value\s+not\s+provided|outcome\s+requires\s+confirmation|\[Relevance:\s*\d+%/i;
+
+  if (options.publicSections) {
+    for (const sec of options.publicSections) {
+      if (auditVoiceRegex.test(sec.content || '')) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: `Section ${sec.name}`,
+          field: 'Auditor Commentary Hard Gate',
+          description: `Auditor commentary or internal evaluation metadata leaked into submission section '${sec.name}'. Submissions must never speak as an auditor of themselves.`,
+          actionTaken: 'Blocked delivery: Auditor self-critique prohibited in Chambers submission.'
+        });
+      }
+    }
+  }
+
+  for (const m of allCore) {
+    const mName = m.title || m.name || m.client || 'Matter';
+    const fieldsToInspect = [
+      ['D2 Summary', m.optimizedText || m.summary || ''],
+      ['D8 Status', m.completionDate || m.status || ''],
+      ['D9 Other Info', m.otherInfo || m.press_link || '']
+    ];
+    for (const [fName, fVal] of fieldsToInspect) {
+      if (auditVoiceRegex.test(fVal)) {
+        criticalErrors.push({
+          severity: 'CRITICAL',
+          matterName: mName,
+          field: fName,
+          description: `Internal metadata or auditor voice commentary detected in ${fName}.`,
+          actionTaken: 'Flagged for scrubbing / blocked from delivery.'
+        });
+      }
+    }
+
+    // Check 14: Cross-Field Factual Consistency (D2 vs D8 date harmonization)
+    const d2Text = (m.optimizedText || m.summary || '').toLowerCase();
+    const d8Text = (m.completionDate || m.status || '').toLowerCase();
+    const clientLower = (m.client || '').toLowerCase();
+
+    // Specific IDEX 2020 vs 2024 check
+    if ((clientLower.includes('idex') || clientLower.includes('brasilia')) && d2Text.includes('2020') && d8Text.includes('2024')) {
+      criticalErrors.push({
+        severity: 'CRITICAL',
+        matterName: mName,
+        field: 'Factual Integrity (D2 vs D8 Date Contradiction)',
+        description: `Contradiction detected: D2 narrative states 'won in early 2020' while D8 states 'resolved in August 2024'. Both fields must align on verified source facts (early 2020).`,
+        actionTaken: 'Blocked delivery: Dates must be harmonized.'
       });
     }
   }

@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           optimizedText: m.optimizedText || '',
           status: 'Draft',
           isConfidential: isConf,
-          otherInfo: m.valueConflict || m.otherInfo || m.press_link || (m.practiceRelevanceRationale ? `[Relevance: ${m.practiceRelevanceScore}% - ${m.primaryDetectedPractice}] ${m.practiceRelevanceRationale}` : null),
+          otherInfo: m.press_link || (m.otherInfo && !m.otherInfo.startsWith('[Relevance:') ? m.otherInfo : null),
           crossBorder: m.crossBorder || '',
           teamMembers: m.teamMembers || m.team_members || '',
           otherFirms: m.otherFirms || '',

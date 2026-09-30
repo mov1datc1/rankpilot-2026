@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented in this file.
 
+## [v29.4] — 2026-09-30
+
+### Resolution of Angela Castillo's 6 Structural Findings on Ramos Castillo Real Estate
+
+- **Zero Auditor Self-Critique & Metadata Leakage Hard Gate (`src/app/api/extract-document/route.ts`, `src/app/api/generate-docx/submission-builder.ts`, `src/lib/docx/artifact-integrity-check.ts`, `ai-engine/utils/language_guard.py`)**:
+  - *Strict Boundary Between Audit & Submission*: Submissions must never expose evidence limitations. Purged LLM self-criticisms such as *"While the available mandate record does not state transaction values or monetary amounts..."*, *"no discrete matter value has been specified"*, and *"missing evidence"* from B10, B7, and matter fields.
+  - *Purged Developer Metadata from Field D9*: Prevented `extract-document/route.ts` from storing `[Relevance: 95% - Real Estate]` in `matter.otherInfo`. Enhanced `submission-builder.ts` and `artifact-integrity-check.ts` to sanitize all internal tags (`[Relevance: ...]`, `[Strategic Tier: ...]`, `[Confirm: ...]`) so Field D9 only contains substantive press links or clean descriptions.
+  - *Synced with Python AI Engine*: Updated `sanitize_submission_voice` in `language_guard.py` with regex filters stripping auditor self-critiques and internal metadata tokens.
+
+- **B9 Individual Professional Candidacy for Nominated Partners (`src/lib/docx/lawyer-curator.ts`)**:
+  - *Individual Candidacy Architecture*: Implemented Angela's 6-tier blueprint (*Identity → Credentials/Expertise → Real Estate connection → Representative work in cycle → Individual role/impact → Case for recognition*).
+  - *José Pablo Ramos Castillo Profile*: Incorporated full academic and professional credentials from the source dossier: Founding Partner, honors law degree and postgraduate diplomas in Obligations & Contracts and Administrative Law from Universidad Panamericana, Professor of Amparo and Constitutional Procedure, and Secretary of the Steering Committee of the Mexican Bar Association (Capítulo Jalisco), followed by first-chair leadership on *El Cielo (MXN 3B)*, *Duranpark (MXN 698.4M)*, and *IDEX (MXN 1.3B)*.
+
+- **"Audit Decides. Submission Executes" — Portfolio Consistency & Hero Persistence (`src/lib/docx/matter-curator.ts`, `src/app/api/optimize/complete/route.ts`)**:
+  - *Elimination of the El Cielo Demotion Bug*: Identified and eliminated the false tax penalty triggered by leaked `[Relevance: 20% - Tax]` tags. Core Real Estate anchors (*El Cielo, IDEX, Duranpark, San Carlos, La Primavera, Cominvi*) are now shielded and can never be marked as dilution risks or excluded.
+  - *Flagship Hero Persistence*: Ensured that *El Cielo Country Club* is unconditionally designated as Core Flagship Hero Matter #1 in both the Strategic Audit (Table 4) and the final Submission Form (Table 14), eliminating portfolio divergence between layers.
+
+- **Matter-by-Matter Curation Audit Table Domain-Specific Rationales (`src/app/api/generate-docx/route.ts`)**:
+  - *Concrete Exclusion & Inclusion Defense*: Replaced generic phrases (*"does not meet requirements"*, *"held in reserve to prevent dilution"*) with `getDetailedCurationRationale`, generating substantive, defensible reasons relative to the portfolio:
+    - *Grupo R*: Public lighting concession and fuel station advisory; principally energy and administrative procurement lacking substantive Real Estate asset or zoning nexus.
+    - *Baruma / Tax*: Principally tax controversy without property title or development nexus; excluded to maintain submission practice purity.
+    - *Paquetexpress*: Freight transport regulatory penalty; off-category administrative fine without property dimensions.
+    - *Devangary*: Environmental association amparo; held in reserve as secondary regulatory scope to prioritize commercial property developers.
+    - *Reserve Matters*: Valid practice relevance but lower transactional scale and evidentiary outcome relative to the 20 selected multi-billion-peso core assets.
+
+- **Matter Descriptions Factual Integrity & Date Harmonization (`src/lib/docx/artifact-integrity-check.ts`)**:
+  - *IDEX Date Reconciliation*: Eliminated the contradictory "August 2024" override in D8. Harmonized both D2 narrative and D8 status to verified source facts: *"Won and successfully concluded in early 2020, dismissing all four lawsuits and suspensions..."*.
+  - *"RankPilot can enhance the narrative, but never enhance or invent facts"*: All dates, values, and outcomes are locked to source evidence.
+
+- **Automated Pre-Flight Matter Integrity Check (`src/lib/docx/artifact-integrity-check.ts`)**:
+  - Added **Check 13** (Zero Auditor Commentary & Metadata Leakage Hard Gate) and **Check 14** (Cross-Field Factual Consistency: D2 vs D8 date harmonization and lead partner attribution), guaranteeing that defective documents are blocked from delivery until reconciled.
+
 ## [v29.3] — 2026-09-29
 
 ### Evidence Readiness & Frictionless Gating UX, Auto-Save Reassurance & Angela Castillo Regression Resolution (Ramos Castillo Benchmark `29-jonathan-1`)
