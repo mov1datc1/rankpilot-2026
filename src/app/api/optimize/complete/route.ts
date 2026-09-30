@@ -119,9 +119,20 @@ export async function POST(request: NextRequest) {
     const rawCurrentBand = (submission.currentBand || chambersData.current_band || chambersData.currentBand || '').toLowerCase();
     const isUnranked = !rawCurrentBand || rawCurrentBand.includes('unranked') || rawCurrentBand.includes('sin rankear') || rawCurrentBand.includes('none');
 
+    const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
+    const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
+    const isCompliance = practiceArea.toLowerCase().includes('compliance') || practiceArea.toLowerCase().includes('investig') || practiceArea.toLowerCase().includes('anticorrup') || practiceArea.toLowerCase().includes('anti-corrup');
+    const isBanking = practiceArea.toLowerCase().includes('bank') || practiceArea.toLowerCase().includes('financ') || practiceArea.toLowerCase().includes('bancari');
+    const isCorporate = practiceArea.toLowerCase().includes('corp') || practiceArea.toLowerCase().includes('m&a') || practiceArea.toLowerCase().includes('societari');
+    const isTax = practiceArea.toLowerCase().includes('tax') || practiceArea.toLowerCase().includes('fiscal') || practiceArea.toLowerCase().includes('tributar');
+    const isDisputes = practiceArea.toLowerCase().includes('dispute') || practiceArea.toLowerCase().includes('litig') || practiceArea.toLowerCase().includes('arbitr') || practiceArea.toLowerCase().includes('contenc');
+
+    const rawTargetBand = ((submission as any).targetBand || chambersData.target_band || chambersData.targetBand || '').toLowerCase();
+    const isExplicitBand5 = rawTargetBand.includes('band 5') || rawTargetBand.includes('banda 5') || (isLabour && isUnranked);
+
     const targetTerm = isLegal500 
       ? (isUnranked ? 'Tier 4 / Entry' : 'Tier 1')
-      : (isUnranked ? 'Band 4 / Entry' : 'Band 1');
+      : (isUnranked ? (isExplicitBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry') : (rawTargetBand.includes('band 5') ? 'Band 5' : 'Band 1'));
     const currentTerm = isUnranked ? 'Unranked' : (isLegal500 ? 'Tier 2/3' : 'Band 2/3');
 
     let calculatedScore = isUnranked ? 91 : 94;
@@ -134,14 +145,6 @@ export async function POST(request: NextRequest) {
       calculatedScore = 65;
       riskLevel = `High Risk — Incomplete Evidence Portfolio (${totalMatters}/10 minimum matters)`;
     }
-
-    const isRealEstate = practiceArea.toLowerCase().includes('real estate') || practiceArea.toLowerCase().includes('inmobiliario');
-    const isLabour = practiceArea.toLowerCase().includes('labour') || practiceArea.toLowerCase().includes('labor') || practiceArea.toLowerCase().includes('empleo');
-    const isCompliance = practiceArea.toLowerCase().includes('compliance') || practiceArea.toLowerCase().includes('investig') || practiceArea.toLowerCase().includes('anticorrup') || practiceArea.toLowerCase().includes('anti-corrup');
-    const isBanking = practiceArea.toLowerCase().includes('bank') || practiceArea.toLowerCase().includes('financ') || practiceArea.toLowerCase().includes('bancari');
-    const isCorporate = practiceArea.toLowerCase().includes('corp') || practiceArea.toLowerCase().includes('m&a') || practiceArea.toLowerCase().includes('societari');
-    const isTax = practiceArea.toLowerCase().includes('tax') || practiceArea.toLowerCase().includes('fiscal') || practiceArea.toLowerCase().includes('tributar');
-    const isDisputes = practiceArea.toLowerCase().includes('dispute') || practiceArea.toLowerCase().includes('litig') || practiceArea.toLowerCase().includes('arbitr') || practiceArea.toLowerCase().includes('contenc');
 
     // 2. Build Matter Evaluations & Portfolio Curation using Gold Standard curation
     const allowance = getDirectoryPracticeAllowance(targetDirectory || chambersData.target_directory || 'chambers', practiceArea);
@@ -563,7 +566,7 @@ export async function POST(request: NextRequest) {
       : `(1) ${totalMatters} matters analyzed within the recommended portfolio threshold`;
 
     const scoreRationale = isUnranked
-      ? `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94% (values, dates, and factual data fully preserved), (2) Strategic Analysis Quality: 96% (calibrated for Band 4 / Entry Candidate), (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% of Core matters structured in organic 3-paragraph prose (${verifiedThreeParasCount} of ${totalCoreMatters}). Highly defensible candidacy for Chambers researchers.`
+      ? `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94% (values, dates, and factual data fully preserved), (2) Strategic Analysis Quality: 96% (calibrated for ${isExplicitBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Candidate'}), (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% of Core matters structured in organic 3-paragraph prose (${verifiedThreeParasCount} of ${totalCoreMatters}). Highly defensible candidacy for Chambers researchers.`
       : `Strategic calibration across 3 dimensions: (1) Source Evidence Integrity: 94%, (2) Strategic Analysis Quality: 96%, (3) Drafted Deliverable Execution: ${deliverableQualityPercent}% (${verifiedThreeParasCount} of ${totalCoreMatters} matters structured in 3 paragraphs).`;
 
     let c2Positioning = chambersData.original_c2 || chambersData.c2 || '';
@@ -847,7 +850,7 @@ export async function POST(request: NextRequest) {
         institutional_depth_score: isInsufficient ? 0 : (judgeEvaluation.passed ? 94 : 0)
       },
       comparative_analysis: {
-        band_alignment: isUnranked ? 'Band 4 / Entry Standard' : `${targetTerm} Standard`,
+        band_alignment: isUnranked ? (isExplicitBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Standard') : `${targetTerm} Standard`,
         evidence_supporting_target: isLabour
           ? `Anchor representation of major corporate employers and industrial clients${clientsSnippet}, demonstrating complex post-M&A workforce integration, collective bargaining governance, and contentious labor defense.`
           : (isTax

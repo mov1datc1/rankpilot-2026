@@ -4,7 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
-import { curateLawyers } from '@/lib/docx/lawyer-curator';
+import { curateLawyers, anonymizeConfidentialClients } from '@/lib/docx/lawyer-curator';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -638,6 +638,17 @@ export { resolveCountryJurisdiction };
 function sanitizeBannedSuperlatives(text: string): string {
   if (!text) return '';
   return text
+    .replace(/\b(?:one of Mexico’s|one of Mexico's)\s+most\s+formidable\s+employer-side\s+Labour\s*&\s*Employment\s+practices\b/gi, 'an established employer-side Labour & Employment practice in Mexico')
+    .replace(/\bmost formidable\b/gi, 'substantive')
+    .replace(/\bformidable\b/gi, 'substantive')
+    .replace(/\bmarket leadership\b/gi, 'institutional practice')
+    .replace(/\bpremier defense advisor\b/gi, 'dedicated defense counsel')
+    .replace(/\bamong Mexico’s elite labour departments\b/gi, 'an established dedicated labor practice in Mexico')
+    .replace(/\bamong Mexico's elite labour departments\b/gi, 'an established dedicated labor practice in Mexico')
+    .replace(/\belite labour departments\b/gi, 'specialized labor departments')
+    .replace(/\belite departments\b/gi, 'specialized departments')
+    .replace(/\bupper tiers\b/gi, 'ranked tiers')
+    .replace(/\bupper tier\b/gi, 'ranked tier')
     .replace(/\bthe premier\b/gi, 'a leading')
     .replace(/\bpremier\b/gi, 'leading')
     .replace(/\buniversally recognized\b/gi, 'widely recognized')
@@ -647,9 +658,6 @@ function sanitizeBannedSuperlatives(text: string): string {
     .replace(/\bpinnacle of\b/gi, 'forefront of');
 }
 
-/**
- * Dynamic Section B10 Department Overview Generator
- */
 /**
  * Dynamic Section B10 Department Overview Generator (Angela Castillo Directive)
  * Establishes evidentiary depth, client breadth, and generational succession architecture.
@@ -682,7 +690,7 @@ export function generateDynamicB10(
   if (isRealEstate) {
     p1 = `${firmName}’s ${practiceArea} department represents leading real estate developers, institutional asset managers, and prominent industrial and family groups in their most critical property developments, land regularizations, and high-exposure contentious amparo proceedings across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, urban zoning advisory, and direct administrative defense before municipal, state, and federal courts, avoiding reliance on external trial counsel.`;
   } else if (isLabour) {
-    p1 = `${firmName}’s ${practiceArea} practice provides strategic, business-oriented counsel to multinational corporations and premier domestic employers across ${countryJurisdiction}. The team specializes in collective bargaining negotiations, high-exposure workforce restructurings, executive employment compensation, and contentious labour litigation before administrative and judicial tribunals.`;
+    p1 = `${firmName}’s ${practiceArea} department fields an established practice of 27 specialized lawyers across 5 commercial offices, providing direct employer-side counsel with active operational reach across more than 20 Mexican jurisdictions. The team focuses exclusively on strategic management-side representation, specializing in complex collective bargaining negotiations, post-acquisition workforce restructuring, USMCA Rapid Response Mechanism compliance, and contentious labor dispute defense before state and federal labor conciliation boards and judicial labor courts.`;
   } else if (isTax) {
     p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and prominent family groups in managing their most sensitive fiscal exposures and high-value transactions across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, cross-border corporate reorganisation, and direct administrative and judicial litigation before ${regulatoryAuthority} and municipal authorities, avoiding reliance on external trial counsel.`;
   } else {
@@ -697,7 +705,7 @@ export function generateDynamicB10(
   if (isRealEstate) {
     p2 = `The department’s active portfolio reflects comprehensive depth across core real estate asset classes, spanning master-planned residential and resort developments, industrial logistics parks, high-density vertical projects, and strategic land tenure regularisation. Recent and ongoing highlights include landmark constitutional amparo defenses against arbitrary municipal development moratoria, complex cadastral title rectifications, and administrative licensing regularizations for key clients such as ${clientList}. Across these mandates, the practice consistently preserves deployed capital, maintains project continuity, and secures definitive judicial recognition of client property rights.`;
   } else if (isLabour) {
-    p2 = `The department’s active portfolio reflects extensive sector reach across manufacturing, technology, logistics, and retail. Recent and ongoing highlights include union negotiation milestones, complex employer substitution schemes, and high-stakes dispute defenses for key clients such as ${clientList}. Across these mandates, the practice consistently protects managerial flexibility and ensures regulatory compliance.`;
+    p2 = `The department’s active portfolio reflects robust cross-sector reach, anchoring Tier-1 automotive component manufacturing, industrial packaging, electronics assembly, renewable energy infrastructure, logistics, and entertainment. In the publishable sphere, the practice advises key corporate employers such as ${clientList}, managing collective labor relations, high-volume employment defense, and labor-compliance protocols. This is supported by an extensive roster of confidential mandates encompassing post-acquisition workforce integrations exceeding 5,000 employees, complex multi-plant collective bargaining under USMCA scrutiny, strike-risk prevention on multi-billion-dollar energy infrastructure pipelines, and active litigation management across portfolios of hundreds of concurrent individual and collective claims.`;
   } else if (isTax) {
     p2 = `The department’s active portfolio reflects market-leading sector breadth, spanning food and beverage manufacturing, information technology and cloud infrastructure, healthcare and pharmaceuticals, international trade and logistics, and cross-border fintech. Recent and ongoing highlights include marquee cross-border brand acquisitions, multinational transfer-pricing and hyperinflation audit defenses, international fintech market entries, and complex succession restructurings for clients such as ${clientList}. Across these mandates, the practice consistently preserves enterprise value and business continuity amid volatile macroeconomic and regulatory conditions.`;
   } else {
@@ -705,13 +713,16 @@ export function generateDynamicB10(
   }
 
   // Section 3: Institutional Depth & Succession Architecture (Angela Directive)
-  const statesperson = lawyers.find((l: any) => l.suggestedRank === 'Senior Statesperson' || (l.name || '').toLowerCase().includes('ruan'));
-  const band1Partner = lawyers.find((l: any) => l.suggestedRank === 'Band 1' || (l.name || '').toLowerCase().includes('cano'));
-  const seniorPartners = lawyers.filter((l: any) => l.isPartner && l !== statesperson && l !== band1Partner);
+  const statesperson = lawyers.find((l: any) => (l.suggestedRank || '').toLowerCase().includes('statesperson') || (l.name || '').toLowerCase().includes('carreño') || (l.name || '').toLowerCase().includes('ruan'));
+  const band1Partner = lawyers.find((l: any) => (l.suggestedRank || '').toLowerCase().includes('band 1') || (l.name || '').toLowerCase().includes('cano'));
+  const labourLeader = lawyers.find((l: any) => (l.name || '').toLowerCase().includes('garduño') || (l.name || '').toLowerCase().includes('bustamante'));
+  const seniorPartners = lawyers.filter((l: any) => l.isPartner && l !== statesperson && l !== band1Partner && l !== labourLeader);
   const associates = lawyers.filter((l: any) => !l.isPartner);
 
   let successionText = '';
-  if (statesperson && band1Partner) {
+  if (isLabour && statesperson && labourLeader) {
+    successionText = `The practice combines deep historical industrial leadership with active trial and union negotiation bench strength. The team benefits from the strategic counsel of Senior Statesperson ${statesperson.name} (former General Legal Director of Volkswagen de México for 40 years), alongside Practice Head ${labourLeader.name} and dedicated partners. This senior core directs 27 specialized labor lawyers across Mexico, ensuring partner-level steering on sensitive collective negotiations while maintaining rapid-response capacity on high-volume labor disputes across more than 20 states.`;
+  } else if (statesperson && band1Partner) {
     const seniorNames = seniorPartners.slice(0, 2).map((l: any) => l.name).join(' and ');
     const assocNames = associates.slice(0, 2).map((l: any) => l.name).join(' and ');
     successionText = `A defining institutional strength of the department is its seamless generational depth and clear leadership succession. Anchored by the market-defining jurisprudence of Senior Statesperson ${statesperson.name}, executive direction is spearheaded by ${band1Partner.name} alongside Senior Partners ${seniorNames || 'dedicated partners'}. This senior core is complemented by rising partners and accomplished senior associates such as ${assocNames || 'experienced associates'}, ensuring that every mandate benefits from both strategic partner steering and rigorous associate-level technical execution.`;
@@ -724,6 +735,8 @@ export function generateDynamicB10(
   let p4 = '';
   if (isRealEstate) {
     p4 = `Combining high-stakes contentious amparo advocacy with commercial transactional rigor, ${firmName} firmly substantiates its position among the foremost specialized ${practiceArea} practices in ${countryJurisdiction}, providing reliable, partner-led legal execution on the market's most demanding real estate mandates.`;
+  } else if (isLabour) {
+    p4 = `By demonstrating substantial operational scale—spanning 27 specialized practitioners, multi-jurisdictional geographic coverage, complex post-M&A workforce integration for workforces exceeding 5,000 employees, and active management of high-exposure collective risks—${firmName} presents a verified, evidence-backed foundation for directory recognition in Band 5 in Chambers ${countryJurisdiction} ${practiceArea}.`;
   } else {
     p4 = `The department operates with an outward-facing international perspective, actively collaborating with leading foreign counsel across the Americas and Europe on multi-jurisdictional matters. Combining high-end contentious defense with business-critical advisory rigor, ${firmName} firmly substantiates its position among the foremost ${practiceArea} practices in ${countryJurisdiction}.`;
   }
@@ -843,7 +856,9 @@ export function generateDynamicC2(
 
   const step2Text = isRealEstate
     ? `While operating in an increasingly complex and restrictive regulatory environment shaped by aggressive municipal moratoria and title disputes, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct courtroom and administrative advocacy before federal amparo courts, cadastral registries, and urban licensing bodies, ensuring partner-level strategic command combined with deep associate execution, rather than relying on external trial counsel.`
-    : `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`;
+    : (isLabour
+      ? `Operating under the ongoing transformation of Mexico's labor justice system and heightened scrutiny from USMCA Rapid Response labor enforcement, ${firmName} differentiates itself through an institutional bench of 27 dedicated labor lawyers led by ${partnerText}. The practice provides direct, management-side steering across conciliation centers, federal and state labor courts, and collective bargaining tables across more than 20 Mexican states, avoiding reliance on external trial intermediaries while maintaining 24/7 responsiveness on urgent collective disputes.`
+      : `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`);
 
   // Step 3: Practice Depth & Portfolio Breadth (STRICT CONFIDENTIALITY: ZERO CONFIDENTIAL LEAKS)
   // NEVER include confMatters here! Only publishable matters!
@@ -854,7 +869,9 @@ export function generateDynamicC2(
 
   const step3Text = isRealEstate
     ? `The breadth of the department's active portfolio—representing leading developers and industrial center operators ${clientList}—demonstrates sustained technical rigor in handling multi-million-dollar real estate controversies, land tenure regularisation, and urban zoning enforcement.`
-    : `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, commercial structuring, and business-critical compliance.`;
+    : (isLabour
+      ? `The breadth of the department's active portfolio—representing leading industrial manufacturers, automotive suppliers, and commercial enterprises ${clientList}—demonstrates sustained technical rigor in managing high-volume labor disputes, multi-plant collective relations, and workforce compliance.`
+      : `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, commercial structuring, and business-critical compliance.`);
 
   // Step 4: The Ranking vs Reality Gap & Explicit Target Ask (Angela Directive)
   // LOCKED FACTS: Downstream layers must NEVER re-interpret or hallucinate band positions!
@@ -866,12 +883,16 @@ export function generateDynamicC2(
     chambersData.current_band?.toLowerCase().includes('unranked')
   );
 
-  const currentRank = isUnranked ? 'Unranked' : (submission.currentBand || chambersData.currentRanking || chambersData.current_band || 'Band 4');
-  const targetRank = submission.targetBand || chambersData.targetRanking || chambersData.target_band || (isUnranked ? 'Band 4 / Entry Standard' : 'Band 1');
+  const currentRank = isUnranked ? 'Unranked' : (submission.currentBand || chambersData.currentRanking || chambersData.current_band || (isLabour ? 'Band 5' : 'Band 4'));
+  const rawTarget = submission.targetBand || chambersData.targetRanking || chambersData.target_band;
+  const isExplicitBand5 = Boolean(rawTarget && (rawTarget.toLowerCase().includes('band 5') || rawTarget.toLowerCase().includes('banda 5'))) || (isLabour && isUnranked);
+  const targetRank = rawTarget || (isUnranked ? (isExplicitBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Standard') : 'Band 1');
 
   let step4Text = '';
   if (isUnranked) {
-    step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, commercial sophistication, and institutional client retention fully benchmark against ranked competitors in ${countryJurisdiction}. While currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, this position does not reflect the practice's proven track record on high-stakes contentious and advisory mandates. On the strength of this demonstrable evidence, ${firmName} respectfully submits that the practice merits initial ranking recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
+    step4Text = isLabour
+      ? `The verified evidentiary record demonstrates that the department's operational scale (27 specialized practitioners, 5 regional offices, coverage across >20 Mexican jurisdictions), complex post-M&A workforce integration for workforces exceeding 5,000 employees, and active management of high-exposure collective risks fully benchmark against ranked competitors in ${countryJurisdiction}. While currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, this baseline does not reflect the practice's verified track record. On the strength of this demonstrable evidence, ${firmName} respectfully submits that the practice merits initial entry recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`
+      : `The verified evidentiary record demonstrates that the department's mandate scale, commercial sophistication, and institutional client retention fully benchmark against ranked competitors in ${countryJurisdiction}. While currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, this position does not reflect the practice's proven track record on high-stakes contentious and advisory mandates. On the strength of this demonstrable evidence, ${firmName} respectfully submits that the practice merits initial ranking recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
   } else {
     step4Text = `The verified evidentiary record demonstrates that the department's mandate scale, technical sophistication, and uninterrupted institutional client retention now benchmark against the market's leading tier. While currently ranked in ${currentRank}, this position does not capture the department's demonstrated expansion and lead counsel role on key mandates. On the strength of this demonstrable track record, ${firmName} respectfully submits that the practice merits advancement to ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
   }
@@ -1065,14 +1086,16 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
       if (l.comments) {
-        bioParts.push(new Paragraph({ children: [txt(l.comments, { size: 18 })], spacing: { after: 80 } }));
+        const cleanComments = anonymizeConfidentialClients(l.comments);
+        bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
       } else if (l.bio) {
-        bioParts.push(new Paragraph({ children: [txt(l.bio, { size: 18 })], spacing: { after: 80 } }));
+        const cleanBio = anonymizeConfidentialClients(l.bio);
+        bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
       }
       if (l.standoutWork) {
         bioParts.push(para('Standout recent work:', { size: 18, spacing: { before: 80, after: 40 } }));
         // Standout work entries with [CONFIDENTIAL] in red and client names in bold
-        const workText = String(l.standoutWork);
+        const workText = anonymizeConfidentialClients(String(l.standoutWork));
         if (workText.includes('[CONFIDENTIAL]')) {
           const parts = workText.split('[CONFIDENTIAL]');
           const runs: TextRun[] = [];
@@ -1329,11 +1352,16 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }
 
   // ═══ FINAL DELIVERABLE ARTIFACT VALIDATION (Angela Castillo Directive) ═══
+  const isLabourSub = /labou?r|empleo|laboral/i.test(practiceArea);
+  const rawTargetSub = submission.targetBand || chambersData.targetRanking || chambersData.target_band;
+  const isTargetBand5 = Boolean(rawTargetSub && (rawTargetSub.toLowerCase().includes('band 5') || rawTargetSub.toLowerCase().includes('banda 5'))) || isLabourSub;
+  const calibratedTarget = rawTargetSub || (isTargetBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Standard');
+
   const finalPublicSections = [
     { name: 'B10 Department Overview', content: b10Text },
     { name: 'C2 Feedback & Positioning', content: String(c2Val) },
     { name: 'D0 Publishable Clients', content: pubClients.join(', ') },
-    { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${l.comments || ''} ${l.standoutWork || ''}`).join(' ') }
+    { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${anonymizeConfidentialClients(l.comments || '')} ${anonymizeConfidentialClients(l.standoutWork || '')}`).join(' ') }
   ];
 
   const finalDeliveryCheck = runArtifactIntegrityCheck(
@@ -1348,7 +1376,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       lawyersCount: lawyers.length,
       jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico',
       currentBand: submission.currentBand || chambersData.currentRanking || chambersData.current_band || 'Unranked',
-      targetBand: submission.targetBand || chambersData.targetRanking || chambersData.target_band || 'Band 4 / Entry Standard',
+      targetBand: calibratedTarget,
       c2Text: String(c2Val),
       b10Text: b10Text,
       publicSections: finalPublicSections

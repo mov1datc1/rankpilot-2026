@@ -76,6 +76,52 @@ function isSameLawyer(name1: string, name2: string): boolean {
 }
 
 /**
+ * Anonymization dictionary to replace confidential client names with high-impact sector descriptors in public bios.
+ * Prevents confidential leaks in public sections (B9, B10, C2) while preserving high-caliber substantive evidence.
+ */
+export function anonymizeConfidentialClients(text: string, confClientNames: string[] = []): string {
+  if (!text) return '';
+  let res = text;
+  const replacements: Array<[RegExp, string]> = [
+    [/\b(?:Bonatti\s+SpA(?:,\s*Bonatti\s+M[eé]xico)?|Bonatti)\b/gi, 'an international energy infrastructure contractor'],
+    [/\b(?:SCHAEFFLER|Schaeffler|Scheaffler|Vitesco(?:\s+Technologies)?)\b/gi, 'a multinational industrial manufacturing conglomerate'],
+    [/\b(?:GeNI\s+de\s+M[eé]xico(?:\s*,\s*S\.?A\.?\s*(?:de\s+C\.?V\.?)?)?|GeNI|GeNi)\b/gi, 'a major tier-1 automotive manufacturing supplier'],
+    [/\b(?:Nueva\s+Empresa(?:\s*,\s*S\.?C\.?)?)\b/gi, 'a prominent commercial services corporation'],
+    [/\b(?:Brose\s+M[eé]xico(?:\s*,\s*S\.?A\.?)?|Brose)\b/gi, 'a global automotive systems developer'],
+    [/\b(?:Securitas\s+de\s+M[eé]xico|Securitas)\b/gi, 'a leading nationwide private security provider'],
+    [/\b(?:American\s+Axle(?:\s+Manufactur(?:y|ing))?|AAM)\b/gi, 'a global automotive driveline manufacturer'],
+    [/\b(?:Empresa\s+Tekia|Tekia)\b/gi, 'an international technology and engineering enterprise'],
+    [/\b(?:Grupo\s+Dos)\b/gi, 'an advanced hardware and software technology enterprise'],
+    [/\b(?:Ramsa(?:\s+Soluciones\s+de\s+Negocios(?:\s+en\s+Bebidas)?)?)\b/gi, 'a major beverage logistics and commercial enterprise'],
+    [/\b(?:BADAK)\b/gi, 'a technology consultancy and software development firm'],
+    [/\b(?:Volkswagen\s+de\s+M[eé]xico(?:\s+and\s+VW\s+Financial\s+Services)?|Volkswagen|VWFS)\b/gi, 'a leading global automotive manufacturer'],
+    [/\b(?:Robert\s+Bosch\s+de\s+M[eé]xico|Robert\s+Bosch|Bosch)\b/gi, 'a global industrial technology and automotive supplier'],
+    [/\b(?:Coats\s+de\s+M[eé]xico|Coats)\b/gi, 'a global industrial manufacturing enterprise'],
+    [/\b(?:REGSA(?:\s*-\s*Recubrimientos[^\.,]*)?)\b/gi, 'an industrial coatings and electroplating enterprise'],
+    [/\b(?:Omron)\b/gi, 'a global industrial automation technology leader'],
+    [/\b(?:Benteler)\b/gi, 'an international tier-1 automotive structural supplier'],
+    [/\b(?:Grupo\s+Radio\s+Centro|Radio\s+Centro)\b/gi, 'a major national media and broadcasting group'],
+    [/\b(?:Cinemex)\b/gi, 'a premier national cinema and entertainment group'],
+    [/\b(?:Art\s+Human)\b/gi, 'a major human capital and workforce solutions firm'],
+    [/\b(?:Mextypsa(?:\s*,\s*S\.?A\.?)?)\b/gi, 'a specialized industrial engineering enterprise'],
+  ];
+
+  for (const [regex, rep] of replacements) {
+    res = res.replace(regex, rep);
+  }
+
+  // Catch any remaining confidential entity names
+  for (const confName of confClientNames) {
+    if (confName && confName.length >= 4) {
+      const esc = confName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const reg = new RegExp(`\\b${esc}\\b`, 'gi');
+      res = res.replace(reg, 'a leading multinational corporate client');
+    }
+  }
+  return res;
+}
+
+/**
  * Deduplicates and curates lawyer candidates with evidentiary depth and strategic rankings
  */
 export function curateLawyers(
@@ -233,8 +279,33 @@ function cleanRawLeadString(rawStr: string): string[] {
     }
   }
 
+  // Safe guideRegion and location extraction
+  const safeRegion = typeof guideRegion === 'string' && !guideRegion.includes('[object')
+    ? guideRegion
+    : (typeof chambersData?.location === 'string' ? chambersData.location : 'Mexico');
+  const safeFirm = typeof firmName === 'string' && !firmName.includes('[object')
+    ? firmName
+    : (typeof chambersData?.firmName === 'string' ? chambersData.firmName : 'The Firm');
+
+  // Build confidential client set for zero-leak public anonymization
+  const confMattersList = allMattersPool.filter(m => m.isConfidential || m.confidential || m.publish_status === 'non_publishable');
+  const confClientNames: string[] = [];
+  for (const cm of confMattersList) {
+    const rawC = (cm.client || cm.clientName || cm.name || '').trim();
+    if (rawC.length >= 3 && !rawC.toLowerCase().includes('client') && !rawC.toLowerCase().includes('confidential')) {
+      confClientNames.push(rawC);
+      const prefix = rawC.split(/[\—\-\:\.]/)[0].trim();
+      if (prefix.length >= 3 && prefix.toLowerCase() !== 'confidential') {
+        confClientNames.push(prefix);
+      }
+    }
+  }
+
+
+
   // Associate each lawyer with verified matters and client mandates
   const isTaxPractice = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
+  const isLabourPractice = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment') || (practiceArea || '').toLowerCase().includes('laboral');
 
   const curated: CuratedLawyer[] = merged.map((l: any) => {
     const lName = l.name;
@@ -246,10 +317,14 @@ function cleanRawLeadString(rawStr: string): string[] {
       return Array.from(lTokens).some(t => t.length >= 4 && mText.includes(t));
     });
 
-    // Extract unique client names and matter values
+    // Separate linked matters into strictly publishable vs confidential
+    const pubLinkedMatters = linkedMatters.filter((m: any) => !m.isConfidential && !m.confidential && m.publish_status !== 'non_publishable');
+    const confLinkedMatters = linkedMatters.filter((m: any) => m.isConfidential || m.confidential || m.publish_status === 'non_publishable');
+
+    // Extract unique publishable client names
     const clientList: string[] = [];
     const clientSet = new Set<string>();
-    for (const m of linkedMatters) {
+    for (const m of pubLinkedMatters) {
       const { cleanClient } = sanitizeClientName(m.client || m.clientName || m.name || '');
       let client = cleanClient.replace(/\s*—.*$/, '').replace(/\|.*$/, '').trim();
       if (client && client.length > 2 && !clientSet.has(client.toLowerCase()) && !client.toLowerCase().includes('n/a') && !client.toLowerCase().includes('confidential')) {
@@ -260,7 +335,33 @@ function cleanRawLeadString(rawStr: string): string[] {
     }
 
     const topClients = clientList.slice(0, 4);
-    const clientsStr = topClients.length > 0 ? topClients.join(', ') : 'key institutional and multinational corporations';
+    let clientsStr = topClients.length > 0 ? topClients.join(', ') : '';
+
+    // If lawyer leads confidential matters, incorporate high-impact anonymized evidentiary descriptions
+    if (confLinkedMatters.length > 0) {
+      const hasPostMA = confLinkedMatters.some((m: any) => /vitesco|schaeffler|post-acquisition|integration/i.test(`${m.client} ${m.name} ${m.summary}`));
+      const hasUnionRRM = confLinkedMatters.some((m: any) => /brose|usmca|rapid response|mlrr|sindicato|huelga|strike/i.test(`${m.client} ${m.name} ${m.summary}`));
+      const hasEnergyInfra = confLinkedMatters.some((m: any) => /bonatti|pipeline|gasoducto|energy infrastructure/i.test(`${m.client} ${m.name} ${m.summary}`));
+      const hasMassLitigation = confLinkedMatters.some((m: any) => /cinemex|securitas|11,000|workforce/i.test(`${m.client} ${m.name} ${m.summary}`));
+
+      const anonDescriptors: string[] = [];
+      if (hasPostMA) anonDescriptors.push('post-M&A workforce integration exceeding 5,000 employees across multiple plants');
+      if (hasUnionRRM) anonDescriptors.push('cross-plant collective bargaining under USMCA Rapid Response Mechanism exposure');
+      if (hasEnergyInfra) anonDescriptors.push('multibillion-dollar energy infrastructure workforce governance and strike prevention');
+      if (hasMassLitigation) anonDescriptors.push('nationwide litigation coordination managing multi-claim portfolios');
+
+      if (anonDescriptors.length > 0) {
+        clientsStr = clientsStr
+          ? `${clientsStr}, as well as leading ${anonDescriptors.slice(0, 2).join(' and ')}`
+          : `leading ${anonDescriptors.slice(0, 2).join(' and ')}`;
+      }
+    }
+
+    if (!clientsStr) {
+      clientsStr = isLabourPractice
+        ? 'leading industrial manufacturers, automotive tier-1 suppliers, and multinational employers'
+        : 'key institutional and multinational corporations';
+    }
 
     // Strategic Ranking Ladder & Candidacy Positioning
     const nNorm = normalizeName(lName);
@@ -269,51 +370,78 @@ function cleanRawLeadString(rawStr: string): string[] {
 
     // Specialized calibration for known market profiles or role-based dynamic assignment
     if (isTaxPractice && nNorm.includes('gabriel ruan')) {
-      // Founding Partner, tax scholar, Senior Statesperson
       currentRank = 'Senior Statesperson';
-      targetRank = `Senior Statesperson (${practiceArea} — ${guideRegion})`;
+      targetRank = `Senior Statesperson (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = true;
     } else if (isTaxPractice && (nNorm.includes('maria carolina') || nNorm.includes('carolina cano'))) {
-      // Executive leader of department — Angela feedback: currently Band 2, target Band 1
       currentRank = 'Band 2';
-      targetRank = `Band 1 (${practiceArea} — ${guideRegion})`;
+      targetRank = `Band 1 (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = true;
     } else if (isTaxPractice && (nNorm.includes('ingrid garcia') || nNorm.includes('garcia pacheco'))) {
-      // Senior ranked partner — Angela feedback: target Band 2
       currentRank = 'Band 3';
-      targetRank = `Band 2 (${practiceArea} — ${guideRegion})`;
+      targetRank = `Band 2 (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = true;
     } else if (isTaxPractice && nNorm.includes('balzan')) {
-      // Partner, rising star — Angela feedback: target Up and Coming
       currentRank = 'Unranked';
-      targetRank = `Up and Coming (${practiceArea} — ${guideRegion})`;
+      targetRank = `Up and Coming (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = false;
-    } else if (nNorm.includes('garcia nieto') || nNorm.includes('llamozas') || !l.isPartner) {
-      // Senior Associates / Associates
+    } else if (isLabourPractice && (nNorm.includes('eduardo garduno') || nNorm.includes('garduno'))) {
+      // DeForest Practice Head — Angela Castillo explicit directive: Candidate for Band 5
       currentRank = 'Unranked';
-      targetRank = `Associate to Watch (${practiceArea} — ${guideRegion})`;
+      targetRank = `Band 5 (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('jaime bustamante') || nNorm.includes('bustamante'))) {
+      // Former Regional Legal Director ManpowerGroup, CONCAMIN VP
+      currentRank = 'Unranked';
+      targetRank = `Band 5 / Up and Coming (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('raymundo carreno') || nNorm.includes('carreno'))) {
+      // 40 years General Legal Director Volkswagen de México
+      currentRank = 'Unranked';
+      targetRank = `Senior Statesperson (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('andres cabrera') || nNorm.includes('cabrera'))) {
+      currentRank = 'Unranked';
+      targetRank = `Band 5 / Up and Coming (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('atzin') || nNorm.includes('vallejo'))) {
+      currentRank = 'Unranked';
+      targetRank = `Associate to Watch / Up and Coming (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('barreto') || nNorm.includes('erick perez') || nNorm.includes('diaz mendez'))) {
+      currentRank = 'Unranked';
+      targetRank = `Associate to Watch (${practiceArea} — ${safeRegion})`;
+      l.isPartner = false;
+      l.isRanked = false;
+    } else if (nNorm.includes('garcia nieto') || nNorm.includes('llamozas') || !l.isPartner) {
+      currentRank = 'Unranked';
+      targetRank = `Associate to Watch (${practiceArea} — ${safeRegion})`;
       l.isPartner = false;
       l.isRanked = false;
     } else if (!targetRank) {
-      // Generic universal fallback
       if (currentRank.includes('Senior Statesperson')) {
-        targetRank = `Senior Statesperson (${practiceArea} — ${guideRegion})`;
+        targetRank = `Senior Statesperson (${practiceArea} — ${safeRegion})`;
       } else if (currentRank.includes('Band 1')) {
-        targetRank = `Band 1 / Star Individual (${practiceArea} — ${guideRegion})`;
+        targetRank = `Band 1 / Star Individual (${practiceArea} — ${safeRegion})`;
       } else if (currentRank.includes('Band 2')) {
-        targetRank = `Band 1 (${practiceArea} — ${guideRegion})`;
+        targetRank = `Band 1 (${practiceArea} — ${safeRegion})`;
       } else if (currentRank.includes('Band 3')) {
-        targetRank = `Band 2 (${practiceArea} — ${guideRegion})`;
+        targetRank = `Band 2 (${practiceArea} — ${safeRegion})`;
       } else if (currentRank.includes('Band 4')) {
-        targetRank = `Band 3 (${practiceArea} — ${guideRegion})`;
+        targetRank = `Band 3 (${practiceArea} — ${safeRegion})`;
       } else if (l.isPartner) {
-        targetRank = `Band 4 / Up and Coming (${practiceArea} — ${guideRegion})`;
+        targetRank = isLabourPractice ? `Band 5 / Up and Coming (${practiceArea} — ${safeRegion})` : `Band 4 / Up and Coming (${practiceArea} — ${safeRegion})`;
       } else {
-        targetRank = `Associate to Watch (${practiceArea} — ${guideRegion})`;
+        targetRank = `Associate to Watch (${practiceArea} — ${safeRegion})`;
       }
     }
 
@@ -325,7 +453,7 @@ function cleanRawLeadString(rawStr: string): string[] {
       bioCommentary = `One of the most distinguished tax scholars and practitioners in Venezuela, Gabriel Ruan Santos serves as Senior Counsel and strategic advisor on landmark constitutional tax matters, high-stakes judicial appeals, and foundational double-taxation treaty interpretations. With decades of preeminent market standing, he continues to guide institutional clients on critical fiscal jurisprudence while leading the generational transition of executive mandate leadership.`;
       strategicRationale = `Preeminent market scholar providing apex strategic counsel on complex fiscal jurisprudence while mentoring next-generation practice leadership.`;
     } else if (isTaxPractice && (nNorm.includes('maria carolina') || nNorm.includes('carolina cano'))) {
-      bioCommentary = `As the executive operational leader of ${firmName}'s Tax practice, María Carolina Cano directs the department's marquee transactional, contentious, and cross-border instructions. Over the research cycle, she led the tax structuring for Gruppo Montenegro's acquisition of Pampero Rum from Diageo, successfully represented PEPSICO & Empresas Filiales in multi-million dollar SENIAT hyperinflation and transfer pricing audits, and structured the Venezuelan market entry for fintech leader Summus. Her demonstrated market leadership, sophisticated commercial acumen, and commanding client trust firmly warrant elevation to Band 1.`;
+      bioCommentary = `As the executive operational leader of ${safeFirm}'s Tax practice, María Carolina Cano directs the department's marquee transactional, contentious, and cross-border instructions. Over the research cycle, she led the tax structuring for Gruppo Montenegro's acquisition of Pampero Rum from Diageo, successfully represented PEPSICO & Empresas Filiales in multi-million dollar SENIAT hyperinflation and transfer pricing audits, and structured the Venezuelan market entry for fintech leader Summus. Her demonstrated market leadership, sophisticated commercial acumen, and commanding client trust firmly warrant elevation to Band 1.`;
       strategicRationale = `Operational practice leader spearheading marquee M&A transactions (Pampero/Diageo), high-stakes hyperinflation audits (PepsiCo), and fintech expansion (Summus).`;
     } else if (isTaxPractice && (nNorm.includes('ingrid garcia') || nNorm.includes('garcia pacheco'))) {
       bioCommentary = `Partner Ingrid García Pacheco co-directs the department's contentious tax and regulatory practice, providing high-stakes defense in complex SENIAT municipal and national audit proceedings. Her recent instructions include leading critical contentious procedures for multinational corporations, including Kyndryl de Venezuela, and steering complex corporate tax compliance amidst Venezuela's volatile regulatory framework, strongly supporting her progression to Band 2.`;
@@ -333,12 +461,18 @@ function cleanRawLeadString(rawStr: string): string[] {
     } else if (isTaxPractice && nNorm.includes('balzan')) {
       bioCommentary = `Partner Juan Carlos Balzán demonstrates exceptional technical capability across corporate tax consulting, municipal taxation, and regulatory compliance for leading industrial and commercial clients. Having assumed primary lead partner responsibilities across an expanding domestic and international portfolio, his proven transaction execution and rising market profile firmly justify initial directory recognition as Up and Coming.`;
       strategicRationale = `Rising partner assuming first-chair responsibility across corporate consulting and municipal tax controversies.`;
-    } else if (nNorm.includes('garcia nieto')) {
-      bioCommentary = `Senior Associate María Alejandra García Nieto plays a pivotal role in the day-to-day execution of the firm's most complex tax mandates, including cross-border structuring, SENIAT administrative defenses, and transfer pricing analyses. Her exceptional analytical rigor, substantive matter management on instructions for PEPSICO, Summus, and SKU Logistics, and outstanding client feedback firmly warrant designation as Associate to Watch.`;
-      strategicRationale = `Key senior associate managing core day-to-day execution on flagship transfer pricing and cross-border structuring mandates.`;
-    } else if (nNorm.includes('llamozas')) {
-      bioCommentary = `Associate Isabella Llamozas provides vital technical and operational support across contentious tax proceedings and corporate tax compliance, demonstrating substantive involvement in high-stakes administrative defenses and client advisory across the department's active portfolio, justifying recognition as Associate to Watch.`;
-      strategicRationale = `Substantive technical contributor across contentious proceedings and corporate tax advisory.`;
+    } else if (isLabourPractice && (nNorm.includes('eduardo garduno') || nNorm.includes('garduno'))) {
+      bioCommentary = `Partner and Head of DeForest Abogados's Labor & Employment practice with over two decades of experience advising multinational employers across Mexico, complemented by senior public-sector experience. He serves as President of the Labor Committee of ANADE Puebla and actively participates in corporate chambers including CLAUZ, CANACINTRA, and the American Chamber of Commerce. Across the research cycle, Mr. Garduño directed the practice's most consequential mandates, including a complex post-M&A workforce integration across multiple industrial plants (>5,000 employees), cross-plant collective bargaining under USMCA Rapid Response Mechanism scrutiny, and ongoing dispute coordination across hundreds of active labor proceedings for multinational automotive, packaging, and technology corporations. His proven leadership on high-stakes labor stability firmly justifies initial recognition in Band 5.`;
+      strategicRationale = `Practice head combining bar leadership (ANADE Puebla President) with first-chair direction on post-M&A workforce integrations (>5,000 workers) and USMCA Rapid Response collective bargaining defense.`;
+    } else if (isLabourPractice && (nNorm.includes('jaime bustamante') || nNorm.includes('bustamante'))) {
+      bioCommentary = `Partner Jaime Bustamante contributes extensive corporate executive counsel developed as former Legal Director for Mexico, Central and South America at ManpowerGroup. An active voice in national labor policy, he serves as Vice President of the Labor, Social Security and HR Commission at CONCAMIN. His practice focuses on mass-litigation coordination, complex workforce transitions, and high-pressure collective bargaining negotiations for major employer workforces nationwide, firmly supporting initial recognition in Band 5 / Up and Coming.`;
+      strategicRationale = `Former regional corporate legal director (ManpowerGroup) and CONCAMIN Vice President directing large-scale workforce transitions and mass-litigation platforms.`;
+    } else if (isLabourPractice && (nNorm.includes('raymundo carreno') || nNorm.includes('carreno'))) {
+      bioCommentary = `Senior Counsel Raymundo Carreño embodies an uncommon depth of automotive labor authority developed across nearly forty years as General Legal Director of Volkswagen de México. Having steered landmark regulatory transitions, high-stakes union negotiations, and major corporate restructurings that shaped Mexico's automotive sector, his strategic insight provides invaluable senior direction on matters where labor law intersects with operational continuity, firmly justifying designation as Senior Statesperson.`;
+      strategicRationale = `Senior Statesperson offering 40 years of apex automotive labor leadership as former General Legal Director of Volkswagen de México.`;
+    } else if (isLabourPractice && (nNorm.includes('atzin') || nNorm.includes('vallejo'))) {
+      bioCommentary = `Partner Javier Atzin Vallejo specializes in labor compliance, social security, and regulatory audits across multi-plant industrial structures. His practice centers on harmonizing documentation and employment frameworks across corporate acquisitions, managing complex Ministry of Labor inspections, and advising multinational manufacturing groups on durable workforce stability, firmly supporting recognition as Associate to Watch / Up and Coming.`;
+      strategicRationale = `Key technical partner managing complex social security audits, documentation harmonisation, and multi-plant labor compliance.`;
     } else if (nNorm.includes('jose pablo') || nNorm.includes('ramos castillo')) {
       const cleanRank = targetRank.split('(')[0].trim() || 'Band 4 / Up and Coming';
       bioCommentary = `Founding Partner of Ramos Castillo Abogados and head of the firm's administrative, constitutional, and amparo litigation practices. José Pablo holds a law degree with honors and postgraduate diplomas in Obligations and Contracts and Administrative Law (both with honors) from Universidad Panamericana, where he has served as Professor of Amparo and Constitutional Procedure. An active leader in the organized bar, he serves as Secretary of the Steering Committee of the Mexican Bar Association (Capítulo Jalisco). In Real Estate, Mr. Ramos translates his specialized command of constitutional and administrative law into strategic commercial defense for developers, asset managers, and industrial owners navigating complex urban zoning, title rectifications, and administrative restrictions. During the current research cycle, he acted as first-chair counsel directing the successful constitutional amparo defense protecting the MXN 3bn El Cielo Country Club master development, steered the land tenure defense of Duranpark's 207.5-hectare industrial center (MXN 698.4m), and secured the lifting of municipal suspensions for IDEX's MXN 1.3bn Brasilia vertical project. His blend of academic authority, bar leadership, and proven high-exposure property litigation firmly justifies his individual recognition for ${cleanRank}.`;
@@ -347,18 +481,22 @@ function cleanRawLeadString(rawStr: string): string[] {
       // Dynamic evidentiary synthesis for any practice area or jurisdiction
       const roleTitle = l.isPartner ? 'Partner' : 'Senior Associate';
       const cleanRank = targetRank.split('(')[0].trim();
-      bioCommentary = `${lName} is a senior practitioner in ${firmName}'s ${practiceArea} practice in ${guideRegion}, providing disciplined legal architecture and commercial counsel on critical mandates. Having assumed primary responsibility on instructions for ${clientsStr}, ${lName.split(' ')[0]} demonstrates sophisticated regulatory acumen and execution capability that firmly justify consideration for ${cleanRank}.`;
+      bioCommentary = `${lName} is a senior practitioner in ${safeFirm}'s ${practiceArea} practice in ${safeRegion}, providing disciplined legal architecture and commercial counsel on critical mandates. Having assumed primary responsibility on instructions for ${clientsStr}, ${lName.split(' ')[0]} demonstrates sophisticated regulatory acumen and execution capability that firmly justify consideration for ${cleanRank}.`;
       strategicRationale = `${roleTitle} leading substantive instructions across ${practiceArea}, demonstrating established commercial execution for ${clientsStr}.`;
     }
 
-    bioCommentary = sanitizeBannedSuperlatives(bioCommentary);
-    strategicRationale = sanitizeBannedSuperlatives(strategicRationale);
+    bioCommentary = sanitizeBannedSuperlatives(anonymizeConfidentialClients(bioCommentary));
+    strategicRationale = sanitizeBannedSuperlatives(anonymizeConfidentialClients(strategicRationale));
+
+    // Also sanitize any raw comments or bio that arrived with the lawyer record
+    const sanitizedRawComments = l.comments ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.comments)) : '';
+    const sanitizedRawBio = l.bio ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.bio)) : '';
 
     const suppMatters = topClients.length > 0
       ? `Key lead mandates for ${topClients.join(', ')}.`
       : 'Core practice mandates across active department portfolio.';
 
-    const marketEvidence = `Established professional standing and sustained client recognition across ${guideRegion}.`;
+    const marketEvidence = `Established professional standing and sustained client recognition across ${safeRegion}.`;
     const evidenceGaps = 'Confirm specific matter outcomes, quantifiable economic impact, and active client referee availability for directory outreach.';
     const recommendedAction = `Highlight partner prominence on flagship mandates (${topClients.slice(0, 2).join(', ') || 'core portfolio'}) and submit 3 dedicated client referees.`;
 
@@ -370,8 +508,8 @@ function cleanRawLeadString(rawStr: string): string[] {
       suggestedRank: targetRank.split('(')[0].trim(),
       targetRank: targetRank,
       url: l.url || '',
-      comments: bioCommentary,
-      bio: bioCommentary,
+      comments: sanitizedRawComments || bioCommentary,
+      bio: sanitizedRawBio || bioCommentary,
       supportingMatters: suppMatters,
       strategicRationale: strategicRationale,
       marketEvidence: marketEvidence,
@@ -379,7 +517,7 @@ function cleanRawLeadString(rawStr: string): string[] {
       recommendedAction: recommendedAction,
       leave: l.leave || 'N/A',
       focus: l.focus || '',
-      standoutWork: l.standoutWork || ''
+      standoutWork: l.standoutWork ? anonymizeConfidentialClients(l.standoutWork) : ''
     };
   });
 
@@ -392,6 +530,7 @@ function cleanRawLeadString(rawStr: string): string[] {
     if (t.includes('band 2')) return 80;
     if (t.includes('band 3')) return 70;
     if (t.includes('band 4')) return 60;
+    if (t.includes('band 5')) return 55;
     if (t.includes('up and coming') || l.isPartner) return 50;
     if (t.includes('associate to watch') || !l.isPartner) return 30;
     return 10;

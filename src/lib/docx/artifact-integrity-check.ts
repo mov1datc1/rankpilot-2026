@@ -570,14 +570,15 @@ export function runArtifactIntegrityCheck(
       });
     }
 
-    const targetIsBand4 = Boolean(options.targetBand && (options.targetBand.toLowerCase().includes('band 4') || options.targetBand.toLowerCase().includes('entry')));
-    if (targetIsBand4 && c2Lower.includes('advancement to band 1')) {
+    const targetIsEntry = Boolean(options.targetBand && (options.targetBand.toLowerCase().includes('band 4') || options.targetBand.toLowerCase().includes('band 5') || options.targetBand.toLowerCase().includes('entry')));
+    if (targetIsEntry && c2Lower.includes('advancement to band 1')) {
+      const canonicalTarget = options.targetBand || 'Entry Standard';
       criticalErrors.push({
         severity: 'CRITICAL',
         matterName: 'Section C2 Feedback',
         field: 'Target Integrity Invariant',
-        description: `Audit calibrated target as 'Band 4 / Entry', but Section C2 claims 'advancement to Band 1'. Downstream generation cannot hallucinate higher-tier claims.`,
-        actionTaken: 'Blocked delivery: Target band ask must align with canonical Band 4 / Entry calibration.'
+        description: `Audit calibrated target as '${canonicalTarget}', but Section C2 claims 'advancement to Band 1'. Downstream generation cannot hallucinate higher-tier claims.`,
+        actionTaken: `Blocked delivery: Target band ask must align with canonical ${canonicalTarget} calibration.`
       });
     }
   }

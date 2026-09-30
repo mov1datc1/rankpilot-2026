@@ -97,7 +97,13 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   const riskLevel = isInsufficientEvidence ? "High (Evidencia Insuficiente)" : (analysis.risk_level ? String(analysis.risk_level) : "Pending");
   const archetype = context.archetype ? String(context.archetype) : "Strategic model pending";
   const detectedTier = isInsufficientEvidence ? "Unrated — Insufficient Evidence Base" : (context.starting_position ? String(context.starting_position) : "Not classified");
-  const target = isInsufficientEvidence ? "Retenido — Requiere 10–20 Mandatos" : (context.target_realistic ? String(context.target_realistic) : "Target pending");
+  const isLabourPrac = (submission.practiceArea || '').toLowerCase().includes('labour') || (submission.practiceArea || '').toLowerCase().includes('labor') || (submission.practiceArea || '').toLowerCase().includes('empleo');
+  const targetBandRaw = (submission as any).targetBand || chambersData.targetRanking || chambersData.target_band || '';
+  const isTargetBand5 = targetBandRaw.toLowerCase().includes('band 5') || targetBandRaw.toLowerCase().includes('banda 5') || isLabourPrac;
+  const rawTarget = context.target_realistic ? String(context.target_realistic) : (isTargetBand5 ? 'Band 5 / Entry Standard' : 'Target pending');
+  const target = isInsufficientEvidence
+    ? "Retenido — Requiere 10–20 Mandatos"
+    : (isTargetBand5 && rawTarget.toLowerCase().includes('band 4') ? 'Band 5 / Entry Standard' : rawTarget);
 
   // Editorial Intelligence metrics (with jurisdiction harmonization)
   const rawIdentityStatement = competitiveIdentity.identity_statement || `${firmName} - ${submission.practiceArea || 'Practice'} Market Leader`;
