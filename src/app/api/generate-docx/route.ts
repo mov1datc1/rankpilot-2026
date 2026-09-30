@@ -463,7 +463,7 @@ function makeTable(headers: string[], rows: string[][]): Table {
 // ═══════════════════════════════════════════════════════════════
 
 export function buildAuditDoc(firmName: string, practiceArea: string, analysis: any, context: any, letter: any, submission: any): Document {
-  const dateStr = new Date(submission.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const dateStr = submission?.createdAt ? new Date(submission.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const sections: (Paragraph | Table)[] = [];
 
   // Extract v6.0-v10.0 data from chambersData
@@ -696,32 +696,32 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
       p(strategicSufficiency.headline, { bold: true, size: 24, color: 'B91C1C', spacing: { after: 120 } }),
       p('RankPilot Strategic Defensibility Protocol: In accordance with Chambers & Partners editorial standards, the platform has intentionally failed closed on band predictions and competitiveness scoring. A submission cannot be responsibly certified or ranked with insufficient evidentiary volume.', { italics: true, color: GRAY, spacing: { after: 200 } }),
 
-      subTitle('1. Evidencia Recibida (Audit Intake)'),
-      p(`• Total de asuntos registrados: ${strategicSufficiency.receivedEvidence.totalMatters} (${strategicSufficiency.receivedEvidence.publishableCount} publicables, ${strategicSufficiency.receivedEvidence.confidentialCount} confidenciales).`, { spacing: { after: 40 } }),
-      p(`• Clientes identificados: ${strategicSufficiency.receivedEvidence.clients.join(', ') || 'N/A'}.`, { spacing: { after: 40 } }),
-      p(`• Estado de Sección B10 (Department Overview): ${strategicSufficiency.receivedEvidence.hasDepartmentB10 ? `Registrada (${strategicSufficiency.receivedEvidence.b10WordCount} palabras).` : 'Vacía / No incluida en el documento fuente.'}`, { spacing: { after: 40 } }),
-      p(`• Abogados en roster (B9): ${strategicSufficiency.receivedEvidence.lawyerCount} candidatos registrados.`, { spacing: { after: 120 } }),
+      subTitle('1. Received Evidence (Audit Intake)'),
+      p(`• Total recorded matters: ${strategicSufficiency.receivedEvidence.totalMatters} (${strategicSufficiency.receivedEvidence.publishableCount} publishable, ${strategicSufficiency.receivedEvidence.confidentialCount} confidential).`, { spacing: { after: 40 } }),
+      p(`• Identified clients: ${strategicSufficiency.receivedEvidence.clients.join(', ') || 'N/A'}.`, { spacing: { after: 40 } }),
+      p(`• Section B10 (Department Overview) status: ${strategicSufficiency.receivedEvidence.hasDepartmentB10 ? `Provided (${strategicSufficiency.receivedEvidence.b10WordCount} words).` : 'Empty / Not included in source dossier.'}`, { spacing: { after: 40 } }),
+      p(`• Nominated lawyers (B9): ${strategicSufficiency.receivedEvidence.lawyerCount} practitioners registered.`, { spacing: { after: 120 } }),
 
-      subTitle('2. Evidencia Faltante (Déficit Frente al Estándar Chambers)'),
-      p(`• Estándar de mercado: Chambers & Partners permite hasta 20 asuntos destacados (mínimo competitivo recomendado: 10–20 mandatos).`, { spacing: { after: 40 } }),
-      p(`• Déficit crítico: Se requiere incorporar al menos ${strategicSufficiency.missingEvidence.matterDeficit} asuntos representativos adicionales para sustentar masa crítica, recurrencia anual y diversidad de industrias.`, { spacing: { after: 40 } }),
-      ...strategicSufficiency.missingEvidence.missingSections.map((s: string) => p(`• Sección faltante: ${s}`, { color: 'B45309', spacing: { after: 40 } })),
+      subTitle('2. Missing Evidence (Deficit Against Chambers Benchmark)'),
+      p(`• Market standard: Chambers & Partners allows up to 20 standout matters (minimum competitive threshold: 10–20 mandates).`, { spacing: { after: 40 } }),
+      p(`• Critical evidentiary deficit: A minimum of ${strategicSufficiency.missingEvidence.matterDeficit} additional representative matters is required to demonstrate critical mass, annual recurrence, and industry diversity.`, { spacing: { after: 40 } }),
+      ...strategicSufficiency.missingEvidence.missingSections.map((s: string) => p(`• Missing section: ${s}`, { color: 'B45309', spacing: { after: 40 } })),
 
-      subTitle('3. Por Qué No Se Puede Evaluar Defendiblemente la Candidatura'),
+      subTitle('3. Strategic Rationale for Withheld Candidacy Evaluation'),
       p(strategicSufficiency.defensibilityRationale, { spacing: { after: 140 } }),
 
-      subTitle('4. Hoja de Ruta y Acciones Requeridas para Desbloquear'),
+      subTitle('4. Strategic Roadmap and Required Actions to Unlock Submission'),
       ...strategicSufficiency.requiredActions.map((act: string, idx: number) => p(`${idx + 1}. ${act}`, { bold: true, color: NAVY, spacing: { after: 50 } })),
       emptyRow()
     );
 
     if (strategicSufficiency.practiceDiscrepancy?.hasDiscrepancy) {
       sections.push(
-        subTitle('5. Advertencia Material de Coherencia de Área de Práctica'),
+        subTitle('5. Practice Area Scope and Alignment Advisory'),
         p(`Selected Practice Area: ${strategicSufficiency.practiceDiscrepancy.calibratedPractice}  vs.  Extracted Substantive Focus: ${strategicSufficiency.practiceDiscrepancy.detectedPractice}`, { bold: true, color: 'B45309', spacing: { after: 60 } }),
         p(strategicSufficiency.practiceDiscrepancy.headline, { bold: true, color: NAVY, spacing: { after: 60 } }),
         ...strategicSufficiency.practiceDiscrepancy.substantiveFindings.map((f: string) => p(`• ${f}`, { spacing: { after: 40 } })),
-        p(`Impacto editorial en Chambers: ${strategicSufficiency.practiceDiscrepancy.chambersImpact}`, { italics: true, color: GRAY, spacing: { after: 60 } }),
+        p(`Editorial impact on Chambers evaluation: ${strategicSufficiency.practiceDiscrepancy.chambersImpact}`, { italics: true, color: GRAY, spacing: { after: 60 } }),
         p(strategicSufficiency.practiceDiscrepancy.warningIfContinued, { bold: true, color: 'DC2626', spacing: { after: 160 } }),
         emptyRow()
       );
@@ -874,7 +874,23 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
     bandAlignment = 'Band 5 / Entry Standard';
   }
   const currentBand = submission.currentBand || context.starting_position || 'Unranked';
-  if (bandAlignment) {
+
+  if (isStrategicallyInsufficient) {
+    sections.push(sectionTitle('Band Calibration & Strategic Justification'));
+    sections.push(
+      p(`Calibrated Directory Target: WITHHELD (Insufficient Evidence Base)`, { bold: true, color: 'DC2626', size: 24, spacing: { after: 80 } }),
+      p(`RankPilot Strategic Defensibility Protocol: Formal band calibration and directory target benchmarking are intentionally withheld. Chambers & Partners requires a consolidated evidentiary baseline (minimum 10–20 representative matters) to evaluate market competitiveness:`, { italics: true, color: GRAY, spacing: { after: 120 } })
+    );
+    const calibrationRows = [
+      ['Current Directory Position', currentBand],
+      ['Target Directory Objective', 'WITHHELD (Pre-filing Draft / Evidentiary Deficit)'],
+      ['Evidence Supporting Target', `Preliminary dossier compiles ${availableMatters.length} matter(s). While initial activity is documented, total volume is insufficient to demonstrate annual commercial recurrence or practice depth before Chambers researchers.`],
+      ['Evidence Limiting Stronger Claim', 'Evidentiary deficit prevents benchmark modeling against ranked firms. Directory guidelines require critical mass across client diversity, mandate values, and practice-specific regulatory interfaces.'],
+      ['Principal Upgrade Requirements', 'Expand evidentiary dossier to a minimum of 10–20 matters with verified mandate values, complete counterparty disclosures, and responsive client referees before formal submission.']
+    ];
+    sections.push(makeTable(['Calibration Dimension', 'Strategic Assessment'], calibrationRows));
+    sections.push(emptyRow());
+  } else if (bandAlignment) {
     sections.push(sectionTitle('Band Calibration & Strategic Justification'));
     sections.push(
       p(`Calibrated Directory Target: ${bandAlignment}`, { bold: true, color: NAVY, size: 24, spacing: { after: 80 } }),
@@ -892,32 +908,52 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
   }
 
   // ═══ NEW §5: Narrative Strategy ═══
-  const narrativeStrategy = Array.isArray(letter.narrative_strategy) ? letter.narrative_strategy : [];
-  if (narrativeStrategy.length > 0) {
-    sections.push(sectionTitle('Narrative Strategy'));
-    for (const bullet of narrativeStrategy) {
+  if (isStrategicallyInsufficient) {
+    sections.push(sectionTitle('Evidentiary Working Strategy (Pre-filing Roadmap)'));
+    const prefilingRoadmap = [
+      `Maintain current matter compilation as an active working draft while compiling 8–18 additional representative mandates for ${practiceArea}.`,
+      `Substantiate direct practice-specific legal work: verify whether mandates center on core ${practiceArea} regulatory frameworks, contentious proceedings, or transactional advisory.`,
+      `Disclose concrete client identities, quantifiable economic exposure (mandate values), and specific counterparty/regulatory authorities for all draft matters.`,
+      `Engage and register 10–20 responsive client referees across target industry sectors prior to the directory submission deadline.`
+    ];
+    for (const bullet of prefilingRoadmap) {
       sections.push(new Paragraph({
-        children: [new TextRun({ text: `→  ${typeof bullet === 'string' ? bullet : JSON.stringify(bullet)}`, size: 22 })],
+        children: [new TextRun({ text: `→  ${bullet}`, size: 22 })],
         indent: { left: 400 },
         spacing: { after: 80 },
       }));
     }
     sections.push(emptyRow());
-  }
+    sections.push(sectionTitle('Competitive Positioning & Directory Viability'));
+    sections.push(p('RankPilot Strategic Defensibility Protocol: Formal competitive positioning and unfair advantage benchmarking are intentionally WITHHELD. Chambers & Partners requires an empirical threshold of 10–20 representative matters to evaluate market standing. Asserting competitive superiority on an evidentiary base of fewer than 5 matters risks editorial skepticism. This dossier is maintained as an active working draft while additional mandates are compiled.', { italics: true, color: GRAY, spacing: { after: 200 } }));
+  } else {
+    const narrativeStrategy = Array.isArray(letter.narrative_strategy) ? letter.narrative_strategy : [];
+    if (narrativeStrategy.length > 0) {
+      sections.push(sectionTitle('Narrative Strategy'));
+      for (const bullet of narrativeStrategy) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: `→  ${typeof bullet === 'string' ? bullet : JSON.stringify(bullet)}`, size: 22 })],
+          indent: { left: 400 },
+          spacing: { after: 80 },
+        }));
+      }
+      sections.push(emptyRow());
+    }
 
-  // State of Play
-  if (letter.the_state_of_play) {
-    sections.push(sectionTitle('The State of Play'), p(String(letter.the_state_of_play), { spacing: { after: 300 } }));
-  }
+    // State of Play
+    if (letter.the_state_of_play) {
+      sections.push(sectionTitle('The State of Play'), p(String(letter.the_state_of_play), { spacing: { after: 300 } }));
+    }
 
-  // Unfair Advantage
-  if (letter.the_unfair_advantage) {
-    sections.push(sectionTitle('The Unfair Advantage'), p(String(letter.the_unfair_advantage), { spacing: { after: 300 } }));
-  }
+    // Unfair Advantage
+    if (letter.the_unfair_advantage) {
+      sections.push(sectionTitle('The Unfair Advantage'), p(String(letter.the_unfair_advantage), { spacing: { after: 300 } }));
+    }
 
-  // Competitive Context
-  if (letter.competitive_context) {
-    sections.push(sectionTitle('Competitive Positioning'), p(String(letter.competitive_context), { spacing: { after: 300 } }));
+    // Competitive Context
+    if (letter.competitive_context) {
+      sections.push(sectionTitle('Competitive Positioning'), p(String(letter.competitive_context), { spacing: { after: 300 } }));
+    }
   }
 
   // Reality Check

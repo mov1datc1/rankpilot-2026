@@ -83,9 +83,9 @@ export function evaluateStrategicSufficiency(params: {
   // Case A: Insufficient evidence (< 5 matters or 0 matters)
   if (totalMatters < MINIMUM_DEFENSIBLE_MATTERS) {
     const missingSections: string[] = [];
-    if (!hasDepartmentB10) missingSections.push('Sección B10 (Department Best Known For / Perfil del Departamento)');
-    if (lawyerCount === 0) missingSections.push('Sección B9 (Roster de Abogados y Biografías Estratégicas)');
-    missingSections.push(`Asuntos de fondo: faltan ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} a ${FULL_BENCHMARK_MATTERS - totalMatters} mandatos representativos`);
+    if (!hasDepartmentB10) missingSections.push('Section B10 (Department Overview / Practice Profile)');
+    if (lawyerCount === 0) missingSections.push('Section B9 (Lawyer Roster & Strategic Bios)');
+    missingSections.push(`Substantive Mandates: Deficit of ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} to ${FULL_BENCHMARK_MATTERS - totalMatters} representative matters`);
 
     const clientSnippet = uniqueClients.length > 0 ? ` (${uniqueClients.join(', ')})` : '';
 
@@ -108,17 +108,17 @@ export function evaluateStrategicSufficiency(params: {
         minimumRecommended: RECOMMENDED_COMPETITIVE_MATTERS,
         matterDeficit: RECOMMENDED_COMPETITIVE_MATTERS - totalMatters,
         missingSections,
-        benchmarkComparison: `Se recibieron ${totalMatters} mandatos frente al estándar oficial de Chambers de hasta 20 asuntos (mínimo 10–20 recomendados).`
+        benchmarkComparison: `${totalMatters} matter(s) received against the official Chambers benchmark of up to 20 matters (minimum 10–20 recommended).`
       },
-      defensibilityRationale: `Chambers & Partners evalúa la profundidad institucional del equipo, la recurrencia anual y la diversidad de clientes ante contrapartes complejas. Con una muestra de solo ${totalMatters} asunto(s)${clientSnippet}, cualquier asignación de Banda (Band 1–4) o Score de competitividad carece de sustento probatorio y sería metodológicamente indefendible. RankPilot aplica el principio de 'fail-closed' para proteger la credibilidad del despacho y evitar recomendaciones artificiales.`,
+      defensibilityRationale: `Chambers & Partners evaluates institutional team depth, annual mandate recurrence, and client diversity against complex counterparties. With a sample of only ${totalMatters} matter(s)${clientSnippet}, any band projection (Band 1–5) or competitiveness score lacks evidentiary foundation and is methodologically indefensible. RankPilot applies the 'fail-closed' protocol to protect firm credibility and prevent speculative or artificial ranking recommendations.`,
       requiredActions: [
-        `Cargar o importar al menos ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} asuntos adicionales (hasta completar de 10 a 20 mandatos destacados) para construir una masa crítica defendible.`,
+        `Upload or import at least ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} additional matters (to reach the 10–20 standout mandate threshold) to build a defensible critical mass.`,
         hasDepartmentB10
-          ? 'Revisar la Sección B10 para asegurar que los pilares institucionales reflejen la práctica seleccionada.'
-          : 'Completar la narrativa del departamento (B10) destacando fortalezas únicas, volumen general y feedback de mercado.',
+          ? 'Review Section B10 to ensure institutional pillars reflect the selected practice area.'
+          : 'Complete the department overview (Section B10) highlighting core strengths, volume, and sector specialization.',
         practiceDiscrepancy.hasDiscrepancy
-          ? `Resolver la discrepancia de área de práctica: cambiar a '${practiceDiscrepancy.detectedPractice}' o ratificar '${practiceArea}' documentando el riesgo de dilución.`
-          : 'Verificar que cada mandato contenga cuantía económica, autoridades intervinientes y desglose de horas/abogados.'
+          ? `Resolve practice area discrepancy: reassign to '${practiceDiscrepancy.detectedPractice}' or confirm '${practiceArea}' with documented dilution risk.`
+          : 'Verify that each mandate contains quantifiable financial scale, regulatory authorities involved, and lead partner attribution.'
       ],
       submissionReadiness: 'Withheld — Strategically Insufficient Evidence',
       recommendedScore: null,
@@ -147,15 +147,15 @@ export function evaluateStrategicSufficiency(params: {
       missingEvidence: {
         minimumRecommended: RECOMMENDED_COMPETITIVE_MATTERS,
         matterDeficit: RECOMMENDED_COMPETITIVE_MATTERS - totalMatters,
-        missingSections: !hasDepartmentB10 ? ['Sección B10 recomendada'] : [],
-        benchmarkComparison: `${totalMatters} mandatos detectados (umbral provisional superado, pero por debajo de los 10–20 mandatos óptimos).`
+        missingSections: !hasDepartmentB10 ? ['Section B10 Recommended'] : [],
+        benchmarkComparison: `${totalMatters} matters detected (provisional threshold met, but below the 10–20 optimal mandate range).`
       },
-      defensibilityRationale: `El dataset de ${totalMatters} mandatos permite emitir un diagnóstico preliminar, pero existe riesgo de desventaja competitiva frente a firmas líderes que presentan el tope de 20 mandatos con distribución equilibrada entre socios.`,
+      defensibilityRationale: `The dataset of ${totalMatters} matters allows a preliminary diagnosis, but carries competitive disadvantage against peer firms submitting the full 20-matter roster with balanced partner distribution.`,
       requiredActions: [
-        `Agregar ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} a ${FULL_BENCHMARK_MATTERS - totalMatters} mandatos más para maximizar las probabilidades en Chambers.`,
+        `Add ${RECOMMENDED_COMPETITIVE_MATTERS - totalMatters} to ${FULL_BENCHMARK_MATTERS - totalMatters} additional matters to maximize directory competitiveness.`,
         practiceDiscrepancy.hasDiscrepancy
-          ? `Evaluar la recomendación de práctica: los mandatos son consistentes con '${practiceDiscrepancy.detectedPractice}'.`
-          : 'Confirmar que los socios líderes estén distribuidos adecuadamente en los mandatos principales.'
+          ? `Evaluate practice recommendation: matters are consistent with '${practiceDiscrepancy.detectedPractice}'.`
+          : 'Confirm that lead partners are appropriately distributed across primary mandates.'
       ],
       submissionReadiness: 'Provisional — Evidence Expansion Recommended',
       recommendedScore: Math.min(65, 40 + totalMatters * 3),

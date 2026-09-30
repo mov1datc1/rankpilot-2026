@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented in this file.
 
+## [v29.6] — 2026-09-30
+
+### Resolution of Angela Castillo's 7 Architectural Directives on Ramos Castillo Energy & Natural Resources
+
+- **WITHHELD Audit Governs Downstream Submission Pipeline (`src/app/api/generate-docx/route.ts`, `src/app/api/generate-docx/submission-builder.ts`)**:
+  - *Binding Pipeline State*: When RankPilot's Strategic Sufficiency Gate determines that evidence is insufficient (< 5 matters), the system unconditionally locks to WITHHELD across all layers.
+  - *Audit Letter Band Calibration*: Locked to `Calibrated Directory Target: WITHHELD (Insufficient Evidence Base)`. Replaced default "Band 4 / Entry Standard" with evidentiary deficit justification and pre-filing requirements table.
+  - *Section C2 Feedback & Positioning*: Overrode competitive positioning with `[STRATEGIC POSITIONING WITHHELD — INSUFFICIENT EVIDENCE BASE]`. Strictly barred assertions that the practice "merits initial ranking recognition in Band 4" or "benchmarks against ranked competitors" on insufficient evidence.
+  - *Section B10 Department Overview*: Locked to `[EDITORIAL STATUS: PRE-FILING WORKING DRAFT — CANDIDACY EVALUATION WITHHELD]`. Suppressed commercial superlatives and market dominance claims in favor of a factual working draft overview.
+
+- **Pre-Filing Working Draft Mode — Value Preservation Without False Candidacy (`src/lib/docx/matter-curator.ts`, `src/app/api/generate-docx/submission-builder.ts`)**:
+  - *Matter Retention Safeguard*: Prevented small preliminary dossiers (< 5 matters) from having all matters excluded by off-category filters. Retained user draft matters in Section D so the user receives draft rewriting, factual polishing, and missing evidence questions.
+  - *Zero Hallucinated Filler Prose*: Eliminated the generic fallback text (*"Publishable Matter 1 instructed the practice to manage and resolve high-stakes issues..."*) on empty matters. Implemented `[INSUFFICIENT FACTUAL EVIDENCE IN SOURCE — DRAFT REVISION WITHHELD]` accompanied by 5 concrete questions required to unlock substantive drafting.
+
+- **Substantive Practice-Area Evaluation for Energy & Natural Resources (`src/lib/audit/practice-area-classifier.ts`)**:
+  - *Substantive Legal Scope vs. Keyword Leaks*: Practice classifier now strictly evaluates whether legal work falls within Chambers Energy definitions (power generation, renewables, hydrocarbons, mining, CRE/CENACE/SENER regulatory frameworks).
+  - *Constructora FH3 Scope Alignment*: Correctly classified municipal civil protection amparo for a residential housing developer as `Practice relevance: UNCONFIRMED / MISMATCH (Real Estate / Administrative Litigation)`.
+  - *Field D9 Sanitization*: Restricted Field D9 strictly to valid external URLs or press citations. Purged all internal scoring tags (`[Relevance: 75%...]`, `Matter aligned with target practice area scope`) from client-facing deliverables.
+
+- **Zero Cross-Practice Contamination (`src/lib/docx/lawyer-curator.ts`)**:
+  - *Practice Isolation for Nominated Partners*: José Pablo Ramos Castillo's individual bio now strictly evaluates the target practice area. Real Estate flagship matters (*El Cielo Country Club*, *Duranpark*, *IDEX Brasilia*) are ONLY cited when the target practice area is Real Estate. For Energy with insufficient evidence, his candidacy is marked as under evidentiary review without cross-practice contamination.
+
+- **Document-Level Language Lock (`src/lib/audit/evidence-sufficiency-gate.ts`, `src/lib/audit/practice-area-classifier.ts`, `src/app/api/generate-docx/route.ts`, `src/app/api/generate-docx/submission-builder.ts`)**:
+  - *100% English Uniformity*: Translated all audit sufficiency gate headers, missing evidence lists, benchmark rationales, and practice discrepancy advisories into English.
+  - *Matter Recasting*: Implemented `ensureEnglishMatterSummary` to automatically recast Spanish matter narratives (including Constructora FH3) into professional English for Chambers submissions.
+
 ## [v29.4] — 2026-09-30
 
 ### Resolution of Angela Castillo's 6 Structural Findings on Ramos Castillo Real Estate

@@ -103,9 +103,30 @@ export function detectPracticeAreaDiscrepancy(
   const labourScore = countMatches(labourKeywords);
   const realEstateScore = countMatches(realEstateKeywords);
 
-  // 1. SPECIFIC CASE: Energy & Natural Resources calibrated vs. Environmental content
+  // 1. SPECIFIC CASE: Energy & Natural Resources calibrated vs. Non-Energy / Environmental / Real Estate content
   if (normCalibrated.includes('energy') || normCalibrated.includes('energía')) {
-    if (envScore >= 3 && energyScore <= 1) {
+    if (energyScore === 0) {
+      const topAlternative = (realEstateScore > 0 || combinedText.includes('protección civil') || combinedText.includes('habitacional') || combinedText.includes('licencia de construcción'))
+        ? 'Real Estate / Administrative Litigation'
+        : (envScore > 0 ? 'Environment' : 'Unconfirmed / Off-Category');
+
+      return {
+        hasDiscrepancy: true,
+        calibratedPractice: 'Energy & Natural Resources',
+        detectedPractice: topAlternative,
+        confidence: 'high',
+        headline: `No substantive Energy & Natural Resources legal mandates detected. Evidence aligns with ${topAlternative}.`,
+        substantiveFindings: [
+          `None of the submitted matters (${matters.length}) involve power generation, renewable energy (solar/wind), PPA structuring, transmission facilities, hydrocarbons (upstream/midstream), or regulatory proceedings before the CRE, CENACE, SENER, or ASEA.`,
+          `The provided matters describe municipal building licenses, civil protection suspension defense, residential zoning, or general administrative amparo, which fall under Real Estate and Administrative Litigation.`,
+          `International directory research teams (Chambers and Legal 500) evaluate municipal zoning and construction amparos in Real Estate or Dispute Resolution, not in Energy & Natural Resources.`
+        ],
+        chambersImpact: 'Filing residential zoning, municipal building permits, or non-energy administrative disputes under Energy & Natural Resources causes immediate evaluative dilution and rejection by specialized energy researchers.',
+        recommendedAction: 'switch_practice',
+        suggestedPractice: topAlternative,
+        warningIfContinued: 'If you proceed in Energy & Natural Resources, the Strategic Audit will flag this substantive mismatch as a critical dilution risk, and the matters will not support any ranking candidacy in Energy.'
+      };
+    } else if (envScore >= 3 && energyScore <= 1) {
       return {
         hasDiscrepancy: true,
         calibratedPractice: 'Energy & Natural Resources',
@@ -113,14 +134,14 @@ export function detectPracticeAreaDiscrepancy(
         confidence: 'high',
         headline: 'The uploaded evidence appears more consistent with Environment than Energy & Natural Resources.',
         substantiveFindings: [
-          `Los asuntos cargados (${matters.length}) se centran predominantemente en inspecciones, clausuras, descargas de aguas residuales y regulación de emisiones ante autoridades ambientales (PROFEPA, CONAGUA, LGEEPA).`,
-          'No se identificaron mandatos de generación eléctrica, proyectos de energía renovable (solar/eólica), contratos PPA, hidrocarburos (upstream/midstream), o litigio regulatorio ante la CRE o el CENACE.',
-          'En los directorios internacionales (Chambers & Partners y The Legal 500), los mandatos de cumplimiento ambiental industrial y remediación se evalúan en la tabla de "Environment", no en "Energy & Natural Resources".'
+          `The submitted matters (${matters.length}) focus predominantly on environmental compliance, wastewater discharges, emissions inspections, and PROFEPA/CONAGUA enforcement.`,
+          'No substantial transactional, project development, or regulatory energy mandates (CRE/CENACE/hydrocarbons) were identified.',
+          'International directories evaluate environmental audit compliance and industrial closure defense under "Environment", not "Energy & Natural Resources".'
         ],
-        chambersImpact: 'Presentar mandatos de defensa ambiental regulatoria bajo la tabla de Energy genera dilución sustantiva: los investigadores de Energy buscan volumen transaccional y proyectos de generación, mientras que los investigadores de Environment buscan precisamente inspecciones PROFEPA/CONAGUA y clausuras industriales.',
+        chambersImpact: 'Specialized energy researchers look for power generation projects, transaction scale, and regulatory filings; environmental enforcement is evaluated in the Environment guide.',
         recommendedAction: 'switch_practice',
         suggestedPractice: 'Environment',
-        warningIfContinued: 'Si decides continuar en Energy & Natural Resources, la Auditoría Estratégica señalará esta discrepancia material como un riesgo crítico de dilución editorial y los mandatos no podrán respaldar un posicionamiento competitivo en Energía.'
+        warningIfContinued: 'Filing environmental enforcement matters under Energy creates critical substantive dilution.'
       };
     }
   }
@@ -135,12 +156,12 @@ export function detectPracticeAreaDiscrepancy(
         confidence: 'high',
         headline: 'The uploaded evidence appears more consistent with Tax than Real Estate.',
         substantiveFindings: [
-          'La evidencia analizada describe controversias fiscales y auditorías ante el SAT, sin desarrollo ni transacciones inmobiliarias sustantivas.'
+          'The analyzed evidence describes tax controversies and SAT audits, lacking substantive real estate transactions or development nexus.'
         ],
-        chambersImpact: 'La postulación será clasificada incorrectamente por los equipos de investigación de Chambers.',
+        chambersImpact: 'The submission will be evaluated unfavorably by Chambers Real Estate research teams.',
         recommendedAction: 'switch_practice',
         suggestedPractice: 'Tax',
-        warningIfContinued: 'Continuar en Real Estate provocará que los mandatos fiscales no sean computados favorablemente por el equipo de investigación inmobiliaria.'
+        warningIfContinued: 'Proceeding in Real Estate will cause fiscal disputes to be discounted by real estate researchers.'
       };
     }
   }
@@ -156,12 +177,12 @@ export function detectPracticeAreaDiscrepancy(
         confidence: 'high',
         headline: `The uploaded evidence appears more consistent with ${topOther} than Labour & Employment.`,
         substantiveFindings: [
-          'No se identificaron asuntos de negociación colectiva, sindicatos, huelgas ni litigio laboral individual/colectivo.'
+          'No collective bargaining negotiations, union relations, strike defenses, or employment litigations were identified.'
         ],
-        chambersImpact: 'La postulación no contiene evidencia probatoria para la práctica de Labour & Employment.',
+        chambersImpact: 'The submission lacks evidentiary support for the Labour & Employment practice.',
         recommendedAction: 'switch_practice',
         suggestedPractice: topOther,
-        warningIfContinued: 'Se generará una evaluación de incompatibilidad material en la auditoría.'
+        warningIfContinued: 'A finding of material practice incompatibility will be registered in the audit.'
       };
     }
   }
@@ -201,9 +222,87 @@ export function classifyMatterPractice(
   const client = (matter.client || matter.clientName || matter.name || '').toLowerCase();
   const title = (matter.title || '').toLowerCase();
   const summary = (matter.summary || matter.rawNotes || matter.optimizedText || matter.description || '').toLowerCase();
-  const text = `${client} ${title} ${summary}`;
+  const text = `${client} ${title} ${summary}`.trim();
+
+  // If matter has no substantive text (< 20 characters), it cannot be confirmed
+  if (text.length < 20) {
+    return {
+      relevanceScore: 0,
+      classification: 'off_category',
+      primaryPractice: 'Unconfirmed / Insufficient Evidence',
+      relevanceRationale: 'Practice relevance: UNCONFIRMED. Insufficient factual evidence in source dossier to establish practice alignment or legal scope.',
+      isOffCategory: true,
+    };
+  }
 
   const isRealEstate = normTarget.includes('real estate') || normTarget.includes('inmobiliario');
+  const isEnergy = normTarget.includes('energy') || normTarget.includes('energía') || normTarget.includes('natural resources');
+
+  // Energy & Natural Resources substantive practice evaluation
+  if (isEnergy) {
+    const hasEnergyKeywords = (
+      text.includes('energía') || text.includes('energy') ||
+      text.includes('eléctric') || text.includes('electric') ||
+      text.includes('power') || text.includes('renovable') || text.includes('renewable') ||
+      text.includes('solar') || text.includes('fotovolt') || text.includes('wind') || text.includes('eólic') ||
+      text.includes('hidrocarbur') || text.includes('hydrocarbon') ||
+      text.includes('petróleo') || text.includes('petroleo') || text.includes('oil & gas') || text.includes('gas natural') ||
+      text.includes('gasoducto') || text.includes('pipeline') ||
+      text.includes('minería') || text.includes('mining') || text.includes('mineral') || text.includes('concesión minera') ||
+      text.includes('cre') || text.includes('cenace') || text.includes('sener') || text.includes('cnh') || text.includes('asea') ||
+      text.includes('ppa') || text.includes('cels') || text.includes('clean energy') ||
+      text.includes('sistema eléctrico') || text.includes('sistema electrico')
+    );
+
+    if (hasEnergyKeywords) {
+      return {
+        relevanceScore: 85,
+        classification: 'core',
+        primaryPractice: 'Energy & Natural Resources',
+        relevanceRationale: 'Substantive nexus to power generation, hydrocarbons, mining concessions, or energy regulatory compliance.',
+        isOffCategory: false,
+      };
+    }
+
+    // If it has residential housing / municipal civil protection / building licensing without energy work:
+    const isRealEstateOrAdmin = (
+      text.includes('habitacional') || text.includes('vivienda') || text.includes('inmobiliari') ||
+      text.includes('puerto vallarta') || text.includes('constructora') || text.includes('licencia de construcción') ||
+      text.includes('protección civil') || text.includes('proteccion civil') || text.includes('urban zoning') ||
+      text.includes('uso de suelo') || text.includes('desarrolladora') || text.includes('condominio') ||
+      text.includes('fraccionamiento') || text.includes('edificación')
+    );
+
+    if (isRealEstateOrAdmin) {
+      return {
+        relevanceScore: 20,
+        classification: 'off_category',
+        primaryPractice: 'Real Estate / Administrative Litigation',
+        relevanceRationale: 'Practice relevance: UNCONFIRMED / MISMATCH (Real Estate / Administrative Litigation). Mandate centers on municipal civil protection, residential construction licensing, and amparo litigation for a housing developer. Zero legal work in power generation, hydrocarbons, mining, or energy regulatory frameworks (CRE/CENACE/SENER).',
+        isOffCategory: true,
+      };
+    }
+
+    // Pure environmental without energy
+    if (text.includes('ambiental') || text.includes('environmental') || text.includes('impacto ambiental') || text.includes('ecología')) {
+      return {
+        relevanceScore: 25,
+        classification: 'off_category',
+        primaryPractice: 'Environment',
+        relevanceRationale: 'Practice relevance: UNCONFIRMED / MISMATCH (Environment). Mandate involves general environmental licensing or compliance without energy generation or natural resources nexus.',
+        isOffCategory: true,
+      };
+    }
+
+    // Unconfirmed Energy
+    return {
+      relevanceScore: 15,
+      classification: 'off_category',
+      primaryPractice: 'Unconfirmed Practice',
+      relevanceRationale: 'Practice relevance: UNCONFIRMED. Lacks verifiable energy regulatory, transactional, or contentious nexus.',
+      isOffCategory: true,
+    };
+  }
 
   if (isRealEstate) {
     // 1. Off-category: Energy infrastructure, public lighting, fuel stations, electric grid
@@ -331,12 +430,12 @@ export function classifyMatterPractice(
     };
   }
 
-  // Generic fallback
+  // Generic fallback: neutral practice relevance
   return {
-    relevanceScore: 75,
-    classification: 'core',
+    relevanceScore: 40,
+    classification: 'supporting',
     primaryPractice: targetPracticeArea || 'General Practice',
-    relevanceRationale: 'Matter aligned with target practice area scope.',
+    relevanceRationale: 'Practice relevance: UNCONFIRMED. Matter retained in working draft pending practice scope verification.',
     isOffCategory: false,
   };
 }

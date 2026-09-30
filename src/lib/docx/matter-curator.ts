@@ -543,6 +543,15 @@ export function curateMatters(
   const qualifiedConf = rawConf.filter(m => !isExcluded(m));
   const excludedConf = rawConf.filter(m => isExcluded(m));
 
+  // In pre-filing draft mode (or when all provided matters would otherwise be excluded),
+  // retain the provided matters so the user receives draft rewriting, factual polishing, and missing evidence questions.
+  if (qualifiedPub.length === 0 && rawPub.length > 0) {
+    qualifiedPub.push(...rawPub);
+  }
+  if (qualifiedConf.length === 0 && rawConf.length > 0) {
+    qualifiedConf.push(...rawConf);
+  }
+
   // Partition into official slate vs surplus (Reserve / Excluded)
   const officialPubMatters = qualifiedPub.slice(0, maxPub);
   const surplusPubMatters = [...qualifiedPub.slice(maxPub), ...excludedPub];
