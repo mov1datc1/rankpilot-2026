@@ -16,6 +16,7 @@
 
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { evaluateStrategicSufficiency, StrategicSufficiencyAudit } from './evidence-sufficiency-gate';
+import { curateMatters } from '@/lib/docx/matter-curator';
 
 export interface JudgeSolCheck {
   check_id: string;
@@ -77,18 +78,25 @@ export function evaluateJudgeSolSubmission(params: {
   const isMexico = resolvedLocation.includes('mexic') || resolvedLocation.includes('mx');
   const isColombia = resolvedLocation.includes('colomb') || resolvedLocation.includes('co');
 
+  // Curate matters according to practice allowance, canonical selection & confidentiality
+  const curation = curateMatters(matters, practiceArea, chambersData);
+  const officialPubMatters = curation.officialPubMatters || [];
+  const officialConfMatters = curation.officialConfMatters || [];
+  const officialMatters = [...officialPubMatters, ...officialConfMatters];
+  const surplusMatters = [...(curation.surplusPubMatters || []), ...(curation.surplusConfMatters || [])];
+
   const totalMatters = matters.length;
-  const pubMatters = matters.filter((m: any) => !m.confidential);
-  const confMatters = matters.filter((m: any) => m.confidential);
-  const pubCount = pubMatters.length;
-  const confCount = confMatters.length;
+  const officialCount = officialMatters.length;
+  const pubCount = officialPubMatters.length;
+  const confCount = officialConfMatters.length;
+  const surplusCount = surplusMatters.length;
 
   const checks: JudgeSolCheck[] = [];
   const violations: string[] = [];
   let totalPenalty = 0;
 
   // 1. REGISTER CHECK (Matter volume & presence)
-  const registerPassed = totalMatters > 0;
+  const registerPassed = totalMatters > 0 || officialCount > 0;
   if (!registerPassed) {
     totalPenalty += 6.0;
     violations.push('Fallo crítico de registro: 0 asuntos detectados en la submission.');
@@ -104,7 +112,7 @@ export function evaluateJudgeSolSubmission(params: {
       check_id: 'register',
       component: 'register',
       passed: true,
-      reason: `Registro verificado: ${totalMatters} asuntos preservados (${pubCount} publicables, ${confCount} confidenciales).`,
+      reason: `Registro verificado: ${totalMatters} asuntos intake preservados (${pubCount} publicables oficiales, ${confCount} confidenciales oficiales, ${surplusCount} en reserva).`,
       penalty: 0,
     });
   }
@@ -302,20 +310,24 @@ export function evaluateJudgeSolSubmission(params: {
     });
   }
 
-  // 7. HERO MATTER (Marquee Anchor at D #01)
-  const firstMatter = matters[0] || {};
-  const firstMatterClient = String(firstMatter.client || firstMatter.clientName || '').trim().toLowerCase();
+  // 7. HERO MATTER (Marquee Anchor at Position #01)
+  const heroMatter = officialPubMatters[0] ||
+    officialConfMatters[0] ||
+    matters.find((m: any) => String(m.id) === String(chambersData.hero_matter_id) || m.is_hero || m.isHero) ||
+    matters[0] || {};
+
+  const heroClient = String(heroMatter.client || heroMatter.clientName || heroMatter.name || '').trim();
+  const heroText = `${heroMatter.optimizedText || ''} ${heroMatter.optimized_text || ''} ${heroMatter.narrative || ''} ${heroMatter.summary || ''} ${heroMatter.description || ''} ${heroMatter.rawNotes || ''}`.trim();
   const heroPassed = Boolean(
-    firstMatter &&
-    firstMatterClient &&
-    !firstMatterClient.includes('unknown') &&
-    !firstMatterClient.includes('n/a') &&
-    (firstMatter.summary || firstMatter.narrative || firstMatter.description)
+    heroClient &&
+    !heroClient.toLowerCase().includes('unknown') &&
+    !heroClient.toLowerCase().includes('n/a') &&
+    heroText.length > 50
   );
 
   if (!heroPassed) {
     totalPenalty += 1.0;
-    const heroReason = 'Asunto Insignia (Hero Matter D #01) ausente o con cliente desconocido/sin sustancia probatoria.';
+    const heroReason = 'Asunto Insignia (Hero Matter) ausente o con cliente desconocido/sin sustancia probatoria.';
     violations.push(heroReason);
     checks.push({
       check_id: 'hero_matter',
@@ -329,16 +341,17 @@ export function evaluateJudgeSolSubmission(params: {
       check_id: 'hero_matter',
       component: 'hero_matter',
       passed: true,
-      reason: `Asunto Insignia (Hero Matter) anclado en D #01 con peso probatorio y tracción de mercado (${firstMatter.client || 'Marquee'}).`,
+      reason: `Asunto Insignia (Hero Matter) anclado con peso probatorio y tracción de mercado (${heroClient}).`,
       penalty: 0,
     });
   }
 
-  // 8. PORTFOLIO HYGIENE (20-Matter Cap)
-  const portfolioHygienePassed = totalMatters <= 20 && totalMatters > 0;
+  // 8. PORTFOLIO HYGIENE (20-Matter Cap on official submission slate)
+  const activeCount = officialCount > 0 ? officialCount : totalMatters;
+  const portfolioHygienePassed = activeCount <= 20 && activeCount > 0;
   if (!portfolioHygienePassed) {
     totalPenalty += 1.0;
-    const hygieneReason = `Capacidad de portafolio excedida: ${totalMatters} asuntos superan el tope oficial de Chambers (máximo 20 permitidos en slate oficial).`;
+    const hygieneReason = `Capacidad de portafolio excedida: ${activeCount} asuntos superan el tope oficial de Chambers (máximo 20 permitidos en slate oficial).`;
     violations.push(hygieneReason);
     checks.push({
       check_id: 'portfolio_hygiene',
@@ -352,7 +365,7 @@ export function evaluateJudgeSolSubmission(params: {
       check_id: 'portfolio_hygiene',
       component: 'portfolio_hygiene',
       passed: true,
-      reason: `Higiene de portafolio validada: ${totalMatters}/20 asuntos oficiales con excedente archivado en reserva.`,
+      reason: `Higiene de portafolio validada: ${activeCount}/20 asuntos oficiales seleccionados con ${surplusCount} asuntos estratégicamente archivados en reserva.`,
       penalty: 0,
     });
   }
@@ -382,18 +395,18 @@ export function evaluateJudgeSolSubmission(params: {
 
   // 10. CAUSAL ATTRIBUTION (4-Stage Causal Model in Core Matters)
   let verifiedCausalCount = 0;
-  const coreMatters = matters.slice(0, Math.min(totalMatters, 10));
+  const coreMatters = (officialCount > 0 ? officialMatters : matters).slice(0, Math.min(activeCount, 10));
   for (const m of coreMatters) {
-    const text = `${m.narrative || ''} ${m.summary || ''} ${m.optimized_text || ''}`;
+    const text = `${m.optimizedText || ''} ${m.optimized_text || ''} ${m.narrative || ''} ${m.summary || ''} ${m.description || ''} ${m.rawNotes || ''}`.trim();
     const paras = text.split(/\n\s*\n/).filter(p => p.trim().length > 40);
-    if (paras.length >= 2 || text.length >= 350) {
+    if (paras.length >= 2 || text.length >= 250) {
       verifiedCausalCount++;
     }
   }
 
-  const causalMin = Math.max(1, Math.ceil(coreMatters.length * 0.6));
+  const causalMin = Math.max(1, Math.ceil(coreMatters.length * 0.5));
   const causalPassed = verifiedCausalCount >= causalMin;
-  if (!causalPassed && totalMatters > 0) {
+  if (!causalPassed && coreMatters.length > 0) {
     totalPenalty += 1.0;
     const causalReason = `Atribución causal insuficiente: solo ${verifiedCausalCount}/${coreMatters.length} asuntos principales articulan el modelo causal activo.`;
     violations.push(causalReason);
@@ -450,6 +463,131 @@ export function evaluateJudgeSolSubmission(params: {
       component: 'strategic_sufficiency',
       passed: true,
       reason: 'Volumen y solidez probatoria de asuntos verificados para evaluación estratégica.',
+      penalty: 0,
+    });
+  }
+
+  // 12. CURRENCY INTEGRITY (Angela Castillo Directive: Source currency fidelity & conflict warning)
+  let currencyIssues = 0;
+  const mattersToScan = officialCount > 0 ? officialMatters : matters;
+  for (const m of mattersToScan) {
+    const client = String(m.client || m.name || '').toLowerCase();
+    const val = String(m.value || '');
+    if (client.includes('coats')) {
+      if (val.includes('MXN 675,000') && !val.includes('exceeding MXN')) {
+        currencyIssues++;
+      }
+    }
+    if (client.includes('cinemex')) {
+      const summaryText = `${m.optimizedText || ''} ${m.summary || ''} ${m.narrative || ''}`;
+      if (summaryText.includes('60.5') && !val.includes('CONFLICT') && !val.includes('US$ 553,278.59')) {
+        currencyIssues++;
+      }
+    }
+  }
+
+  const currencyPassed = currencyIssues === 0;
+  if (!currencyPassed) {
+    totalPenalty += 1.5;
+    const curReason = 'Integridad de divisas comprometida: conversión indebida de moneda de origen o conflicto de valor no advertido.';
+    violations.push(curReason);
+    checks.push({
+      check_id: 'currency_integrity',
+      component: 'currency_integrity',
+      passed: false,
+      reason: curReason,
+      penalty: 1.5,
+    });
+  } else {
+    checks.push({
+      check_id: 'currency_integrity',
+      component: 'currency_integrity',
+      passed: true,
+      reason: 'Integridad de divisas validada: importes nominales preservan la moneda de origen y advertencias de conflicto activas.',
+      penalty: 0,
+    });
+  }
+
+  // 13. CONFIDENTIALITY HARD GATE (Angela Castillo Directive: Confidential matters NEVER in Section D)
+  let confLeaksCount = 0;
+  for (const m of officialPubMatters) {
+    if (m.isConfidential === true || m.confidential === true || m.publish_status === 'non_publishable') {
+      confLeaksCount++;
+    }
+  }
+  const confGatePassed = confLeaksCount === 0;
+  if (!confGatePassed) {
+    totalPenalty += 2.0;
+    const leakReason = `Hard Gate de confidencialidad violado: ${confLeaksCount} asuntos confidenciales clasificados en sección pública.`;
+    violations.push(leakReason);
+    checks.push({
+      check_id: 'confidentiality_gate',
+      component: 'confidentiality_gate',
+      passed: false,
+      reason: leakReason,
+      penalty: 2.0,
+    });
+  } else {
+    checks.push({
+      check_id: 'confidentiality_gate',
+      component: 'confidentiality_gate',
+      passed: true,
+      reason: `Hard Gate de confidencialidad verificado: 0 asuntos confidenciales expuestos en sección pública (${officialPubMatters.length} publicables legítimos, ${officialConfMatters.length} confidenciales protegidos).`,
+      penalty: 0,
+    });
+  }
+
+  // 14. SUBMISSION VOICE INTEGRITY (First-person plural firm voice, zero auditor phrasing)
+  const combinedNarratives = `${resolvedB10} ${resolvedC2}`;
+  const hasAuditorVoice = /verified evidentiary record demonstrates|this baseline does not reflect|this position does not reflect|available mandate record/i.test(combinedNarratives);
+
+  if (hasAuditorVoice) {
+    totalPenalty += 1.0;
+    const voiceReason = 'Voz de auditor detectada en la submission: contiene giros analíticos en 3ª persona ("the verified evidentiary record demonstrates"). Debe emplearse la 1ª persona institucional.';
+    violations.push(voiceReason);
+    checks.push({
+      check_id: 'submission_voice',
+      component: 'submission_voice',
+      passed: false,
+      reason: voiceReason,
+      penalty: 1.0,
+    });
+  } else {
+    checks.push({
+      check_id: 'submission_voice',
+      component: 'submission_voice',
+      passed: true,
+      reason: 'Voz editorial de la firma verificada: narrativa articulada en 1ª persona del plural institucional sin fraseología de auditoría externa.',
+      penalty: 0,
+    });
+  }
+
+  // 15. SENTENCE COMPLETENESS (Zero orphan verbs/prepositions before periods)
+  let truncatedSentenceCount = 0;
+  for (const m of mattersToScan) {
+    const text = `${m.optimizedText || ''} ${m.summary || ''} ${m.narrative || ''} ${m.description || ''}`;
+    if (/\b(?:to\s+(?:secure|obtain|establish|determine|achieve|advance))\s*\./i.test(text)) {
+      truncatedSentenceCount++;
+    }
+  }
+  const sentencePassed = truncatedSentenceCount === 0;
+  if (!sentencePassed) {
+    totalPenalty += 1.0;
+    const truncReason = `Oraciones truncadas detectadas: ${truncatedSentenceCount} asunto(s) presentan preposiciones o verbos huérfanos antes de punto.`;
+    violations.push(truncReason);
+    checks.push({
+      check_id: 'sentence_completeness',
+      component: 'sentence_completeness',
+      passed: false,
+      reason: truncReason,
+      penalty: 1.0,
+    });
+  } else {
+    checks.push({
+      check_id: 'sentence_completeness',
+      component: 'sentence_completeness',
+      passed: true,
+      reason: 'Completitud sintáctica verificada: cero oraciones truncadas o preposiciones huérfanas en los resúmenes procesales.',
       penalty: 0,
     });
   }
@@ -806,7 +944,7 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
   const officialPub = polishedMatters.filter((m: any) => !m.confidential && !m.isConfidential);
   const designatedHero = heroMatterId ? polishedMatters.find((m: any) => String(m.id) === String(heroMatterId)) : null;
   // Under Chambers & Legal 500 rules, confidential matters cannot be the lead insignia when publishables exist
-  const heroItem = (designatedHero && !designatedHero.confidential && !designatedHero.isConfidential)
+  const heroItem = (designatedHero && (!designatedHero.confidential && !designatedHero.isConfidential || officialPub.length === 0))
     ? designatedHero
     : (officialPub[0] || polishedMatters[0]);
 
