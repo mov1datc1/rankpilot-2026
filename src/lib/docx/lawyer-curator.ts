@@ -541,6 +541,13 @@ function cleanRawLeadString(rawStr: string): string[] {
     const evidenceGaps = candidateEvidenceGaps || 'Confirm specific matter outcomes, quantifiable economic impact, and active client referee availability for directory outreach.';
     const recommendedAction = candidateRecommendedAction || `Highlight partner prominence on flagship mandates (${topClients.slice(0, 2).join(', ') || 'core portfolio'}) and submit 3 dedicated client referees.`;
 
+    const hasBenchmarkBio = Boolean(bioCommentary && candidateSuppMatters && bioCommentary.length > 200);
+    const firstAnchorWord = candidateSuppMatters ? candidateSuppMatters.split(/[\s(]/)[0].toLowerCase() : '';
+    const isRawGeneric = !sanitizedRawComments || sanitizedRawComments.length < 350 || (firstAnchorWord && !sanitizedRawComments.toLowerCase().includes(firstAnchorWord));
+
+    const finalComments = (hasBenchmarkBio && isRawGeneric) ? bioCommentary : (sanitizedRawComments || bioCommentary);
+    const finalBio = (hasBenchmarkBio && isRawGeneric) ? bioCommentary : (sanitizedRawBio || bioCommentary);
+
     return {
       name: lName,
       isPartner: l.isPartner,
@@ -549,8 +556,8 @@ function cleanRawLeadString(rawStr: string): string[] {
       suggestedRank: targetRank.split('(')[0].trim(),
       targetRank: targetRank,
       url: l.url || '',
-      comments: sanitizedRawComments || bioCommentary,
-      bio: sanitizedRawBio || bioCommentary,
+      comments: finalComments,
+      bio: finalBio,
       supportingMatters: suppMatters,
       strategicRationale: strategicRationale,
       marketEvidence: marketEvidence,
