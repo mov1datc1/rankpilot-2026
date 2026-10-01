@@ -1286,34 +1286,34 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
           // Specific Labour Core Inclusions
           if (isLabour) {
             if (combined.includes('recicla')) {
-              return 'Core Public Pillar: Environmental waste management enterprise; comprehensive labor consulting, union negotiation, and strategic compliance restructuring across regional recycling facilities.';
+              return 'Core Confidential Pillar: Environmental waste management enterprise; comprehensive labor consulting, union negotiation, and strategic compliance restructuring across regional recycling facilities.';
             }
             if (combined.includes('skf')) {
-              return 'Core Public Pillar: Global industrial bearing manufacturer; strategic management-side labor defense, collective bargaining revision, and workforce reduction compliance across Mexican plants.';
+              return 'Core Confidential Pillar: Global industrial bearing manufacturer; strategic management-side labor defense, collective bargaining revision, and workforce reduction compliance across Mexican plants.';
             }
             if (combined.includes('corrugados')) {
-              return 'Core Public Pillar: Industrial packaging leader; collective labor relations, workplace safety regulation compliance, and defense against individual wrongful dismissal claims.';
+              return 'Core Confidential Pillar: Industrial packaging leader; collective labor relations, workplace safety regulation compliance, and defense against individual wrongful dismissal claims.';
             }
             if (combined.includes('sirushi')) {
-              return 'Core Public Pillar: Commercial enterprise representation; day-to-day employment advisory, employment agreement restructuring, and labor conciliation board dispute defense.';
+              return 'Core Confidential Pillar: Commercial hospitality enterprise; day-to-day employment advisory, employment agreement restructuring, and labor conciliation board dispute defense.';
             }
             if (combined.includes('aunde')) {
-              return 'Core Public Pillar: Tier-1 automotive textile supplier; workforce management advisory, union contract revision, and executive labor dispute prevention.';
+              return 'Core Confidential Pillar: Tier-1 automotive textile supplier; workforce management advisory, union contract revision, and executive labor dispute prevention.';
             }
             if (combined.includes('sebnmx')) {
-              return 'Core Public Pillar: Automotive wiring systems manufacturer; representation in individual labor lawsuits and collective bargaining governance.';
+              return 'Core Confidential Pillar: Automotive wiring systems manufacturer; representation in individual labor lawsuits and collective bargaining governance.';
             }
             if (combined.includes('solana')) {
-              return 'Core Public Pillar: Major automotive dealership consortium; high-volume individual labor litigation defense across multiple regional dealerships.';
+              return 'Core Confidential Pillar: Major automotive dealership consortium; high-volume individual labor litigation defense across multiple regional dealerships.';
             }
             if (combined.includes('woodbridge') || combined.includes('psw') || combined.includes('poliuretanos')) {
-              return 'Core Public Pillar: Automotive foam component manufacturing; collective bargaining advisory, shift restructure agreements, and contentious labor defense.';
+              return 'Core Confidential Pillar: Automotive foam component manufacturing; collective bargaining advisory, shift restructure agreements, and contentious labor defense.';
             }
             if (combined.includes('natividad')) {
-              return 'Core Public Pillar: Strategic labor co-counsel engagement; cross-jurisdictional trial support on complex collective disputes.';
+              return 'Core Confidential Pillar: Strategic labor co-counsel engagement; cross-jurisdictional trial support on complex collective disputes.';
             }
             if (combined.includes('scotch')) {
-              return 'Core Public Pillar: Commercial retail and manufacturing employer; labor auditing, severance structuring, and labor tribunal representation.';
+              return 'Core Confidential Pillar: Commercial retail and manufacturing employer; labor auditing, severance structuring, and labor tribunal representation.';
             }
             if (combined.includes('coats')) {
               return 'Core Confidential Pillar: Global industrial manufacturing group; cross-plant employment policy harmonization, collective union negotiation, and dispute risk management.';
@@ -1326,9 +1326,36 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
             }
           }
 
-          if (isRealEstate && (combined.includes('san carlos') || combined.includes('primavera'))) {
-            return 'Core Pillar: Complex urban zoning regularisation and administrative title defense securing commercial development permits.';
+          if (isRealEstate) {
+            if (combined.includes('san carlos')) {
+              return 'Core Pillar: Complex urban zoning regularisation and administrative title defense (MXN 200M) securing commercial development permits.';
+            }
+            if (combined.includes('diageo')) {
+              return 'Core Pillar: Immediate precautionary amparo securing operational continuity for major industrial facility against municipal closure.';
+            }
+            if (combined.includes('primavera')) {
+              return 'Core Pillar: Real estate acquisition structuring and municipal zoning clearance for extensive residential development.';
+            }
+            if (combined.includes('anda')) {
+              return 'Core Confidential Pillar: High-exposure (MXN 150M) property restitution amparo; constitutional defense of 11,283 m² Zapopan parcel appropriated by the State, reconstructing historical title deeds and matrimonial property regime.';
+            }
+            if (combined.includes('villas del colli')) {
+              return 'Core Confidential Pillar: Constitutional amparo defending against unlawful municipal land taking and establishing procedural due process limits on environmental planning.';
+            }
+            if (combined.includes('hermosillo')) {
+              return 'Core Confidential Pillar: Strategic land development and commercial lease agreements, challenging the validity of the underlying municipal regulatory framework.';
+            }
+            if (combined.includes('midi') || combined.includes('toronjas')) {
+              return 'Core Public Pillar: Constitutional amparo against urban zoning and ecological decree limiting residential development on Las Toronjas parcel (MXN 100M); direct defense of property development rights.';
+            }
+            if (combined.includes('rosa dorina') || combined.includes('ochoa')) {
+              return 'Core Public Pillar: High-precision property boundary litigation defending private parcel against uncompensated federal zone absorption; hydraulic expert testimony establishing private title limits vs subterranean watercourse.';
+            }
+            if (combined.includes('leano') || combined.includes('leaño')) {
+              return 'Core Confidential Pillar: Real estate title rectification, agrarian boundary regularisation, and defense of proprietary rights.';
+            }
           }
+
           if (m.curationRationale && !m.curationRationale.includes('does not meet') && !m.curationRationale.includes('held in reserve')) {
             return m.curationRationale;
           }
@@ -1341,13 +1368,13 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
             return 'Reserve Roster: Substantive entertainment exhibition portfolio; held in reserve roster as high-volume secondary litigation to prioritize manufacturing and infrastructure core.';
           }
           if (combined.includes('bosch')) {
-            return 'Reserve Roster: Global industrial supplier; valid labor advisory held in reserve to concentrate flagship exposure on Schaeffler, Bonatti, and Brose.';
+            return 'Reserve Roster: Global industrial supplier (17,000 employees); valid labor governance advisory held in reserve to concentrate flagship exposure on active high-stakes dispute resolution (Schaeffler, Bonatti, Brose).';
           }
           if (combined.includes('omron')) {
             return 'Reserve Roster: Industrial automation leader; held in reserve roster to prioritize active strike-risk defense mandates.';
           }
           if (combined.includes('benteler')) {
-            return 'Reserve Roster: Automotive structural supplier; held in reserve roster to maintain 20-matter Chambers filing ceiling.';
+            return 'Reserve Roster: Automotive structural supplier; union representativeness dispute at plant level held in reserve to respect Chambers ceiling while preserving substitution capacity.';
           }
           if (combined.includes('art human')) {
             return 'Reserve Roster: Human resources consulting firm; held in reserve roster to avoid outsourcing/intermediary review dilution.';
@@ -1356,28 +1383,44 @@ export function buildAuditDoc(firmName: string, practiceArea: string, analysis: 
             return 'Reserve Roster: Media broadcasting group; held in reserve roster due to media-specific rather than core industrial footprint.';
           }
           if (combined.includes('badak') || combined.includes('tekia') || combined.includes('grupo dos')) {
-            return 'Reserve Roster: Specialized IT and engineering consultancy; held in reserve roster to prioritize heavy manufacturing employers.';
+            return 'Reserve Roster: Specialized IT and engineering consultancy labor claim reduction (MXN 1.06M to MXN 20k); held in reserve behind multi-million-peso heavy manufacturing and infrastructure disputes.';
           }
-          if (combined.includes('ramsa') || combined.includes('mextypsa') || combined.includes('regsa') || combined.includes('american axle') || combined.includes('nueva empresa') || combined.includes('enerflex')) {
+          if (combined.includes('mextypsa')) {
+            return 'Reserve Roster: Guadalajara Metro Line 4 infrastructure labor litigation (MXN 21.5M exposure); held in reserve behind automotive manufacturing core to prioritize continuous collective representation.';
+          }
+          if (combined.includes('nueva empresa')) {
+            return 'Reserve Roster: Successful constitutional amparo restoring employer procedural defense rights; held in reserve to prioritize active multi-plant collective bargaining and strike prevention mandates.';
+          }
+          if (combined.includes('ramsa') || combined.includes('regsa') || combined.includes('american axle') || combined.includes('enerflex')) {
             return 'Reserve Roster: Valid employer-side labor mandate held in reserve roster to preserve high-caliber substitution capacity within Chambers ceiling.';
           }
         }
 
         if (isRealEstate) {
-          if (combined.includes('zapopan') && (combined.includes('concesi') || combined.includes('alumbrado') || combined.includes('energy') || combined.includes('combustible'))) {
-            return 'Exclusion / Reserve: Public lighting concession and fuel station advisory; principally energy and administrative procurement lacking substantive Real Estate asset or zoning nexus.';
+          if (combined.includes('cominvi')) {
+            return 'Secondary Candidate / Reserve: Construction tender controversy (MXN 1.059B); held in reserve below core development anchors because legal core centers on public procurement rather than direct property title, land use, or zoning regularisation.';
           }
-          if (combined.includes('sat') || combined.includes('tributari') || combined.includes('fiscal') || combined.includes('impuesto') || combined.includes('devoluci')) {
-            return 'Exclusion / Reserve: Principally tax/fiscal controversy without property title or development nexus; excluded to maintain submission practice purity.';
+          if (combined.includes('smb') || combined.includes('promotora')) {
+            return 'Secondary Candidate / Reserve: Real estate developer loan recovery and commercial dispute; valid practice relevance but secondary substantive weight compared to core master-planned land tenure defenses.';
           }
-          if (combined.includes('paquetexpress') || combined.includes('transport') || combined.includes('sct') || combined.includes('pesos y dimensiones') || combined.includes('vehicular')) {
-            return 'Exclusion / Reserve: Freight logistics regulatory penalty; off-category administrative fine lacking real estate property or land use dimensions.';
+          if (combined.includes('holcim')) {
+            return 'Secondary Candidate / Reserve: Concrete manufacturing plant administrative closures; valid contentious defense held in reserve to prioritize developer anchors with direct property title and zoning regularisation.';
           }
           if (combined.includes('devangary') || combined.includes('conciencia ambiental') || (combined.includes('flora') && combined.includes('fauna'))) {
-            return 'Exclusion / Reserve: Environmental association amparo for ecosystem conservation; held in reserve as secondary regulatory scope to prioritize commercial property developers.';
+            return 'Secondary Candidate / Reserve: Environmental amparo litigation defending private property against federal zone delimitation; retained in reserve behind core residential developers due to dominant environmental NGO scope.';
+          }
+          if (combined.includes('zapopan') && (combined.includes('concesi') || combined.includes('alumbrado') || combined.includes('energy') || combined.includes('combustible'))) {
+            return 'Exclusion / Off-Practice: Public lighting concession and fuel station advisory; principally energy and administrative procurement lacking substantive Real Estate asset or zoning nexus.';
+          }
+          if (combined.includes('paquetexpress') || combined.includes('transport') || combined.includes('sct') || combined.includes('pesos y dimensiones') || combined.includes('vehicular')) {
+            return 'Exclusion / Off-Practice: Freight logistics regulatory penalty; off-category administrative fine lacking real estate property or land use dimensions.';
           }
           if (combined.includes('balken') || combined.includes('asamblea') || combined.includes('accionistas') || combined.includes('buyout')) {
-            return 'Exclusion / Reserve: Internal corporate governance and shareholder restructuring; lacks direct real estate asset acquisition or development nexus.';
+            return 'Exclusion / Off-Practice: Internal corporate governance and shareholder restructuring; lacks direct real estate asset acquisition or development nexus.';
+          }
+          const hasPropertyNexus = /\b(predio|terreno|parcela|inmueble|propiedad|amparo|desarrollo|fraccionamiento|expropiaci|urban|catastr|zonificaci|toronjas|acueducto)\b/i.test(combined);
+          if (!hasPropertyNexus && /\b(sat|iva|isr|cr[eé]dito fiscal|tributari|impuesto sobre la renta|devoluci[oó]n de impuestos)\b/i.test(combined)) {
+            return 'Exclusion / Off-Practice: Principally tax/fiscal controversy without property title or development nexus; excluded to maintain submission practice purity.';
           }
         }
 

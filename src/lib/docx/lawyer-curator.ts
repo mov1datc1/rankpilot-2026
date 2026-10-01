@@ -451,6 +451,10 @@ function cleanRawLeadString(rawStr: string): string[] {
     // Concrete Evidentiary Commentary & Strategic Rationale (No repetitive boilerplate)
     let bioCommentary = '';
     let strategicRationale = '';
+    let candidateSuppMatters = '';
+    let candidateMarketEvidence = '';
+    let candidateEvidenceGaps = '';
+    let candidateRecommendedAction = '';
 
     if (isTaxPractice && nNorm.includes('gabriel ruan')) {
       bioCommentary = `One of the most distinguished tax scholars and practitioners in Venezuela, Gabriel Ruan Santos serves as Senior Counsel and strategic advisor on landmark constitutional tax matters, high-stakes judicial appeals, and foundational double-taxation treaty interpretations. With decades of preeminent market standing, he continues to guide institutional clients on critical fiscal jurisprudence while leading the generational transition of executive mandate leadership.`;
@@ -467,24 +471,48 @@ function cleanRawLeadString(rawStr: string): string[] {
     } else if (isLabourPractice && (nNorm.includes('eduardo garduno') || nNorm.includes('garduno'))) {
       bioCommentary = `Partner and Head of DeForest Abogados's Labor & Employment practice with over two decades of experience advising multinational employers across Mexico, complemented by senior public-sector experience. He serves as President of the Labor Committee of ANADE Puebla and actively participates in corporate chambers including CLAUZ, CANACINTRA, and the American Chamber of Commerce. Across the research cycle, Mr. Garduño directed the practice's most consequential mandates, including a complex post-M&A workforce integration across multiple industrial plants (>5,000 employees), cross-plant collective bargaining under USMCA Rapid Response Mechanism scrutiny, and ongoing dispute coordination across hundreds of active labor proceedings for multinational automotive, packaging, and technology corporations. His proven leadership on high-stakes labor stability firmly justifies initial recognition in Band 5.`;
       strategicRationale = `Practice head combining bar leadership (ANADE Puebla President) with first-chair direction on post-M&A workforce integrations (>5,000 workers) and USMCA Rapid Response collective bargaining defense.`;
+      candidateSuppMatters = `Schaeffler / Vitesco post-acquisition integration (>5,000 workers, 35 disputes), GeNI collective bargaining, and multi-plant labor governance.`;
+      candidateMarketEvidence = `President of the Labor Committee of ANADE Puebla; frequent speaker at CLAUZ, CANACINTRA, and American Chamber of Commerce.`;
+      candidateEvidenceGaps = `Submit 3 corporate referees from Schaeffler, GeNI, and multinational automotive suppliers.`;
+      candidateRecommendedAction = `Nominate for Band 5 in Chambers Mexico Labour & Employment; highlight bar leadership and first-chair management of large-scale industrial integrations.`;
     } else if (isLabourPractice && (nNorm.includes('jaime bustamante') || nNorm.includes('bustamante'))) {
       bioCommentary = `Partner Jaime Bustamante contributes extensive corporate executive counsel developed as former Legal Director for Mexico, Central and South America at ManpowerGroup. An active voice in national labor policy, he serves as Vice President of the Labor, Social Security and HR Commission at CONCAMIN. His practice focuses on mass-litigation coordination, complex workforce transitions, and high-pressure collective bargaining negotiations for major employer workforces nationwide, firmly supporting initial recognition in Band 5 / Up and Coming.`;
       strategicRationale = `Former regional corporate legal director (ManpowerGroup) and CONCAMIN Vice President directing large-scale workforce transitions and mass-litigation platforms.`;
+      candidateSuppMatters = `Corporate labor restructuring, mass-litigation management platforms, and multi-state workforce transitions.`;
+      candidateMarketEvidence = `Former Legal Director for Mexico, Central & South America at ManpowerGroup; Vice President of the Labor, Social Security & HR Commission at CONCAMIN.`;
+      candidateEvidenceGaps = `Confirm client referees from large-scale corporate employers and industrial manufacturers.`;
+      candidateRecommendedAction = `Nominate for Band 5 / Up and Coming; leverage CONCAMIN national policy standing and corporate workforce management pedigree.`;
     } else if (isLabourPractice && (nNorm.includes('raymundo carreno') || nNorm.includes('carreno'))) {
       bioCommentary = `Senior Counsel Raymundo Carreño embodies an uncommon depth of automotive labor authority developed across nearly forty years as General Legal Director of Volkswagen de México. Having steered landmark regulatory transitions, high-stakes union negotiations, and major corporate restructurings that shaped Mexico's automotive sector, his strategic insight provides invaluable senior direction on matters where labor law intersects with operational continuity, firmly justifying designation as Senior Statesperson.`;
       strategicRationale = `Senior Statesperson offering 40 years of apex automotive labor leadership as former General Legal Director of Volkswagen de México.`;
+      candidateSuppMatters = `Volkswagen de México and VW Financial Services (>MXN 280m litigation exposure and strategic corporate governance).`;
+      candidateMarketEvidence = `Nearly 40 years as General Legal Director of Volkswagen de México; preeminent automotive labor authority.`;
+      candidateEvidenceGaps = `Provide senior institutional client testimonials from automotive OEMs.`;
+      candidateRecommendedAction = `Nominate for Senior Statesperson in Chambers Mexico Labour & Employment, reflecting four decades of landmark automotive labor leadership.`;
     } else if (isLabourPractice && (nNorm.includes('atzin') || nNorm.includes('vallejo'))) {
-      bioCommentary = `Partner Javier Atzin Vallejo specializes in labor compliance, social security, and regulatory audits across multi-plant industrial structures. His practice centers on harmonizing documentation and employment frameworks across corporate acquisitions, managing complex Ministry of Labor inspections, and advising multinational manufacturing groups on durable workforce stability, firmly supporting recognition as Associate to Watch / Up and Coming.`;
-      strategicRationale = `Key technical partner managing complex social security audits, documentation harmonisation, and multi-plant labor compliance.`;
+      bioCommentary = `Partner Javier Atzin Vallejo demonstrates exceptional first-chair capability in high-stakes collective labor disputes, strike prevention, and complex workforce restructuring for multinational industrial employers. Recommended for recognition as Up and Coming, Mr. Vallejo directed critical mandates across the research cycle, notably acting as lead counsel for Bonatti SpA across major energy infrastructure projects exceeding USD 2.5 billion, where he managed over 20 concurrent labor disputes, reduced potential financial exposure by approximately 80%, and successfully averted an imminent strike on strategic gas pipelines. In parallel, he served as lead partner for Brose México, steering the defense of a highly sensitive union representation dispute across manufacturing plants, designing a coordinated negotiation and litigation strategy that prevented work stoppages and avoided cross-border escalation under the USMCA Rapid Response Labor Mechanism. His track record of managing multi-billion-dollar operational risk and delivering decisive dispute outcomes firmly demonstrates partner-level ranking maturity warranting directory recognition as Up and Coming.`;
+      strategicRationale = `Up and Coming partner leading apex collective mandates: defended Bonatti's USD 2.5B pipeline projects (averted general strike, 80% liability reduction across 20+ disputes) and shielded Brose México from USMCA Rapid Response escalation.`;
+      candidateSuppMatters = `Bonatti SpA (USD 2.5B energy infrastructure; averted general strike, 20+ disputes, 80% liability reduction); Brose México (sensitive union representation dispute, strike prevented, avoided USMCA RRM escalation).`;
+      candidateMarketEvidence = `Direct corporate client trust from multinational infrastructure (Bonatti) and automotive Tier-1 (Brose) employers on business-critical union relations.`;
+      candidateEvidenceGaps = `Confirm 3 confidential referee contacts from Bonatti and Brose corporate leadership available for Chambers researcher interviews.`;
+      candidateRecommendedAction = `Nominate for Up and Coming in Chambers Mexico Labour & Employment; emphasize lead role in Bonatti strike prevention and Brose USMCA defense, and submit 3 dedicated client referees.`;
     } else if (nNorm.includes('jose pablo') || nNorm.includes('ramos castillo')) {
       if (isRealEstatePractice) {
         const cleanRank = targetRank.split('(')[0].trim() || 'Band 4 / Up and Coming';
         bioCommentary = `Founding Partner of Ramos Castillo Abogados and head of the firm's administrative, constitutional, and amparo litigation practices. José Pablo holds a law degree with honors and postgraduate diplomas in Obligations and Contracts and Administrative Law (both with honors) from Universidad Panamericana, where he has served as Professor of Amparo and Constitutional Procedure. An active leader in the organized bar, he serves as Secretary of the Steering Committee of the Mexican Bar Association (Capítulo Jalisco). In Real Estate, Mr. Ramos translates his specialized command of constitutional and administrative law into strategic commercial defense for developers, asset managers, and industrial owners navigating complex urban zoning, title rectifications, and administrative restrictions. During the current research cycle, he acted as first-chair counsel directing the successful constitutional amparo defense protecting the MXN 3bn El Cielo Country Club master development, steered the land tenure defense of Duranpark's 207.5-hectare industrial center (MXN 698.4m), and secured the lifting of municipal suspensions for IDEX's MXN 1.3bn Brasilia vertical project. His blend of academic authority, bar leadership, and proven high-exposure property litigation firmly justifies his individual recognition for ${cleanRank}.`;
         strategicRationale = `Founding partner combining academic professorship, bar leadership, and established first-chair constitutional defense across landmark multi-billion-peso real estate developments.`;
+        candidateSuppMatters = `El Cielo Country Club (MXN 3bn master amparo defense); Duranpark (207.5ha industrial center title defense, MXN 698.4m); IDEX Brasilia (MXN 1.3bn vertical development, lifted 4 suspensions); San Carlos (MXN 200m urban land regularization).`;
+        candidateMarketEvidence = `Professor of Amparo and Constitutional Procedure at Universidad Panamericana; Secretary of the Steering Committee of the Mexican Bar Association (Capítulo Jalisco).`;
+        candidateEvidenceGaps = `Ensure 3 client referees from major developers (El Cielo, IDEX, Duranpark) are available for researcher calls.`;
+        candidateRecommendedAction = `Nominate for Band 4 / Up and Coming in Chambers Mexico Real Estate; emphasize first-chair constitutional amparo defense protecting >MXN 5bn in operating real estate assets.`;
       } else if (isInsufficientEvidence || isEnergyPractice) {
         targetRank = `Candidate under evidentiary review (${practiceArea} — ${safeRegion})`;
         bioCommentary = `Founding Partner of Ramos Castillo Abogados and head of the firm's administrative, constitutional, and amparo litigation practices. José Pablo holds a law degree with honors and postgraduate diplomas from Universidad Panamericana, where he has served as Professor of Amparo and Constitutional Procedure. In ${practiceArea}, Mr. Ramos applies his specialized command of constitutional and administrative law to direct contentious amparo defense and regulatory proceedings before federal and administrative authorities across Mexico. With the practice currently in an evidentiary consolidation cycle for this directory category, his foundational trial experience anchors the firm's contentious capability.`;
         strategicRationale = `Founding partner directing constitutional amparo and administrative contentious proceedings before federal courts.`;
+        candidateSuppMatters = `Preliminary administrative proceedings before federal authorities.`;
+        candidateMarketEvidence = `Senior trial and amparo counsel with recognized academic standing in constitutional law.`;
+        candidateEvidenceGaps = `Provide concrete, verified matter entries in Energy & Natural Resources before formal directory nomination.`;
+        candidateRecommendedAction = `Consolidate substantive energy evidence base before submitting formal individual directory candidacy.`;
       } else {
         const cleanRank = targetRank.split('(')[0].trim();
         bioCommentary = `Founding Partner of Ramos Castillo Abogados and head of the firm's administrative, constitutional, and amparo litigation practices. In ${practiceArea}, Mr. Ramos directs complex contentious and regulatory mandates across ${safeRegion}.`;
@@ -505,13 +533,13 @@ function cleanRawLeadString(rawStr: string): string[] {
     const sanitizedRawComments = l.comments ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.comments)) : '';
     const sanitizedRawBio = l.bio ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.bio)) : '';
 
-    const suppMatters = topClients.length > 0
+    const suppMatters = candidateSuppMatters || (topClients.length > 0
       ? `Key lead mandates for ${topClients.join(', ')}.`
-      : 'Core practice mandates across active department portfolio.';
+      : 'Core practice mandates across active department portfolio.');
 
-    const marketEvidence = `Established professional standing and sustained client recognition across ${safeRegion}.`;
-    const evidenceGaps = 'Confirm specific matter outcomes, quantifiable economic impact, and active client referee availability for directory outreach.';
-    const recommendedAction = `Highlight partner prominence on flagship mandates (${topClients.slice(0, 2).join(', ') || 'core portfolio'}) and submit 3 dedicated client referees.`;
+    const marketEvidence = candidateMarketEvidence || `Established professional standing and sustained client recognition across ${safeRegion}.`;
+    const evidenceGaps = candidateEvidenceGaps || 'Confirm specific matter outcomes, quantifiable economic impact, and active client referee availability for directory outreach.';
+    const recommendedAction = candidateRecommendedAction || `Highlight partner prominence on flagship mandates (${topClients.slice(0, 2).join(', ') || 'core portfolio'}) and submit 3 dedicated client referees.`;
 
     return {
       name: lName,

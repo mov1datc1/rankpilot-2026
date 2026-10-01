@@ -115,22 +115,47 @@ export function calculateStrategicTier(
   const isLabour = safePractice.includes('labour') || safePractice.includes('labor') || safePractice.includes('employment') || safePractice.includes('laboral');
   const isTax = safePractice.includes('tax') || safePractice.includes('fiscal') || safePractice.includes('tributario');
 
-  // Core Real Estate Anchors protection (Angela Castillo Directive)
+  // Core Real Estate Anchors & Evidentiary Slate (Angela Castillo Directive)
   const clientLower = (matter.client || matter.clientName || '').toLowerCase();
   const titleLower = (matter.title || matter.name || '').toLowerCase();
+  const summaryLower = (matter.summary || matter.rawNotes || matter.optimizedText || matter.description || '').toLowerCase();
+  const fullTextLower = `${clientLower} ${titleLower} ${summaryLower}`;
+
+  // Nivel A — Flagships / Anchors
   const isElCielo = isRealEstate && (clientLower.includes('cielo') || titleLower.includes('cielo'));
   const isIdex = isRealEstate && (clientLower.includes('idex') || titleLower.includes('idex') || clientLower.includes('brasilia'));
   const isDuranpark = isRealEstate && clientLower.includes('duranpark');
   const isSanCarlos = isRealEstate && clientLower.includes('san carlos');
+  const isDiageo = isRealEstate && clientLower.includes('diageo');
+
+  // Nivel B — Solid Real Estate Evidence (Zoning amparo, expropriation restitution, industrial tenure)
   const isPrimavera = isRealEstate && clientLower.includes('primavera');
-  const isRealEstateAnchor = isElCielo || isIdex || isDuranpark || isSanCarlos || isPrimavera || clientLower.includes('cominvi');
+  const isMidi = isRealEstate && (clientLower.includes('midi') || fullTextLower.includes('las toronjas') || fullTextLower.includes('toronjas'));
+  const isDeAnda = isRealEstate && (clientLower.includes('anda') || fullTextLower.includes('de anda') || fullTextLower.includes('11,283') || fullTextLower.includes('acueducto'));
+  const isVillasColli = isRealEstate && (clientLower.includes('villas del colli') || fullTextLower.includes('villas del colli'));
+  const isHermosillo = isRealEstate && (clientLower.includes('hermosillo') || fullTextLower.includes('hermosillo industrial'));
+
+  // Nivel C — Depth Candidates
+  const isOchoa = isRealEstate && (clientLower.includes('ochoa') || fullTextLower.includes('dorina') || fullTextLower.includes('lomas del valle'));
+  const isLeano = isRealEstate && (clientLower.includes('leao') || clientLower.includes('leano') || clientLower.includes('leaño'));
+
+  const isRealEstateTierA = isElCielo || isIdex || isDuranpark || isSanCarlos || isDiageo;
+  const isRealEstateTierB = isPrimavera || isMidi || isDeAnda || isVillasColli || isHermosillo;
+  const isRealEstateTierC = isOchoa || isLeano;
+  const isRealEstateCore = isRealEstateTierA || isRealEstateTierB || isRealEstateTierC;
 
   if (isElCielo) {
-    score += 800; // Flagship Core #1 Hero Matter anchor
+    score += 1000; // Flagship Core #1 Hero Matter anchor
     matter.isHero = true;
     matter.is_hero = true;
-  } else if (isRealEstateAnchor) {
-    score += 400; // Tier 1 Core anchors
+  } else if (isRealEstateTierA) {
+    score += 600; // Tier A Core anchors
+  } else if (isRealEstateTierB) {
+    score += 450; // Tier B Solid Real Estate Evidence
+  } else if (isRealEstateTierC) {
+    score += 300; // Tier C Depth candidates
+  } else if (isRealEstate && clientLower.includes('cominvi')) {
+    score += 120; // Public procurement tender dispute, ranked below pure property mandates
   }
 
   // 2. Explicit Hero Matter designated by user, curation, or canonical anchor
@@ -147,8 +172,8 @@ export function calculateStrategicTier(
   }
 
   // 3. Strategic exclusions from audit (AI identified dilution risks)
-  // NEVER apply dilution penalties to confirmed core anchors (e.g. El Cielo is NEVER off-category)
-  if (!isRealEstateAnchor) {
+  // NEVER apply dilution penalties to confirmed core real estate mandates
+  if (!isRealEstateCore) {
     for (const exclusion of auditExclusions) {
       if (exclusion && combined.includes(exclusion)) {
         score -= 300;
@@ -222,7 +247,7 @@ export function calculateStrategicTier(
   }
 
   // 7. Practice dilution penalties (off-category cases in Real Estate)
-  if (isRealEstate && !isRealEstateAnchor) {
+  if (isRealEstate && !isRealEstateCore) {
     // Pure roadworks / highway concessions / paving without real estate nexus
     if (combined.includes('concesión') || combined.includes('concesion') || combined.includes('alumbrado público') || combined.includes('paving')) {
       score -= 150;
@@ -235,8 +260,10 @@ export function calculateStrategicTier(
     }
 
     // Pure tax / SAT / fiscal disputes (without real property/predial/expropriation nexus)
-    const taxRegex = /\b(sat|iva|crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales|tax credit|tax credits|fiscal process|fiscal dispute|fiscal disputes|tax administration)\b/i;
-    if (taxRegex.test(combined) && !combined.includes('predial') && !combined.includes('property tax') && !combined.includes('terreno') && !combined.includes('expropiación') && !combined.includes('expropriation')) {
+    // Note: Never misclassify real estate amparo or zoning disputes (e.g. words like 'utilisation' or 'compensation') as tax!
+    const taxRegex = /\b(crédito fiscal|credito fiscal|isr|devolución de iva|devolucion de iva|declaración de impuestos|multas fiscales|tax credit|tax credits|fiscal process|fiscal dispute|fiscal disputes|tax administration)\b/i;
+    const hasPropertyNexus = /\b(predial|property tax|terreno|expropiaci[oó]n|expropriation|inmueble|predio|uso de suelo|zoning|ordenamiento ecol[oó]gico|desarrollo urbano|desarrollo residencial|housing|parcel|land)\b/i.test(combined);
+    if ((taxRegex.test(combined) || /\b(sat|iva)\b/i.test(combined)) && !hasPropertyNexus) {
       score -= 150;
     }
 
@@ -329,22 +356,69 @@ export function curateMatters(
       }
     }
 
-    // Invariant: Core Real Estate Anchors must NEVER be cut or omitted from core slate (Angela Castillo Directive)
+    // Invariant: Angela Castillo 12-Matter Real Estate Slate (Levels A, B, C)
     const isRealEstate = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
     if (isRealEstate) {
-      const elCieloMatter = allMatters.find(m => (m.client || m.name || '').toLowerCase().includes('cielo'));
-      if (elCieloMatter && !orderedCore.includes(elCieloMatter)) {
-        orderedCore.unshift(elCieloMatter);
+      const findMatter = (term: string) => allMatters.find(m => (m.client || m.name || m.title || '').toLowerCase().includes(term));
+      const elCielo = findMatter('cielo');
+      const idex = findMatter('idex') || findMatter('brasilia');
+      const duran = findMatter('duranpark');
+      const sanCarlos = findMatter('san carlos');
+      const diageo = findMatter('diageo');
+      const primavera = findMatter('primavera');
+      const midi = findMatter('midi') || allMatters.find(m => (m.summary || m.rawNotes || '').toLowerCase().includes('toronjas'));
+      const deAnda = findMatter('anda') || allMatters.find(m => (m.summary || m.rawNotes || '').toLowerCase().includes('11,283'));
+      const villasColli = findMatter('villas del colli');
+      const hermosillo = findMatter('hermosillo');
+      const ochoa = findMatter('ochoa') || findMatter('dorina');
+      const leano = findMatter('leao') || findMatter('leano') || findMatter('leaño');
+
+      const angelaCore = [elCielo, idex, duran, sanCarlos, diageo, primavera, midi, deAnda, villasColli, hermosillo, ochoa, leano].filter(Boolean);
+      for (const m of angelaCore) {
+        if (!orderedCore.includes(m)) {
+          orderedCore.push(m);
+        }
+      }
+      // COMINVI is a public procurement tender dispute; ensure it does not displace pure real estate core
+      const cominviIdx = orderedCore.findIndex(m => (m.client || m.name || '').toLowerCase().includes('cominvi'));
+      if (cominviIdx >= 0) {
+        const cominviMatter = orderedCore.splice(cominviIdx, 1)[0];
+        orderedCore.push(cominviMatter); // Move to end of core/reserve
+      }
+    }
+
+    // Enforce confidentiality check on orderedCore
+    const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
+    for (const m of orderedCore) {
+      const cLower = (m.client || m.clientName || m.name || '').toLowerCase();
+      if (isLabour && (
+        cLower.includes('skf') || cLower.includes('corrugados') || cLower.includes('sirushi') ||
+        cLower.includes('shirushi') || cLower.includes('aunde') || cLower.includes('natividad') ||
+        cLower.includes('recicla') || cLower.includes('sebnmx') || cLower.includes('bordnetze') ||
+        cLower.includes('solana') || cLower.includes('psw') || cLower.includes('summa woodbridge')
+      )) {
+        m.isConfidential = true;
+        m.publishStatus = 'confidential';
+        m.publish_status = 'non_publishable';
+      }
+      if (isRealEstate && (
+        cLower.includes('anda') || cLower.includes('villas del colli') ||
+        cLower.includes('hermosillo') || cLower.includes('leano') || cLower.includes('leaño')
+      )) {
+        m.isConfidential = true;
+        m.publishStatus = 'confidential';
+        m.publish_status = 'non_publishable';
       }
     }
     
     const officialPubMatters = orderedCore.filter(m => !m.isConfidential && m.publish_status !== 'non_publishable').slice(0, maxPub);
-    const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, maxConf);
+    const remainingSlots = Math.max(0, maxTotal - officialPubMatters.length);
+    const effectiveMaxConf = Math.min(20, Math.max(maxConf, remainingSlots));
+    const officialConfMatters = orderedCore.filter(m => m.isConfidential || m.publish_status === 'non_publishable').slice(0, effectiveMaxConf);
     
     // Clear isHero on all matters initially to prevent double-hero artifact
     [...officialPubMatters, ...officialConfMatters].forEach(m => { m.isHero = false; m.is_hero = false; });
 
-    const isLabour = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment');
     const isTax = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
     const schaefflerConfIdx = officialConfMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
     const elCieloPubIdx = officialPubMatters.findIndex(m => (m.client || m.name || '').toLowerCase().includes('cielo'));
@@ -477,8 +551,61 @@ export function curateMatters(
     if (key && seenTitles.has(key)) continue;
     if (key) seenTitles.add(key);
     
-    const publishStatus = (m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase();
-    const isConfidential = Boolean(m.isConfidential || m.is_confidential || m.confidential || (publishStatus === 'confidential' || publishStatus === 'non_publishable'));
+    const publishStatus = (m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase().trim();
+    
+    // Strict Confidentiality Rule (Angela Castillo Directive):
+    // YES -> Confidential
+    // NO -> Publishable
+    // Blank / Conflict / Unknown -> Confidential default (Never infer publishability)
+    let isConfidential = false;
+    if (publishStatus === 'yes' || publishStatus === 'y' || publishStatus === 'confidential' || publishStatus === 'non_publishable' || m.isConfidential === true || m.is_confidential === true || m.confidential === true) {
+      isConfidential = true;
+    } else if (publishStatus === 'no' || publishStatus === 'n' || publishStatus === 'publishable' || publishStatus === 'public' || m.publish_status === 'publishable' || m.publishStatus === 'publishable') {
+      isConfidential = false;
+    } else if (m.isConfidential === false) {
+      isConfidential = false;
+    } else {
+      // Default unstated or ambiguous to confidential
+      isConfidential = true;
+    }
+
+    const clientNorm = (m.client || m.clientName || m.name || '').toLowerCase();
+    // In DeForest Labour & Employment, the source client table explicitly marks these as Confidential = Y
+    const isDeForestConfClient = (practiceArea || '').toLowerCase().includes('labou') && (
+      clientNorm.includes('skf') ||
+      clientNorm.includes('corrugados') ||
+      clientNorm.includes('sirushi') ||
+      clientNorm.includes('shirushi') ||
+      clientNorm.includes('aunde') ||
+      clientNorm.includes('natividad') ||
+      clientNorm.includes('recicla') ||
+      clientNorm.includes('sebnmx') ||
+      clientNorm.includes('bordnetze') ||
+      clientNorm.includes('solana') ||
+      clientNorm.includes('psw') ||
+      clientNorm.includes('summa woodbridge')
+    );
+    if (isDeForestConfClient) {
+      isConfidential = true;
+      m.isConfidential = true;
+      m.publishStatus = 'confidential';
+      m.publish_status = 'non_publishable';
+    }
+
+    // In Ramos Castillo, Familia de Anda, Villas del Colli, ADM Hermosillo, and Familia Leaño are confidential
+    const isRamosConfClient = (practiceArea || '').toLowerCase().includes('real estate') && (
+      clientNorm.includes('anda') ||
+      clientNorm.includes('villas del colli') ||
+      clientNorm.includes('hermosillo') ||
+      clientNorm.includes('leaño') ||
+      clientNorm.includes('leano')
+    );
+    if (isRamosConfClient) {
+      isConfidential = true;
+      m.isConfidential = true;
+      m.publishStatus = 'confidential';
+      m.publish_status = 'non_publishable';
+    }
 
     if (isConfidential) {
       rawConf.push(m);
@@ -504,15 +631,26 @@ export function curateMatters(
     const client = (m.client || m.clientName || m.name || '').toLowerCase();
     const title = (m.title || '').toLowerCase();
 
-    // Core Real Estate Anchors can NEVER be excluded (Angela Castillo Directive)
+    // Angela Castillo 12-Matter Real Estate Portfolio:
+    // Nivel A: El Cielo, IDEX, Duranpark, San Carlos, Diageo
+    // Nivel B: La Primavera, Inmobiliaria MIDI, Familia de Anda, Villas del Colli, ADM Hermosillo
+    // Nivel C: Rosa Dorina Ochoa, Familia Leaño
+    // These 12 matters can NEVER be excluded or sent to reserve!
     const isRealEstate = (practiceArea || '').toLowerCase().includes('real estate') || (practiceArea || '').toLowerCase().includes('inmobiliari');
     if (isRealEstate && (
       client.includes('cielo') || title.includes('cielo') ||
       client.includes('idex') || title.includes('idex') ||
       client.includes('duranpark') || title.includes('duranpark') ||
       client.includes('san carlos') || title.includes('san carlos') ||
+      client.includes('diageo') || title.includes('diageo') ||
       client.includes('primavera') || title.includes('primavera') ||
-      client.includes('cominvi') || title.includes('cominvi')
+      client.includes('midi') || title.includes('midi') ||
+      client.includes('anda') || title.includes('anda') ||
+      client.includes('villas del colli') || title.includes('villas del colli') ||
+      client.includes('hermosillo') || title.includes('hermosillo') ||
+      client.includes('ochoa') || title.includes('ochoa') ||
+      client.includes('dorina') || title.includes('dorina') ||
+      client.includes('leano') || client.includes('leaño') || title.includes('leano')
     )) {
       return false;
     }
@@ -556,8 +694,10 @@ export function curateMatters(
   const officialPubMatters = qualifiedPub.slice(0, maxPub);
   const surplusPubMatters = [...qualifiedPub.slice(maxPub), ...excludedPub];
 
-  const officialConfMatters = qualifiedConf.slice(0, maxConf);
-  const surplusConfMatters = [...qualifiedConf.slice(maxConf), ...excludedConf];
+  const remainingSlots = Math.max(0, maxTotal - officialPubMatters.length);
+  const effectiveMaxConf = Math.min(20, Math.max(maxConf, remainingSlots));
+  const officialConfMatters = qualifiedConf.slice(0, effectiveMaxConf);
+  const surplusConfMatters = [...qualifiedConf.slice(effectiveMaxConf), ...excludedConf];
   
   // Ensure exactly one flagship hero is selected
   [...officialPubMatters, ...officialConfMatters, ...surplusPubMatters, ...surplusConfMatters].forEach(m => {
