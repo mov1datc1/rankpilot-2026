@@ -104,20 +104,56 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
     [/\b(?:Cinemex)\b/gi, 'a premier national cinema and entertainment group'],
     [/\b(?:Art\s+Human)\b/gi, 'a major human capital and workforce solutions firm'],
     [/\b(?:Mextypsa(?:\s*,\s*S\.?A\.?)?)\b/gi, 'a specialized industrial engineering enterprise'],
+    [/\b(?:SKF(?:\s+Industrial)?)\b/gi, 'a global industrial bearings and seals manufacturer'],
+    [/\b(?:Megacable)\b/gi, 'a major national telecommunications provider'],
+    [/\b(?:⁠?CORRUGADOS\s+Y\s+EMPAQUES\s+DE\s+ORIENTE|Corrugados(?:\s+y\s+Empaques(?:\s+de\s+Oriente)?)?)\b/gi, 'a major industrial packaging manufacturer'],
+    [/\b(?:Sirushi|Shirushi)\b/gi, 'a prominent national hospitality and restaurant group'],
+    [/\b(?:AUNDE(?:\s+de\s+M[eé]xico)?)\b/gi, 'an international automotive technical textiles manufacturer'],
+    [/\b(?:Natividad\s+Abogados|Natividad)\b/gi, 'a specialized institutional legal consultancy'],
+    [/\b(?:Recicla\s+Ambiente(?:\s*,\s*S\.?A\.?)?|Recicla)\b/gi, 'an industrial environmental and waste management enterprise'],
+    [/\b(?:SEBNMX|SEBN|Sumitomo\s+Electric\s+Bordnetze)\b/gi, 'a global automotive wiring harness manufacturer'],
+    [/\b(?:Grupo\s+Solana|Solana)\b/gi, 'a prominent regional automotive dealership group'],
+    [/\b(?:Poliuretanos\s+Summa\s+Woodbridge|Woodbridge|PSW)\b/gi, 'an international automotive interior components manufacturer'],
+    [/\b(?:Enerflex(?:\s+de\s+M[eé]xico)?)\b/gi, 'an international energy infrastructure and gas processing enterprise'],
+    [/\b(?:Edificaciones\s+y\s+Construcciones\s+San\s+Carlos|San\s+Carlos)\b/gi, 'a prominent commercial real estate developer'],
+    [/\b(?:De\s+Anda)\b/gi, 'a prominent private landholder'],
+    [/\b(?:Villas\s+del\s+Colli)\b/gi, 'a prime commercial urban development'],
+    [/\b(?:Hermosillo)\b/gi, 'a major private agricultural enterprise'],
+    [/\b(?:Leaño|Leano)\b/gi, 'a prominent real estate landowning family'],
   ];
 
   for (const [regex, rep] of replacements) {
     res = res.replace(regex, rep);
   }
 
-  // Catch any remaining confidential entity names
+  // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
   for (const confName of confClientNames) {
-    if (confName && confName.length >= 4) {
-      const esc = confName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (confName && confName.trim().length >= 2) {
+      const cleanConf = confName.trim();
+      const esc = cleanConf.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const reg = new RegExp(`\\b${esc}\\b`, 'gi');
-      res = res.replace(reg, 'a leading multinational corporate client');
+      res = res.replace(reg, 'a leading corporate client');
     }
   }
+
+  // Polish English grammar in bios and descriptions (Angela Housekeeping Rule)
+  res = res.replace(/\b(?:is the Partner of|is the partner of)\b/g, 'leads');
+  res = res.replace(/\bLabor & Employment\b/g, 'Labour & Employment');
+
+  // Strip residual audit voice from submission texts
+  res = res.replace(/\bthe verified evidentiary record demonstrates\b/gi, 'our active practice record demonstrates');
+  res = res.replace(/\bthe verified evidentiary record\b/gi, 'our representative practice record');
+  res = res.replace(/\bverified evidentiary record\b/gi, 'active practice record');
+  res = res.replace(/\bevidentiary record demonstrates\b/gi, 'representative casework demonstrates');
+  res = res.replace(/\bevidentiary record\b/gi, 'practice record');
+  res = res.replace(/\bevidence completeness\b/gi, 'breadth of experience');
+  res = res.replace(/\bdefensibility\b/gi, 'substantive standing');
+  res = res.replace(/\bour analysis indicates\b/gi, 'our market experience indicates');
+  res = res.replace(/\bour analysis demonstrates\b/gi, 'our caseload demonstrates');
+  res = res.replace(/\bthe audit demonstrates\b/gi, 'our track record demonstrates');
+  res = res.replace(/\bthe audit indicates\b/gi, 'our practice experience indicates');
+  res = res.replace(/\bthis baseline does not reflect\b/gi, 'this position does not reflect');
+
   return res;
 }
 
@@ -303,6 +339,23 @@ function cleanRawLeadString(rawStr: string): string[] {
 
 
 
+  // Dynamically collect all confidential entity names from matters pool and known clients
+  const dynamicConfNames = new Set<string>();
+  for (const m of allMattersPool) {
+    const isConf = m.isConfidential === true || m.confidential === true || m.is_confidential === true ||
+      String(m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase().includes('conf') ||
+      String(m.publishStatus || m.publish_status || '').toLowerCase() === 'non_publishable';
+    const cName = (m.client || m.clientName || '').trim();
+    if (isConf && cName && cName.length >= 2) {
+      dynamicConfNames.add(cName);
+      const clean = sanitizeClientName(cName).cleanClient;
+      if (clean && clean.length >= 2) dynamicConfNames.add(clean);
+    }
+  }
+  const knownConfList = ['SKF', 'SKF Industrial', 'Megacable', 'Corrugados', 'Sirushi', 'Shirushi', 'AUNDE', 'Natividad', 'Recicla', 'SEBNMX', 'Sumitomo Electric Bordnetze', 'Solana', 'PSW', 'Poliuretanos Summa Woodbridge', 'Enerflex', 'San Carlos', 'De Anda', 'Villas del Colli', 'Hermosillo', 'Leaño'];
+  knownConfList.forEach(k => dynamicConfNames.add(k));
+  const confNamesList = Array.from(dynamicConfNames);
+
   // Associate each lawyer with verified matters and client mandates
   const isTaxPractice = (practiceArea || '').toLowerCase().includes('tax') || (practiceArea || '').toLowerCase().includes('tributar');
   const isLabourPractice = (practiceArea || '').toLowerCase().includes('labour') || (practiceArea || '').toLowerCase().includes('labor') || (practiceArea || '').toLowerCase().includes('employment') || (practiceArea || '').toLowerCase().includes('laboral');
@@ -321,8 +374,14 @@ function cleanRawLeadString(rawStr: string): string[] {
     });
 
     // Separate linked matters into strictly publishable vs confidential
-    const pubLinkedMatters = linkedMatters.filter((m: any) => !m.isConfidential && !m.confidential && m.publish_status !== 'non_publishable');
-    const confLinkedMatters = linkedMatters.filter((m: any) => m.isConfidential || m.confidential || m.publish_status === 'non_publishable');
+    const isMatterConf = (m: any) => Boolean(
+      m.isConfidential === true || m.confidential === true || m.is_confidential === true ||
+      String(m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase().includes('conf') ||
+      String(m.publishStatus || m.publish_status || '').toLowerCase() === 'non_publishable' ||
+      /skf|corrugados|sirushi|shirushi|aunde|natividad|recicla|sebnmx|solana|psw|summa woodbridge|enerflex|megacable|san carlos|de anda|villas del colli|hermosillo|leaño/i.test(m.client || m.clientName || m.name || '')
+    );
+    const pubLinkedMatters = linkedMatters.filter((m: any) => !isMatterConf(m));
+    const confLinkedMatters = linkedMatters.filter((m: any) => isMatterConf(m));
 
     // Extract unique publishable client names
     const clientList: string[] = [];
@@ -410,14 +469,14 @@ function cleanRawLeadString(rawStr: string): string[] {
       targetRank = `Senior Statesperson (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = false;
-    } else if (isLabourPractice && (nNorm.includes('andres cabrera') || nNorm.includes('cabrera'))) {
-      currentRank = 'Unranked';
-      targetRank = `Band 5 / Up and Coming (${practiceArea} — ${safeRegion})`;
-      l.isPartner = true;
-      l.isRanked = false;
     } else if (isLabourPractice && (nNorm.includes('atzin') || nNorm.includes('vallejo'))) {
       currentRank = 'Unranked';
-      targetRank = `Associate to Watch / Up and Coming (${practiceArea} — ${safeRegion})`;
+      targetRank = `Up and Coming (${practiceArea} — ${safeRegion})`;
+      l.isPartner = true;
+      l.isRanked = false;
+    } else if (isLabourPractice && (nNorm.includes('andres cabrera') || nNorm.includes('cabrera'))) {
+      currentRank = 'Unranked';
+      targetRank = `Associate to Watch (${practiceArea} — ${safeRegion})`;
       l.isPartner = true;
       l.isRanked = false;
     } else if (isLabourPractice && (nNorm.includes('barreto') || nNorm.includes('erick perez') || nNorm.includes('diaz mendez'))) {
@@ -469,7 +528,7 @@ function cleanRawLeadString(rawStr: string): string[] {
       bioCommentary = `Partner Juan Carlos Balzán demonstrates exceptional technical capability across corporate tax consulting, municipal taxation, and regulatory compliance for leading industrial and commercial clients. Having assumed primary lead partner responsibilities across an expanding domestic and international portfolio, his proven transaction execution and rising market profile firmly justify initial directory recognition as Up and Coming.`;
       strategicRationale = `Rising partner assuming first-chair responsibility across corporate consulting and municipal tax controversies.`;
     } else if (isLabourPractice && (nNorm.includes('eduardo garduno') || nNorm.includes('garduno'))) {
-      bioCommentary = `Partner and Head of DeForest Abogados's Labor & Employment practice with over two decades of experience advising multinational employers across Mexico, complemented by senior public-sector experience. He serves as President of the Labor Committee of ANADE Puebla and actively participates in corporate chambers including CLAUZ, CANACINTRA, and the American Chamber of Commerce. Across the research cycle, Mr. Garduño directed the practice's most consequential mandates, including a complex post-M&A workforce integration across multiple industrial plants (>5,000 employees), cross-plant collective bargaining under USMCA Rapid Response Mechanism scrutiny, and ongoing dispute coordination across hundreds of active labor proceedings for multinational automotive, packaging, and technology corporations. His proven leadership on high-stakes labor stability firmly justifies initial recognition in Band 5.`;
+      bioCommentary = `Eduardo Garduño leads DeForest's Labour & Employment practice, bringing over two decades of specialized experience advising multinational employers across Mexico, complemented by distinguished senior public-sector service. He serves as President of the Labor Committee of ANADE Puebla and actively contributes to leading industrial associations including CLAUZ, CANACINTRA, and the American Chamber of Commerce. Across the research cycle, Mr. Garduño directed the practice's most consequential mandates, including a complex post-M&A workforce integration across multiple industrial plants (>5,000 employees), cross-plant collective bargaining under USMCA Rapid Response Mechanism scrutiny, and dispute coordination across hundreds of active labor proceedings for multinational automotive, packaging, and industrial technology corporations. His proven leadership on high-stakes labor stability firmly substantiates initial recognition in Band 5.`;
       strategicRationale = `Practice head combining bar leadership (ANADE Puebla President) with first-chair direction on post-M&A workforce integrations (>5,000 workers) and USMCA Rapid Response collective bargaining defense.`;
       candidateSuppMatters = `Schaeffler / Vitesco post-acquisition integration (>5,000 workers, 35 disputes), GeNI collective bargaining, and multi-plant labor governance.`;
       candidateMarketEvidence = `President of the Labor Committee of ANADE Puebla; frequent speaker at CLAUZ, CANACINTRA, and American Chamber of Commerce.`;
@@ -496,6 +555,13 @@ function cleanRawLeadString(rawStr: string): string[] {
       candidateMarketEvidence = `Direct corporate client trust from multinational infrastructure (Bonatti) and automotive Tier-1 (Brose) employers on business-critical union relations.`;
       candidateEvidenceGaps = `Confirm 3 confidential referee contacts from Bonatti and Brose corporate leadership available for Chambers researcher interviews.`;
       candidateRecommendedAction = `Nominate for Up and Coming in Chambers Mexico Labour & Employment; emphasize lead role in Bonatti strike prevention and Brose USMCA defense, and submit 3 dedicated client referees.`;
+    } else if (isLabourPractice && (nNorm.includes('andres cabrera') || nNorm.includes('cabrera'))) {
+      bioCommentary = `Partner Andrés Cabrera Gómez leads DeForest's regional practice in the Bajío industrial corridor, coordinating contentious labor execution and regulatory compliance across Guanajuato and Querétaro. While demonstrating strong regional client relationships and procedural coordination, his individual directory profile remains under evidentiary consolidation pending the submission of dedicated first-chair matter entries.`;
+      strategicRationale = `Regional partner leading Bajío contentious execution; recommended for Associate to Watch pending direct first-chair matter attribution.`;
+      candidateSuppMatters = `Regional Bajío labor contentious coordination and compliance support.`;
+      candidateMarketEvidence = `Regional lead coordinator across Bajío industrial clients.`;
+      candidateEvidenceGaps = `Requires dedicated first-chair lead matters to support partner-level directory nomination.`;
+      candidateRecommendedAction = `Nominate for Associate to Watch in Chambers Mexico Labour & Employment; consolidate direct lead-partner matter credits for future Band 5 progression.`;
     } else if (nNorm.includes('jose pablo') || nNorm.includes('ramos castillo')) {
       if (isRealEstatePractice) {
         const cleanRank = targetRank.split('(')[0].trim() || 'Band 4 / Up and Coming';
@@ -526,12 +592,12 @@ function cleanRawLeadString(rawStr: string): string[] {
       strategicRationale = `${roleTitle} leading substantive instructions across ${practiceArea}, demonstrating established commercial execution for ${clientsStr}.`;
     }
 
-    bioCommentary = sanitizeBannedSuperlatives(anonymizeConfidentialClients(bioCommentary));
-    strategicRationale = sanitizeBannedSuperlatives(anonymizeConfidentialClients(strategicRationale));
+    bioCommentary = sanitizeBannedSuperlatives(anonymizeConfidentialClients(bioCommentary, confNamesList));
+    strategicRationale = sanitizeBannedSuperlatives(anonymizeConfidentialClients(strategicRationale, confNamesList));
 
     // Also sanitize any raw comments or bio that arrived with the lawyer record
-    const sanitizedRawComments = l.comments ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.comments)) : '';
-    const sanitizedRawBio = l.bio ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.bio)) : '';
+    const sanitizedRawComments = l.comments ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.comments, confNamesList)) : '';
+    const sanitizedRawBio = l.bio ? sanitizeBannedSuperlatives(anonymizeConfidentialClients(l.bio, confNamesList)) : '';
 
     const suppMatters = candidateSuppMatters || (topClients.length > 0
       ? `Key lead mandates for ${topClients.join(', ')}.`
@@ -565,7 +631,7 @@ function cleanRawLeadString(rawStr: string): string[] {
       recommendedAction: recommendedAction,
       leave: l.leave || 'N/A',
       focus: l.focus || '',
-      standoutWork: l.standoutWork ? anonymizeConfidentialClients(l.standoutWork) : ''
+      standoutWork: l.standoutWork ? anonymizeConfidentialClients(l.standoutWork, confNamesList) : ''
     };
   });
 

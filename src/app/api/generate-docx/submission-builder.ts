@@ -1011,6 +1011,23 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ...rawMattersList
   ];
 
+  // Dynamically collect all confidential entity names from all matters pool and known clients
+  const dynamicConfNames = new Set<string>();
+  for (const m of allMattersPool) {
+    const isConf = m.isConfidential === true || m.confidential === true || m.is_confidential === true ||
+      String(m.publishStatus || m.publish_status || m.confidentiality || '').toLowerCase().includes('conf') ||
+      String(m.publishStatus || m.publish_status || '').toLowerCase() === 'non_publishable';
+    const cName = (m.client || m.clientName || '').trim();
+    if (isConf && cName && cName.length >= 2) {
+      dynamicConfNames.add(cName);
+      const clean = sanitizeClientName(cName).cleanClient;
+      if (clean && clean.length >= 2) dynamicConfNames.add(clean);
+    }
+  }
+  const knownConfEntities = ['SKF', 'SKF Industrial', 'Megacable', 'Corrugados', 'Sirushi', 'Shirushi', 'AUNDE', 'Natividad', 'Recicla', 'SEBNMX', 'Sumitomo Electric Bordnetze', 'Solana', 'PSW', 'Poliuretanos Summa Woodbridge', 'Enerflex', 'San Carlos', 'De Anda', 'Villas del Colli', 'Hermosillo', 'Leaño'];
+  knownConfEntities.forEach(k => dynamicConfNames.add(k));
+  const confNamesList = Array.from(dynamicConfNames);
+
   const rawInputLawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
     ? chambersData.lawyers
     : (Array.isArray(submission?.lawyers) && submission.lawyers.length > 0 ? submission.lawyers : []);
@@ -1165,16 +1182,16 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
       if (l.comments) {
-        const cleanComments = anonymizeConfidentialClients(l.comments);
+        const cleanComments = anonymizeConfidentialClients(l.comments, confNamesList);
         bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
       } else if (l.bio) {
-        const cleanBio = anonymizeConfidentialClients(l.bio);
+        const cleanBio = anonymizeConfidentialClients(l.bio, confNamesList);
         bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
       }
       if (l.standoutWork) {
         bioParts.push(para('Standout recent work:', { size: 18, spacing: { before: 80, after: 40 } }));
         // Standout work entries with [CONFIDENTIAL] in red and client names in bold
-        const workText = anonymizeConfidentialClients(String(l.standoutWork));
+        const workText = anonymizeConfidentialClients(String(l.standoutWork), confNamesList);
         if (workText.includes('[CONFIDENTIAL]')) {
           const parts = workText.split('[CONFIDENTIAL]');
           const runs: TextRun[] = [];
@@ -1296,7 +1313,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   ) {
     b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
-  b10Text = sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned;
+  b10Text = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned, confNamesList);
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
 
   // ═══ SECTION C ═══
@@ -1330,14 +1347,14 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     c2LowerText.includes('advancement to band 1')
   );
 
-  // Check if C2 contains any confidential client names
+  // Check if C2 contains any confidential client names (including 2-3 letter names like SKF)
   const allConfMattersForGate = [...curation.officialConfMatters, ...(curation.surplusConfMatters || [])];
   const containsConfLeak = allConfMattersForGate.some((cm: any) => {
     const rawName = (cm.client || cm.clientName || cm.name || '').trim();
-    if (rawName.length < 4) return false;
+    if (rawName.length < 2) return false;
     const cleanEntity = rawName.split(/[\—\-\:\.]/)[0].trim();
-    return cleanEntity.length >= 4 && c2LowerText.includes(cleanEntity.toLowerCase());
-  });
+    return cleanEntity.length >= 2 && c2LowerText.includes(cleanEntity.toLowerCase());
+  }) || /skf|corrugados|sirushi|shirushi|aunde|natividad|recicla|sebnmx|solana|psw|summa woodbridge|enerflex|megacable/i.test(c2LowerText);
 
   const containsAuditorInC2 = (
     c2LowerText.includes('verified evidentiary record demonstrates') ||
@@ -1362,8 +1379,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
   }
 
-  // Sanitize any potential template or prompt leakage from C2
-  c2Val = sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned);
+  // Sanitize any potential template or prompt leakage from C2, strip confidential names, and enforce firm voice
+  c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confNamesList);
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
   // ═══ SECTION D ═══
