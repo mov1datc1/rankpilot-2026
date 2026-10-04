@@ -21,6 +21,9 @@ import os
 import re
 import time
 import random
+import hashlib
+from html import unescape
+from urllib.parse import urlparse
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 
@@ -142,7 +145,11 @@ def _fetch_html(url: str, params: str = "") -> Optional[str]:
     
     try:
         with httpx.Client(follow_redirects=True, timeout=30.0) as client:
+            if urlparse(full_url).hostname not in {"chambers.com", "www.chambers.com", "legal500.com", "www.legal500.com"}:
+                return None
             response = client.get(full_url, headers=headers)
+            if urlparse(response.url.__str__()).hostname not in {"chambers.com", "www.chambers.com", "legal500.com", "www.legal500.com"}:
+                return None
             
             if response.status_code != 200:
                 print(f"[BENCHMARK SCRAPER] HTTP {response.status_code} for {full_url}")
@@ -239,6 +246,8 @@ class ChambersScraper:
                     sub = body["subsection"]
                     if isinstance(sub, dict):
                         result["guide"] = sub.get("publicationTypeDescription", "")
+                        result["observed_practice"] = sub.get("practiceAreaDescription", "")
+                        result["observed_jurisdiction"] = sub.get("locationDescription", "")
                         break
         
         # Find all keys that contain ranking data (Band/categories/individuals/organisations)
@@ -282,9 +291,16 @@ class ChambersScraper:
                         "name": org.get("organisationName", org.get("displayName", "")),
                         "band": band_name,
                         "rank_type": cat.get("rankType", ""),
+                        "edition": org.get("publicationYear"),
+                        "organisation_id": org.get("organisationId"),
+                        "profile_path": org.get("urlPath"),
                     }
                     result["firms"].append(firm)
         
+        editions = {str(f["edition"]) for f in result["firms"] if f.get("edition")}
+        result["edition"] = next(iter(editions)) if len(editions) == 1 else None
+        result["listing_complete"] = False  # Never infer global absence from a scraper.
+
         # Process Lawyers (individuals)
         if lawyers_data:
             categories = lawyers_data.get("categories", [])
@@ -385,13 +401,13 @@ class Legal500Scraper:
         # ── Extract ranking groups with their firms ──
         # Split HTML by ranking-group boundaries
         # Each group starts with data-testid="ranking-group" and contains a tier header + firm rows
-        group_pattern = r'data-testid="ranking-group">(.*?)(?=data-testid="ranking-group"|$)'
+        group_pattern = r'<ul\b[^>]*data-testid="ranking-group"[^>]*>(.*?)</ul>'
         groups = re.findall(group_pattern, html, re.DOTALL)
         
         if not groups:
             # Fallback: use the tier headers to segment the content
             # Find positions of each tier header to segment firms
-            groups = Legal500Scraper._segment_by_tiers(html, tier_headers)
+            return None  # Do not scan unrelated footer/profile content as ranked firms.
         
         for group_html in groups:
             # Get tier name from sr-only h3
@@ -406,36 +422,22 @@ class Legal500Scraper:
             
             result["structure"]["firm_bands"].append(display_tier)
             
-            # Extract firm names from h4 tags
-            # Bold firms (ranked): typography-interface-l-bold
-            # Non-bold firms (firms to watch in lower tiers): typography-interface-l
-            firm_names_bold = re.findall(
-                r'typography-interface-l-bold">\s*([^<]+?)\s*</h4>', 
-                group_html
-            )
-            firm_names_normal = re.findall(
-                r'typography-interface-l">\s*([^<]+?)\s*</h4>', 
-                group_html
-            )
-            
-            all_firms = firm_names_bold + firm_names_normal
-            
-            for name in all_firms:
-                # Filter out navigation items
-                name = name.strip()
-                if name in ("Comparative Guides", "Events", "Legal 500 TV", 
-                           "Rankings", "Firms & Lawyers", "In-House", 
-                           "Knowledge Centre", ""):
+            rows = re.findall(r'<li\b[^>]*data-testid="ranking-table-row"[^>]*>(.*?)</li>', group_html, re.DOTALL)
+            for row in rows:
+                name_match = re.search(r'<h4\b[^>]*>(.*?)</h4>', row, re.DOTALL)
+                link = re.search(r'href="(/rankings/ranking/[^"?#]+)"', row)
+                if not name_match or not link:
                     continue
-                
-                # Decode HTML entities
-                name = name.replace("&amp;", "&").replace("&#x27;", "'").replace("&quot;", '"')
-                
-                result["firms"].append({
-                    "name": name,
-                    "band": display_tier,
-                })
-        
+                name = unescape(re.sub(r'<[^>]+>', '', name_match.group(1))).strip()
+                if name:
+                    result['firms'].append({'name':name, 'band':display_tier, 'profile_path':unescape(link.group(1))})
+
+        title = re.search(r'<title>(.*?)</title>', html, re.DOTALL)
+        scope = re.search(r'L500 \| (.*?) in (.*?) \|', unescape(title.group(1))) if title else None
+        result['observed_practice'] = scope.group(1) if scope else None
+        result['observed_jurisdiction'] = scope.group(2) if scope else None
+        result['edition'] = None  # Copyright year is NOT the ranking edition.
+        result['listing_complete'] = False
         result["structure"]["has_firm_bands"] = len(result["structure"]["firm_bands"]) > 0
         result["total_firms"] = len(result["firms"])
         
@@ -509,7 +511,7 @@ def scrape_rankings(directory: str, practice_area: str, jurisdiction: str,
     # 1. Check cache
     if not force_refresh:
         cached = get_cached_benchmark(directory, practice_area, jurisdiction, ttl_days)
-        if cached:
+        if cached and cached.get("parser_version") == "ranking-evidence-v1":
             return cached
     
     # 2. Look up URL
@@ -547,6 +549,8 @@ def scrape_rankings(directory: str, practice_area: str, jurisdiction: str,
     if not result:
         return None
     
+    result.update(source_url=url, content_sha256=hashlib.sha256(html.encode()).hexdigest(), parser_version="ranking-evidence-v1")
+
     # 5. Save to cache
     save_benchmark_cache(directory, practice_area, jurisdiction, result)
     
@@ -567,7 +571,7 @@ def get_benchmark_summary(benchmark_data: Dict[str, Any]) -> str:
     scraped_at = benchmark_data.get("scraped_at", "unknown date")
     
     lines = [
-        f"LIVE BENCHMARK DATA (verified from {source.upper()} on {scraped_at}):",
+        f"OBSERVED BENCHMARK DATA ({source.upper()}, fetched {scraped_at}; not verification of a user claim):",
         f"Practice: {practice} | Jurisdiction: {jurisdiction}",
     ]
     
@@ -594,7 +598,7 @@ def get_benchmark_summary(benchmark_data: Dict[str, Any]) -> str:
                 lines.append(f"  • {band}: {firms_str}")
                 bands_shown.add(band)
     else:
-        lines.append("- Firm ranking: NO — this practice does NOT rank firms/departments")
+        lines.append("- Firm ranking data unavailable in this response; do not infer that firms are not ranked.")
     
     # Individual categories
     if structure.get("has_individual_bands"):

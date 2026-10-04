@@ -1,0 +1,20 @@
+/** Shared by Studio and the download endpoint. Optimization is not approval. */
+export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false) {
+  const verdict = data?.release_verdict || {};
+  const errors: string[] = [];
+  if (verdict.passed !== true || (verdict.status && !['passed', 'approved'].includes(verdict.status))) {
+    errors.push('La revisión final está pendiente o tiene bloqueos.');
+  }
+  if (Array.isArray(verdict.errors)) errors.push(...verdict.errors.map(String));
+  if (data?.ranking_claim && data?.ranking_verification?.status !== 'verified_match') errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
+  if (!matters.length) errors.push('No hay asuntos disponibles.');
+  const ids = matters.map(m => m.id).filter(Boolean);
+  if (new Set(ids).size !== ids.length) errors.push('Hay asuntos duplicados en el expediente.');
+  if (matters.some(m => m.confidentialityConfirmed === false || m.publish_status === 'confirmation_required' || m.confidentialityStatus === 'confirmation_required')) {
+    errors.push('Confirma los permisos de publicación de los asuntos pendientes.');
+  }
+  if (matters.some(m => m.valueConflict || m.value_conflict)) errors.push('Resuelve los importes o monedas contradictorios antes de la entrega final.');
+  if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
+  const warnings = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
+  return { approved: errors.length === 0, errors, warnings, label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
+}

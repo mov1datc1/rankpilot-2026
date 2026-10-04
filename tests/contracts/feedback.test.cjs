@@ -1,0 +1,12 @@
+require('../../docs/reviews/review-loader.cjs');
+const {test}=require('node:test');const assert=require('node:assert/strict');
+const {processingFeedback}=require('../../src/lib/ux/processing-feedback.ts');
+const {calculateEvidenceReadiness}=require('../../src/lib/docx/evidence-readiness.ts');
+const matter={id:'m',client:'Synthetic Client',rawNotes:'The appeal remains pending.',leadPartner:'Named responsible lawyer'};
+test('one truthful pending matter can enter draft review without an invented minimum quota',()=>{const r=calculateEvidenceReadiness([matter],[],'The department advises on tax disputes.');assert.equal(r.canOptimize,true);assert.equal(r.matterStatuses[0].hasOutcome,true);assert.ok(!r.blockers.length);assert.ok(!r.summary.includes('competitiva'));});
+test('long prose without a status is not a verified outcome',()=>{const r=calculateEvidenceReadiness([{...matter,rawNotes:'Background description. '.repeat(40)}],[],'Department source');assert.equal(r.matterStatuses[0].hasOutcome,false);});
+test('generated prose cannot fill a missing source status',()=>{const r=calculateEvidenceReadiness([{...matter,rawNotes:'Background.',optimizedText:'The firm won an award.'}],[],'Department source');assert.equal(r.matterStatuses[0].hasOutcome,false);});
+test('unknown value is guidance, not a demand to fabricate a monetary metric',()=>{const r=calculateEvidenceReadiness([matter],[],'Department source');assert.equal(r.canOptimize,true);assert.ok(r.warnings.some(x=>x.includes('solo si aplica')));});
+test('empty source narrative blocks drafting with an actionable message',()=>{const r=calculateEvidenceReadiness([matter],[],'');assert.equal(r.canOptimize,false);assert.ok(r.blockers.some(x=>x.includes('descripción del departamento')));});
+test('provider details do not leak into product feedback',()=>{assert.ok(!processingFeedback({error:'secret trace API_KEY'},502).includes('secret'));assert.ok(processingFeedback({},502).includes('se conserva'));});
+test('irrelevant documents and partial sources have different recovery instructions',()=>{assert.ok(processingFeedback({code:'NO_LEGAL_MATTERS'},422).includes('No encontramos asuntos legales'));assert.ok(processingFeedback({code:'PARTIAL_EXTRACTION',source_errors:[{source:'damaged.docx'}]},422).includes('damaged.docx'));});

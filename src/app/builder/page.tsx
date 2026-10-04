@@ -1,5 +1,6 @@
 'use client';
 
+import { processingFeedback } from '@/lib/ux/processing-feedback';
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { 
   Upload, 
@@ -64,7 +65,7 @@ function BuilderContent() {
   const [country, setCountry] = useState<string>('Mexico');
   const [guideRegion, setGuideRegion] = useState<string>('Latin America');
   const [practiceArea, setPracticeArea] = useState<string>('Tax');
-  const [currentBand, setCurrentBand] = useState<string>('Unranked');
+  const [currentBand, setCurrentBand] = useState<string>('');
   const [primaryObjective, setPrimaryObjective] = useState<string>('First-time recognition');
   const [secondaryObjective, setSecondaryObjective] = useState<string>('Highlight Cross-Border Mandates');
 
@@ -81,10 +82,13 @@ function BuilderContent() {
   const [isBuilding, setIsBuilding] = useState(false);
   const [buildStepText, setBuildStepText] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const draftAttempt = useRef<{id:string; configuration:string} | null>(null);
+  const buildBusy = useRef(false);
+  const [savedDraftId,setSavedDraftId] = useState('');
 
   // Smart objective defaults based on band
   useEffect(() => {
-    if (currentBand === 'Unranked') {
+    if (!currentBand || currentBand === 'Unranked') {
       setPrimaryObjective('First-time recognition');
     } else {
       setPrimaryObjective('Maintain current ranking');
@@ -133,25 +137,22 @@ function BuilderContent() {
       }
     }
 
+    if(buildBusy.current) return;
+    buildBusy.current=true;
     setIsBuilding(true);
-    setBuildStepText('Inicializando submission e inyectando calibración estratégica...');
+    setBuildStepText('Guardando los datos iniciales de tu borrador…');
 
     try {
-      // 1. Create Submission in DB
-      const subRes = await createSubmission({
-        targetDirectory,
-        practiceArea,
-        guideRegion: `${guideRegion} — ${country}`,
-        currentBand,
-        primaryObjective,
-        secondaryObjective
-      });
-
-      if (!subRes.success || !subRes.data) {
-        throw new Error(subRes.error || 'Error creando el registro del submission');
+      // Reuse this attempt after a recoverable upload/extraction failure.
+      const configuration=JSON.stringify({targetDirectory,practiceArea,guideRegion,country,currentBand,primaryObjective,secondaryObjective});
+      let submissionId=draftAttempt.current?.configuration===configuration?draftAttempt.current.id:'';
+      if(!submissionId) {
+        const subRes=await createSubmission({targetDirectory,practiceArea,guideRegion:`${guideRegion} — ${country}`,currentBand,primaryObjective,secondaryObjective});
+        if(!subRes.success || !subRes.data) throw new Error('No pudimos crear el borrador. Tus archivos y notas siguen seleccionados; vuelve a intentar.');
+        submissionId=subRes.data.id;
+        draftAttempt.current={id:submissionId,configuration};
+        setSavedDraftId(submissionId);
       }
-
-      const submissionId = subRes.data.id;
       let primaryDocUrl = '';
       const sourcesPayload: Array<{ url: string; name: string; text?: string }> = [];
 
@@ -179,6 +180,7 @@ function BuilderContent() {
               .from('documents')
               .upload(`sources/${fileName}`, sf.file, { cacheControl: '3600', upsert: true });
 
+            if (uErr) throw new Error(`No se pudo subir ${sf.name}: ${uErr.message}. Tus archivos siguen seleccionados; reintenta la carga.`);
             if (!uErr) {
               const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(`sources/${fileName}`);
               sourcesPayload.push({ url: publicUrl, name: sf.name });
@@ -196,7 +198,7 @@ function BuilderContent() {
       }
 
       // 3. Trigger Extraction via /api/extract-document
-      setBuildStepText('Extrayendo entidades fácticas, narrativa B10 y roster B9 con IA...');
+      setBuildStepText('Leyendo las fuentes e identificando asuntos, responsables y datos pendientes…');
       const extractPayload: any = {
         submissionId,
         documentUrl: primaryDocUrl || (sourcesPayload.length > 0 ? sourcesPayload[0].url : ''),
@@ -219,7 +221,7 @@ function BuilderContent() {
 
       const extJson = await extRes.json();
       if (!extRes.ok || !extJson.success) {
-        throw new Error(extJson.error || 'El motor de extracción no pudo procesar los documentos.');
+        throw new Error(processingFeedback(extJson,extRes.status,'extract'));
       }
 
       setBuildStepText('¡Extracción completada! Abriendo Asistente de Validación...');
@@ -229,7 +231,7 @@ function BuilderContent() {
       console.error('[BUILDER ERROR]:', err);
       setErrorMessage(err.message || 'Ocurrió un error inesperado al construir el submission.');
       setIsBuilding(false);
-    }
+    } finally {buildBusy.current=false;}
   };
 
   return (
@@ -431,7 +433,7 @@ function BuilderContent() {
                 Documentos Dispersos o Desde Cero
               </h3>
               <p style={{ fontSize: '0.88rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-                Ideal si tienes información desconectada (múltiples PDFs, Word, hilos de correo o notas sueltas). La IA agrupará los mandatos por cliente y los clasificará en casillas oficiales.
+                Ideal si tienes información desconectada (múltiples PDFs, Word, hilos de correo o notas sueltas). RankPilot contrastará las fuentes para identificar cada asunto; dos mandatos del mismo cliente se mantendrán separados cuando sean distintos.
               </p>
             </div>
           </div>
@@ -592,14 +594,14 @@ function BuilderContent() {
             {calibrationSubStep === 5 && (
               <div>
                 <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '0.85rem' }}>
-                  ¿Cuál es la banda o tier actual del despacho en esta guía y práctica?
+                  ¿Qué posición declara la firma en esta guía y práctica? La contrastaremos con una fuente oficial antes de usarla como un hecho.
                 </p>
                 <div style={{ maxWidth: '450px' }}>
                   <PremiumSelect
-                    label="Banda o Clasificación Actual"
-                    value={currentBand}
-                    onChange={setCurrentBand}
-                    options={BANDS}
+                    label="Posición declarada (pendiente de verificar)"
+                    value={currentBand || 'No la he confirmado'}
+                    onChange={value=>setCurrentBand(value==='No la he confirmado'?'':value)}
+                    options={['No la he confirmado',...BANDS.filter(value=>value==='Unranked' || (targetDirectory.includes('500') ? value.startsWith('Tier ') : value.startsWith('Band ')))]}
                   />
                 </div>
               </div>
@@ -945,7 +947,7 @@ function BuilderContent() {
               gap: '0.5rem'
             }}>
               <AlertCircle size={16} />
-              <span>{errorMessage}</span>
+              <div role="alert"><p style={{margin:0}}>{errorMessage}</p>{savedDraftId && <p style={{marginBottom:0}}>Los datos iniciales ya están guardados. Puedes reintentar aquí con los archivos seleccionados o <a href={`/reports/${savedDraftId}`}>abrir el borrador</a>. Las notas aún no extraídas siguen solamente en esta pantalla.</p>}</div>
             </div>
           )}
 
@@ -995,7 +997,7 @@ function BuilderContent() {
               {isBuilding ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  <span>{buildStepText || 'Construyendo submission...'}</span>
+                  <span role="status" aria-live="polite">{buildStepText || 'Preparando tu borrador…'}</span>
                 </>
               ) : (
                 <>

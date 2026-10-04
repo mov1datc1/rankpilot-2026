@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 
     const payload = {
-      original_b10: original_b10 || chambersData.original_b10 || chambersData.b7 || chambersData.departmentDesc || '',
+      original_b10: chambersData.confirmed_source_b10 ?? chambersData.original_b10 ?? '',
       practice_area: submission.practiceArea || '',
       firm_name: chambersData.firm_name || chambersData.firmName || '',
       directive: directive || '',
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       narrative_architecture: chambersData.narrative_architecture || {}
     };
 
+    if(!payload.original_b10.trim()) return NextResponse.json({code:'SOURCE_REQUIRED',error:'Falta la descripción de origen del departamento.'},{status:422});
     const resp = await fetch(`${pythonApiUrl}/optimize/b10`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,22 +62,19 @@ export async function POST(request: NextRequest) {
     const result = await resp.json();
 
     if (result.success && result.enhanced_b10) {
-      const updatedChambersData = {
-        ...chambersData,
-        enhanced_b7: result.enhanced_b10,
-        enhanced_b10: result.enhanced_b10,
-        b7: result.enhanced_b10
-      };
-
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: { chambersData: updatedChambersData }
+      await prisma.$transaction(async tx => {
+        const current = await tx.submission.update({where:{id:submissionId},data:{updatedAt:new Date()}});
+        const latest:any = current.chambersData || {};
+        if ((latest.enhanced_b7 || '') !== (chambersData.enhanced_b7 || '') || (latest.original_b10 || '') !== (chambersData.original_b10 || '') || (latest.confirmed_source_b10 || '') !== (chambersData.confirmed_source_b10 || '')) throw new Error('DRAFT_CONFLICT');
+        const revision=Number(latest.draft_revision || 0)+1;
+        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,enhanced_b7:result.enhanced_b10,enhanced_b10:result.enhanced_b10,b7:result.enhanced_b10,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Department narrative edited; review required.']}}}});
+        result.revision=revision;
       });
     }
 
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[API /optimize/b10] Error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message === 'DRAFT_CONFLICT' ? 'La narrativa cambió durante la optimización. Recarga y reintenta.' : error.message || 'Server error' }, { status: error.message === 'DRAFT_CONFLICT' ? 409 : 500 });
   }
 }

@@ -56,7 +56,7 @@ export async function createSubmission(data: {
         targetDirectory: data.targetDirectory,
         practiceArea: data.practiceArea,
         guideRegion: data.guideRegion,
-        currentBand: data.currentBand || 'Unranked',
+        currentBand: data.currentBand || '',
         deadline: data.deadline ? new Date(data.deadline) : null,
         status: 'Draft',
         chambersData: chambersData as any,
@@ -172,10 +172,13 @@ export async function updateSubmissionDepartment(submissionId: string, deptData:
 
 // ── Update Validated Submission Data (Post-Ingestion Wizard) ──
 export async function updateSubmissionValidatedData(submissionId: string, data: {
+  expectedRevision?: number;
   firmName?: string;
   practiceArea?: string;
   location?: string;
   b10Text?: string;
+  confirmedSourceB10?: string;
+  researchPeriod?: { from: string; to: string };
   lawyers?: any[];
   matters?: any[];
 }) {
@@ -187,20 +190,45 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     }
 
     const chambers = (existing.chambersData as any) || {};
+    if (data.expectedRevision !== undefined && data.expectedRevision !== Number(chambers.draft_revision || 0)) {
+      throw new Error('Hay una versión más reciente del borrador. Recarga antes de guardar para no sobrescribirla.');
+    }
+    if (data.researchPeriod) {
+      const {from,to}=data.researchPeriod;
+      const valid=(value:string)=>/^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
+      if(!valid(from) || !valid(to) || from>to) throw new Error('Indica un periodo de trabajo válido.');
+    }
+    const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
+      draft_revision: nextRevision,
+      ...(data.practiceArea && data.practiceArea !== existing.practiceArea ? { canonical_matter_selection: null } : {}),
+      release_verdict: { passed: false, status: 'needs_review', errors: ['Draft edited; validation required.'] },
+      cloned_docx_b64: null,
+      approved_artifact: null,
       ...(data.firmName ? { firm_name: data.firmName, firmName: data.firmName } : {}),
-      ...(data.b10Text ? { original_b10: data.b10Text, enhanced_b7: data.b10Text, b7: data.b10Text } : {}),
+      ...(data.b10Text !== undefined ? { enhanced_b7: data.b10Text, b7: data.b10Text } : {}),
+      ...(data.confirmedSourceB10 !== undefined ? { confirmed_source_b10: data.confirmedSourceB10 } : {}),
+      ...(data.researchPeriod ? { research_period: {...data.researchPeriod,source:'User-confirmed submission instructions'} } : {}),
       ...(data.lawyers ? { lawyers: data.lawyers } : {}),
       ...(data.matters ? { matters: data.matters } : {})
     };
 
+    await prisma.$transaction(async (tx) => {
+    const locked = await tx.submission.updateMany({ where: { id: submissionId, updatedAt: existing.updatedAt }, data: { updatedAt: new Date() } });
+    if (locked.count !== 1) throw new Error('El borrador cambió en otra operación. Recarga antes de guardar.');
     if (data.matters && Array.isArray(data.matters)) {
       for (const m of data.matters) {
         if (m.id && !m.id.startsWith('matter-ext-') && !m.id.startsWith('matter-')) {
-          await prisma.matter.updateMany({
+          await tx.matter.updateMany({
             where: { id: m.id, submissionId },
             data: {
+              name: m.name || m.title || '',
+              optimizedText: m.optimizedText || m.optimized_text || '',
+              teamMembers: m.teamMembers || m.team_members || '',
+              crossBorder: m.crossBorder || '',
+              completionDate: m.completionDate || '',
+              otherFirms: m.otherFirms || '',
               client: m.client || '',
               value: m.value || '',
               leadPartner: m.leadPartner || m.lead_partner || '',
@@ -212,7 +240,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       }
     }
 
-    await prisma.submission.update({
+    await tx.submission.update({
       where: { id: submissionId },
       data: {
         chambersData: updatedChambers,
@@ -221,7 +249,8 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       }
     });
 
-    return { success: true };
+    });
+    return { success: true, revision: nextRevision };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };
@@ -241,6 +270,10 @@ export async function updateDesignatedHeroMatter(submissionId: string, heroMatte
     const narrativeArch = chambers.narrative_architecture || {};
     const updatedChambers = {
       ...chambers,
+      draft_revision: Number(chambers.draft_revision || 0)+1,
+      approved_artifact: null,
+      release_verdict: {passed:false,status:'needs_review'},
+      user_selected_hero_id: heroMatterId,
       hero_matter_id: heroMatterId,
       hero_matter_title: heroMatterTitle,
       hero_matter_name: heroMatterTitle,
@@ -255,15 +288,16 @@ export async function updateDesignatedHeroMatter(submissionId: string, heroMatte
       }
     };
 
-    await prisma.submission.update({
-      where: { id: submissionId },
+    const saved = await prisma.submission.updateMany({
+      where: { id: submissionId, updatedAt: existing.updatedAt },
       data: {
         chambersData: updatedChambers,
         updatedAt: new Date()
       }
     });
 
-    return { success: true };
+    if (saved.count !== 1) throw new Error('El borrador cambió. Recarga antes de seleccionar la insignia.');
+    return { success: true, revision: updatedChambers.draft_revision };
   } catch (error: any) {
     console.error('Error updating hero matter:', error);
     return { success: false, error: error.message };

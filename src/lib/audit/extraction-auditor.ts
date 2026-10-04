@@ -136,11 +136,15 @@ export function judgeSolExtractionAudit(params: {
     const isExplicitlyPub = pubStatus === 'publishable' || pubStatus === 'public' || pubStatus === 'no' || matterCopy.isConfidential === false;
     const isExplicitlyConf = pubStatus === 'confidential' || pubStatus === 'non_publishable' || pubStatus === 'yes' || matterCopy.isConfidential === true;
 
-    if (!isExplicitlyPub && !isExplicitlyConf) {
+    const unconfirmed = matterCopy.confidentialityConfirmed === false || matterCopy.publish_status === 'confirmation_required' || matterCopy.confidentialityStatus === 'confirmation_required';
+    if (unconfirmed || (!isExplicitlyPub && !isExplicitlyConf)) {
+      matterCopy.confidentialityConfirmed = false;
+      matterCopy.confidentialityStatus = 'confirmation_required';
+      matterCopy.publish_status = 'confirmation_required';
       // Default to confidential until human verification
       matterCopy.isConfidential = true;
       matterCopy.confidentiality = 'confidential';
-      matterCopy.publishStatus = 'confidential';
+      matterCopy.publishStatus = 'confirmation_required';
       confidentialityAdjustments.push(
         `[Asunto #${num}] Estado de confidencialidad en blanco o ambiguo en fuente. Activado guardrail estricto: asignado como CONFIDENCIAL por defecto.`
       );

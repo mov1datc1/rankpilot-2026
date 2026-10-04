@@ -60,7 +60,9 @@ export function evaluateStrategicSufficiency(params: {
     firmName = 'The Firm'
   } = params;
 
-  const totalMatters = matters.length;
+  // Count substantive source records, not empty rows or repeated IDs. This is a readiness heuristic, not a ranking model.
+  const evidenced = matters.filter(m => String(m.rawNotes || m.summary || '').trim().length > 0 && String(m.client || m.clientDescription || '').trim().length > 0);
+  const totalMatters = new Set(evidenced.map((m, i) => m.id || `source-${i}`)).size;
   const pubCount = matters.filter(m => !m.isConfidential && !m.confidential).length;
   const confCount = matters.filter(m => m.isConfidential || m.confidential).length;
   const uniqueClients = Array.from(new Set(
@@ -159,7 +161,7 @@ export function evaluateStrategicSufficiency(params: {
       ],
       submissionReadiness: 'Provisional — Evidence Expansion Recommended',
       recommendedScore: Math.min(65, 40 + totalMatters * 3),
-      recommendedBand: 'Band 4 / Candidate Standard',
+      recommendedBand: 'Not assessed — editorial review required',
       practiceDiscrepancy
     };
   }
@@ -193,8 +195,8 @@ export function evaluateStrategicSufficiency(params: {
         : 'Verificar la narrativa final y descargar los entregables certificados.'
     ],
     submissionReadiness: 'Ready for Strategic Delivery',
-    recommendedScore: 85,
-    recommendedBand: 'Band 1–3 Competitive Standard',
+    recommendedScore: null,
+    recommendedBand: 'Not assessed — editorial review required',
     practiceDiscrepancy
   };
 }

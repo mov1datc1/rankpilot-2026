@@ -143,319 +143,21 @@ export function cleanLawyerNames(nameStr: string): string {
 }
 
 function sanitizeMatterValue(val: string, clientName: string = ''): string {
-  if (!val || val === 'N/A') return 'N/A';
-  let s = cleanTablePipes(val);
-  // Unstated currency edge case (e.g. raw numbers without currency prefix)
-  if ((s === '10,000,000.00 approximately' || s === '10,000,000.00' || /^10,?000,?000(?:\.00)?\s*(?:approximately)?$/i.test(s)) && !/(mxn|usd|eur|veb|cop|pen|clp|\$)/i.test(s)) {
-    return '10,000,000.00 (Pending currency confirmation — presumed MXN; approx. USD 588,000)';
-  }
-
-  // Fix El Cielo comma typo: Approx USD 172,37,026.00 -> approx. USD 176.6 million
-  if (s.includes('172,37,026') || s.includes('172,370,26')) {
-    return 'MXN 3,000,000,000.00 (approx. USD 176.6 million)';
-  }
-  
-  // Fix spelled out numbers or known value typos
-  if (s.includes('Six hundred ninety-eight million') || s.includes('698,400,750')) {
-    return 'MXN 698,400,750.00 (approx. USD 41.1 million)';
-  }
-
-  // 1.3B / 76.5M pattern
-  if (s.includes('1.300.000.000') || s.includes('74,747,252')) {
-    return 'MXN 1,300,000,000.00 (approx. USD 76.5 million)';
-  }
-
-  // 200M / 11.5M pattern
-  if (s.includes('200.000.000') && s.includes('11,492,879')) {
-    return 'MXN 200,000,000.00 (approx. USD 11.5 million)';
-  }
-
-  // 100M / 5.75M pattern
-  if (s.includes('100.000.000,00') && s.includes('5,746,172')) {
-    return 'MXN 100,000,000.00 (approx. USD 5.75 million)';
-  }
-
-  // 100M / 5.54M pattern
-  if (s.includes('100,000,000.00') && s.includes('5,536,728')) {
-    return 'MXN 100,000,000.00 (approx. USD 5.54 million)';
-  }
-
-  // 1.059B pattern
-  if (s.includes('1,059,435,140')) {
-    return 'MXN 1,059,435,140.65 (approx. USD 62.3 million)';
-  }
-
-  // 2.5M / 138k pattern
-  if (s.includes('2.500.000') && s.includes('138,417')) {
-    return 'MXN 2,500,000.00 (approx. USD 138,400)';
-  }
-
-  // 19.4M pattern
-  if (s.includes('19,476,764')) {
-    return 'MXN 19,476,764.61 (approx. USD 1.15 million)';
-  }
-
-  // 48.3M pattern
-  if (s.includes("48'349,081") || s.includes('48,349,081')) {
-    return 'MXN 48,349,081.87 (approx. USD 2.84 million)';
-  }
-
-  // 150M / 8.3M pattern
-  if (s.includes('150,000,000') && s.includes('8,301,834')) {
-    return 'MXN 150,000,000.00 (approx. USD 8.3 million)';
-  }
-
-  // 40M / 2.2M pattern
-  if (s.includes('40,000,000') && s.includes('2,214,288')) {
-    return 'MXN 40,000,000.00 (approx. USD 2.2 million)';
-  }
-
-  // 287k USD pattern
-  if (s.includes('287,338')) {
-    return 'MXN 5,000,000.00 (Estimated exposure; approx. USD 287,000)';
-  }
-
-  // 110k USD pattern
-  if (s.includes('110,799')) {
-    return 'MXN 2,000,000.00 (approx. USD 110,800)';
-  }
-
-  // Coats: Preserve USD currency integrity (Angela Castillo Critical Rule)
-  if (clientName.toLowerCase().includes('coats') || s.includes('675,000') || s.includes('675.000')) {
-    return 'Approx. US$ 675,000.00 (with contentious portfolio exposure exceeding MXN 12.5 million)';
-  }
-
-  // Cinemex: Conflicting value report in source (Angela Castillo Critical Rule)
-  if (clientName.toLowerCase().includes('cinemex') || s.includes('553,278') || s.includes('553.278')) {
-    return 'US$ 553,278.59 [SOURCE VALUE CONFLICT — CONFIRM BEFORE DELIVERY: Reported matter value US$ 553,278.59 vs. approximately MXN 60.5 million aggregate portfolio exposure. Confirm whether US$ 553k represents an individual claim reserve and MXN 60.5M the aggregate contentious exposure prior to Chambers delivery.]';
-  }
-
-  // 280M pattern
-  if (s.includes('280,000,000') || s.includes('280 million')) {
-    return 'MXN 280,000,000.00 (approx. USD 16.0 million)';
-  }
-
-  // Point 4: Absurd Exchange Rate sanitizer (e.g. Transportes Potosinos typo MXN 11.7M => USD 65.3M; Bemis MXN 5M => USD 27.7M)
-  if (s.includes("65'353,319") || s.includes('65,353,319')) {
-    return 'MXN 11,775,193.22 (approx. USD 692,658)';
-  }
-  if (s.includes("27'762,495") || s.includes('27,762,495')) {
-    return 'MXN 5,015,025.97 (approx. USD 295,000)';
-  }
-
-  // Strip redundant spelled-out numbers in parentheses
-  s = s.replace(/\s*\([A-Z][a-z]+(\s+[a-z]+)*\s+pesos[^)]*\)/gi, '');
-  
-  return s.trim();
+  return cleanTablePipes(val || '');
 }
 
 function sanitizeMatterSummary(rawText: string): string {
-  if (!rawText) return '';
-  let s = rawText.trim();
-
-  // Point 5: Fix El Cielo typo and currency representations inside narrative
-  s = s.replace(/MXN\s*3\.000\.000\.000,00\s*\(Approx\s*USD\s*172,37,026(?:\.00)?\)/gi, 'MXN 3 billion (approximately USD 176.6 million)');
-  s = s.replace(/\(?Approx\s*USD\s*172,37,026(?:\.00)?\)?/gi, '(approximately USD 176.6 million)');
-  s = s.replace(/MXN\s*\$698,400,750(?:\.00)?/gi, 'MXN 698.4 million (approximately USD 41.1 million)');
-  s = s.replace(/\$698,400,750\.00\s*\([^\)]*pesos[^\)]*\)/gi, 'MXN 698.4 million (approximately USD 41.1 million)');
-  s = s.replace(/\$1,300,000,000(\.00)?\s*\([^\)]*pesos[^\)]*\)/gi, 'MXN 1.3 billion (approximately USD 76.5 million)');
-  
-  // Point 7: Remove legal platitude / doctrina from El Cielo
-  s = s.replace(/It also established the importance of technically and scientifically grounded environmental measures where established developments and purchaser interests are at stake\.?/gi, '');
-  s = s.replace(/The matter further demonstrates that environmental restrictions affecting established developments require technically and scientifically supported grounds\.?/gi, '');
-  s = s.replace(/environmental restrictions affecting established developments require technically and scientifically supported grounds\.?/gi, '');
-
-  // Point 8: Temporal reconciliation: eliminate obsolete predictive timelines in-place (never overwrite entire matter!)
-  s = s.replace(/UPDATE 2024:?\s*/gi, '');
-  s = s.replace(/,\s*with a resolution expected in early 2023\./gi, '. In July 2024, the collegiate tribunal confirmed the definitive judgment.');
-  s = s.replace(/with a resolution expected in early 2023/gi, 'achieving full judicial enforcement in July 2024');
-  s = s.replace(/A resolution is expected in early 2023\.?/gi, 'Full judicial enforcement was achieved in July 2024.');
-
-  // Strip leaked meta-commentary from system prompt
-  s = s.replace(/\s*No final precedent, lead partner or active team members have been specified\./gi, '');
-  s = s.replace(/\s*no discrete matter value has been specified\./gi, '');
-  s = s.replace(/\s*no additional active team members have been specified\./gi, '');
-  s = s.replace(/\s*no public quantified outcome or precedent is disclosed\./gi, '');
-
-  // Angela 9-Sept-2: Editorial QA Pass (Tone and Sobriety)
-  s = s.replace(/\bsovereign action\b/gi, 'administrative action');
-  s = s.replace(/\bsovereign intervention\b/gi, 'state intervention');
-  s = s.replace(/\bneutralise sovereign action at speed\b/gi, 'overturn unlawful administrative action at speed');
-  s = s.replace(/\bneutralise sovereign action\b/gi, 'overturn unlawful administrative decrees');
-  s = s.replace(/\bneutralize sovereign action\b/gi, 'overturn unlawful administrative decrees');
-  s = s.replace(/prevented public authorities from rewriting the legal history of an operating development\.?/gi, 'successfully defended acquired rights and preserved the commercial viability of an operating development against retroactive zoning decrees.');
-  s = s.replace(/rewriting the legal history of an operating development/gi, 'retroactively revoking vested development rights');
-  s = s.replace(/rewriting the legal history/gi, 'retroactively altering established regulatory status');
-
-  // Angela 10-Sept: Transversal Rule & Merit Attribution to Lawyers/Team
-  // 1. Diageo: Remove promotional 'marquee' and attribute capability to team
-  s = s.replace(/\bmarquee global corporate client\b/gi, 'global corporate client');
-  s = s.replace(/Their intervention preserved business continuity for a marquee global corporate client, proving the practice's ability to shield critical industrial operations from unlawful municipal interference\.?/gi,
-    'The team acted with immediate strategic coordination to secure precautionary relief, preserving business continuity for a global corporate client and demonstrating the practice\'s proven ability to shield critical industrial facilities from unlawful municipal interference.');
-  s = s.replace(/Their intervention preserved business continuity for a global corporate client, proving the practice's ability to shield critical industrial operations from unlawful municipal interference\.?/gi,
-    'The team acted with immediate strategic coordination to secure precautionary relief, preserving business continuity for a global corporate client and demonstrating the practice\'s proven ability to shield critical industrial facilities from unlawful municipal interference.');
-
-  // 3. Holcim: Team argumentative strategy kept plants running
-  s = s.replace(/The matter illustrates the use of constitutional and administrative-law protections to safeguard licensed infrastructure against irregular public-law measures with potentially business-critical consequences\.?/gi,
-    'The team’s argumentative strategy secured crucial suspensions, neutralizing the operational shutdown and keeping three manufacturing plants running without interruption.');
-  s = s.replace(/The matter illustrates the use of constitutional and administrative-law protections[^\.]*\./gi,
-    'The team’s argumentative strategy secured crucial suspensions, neutralizing the operational shutdown and keeping three manufacturing plants running without interruption.');
-
-  // 4. Rosa Dorina: Team questioned technical cartography and defended private title
-  s = s.replace(/At the evidentiary stage, the matter is positioned to protect the client’s landholding and establish that administrative cartography cannot operate as an unreviewable mechanism for the absorption of private title\.?/gi,
-    'The team questioned seemingly objective technical cartography, reconstructed historical riverbed, federal zone, and registry boundaries, and successfully opened a viable legal pathway to defend private ownership or secure fair market compensation.');
-  s = s.replace(/establish that administrative cartography cannot operate as an unreviewable mechanism for the absorption of private title\.?/gi,
-    'The team questioned seemingly objective technical cartography, reconstructed historical riverbed, federal zone, and registry boundaries, and successfully opened a viable legal pathway to defend private ownership or secure fair market compensation.');
-
-  // 6. Familia De Anda: Reopening property analysis from first principles
-  s = s.replace(/It also illustrates the continuing relevance of historic ownership and matrimonial-property structures in assessing the reversibility of state action\.?/gi,
-    'By reopening the property analysis from first principles, the team uncovered a previously overlooked matrimonial property regime, establishing legal standing and reviving a recovery claim that appeared lost.');
-  s = s.replace(/illustrates the continuing relevance of historic ownership and matrimonial-property structures[^\.]*\./gi,
-    'By reopening the property analysis from first principles, the team uncovered a previously overlooked matrimonial property regime, establishing legal standing and reviving a recovery claim that appeared lost.');
-
-  // 7. ADM Hermosillo: Challenged validity of regulatory framework itself
-  s = s.replace(/Rather than limiting its response to transaction-by-transaction compliance, the firm pursued a constitutional strategy directed at the regulatory source of the burden\.?/gi,
-    'Rather than addressing the requirements piecemeal, the team challenged the validity of the regulatory framework itself.');
-  s = s.replace(/directed at the regulatory source of the burden/gi, 'challenging the validity of the regulatory framework itself');
-  s = s.replace(/regulatory source of the burden/gi, 'validity of the regulatory framework itself');
-
-  // 8. San Carlos: Active interim-relief strategy
-  s = s.replace(/It illustrates the importance of effective interim-relief strategy in preserving development assets against litigation-driven disruption\.?/gi,
-    'The team’s decisive interim-relief strategy overturned the site closure and preserved the investment viability of the development.');
-
-  // 9. Villas del Colli: Active team constitutional standard
-  s = s.replace(/The matter establishes an important boundary between legitimate environmental planning and public power exercised without procedural accountability, while providing a precedent for other owners affected by comparable land-use restrictions\.?/gi,
-    'The team established that environmental planning decrees cannot arbitrarily bypass procedural due process or impose de facto confiscations on legitimate property holders, preserving commercial development viability for the client.');
-
-  // 10. Transversal Active Attribution Engine: Eliminate passive instrument attribution across ALL matters
-  s = s.replace(/(?:The matter|The dispute|The case|It)\s+(?:also\s+)?(?:illustrates|demonstrates)\s+the\s+importance\s+of\s+([^\.]+)\./gi, (match, p1) => {
-    return `The team successfully deployed targeted legal strategy to address ${p1.trim()}, securing essential commercial protection for the client.`;
-  });
-  s = s.replace(/(?:The matter|The dispute|The case|It)\s+(?:also\s+)?(?:illustrates|demonstrates)\s+the\s+use\s+of\s+([^\.]+)\./gi, (match, p1) => {
-    return `The team’s agile application of ${p1.trim()} delivered decisive protection for the client’s operations.`;
-  });
-  s = s.replace(/(?:The matter|The dispute|The case)\s+illustrates\s+([^\.]+)\./gi, (match, p1) => {
-    return `The team’s strategic intervention in this matter resolved ${p1.trim()}, safeguarding the client’s commercial interests.`;
-  });
-
-  // Strip leaked LLM reasoning blocks or JSON artifacts
-  s = s.replace(/\{"id":\s*"rs_[^"]*"[^}]*\}\s*/gi, '');
-  s = s.replace(/\{"id":\s*"[^"]*",\s*"summary":\s*\[\],\s*"type":\s*"reasoning"[\s\S]*?\}\s*/gi, '');
-  s = s.replace(/\{[^{}]*"type":\s*"reasoning"[^{}]*\}\s*/gi, '');
-
-  // Fix truncated sentences / orphan prepositions or verbs before periods (Angela Castillo Directive)
-  s = s.replace(/the\s+team\s+is\s+advancing\s+the\s+strategy\s+to\s+secure\s*\./gi, 'the team is advancing the defense strategy to secure the definitive revocation of the municipal suspension and preserve the client\'s development rights.');
-  s = s.replace(/\b(?:advancing\s+the\s+strategy\s+to\s+secure|strategy\s+to\s+secure)\s*\./gi, 'advancing the defense strategy to secure definitive judicial protection.');
-  s = s.replace(/\bto\s+secure\s*\./gi, 'to secure definitive judicial protection.');
-  s = s.replace(/\bto\s+obtain\s*\./gi, 'to obtain favorable judicial relief.');
-  s = s.replace(/\bto\s+protect\s*\./gi, 'to protect the client\'s commercial interests.');
-  s = s.replace(/\b(?:for|in|at|by|with|to)\s*\./gi, '.');
-
-  // Strip leaked template instructions
-  s = sanitizeTemplateBoilerplate(s).cleaned;
-
-  // Clean double spaces or leading/trailing whitespace
-  s = s.replace(/[ \t]{2,}/g, ' ');
-
-  return s.trim();
+  // Rendering never changes currencies, dates, outcomes or source assertions.
+  return String(rawText || '').trim();
 }
 
-// Dynamic client descriptor cleaner for D0 / E0 to eliminate marketing fluff and extract real sector descriptions
 function cleanClientDescriptor(rawClient: string, matter?: any): string {
-  if (!rawClient) return '';
-  let s = cleanTablePipes(rawClient);
-
-  // Strip template instructions that may have been pasted into the client field
-  const templateCleaned = sanitizeTemplateBoilerplate(s).cleaned;
-  if (templateCleaned) s = templateCleaned;
-  s = s.replace(/(?:If you cannot reveal the\s+)?client name,\s*give a general description\.?/gi, '').trim();
-  s = s.replace(/^Name of client:?\s*/gi, '').trim();
-
-  // 1. If matter provides an explicit clientDescriptor or industry/sector, use it
-  if (matter) {
-    const rawDesc = matter.clientDescriptor || matter.client_descriptor;
-    if (rawDesc && typeof rawDesc === 'string' && rawDesc.trim().length > 5) {
-      const cleanDesc = sanitizeTemplateBoilerplate(rawDesc.trim()).cleaned;
-      return cleanDesc.includes('—') ? cleanDesc : `${s} — ${cleanDesc}`;
-    }
-    if (matter.industry && typeof matter.industry === 'string' && matter.industry.trim().length > 3) {
-      return `${s} — ${matter.industry.trim()}`;
-    }
-  }
-
-  // 2. Check if the narrative contains an appositive sector description: e.g. "SUMMUS (a leading cross-border payment intermediary...)"
-  const narrative = matter?.summary || matter?.rawNotes || matter?.narrative || matter?.description || '';
-  if (narrative && typeof narrative === 'string') {
-    const appositiveMatch = narrative.match(/\((a\s+(?:leading|multinational|major|specialized|prominent|reputable|global)[^)]+?)(?:,|\))/i)
-      || narrative.match(/\((developer of [^)]+?)(?:,|\))/i)
-      || narrative.match(/\((manufacturer of [^)]+?)(?:,|\))/i)
-      || narrative.match(/\((global [^)]+?)(?:,|\))/i);
-    if (appositiveMatch && appositiveMatch[1] && appositiveMatch[1].length > 10 && appositiveMatch[1].length < 140) {
-      return `${s} — ${appositiveMatch[1].trim()}`;
-    }
-  }
-
-  // 3. If client string itself already has a description (e.g. "Entity — Sector/Activity")
-  if (s.includes(' — ') || s.includes(' - ')) {
-    const parts = s.split(/\s+[—\-]\s+/);
-    if (parts.length > 1) {
-      const entity = parts[0].trim();
-      let desc = parts.slice(1).join(' — ').trim();
-      desc = desc.replace(/^(is an?|it is an?|company dedicated to|dedicated to|specialized in)\s*/gi, '');
-      return `${entity} — ${desc}`;
-    }
-  }
-
-  // 4. Confidential generic sector fallback
-  if (s.toLowerCase().includes('confidential') || s.toLowerCase() === 'client' || s.toLowerCase().startsWith('client ')) {
-    const sector = matter?.sector || matter?.industry || matter?.practiceArea || 'Commercial enterprise';
-    return `Confidential — ${sector} sector`;
-  }
-
-  // 5. Generic cleaning: If client string contains long marketing copy, strip everything after the first sentence
-  if (s.length > 80 && s.includes('. ')) {
-    const parts = s.split(/\.\s+/);
-    if (parts.length > 1) {
-      const entityName = parts[0].trim();
-      let desc = parts[1].trim();
-      desc = desc.replace(/^(is an?|it is an?|company dedicated to|dedicated to|specialized in|among the activities it performs[^\.]*)\s*/gi, '');
-      const descWords = desc.split(/\s+/).slice(0, 15).join(' ');
-      return descWords ? `${entityName} — ${descWords}.` : entityName;
-    }
-  }
-
-  return s;
+  return cleanTablePipes(rawClient || '');
 }
 
-/**
- * Document-Level Language Lock (Angela Castillo Directive)
- * Guarantees that matter summaries in English Chambers/Legal 500 deliverables
- * are fully presented in professional English, eliminating Spanish fragments or un-translated drafts.
- */
+/** Translation belongs to the reviewed writing stage, never a name-based renderer fallback. */
 export function ensureEnglishMatterSummary(summary: string): string {
-  if (!summary) return '';
-  const lower = summary.toLowerCase();
-
-  // 1. Constructora FH3 specific landmark translation
-  if (lower.includes('constructora fh3') || (lower.includes('puerto vallarta') && lower.includes('habitacional'))) {
-    return `The practice represented Constructora FH3, S.A. de C.V., the developer of a multi-family residential housing project in Puerto Vallarta, in contentious administrative defense against municipal Civil Protection and Fire Department orders threatening immediate suspension and closure of construction activities. The project held a valid municipal building license, zoning permit, and environmental impact authorization.
-
-The mandate was commercially significant as it safeguarded an urban development project with an economic value of MXN 600m, which had been abruptly halted by local authorities, causing severe operational disruptions and financial exposure. The case centered on the legal protection of vested development rights previously granted under valid administrative authorizations.
-
-The firm's Administrative and Constitutional Litigation team designed and executed the defense strategy through an indirect amparo proceeding (juicio de amparo indirecto) before federal courts. The petition asserted violations of legality, due process, legal certainty, and lack of proper administrative foundation, securing injunctive relief (suspensión del acto reclamado) to preserve construction continuity pending final judicial resolution.`;
-  }
-
-  // 2. Generic Spanish legal narrative recasting for Chambers deliverables
-  let text = summary;
-  if (/^\s*representamos\s+a\b/i.test(text)) {
-    text = text.replace(/^\s*representamos\s+a\b/i, 'The practice represented');
-  } else if (/^\s*asesoramos\s+a\b/i.test(text)) {
-    text = text.replace(/^\s*asesoramos\s+a\b/i, 'The practice advised');
-  } else if (/^\s*asesor[ií]a\s+y\s+representaci[oó]n\s+jur[ií]dica\s+a\b/i.test(text)) {
-    text = text.replace(/^\s*asesor[ií]a\s+y\s+representaci[oó]n\s+jur[ií]dica\s+a\b/i, 'Legal advisory and representation for');
-  }
-
-  return text;
+  return String(summary || '').trim();
 }
 
 function matterTable(
@@ -498,7 +200,7 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   }
 
   let summaryText = ensureEnglishMatterSummary(cleanLawyerNames(sanitizeMatterSummary(rawSummary)));
-  const valueText = sanitizeMatterValue(matter.value || matter.dealValue || 'N/A', rawClient);
+  const valueText = sanitizeMatterValue(matter.value || matter.dealValue || '', rawClient);
 
   // Point 3 & 7: Value conflict banner
   if (matter.sourceValueConflict && !summaryText.includes('SOURCE VALUE CONFLICT')) {
@@ -513,15 +215,10 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   let rawLead = matter.leadPartner || (Array.isArray(matter.leadPartners) ? matter.leadPartners.join(', ') : matter.leadPartners) || '';
   let rawTeam = matter.teamMembers || (Array.isArray(matter.otherLawyers) ? matter.otherLawyers.join(', ') : matter.otherLawyers) || '';
 
-  if (!rawLead) {
-    const defaultPartner = (lawyers && Array.isArray(lawyers)) ? lawyers.find((l: any) => l.isPartner)?.name : '';
-    if (defaultPartner) rawLead = defaultPartner;
-  }
-
   const leadPartnerText = cleanLawyerNames(rawLead);
   const teamMembersText = cleanLawyerNames(rawTeam);
 
-  const rawStatus = matter.completionDate || matter.status || matter.date || 'Active / Concluded';
+  const rawStatus = matter.completionDate || matter.completion_date || matter.date || '';
   const statusText = cleanTablePipes(sanitizeMatterSummary(rawStatus));
 
   let crossBorderVal = cleanTablePipes(matter.crossBorder || matter.cross_border || '');
@@ -580,26 +277,10 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   );
 
   let matterHeaderTitle = `${type} Matter ${matterNum}`;
-  const isExplicitHero = Boolean(
-    matterNum === 1 && (
-      matter.isHero || 
-      matter.is_hero || 
-      matter.hero || 
-      matter.quality_label === 'Flagship Matter' || 
-      matter._isCanonicalAnchor ||
-      (heroContext?.heroId && String(matter.id).toLowerCase() === String(heroContext.heroId).toLowerCase()) ||
-      (heroContext?.heroTitle && typeof heroContext.heroTitle === 'string' && heroContext.heroTitle.trim().length > 2 && (
-        (matter.client && heroContext.heroTitle.toLowerCase().includes(matter.client.toLowerCase())) ||
-        (matter.name && heroContext.heroTitle.toLowerCase().includes(matter.name.toLowerCase()))
-      ))
-    )
-  );
-  if (isExplicitHero) {
-    const rawClient = (matter.client || matter.clientName || matter.name || 'Flagship Mandate').replace(/\s*—\s*.*$/, '').trim();
-    const heroClient = rawClient.toLowerCase().includes('schaeffler') ? 'Schaeffler / Vitesco' : rawClient;
-    matterHeaderTitle = `Hero Matter: ${heroClient} — ${type} Matter #${matterNum}`;
-  } else if (!isConf && isMatterConfUnstated) {
-    matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED — Status unstated in source; verify before filing]`;
+  // Canonical ordering identifies the lead mandate; internal selection labels
+  // do not belong in the public submission.
+  if (!isConf && isMatterConfUnstated) {
+    matterHeaderTitle = `Publishable Matter ${matterNum} [CONFIRMATION REQUIRED]`;
   }
 
   const rows: TableRow[] = [
@@ -703,108 +384,10 @@ export function generateDynamicB10(
   chambersData: any = {},
   submission: any = {}
 ): string {
-  const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
-  const partnerCount = lawyers.filter((l: any) => l.isPartner).length;
-  const associateCount = lawyers.length - partnerCount;
-  const isRealEstate = /real\s*estate|inmobiliari/i.test(practiceArea);
-  const isLabour = /labou?r|empleo|laboral/i.test(practiceArea);
-  const isTax = /tax|tributari|fiscal/i.test(practiceArea);
-
-  // Strategic Sufficiency Gate binding check: If evidence base is insufficient (< 5 matters), lock to Pre-filing Draft
-  const totalMattersCount = pubMatters.length;
-  const isInsufficient = Boolean(
-    chambersData.strategic_sufficiency?.status === 'insufficient' ||
-    totalMattersCount < 5
-  );
-
-  if (isInsufficient) {
-    const topClients = [...new Set(pubMatters.map((m: any) => sanitizeClientName(m.client || m.clientName || m.name || '').cleanClient.replace(/\s*—.*$/, '').trim()).filter(Boolean))].slice(0, 5);
-    const clientList = topClients.length > 0 ? topClients.join(', ') : 'commercial and institutional clients';
-    const partnerNames = lawyers.filter((l: any) => l.isPartner).map((l: any) => l.name).slice(0, 3).join(', ') || 'the senior partnership';
-
-    return sanitizeBannedSuperlatives(
-      `${firmName}’s ${practiceArea} practice provides legal counsel across ${countryJurisdiction}, focusing on contentious administrative litigation, constitutional amparo proceedings, and regulatory compliance.
-
-The department's preliminary dossier currently compiles initial representative mandates, including active instructions concerning ${clientList}. In accordance with Chambers & Partners evidentiary standards, additional representative matters are being curated to substantiate the practice's annual workflow and sector coverage across ${countryJurisdiction}.
-
-Under the direction of ${partnerNames}, the team provides direct technical execution and partner-led steering across contentious and advisory proceedings before administrative authorities and judicial courts.
-
-[EDITORIAL STATUS: PRE-FILING WORKING DRAFT — CANDIDACY EVALUATION WITHHELD]
-This overview serves as an internal working draft to preserve and refine initial matter narratives. In accordance with Chambers & Partners evidentiary methodology, formal directory positioning and competitive benchmarking require a consolidated evidentiary baseline (10–20 representative matters). Formal ranking candidacy is withheld pending evidentiary expansion.`
-    );
-  }
-
-  // Filter out off-category matters and strictly retain only publishable, practice-aligned matters
-  const validPubMatters = pubMatters.filter((m: any) => {
-    if (m.isConfidential || m.confidential || m.publish_status === 'non_publishable' || m.publishStatus === 'non_publishable') return false;
-    if (isRealEstate && m.isOffCategory) return false;
-    return true;
-  });
-
-  // Section 1: Practice Overview & Value Proposition
-  let p1 = '';
-  if (isRealEstate) {
-    p1 = `${firmName}’s ${practiceArea} department represents leading real estate developers, institutional asset managers, and prominent industrial and family groups in their most critical property developments, land regularizations, and high-exposure contentious amparo proceedings across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, urban zoning advisory, and direct administrative defense before municipal, state, and federal courts, avoiding reliance on external trial counsel.`;
-  } else if (isLabour) {
-    p1 = `${firmName}’s ${practiceArea} department fields an established practice of 27 specialized lawyers across 5 commercial offices, providing direct employer-side counsel with active operational reach across more than 20 Mexican jurisdictions. The team focuses exclusively on strategic management-side representation, specializing in complex collective bargaining negotiations, post-acquisition workforce restructuring, USMCA Rapid Response Mechanism compliance, and contentious labor dispute defense before state and federal labor conciliation boards and judicial labor courts.`;
-  } else if (isTax) {
-    p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and prominent family groups in managing their most sensitive fiscal exposures and high-value transactions across ${countryJurisdiction}. The practice distinguishes itself through an integrated model that unites sophisticated transactional structuring, cross-border corporate reorganisation, and direct administrative and judicial litigation before ${regulatoryAuthority} and municipal authorities, avoiding reliance on external trial counsel.`;
-  } else {
-    p1 = `${firmName}’s ${practiceArea} department represents premier multinational corporations, domestic industrial conglomerates, and institutional clients in managing their most critical commercial transactions and high-value regulatory exposures across ${countryJurisdiction}. The practice combines deep industry expertise with direct contentious advocacy before ${regulatoryAuthority} and judicial courts.`;
-  }
-
-  // Section 2: Marquee Portfolio Evidence & Core Sectors
-  const topClients = [...new Set(validPubMatters.map((m: any) => sanitizeClientName(m.client || m.clientName || m.name || '').cleanClient.replace(/\s*—.*$/, '').trim()).filter(Boolean))].slice(0, 8);
-  const clientList = topClients.length > 0 ? topClients.join(', ') : 'leading multinational and domestic market leaders';
-  
-  let p2 = '';
-  if (isRealEstate) {
-    p2 = `The department’s active portfolio reflects comprehensive depth across core real estate asset classes, spanning master-planned residential and resort developments, industrial logistics parks, high-density vertical projects, and strategic land tenure regularisation. Recent and ongoing highlights include landmark constitutional amparo defenses against arbitrary municipal development moratoria, complex cadastral title rectifications, and administrative licensing regularizations for key clients such as ${clientList}. Across these mandates, the practice consistently preserves deployed capital, maintains project continuity, and secures definitive judicial recognition of client property rights.`;
-  } else if (isLabour) {
-    p2 = `The department’s active portfolio reflects robust cross-sector reach, anchoring Tier-1 automotive component manufacturing, industrial packaging, electronics assembly, renewable energy infrastructure, logistics, and entertainment. In the publishable sphere, the practice advises key corporate employers such as ${clientList}, managing collective labor relations, high-volume employment defense, and labor-compliance protocols. This is supported by an extensive roster of confidential mandates encompassing post-acquisition workforce integrations exceeding 5,000 employees, complex multi-plant collective bargaining under USMCA scrutiny, strike-risk prevention on multi-billion-dollar energy infrastructure pipelines, and active litigation management across portfolios of hundreds of concurrent individual and collective claims.`;
-  } else if (isTax) {
-    p2 = `The department’s active portfolio reflects market-leading sector breadth, spanning food and beverage manufacturing, information technology and cloud infrastructure, healthcare and pharmaceuticals, international trade and logistics, and cross-border fintech. Recent and ongoing highlights include marquee cross-border brand acquisitions, multinational transfer-pricing and hyperinflation audit defenses, international fintech market entries, and complex succession restructurings for clients such as ${clientList}. Across these mandates, the practice consistently preserves enterprise value and business continuity amid volatile macroeconomic and regulatory conditions.`;
-  } else {
-    p2 = `The department’s active portfolio reflects substantive sector breadth across major commercial and industrial spheres. Recent highlights include landmark transactional advisory, regulatory compliance programs, and high-stakes contentious defenses for clients such as ${clientList}.`;
-  }
-
-  // Section 3: Institutional Depth & Succession Architecture (Angela Directive)
-  const statesperson = lawyers.find((l: any) => (l.suggestedRank || '').toLowerCase().includes('statesperson') || (l.name || '').toLowerCase().includes('carreño') || (l.name || '').toLowerCase().includes('ruan'));
-  const band1Partner = lawyers.find((l: any) => (l.suggestedRank || '').toLowerCase().includes('band 1') || (l.name || '').toLowerCase().includes('cano'));
-  const labourLeader = lawyers.find((l: any) => (l.name || '').toLowerCase().includes('garduño') || (l.name || '').toLowerCase().includes('bustamante'));
-  const seniorPartners = lawyers.filter((l: any) => l.isPartner && l !== statesperson && l !== band1Partner && l !== labourLeader);
-  const associates = lawyers.filter((l: any) => !l.isPartner);
-
-  let successionText = '';
-  if (isLabour && statesperson && labourLeader) {
-    successionText = `The practice combines deep historical industrial leadership with active trial and union negotiation bench strength. The team benefits from the strategic counsel of Senior Statesperson ${statesperson.name} (former General Legal Director of Volkswagen de México for 40 years), alongside Practice Head ${labourLeader.name} and dedicated partners. This senior core directs 27 specialized labor lawyers across Mexico, ensuring partner-level steering on sensitive collective negotiations while maintaining rapid-response capacity on high-volume labor disputes across more than 20 states.`;
-  } else if (statesperson && band1Partner) {
-    const seniorNames = seniorPartners.slice(0, 2).map((l: any) => l.name).join(' and ');
-    const assocNames = associates.slice(0, 2).map((l: any) => l.name).join(' and ');
-    successionText = `A defining institutional strength of the department is its seamless generational depth and clear leadership succession. Anchored by the market-defining jurisprudence of Senior Statesperson ${statesperson.name}, executive direction is spearheaded by ${band1Partner.name} alongside Senior Partners ${seniorNames || 'dedicated partners'}. This senior core is complemented by rising partners and accomplished senior associates such as ${assocNames || 'experienced associates'}, ensuring that every mandate benefits from both strategic partner steering and rigorous associate-level technical execution.`;
-  } else {
-    const partnerNames = lawyers.filter((l: any) => l.isPartner).slice(0, 3).map((l: any) => l.name).join(', ');
-    successionText = `Under the strategic direction of ${partnerNames || 'the senior partnership'}, the department fields a dedicated bench of ${lawyers.length} specialized lawyers (${partnerCount} partners and ${associateCount} associates), ensuring seamless generational depth, technical continuity, and partner-level responsiveness across all contentious and advisory workflows.`;
-  }
-
-  // Section 4: Market Standing & Defensibility
-  let p4 = '';
-  if (isRealEstate) {
-    p4 = `Combining high-stakes contentious amparo advocacy with commercial transactional rigor, ${firmName} firmly substantiates its position among the foremost specialized ${practiceArea} practices in ${countryJurisdiction}, providing reliable, partner-led legal execution on the market's most demanding real estate mandates.`;
-  } else if (isLabour) {
-    p4 = `By demonstrating substantial operational scale—spanning 27 specialized practitioners, multi-jurisdictional geographic coverage, complex post-M&A workforce integration for workforces exceeding 5,000 employees, and active management of high-exposure collective risks—we respectfully submit that ${firmName} has established an evidence-backed foundation for directory recognition in Band 5 in Chambers ${countryJurisdiction} ${practiceArea}.`;
-  } else {
-    p4 = `The department operates with an outward-facing international perspective, actively collaborating with leading foreign counsel across the Americas and Europe on multi-jurisdictional matters. Combining high-end contentious defense with business-critical advisory rigor, ${firmName} firmly substantiates its position among the foremost ${practiceArea} practices in ${countryJurisdiction}.`;
-  }
-
-  return sanitizeBannedSuperlatives(`${p1}\n\n${p2}\n\n${successionText}\n\n${p4}`);
+  return chambersData.enhanced_b7 || chambersData.enhanced_b10 || chambersData.original_b10 || '';
 }
 
-/**
- * Dynamic Section C2 Generator (4-Step Evidentiary Formula - Angela Castillo Directive)
- * Strips all prohibited superlatives and builds a concrete 4-step argument:
- * Evidence -> Differentiation -> Market Reality -> Ranking Gap / Ask
- */
+/** Preserve an actual source or reviewed answer; never invent competitive positioning. */
 export function generateDynamicC2(
   firmName: string,
   practiceArea: string,
@@ -815,170 +398,7 @@ export function generateDynamicC2(
   chambersData: any = {},
   submission: any = {}
 ): string {
-  const regulatoryAuthority = resolveRegulatoryAuthority(countryJurisdiction, practiceArea);
-  const isRealEstate = /real\s*estate|inmobiliari/i.test(practiceArea);
-  const isLabour = /labou?r|empleo|laboral/i.test(practiceArea);
-  const isTax = /tax|tributari|fiscal/i.test(practiceArea);
-
-  // Strategic Sufficiency Gate binding check: If evidence base is insufficient (< 5 matters), withhold competitive positioning
-  const totalMattersCount = pubMatters.length + confMatters.length;
-  const isInsufficient = Boolean(
-    chambersData.strategic_sufficiency?.status === 'insufficient' ||
-    totalMattersCount < 5
-  );
-
-  if (isInsufficient) {
-    return sanitizeBannedSuperlatives(
-      `[STRATEGIC POSITIONING WITHHELD — INSUFFICIENT EVIDENCE BASE]
-
-1. Evidentiary Intake Status: The currently submitted dossier compiles ${totalMattersCount} representative matter(s) for ${practiceArea} in ${countryJurisdiction}. Under Chambers & Partners research methodology, a defensible directory candidacy requires an empirical record of 10 to 20 matters demonstrating commercial critical mass, annual recurrence, and institutional client diversity.
-
-2. Strategic Defensibility Assessment: On the current evidentiary baseline, RankPilot's Strategic Sufficiency Gate has intentionally withheld competitive band positioning and directory target calibration. Asserting competitive equivalence against ranked market leaders or petitioning for a specific band on an evidence base of fewer than 5 matters is not editorially defensible before Chambers researchers.
-
-3. Working Draft Roadmap: The matter narratives included in this submission have been preserved and editorially refined as an active working draft. To unlock a defensible competitive submission, the practice should: (i) expand the evidentiary base to a minimum of 10–20 representative matters; (ii) verify direct practice-specific legal work in ${practiceArea}; (iii) provide complete value, counterparty, and factual outcome disclosures; and (iv) register 10–20 responsive institutional client referees.
-
-4. Directory Objective: Formal ranking request withheld pending evidentiary expansion.`
-    );
-  }
-
-  // Helper to extract clean substantive matter description without template boilerplate
-  const cleanMatterSummary = (m: any): string => {
-    const client = (m.client || m.clientName || m.name || '').toLowerCase();
-    const allText = `${m.description || ''} ${m.summary || ''} ${m.optimizedText || ''} ${m.rawNotes || ''} ${m.narrative || ''} ${m.title || ''}`.toLowerCase();
-    
-    // Domain-grounded high-impact descriptions for known landmark mandates
-    if (client.includes('cielo') || allText.includes('cielo country club')) {
-      return 'strategic constitutional amparo defense protecting a MXN 3bn master-planned development against arbitrary municipal construction suspensions';
-    }
-    if (client.includes('duranpark') || allText.includes('duranpark')) {
-      return 'high-stakes property title defense protecting a 207.5ha industrial logistics center valued at MXN 698.4m';
-    }
-    if (client.includes('idex') || client.includes('brasilia') || allText.includes('brasilia 10')) {
-      return 'contentious urban zoning amparo defense and license regularization for a MXN 1.3bn high-density vertical development';
-    }
-    if (client.includes('san carlos') || allText.includes('san carlos')) {
-      return 'strategic land title defense and property regularization for a major urban parcel';
-    }
-    if (client.includes('pepsico') || allText.includes('pepsico')) {
-      return 'high-exposure SENIAT tax controversy, hyperinflation adjustments, and cross-border transfer pricing across Ireland and Uruguay';
-    }
-    if (client.includes('montenegro') || allText.includes('montenegro') || allText.includes('pampero')) {
-      return 'cross-border tax structuring for the acquisition of the Pampero rum brand from Diageo';
-    }
-    if (client.includes('summus') || allText.includes('summus')) {
-      return 'Venezuelan market entry, fintech tax structuring, and municipal fiscal compliance';
-    }
-    if (client.includes('kyndryl') || allText.includes('kyndryl')) {
-      return 'complex corporate tax restructuring and ongoing cross-border compliance';
-    }
-    if (client.includes('turkish') || allText.includes('turkish airlines')) {
-      return 'aviation tax compliance, municipal tax defense, and cross-border operational structuring';
-    }
-    if (client.includes('universal music') || allText.includes('universal music')) {
-      return 'intellectual property taxation, royalty withholding regimes, and contentious municipal defense';
-    }
-    if (client.includes('bdo') || allText.includes('bdo')) {
-      return 'cross-border professional services tax alignment and corporate compliance';
-    }
-
-    let text = (m.description || m.optimizedText || m.summary || m.rawNotes || m.narrative || m.title || '').trim();
-    // Strip Chambers form prompts, questions, and boilerplate
-    text = text.replace(/^(?:please\s+say\s+why\s+this\s+matter\s+was\s+important\.?\s*|also,?\s*tell\s+us\s+exactly\s+what\s+role\s+your\s+department\s+played\.?\s*|summary\s+of\s+matter\s+and\s+your\s+department'?s\s+role\.?\s*|matter\s+was\s+important\.?\s*)+/gi, '').trim();
-    text = text.replace(/^(?:through\s+a\s+joint\s+work|advised|advises|providing|represented|advising)\s+/gi, '').trim();
-    
-    // Strip leading client name + verb
-    const clientClean = (m.client || m.clientName || '').trim();
-    if (clientClean && text.toLowerCase().startsWith(clientClean.toLowerCase())) {
-      text = text.slice(clientClean.length).replace(/^(?:’s|'s)?\s*(?:faces|instructed|completed|operates|is|underwent|sought|retained|engaged)\s+/i, '').trim();
-    }
-
-    const firstSentence = text.split(/\.\s+/)[0]?.trim() || '';
-    if (firstSentence.length > 20 && !firstSentence.toLowerCase().includes('matter was important')) {
-      return firstSentence.charAt(0).toLowerCase() + firstSentence.slice(1);
-    }
-    const cleanTitle = (m.title || m.name || '').replace(/^(?:publishable|confidential)\s+matter\s+\d+\s*[-:–]?\s*/gi, '').trim();
-    if (cleanTitle.length > 10 && !cleanTitle.toLowerCase().includes('matter')) {
-      return `its ${cleanTitle.toLowerCase()}`;
-    }
-    if (isRealEstate) return 'high-stakes real estate development, urban zoning defense, and property title regularization';
-    if (isLabour) return 'strategic collective bargaining, workforce restructuring, and labour litigation';
-    return 'strategic legal and regulatory counsel';
-  };
-
-  // Step 1: Evidence & Flagship Mandates (strictly publishable practice matters)
-  const eligiblePubMatters = pubMatters.filter((m: any) => {
-    if (m.isConfidential || m.confidential || m.publish_status === 'non_publishable' || m.publishStatus === 'non_publishable') return false;
-    if (isRealEstate && m.isOffCategory) return false;
-    return true;
-  });
-
-  const topMatters = eligiblePubMatters.slice(0, 3);
-  const matterHighlights: string[] = [];
-  for (const m of topMatters) {
-    const rawClient = m.client || m.clientName || m.name || 'Core Client';
-    const client = sanitizeClientName(rawClient).cleanClient.replace(/\s*—.*$/, '').trim();
-    const desc = cleanMatterSummary(m);
-    if (client) {
-      matterHighlights.push(`advising ${client} on ${desc}`);
-    }
-  }
-
-  const step1Text = matterHighlights.length > 0
-    ? `During the current research cycle, our team led marquee mandates across ${countryJurisdiction}, notably ${matterHighlights.join('; ')}.`
-    : `Our department has consistently led market-defining mandates across ${countryJurisdiction}, advising domestic conglomerates and market leaders.`;
-
-  // Step 2: Institutional Differentiation & Direct Execution
-  const partnerNames = lawyers.filter((l: any) => l.isPartner).map((l: any) => l.name).slice(0, 3);
-  const partnerText = partnerNames.length > 0 ? partnerNames.join(', ') : 'the senior partnership';
-
-  const step2Text = isRealEstate
-    ? `While operating in an increasingly complex and restrictive regulatory environment shaped by aggressive municipal moratoria and title disputes, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct courtroom and administrative advocacy before federal amparo courts, cadastral registries, and urban licensing bodies, ensuring partner-level strategic command combined with deep associate execution, rather than relying on external trial counsel.`
-    : (isLabour
-      ? `Operating under the ongoing transformation of Mexico's labor justice system and heightened scrutiny from USMCA Rapid Response labor enforcement, ${firmName} differentiates itself through an institutional bench of 27 dedicated labor lawyers led by ${partnerText}. The practice provides direct, management-side steering across conciliation centers, federal and state labor courts, and collective bargaining tables across more than 20 Mexican states, avoiding reliance on external trial intermediaries while maintaining 24/7 responsiveness on urgent collective disputes.`
-      : `While operating in an increasingly complex and evolving regulatory environment, ${firmName} differentiates itself through an institutional bench of dedicated specialists led by ${partnerText}. The practice provides direct trial and transactional advocacy before ${regulatoryAuthority}, ensuring partner-level strategic steering combined with deep associate execution, rather than relying on external intermediaries.`);
-
-  // Step 3: Practice Depth & Portfolio Breadth (STRICT CONFIDENTIALITY: ZERO CONFIDENTIAL LEAKS)
-  // NEVER include confMatters here! Only publishable matters!
-  const otherClients = eligiblePubMatters.slice(3, 8)
-    .map((m: any) => sanitizeClientName(m.client || m.clientName || m.name || '').cleanClient.replace(/\s*—.*$/, '').trim())
-    .filter(Boolean);
-  const clientList = otherClients.length > 0 ? `including ${otherClients.join(', ')}` : 'spanning premier commercial developers, industrial operators, and blue-chip enterprises';
-
-  const step3Text = isRealEstate
-    ? `The breadth of the department's active portfolio—representing leading developers and industrial center operators ${clientList}—demonstrates sustained technical rigor in handling multi-million-dollar real estate controversies, land tenure regularisation, and urban zoning enforcement.`
-    : (isLabour
-      ? `The breadth of the department's active portfolio—representing leading industrial manufacturers, automotive suppliers, and commercial enterprises ${clientList}—demonstrates sustained technical rigor in managing high-volume labor disputes, multi-plant collective relations, and workforce compliance.`
-      : `The breadth of the department's active portfolio—representing leading multinational and domestic enterprises ${clientList}—demonstrates sustained technical rigor in handling high-exposure controversies, commercial structuring, and business-critical compliance.`);
-
-  // Step 4: The Ranking vs Reality Gap & Explicit Target Ask (Angela Directive)
-  // LOCKED FACTS: Downstream layers must NEVER re-interpret or hallucinate band positions!
-  const isUnranked = Boolean(
-    !submission.currentBand ||
-    submission.currentBand.toLowerCase().includes('unranked') ||
-    submission.currentBand.toLowerCase().includes('not ranked') ||
-    chambersData.currentRanking?.toLowerCase().includes('unranked') ||
-    chambersData.current_band?.toLowerCase().includes('unranked')
-  );
-
-  const currentRank = isUnranked ? 'Unranked' : (submission.currentBand || chambersData.currentRanking || chambersData.current_band || (isLabour ? 'Band 5' : 'Band 4'));
-  const rawTarget = submission.targetBand || chambersData.targetRanking || chambersData.target_band;
-  const isExplicitBand5 = Boolean(rawTarget && (rawTarget.toLowerCase().includes('band 5') || rawTarget.toLowerCase().includes('banda 5'))) || (isLabour && isUnranked);
-  const targetRank = rawTarget || (isUnranked ? (isExplicitBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Standard') : 'Band 1');
-
-  let step4Text = '';
-  if (isUnranked) {
-    step4Text = isLabour
-      ? `Our department combines significant operational scale (27 specialized labor practitioners across 5 regional offices covering more than 20 Mexican jurisdictions) with proven execution on complex post-M&A workforce integrations exceeding 5,000 employees and active defense of business-critical collective bargaining disputes. While our practice is currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, we believe our active case record and client mandates demonstrate capabilities on par with established market leaders. On the basis of these achievements, ${firmName} respectfully submits that the practice merits initial entry recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`
-      : (isRealEstate
-        ? `Our department combines extensive trial and constitutional amparo capabilities with proven execution on demanding master-planned developments, urban zoning challenges, and high-exposure land title disputes. While our practice is currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, we believe our active portfolio of marquee mandates—including landmark constitutional victories on development projects exceeding MXN 3 billion—demonstrates capabilities fully comparable with ranked market leaders. On the basis of these achievements, ${firmName} respectfully submits that the practice merits initial ranking recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`
-        : `Our department combines substantive technical depth with proven execution on high-stakes contentious and advisory mandates across ${countryJurisdiction}. While currently unranked in Chambers ${countryJurisdiction} ${practiceArea}, we believe our active casework and institutional client retention demonstrate capabilities on par with established market leaders. On the basis of this track record, ${firmName} respectfully submits that the practice merits initial ranking recognition in ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`);
-  } else {
-    step4Text = `Our department continues to expand its market leadership and institutional client retention across ${countryJurisdiction}, regularly acting as lead counsel on market-defining mandates. While currently ranked in ${currentRank}, we believe our recent growth, cross-border complexity, and decisive contentious outcomes demonstrate a tier-one capability. On the basis of this demonstrable record, ${firmName} respectfully submits that the practice merits advancement to ${targetRank} in Chambers ${countryJurisdiction} ${practiceArea}.`;
-  }
-
-  const rawC2 = `${step1Text}\n\n${step2Text}\n\n${step3Text}\n\n${step4Text}`;
-
-  return sanitizeBannedSuperlatives(rawC2);
+  return chambersData.enhanced_c2 || chambersData.original_c2 || chambersData.c2 || '';
 }
 
 function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
@@ -1024,8 +444,6 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (clean && clean.length >= 2) dynamicConfNames.add(clean);
     }
   }
-  const knownConfEntities = ['SKF', 'SKF Industrial', 'Megacable', 'Corrugados', 'Sirushi', 'Shirushi', 'AUNDE', 'Natividad', 'Recicla', 'SEBNMX', 'Sumitomo Electric Bordnetze', 'Solana', 'PSW', 'Poliuretanos Summa Woodbridge', 'Enerflex', 'San Carlos', 'De Anda', 'Villas del Colli', 'Hermosillo', 'Leaño'];
-  knownConfEntities.forEach(k => dynamicConfNames.add(k));
   const confNamesList = Array.from(dynamicConfNames);
 
   const rawInputLawyers = Array.isArray(chambersData.lawyers) && chambersData.lawyers.length > 0
@@ -1053,7 +471,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
       heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
       lawyersCount: lawyers.length,
-      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico'
+      jurisdiction: chambersData?.jurisdiction || guideRegion || ''
     }
   );
   if (!integrityReport.passed) {
@@ -1119,7 +537,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(para('', { spacing: { after: 120 } }));
 
   // B7 Department Heads (Official Chambers Latin America template: B7 Head or Heads of department)
-  const heads = chambersData.departmentHeads || lawyers.filter((l: any) => l.isPartner && (l.currentRank?.includes('Band 1') || l.currentRank?.includes('Band 2') || l.currentRank?.includes('Senior') || l.targetRank?.includes('Band 1') || l.targetRank?.includes('Band 2')));
+  const heads = chambersData.departmentHeads || chambersData.department?.department_heads || [];
   const headRows = heads.length > 0
     ? heads.map((h: any) => [h.name || '', h.email || '', h.phone || ''])
     : [['', '', '']];
@@ -1157,26 +575,12 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     ],
   });
 
-  const ARAQUEREYNA_CANONICAL_URLS: Record<string, string> = {
-    'gabriel ruan santos': 'https://chambers.com/lawyer/gabriel-ruan-santos-latin-america-9:177712',
-    'maría carolina cano': 'https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375',
-    'maria carolina cano': 'https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375',
-    'ingrid garcía pacheco': 'https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668',
-    'ingrid garcia pacheco': 'https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668',
-    'juan carlos balzán': 'https://araquereyna.com/abogados_araquereyna/juan-carlos-balzan-en/',
-    'juan carlos balzan': 'https://araquereyna.com/abogados_araquereyna/juan-carlos-balzan-en/',
-    'maría alejandra garcia nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
-    'maria alejandra garcia nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
-    'maría alejandra garcía nieto': 'https://araquereyna.com/abogados_araquereyna/maria-alejandra-garcia-en/',
-  };
-
   const b6DataRows: TableRow[] = [];
   if (lawyers.length > 0) {
     for (const l of lawyers) {
       const bioParts: Paragraph[] = [];
       const normLawyerName = String(l.name || '').toLowerCase().trim();
-      const canonicalUrl = ARAQUEREYNA_CANONICAL_URLS[normLawyerName];
-      const rawUrl = canonicalUrl || l.url || '';
+      const rawUrl = l.url || '';
       if (rawUrl) bioParts.push(para(rawUrl.replace(/\|[A-Za-z0-9_\-\s]*$/g, '').replace(/\|+$/g, '').trim(), { size: 18 }));
       if (l.currentRank) bioParts.push(para(`Current ranking: ${l.currentRank}`, { size: 18, spacing: { before: 100, after: 40 } }));
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
@@ -1210,9 +614,9 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
         children: [
           yellowCell([para(l.name || '', { size: 20 })], { width: b6ColWidths[0] }),
           yellowCell(bioParts, { width: b6ColWidths[1] }),
-          yellowCell([para(l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
-          yellowCell([para(l.isRanked ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
-          yellowCell([para(l.leave || 'N/A', { size: 20 })], { width: b6ColWidths[4] }),
+          yellowCell([para(l.isPartner === null ? '' : l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
+          yellowCell([para(l.isRanked === null ? '' : l.isRanked ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+          yellowCell([para(l.leave || '', { size: 20 })], { width: b6ColWidths[4] }),
         ],
       }));
     }
@@ -1324,60 +728,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('If you have used barristers / advocates in the UK, Australia, Hong Kong, India, Malaysia, New Zealand or Sri Lanka please provide the information below (Optional)', ['Barrister/advocate name', 'Firm / Set', 'Comments'], emptyBarRows, { labelPrefix: 'C1' }));
   elements.push(para('', { spacing: { after: 120 } }));
 
-  // C2 Feedback (v26.30: 4-Part Strategic Argument with Explicit Locked Band Ask)
-  let c2Val = chambersData.analysis?.audit_letter?.competitive_positioning_text
-    || chambersData.analysis?.competitive_positioning_text
-    || chambersData.competitive_positioning_text
-    || chambersData.feedback
-    || chambersData.c2;
-
-  const isUnrankedFirm = Boolean(
-    !submission.currentBand ||
-    submission.currentBand.toLowerCase().includes('unranked') ||
-    submission.currentBand.toLowerCase().includes('not ranked') ||
-    chambersData.currentRanking?.toLowerCase().includes('unranked') ||
-    chambersData.current_band?.toLowerCase().includes('unranked')
-  );
-
-  const c2LowerText = String(c2Val || '').toLowerCase();
-  const hasRankingHallucination = isUnrankedFirm && (
-    c2LowerText.includes('currently ranked in band 2') ||
-    c2LowerText.includes('currently ranked in band 1') ||
-    c2LowerText.includes('currently ranked in band 3') ||
-    c2LowerText.includes('advancement to band 1')
-  );
-
-  // Check if C2 contains any confidential client names (including 2-3 letter names like SKF)
-  const allConfMattersForGate = [...curation.officialConfMatters, ...(curation.surplusConfMatters || [])];
-  const containsConfLeak = allConfMattersForGate.some((cm: any) => {
-    const rawName = (cm.client || cm.clientName || cm.name || '').trim();
-    if (rawName.length < 2) return false;
-    const cleanEntity = rawName.split(/[\—\-\:\.]/)[0].trim();
-    return cleanEntity.length >= 2 && c2LowerText.includes(cleanEntity.toLowerCase());
-  }) || /skf|corrugados|sirushi|shirushi|aunde|natividad|recicla|sebnmx|solana|psw|summa woodbridge|enerflex|megacable/i.test(c2LowerText);
-
-  const containsAuditorInC2 = (
-    c2LowerText.includes('verified evidentiary record demonstrates') ||
-    c2LowerText.includes('this baseline does not reflect') ||
-    c2LowerText.includes('this position does not reflect') ||
-    c2LowerText.includes('the department\'s mandate scale') ||
-    c2LowerText.includes('available mandate record') ||
-    c2LowerText.includes('available records do not state')
-  );
-
-  if (
-    isInsufficientEv ||
-    !c2Val ||
-    String(c2Val).length < 150 ||
-    String(c2Val).includes('We would be happy to discuss') ||
-    String(c2Val).toLowerCase().includes('matter was important') ||
-    hasRankingHallucination ||
-    containsConfLeak ||
-    containsAuditorInC2 ||
-    (!c2LowerText.includes('advancement to') && !c2LowerText.includes('initial ranking') && !c2LowerText.includes('withheld'))
-  ) {
-    c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
-  }
+  // C2 uses reviewed/source text, never a name dictionary or assumed ranking.
+  let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
 
   // Sanitize any potential template or prompt leakage from C2, strip confidential names, and enforce firm voice
   c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confNamesList);
@@ -1408,7 +760,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
         if (isConfUnstated && !desc.includes('CONFIRMATION REQUIRED')) {
           desc = `${desc} [CONFIRMATION REQUIRED — Confidentiality unstated in source: confirm publishability before delivery]`;
         }
-        return [String(i + 1), desc, 'No'];
+        return [String(i + 1), desc, associatedMatter?.isNewClient === true ? 'Yes' : associatedMatter?.isNewClient === false ? 'No' : ''];
       })
     : [['', '', '']];
   while (d0Rows.length < 8) d0Rows.push(['', '', '']);
@@ -1441,7 +793,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // E0 Confidential Clients
   const confClients = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
   const e0Rows = confClients.length > 0
-    ? confClients.map((c, i) => [String(i + 1), cleanClientDescriptor(String(c)), 'No'])
+    ? confClients.map((c, i) => [String(i + 1), cleanClientDescriptor(String(c)), ''])
     : [['', '', '']];
   while (e0Rows.length < 8) e0Rows.push(['', '', '']);
   elements.push(dataTable("CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.", ['', 'Name of Client', 'New Client (Y/N)'], e0Rows, { labelPrefix: 'E0 –' }));
@@ -1474,10 +826,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   }
 
   // ═══ FINAL DELIVERABLE ARTIFACT VALIDATION (Angela Castillo Directive) ═══
-  const isLabourSub = /labou?r|empleo|laboral/i.test(practiceArea);
-  const rawTargetSub = submission.targetBand || chambersData.targetRanking || chambersData.target_band;
-  const isTargetBand5 = Boolean(rawTargetSub && (rawTargetSub.toLowerCase().includes('band 5') || rawTargetSub.toLowerCase().includes('banda 5'))) || isLabourSub;
-  const calibratedTarget = rawTargetSub || (isTargetBand5 ? 'Band 5 / Entry Standard' : 'Band 4 / Entry Standard');
+  const calibratedTarget = submission.targetBand || chambersData.targetRanking || chambersData.target_band || '';
 
   const dMattersContent = pubMatters.map((m: any) => `${m.client} ${m.name} ${m.summary || ''} ${m.optimizedText || ''}`).join(' ');
   const finalPublicSections = [
@@ -1498,8 +847,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
       heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
       lawyersCount: lawyers.length,
-      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico',
-      currentBand: submission.currentBand || chambersData.currentRanking || chambersData.current_band || 'Unranked',
+      jurisdiction: chambersData?.jurisdiction || guideRegion || '',
+      currentBand: chambersData.ranking_verification?.status === 'verified_match' ? chambersData.ranking_verification.observed_band : 'Not verified',
       targetBand: calibratedTarget,
       c2Text: String(c2Val),
       b10Text: b10Text,
@@ -1605,7 +954,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
       heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
       lawyersCount: (chambersData.lawyers || []).length,
-      jurisdiction: chambersData?.jurisdiction || guideRegion || 'Mexico'
+      jurisdiction: chambersData?.jurisdiction || guideRegion || ''
     }
   );
   if (!integrityReportL500.passed) {
@@ -1685,7 +1034,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   if (partners.length > 0) {
     const partnerRows = partners.map((l: any) => [
       l.name || '',
-      l.currentRanking || 'Not Ranked',
+      l.currentRank || l.currentRanking || '',
       l.keyFocus || '',
       l.standoutWork || '',
     ]);
@@ -1701,7 +1050,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   }
 
   // ═══ LEADING ASSOCIATES ═══
-  const associates = lawyers.filter((l: any) => !l.isPartner);
+  const associates = lawyers.filter((l: any) => l.isPartner === false);
   if (associates.length > 0) {
     elements.push(para('LEADING ASSOCIATES', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
     const assocRows = associates.map((l: any) => [l.name || '', l.keyFocus || '', l.standoutWork || '']);
@@ -1716,7 +1065,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // Publishable Clients
   const pubClients = [...new Set(pubMatters.map((m: any) => m.client).filter(Boolean))];
   const d0Rows = pubClients.length > 0
-    ? pubClients.map((c) => ['', String(c), 'No'])
+    ? pubClients.map((c) => ['', String(c), ''])
     : [['', '', '']];
   while (d0Rows.length < 4) d0Rows.push(['', '', '']);
   elements.push(dataTable('PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], d0Rows));
@@ -1745,7 +1094,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
     const confClients = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
     const e0Rows = confClients.length > 0
-      ? confClients.map((c, i) => [String(i + 1), String(c), 'No'])
+      ? confClients.map((c, i) => [String(i + 1), String(c), ''])
       : [['', '', '']];
     while (e0Rows.length < 4) e0Rows.push(['', '', '']);
     elements.push(dataTable('NON-PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], e0Rows));

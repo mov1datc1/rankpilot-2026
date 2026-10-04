@@ -114,7 +114,11 @@ def create_rankpilot_graph():
         route_after_ingestion,
         {"extraction": "extraction", "blocked": END},
     )
-    workflow.add_edge("extraction", "evidence_reconciliation")
+    workflow.add_conditional_edges(
+        "extraction",
+        lambda state: "blocked" if state.get("extraction_error") else "reconcile",
+        {"blocked": END, "reconcile": "evidence_reconciliation"},
+    )
     workflow.add_edge("evidence_reconciliation", "pre_flight")
     
     # Pre-Flight Gate: critical failures terminate without deliverables.

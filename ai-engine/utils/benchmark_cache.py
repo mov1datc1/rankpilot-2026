@@ -13,7 +13,7 @@ Design principles:
 import json
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 
 
@@ -72,11 +72,11 @@ def get_cached_benchmark(directory: str, practice_area: str,
     try:
         scraped_dt = datetime.fromisoformat(scraped_at.replace("Z", "+00:00"))
         # Compare in naive UTC
-        scraped_naive = scraped_dt.replace(tzinfo=None)
+        scraped_naive = scraped_dt.astimezone(timezone.utc).replace(tzinfo=None) if scraped_dt.tzinfo else scraped_dt
         now_naive = datetime.utcnow()
         age = now_naive - scraped_naive
         
-        if age > timedelta(days=ttl_days):
+        if age < timedelta(0) or age > timedelta(days=ttl_days):
             print(f"[BENCHMARK CACHE] EXPIRED — {key} is {age.days} days old (TTL={ttl_days})")
             return None
         

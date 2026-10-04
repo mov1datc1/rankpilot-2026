@@ -6,6 +6,9 @@ import asyncio
 import traceback
 import base64
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
 import httpx
 from fastapi import FastAPI, Request, BackgroundTasks
@@ -844,8 +847,11 @@ async def extract_document_endpoint(request: Request):
     user_input = data.get("user_input") or data.get("documentUrl") or data.get("text") or ""
     context = data.get("context", {})
 
-    if not user_input:
-        return JSONResponse(status_code=400, content={"error": "Missing user_input (URL, file path, or text)"})
+    sources = data.get("sources") or context.get("sources") or []
+    if not isinstance(user_input, str) or not isinstance(sources, list):
+        return JSONResponse(status_code=400, content={"success": False, "error": "Invalid input or sources"})
+    if not user_input and not sources:
+        return JSONResponse(status_code=400, content={"success": False, "error": "Missing user_input or sources"})
 
     is_url = user_input.startswith("http://") or user_input.startswith("https://")
     is_file = is_url or (isinstance(user_input, str) and (user_input.endswith(".docx") or user_input.endswith(".doc") or user_input.endswith(".pdf") or os.path.exists(user_input)))
@@ -857,6 +863,7 @@ async def extract_document_endpoint(request: Request):
         # 1. Parse document text (supporting single source or multi-document corpus)
         sources = data.get("sources") or context.get("sources") or []
         doc_texts = []
+        source_errors = []
         if sources and isinstance(sources, list) and len(sources) > 0:
             if len(sources) == 1 and sources[0].get("url"):
                 # Single document (e.g. Modality A Draft) — parse directly without artificial delimiter
@@ -865,7 +872,8 @@ async def extract_document_endpoint(request: Request):
                     parsed = DocumentParser.parse(s_url)
                     doc_text = parsed.strip() if parsed else ""
                 except Exception as err:
-                    logger.warning(f"Failed parsing single source document: {err}")
+                    logger.warning("Failed parsing single source document")
+                    source_errors.append({"source": sources[0].get("name", "document"), "code": "SOURCE_UNREADABLE"})
                     doc_text = ""
             else:
                 for s in sources:
@@ -878,7 +886,8 @@ async def extract_document_endpoint(request: Request):
                             if parsed and parsed.strip():
                                 doc_texts.append(f"=== SOURCE DOCUMENT: {s_name} ===\n{parsed.strip()}\n=== END DOCUMENT: {s_name} ===")
                         except Exception as err:
-                            logger.warning(f"Failed parsing source document {s_name}: {err}")
+                            logger.warning("Failed parsing source document")
+                            source_errors.append({"source": s_name, "code": "SOURCE_UNREADABLE"})
                     elif s_text and s_text.strip():
                         doc_texts.append(f"=== SOURCE NOTE: {s_name} ===\n{s_text.strip()}\n=== END NOTE: {s_name} ===")
                 if doc_texts:
@@ -932,7 +941,9 @@ async def extract_document_endpoint(request: Request):
         if sections:
             for label_key, sec in sections.items():
                 fields = DocumentParser.extract_matter_fields(sec["text"])
-                conf_status = fields.get("confidentiality_status") or sec.get("confidentiality_status") or "confirmation_required"
+                conf_status = fields.get("confidentiality_status")
+                if not conf_status or conf_status == "confirmation_required":
+                    conf_status = sec.get("confidentiality_status") or "confirmation_required"
                 is_conf = (conf_status == "confidential") or ("confidential" in label_key or "non-publishable" in label_key)
                 if is_conf and conf_status != "confidential":
                     conf_status = "confidential"
@@ -959,8 +970,10 @@ async def extract_document_endpoint(request: Request):
                     "isConfidential": is_conf,
                     "confidentialityStatus": conf_status,
                     "confidentialityConfirmed": not is_unconfirmed,
-                    "publish_status": "non_publishable" if is_conf else ("confirmation_required" if is_unconfirmed else "publishable"),
+                    "publish_status": "confirmation_required" if is_unconfirmed else ("non_publishable" if is_conf else "publishable"),
                     "valueConflict": fields.get("value_conflict") or "",
+                    "source_excerpt": sec["text"],
+                    "source_label": sec["label"],
                     "optimizedText": "",
                 })
         else:
@@ -969,18 +982,21 @@ async def extract_document_endpoint(request: Request):
             state = {
                 "file_path": user_input if is_file else "",
                 "doc_text": doc_text,
+                "submission_context": context,
                 "messages": [],
                 "pipeline_manifest": {
                     "document": {
-                        "source_matters": {"total": 0, "matter_labels": []}
+                        "source_matters": {"total": None, "count_status": "unknown", "matter_labels": []}
                     }
                 }
             }
             extract_res = extraction_node(state)
+            if extract_res.get("extraction_error"):
+                return JSONResponse(status_code=502, content={"success": False, "code": "EXTRACTION_PROVIDER_ERROR", "error": "Extraction failed. Your draft has not been replaced. Please retry.", "source_errors": source_errors})
             ext_matters = extract_res.get("matters", [])
             for idx, m in enumerate(ext_matters):
                 is_conf = m.get("is_confidential", False) or m.get("publish_status") in ("non_publishable", "confidential")
-                conf_status = m.get("confidentiality_status") or ("confidential" if is_conf else "confirmation_required")
+                conf_status = m.get("confidentiality_status") or ("confirmation_required" if m.get("publish_status") == "confirmation_required" else ("confidential" if is_conf else ("publishable" if m.get("publish_status") == "publishable" else "confirmation_required")))
                 is_unconfirmed = (conf_status == "confirmation_required")
                 matters.append({
                     "id": f"matter-ext-{idx + 1}",
@@ -1000,12 +1016,21 @@ async def extract_document_endpoint(request: Request):
                     "isConfidential": is_conf,
                     "confidentialityStatus": conf_status,
                     "confidentialityConfirmed": not is_unconfirmed,
-                    "publish_status": "non_publishable" if is_conf else ("confirmation_required" if is_unconfirmed else "publishable"),
+                    "publish_status": "confirmation_required" if is_unconfirmed else ("non_publishable" if is_conf else "publishable"),
                     "valueConflict": m.get("value_conflict") or "",
+                    "source_excerpt": m.get("source_excerpt") or "",
+                    "source_label": m.get("source_label") or "",
                     "optimizedText": "",
                 })
-            if not prelim.get("firm_name"):
-                prelim = extract_res.get("metadata", {})
+            extracted_metadata = extract_res.get("metadata", {})
+            prelim = {**extracted_metadata, **{k: v for k, v in prelim.items() if v}}
+            if not roster:
+                roster = extracted_metadata.get("lawyers", [])
+            if not heads:
+                heads = [h.get("name", "") for h in extracted_metadata.get("department", {}).get("department_heads", []) if h.get("name")]
+
+        if not matters:
+            return JSONResponse(status_code=422, content={"success": False, "code": "NO_LEGAL_MATTERS", "error": "No legal matters could be identified. Add the client, legal work and outcome or upload a readable source.", "source_errors": source_errors})
 
         firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
         raw_practice = prelim.get("practice_area") or ""
@@ -1032,6 +1057,8 @@ async def extract_document_endpoint(request: Request):
             "original_c2": original_c2,
             "matters": matters,
             "total_matters": len(matters),
+            "source_errors": source_errors,
+            "partial": bool(source_errors),
             "publishable_count": sum(1 for m in matters if not m.get("isConfidential")),
             "confidential_count": sum(1 for m in matters if m.get("isConfidential")),
         })
@@ -1046,3 +1073,45 @@ async def extract_document_endpoint(request: Request):
         })
 
 
+
+
+@api.post('/review-package')
+async def review_package_endpoint(request: Request):
+    """Bounded strategy → letter → adversarial review; no database writes."""
+    try:
+        payload = await request.json()
+        if not isinstance(payload, dict) or not isinstance(payload.get('matters'), list):
+            return JSONResponse(status_code=400, content={'success':False,'error':'Invalid review package'})
+        from utils.ranking_verifier import verify_ranking_claim
+        payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
+        from core.review_graph import review_graph
+        result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
+        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','letter','judge','release_verdict','trace')}})
+    except Exception:
+        logger.exception('Editorial package review failed')
+        return JSONResponse(status_code=502, content={'success':False,'error':'Editorial review unavailable. Draft remains unapproved.'})
+
+
+@api.post('/verify-rendered-package')
+async def verify_rendered_package_endpoint(request: Request):
+    """Final editorial gate sees the text extracted from the exact DOCX bytes."""
+    try:
+        payload = await request.json()
+        if not isinstance(payload.get('package'), dict) or not payload['package'].get('rendered_artifact'):
+            return JSONResponse(status_code=400, content={'success':False,'error':'Missing rendered artifact'})
+        from core.review_graph import review_rendered_package
+        result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[]})
+        return JSONResponse(content={'success':True,**result})
+    except Exception:
+        logger.exception('Rendered artifact review failed')
+        return JSONResponse(status_code=502, content={'success':False,'error':'Final artifact review unavailable; delivery remains blocked.'})
+
+
+@api.post('/verify-ranking')
+async def verify_ranking_endpoint(request: Request):
+    from utils.ranking_verifier import verify_ranking_claim
+    payload = await request.json()
+    if not isinstance(payload, dict):
+        return JSONResponse(status_code=400, content={'error':'Invalid ranking request'})
+    result = await asyncio.to_thread(verify_ranking_claim, payload)
+    return JSONResponse(content={'success':True, 'ranking_verification':result})

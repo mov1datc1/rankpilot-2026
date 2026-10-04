@@ -1,3 +1,4 @@
+import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { submissionId, documentUrl, text, context } = body;
 
     const userInput = documentUrl || text || '';
-    if (!userInput && !submissionId) {
+    if (!userInput && !submissionId && !body.sources?.length) {
       return NextResponse.json({ error: 'Missing documentUrl, text, or submissionId' }, { status: 400 });
     }
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
           targetDirectory: context?.directory || 'Chambers',
           practiceArea: context?.practiceArea || 'General',
           guideRegion: context?.jurisdiction || 'Global',
-          currentBand: context?.currentBand || 'Unranked',
+          currentBand: context?.currentBand || '',
           status: 'Draft',
           chambersData: context || {}
         }
@@ -75,12 +76,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!extractResponse.ok) {
-      const errText = await extractResponse.text();
-      console.error(`[EXTRACT-DOCUMENT] Python extraction failed:`, errText);
-      return NextResponse.json({
-        error: 'El motor de extracción no pudo procesar el documento.',
-        details: errText
-      }, { status: 500 });
+      const failure = await extractResponse.json().catch(()=>({}));
+      const status = extractResponse.status >= 400 && extractResponse.status < 500 ? extractResponse.status : 502;
+      const code = failure.code || (status===409?'DRAFT_CONFLICT':'EXTRACTION_UNAVAILABLE');
+      return NextResponse.json({code,error:processingFeedback({...failure,code},status,'extract'),source_errors:failure.source_errors || []},{status});
     }
 
     const extractData = await extractResponse.json();
@@ -94,6 +93,12 @@ export async function POST(request: NextRequest) {
     const extractedMeta = extractData.metadata || {};
     const extractedB10 = extractData.original_b10 || '';
     const extractedMatters: any[] = extractData.matters || [];
+    if (!Array.isArray(extractedMatters) || extractedMatters.length === 0) {
+      return NextResponse.json({ error: 'No se identificaron asuntos. Tu borrador anterior se conserva.', code: 'NO_LEGAL_MATTERS' }, { status: 422 });
+    }
+    if (extractData.partial || extractData.source_errors?.length) {
+      return NextResponse.json({ error: 'No se pudieron leer todas las fuentes. Tu borrador se conserva; corrige los archivos indicados y reintenta.', code: 'PARTIAL_EXTRACTION', source_errors: extractData.source_errors }, { status: 422 });
+    }
     const extractedDept = extractData.department || {};
     const extractedLawyers = extractData.lawyers || [];
 
@@ -108,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     const cleanExtractedPractice = sanitizePractice(extractedMeta.extracted_practice_area || extractedMeta.practice_area);
     const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || sanitizePractice(submission.practiceArea);
-    const finalPracticeArea = cleanExtractedPractice || calibratedPractice || 'General Practice';
+    const finalPracticeArea = calibratedPractice || cleanExtractedPractice || 'General Practice';
 
     // ═══ JUDGE SOL EXTRACTION SANITY & SURGICAL HEALER ═══
     const { judgeSolExtractionAudit } = await import('@/lib/audit/extraction-auditor');
@@ -119,8 +124,15 @@ export async function POST(request: NextRequest) {
     });
     const healedMatters = extractionAudit.healedMatters;
 
-    // Delete any old draft matters for this submission before populating
-    await prisma.matter.deleteMany({
+    const createdMatters = await prisma.$transaction(async (tx) => {
+    // Acquire the submission revision before replacing any existing rows.
+    const locked = await tx.submission.updateMany({
+      where: { id: submission.id, updatedAt: submission.updatedAt },
+      data: { updatedAt: new Date() }
+    });
+    if (locked.count !== 1) throw new Error('DRAFT_CONFLICT: El borrador cambió durante la extracción. Recarga y reintenta.');
+    // Replace the register atomically only after complete successful extraction.
+    await tx.matter.deleteMany({
       where: { submissionId: submission.id }
     });
 
@@ -128,8 +140,8 @@ export async function POST(request: NextRequest) {
     const createdMatters = [];
     for (let idx = 0; idx < healedMatters.length; idx++) {
       const m = healedMatters[idx];
-      const isConf = Boolean(m.isConfidential);
-      const created = await prisma.matter.create({
+      const isConf = m.confidentialityConfirmed === false || m.publish_status === 'confirmation_required' || m.confidentialityStatus === 'confirmation_required' || Boolean(m.isConfidential);
+      const created = await tx.matter.create({
         data: {
           submissionId: submission.id,
           userId: resolvedUserId,
@@ -163,6 +175,9 @@ export async function POST(request: NextRequest) {
     const existingChambers = (submission.chambersData as any) || {};
     const updatedChambersData = {
       ...existingChambers,
+      release_verdict: { passed: false, status: 'needs_review', errors: ['Source evidence changed; validation required.'] },
+      canonical_matter_selection: null,
+      cloned_docx_b64: null,
       judge_sol_extraction_audit: extractionAudit.reviewAudit,
       firm_name: extractedMeta.firm_name || existingChambers.firm_name || '',
       firmName: extractedMeta.firm_name || existingChambers.firmName || '',
@@ -174,6 +189,9 @@ export async function POST(request: NextRequest) {
         calibrated_practice_area: calibratedPractice,
         location: extractedMeta.location || submission.guideRegion
       },
+      original_c2: extractData.original_c2 || '',
+      sources,
+      draft_revision: Number(existingChambers.draft_revision || 0) + 1,
       original_b10: extractedB10 || existingChambers.original_b10 || '',
       enhanced_b7: extractedB10 || existingChambers.enhanced_b7 || '',
       b7: extractedB10 || existingChambers.b7 || '',
@@ -182,6 +200,7 @@ export async function POST(request: NextRequest) {
       matters: createdMatters.map((m, idx) => {
         const healedM = healedMatters[idx] || {};
         const isConf = Boolean(m.isConfidential);
+        const unconfirmed = healedM.confidentialityConfirmed === false || healedM.publish_status === 'confirmation_required' || healedM.confidentialityStatus === 'confirmation_required';
         return {
           id: m.id,
           name: m.name,
@@ -195,12 +214,13 @@ export async function POST(request: NextRequest) {
           summary: m.rawNotes,
           isConfidential: isConf,
           confidential: isConf,
-          confidentialityStatus: isConf ? 'confidential' : 'publishable',
-          confidentialityConfirmed: true,
-          publish_status: isConf ? 'non_publishable' : 'publishable',
+          confidentialityStatus: unconfirmed ? 'confirmation_required' : (isConf ? 'confidential' : 'publishable'),
+          confidentialityConfirmed: !unconfirmed,
+          publish_status: unconfirmed ? 'confirmation_required' : (isConf ? 'non_publishable' : 'publishable'),
           publishStatus: isConf ? 'confidential' : 'publishable',
           valueConflict: healedM.valueConflict || '',
           source_label: healedM.source_label || healedM.sourceLabel || '',
+          source_excerpt: healedM.source_excerpt || '',
           crossBorder: m.crossBorder,
           teamMembers: m.teamMembers,
           team_members: m.teamMembers,
@@ -217,7 +237,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Update submission record
-    await prisma.submission.update({
+    await tx.submission.update({
       where: { id: submission.id },
       data: {
         status: 'Draft',
@@ -226,6 +246,9 @@ export async function POST(request: NextRequest) {
         chambersData: updatedChambersData,
         updatedAt: new Date()
       }
+    });
+
+    return createdMatters;
     });
 
     console.log(`[EXTRACT-DOCUMENT] Successfully extracted ${createdMatters.length} matters for submission ${submission.id}`);
@@ -243,6 +266,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       error: 'Error procesando la extracción del documento',
       details: error.message
-    }, { status: 500 });
+    }, { status: String(error.message).startsWith('DRAFT_CONFLICT') ? 409 : 500 });
   }
 }

@@ -1,7 +1,6 @@
 {
-  "_version": "v17.0",
+  "_version": "ranking-evidence-v1",
   "_description": "Maps (directory, practice_area, jurisdiction) → public URL for live benchmark scraping. Keys use format 'Practice Area|Jurisdiction'.",
-  
   "chambers": {
     "Data Protection|Mexico": {
       "url": "https://chambers.com/legal-rankings/data-protection-mexico-9:1113:144:1",
@@ -24,12 +23,1186 @@
       "params": "l=en-GB"
     },
     "Labour & Employment|Mexico": {
-      "url": "https://chambers.com/legal-rankings/employment-mexico-9:55:144:1",
+      "url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "General Business Law|Central America-wide": {
+      "url": "https://chambers.com/legal-rankings/general-business-law-central-america-wide-9:852:56:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-international-counsel-9:6:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-international-counsel-9:8:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate Crime & Investigations|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/corporate-crime-investigations-international-counsel-9:2385:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-international-counsel-9:354:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/insurance-international-counsel-9:33:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Arbitration|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/international-arbitration-international-counsel-9:738:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Arbitration: Arbitrators|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/international-arbitration-arbitrators-international-counsel-9:386:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Project Finance|International Counsel": {
+      "url": "https://chambers.com/legal-rankings/project-finance-international-counsel-9:760:21144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Leading Law Firm Networks: The Elite (Legal Network)|Latin America-wide": {
+      "url": "https://chambers.com/legal-rankings/leading-law-firm-networks-the-elite-legal-network-latin-america-wide-9:2432:16086:4",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Leading Regional Law Firm Networks (Legal Network)|Latin America-wide": {
+      "url": "https://chambers.com/legal-rankings/leading-regional-law-firm-networks-legal-network-latin-america-wide-9:2431:16086:4",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Practice Area Focused Networks (Legal Network)|Latin America-wide": {
+      "url": "https://chambers.com/legal-rankings/practice-area-focused-networks-legal-network-latin-america-wide-9:2979:16086:4",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Argentina": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-argentina-9:6:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Bankruptcy/Restructuring|Argentina": {
+      "url": "https://chambers.com/legal-rankings/bankruptcy-restructuring-argentina-9:513:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Argentina": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-argentina-9:26:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Compliance|Argentina": {
+      "url": "https://chambers.com/legal-rankings/compliance-argentina-9:2590:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Consumer Law|Argentina": {
+      "url": "https://chambers.com/legal-rankings/consumer-law-argentina-9:16:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Argentina": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-argentina-9:354:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Argentina": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-argentina-9:467:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Argentina": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-argentina-9:928:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Mining|Argentina": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-mining-argentina-9:652:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Oil & Gas|Argentina": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-oil-gas-argentina-9:650:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Power|Argentina": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-power-argentina-9:657:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Argentina": {
+      "url": "https://chambers.com/legal-rankings/environment-argentina-9:25:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Argentina": {
+      "url": "https://chambers.com/legal-rankings/insurance-argentina-9:33:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Argentina": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-argentina-9:34:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Trade/WTO|Argentina": {
+      "url": "https://chambers.com/legal-rankings/international-trade-wto-argentina-9:455:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Argentina": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-argentina-9:1596:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Argentina": {
+      "url": "https://chambers.com/legal-rankings/public-law-argentina-9:572:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Argentina": {
+      "url": "https://chambers.com/legal-rankings/real-estate-argentina-9:11:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Argentina": {
+      "url": "https://chambers.com/legal-rankings/tax-argentina-9:49:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Argentina": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-argentina-9:1843:19:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-bolivia-9:6:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-bolivia-9:242:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-bolivia-9:467:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-bolivia-9:24:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-bolivia-9:34:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-bolivia-9:1596:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Bolivia": {
+      "url": "https://chambers.com/legal-rankings/tax-bolivia-9:49:37:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Chile": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-chile-9:6:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Bankruptcy/Restructuring|Chile": {
+      "url": "https://chambers.com/legal-rankings/bankruptcy-restructuring-chile-9:513:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|Chile": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-chile-9:8:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Chile": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-chile-9:26:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Compliance|Chile": {
+      "url": "https://chambers.com/legal-rankings/compliance-chile-9:2590:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A: Highly Regarded|Chile": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-highly-regarded-chile-9:1163:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A: The Elite|Chile": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-the-elite-chile-9:1437:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Data Protection|Chile": {
+      "url": "https://chambers.com/legal-rankings/data-protection-chile-9:1113:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Arbitration|Chile": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-arbitration-chile-9:568:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Litigation|Chile": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-litigation-chile-9:567:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Chile": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-chile-9:928:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: White-Collar Crime|Chile": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-white-collar-crime-chile-9:557:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Chile": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-chile-9:24:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Mining|Chile": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-mining-chile-9:652:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Chile": {
+      "url": "https://chambers.com/legal-rankings/environment-chile-9:25:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment: Water Rights|Chile": {
+      "url": "https://chambers.com/legal-rankings/environment-water-rights-chile-9:1984:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Chile": {
+      "url": "https://chambers.com/legal-rankings/insurance-chile-9:33:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Chile": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-chile-9:34:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Chile": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-chile-9:1596:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Life Sciences|Chile": {
+      "url": "https://chambers.com/legal-rankings/life-sciences-chile-9:376:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects|Chile": {
+      "url": "https://chambers.com/legal-rankings/projects-chile-9:194:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Chile": {
+      "url": "https://chambers.com/legal-rankings/public-law-chile-9:572:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Chile": {
+      "url": "https://chambers.com/legal-rankings/real-estate-chile-9:11:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Shipping|Chile": {
+      "url": "https://chambers.com/legal-rankings/shipping-chile-9:47:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Chile": {
+      "url": "https://chambers.com/legal-rankings/tax-chile-9:49:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Chile": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-chile-9:1843:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Venture Capital|Chile": {
+      "url": "https://chambers.com/legal-rankings/venture-capital-chile-9:2813:59:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Colombia": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-colombia-9:6:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|Colombia": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-colombia-9:8:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Colombia": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-colombia-9:26:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Colombia": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-colombia-9:354:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Arbitration|Colombia": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-arbitration-colombia-9:568:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Civil & Commercial Litigation|Colombia": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-civil-commercial-litigation-colombia-9:2861:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Colombia": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-colombia-9:928:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Colombia": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-colombia-9:24:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Environment|Colombia": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-environment-colombia-9:1227:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Mining|Colombia": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-mining-colombia-9:652:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Colombia": {
+      "url": "https://chambers.com/legal-rankings/insurance-colombia-9:33:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Colombia": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-colombia-9:34:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Trade/WTO|Colombia": {
+      "url": "https://chambers.com/legal-rankings/international-trade-wto-colombia-9:455:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Colombia": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-colombia-9:1596:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Life Sciences|Colombia": {
+      "url": "https://chambers.com/legal-rankings/life-sciences-colombia-9:376:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects|Colombia": {
+      "url": "https://chambers.com/legal-rankings/projects-colombia-9:194:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Colombia": {
+      "url": "https://chambers.com/legal-rankings/public-law-colombia-9:572:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Colombia": {
+      "url": "https://chambers.com/legal-rankings/real-estate-colombia-9:11:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Colombia": {
+      "url": "https://chambers.com/legal-rankings/tax-colombia-9:49:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Colombia": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-colombia-9:1843:61:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-costa-rica-9:6:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-costa-rica-9:26:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-costa-rica-9:354:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-costa-rica-9:467:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-costa-rica-9:928:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/environment-costa-rica-9:25:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/insurance-costa-rica-9:33:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-costa-rica-9:34:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-costa-rica-9:1596:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/projects-costa-rica-9:194:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/public-law-costa-rica-9:572:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/real-estate-costa-rica-9:11:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/tax-costa-rica-9:49:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Costa Rica": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-costa-rica-9:1843:64:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Cuba": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-cuba-9:242:67:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial: International Firms|Cuba": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-international-firms-cuba-9:2324:67:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-dominican-republic-9:242:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-dominican-republic-9:467:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/environment-dominican-republic-9:25:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-dominican-republic-9:34:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-dominican-republic-9:1596:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate & Tourism|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/real-estate-tourism-dominican-republic-9:1500:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Dominican Republic": {
+      "url": "https://chambers.com/legal-rankings/tax-dominican-republic-9:49:72:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-ecuador-9:6:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-ecuador-9:26:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-ecuador-9:242:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-ecuador-9:467:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-ecuador-9:24:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-ecuador-9:34:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-ecuador-9:1596:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/public-law-ecuador-9:572:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/real-estate-ecuador-9:11:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Ecuador": {
+      "url": "https://chambers.com/legal-rankings/tax-ecuador-9:49:73:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|El Salvador": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-el-salvador-9:242:75:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|El Salvador": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-el-salvador-9:467:75:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|El Salvador": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-el-salvador-9:34:75:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-guatemala-9:6:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-guatemala-9:354:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-guatemala-9:467:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-guatemala-9:24:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-guatemala-9:34:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-guatemala-9:1596:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/real-estate-guatemala-9:11:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Guatemala": {
+      "url": "https://chambers.com/legal-rankings/tax-guatemala-9:49:100:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Honduras": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-honduras-9:242:106:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Honduras": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-honduras-9:467:106:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Honduras": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-honduras-9:34:106:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Honduras": {
+      "url": "https://chambers.com/legal-rankings/tax-honduras-9:49:106:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Aviation|Mexico": {
+      "url": "https://chambers.com/legal-rankings/aviation-mexico-9:5:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance: Regulatory|Mexico": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-regulatory-mexico-9:356:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Bankruptcy/Restructuring|Mexico": {
+      "url": "https://chambers.com/legal-rankings/bankruptcy-restructuring-mexico-9:513:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|Mexico": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-mexico-9:8:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Mexico": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-mexico-9:26:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Compliance|Mexico": {
+      "url": "https://chambers.com/legal-rankings/compliance-mexico-9:2590:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial: Monterrey|Mexico": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-monterrey-mexico-9:2657:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A: Highly Regarded|Mexico": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-highly-regarded-mexico-9:1163:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A: The Elite|Mexico": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-the-elite-mexico-9:1437:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Arbitration|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-arbitration-mexico-9:568:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Civil & Commercial Litigation|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-civil-commercial-litigation-mexico-9:2861:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Civil & Commercial Litigation: Highly Regarded|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-civil-commercial-litigation-highly-regarded-mexico-9:3795:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Civil & Commercial Litigation: The Elite|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-civil-commercial-litigation-the-elite-mexico-9:3796:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Monterrey|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-monterrey-mexico-9:2658:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-mexico-9:928:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: White-Collar Crime|Mexico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-white-collar-crime-mexico-9:557:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Mining|Mexico": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-mining-mexico-9:652:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Oil & Gas|Mexico": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-oil-gas-mexico-9:650:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Power|Mexico": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-power-mexico-9:657:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Mexico": {
+      "url": "https://chambers.com/legal-rankings/environment-mexico-9:25:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "General Business Law: Guadalajara|Mexico": {
+      "url": "https://chambers.com/legal-rankings/general-business-law-guadalajara-mexico-9:2673:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "General Business Law: Queretaro|Mexico": {
+      "url": "https://chambers.com/legal-rankings/general-business-law-queretaro-mexico-9:3546:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Mexico": {
+      "url": "https://chambers.com/legal-rankings/insurance-mexico-9:33:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Mexico": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-mexico-9:34:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Trade/WTO|Mexico": {
+      "url": "https://chambers.com/legal-rankings/international-trade-wto-mexico-9:455:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment: Monterrey|Mexico": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-monterrey-mexico-9:2752:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Life Sciences|Mexico": {
+      "url": "https://chambers.com/legal-rankings/life-sciences-mexico-9:376:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects|Mexico": {
+      "url": "https://chambers.com/legal-rankings/projects-mexico-9:194:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Mexico": {
+      "url": "https://chambers.com/legal-rankings/public-law-mexico-9:572:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Mexico": {
+      "url": "https://chambers.com/legal-rankings/real-estate-mexico-9:11:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax: Controversy|Mexico": {
+      "url": "https://chambers.com/legal-rankings/tax-controversy-mexico-9:1449:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax: Monterrey|Mexico": {
+      "url": "https://chambers.com/legal-rankings/tax-monterrey-mexico-9:2659:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax: Non-contentious|Mexico": {
+      "url": "https://chambers.com/legal-rankings/tax-non-contentious-mexico-9:2860:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Mexico": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-mexico-9:1843:144:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Nicaragua": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-nicaragua-9:242:159:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Nicaragua": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-nicaragua-9:467:159:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Nicaragua": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-nicaragua-9:34:159:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Nicaragua": {
+      "url": "https://chambers.com/legal-rankings/real-estate-nicaragua-9:11:159:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Panama": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-panama-9:6:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|Panama": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-panama-9:8:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Panama": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-panama-9:354:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Panama": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-panama-9:467:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Panama": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-panama-9:34:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects & Energy|Panama": {
+      "url": "https://chambers.com/legal-rankings/projects-energy-panama-9:996:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Shipping|Panama": {
+      "url": "https://chambers.com/legal-rankings/shipping-panama-9:47:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Shipping: Litigation|Panama": {
+      "url": "https://chambers.com/legal-rankings/shipping-litigation-panama-9:329:168:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-paraguay-9:6:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-paraguay-9:242:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial: Labour & Employment|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-labour-employment-paraguay-9:1507:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial: Tax|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-tax-paraguay-9:510:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-paraguay-9:467:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Paraguay": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-paraguay-9:34:170:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Peru": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-peru-9:6:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Bankruptcy/Restructuring|Peru": {
+      "url": "https://chambers.com/legal-rankings/bankruptcy-restructuring-peru-9:513:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Capital Markets|Peru": {
+      "url": "https://chambers.com/legal-rankings/capital-markets-peru-9:8:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Competition/Antitrust|Peru": {
+      "url": "https://chambers.com/legal-rankings/competition-antitrust-peru-9:26:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Consumer Law|Peru": {
+      "url": "https://chambers.com/legal-rankings/consumer-law-peru-9:16:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Peru": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-peru-9:354:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Arbitration|Peru": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-arbitration-peru-9:568:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Litigation|Peru": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-litigation-peru-9:567:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Peru": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-peru-9:928:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: White-Collar Crime|Peru": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-white-collar-crime-peru-9:557:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Mining|Peru": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-mining-peru-9:652:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Oil & Gas|Peru": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-oil-gas-peru-9:650:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources: Power|Peru": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-power-peru-9:657:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Peru": {
+      "url": "https://chambers.com/legal-rankings/environment-peru-9:25:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Insurance|Peru": {
+      "url": "https://chambers.com/legal-rankings/insurance-peru-9:33:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Peru": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-peru-9:34:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "International Trade/WTO|Peru": {
+      "url": "https://chambers.com/legal-rankings/international-trade-wto-peru-9:455:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Peru": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-peru-9:1596:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Life Sciences|Peru": {
+      "url": "https://chambers.com/legal-rankings/life-sciences-peru-9:376:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects|Peru": {
+      "url": "https://chambers.com/legal-rankings/projects-peru-9:194:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Peru": {
+      "url": "https://chambers.com/legal-rankings/public-law-peru-9:572:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Peru": {
+      "url": "https://chambers.com/legal-rankings/real-estate-peru-9:11:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Peru": {
+      "url": "https://chambers.com/legal-rankings/tax-peru-9:49:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "TMT (Telecoms, Media, Technology)|Peru": {
+      "url": "https://chambers.com/legal-rankings/tmt-telecoms-media-technology-peru-9:1843:171:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-puerto-rico-9:242:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/Commercial: Real Estate|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/corporate-commercial-real-estate-puerto-rico-9:913:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-puerto-rico-9:467:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Bankruptcy|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-bankruptcy-puerto-rico-9:1799:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Environment|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/environment-puerto-rico-9:25:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-puerto-rico-9:34:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-puerto-rico-9:1596:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Puerto Rico": {
+      "url": "https://chambers.com/legal-rankings/tax-puerto-rico-9:49:175:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Banking & Finance|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/banking-finance-uruguay-9:6:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-uruguay-9:354:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-uruguay-9:467:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-uruguay-9:34:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-uruguay-9:1596:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Projects & Energy|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/projects-energy-uruguay-9:996:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Real Estate|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/real-estate-uruguay-9:11:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Uruguay": {
+      "url": "https://chambers.com/legal-rankings/tax-uruguay-9:49:226:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Corporate/M&A|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-venezuela-9:467:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: Most in Demand Arbitrators|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-most-in-demand-arbitrators-venezuela-9:928:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Dispute Resolution: White-Collar Crime|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/dispute-resolution-white-collar-crime-venezuela-9:557:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Energy & Natural Resources|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/energy-natural-resources-venezuela-9:24:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Intellectual Property|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/intellectual-property-venezuela-9:34:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Labour & Employment|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/labour-employment-venezuela-9:1596:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Public Law|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/public-law-venezuela-9:572:229:1",
+      "guide": "Latin America",
+      "params": "l=en-GB"
+    },
+    "Tax|Venezuela": {
+      "url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
       "guide": "Latin America",
       "params": "l=en-GB"
     }
   },
-
   "legal500": {
     "TMT|Mexico": {
       "url": "https://www.legal500.com/c/mexico/tmt/"
@@ -71,7 +1244,6 @@
       "url": "https://www.legal500.com/c/mexico/projects-and-government-contracts/"
     }
   },
-
   "alias_map": {
     "Banking and Finance": "Banking & Finance",
     "Banking": "Banking & Finance",
@@ -87,5 +1259,10 @@
     "Employment": "Labour & Employment",
     "Labor": "Labour & Employment",
     "Labour and Employment": "Labour & Employment"
+  },
+  "_catalogue_provenance": {
+    "source": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+    "retrieved": "2026-10-03",
+    "note": "Chambers official guide navigation. Each fetched page must still pass practice/country/edition validation."
   }
 }

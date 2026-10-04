@@ -13,13 +13,14 @@ class Matter(BaseModel):
     team_members: Optional[str] = Field(default="", description="Other team members who worked on this matter.")
     other_firms: Optional[str] = Field(default="", description="Other law firms advising on the matter and their roles.")
     matter_value: Optional[str] = Field(default="", description="The monetary value of the deal/matter with currency (e.g. 'USD 250 million').")
+    value_conflict: Optional[str] = Field(default="", description="Describe conflicting values/currencies with both alternatives and sources. Leave matter_value empty until resolved; never silently discard a conflict.")
     completion_date: Optional[str] = Field(default="", description="Date of completion or current status of the matter.")
     is_confidential: bool = Field(default=False, description="True if this matter contains confidential information not for publication.")
     is_new_client: bool = Field(default=False, description="True if the client is new within the last 12 months.")
     # v10.0: Explicit publish status — DETERMINISTIC and IMMUTABLE
-    publish_status: Literal["publishable", "non_publishable", "confidential"] = Field(
-        default="publishable",
-        description="IMMUTABLE publish status extracted from source document. 'non_publishable' = matter appears in non-publishable/confidential section. 'confidential' = explicitly marked confidential. 'publishable' = safe for publication. The AI CANNOT change this after extraction."
+    publish_status: Literal["publishable", "non_publishable", "confidential", "confirmation_required"] = Field(
+        default="confirmation_required",
+        description="Absent or ambiguous permissions must be confirmation_required. IMMUTABLE publish status extracted from source document. 'non_publishable' = matter appears in non-publishable/confidential section. 'confidential' = explicitly marked confidential. 'publishable' = safe for publication. The AI CANNOT change this after extraction."
     )
     source_label: Optional[str] = Field(
         default="",
@@ -44,8 +45,8 @@ class LawyerProfile(BaseModel):
     key_focus: Optional[str] = Field(default="", description="Key areas of focus for this lawyer.")
     bio: Optional[str] = Field(default="", description="Brief biographical paragraph about the lawyer's practice.")
     standout_work: Optional[str] = Field(default="", description="Description of standout recent work. Prefix confidential parts with [CONFIDENTIAL].")
-    is_partner: bool = Field(default=False, description="True if the lawyer is a partner.")
-    is_ranked: bool = Field(default=False, description="True if the lawyer is currently ranked.")
+    is_partner: Optional[bool] = Field(default=None, description="True if the lawyer is a partner.")
+    is_ranked: Optional[bool] = Field(default=None, description="True if the lawyer is currently ranked.")
 
 class ContactPerson(BaseModel):
     """A contact person for interview arrangements."""
@@ -64,7 +65,7 @@ class DepartmentInfo(BaseModel):
     department_name: Optional[str] = Field(default="", description="Department name as used by the firm.")
     num_partners: Optional[int] = Field(default=0, description="Number of partners in the department.")
     num_lawyers: Optional[int] = Field(default=0, description="Number of other qualified lawyers.")
-    department_heads: List[ContactPerson] = Field(default_factory=list, description="Department heads or key partners.")
+    department_heads: List[ContactPerson] = Field(default_factory=list, description="Explicitly identified department heads only. A partner is not necessarily a head.")
     hires_departures: List[HireDeparture] = Field(default_factory=list, description="Partner hires and departures in last 12 months.")
     department_description: Optional[str] = Field(default="", description="What the department is best known for (B7 section).")
 
