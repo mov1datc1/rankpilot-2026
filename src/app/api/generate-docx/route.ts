@@ -1,3 +1,6 @@
+import { artifactHash, deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { getDeliveryState } from '@/lib/audit/delivery-state';
+import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
@@ -48,6 +51,8 @@ function getPracticeDilutionDescription(practiceArea?: string): string {
   return 'Matters outside the core substantive focus of the practice area dilute directory ranking competitiveness:';
 }
 
+function escapeHtml(value: string) { return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!)); }
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -87,24 +92,10 @@ export async function GET(request: NextRequest) {
     const releaseVerdict = chambersData.release_verdict || {};
     const isSubmission = docType === 'submission';
     const isOriginalSubmissionExport = isSubmission && exportMode === 'original';
-    const sourceCloneReady = releaseVerdict.delivery_mode === 'source_clone'
-      && releaseVerdict.docx_clone_passed === true
-      && releaseVerdict.ooxml_validation_passed === true
-      && Boolean(chambersData.cloned_docx_b64);
-    const canonicalBuilderReady = releaseVerdict.delivery_mode === 'canonical_docx_builder'
-      && releaseVerdict.builder_contract_passed === true;
-
-    // v26.26: Never block Strategic Audit downloads on submission delivery mode checks.
-    // For submission exports, allow canonical builder fallback if matters exist in database.
-    const hasMatters = (Array.isArray(chambersData.matters) && chambersData.matters.length > 0)
-      || (Array.isArray(submission.matters) && submission.matters.length > 0);
-
     if (isSubmission && !isOriginalSubmissionExport) {
-      const isApproved = (releaseVerdict.passed === true && (sourceCloneReady || canonicalBuilderReady)) || hasMatters;
+      const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
       if (!isApproved) {
-        const blockingIssues = Array.isArray(releaseVerdict.errors) && releaseVerdict.errors.length > 0
-          ? releaseVerdict.errors
-          : [!hasMatters ? 'Matter register reconciliation failure: 0 matters detected in source document' : 'Pipeline verification checks pending'];
+        const blockingIssues = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).errors;
         const requiredAction = 'Please review the Strategic Audit findings and verify source matter headings, or re-run optimization once matters are confirmed.';
         
         const acceptsHtml = request.headers.get('accept')?.includes('text/html');
@@ -138,7 +129,7 @@ export async function GET(request: NextRequest) {
     <div class="issues">
       <h4>Blocking Issues Detected</h4>
       <ul>
-        ${blockingIssues.map((issue: string) => `<li>${issue}</li>`).join('')}
+        ${blockingIssues.map((issue: string) => `<li>${escapeHtml(issue)}</li>`).join('')}
       </ul>
     </div>
     <div class="action">
@@ -164,6 +155,24 @@ export async function GET(request: NextRequest) {
           { status: 409 }
         );
       }
+    }
+    if (isSubmission && !isOriginalSubmissionExport) {
+      const artifact = chambersData.approved_artifact;
+      if (!artifact || artifact.input_hash !== deliveryInputHash(submission, chambersData)) {
+        return NextResponse.json({error: 'El expediente cambió después de la revisión. Revisa la versión actual antes de descargar.'}, {status: 409});
+      }
+      const requestedFormat = searchParams.get('template') || searchParams.get('format') || '';
+      const wantsLegal500 = /legal.?500/.test(requestedFormat);
+      if (requestedFormat && wantsLegal500 !== /legal.?500/i.test(submission.targetDirectory || '')) {
+        return NextResponse.json({error: 'El formato solicitado no corresponde al archivo revisado.'}, {status: 409});
+      }
+      const bytes = Buffer.from(artifact.base64, 'base64');
+      if (artifactHash(bytes) !== artifact.sha256) return NextResponse.json({error:'La integridad del archivo no pudo verificarse.'}, {status:409});
+      return new NextResponse(new Uint8Array(bytes), {headers:{
+        'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition':buildSafeContentDisposition('Submission_Form', submission.practiceArea, 'docx'),
+        'X-Artifact-SHA256':artifact.sha256, 'Cache-Control':'private, no-store'
+      }});
     }
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
@@ -278,27 +287,6 @@ export async function GET(request: NextRequest) {
       submission.targetDirectory = 'Chambers';
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // v19.0: CLONE-AND-REPLACE — Serve pre-built DOCX if available
-    // (Bypassed if master template or explicit canonical builder requested)
-    // ═══════════════════════════════════════════════════════════
-    if (docType === 'submission' && sourceCloneReady && !forceMaster) {
-      console.log('[DOCX GENERATOR] ✅ Serving cloned DOCX (v19.0 Clone-and-Replace)');
-      try {
-        const docxBuffer = Buffer.from(chambersData.cloned_docx_b64, 'base64');
-        const prefix = 'Submission_Form';
-        return new NextResponse(new Uint8Array(docxBuffer), {
-          headers: {
-            'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'Content-Disposition': buildSafeContentDisposition(prefix, practiceArea, 'docx'),
-          },
-        });
-      } catch (cloneErr: any) {
-        console.error('[DOCX GENERATOR] Failed to decode approved cloned DOCX:', cloneErr.message);
-        throw new Error('Approved DOCX artifact could not be decoded');
-      }
-    }
-
     let doc: Document;
     if (docType === 'submission') {
       doc = buildSubmissionDoc(firmName, practiceArea, chambersData, submission, exportMode);
@@ -314,6 +302,8 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': buildSafeContentDisposition(prefix, practiceArea, 'docx'),
+        'X-Artifact-SHA256': createHash('sha256').update(buffer).digest('hex'),
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error: any) {
@@ -354,7 +344,7 @@ export async function GET(request: NextRequest) {
     <p class="subtitle">RankPilot strictly prevents downstream delivery of documents containing unverified ranking drift or confidential information leaks.</p>
     <div class="box">
       <div class="box-title">Validation Diagnosis</div>
-      <div class="box-msg">${errMsg}</div>
+      <div class="box-msg">${escapeHtml(errMsg)}</div>
     </div>
     <div class="actions">
       <a href="javascript:history.back()" class="btn btn-primary">Return to Submission Studio</a>

@@ -1,0 +1,114 @@
+{
+  "version": "review-core-v1.2",
+  "status": "implemented_project_policy",
+  "owner_endorsement": "Not claimed. Derived from the approved implementation direction, observed failures and reviewed references.",
+  "references": [
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Labour & Employment/Prompts - Labour & Employment - DeForest - Chambers.docx",
+      "sha256": "63c46eb2195b050ad0ae740df0dec3756be383cac8dc29e7da000310e184f497",
+      "attribution": "Reference conversation may contain both owner and model text; not a verbatim owner endorsement."
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Gonzalez_de_Araujo/Prompts_Optimizacion_Compliance_Gonzalez_de_Araujo.docx",
+      "sha256": "985c792c5d2f43ff95ab74ec391f6d21f8c8b9f4c7e55e44b78ac395fa6032e7",
+      "attribution": "Reference conversation may contain both owner and model text; not a verbatim owner endorsement."
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/referencias/Prompts IA - Ramos Castillo - Real Estate - Optimized .docx",
+      "sha256": "3eab0558e90cf290709ea179abfd404228167144ba15b0d0ad7317f79bc0f381",
+      "attribution": "Reference conversation may contain both owner and model text; not a verbatim owner endorsement."
+    }
+  ],
+  "rules": [
+    {
+      "id": "RP01",
+      "criterion": "Every factual claim needs source support; unknown facts stay unknown.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP02",
+      "criterion": "Questions, hypotheses and requested improvements are not established facts.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP03",
+      "criterion": "Unconfirmed publication permission blocks public release; confidentiality is not guessed.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP04",
+      "criterion": "Preserve stable matter identity and distinguish duplicate references from different mandates.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP05",
+      "criterion": "Practice relevance depends on the legal mandate, not the industry or prestige of the client.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP06",
+      "criterion": "Describe the firm’s actual contribution, not merely the client’s business activity.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP07",
+      "criterion": "Preserve pending status, dates, negation, currency and material conflicts; never infer victories or conversions.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP08",
+      "criterion": "Do not infer or guarantee a ranking from practice area, firm name, matter count or deal size.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP09",
+      "criterion": "A mention of a lawyer does not establish lead responsibility, partner status or ranking.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP10",
+      "criterion": "Submission, internal letter and Studio must share one canonical selection and hero decision.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP11",
+      "criterion": "Document completeness, evidence quality and editorial quality are different; do not invent a composite certification score.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP12",
+      "criterion": "Keep internal gaps and audit commentary out of public submission prose.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP13",
+      "criterion": "Repairs must be targeted and bounded; an unresolved critical defect blocks delivery.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP14",
+      "criterion": "Do not pad a portfolio or narrative to reach a matter or word quota.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP15",
+      "criterion": "Review the actual rendered artifact and invalidate approval after input changes.",
+      "scope": "all_practices",
+      "test_required": true
+    }
+  ]
+}

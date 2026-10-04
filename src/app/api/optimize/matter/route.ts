@@ -35,23 +35,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized or not found' }, { status: 403 });
     }
 
-    // Find matter from DB or inline
-    let targetMatter = inlineMatter;
-    if (matterId) {
-      const dbMatter = submission.matters.find(m => m.id === matterId);
-      if (dbMatter) {
-        targetMatter = {
-          ...dbMatter,
-          ...inlineMatter
-        };
-      }
-    }
-
-    if (!targetMatter) {
-      return NextResponse.json({ error: 'Matter not found' }, { status: 404 });
-    }
-
+    // A browser draft is not a replacement for the persisted source register.
     const chambersData = (submission.chambersData as any) || {};
+    const stableId = matterId || inlineMatter?.id;
+    const sourceMatter = (chambersData.matters || submission.matters).find((m:any)=>m.id===stableId);
+    const dbMatter = submission.matters.find(m=>m.id===stableId);
+    if (!stableId || !sourceMatter || !dbMatter) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
+    const targetMatter = {...dbMatter,...sourceMatter};
+
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 
     const payload = {
@@ -77,75 +68,27 @@ export async function POST(request: NextRequest) {
     const result = await resp.json();
 
     if (result.success && result.optimized_text) {
-      // 1. Update in prisma Matter table if matterId exists
-      if (matterId && matterId.length > 20) {
-        try {
-          await prisma.matter.update({
-            where: { id: matterId },
-            data: {
-              optimizedText: result.optimized_text,
-              status: 'Approved'
-            }
-          });
-        } catch (dbErr) {
-          // Ignore id mismatch
-        }
-      }
-
-      // Also update by client name in submission
-      const clientLookup = (targetMatter.client || targetMatter.name || '').trim();
-      if (clientLookup) {
-        try {
-          await prisma.matter.updateMany({
-            where: {
-              submissionId: submission.id,
-              OR: [
-                { client: { equals: clientLookup, mode: 'insensitive' } },
-                { name: { equals: clientLookup, mode: 'insensitive' } }
-              ]
-            },
-            data: {
-              optimizedText: result.optimized_text,
-              status: 'Approved'
-            }
-          });
-        } catch (dbErr2) {
-          // Ignore
-        }
-      }
-
-      // 2. Update inside submission.chambersData.matters array
-      const currentChambersMatters = chambersData.matters || [];
-      const targetClient = (targetMatter.client || targetMatter.name || '').trim().toLowerCase();
-      const updatedChambersMatters = currentChambersMatters.map((m: any) => {
-        const mClient = (m.client || m.name || '').trim().toLowerCase();
-        const isMatch = (matterId && m.id === matterId) 
-          || (targetClient && mClient && mClient === targetClient);
-        if (isMatch) {
-          return {
-            ...m,
-            optimized_text: result.optimized_text,
-            optimizedText: result.optimized_text,
-            status: 'Approved'
-          };
-        }
-        return m;
-      });
-
-      const updatedChambersData = {
-        ...chambersData,
-        matters: updatedChambersMatters
-      };
-
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: { chambersData: updatedChambersData }
+      const stableId = matterId || targetMatter.id;
+      if (!stableId) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'}, {status:409});
+      await prisma.$transaction(async tx => {
+        // Updating the row acquires a transaction-scoped lock. Read JSON after acquiring it.
+        const current = await tx.submission.update({where:{id:submissionId},data:{updatedAt:new Date()}});
+        const latest:any = current.chambersData || {};
+        const register = Array.isArray(latest.matters) ? latest.matters : submission.matters;
+        const before = (chambersData.matters || submission.matters).find((m:any)=>m.id===stableId);
+        const now = register.find((m:any)=>m.id===stableId);
+        if (!now || !before || JSON.stringify(now) !== JSON.stringify(before)) throw new Error('DRAFT_CONFLICT');
+        const updated = register.map((m:any)=>m.id===stableId ? {...m,optimizedText:result.optimized_text,optimized_text:result.optimized_text,status:'Optimized'} : m);
+        await tx.matter.updateMany({where:{id:stableId,submissionId},data:{optimizedText:result.optimized_text,status:'Optimized'}});
+        const revision = Number(latest.draft_revision || 0)+1;
+        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,matters:updated,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Matter edited; review required.']}}}});
+        result.revision=revision;
       });
     }
 
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[API /optimize/matter] Error:', error);
-    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+    return NextResponse.json({ error: error.message === 'DRAFT_CONFLICT' ? 'El asunto cambió durante la optimización. Recarga antes de reintentar.' : error.message || 'Server error' }, { status: error.message === 'DRAFT_CONFLICT' ? 409 : 500 });
   }
 }

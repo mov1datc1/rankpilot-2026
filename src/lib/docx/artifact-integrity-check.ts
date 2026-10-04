@@ -145,133 +145,25 @@ export function validateAndSanitizeValue(
   clientName: string,
   matterSummary: string
 ): { sanitizedValue: string; issue?: IntegrityIssue } {
-  if (!rawValue || rawValue.trim() === '' || rawValue.trim().toUpperCase() === 'N/A') {
-    return { sanitizedValue: 'N/A' };
-  }
-
-  let val = rawValue.trim();
-
-  // Check 1: Naked numbers without currency (e.g., Rosa Dorina "10,000,000.00 approximately")
-  const isNakedNumber = /^['0-9,\.]+\s*(?:approx\.?|approximately)?$/i.test(val);
-  if (isNakedNumber && !val.toLowerCase().includes('mxn') && !val.toLowerCase().includes('usd') && !val.includes('$')) {
-    return {
-      sanitizedValue: `MXN ${val} (Pending firm currency confirmation — assumed MXN)`,
-      issue: {
-        severity: 'WARNING',
-        matterName: clientName,
-        field: 'D3/E3 Matter Value',
-        description: `Value '${rawValue}' lacks explicit currency denomination.`,
-        actionTaken: 'Appended explicit pending currency confirmation notice.'
-      }
-    };
-  }
-
-  // Check 2: Facially absurd USD exchange rates (e.g. MXN 11.7M => USD 65.3M)
-  if (val.includes("65'353,319") || val.includes('65,353,319')) {
-    return {
-      sanitizedValue: 'MXN 11,775,193.22 (approx. USD $692,658)',
-      issue: {
-        severity: 'SANITIZED',
-        matterName: clientName,
-        field: 'D3/E3 Matter Value',
-        description: 'Mathematical typo in source USD conversion (MXN 11.7M converted as USD 65.3M).',
-        actionTaken: 'Sanitized with standard FX rate (~17.0 MXN/USD).'
-      }
-    };
-  }
-
-  if (val.includes("27'762,495") || val.includes('27,762,495')) {
-    return {
-      sanitizedValue: 'MXN 5,015,025.97 (approx. USD $295,000)',
-      issue: {
-        severity: 'SANITIZED',
-        matterName: clientName,
-        field: 'D3/E3 Matter Value',
-        description: 'Mathematical typo in source USD conversion (MXN 5M converted as USD 27.7M).',
-        actionTaken: 'Sanitized with standard FX rate (~17.0 MXN/USD).'
-      }
-    };
-  }
-
-  return { sanitizedValue: val };
+  return { sanitizedValue: String(rawValue || '').trim() };
 }
 
-/**
- * Reconciles status dates and outcomes between D2/E2 and D8/E8.
- */
+/** Preserve source status; contradictions are review findings, not silent rewrites. */
 export function harmonizeStatusChronology(
   clientName: string,
   summaryText: string,
   rawStatus: string
 ): { statusText: string; issue?: IntegrityIssue } {
-  const cLower = clientName.toLowerCase();
-  let status = rawStatus || '';
-
-  // Case 1: IDEX Brasilia — Align D8 with verified source facts ("early 2020")
-  if (cLower.includes('idex') || cLower.includes('brasilia')) {
-    const harmonized = 'The Brasilia matter was successfully won in early 2020, dismissing all four lawsuits and suspensions. This definitively confirmed the full legality of the development, allowing for its construction, commercialization, and delivery.';
-    return {
-      statusText: harmonized,
-      issue: status !== harmonized ? {
-        severity: 'SANITIZED',
-        matterName: clientName,
-        field: 'D8/E8 Status',
-        description: 'Harmonized IDEX D8 status to verified early 2020 conclusion date.',
-        actionTaken: 'Harmonized status to verified early 2020 conclusion.'
-      } : undefined
-    };
-  }
-
-  // Case 2: El Cielo — D2 establishes July 2024 appellate confirmation, D8 must not retain "currently under review"
-  if (cLower.includes('cielo') || cLower.includes('bugambilias')) {
-    const harmonized = 'Concluded and fully enforced in July 2024. The Collegiate Circuit Court issued a definitive, non-appealable judgment confirming the nullity of the Governor\'s Decree, completely restoring urban development rights across the 88-hectare estate.';
-    return {
-      statusText: harmonized,
-      issue: status !== harmonized ? {
-        severity: 'SANITIZED',
-        matterName: clientName,
-        field: 'D8/E8 Status',
-        description: 'Legacy status contained contradictory "currently under review" clause alongside July 2024 enforcement.',
-        actionTaken: 'Harmonized status to definitive July 2024 appellate enforcement.'
-      } : undefined
-    };
-  }
-
-  return { statusText: status };
+  return { statusText: String(rawStatus || '').trim() };
 }
 
-/**
- * Cross-validates partner/associate roles against department roster.
- */
+/** Preserve explicit source roles; do not promote associates to partners. */
 export function harmonizeLawyerRoles(
   clientName: string,
   rawLead: string,
   rawTeam: string
 ): { lead: string; team: string; issue?: IntegrityIssue } {
-  let lead = cleanLawyerNames(rawLead);
-  let team = cleanLawyerNames(rawTeam);
-
-  // If Lead Partner field contains an explicit Associate title, sanitize it
-  const assocMatch = lead.match(/\((?:Senior\s+)?Associat?e?\)/i) || lead.match(/\((?:Asociad[oa](?:\s+Senior)?)\)/i);
-  if (assocMatch) {
-    const cleanedLead = lead.replace(/\s*\((?:Senior\s+)?Associat?e?\)/gi, '').replace(/\s*\((?:Asociad[oa](?:\s+Senior)?)\)/gi, '').trim();
-    return {
-      lead: cleanedLead,
-      team,
-      issue: {
-        severity: 'SANITIZED',
-        matterName: clientName,
-        field: 'D5/D6 Lawyer Roles',
-        description: 'Associate/Senior Associate title detected in Lead Partner field contradicted leadership profile.',
-        actionTaken: `Sanitized associate designation from Lead Partner field to maintain directory hierarchy.`
-      }
-    };
-  }
-
-  return {
-    lead,
-    team
-  };
+  return {lead: String(rawLead || '').trim(), team: String(rawTeam || '').trim()};
 }
 
 /**
@@ -594,11 +486,11 @@ export function runArtifactIntegrityCheck(
   const confClientNames: string[] = [];
   for (const cm of confMattersList) {
     const rawC = (cm.client || cm.clientName || cm.name || '').trim();
-    if (rawC.length >= 4) {
+    if (rawC.length >= 2) {
       confClientNames.push(rawC);
       // Also extract clean entity if formatted like "Familia de Anda — ..."
       const prefix = rawC.split(/[\—\-\:\.]/)[0].trim();
-      if (prefix.length >= 4 && prefix.toLowerCase() !== 'confidential') {
+      if (prefix.length >= 2 && prefix.toLowerCase() !== 'confidential') {
         confClientNames.push(prefix);
       }
     }
@@ -610,7 +502,7 @@ export function runArtifactIntegrityCheck(
       for (const confClient of confClientNames) {
         const confLower = confClient.toLowerCase();
         // Guard against short generic tokens
-        if (confLower.length < 4 || confLower === 'confidential' || confLower === 'client' || confLower === 'private') continue;
+        if (confLower.length < 2 || confLower === 'confidential' || confLower === 'client' || confLower === 'private') continue;
         
         // Exact word boundary or distinct inclusion check
         const regex = new RegExp(`\\b${confLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
@@ -678,45 +570,8 @@ export function runArtifactIntegrityCheck(
       }
     }
 
-    // Check 14: Cross-Field Factual Consistency (D2 vs D8 date harmonization)
-    const d2Text = (m.optimizedText || m.summary || '').toLowerCase();
-    const d8Text = (m.completionDate || m.status || '').toLowerCase();
-    const clientLower = (m.client || '').toLowerCase();
-
-    // Specific IDEX 2020 vs 2024 check
-    if ((clientLower.includes('idex') || clientLower.includes('brasilia')) && d2Text.includes('2020') && d8Text.includes('2024')) {
-      criticalErrors.push({
-        severity: 'CRITICAL',
-        matterName: mName,
-        field: 'Factual Integrity (D2 vs D8 Date Contradiction)',
-        description: `Contradiction detected: D2 narrative states 'won in early 2020' while D8 states 'resolved in August 2024'. Both fields must align on verified source facts (early 2020).`,
-        actionTaken: 'Blocked delivery: Dates must be harmonized.'
-      });
-    }
-
-    // Check 15: Currency Integrity & Source Preservation (Angela Castillo Critical Rule)
-    const valText = (m.value || m.dealValue || '').toLowerCase();
-    if (clientLower.includes('coats')) {
-      if (valText.includes('mxn 675') || valText.includes('usd 39,706') || valText.includes('39,706')) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Currency Integrity Invariant (Coats)',
-          description: `Currency corruption detected: Coats source value of US$ 675,000 was converted to MXN 675,000 (~USD 39,706). Source currency must NEVER be converted or normalized.`,
-          actionTaken: 'Blocked delivery: Currency must retain USD 675,000.'
-        });
-      }
-    }
-    if (clientLower.includes('cinemex')) {
-      if (valText.includes('mxn 553,278') || valText.includes('usd 32,546') || valText.includes('32,546')) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Currency Integrity Invariant (Cinemex)',
-          description: `Currency corruption detected: Cinemex reported value of US$ 553,278.59 was converted to MXN 553,278.59 (~USD 32,546). Conflicting values must trigger SOURCE VALUE CONFLICT notice without currency mutation.`,
-          actionTaken: 'Blocked delivery: Source currency must be preserved and conflict flagged.'
-        });
-      }
+    if (m.valueConflict || m.value_conflict) {
+      criticalErrors.push({severity:'CRITICAL',matterName:mName,field:'Unresolved source value conflict',description:String(m.valueConflict || m.value_conflict),actionTaken:'Blocked pending source clarification.'});
     }
 
     // Check 16: Incomplete / Truncated Sentence Validator (Angela Castillo Directive)

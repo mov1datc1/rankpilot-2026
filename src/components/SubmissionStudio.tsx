@@ -1,5 +1,7 @@
 'use client';
 
+import { processingFeedback } from '@/lib/ux/processing-feedback';
+import { getDeliveryState } from '@/lib/audit/delivery-state';
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { curateMatters } from '@/lib/docx/matter-curator';
@@ -113,10 +115,12 @@ export default function SubmissionStudio({
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});
   const [matters, setMatters] = useState<MatterItem[]>(() => {
-    // Prefer database matters, fall back to chambersData.matters
+    // Database fields plus revision-specific provenance/permissions from the JSON register.
     const dbMatters = submission.matters || [];
     const sourceMatters = dbMatters.length > 0 ? dbMatters : (chambersData.matters || []);
+    const evidenceById = new Map((chambersData.matters || []).map((m: any) => [m.id, m]));
     return sourceMatters.map((m: any, idx: number) => ({
+      ...(evidenceById.get(m.id) as any || {}),
       ...m,
       id: m.id || m._id || `matter-${idx}-${(m.client || m.name || m.title || 'item').toString().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`
     }));
@@ -135,32 +139,12 @@ export default function SubmissionStudio({
   // B10 Narrative State
   const firmLowerSS = (chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '').toLowerCase();
   const paLowerSS = (submission.practiceArea || chambersData.practice_area || '').toLowerCase();
-  let initialB10 = chambersData.enhanced_b7 
+  const initialB10 = chambersData.enhanced_b7
     || chambersData.enhanced_b10 
     || chambersData.b7 
+    || chambersData.original_b10
     || chambersData.departmentDesc 
     || '';
-  if (initialB10.length < 50 || initialB10.includes('principal base is Guadalajara') || initialB10.includes('region of Guadalajara')) {
-    const firmDisplay = chambersData.firm_name || chambersData.firmName || (submission as any).firmName || 'The firm';
-    const paDisplay = submission.practiceArea || chambersData.practice_area || 'Practice';
-    const jurDisplay = chambersData.jurisdiction || chambersData.guideRegion || 'the jurisdiction';
-    const mattersList: any[] = chambersData.matters || submission.matters || [];
-    const lawyersList: any[] = chambersData.lawyers || [];
-    
-    const leadLawyers = lawyersList.filter((l: any) => l.isPartner || l.ranking || (l.role && String(l.role).toLowerCase().includes('partner'))).map((l: any) => l.name || l.fullName).filter(Boolean);
-    const topClients = mattersList.slice(0, 4).map((m: any) => m.client || m.clientName || m.name).filter(Boolean);
-
-    const leadStr = leadLawyers.length > 0 ? `Led by ${leadLawyers.slice(0, 3).join(', ')}, ` : '';
-    const clientsStr = topClients.length > 0 ? ` with representative instructions for ${topClients.join(', ')}` : '';
-
-    initialB10 = `${firmDisplay} delivers specialized, strategic counsel in ${paDisplay} across ${jurDisplay}. Clients engage the team for business-critical mandates requiring sophisticated regulatory, transactional, and contentious expertise.
-
-${leadStr}the practice has repeatedly converted complex legal challenges into outcomes that protect commercial value, ensure regulatory compliance, and support long-term investment continuity${clientsStr}.
-
-The department combines deep substantive command with rigorous execution across its senior partners and specialized associates, ensuring direct partner involvement and consistent technical depth on every mandate.
-
-The practice regularly represents domestic conglomerates, financial institutions, and multinational corporations in high-stakes matters, maintaining an established reputation for excellence across ${jurDisplay}.`;
-  }
   const [b10Text, setB10Text] = useState<string>(initialB10);
   const [b10Directive, setB10Directive] = useState<string>('');
   const [isOptimizingB10, setIsOptimizingB10] = useState<boolean>(false);
@@ -188,7 +172,7 @@ The practice regularly represents domestic conglomerates, financial institutions
   const [editingMatterField, setEditingMatterField] = useState<{ matterId: string; field: string; value: string } | null>(null);
 
   // Evidence Readiness Engine (v27.0)
-  const currentPracticeArea = submission.practiceArea || chambersData.practice_area || '';
+  const currentPracticeArea = chambersData.practice_area || submission.practiceArea || '';
   const readiness: EvidenceReadinessResult = React.useMemo(() => {
     return calculateEvidenceReadiness(matters, chambersData.lawyers || [], b10Text, {
       practiceArea: currentPracticeArea,
@@ -216,9 +200,8 @@ The practice regularly represents domestic conglomerates, financial institutions
     if (isSwitchingPractice) return;
     setIsSwitchingPractice(true);
     try {
-      await updateSubmissionValidatedData(submission.id, {
-        practiceArea: newPractice
-      });
+      const result = await updateSubmissionValidatedData(submission.id, { practiceArea: newPractice });
+      if (!result.success) throw new Error(result.error);
       setChambersData((prev: any) => ({
         ...prev,
         practice_area: newPractice,
@@ -234,67 +217,101 @@ The practice regularly represents domestic conglomerates, financial institutions
   const handleUpdateMatterField = async (matterId: string, field: string, value: string) => {
     const updated = matters.map(m => {
       if (m.id === matterId) {
-        return { ...m, [field]: value };
+        return { ...m, [field]: value, optimizedText: '', optimized_text: '' };
       }
       return m;
     });
     setMatters(updated);
     setEditingMatterField(null);
     try {
-      await updateSubmissionValidatedData(submission.id, { matters: updated });
+      const result = await updateSubmissionValidatedData(submission.id, {expectedRevision: Number(chambersData.draft_revision || 0), matters: updated});
+      if (!result.success) throw new Error(result.error);
+      setChambersData((prev: any) => ({...prev, draft_revision: result.revision, matters: updated, release_verdict: {passed: false, status: 'needs_review'}}));
     } catch (err) {
       console.error('Error saving matter field:', err);
+      setDraftSaveError(err instanceof Error ? err.message : 'No se pudo guardar el cambio.');
     }
   };
 
   const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
   const [draftSavedToast, setDraftSavedToast] = useState<boolean>(false);
+  const [draftSaveError, setDraftSaveError] = useState<string>('');
 
-  const handleSaveDraft = async () => {
+  const handleSaveDraft = async (): Promise<boolean> => {
     setIsSavingDraft(true);
+    setDraftSaveError('');
+    setDraftSavedToast(false);
     try {
-      await updateSubmissionValidatedData(submission.id, {
-        matters: matters,
-        b10Text: b10Text,
-        practiceArea: currentPracticeArea,
+      const result = await updateSubmissionValidatedData(submission.id, {
+        expectedRevision: Number(chambersData.draft_revision || 0),
+        matters, b10Text, practiceArea: currentPracticeArea,
         firmName: chambersData.firm_name || chambersData.firmName || ''
       });
+      if (!result.success) throw new Error(result.error || 'No se pudo guardar el borrador.');
+      setChambersData((prev: any) => ({...prev, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.']}}));
       setDraftSavedToast(true);
       setTimeout(() => setDraftSavedToast(false), 3500);
+      return true;
     } catch (e) {
-      console.error('Error saving draft:', e);
+      setDraftSaveError(e instanceof Error ? e.message : 'No se pudo guardar. Tus cambios siguen en esta pantalla; reintenta antes de salir.');
+      return false;
     } finally {
       setIsSavingDraft(false);
     }
   };
 
   const handleSaveDraftAndExit = async () => {
-    setIsSavingDraft(true);
-    try {
-      await updateSubmissionValidatedData(submission.id, {
-        matters: matters,
-        b10Text: b10Text,
-        practiceArea: currentPracticeArea,
-        firmName: chambersData.firm_name || chambersData.firmName || ''
-      });
-    } catch (e) {
-      console.error('Error saving draft and exit:', e);
-    } finally {
-      router.push('/reports');
-    }
+    if (await handleSaveDraft()) router.push('/reports');
   };
+
+  const confirmPublication = async (matterId: string, isPublic: boolean) => {
+    setIsSavingDraft(true);
+    setDraftSaveError('');
+    const updated = matters.map(m => m.id === matterId ? {...m, isConfidential: !isPublic, confidential: !isPublic, confidentialityConfirmed: true, confidentialityStatus: isPublic ? 'publishable' : 'confidential', publish_status: isPublic ? 'publishable' : 'non_publishable', publishStatus: isPublic ? 'publishable' : 'confidential'} : m);
+    try {
+      const result = await updateSubmissionValidatedData(submission.id, {expectedRevision: Number(chambersData.draft_revision || 0), matters: updated});
+      if (!result.success) throw new Error(result.error);
+      setMatters(updated);
+      setChambersData((prev: any) => ({...prev, matters: updated, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review'}}));
+    } catch (e) { setDraftSaveError(e instanceof Error ? e.message : 'No se pudo guardar la confirmación.'); }
+    finally { setIsSavingDraft(false); }
+  };
+  const unconfirmedMatters = matters.filter((m: any) => m.confidentialityConfirmed === false || m.publish_status === 'confirmation_required' || m.confidentialityStatus === 'confirmation_required');
+
+  const [periodFrom, setPeriodFrom] = useState(initialChambersData?.research_period?.from || '');
+  const [periodTo, setPeriodTo] = useState(initialChambersData?.research_period?.to || '');
+  const saveResearchPeriod = async () => {
+    setIsSavingDraft(true);setDraftSaveError('');
+    try {
+      const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),researchPeriod:{from:periodFrom,to:periodTo}});
+      if(!result.success) throw new Error(result.error);
+      setChambersData((prev:any)=>({...prev,research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+    } catch(error) {setDraftSaveError(error instanceof Error?error.message:'No se pudo guardar el periodo.');}
+    finally {setIsSavingDraft(false);}
+  };
+  const [declaredRanking, setDeclaredRanking] = useState(submission.currentBand || '');
+  const [rankingEdition, setRankingEdition] = useState(String(initialChambersData?.ranking_edition || ''));
+  const [rankingCountry, setRankingCountry] = useState(initialChambersData?.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim() || '');
+  const [checkingRanking, setCheckingRanking] = useState(false);
+  const checkRanking = async () => {
+    setCheckingRanking(true); setDraftSaveError('');
+    try {
+      const response = await fetch('/api/verify-ranking', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissionId:submission.id,expectedRevision:Number(chambersData.draft_revision || 0),edition:rankingEdition,country:rankingCountry,declaredBand:declaredRanking})});
+      const result = await response.json();
+      if(!response.ok || !result.success) throw new Error(result.error || 'No se pudo verificar el ranking.');
+      setChambersData(result.chambersData);
+    } catch(error) {setDraftSaveError(error instanceof Error ? error.message : 'La consulta no está disponible.');}
+    finally {setCheckingRanking(false);}
+  };
+  const deliveryState = getDeliveryState(chambersData, matters, true);
 
   // Calculations
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
   
   // Categorize matters into publishable (D), confidential (E), and pruned (surplus) using strategic curation
   const curation = React.useMemo(() => {
-    return curateMatters(matters, submission.practiceArea || chambersData.practice_area || '', chambersData, {
-      maxTotal: 20,
-      maxPub: 13,
-      maxConf: 7,
-    });
-  }, [matters, submission.practiceArea, chambersData]);
+    return curateMatters(matters, currentPracticeArea || submission.practiceArea || '', chambersData);
+  }, [matters, currentPracticeArea, submission.practiceArea, chambersData]);
 
   const coreCount = curation.officialPubMatters.length + curation.officialConfMatters.length;
   const surplusCount = curation.surplusPubMatters.length + curation.surplusConfMatters.length;
@@ -356,27 +373,7 @@ The practice regularly represents domestic conglomerates, financial institutions
   };
 
   // Helper to sanitize and format monetary values cleanly for copilot badges
-  const formatCleanValue = (val: string): string => {
-    if (!val || val === 'N/A' || val === 'Not disclosed') return '';
-    let s = String(val).trim();
-    // Fix El Cielo comma typo: Approx USD 172,37,026.00 -> approx. USD 176.6M
-    if (s.includes('172,37,026') || s.includes('3.000.000.000') || s.includes('3,000,000,000')) {
-      return 'MXN 3B (approx. USD 176.6M)';
-    }
-    // Fix Duranpark spelled out words
-    if (s.includes('698,400,750') || s.includes('Six hundred ninety-eight million')) {
-      return 'MXN 698.4M (approx. USD 41.1M)';
-    }
-    // Strip redundant spelled-out numbers in parentheses e.g. (Six hundred... pesos 00/100 MXN)
-    s = s.replace(/\s*\([A-Z][a-z]+(\s+[a-z]+)*\s+pesos[^)]*\)/gi, '');
-    s = s.replace(/\s*\([A-Z\s]+pesos[^)]*\)/gi, '');
-    // If string has a spelled out parenthetical with words like million, pesos, hundred, thousand, strip it
-    s = s.replace(/\s*\([^)]*(?:million|pesos|hundred|thousand)[^)]*\)/gi, '');
-    if (s.length > 35) {
-      s = s.substring(0, 32) + '...';
-    }
-    return s.trim();
-  };
+  const formatCleanValue = (value:string):string => String(value || '').trim();
 
   const [userDesignatedHeroId, setUserDesignatedHeroId] = useState<string | null>(null);
 
@@ -384,6 +381,8 @@ The practice regularly represents domestic conglomerates, financial institutions
   const flagshipMatter = React.useMemo(() => {
     const all = [...(categorized.pub || []), ...(categorized.conf || []), ...(categorized.pruned || []), ...(matters || [])];
     
+    const canonicalId=chambersData.canonical_matter_selection?.hero_matter_id || chambersData.hero_matter_id;
+    if(canonicalId) return all.find(m=>m.id===canonicalId) || null;
     // 1. Explicit Hero Matter ID designated by user via "⭐ Hacer Insignia" button in current session
     if (userDesignatedHeroId) {
       const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(userDesignatedHeroId).toLowerCase());
@@ -397,42 +396,8 @@ The practice regularly represents domestic conglomerates, financial institutions
       if (found) return found;
     }
 
-    // 3. In Draft / un-optimized state, DO NOT prematurely assign an uncurated matter as Insignia!
-    // If 0 matters are optimized, show "Por calibrar" until "Optimizar Todo" runs.
-    const isOptimized = optimizedMattersCount > 0;
-    if (!isOptimized) {
-      return null;
-    }
-
-    // 4. In optimized state, look for the designated hero matter in curated matters
-    const allCurated = [...(curation.officialPubMatters || []), ...(curation.officialConfMatters || [])];
-    const explicitHero = allCurated.find(m => m.isHero || m.is_hero || m.quality_label === 'Flagship Matter');
-    if (explicitHero) {
-      return explicitHero;
-    }
-
-    // 5. Practice flagship anchors (Schaeffler for Labour, PepsiCo for Tax)
-    const schaefflerMatch = allCurated.find(m => (m.client || m.name || '').toLowerCase().includes('schaeffler'));
-    if (schaefflerMatch) {
-      return schaefflerMatch;
-    }
-    const pepsicoMatch = allCurated.find(m => (m.client || m.name || '').toLowerCase().includes('pepsico'));
-    if (pepsicoMatch) {
-      return pepsicoMatch;
-    }
-
-    // 6. Default to Section D #01 (top publishable matter)
-    if (curation.officialPubMatters && curation.officialPubMatters.length > 0) {
-      return curation.officialPubMatters[0];
-    }
-
-    // 7. Fallback if no publishable matters exist at all
-    if (allCurated.length > 0) {
-      const sortedByTier = [...allCurated].sort((a, b) => (b._strategicTier || 0) - (a._strategicTier || 0));
-      return sortedByTier[0];
-    }
     return null;
-  }, [categorized, matters, chambersData, submission, optimizedMattersCount, curation, userDesignatedHeroId]);
+  }, [categorized, matters, chambersData, userDesignatedHeroId]);
 
   const verifiedValuesList = React.useMemo(() => {
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
@@ -474,16 +439,6 @@ The practice regularly represents domestic conglomerates, financial institutions
     if (chambersData.department?.department_heads && chambersData.department?.department_heads.length > 0) {
       return chambersData.department?.department_heads;
     }
-    if (chambersData.contacts && chambersData.contacts.length > 0) {
-      return chambersData.contacts;
-    }
-    if (primaryLeadPartner) {
-      return [{
-        name: primaryLeadPartner,
-        email: chambersData.contacts?.[0]?.email || `${primaryLeadPartner.toLowerCase().replace(/[^a-z0-9]/g, '.')}@${firmName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-        phone: chambersData.contacts?.[0]?.phone || 'Socio Líder Asignado'
-      }];
-    }
     return [];
   }, [chambersData, primaryLeadPartner, firmName]);
 
@@ -496,7 +451,7 @@ The practice regularly represents domestic conglomerates, financial institutions
     || chambersData.enhanced_c2
     || chambersData.feedback
     || chambersData.c2
-    || 'We would be happy to discuss the market during a telephone interview.';
+    || '';
 
   const pubClients = React.useMemo(() => {
     return [...new Set(categorized.pub.map(m => m.client).filter(Boolean))] as string[];
@@ -521,10 +476,10 @@ The practice regularly represents domestic conglomerates, financial institutions
       badges.push({ label: 'Sin Socio', color: '#4338CA', bg: '#EEF2FF', icon: '○' });
     }
     if (!hasSubstance) {
-      badges.push({ label: 'Evidencia Débil', color: '#DC2626', bg: '#FEE2E2', icon: '⚠' });
+      badges.push({ label: 'Descripción por revisar', color: '#DC2626', bg: '#FEE2E2', icon: '⚠' });
     }
     if (hasClient && hasValue && hasLead && hasSubstance) {
-      badges.push({ label: 'Evidencia Completa', color: '#16A34A', bg: '#DCFCE7', icon: '✓' });
+      badges.push({ label: 'Datos básicos presentes', color: '#16A34A', bg: '#DCFCE7', icon: '✓' });
     }
     return badges;
   };
@@ -533,7 +488,7 @@ The practice regularly represents domestic conglomerates, financial institutions
   const handleCopyPartnerQuestionnaire = () => {
     let text = `SOLICITUD DE INFORMACIÓN PARA SUBMISSION CHAMBERS / LEGAL 500\n`;
     text += `Firma: ${firmName} | Práctica: ${practiceAreaName}\n`;
-    text += `Diagnóstico de Preparación de Evidencia: ${readiness.score}% (${readiness.label})\n`;
+    text += `Campos básicos presentes: ${readiness.score}% (${readiness.label})\n`;
     text += `Fecha: ${new Date().toLocaleDateString('es-MX')}\n\n`;
     text += `Estimados Socios y Asociados:\n`;
     text += `Para completar la postulación oficial de la práctica ante el directorio y asegurar la mejor evaluación editorial, necesitamos solventar los siguientes datos faltantes antes de optimizar:\n\n`;
@@ -546,12 +501,12 @@ The practice regularly represents domestic conglomerates, financial institutions
         text += `   Datos faltantes: ${item.missingFields.join(', ')}\n`;
         text += `   Preguntas a responder:\n`;
         if (!item.hasClient) text += `   - ¿Quién es el cliente corporativo o qué descripción sectorial podemos usar si es confidencial?\n`;
-        if (!item.hasValue) text += `   - ¿Cuál es el monto estimado de la operación / litigio o la escala económica (USD o MXN)?\n`;
-        if (!item.hasOutcome) text += `   - ¿Cuál fue el resultado concreto obtenido, hito de cierre o precedente alcanzado?\n`;
+        if (!item.hasValue) text += `   - Si aplica un valor económico, ¿qué importe, moneda y tipo de valor acredita la fuente?\n`;
+        if (!item.hasOutcome) text += `   - ¿Cuál es el estado actual y su fecha? Si hay un resultado o hito, ¿qué fuente lo acredita?\n`;
         if (!item.hasLeadPartner) text += `   - ¿Quién es el socio líder y asociados clave asignados a este asunto?\n`;
       });
     } else {
-      text += `Todos los asuntos cargados tienen los campos indispensables completos.\n`;
+      text += `Los campos básicos revisados están presentes; queda pendiente la revisión editorial y del archivo.\n`;
     }
 
     text += `\nFavor de enviar estos datos a la brevedad para incorporar al borrador de RankPilot.\n`;
@@ -568,28 +523,33 @@ The practice regularly represents domestic conglomerates, financial institutions
     if (isOptimizingAll) return;
 
     // v27.0 Evidence Readiness Gate: Block ONLY on critical insufficiency (< 5 matters or score < 50)
-    if (!bypassReadiness && readiness.level === 'critical') {
+    if (!readiness.canOptimize) {
       setShowReadinessModal(true);
       return;
     }
     setShowReadinessModal(false);
 
+    setDraftSaveError('');
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
 
     // v26.37: Optimize ALL matters across the submission (both publishable and confidential)
-    const targetList = matters;
+    const targetList = matters.filter(m => !(m.optimizedText || m.optimized_text || '').trim());
+    let optimizationFailed = false;
+    const failedMatters:string[]=[];
+    let savedMatters=0;
     const totalSteps = targetList.length + 2; // B10 + matters + audit synthesis
 
     setOptimizeAllProgress({
       current: 0,
       total: totalSteps,
-      stage: 'Iniciando optimización integral: Sección B10 (Posicionamiento Institucional)...'
+      stage: 'Preparando la descripción del departamento con tus fuentes…'
     });
 
     // 1. Optimize Section B10
     let currentB10Text = b10Text;
     try {
+      if (!chambersData.enhanced_b7 && b10Text.trim()) {
       const b10Res = await fetch('/api/optimize/b10', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -600,19 +560,24 @@ The practice regularly represents domestic conglomerates, financial institutions
         })
       });
       const b10Data = await b10Res.json();
+      if (b10Data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), b10Data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (b10Data.success && b10Data.enhanced_b10) {
         currentB10Text = b10Data.enhanced_b10;
         setB10Text(b10Data.enhanced_b10);
+        setChambersData((prev:any)=>({...prev,enhanced_b7:b10Data.enhanced_b10}));
+      } else { optimizationFailed = true; }
       }
     } catch (b10Err) {
       console.warn('[Global Optimization] B10 error:', b10Err);
+      optimizationFailed = true;
     }
 
+    if(optimizationFailed) {setDraftSaveError('No se pudo guardar la nueva redacción del departamento. La versión anterior se conserva. Reintenta antes de continuar con los asuntos.');setIsOptimizingAll(false);setOptimizeAllProgress(null);return;}
     let completed = 1;
     setOptimizeAllProgress({
       current: completed,
       total: totalSteps,
-      stage: `Sección B10 optimizada. Optimizando los ${targetList.length} asuntos (públicos y confidenciales)...`
+      stage: `Descripción del departamento disponible. Preparando ${targetList.length} asuntos pendientes de redacción…`
     });
 
     // 2. Optimize matters in concurrent batches of 4
@@ -637,40 +602,33 @@ The practice regularly represents domestic conglomerates, financial institutions
             })
           });
           const data = await res.json();
-          if (data.success && data.optimized_text) {
+          if (!res.ok || !data.success || !data.optimized_text) {optimizationFailed = true;failedMatters.push(m.name || m.client || m.id || 'Asunto sin nombre');}
+      if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
+      if (data.success && data.optimized_text) {
+            savedMatters++;
             const optText = data.optimized_text;
             if (m.id) optimizedMap[m.id] = optText;
-            if (m.client) optimizedMap[`client:${m.client.trim().toLowerCase()}`] = optText;
-            const cleanClient = (m.client || m.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (cleanClient) optimizedMap[`clean_client:${cleanClient}`] = optText;
-            if (m.title) optimizedMap[`title:${m.title.trim().toLowerCase()}`] = optText;
-            optimizedMap[`idx:${actualIdx}`] = optText;
+
+
           }
         } catch (mErr) {
           console.warn(`[Global Optimization] Matter ${actualIdx} error:`, mErr);
+          optimizationFailed = true;
+          failedMatters.push(m.name || m.client || m.id || 'Asunto sin nombre');
         } finally {
           completed++;
           setOptimizeAllProgress({
             current: Math.min(completed, totalSteps - 1),
             total: totalSteps,
-            stage: `Optimizando asuntos: ${Math.min(completed - 1, targetList.length)} de ${targetList.length} completados...`
+            stage: `Asuntos procesados: ${Math.min(completed - 1, targetList.length)} de ${targetList.length}. ${savedMatters} redacciones guardadas${failedMatters.length ? `; ${failedMatters.length} pendientes de reintento` : ''}.`
           });
         }
       }));
     }
 
-    // Merge all optimized matters deterministically without race conditions
+    // Stable matter IDs are the join key. Client names can legitimately repeat.
     const latestMatters = matters.map((item, idx) => {
-      const clientKey = item.client ? `client:${item.client.trim().toLowerCase()}` : '';
-      const cleanItemClient = (item.client || item.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const titleKey = item.title ? `title:${item.title.trim().toLowerCase()}` : '';
-      const optText = (item.id && optimizedMap[item.id])
-        || (clientKey && optimizedMap[clientKey])
-        || (cleanItemClient && optimizedMap[`clean_client:${cleanItemClient}`])
-        || (titleKey && optimizedMap[titleKey])
-        || optimizedMap[`idx:${idx}`]
-        || item.optimizedText
-        || item.optimized_text;
+      const optText = (item.id && optimizedMap[item.id]) || item.optimizedText || item.optimized_text;
       if (optText) {
         return {
           ...item,
@@ -681,12 +639,18 @@ The practice regularly represents domestic conglomerates, financial institutions
       return item;
     });
     setMatters(latestMatters);
+    if (optimizationFailed) {
+      setDraftSaveError(`No se completaron: ${failedMatters.join(', ')}. Las ${savedMatters} nuevas redacciones confirmadas se guardaron. Reintenta para continuar con los pendientes.`);
+      setIsOptimizingAll(false);
+      setOptimizeAllProgress(null);
+      return;
+    }
 
     // 3. Finalize & Synthesize Strategic Audit Report + Active Judge SOL Auto-Polisher
     setOptimizeAllProgress({
       current: totalSteps - 1,
       total: totalSteps,
-      stage: 'Control de Calidad Activo Judge SOL: Auto-pulido de entregables y certificación 1:1...'
+      stage: 'Revisando las fuentes, la coherencia editorial y el Word final. Puede tardar varios minutos. Los pasos ya guardados se conservan.'
     });
 
     try {
@@ -701,6 +665,7 @@ The practice regularly represents domestic conglomerates, financial institutions
         })
       });
       const compData = await compRes.json();
+      if (!compRes.ok || !compData.success) throw new Error(processingFeedback(compData,compRes.status,'review'));
       if (compData.success && compData.chambersData) {
         setChambersData(compData.chambersData);
         if (Array.isArray(compData.matters) && compData.matters.length > 0) {
@@ -709,17 +674,21 @@ The practice regularly represents domestic conglomerates, financial institutions
         if (compData.b10) {
           setB10Text(compData.b10);
         }
-        setSubmissionStatus('Optimized');
+        setSubmissionStatus(compData.status || 'Draft');
         router.refresh();
       }
     } catch (cErr) {
       console.warn('[Global Optimization] Complete API error:', cErr);
+      setDraftSaveError(cErr instanceof Error ? cErr.message : 'La revisión no se completó. Conserva el borrador y reintenta.');
+      setIsOptimizingAll(false);
+      setOptimizeAllComplete(false);
+      return;
     }
 
     setOptimizeAllProgress({
       current: totalSteps,
       total: totalSteps,
-      stage: '¡Optimización y Control de Calidad SOL completados! Entregables 100% certificados para descarga.'
+      stage: 'Revisión completada. Consulta el estado de entrega y los pendientes antes de descargar.'
     });
     setOptimizeAllComplete(true);
     setIsOptimizingAll(false);
@@ -732,6 +701,7 @@ The practice regularly represents domestic conglomerates, financial institutions
   const handleOptimizeB10 = async () => {
     setIsOptimizingB10(true);
     setB10SuccessMsg('');
+    setDraftSaveError('');
     try {
       const res = await fetch('/api/optimize/b10', {
         method: 'POST',
@@ -744,15 +714,17 @@ The practice regularly represents domestic conglomerates, financial institutions
       });
 
       const data = await res.json();
+      if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (data.success && data.enhanced_b10) {
         setB10Text(data.enhanced_b10);
-        setB10SuccessMsg('✅ B10 optimizado con éxito bajo los 4 Pilares Institucionales');
+        setChambersData((prev:any)=>({...prev,enhanced_b7:data.enhanced_b10}));
+        setB10SuccessMsg('Redacción del departamento guardada. La aprobación final sigue pendiente.');
         setTimeout(() => setB10SuccessMsg(''), 4000);
       } else {
-        alert(data.error || 'No se pudo optimizar B10. Inténtalo de nuevo.');
+        setDraftSaveError(processingFeedback(data,res.status,'optimize'));
       }
     } catch (err: any) {
-      alert('Error de conexión con el motor de IA: ' + err.message);
+      setDraftSaveError(processingFeedback({},0,'optimize'));
     } finally {
       setIsOptimizingB10(false);
     }
@@ -761,6 +733,7 @@ The practice regularly represents domestic conglomerates, financial institutions
   // Handler: Re-optimize single matter (3s isolated micro-call)
   const handleOptimizeMatter = async (matter: MatterItem, matterIdx: number) => {
     const key = matter.id || `matter-${matterIdx}`;
+    setDraftSaveError('');
     setOptimizingMatterId(key);
     setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
 
@@ -778,10 +751,11 @@ The practice regularly represents domestic conglomerates, financial institutions
       });
 
       const data = await res.json();
+      if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (data.success && data.optimized_text) {
         // Update matters state
         setMatters(prev => prev.map((m, idx) => {
-          if ((m.id && m.id === matter.id) || idx === matterIdx) {
+          if (m.id && m.id === matter.id) {
             return {
               ...m,
               optimizedText: data.optimized_text,
@@ -793,16 +767,16 @@ The practice regularly represents domestic conglomerates, financial institutions
 
         setMatterSuccessMsg(prev => ({
           ...prev,
-          [key]: '⚡ Asunto optimizado en 3 párrafos orgánicos'
+          [key]: 'Nueva redacción guardada; pendiente de revisión final.'
         }));
         setTimeout(() => {
           setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
         }, 4000);
       } else {
-        alert(data.error || 'No se pudo optimizar el asunto.');
+        setDraftSaveError(processingFeedback(data,res.status,'optimize'));
       }
     } catch (err: any) {
-      alert('Error de conexión con el motor de IA: ' + err.message);
+      setDraftSaveError(processingFeedback({},0,'optimize'));
     } finally {
       setOptimizingMatterId(null);
     }
@@ -818,12 +792,14 @@ The practice regularly represents domestic conglomerates, financial institutions
     // Update local matters state with isHero
     setMatters(prev => prev.map(m => ({
       ...m,
-      isHero: (m.id && m.id === heroId) || (m.client && m.client === matter.client)
+      isHero: m.id === heroId
     })));
 
     // Update chambersData in state
     const updatedChambersData = {
       ...chambersData,
+      approved_artifact: null,
+      release_verdict: {passed:false,status:'needs_review'},
       user_selected_hero_id: heroId,
       hero_matter_id: heroId,
       hero_matter_title: heroTitle,
@@ -842,9 +818,12 @@ The practice regularly represents domestic conglomerates, financial institutions
 
     // Persist via Server Action
     try {
-      await updateDesignatedHeroMatter(submission.id, heroId, heroTitle);
+      const result = await updateDesignatedHeroMatter(submission.id, heroId, heroTitle);
+      if (!result.success) throw new Error(result.error);
+      setChambersData((prev:any)=>({...prev,draft_revision:result.revision}));
     } catch (err) {
       console.error('Failed to persist designated hero matter:', err);
+      setDraftSaveError(err instanceof Error ? err.message : 'No se pudo guardar la selección.');
     }
   };
 
@@ -857,10 +836,27 @@ The practice regularly represents domestic conglomerates, financial institutions
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F8FAFC' }}>
+    <div className="rankpilot-studio" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F8FAFC' }}>
+      <style>{`
+        .rankpilot-studio, .rankpilot-studio * { box-sizing: border-box; }
+        .rankpilot-studio { max-width: 100%; overflow-wrap: anywhere; }
+        .studio-canvas { min-width: 0; }
+        @media (max-width: 900px) {
+          .studio-toolbar { position: relative !important; padding: 12px !important; flex-wrap: wrap; gap: 12px; }
+          .studio-toolbar > div { flex-wrap: wrap; max-width: 100%; gap: 8px !important; }
+          .studio-columns { flex-direction: column; }
+          .studio-nav, .studio-copilot { width: 100% !important; height: auto !important; max-width: 100% !important; flex-basis: auto !important; position: relative !important; top: 0 !important; }
+          .studio-nav { max-height: 180px; }
+          .studio-canvas { width: 100%; max-width: 100% !important; padding: 16px !important; }
+          .rankpilot-studio [style*='grid-template-columns'] { grid-template-columns: minmax(0, 1fr) !important; }
+          .studio-canvas [style*='min-width: 280px'] { min-width: 0 !important; flex: 1 1 100% !important; }
+          .studio-canvas [style*='display: flex'] { flex-wrap: wrap; }
+          .rankpilot-studio input, .rankpilot-studio textarea { max-width: 100%; min-width: 0; }
+        }
+      `}</style>
       
       {/* ═══ TOP BAR & TABS ═══ */}
-      <div style={{
+      <div className="studio-toolbar" style={{
         background: '#FFFFFF',
         borderBottom: '1px solid #E2E8F0',
         padding: '0.75rem 2rem',
@@ -949,9 +945,9 @@ The practice regularly represents domestic conglomerates, financial institutions
             type="button"
             onClick={() => setShowReadinessModal(true)}
             style={{
-              background: matters.length < 5 ? '#FEF2F2' : readiness.bgColor,
-              border: matters.length < 5 ? '1.5px solid #FECACA' : `1px solid ${readiness.color}40`,
-              color: matters.length < 5 ? '#DC2626' : readiness.color,
+              background: readiness.level === 'critical' ? '#FEF2F2' : readiness.bgColor,
+              border: readiness.level === 'critical' ? '1.5px solid #FECACA' : `1px solid ${readiness.color}40`,
+              color: readiness.level === 'critical' ? '#DC2626' : readiness.color,
               padding: '0.45rem 0.75rem',
               borderRadius: '7px',
               fontSize: '0.78rem',
@@ -962,19 +958,19 @@ The practice regularly represents domestic conglomerates, financial institutions
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title={matters.length < 5 ? `Muestra de evidencia insuficiente (${matters.length} mandatos). Chambers exige 10 a 20 mandatos. Haz clic para ver el diagnóstico.` : `Diagnóstico de Calidad de Evidencia (${readiness.score}%). Haz clic en cualquier momento para ver qué campos faltan o cómo mejorar tu postulación antes de optimizar o descargar.`}
+            title="Consulta los campos presentes y los datos pendientes. Este indicador no certifica calidad ni ranking."
             onMouseEnter={e => {
-              const c = matters.length < 5 ? '#DC2626' : readiness.color;
+              const c = readiness.level === 'critical' ? '#DC2626' : readiness.color;
               e.currentTarget.style.borderColor = c;
               e.currentTarget.style.boxShadow = `0 1px 4px ${c}25`;
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = matters.length < 5 ? '#FECACA' : `${readiness.color}40`;
+              e.currentTarget.style.borderColor = readiness.level === 'critical' ? '#FECACA' : `${readiness.color}40`;
               e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: matters.length < 5 ? '#DC2626' : readiness.color }} />
-            <span>{matters.length < 5 ? `Insuficiente (${matters.length}/10)` : `${readiness.score}% Calidad`}</span>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.level === 'critical' ? '#DC2626' : readiness.color }} />
+            <span>{readiness.score}% campos presentes</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
@@ -1164,13 +1160,14 @@ The practice regularly represents domestic conglomerates, financial institutions
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={isFullyOptimized ? 'Todos los asuntos están optimizados. Haz clic para re-optimizar si realizaste cambios.' : 'Ejecutar optimización editorial integral bajo estándares Chambers'}
+            title={isFullyOptimized ? 'Los asuntos ya están optimizados. Revisa y genera los entregables; los pendientes se procesan al continuar.' : 'Ejecutar optimización editorial integral bajo estándares Chambers'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Optimizando Asuntos...' : isFullyOptimized ? '✓ Optimizado' : '✨ Optimizar Todo'}</span>
+            <span>{isOptimizingAll ? 'Optimizando Asuntos...' : isFullyOptimized ? 'Revisar entrega' : '✨ Optimizar Todo'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
+          {draftSaveError && <div role="alert" style={{position:'fixed',bottom:16,right:16,zIndex:100,color:'#991B1B',background:'#FFF7ED',border:'1px solid #FDBA74',borderRadius:10,padding:16,width:'calc(100vw - 32px)',maxWidth:440,maxHeight:'30vh',overflowY:'auto',fontSize:14,boxShadow:'0 4px 20px #0002'}}>{draftSaveError}<button type="button" aria-label="Ocultar aviso" onClick={()=>setDraftSaveError('')} style={{display:'block',marginTop:8}}>Entendido</button></div>}
           <div style={{ position: 'relative' }} data-dropdown="download">
             <button
               onClick={() => {
@@ -1219,7 +1216,9 @@ The practice regularly represents domestic conglomerates, financial institutions
                   href={isLegal500
                     ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`
                     : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
-                  onClick={() => setShowDownloadMenu(false)}
+                  aria-disabled={!deliveryState.approved}
+                  title={deliveryState.errors.join(' ')}
+                  onClick={(e) => { if (!deliveryState.approved) { e.preventDefault(); setDraftSaveError(deliveryState.errors.join(' ')); } else setShowDownloadMenu(false); }}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
@@ -1239,12 +1238,12 @@ The practice regularly represents domestic conglomerates, financial institutions
                       {isLegal500 ? 'Legal 500 Master DOCX' : 'Chambers Master DOCX'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                      Formulario oficial optimizado en 3 párrafos
+                      {deliveryState.approved ? 'Disponible tras revisión' : 'Pendiente: revisa los bloqueos antes de descargar'}
                     </div>
                   </div>
                 </a>
 
-                {/* Strategic Audit Report DOCX */}
+                {/* Internal Evidence Review DOCX */}
                 <a
                   href={`/api/generate-docx?id=${submission.id}&type=audit`}
                   onClick={() => setShowDownloadMenu(false)}
@@ -1263,7 +1262,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                   <FileText size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>
-                      Strategic Audit Report DOCX
+                      Internal Evidence Review DOCX
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
                       Carta ejecutiva para socios con conciliación 1:1
@@ -1327,14 +1326,14 @@ The practice regularly represents domestic conglomerates, financial institutions
                 <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF', marginRight: '0.5rem' }}>
                   Optimizando Submission Global:
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#E0E7FF' }}>
+                <span role="status" aria-live="polite" style={{ fontSize: '0.85rem', color: '#E0E7FF' }}>
                   {optimizeAllProgress.stage}
                 </span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.15)', padding: '2px 8px', borderRadius: '4px', color: '#BAE6FD', fontWeight: 600 }}>
-                ~{Math.max(2, Math.round((optimizeAllProgress.total - optimizeAllProgress.current) * 1.5))}s restantes
+                {optimizeAllProgress.current} de {optimizeAllProgress.total} pasos procesados
               </span>
               <span style={{ fontWeight: 800, fontSize: '1rem', color: '#38BDF8' }}>
                 {Math.min(100, Math.round((optimizeAllProgress.current / Math.max(1, optimizeAllProgress.total)) * 100))}%
@@ -1356,7 +1355,7 @@ The practice regularly represents domestic conglomerates, financial institutions
       {/* ═══ AUDIT TAB VIEW ═══ */}
       {activeTab === 'audit' && (
         <div style={{ maxWidth: '64rem', margin: '2rem auto', width: '100%', padding: '0 2rem' }}>
-          {(!chambersData.analysis?.score && !chambersData.analysis?.audit_letter?.the_state_of_play) && (
+          {(!chambersData.editorial_review?.letter && !chambersData.analysis?.score && !chambersData.analysis?.audit_letter?.the_state_of_play) && (
             <div style={{
               background: '#EFF6FF',
               border: '1px solid #BFDBFE',
@@ -1399,16 +1398,20 @@ The practice regularly represents domestic conglomerates, financial institutions
               </button>
             </div>
           )}
-          {auditChildren}
+          {chambersData.editorial_review?.letter ? <article style={{background:'#FFFFFF',padding:'1.5rem',borderRadius:12,border:'1px solid #E2E8F0'}}>
+            <h2>Strategic Audit Letter</h2><p><strong>{deliveryState.label}</strong></p>
+            {Object.entries({executive_assessment:'1. Evaluación ejecutiva',portfolio:'2. Portafolio seleccionado',leadership:'3. Liderazgo y atribución',evidence_gaps:'4. Evidencia pendiente',next_steps:'5. Próximos pasos'}).map(([key,title])=><section key={key}><h3>{title}</h3><p style={{whiteSpace:'pre-wrap'}}>{chambersData.editorial_review.letter[key]}</p></section>)}
+          </article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
+
         </div>
       )}
 
       {/* ═══ STUDIO TAB VIEW (3 COLUMNS) ═══ */}
       {activeTab === 'studio' && (
-        <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+        <div className="studio-columns" style={{ display: 'flex', flex: 1, position: 'relative' }}>
           
           {/* ── LEFT SIDEBAR (NAV) ── */}
-          <div style={{
+          <div className="studio-nav" style={{
             width: sidebarCollapsed ? '60px' : '250px',
             transition: 'width 0.2s ease',
             background: '#FFFFFF',
@@ -1650,7 +1653,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A' }}>Anclaje Factual</span>
                   </div>
                   <p style={{ fontSize: '0.68rem', color: '#64748B', margin: 0, lineHeight: 1.4 }}>
-                    Todas las cifras, tribunales y contrapartes provienen estrictamente del submission original.
+                    Revisa cada cifra y atribución contra su fuente antes de aprobar la entrega.
                   </p>
                 </div>
               </div>
@@ -1658,8 +1661,41 @@ The practice regularly represents domestic conglomerates, financial institutions
           </div>
 
           {/* ── CENTER CANVAS (CARDS & PREVIEW) ── */}
-          <div style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="studio-canvas" style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
+            <section aria-label="Estado de entrega" style={{padding:'1rem',background:deliveryState.approved?'#F0FDF4':'#EFF6FF',border:'1px solid #CBD5E1',borderRadius:10}}>
+              <strong>{deliveryState.label}</strong>
+              {deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
+              {deliveryState.warnings.length > 0 && <><p>Observaciones antes de presentar:</p><ul>{deliveryState.warnings.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul></>}
+            </section>
+            <section aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+              <strong>Periodo de trabajo que se presenta</strong>
+              <p>Indica las fechas de las instrucciones del directorio para contrastarlas con la actividad de los asuntos. Este dato queda registrado como confirmado por ti.</p>
+              <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
+              <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
+              <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>Guardar periodo</button>
+            </section>
+            <section aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+              <strong>Verificación oficial del ranking</strong>
+              <p>La consulta compara firma, práctica, país y edición. Las correcciones de tu declaración quedan registradas; una consulta fallida no acredita ausencia de ranking.</p>
+              <label style={{display:'block'}}>Posición declarada <input aria-label="Posición declarada" value={declaredRanking} onChange={e=>setDeclaredRanking(e.target.value)} placeholder="Ej. Band 2 o Tier 2" style={{maxWidth:'100%'}} /></label>
+              <label style={{display:'block'}}><input type="checkbox" checked={rankingEdition==='current'} onChange={e=>setRankingEdition(e.target.checked?'current':'')} /> Comparar con la tabla pública actual (sin afirmar una edición histórica)</label>
+              {rankingEdition!=='current' && <label>Edición del ranking <input aria-label="Edición del ranking" value={rankingEdition} onChange={e=>setRankingEdition(e.target.value)} placeholder="Ej. 2026" maxLength={4} style={{maxWidth:'100%'}} /></label>}
+              <label style={{display:'block'}}>País de la tabla <input aria-label="País de la tabla" value={rankingCountry} onChange={e=>setRankingCountry(e.target.value)} placeholder="Ej. Mexico" style={{maxWidth:'100%'}} /></label>
+              <button type="button" disabled={checkingRanking} onClick={()=>void checkRanking()}>{checkingRanking?'Consultando fuente oficial…':'Guardar declaración y verificar'}</button>
+              <p role="status">{chambersData.ranking_verification?.message || 'Pendiente de consulta oficial.'}</p>
+              {chambersData.ranking_verification?.observed_band && <p>Posición observada: {chambersData.ranking_verification.observed_band}. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
+              {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
+            </section>
+            {unconfirmedMatters.length > 0 && <section aria-label="Permisos de publicación pendientes" style={{padding: '1rem', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10}}>
+              <strong>Confirma los permisos de publicación</strong>
+              <p>Estos asuntos se mantienen fuera de las secciones públicas hasta que confirmes su estado. La entrega final permanece pendiente.</p>
+              {unconfirmedMatters.map(m => <div key={m.id} style={{marginBottom: 12}}>
+                <label>{m.client || m.name}<select aria-label={`Permiso de publicación de ${m.client || m.name}`} value="" disabled={isSavingDraft} onChange={e => { if (e.target.value) void confirmPublication(m.id!, e.target.value === 'public'); }} style={{display: 'block', width: '100%', marginTop: 6, padding: 8}}>
+                  <option value="">Selecciona el estado confirmado</option><option value="public">Autorizado para publicar</option><option value="confidential">Confidencial</option>
+                </select></label>
+              </div>)}
+            </section>}
             {/* ═══ MASTER ACTION HERO BANNER: OPTIMIZAR TODO CON IA ═══ */}
             <div style={{
               background: 'linear-gradient(135deg, #1A237E 0%, #283593 50%, #312E81 100%)',
@@ -1691,7 +1727,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                     </span>
                   </div>
                   <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                    {isFullyOptimized ? 'Submission 100% Optimizado con IA' : 'Optimización Estratégica Integral'}
+                    {isFullyOptimized ? 'Borrador optimizado — consulta la revisión' : 'Optimización Estratégica Integral'}
                   </h2>
                   <p style={{ fontSize: '0.85rem', color: '#C7D2FE', margin: '0.35rem 0 0 0', lineHeight: 1.45 }}>
                     {isFullyOptimized 
@@ -1943,7 +1979,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>Información Preliminar (A1 - A4)</h3>
                 </div>
                 <span style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <Check size={14} /> Verificado
+                  <Check size={14} /> Datos registrados
                 </span>
               </div>
 
@@ -2150,7 +2186,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <Sparkles size={14} color="#4F46E5" />
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
-                    Re-optimizar Sección B10 (Micro-Ajuste en 3 segundos)
+                    Revisar la redacción del departamento
                   </span>
                 </div>
 
@@ -2196,7 +2232,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                     ) : (
                       <>
                         <Sparkles size={14} />
-                        Re-optimizar B10 (3s)
+                        Revisar redacción de B10
                       </>
                     )}
                   </button>
@@ -2609,7 +2645,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                             ) : (
                               <>
                                 <Zap size={12} />
-                                Re-optimizar (3s)
+                                Revisar redacción
                               </>
                             )}
                           </button>
@@ -2927,7 +2963,7 @@ The practice regularly represents domestic conglomerates, financial institutions
           </div>
 
           {/* ── RIGHT DRAWER: EDITORIAL COPILOT ── */}
-          <div style={{
+          <div className="studio-copilot" style={{
             width: copilotCollapsed ? '50px' : '310px',
             transition: 'width 0.2s ease',
             background: '#FFFFFF',
@@ -2987,7 +3023,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
                     <ShieldCheck size={16} color={isFullyOptimized ? '#4ADE80' : '#38BDF8'} />
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: isFullyOptimized ? '#A5B4FC' : '#94A3B8' }}>
-                      {isFullyOptimized ? 'Calidad Institucional' : 'Borrador en Evolución'}
+                      {isFullyOptimized ? 'Redacción guardada' : 'Borrador en preparación'}
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
@@ -3204,13 +3240,13 @@ The practice regularly represents domestic conglomerates, financial institutions
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
                       <span style={{ fontSize: '0.85rem' }}>🔒</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
-                        Anclaje Factual Verificado
+                        Evidencia para revisar
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: 0, lineHeight: 1.45 }}>
                       {verifiedValuesList.length > 0
-                        ? `Cifras reales cotejadas: ${verifiedValuesList.map(v => `${v.name} (${v.value})`).join(' · ')}. Cero alucinación de montos o contrapartes.`
-                        : `Todas las entidades, fechas y tribunales provienen estrictamente del submission original de ${firmName} sin alterar los hechos.`}
+                        ? `Cifras registradas: ${verifiedValuesList.map(v => `${v.name} (${v.value})`).join(' · ')}. Comprueba su fuente antes de aprobar.`
+                        : `Revisa entidades, fechas y tribunales contra las fuentes de ${firmName}.`}
                     </p>
                   </div>
 
@@ -3230,7 +3266,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                     <p style={{ fontSize: '0.72rem', color: isLegal500 ? '#78350F' : '#1E3A8A', margin: 0, lineHeight: 1.45 }}>
                       {isLegal500
                         ? 'Pondera el volumen transaccional de todo el equipo (socios y asociados clave) y clasifica por Tiers sectoriales.'
-                        : 'El 60% del peso evaluativo recae en las 20 entrevistas de referees de clientes. Asegura correos corporativos vigentes.'}
+                        : 'Comprueba los requisitos de referentes del directorio y edición seleccionados, y la vigencia de sus datos de contacto.'}
                     </p>
                   </div>
                 </div>
@@ -3306,11 +3342,11 @@ The practice regularly represents domestic conglomerates, financial institutions
                       borderRadius: '6px',
                       border: `1px solid ${readiness.color}30`
                     }}>
-                      {readiness.score}% · {readiness.label} ({matters.length}/10 Asuntos)
+                      {readiness.score}% campos presentes · {matters.length} asuntos
                     </span>
                   </div>
                   <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '2px 0 0 0' }}>
-                    Estándar Chambers and Partners & The Legal 500
+                    Comprobación de datos; la aprobación final se muestra por separado
                   </p>
                 </div>
               </div>
@@ -3347,10 +3383,10 @@ The practice regularly represents domestic conglomerates, financial institutions
                   <div>
                     <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: readiness.color, margin: 0 }}>
                       {readiness.level === 'optimal'
-                        ? 'Portafolio Sólido y Defendible'
+                        ? 'Datos básicos presentes'
                         : readiness.level === 'warning'
-                        ? 'Atención: Datos Incompletos para Evaluación Tier-1'
-                        : 'Acción Requerida: Evidencia Insuficiente para Chambers'}
+                        ? 'Datos por completar'
+                        : 'Añade el contenido de origen'}
                     </h4>
                     <p style={{ fontSize: '0.8rem', color: '#334155', margin: '0.25rem 0 0 0', lineHeight: 1.5 }}>
                       {readiness.summary}
@@ -3358,7 +3394,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                     {matters.length < 10 && (
                       <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.65rem', background: '#FFFFFF', borderRadius: '6px', border: `1px solid ${readiness.color}30`, fontSize: '0.74rem', color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <span>⚠️</span>
-                        <span><strong>Alerta Chambers:</strong> Se exigen mínimo 10 asuntos para evaluar la solvencia de la práctica. Con {matters.length} asuntos, los investigadores desestiman el submission en primera ronda.</span>
+                        <span>Hay {matters.length} asuntos cargados. La pertinencia y la evidencia se revisan individualmente; este indicador no establece un mínimo obligatorio del directorio.</span>
                       </div>
                     )}
                   </div>
@@ -3631,57 +3667,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                 </div>
               </div>
 
-              {/* EXPLICIT DRAFT MODE GUARDRAIL (Solo para casos verdaderamente críticos: < 5 asuntos o score < 50) */}
-              {(matters.length < 5 || readiness.score < 50 || readiness.level === 'critical') && (
-                <div style={{
-                  background: '#FFF1F2',
-                  border: '1px solid #FECDD3',
-                  borderRadius: '10px',
-                  padding: '0.85rem 1.15rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem'
-                }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.78rem', color: '#9F1239', fontWeight: 600, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={allowDraftOptimization}
-                      onChange={(e) => setAllowDraftOptimization(e.target.checked)}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                    />
-                    <span>
-                      Deseo probar la redacción con IA en <strong>Modo Borrador Interno (No Certificable)</strong> a pesar de contar con solo {matters.length} asuntos.
-                    </span>
-                  </label>
-                  {allowDraftOptimization && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', paddingTop: '0.5rem', borderTop: '1px dashed #FECDD3' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#BE123C' }}>
-                        ⚠️ El Strategic Audit y el DOCX quedarán rotulados como <strong>BORRADOR NO CERTIFICABLE</strong> (Insuficiente: {matters.length}/10 asuntos).
-                      </span>
-                      <button
-                        onClick={() => {
-                          setShowReadinessModal(false);
-                          handleOptimizeAll(true);
-                        }}
-                        style={{
-                          background: '#DC2626',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          padding: '0.45rem 1rem',
-                          borderRadius: '6px',
-                          fontSize: '0.76rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                          boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)'
-                        }}
-                      >
-                        Optimizar como Borrador de Prueba ⚠️
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              {readiness.blockers.length>0 && <div role="status" style={{padding:'1rem',background:'#FFF7ED',borderRadius:8}}><strong>Antes de redactar:</strong><ul>{readiness.blockers.map(message=><li key={message}>{message}</li>)}</ul><p>Completa estos datos y vuelve a intentar. El borrador permanece disponible.</p></div>}
 
               {/* High-capacity portfolio advisory (ej. Ramos Castillo con 33 asuntos) */}
               {matters.length >= 10 && readiness.mattersNeedingAttention.length > 0 && (
@@ -3711,7 +3697,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                       Portafolio Apto para Optimización ({matters.length} Asuntos disponibles)
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: '0.15rem' }}>
-                      Cuentas con {matters.length - readiness.mattersNeedingAttention.length} asuntos completamente estructurados (supera el mínimo de 10). Puedes optimizar ahora mismo: el Strategic Audit seleccionará los mejores asuntos para el Core y enviará los excedentes a la reserva auditada.
+                      Hay {matters.length - readiness.mattersNeedingAttention.length} asuntos con sus campos básicos presentes. La revisión contrastará la evidencia y propondrá cuáles incluir; completar campos no acredita por sí solo calidad editorial.
                     </div>
                   </div>
                 </div>
@@ -3882,7 +3868,7 @@ The practice regularly represents domestic conglomerates, financial institutions
                       boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)'
                     }}
                   >
-                    ⚠️ Completar Asuntos Requeridos ({matters.length}/10) →
+                    Completar datos de origen →
                   </button>
                 ) : (
                   <button
@@ -3933,6 +3919,7 @@ The practice regularly represents domestic conglomerates, financial institutions
         onClose={() => setShowValidationWizard(false)}
         targetDirectory={selectedDirectory}
         initialData={{
+          draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
           practiceArea: (() => {
             const raw = chambersData?.metadata?.extracted_practice_area || chambersData?.practice_area || submission.practiceArea || '';
@@ -3944,39 +3931,18 @@ The practice regularly represents domestic conglomerates, financial institutions
             return (raw.includes('SOURCE DOCUMENT') || raw.startsWith('===')) ? '' : raw;
           })(),
           location: chambersData.location || chambersData.jurisdiction || submission.guideRegion || '',
-          b10Text: b10Text,
+          b10Text: chambersData.confirmed_source_b10 ?? chambersData.original_b10 ?? '',
           lawyers: chambersData.lawyers || [],
           matters: matters
         }}
         onComplete={async (data) => {
+          const result=await updateSubmissionValidatedData(submission.id,{...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision});
+          if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
+          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:data.lawyers,matters:data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setMatters(data.matters);
+          if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
-          if (data.firmName) {
-            setChambersData((prev: any) => ({ ...prev, firm_name: data.firmName, firmName: data.firmName }));
-          }
-          if (data.practiceArea) {
-            setChambersData((prev: any) => ({ ...prev, practice_area: data.practiceArea }));
-          }
-          if (data.b10Text) {
-            setB10Text(data.b10Text);
-            setChambersData((prev: any) => ({ ...prev, original_b10: data.b10Text, enhanced_b7: data.b10Text, b7: data.b10Text }));
-          }
-          if (data.lawyers) {
-            setChambersData((prev: any) => ({ ...prev, lawyers: data.lawyers }));
-          }
-          if (data.matters) {
-            setMatters(data.matters);
-            setChambersData((prev: any) => ({ ...prev, matters: data.matters }));
-          }
-          // Persist to database in background
-          try {
-            await updateSubmissionValidatedData(submission.id, data);
-            if (data.practiceArea && data.practiceArea !== (submission.practiceArea || '')) {
-              window.location.reload();
-              return;
-            }
-          } catch (err) {
-            console.warn('[PostIngestionWizard] Error persisting validated data:', err);
-          }
+          if(data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
         }}
       />
 

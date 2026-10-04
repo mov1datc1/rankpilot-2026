@@ -4,6 +4,7 @@ from langgraph.graph.message import add_messages
 
 class AgentState(TypedDict):
     file_path: str
+    extraction_error: str  # Provider failure must not be interpreted as an empty successful extraction.
     doc_text: str
     # Historial de mensajes (para el chat dialéctico)
     messages: Annotated[list, add_messages]

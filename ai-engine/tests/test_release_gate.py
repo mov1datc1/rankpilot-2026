@@ -127,7 +127,7 @@ class ReleaseGateTests(unittest.TestCase):
         })
         self.assertEqual(("none", [], []), (route, scopes, matter_ids))
 
-    def test_judge_sol_evaluates_with_score_and_feedback_without_blocking_delivery(self):
+    def test_editorial_rejection_blocks_delivery_and_preserves_feedback(self):
         from agents.constitutional_validator import constitutional_validation_node
 
         mock_state = {
@@ -156,10 +156,10 @@ class ReleaseGateTests(unittest.TestCase):
                 )):
                     result = constitutional_validation_node(mock_state)
 
-        # Must NOT be blocked: Layer 2 Judge SOL provides score and feedback, and delivery is approved!
-        self.assertEqual("writing", result["constitutional_route"])
-        self.assertTrue(result["release_verdict"]["passed"])
-        self.assertEqual("RELEASE_APPROVED", result["release_verdict"]["code"])
+        # A negative editorial verdict is binding, even if deterministic checks pass.
+        self.assertEqual("blocked", result["constitutional_route"])
+        self.assertFalse(result["release_verdict"]["passed"])
+        self.assertEqual("CONSTITUTIONAL_VALIDATION_FAILED", result["release_verdict"]["code"])
         judge = result["release_verdict"]["judge"]
         self.assertEqual(6, judge["score"])
         self.assertIn("Matter 01 needs clearer outcomes", judge["feedback"])

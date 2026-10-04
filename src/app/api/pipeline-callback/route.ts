@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { evaluateJudgeSolSubmission } from '@/lib/audit/judge-sol-evaluator';
@@ -326,11 +327,12 @@ export async function POST(request: NextRequest) {
           evidence_reconciliation: pyData.data?.evidence_reconciliation || existingChambersData.evidence_reconciliation,
           source_validation: sourceValidation,
           constitutional_validation: constitutionalValidation,
-          release_verdict: releaseVerdict,
+          release_verdict: {...releaseVerdict, ...(sourceCloneReady ? {artifact_sha256: createHash('sha256').update(Buffer.from(pyData.data.cloned_docx_b64, 'base64')).digest('hex')} : {})},
           judgeScore,
           judgeFeedback,
           judgeVerdict: judgeData,
           judgeChecks,
+          approved_artifact: null,
           // v19.0: Clone-and-Replace DOCX — base64-encoded cloned DOCX with AI enhancements
           // This preserves the original formatting (colors, bold, logos, diversity sections)
           // and only replaces B10 + D2/E2 cells with enhanced content

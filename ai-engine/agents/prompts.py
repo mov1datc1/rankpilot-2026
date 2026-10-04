@@ -755,7 +755,10 @@ PROVENANCE
 CONFIDENTIALITY
 - Section D / Publishable Matter -> publish_status="publishable", is_confidential=false.
 - Section E / Confidential or Non-publishable Matter -> preserve that source status and set is_confidential=true.
+- For unstructured notes: explicit publication authorization means publishable. Absent or ambiguous permission means confirmation_required, not confirmed confidential or public.
 - Never move a matter between sections.
+- For contradictory amounts or currencies in the same mandate, leave matter_value empty and describe BOTH alternatives in value_conflict.
+- Merge references to the same unstructured mandate across sources; keep unrelated mandates distinct.
 
 SEMANTIC ROLES
 - Set client_role only when explicit or semantically unambiguous.

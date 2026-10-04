@@ -958,14 +958,13 @@ def extraction_node(state: AgentState) -> Dict:
     doc_text = sanitize_text(state.get("doc_text", ""))
     chat_history = "\n".join([sanitize_text(msg.content) for msg in state["messages"] if hasattr(msg, 'content')])
     source_manifest = state.get("pipeline_manifest", {}).get("document", {}).get("source_matters", {})
-    manifest_block = json.dumps({
-        "total": source_manifest.get("total", 0),
-        "publishable": source_manifest.get("publishable", 0),
-        "confidential": source_manifest.get("confidential", 0),
-        "matter_labels": source_manifest.get("matter_labels", []),
-    }, ensure_ascii=False)
+    known_count = source_manifest.get("total")
+    if source_manifest.get("count_status") == "unknown" or known_count is None:
+        manifest_block = "Numbered matter count is unavailable. Detect distinct legal mandates from the source narrative; unrelated content contains no matters."
+    else:
+        manifest_block = json.dumps(source_manifest, ensure_ascii=False)
     full_input = (
-        f"SOURCE MANIFEST (deterministic; must reconcile exactly):\n{manifest_block}\n\n"
+        f"SOURCE MANIFEST:\n{manifest_block}\n\n"
         f"SOURCE DOCUMENT:\n{doc_text}\n\nUpdates from chat:\n{chat_history}"
     )
 
@@ -977,7 +976,8 @@ def extraction_node(state: AgentState) -> Dict:
         return {
             "metadata": {"firm_name": "", "practice_area": "", "location": "", "narrative": ""},
             "matters": [],
-            "current_step": "context"
+            "current_step": "context",
+            "extraction_error": "EXTRACTION_PROVIDER_ERROR"
         }
     
     if hasattr(structured_data, "model_dump"):
@@ -1038,10 +1038,14 @@ def extraction_node(state: AgentState) -> Dict:
     for matter in matters_list:
         if isinstance(matter, dict):
             explicitly_confidential = matter.get("is_confidential", False)
-            ps = matter.get("publish_status", "publishable")
+            ps = matter.get("publish_status", "confirmation_required")
             explicitly_non_pub = ps in ("non_publishable", "confidential")
             
-            if explicitly_confidential and not explicitly_non_pub:
+            if ps == "confirmation_required":
+                matter["confidentiality_status"] = "confirmation_required"
+                matter["is_confidential"] = True  # Restrict public rendering, without asserting confirmed confidentiality.
+                matter["publish_status"] = "confirmation_required"
+            elif explicitly_confidential and not explicitly_non_pub:
                 # Extraction said confidential but publish_status wasn't set → sync them
                 matter["publish_status"] = "non_publishable"
                 matter["_confidentiality_locked"] = True
@@ -1063,15 +1067,17 @@ def extraction_node(state: AgentState) -> Dict:
     # incorrect downstream analysis (owner feedback July 2026).
     # =====================================================
     source_matters = manifest.get("document", {}).get("source_matters", {})
-    source_total = source_matters.get("total", 0)
+    source_count_known = isinstance(source_matters.get("total"), int)
+    source_total = source_matters.get("total") if source_count_known else 0
     extracted_total = len(matters_list)
     
     extraction_validation = {
-        "source_matter_count": source_total,
+        "source_matter_count": source_total if source_count_known else None,
+        "count_status": "known" if source_count_known else "unknown",
         "extracted_matter_count": extracted_total,
         "match": source_total > 0 and source_total == extracted_total,
         "loss_count": max(0, source_total - extracted_total),
-        "over_extraction_count": max(0, extracted_total - source_total),
+        "over_extraction_count": max(0, extracted_total - source_total) if source_count_known else None,
         "loss_percentage": round(max(0, source_total - extracted_total) / source_total * 100, 1) if source_total > 0 else 0,
         "extracted_titles": [m.get("title", "?") for m in matters_list if isinstance(m, dict)],
     }
@@ -1119,10 +1125,10 @@ def extraction_node(state: AgentState) -> Dict:
         elif "ARAQUEREYNA" in doc_text.upper():
             resolved_firm = "ARAQUEREYNA"
         else:
-            resolved_firm = submission_context.get("firm_name") or submission_context.get("firmName") or "Chambers Applicant Firm"
+            resolved_firm = submission_context.get("firm_name") or submission_context.get("firmName") or ""
 
     if not resolved_practice or resolved_practice.lower() in ["unknown", "n/a", "none"]:
-        resolved_practice = submission_context.get("practice_area") or submission_context.get("practiceArea") or "Corporate/M&A"
+        resolved_practice = submission_context.get("practice_area") or submission_context.get("practiceArea") or ""
 
     if not resolved_location or resolved_location.lower() in ["unknown", "n/a", "none"]:
         resolved_location = submission_context.get("jurisdiction") or submission_context.get("guideRegion") or "Global"
@@ -1268,7 +1274,7 @@ def pre_flight_gate_node(state: AgentState) -> Dict:
     # ── CHECK 2: Matter Extraction Completeness (Rule 70 gate) ──
     extraction = manifest.get("extraction", {})
     source_matters = doc_info.get("source_matters", {})
-    source_total = source_matters.get("total", 0)
+    source_total = source_matters.get("total") or 0
     extracted_total = extraction.get("extracted_matter_count", len(matters))
     
     if source_total > 0:
@@ -1729,164 +1735,24 @@ IMPORTANT: Do NOT default to "General Practice". Analyze the evidence and choose
         print(f"[RAVL] Scenario D: unknown — defaulting to no benchmark")
     
     # =====================================================
-    # v17.2: LIVE BENCHMARK ENGINE — INTELLIGENT JURISDICTION RESOLUTION
-    # 1. Try exact jurisdiction first (e.g., "Venezuela")
-    # 2. If miss AND jurisdiction is regional (e.g., "Latin America"),
-    #    scan URL map for sub-jurisdictions under same practice area
-    # 3. If firm found in benchmark, AUTO-DETECT current band
-    # 4. Override user-declared "Unranked" with verified band
-    # =====================================================
-    firm_name = submission_context.get("firm_name", "")
-    live_benchmark = None
-    resolved_jurisdiction = jurisdiction  # Track which jurisdiction resolved
-    
-    try:
-        # Step 1: Try exact jurisdiction
-        live_benchmark = scrape_rankings(directory, practice_area, jurisdiction)
-        
-        # Step 2: If miss and jurisdiction is regional, try sub-jurisdictions
-        if not live_benchmark and jurisdiction.lower() in [
-            "latin america", "europe", "asia pacific", "global", 
-            "middle east", "africa", "caribbean"
-        ]:
-            print(f"[BENCHMARK RESOLVER] Regional jurisdiction '{jurisdiction}' — scanning for country-level URLs...")
-            url_map = {}
-            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "benchmark_url_map.json")
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    url_map = json.load(f)
-            except Exception:
-                pass
-            
-            # Find all country-level entries for this practice area
-            from utils.benchmark_scraper import _normalize_practice_area
-            practice_normalized = _normalize_practice_area(practice_area)
-            dir_section = url_map.get("chambers", {}) if "chambers" in directory.lower() else url_map.get("legal500", {})
-            
-            candidate_jurisdictions = []
-            for map_key in dir_section.keys():
-                if "|" in map_key:
-                    map_practice, map_jurisdiction = map_key.split("|", 1)
-                    if map_practice.lower() == practice_normalized.lower():
-                        candidate_jurisdictions.append(map_jurisdiction)
-            
-            if candidate_jurisdictions:
-                print(f"[BENCHMARK RESOLVER] Found {len(candidate_jurisdictions)} candidates: {candidate_jurisdictions}")
-                
-                # Scrape ALL candidates and pick the one containing the firm
-                all_benchmarks = {}
-                for candidate in candidate_jurisdictions:
-                    bm = scrape_rankings(directory, practice_area, candidate)
-                    if bm:
-                        all_benchmarks[candidate] = bm
-                        # Check if THIS benchmark contains our firm
-                        if firm_name:
-                            firm_lower_check = firm_name.lower().strip()
-                            for rf in bm.get("firms", []):
-                                rn = rf.get("name", "").lower().strip()
-                                if firm_lower_check in rn or rn in firm_lower_check:
-                                    # PRIORITY: use THIS jurisdiction because it has our firm
-                                    live_benchmark = bm
-                                    resolved_jurisdiction = candidate
-                                    print(f"[BENCHMARK RESOLVER] ✅ FIRM MATCH: '{firm_name}' found in {candidate} → using this jurisdiction")
-                                    break
-                        if live_benchmark:
-                            break
-                
-                # If no firm match found, use the first available benchmark as context
-                if not live_benchmark and all_benchmarks:
-                    first_key = list(all_benchmarks.keys())[0]
-                    live_benchmark = all_benchmarks[first_key]
-                    resolved_jurisdiction = first_key
-                    print(f"[BENCHMARK RESOLVER] No firm match — using first available: '{first_key}'")
-            else:
-                print(f"[BENCHMARK RESOLVER] No candidate sub-jurisdictions found for {practice_normalized}")
-        
-        if live_benchmark:
-            benchmark_summary = get_benchmark_summary(live_benchmark)
-            strategic_context["live_benchmark"] = live_benchmark
-            strategic_context["benchmark_reference"] = benchmark_summary
-            strategic_context["benchmark_available"] = True
-            strategic_context["benchmark_source"] = "live_scrape"
-            strategic_context["resolved_jurisdiction"] = resolved_jurisdiction
-            
-            # Override RAVL scenario with real data
-            live_structure = live_benchmark.get("structure", {})
-            strategic_context["ranking_architecture"]["firm_bands_exist"] = live_structure.get("has_firm_bands", False)
-            strategic_context["ranking_architecture"]["live_enriched"] = True
-            
-            if not live_structure.get("has_firm_bands", False) and live_structure.get("has_individual_bands", False):
-                strategic_context["ranking_architecture"]["scenario"] = "B"
-                strategic_context["ranking_architecture"]["ranking_type"] = "individuals_only"
-            elif live_structure.get("has_firm_bands", False):
-                strategic_context["ranking_architecture"]["scenario"] = "A"
-                strategic_context["ranking_architecture"]["ranking_type"] = "firms_and_individuals"
-            
-            print(f"[LIVE BENCHMARK ✅] Enriched with REAL data from {live_benchmark.get('source', '?')}")
-            print(f"[LIVE BENCHMARK] Firms: {live_benchmark.get('total_firms', 0)} | "
-                  f"Individuals: {live_benchmark.get('total_individuals', 0)} | "
-                  f"Firm bands: {live_structure.get('firm_bands', [])}")
-            
-            # =====================================================
-            # v17.2: AUTO-DETECT CURRENT BAND FROM LIVE BENCHMARK
-            # Search for the submission firm in the benchmark data
-            # Override user-declared band with verified band
-            # =====================================================
-            if firm_name and live_benchmark.get("firms"):
-                firm_lower = firm_name.lower().strip()
-                detected_band = None
-                matched_firm_name = None
-                
-                for ranked_firm in live_benchmark["firms"]:
-                    ranked_name = ranked_firm.get("name", "").lower().strip()
-                    # Fuzzy match: check if firm name is contained or vice versa
-                    if (firm_lower in ranked_name or ranked_name in firm_lower or
-                        # Also try without common suffixes
-                        firm_lower.replace(",", "").replace(".", "").split()[0] in ranked_name):
-                        detected_band = ranked_firm.get("band", "")
-                        matched_firm_name = ranked_firm.get("name", "")
-                        break
-                
-                if detected_band:
-                    print(f"[BAND AUTO-DETECT ✅] Found '{matched_firm_name}' in {detected_band}")
-                    print(f"[BAND AUTO-DETECT] Overriding user-declared '{current_status}' → '{detected_band}'")
-                    
-                    # Override strategic context
-                    strategic_context["current_status"] = detected_band
-                    strategic_context["verified_band"] = detected_band
-                    strategic_context["band_source"] = "live_benchmark"
-                    strategic_context["user_declared_band"] = current_status
-                    
-                    # Re-classify starting_position based on real band
-                    band_lower = detected_band.lower()
-                    if "1" in band_lower:
-                        starting_position = "Defensive Leadership"
-                    elif "2" in band_lower or "3" in band_lower:
-                        starting_position = "Upper Tier Push"
-                    elif "4" in band_lower or "5" in band_lower:
-                        starting_position = "Lower Tier Consolidation"
-                    
-                    strategic_context["starting_position"] = starting_position
-                    print(f"[BAND AUTO-DETECT] Starting position reclassified: '{starting_position}'")
-                else:
-                    print(f"[BAND AUTO-DETECT] Firm '{firm_name}' NOT found in benchmark — keeping user-declared '{current_status}'")
-                    # Check individuals too
-                    for ranked_ind in live_benchmark.get("individuals", []):
-                        ind_firm = ranked_ind.get("firm", "").lower().strip()
-                        if firm_lower in ind_firm or ind_firm in firm_lower:
-                            print(f"[BAND AUTO-DETECT] Found firm in INDIVIDUALS: {ranked_ind.get('name', '')} ({ranked_ind.get('firm', '')}) — {ranked_ind.get('band', '')}")
-                            if not detected_band:
-                                # Use the individual's category to infer firm presence
-                                strategic_context["firm_has_ranked_individuals"] = True
-                                strategic_context["individual_band_evidence"] = ranked_ind.get("band", "")
-                            break
-        else:
-            strategic_context["benchmark_source"] = "ravl_static"
-            print(f"[LIVE BENCHMARK] No live data available — using RAVL static config")
-    except Exception as e:
-        strategic_context["benchmark_source"] = "ravl_static"
-        print(f"[LIVE BENCHMARK] Scraping failed (graceful fallback): {e}")
-    
+    # Ranking assertions require scoped official evidence. Never infer a country,
+    # identity from a first-name token, or a firm band from an individual's rank.
+    from utils.ranking_verifier import verify_ranking_claim
+    verification = verify_ranking_claim({
+        'firm_name':submission_context.get('firm_name',''), 'directory':directory,
+        'practice_area':practice_area, 'jurisdiction':jurisdiction,
+        'current_band':current_status, 'ranking_edition':submission_context.get('ranking_edition')})
+    strategic_context['ranking_verification'] = verification
+    strategic_context['user_declared_band'] = current_status
+    strategic_context['current_status'] = 'Not verified'
+    strategic_context['starting_position'] = 'Evidence review required'
+    strategic_context['benchmark_source'] = 'unverified'
+    if verification['status'] in ('verified_match','verified_observation','verified_mismatch'):
+        strategic_context['verified_band'] = verification['observed_band']
+        strategic_context['current_status'] = verification['observed_band']
+        strategic_context['band_source'] = 'official_scoped_evidence'
+    strategic_context['benchmark_reference'] = json.dumps(verification,ensure_ascii=False)
+
     print(f"[DIRECTORY ROUTER] Directory: {dir_config['name']} | Ranking unit: {dir_config['ranking_unit']} | Template: {dir_config['export_template']}")
     # v17.4c: Print from UPDATED strategic_context (post live-scrape), not old static ranking_arch
     final_ravl = strategic_context.get("ranking_architecture", {})
@@ -4067,7 +3933,7 @@ def optimization_node(state: AgentState) -> Dict:
     # ═══════════════════════════════════════════════════════════════
     manifest = state.get("pipeline_manifest", {})
     source_matters_info = manifest.get("document", {}).get("source_matters", {})
-    source_total = source_matters_info.get("total", 0)
+    source_total = source_matters_info.get("total") or 0
     
     if source_total > 0 and len(optimized_matters) < source_total:
         deficit = source_total - len(optimized_matters)

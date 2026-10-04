@@ -627,17 +627,17 @@ def constitutional_validation_node(state: AgentState) -> Dict:
     all_violations = l1_violations + l2_violations
 
     # If Layer 1 deterministic checks failed on first attempt and are retryable, allow 1 targeted repair
-    if not l1_passed and retry_count < max_retries and retry_target != "none":
+    if not (l1_passed and l2_passed) and retry_count < max_retries and retry_target != "none":
         print(f"\n[CONSTITUTIONAL L1] 🔄 Routing to '{retry_target}' for attempt {retry_count + 1}/{max_retries}")
-        violation_feedback = "CONSTITUTIONAL L1 CHECKS FAILED:\n" + "\n".join(f"- {v}" for v in l1_violations)
+        violation_feedback = "CONSTITUTIONAL L1 CHECKS FAILED:\n" + "\n".join(f"- {v}" for v in all_violations)
         return {
             "constitutional_validation": {
                 "passed": False,
                 "violations": all_violations,
                 "retry_count": retry_count + 1,
                 "retry_target": retry_target,
-                "layer1_passed": False,
-                "layer2_passed": False,
+                "layer1_passed": l1_passed,
+                "layer2_passed": l2_passed,
                 "judge": judge_verdict,
             },
             "constitutional_retry_count": retry_count + 1,
@@ -647,14 +647,14 @@ def constitutional_validation_node(state: AgentState) -> Dict:
             "constitutional_violation_feedback": violation_feedback,
         }
 
-    if not l1_passed and (retry_count >= max_retries or retry_target == "none"):
+    if not (l1_passed and l2_passed) and (retry_count >= max_retries or retry_target == "none"):
         print("\n[CONSTITUTIONAL L1] ❌ Non-retryable deterministic failure — release blocked")
         return {
             "constitutional_validation": {
                 "passed": False,
                 "violations": all_violations,
                 "retry_count": retry_count,
-                "layer1_passed": False,
+                "layer1_passed": l1_passed,
                 "layer2_passed": l2_passed,
                 "judge": judge_verdict,
             },
@@ -670,10 +670,7 @@ def constitutional_validation_node(state: AgentState) -> Dict:
         }
 
     # ─── ROUTING DECISION: DELIVERY APPROVED ───
-    # When Layer 1 passes, Judge SOL is an evaluator and auditor (Score 1-10 + feedback report).
-    # Judge SOL does NOT block delivery to the end user.
-    # The submission proceeds to writing so the user receives their deliverables,
-    # while the admin panel receives the exact score and critique.
+    # Both deterministic and editorial checks must pass before writing.
     judge_score = judge_verdict.get("score", 8) if isinstance(judge_verdict, dict) else 8
     judge_feedback = judge_verdict.get("feedback", "") if isinstance(judge_verdict, dict) else ""
     

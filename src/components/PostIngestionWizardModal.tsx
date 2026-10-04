@@ -32,8 +32,11 @@ export interface PostIngestionWizardModalProps {
     b10Text: string;
     lawyers: any[];
     matters: any[];
-  }) => void;
+    expectedRevision?: number;
+    b10SourceChanged?: boolean;
+  }) => void | Promise<void>;
   initialData: {
+    draftRevision?: number;
     firmName?: string;
     practiceArea?: string;
     calibratedPracticeArea?: string;
@@ -85,9 +88,7 @@ export default function PostIngestionWizardModal({
     : (extractedPractice || calibratedPractice);
 
   // Local state for all fields being validated
-  const initialPractice = hasMaterialDiscrepancy 
-    ? (substantiveDiscrepancy.hasDiscrepancy ? substantiveDiscrepancy.suggestedPractice : (extractedPractice || calibratedPractice))
-    : (calibratedPractice || sanitizeStr(initialData.practiceArea));
+  const initialPractice = calibratedPractice || sanitizeStr(initialData.practiceArea);
 
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
   const [practiceArea, setPracticeArea] = useState(initialPractice);
@@ -110,55 +111,42 @@ export default function PostIngestionWizardModal({
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingInline, setIsEditingInline] = useState(false);
+  const [isSaving,setIsSaving] = useState(false);
+  const [saveError,setSaveError] = useState('');
+  const [expectedRevision,setExpectedRevision] = useState(initialData.draftRevision || 0);
+  const [initialB10Source,setInitialB10Source] = useState(initialData.b10Text || '');
 
   // Sync when initialData changes
   useEffect(() => {
-    if (initialData) {
+    if (isOpen) {
+      setExpectedRevision(initialData.draftRevision || 0);
+      setInitialB10Source(initialData.b10Text || '');
+      setSaveError('');
       setFirmName(sanitizeStr(initialData.firmName));
-      setPracticeArea(sanitizeStr(initialData.practiceArea));
+      setPracticeArea(calibratedPractice || sanitizeStr(initialData.practiceArea));
       setLocation(sanitizeStr(initialData.location));
       setB10Text(initialData.b10Text || '');
       setLawyers(initialData.lawyers || []);
       setMatters(initialData.matters || []);
     }
-  }, [initialData]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const saveReview = async () => {
+    if(isSaving)return;
+    setIsSaving(true);setSaveError('');
+    try {await onComplete({firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:b10Text!==initialB10Source});}
+    catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
+    finally {setIsSaving(false);}
+  };
   const handleNext = () => {
     setIsEditingInline(false);
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      // Completed all steps!
-      onComplete({
-        firmName,
-        practiceArea,
-        location,
-        b10Text,
-        lawyers,
-        matters
-      });
-    }
+    if(currentStep<totalSteps)setCurrentStep(prev=>prev+1);
+    else void saveReview();
   };
-
-  const handleBack = () => {
-    setIsEditingInline(false);
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    onComplete({
-      firmName,
-      practiceArea,
-      location,
-      b10Text,
-      lawyers,
-      matters
-    });
-  };
+  const handleBack = () => {setIsEditingInline(false);if(currentStep>1)setCurrentStep(prev=>prev-1);};
+  const handleSkip = () => {void saveReview();};
 
   const updateMatterField = (matterId: string, field: string, value: any) => {
     setMatters(prev => prev.map(m => {
@@ -228,8 +216,8 @@ export default function PostIngestionWizardModal({
             </div>
           </div>
           <button
-            onClick={handleSkip}
-            title="Saltar validación e ir directo al Studio completo"
+            disabled={isSaving} onClick={handleSkip}
+            title="Guardar los datos revisados y continuar después"
             style={{
               background: 'transparent',
               border: 'none',
@@ -245,7 +233,7 @@ export default function PostIngestionWizardModal({
               transition: 'background 0.15s ease'
             }}
           >
-            <span>Saltar al Studio</span>
+            <span>Guardar revisión parcial</span>
             <X size={15} />
           </button>
         </div>
@@ -279,41 +267,7 @@ export default function PostIngestionWizardModal({
                 </div>
               </div>
 
-              {/* Strategic Sufficiency Gate Alert if matters < 5 */}
-              {matters.length < 5 && (
-                <div style={{
-                  background: '#FEF2F2',
-                  border: '1.5px solid #FECACA',
-                  borderRadius: '12px',
-                  padding: '1.1rem 1.25rem',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.85rem'
-                }}>
-                  <ShieldAlert size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#991B1B' }}>
-                        Volumen de Evidencia Estratégicamente Insuficiente ({matters.length} mandatos detectados)
-                      </h4>
-                      <span style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 700,
-                        background: '#FEE2E2',
-                        color: '#991B1B',
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        border: '1px solid #FECACA'
-                      }}>
-                        Gating Activo · Fail-Closed
-                      </span>
-                    </div>
-                    <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.8rem', color: '#B91C1C', lineHeight: 1.5 }}>
-                      Chambers & Partners exige una masa crítica de <strong>10 a 20 mandatos</strong> para evaluar la solidez del departamento. Con una muestra de {matters.length} asunto(s), RankPilot procesará y auditará la evidencia recibida, pero <strong>retendrá la calificación numérica formal</strong> y emitirá un dictamen de suficiencia insuficiente para proteger la credibilidad estratégica de la firma.
-                    </p>
-                  </div>
-                </div>
-              )}
+              <div role="status" style={{padding:'1rem',background:'#EFF6FF',borderRadius:8}}>Se identificaron {matters.length} asuntos. Confirma que corresponden a tus fuentes. Guardar esta revisión conserva el borrador; no equivale a aprobar el documento final.</div>
 
               {/* Material Practice Discrepancy Interactive Decision Gate */}
               {hasMaterialDiscrepancy && (
@@ -330,7 +284,7 @@ export default function PostIngestionWizardModal({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <AlertTriangle size={18} color="#D97706" />
                       <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#92400E' }}>
-                        {substantiveDiscrepancy.headline || 'Discrepancia Material en Área de Práctica'}
+                        Posible diferencia entre la práctica elegida y el contenido
                       </span>
                     </div>
                     <span style={{
@@ -342,32 +296,11 @@ export default function PostIngestionWizardModal({
                       borderRadius: '9999px',
                       border: '1px solid #FDE68A'
                     }}>
-                      Decisión Estratégica Requerida
+                      Confirma la práctica
                     </span>
                   </div>
 
-                  {substantiveDiscrepancy.substantiveFindings && substantiveDiscrepancy.substantiveFindings.length > 0 ? (
-                    <div style={{ background: '#FFFFFF', borderRadius: '8px', border: '1px solid #FDE68A', padding: '0.85rem 1rem' }}>
-                      <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', margin: '0 0 0.4rem 0', letterSpacing: '0.04em' }}>
-                        Hallazgos del Análisis Sustantivo de la Evidencia:
-                      </p>
-                      <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.8rem', color: '#78350F', lineHeight: 1.5 }}>
-                        {substantiveDiscrepancy.substantiveFindings.map((finding, idx) => (
-                          <li key={idx} style={{ marginBottom: '0.25rem' }}>{finding}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '0.82rem', color: '#78350F', margin: 0, lineHeight: 1.45 }}>
-                      En la calibración estratégica seleccionaste <strong>{calibratedPractice}</strong>, pero en el documento identificamos <strong>{extractedPractice}</strong>. Selecciona qué área deseas oficializar para este submission:
-                    </p>
-                  )}
-
-                  {substantiveDiscrepancy.chambersImpact && (
-                    <p style={{ fontSize: '0.78rem', color: '#B45309', margin: 0, lineHeight: 1.45, fontStyle: 'italic' }}>
-                      <strong>Impacto en Directorios:</strong> {substantiveDiscrepancy.chambersImpact}
-                    </p>
-                  )}
+                  <p style={{fontSize:'0.82rem',color:'#78350F',margin:0}}>Seleccionaste <strong>{calibratedPractice}</strong>. La lectura inicial sugiere revisar si algunos asuntos corresponden a <strong>{suggestedPractice}</strong>. Es una señal para comprobar el trabajo jurídico, no un cambio automático ni una predicción del directorio.</p>
 
                   {/* 3-Button Action Suite requested by partner Angela Castillo */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginTop: '0.25rem' }}>
@@ -393,7 +326,7 @@ export default function PostIngestionWizardModal({
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Sparkles size={16} color={practiceArea === suggestedPractice ? '#FFFFFF' : '#2563EB'} />
-                        <span>Cambiar práctica a <strong>{suggestedPractice}</strong> (Recomendado)</span>
+                        <span>Cambiar práctica a <strong>{suggestedPractice}</strong></span>
                       </div>
                       {practiceArea === suggestedPractice ? (
                         <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '4px' }}>✓ Confirmado</span>
@@ -424,12 +357,12 @@ export default function PostIngestionWizardModal({
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <AlertTriangle size={15} color={practiceArea === calibratedPractice ? '#FFFFFF' : '#D97706'} />
-                        <span>Continuar con <strong>{calibratedPractice}</strong> (Con advertencia de dilución)</span>
+                        <span>Continuar con <strong>{calibratedPractice}</strong> (Mantener selección)</span>
                       </div>
                       {practiceArea === calibratedPractice ? (
                         <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '4px' }}>✓ Mantener</span>
                       ) : (
-                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Riesgo documentado en Audit</span>
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Revisar pertinencia</span>
                       )}
                     </button>
 
@@ -464,7 +397,7 @@ export default function PostIngestionWizardModal({
                   {practiceArea === calibratedPractice && substantiveDiscrepancy.warningIfContinued && (
                     <div style={{ background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', padding: '0.6rem 0.85rem', marginTop: '0.2rem' }}>
                       <p style={{ fontSize: '0.75rem', color: '#9F1239', margin: 0, lineHeight: 1.45 }}>
-                        ⚠️ <strong>Advertencia de Dilución:</strong> {substantiveDiscrepancy.warningIfContinued}
+                        La práctica elegida se conserva. La revisión final comprobará la pertinencia de cada asunto con sus fuentes.
                       </p>
                     </div>
                   )}
@@ -966,7 +899,7 @@ export default function PostIngestionWizardModal({
             <div>
               {currentStep > 1 && (
                 <button
-                  onClick={handleBack}
+                  disabled={isSaving} onClick={handleBack}
                   style={{
                     background: '#FFFFFF',
                     border: '1px solid #CBD5E1',
@@ -1008,8 +941,10 @@ export default function PostIngestionWizardModal({
                 <Edit3 size={14} /> {isEditingInline ? 'Cerrar Edición' : 'Editar y Confirmar'}
               </button>
 
+              {saveError && <div role="alert" style={{color:'#B91C1C',maxWidth:360}}>{saveError} Tus cambios siguen en esta ventana; reintenta antes de salir.</div>}
+              {isSaving && <span role="status">Guardando tu revisión…</span>}
               <button
-                onClick={handleNext}
+                disabled={isSaving} onClick={handleNext}
                 style={{
                   background: 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
                   color: '#FFFFFF',

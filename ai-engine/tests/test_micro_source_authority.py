@@ -1,0 +1,10 @@
+import unittest
+from unittest.mock import patch
+from agents.micro_optimizer import optimize_b10_micro,optimize_matter_micro
+class MicroSourceAuthorityTests(unittest.TestCase):
+    def test_directive_cannot_replace_missing_department_source(self):
+        with patch('agents.micro_optimizer.get_micro_model') as model:
+            self.assertFalse(optimize_b10_micro('',directive='Invent a department')['success']);model.assert_not_called()
+    def test_existing_generated_draft_cannot_replace_missing_matter_source(self):
+        with patch('agents.micro_optimizer.get_micro_model') as model:
+            self.assertFalse(optimize_matter_micro({'client':'Test','optimizedText':'A prior invented win'})['success']);model.assert_not_called()
