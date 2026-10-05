@@ -85,6 +85,9 @@ export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, a
     for (const issue of data.release_verdict?.errors || []) sections.push(p(String(issue)));
     return new Document({title: `RankPilot Strategic Audit - ${firmName}`,creator:'RankPilot',sections:[{children:sections}]});
   }
+  if (data.editorial_review && !letterData) {
+    return new Document({title:`RankPilot — Audit pendiente — ${firmName}`,creator:'RankPilot',sections:[{children:[sectionTitle('Strategic Audit — pendiente de generación'),fieldLabel('Firma: ',firmName),p('La revisión se interrumpió antes de redactar el Audit. No hay un portafolio validado para esta corrida. Reintenta la revisión; las redacciones guardadas se conservan.'),...(data.release_verdict?.errors || []).map((message:unknown)=>p(String(message)))]}]});
+  }
   const source = Array.isArray(data.matters) ? data.matters : (submission.matters || []);
   const matters = Array.from(new Map(source.map((m: any, i: number) => [m.id || `source-${i}`, m])).values()) as any[];
   const curation = curateMatters(matters, practiceArea, data);

@@ -1,3 +1,4 @@
+import { clientAliases } from './client-aliases';
 import { cleanLawyerNames, sanitizeBannedSuperlatives } from './artifact-integrity-check';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 
@@ -83,7 +84,7 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
   if (!text) return '';
   let res = text;
   // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
-  for (const confName of confClientNames) {
+  for (const confName of clientAliases(confClientNames)) {
     if (confName && confName.trim().length >= 2) {
       const cleanConf = confName.trim();
       const esc = cleanConf.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -92,8 +93,10 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
     }
   }
 
+  res = res.replace(/\bclients such as\s+([^.!?]+)(?=[.!?]|$)/gi, (whole, names) => /a confidential client/i.test(names) ? 'a range of clients' : whole);
+
   // Polish English grammar in bios and descriptions (Angela Housekeeping Rule)
-  res = res.replace(/\b(?:is the Partner of|is the partner of)\b/g, 'leads');
+  res = res.replace(/\b(?:is the Partner of|is the partner of)\b/g, 'is a partner in');
   res = res.replace(/\bLabor & Employment\b/g, 'Labour & Employment');
 
   // Strip residual audit voice from submission texts

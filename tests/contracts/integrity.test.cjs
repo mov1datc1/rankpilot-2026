@@ -88,3 +88,11 @@ test('known client name does not change currency, outcome, timeline or lawyer ra
   assert.ok(text.includes(source));assert.ok(text.includes('MXN 675,000'));assert.doesNotMatch(text,/USD 675|July 2024|Suggested ranking: Band|Current ranking: Unranked/);
  }
 });
+test('public biographies suppress source-derived client aliases and mixed unconfirmed identity lists',()=>{
+ const text='A partner advises clients such as XYZ, Unknown Client and Acme. XYZ retained the team.';
+ const result=anonymizeConfidentialClients(text,['XYZ Industrial','Acme Manufacturing']);
+ assert.doesNotMatch(result,/XYZ|Unknown Client|Acme/);
+ assert.match(result,/A partner advises a range of clients/);
+ assert.equal(anonymizeConfidentialClients('She is the Partner of the employment practice.',[]),'She is a partner in the employment practice.');
+ assert.match(anonymizeConfidentialClients('Public Client retained the team.',['XYZ Industrial']),/Public Client/);
+});

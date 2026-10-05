@@ -1,3 +1,4 @@
+import { clientAliases } from './client-aliases';
 /**
  * Final Artifact Integrity Check — RankPilot Deliverable QA Engine
  * 
@@ -499,7 +500,7 @@ export function runArtifactIntegrityCheck(
   if (options.publicSections && options.publicSections.length > 0 && confClientNames.length > 0) {
     for (const sec of options.publicSections) {
       const contentLower = (sec.content || '').toLowerCase();
-      for (const confClient of confClientNames) {
+      for (const confClient of clientAliases(confClientNames)) {
         const confLower = confClient.toLowerCase();
         // Guard against short generic tokens
         if (confLower.length < 2 || confLower === 'confidential' || confLower === 'client' || confLower === 'private') continue;

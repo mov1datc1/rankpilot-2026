@@ -68,3 +68,22 @@ class ReviewGraphTests(unittest.TestCase):
         with patch('core.review_graph.editor',return_value={'judge':defect,'trace':[]}), patch('core.review_graph.writer') as writer:
             result=review_rendered_package({'package':PACKAGE,'strategy':STRATEGY,'letter':LETTER,'trace':[]})
         writer.assert_not_called();self.assertFalse(result['judge']['passed'])
+
+    def test_literal_clause_with_terminal_period_accepts_source_comma(self):
+        package={**PACKAGE,'matters':[{**PACKAGE['matters'][0],'rawNotes':'The appeal remains pending, with a hearing scheduled.'}]}
+        result,calls=self.run_graph(package=package)
+        self.assertTrue(result['selection_validated'])
+        self.assertEqual(calls,['strategist','writer','editor'])
+
+    def test_terminal_tolerance_does_not_accept_changed_words(self):
+        strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'source_quote':'The appeal was successful.'}]}
+        result,calls=self.run_graph(strategy=strategy)
+        self.assertFalse(result['selection_validated'])
+        self.assertEqual(calls,['strategist'])
+        self.assertNotIn('Editorial review did not approve this package.',result['release_verdict']['errors'])
+
+    def test_source_quotes_cannot_join_two_different_fields(self):
+        package={**PACKAGE,'matters':[{**PACKAGE['matters'][0],'source_excerpt':'The appeal remains','rawNotes':'pending.'}]}
+        result,calls=self.run_graph(package=package)
+        self.assertFalse(result['selection_validated'])
+        self.assertEqual(calls,['strategist'])

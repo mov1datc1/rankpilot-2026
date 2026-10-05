@@ -67,8 +67,9 @@ export async function POST(request: NextRequest) {
         const latest:any = current.chambersData || {};
         if ((latest.enhanced_b7 || '') !== (chambersData.enhanced_b7 || '') || (latest.original_b10 || '') !== (chambersData.original_b10 || '') || (latest.confirmed_source_b10 || '') !== (chambersData.confirmed_source_b10 || '')) throw new Error('DRAFT_CONFLICT');
         const revision=Number(latest.draft_revision || 0)+1;
-        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,enhanced_b7:result.enhanced_b10,enhanced_b10:result.enhanced_b10,b7:result.enhanced_b10,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Department narrative edited; review required.']}}}});
+        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,b10_optimization:{source:payload.original_b10.trim(),text:result.enhanced_b10.trim()},enhanced_b7:result.enhanced_b10,enhanced_b10:result.enhanced_b10,b7:result.enhanced_b10,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Department narrative edited; review required.']}}}});
         result.revision=revision;
+        result.b10_optimization={source:payload.original_b10.trim(),text:result.enhanced_b10.trim()};
       });
     }
 

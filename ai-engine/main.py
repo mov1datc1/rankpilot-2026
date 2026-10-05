@@ -1121,7 +1121,7 @@ async def review_package_endpoint(request: Request):
         payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
         from core.review_graph import review_graph
         result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
-        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','letter','judge','release_verdict','trace')}})
+        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','letter','judge','release_verdict','trace')}})
     except Exception:
         logger.exception('Editorial package review failed')
         return JSONResponse(status_code=502, content={'success':False,'error':'Editorial review unavailable. Draft remains unapproved.'})

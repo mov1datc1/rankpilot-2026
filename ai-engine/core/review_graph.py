@@ -5,6 +5,7 @@ internal letter, and review both. Deterministic gates remain authoritative.
 This graph does not replace ingestion or mutate user records.
 """
 import json
+import re
 import time
 from pathlib import Path
 from typing import List, Literal, Optional
@@ -49,6 +50,7 @@ class ReviewState(TypedDict, total=False):
     judge: dict
     errors: list
     trace: list
+    selection_validated: bool
     writer_attempts: int
     release_verdict: dict
 
@@ -58,6 +60,7 @@ Severity policy: critical defects are concrete material factual changes, confide
 A firm's name never determines strength or ranking. Do not predict a band, invent a score, fill a quota, or add facts from prior knowledge.
 Ranking statements in source documents are unverified claims, including lawyer ranks. Only ranking_verification with a verified status establishes the scoped firm position; never use a firm observation to verify a lawyer or a different directory/edition. If the draft, strategy or letter presents a ranking claim as established without corresponding official evidence, report a critical defect and request verification or removal. An unverified declaration may remain in the source register or be described explicitly as unverified; do not mistake such attribution for an established ranking.
 A valid valueResolution (confirmed=true, value matching the matter value, source explanation supplied) is a user-confirmed correction to the disputed amount, not an unresolved conflict. Use that value and explanation while retaining original source text for traceability. Reject a draft that silently reinstates the superseded value; distinguish different monetary concepts described in the explanation. A correction is not independent documentary verification.
+Explicit confidentialityConfirmed=true together with publish_status=publishable or non_publishable is the user's saved decision; historical confidentialityEvidence describes extraction provenance and does not reopen that decision. Confidential matters are eligible for section E and hero selection without an additional publication permission.
 Unknown practice requirements require questions or abstention. A user's requested ranking is an objective, not an established fact.
 '''
 
@@ -81,11 +84,11 @@ def register_gate(state):
     if not matters: errors.append('No source matters supplied.')
     if any(not i for i in ids) or len(ids)!=len(set(ids)): errors.append('Matter IDs must be present and unique.')
     if any(not (m.get('source_excerpt') or m.get('rawNotes') or m.get('summary')) for m in matters): errors.append('Every matter requires source evidence.')
-    return {'errors':errors,'trace':[],'writer_attempts':0}
+    return {'errors':errors,'trace':[],'writer_attempts':0,'selection_validated':False}
 
 def strategist(state):
     strategy,trace=invoke_role(state,'strategist',Strategy,
-        'Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Hero may be null. Do not fabricate a minimum matter count.',state['package'])
+        'Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',state['package'])
     return {'strategy':strategy,'trace':trace}
 
 def selection_gate(state):
@@ -99,12 +102,16 @@ def selection_gate(state):
     for d in decisions:
         m=source.get(d['matter_id'],{});text=' '.join(str(m.get(k) or '') for k in ['source_excerpt','rawNotes','summary'])
         quote=d.get('source_quote','').strip()
-        if not quote or ' '.join(quote.split()).casefold() not in ' '.join(text.split()).casefold():errors.append(f"Unsupported strategy quote: {d['matter_id']}")
-    return {'errors':errors}
+        # A clipped literal clause may end in a period instead of the source comma.
+        # Preserve every internal word, number and punctuation mark; require token boundaries.
+        literal=' '.join(quote.split()).casefold().rstrip('.,;:!?')
+        supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(str(m.get(k) or '').split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+        if not supported:errors.append(f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial.")
+    return {'errors':errors,'selection_validated':not errors}
 
 def writer(state):
     letter,trace=invoke_role(state,'writer',Letter,
-        'Write a concise internal executive letter in five sections, at most 700 words total. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. If correcting, change only the identified defects.',
+        'Write a concise internal executive letter in five sections, at most 700 words total. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
         {'package':state['package'],'strategy':state['strategy'],'previous_letter':state.get('letter'),'defects':state.get('judge',{}).get('defects',[])})
     return {'letter':letter,'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1}
 
@@ -116,7 +123,8 @@ def editor(state):
 
 def release_gate(state):
     errors=list(state.get('errors',[]));judge=state.get('judge',{})
-    if not judge.get('passed'):errors.append('Editorial review did not approve this package.')
+    if not judge and not errors:errors.append('La revisión editorial aún no se ha ejecutado.')
+    elif judge and not judge.get('passed'):errors.append('La revisión editorial requiere corregir los hallazgos indicados.')
     errors.extend(d['message'] for d in judge.get('defects',[]) if d['severity']=='critical')
     for m in state['package'].get('matters',[]):
         if m.get('confidentialityConfirmed') is False or m.get('publish_status')=='confirmation_required':errors.append(f"Publication permission pending: {m['id']}")

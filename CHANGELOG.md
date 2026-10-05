@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Estado editorial y reanudación de Studio
+
+- B10 distingue texto importado de optimización guardada; reanudar conserva asuntos ya redactados. Las tarjetas reflejan cada guardado y el contador de B10 se actualiza. No se trunca B10 a mitad de frase al superar el límite.
+- Entrega aprobada exige el veredicto y artefacto; se deduplican hallazgos y durante la ejecución se muestra la fase actual. Una estrategia rechazada no se convierte en selección canónica ni se sustituye la carta pendiente por un Audit antiguo.
+- Control de citas admite puntuación terminal de un fragmento literal, manteniendo palabras, cifras y límites de fuente. Criterios editoriales incluyen insignias confidenciales, comparación de reservas y atribución individual sustentada.
+- Protección de variantes de nombres de clientes en secciones públicas y listas mixtas de biografías; corrección gramatical sin inferir liderazgo. Contadores laterales sin partir dígitos.
+- Validación: 239 contratos Node, 170 pruebas Python; Chrome con Studio real y servicios sintéticos verifica reanudación, B10, actualización progresiva, estado bloqueado y ausencia de Audit heredado. Revisión de un expediente mediante snapshot de solo lectura; sin escrituras de producción ni nueva revisión de sus datos por modelos externos.
+
 ## [2026-10-05] — Confidencialidad cruzada con la fuente
 
 - La extracción cruza fichas numeradas con la columna explícita de confidencialidad del registro de clientes del mismo documento. Conserva fila y encabezado de origen; no confunde cliente nuevo con permiso ni autoriza publicar por una celda vacía.

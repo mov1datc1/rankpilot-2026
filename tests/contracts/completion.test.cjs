@@ -11,7 +11,7 @@ const {POST}=require('../../src/app/api/optimize/complete/route.ts');
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
 global.fetch=async(url,options)=>{
  const payload=JSON.parse(options.body);calls.push({url,payload});
- if(url.endsWith('/review-package'))return Response.json({success:true,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
+ if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
  return Response.json({success:true,judge:{passed:!rejectFinal,defects:rejectFinal?[{severity:'critical',message:'Injected rendered claim defect'}]:[]}});
 };
 const complete=body=>POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));
@@ -52,4 +52,31 @@ test('pending source decisions block optimization before any model call',async()
   assert.equal(response.status,422);assert.equal(calls.length,0);
   assert.equal((await complete()).status,422);assert.equal(calls.length,0);
  }
+});
+test('rejected source selection is a proposal, never a canonical portfolio or approved artifact',async()=>{
+ reset();const saved=global.fetch;
+ global.fetch=async()=>Response.json({success:true,selection_validated:false,strategy:{matters:[{matter_id:'m1',disposition:'core'}],hero_matter_id:'m1'},release_verdict:{passed:false,status:'needs_review',errors:['Source quote not supported']}});
+ try {assert.equal((await complete()).status,200);assert.equal(state.chambersData.canonical_matter_selection,null);assert.equal(state.chambersData.hero_matter_id,null);assert.equal(state.chambersData.approved_artifact,null);assert.deepEqual(state.chambersData.release_verdict.errors,['Source quote not supported']);} finally {global.fetch=saved;}
+});
+const {needsB10Optimization,hasValidatedSelection}=require('../../src/lib/audit/optimization-state.ts');
+test('resume optimizes an imported enhanced B10 but preserves an existing revision',()=>{
+ assert.equal(needsB10Optimization({original_b10:b10,enhanced_b7:b10},b10),true);
+ assert.equal(needsB10Optimization({original_b10:b10},'User edited narrative'),false);
+ assert.equal(needsB10Optimization({original_b10:b10,b10_optimization:{source:b10,text:b10}},b10),false);
+ assert.equal(needsB10Optimization({original_b10:b10,confirmed_source_b10:'New source',b10_optimization:{source:b10,text:b10}},'New source'),true);
+ assert.equal(hasValidatedSelection({canonical_matter_selection:{core_matter_ids:['m1']},editorial_review:{strategy:{},letter:null,judge:null}}),false);
+ assert.equal(hasValidatedSelection({canonical_matter_selection:{core_matter_ids:['m1']},editorial_review:{selection_validated:true}}),true);
+});
+const {POST:optimizeB10}=require('../../src/app/api/optimize/b10/route.ts');
+test('B10 response records provenance only after successful persistent save',async()=>{
+ reset();const saved=global.fetch;
+ global.fetch=async()=>Response.json({success:true,enhanced_b10:'Source-grounded shortened narrative.'});
+ try {
+  const r=await optimizeB10(new NextRequest('http://localhost/api/optimize/b10',{method:'POST',body:JSON.stringify({submissionId:'s'})}));
+  assert.equal(r.status,200);const result=await r.json();
+  assert.deepEqual(result.b10_optimization,{source:b10,text:'Source-grounded shortened narrative.'});
+  assert.deepEqual(state.chambersData.b10_optimization,result.b10_optimization);
+  assert.equal(state.chambersData.enhanced_b7,result.enhanced_b10);
+  assert.equal(state.chambersData.approved_artifact,null);
+ }finally{global.fetch=saved;}
 });

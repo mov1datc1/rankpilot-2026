@@ -51,13 +51,14 @@ export async function POST(request: NextRequest) {
     const review = await reviewResponse.json();
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
     const decisions = review.strategy?.matters || [];
+    const selectionValidated = review.selection_validated === true;
     const data:any = {
       ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,
-      cloned_docx_b64:null,approved_artifact:null,
+      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,
-      canonical_matter_selection:{core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null},
-      hero_matter_id:review.strategy?.hero_matter_id || null,
-      editorial_review:review,ranking_verification:review.ranking_verification,ranking_claim:submission.currentBand || null,
+      canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
+      hero_matter_id:selectionValidated ? review.strategy?.hero_matter_id || null : null,
+      editorial_review:{...review,selection_validated:selectionValidated},ranking_verification:review.ranking_verification,ranking_claim:submission.currentBand || null,
       analysis:{summary:review.letter?.executive_assessment || '',score:null,matter_evaluations:decisions},
       judgeScore:null,judgeFeedback:(review.release_verdict.errors || []).join(' '),judgeVerdict:review.judge,
       release_verdict:review.release_verdict,

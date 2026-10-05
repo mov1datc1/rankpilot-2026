@@ -100,7 +100,10 @@ def optimize_b10_micro(
         # Word count check
         words = text.split()
         if len(words) > 500:
-            text = " ".join(words[:500])
+            # Never cut a sentence at word 500: that can change or lose its meaning.
+            return {"success": False, "error": "La redacción B10 excede 500 palabras. Reintenta para obtener una versión completa dentro del límite; se conserva el texto anterior."}
+        if not words:
+            return {"success": False, "error": "No se obtuvo una redacción B10. Se conserva el texto anterior."}
 
         return {
             "success": True,

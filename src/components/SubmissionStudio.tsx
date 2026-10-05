@@ -1,6 +1,7 @@
 'use client';
 
 import { processingFeedback } from '@/lib/ux/processing-feedback';
+import { needsB10Optimization, hasValidatedSelection } from '@/lib/audit/optimization-state';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -312,7 +313,7 @@ export default function SubmissionStudio({
   const rawConfMatters = React.useMemo(() => matters.filter(m => m.isConfidential), [matters]);
 
   const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
-  const hasRunOptimization = optimizedMattersCount > 0;
+  const hasRunOptimization = hasValidatedSelection(chambersData);
   const targetMattersCount = matters.length;
   const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
 
@@ -545,7 +546,7 @@ export default function SubmissionStudio({
     // 1. Optimize Section B10
     let currentB10Text = b10Text;
     try {
-      if (!chambersData.enhanced_b7 && b10Text.trim()) {
+      if (needsB10Optimization(chambersData, b10Text)) {
       const b10Res = await fetch('/api/optimize/b10', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -560,7 +561,7 @@ export default function SubmissionStudio({
       if (b10Data.success && b10Data.enhanced_b10) {
         currentB10Text = b10Data.enhanced_b10;
         setB10Text(b10Data.enhanced_b10);
-        setChambersData((prev:any)=>({...prev,enhanced_b7:b10Data.enhanced_b10}));
+        setChambersData((prev:any)=>({...prev,enhanced_b7:b10Data.enhanced_b10,b10_optimization:b10Data.b10_optimization}));
       } else { optimizationFailed = true; }
       }
     } catch (b10Err) {
@@ -603,7 +604,10 @@ export default function SubmissionStudio({
       if (data.success && data.optimized_text) {
             savedMatters++;
             const optText = data.optimized_text;
-            if (m.id) optimizedMap[m.id] = optText;
+            if (m.id) {
+              optimizedMap[m.id] = optText;
+              setMatters(previous => previous.map(item => item.id === m.id ? {...item, optimizedText:optText, optimized_text:optText} : item));
+            }
 
 
           }
@@ -713,7 +717,7 @@ export default function SubmissionStudio({
       if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (data.success && data.enhanced_b10) {
         setB10Text(data.enhanced_b10);
-        setChambersData((prev:any)=>({...prev,enhanced_b7:data.enhanced_b10}));
+        setChambersData((prev:any)=>({...prev,enhanced_b7:data.enhanced_b10,b10_optimization:data.b10_optimization}));
         setB10SuccessMsg('Redacción del departamento guardada. La aprobación final sigue pendiente.');
         setTimeout(() => setB10SuccessMsg(''), 4000);
       } else {
@@ -1387,7 +1391,7 @@ export default function SubmissionStudio({
                     Strategic Audit Report Pendiente
                   </h4>
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#1E40AF' }}>
-                    Ejecuta la optimización integral para calcular la calificación Judge SOL (1-10) y generar el informe estratégico completo.
+                    Ejecuta la revisión para generar el Audit con la selección de asuntos, atribución de abogados y acciones pendientes.
                   </p>
                 </div>
               </div>
@@ -1414,7 +1418,7 @@ export default function SubmissionStudio({
           {chambersData.editorial_review?.letter ? <article style={{background:'#FFFFFF',padding:'1.5rem',borderRadius:12,border:'1px solid #E2E8F0'}}>
             <h2>Strategic Audit Letter</h2><p><strong>{deliveryState.label}</strong></p>
             {Object.entries({executive_assessment:'1. Evaluación ejecutiva',portfolio:'2. Portafolio seleccionado',leadership:'3. Liderazgo y atribución',evidence_gaps:'4. Evidencia pendiente',next_steps:'5. Próximos pasos'}).map(([key,title])=><section key={key}><h3>{title}</h3><p style={{whiteSpace:'pre-wrap'}}>{chambersData.editorial_review.letter[key]}</p></section>)}
-          </article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
+          </article> : chambersData.editorial_review ? <article><h2>Audit pendiente de generación</h2><p>La revisión se interrumpió antes de redactar el Audit. Las redacciones guardadas se conservan; reintenta Optimizar Todo para continuar.</p><ul>{deliveryState.errors.map((message:string)=><li key={message}>{message}</li>)}</ul></article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
 
         </div>
       )}
@@ -1512,7 +1516,7 @@ export default function SubmissionStudio({
                   {!sidebarCollapsed && <span>Sección B: Depto & B10</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span style={{ fontSize: '0.65rem', background: '#EEF2FF', color: '#4F46E5', padding: '1px 6px', borderRadius: '4px' }}>
+                  <span style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.65rem', background: '#EEF2FF', color: '#4F46E5', padding: '1px 6px', borderRadius: '4px' }}>
                     {b10WordCount}w
                   </span>
                 )}
@@ -1563,7 +1567,7 @@ export default function SubmissionStudio({
                   {!sidebarCollapsed && <span>D. Asuntos Públicos</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span style={{ fontSize: '0.65rem', background: '#DCFCE7', color: '#16A34A', padding: '1px 6px', borderRadius: '4px' }}>
+                  <span style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.65rem', background: '#DCFCE7', color: '#16A34A', padding: '1px 6px', borderRadius: '4px' }}>
                     {categorized.pub.length}
                   </span>
                 )}
@@ -1592,7 +1596,7 @@ export default function SubmissionStudio({
                   {!sidebarCollapsed && <span>E. Asuntos Confidenciales</span>}
                 </div>
                 {!sidebarCollapsed && (
-                  <span style={{ fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '1px 6px', borderRadius: '4px' }}>
+                  <span style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '1px 6px', borderRadius: '4px' }}>
                     {categorized.conf.length}
                   </span>
                 )}
@@ -1621,9 +1625,9 @@ export default function SubmissionStudio({
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <Sliders size={16} color="#94A3B8" />
-                        <span>En Reserva (Excedentes)</span>
+                        <span>Fuera de selección</span>
                       </div>
-                      <span style={{ fontSize: '0.65rem', background: '#F1F5F9', color: '#64748B', padding: '1px 6px', borderRadius: '4px' }}>
+                      <span style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.65rem', background: '#F1F5F9', color: '#64748B', padding: '1px 6px', borderRadius: '4px' }}>
                         {categorized.pruned.length}
                       </span>
                     </button>
@@ -1677,8 +1681,9 @@ export default function SubmissionStudio({
           <div className="studio-canvas" style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
             <section className="studio-review-panel" aria-label="Estado de entrega" style={{padding:'1rem',background:deliveryState.approved?'#F0FDF4':'#EFF6FF',border:'1px solid #CBD5E1',borderRadius:10}}>
-              <strong>{deliveryState.label}</strong>
-              {deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
+              <strong>{isOptimizingAll ? 'Optimización y revisión en curso' : deliveryState.label}</strong>
+              {isOptimizingAll && <p role="status">{optimizeAllProgress?.stage} Los hallazgos se actualizarán al terminar la revisión.</p>}
+              {!isOptimizingAll && deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
               {deliveryState.warnings.length > 0 && <><p>Observaciones antes de presentar:</p><ul>{deliveryState.warnings.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul></>}
             </section>
             <details className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
@@ -1742,7 +1747,7 @@ export default function SubmissionStudio({
                   </h2>
                   <p style={{ fontSize: '0.85rem', color: '#C7D2FE', margin: '0.35rem 0 0 0', lineHeight: 1.45 }}>
                     {isFullyOptimized 
-                      ? `Todos los asuntos (${optimizedMattersCount}/${targetMattersCount}) y la narrativa B10 están reescritos en 3 párrafos orgánicos bajo el estándar Chambers.`
+                      ? `Redacción guardada para ${optimizedMattersCount}/${targetMattersCount} asuntos. B10: ${b10WordCount} palabras. ${deliveryState.label}.`
                       : 'Reescribe la Sección B10 bajo los 4 Pilares Institucionales y transforma cada asunto en prosa orgánica de 3 párrafos (Asset/Scale → Craft/Outcome → Team/Precedent).'}
                   </p>
 
@@ -1840,7 +1845,7 @@ export default function SubmissionStudio({
                     ) : isFullyOptimized ? (
                       <>
                         <RefreshCw size={16} />
-                        ↻ Re-optimizar Todo
+                        ↻ Reintentar revisión
                       </>
                     ) : (
                       <>
@@ -1912,7 +1917,7 @@ export default function SubmissionStudio({
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, maxWidth: '640px', lineHeight: 1.45 }}>
                   {!hasRunOptimization
-                    ? `Se han extraído ${matters.length} asuntos íntegros del documento fuente. Al ejecutar 'Optimizar Todo', el Audit Estratégico evaluará la trascendencia, impacto económico y nexo de práctica para seleccionar el Core oficial de hasta ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) y derivar ${surplusCount} asuntos a reserva auditada.`
+                    ? `El registro conserva ${matters.length} asuntos. La revisión editorial comparará su evidencia y aportación al portafolio antes de confirmar la selección y las reservas.`
                     : (paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
                       ? `RankPilot ha priorizado un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
                       : `Chambers y Legal 500 recomiendan una selección curada de hasta ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar la dilución del perfil.`
@@ -2693,7 +2698,7 @@ export default function SubmissionStudio({
                         color: hasRunOptimization ? '#166534' : '#B45309',
                         border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
                       }}>
-                        {hasRunOptimization ? '✓ Calibrado (Máx. 7 Chambers)' : '⏳ Por calibrar con IA'}
+                        {hasRunOptimization ? '✓ Selección revisada' : '⏳ Por calibrar con IA'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
@@ -2946,7 +2951,7 @@ export default function SubmissionStudio({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                   <div>
                     <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#64748B', margin: 0 }}>
-                      Asuntos en Reserva / Excedentes ({categorized.pruned.length})
+                      Asuntos fuera de selección ({categorized.pruned.length})
                     </h3>
                     <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>
                       Estos asuntos fueron podados del Core de 20 para no diluir la ponderación de la práctica.
@@ -3038,12 +3043,10 @@ export default function SubmissionStudio({
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    {isFullyOptimized ? 'Listo para Presentación' : `${optimizedMattersCount} de ${targetMattersCount} Asuntos Optimizados`}
+                    {deliveryState.approved && !isOptimizingAll ? 'Listo para presentación' : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
-                    {isFullyOptimized
-                      ? `Cumple al 100% con los estándares de redacción orgánica y anclaje factual de ${selectedDirectory}.`
-                      : `Estructuración editorial activa para ${firmName} en ${practiceAreaName}. Cada asunto se calibra en 3 párrafos fluidos.`}
+                    {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'B10 conserva la redacción de origen; Optimizar Todo completará ese paso.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
                   </p>
                 </div>
 
@@ -3076,10 +3079,9 @@ export default function SubmissionStudio({
                         ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Haz clic en Optimizar Todo para estructurar los 4 Pilares Institucionales.`
                         : b10WordCount > 500
                           ? `⚠️ Excede el límite estricto de 500 palabras (${b10WordCount}/500w). Reduce la extensión para cumplir el criterio de evaluación de ${selectedDirectory}.`
-                          : verifiedValuesList.length > 0
-                            ? `Posicionamiento calibrado (${b10WordCount}/500w). Integra el liderazgo de ${firmName} y mandatos clave como ${verifiedValuesList.map(v => `${v.name}${v.value ? ` (${v.value})` : ''}`).slice(0, 2).join(' y ')}.`
-                            : `Posicionamiento calibrado (${b10WordCount}/500w) bajo los 4 Pilares: Identidad institucional, Mandatos ancla, Liderazgo y Precedente sectorial.`}
+                          : `${b10WordCount}/500 palabras. ${needsB10Optimization(chambersData,b10Text) ? 'Conserva el texto de origen; pendiente de optimizar.' : 'Versión actual dentro del límite de extensión.'}`}
                     </p>
+                    {b10Text.trim() && <p aria-label="Vista previa del B10 actual" style={{fontSize:'0.72rem',color:'#475569',lineHeight:1.45}}>{b10Text.trim().slice(0,180)}{b10Text.trim().length > 180 ? '…' : ''}</p>}
                     <button
                       onClick={() => scrollTo('section-b10')}
                       style={{
@@ -3154,11 +3156,11 @@ export default function SubmissionStudio({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
                         <span style={{ fontSize: '0.85rem' }}>⭐</span>
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>
-                          Insignia: Por calibrar
+                          {hasRunOptimization ? 'Sin asunto insignia designado' : 'Insignia: selección pendiente'}
                         </span>
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
-                        Se identificará automáticamente al ejecutar <strong>Optimizar Todo</strong> (evaluando escala, volumen y precedentes), o puedes elegirlo manualmente con el botón <strong>⭐ Hacer Insignia</strong> en cualquier asunto.
+                        {hasRunOptimization ? 'La selección revisada no designó un asunto insignia. Consulta la justificación en el Audit o elige un candidato para una nueva revisión.' : 'Optimizar Todo revisará la selección y propondrá un asunto insignia cuando haya evidencia suficiente. También puedes proponerlo con Hacer Insignia.'}
                       </p>
                       <button
                         onClick={() => scrollTo('section-d')}
@@ -3210,10 +3212,7 @@ export default function SubmissionStudio({
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                       {!hasRunOptimization
                         ? `Se han extraído ${matters.length} asuntos íntegros (${rawPubMatters.length} públicos, ${rawConfMatters.length} confidenciales). Al ejecutar la optimización, el Audit Estratégico seleccionará el Core óptimo de hasta 20 asuntos y derivará excedentes a reserva.`
-                        : (matters.length > 20
-                          ? `Se seleccionó un Core oficial de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos, ${curation.officialConfMatters.length} confidenciales) y ${surplusCount} en reserva auditada según las reglas de ${selectedDirectory}.`
-                          : `Portafolio de ${matters.length} asuntos (${categorized.pub.length} públicos, ${categorized.conf.length} confidenciales) cumple con el límite oficial de ${selectedDirectory}.`
-                        )
+                        : `Selección de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos, ${curation.officialConfMatters.length} confidenciales). Fuera de la selección: ${chambersData.canonical_matter_selection?.reserve_matter_ids?.length || 0} en reserva y ${chambersData.canonical_matter_selection?.excluded_matter_ids?.length || 0} excluidos. ${deliveryState.label}.`
                       }
                     </p>
                     {hasRunOptimization && matters.length > 20 && (
@@ -3235,7 +3234,7 @@ export default function SubmissionStudio({
                           gap: '0.25rem'
                         }}
                       >
-                        {showCoreOnly ? `Ver Excedentes en Reserva (${surplusCount})` : `Filtrar Core ${coreCount}`}
+                        {showCoreOnly ? `Ver asuntos fuera de selección (${surplusCount})` : `Filtrar Core ${coreCount}`}
                         <ArrowRight size={12} />
                       </button>
                     )}
