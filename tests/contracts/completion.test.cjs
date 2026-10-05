@@ -15,6 +15,20 @@ global.fetch=async(url,options)=>{
  return Response.json({success:true,judge:{passed:!rejectFinal,defects:rejectFinal?[{severity:'critical',message:'Injected rendered claim defect'}]:[]}});
 };
 const complete=body=>POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));
+test('completion defaults to the current ranking table and selected country without inventing a research period',async()=>{
+ reset();state.guideRegion='Latin America — Mexico';
+ assert.equal((await complete()).status,200);
+ assert.equal(calls[0].payload.ranking_edition,'current');
+ assert.equal(calls[0].payload.ranking_jurisdiction,'Mexico');
+ assert.equal(calls[0].payload.research_period,null);
+});
+test('completion preserves the explicitly selected ranking scope and research period',async()=>{
+ reset();Object.assign(state.chambersData,{ranking_edition:'2026',ranking_jurisdiction:'Brazil',research_period:{from:'2025-01-01',to:'2025-12-31'}});
+ assert.equal((await complete()).status,200);
+ assert.equal(calls[0].payload.ranking_edition,'2026');
+ assert.equal(calls[0].payload.ranking_jurisdiction,'Brazil');
+ assert.deepEqual(calls[0].payload.research_period,{from:'2025-01-01',to:'2025-12-31'});
+});
 test('completion reviews actual DOCX and binds exact bytes to current draft',async()=>{reset();const r=await complete();assert.equal(r.status,200);const data=state.chambersData;assert.equal(data.release_verdict.passed,true,JSON.stringify(data.release_verdict));assert.equal(calls.length,2);assert.ok(calls[1].payload.package.rendered_artifact.includes('MXN 1000000'));const bytes=Buffer.from(data.approved_artifact.base64,'base64');assert.ok((await JSZip.loadAsync(bytes)).file('word/document.xml'));assert.equal(data.approved_artifact.sha256,artifactHash(bytes));assert.equal(data.approved_artifact.input_hash,deliveryInputHash(state));});
 test('final reviewer defect blocks artifact despite positive initial review',async()=>{reset();rejectFinal=true;const r=await complete();assert.equal(r.status,200);assert.equal(state.chambersData.release_verdict.passed,false);assert.equal(state.chambersData.approved_artifact,null);assert.equal(state.status,'Draft');assert.equal(calls.length,2);assert.ok(state.chambersData.release_verdict.errors[0].includes('Injected rendered claim defect'));});
 test('concurrent save during review rejects completion without overwriting draft',async()=>{reset();conflict=true;const before=structuredClone(state);assert.equal((await complete()).status,409);assert.deepEqual(state,before);});

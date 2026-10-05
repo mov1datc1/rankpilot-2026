@@ -58,3 +58,12 @@ export function persistInputReview(m: any, previous?: any) {
   }
   return reviewed;
 }
+
+/** Cards must never present an unresolved source alternative as the selected amount. */
+export function hasPendingValue(m: any): boolean {
+  return (!!valueConflict(m) || !!m.valueResolution) && !validValueResolution(m);
+}
+
+export function displayedMatterValue(m: any): string {
+  return hasPendingValue(m) ? 'Por definir' : String(m.value || '').trim() || 'No informado';
+}

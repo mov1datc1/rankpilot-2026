@@ -19,11 +19,11 @@ export default async function ReportsLayout({
   } catch {}
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
+    <div className="reports-shell" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
       <Sidebar userRole={userRole} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <Topbar />
-        <main style={{ padding: '2rem', flex: 1 }}>
+        <main style={{ padding: '2rem', flex: 1, minWidth: 0 }}>
           {children}
         </main>
       </div>

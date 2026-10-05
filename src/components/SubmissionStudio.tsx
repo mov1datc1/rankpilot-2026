@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
-import { needsInputReview } from '@/lib/audit/input-review';
+import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
@@ -282,7 +282,7 @@ export default function SubmissionStudio({
     finally {setIsSavingDraft(false);}
   };
   const [declaredRanking, setDeclaredRanking] = useState(submission.currentBand || '');
-  const [rankingEdition, setRankingEdition] = useState(String(initialChambersData?.ranking_edition || ''));
+  const [rankingEdition, setRankingEdition] = useState(String(initialChambersData?.ranking_edition || 'current'));
   const [rankingCountry, setRankingCountry] = useState(initialChambersData?.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim() || '');
   const [checkingRanking, setCheckingRanking] = useState(false);
   const checkRanking = async () => {
@@ -395,7 +395,7 @@ export default function SubmissionStudio({
     const list = [...(categorized.pub || []), ...(categorized.conf || [])];
     if (list.length === 0) return [];
     return list
-      .filter(m => m.value && m.value.trim().length > 0 && m.value !== 'N/A' && m.value !== 'Not disclosed')
+      .filter(m => !hasPendingValue(m) && m.value && m.value.trim().length > 0 && m.value !== 'N/A' && m.value !== 'Not disclosed')
       .slice(0, 3)
       .map(m => ({
         name: formatEntityName(m.client || m.name || m.title || 'Asunto'),
@@ -454,14 +454,17 @@ export default function SubmissionStudio({
     const badges: { label: string; color: string; bg: string; icon?: string }[] = [];
     const text = m.optimizedText || m.optimized_text || m.rawNotes || '';
     const hasClient = Boolean(m.client && m.client.trim() !== '' && (m.isConfidential || m.client.toLowerCase() !== 'confidencial'));
-    const hasValue = Boolean(m.value && m.value.trim() !== '' && !m.value.toLowerCase().includes('n/a'));
+    const pendingValue = hasPendingValue(m);
+    const hasValue = !pendingValue && Boolean(m.value && m.value.trim() !== '' && !m.value.toLowerCase().includes('n/a'));
     const hasLead = Boolean((m.leadPartner || m.lead_partner || '').trim() !== '');
     const hasSubstance = text.length >= 120;
 
     if (!hasClient) {
       badges.push({ label: 'Falta Cliente', color: '#DC2626', bg: '#FEE2E2', icon: '✕' });
     }
-    if (!hasValue) {
+    if (pendingValue) {
+      badges.push({ label: 'Monto por definir', color: '#D97706', bg: '#FEF3C7', icon: '⚠' });
+    } else if (!hasValue) {
       badges.push({ label: 'Sin Monto', color: '#D97706', bg: '#FEF3C7', icon: '⚠' });
     }
     if (!hasLead) {
@@ -835,6 +838,21 @@ export default function SubmissionStudio({
         .rankpilot-studio, .rankpilot-studio * { box-sizing: border-box; }
         .rankpilot-studio { max-width: 100%; overflow-wrap: anywhere; }
         .studio-canvas { min-width: 0; }
+        .rankpilot-studio { container-type: inline-size; }
+        .studio-toolbar { flex-wrap: wrap; gap: 12px; }
+        .studio-toolbar > div { flex-wrap: wrap; gap: 12px !important; max-width: 100%; min-width: 0; }
+        .studio-toolbar button { flex-shrink: 0; overflow-wrap: normal; word-break: normal; white-space: nowrap; }
+        .studio-toolbar svg { flex-shrink: 0; }
+        @container (max-width: 1100px) {
+          .studio-columns { flex-wrap: wrap; }
+          .studio-copilot { width: 100% !important; position: relative !important; top: 0 !important; height: auto !important; }
+          .studio-canvas { max-width: none !important; }
+        }
+        @container (max-width: 700px) {
+          .studio-columns { flex-direction: column; }
+          .studio-nav { width: 100% !important; height: auto !important; max-height: 180px; position: relative !important; top: 0 !important; }
+          .studio-canvas { width: 100%; padding: 16px !important; }
+        }
         @media (max-width: 900px) {
           .studio-toolbar { position: relative !important; padding: 12px !important; flex-wrap: wrap; gap: 12px; }
           .studio-toolbar > div { flex-wrap: wrap; max-width: 100%; gap: 8px !important; }
@@ -1663,22 +1681,24 @@ export default function SubmissionStudio({
               {deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
               {deliveryState.warnings.length > 0 && <><p>Observaciones antes de presentar:</p><ul>{deliveryState.warnings.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul></>}
             </section>
-            <section className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
-              <strong>Periodo de trabajo que se presenta</strong>
-              <p>Indica las fechas de las instrucciones del directorio para contrastarlas con la actividad de los asuntos. Este dato queda registrado como confirmado por ti.</p>
+            <details className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+              <summary style={{cursor:'pointer',fontWeight:600}}>Periodo del directorio · opcional para optimizar</summary>
+              <p>Sirve para comprobar si la actividad de los asuntos corresponde al periodo solicitado. Puedes optimizar sin completarlo; la cobertura temporal quedará sin verificar. Añádelo solo si conoces las fechas de las instrucciones del directorio.</p>
               <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
               <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
               <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>Guardar periodo</button>
-            </section>
+            </details>
             <section className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Verificación oficial del ranking</strong>
-              <p>La consulta compara firma, práctica, país y edición. Las correcciones de tu declaración quedan registradas; una consulta fallida no acredita ausencia de ranking.</p>
+              <p>Al optimizar todo, consultamos la fuente oficial con la firma, el directorio, la práctica y el país ya seleccionados. Sin una edición específica, comparamos la tabla pública actual.</p>
+              <details><summary style={{cursor:'pointer'}}>Corregir datos o reintentar la consulta</summary>
               <label style={{display:'block'}}>Posición declarada <input aria-label="Posición declarada" value={declaredRanking} onChange={e=>setDeclaredRanking(e.target.value)} placeholder="Ej. Band 2 o Tier 2" style={{maxWidth:'100%'}} /></label>
               <label style={{display:'block'}}><input type="checkbox" checked={rankingEdition==='current'} onChange={e=>setRankingEdition(e.target.checked?'current':'')} /> Comparar con la tabla pública actual (sin afirmar una edición histórica)</label>
               {rankingEdition!=='current' && <label>Edición del ranking <input aria-label="Edición del ranking" value={rankingEdition} onChange={e=>setRankingEdition(e.target.value)} placeholder="Ej. 2026" maxLength={4} style={{maxWidth:'100%'}} /></label>}
               <label style={{display:'block'}}>País de la tabla <input aria-label="País de la tabla" value={rankingCountry} onChange={e=>setRankingCountry(e.target.value)} placeholder="Ej. Mexico" style={{maxWidth:'100%'}} /></label>
               <button type="button" disabled={checkingRanking} onClick={()=>void checkRanking()}>{checkingRanking?'Consultando fuente oficial…':'Guardar declaración y verificar'}</button>
-              <p role="status">{chambersData.ranking_verification?.message || 'Pendiente de consulta oficial.'}</p>
+              </details>
+              <p role="status">{chambersData.ranking_verification?.message || 'La consulta se realizará durante la revisión de la optimización.'}</p>
               {chambersData.ranking_verification?.observed_band && <p>Posición observada: {chambersData.ranking_verification.observed_band}. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
               {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
             </section>
@@ -2396,9 +2416,9 @@ export default function SubmissionStudio({
                               ⭐ Asunto Insignia
                             </span>
                           )}
-                          {m.value ? (
+                          {(hasPendingValue(m) || m.value) ? (
                             <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
-                              {m.value}
+                              {displayedMatterValue(m)}
                             </span>
                           ) : (
                             editingMatterField?.matterId === (m.id || key) && editingMatterField?.field === 'value' ? (
@@ -2734,9 +2754,9 @@ export default function SubmissionStudio({
                                 ⭐ Asunto Insignia
                               </span>
                             )}
-                            {m.value ? (
+                            {(hasPendingValue(m) || m.value) ? (
                               <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#EEF2FF', color: '#4F46E5', padding: '2px 8px', borderRadius: '4px' }}>
-                                {m.value}
+                                {displayedMatterValue(m)}
                               </span>
                             ) : (
                               editingMatterField?.matterId === (m.id || key) && editingMatterField?.field === 'value' ? (
@@ -2944,7 +2964,7 @@ export default function SubmissionStudio({
                         {m.client || m.name || `Asunto excedente ${idx + 21}`}
                       </span>
                       <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
-                        {m.value || 'Sin valor reportado'}
+                        {displayedMatterValue(m)}
                       </span>
                     </div>
                   ))}

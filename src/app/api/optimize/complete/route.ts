@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (previous.enhanced_b7 && b10 !== previous.enhanced_b7) return NextResponse.json({error:'La narrativa cambió. Guarda o recarga antes de completar.'},{status:409});
     const reviewResponse = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
       method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
-      body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition,ranking_jurisdiction:previous.ranking_jurisdiction,preferred_hero_id:previous.user_selected_hero_id || null,
+      body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
         b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:previous.lawyers || [],matters})
     });
     if (!reviewResponse.ok) return NextResponse.json({error:'La revisión editorial no se completó. El borrador anterior se conserva.'}, {status:502});

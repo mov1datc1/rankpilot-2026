@@ -18,3 +18,14 @@ test('saving an already resolved matter preserves its current optimized prose',(
 test('saved confidential classification cannot be changed to public during review',()=>{const previous={id:'m',isConfidential:true,confidentialityConfirmed:true,publish_status:'confidential'};const incoming=confirmPublicationStatus(previous,'publishable');const saved=persistInputReview(incoming,previous);assert.equal(publicationStatus(saved),'confidential');assert.equal(saved.isConfidential,true);assert.equal(needsInputReview(saved),false);});
 test('unknown permission restricted as confidential remains a genuine decision',()=>{const previous={id:'m',isConfidential:true,confidentialityConfirmed:false,publish_status:'confirmation_required'};const saved=persistInputReview(confirmPublicationStatus(previous,'publishable'),previous);assert.equal(publicationStatus(saved),'publishable');assert.equal(saved.isConfidential,false);});
 test('retaining confidential status does not bypass a value conflict',()=>{const previous={id:'m',isConfidential:true,confidentialityConfirmed:true,publish_status:'confidential',valueConflict:'Conflicting source amounts'};const saved=persistInputReview(previous,previous);assert.equal(publicationStatus(saved),'confidential');assert.equal(needsInputReview(saved),true);});
+
+test('cards hide unresolved amounts but preserve evidence and allow an absent amount',()=>{
+  const {displayedMatterValue,hasPendingValue}=require('../../src/lib/audit/input-review.ts');
+  assert.equal(displayedMatterValue(conflict),'Por definir');
+  assert.equal(conflict.value,'USD 100');
+  assert.equal(displayedMatterValue(resolved()),'MXN 5000');
+  assert.equal(displayedMatterValue({...resolved(),value:'USD 1'}),'Por definir');
+  assert.equal(displayedMatterValue({isConfidential:true}),'No informado');
+  assert.equal(hasPendingValue({isConfidential:true}),false);
+  assert.equal(needsInputReview({isConfidential:true}),false);
+});

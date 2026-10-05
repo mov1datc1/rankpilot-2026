@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Studio: montos pendientes y revisión simplificada
+
+- Los montos contradictorios muestran «Por definir» en tarjetas y excedentes y se excluyen de los destacados. Sus fuentes se conservan; la insignia «Datos básicos presentes» no se muestra mientras el monto siga pendiente.
+- Ajustes de distribución del Studio y Reports para espacios estrechos. Periodo del directorio plegable y opcional para optimizar; ausencia de periodo no implica cobertura temporal verificada.
+- Revisión final consulta la tabla de ranking actual y el país seleccionado cuando no hay alcance explícito; conserva edición, país y periodo indicados por el usuario.
+- Validación local: 227 contratos Node aprobados, TypeScript y build Next completo. Primer build bloqueado por descarga de fuentes; reintento con red exitoso. QA visual y despliegue de estos cambios pendientes.
+
 ## [2026-10-05] — Validación documental previa a la extracción
 
 - Detección por contenido de DOCX, DOC binario, PDF y TXT; límites de lectura y diagnósticos por fuente antes de llamar al extractor.

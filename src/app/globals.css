@@ -341,3 +341,11 @@ button {
 @media (forced-colors: active) {
   :is(.rankpilot-studio, .input-review) input[type=checkbox] { appearance: auto; }
 }
+
+/* Keep report content from squeezing the global navigation. */
+.reports-shell > aside { flex-shrink: 0; }
+@media (max-width: 700px) {
+  .reports-shell { flex-direction: column; }
+  .reports-shell > aside { width: 100% !important; height: auto !important; position: relative !important; max-height: 180px; }
+  .reports-shell > div > main { padding: 12px !important; }
+}
