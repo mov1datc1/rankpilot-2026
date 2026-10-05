@@ -4,6 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## [2026-10-05] — Revisión guiada de permisos y montos
 
+- Ajuste posterior: asuntos ya clasificados conservan su estado sin repetir permisos; el servidor impide convertir un confidencial guardado en público. Solo los ambiguos requieren decisión. Montos y hechos mantienen su revisión. Validación: 218 contratos, TypeScript y Chrome con datos sintéticos (escritorio/móvil; persistencia simulada).
 - Studio y wizard definen tema claro explícito: corregida la herencia de texto blanco; campos, fechas, botones, checkbox y foco con estilos consistentes.
 - Permisos de publicación integrados en cada asunto del wizard; Studio remite a pendientes y el modo de resolución salta asuntos sin decisiones pendientes. Se conserva el guardado parcial.
 - Las discrepancias de valor requieren monto/moneda, fuente/motivo y confirmación expresa. Alternativas de tabla/narrativa solo si están identificadas literalmente; sin conversión automática.

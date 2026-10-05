@@ -239,7 +239,7 @@ export default function PostIngestionWizardModal({
                 Revisa los datos de tu submission
               </h2>
               <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
-                Confirma las fuentes, los permisos y los montos antes de optimizar para {targetDirectory}.
+                Revisa los hechos extraídos y resuelve las discrepancias antes de optimizar para {targetDirectory}.
               </p>
             </div>
           </div>
@@ -695,6 +695,8 @@ export default function PostIngestionWizardModal({
                 const confStatus = publicationStatus(matter);
                 const isConf = confStatus === 'confidential';
                 const isUnconfirmed = confStatus === 'confirmation_required';
+                const originalMatter = initialData.matters?.find((original: any) => original.id === matter.id) || matter;
+                const needsPublicationChoice = publicationStatus(originalMatter) === 'confirmation_required';
                 const hasValueConflict = !!valueConflict(matter) || (!!matter.valueResolution && !validValueResolution(matter));
 
                 return (
@@ -783,7 +785,7 @@ export default function PostIngestionWizardModal({
                       </div>
                     )}
 
-                    <fieldset className="review-decision">
+                    {needsPublicationChoice ? <fieldset className="review-decision">
                       <legend>Permiso de publicación {isUnconfirmed ? '· Requiere tu decisión' : '· Confirmado'}</legend>
                       <p>Indica cómo puede presentarse este asunto al directorio.</p>
                       <div className="review-options">
@@ -795,7 +797,9 @@ export default function PostIngestionWizardModal({
                           </label>
                         ))}
                       </div>
-                    </fieldset>
+                    </fieldset> : <p style={{fontSize: '.8rem', color: '#475569', margin: '.75rem 0'}}>
+                      {isConf ? 'Se conserva la clasificación confidencial del borrador. Este asunto permanecerá en la sección confidencial.' : 'Se conserva la clasificación publicable del borrador.'}
+                    </p>}
                     {hasValueConflict && <fieldset className="review-decision">
                       <legend>Monto definitivo · Obligatorio</legend>
                       <p>No elegiremos ni convertiremos una cifra por ti. Escribe el importe y la moneda que deben usarse; si son conceptos distintos, explícalos en la justificación.</p>

@@ -38,7 +38,9 @@ export function needsInputReview(m: any): boolean {
 
 /** Preserve the original discrepancy; clear active blockers only after an explicit resolution. */
 export function persistInputReview(m: any, previous?: any) {
-  let reviewed = confirmPublicationStatus(m, publicationStatus(m));
+  // A saved confidential matter cannot be made public by a review payload.
+  const status = previous && publicationStatus(previous) === 'confidential' ? 'confidential' : publicationStatus(m);
+  let reviewed = confirmPublicationStatus(m, status);
   const conflict = valueConflict(previous || {}) || valueConflict(m);
   if (conflict) {
     if (validValueResolution(m)) {
