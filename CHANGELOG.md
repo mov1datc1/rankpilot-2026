@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Validación documental previa a la extracción
+
+- Detección por contenido de DOCX, DOC binario, PDF y TXT; límites de lectura y diagnósticos por fuente antes de llamar al extractor.
+- OOXML recorrido sin duplicar texto: tablas, controles de contenido, párrafos, saltos, encabezados, notas e hipervínculos. Se bloquean cambios controlados pendientes, contenido incrustado no leído, paquetes dañados y archivos protegidos.
+- Eliminada recuperación de cadenas crudas del binario DOC. Se usan conversores disponibles o se solicita una copia DOCX. PDF sin texto legible en páginas con imágenes requiere original u OCR revisado; no se añadió OCR automático.
+- Extracción separada por fuente, procedencia por asunto, rechazo de encabezados repetidos dentro de una fuente y de asuntos con datos sin descripción. Notas no estructuradas requieren evidencia literal; su cobertura total sigue requiriendo revisión humana.
+- Builder acepta PDF para borradores y muestra errores accionables sin abrir el wizard ni sustituir datos guardados. El wizard muestra formatos leídos, conteos y observaciones.
+- Nueva extracción no hereda B10 ni artefactos aprobados de fuentes anteriores. Frontend exige el resultado de validación del motor; ambas aplicaciones deben actualizarse.
+- Validación: 159 tests Python, 224 contratos Node, TypeScript y build Next aprobados; QA Chrome con servicios simulados y lectura local de muestras DOC/DOCX. No certifica todos los documentos ni OCR ni E2E autenticado de producción.
+
 ## [2026-10-05] — Revisión guiada de permisos y montos
 
 - Ajuste posterior: asuntos ya clasificados conservan su estado sin repetir permisos; el servidor impide convertir un confidencial guardado en público. Solo los ambiguos requieren decisión. Montos y hechos mantienen su revisión. Validación: 218 contratos, TypeScript y Chrome con datos sintéticos (escritorio/móvil; persistencia simulada).

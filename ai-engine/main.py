@@ -832,77 +832,19 @@ async def optimize_matter_endpoint(request: Request):
     return JSONResponse(status_code=status_code, content=result)
 
 
-@api.post("/extract")
-async def extract_document_endpoint(request: Request):
-    """
-    Fast extraction endpoint (<1s deterministic, or fallback to extraction_node).
-    Extracts firm metadata, lawyers, department narrative B10, and all matters
-    directly into structured format for immediate preview in Submission Studio.
-    """
+async def _extract_readable_source(doc_text, context):
+    from utils.doc_parser import DocumentParser
+    from utils.document_preflight import SourceError
+    from agents.nodes import sanitize_text
+    doc_text = sanitize_text(doc_text)
+    source_errors = []
+    empty_sections = []
     try:
-        data = await request.json()
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": "Invalid JSON", "details": str(e)})
-
-    user_input = data.get("user_input") or data.get("documentUrl") or data.get("text") or ""
-    context = data.get("context", {})
-
-    sources = data.get("sources") or context.get("sources") or []
-    if not isinstance(user_input, str) or not isinstance(sources, list):
-        return JSONResponse(status_code=400, content={"success": False, "error": "Invalid input or sources"})
-    if not user_input and not sources:
-        return JSONResponse(status_code=400, content={"success": False, "error": "Missing user_input or sources"})
-
-    is_url = user_input.startswith("http://") or user_input.startswith("https://")
-    is_file = is_url or (isinstance(user_input, str) and (user_input.endswith(".docx") or user_input.endswith(".doc") or user_input.endswith(".pdf") or os.path.exists(user_input)))
-
-    try:
-        from utils.doc_parser import DocumentParser
-        from agents.nodes import sanitize_text
-
-        # 1. Parse document text (supporting single source or multi-document corpus)
-        sources = data.get("sources") or context.get("sources") or []
-        doc_texts = []
-        source_errors = []
-        if sources and isinstance(sources, list) and len(sources) > 0:
-            if len(sources) == 1 and sources[0].get("url"):
-                # Single document (e.g. Modality A Draft) — parse directly without artificial delimiter
-                s_url = sources[0].get("url")
-                try:
-                    parsed = DocumentParser.parse(s_url)
-                    doc_text = parsed.strip() if parsed else ""
-                except Exception as err:
-                    logger.warning("Failed parsing single source document")
-                    source_errors.append({"source": sources[0].get("name", "document"), "code": "SOURCE_UNREADABLE"})
-                    doc_text = ""
-            else:
-                for s in sources:
-                    s_url = s.get("url") if isinstance(s, dict) else str(s)
-                    s_name = s.get("name") if isinstance(s, dict) else os.path.basename(s_url)
-                    s_text = s.get("text") if isinstance(s, dict) else ""
-                    if s_url:
-                        try:
-                            parsed = DocumentParser.parse(s_url)
-                            if parsed and parsed.strip():
-                                doc_texts.append(f"=== SOURCE DOCUMENT: {s_name} ===\n{parsed.strip()}\n=== END DOCUMENT: {s_name} ===")
-                        except Exception as err:
-                            logger.warning("Failed parsing source document")
-                            source_errors.append({"source": s_name, "code": "SOURCE_UNREADABLE"})
-                    elif s_text and s_text.strip():
-                        doc_texts.append(f"=== SOURCE NOTE: {s_name} ===\n{s_text.strip()}\n=== END NOTE: {s_name} ===")
-                if doc_texts:
-                    doc_text = "\n\n".join(doc_texts)
-                elif is_file:
-                    doc_text = DocumentParser.parse(user_input)
-                else:
-                    doc_text = user_input
-        elif is_file:
-            doc_text = DocumentParser.parse(user_input)
-        else:
-            doc_text = user_input
-        doc_text = sanitize_text(doc_text)
-
-        # 2. Extract deterministic metadata and sections
+        # Reject duplicate labels before any source sections can be merged/renumbered.
+        labels = DocumentParser._count_matter_labels_in_text(doc_text)
+        if labels['label_validation'].get('duplicate_labels'):
+            raise SourceError('SOURCE_DUPLICATE_LABELS')
+        # Extract deterministic metadata and sections
         prelim = DocumentParser.extract_chambers_preliminary_fields(doc_text)
         heads = DocumentParser.extract_department_heads(doc_text)
         roster = DocumentParser.extract_lawyer_roster(doc_text)
@@ -927,7 +869,7 @@ async def extract_document_endpoint(request: Request):
             if end_match:
                 original_b10 = rem[:end_match.start()].strip()
             else:
-                original_b10 = rem[:4500].strip()
+                original_b10 = rem.strip()
 
             original_b10 = re.sub(
                 r'(?:Please include:.*?word count limit\)?|Address any feedback.*?word count limit\)?)',
@@ -941,6 +883,11 @@ async def extract_document_endpoint(request: Request):
         if sections:
             for label_key, sec in sections.items():
                 fields = DocumentParser.extract_matter_fields(sec["text"])
+                if not any(str(fields.get(key) or '').strip() for key in ('client', 'summary', 'matter_value', 'lead_partner', 'team_members', 'completion_date')):
+                    empty_sections.append(sec['label'])
+                    continue
+                if not str(fields.get('summary') or '').strip():
+                    raise SourceError('SOURCE_INCOMPLETE_MATTERS', matters=[sec['label']])
                 conf_status = fields.get("confidentiality_status")
                 if not conf_status or conf_status == "confirmation_required":
                     conf_status = sec.get("confidentiality_status") or "confirmation_required"
@@ -980,7 +927,7 @@ async def extract_document_endpoint(request: Request):
             # Fallback to extraction_node if no standard numbered headers found
             from agents.nodes import extraction_node
             state = {
-                "file_path": user_input if is_file else "",
+                "file_path": "",
                 "doc_text": doc_text,
                 "submission_context": context,
                 "messages": [],
@@ -995,6 +942,12 @@ async def extract_document_endpoint(request: Request):
                 return JSONResponse(status_code=502, content={"success": False, "code": "EXTRACTION_PROVIDER_ERROR", "error": "Extraction failed. Your draft has not been replaced. Please retry.", "source_errors": source_errors})
             ext_matters = extract_res.get("matters", [])
             for idx, m in enumerate(ext_matters):
+                excerpt = str(m.get('source_excerpt') or '').strip()
+                normalize = lambda value: ' '.join(str(value).split()).casefold()
+                if not excerpt or normalize(excerpt) not in normalize(doc_text) or any(normalize(m.get(field, '')) not in normalize(excerpt) for field in ('client', 'matter_value', 'lead_partner') if m.get(field)):
+                    raise SourceError('SOURCE_UNGROUNDED_MATTERS', matters=[m.get('title') or str(idx + 1)])
+                # The wizard must show literal evidence, not a model's paraphrase.
+                m['summary'] = excerpt
                 is_conf = m.get("is_confidential", False) or m.get("publish_status") in ("non_publishable", "confidential")
                 conf_status = m.get("confidentiality_status") or ("confirmation_required" if m.get("publish_status") == "confirmation_required" else ("confidential" if is_conf else ("publishable" if m.get("publish_status") == "publishable" else "confirmation_required")))
                 is_unconfirmed = (conf_status == "confirmation_required")
@@ -1029,9 +982,6 @@ async def extract_document_endpoint(request: Request):
             if not heads:
                 heads = [h.get("name", "") for h in extracted_metadata.get("department", {}).get("department_heads", []) if h.get("name")]
 
-        if not matters:
-            return JSONResponse(status_code=422, content={"success": False, "code": "NO_LEGAL_MATTERS", "error": "No legal matters could be identified. Add the client, legal work and outcome or upload a readable source.", "source_errors": source_errors})
-
         firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
         raw_practice = prelim.get("practice_area") or ""
         if "SOURCE DOCUMENT" in raw_practice or raw_practice.startswith("===") or "END DOCUMENT" in raw_practice:
@@ -1058,21 +1008,104 @@ async def extract_document_endpoint(request: Request):
             "matters": matters,
             "total_matters": len(matters),
             "source_errors": source_errors,
-            "partial": bool(source_errors),
+            "partial": False,
+            "empty_sections": empty_sections,
             "publishable_count": sum(1 for m in matters if not m.get("isConfidential")),
             "confidential_count": sum(1 for m in matters if m.get("isConfidential")),
         })
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JSONResponse(status_code=500, content={
-            "success": False,
-            "error": str(e),
-            "details": traceback.format_exc()[:1500]
-        })
+    except SourceError:
+        raise
+    except Exception:
+        logger.exception('Source extraction failed')
+        return JSONResponse(status_code=502, content={'success': False, 'code': 'EXTRACTION_PROVIDER_ERROR'})
 
 
+@api.post('/extract')
+async def extract_document_endpoint(request: Request):
+    from utils.doc_parser import DocumentParser
+    from utils.document_preflight import SourceError, readable_text
+    from urllib.parse import urlparse
+    try:
+        data = await request.json()
+        if not isinstance(data, dict):
+            raise ValueError()
+        context = data.get('context') or {}
+        sources = data.get('sources') or context.get('sources') or []
+        user_input = data.get('user_input') or data.get('documentUrl') or data.get('text') or ''
+        if not isinstance(context, dict) or not isinstance(sources, list) or not isinstance(user_input, str):
+            raise ValueError()
+        if not sources:
+            if not user_input:
+                raise ValueError()
+            is_file = user_input.startswith(('http://', 'https://')) or os.path.isfile(user_input)
+            sources = [{'url': user_input, 'name': os.path.basename(urlparse(user_input).path)}] if is_file else [{'text': user_input, 'name': 'Notas de origen'}]
+        if any(not isinstance(source, dict) for source in sources):
+            raise ValueError()
+    except Exception:
+        return JSONResponse(status_code=400, content={'success': False, 'code': 'SOURCE_REQUIRED'})
+
+    # Read every source first. A failure stops the whole batch before model calls.
+    prepared, reports, errors = [], [], []
+    for index, source in enumerate(sources):
+        name = str(source.get('name') or os.path.basename(urlparse(str(source.get('url') or '')).path) or f'Archivo {index + 1}')
+        try:
+            if source.get('url'):
+                text, report = DocumentParser.parse_with_report(source['url'], name)
+            else:
+                text = readable_text(str(source.get('text') or ''))
+                report = {'source': name, 'detected_format': 'text', 'method': 'user_notes', 'character_count': len(text)}
+            prepared.append((name, text))
+            reports.append(report)
+        except SourceError as error:
+            errors.append(error.as_dict(name))
+        except Exception:
+            errors.append(SourceError('SOURCE_UNREADABLE').as_dict(name))
+    if errors:
+        return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': errors})
+
+    results = []
+    for (name, text), report in zip(prepared, reports):
+        try:
+            response = await _extract_readable_source(text, context)
+            result = json.loads(response.body)
+            if response.status_code != 200:
+                return JSONResponse(status_code=response.status_code, content={**result, 'source_errors': [{'source': name, 'code': result.get('code', 'EXTRACTION_PROVIDER_ERROR')}]})
+            report['matter_count'] = len(result['matters'])
+            report['empty_sections'] = result.pop('empty_sections', [])
+            report['layout'] = 'numbered_form' if DocumentParser.extract_numbered_matter_sections(text) else 'unstructured'
+            if report['layout'] == 'unstructured':
+                report.setdefault('warnings', []).append('Fuente sin formulario numerado: confirma que el total y la identidad de los asuntos correspondan al documento; no hay un conteo independiente verificado.')
+            if not result['matters']:
+                report.setdefault('warnings', []).append('No se identificaron asuntos en esta fuente. Comprueba si solo aporta información complementaria.')
+            for matter in result['matters']:
+                matter['source_document'] = name
+            results.append(result)
+        except SourceError as error:
+            return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': [error.as_dict(name)]})
+
+    matters = [matter for result in results for matter in result['matters']]
+    if not matters:
+        return JSONResponse(status_code=422, content={'success': False, 'code': 'NO_LEGAL_MATTERS', 'source_reports': reports})
+    for index, matter in enumerate(matters, 1):
+        matter['id'] = f'matter-ext-{index}'
+    # Retain all source findings rather than silently ignoring non-numbered sources.
+    firm_names = {re.sub(r'\W+', '', result['metadata'].get('firm_name', '')).casefold() for result in results if result['metadata'].get('firm_name')}
+    if len(firm_names) > 1:
+        return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': [SourceError('SOURCE_IDENTITY_CONFLICT').as_dict('Fuentes del submission')]})
+    merged = results[0]
+    merged['metadata'] = {key: next((result['metadata'][key] for result in results if result['metadata'].get(key)), '') for key in merged['metadata']}
+    for field in ('original_b10', 'original_c2'):
+        merged[field] = '\n\n'.join(dict.fromkeys(result[field] for result in results if result[field]))
+    merged['lawyers'] = list({json.dumps(lawyer, sort_keys=True): lawyer for result in results for lawyer in result['lawyers']}.values())
+    if not merged['original_b10']:
+        reports[0].setdefault('warnings', []).append('No se identificó una descripción literal del departamento (B10). Añádela desde tu fuente antes de optimizar.')
+    merged['department'] = {'department_heads': list({head['name']: head for result in results for head in result['department']['department_heads']}.values())}
+    merged.update(matters=matters, total_matters=len(matters),
+                  publishable_count=sum(m['publish_status'] == 'publishable' for m in matters),
+                  confidential_count=sum(m['isConfidential'] for m in matters),
+                  source_reports=reports, ingestion_quality={'status': 'ready_for_review', 'sources_read': len(reports), 'matters_found': len(matters)})
+    return JSONResponse(status_code=200, content=merged)
 
 
 @api.post('/review-package')

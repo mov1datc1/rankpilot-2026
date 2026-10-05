@@ -3911,6 +3911,7 @@ export default function SubmissionStudio({
         onClose={() => setShowValidationWizard(false)}
         targetDirectory={selectedDirectory}
         initialData={{
+          sourceReports: chambersData.source_reports || [],
           draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
           practiceArea: (() => {

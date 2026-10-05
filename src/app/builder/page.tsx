@@ -127,7 +127,7 @@ function BuilderContent() {
 
     if (modality === 'draft') {
       if (!selectedFile) {
-        setErrorMessage('Por favor selecciona un archivo Word (.docx o .doc) con el borrador oficial.');
+        setErrorMessage('Por favor selecciona un archivo DOCX, DOC o PDF con el borrador. Recomendamos el formulario DOCX completo.');
         return;
       }
     } else {
@@ -198,7 +198,7 @@ function BuilderContent() {
       }
 
       // 3. Trigger Extraction via /api/extract-document
-      setBuildStepText('Leyendo las fuentes e identificando asuntos, responsables y datos pendientes…');
+      setBuildStepText('Comprobando el formato real, la lectura completa y los asuntos de cada fuente…');
       const extractPayload: any = {
         submissionId,
         documentUrl: primaryDocUrl || (sourcesPayload.length > 0 ? sourcesPayload[0].url : ''),
@@ -792,7 +792,7 @@ function BuilderContent() {
                   type="file"
                   ref={draftFileInputRef}
                   onChange={handleDraftFileSelect}
-                  accept=".docx,.doc"
+                  accept=".docx,.doc,.pdf"
                   style={{ display: 'none' }}
                 />
                 <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: selectedFile ? '#DCFCE7' : '#EFF6FF', color: selectedFile ? '#16A34A' : '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
@@ -810,10 +810,10 @@ function BuilderContent() {
                 ) : (
                   <div>
                     <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A', display: 'block' }}>
-                      Selecciona o arrastra el borrador oficial en .docx o .doc
+                      Selecciona el borrador en DOCX, DOC o PDF
                     </span>
                     <span style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '0.25rem', display: 'block' }}>
-                      Compatible con plantillas de Chambers &amp; Partners, The Legal 500 y Leaders League
+                      Recomendado: formulario DOCX completo y rellenado. Revisaremos la lectura de cada archivo antes de abrir el asistente.
                     </span>
                   </div>
                 )}
@@ -857,7 +857,7 @@ function BuilderContent() {
                 ref={multiFileInputRef}
                 onChange={handleMultiFileSelect}
                 multiple
-                accept=".pdf,.docx,.doc,.txt,.eml"
+                accept=".pdf,.docx,.doc,.txt"
                 style={{ display: 'none' }}
               />
 

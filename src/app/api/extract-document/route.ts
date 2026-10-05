@@ -99,6 +99,9 @@ export async function POST(request: NextRequest) {
     if (extractData.partial || extractData.source_errors?.length) {
       return NextResponse.json({ error: 'No se pudieron leer todas las fuentes. Tu borrador se conserva; corrige los archivos indicados y reintenta.', code: 'PARTIAL_EXTRACTION', source_errors: extractData.source_errors }, { status: 422 });
     }
+    if (extractData.ingestion_quality?.status !== 'ready_for_review' || extractData.ingestion_quality?.matters_found !== extractedMatters.length) {
+      return NextResponse.json({code: 'EXTRACTION_VALIDATION_REQUIRED', error: processingFeedback({code: 'EXTRACTION_VALIDATION_REQUIRED'}, 422)}, {status: 422});
+    }
     const extractedDept = extractData.department || {};
     const extractedLawyers = extractData.lawyers || [];
 
@@ -178,6 +181,8 @@ export async function POST(request: NextRequest) {
       release_verdict: { passed: false, status: 'needs_review', errors: ['Source evidence changed; validation required.'] },
       canonical_matter_selection: null,
       cloned_docx_b64: null,
+      approved_artifact: null,
+      confirmed_source_b10: null,
       judge_sol_extraction_audit: extractionAudit.reviewAudit,
       firm_name: extractedMeta.firm_name || existingChambers.firm_name || '',
       firmName: extractedMeta.firm_name || existingChambers.firmName || '',
@@ -191,10 +196,12 @@ export async function POST(request: NextRequest) {
       },
       original_c2: extractData.original_c2 || '',
       sources,
+      source_reports: extractData.source_reports || [],
+      ingestion_quality: extractData.ingestion_quality || null,
       draft_revision: Number(existingChambers.draft_revision || 0) + 1,
-      original_b10: extractedB10 || existingChambers.original_b10 || '',
-      enhanced_b7: extractedB10 || existingChambers.enhanced_b7 || '',
-      b7: extractedB10 || existingChambers.b7 || '',
+      original_b10: extractedB10,
+      enhanced_b7: extractedB10,
+      b7: extractedB10,
       department: extractedDept,
       lawyers: extractedLawyers,
       matters: createdMatters.map((m, idx) => {
@@ -206,6 +213,7 @@ export async function POST(request: NextRequest) {
           name: m.name,
           title: m.name,
           client: m.client,
+          source_document: healedM.source_document || '',
           clientDescription: healedM.clientDescription || '',
           value: m.value,
           leadPartner: m.leadPartner,

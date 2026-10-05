@@ -99,66 +99,36 @@ class DocumentParser:
 
     @staticmethod
     def parse(file_path: str) -> str:
-        is_url = file_path.startswith('http://') or file_path.startswith('https://')
-        
-        # Parse extension correctly even with URL parameters
-        parsed_path = urlparse(file_path).path if is_url else file_path
-        extension = os.path.splitext(parsed_path)[1].lower()
-        
-        if extension not in ['.docx', '.doc', '.pdf']:
-            raise ValueError(f"Unsupported file format: {extension}")
+        from utils.document_preflight import read_document
+        return read_document(file_path)[0]
 
-        local_path = file_path
-        temp_file = None
-
-        if is_url:
-            # Download to a temporary file
-            fd, local_path = tempfile.mkstemp(suffix=extension)
-            os.close(fd)
-            req = urllib.request.Request(file_path, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as response, open(local_path, 'wb') as out_file:
-                out_file.write(response.read())
-            temp_file = local_path
-
-        try:
-            if extension == '.docx':
-                return DocumentParser._parse_docx(local_path)
-            elif extension == '.doc':
-                return DocumentParser._parse_doc(local_path)
-            elif extension == '.pdf':
-                return DocumentParser._parse_pdf(local_path)
-        finally:
-            # Cleanup temp file if it was created
-            if temp_file and os.path.exists(temp_file):
-                os.remove(temp_file)
+    @staticmethod
+    def parse_with_report(file_path: str, source_name: str = ''):
+        from utils.document_preflight import read_document
+        return read_document(file_path, source_name)
 
     @staticmethod
     def _parse_doc(file_path: str) -> str:
         """Native Word 97-2003 (.doc) binary OLE extractor with multi-tier conversion."""
         # Tier 1: Try libreoffice / soffice conversion to .docx if available
-        # This provides 100% table and XML fidelity via python-docx
+        # Conversion preserves structure when supported; the resulting OOXML is validated.
         lo_bin = shutil.which("libreoffice") or shutil.which("soffice")
+        from utils.document_preflight import SourceError
         if lo_bin:
             try:
-                output_dir = tempfile.mkdtemp()
-                docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
-                completed = subprocess.run(
-                    [lo_bin, "--headless", "--convert-to", "docx", file_path, "--outdir", output_dir],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    timeout=60
-                )
-                if completed.returncode == 0 and os.path.exists(docx_path):
-                    parsed = DocumentParser._parse_docx(docx_path)
-                    try:
-                        os.remove(docx_path)
-                        os.rmdir(output_dir)
-                    except Exception:
-                        pass
-                    if len(parsed.strip()) > 100:
-                        return parsed.strip()
-            except Exception as lo_err:
-                print(f"[DOC PARSER] LibreOffice conversion error: {lo_err}")
+                with tempfile.TemporaryDirectory(prefix='rankpilot-conversion-') as output_dir:
+                    docx_path = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + '.docx')
+                    profile = os.path.join(output_dir, 'profile')
+                    completed = subprocess.run(
+                        [lo_bin, '-env:UserInstallation=file://' + profile, '--headless', '--convert-to', 'docx', file_path, '--outdir', output_dir],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60,
+                    )
+                    if completed.returncode == 0 and os.path.exists(docx_path):
+                        return DocumentParser._parse_docx(docx_path)
+            except SourceError:
+                raise
+            except (OSError, subprocess.SubprocessError):
+                pass
 
         # Tier 2: Use native converters (antiword, catdoc, textutil)
         converter_commands = []
@@ -186,115 +156,18 @@ class DocumentParser:
             except Exception as converter_err:
                 print(f"[DOC PARSER] {command[0]} conversion unavailable: {converter_err}")
 
-        # Method 3: Pure Python OLE Stream Text Extractor (last-resort fallback)
-        try:
-            with open(file_path, 'rb') as f:
-                content = f.read()
-
-            lines = []
-            # Extract UTF-16LE text strings
-            try:
-                text_utf16 = content.decode('utf-16le', errors='ignore')
-                clean_utf16 = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text_utf16)
-                blocks = re.findall(r'[\x20-\x7E\u00A0-\u024F\u1E00-\u1EFF]{4,}', clean_utf16)
-                for b in blocks:
-                    st = b.strip()
-                    if len(st) > 3 and not any(st.startswith(x) for x in ['Root', 'WordDocument', 'þÿ', 'bjbj', 'Table', 'CompObj']):
-                        if not any(c in st for c in ['Ą', 'ȫ']):
-                            lines.append(st)
-            except Exception:
-                pass
-
-            # Extract Latin1 text strings
-            text_latin1 = content.decode('latin1', errors='ignore')
-            blocks_latin = re.findall(r'[\x20-\x7E\xA0-\xFF]{4,}', text_latin1)
-            for b in blocks_latin:
-                st = b.strip()
-                if len(st) > 4 and not any(st.startswith(x) for x in ['Root', 'WordDocument', 'þÿ', 'bjbj', 'Table', 'CompObj']):
-                    if st not in lines:
-                        lines.append(st)
-
-            extracted_doc_text = '\n'.join(lines)
-            if len(extracted_doc_text.strip()) > 50:
-                return DocumentParser._clean_legacy_doc_text(extracted_doc_text)
-        except Exception as doc_err:
-            print(f"[DOC PARSER ERROR] OLE binary .doc extraction failed: {doc_err}")
-
-        return ""
+        from utils.document_preflight import SourceError
+        raise SourceError('SOURCE_DOC_CONVERSION')
 
     @staticmethod
     def _parse_docx(file_path: str) -> str:
-        """Extracts text from Word documents in exact document order, handling SDT content controls and tables."""
-        doc = Document(file_path)
-        body = doc._body._element
-        text_lines = []
-        word_ns = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
-
-        def xml_text(elem) -> str:
-            # ``itertext()`` repeats content from nested Word SDT/run wrappers.
-            # Reading only w:t leaves returns the text exactly once.
-            return ''.join(node.text or '' for node in elem.findall(f'.//{word_ns}t'))
-
-        def clean_text(raw: str) -> str:
-            if not raw:
-                return ''
-            parts = [p.strip() for p in raw.split('\n') if p.strip()]
-            cleaned_parts = []
-            for p in parts:
-                p = DocumentParser._collapse_exact_repetition(p)
-                if not cleaned_parts or p != cleaned_parts[-1]:
-                    cleaned_parts.append(p)
-            return ' '.join(cleaned_parts)
-
-        def process_node(elem):
-            for child in elem:
-                tag = child.tag.split('}')[-1]
-                if tag == 'p':
-                    p_txt = clean_text(xml_text(child).strip())
-                    if p_txt:
-                        text_lines.append(p_txt)
-                elif tag == 'tbl':
-                    for row in child.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tr'):
-                        row_cells = []
-                        for cell in row.findall('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tc'):
-                            c_txt = clean_text(xml_text(cell).strip())
-                            if c_txt and (not row_cells or c_txt != row_cells[-1]):
-                                row_cells.append(c_txt)
-                        if row_cells:
-                            text_lines.append(' | '.join(row_cells))
-                elif tag == 'sdt':
-                    sdt_content = child.find('.//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}sdtContent')
-                    if sdt_content is not None:
-                        process_node(sdt_content)
-                    else:
-                        process_node(child)
-
-        try:
-            process_node(body)
-        except Exception as err:
-            print(f"[DOC PARSER WARNING] XML document-order traversal failed ({err}) — falling back to standard extraction")
-
-        # Fallback if XML traversal yielded no text lines
-        if not text_lines:
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    text_lines.append(para.text.strip())
-            for table in doc.tables:
-                for row in table.rows:
-                    row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                    if row_text:
-                        text_lines.append(" | ".join(row_text))
-
-        return "\n".join(text_lines)
+        from utils.document_preflight import docx_text
+        return docx_text(file_path)[0]
 
     @staticmethod
     def _parse_pdf(file_path: str) -> str:
-        """Extracts text from PDF using PyMuPDF."""
-        text = ""
-        with fitz.open(file_path) as doc:
-            for page in doc:
-                text += page.get_text("text") + "\n"
-        return text
+        from utils.document_preflight import pdf_text
+        return pdf_text(file_path)[0]
 
     # =====================================================
     # v14.0 TRUST LAYER — Programmatic Source Verification

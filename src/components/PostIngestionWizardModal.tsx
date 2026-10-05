@@ -37,6 +37,7 @@ export interface PostIngestionWizardModalProps {
     b10SourceChanged?: boolean;
   }) => void | Promise<void>;
   initialData: {
+    sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[] }[];
     draftRevision?: number;
     firmName?: string;
     practiceArea?: string;
@@ -295,6 +296,15 @@ export default function PostIngestionWizardModal({
                 </div>
               </div>
 
+              {!!initialData.sourceReports?.length && <div className="review-decision">
+                <strong>Fuentes leídas: {initialData.sourceReports.length}</strong>
+                {initialData.sourceReports.map((source, index) => <div key={index} style={{marginTop: '.5rem', fontSize: '.8rem'}}>
+                  <span>{source.source} · {source.detected_format.toUpperCase()} · {source.matter_count ?? 0} asuntos</span>
+                  {source.warnings?.map((warning, i) => <p key={i}>{warning}</p>)}
+                  {!!source.empty_sections?.length && <p>{source.empty_sections.length} espacios de asuntos vacíos en la plantilla no se importaron.</p>}
+                </div>)}
+                <p>La lectura técnica se completó. Ahora confirma los hechos y resuelve las discrepancias; esto no aprueba el documento final.</p>
+              </div>}
               <div role="status" style={{padding:'1rem',background:'#EFF6FF',borderRadius:8}}>Se identificaron {matters.length} asuntos. Confirma que corresponden a tus fuentes. Guardar esta revisión conserva el borrador; no equivale a aprobar el documento final.</div>
 
               {/* Material Practice Discrepancy Interactive Decision Gate */}
@@ -712,6 +722,7 @@ export default function PostIngestionWizardModal({
                       <div>
                         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
                           {matter.title || matter.name || 'Asunto'}
+                          {matter.source_document && <span style={{display: 'block', textTransform: 'none', fontWeight: 400}}>Fuente: {matter.source_document}</span>}
                         </div>
                         <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginTop: '0.15rem' }}>
                           {matter.client || <span style={{ color: '#EF4444' }}>Cliente No Identificado</span>}
