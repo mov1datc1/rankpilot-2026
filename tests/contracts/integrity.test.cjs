@@ -96,3 +96,12 @@ test('public biographies suppress source-derived client aliases and mixed unconf
  assert.equal(anonymizeConfidentialClients('She is the Partner of the employment practice.',[]),'She is a partner in the employment practice.');
  assert.match(anonymizeConfidentialClients('Public Client retained the team.',['XYZ Industrial']),/Public Client/);
 });
+
+test('client aliases do not turn arbitrary first words of compound names into identities',()=>{
+ const {clientAliases}=require('../../src/lib/docx/client-aliases.ts');
+ assert.ok(!clientAliases(['American Widgets']).includes('American'));
+ assert.ok(!clientAliases(['Richard Example']).includes('Richard'));
+ assert.ok(clientAliases(['XYZ Industrial']).includes('XYZ'));
+ assert.ok(clientAliases(['Fictional de México']).includes('Fictional'));
+ assert.ok(clientAliases(['Example (ABC)']).includes('ABC'));
+});
