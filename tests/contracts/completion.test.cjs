@@ -31,3 +31,11 @@ test('same-mandate source edit during optimization rejects stale generated text'
  global.fetch=async()=>{state.chambersData.matters[0].rawNotes='New confirmed source';return Response.json({success:true,optimized_text:'Stale text'});};
  try{const r=await optimizeMatter(new NextRequest('http://localhost/api/optimize/matter',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));assert.equal(r.status,409);assert.equal(state.chambersData.matters[0].rawNotes,'New confirmed source');assert.notEqual(state.chambersData.matters[0].optimizedText,'Stale text');}finally{global.fetch=originalFetch;}
 });
+test('pending source decisions block optimization before any model call',async()=>{
+ for (const pending of [{valueConflict:'Table and narrative disagree'},{confidentialityConfirmed:false,publish_status:'confirmation_required'}]) {
+  reset();Object.assign(state.chambersData.matters[0],pending);
+  const response=await optimizeMatter(new NextRequest('http://localhost/api/optimize/matter',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));
+  assert.equal(response.status,422);assert.equal(calls.length,0);
+  assert.equal((await complete()).status,422);assert.equal(calls.length,0);
+ }
+});

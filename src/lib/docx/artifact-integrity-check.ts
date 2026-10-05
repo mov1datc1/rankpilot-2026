@@ -570,8 +570,8 @@ export function runArtifactIntegrityCheck(
       }
     }
 
-    if (m.valueConflict || m.value_conflict) {
-      criticalErrors.push({severity:'CRITICAL',matterName:mName,field:'Unresolved source value conflict',description:String(m.valueConflict || m.value_conflict),actionTaken:'Blocked pending source clarification.'});
+    if (m.valueConflict || m.value_conflict || m.sourceValueConflict) {
+      criticalErrors.push({severity:'CRITICAL',matterName:mName,field:'Unresolved source value conflict',description:String(m.valueConflict || m.value_conflict || m.sourceValueConflict),actionTaken:'Blocked pending source clarification.'});
     }
 
     // Check 16: Incomplete / Truncated Sentence Validator (Angela Castillo Directive)

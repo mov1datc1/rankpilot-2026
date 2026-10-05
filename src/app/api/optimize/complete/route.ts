@@ -1,3 +1,4 @@
+import { needsInputReview } from '@/lib/audit/input-review';
 import JSZip from 'jszip';
 import { NextRequest, NextResponse } from 'next/server';
 import { Packer } from 'docx';
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     if (!submission || ![user.id,account?.id].includes(submission.userId)) return NextResponse.json({error:'Not found'}, {status:404});
     const previous = submission.chambersData as any || {};
     const stored = Array.isArray(previous.matters) ? previous.matters : submission.matters;
+    if (stored.some(needsInputReview)) return NextResponse.json({error:'Resuelve los permisos y montos pendientes en el asistente antes de la revisión final.'}, {status:422});
     const draft = Array.isArray(body.matters) ? body.matters : stored;
     const ids = draft.map((m:any) => m.id);
     if (!draft.length || ids.some((id:any)=>!id) || new Set(ids).size !== ids.length) return NextResponse.json({error:'El expediente debe contener asuntos con IDs únicos.'}, {status:422});

@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Revisión guiada de permisos y montos
+
+- Studio y wizard definen tema claro explícito: corregida la herencia de texto blanco; campos, fechas, botones, checkbox y foco con estilos consistentes.
+- Permisos de publicación integrados en cada asunto del wizard; Studio remite a pendientes y el modo de resolución salta asuntos sin decisiones pendientes. Se conserva el guardado parcial.
+- Las discrepancias de valor requieren monto/moneda, fuente/motivo y confirmación expresa. Alternativas de tabla/narrativa solo si están identificadas literalmente; sin conversión automática.
+- Persistencia conserva la discrepancia original, atribuye la confirmación y elimina prosa optimizada obsoleta. Cambiar un monto confirmado reabre revisión. API de optimización y revisión final bloquean pendientes.
+- Motor editorial recibe la corrección del usuario junto a la fuente original. No equivale a verificación documental independiente ni a aprobación automática del Word.
+- Eliminada reexportación de constructores DOCX en un Route Handler, incompatible con la validación de tipos de Next.js.
+- Validación: 214 contratos Node, 135 tests Python; comprobación TypeScript. Build completo impedido por descarga de Google Fonts sin red. Chrome no pudo ejecutarse: revisión automática de escalación rechazó por límite de uso. QA visual y prueba autenticada de producción pendientes.
+
 ## [v29.6] — 2026-09-30
 
 ### Resolution of Angela Castillo's 7 Architectural Directives on Ramos Castillo Energy & Natural Resources

@@ -1,5 +1,6 @@
 'use server';
 
+import { persistInputReview, validValueResolution } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
@@ -198,6 +199,17 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       const valid=(value:string)=>/^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
       if(!valid(from) || !valid(to) || from>to) throw new Error('Indica un periodo de trabajo válido.');
     }
+    if (data.matters) data.matters = data.matters.map(m => {
+      const previous = chambers.matters?.find((saved: any) => saved.id === m.id);
+      const reviewed = persistInputReview(m, previous);
+      if (validValueResolution(reviewed)) {
+        const unchanged = previous?.valueResolution?.value === reviewed.valueResolution.value && previous?.valueResolution?.reason === reviewed.valueResolution.reason;
+        reviewed.valueResolution = {...reviewed.valueResolution,
+          confirmedAt: unchanged ? previous.valueResolution.confirmedAt : new Date().toISOString(),
+          confirmedBy: unchanged ? previous.valueResolution.confirmedBy : user.id};
+      }
+      return reviewed;
+    });
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
@@ -225,6 +237,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
             data: {
               name: m.name || m.title || '',
               optimizedText: m.optimizedText || m.optimized_text || '',
+              ...(m.status === 'Draft' ? {status: 'Draft'} : {}),
               teamMembers: m.teamMembers || m.team_members || '',
               crossBorder: m.crossBorder || '',
               completionDate: m.completionDate || '',
@@ -250,7 +263,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
 
     });
-    return { success: true, revision: nextRevision };
+    return { success: true, revision: nextRevision, matters: data.matters };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };

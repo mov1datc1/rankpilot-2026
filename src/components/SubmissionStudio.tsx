@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
+import { needsInputReview } from '@/lib/audit/input-review';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
@@ -226,7 +227,8 @@ export default function SubmissionStudio({
     try {
       const result = await updateSubmissionValidatedData(submission.id, {expectedRevision: Number(chambersData.draft_revision || 0), matters: updated});
       if (!result.success) throw new Error(result.error);
-      setChambersData((prev: any) => ({...prev, draft_revision: result.revision, matters: updated, release_verdict: {passed: false, status: 'needs_review'}}));
+      setMatters(result.matters || updated);
+      setChambersData((prev: any) => ({...prev, draft_revision: result.revision, matters: result.matters || updated, release_verdict: {passed: false, status: 'needs_review'}}));
     } catch (err) {
       console.error('Error saving matter field:', err);
       setDraftSaveError(err instanceof Error ? err.message : 'No se pudo guardar el cambio.');
@@ -248,7 +250,8 @@ export default function SubmissionStudio({
         firmName: chambersData.firm_name || chambersData.firmName || ''
       });
       if (!result.success) throw new Error(result.error || 'No se pudo guardar el borrador.');
-      setChambersData((prev: any) => ({...prev, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.']}}));
+      if (result.matters) setMatters(result.matters);
+      setChambersData((prev: any) => ({...prev, matters: result.matters || matters, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.']}}));
       setDraftSavedToast(true);
       setTimeout(() => setDraftSavedToast(false), 3500);
       return true;
@@ -264,19 +267,8 @@ export default function SubmissionStudio({
     if (await handleSaveDraft()) router.push('/reports');
   };
 
-  const confirmPublication = async (matterId: string, isPublic: boolean) => {
-    setIsSavingDraft(true);
-    setDraftSaveError('');
-    const updated = matters.map(m => m.id === matterId ? {...m, isConfidential: !isPublic, confidential: !isPublic, confidentialityConfirmed: true, confidentialityStatus: isPublic ? 'publishable' : 'confidential', publish_status: isPublic ? 'publishable' : 'non_publishable', publishStatus: isPublic ? 'publishable' : 'confidential'} : m);
-    try {
-      const result = await updateSubmissionValidatedData(submission.id, {expectedRevision: Number(chambersData.draft_revision || 0), matters: updated});
-      if (!result.success) throw new Error(result.error);
-      setMatters(updated);
-      setChambersData((prev: any) => ({...prev, matters: updated, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review'}}));
-    } catch (e) { setDraftSaveError(e instanceof Error ? e.message : 'No se pudo guardar la confirmación.'); }
-    finally { setIsSavingDraft(false); }
-  };
-  const unconfirmedMatters = matters.filter((m: any) => m.confidentialityConfirmed === false || m.publish_status === 'confirmation_required' || m.confidentialityStatus === 'confirmation_required');
+  const pendingInputMatters = matters.filter(needsInputReview);
+  const [reviewPending, setReviewPending] = useState(false);
 
   const [periodFrom, setPeriodFrom] = useState(initialChambersData?.research_period?.from || '');
   const [periodTo, setPeriodTo] = useState(initialChambersData?.research_period?.to || '');
@@ -520,6 +512,7 @@ export default function SubmissionStudio({
 
   // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
   const handleOptimizeAll = async (bypassReadiness: boolean = false) => {
+    if (pendingInputMatters.length) { setReviewPending(true); setShowValidationWizard(true); return; }
     if (isOptimizingAll) return;
 
     // v27.0 Evidence Readiness Gate: Block ONLY on critical insufficiency (< 5 matters or score < 50)
@@ -732,6 +725,7 @@ export default function SubmissionStudio({
 
   // Handler: Re-optimize single matter (3s isolated micro-call)
   const handleOptimizeMatter = async (matter: MatterItem, matterIdx: number) => {
+    if (needsInputReview(matter)) { setReviewPending(true); setShowValidationWizard(true); return; }
     const key = matter.id || `matter-${matterIdx}`;
     setDraftSaveError('');
     setOptimizingMatterId(key);
@@ -1051,6 +1045,7 @@ export default function SubmissionStudio({
                 <button
                   type="button"
                   onClick={() => {
+                    setReviewPending(false);
                     setShowValidationWizard(true);
                     setShowToolsMenu(false);
                   }}
@@ -1663,19 +1658,19 @@ export default function SubmissionStudio({
           {/* ── CENTER CANVAS (CARDS & PREVIEW) ── */}
           <div className="studio-canvas" style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
-            <section aria-label="Estado de entrega" style={{padding:'1rem',background:deliveryState.approved?'#F0FDF4':'#EFF6FF',border:'1px solid #CBD5E1',borderRadius:10}}>
+            <section className="studio-review-panel" aria-label="Estado de entrega" style={{padding:'1rem',background:deliveryState.approved?'#F0FDF4':'#EFF6FF',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>{deliveryState.label}</strong>
               {deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
               {deliveryState.warnings.length > 0 && <><p>Observaciones antes de presentar:</p><ul>{deliveryState.warnings.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul></>}
             </section>
-            <section aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+            <section className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Periodo de trabajo que se presenta</strong>
               <p>Indica las fechas de las instrucciones del directorio para contrastarlas con la actividad de los asuntos. Este dato queda registrado como confirmado por ti.</p>
               <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
               <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
               <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>Guardar periodo</button>
             </section>
-            <section aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+            <section className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Verificación oficial del ranking</strong>
               <p>La consulta compara firma, práctica, país y edición. Las correcciones de tu declaración quedan registradas; una consulta fallida no acredita ausencia de ranking.</p>
               <label style={{display:'block'}}>Posición declarada <input aria-label="Posición declarada" value={declaredRanking} onChange={e=>setDeclaredRanking(e.target.value)} placeholder="Ej. Band 2 o Tier 2" style={{maxWidth:'100%'}} /></label>
@@ -1687,14 +1682,10 @@ export default function SubmissionStudio({
               {chambersData.ranking_verification?.observed_band && <p>Posición observada: {chambersData.ranking_verification.observed_band}. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
               {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
             </section>
-            {unconfirmedMatters.length > 0 && <section aria-label="Permisos de publicación pendientes" style={{padding: '1rem', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10}}>
-              <strong>Confirma los permisos de publicación</strong>
-              <p>Estos asuntos se mantienen fuera de las secciones públicas hasta que confirmes su estado. La entrega final permanece pendiente.</p>
-              {unconfirmedMatters.map(m => <div key={m.id} style={{marginBottom: 12}}>
-                <label>{m.client || m.name}<select aria-label={`Permiso de publicación de ${m.client || m.name}`} value="" disabled={isSavingDraft} onChange={e => { if (e.target.value) void confirmPublication(m.id!, e.target.value === 'public'); }} style={{display: 'block', width: '100%', marginTop: 6, padding: 8}}>
-                  <option value="">Selecciona el estado confirmado</option><option value="public">Autorizado para publicar</option><option value="confidential">Confidencial</option>
-                </select></label>
-              </div>)}
+            {pendingInputMatters.length > 0 && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
+              <strong>{pendingInputMatters.length} asuntos necesitan tu revisión</strong>
+              <p>Resuelve los permisos y los montos en el asistente. Tus decisiones se guardarán juntas antes de optimizar.</p>
+              <button type="button" onClick={() => {setReviewPending(true); setShowValidationWizard(true);}}>Resolver pendientes en el asistente <ArrowRight size={16} /></button>
             </section>}
             {/* ═══ MASTER ACTION HERO BANNER: OPTIMIZAR TODO CON IA ═══ */}
             <div style={{
@@ -3916,6 +3907,7 @@ export default function SubmissionStudio({
       {/* ═══ POST-INGESTION PROGRESSIVE VALIDATION WIZARD ═══ */}
       <PostIngestionWizardModal
         isOpen={showValidationWizard}
+        reviewPending={reviewPending}
         onClose={() => setShowValidationWizard(false)}
         targetDirectory={selectedDirectory}
         initialData={{
@@ -3938,8 +3930,8 @@ export default function SubmissionStudio({
         onComplete={async (data) => {
           const result=await updateSubmissionValidatedData(submission.id,{...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:data.lawyers,matters:data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
-          setMatters(data.matters);
+          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
           if(data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();

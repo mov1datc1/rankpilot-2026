@@ -264,3 +264,80 @@ button {
     display: none !important;
   }
 }
+
+/* Light editorial surfaces must not inherit the application's dark theme. */
+.rankpilot-studio, .input-review {
+  color: #0f172a;
+  color-scheme: light;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+:is(.rankpilot-studio, .input-review) :is(input, select, textarea) {
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: .65rem .8rem;
+  max-width: 100%;
+}
+:is(.rankpilot-studio, .input-review) :is(input, textarea)::placeholder { color: #64748b; opacity: 1; }
+:is(.rankpilot-studio, .input-review) :is(button, input, select, textarea):focus-visible {
+  outline: 3px solid #818cf8;
+  outline-offset: 3px;
+}
+:is(.rankpilot-studio, .input-review) input:is([type=checkbox], [type=radio]) {
+  appearance: auto;
+  accent-color: #4f46e5;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  padding: 0;
+  vertical-align: middle;
+}
+:is(.rankpilot-studio, .input-review) button:disabled { opacity: .55; cursor: not-allowed; }
+.studio-review-panel { padding: 1.25rem; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; }
+.studio-review-panel > strong { display: block; font-size: 1rem; }
+.studio-review-panel p { color: #475569; margin: .5rem 0 1rem; font-size: .875rem; line-height: 1.6; }
+.studio-review-panel ul { padding-left: 1.25rem; margin-top: .5rem; font-size: .875rem; }
+.studio-review-panel label { display: block; font-size: .85rem; font-weight: 500; margin: .85rem 0; }
+.studio-review-panel label input:not([type=checkbox]) { display: block; width: 100%; margin-top: .35rem; }
+.studio-review-panel label:has(input[type=checkbox]) { display: flex !important; align-items: flex-start; gap: .65rem; padding: .85rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
+.studio-review-panel button { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1rem; border-radius: 8px; background: #4f46e5; color: #fff; font: inherit; font-size: .85rem; font-weight: 600; }
+.studio-review-panel a { color: #4338ca; text-decoration: underline; }
+.review-decision { min-width: 0; border: 1px solid #c7d2fe; border-radius: 10px; padding: 1rem; margin: 1rem 0; background: #f8faff; }
+.review-decision legend { font-size: .85rem; font-weight: 700; padding: 0 .35rem; color: #312e81; }
+.review-decision p { font-size: .8rem; color: #475569; margin: 0 0 .75rem; }
+.review-decision label { display: block; font-size: .8rem; font-weight: 500; margin-top: .75rem; }
+.review-decision label > :is(input:not([type=checkbox]):not([type=radio]), textarea) { display: block; width: 100%; margin-top: .35rem; }
+.review-decision textarea { min-height: 85px; resize: vertical; }
+.review-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .65rem; }
+.review-options label, .review-decision .review-check { display: flex; align-items: flex-start; gap: .65rem; cursor: pointer; }
+.review-options label { border: 1px solid #cbd5e1; border-radius: 8px; padding: .85rem; background: white; margin: 0; }
+.review-options label.selected { border-color: #4f46e5; background: #eef2ff; color: #312e81; }
+.input-review > div { min-height: 0; }
+@media (max-width: 600px) {
+  .input-review { padding: .5rem !important; }
+  .input-review > div { max-height: 97dvh !important; }
+  .input-review > div > div { padding: 1rem !important; }
+  .input-review > div > div:first-child { flex-wrap: wrap; gap: .5rem; }
+  .input-review > div > div:last-child > div:last-child { flex-wrap: wrap; gap: .75rem; }
+  .input-review > div > div:last-child > div:last-child > div { flex-wrap: wrap; gap: .5rem; }
+}
+:is(.rankpilot-studio, .input-review) input[type=checkbox] {
+  appearance: none;
+  border: 1.5px solid #94a3b8;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+}
+:is(.rankpilot-studio, .input-review) input[type=checkbox]:checked {
+  border-color: #4f46e5;
+  background-color: #4f46e5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='m4 10 4 4 8-8'/%3E%3C/svg%3E");
+}
+:is(.rankpilot-studio, .input-review) input:disabled { opacity: .55; cursor: not-allowed; }
+@media (forced-colors: active) {
+  :is(.rankpilot-studio, .input-review) input[type=checkbox] { appearance: auto; }
+}

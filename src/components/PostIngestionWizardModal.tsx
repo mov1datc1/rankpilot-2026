@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { getCanonicalPracticeArea } from '@/lib/constants';
+import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
 
 export interface PostIngestionWizardModalProps {
@@ -47,6 +48,7 @@ export interface PostIngestionWizardModalProps {
     matters?: any[];
   };
   targetDirectory?: string;
+  reviewPending?: boolean;
 }
 
 export default function PostIngestionWizardModal({
@@ -54,7 +56,8 @@ export default function PostIngestionWizardModal({
   onClose,
   onComplete,
   initialData,
-  targetDirectory = 'Chambers & Partners'
+  targetDirectory = 'Chambers & Partners',
+  reviewPending = false
 }: PostIngestionWizardModalProps) {
   const sanitizeStr = (s?: string) => {
     if (!s) return '';
@@ -110,6 +113,9 @@ export default function PostIngestionWizardModal({
   const totalSteps = 3 + totalMatterSteps;
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [validationError, setValidationError] = useState('');
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => { contentRef.current?.scrollTo({top: 0}); setValidationError(''); }, [currentStep]);
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [isSaving,setIsSaving] = useState(false);
   const [saveError,setSaveError] = useState('');
@@ -119,6 +125,11 @@ export default function PostIngestionWizardModal({
   // Sync when initialData changes
   useEffect(() => {
     if (isOpen) {
+      const pendingIndex = (initialData.matters || []).findIndex(needsInputReview);
+      setCurrentStep(reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
+      contentRef.current?.scrollTo({top: 0});
+      setIsEditingInline(false);
+      setValidationError('');
       setExpectedRevision(initialData.draftRevision || 0);
       setInitialB10Source(initialData.b10Text || '');
       setSaveError('');
@@ -141,6 +152,20 @@ export default function PostIngestionWizardModal({
     finally {setIsSaving(false);}
   };
   const handleNext = () => {
+    if (currentMatterChunk.some(needsInputReview)) {
+      setValidationError('Resuelve los permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
+      return;
+    }
+    if (reviewPending) {
+      const pendingIndex = matters.findIndex(needsInputReview);
+      if (pendingIndex >= 0) setCurrentStep(4 + Math.floor(pendingIndex / mattersChunkSize));
+      else void saveReview();
+      return;
+    }
+    if (currentStep === totalSteps) {
+      const pendingIndex = matters.findIndex(needsInputReview);
+      if (pendingIndex >= 0) { setCurrentStep(4 + Math.floor(pendingIndex / mattersChunkSize)); return; }
+    }
     setIsEditingInline(false);
     if(currentStep<totalSteps)setCurrentStep(prev=>prev+1);
     else void saveReview();
@@ -158,10 +183,13 @@ export default function PostIngestionWizardModal({
   };
 
   const currentMatterChunk = currentStep >= 4 ? matterChunks[currentStep - 4] || [] : [];
-  const progressPercent = Math.round((currentStep / totalSteps) * 100);
+  const progressPercent = Math.round(((currentStep - 1) / totalSteps) * 100);
+  const pendingCount = matters.filter(needsInputReview).length;
 
   return (
-    <div style={{
+    <div className="input-review" role="dialog" aria-modal="true" aria-labelledby="input-review-title" style={{
+      color: '#0F172A',
+      colorScheme: 'light',
       position: 'fixed',
       inset: 0,
       zIndex: 99999,
@@ -207,11 +235,11 @@ export default function PostIngestionWizardModal({
               <Sparkles size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                Validación Guiada de Datos Extraídos
+              <h2 id="input-review-title" style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                Revisa los datos de tu submission
               </h2>
               <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
-                Verifica los datos literales antes de proceder a la optimización de {targetDirectory}
+                Confirma las fuentes, los permisos y los montos antes de optimizar para {targetDirectory}.
               </p>
             </div>
           </div>
@@ -239,7 +267,7 @@ export default function PostIngestionWizardModal({
         </div>
 
         {/* Body Content - Scrollable */}
-        <div style={{
+        <div ref={contentRef} inert={isSaving} style={{
           padding: '1.75rem',
           overflowY: 'auto',
           flex: 1
@@ -664,10 +692,10 @@ export default function PostIngestionWizardModal({
               </div>
 
               {currentMatterChunk.map((matter: any) => {
-                const confStatus = matter.confidentialityStatus || (matter.isConfidential ? 'confidential' : 'publishable');
+                const confStatus = publicationStatus(matter);
                 const isConf = confStatus === 'confidential';
                 const isUnconfirmed = confStatus === 'confirmation_required';
-                const hasValueConflict = !!matter.valueConflict;
+                const hasValueConflict = !!valueConflict(matter) || (!!matter.valueResolution && !validValueResolution(matter));
 
                 return (
                   <div key={matter.id} style={{
@@ -751,9 +779,56 @@ export default function PostIngestionWizardModal({
                         gap: '0.5rem'
                       }}>
                         <AlertTriangle size={15} color="#D97706" style={{ flexShrink: 0 }} />
-                        <span><strong>Aviso de Auditoría FX:</strong> {matter.valueConflict}</span>
+                        <span><strong>Revisa el monto y la moneda.</strong> {valueConflict(matter) || 'El monto cambió después de confirmarlo. Revisa de nuevo su fuente.'}</span>
                       </div>
                     )}
+
+                    <fieldset className="review-decision">
+                      <legend>Permiso de publicación {isUnconfirmed ? '· Requiere tu decisión' : '· Confirmado'}</legend>
+                      <p>Indica cómo puede presentarse este asunto al directorio.</p>
+                      <div className="review-options">
+                        {[['publishable', 'Autorizado para publicar'], ['confidential', 'Confidencial']].map(([status, label]) => (
+                          <label key={status} className={confStatus === status ? 'selected' : ''}>
+                            <input type="radio" name={`publication-${matter.id}`} checked={confStatus === status} disabled={isSaving}
+                              onChange={() => setMatters(prev => prev.map(m => m.id === matter.id ? confirmPublicationStatus(m, status) : m))} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    {hasValueConflict && <fieldset className="review-decision">
+                      <legend>Monto definitivo · Obligatorio</legend>
+                      <p>No elegiremos ni convertiremos una cifra por ti. Escribe el importe y la moneda que deben usarse; si son conceptos distintos, explícalos en la justificación.</p>
+                      {valueAlternatives(matter).length > 0 && <div className="review-options">
+                        {valueAlternatives(matter).map(option => <label key={option.label} className={matter.valueResolution?.value === option.value ? 'selected' : ''}>
+                          <input type="radio" name={`value-${matter.id}`} checked={matter.valueResolution?.value === option.value} disabled={isSaving}
+                            onChange={() => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, value: option.value, confirmed: false})} />
+                          <span>{option.label}<br /><strong>{option.value}</strong></span>
+                        </label>)}
+                      </div>}
+                      <label>Monto y moneda confirmados (código de tres letras, por ejemplo MXN o USD)
+                        <input aria-label={`Monto confirmado de ${matter.client || matter.name}`} placeholder="Ej. MXN 5500000"
+                          value={matter.valueResolution?.value || ''} disabled={isSaving}
+                          onChange={e => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, value: e.target.value, confirmed: false})} />
+                      </label>
+                      <label>Fuente y motivo de la decisión
+                        <textarea aria-label={`Fuente del monto de ${matter.client || matter.name}`} placeholder="Documento, página o sección y por qué corresponde este monto."
+                          value={matter.valueResolution?.reason || ''} disabled={isSaving}
+                          onChange={e => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, reason: e.target.value, confirmed: false})} />
+                      </label>
+                      <label className="review-check">
+                        <input type="checkbox" checked={validValueResolution(matter)} disabled={isSaving || !validValueResolution({...matter, value: matter.valueResolution?.value, valueResolution: {...matter.valueResolution, confirmed: true}})}
+                          onChange={e => setMatters(prev => prev.map(m => m.id === matter.id ? {...m, value: m.valueResolution.value.trim(), valueResolution: {...m.valueResolution, value: m.valueResolution.value.trim(), confirmed: e.target.checked}} : m))} />
+                        Confirmo que revisé la fuente y este es el monto que debe utilizar RankPilot.
+                      </label>
+                      {validValueResolution(matter) && <p role="status">Se usará {matter.value}. La discrepancia original quedará en el historial de esta decisión.</p>}
+                    </fieldset>}
+
+                    {!hasValueConflict && validValueResolution(matter) && <details className="review-decision">
+                      <summary>Monto confirmado: {matter.value}</summary>
+                      <p style={{marginTop: '.75rem'}}><strong>Fuente y motivo:</strong> {matter.valueResolution.reason}</p>
+                      <p><strong>Discrepancia original:</strong> {matter.valueResolution.originalConflict}</p>
+                    </details>}
 
                     {/* Matter Fields */}
                     {!isEditingInline ? (
@@ -821,30 +896,7 @@ export default function PostIngestionWizardModal({
                             }}
                           />
                         </div>
-                        <div>
-                          <label style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 600 }}>Confidencialidad</label>
-                          <select
-                            value={confStatus}
-                            onChange={e => {
-                              const val = e.target.value;
-                              updateMatterField(matter.id, 'confidentialityStatus', val);
-                              updateMatterField(matter.id, 'isConfidential', val === 'confidential');
-                              updateMatterField(matter.id, 'confidentialityConfirmed', val !== 'confirmation_required');
-                            }}
-                            style={{
-                              width: '100%',
-                              padding: '0.45rem 0.65rem',
-                              borderRadius: '6px',
-                              border: '1px solid #CBD5E1',
-                              fontSize: '0.82rem',
-                              background: '#FFFFFF'
-                            }}
-                          >
-                            <option value="publishable">Publicable</option>
-                            <option value="confidential">Confidencial</option>
-                            <option value="confirmation_required">Requiere Confirmación</option>
-                          </select>
-                        </div>
+
                       </div>
                     )}
 
@@ -894,6 +946,8 @@ export default function PostIngestionWizardModal({
             }} />
           </div>
 
+          <p style={{fontSize: '0.8rem', color: '#475569'}}>{pendingCount ? `${pendingCount} asuntos requieren una decisión. Puedes guardar y continuar después.` : 'Sin decisiones de permisos o montos pendientes.'}</p>
+          {validationError && currentMatterChunk.some(needsInputReview) && <p role="alert" style={{color: '#B91C1C'}}>{validationError}</p>}
           {/* Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.35rem' }}>
             <div>
@@ -922,7 +976,7 @@ export default function PostIngestionWizardModal({
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button
-                onClick={() => setIsEditingInline(prev => !prev)}
+                disabled={isSaving} onClick={() => setIsEditingInline(prev => !prev)}
                 style={{
                   background: isEditingInline ? '#EEF2FF' : '#FFFFFF',
                   border: isEditingInline ? '1px solid #6366F1' : '1px solid #CBD5E1',
@@ -938,7 +992,7 @@ export default function PostIngestionWizardModal({
                   transition: 'all 0.15s ease'
                 }}
               >
-                <Edit3 size={14} /> {isEditingInline ? 'Cerrar Edición' : 'Editar y Confirmar'}
+                <Edit3 size={14} /> {isEditingInline ? 'Cerrar edición' : 'Editar datos'}
               </button>
 
               {saveError && <div role="alert" style={{color:'#B91C1C',maxWidth:360}}>{saveError} Tus cambios siguen en esta ventana; reintenta antes de salir.</div>}
@@ -961,7 +1015,7 @@ export default function PostIngestionWizardModal({
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>{currentStep === totalSteps ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
+                <span>{reviewPending ? (pendingCount ? 'Continuar con los pendientes' : 'Guardar decisiones e ir al Studio') : currentStep === totalSteps ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
                 <ArrowRight size={14} />
               </button>
             </div>

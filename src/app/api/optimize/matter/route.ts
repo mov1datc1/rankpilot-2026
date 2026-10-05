@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { needsInputReview } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
     const dbMatter = submission.matters.find(m=>m.id===stableId);
     if (!stableId || !sourceMatter || !dbMatter) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
     const targetMatter = {...dbMatter,...sourceMatter};
+    if (needsInputReview(targetMatter)) return NextResponse.json({error:'Confirma los permisos y resuelve los montos en el asistente antes de optimizar.'}, {status:422});
 
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 

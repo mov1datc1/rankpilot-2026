@@ -362,5 +362,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message || 'Generation failed' }, { status: 500 });
   }
 }
-
-export { buildAuditDoc, buildExecutiveAuditDoc } from './audit-builder';
