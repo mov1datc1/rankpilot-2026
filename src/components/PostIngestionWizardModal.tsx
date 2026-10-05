@@ -20,7 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { getCanonicalPracticeArea } from '@/lib/constants';
-import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview } from '@/lib/audit/input-review';
+import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
 
 export interface PostIngestionWizardModalProps {
@@ -708,6 +708,7 @@ export default function PostIngestionWizardModal({
                 const originalMatter = initialData.matters?.find((original: any) => original.id === matter.id) || matter;
                 const needsPublicationChoice = publicationStatus(originalMatter) === 'confirmation_required';
                 const hasValueConflict = !!valueConflict(matter) || (!!matter.valueResolution && !validValueResolution(matter));
+                const resolutionIssues = valueResolutionIssues(matter.valueResolution);
 
                 return (
                   <div key={matter.id} style={{
@@ -831,9 +832,14 @@ export default function PostIngestionWizardModal({
                           value={matter.valueResolution?.reason || ''} disabled={isSaving}
                           onChange={e => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, reason: e.target.value, confirmed: false})} />
                       </label>
+                      {resolutionIssues.length > 0 && <div id={`value-issues-${matter.id}`} role="status">
+                        <strong>Para habilitar la confirmación:</strong>
+                        <ul>{resolutionIssues.map(issue => <li key={issue}>{issue}</li>)}</ul>
+                      </div>}
                       <label className="review-check">
-                        <input type="checkbox" checked={validValueResolution(matter)} disabled={isSaving || !validValueResolution({...matter, value: matter.valueResolution?.value, valueResolution: {...matter.valueResolution, confirmed: true}})}
-                          onChange={e => setMatters(prev => prev.map(m => m.id === matter.id ? {...m, value: m.valueResolution.value.trim(), valueResolution: {...m.valueResolution, value: m.valueResolution.value.trim(), confirmed: e.target.checked}} : m))} />
+                        <input type="checkbox" checked={validValueResolution(matter)} disabled={isSaving || resolutionIssues.length > 0}
+                          aria-describedby={resolutionIssues.length > 0 ? `value-issues-${matter.id}` : undefined}
+                          onChange={e => setMatters(prev => prev.map(m => m.id === matter.id ? {...m, value: normalizeReviewValue(m.valueResolution.value), valueResolution: {...m.valueResolution, value: normalizeReviewValue(m.valueResolution.value), confirmed: e.target.checked}} : m))} />
                         Confirmo que revisé la fuente y este es el monto que debe utilizar RankPilot.
                       </label>
                       {validValueResolution(matter) && <p role="status">Se usará {matter.value}. La discrepancia original quedará en el historial de esta decisión.</p>}

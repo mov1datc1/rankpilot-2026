@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Confirmación de montos con US$
+
+- Corregida la opción de monto que quedaba bloqueada con prefijos como «Approx. US$»: se normaliza la notación explícita a USD sin convertir el importe ni quitar su carácter aproximado. También se admite esa notación en decisiones parciales al confirmarlas.
+- La casilla explica si falta importe, moneda o fuente/motivo. Se mantiene la confirmación expresa; un símbolo $ sin identificar sigue requiriendo moneda.
+- Regresión sintética: selección, confirmación, persistencia y conservación de la discrepancia original; 230 contratos Node, TypeScript y build Next aprobados. No se modificaron expedientes reales; QA visual pendiente.
+
 ## [2026-10-05] — Studio: montos pendientes y revisión simplificada
 
 - Los montos contradictorios muestran «Por definir» en tarjetas y excedentes y se excluyen de los destacados. Sus fuentes se conservan; la insignia «Datos básicos presentes» no se muestra mientras el monto siga pendiente.

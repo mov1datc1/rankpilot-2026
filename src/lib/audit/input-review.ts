@@ -22,7 +22,22 @@ export function valueAlternatives(m: any): {label: string; value: string}[] {
   const match = valueConflict(m).match(/between table \((.+?)\) and narrative \((.+?)\)/i);
   if (!match) return [];
   return [{label: 'Monto de la tabla', value: match[1]}, {label: 'Monto de la narrativa', value: match[2]}]
-    .map(option => ({...option, value: option.value.replace(/^US\$\s*/i, 'USD ')}));
+    .map(option => ({...option, value: normalizeReviewValue(option.value)}));
+}
+
+/** Standardize an explicit US dollar symbol, without changing the amount or guessing what $ means. */
+export function normalizeReviewValue(value: string): string {
+  return value.replace(/\bUS\$\s*/gi, 'USD ').trim();
+}
+
+/** Explain every missing input before enabling confirmation. */
+export function valueResolutionIssues(resolution: any): string[] {
+  const value = normalizeReviewValue(typeof resolution?.value === 'string' ? resolution.value : '');
+  const issues: string[] = [];
+  if (!/\d/.test(value)) issues.push('Escribe el importe que verificaste.');
+  if (!/\b[A-Z]{3}\b/.test(value)) issues.push('Indica la moneda con un código como USD o MXN. Un símbolo $ solo no identifica la moneda.');
+  if (typeof resolution?.reason !== 'string' || !resolution.reason.trim()) issues.push('Indica la fuente y el motivo por el que elegiste este monto.');
+  return issues;
 }
 
 export function validValueResolution(m: any): boolean {
