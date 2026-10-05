@@ -55,3 +55,28 @@ test('technical preflight rejection preserves draft and explains affected file',
 test('successful but unvalidated extraction never replaces the draft',async()=>{reset();delete extracted.ingestion_quality;assert.equal((await extract()).status,422);assert.equal(state.matters[0].id,'old');});
 test('source diagnostics and provenance survive successful extraction',async()=>{reset();extracted.source_reports=[{source:'draft.doc',detected_format:'doc',matter_count:1}];extracted.matters[0].source_document='draft.doc';assert.equal((await extract()).status,200);assert.deepEqual(state.submission.chambersData.source_reports,extracted.source_reports);assert.equal(state.submission.chambersData.matters[0].source_document,'draft.doc');});
 test('new extraction cannot reuse department facts or approved bytes from an older source',async()=>{reset();Object.assign(state.submission.chambersData,{confirmed_source_b10:'Older confirmed department',enhanced_b7:'Older optimized department',approved_artifact:{base64:'old'}});assert.equal((await extract()).status,200);const data=state.submission.chambersData;assert.equal(data.original_b10,'');assert.equal(data.enhanced_b7,'');assert.equal(data.confirmed_source_b10,null);assert.equal(data.approved_artifact,null);});
+
+test('confidentiality recheck reads only persisted sources and never writes the draft',async()=>{
+ reset();state.submission.chambersData.sources=[{text:'Saved original source',name:'original.txt'}];
+ extracted.confidentiality_contract_version=1;
+ const before=structuredClone(state);const original=global.fetch;let payload;
+ global.fetch=async(url,options)=>{payload=JSON.parse(options.body);return Response.json(extracted);};
+ try {
+  const r=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',mode:'confidentiality_review',sources:[{text:'Untrusted replacement'}],text:'Untrusted replacement'})}));
+  assert.equal(r.status,200);assert.deepEqual((await r.json()).matters,extracted.matters);assert.deepEqual(state,before);assert.deepEqual(payload.sources,before.submission.chambersData.sources);assert.notEqual(payload.user_input,'Untrusted replacement');
+ } finally {global.fetch=original;}
+});
+test('confidentiality recheck without saved sources cannot create or replace a draft',async()=>{
+ reset();const before=structuredClone(state);
+ const r=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',mode:'confidentiality_review',text:'Ignored inline source'})}));
+ assert.equal(r.status,400);assert.deepEqual(state,before);
+});
+test('confidentiality provenance survives normal extraction persistence',async()=>{
+ reset();extracted.matters[0].confidentialityEvidence={version:1,basis:'client_register',client_register:[{quote:'Synthetic | Y'}]};
+ assert.equal((await extract()).status,200);assert.deepEqual(state.submission.chambersData.matters[0].confidentialityEvidence,extracted.matters[0].confidentialityEvidence);
+});
+test('confidentiality recheck cannot report success against an older backend',async()=>{
+ reset();state.submission.chambersData.sources=[{text:'Saved source'}];const before=structuredClone(state);
+ const r=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',mode:'confidentiality_review'})}));
+ assert.equal(r.status,503);assert.deepEqual(state,before);
+});

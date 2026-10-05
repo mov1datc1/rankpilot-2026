@@ -515,6 +515,8 @@ class DocumentParser:
             r'(?=\s*$|\s*\||[DE][1-9]\b|:)'
         )
         matches = list(pattern.finditer(text or ""))
+        from utils.source_confidentiality import client_register, reconcile
+        register = client_register(text or "")
         sections = {}
         seen_labels = set()
         for index, match in enumerate(matches):
@@ -572,8 +574,13 @@ class DocumentParser:
             )
             if metadata_trailer:
                 excerpt = excerpt[:metadata_trailer.start()].strip()
+            source_heading = match.group(0).strip().strip("|").strip()
+            client = DocumentParser.extract_matter_fields(excerpt).get("client", "")
+            conf_status, confidentiality_evidence = reconcile(client, conf_status, register, source_heading)
             sections[label.lower()] = {
                 "label": label,
+                "source_heading": source_heading,
+                "confidentiality_evidence": confidentiality_evidence,
                 "text": excerpt,
                 "confidentiality_status": conf_status,
             }

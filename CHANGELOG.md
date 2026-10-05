@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Confidencialidad cruzada con la fuente
+
+- La extracción cruza fichas numeradas con la columna explícita de confidencialidad del registro de clientes del mismo documento. Conserva fila y encabezado de origen; no confunde cliente nuevo con permiso ni autoriza publicar por una celda vacía.
+- Coincidencias normalizadas y sufijos societarios acotados; ambigüedades o contradicciones requieren revisión. Asuntos sin permiso definido usan un título neutral.
+- Wizard incorpora revisión de confidencialidad desde la fuente persistida, sin reemplazar el expediente. Solo completa pendientes con cliente y extracto idénticos; conserva decisiones previas, importes, texto y revisión de guardado. Exige versión compatible del motor.
+- Validación: 166 tests Python, 235 contratos Node, TypeScript y build Next. Chrome sintético verificó fallo/reintento, eliminación de la pregunta redundante y guardado parcial sin pérdida de ediciones. No se modificaron expedientes de producción.
+
 ## [2026-10-05] — Menú compacto para Submission Studio
 
 - Menú lateral de 64 px por defecto en Studio, con iconos de 17 px y controles para expandir o contraer. Recuerda la elección en el navegador para las rutas de Studio; la navegación general conserva su propia preferencia.

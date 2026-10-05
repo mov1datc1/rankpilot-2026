@@ -3927,6 +3927,12 @@ export default function SubmissionStudio({
       {/* ═══ POST-INGESTION PROGRESSIVE VALIDATION WIZARD ═══ */}
       <PostIngestionWizardModal
         isOpen={showValidationWizard}
+        recheckConfidentiality={async () => {
+          const response = await fetch('/api/extract-document', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({submissionId: submission.id, mode: 'confidentiality_review'})});
+          const result = await response.json();
+          if (!response.ok || !result.success || !Array.isArray(result.matters)) throw new Error('No se pudo revisar la fuente.');
+          return result.matters;
+        }}
         reviewPending={reviewPending}
         onClose={() => setShowValidationWizard(false)}
         targetDirectory={selectedDirectory}

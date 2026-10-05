@@ -888,21 +888,21 @@ async def _extract_readable_source(doc_text, context):
                     continue
                 if not str(fields.get('summary') or '').strip():
                     raise SourceError('SOURCE_INCOMPLETE_MATTERS', matters=[sec['label']])
-                conf_status = fields.get("confidentiality_status")
-                if not conf_status or conf_status == "confirmation_required":
-                    conf_status = sec.get("confidentiality_status") or "confirmation_required"
-                is_conf = (conf_status == "confidential") or ("confidential" in label_key or "non-publishable" in label_key)
-                if is_conf and conf_status != "confidential":
-                    conf_status = "confidential"
-                is_unconfirmed = (conf_status == "confirmation_required")
+                conf_status = sec.get("confidentiality_status") or "confirmation_required"
+                is_unconfirmed = conf_status == "confirmation_required"
+                is_conf = conf_status != "publishable"
+                source_heading = sec.get("source_heading") or sec["label"]
+                display_label = re.sub(r'(?i)^(?:Publishable|Confidential|Non[- ]publishable)\s+', '', sec["label"]) if is_unconfirmed else sec["label"]
+                if conf_status == "confidential":
+                    display_label = re.sub(r'(?i)^Publishable', 'Confidential', display_label)
 
                 c_name = re.sub(r'(?i)^\s*(?:client name,?\s*give a general description\.?|\(?or if you cannot reveal the client name[^\)]*\)?\.?)\s*', '', fields.get("client", "")).strip()
                 c_name = c_name.strip('|\n\r\t ')
                 cb_val = re.sub(r'(?i)^\s*(?:jurisdictions involved\.?|please name the jurisdictions involved\.?)\s*', '', fields.get("cross_border_jurisdictions", "")).strip()
                 matters.append({
                     "id": f"matter-ext-{len(matters) + 1}",
-                    "name": sec["label"],
-                    "title": sec["label"],
+                    "name": display_label,
+                    "title": display_label,
                     "client": c_name,
                     "value": fields.get("matter_value", ""),
                     "leadPartner": fields.get("lead_partner", ""),
@@ -920,7 +920,8 @@ async def _extract_readable_source(doc_text, context):
                     "publish_status": "confirmation_required" if is_unconfirmed else ("non_publishable" if is_conf else "publishable"),
                     "valueConflict": fields.get("value_conflict") or "",
                     "source_excerpt": sec["text"],
-                    "source_label": sec["label"],
+                    "source_label": source_heading,
+                    "confidentialityEvidence": sec.get("confidentiality_evidence"),
                     "optimizedText": "",
                 })
         else:
@@ -1101,9 +1102,10 @@ async def extract_document_endpoint(request: Request):
     if not merged['original_b10']:
         reports[0].setdefault('warnings', []).append('No se identificó una descripción literal del departamento (B10). Añádela desde tu fuente antes de optimizar.')
     merged['department'] = {'department_heads': list({head['name']: head for result in results for head in result['department']['department_heads']}.values())}
-    merged.update(matters=matters, total_matters=len(matters),
+    merged.update(matters=matters, total_matters=len(matters), confidentiality_contract_version=1,
                   publishable_count=sum(m['publish_status'] == 'publishable' for m in matters),
-                  confidential_count=sum(m['isConfidential'] for m in matters),
+                  confidential_count=sum(m['confidentialityStatus'] == 'confidential' for m in matters),
+                  confirmation_required_count=sum(m['confidentialityStatus'] == 'confirmation_required' for m in matters),
                   source_reports=reports, ingestion_quality={'status': 'ready_for_review', 'sources_read': len(reports), 'matters_found': len(matters)})
     return JSONResponse(status_code=200, content=merged)
 

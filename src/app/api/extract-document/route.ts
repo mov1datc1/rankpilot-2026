@@ -7,6 +7,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { submissionId, documentUrl, text, context } = body;
+    const confidentialityOnly = body.mode === 'confidentiality_review';
+    if (confidentialityOnly && !submissionId) return NextResponse.json({error: 'Submission requerido.'}, {status: 400});
 
     const userInput = documentUrl || text || '';
     if (!userInput && !submissionId && !body.sources?.length) {
@@ -48,8 +50,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const sources = body.sources || context?.sources || [];
-    const sourceInput = userInput || submission.documentUrl || (sources.length > 0 ? sources[0].url : '');
+    const sources = confidentialityOnly ? ((submission.chambersData as any)?.sources || []) : body.sources || context?.sources || [];
+    const sourceInput = (confidentialityOnly ? '' : userInput) || submission.documentUrl || (sources.length > 0 ? sources[0].url : '');
     if (!sourceInput && sources.length === 0) {
       return NextResponse.json({ error: 'No source document available to extract' }, { status: 400 });
     }
@@ -103,6 +105,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({code: 'EXTRACTION_VALIDATION_REQUIRED', error: processingFeedback({code: 'EXTRACTION_VALIDATION_REQUIRED'}, 422)}, {status: 422});
     }
     const extractedDept = extractData.department || {};
+    // Read-only reconciliation: the existing wizard saves selected changes with revision checks.
+    if (confidentialityOnly) {
+      if (extractData.confidentiality_contract_version !== 1) return NextResponse.json({error: 'El motor de confidencialidad se está actualizando. Reintenta en unos minutos.'}, {status: 503});
+      return NextResponse.json({success: true, matters: extractedMatters});
+    }
     const extractedLawyers = extractData.lawyers || [];
 
     const sanitizePractice = (val?: string) => {
@@ -229,6 +236,7 @@ export async function POST(request: NextRequest) {
           valueConflict: healedM.valueConflict || '',
           source_label: healedM.source_label || healedM.sourceLabel || '',
           source_excerpt: healedM.source_excerpt || '',
+          confidentialityEvidence: healedM.confidentialityEvidence || null,
           crossBorder: m.crossBorder,
           teamMembers: m.teamMembers,
           team_members: m.teamMembers,

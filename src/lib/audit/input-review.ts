@@ -82,3 +82,19 @@ export function hasPendingValue(m: any): boolean {
 export function displayedMatterValue(m: any): string {
   return hasPendingValue(m) ? 'Por definir' : String(m.value || '').trim() || 'No informado';
 }
+
+/** Recheck only undecided matters with one identical source excerpt and client. Never replace the draft. */
+export function applySourceConfidentiality(matters: any[], extracted: any[]): any[] {
+  const normalize = (value: unknown) => String(value || '').replace(/\s+/g, ' ').trim();
+  return matters.map(m => {
+    if (publicationStatus(m) !== 'confirmation_required' || !normalize(m.source_excerpt)) return m;
+    const matches = extracted.filter(e => normalize(e.source_excerpt) === normalize(m.source_excerpt)
+      && normalize(e.client) === normalize(m.client));
+    if (matches.length !== 1) return m;
+    const source = matches[0];
+    if (source.confidentialityEvidence?.version !== 1 || source.confidentialityEvidence?.requires_review
+      || source.confidentialityEvidence?.basis !== 'client_register' || publicationStatus(source) !== 'confidential') return m;
+    return {...confirmPublicationStatus(m, 'confidential'), confidentialityEvidence: source.confidentialityEvidence,
+      source_label: source.source_label, name: source.name, title: source.title};
+  });
+}

@@ -62,3 +62,15 @@ test('cards hide unresolved amounts but preserve evidence and allow an absent am
   assert.equal(hasPendingValue({isConfidential:true}),false);
   assert.equal(needsInputReview({isConfidential:true}),false);
 });
+
+test('source recheck only fills undecided confidentiality and preserves edits and value decisions',()=>{
+ const {applySourceConfidentiality}=require('../../src/lib/audit/input-review.ts');
+ const pending={...conflict,client:'Synthetic Alpha',source_excerpt:'Same source paragraph.',optimizedText:'Saved edited text',valueResolution:{value:'USD 100',reason:'Source checked.',confirmed:true}};
+ const evidence={version:1,basis:'client_register',requires_review:false};
+ const extracted={...confirmPublicationStatus(pending,'confidential'),confidentialityEvidence:evidence,name:'Confidential Matter 1',title:'Confidential Matter 1',source_label:'MATTER NUMBER 1',value:'USD 999',optimizedText:''};
+ const [patched]=applySourceConfidentiality([pending],[extracted]);
+ assert.equal(publicationStatus(patched),'confidential');assert.equal(patched.id,pending.id);
+ assert.equal(patched.value,pending.value);assert.deepEqual(patched.valueResolution,pending.valueResolution);assert.equal(patched.optimizedText,pending.optimizedText);
+ for(const existing of [confirmPublicationStatus(pending,'publishable'),confirmPublicationStatus(pending,'confidential')])assert.deepEqual(applySourceConfidentiality([existing],[extracted]),[existing]);
+ for(const candidates of [[extracted,extracted],[{...extracted,client:'Different Client'}],[{...extracted,source_excerpt:'Different paragraph'}],[{...extracted,confidentialityEvidence:{...evidence,requires_review:true}}],[{...extracted,confidentialityEvidence:null}]])assert.deepEqual(applySourceConfidentiality([pending],candidates),[pending]);
+});

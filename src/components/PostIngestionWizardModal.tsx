@@ -20,7 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { getCanonicalPracticeArea } from '@/lib/constants';
-import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues } from '@/lib/audit/input-review';
+import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
 
 export interface PostIngestionWizardModalProps {
@@ -50,6 +50,7 @@ export interface PostIngestionWizardModalProps {
   };
   targetDirectory?: string;
   reviewPending?: boolean;
+  recheckConfidentiality?: () => Promise<any[]>;
 }
 
 export default function PostIngestionWizardModal({
@@ -58,7 +59,8 @@ export default function PostIngestionWizardModal({
   onComplete,
   initialData,
   targetDirectory = 'Chambers & Partners',
-  reviewPending = false
+  reviewPending = false,
+  recheckConfidentiality
 }: PostIngestionWizardModalProps) {
   const sanitizeStr = (s?: string) => {
     if (!s) return '';
@@ -120,6 +122,18 @@ export default function PostIngestionWizardModal({
   const [isEditingInline, setIsEditingInline] = useState(false);
   const [isSaving,setIsSaving] = useState(false);
   const [saveError,setSaveError] = useState('');
+  const [rechecking, setRechecking] = useState(false);
+  const [recheckMessage, setRecheckMessage] = useState('');
+  const recheck = async () => {
+    if (!recheckConfidentiality) return;
+    setRechecking(true); setIsSaving(true); setRecheckMessage('');
+    try {
+      const extracted = await recheckConfidentiality();
+      setMatters(current => applySourceConfidentiality(current, extracted));
+      setRecheckMessage('Cruce completado. Se conservaron tus decisiones y montos. Los pendientes con fuente coincidente se marcaron confidenciales; guarda la revisión para conservar los cambios.');
+    } catch { setRecheckMessage('No se pudo revisar la fuente. Tus datos se conservan; puedes reintentar.'); }
+    finally { setRechecking(false); setIsSaving(false); }
+  };
   const [expectedRevision,setExpectedRevision] = useState(initialData.draftRevision || 0);
   const [initialB10Source,setInitialB10Source] = useState(initialData.b10Text || '');
 
@@ -273,6 +287,11 @@ export default function PostIngestionWizardModal({
           overflowY: 'auto',
           flex: 1
         }}>
+          {recheckConfidentiality && <section style={{marginBottom: '1rem', padding: '1rem', border: '1px solid #C7D2FE', borderRadius: 10, background: '#EEF2FF'}}>
+            <button type="button" disabled={isSaving} onClick={() => void recheck()}>{rechecking ? 'Revisando documento…' : 'Revisar confidencialidad desde el documento'}</button>
+            <p style={{fontSize: '.8rem', marginTop: 8}}>Cruza los permisos pendientes con la tabla de clientes. Conserva tus decisiones, textos y montos.</p>
+            {recheckMessage && <p role="status">{recheckMessage}</p>}
+          </section>}
           {/* STEP 1: FIRM & PRACTICE METADATA */}
           {currentStep === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -706,7 +725,8 @@ export default function PostIngestionWizardModal({
                 const isConf = confStatus === 'confidential';
                 const isUnconfirmed = confStatus === 'confirmation_required';
                 const originalMatter = initialData.matters?.find((original: any) => original.id === matter.id) || matter;
-                const needsPublicationChoice = publicationStatus(originalMatter) === 'confirmation_required';
+                const sourceConfirmed = confStatus === 'confidential' && matter.confidentialityEvidence?.basis === 'client_register' && !matter.confidentialityEvidence?.requires_review;
+                const needsPublicationChoice = publicationStatus(originalMatter) === 'confirmation_required' && !sourceConfirmed;
                 const hasValueConflict = !!valueConflict(matter) || (!!matter.valueResolution && !validValueResolution(matter));
                 const resolutionIssues = valueResolutionIssues(matter.valueResolution);
 
@@ -722,7 +742,7 @@ export default function PostIngestionWizardModal({
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem' }}>
                       <div>
                         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                          {matter.title || matter.name || 'Asunto'}
+                          {isUnconfirmed ? String(matter.title || matter.name || 'Asunto').replace(/^(?:publishable|confidential|non[- ]publishable)\s+/i, '') : matter.title || matter.name || 'Asunto'}
                           {matter.source_document && <span style={{display: 'block', textTransform: 'none', fontWeight: 400}}>Fuente: {matter.source_document}</span>}
                         </div>
                         <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', marginTop: '0.15rem' }}>
@@ -852,6 +872,7 @@ export default function PostIngestionWizardModal({
                     </details>}
 
                     {/* Matter Fields */}
+                    {matter.confidentialityEvidence?.basis === 'client_register' && <p style={{fontSize: '.8rem', color: '#475569'}}>Confidencial según la tabla de clientes del documento original.</p>}
                     {!isEditingInline ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginTop: '0.5rem' }}>
                         <div style={{ background: '#F8FAFC', padding: '0.6rem 0.8rem', borderRadius: '8px' }}>
