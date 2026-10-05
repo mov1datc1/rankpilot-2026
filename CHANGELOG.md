@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-05] — Menú compacto para Submission Studio
+
+- Menú lateral de 64 px por defecto en Studio, con iconos de 17 px y controles para expandir o contraer. Recuerda la elección en el navegador para las rutas de Studio; la navegación general conserva su propia preferencia.
+- Accesos recientes y de cuenta conservados, etiquetas al pasar el cursor o enfocar con teclado, foco visible y movimiento reducido. En móvil, el menú contraído usa una franja horizontal.
+- Validación: TypeScript y build Next aprobados. Chrome con el componente real y navegación/API simuladas comprobó persistencia, cambio de submission, teclado, móvil de 390 px y funcionamiento sin almacenamiento. Sin prueba autenticada de producción.
+
 ## [2026-10-05] — Confirmación de montos con US$
 
 - Corregida la opción de monto que quedaba bloqueada con prefijos como «Approx. US$»: se normaliza la notación explícita a USD sin convertir el importe ni quitar su carácter aproximado. También se admite esa notación en decisiones parciales al confirmarlas.

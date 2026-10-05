@@ -2,177 +2,112 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  Home, 
-  FileText, 
-  BarChart2, 
-  Settings,
-  BookOpen,
-  LogOut
-} from 'lucide-react';
-
-import { useState, useEffect } from 'react';
+import { Home, FileText, BarChart2, Settings, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useState, useEffect, type FocusEvent, type MouseEvent } from 'react';
+import './Sidebar.css';
 
 type RecentItem = { name: string; href: string; directory: string };
+type Preference = 'collapsed' | 'expanded';
+const storageKey = 'rankpilot.sidebar.v1';
 
-interface SidebarProps {
-  userRole?: string;
-}
-
-export default function Sidebar({ userRole }: SidebarProps) {
+export default function Sidebar({ userRole }: { userRole?: string }) {
   const pathname = usePathname();
-  
-  // Unified navigation: Builder → Reports → Dashboard
+  const inStudio = /^\/reports\/[^/]+/.test(pathname);
+  const scope = inStudio ? 'studio' : 'general';
+  const [preferences, setPreferences] = useState<Partial<Record<'studio' | 'general', Preference>>>({});
+  const collapsed = preferences[scope] ? preferences[scope] === 'collapsed' : inStudio;
+  const [recentLinks, setRecentLinks] = useState<RecentItem[]>([]);
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      const valid: typeof preferences = {};
+      for (const key of ['studio', 'general'] as const) {
+        if (stored?.[key] === 'collapsed' || stored?.[key] === 'expanded') valid[key] = stored[key];
+      }
+      setPreferences(valid);
+    } catch { /* Storage may be unavailable; the menu still works for this visit. */ }
+    fetch('/api/recent-submissions').then(res => res.json()).then(data => {
+      if (data.success && Array.isArray(data.items)) setRecentLinks(data.items);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => { setTooltip(null); }, [pathname, collapsed]);
+
+  const toggle = () => {
+    const next = { ...preferences, [scope]: collapsed ? 'expanded' as const : 'collapsed' as const };
+    setPreferences(next);
+    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* Keep the in-memory choice. */ }
+  };
+  const showLabel = (event: MouseEvent<HTMLElement> | FocusEvent<HTMLElement>, text: string) => {
+    if (!collapsed) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({ text, x: Math.min(rect.right + 10, window.innerWidth - 230), y: Math.min(rect.top, window.innerHeight - 70) });
+  };
+  const labelEvents = (text: string) => ({
+    onMouseEnter: (event: MouseEvent<HTMLElement>) => showLabel(event, text),
+    onFocus: (event: FocusEvent<HTMLElement>) => showLabel(event, text),
+    onMouseLeave: () => setTooltip(null),
+    onBlur: () => setTooltip(null),
+    onKeyDown: (event: React.KeyboardEvent) => { if (event.key === 'Escape') setTooltip(null); },
+  });
   const platformLinks = [
     { name: 'Builder', href: '/builder', icon: Home },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Dashboard', href: '/dashboard-analytics', icon: BarChart2 },
   ];
-
-  const [recentLinks, setRecentLinks] = useState<RecentItem[]>([]);
-
-  useEffect(() => {
-    // Fetch real recent submissions
-    fetch('/api/recent-submissions')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.items) {
-          setRecentLinks(data.items);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPERADMIN';
+  const toggleLabel = collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral';
 
   return (
-    <aside style={{
-      width: '260px',
-      background: '#ffffff',
-      borderRight: '1px solid #e2e8f0',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
-      overflowY: 'auto'
-    }}>
-      {/* Logo */}
-      <div style={{ padding: '1.25rem 1rem', display: 'flex', alignItems: 'center' }}>
-        <img src="/logo-rankpilot.png" alt="RankPilot" style={{ height: '36px', width: 'auto' }} />
-      </div>
-
-      {/* PLATFORM SECTION */}
-      <div style={{ padding: '1.5rem 1rem 0.5rem 1rem' }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>PLATFORM</p>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {platformLinks.map((link) => {
-            const isActive = (pathname.startsWith(link.href) || (link.href === '/builder' && pathname.startsWith('/submissions'))) && link.href !== '#';
-            const Icon = link.icon;
-            return (
-              <Link key={link.name} href={link.href} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.6rem 1rem',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: isActive ? '#2563eb' : '#475569',
-                background: isActive ? '#eff6ff' : 'transparent',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.9rem',
-                transition: 'all 0.2s'
-              }}>
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* RECENT SECTION — real data */}
-      {recentLinks.length > 0 && (
-        <div style={{ padding: '1.5rem 1rem 0.5rem 1rem' }}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>RECENT</p>
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {recentLinks.map((link, idx) => (
-              <Link key={idx} href={link.href} style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0.4rem 1rem',
-                textDecoration: 'none',
-                color: '#64748b',
-                fontSize: '0.8rem',
-                transition: 'color 0.2s',
-                borderRadius: '6px',
-              }}>
-                <span style={{ marginRight: '0.5rem', color: '#94a3b8', fontSize: '1.2rem', lineHeight: 1 }}>·</span>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {link.name}
-                </span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-      )}
-
-      <div style={{ flex: 1 }}></div>
-
-      {/* ACCOUNT SECTION */}
-      <div style={{ padding: '1.5rem 1rem 2rem 1rem' }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>ACCOUNT</p>
-        
-        {isAdmin && (
-          <Link href="/dashboard/admin" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.6rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            color: pathname.startsWith('/dashboard/admin') ? '#2563eb' : '#475569',
-            background: pathname.startsWith('/dashboard/admin') ? '#eff6ff' : 'transparent',
-            fontWeight: pathname.startsWith('/dashboard/admin') ? 600 : 500,
-            fontSize: '0.9rem',
-            transition: 'all 0.2s'
-          }}>
-            <Settings size={18} />
-            Admin Panel
-          </Link>
-        )}
-
-        <button 
-          onClick={() => {
-            // Logout via Supabase
-            fetch('/api/auth/logout', { method: 'POST' }).then(() => {
-              window.location.href = '/login';
-            });
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.6rem 1rem',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            color: '#94a3b8',
-            background: 'transparent',
-            fontWeight: 500,
-            fontSize: '0.9rem',
-            transition: 'all 0.2s',
-            width: '100%',
-            border: 'none',
-            cursor: 'pointer',
-            marginTop: '0.25rem',
-          }}
-        >
-          <LogOut size={18} />
-          Cerrar Sesión
+    <aside className="app-sidebar" data-collapsed={collapsed} aria-label="Menú principal" onScroll={() => setTooltip(null)}>
+      <div className="app-sidebar-header">
+        <Link href="/builder" className="app-sidebar-brand" aria-label="RankPilot · Inicio" {...labelEvents('RankPilot · Inicio')}>
+          {collapsed ? <span className="app-sidebar-mark" aria-hidden="true">R<span>↗</span></span> : <img src="/logo-rankpilot.png" alt="RankPilot" />}
+        </Link>
+        <button type="button" className="app-sidebar-toggle" onClick={toggle} aria-label={toggleLabel} aria-expanded={!collapsed} aria-controls="app-sidebar-navigation" title={toggleLabel}>
+          {collapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}
         </button>
       </div>
 
+      <div id="app-sidebar-navigation" className="app-sidebar-navigation">
+        <section className="app-sidebar-section">
+          {!collapsed && <p className="app-sidebar-heading">PLATFORM</p>}
+          <nav aria-label="Plataforma">
+            {platformLinks.map(({ name, href, icon: Icon }) => {
+              const active = pathname.startsWith(href) || (href === '/builder' && pathname.startsWith('/submissions'));
+              return <Link key={href} href={href} className="app-sidebar-link" aria-label={name} aria-current={active ? 'page' : undefined} {...labelEvents(name)}>
+                <Icon size={collapsed ? 17 : 19} aria-hidden="true" />
+                {!collapsed && <span>{name}</span>}
+              </Link>;
+            })}
+          </nav>
+        </section>
+        {recentLinks.length > 0 && <section className="app-sidebar-section app-sidebar-recent">
+          {!collapsed && <p className="app-sidebar-heading">RECIENTES</p>}
+          <nav aria-label="Submissions recientes">
+            {recentLinks.map((link, index) => <Link key={`${link.href}-${index}`} href={link.href} className="app-sidebar-link" aria-label={link.name} title={link.name} {...labelEvents(link.name)}>
+              <FileText size={16} aria-hidden="true" />
+              {!collapsed && <span>{link.name}</span>}
+            </Link>)}
+          </nav>
+        </section>}
+        <section className="app-sidebar-section app-sidebar-account">
+          {!collapsed && <p className="app-sidebar-heading">CUENTA</p>}
+          <nav aria-label="Cuenta">
+            {isAdmin && <Link href="/dashboard/admin" className="app-sidebar-link" aria-label="Admin Panel" aria-current={pathname.startsWith('/dashboard/admin') ? 'page' : undefined} {...labelEvents('Admin Panel')}>
+              <Settings size={collapsed ? 17 : 19} aria-hidden="true" />{!collapsed && <span>Admin Panel</span>}
+            </Link>}
+            <button type="button" className="app-sidebar-link" aria-label="Cerrar sesión" {...labelEvents('Cerrar sesión')} onClick={() => {
+              fetch('/api/auth/logout', { method: 'POST' }).then(() => { window.location.href = '/login'; });
+            }}>
+              <LogOut size={collapsed ? 17 : 19} aria-hidden="true" />{!collapsed && <span>Cerrar sesión</span>}
+            </button>
+          </nav>
+        </section>
+      </div>
+      {collapsed && tooltip && <div role="tooltip" className="app-sidebar-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>}
     </aside>
   );
 }
-
