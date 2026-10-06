@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Correcciones puntuales sin repetir el wizard
+
+- Los pendientes del expediente abren una revisión acotada a los abogados y asuntos relacionados. «Guardar y volver al expediente» guarda y cierra sin exigir confirmar los demás pasos; revisar asuntos relacionados es opcional.
+- El guardado envía solo los registros modificados y conserva el registro completo de asuntos. Cancelar no escribe; un error mantiene los cambios abiertos para reintentar. La revisión inicial conserva su recorrido completo.
+- Validación: 266 contratos Node, TypeScript y build; Chrome con Studio real y persistencia simulada verifica cierre, reintento, cancelación, conservación de 32 asuntos y permisos ajenos al pendiente, navegación completa y pantalla móvil de 390 px.
+
 ## [2026-10-06] — Pendientes accionables y proyección fiel de B9
 
 - Audit con secciones desplegables y próximos pasos separados; hallazgos individuales con detalle conservado y accesos a periodo, ranking y abogados. Descarga pendiente remite al panel en lugar de superponer el veredicto completo. Datos presentes y aprobación se distinguen explícitamente.

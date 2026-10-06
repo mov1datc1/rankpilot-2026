@@ -42,7 +42,7 @@ import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
-import type { ReviewDestination } from '@/lib/audit/review-actions';
+import { focusedReviewScope, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
@@ -87,6 +87,7 @@ export default function SubmissionStudio({
   const router = useRouter();
   const [showValidationWizard, setShowValidationWizard] = useState<boolean>(false);
   const [reviewLawyersFirst, setReviewLawyersFirst] = useState(false);
+  const [focusedReview, setFocusedReview] = useState<FocusedReviewScope | undefined>();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -300,8 +301,8 @@ export default function SubmissionStudio({
     finally {setCheckingRanking(false);}
   };
   const deliveryState = getDeliveryState(chambersData, matters, true);
-  const resolveReviewIssue = (destination: ReviewDestination) => {
-    if (destination === 'wizard' || destination === 'lawyers') { setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
+  const resolveReviewIssue = (destination: ReviewDestination, message: string) => {
+    if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters)); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
     setActiveTab('studio');
     window.setTimeout(() => {
       const target=document.getElementById(destination === 'period' ? 'studio-research-period' : destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
@@ -3980,7 +3981,8 @@ export default function SubmissionStudio({
         }}
         reviewPending={reviewPending}
         startAtLawyers={reviewLawyersFirst}
-        onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);}}
+        reviewScope={focusedReview}
+        onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);}}
         targetDirectory={selectedDirectory}
         initialData={{
           sourceReports: chambersData.source_reports || [],
@@ -4001,14 +4003,17 @@ export default function SubmissionStudio({
           matters: matters
         }}
         onComplete={async (data) => {
-          const result=await updateSubmissionValidatedData(submission.id,{...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision});
+          if (data.correctionOnly && !data.lawyersChanged && !data.mattersChanged) {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);return;}
+          const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
+          const result=await updateSubmissionValidatedData(submission.id,changes);
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
           setReviewLawyersFirst(false);
-          if(data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
+          setFocusedReview(undefined);
+          if(!data.correctionOnly && data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
         }}
       />
 

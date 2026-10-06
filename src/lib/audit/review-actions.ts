@@ -1,4 +1,18 @@
 export type ReviewDestination = 'period' | 'lawyers' | 'wizard' | 'ranking' | 'review';
+export type FocusedReviewScope = { lawyerNames: string[]; matterIds: string[]; message: string };
+
+const reviewName = (value: unknown) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const mentions = (text: unknown, name: unknown) => {
+  const normalized=reviewName(name);
+  return normalized.length >= 4 && ` ${reviewName(text)} `.includes(` ${normalized} `);
+};
+
+/** Navigation only: match supplied identities; never infer or change a role. */
+export function focusedReviewScope(message: string, lawyers: any[], matters: any[]): FocusedReviewScope {
+  const lawyerNames=lawyers.map(l=>l.name || l.fullName || '').filter(name=>mentions(message,name));
+  const matterIds=matters.filter(m=>mentions(message,m.client) || mentions(message,m.name || m.title) || lawyerNames.some(name=>mentions(m.leadPartner || m.lead_partner,name) || mentions(m.teamMembers || m.team_members,name))).map(m=>m.id);
+  return {lawyerNames,matterIds,message};
+}
 export function describeReviewIssue(message: string) {
   if (/renderizador|registro canónico|basándose aparentemente|identidades obtenidas/i.test(message)) return {title:'Corregir los perfiles añadidos al Word',owner:'RankPilot',action:'El Word debe usar solo los abogados registrados y no inferir cargos desde los asuntos.',destination:'review' as ReviewDestination};
   if (/research_period|per[ií]odo (?:de investigaci[oó]n|aplicable)|elegibilidad temporal|fechas de/i.test(message)) return {title:'Confirmar el periodo y las fechas de los asuntos',owner:'Tu confirmación',action:'Indica las fechas de investigación y comprueba la actividad de cada asunto seleccionado dentro de ese intervalo.',destination:'period' as ReviewDestination};

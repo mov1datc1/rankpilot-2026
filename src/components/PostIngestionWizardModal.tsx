@@ -19,6 +19,7 @@ import {
   X,
   Check
 } from 'lucide-react';
+import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
 import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
@@ -35,6 +36,9 @@ export interface PostIngestionWizardModalProps {
     matters: any[];
     expectedRevision?: number;
     b10SourceChanged?: boolean;
+    correctionOnly?: boolean;
+    lawyersChanged?: boolean;
+    mattersChanged?: boolean;
   }) => void | Promise<void>;
   initialData: {
     sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[] }[];
@@ -51,6 +55,7 @@ export interface PostIngestionWizardModalProps {
   targetDirectory?: string;
   reviewPending?: boolean;
   startAtLawyers?: boolean;
+  reviewScope?: FocusedReviewScope;
   recheckConfidentiality?: () => Promise<any[]>;
 }
 
@@ -62,8 +67,11 @@ export default function PostIngestionWizardModal({
   targetDirectory = 'Chambers & Partners',
   reviewPending = false,
   startAtLawyers = false,
+  reviewScope,
   recheckConfidentiality
 }: PostIngestionWizardModalProps) {
+  const correctionOnly = startAtLawyers || !!reviewScope;
+  const initialReview = React.useRef({lawyers: '', matters: ''});
   const sanitizeStr = (s?: string) => {
     if (!s) return '';
     if (s.includes('SOURCE DOCUMENT') || s.startsWith('===')) return '';
@@ -111,8 +119,11 @@ export default function PostIngestionWizardModal({
   // Step 4..N: Extracted Matters (Chunked 2 matters per step)
   const mattersChunkSize = 2;
   const matterChunks: any[][] = [];
-  for (let i = 0; i < matters.length; i += mattersChunkSize) {
-    matterChunks.push(matters.slice(i, i + mattersChunkSize));
+  // Filter navigation only. The complete register remains in state for saving.
+  const visibleMatters = correctionOnly && reviewScope?.matterIds.length
+    ? matters.filter(m=>reviewScope.matterIds.includes(m.id)) : correctionOnly && startAtLawyers ? [] : matters;
+  for (let i = 0; i < visibleMatters.length; i += mattersChunkSize) {
+    matterChunks.push(visibleMatters.slice(i, i + mattersChunkSize));
   }
   const totalMatterSteps = Math.max(1, matterChunks.length);
   const totalSteps = 3 + totalMatterSteps;
@@ -143,9 +154,10 @@ export default function PostIngestionWizardModal({
   useEffect(() => {
     if (isOpen) {
       const pendingIndex = (initialData.matters || []).findIndex(needsInputReview);
-      setCurrentStep(startAtLawyers ? 3 : reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
+      initialReview.current={lawyers:JSON.stringify(initialData.lawyers || []),matters:JSON.stringify(initialData.matters || [])};
+      setCurrentStep(startAtLawyers ? 3 : correctionOnly ? 4 : reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
       contentRef.current?.scrollTo({top: 0});
-      setIsEditingInline(false);
+      setIsEditingInline(correctionOnly && !startAtLawyers);
       setValidationError('');
       setExpectedRevision(initialData.draftRevision || 0);
       setInitialB10Source(initialData.b10Text || '');
@@ -164,11 +176,12 @@ export default function PostIngestionWizardModal({
   const saveReview = async () => {
     if(isSaving)return;
     setIsSaving(true);setSaveError('');
-    try {await onComplete({firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:b10Text!==initialB10Source});}
+    try {await onComplete({firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
     catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
     finally {setIsSaving(false);}
   };
   const handleNext = () => {
+    if (correctionOnly) { void saveReview(); return; }
     if (currentMatterChunk.some(needsInputReview)) {
       setValidationError('Resuelve los permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
       return;
@@ -187,7 +200,7 @@ export default function PostIngestionWizardModal({
     if(currentStep<totalSteps)setCurrentStep(prev=>prev+1);
     else void saveReview();
   };
-  const handleBack = () => {setIsEditingInline(false);if(currentStep>1)setCurrentStep(prev=>prev-1);};
+  const handleBack = () => {setIsEditingInline(false);if(currentStep>(correctionOnly ? (startAtLawyers ? 3 : 4) : 1))setCurrentStep(prev=>prev-1);};
   const handleSkip = () => {void saveReview();};
 
   const updateMatterField = (matterId: string, field: string, value: any) => {
@@ -236,11 +249,14 @@ export default function PostIngestionWizardModal({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
           background: 'linear-gradient(to right, #F8FAFC, #FFFFFF)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flex: '1 1 200px', minWidth: 0, alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
               width: '36px',
+              flexShrink: 0,
               height: '36px',
               borderRadius: '10px',
               background: 'linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)',
@@ -253,17 +269,19 @@ export default function PostIngestionWizardModal({
             </div>
             <div>
               <h2 id="input-review-title" style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                Revisa los datos de tu submission
+                {correctionOnly ? 'Corrige este pendiente' : 'Revisa los datos de tu submission'}
               </h2>
               <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0.15rem 0 0 0' }}>
-                Revisa los hechos extraídos y resuelve las discrepancias antes de optimizar para {targetDirectory}.
+                {correctionOnly ? 'Guarda la corrección y vuelve al expediente. No necesitas repetir la revisión completa.' : `Revisa los hechos extraídos y resuelve las discrepancias antes de optimizar para ${targetDirectory}.`}
               </p>
             </div>
           </div>
           <button
-            disabled={isSaving} onClick={handleSkip}
-            title="Guardar los datos revisados y continuar después"
+            disabled={isSaving} onClick={correctionOnly ? onClose : handleSkip}
+            title={correctionOnly ? 'Volver sin guardar esta corrección' : 'Guardar los datos revisados y continuar después'}
             style={{
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
               background: 'transparent',
               border: 'none',
               color: '#64748B',
@@ -278,7 +296,7 @@ export default function PostIngestionWizardModal({
               transition: 'background 0.15s ease'
             }}
           >
-            <span>Guardar revisión parcial</span>
+            <span>{correctionOnly ? 'Cancelar' : 'Guardar revisión parcial'}</span>
             <X size={15} />
           </button>
         </div>
@@ -289,12 +307,13 @@ export default function PostIngestionWizardModal({
           overflowY: 'auto',
           flex: 1
         }}>
-          {recheckConfidentiality && <section style={{marginBottom: '1rem', padding: '1rem', border: '1px solid #C7D2FE', borderRadius: 10, background: '#EEF2FF'}}>
+          {recheckConfidentiality && !correctionOnly && <section style={{marginBottom: '1rem', padding: '1rem', border: '1px solid #C7D2FE', borderRadius: 10, background: '#EEF2FF'}}>
             <button type="button" disabled={isSaving} onClick={() => void recheck()}>{rechecking ? 'Revisando documento…' : 'Revisar confidencialidad desde el documento'}</button>
             <p style={{fontSize: '.8rem', marginTop: 8}}>Cruza los permisos pendientes con la tabla de clientes. Conserva tus decisiones, textos y montos.</p>
             {recheckMessage && <p role="status">{recheckMessage}</p>}
           </section>}
           {/* STEP 1: FIRM & PRACTICE METADATA */}
+          {correctionOnly && reviewScope?.message && <details style={{marginBottom:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer',fontWeight:600}}>Recordar qué hay que corregir</summary><p style={{whiteSpace:'pre-wrap'}}>{reviewScope.message}</p></details>}
           {currentStep === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div style={{
@@ -648,7 +667,7 @@ export default function PostIngestionWizardModal({
                     Abogados Clave Extraídos (Sección B9)
                   </h4>
                   <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#6B21A8' }}>
-                    Se detectaron {lawyers.length} abogados asociados a esta práctica.
+                    {correctionOnly ? (reviewScope?.lawyerNames.length ? 'Mostrando los abogados mencionados en este pendiente.' : 'Selecciona el perfil que necesitas corregir.') : `Se detectaron ${lawyers.length} abogados asociados a esta práctica.`}
                   </p>
                 </div>
               </div>
@@ -663,6 +682,7 @@ export default function PostIngestionWizardModal({
                 {lawyers.length > 0 ? (
                   lawyers.map((l: any, idx: number) => {
                     const name = l.name || l.fullName || `Abogado ${idx + 1}`;
+                    if (correctionOnly && reviewScope?.lawyerNames.length && !reviewScope.lawyerNames.includes(name)) return null;
                     const role = l.role || (l.isPartner ? 'Partner' : 'Associate');
                     const ranking = l.suggestedRank || l.suggestedRanking || l.suggested_rank || l.suggested_ranking || '';
                     return (
@@ -998,7 +1018,8 @@ export default function PostIngestionWizardModal({
           flexDirection: 'column',
           gap: '0.85rem'
         }}>
-          {/* Progress Bar & Step Text */}
+          {/* Full wizard progress does not apply to an individual correction. */}
+          {!correctionOnly && <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
               Paso {currentStep} de {totalSteps}
@@ -1024,11 +1045,18 @@ export default function PostIngestionWizardModal({
           </div>
 
           <p style={{fontSize: '0.8rem', color: '#475569'}}>{pendingCount ? `${pendingCount} asuntos requieren una decisión. Puedes guardar y continuar después.` : 'Sin decisiones de permisos o montos pendientes.'}</p>
+          </>}
+          {correctionOnly && <div style={{fontSize:13,color:'#475569',lineHeight:1.6}}>
+            <strong>{currentStep===3 ? 'Corrección de abogados' : `Asuntos relacionados · ${currentStep-3} de ${totalMatterSteps}`}</strong>
+            <p style={{margin:'6px 0'}}>Guardar conserva tus cambios. La aprobación de la entrega se comprobará después, al pulsar «Revisar entrega».</p>
+            {currentStep===3 && visibleMatters.length>0 && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(4);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Revisar asuntos relacionados ({visibleMatters.length})</button>}
+            {currentStep>=4 && currentStep<totalSteps && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(step=>step+1);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Siguientes asuntos relacionados →</button>}
+          </div>}
           {validationError && currentMatterChunk.some(needsInputReview) && <p role="alert" style={{color: '#B91C1C'}}>{validationError}</p>}
           {/* Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.35rem' }}>
+          <div style={{ display: 'flex', flexWrap:'wrap', gap:10, alignItems: 'center', justifyContent: 'space-between', marginTop: '0.35rem' }}>
             <div>
-              {currentStep > 1 && (
+              {currentStep > (correctionOnly ? (startAtLawyers ? 3 : 4) : 1) && (
                 <button
                   disabled={isSaving} onClick={handleBack}
                   style={{
@@ -1051,8 +1079,8 @@ export default function PostIngestionWizardModal({
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <button
+            <div style={{ display: 'flex', flexWrap:'wrap', alignItems: 'center', gap: '0.75rem' }}>
+              {(!correctionOnly || currentStep>=4) && <button
                 disabled={isSaving} onClick={() => setIsEditingInline(prev => !prev)}
                 style={{
                   background: isEditingInline ? '#EEF2FF' : '#FFFFFF',
@@ -1070,7 +1098,7 @@ export default function PostIngestionWizardModal({
                 }}
               >
                 <Edit3 size={14} /> {isEditingInline ? 'Cerrar edición' : 'Editar datos'}
-              </button>
+              </button>}
 
               {saveError && <div role="alert" style={{color:'#B91C1C',maxWidth:360}}>{saveError} Tus cambios siguen en esta ventana; reintenta antes de salir.</div>}
               {isSaving && <span role="status">Guardando tu revisión…</span>}
@@ -1092,7 +1120,7 @@ export default function PostIngestionWizardModal({
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>{reviewPending ? (pendingCount ? 'Continuar con los pendientes' : 'Guardar decisiones e ir al Studio') : currentStep === totalSteps ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
+                <span>{correctionOnly ? 'Guardar y volver al expediente' : reviewPending ? (pendingCount ? 'Continuar con los pendientes' : 'Guardar decisiones e ir al Studio') : currentStep === totalSteps ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
                 <ArrowRight size={14} />
               </button>
             </div>

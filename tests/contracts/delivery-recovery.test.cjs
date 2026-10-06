@@ -28,3 +28,16 @@ test('structured findings replace the legacy concatenated error without losing w
   const result=reviewIssues({final_artifact_review:{judge:{defects}}},['El documento no superó la validación final: todo concatenado','Genera y revisa el archivo final antes de descargar.']);
   assert.equal(result.length,2);assert.equal(result[0].owner,'RankPilot');assert.equal(result[1].destination,'period');
 });
+
+const {focusedReviewScope}=require('../../src/lib/audit/review-actions.ts');
+test('focused correction includes the named lawyer and only supplied related matters',()=>{
+ const people=[{name:'Sofía Vega'},{name:'Ana Sol'}];
+ const matters=[{id:'lead',leadPartner:'Sofia Vega'},{id:'team',teamMembers:'Sofía Vega; Ana Sol'},{id:'named',client:'Synthetic Industries'},{id:'other',leadPartner:'Ana Sol'},{id:'partial',leadPartner:'Sofia'}];
+ const scope=focusedReviewScope('Confirmar cargo de Sofía Vega y socio responsable en Synthetic Industries.',people,matters);
+ assert.deepEqual(scope.lawyerNames,['Sofía Vega']);assert.deepEqual(scope.matterIds,['lead','team','named']);
+});
+test('unknown identity does not guess another lawyer or mutate the register',()=>{
+ const matters=[{id:'one',leadPartner:'Sofia Vega',isConfidential:true}],before=structuredClone(matters);
+ const scope=focusedReviewScope('Confirmar el cargo de otra persona.',[{name:'Sofia Vega'}],matters);
+ assert.deepEqual(scope.lawyerNames,[]);assert.deepEqual(scope.matterIds,[]);assert.deepEqual(matters,before);
+});
