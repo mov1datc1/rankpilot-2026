@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, END
 from utils.model_factory import create_chat_model
+from utils.model_response import require_complete_response
 
 class Disposition(BaseModel):
     matter_id: str
@@ -66,11 +67,50 @@ Unknown practice requirements require questions or abstention. A user's requeste
 
 _RULES = json.loads((Path(__file__).resolve().parents[1] / 'config' / 'editorial_rules.v1.json').read_text())
 BASE += "\nVERSIONED REVIEW CRITERIA:\n" + "\n".join(f"{r['id']}: {r['criterion']}" for r in _RULES['rules'])
+BASE += '\nIndividual evidence appears in ranking_verification.individuals. Only verified observations/matches establish a named lawyer ranking in their exact practice, jurisdiction and edition. Not found never means globally Unranked. A confirmed roleResolution records a user correction for this submission period, with its source/reason; preserve the original role for traceability. Pending role decisions block final delivery, not draft writing.\n'
+
+def compact_review_payload(value):
+    """Remove only byte-identical aliases, never truncate or summarize evidence.
+
+    The register commonly carries three copies of source prose and two copies
+    of the draft. Different versions must remain visible to the reviewer.
+    """
+    if isinstance(value, list):
+        return [compact_review_payload(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    result = {key: compact_review_payload(item) for key, item in value.items()}
+    for aliases in [('source_excerpt', 'rawNotes', 'summary'), ('optimizedText', 'optimized_text')]:
+        seen = set()
+        for key in aliases:
+            text = result.get(key)
+            if isinstance(text, str) and text:
+                if text in seen:
+                    del result[key]
+                else:
+                    seen.add(text)
+    return result
+
+def role_payload(payload, role):
+    result = compact_review_payload(payload)
+    package = result.get('package', result)
+    # Strategy and internal correspondence use source facts. Final review uses
+    # the exact rendered document, so a second copy of its prior drafts adds
+    # neither evidence nor authority. Pre-render review still sees all drafts.
+    if role in ('strategist', 'writer') or package.get('rendered_artifact'):
+        for key in ('b10_draft', 'c2_draft'):
+            package.pop(key, None)
+        for matter in package.get('matters', []):
+            matter.pop('optimizedText', None)
+            matter.pop('optimized_text', None)
+    return result
 
 def invoke_role(state, role, schema, instruction, payload):
     started = time.monotonic()
-    result = create_chat_model('judge' if role == 'editor' else 'editorial').with_structured_output(schema, include_raw=True).invoke([
-        ('system', BASE + instruction), ('human', json.dumps(payload, ensure_ascii=False))])
+    purpose = 'judge' if role == 'editor' else 'letter' if role == 'writer' else 'editorial'
+    result = create_chat_model(purpose).with_structured_output(schema, include_raw=True).invoke([
+        ('system', BASE + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
+    require_complete_response(result.get('raw'))
     if result.get('parsing_error') or result.get('parsed') is None:
         raise ValueError(f'{role}: structured response unavailable')
     parsed = result['parsed']
@@ -88,7 +128,11 @@ def register_gate(state):
 
 def strategist(state):
     strategy,trace=invoke_role(state,'strategist',Strategy,
-        'Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',state['package'])
+        'Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',state['package'])
+    # Keep the comparative order supplied by the strategist, with the validated
+    # hero first. Both exports project this exact order; the renderer never ranks.
+    hero = strategy.get('hero_matter_id')
+    strategy['matters'] = sorted(strategy['matters'], key=lambda item: 0 if item['matter_id'] == hero else 1)
     return {'strategy':strategy,'trace':trace}
 
 def selection_gate(state):
@@ -111,8 +155,17 @@ def selection_gate(state):
 
 def writer(state):
     letter,trace=invoke_role(state,'writer',Letter,
-        'Write a concise internal executive letter in five sections, at most 700 words total. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
+        'Write a concise internal executive letter in Spanish in five sections, at most 700 words total. Use client/person names, never database IDs or UUIDs in reader-facing prose. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Conflicting role evidence requires user resolution, never silently choose a role. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
         {'package':state['package'],'strategy':state['strategy'],'previous_letter':state.get('letter'),'defects':state.get('judge',{}).get('defects',[])})
+    # Internal stable IDs remain in strategy JSON, not reader-facing prose.
+    names = {str(m['id']): str(m.get('client') or m.get('name') or m.get('title') or '') for m in state['package'].get('matters', [])}
+    for field, text in letter.items():
+        if not isinstance(text, str):
+            continue
+        for matter_id, name in names.items():
+            if name:
+                text = re.sub(r'(?<!\w)' + re.escape(matter_id) + r'(?!\w)', lambda _: name, text)
+        letter[field] = text
     return {'letter':letter,'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1}
 
 def editor(state):
@@ -133,6 +186,10 @@ def release_gate(state):
             errors.append(f"Value confirmation no longer matches: {m['id']}")
         if m.get('valueConflict') or m.get('value_conflict') or m.get('sourceValueConflict'):errors.append(f"Value conflict unresolved: {m['id']}")
     if state['package'].get('current_band') and state['package'].get('ranking_verification',{}).get('status') != 'verified_match':errors.append('La posición declarada no está verificada o discrepa de la fuente oficial. Revisa firma, país, práctica y edición.')
+    for lawyer in state['package'].get('lawyers', []):
+        resolution = lawyer.get('roleResolution')
+        if resolution and (resolution.get('confirmed') is not True or not str(resolution.get('reason') or '').strip() or resolution.get('role') != lawyer.get('role') or lawyer.get('isPartner') != (lawyer.get('role') == 'Partner')):
+            errors.append(f"Confirma el cargo y su fuente para {lawyer.get('name') or lawyer.get('fullName') or 'el abogado'} antes de aprobar la entrega.")
     if not state['package'].get('b10_source'):errors.append('Department source narrative is missing.')
     if not state['package'].get('directory','').lower().startswith('chambers'):errors.append('This review policy has only been configured for Chambers; directory-specific review required.')
     return {'release_verdict':{'passed':not errors,'status':'passed' if not errors else 'needs_review','errors':list(dict.fromkeys(errors))}}
@@ -155,11 +212,11 @@ def create_review_graph():
 review_graph=create_review_graph()
 
 
-def review_rendered_package(state):
+def review_rendered_package(state, allow_repair=True):
     """One targeted letter repair after rendering; never alter the artifact or facts."""
     result = {**state, **editor(state)}
     critical = [d for d in result['judge'].get('defects',[]) if d['severity']=='critical']
-    if critical and all(d['scope']=='letter' for d in critical):
+    if allow_repair and critical and all(d['scope']=='letter' for d in critical):
         result.update(writer(result))
         result.update(editor(result))
     return {key:result[key] for key in ('judge','trace','letter')}

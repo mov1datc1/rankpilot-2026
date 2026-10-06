@@ -213,3 +213,13 @@ if ($response->json('data.flow_control.is_complete')) {
 
     Seguridad: Todas las llamadas entre sistemas deben estar firmadas mediante un X-API-KEY configurado en el .env de Python.
 ```
+
+## Studio review cost controls (2026-10-06)
+
+Studio calls `/review-step` once for each of strategy, writer and editor, persisting the server response in the authenticated submission between requests. The final DOCX review has its own request. Reopening resumes persisted stages; a lease prevents concurrent paid requests for the same stage. This is request-driven checkpointing, not a durable background worker. An in-flight response lost before persistence may still need to be repeated after the lease expires. The legacy `/review-package` endpoint remains synchronous for compatibility; new clients must use the staged path.
+
+`utils/model_factory.py` defines output ceilings, including reasoning tokens: extraction 32768, standard 8192, editorial strategy 12288, judge 8192, rewrite and letter 4096. Extraction keeps space for the complete register. Independent judge model selection is unchanged; default judge reasoning is `medium`, letter/rewrite `low`, strategy `high`. SDK retries are disabled; Studio does not automatically run letter-repair loops.
+
+Overrides: `OPENAI_MAX_OUTPUT_TOKENS_<PURPOSE>` wins over legacy `OPENAI_MAX_OUTPUT_TOKENS`, which wins over the per-purpose default. Reasoning overrides are `REASONING_EFFORT_JUDGE`, `REASONING_EFFORT_LETTER`, `REASONING_EFFORT_REWRITE`, and `REASONING_EFFORT_EDITORIAL`. Existing deployment overrides remain effective. Review traces retain provider token usage; these controls are not a dollar budget or a demonstrated quality/cost benchmark. See [OpenAI reasoning token limits](https://developers.openai.com/api/docs/guides/reasoning).
+
+`AI_CREDIT_EXHAUSTED` requires billing recovery, not blind retries. `AI_OUTPUT_LIMIT` preserves the draft and requires inspecting the affected task limit; it does not silently increase the budget. Only exact duplicate source aliases are removed. Strategy and letter use source facts; the final judge sees sources plus the actual rendered Word rather than redundant pre-render draft copies.

@@ -80,3 +80,12 @@ test('confidentiality recheck cannot report success against an older backend',as
  const r=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',mode:'confidentiality_review'})}));
  assert.equal(r.status,503);assert.deepEqual(state,before);
 });
+
+test('role correction records the user, source and prior role without silently confirming an incomplete edit',async()=>{
+ reset();state.submission.chambersData.lawyers=[{name:'Sofia Vega',isPartner:false,is_partner:false}];
+ let result=await updateSubmissionValidatedData('s',{lawyers:[{name:'Sofia Vega',role:'Partner',isPartner:true}]});
+ assert.equal(result.success,true);assert.equal(result.lawyers[0].roleResolution.confirmed,false);
+ result=await updateSubmissionValidatedData('s',{lawyers:[{...result.lawyers[0],roleResolution:{role:'Partner',reason:'Official team listing reviewed for this period',confirmed:true}}]});
+ const lawyer=result.lawyers[0];assert.equal(lawyer.roleResolution.confirmedBy,'u');assert.ok(lawyer.roleResolution.confirmedAt);assert.equal(lawyer.roleResolution.originalRole,'Associate');assert.equal(lawyer.is_partner,true);
+ assert.equal(state.submission.chambersData.release_verdict.passed,false);
+});

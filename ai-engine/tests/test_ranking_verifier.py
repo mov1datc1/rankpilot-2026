@@ -1,10 +1,24 @@
 import unittest
 from datetime import datetime,timezone,timedelta
-from utils.ranking_verifier import compare_claim
+from utils.ranking_verifier import compare_claim, compare_individual_claim
 from utils.benchmark_scraper import Legal500Scraper, ChambersScraper
 import json
 
 class RankingVerificationTests(unittest.TestCase):
+    def test_individual_observation_uses_own_edition_and_exact_person_and_firm(self):
+        benchmark = self.evidence(edition='2027', individuals=[{'name':'Sofia Vega','firm':'Synthetic Legal','band':'Band 2','edition':'2026'}])
+        lawyer = {'name':'Sofia Vega','current_ranking':'Band 2'}
+        result = compare_individual_claim(lawyer,'Synthetic Legal','Chambers','Tax','Mexico','2026',benchmark)
+        self.assertEqual(result['status'],'verified_match')
+        self.assertEqual(result['evidence']['edition'],'2026')
+        wrong = compare_individual_claim(lawyer,'Synthetic Different','Chambers','Tax','Mexico','2026',benchmark)
+        self.assertEqual(wrong['status'],'not_found')
+
+    def test_individual_rank_never_transfers_practice_or_firm_edition(self):
+        benchmark = self.evidence(individuals=[{'name':'Sofia Vega','firm':'Synthetic Legal','band':'Band 2'}])
+        lawyer = {'name':'Sofia Vega'}
+        self.assertEqual(compare_individual_claim(lawyer,'Synthetic Legal','Chambers','Labour','Mexico','current',benchmark)['status'],'scope_mismatch')
+        self.assertEqual(compare_individual_claim(lawyer,'Synthetic Legal','Chambers','Tax','Mexico','2027',benchmark)['status'],'edition_required')
     def evidence(self,**changes):
         return {**{'source':'chambers','source_url':'https://chambers.com/legal-rankings/example','content_sha256':'a'*64,'parser_version':'ranking-evidence-v1','scraped_at':datetime.now(timezone.utc).isoformat(),'edition':'2027','observed_practice':'Tax','observed_jurisdiction':'Mexico','firms':[{'name':'Synthetic Legal','band':'Band 3'}]},**changes}
     def verify(self,benchmark=None,firm='Synthetic Legal',band='Band 2',edition='2027'):

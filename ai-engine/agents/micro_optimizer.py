@@ -13,14 +13,15 @@ import re
 from typing import Dict, Any, Optional
 from langchain_core.messages import SystemMessage, HumanMessage
 from utils.model_factory import create_chat_model
-from utils.model_response import coerce_message_text
+from utils.provider_errors import provider_failure
+from utils.model_response import coerce_message_text, require_complete_response
 from utils.evidence_validation import strip_carpentry_and_labels, ensure_three_paragraphs
 from utils.language_guard import sanitize_submission_voice
 
 
 def get_micro_model():
     # Uses low reasoning effort for 2-3 second execution to prevent HTTP timeouts
-    return create_chat_model("extraction")
+    return create_chat_model("rewrite")
 
 
 B10_SYSTEM_PROMPT = """You edit a legal-directory department narrative in professional English.
@@ -87,6 +88,7 @@ def optimize_b10_micro(
     try:
         llm = get_micro_model()
         response = llm.invoke(messages)
+        require_complete_response(response)
         text = coerce_message_text(response).strip()
 
         # Sanitize voice & strip fillers
@@ -111,10 +113,7 @@ def optimize_b10_micro(
             "word_count": len(text.split()),
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return provider_failure(e)
 
 
 def optimize_matter_micro(
@@ -171,11 +170,17 @@ def optimize_matter_micro(
     try:
         llm = get_micro_model()
         response = llm.invoke(messages)
+        require_complete_response(response)
         text = coerce_message_text(response).strip()
 
         # Deterministic carpentry cleaning
         cleaned = strip_carpentry_and_labels(text)
-        final_text = ensure_three_paragraphs(cleaned)
+        paragraphs = [p.strip() for p in cleaned.split('\n\n') if p.strip()]
+        # The prompt permits 1–3 paragraphs. Splitting on every period breaks
+        # corporate abbreviations such as S.A. de C.V. and initials.
+        final_text = ensure_three_paragraphs(cleaned) if len(paragraphs) > 3 else '\n\n'.join(paragraphs)
+        if not final_text:
+            return {'success': False, 'code': 'AI_OUTPUT_LIMIT', 'error': 'No se obtuvo una redacción completa. Se conserva el texto anterior.'}
 
         return {
             "success": True,
@@ -184,7 +189,4 @@ def optimize_matter_micro(
             "client": client_name
         }
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return provider_failure(e)

@@ -5,6 +5,13 @@ from collections.abc import Mapping
 from typing import Any
 
 
+def require_complete_response(message: Any) -> None:
+    """A token-limited partial narrative must never replace a saved draft."""
+    metadata = getattr(message, 'response_metadata', {}) or {}
+    if metadata.get('finish_reason') == 'length' or metadata.get('status') == 'incomplete' or metadata.get('incomplete_details'):
+        raise ValueError('max_output_tokens: incomplete response')
+
+
 def coerce_message_text(content: Any) -> str:
     """Return only textual payloads from string or content-block responses.
 

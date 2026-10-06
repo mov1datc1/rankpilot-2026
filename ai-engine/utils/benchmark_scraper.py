@@ -317,6 +317,8 @@ class ChambersScraper:
                         "band": cat_name,
                         "rank_type": cat.get("rankType", ""),
                         "years_ranked": ind.get("rankedYearsCount", 0),
+                        "edition": ind.get("publicationYear"),
+                        "profile_path": ind.get("urlPath"),
                     }
                     result["individuals"].append(individual)
         

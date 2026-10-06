@@ -22,12 +22,14 @@ class RaisingJudge:
 
 
 class ReleaseGateTests(unittest.TestCase):
-    def test_judge_profile_uses_sol_and_xhigh_by_default(self):
+    def test_judge_profile_preserves_independent_model_with_bounded_reasoning(self):
         with patch.dict(os.environ, {}, clear=True):
             settings = get_model_settings("judge")
             profile = get_model_profile("judge")
         self.assertEqual("gpt-5.6-sol", settings["model"])
-        self.assertEqual("xhigh", settings["reasoning_effort"])
+        self.assertEqual("medium", settings["reasoning_effort"])
+        self.assertEqual(8192, settings["max_tokens"])
+        self.assertEqual(0, settings["max_retries"])
         self.assertTrue(settings["use_responses_api"])
         self.assertEqual("responses", profile["api_mode"])
 

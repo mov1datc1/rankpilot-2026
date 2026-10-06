@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Revisión por etapas y control de consumo
+
+- Studio guarda estrategia, carta y juez por separado, con huella de entradas y bloqueo temporal por etapa. Reanuda etapas confirmadas; el Word se revisa en una petición independiente. Repetir un documento ya revisado sin cambios reutiliza su resultado. Una etapa interrumpida antes de guardarse todavía puede requerir repetición; no es una cola de trabajo autónoma.
+- Límites por tarea: redacciones/carta 4096, estrategia 12288 y juez 8192 tokens; juez con razonamiento medium, carta low, estrategia high. Extracción conserva 32768. Sin reintentos del SDK ni reparación automática adicional del Word en Studio. No equivalen a un presupuesto fijo en dólares.
+- Contexto sin alias idénticos ni borradores redundantes para estrategia/carta y revisión del Word exacto. Respuestas cortadas no sustituyen el texto guardado. Crédito agotado tiene un mensaje específico y detiene los siguientes lotes.
+- Menú: tooltips en portal fuera de la capa del Studio. Estrategia pide orden comparativo y proyecta el mismo asunto insignia primero en Audit y exportación; cartas con nombres, sin UUIDs. No se fuerzan cortes de párrafo dentro de abreviaturas societarias.
+- Correcciones de cargo en wizard con fuente, periodo y confirmación atribuida. Pendientes permiten trabajar y bloquean solo entrega. Verificación individual reutiliza la tabla oficial seleccionada, exige persona/firma/alcance y no transfiere edición del departamento. Búsqueda ampliada de cargos y rankings en otras prácticas sigue pendiente.
+- Validación: 251 contratos Node, 183 pruebas Python, TypeScript y build Next; Chrome con componentes reales y servicios simulados verifica Studio, menú y corrección de cargo. Sin llamadas de pago nuevas ni escrituras en expedientes de producción; ahorro monetario y calidad con los nuevos límites aún sin medición real.
+
 ## [2026-10-06] — Estado editorial y reanudación de Studio
 
 - B10 distingue texto importado de optimización guardada; reanudar conserva asuntos ya redactados. Las tarjetas reflejan cada guardado y el contador de B10 se actualiza. No se trunca B10 a mitad de frase al superar el límite.

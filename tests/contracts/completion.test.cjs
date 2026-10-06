@@ -4,7 +4,7 @@ let state,calls,conflict,rejectFinal;
 const source='Synthetic Buyer retained the team in a tax appeal in Mexico. Partner Sofia Vega led the representation. The disputed assessment is MXN 1000000. The appeal remains pending; there has been no ruling.';
 const b10='Synthetic Legal advises on tax disputes in Mexico. The supplied mandate is a pending tax appeal. No ranking or broader team size is claimed.';
 function reset(){conflict=false;rejectFinal=false;calls=[];state={id:'s',userId:'u',updatedAt:new Date('2026-01-01'),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',currentBand:null,status:'Draft',matters:[{id:'m1',submissionId:'s',client:'Synthetic Buyer',name:'Tax appeal',leadPartner:'Sofia Vega',summary:source,rawNotes:source,source_excerpt:source,optimizedText:source,value:'MXN 1000000',isConfidential:false,confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{firm_name:'Synthetic Legal',original_b10:b10,enhanced_b7:b10,draft_revision:1}};state.chambersData.matters=structuredClone(state.matters);}
-const db=box=>({submission:{findUnique:async()=>structuredClone(box),updateMany:async()=>({count:conflict?0:1}),update:async({data})=>Object.assign(box,data)},matter:{updateMany:async({where,data})=>{Object.assign(box.matters.find(m=>m.id===where.id),data);return{count:1};}},user:{findUnique:async()=>null}});
+const db=box=>({submission:{findUnique:async()=>structuredClone(box),updateMany:async({data})=>{if(conflict)return{count:0};Object.assign(box,data);return{count:1};},update:async({data})=>Object.assign(box,data)},matter:{updateMany:async({where,data})=>{Object.assign(box.matters.find(m=>m.id===where.id),data);return{count:1};}},user:{findUnique:async()=>null}});
 const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async fn=>{const pending=structuredClone(state);const result=await fn(db(pending));state=pending;return result;}:db(state)[key]});
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'u'}}})}})};return load.call(this,name,...args);};
 const {POST}=require('../../src/app/api/optimize/complete/route.ts');
@@ -79,4 +79,26 @@ test('B10 response records provenance only after successful persistent save',asy
   assert.equal(state.chambersData.enhanced_b7,result.enhanced_b10);
   assert.equal(state.chambersData.approved_artifact,null);
  }finally{global.fetch=saved;}
+});
+
+const {reviewInputHash,reviewPackage}=require('../../src/lib/audit/review-checkpoint.ts');
+test('checkpointed completion never repeats strategy or audit, and caches the approved artifact',async()=>{
+ reset();const review=await (await global.fetch('http://engine/review-package',{body:'{}'})).json();calls=[];
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:review,lease_until:0};
+ assert.equal((await complete({checkpoint:true})).status,200);assert.equal(calls.length,1);assert.ok(calls[0].url.endsWith('/verify-rendered-package'));
+ assert.equal(state.chambersData.review_checkpoint.lease_until,0);
+ const again=await complete({checkpoint:true});assert.equal(again.status,200);assert.equal((await again.json()).cached,true);assert.equal(calls.length,1);
+});
+test('final artifact lease blocks overlapping paid review calls',async()=>{
+ reset();state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:{},lease_until:Date.now()+300000};
+ const result=await complete({checkpoint:true});assert.equal(result.status,202);assert.equal((await result.json()).pending,true);assert.equal(calls.length,0);
+});
+test('stale checkpoint cannot approve an edited draft',async()=>{
+ reset();state.chambersData.review_checkpoint={input_hash:'stale',stage:'done',state:{}};
+ assert.equal((await complete({checkpoint:true})).status,409);assert.equal(calls.length,0);
+});
+test('an already reviewed rejection does not pay for an unchanged Word again',async()=>{
+ reset();rejectFinal=true;const review=await (await global.fetch('http://engine/review-package',{body:'{}'})).json();calls=[];
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:review,lease_until:0};
+ await complete({checkpoint:true});const result=await complete({checkpoint:true});assert.equal((await result.json()).cached,true);assert.equal(calls.length,1);
 });

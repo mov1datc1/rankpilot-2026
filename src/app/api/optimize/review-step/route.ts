@@ -1,0 +1,60 @@
+import { randomUUID } from 'node:crypto';
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { createClient } from '@/utils/supabase/server';
+import { needsInputReview } from '@/lib/audit/input-review';
+import { reviewPackage, reviewInputHash, reviewSteps, reviewStepLabels } from '@/lib/audit/review-checkpoint';
+
+export const maxDuration = 300;
+
+/** One paid role per request; checkpoints survive reloads and retries. */
+export async function POST(request: NextRequest) {
+  let locked: any = null;
+  let checkpoint: any = null;
+  try {
+    const { data: { user } } = await (await createClient()).auth.getUser();
+    if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
+    const account = user.email ? await prisma.user.findUnique({where: {email: user.email}}) : null;
+    const { submissionId } = await request.json();
+    if (!submissionId) return NextResponse.json({error: 'Missing submissionId'}, {status: 400});
+    const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
+    if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
+    const data: any = submission.chambersData || {};
+    const matters = Array.isArray(data.matters) ? data.matters : submission.matters;
+    if (matters.some(needsInputReview)) return NextResponse.json({error: 'Resuelve permisos y montos antes de revisar.'}, {status: 422});
+    const payload = reviewPackage(submission, data, matters);
+    const inputHash = reviewInputHash(payload);
+    const saved = data.review_checkpoint;
+    checkpoint = saved?.input_hash === inputHash ? saved : {input_hash: inputHash, stage: 'strategy', state: {}};
+    const stage = checkpoint.stage as keyof typeof reviewStepLabels;
+    if (!reviewSteps.includes(stage)) throw new Error('Invalid review stage');
+    if (stage === 'done') return NextResponse.json({success: true, done: true, completed: 3, stage, message: reviewStepLabels.done});
+    if (checkpoint.lease_until > Date.now()) return NextResponse.json({success: true, done: false, busy: true, completed: reviewSteps.indexOf(stage), stage, message: reviewStepLabels[stage]}, {status: 202});
+    checkpoint = {...checkpoint, lease_until: Date.now() + 330000, lease_id: randomUUID(), error: null};
+    const changed = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: submission.updatedAt}, data: {updatedAt: new Date(), chambersData: {...data, review_checkpoint: checkpoint}}});
+    if (changed.count !== 1) throw new Error('DRAFT_CONFLICT');
+    locked = await prisma.submission.findUnique({where: {id: submission.id}});
+    if ((locked.chambersData as any)?.review_checkpoint?.lease_id !== checkpoint.lease_id) throw new Error('DRAFT_CONFLICT');
+    const response = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(250000),
+      body: JSON.stringify({stage, package: payload, state: checkpoint.state}),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      const failure = {code: result.code || 'AI_REVIEW_UNAVAILABLE', error: result.error || 'No se completó esta etapa. El avance se conserva.'};
+      await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, lease_until: 0, error: failure}}}});
+      locked = null;
+      return NextResponse.json(failure, {status: 502});
+    }
+    const nextStage = result.next_stage;
+    if (!reviewSteps.includes(nextStage) || !result.state || reviewSteps.indexOf(nextStage) <= reviewSteps.indexOf(stage)) throw new Error('Invalid review response');
+    const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, stage: nextStage, state: result.state, lease_until: 0}}}});
+    if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
+    locked = null;
+    return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
+  } catch (error: any) {
+    // A timeout leaves the lease until expiry: a still-running provider call must
+    // not overlap a retry. Successful earlier stages remain persisted.
+    return NextResponse.json({code: error.message === 'DRAFT_CONFLICT' ? 'DRAFT_CONFLICT' : 'AI_REVIEW_UNAVAILABLE', error: 'La etapa no se completó. Las etapas anteriores están guardadas.'}, {status: error.message === 'DRAFT_CONFLICT' ? 409 : 502});
+  }
+}

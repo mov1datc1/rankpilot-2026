@@ -210,6 +210,18 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       }
       return reviewed;
     });
+    if (data.lawyers) data.lawyers = data.lawyers.map(lawyer => {
+      const previous = chambers.lawyers?.find((saved:any) => (saved.name || saved.fullName) === (lawyer.name || lawyer.fullName));
+      const changed = previous && (previous.role !== lawyer.role || previous.isPartner !== lawyer.isPartner);
+      if (!changed && !lawyer.roleResolution) return lawyer;
+      const resolution = lawyer.roleResolution || {role:lawyer.role || '',reason:'',confirmed:false};
+      const valid = resolution.confirmed === true && !!resolution.reason?.trim() && resolution.role === lawyer.role && lawyer.isPartner === (lawyer.role === 'Partner');
+      const unchanged = previous?.roleResolution?.confirmed === true && previous.roleResolution.role === resolution.role && previous.roleResolution.reason === resolution.reason;
+      return {...lawyer,is_partner:lawyer.isPartner,roleResolution:{...resolution,confirmed:valid,
+        originalRole:previous?.roleResolution?.originalRole ?? previous?.role ?? (previous?.isPartner === true ? 'Partner' : previous?.isPartner === false ? 'Associate' : null),
+        confirmedAt:valid ? (unchanged ? previous.roleResolution.confirmedAt : new Date().toISOString()) : null,
+        confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}};
+    });
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
@@ -263,7 +275,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
 
     });
-    return { success: true, revision: nextRevision, matters: data.matters };
+    return { success: true, revision: nextRevision, matters: data.matters, lawyers: data.lawyers };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };
@@ -316,5 +328,4 @@ export async function updateDesignatedHeroMatter(submissionId: string, heroMatte
     return { success: false, error: error.message };
   }
 }
-
 

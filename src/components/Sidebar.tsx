@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, FileText, BarChart2, Settings, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useState, useEffect, type FocusEvent, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import './Sidebar.css';
 
 type RecentItem = { name: string; href: string; directory: string };
@@ -107,7 +108,7 @@ export default function Sidebar({ userRole }: { userRole?: string }) {
           </nav>
         </section>
       </div>
-      {collapsed && tooltip && <div role="tooltip" className="app-sidebar-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>}
+      {collapsed && tooltip && createPortal(<div role="tooltip" className="app-sidebar-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>, document.body)}
     </aside>
   );
 }

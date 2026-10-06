@@ -65,6 +65,30 @@ def compare_claim(firm, directory, practice, jurisdiction, claimed_band, edition
     return result
 
 
+def compare_individual_claim(lawyer, firm, directory, practice, jurisdiction, edition, benchmark):
+    """Individual identity + employer + scope. A department band is never reused."""
+    name = lawyer.get('name') or lawyer.get('fullName') or ''
+    claimed = lawyer.get('current_ranking') or lawyer.get('currentRanking')
+    candidates = [item for item in (benchmark or {}).get('individuals', [])
+                  if normalize(item.get('name')) == normalize(name) and normalize(name)
+                  and normalize(item.get('firm')) == normalize(firm) and normalize(firm)]
+    individual_benchmark = None
+    if benchmark:
+        editions = {str(item['edition']) for item in candidates if item.get('edition')}
+        individual_benchmark = {**benchmark,
+            'edition': next(iter(editions)) if len(editions) == 1 else None,
+            'firms': [{**item, 'organisation_id': None} for item in candidates]}
+    result = compare_claim(name, directory, practice, jurisdiction, claimed, edition, individual_benchmark)
+    result['lawyer_name'] = name
+    result['firm_name'] = firm
+    result['subject_type'] = 'individual'
+    if result['status'] == 'not_found':
+        result['message'] = 'No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.'
+    elif result['status'].startswith('verified'):
+        result['message'] = 'Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.'
+    return result
+
+
 def verify_ranking_claim(package):
     args = (package.get('firm_name',''), package.get('directory',''), package.get('practice_area',''),
             package.get('ranking_jurisdiction') or package.get('jurisdiction',''),
@@ -73,4 +97,9 @@ def verify_ranking_claim(package):
         benchmark = scrape_rankings(args[1],args[2],args[3],ttl_days=1)
     except Exception:
         benchmark = None
-    return compare_claim(*args, benchmark)
+    result = compare_claim(*args, benchmark)
+    # Reuse the same downloaded table for every candidate; no extra model/search
+    # request per person and no speculative worldwide ranking inference.
+    result['individuals'] = [compare_individual_claim(lawyer, args[0], args[1], args[2], args[3], args[5], benchmark)
+                             for lawyer in package.get('lawyers', [])]
+    return result

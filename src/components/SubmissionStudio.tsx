@@ -533,9 +533,11 @@ export default function SubmissionStudio({
     // v26.37: Optimize ALL matters across the submission (both publishable and confidential)
     const targetList = matters.filter(m => !(m.optimizedText || m.optimized_text || '').trim());
     let optimizationFailed = false;
+    let optimizationError = '';
+    let stopBatch = false;
     const failedMatters:string[]=[];
     let savedMatters=0;
-    const totalSteps = targetList.length + 2; // B10 + matters + audit synthesis
+    const totalSteps = targetList.length + 5; // B10 + matters + three saved review stages + Word
 
     setOptimizeAllProgress({
       current: 0,
@@ -562,14 +564,14 @@ export default function SubmissionStudio({
         currentB10Text = b10Data.enhanced_b10;
         setB10Text(b10Data.enhanced_b10);
         setChambersData((prev:any)=>({...prev,enhanced_b7:b10Data.enhanced_b10,b10_optimization:b10Data.b10_optimization}));
-      } else { optimizationFailed = true; }
+      } else { optimizationFailed = true; optimizationError = processingFeedback(b10Data,b10Res.status,'optimize'); }
       }
     } catch (b10Err) {
       console.warn('[Global Optimization] B10 error:', b10Err);
       optimizationFailed = true;
     }
 
-    if(optimizationFailed) {setDraftSaveError('No se pudo guardar la nueva redacción del departamento. La versión anterior se conserva. Reintenta antes de continuar con los asuntos.');setIsOptimizingAll(false);setOptimizeAllProgress(null);return;}
+    if(optimizationFailed) {setDraftSaveError(optimizationError || 'No se pudo guardar la nueva redacción del departamento. La versión anterior se conserva. Reintenta antes de continuar con los asuntos.');setIsOptimizingAll(false);setOptimizeAllProgress(null);return;}
     let completed = 1;
     setOptimizeAllProgress({
       current: completed,
@@ -599,6 +601,10 @@ export default function SubmissionStudio({
             })
           });
           const data = await res.json();
+          if (['AI_CREDIT_EXHAUSTED','AI_OUTPUT_LIMIT'].includes(data.code)) {
+            stopBatch = true;
+            optimizationError = processingFeedback(data,res.status,'optimize');
+          }
           if (!res.ok || !data.success || !data.optimized_text) {optimizationFailed = true;failedMatters.push(m.name || m.client || m.id || 'Asunto sin nombre');}
       if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (data.success && data.optimized_text) {
@@ -624,6 +630,7 @@ export default function SubmissionStudio({
           });
         }
       }));
+      if (stopBatch) break;
     }
 
     // Stable matter IDs are the join key. Client names can legitimately repeat.
@@ -640,32 +647,53 @@ export default function SubmissionStudio({
     });
     setMatters(latestMatters);
     if (optimizationFailed) {
-      setDraftSaveError(`No se completaron: ${failedMatters.join(', ')}. Las ${savedMatters} nuevas redacciones confirmadas se guardaron. Reintenta para continuar con los pendientes.`);
+      setDraftSaveError(optimizationError || `No se completaron: ${failedMatters.join(', ')}. Las ${savedMatters} nuevas redacciones confirmadas se guardaron. Reintenta para continuar con los pendientes.`);
       setIsOptimizingAll(false);
       setOptimizeAllProgress(null);
       return;
     }
 
-    // 3. Finalize & Synthesize Strategic Audit Report + Active Judge SOL Auto-Polisher
+    // 3. Resume persisted review roles, then verify the exact Word.
     setOptimizeAllProgress({
-      current: totalSteps - 1,
+      current: targetList.length + 1,
       total: totalSteps,
-      stage: 'Revisando las fuentes, la coherencia editorial y el Word final. Puede tardar varios minutos. Los pasos ya guardados se conservan.'
+      stage: 'Reanudando la revisión desde la última etapa guardada…'
     });
 
     try {
-      const compRes = await fetch('/api/optimize/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submissionId: submission.id,
-          b10Text: currentB10Text,
-          matters: latestMatters,
-          targetDirectory: selectedDirectory
-        })
-      });
-      const compData = await compRes.json();
-      if (!compRes.ok || !compData.success) throw new Error(processingFeedback(compData,compRes.status,'review'));
+      // The server determines the next stage from persisted inputs/checkpoints.
+      // Polling a held lease never launches another paid call.
+      for (let attempts = 0; ; attempts++) {
+        if (attempts >= 90) throw new Error('La revisión sigue en curso. Las etapas guardadas se conservan; vuelve a abrir el expediente para reanudar.');
+        const stepRes = await fetch('/api/optimize/review-step', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({submissionId: submission.id}),
+        });
+        const step = await stepRes.json();
+        if (!stepRes.ok || !step.success) throw new Error(processingFeedback(step, stepRes.status, 'review'));
+        setOptimizeAllProgress({current:targetList.length + 1 + Number(step.completed || 0),total:totalSteps,stage:step.message});
+        if (step.done) break;
+        if (step.busy) await new Promise(resolve => setTimeout(resolve, 4000));
+      }
+      let compData:any;
+      for (let attempts=0; ; attempts++) {
+        if (attempts>=90) throw new Error('La revisión del Word sigue en curso. Se conserva el avance; vuelve a abrir el expediente para continuar.');
+        const compRes = await fetch('/api/optimize/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            submissionId: submission.id,
+            b10Text: currentB10Text,
+            checkpoint: true,
+            matters: latestMatters,
+            targetDirectory: selectedDirectory
+          })
+        });
+        compData = await compRes.json();
+        if (!compRes.ok || !compData.success) throw new Error(processingFeedback(compData,compRes.status,'review'));
+        if (!compData.pending) break;
+        await new Promise(resolve=>setTimeout(resolve,4000));
+      }
       if (compData.success && compData.chambersData) {
         setChambersData(compData.chambersData);
         if (Array.isArray(compData.matters) && compData.matters.length > 0) {
@@ -682,6 +710,7 @@ export default function SubmissionStudio({
       setDraftSaveError(cErr instanceof Error ? cErr.message : 'La revisión no se completó. Conserva el borrador y reintenta.');
       setIsOptimizingAll(false);
       setOptimizeAllComplete(false);
+      setOptimizeAllProgress(null);
       return;
     }
 
@@ -1705,6 +1734,10 @@ export default function SubmissionStudio({
               </details>
               <p role="status">{chambersData.ranking_verification?.message || 'La consulta se realizará durante la revisión de la optimización.'}</p>
               {chambersData.ranking_verification?.observed_band && <p>Posición observada: {chambersData.ranking_verification.observed_band}. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
+              {chambersData.ranking_verification?.individuals?.length > 0 && <details><summary>Verificación individual de candidatos</summary>
+                <p>Se contrasta persona y firma en la misma tabla oficial, sin otra llamada de IA. Un ranking en otra práctica o edición no se transfiere a esta candidatura.</p>
+                <ul>{chambersData.ranking_verification.individuals.map((item:any,index:number)=><li key={index}><strong>{item.lawyer_name}</strong>: {String(item.status).startsWith('verified') ? `${item.observed_band} · ${item.practice_area} · ${item.jurisdiction} · ${item.evidence?.edition || 'tabla actual'}` : item.message}</li>)}</ul>
+              </details>}
               {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
             </section>
             {pendingInputMatters.length > 0 && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
@@ -3956,7 +3989,7 @@ export default function SubmissionStudio({
         onComplete={async (data) => {
           const result=await updateSubmissionValidatedData(submission.id,{...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);

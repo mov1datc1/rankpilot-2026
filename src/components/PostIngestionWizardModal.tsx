@@ -673,6 +673,21 @@ export default function PostIngestionWizardModal({
                       }}>
                         <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0F172A' }}>{name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.15rem' }}>{role}</div>
+                        <label style={{display:'block',marginTop:8,fontSize:13,color:'#334155'}}>Cargo en este submission
+                          <select aria-label={`Cargo de ${name}`} value={l.role || (l.isPartner === true ? 'Partner' : l.isPartner === false ? 'Associate' : '')}
+                            onChange={e=>{const value=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,role:value,isPartner:value==='Partner',is_partner:value==='Partner',roleResolution:{role:value,reason:'',confirmed:false}}:item));}}
+                            style={{display:'block',width:'100%',padding:8,marginTop:4,background:'#fff',color:'#0f172a',border:'1px solid #cbd5e1',borderRadius:6}}>
+                            <option value="">Sin confirmar</option><option value="Partner">Socio / Partner</option><option value="Associate">Asociado / Associate</option><option value="Of Counsel">Of Counsel</option><option value="Other">Otro</option>
+                            {l.role && !['Partner','Associate','Of Counsel','Other'].includes(l.role) && <option value={l.role}>{l.role}</option>}
+                          </select>
+                        </label>
+                        {l.roleResolution && <div style={{fontSize:12,color:'#475569',marginTop:8}}>
+                          <label>Fuente, fecha y motivo de la corrección
+                            <textarea aria-label={`Fuente del cargo de ${name}`} value={l.roleResolution.reason || ''} onChange={e=>{const reason=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,reason,confirmed:false}}:item));}} style={{width:'100%',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #cbd5e1',borderRadius:6}}/>
+                          </label>
+                          <label style={{display:'flex',gap:6,alignItems:'start'}}><input type="checkbox" checked={l.roleResolution.confirmed===true} disabled={!l.role || !l.roleResolution.reason?.trim()} onChange={e=>{const confirmed=e.target.checked;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,confirmed}}:item));}}/>Confirmo el cargo para el periodo de este submission.</label>
+                          {!l.roleResolution.confirmed && <p>Decisión pendiente antes de aprobar la entrega. Puedes guardar y seguir trabajando.</p>}
+                        </div>}
                         <div style={{
                           display: 'inline-block',
                           marginTop: '0.4rem',

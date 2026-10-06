@@ -1110,6 +1110,49 @@ async def extract_document_endpoint(request: Request):
     return JSONResponse(status_code=200, content=merged)
 
 
+@api.post('/review-step')
+async def review_step_endpoint(request: Request):
+    """One role per call; the authenticated application persists each checkpoint."""
+    from utils.provider_errors import provider_failure
+    try:
+        body = await request.json()
+        payload = body.get('package')
+        stage = body.get('stage')
+        if not isinstance(payload, dict) or not isinstance(payload.get('matters'), list) or stage not in ('strategy', 'writer', 'editor'):
+            return JSONResponse(status_code=400, content={'success': False, 'error': 'Invalid review step'})
+        from core.review_graph import register_gate, strategist, selection_gate, writer, editor, release_gate
+        state = {**(body.get('state') or {}), 'package': payload}
+        if stage == 'strategy':
+            from utils.ranking_verifier import verify_ranking_claim
+            state.update(register_gate(state))
+            if not state['errors']:
+                payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
+                state['ranking_verification'] = payload['ranking_verification']
+                state.update(await asyncio.to_thread(strategist, state))
+                state.update(selection_gate(state))
+            next_stage = 'writer' if not state['errors'] else 'done'
+        else:
+            payload['ranking_verification'] = state.get('ranking_verification', {})
+            if not state.get('selection_validated') or not state.get('strategy'):
+                return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing validated strategy'})
+            if stage == 'writer':
+                state.update(await asyncio.to_thread(writer, state))
+                next_stage = 'editor'
+            else:
+                if not state.get('letter'):
+                    return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing letter'})
+                state.update(await asyncio.to_thread(editor, state))
+                next_stage = 'done'
+        if next_stage == 'done':
+            state.update(release_gate(state))
+        # Sources already live in the submission; do not duplicate them in checkpoints.
+        state.pop('package', None)
+        return JSONResponse(content={'success': True, 'next_stage': next_stage, 'state': state})
+    except Exception as error:
+        logger.exception('Editorial step failed')
+        return JSONResponse(status_code=502, content=provider_failure(error))
+
+
 @api.post('/review-package')
 async def review_package_endpoint(request: Request):
     """Bounded strategy → letter → adversarial review; no database writes."""
@@ -1122,9 +1165,10 @@ async def review_package_endpoint(request: Request):
         from core.review_graph import review_graph
         result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
         return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','letter','judge','release_verdict','trace')}})
-    except Exception:
+    except Exception as error:
         logger.exception('Editorial package review failed')
-        return JSONResponse(status_code=502, content={'success':False,'error':'Editorial review unavailable. Draft remains unapproved.'})
+        from utils.provider_errors import provider_failure
+        return JSONResponse(status_code=502, content=provider_failure(error))
 
 
 @api.post('/verify-rendered-package')
@@ -1135,11 +1179,12 @@ async def verify_rendered_package_endpoint(request: Request):
         if not isinstance(payload.get('package'), dict) or not payload['package'].get('rendered_artifact'):
             return JSONResponse(status_code=400, content={'success':False,'error':'Missing rendered artifact'})
         from core.review_graph import review_rendered_package
-        result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[]})
+        result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[]}, payload.get('allow_repair', True))
         return JSONResponse(content={'success':True,**result})
-    except Exception:
+    except Exception as error:
         logger.exception('Rendered artifact review failed')
-        return JSONResponse(status_code=502, content={'success':False,'error':'Final artifact review unavailable; delivery remains blocked.'})
+        from utils.provider_errors import provider_failure
+        return JSONResponse(status_code=502, content=provider_failure(error))
 
 
 @api.post('/verify-ranking')

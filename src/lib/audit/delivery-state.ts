@@ -12,6 +12,12 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   }
   if (data?.editorial_review?.selection_validated === false && !errors.length) errors.push('La selección de asuntos aún no ha superado la revisión de fuentes.');
   if (data?.ranking_claim && data?.ranking_verification?.status !== 'verified_match') errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
+  for (const lawyer of data?.lawyers || []) {
+    const resolution = lawyer.roleResolution;
+    if (resolution && (resolution.confirmed !== true || !resolution.reason?.trim() || resolution.role !== lawyer.role || lawyer.isPartner !== (lawyer.role === 'Partner'))) {
+      errors.push(`Confirma el cargo y su fuente para ${lawyer.name || lawyer.fullName || 'el abogado'} antes de aprobar la entrega.`);
+    }
+  }
   if (!matters.length) errors.push('No hay asuntos disponibles.');
   const ids = matters.map(m => m.id).filter(Boolean);
   if (new Set(ids).size !== ids.length) errors.push('Hay asuntos duplicados en el expediente.');

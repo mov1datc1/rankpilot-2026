@@ -1,5 +1,8 @@
 import { needsInputReview } from '@/lib/audit/input-review';
+import { randomUUID } from 'node:crypto';
 import JSZip from 'jszip';
+import { reviewPackage, reviewInputHash } from '@/lib/audit/review-checkpoint';
+import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
 import { Packer } from 'docx';
 import prisma from '@/lib/prisma';
@@ -42,18 +45,44 @@ export async function POST(request: NextRequest) {
     })) return NextResponse.json({error:'La versión optimizada cambió. Guarda o recarga el borrador antes de revisar.'},{status:409});
     const b10 = typeof body.b10Text === 'string' ? body.b10Text : previous.enhanced_b7 || previous.original_b10 || '';
     if (previous.enhanced_b7 && b10 !== previous.enhanced_b7) return NextResponse.json({error:'La narrativa cambió. Guarda o recarga antes de completar.'},{status:409});
-    const reviewResponse = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
-      method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
-      body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
-        b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:previous.lawyers || [],matters})
-    });
-    if (!reviewResponse.ok) return NextResponse.json({error:'La revisión editorial no se completó. El borrador anterior se conserva.'}, {status:502});
-    const review = await reviewResponse.json();
+    const inputHash = reviewInputHash(reviewPackage(submission, previous, stored));
+    const checkpoint = previous.review_checkpoint;
+    const cachedReview = checkpoint?.input_hash === inputHash && checkpoint.stage === 'done' ? checkpoint.state : null;
+    if (body.checkpoint && !cachedReview) return NextResponse.json({code:'DRAFT_CONFLICT',error:'Completa las etapas de revisión del borrador actual antes de generar el Word.'},{status:409});
+    if (previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
+      return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
+    }
+    if (previous.completed_review_input_hash === inputHash && previous.final_artifact_review?.judge) {
+      return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
+    }
+    if (body.checkpoint) {
+      if (checkpoint.lease_until > Date.now()) return NextResponse.json({success:true,pending:true,message:'La revisión del Word ya está en curso.'},{status:202});
+      const claimed = {...checkpoint,lease_until:Date.now()+330000,lease_id:randomUUID()};
+      const lock = await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...previous,review_checkpoint:claimed}}});
+      if (lock.count !== 1) throw new Error('DRAFT_CONFLICT');
+      const latest = await prisma.submission.findUnique({where:{id:submission.id}});
+      if (!latest || (latest.chambersData as any)?.review_checkpoint?.lease_id !== claimed.lease_id) throw new Error('DRAFT_CONFLICT');
+      submission.updatedAt = latest.updatedAt;
+      previous.review_checkpoint = claimed;
+    }
+    let review:any;
+    if (cachedReview) {
+      review = {success:true,...cachedReview};
+    } else {
+      const reviewResponse = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
+        method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
+        body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
+          b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:previous.lawyers || [],matters})
+      });
+      if (!reviewResponse.ok) return NextResponse.json({error:'La revisión editorial no se completó. El borrador anterior se conserva.'}, {status:502});
+      review = await reviewResponse.json();
+    }
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,
+      ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,
+      ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,
       canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
@@ -74,12 +103,12 @@ export async function POST(request: NextRequest) {
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${(await archive.files[name].async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')}`))).join('\n');
         const finalResponse=await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
           method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-          body:JSON.stringify({package:{directory:submission.targetDirectory,practice_area:submission.practiceArea,research_period:previous.research_period || null,current_band:submission.currentBand,ranking_verification:review.ranking_verification,b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',matters,lawyers:previous.lawyers || [],rendered_artifact:rendered},strategy:review.strategy,letter:review.letter})
+          body:JSON.stringify({package:{directory:submission.targetDirectory,practice_area:submission.practiceArea,research_period:previous.research_period || null,current_band:submission.currentBand,ranking_verification:review.ranking_verification,b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',matters,lawyers:previous.lawyers || [],rendered_artifact:rendered},strategy:review.strategy,letter:review.letter,allow_repair:false})
         });
-        if(!finalResponse.ok) throw new Error('La revisión del archivo final no está disponible.');
         const finalReview=await finalResponse.json();
-        if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
+        if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
         data.final_artifact_review=finalReview;
+        if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
         if(finalReview.letter) {data.editorial_review={...review,letter:finalReview.letter};data.analysis.summary=finalReview.letter.executive_assessment || '';}
         data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {
