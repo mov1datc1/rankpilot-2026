@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, END
 from utils.model_factory import create_chat_model
 from utils.model_response import require_complete_response
+from core.selection_contract import selection_contract, project_selection
 
 class Disposition(BaseModel):
     matter_id: str
@@ -52,6 +53,7 @@ class ReviewState(TypedDict, total=False):
     judge: dict
     errors: list
     trace: list
+    selection_feedback: dict
     selection_validated: bool
     writer_attempts: int
     release_verdict: dict
@@ -133,8 +135,17 @@ def register_gate(state):
     return {'errors':errors,'trace':[],'writer_attempts':0,'selection_validated':False}
 
 def strategist(state):
-    strategy,trace=invoke_role(state,'strategist',Strategy,
-        'Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',state['package'])
+    schema, references = selection_contract(state['package']['matters'])
+    reverse = {matter_id: ref for ref, matter_id in references.items()}
+    payload = {**state['package'], 'matters': [{**m, 'id': reverse[m['id']]} for m in state['package']['matters']],
+               'preferred_hero_id': reverse.get(state['package'].get('preferred_hero_id'))}
+    feedback = state.get('selection_feedback')
+    if feedback:
+        payload['previous_failed_selection'] = {'errors': feedback.get('errors', []),
+            'decisions': [{**d, 'matter_id': reverse.get(d.get('matter_id'), 'UNKNOWN')} for d in feedback.get('strategy', {}).get('matters', [])]}
+    proposal,trace=invoke_role(state,'strategist',schema,
+        'Return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
+    strategy = project_selection(proposal, schema, references)
     # Keep the comparative order supplied by the strategist, with the validated
     # hero first. Both exports project this exact order; the renderer never ranks.
     hero = strategy.get('hero_matter_id')
@@ -143,7 +154,10 @@ def strategist(state):
 
 def selection_gate(state):
     source={m['id']:m for m in state['package']['matters']}; decisions=state['strategy']['matters'];ids=[m['matter_id'] for m in decisions];errors=[]
-    if len(ids)!=len(set(ids)) or set(ids)!=set(source):errors.append('Strategy does not reconcile exactly with the source register.')
+    if len(ids)!=len(set(ids)) or set(ids)!=set(source):
+        missing = [str(m.get('client') or m.get('name') or matter_id) for matter_id, m in source.items() if matter_id not in ids]
+        detail = f" Faltan decisiones para: {', '.join(missing)}." if missing else ''
+        errors.append('RankPilot no pudo conciliar la selección con todos los asuntos registrados.' + detail + ' Reintenta la selección; no necesitas modificar las fuentes.')
     core=[m['matter_id'] for m in decisions if m['disposition']=='core']
     if len(core)>20:errors.append('Core exceeds configured Chambers limit.')
     if not core:errors.append('No source-backed matter has been selected for delivery.')

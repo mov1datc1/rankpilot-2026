@@ -104,3 +104,14 @@ test('review criteria version is shared with Python and old editorial outputs ar
  await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
  await step();assert.equal(calls.length,2);
 });
+
+test('failed selection retries once on the next request with diagnostics and no source edits',async()=>{
+ reset();await step();const source=structuredClone(state.matters);
+ const saved=state.chambersData.review_checkpoint;
+ saved.stage='done';saved.state.selection_validated=false;saved.state.errors=['Missing decision; mixed quote'];
+ saved.state.letter={stale:true};calls=[];
+ await step();assert.equal(calls.length,1);assert.equal(calls[0].stage,'strategy');
+ assert.deepEqual(calls[0].state.selection_feedback.errors,['Missing decision; mixed quote']);
+ assert.equal(calls[0].state.letter,undefined);assert.deepEqual(state.matters,source);
+ await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+});

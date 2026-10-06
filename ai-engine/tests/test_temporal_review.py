@@ -70,7 +70,7 @@ class TemporalReviewTests(unittest.TestCase):
 
     def test_typed_temporal_basis_reaches_model_for_every_editorial_role(self):
         inputs = []
-        responses = [copy.deepcopy(self.state['strategy']), {'evidence_gaps': 'Confirma la actividad del periodo.'},
+        responses = [{'decisions': {'M01': {'disposition': 'core', 'priority': 1, 'rationale': 'Ongoing work', 'source_quote': 'Work is ongoing.'}}, 'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}, {'evidence_gaps': 'Confirma la actividad del periodo.'},
                      Verdict(passed=False, defects=[self.defect('missing_metadata')])]
         def invoke(messages):
             inputs.append(messages)

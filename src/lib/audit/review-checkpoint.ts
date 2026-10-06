@@ -66,7 +66,9 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   if (!state.strategy || keys.strategy !== reviewStepHash('strategy',payload,state)) {
     return {...base,stage:'strategy',state:{},step_keys:{}};
   }
-  if (state.selection_validated === false) return {...base,stage:'done'};
+  if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
+    selection_feedback:{strategy:state.strategy,errors:state.errors || []},
+  }};
   if (!state.letter || keys.writer !== reviewStepHash('writer',payload,state)) {
     delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];state.writer_attempts=0;

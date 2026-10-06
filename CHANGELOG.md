@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Recuperación de selección editorial fallida
+
+- El estratega recibe referencias temporales inequívocas y un esquema con una decisión obligatoria por cada asunto; la aplicación conserva y repone los IDs originales. El control de citas sigue rechazando evidencia mezclada entre asuntos.
+- Una selección no validada puede reintentarse en la próxima acción con diagnóstico del intento previo. No queda almacenada como éxito ni activa un bucle automático de llamadas.
+- Studio agrupa los fallos de conciliación/citas como responsabilidad de RankPilot, con «Reintentar selección», sin pedir cambios de fuentes al usuario. Conserva los datos y redacciones guardadas.
+- Validación: 196 pruebas Python, 272 Node (271 suite y prueba adicional del panel), TypeScript. Build local limitado por ENOSPC; verificar build remoto antes de declarar despliegue listo. Sin nuevas llamadas pagadas ni cambios al expediente real.
+
 ## [2026-10-06] — Fechas ausentes sin bloqueo editorial
 
 - Criterio general RP16: periodo, fechas exactas o estado ausentes generan advertencias; no excluyen asuntos ni bloquean generación o entrega por sí solos. Actividad narrativa y asuntos en curso son evidencia utilizable. Un encabezado estándar no demuestra una contradicción temporal.

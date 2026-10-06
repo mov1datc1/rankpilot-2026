@@ -41,3 +41,11 @@ test('unknown identity does not guess another lawyer or mutate the register',()=
  const scope=focusedReviewScope('Confirmar el cargo de otra persona.',[{name:'Sofia Vega'}],matters);
  assert.deepEqual(scope.lawyerNames,[]);assert.deepEqual(scope.matterIds,[]);assert.deepEqual(matters,before);
 });
+
+test('selection failures become one system-owned retry action, not source edits',()=>{
+ const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Client 32. Reintenta la revisión editorial.','Genera y revisa el archivo final antes de descargar.'];
+ const issues=reviewIssues({},errors);
+ assert.equal(issues.length,1);assert.equal(issues[0].owner,'RankPilot');assert.equal(issues[0].destination,'retry-selection');
+ assert.ok(issues[0].message.includes('Client 32'));assert.ok(issues[0].action.includes('No necesitas corregir las fuentes'));
+ assert.equal(describeReviewIssue('RankPilot no pudo conciliar la selección con todos los asuntos registrados.').destination,'retry-selection');
+});

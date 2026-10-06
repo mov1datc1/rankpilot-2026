@@ -14,7 +14,10 @@ class ReviewGraphTests(unittest.TestCase):
             calls.append(role)
             result=strategy if role=='strategist' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[]})
             return result, state.get('trace',[])+[{'role':role}]
-        with patch('core.review_graph.invoke_role',side_effect=invoke):
+        def select(state):
+            result, trace = invoke(state, 'strategist')
+            return {'strategy': result, 'trace': trace}
+        with patch('core.review_graph.invoke_role',side_effect=invoke), patch('core.review_graph.strategist',side_effect=select):
             result=create_review_graph().invoke({'package':package})
         return result,calls
 

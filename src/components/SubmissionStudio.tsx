@@ -302,6 +302,7 @@ export default function SubmissionStudio({
   };
   const deliveryState = getDeliveryState(chambersData, matters, true);
   const resolveReviewIssue = (destination: ReviewDestination, message: string) => {
+    if (destination === 'retry-selection') { void handleOptimizeAll(false); return; }
     if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters)); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
     setActiveTab('studio');
     window.setTimeout(() => {
@@ -310,7 +311,7 @@ export default function SubmissionStudio({
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
   };
-  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} onResolve={resolveReviewIssue} />;
+  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} onResolve={resolveReviewIssue} busy={isOptimizingAll} />;
 
 
   // Calculations

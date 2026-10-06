@@ -80,9 +80,10 @@ class ReviewCostTests(unittest.TestCase):
         writer.assert_not_called()
 
     def test_hero_order_is_shared_with_letter_and_exports(self):
-        strategy = {'matters': [{'matter_id': 'a'}, {'matter_id': 'b'}, {'matter_id': 'c'}], 'hero_matter_id': 'c'}
-        with patch('core.review_graph.invoke_role', return_value=(strategy, [])):
-            result = strategist({'package': {}})
+        decisions = {ref: {'disposition': 'core', 'priority': i, 'rationale': 'Evidence', 'source_quote': 'Source'} for i, ref in enumerate(['M01', 'M02', 'M03'], 1)}
+        proposal = {'decisions': decisions, 'hero_reference': 'M03', 'pending_questions': [], 'thesis': 'Source'}
+        with patch('core.review_graph.invoke_role', return_value=(proposal, [])):
+            result = strategist({'package': {'matters': [{'id': x} for x in ['a', 'b', 'c']]}})
         self.assertEqual([x['matter_id'] for x in result['strategy']['matters']], ['c', 'a', 'b'])
 
     def test_known_internal_references_are_rendered_as_names_without_a_paid_repair(self):

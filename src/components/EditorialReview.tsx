@@ -2,7 +2,7 @@
 
 import { reviewIssues, type ReviewDestination } from '@/lib/audit/review-actions';
 
-export function ReviewPanel({data,errors,warnings,approved,onResolve}:{data:any;errors:string[];warnings:string[];approved:boolean;onResolve:(destination:ReviewDestination,message:string)=>void}) {
+export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;onResolve:(destination:ReviewDestination,message:string)=>void}) {
   const issues=reviewIssues(data,errors);
   return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
@@ -13,11 +13,11 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve}:{data:any;
       <span style={{fontSize:11,fontWeight:700,color:issue.owner==='RankPilot'?'#4338CA':'#92400E'}}>{issue.owner}</span>
       <h3 style={{fontSize:15,margin:'5px 0'}}>{issue.title}</h3>
       <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{issue.action}</p>
-      {issue.destination!=='review' && <button type="button" onClick={()=>onResolve(issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 10px',fontWeight:600,cursor:'pointer'}}>{issue.destination==='period'?'Completar periodo':issue.destination==='ranking'?'Verificar ranking':'Corregir este pendiente'} →</button>}
+      {issue.destination!=='review' && <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 10px',fontWeight:600,cursor:'pointer'}}>{issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección'):issue.destination==='period'?'Completar periodo':issue.destination==='ranking'?'Verificar ranking':'Corregir este pendiente'} →</button>}
       <details style={{fontSize:13,lineHeight:1.65,marginTop:10}}><summary style={{cursor:'pointer',color:'#475569'}}>Ver hallazgo y personas o asuntos afectados</summary><p style={{whiteSpace:'pre-wrap',marginBottom:0}}>{issue.message}</p></details>
     </div>)}</div>
     {warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
-    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>Después de guardar las correcciones, pulsa «Revisar entrega». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.</p>}
+    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Revisar entrega». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
   </section>;
 }
 

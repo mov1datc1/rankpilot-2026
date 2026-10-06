@@ -1,4 +1,4 @@
-export type ReviewDestination = 'period' | 'lawyers' | 'wizard' | 'ranking' | 'review';
+export type ReviewDestination = 'period' | 'lawyers' | 'wizard' | 'ranking' | 'review' | 'retry-selection';
 export type FocusedReviewScope = { lawyerNames: string[]; matterIds: string[]; message: string };
 
 const reviewName = (value: unknown) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -14,6 +14,7 @@ export function focusedReviewScope(message: string, lawyers: any[], matters: any
   return {lawyerNames,matterIds,message};
 }
 export function describeReviewIssue(message: string) {
+  if (/Strategy does not reconcile|conciliar la selección|vincular una cita de la selección|Core exceeds configured|No source-backed matter|Hero must belong/i.test(message)) return {title:'RankPilot debe rehacer la selección de asuntos',owner:'RankPilot',action:'La selección generada no pasó la comprobación de fuentes. Reintenta esta etapa: se conservan tus documentos, datos y redacciones. No necesitas corregir las fuentes por este error.',destination:'retry-selection' as ReviewDestination};
   if (/renderizador|registro canónico|basándose aparentemente|identidades obtenidas/i.test(message)) return {title:'Corregir los perfiles añadidos al Word',owner:'RankPilot',action:'El Word debe usar solo los abogados registrados y no inferir cargos desde los asuntos.',destination:'review' as ReviewDestination};
   if (/research_period|per[ií]odo (?:de investigaci[oó]n|aplicable)|elegibilidad temporal|fechas de/i.test(message)) return {title:'Confirmar el periodo y las fechas de los asuntos',owner:'Tu confirmación',action:'Indica las fechas de investigación y comprueba la actividad de cada asunto seleccionado dentro de ese intervalo.',destination:'period' as ReviewDestination};
   if (/Associate to Watch|categoría propuesta/i.test(message)) return {title:'Revisar la candidatura individual',owner:'Tu confirmación',action:'Confirma el cargo y corrige o retira la categoría propuesta. No se exportan candidaturas de asociado para un socio declarado.',destination:'lawyers' as ReviewDestination};
@@ -32,5 +33,7 @@ export function reviewIssues(data:any, errors:string[]) {
     if (messages.length && (/^El documento no superó la validación final:/.test(error) || error === 'Genera y revisa el archivo final antes de descargar.')) continue;
     messages.push(error);
   }
-  return [...new Set<string>(messages)].map(message=>({message,...describeReviewIssue(message)}));
+  const issues=[...new Set<string>(messages)].map(message=>({message,...describeReviewIssue(message)}));
+  const selection=issues.filter(issue=>issue.destination==='retry-selection');
+  return selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
 }
