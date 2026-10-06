@@ -537,7 +537,7 @@ export default function SubmissionStudio({
     let stopBatch = false;
     const failedMatters:string[]=[];
     let savedMatters=0;
-    const totalSteps = targetList.length + 5; // B10 + matters + three saved review stages + Word
+    const totalSteps = targetList.length + 4; // B10 + matters + strategy + Audit + exact Word review
 
     setOptimizeAllProgress({
       current: 0,

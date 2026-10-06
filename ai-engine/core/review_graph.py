@@ -103,6 +103,11 @@ def role_payload(payload, role):
         for matter in package.get('matters', []):
             matter.pop('optimizedText', None)
             matter.pop('optimized_text', None)
+            matter.pop('status', None)
+    if role == 'strategist':
+        package.pop('lawyers', None)
+        if isinstance(package.get('ranking_verification'), dict):
+            package['ranking_verification'].pop('individuals', None)
     return result
 
 def invoke_role(state, role, schema, instruction, payload):
@@ -174,11 +179,12 @@ def editor(state):
         {'package':state['package'],'strategy':state['strategy'],'letter':state['letter']})
     return {'judge':verdict,'trace':trace}
 
-def release_gate(state):
+def release_gate(state, require_judge=True):
     errors=list(state.get('errors',[]));judge=state.get('judge',{})
-    if not judge and not errors:errors.append('La revisión editorial aún no se ha ejecutado.')
-    elif judge and not judge.get('passed'):errors.append('La revisión editorial requiere corregir los hallazgos indicados.')
-    errors.extend(d['message'] for d in judge.get('defects',[]) if d['severity']=='critical')
+    if require_judge:
+        if not judge and not errors:errors.append('La revisión editorial aún no se ha ejecutado.')
+        elif judge and not judge.get('passed'):errors.append('La revisión editorial requiere corregir los hallazgos indicados.')
+        errors.extend(d['message'] for d in judge.get('defects',[]) if d['severity']=='critical')
     for m in state['package'].get('matters',[]):
         if m.get('confidentialityConfirmed') is False or m.get('publish_status')=='confirmation_required':errors.append(f"Publication permission pending: {m['id']}")
         resolution = m.get('valueResolution')
@@ -192,7 +198,11 @@ def release_gate(state):
             errors.append(f"Confirma el cargo y su fuente para {lawyer.get('name') or lawyer.get('fullName') or 'el abogado'} antes de aprobar la entrega.")
     if not state['package'].get('b10_source'):errors.append('Department source narrative is missing.')
     if not state['package'].get('directory','').lower().startswith('chambers'):errors.append('This review policy has only been configured for Chambers; directory-specific review required.')
-    return {'release_verdict':{'passed':not errors,'status':'passed' if not errors else 'needs_review','errors':list(dict.fromkeys(errors))}}
+    verdict = {'passed':not errors,'status':'passed' if not errors else 'needs_review','errors':list(dict.fromkeys(errors))}
+    if not require_judge:
+        # Permission to construct bytes is never permission to deliver them.
+        return {'render_gate':verdict,'release_verdict':{'passed':False,'status':'awaiting_artifact_review','errors':verdict['errors']}}
+    return {'release_verdict':verdict}
 
 def create_review_graph():
     g=StateGraph(ReviewState)

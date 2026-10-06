@@ -13,6 +13,8 @@ import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
 
+const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
+
 /** One completion authority: source register → bounded editorial review → exact artifact. */
 export async function POST(request: NextRequest) {
   const started=Date.now();
@@ -48,11 +50,12 @@ export async function POST(request: NextRequest) {
     const inputHash = reviewInputHash(reviewPackage(submission, previous, stored));
     const checkpoint = previous.review_checkpoint;
     const cachedReview = checkpoint?.input_hash === inputHash && checkpoint.stage === 'done' ? checkpoint.state : null;
-    if (body.checkpoint && !cachedReview) return NextResponse.json({code:'DRAFT_CONFLICT',error:'Completa las etapas de revisión del borrador actual antes de generar el Word.'},{status:409});
-    if (previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
+    const sameReview = !cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview);
+    if (sameReview && previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
       return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
     }
-    if (previous.completed_review_input_hash === inputHash && previous.final_artifact_review?.judge) {
+    if (body.checkpoint && !cachedReview) return NextResponse.json({code:'DRAFT_CONFLICT',error:'Completa las etapas de revisión del borrador actual antes de generar el Word.'},{status:409});
+    if (sameReview && previous.completed_review_input_hash === inputHash && previous.final_artifact_review?.judge) {
       return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
     }
     if (body.checkpoint) {
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,
+      ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,
@@ -92,8 +95,10 @@ export async function POST(request: NextRequest) {
       judgeScore:null,judgeFeedback:(review.release_verdict.errors || []).join(' '),judgeVerdict:review.judge,
       release_verdict:review.release_verdict,
     };
-    const readiness=getDeliveryState(data,matters);
-    data.release_verdict={...data.release_verdict,passed:readiness.approved,status:readiness.approved?'passed':'needs_review',errors:readiness.errors};
+    // Deterministic gates permit rendering; only the exact-artifact judge can
+    // approve delivery. Never persist a provisional approval before that judge.
+    const readiness=getDeliveryState(review.render_gate ? {...data,release_verdict:review.render_gate} : data,matters);
+    data.release_verdict={passed:false,status:'needs_review',errors:readiness.errors};
     if (readiness.approved) {
       try {
         const doc=buildSubmissionDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data,{...submission,chambersData:data,matters},'optimized');
@@ -109,6 +114,8 @@ export async function POST(request: NextRequest) {
         if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
         data.final_artifact_review=finalReview;
         if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
+        data.release_verdict={passed:true,status:'passed',errors:[]};
+        data.judgeVerdict=finalReview.judge;
         if(finalReview.letter) {data.editorial_review={...review,letter:finalReview.letter};data.analysis.summary=finalReview.letter.executive_assessment || '';}
         data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {

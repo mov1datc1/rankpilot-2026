@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Entregables reutilizables y un solo juez final en Studio
+
+- Estrategia y Audit tienen huellas de dependencias propias y vigencia de 24 horas. Editar prosa conserva ambos; corregir candidatos invalida el Audit; cambiar hechos fuente invalida la selección y sus dependientes. Un bloqueo vigente evita duplicar llamadas aunque haya ediciones concurrentes.
+- Studio elimina la evaluación editorial previa al Word. Controles deterministas autorizan construirlo; una única revisión de las fuentes, el Audit y los bytes finales decide la entrega. El flujo síncrono heredado conserva su compatibilidad.
+- El resultado final se vincula también a los entregables: una nueva carta no reutiliza la aprobación ni el rechazo de una versión anterior. Repeticiones sin cambios conservan el veredicto guardado.
+- Validación: 258 contratos Node, 185 pruebas Python, TypeScript, build de producción y Chrome con servicios simulados. Sin llamadas de pago; ahorro monetario y calidad con los nuevos límites todavía no medidos.
+
 ## [2026-10-06] — Revisión por etapas y control de consumo
 
 - Studio guarda estrategia, carta y juez por separado, con huella de entradas y bloqueo temporal por etapa. Reanuda etapas confirmadas; el Word se revisa en una petición independiente. Repetir un documento ya revisado sin cambios reutiliza su resultado. Una etapa interrumpida antes de guardarse todavía puede requerir repetición; no es una cola de trabajo autónoma.

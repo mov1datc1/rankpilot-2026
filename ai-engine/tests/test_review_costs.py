@@ -50,6 +50,17 @@ class ReviewCostTests(unittest.TestCase):
         self.assertEqual(package['rendered_artifact'], 'Exact Word text')
         self.assertNotIn('optimizedText', package['matters'][0])
 
+    def test_portfolio_role_does_not_repeat_candidate_leadership_analysis(self):
+        package = {'lawyers':[{'name':'Sofia Vega','isPartner':True}], 'matters':[{'id':'m','rawNotes':'Pending appeal','optimizedText':'Draft','status':'Optimized'}], 'ranking_verification':{'status':'verified_match','individuals':[{'name':'Sofia Vega'}]}}
+        strategy_input = role_payload(package,'strategist')
+        self.assertNotIn('lawyers',strategy_input)
+        self.assertNotIn('individuals',strategy_input['ranking_verification'])
+        self.assertNotIn('status',strategy_input['matters'][0])
+        letter_input = role_payload({'package':package},'writer')['package']
+        self.assertEqual(letter_input['lawyers'][0]['name'],'Sofia Vega')
+        self.assertIn('individuals',letter_input['ranking_verification'])
+        self.assertIn('lawyers',package)
+
     def test_partial_model_response_cannot_replace_source(self):
         from types import SimpleNamespace
         from agents.micro_optimizer import optimize_b10_micro
@@ -90,3 +101,13 @@ class ReviewCostTests(unittest.TestCase):
         self.assertFalse(release_gate(state)['release_verdict']['passed'])
         state['package']['lawyers'][0]['roleResolution']['confirmed'] = True
         self.assertTrue(release_gate(state)['release_verdict']['passed'])
+
+    def test_render_permission_never_implies_delivery_approval(self):
+        from core.review_graph import release_gate
+        state = {'package': {'directory':'Chambers','b10_source':'Source','matters':[]}}
+        result = release_gate(state, require_judge=False)
+        self.assertTrue(result['render_gate']['passed'])
+        self.assertFalse(result['release_verdict']['passed'])
+        self.assertFalse(release_gate(state)['release_verdict']['passed'])
+        state['package']['matters'] = [{'id':'m','confidentialityConfirmed':False}]
+        self.assertFalse(release_gate(state, require_judge=False)['render_gate']['passed'])

@@ -1,11 +1,10 @@
 import { createHash } from 'node:crypto';
 
-export const reviewSteps = ['strategy', 'writer', 'editor', 'done'] as const;
+export const reviewSteps = ['strategy', 'writer', 'done'] as const;
 export const reviewStepLabels = {
   strategy: 'Comparando los asuntos y seleccionando el portafolio…',
   writer: 'Redactando el Audit con la selección guardada…',
-  editor: 'Comprobando fuentes, roles y coherencia editorial…',
-  done: 'Revisando el documento Word final…',
+  done: 'Revisando las fuentes, el Audit y el documento Word final…',
 };
 
 /** Only persisted editorial inputs; never accept a browser-supplied strategy. */
@@ -33,4 +32,43 @@ export function reviewInputHash(payload: any) {
     return Object.fromEntries(Object.keys(copy).sort().map(key => [key, stable(copy[key])]));
   };
   return createHash('sha256').update(JSON.stringify(stable({version: 2, payload}))).digest('hex');
+}
+
+/** Dependencies match the role payloads in Python; a draft is not a source. */
+export function reviewStepHash(stage: string, payload: any, state: any = {}) {
+  const source = structuredClone(payload);
+  if (stage !== 'editor') {
+    delete source.b10_draft;
+    delete source.c2_draft;
+    for (const matter of source.matters || []) {
+      delete matter.optimizedText;
+      delete matter.optimized_text;
+      delete matter.status;
+    }
+  }
+  // Portfolio selection compares mandates, not the candidate's biography.
+  // Candidate corrections belong to the leadership letter and its review.
+  if (stage === 'strategy') delete source.lawyers;
+  return reviewInputHash({policy:'role-deliverables-v2-single-judge',stage,source,
+    ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
+    ...(stage === 'editor' ? {letter:state.letter} : {}),
+  });
+}
+
+export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now()) {
+  const input_hash = reviewInputHash(payload);
+  const fresh = saved && Number.isFinite(saved.created_at) && now >= saved.created_at && now - saved.created_at < 86400000;
+  const state = fresh ? structuredClone(saved.state || {}) : {};
+  const keys = fresh ? {...saved.step_keys} : {};
+  const base = {input_hash,created_at:fresh ? saved.created_at : now,lease_until:0,step_keys:keys,state};
+  if (!state.strategy || keys.strategy !== reviewStepHash('strategy',payload,state)) {
+    return {...base,stage:'strategy',state:{},step_keys:{}};
+  }
+  if (state.selection_validated === false) return {...base,stage:'done'};
+  if (!state.letter || keys.writer !== reviewStepHash('writer',payload,state)) {
+    delete state.letter;delete state.judge;delete state.release_verdict;
+    state.errors=[];state.writer_attempts=0;
+    return {...base,stage:'writer',step_keys:{strategy:keys.strategy}};
+  }
+  return {...base,stage:'done'};
 }

@@ -102,3 +102,24 @@ test('an already reviewed rejection does not pay for an unchanged Word again',as
  state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:review,lease_until:0};
  await complete({checkpoint:true});const result=await complete({checkpoint:true});assert.equal((await result.json()).cached,true);assert.equal(calls.length,1);
 });
+
+test('a new review deliverable cannot reuse approval of an older letter with the same source inputs',async()=>{
+ reset();const review=await (await global.fetch('http://engine/review-package',{body:'{}'})).json();calls=[];
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:review,lease_until:0};
+ await complete({checkpoint:true});assert.equal(calls.length,1);
+ state.chambersData.review_checkpoint.state.letter.executive_assessment='Changed executive assessment';
+ const result=await complete({checkpoint:true});assert.equal(result.status,200);assert.equal(calls.length,2);
+ assert.equal(calls[1].payload.letter.executive_assessment,'Changed executive assessment');
+});
+
+for (const rejected of [false,true]) test(`a single exact Word judge controls delivery after deterministic gates (rejected=${rejected})`,async()=>{
+ reset();rejectFinal=rejected;
+ const review=await (await global.fetch('http://engine/review-package',{body:'{}'})).json();calls=[];
+ delete review.judge;review.render_gate={passed:true,status:'passed',errors:[]};
+ review.release_verdict={passed:false,status:'awaiting_artifact_review',errors:[]};
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.matters)),stage:'done',state:review,lease_until:0};
+ assert.equal((await complete({checkpoint:true})).status,200);
+ assert.equal(calls.length,1);assert.ok(calls[0].url.endsWith('/verify-rendered-package'));
+ assert.equal(state.chambersData.release_verdict.passed,!rejected);
+ assert.equal(Boolean(state.chambersData.approved_artifact),!rejected);
+});

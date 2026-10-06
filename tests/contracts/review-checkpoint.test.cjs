@@ -27,15 +27,16 @@ global.fetch=async(url,options)=>{
   const body=JSON.parse(options.body);calls.push(body);
   if(mutate){state.chambersData.original_b10='Concurrent new source';state.updatedAt=new Date(state.updatedAt.getTime()+1);}
   if(failure)return Response.json({success:false,code:'AI_CREDIT_EXHAUSTED',error:'No credit'},{status:502});
-  const next={strategy:'writer',writer:'editor',editor:'done'}[body.stage];
-  return Response.json({success:true,next_stage:next,state:{...body.state,[body.stage]:{saved:true}}});
+  const next={strategy:'writer',writer:'done'}[body.stage];
+  const output=body.stage==='strategy'?{strategy:{saved:true},selection_validated:true}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
+  return Response.json({success:true,next_stage:next,state:{...body.state,...output}});
 };
 const step=()=>POST(new NextRequest('http://localhost/api/optimize/review-step',{method:'POST',body:JSON.stringify({submissionId:'s'})}));
 test('resume runs one new role per call, then serves persisted completion without spending',async()=>{
-  reset();for(let i=0;i<3;i++)assert.equal((await step()).status,200);
-  assert.deepEqual(calls.map(c=>c.stage),['strategy','writer','editor']);
-  assert.ok(calls[2].state.strategy.saved);assert.ok(calls[2].state.writer.saved);
-  assert.equal((await (await step()).json()).done,true);assert.equal(calls.length,3);
+  reset();for(let i=0;i<2;i++)assert.equal((await step()).status,200);
+  assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+  assert.ok(calls[1].state.strategy.saved);assert.ok(state.chambersData.review_checkpoint.state.letter.saved);
+  assert.equal((await (await step()).json()).done,true);assert.equal(calls.length,2);
 });
 test('quota exhaustion preserves earlier stages and returns a specific error without retry',async()=>{
   reset();await step();failure=true;
@@ -56,4 +57,35 @@ test('ownership, missing session and conflicting acquisition prevent model calls
   reset();user=null;assert.equal((await step()).status,401);
   user={id:'stranger'};assert.equal((await step()).status,404);
   user={id:'u'};conflict=true;assert.equal((await step()).status,409);assert.equal(calls.length,0);
+});
+
+test('editing prose reuses strategy and audit without a pre-render model call',async()=>{
+  reset();for(let i=0;i<2;i++)await step();calls=[];
+  state.chambersData.enhanced_b7='Edited department prose, same original source';
+  const result=await step();assert.equal((await result.json()).done,true);
+  assert.equal(calls.length,0);
+  assert.ok(state.chambersData.review_checkpoint.state.strategy.saved);assert.ok(state.chambersData.review_checkpoint.state.letter.saved);
+});
+
+test('editing a candidate role reuses portfolio selection but rewrites leadership and reviews it',async()=>{
+  reset();state.chambersData.lawyers=[{name:'Sofia Vega',isPartner:false}];
+  for(let i=0;i<2;i++)await step();calls=[];
+  state.chambersData.lawyers[0].isPartner=true;
+  await step();await step();assert.deepEqual(calls.map(c=>c.stage),['writer']);
+  assert.ok(calls[0].state.strategy.saved);assert.equal(calls[0].state.letter,undefined);
+});
+
+test('changing source facts invalidates every dependent deliverable',async()=>{
+  reset();for(let i=0;i<2;i++)await step();calls=[];
+  state.matters[0].rawNotes='New source: a ruling has now been issued';
+  for(let i=0;i<2;i++)await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+});
+
+test('expired evidence restarts verification and active edited requests cannot duplicate a paid role',async()=>{
+  reset();for(let i=0;i<2;i++)await step();calls=[];
+  state.chambersData.review_checkpoint.created_at=Date.now()-86400001;
+  await step();assert.equal(calls[0].stage,'strategy');
+  state.chambersData.review_checkpoint.lease_until=Date.now()+300000;
+  state.chambersData.original_b10='A source edited during generation';
+  assert.equal((await step()).status,202);assert.equal(calls.length,1);
 });

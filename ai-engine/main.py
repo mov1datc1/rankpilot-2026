@@ -1136,15 +1136,21 @@ async def review_step_endpoint(request: Request):
             if not state.get('selection_validated') or not state.get('strategy'):
                 return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing validated strategy'})
             if stage == 'writer':
+                # Roster edits reuse the mandate strategy, but need observations
+                # for the current people. The shared table cache avoids another
+                # model call or one search per lawyer.
+                from utils.ranking_verifier import verify_ranking_claim
+                payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
+                state['ranking_verification'] = payload['ranking_verification']
                 state.update(await asyncio.to_thread(writer, state))
-                next_stage = 'editor'
+                next_stage = 'done'
             else:
                 if not state.get('letter'):
                     return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing letter'})
                 state.update(await asyncio.to_thread(editor, state))
                 next_stage = 'done'
         if next_stage == 'done':
-            state.update(release_gate(state))
+            state.update(release_gate(state, require_judge=stage == 'editor'))
         # Sources already live in the submission; do not duplicate them in checkpoints.
         state.pop('package', None)
         return JSONResponse(content={'success': True, 'next_stage': next_stage, 'state': state})

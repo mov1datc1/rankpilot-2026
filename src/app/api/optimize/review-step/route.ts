@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 import { needsInputReview } from '@/lib/audit/input-review';
-import { reviewPackage, reviewInputHash, reviewSteps, reviewStepLabels } from '@/lib/audit/review-checkpoint';
+import { deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { reviewPackage, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels } from '@/lib/audit/review-checkpoint';
 
 export const maxDuration = 300;
 
@@ -23,13 +24,23 @@ export async function POST(request: NextRequest) {
     const matters = Array.isArray(data.matters) ? data.matters : submission.matters;
     if (matters.some(needsInputReview)) return NextResponse.json({error: 'Resuelve permisos y montos antes de revisar.'}, {status: 422});
     const payload = reviewPackage(submission, data, matters);
-    const inputHash = reviewInputHash(payload);
     const saved = data.review_checkpoint;
-    checkpoint = saved?.input_hash === inputHash ? saved : {input_hash: inputHash, stage: 'strategy', state: {}};
+    if (data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {
+      return NextResponse.json({success:true,done:true,completed:2,stage:'done',message:'El documento aprobado corresponde a esta versión. Reutilizando la revisión guardada.'});
+    }
+    // Even after an edit, let the in-flight request finish/expire before another
+    // starts. Source edits must not buy two copies of the same role concurrently.
+    if (saved?.lease_until > Date.now()) return NextResponse.json({success:true,done:false,busy:true,completed:reviewSteps.indexOf(saved.stage),stage:saved.stage,message:'Hay una etapa en curso. Conservamos los entregables guardados.'},{status:202});
+    checkpoint = resumeReviewCheckpoint(payload,saved);
     const stage = checkpoint.stage as keyof typeof reviewStepLabels;
     if (!reviewSteps.includes(stage)) throw new Error('Invalid review stage');
-    if (stage === 'done') return NextResponse.json({success: true, done: true, completed: 3, stage, message: reviewStepLabels.done});
-    if (checkpoint.lease_until > Date.now()) return NextResponse.json({success: true, done: false, busy: true, completed: reviewSteps.indexOf(stage), stage, message: reviewStepLabels[stage]}, {status: 202});
+    if (stage === 'done') {
+      if (saved.input_hash !== checkpoint.input_hash) {
+        const updated = await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,review_checkpoint:checkpoint}}});
+        if (updated.count !== 1) throw new Error('DRAFT_CONFLICT');
+      }
+      return NextResponse.json({success: true, done: true, completed: 2, stage, message: reviewStepLabels.done});
+    }
     checkpoint = {...checkpoint, lease_until: Date.now() + 330000, lease_id: randomUUID(), error: null};
     const changed = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: submission.updatedAt}, data: {updatedAt: new Date(), chambersData: {...data, review_checkpoint: checkpoint}}});
     if (changed.count !== 1) throw new Error('DRAFT_CONFLICT');
@@ -48,7 +59,8 @@ export async function POST(request: NextRequest) {
     }
     const nextStage = result.next_stage;
     if (!reviewSteps.includes(nextStage) || !result.state || reviewSteps.indexOf(nextStage) <= reviewSteps.indexOf(stage)) throw new Error('Invalid review response');
-    const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, stage: nextStage, state: result.state, lease_until: 0}}}});
+    const step_keys = {...checkpoint.step_keys,[stage]:reviewStepHash(stage,payload,result.state)};
+    const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
