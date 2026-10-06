@@ -116,3 +116,11 @@ test('empty public section describes placement without inventing client instruct
  assert.match(text,/Confidential matters are listed in Section E/);
  assert.doesNotMatch(text,/client confidentiality mandates|in accordance with client/);
 });
+
+test('anonymization preserves employment roles without inventing a client relationship',()=>{
+ const names=['Synthetic Motors de México and Example Financial Services'];
+ const result=anonymizeConfidentialClients('Maria was General Legal Director of Synthetic Motors de México for nearly four decades. The firm advises Synthetic Motors de México on confidential matters.',names);
+ assert.match(result,/General Legal Director of a company for nearly four decades/);
+ assert.match(result,/advises a confidential client on confidential matters/);
+ assert.doesNotMatch(result,/Synthetic Motors|a confidential client de México|a company de México/);
+});

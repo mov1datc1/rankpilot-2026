@@ -89,6 +89,10 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
       const cleanConf = confName.trim();
       const esc = cleanConf.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const reg = new RegExp(`\\b${esc}\\b`, 'gi');
+      // An employer mentioned in a career history is not a client mandate.
+      // Keep the supplied role while anonymizing the entity without inventing a relationship.
+      const employment = new RegExp(`((?:general legal director|legal director|general counsel|chief legal officer|in-house counsel)\\s+(?:of|at|for)\\s+)${esc}\\b`, 'gi');
+      res = res.replace(employment, '$1a company');
       res = res.replace(reg, 'a confidential client');
     }
   }

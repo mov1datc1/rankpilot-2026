@@ -43,6 +43,7 @@ class Defect(BaseModel):
     scope: Literal['facts', 'strategy', 'letter', 'submission']
     matter_id: Optional[str]
     message: str = Field(description='Plain Spanish: explain the concrete issue and the action needed. Preserve names, figures and source quotes verbatim.')
+    conflict_basis: Optional[Literal['source_vs_source', 'source_vs_artifact']] = Field(default=None, description='SOURCE_CONFLICT is only conflicting SOURCE records. A generated draft contradicting an unambiguous source is UNSUPPORTED_CLAIM, source_vs_artifact, and RankPilot must repair it; never ask the user to reconfirm the clear source.')
     source_quote: str = Field(default='', description='Verbatim source evidence for a material defect; empty only for missing optional metadata.')
     artifact_quote: str = Field(default='', description='Verbatim questioned claim; never invent a quote.')
     field_path: Optional[str] = Field(default=None, description='For missing metadata only: research_period, startDate, completionDate or matter_status.')
@@ -216,6 +217,14 @@ def calibrate_verdict(verdict, package=None):
     defects = [dict(d) for d in verdict.get('defects', [])]
     for defect in defects:
         code=defect.get('code')
+        if code == 'SOURCE_CONFLICT' and defect.get('conflict_basis') == 'source_vs_artifact':
+            entity = next((m for m in (package or {}).get('matters', []) if m.get('id') == defect.get('matter_id')), {})
+            source_fields = [entity.get(k, '') for k in ('source_excerpt','rawNotes','summary')]+[(package or {}).get('b10_source','')]
+            artifact_fields = [(package or {}).get(k,'') for k in ('rendered_artifact','rendered_audit')]
+            literal = lambda value: ' '.join(str(value or '').split())
+            source_quote, claim = literal(defect.get('source_quote')), literal(defect.get('artifact_quote'))
+            if source_quote and claim and any(source_quote in literal(s) for s in source_fields) and any(claim in literal(a) for a in artifact_fields):
+                defect['code'] = code = 'UNSUPPORTED_CLAIM'
         if code:
             defect['owner']='user' if code in ('SOURCE_CONFLICT','PUBLICATION_PERMISSION') else 'rankpilot'
             defect['action']='confirm' if defect['owner']=='user' else 'retry'

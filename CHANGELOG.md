@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Atribuciones y anonimización en la entrega real
+
+- La anonimización conserva el cargo de una trayectoria profesional sin convertir al empleador en un cliente. Se reconocen entidades completas en listas de clientes para evitar sufijos sueltos.
+- El juez distingue conflictos entre fuentes de errores de atribución de la prosa generada, con citas verificadas antes de asignar una reparación a RankPilot.
+- Studio identifica firma y práctica en la cabecera y llama «Audit Estratégico DOCX» a su descarga.
+- 297 contratos Node, 212 pruebas Python y TypeScript aprobados. La revisión final del expediente real se ejecuta de nuevo después del despliegue.
+
 ## [2026-10-06] — Cifras escritas y recuperación de selección
 
 - El control de cifras reconoce cardinales ingleses escritos en las fuentes (twenty/20, thirty-five/35, two hundred/200) sin relajar el rechazo de dígitos distintos. La revisión semántica final sigue siendo obligatoria.

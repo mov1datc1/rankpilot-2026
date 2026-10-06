@@ -797,6 +797,9 @@ export default function SubmissionStudio({
             </div>
             <span style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.01em' }}>
               Submission Studio
+              <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 500, color: '#64748B', maxWidth: '240px' }}>
+                {firmName} · {submission.practiceArea}
+              </span>
             </span>
           </div>
 
@@ -1156,7 +1159,7 @@ export default function SubmissionStudio({
                   </div>
                 </a>
 
-                {/* Internal Evidence Review DOCX */}
+                {/* Audit Estratégico DOCX */}
                 <a
                   href={`/api/generate-docx?id=${submission.id}&type=audit`}
                   onClick={() => setShowDownloadMenu(false)}
@@ -1175,7 +1178,7 @@ export default function SubmissionStudio({
                   <FileText size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>
-                      Internal Evidence Review DOCX
+                      Audit Estratégico DOCX
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
                       Carta ejecutiva para socios con conciliación 1:1

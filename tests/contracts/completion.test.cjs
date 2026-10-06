@@ -133,7 +133,7 @@ test('a renderer update retries only the exact Word and then caches its new verd
  state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.chambersData.matters)),stage:'done',lease_until:0,state:review};
  await complete({checkpoint:true});
  assert.equal(calls.length,before+1);assert.ok(calls.at(-1).url.endsWith('/verify-rendered-package'));
- assert.equal(state.chambersData.completed_renderer_version,4);
+ assert.equal(state.chambersData.completed_renderer_version,5);
  await complete({checkpoint:true});assert.equal(calls.length,before+1);
 });
 

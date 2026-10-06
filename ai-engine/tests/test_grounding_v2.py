@@ -45,3 +45,14 @@ class WrittenNumberTests(unittest.TestCase):
             self.assertEqual(factual_issues('More than '+source+' proceedings','More than '+draft+' proceedings'),[])
         self.assertTrue(factual_issues('thirty-five proceedings','53 proceedings'))
         self.assertNotIn('3',numbers('one and two claims'))
+
+class ConflictOwnershipTests(unittest.TestCase):
+    def test_literal_source_to_artifact_attribution_error_belongs_to_rankpilot(self):
+        defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'letter','matter_id':'m','conflict_basis':'source_vs_artifact','source_quote':'Lead: Alice','artifact_quote':'Bob led the matter.','message':'Incorrect generated attribution.'}
+        package={'matters':[{'id':'m','source_excerpt':'Lead: Alice'}],'rendered_audit':'Bob led the matter.'}
+        result=calibrate_verdict({'passed':False,'defects':[defect]},package)
+        self.assertFalse(result['passed'])
+        self.assertEqual(result['defects'][0]['owner'],'rankpilot')
+        self.assertEqual(result['defects'][0]['code'],'UNSUPPORTED_CLAIM')
+        conflict={**defect,'conflict_basis':'source_vs_source'}
+        self.assertEqual(calibrate_verdict({'passed':False,'defects':[conflict]},package)['defects'][0]['owner'],'user')
