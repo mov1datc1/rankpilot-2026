@@ -41,6 +41,8 @@ import {
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
+import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
+import type { ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
@@ -84,6 +86,7 @@ export default function SubmissionStudio({
 }: SubmissionStudioProps) {
   const router = useRouter();
   const [showValidationWizard, setShowValidationWizard] = useState<boolean>(false);
+  const [reviewLawyersFirst, setReviewLawyersFirst] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -297,6 +300,17 @@ export default function SubmissionStudio({
     finally {setCheckingRanking(false);}
   };
   const deliveryState = getDeliveryState(chambersData, matters, true);
+  const resolveReviewIssue = (destination: ReviewDestination) => {
+    if (destination === 'wizard' || destination === 'lawyers') { setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
+    setActiveTab('studio');
+    window.setTimeout(() => {
+      const target=document.getElementById(destination === 'period' ? 'studio-research-period' : destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
+      if (target instanceof HTMLDetailsElement) target.open=true;
+      target?.scrollIntoView({behavior:'smooth',block:'start'});
+    }, 100);
+  };
+  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} onResolve={resolveReviewIssue} />;
+
 
   // Calculations
   const b10WordCount = b10Text.trim() ? b10Text.trim().split(/\s+/).length : 0;
@@ -870,6 +884,7 @@ export default function SubmissionStudio({
       <style>{`
         .rankpilot-studio, .rankpilot-studio * { box-sizing: border-box; }
         .rankpilot-studio { max-width: 100%; overflow-wrap: anywhere; }
+        .rankpilot-studio, .rankpilot-studio * { box-sizing: border-box; }
         .studio-canvas { min-width: 0; }
         .rankpilot-studio { container-type: inline-size; }
         .studio-toolbar { flex-wrap: wrap; gap: 12px; }
@@ -882,6 +897,8 @@ export default function SubmissionStudio({
           .studio-canvas { max-width: none !important; }
         }
         @container (max-width: 700px) {
+          .studio-tabs { max-width: 100%; min-width: 0; }
+          .studio-tabs button { min-width: 0; padding: 8px !important; white-space: normal; }
           .studio-columns { flex-direction: column; }
           .studio-nav { width: 100% !important; height: auto !important; max-height: 180px; position: relative !important; top: 0 !important; }
           .studio-canvas { width: 100%; padding: 16px !important; }
@@ -889,6 +906,8 @@ export default function SubmissionStudio({
         @media (max-width: 900px) {
           .studio-toolbar { position: relative !important; padding: 12px !important; flex-wrap: wrap; gap: 12px; }
           .studio-toolbar > div { flex-wrap: wrap; max-width: 100%; gap: 8px !important; }
+          .studio-tabs { max-width: 100%; min-width: 0; }
+          .studio-tabs button { min-width: 0; padding: 8px !important; white-space: normal; }
           .studio-columns { flex-direction: column; }
           .studio-nav, .studio-copilot { width: 100% !important; height: auto !important; max-width: 100% !important; flex-basis: auto !important; position: relative !important; top: 0 !important; }
           .studio-nav { max-height: 180px; }
@@ -936,7 +955,7 @@ export default function SubmissionStudio({
           <div style={{ width: '1px', height: '24px', background: '#E2E8F0' }} />
 
           {/* Mode Switcher Tabs */}
-          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
+          <div className="studio-tabs" style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
             <button
               onClick={() => setActiveTab('studio')}
               style={{
@@ -1015,7 +1034,7 @@ export default function SubmissionStudio({
             }}
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.level === 'critical' ? '#DC2626' : readiness.color }} />
-            <span>{readiness.score}% campos presentes</span>
+            <span>{readiness.score}% datos · {deliveryState.approved ? 'aprobado' : 'sin aprobar'}</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
@@ -1213,7 +1232,7 @@ export default function SubmissionStudio({
           </button>
 
           {/* Unified Download Dropdown */}
-          {draftSaveError && <div role="alert" style={{position:'fixed',bottom:16,right:16,zIndex:100,color:'#991B1B',background:'#FFF7ED',border:'1px solid #FDBA74',borderRadius:10,padding:16,width:'calc(100vw - 32px)',maxWidth:440,maxHeight:'30vh',overflowY:'auto',fontSize:14,boxShadow:'0 4px 20px #0002'}}>{draftSaveError}<button type="button" aria-label="Ocultar aviso" onClick={()=>setDraftSaveError('')} style={{display:'block',marginTop:8}}>Entendido</button></div>}
+          {draftSaveError && <div role="alert" style={{position:'fixed',bottom:16,right:16,zIndex:100,color:'#991B1B',background:'#FFF7ED',border:'1px solid #FDBA74',borderRadius:10,padding:16,width:'calc(100vw - 32px)',maxWidth:440,maxHeight:'30vh',overflowY:'auto',fontSize:14,boxShadow:'0 4px 20px #0002'}}>{draftSaveError.length <= 220 ? draftSaveError : <><strong>No se pudo completar esta acción.</strong><details style={{marginTop:8}}><summary>Ver motivo completo</summary><p style={{whiteSpace:'pre-wrap'}}>{draftSaveError}</p></details></>}<button type="button" aria-label="Ocultar aviso" onClick={()=>setDraftSaveError('')} style={{display:'block',marginTop:8}}>Entendido</button></div>}
           <div style={{ position: 'relative' }} data-dropdown="download">
             <button
               onClick={() => {
@@ -1263,8 +1282,8 @@ export default function SubmissionStudio({
                     ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`
                     : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
                   aria-disabled={!deliveryState.approved}
-                  title={deliveryState.errors.join(' ')}
-                  onClick={(e) => { if (!deliveryState.approved) { e.preventDefault(); setDraftSaveError(deliveryState.errors.join(' ')); } else setShowDownloadMenu(false); }}
+                  title={deliveryState.approved ? 'Descargar Submission aprobado' : 'Consulta los pendientes de entrega'}
+                  onClick={(e) => { if (!deliveryState.approved) { e.preventDefault(); setShowDownloadMenu(false); setActiveTab('studio'); window.setTimeout(()=>document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'}),100); } else setShowDownloadMenu(false); }}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
@@ -1444,10 +1463,7 @@ export default function SubmissionStudio({
               </button>
             </div>
           )}
-          {chambersData.editorial_review?.letter ? <article style={{background:'#FFFFFF',padding:'1.5rem',borderRadius:12,border:'1px solid #E2E8F0'}}>
-            <h2>Strategic Audit Letter</h2><p><strong>{deliveryState.label}</strong></p>
-            {Object.entries({executive_assessment:'1. Evaluación ejecutiva',portfolio:'2. Portafolio seleccionado',leadership:'3. Liderazgo y atribución',evidence_gaps:'4. Evidencia pendiente',next_steps:'5. Próximos pasos'}).map(([key,title])=><section key={key}><h3>{title}</h3><p style={{whiteSpace:'pre-wrap'}}>{chambersData.editorial_review.letter[key]}</p></section>)}
-          </article> : chambersData.editorial_review ? <article><h2>Audit pendiente de generación</h2><p>La revisión se interrumpió antes de redactar el Audit. Las redacciones guardadas se conservan; reintenta Optimizar Todo para continuar.</p><ul>{deliveryState.errors.map((message:string)=><li key={message}>{message}</li>)}</ul></article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
+          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} /></div> : chambersData.editorial_review ? <article><h2>Audit pendiente de generación</h2><p>La revisión se interrumpió antes de redactar el Audit. Las redacciones guardadas se conservan; reintenta Optimizar Todo para continuar.</p><ul>{deliveryState.errors.map((message:string)=><li key={message}>{message}</li>)}</ul></article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
 
         </div>
       )}
@@ -1709,20 +1725,17 @@ export default function SubmissionStudio({
           {/* ── CENTER CANVAS (CARDS & PREVIEW) ── */}
           <div className="studio-canvas" style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
-            <section className="studio-review-panel" aria-label="Estado de entrega" style={{padding:'1rem',background:deliveryState.approved?'#F0FDF4':'#EFF6FF',border:'1px solid #CBD5E1',borderRadius:10}}>
-              <strong>{isOptimizingAll ? 'Optimización y revisión en curso' : deliveryState.label}</strong>
-              {isOptimizingAll && <p role="status">{optimizeAllProgress?.stage} Los hallazgos se actualizarán al terminar la revisión.</p>}
-              {!isOptimizingAll && deliveryState.errors.length > 0 && <ul>{deliveryState.errors.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul>}
-              {deliveryState.warnings.length > 0 && <><p>Observaciones antes de presentar:</p><ul>{deliveryState.warnings.map((message:string,i:number)=><li key={i}>{message}</li>)}</ul></>}
-            </section>
-            <details className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+            <div id="studio-delivery-review" style={{scrollMarginTop:100}}>
+              {isOptimizingAll ? <section role="status" className="studio-review-panel"><strong>Optimización y revisión en curso</strong><p>{optimizeAllProgress?.stage} Las redacciones guardadas se conservan.</p></section> : reviewPanel}
+            </div>
+            <details id="studio-research-period" className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <summary style={{cursor:'pointer',fontWeight:600}}>Periodo del directorio · opcional para optimizar</summary>
               <p>Sirve para comprobar si la actividad de los asuntos corresponde al periodo solicitado. Puedes optimizar sin completarlo; la cobertura temporal quedará sin verificar. Añádelo solo si conoces las fechas de las instrucciones del directorio.</p>
               <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
               <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
               <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>Guardar periodo</button>
             </details>
-            <section className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
+            <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Verificación oficial del ranking</strong>
               <p>Al optimizar todo, consultamos la fuente oficial con la firma, el directorio, la práctica y el país ya seleccionados. Sin una edición específica, comparamos la tabla pública actual.</p>
               <details><summary style={{cursor:'pointer'}}>Corregir datos o reintentar la consulta</summary>
@@ -3966,7 +3979,8 @@ export default function SubmissionStudio({
           return result.matters;
         }}
         reviewPending={reviewPending}
-        onClose={() => setShowValidationWizard(false)}
+        startAtLawyers={reviewLawyersFirst}
+        onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);}}
         targetDirectory={selectedDirectory}
         initialData={{
           sourceReports: chambersData.source_reports || [],
@@ -3993,6 +4007,7 @@ export default function SubmissionStudio({
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
+          setReviewLawyersFirst(false);
           if(data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
         }}
       />

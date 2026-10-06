@@ -123,21 +123,29 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
 export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName: string, practiceArea: string, guideRegion: string, chambersData?: any): CuratedLawyer[] {
   const roster = new Map<string, any>();
   for (const person of rawLawyers || []) {
-    const name=cleanLawyerNames(person.name || '');
+    const name=cleanLawyerNames(person.name || person.fullName || '');
     if(name && !roster.has(normalizeName(name))) roster.set(normalizeName(name), {...person,name});
   }
-  for (const matter of allMattersPool) {
-    for (const [field,partner] of [[matter.leadPartner || matter.lead_partner,true],[matter.teamMembers || matter.team_members,null]] as const) {
-      for(const name of String(field || '').split(/[,;\/]|\band\b/i).map(s=>cleanLawyerNames(s.trim())).filter(s=>s.split(/\s+/).length>=2)) {
-        if(!roster.has(normalizeName(name))) roster.set(normalizeName(name),{name,isPartner:partner});
-      }
-    }
-  }
+  // B9 is the supplied public roster. A matter mention neither authorizes a
+  // public biography nor establishes partnership, even for a lead lawyer.
   const confNames=allMattersPool.filter(m=>m.isConfidential || m.confidential || m.confidentialityConfirmed===false || ['non_publishable','confidential','confirmation_required'].includes(m.publish_status)).map(m=>m.client).filter(Boolean);
   const booleanOrUnknown=(...values:any[]): boolean|null => {const v=values.find(v=>typeof v==='boolean');return typeof v==='boolean'?v:null;};
   return [...roster.values()].map(person=>{
+    const verified = chambersData?.ranking_verification?.individuals?.find((item:any) =>
+      normalizeName(item.lawyer_name || '') === normalizeName(person.name) &&
+      normalizeName(item.firm_name || '') === normalizeName(firmName) &&
+      normalizeName(item.practice_area || '') === normalizeName(practiceArea) &&
+      normalizeName(item.jurisdiction || '') === normalizeName(chambersData?.ranking_jurisdiction || guideRegion?.split('—').pop()?.trim() || '') &&
+      item.requested_edition === (chambersData?.ranking_edition || 'current') &&
+      ['verified_match','verified_observation','verified_mismatch'].includes(item.status) &&
+      item.subject_type === 'individual' && item.observed_band && item.evidence?.source_url);
+    const isPartner=booleanOrUnknown(person.isPartner,person.is_partner);
+    const proposed=person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
+    // Preserve the source proposal in the record/Audit; never print an
+    // associate candidacy alongside an explicitly declared partner role.
+    const suggestedRank=isPartner === true && /associate/i.test(proposed) ? '' : proposed;
     const sourceBio=String(person.comments || person.bio || '');
     const bio=anonymizeConfidentialClients(sourceBio,confNames);
-    return {name:person.name,isPartner:booleanOrUnknown(person.isPartner,person.is_partner),isRanked:booleanOrUnknown(person.isRanked,person.is_ranked),currentRank:person.currentRank || person.currentRanking || person.current_ranking || '',suggestedRank:person.suggestedRank || person.suggested_ranking || '',targetRank:person.targetRank || '',url:person.url || '',comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
+    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:person.url || '',comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
   });
 }

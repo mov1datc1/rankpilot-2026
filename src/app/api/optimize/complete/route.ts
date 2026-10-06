@@ -12,6 +12,7 @@ import { artifactHash, deliveryInputHash } from '@/lib/audit/artifact-binding';
 import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
+const RENDERER_VERSION = 2;
 
 const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     const inputHash = reviewInputHash(reviewPackage(submission, previous, stored));
     const checkpoint = previous.review_checkpoint;
     const cachedReview = checkpoint?.input_hash === inputHash && checkpoint.stage === 'done' ? checkpoint.state : null;
-    const sameReview = !cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview);
+    const sameReview = previous.completed_renderer_version === RENDERER_VERSION && (!cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview));
     if (sameReview && previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
       return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
     }
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
+      ...previous,completed_renderer_version:RENDERER_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
         if(finalReview.letter) {data.editorial_review={...review,letter:finalReview.letter};data.analysis.summary=finalReview.letter.executive_assessment || '';}
         data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {
-        data.release_verdict={passed:false,status:'needs_review',errors:[`El documento no superó la validación final: ${error.message}`]};
+        data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
       }
     }
     const updated=await prisma.$transaction(async tx=>{

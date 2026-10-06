@@ -123,3 +123,16 @@ for (const rejected of [false,true]) test(`a single exact Word judge controls de
  assert.equal(state.chambersData.release_verdict.passed,!rejected);
  assert.equal(Boolean(state.chambersData.approved_artifact),!rejected);
 });
+
+test('a renderer update retries only the exact Word and then caches its new verdict',async()=>{
+ reset();rejectFinal=true;
+ await complete();const before=calls.length;
+ state.chambersData.completed_renderer_version=1;
+ const {reviewPackage,reviewInputHash}=require('../../src/lib/audit/review-checkpoint.ts');
+ const review=state.chambersData.editorial_review;
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.chambersData.matters)),stage:'done',lease_until:0,state:review};
+ await complete({checkpoint:true});
+ assert.equal(calls.length,before+1);assert.ok(calls.at(-1).url.endsWith('/verify-rendered-package'));
+ assert.equal(state.chambersData.completed_renderer_version,2);
+ await complete({checkpoint:true});assert.equal(calls.length,before+1);
+});

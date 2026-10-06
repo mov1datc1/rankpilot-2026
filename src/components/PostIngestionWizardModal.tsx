@@ -50,6 +50,7 @@ export interface PostIngestionWizardModalProps {
   };
   targetDirectory?: string;
   reviewPending?: boolean;
+  startAtLawyers?: boolean;
   recheckConfidentiality?: () => Promise<any[]>;
 }
 
@@ -60,6 +61,7 @@ export default function PostIngestionWizardModal({
   initialData,
   targetDirectory = 'Chambers & Partners',
   reviewPending = false,
+  startAtLawyers = false,
   recheckConfidentiality
 }: PostIngestionWizardModalProps) {
   const sanitizeStr = (s?: string) => {
@@ -141,7 +143,7 @@ export default function PostIngestionWizardModal({
   useEffect(() => {
     if (isOpen) {
       const pendingIndex = (initialData.matters || []).findIndex(needsInputReview);
-      setCurrentStep(reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
+      setCurrentStep(startAtLawyers ? 3 : reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
       contentRef.current?.scrollTo({top: 0});
       setIsEditingInline(false);
       setValidationError('');
@@ -662,7 +664,7 @@ export default function PostIngestionWizardModal({
                   lawyers.map((l: any, idx: number) => {
                     const name = l.name || l.fullName || `Abogado ${idx + 1}`;
                     const role = l.role || (l.isPartner ? 'Partner' : 'Associate');
-                    const ranking = l.suggestedRanking || l.ranking || 'Ranked Candidate';
+                    const ranking = l.suggestedRank || l.suggestedRanking || l.suggested_rank || l.suggested_ranking || '';
                     return (
                       <div key={idx} style={{
                         background: '#FFFFFF',
@@ -681,6 +683,11 @@ export default function PostIngestionWizardModal({
                             {l.role && !['Partner','Associate','Of Counsel','Other'].includes(l.role) && <option value={l.role}>{l.role}</option>}
                           </select>
                         </label>
+                        <details style={{marginTop:8,fontSize:13}}><summary style={{cursor:'pointer'}}>Revisar el texto del perfil público</summary>
+                          <label>Conserva solo datos sustentados y coherentes con el cargo confirmado.
+                            <textarea aria-label={`Perfil de ${name}`} value={l.comments || l.bio || ''} onChange={e=>{const value=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,comments:value,bio:value}:item));}} rows={5} style={{display:'block',width:'100%',boxSizing:'border-box',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #CBD5E1',borderRadius:6}} />
+                          </label>
+                        </details>
                         {l.roleResolution && <div style={{fontSize:12,color:'#475569',marginTop:8}}>
                           <label>Fuente, fecha y motivo de la corrección
                             <textarea aria-label={`Fuente del cargo de ${name}`} value={l.roleResolution.reason || ''} onChange={e=>{const reason=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,reason,confirmed:false}}:item));}} style={{width:'100%',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #cbd5e1',borderRadius:6}}/>
@@ -698,14 +705,17 @@ export default function PostIngestionWizardModal({
                           fontWeight: 500,
                           color: '#475569'
                         }}>
-                          {ranking}
+                          <label>Candidatura propuesta (opcional)
+                            <input aria-label={`Candidatura de ${name}`} value={ranking} placeholder="Sin candidatura propuesta" onChange={e=>{const value=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,suggestedRank:value,suggestedRanking:value,suggested_rank:value,suggested_ranking:value}:item));}} style={{display:'block',width:'100%',boxSizing:'border-box',padding:8,marginTop:4,background:'#fff',color:'#0f172a',border:'1px solid #cbd5e1',borderRadius:6}} />
+                          </label>
+                          {l.isPartner === true && /associate/i.test(ranking) && <p>Esta candidatura es de asociado y el cargo declarado es socio. Corrige la propuesta o déjala vacía; se conserva la fuente original.</p>}
                         </div>
                       </div>
                     );
                   })
                 ) : (
                   <div style={{ color: '#94A3B8', fontStyle: 'italic', gridColumn: '1 / -1', padding: '1rem', textAlign: 'center' }}>
-                    No se extrajo lista explícita de abogados de cabecera. Se deducirán de los socios líderes de cada asunto.
+                    No se extrajo lista explícita de abogados de cabecera. Añade y confirma sus perfiles en el expediente; no se deducen cargos ni perfiles públicos desde los asuntos.
                   </div>
                 )}
               </div>
@@ -862,8 +872,8 @@ export default function PostIngestionWizardModal({
                           value={matter.valueResolution?.value || ''} disabled={isSaving}
                           onChange={e => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, value: e.target.value, confirmed: false})} />
                       </label>
-                      <label>Fuente y motivo de la decisión
-                        <textarea aria-label={`Fuente del monto de ${matter.client || matter.name}`} placeholder="Documento, página o sección y por qué corresponde este monto."
+                      <label>Fuente, concepto del importe y motivo de la decisión
+                        <textarea aria-label={`Fuente del monto de ${matter.client || matter.name}`} placeholder="Documento y sección. Explica qué mide: valor del asunto, exposición, reclamación o resultado, y por qué corresponde este importe."
                           value={matter.valueResolution?.reason || ''} disabled={isSaving}
                           onChange={e => updateMatterField(matter.id, 'valueResolution', {...matter.valueResolution, reason: e.target.value, confirmed: false})} />
                       </label>
@@ -954,6 +964,16 @@ export default function PostIngestionWizardModal({
                           />
                         </div>
 
+                        <div>
+                          <label style={{fontSize:12,color:'#475569'}}>Otros integrantes del equipo
+                            <input aria-label={`Equipo de ${matter.client || matter.name}`} value={matter.teamMembers || matter.team_members || ''} onChange={e=>{updateMatterField(matter.id,'teamMembers',e.target.value);updateMatterField(matter.id,'team_members',e.target.value);}} style={{display:'block',width:'100%',boxSizing:'border-box',padding:8,border:'1px solid #CBD5E1',borderRadius:6}} />
+                          </label>
+                        </div>
+                        <div>
+                          <label style={{fontSize:12,color:'#475569'}}>Fechas de actividad y estado para este periodo
+                            <input aria-label={`Fechas y estado de ${matter.client || matter.name}`} value={matter.completionDate || ''} onChange={e=>updateMatterField(matter.id,'completionDate',e.target.value)} placeholder="Indica fechas y actividad confirmadas por la fuente" style={{display:'block',width:'100%',boxSizing:'border-box',padding:8,border:'1px solid #CBD5E1',borderRadius:6}} />
+                          </label>
+                        </div>
                       </div>
                     )}
 

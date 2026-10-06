@@ -470,7 +470,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       auditExclusions: chambersData?.analysis?.portfolio_curation?.dilution_risks || chambersData?.portfolio_curation?.dilution_risks || [],
       heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
       heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
-      lawyersCount: lawyers.length,
+      lawyersCount: rawInputLawyers.length ? lawyers.length : undefined,
       jurisdiction: chambersData?.jurisdiction || guideRegion || ''
     }
   );
@@ -846,7 +846,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       firmName,
       heroMatterId: chambersData?.hero_matter_id || chambersData?.canonical_matter_selection?.hero_matter_id,
       heroMatterTitle: chambersData?.hero_matter_title || chambersData?.canonical_matter_selection?.hero_matter_title,
-      lawyersCount: lawyers.length,
+      lawyersCount: rawInputLawyers.length ? lawyers.length : undefined,
       jurisdiction: chambersData?.jurisdiction || guideRegion || '',
       currentBand: chambersData.ranking_verification?.status === 'verified_match' ? chambersData.ranking_verification.observed_band : 'Not verified',
       targetBand: calibratedTarget,

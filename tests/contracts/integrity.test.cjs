@@ -72,7 +72,7 @@ const {buildSubmissionDoc,ensureEnglishMatterSummary}=require('../../src/app/api
 test('roster does not infer rank, biography or partner role from a team mention',()=>{
  const roster=curateLawyers([{name:'Synthetic Lawyer'}],[matter('1',{teamMembers:'Synthetic Associate'})],'Synthetic Firm','Tax','Mexico',{});
  assert.equal(roster[0].currentRank,'');assert.equal(roster[0].suggestedRank,'');assert.equal(roster[0].bio,'');assert.equal(roster[0].isRanked,null);
- assert.equal(roster.find(l=>l.name==='Synthetic Associate').isPartner,null);
+ assert.equal(roster.find(l=>l.name==='Synthetic Associate'),undefined);
 });
 test('renderer cannot invent a translation from a known client name',()=>{
  const input='Representamos a Constructora FH3. No consta resultado.';

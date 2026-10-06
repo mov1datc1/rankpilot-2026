@@ -1,0 +1,22 @@
+export type ReviewDestination = 'period' | 'lawyers' | 'wizard' | 'ranking' | 'review';
+export function describeReviewIssue(message: string) {
+  if (/renderizador|registro canónico|basándose aparentemente|identidades obtenidas/i.test(message)) return {title:'Corregir los perfiles añadidos al Word',owner:'RankPilot',action:'El Word debe usar solo los abogados registrados y no inferir cargos desde los asuntos.',destination:'review' as ReviewDestination};
+  if (/research_period|per[ií]odo (?:de investigaci[oó]n|aplicable)|elegibilidad temporal|fechas de/i.test(message)) return {title:'Confirmar el periodo y las fechas de los asuntos',owner:'Tu confirmación',action:'Indica las fechas de investigación y comprueba la actividad de cada asunto seleccionado dentro de ese intervalo.',destination:'period' as ReviewDestination};
+  if (/Associate to Watch|categoría propuesta/i.test(message)) return {title:'Revisar la candidatura individual',owner:'Tu confirmación',action:'Confirma el cargo y corrige o retira la categoría propuesta. No se exportan candidaturas de asociado para un socio declarado.',destination:'lawyers' as ReviewDestination};
+  if (/rankings individuales no verificados|Current ranking|Ranked.*N/i.test(message)) return {title:'Retirar afirmaciones de ranking sin verificar',owner:'RankPilot',action:'El Word deja el ranking sin afirmar cuando no existe verificación individual. Una consulta fallida no significa «Unranked».',destination:'review' as ReviewDestination};
+  if (/\brol\b|cargo|seniority|lead partner/i.test(message)) return {title:'Resolver el cargo y la responsabilidad del abogado',owner:'Tu confirmación',action:'Confirma el cargo con fuente y fecha; revisa también quién debe figurar como socio responsable en los asuntos afectados.',destination:'lawyers' as ReviewDestination};
+  if (/importe|moneda|monetario|valor|monto/i.test(message)) return {title:'Aclarar el importe y qué representa',owner:'Tu confirmación',action:'Indica importe, moneda y concepto con su fuente. Distingue valor del asunto, exposición y resultado.',destination:'wizard' as ReviewDestination};
+  if (/ranking|posición declarada/i.test(message)) return {title:'Revisar la declaración de ranking',owner:'Revisión de fuente',action:'Comprueba persona o firma, práctica, país y edición. Conserva sin afirmar lo que la fuente no acredita.',destination:'ranking' as ReviewDestination};
+  return {title:message.length>140 ? `${message.slice(0,137)}…` : message,owner:'Revisión pendiente',action:'Consulta el hallazgo completo y corrige los datos o el texto afectados antes de revisar la entrega.',destination:'review' as ReviewDestination};
+}
+
+/** Keep individual judge findings rather than the concatenated legacy error. */
+export function reviewIssues(data:any, errors:string[]) {
+  const defects = data?.final_artifact_review?.judge?.defects || [];
+  const messages = defects.filter((d:any)=>d.severity==='critical').map((d:any)=>String(d.message));
+  for (const error of errors) {
+    if (messages.length && (/^El documento no superó la validación final:/.test(error) || error === 'Genera y revisa el archivo final antes de descargar.')) continue;
+    messages.push(error);
+  }
+  return [...new Set<string>(messages)].map(message=>({message,...describeReviewIssue(message)}));
+}

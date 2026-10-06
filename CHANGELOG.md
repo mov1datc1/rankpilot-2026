@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Pendientes accionables y proyección fiel de B9
+
+- Audit con secciones desplegables y próximos pasos separados; hallazgos individuales con detalle conservado y accesos a periodo, ranking y abogados. Descarga pendiente remite al panel en lugar de superponer el veredicto completo. Datos presentes y aprobación se distinguen explícitamente.
+- Wizard permite corregir candidatura, perfil, equipo y fechas/estado; el importe pide explicar su concepto y fuente. La edición de cargos conserva la confirmación y trazabilidad existentes.
+- B9 solo usa el registro suministrado, sin crear perfiles ni socios desde asuntos. Ranking individual solo desde observación oficial del mismo alcance; omite candidaturas de asociado para socios declarados, preservando el original.
+- Versión del generador invalida el veredicto previo del Word sin forzar regeneración de estrategia/carta vigentes; defectos críticos persisten individualmente.
+- Validación local: 264 contratos Node, TypeScript y build; Chrome con componentes reales y persistencia simulada verifica accesos, candidatura editable, cinco secciones y móvil de 390 px sin desbordamiento. Sin nuevas llamadas pagadas ni escrituras al expediente durante la validación.
+
+
 ## [2026-10-06] — Entregables reutilizables y un solo juez final en Studio
 
 - Estrategia y Audit tienen huellas de dependencias propias y vigencia de 24 horas. Editar prosa conserva ambos; corregir candidatos invalida el Audit; cambiar hechos fuente invalida la selección y sus dependientes. Un bloqueo vigente evita duplicar llamadas aunque haya ediciones concurrentes.
