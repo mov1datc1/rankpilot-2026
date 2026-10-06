@@ -10,6 +10,8 @@ Strictly adheres to Owner Editorial Constitution:
 """
 
 import re
+import time
+from core.grounding import grounding_result
 from typing import Dict, Any, Optional
 from langchain_core.messages import SystemMessage, HumanMessage
 from utils.model_factory import create_chat_model
@@ -51,6 +53,8 @@ def optimize_b10_micro(
     directive: str = "",
     strategic_context: Optional[Dict[str, Any]] = None,
     narrative_architecture: Optional[Dict[str, Any]] = None,
+    directory: str = "",
+    jurisdiction: str = "",
 ) -> Dict[str, Any]:
     """Runs a 3-second micro-optimization of Section B10."""
     original_clean = (original_b10 or "").strip()
@@ -66,7 +70,7 @@ def optimize_b10_micro(
     thesis = narrative_architecture.get("thesis_statement", "")
     anchor_evidence = narrative_architecture.get("anchor_evidence", [])
 
-    context_blocks = []
+    context_blocks = [f"TARGET DIRECTORY: {directory}", f"TARGET JURISDICTION: {jurisdiction}"]
     if firm_name:
         context_blocks.append(f"FIRM NAME: {firm_name}")
     if practice_area:
@@ -81,11 +85,12 @@ def optimize_b10_micro(
     context_str = "\n".join(context_blocks)
 
     messages = [
-        SystemMessage(content=B10_SYSTEM_PROMPT),
+        SystemMessage(content=B10_SYSTEM_PROMPT + "\nTarget scope guides relevance only. It is not evidence of work, qualifications, rankings or jurisdiction. Never reshape source facts to fit the selected scope."),
         HumanMessage(content=f"CONTEXT:\n{context_str}\n\nORIGINAL B10 NARRATIVE:\n{original_clean}\n\nProduce a source-grounded narrative of at most 500 words; no minimum:")
     ]
 
     try:
+        started = time.monotonic()
         llm = get_micro_model()
         response = llm.invoke(messages)
         require_complete_response(response)
@@ -107,8 +112,13 @@ def optimize_b10_micro(
         if not words:
             return {"success": False, "error": "No se obtuvo una redacción B10. Se conserva el texto anterior."}
 
+        rejected = grounding_result(original_clean + " " + firm_name, text)
+        if rejected:
+            rejected["trace"]={"role":"rewrite", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"}
+            return rejected
         return {
             "success": True,
+            "trace": {"role":"b10", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"},
             "enhanced_b10": text,
             "word_count": len(text.split()),
         }
@@ -122,6 +132,8 @@ def optimize_matter_micro(
     practice_area: str = "",
     firm_name: str = "",
     thesis: str = "",
+    directory: str = "",
+    jurisdiction: str = "",
 ) -> Dict[str, Any]:
     """Runs a 3-second micro-optimization of an individual work highlight."""
     client_name = matter.get("client") or matter.get("name") or "Confidential Client"
@@ -141,6 +153,9 @@ def optimize_matter_micro(
         }
 
     matter_details = [
+        f"TARGET DIRECTORY: {directory}",
+        f"TARGET PRACTICE: {practice_area}",
+        f"TARGET JURISDICTION: {jurisdiction}",
         f"CLIENT: {client_name}",
         f"VALUE: {value or 'Not specified'}",
         f"LEAD PARTNER: {lead_partner or 'Not specified'}",
@@ -163,11 +178,12 @@ def optimize_matter_micro(
     details_str = "\n".join(matter_details)
 
     messages = [
-        SystemMessage(content=MATTER_SYSTEM_PROMPT),
+        SystemMessage(content=MATTER_SYSTEM_PROMPT + "\nTarget scope guides relevance only. It is not evidence of work, qualifications, rankings or jurisdiction. Never reshape source facts to fit the selected scope."),
         HumanMessage(content=f"MATTER ATTRIBUTES:\n{details_str}\n\nSOURCE MATTER DESCRIPTION:\n{source_body}\n\nProduce a source-grounded matter narrative of one to three paragraphs:")
     ]
 
     try:
+        started = time.monotonic()
         llm = get_micro_model()
         response = llm.invoke(messages)
         require_complete_response(response)
@@ -182,8 +198,14 @@ def optimize_matter_micro(
         if not final_text:
             return {'success': False, 'code': 'AI_OUTPUT_LIMIT', 'error': 'No se obtuvo una redacción completa. Se conserva el texto anterior.'}
 
+        evidence = source_body + " " + " ".join(str(matter.get(k) or "") for k in ["client","name","value","completionDate","teamMembers","leadPartner"]) + " " + str(resolution.get("reason") or "")
+        rejected = grounding_result(evidence, final_text, matter.get("id"))
+        if rejected:
+            rejected["trace"]={"role":"rewrite", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"}
+            return rejected
         return {
             "success": True,
+            "trace": {"role":"matter", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"},
             "optimized_text": final_text,
             "word_count": len(final_text.split()),
             "client": client_name

@@ -57,7 +57,7 @@ def get_model_settings(purpose: ModelPurpose = "standard", model_override: str =
         "model": model_name,
         "temperature": 0.0,
         "max_tokens": int(os.environ.get(f"OPENAI_MAX_OUTPUT_TOKENS_{purpose.upper()}", os.environ.get("OPENAI_MAX_OUTPUT_TOKENS", str(DEFAULT_OUTPUT_TOKENS[purpose])))),
-        "request_timeout": int(os.environ.get("OPENAI_REQUEST_TIMEOUT", "300")),
+        "request_timeout": int(os.environ.get("OPENAI_REQUEST_TIMEOUT", "210")),
         # Retry ownership belongs to the workflow. SDK retries multiply outer
         # retries and can pay for a timed-out generation more than once.
         "max_retries": 0,

@@ -111,10 +111,10 @@ export default function MattersAssistantPage() {
   }
 
   // Form State for Assistant
-  const [directory, setDirectory] = useState('Chambers & Partners');
-  const [guideRegion, setGuideRegion] = useState('Latin America');
-  const [practiceArea, setPracticeArea] = useState('Banking & Finance');
-  const [jurisdiction, setJurisdiction] = useState('Mexico');
+  const [directory, setDirectory] = useState('');
+  const [guideRegion, setGuideRegion] = useState('');
+  const [practiceArea, setPracticeArea] = useState('');
+  const [jurisdiction, setJurisdiction] = useState('');
   const [looseNotes, setLooseNotes] = useState('');
 
   // Upload State (Multi-Source Corpus Support)
@@ -165,6 +165,7 @@ export default function MattersAssistantPage() {
   };
 
   const handleProcessMatter = async () => {
+    if(!directory || !practiceArea || !jurisdiction || !guideRegion) {alert('Selecciona directorio, guía/región, práctica y jurisdicción. Contrastaremos estos filtros con las fuentes antes de analizar.');return;}
     if (selectedFiles.length === 0 && !looseNotes.trim()) {
       alert('Please upload one or more files or paste some text notes.');
       return;
@@ -218,7 +219,9 @@ export default function MattersAssistantPage() {
         })
       });
 
-      if (!res.ok) throw new Error('Failed to process matter with AI.');
+      const ingestion=await res.json();
+      if (!res.ok) throw new Error(ingestion.error || 'No se pudo extraer el documento.');
+      if(ingestion.studioUrl) {window.location.assign(ingestion.studioUrl);return;}
 
       // Clear the form
       setSelectedFiles([]);
@@ -388,6 +391,7 @@ export default function MattersAssistantPage() {
             </div>
 
             <h3 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: '0 0 1rem 0' }}>Matter Context</h3>
+            <p style={{color:'#475569'}}>Directorio, guía/región, práctica y jurisdicción son obligatorios. Si contradicen las fuentes, te indicaremos qué corregir antes de analizar.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
               <PremiumSelect
                 label="Directory"
@@ -532,7 +536,7 @@ export default function MattersAssistantPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem' }}>
             <button 
               onClick={handleProcessMatter}
-              disabled={isSubmitting || (selectedFiles.length === 0 && !looseNotes.trim())}
+              disabled={isSubmitting || !directory || !practiceArea || !jurisdiction || !guideRegion || (selectedFiles.length === 0 && !looseNotes.trim())}
               style={{ 
                 background: (selectedFiles.length === 0 && !looseNotes.trim()) ? '#9CA3AF' : '#1A237E', 
                 color: '#ffffff', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', fontWeight: 'bold', 

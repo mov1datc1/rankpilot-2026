@@ -1,3 +1,4 @@
+import { engineFetch } from '@/lib/editorial/engine';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     if(body.expectedRevision!==Number(previous.draft_revision || 0)) return NextResponse.json({error:'El borrador cambió. Recarga antes de consultar.'},{status:409});
     const country=typeof body.country==='string'?body.country.trim():'';
     if(!country || country.length>100) return NextResponse.json({error:'Indica el país de la tabla que deseas consultar.'},{status:400});
-    const response=await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-ranking`,{method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(45000),body:JSON.stringify({firm_name:previous.firm_name || previous.firmName || '',directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:country,current_band:declaredBand,ranking_edition:String(body.edition)})});
+    const response=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-ranking`,{method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(45000),body:JSON.stringify({firm_name:previous.firm_name || previous.firmName || '',directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:country,current_band:declaredBand,ranking_edition:String(body.edition)})});
     if(!response.ok) return NextResponse.json({error:'La consulta oficial no está disponible. El borrador se conserva.'},{status:502});
     const result=await response.json();
     if(!result.success || !result.ranking_verification?.status) return NextResponse.json({error:'La consulta no devolvió evidencia válida.'},{status:502});

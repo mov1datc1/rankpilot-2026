@@ -153,6 +153,8 @@ function ProcessingContent() {
             throw new Error(data.error || 'The AI extraction failed');
           }
 
+          if(data.studioUrl) {isFinishedRef.current=true;router.replace(data.studioUrl);return;}
+
           // Consume the one-shot retry flag. Refreshing a later terminal error
           // must display that error, never start an unbounded retry loop.
           if (retryRequested) {

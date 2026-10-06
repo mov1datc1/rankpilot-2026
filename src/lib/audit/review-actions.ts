@@ -33,7 +33,12 @@ export function reviewIssues(data:any, errors:string[]) {
     if (messages.length && (/^El documento no superó la validación final:/.test(error) || error === 'Genera y revisa el archivo final antes de descargar.')) continue;
     messages.push(error);
   }
-  const issues=[...new Set<string>(messages)].map(message=>({message,...describeReviewIssue(message)}));
+  const issues=[...new Set<string>(messages)].map(message=>{
+    const defect=defects.find((d:any)=>d.message===message);
+    const presentation=describeReviewIssue(message);
+    if(defect?.owner==='rankpilot') return {message,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'review' as ReviewDestination};
+    return {message,...presentation};
+  });
   const selection=issues.filter(issue=>issue.destination==='retry-selection');
   return selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
 }

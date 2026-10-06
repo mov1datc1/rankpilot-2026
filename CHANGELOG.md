@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Flujo editorial persistente en Submission Studio
+
+- Cola PostgreSQL y worker independiente: selección antes de redactar, progreso fuera del navegador, control de concurrencia, conservación de fuentes y borradores, y reintentos acotados.
+- Submission y Audit comparten estrategia, revisión de sus dos Word reales y bytes aprobados. Entradas de generación heredadas convergen a Studio; PDF heredado indica usar la entrega DOCX.
+- Filtros requeridos y contrastados con declaraciones de cada fuente; alcance persistido en análisis y redacción. RAG por catálogo acotado, práctica/directorio/jurisdicción/edición/guía y procedencia explícita.
+- Guardas de cifras/resultados, política temporal sin bloqueo por mera ausencia de fechas, autenticación privada del motor y CI de contratos.
+- Validación local: 293 contratos Node, 207 pruebas Python, compilación de producción y prueba SQL transaccional. Despliegue y evaluación editorial real se verifican por separado.
+
 ## [2026-10-07] — Recuperación de selección editorial fallida
 
 - El estratega recibe referencias temporales inequívocas y un esquema con una decisión obligatoria por cada asunto; la aplicación conserva y repone los IDs originales. El control de citas sigue rechazando evidencia mezclada entre asuntos.

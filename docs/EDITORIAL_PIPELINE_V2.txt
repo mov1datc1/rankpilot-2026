@@ -1,0 +1,45 @@
+Submission Studio — durable editorial workflow
+
+Studio persists edits, validates scope/permissions, enqueues one active job per
+submission, then observes progress. Closing the browser does not own or cancel
+execution. The Render background worker claims stages from PostgreSQL using
+SKIP LOCKED, a unique active-job index, renewable leases and a fenced completion.
+
+The shared source snapshot and policy version drive selection first. Only selected
+core matters needing new generated prose are drafted. Human/legacy prose is retained.
+B10, Audit and the final artifact review reuse valid dependencies. The final review
+receives the actual text of both DOCX files. Download serves the approved paired
+bytes with hashes, rather than independently regenerating either result.
+
+A known selection/grounding failure gets one bounded repair. A literal, source-backed
+unsupported claim in unchanged generated prose can receive one targeted final repair.
+Source conflicts and human edits are never rewritten automatically. An ambiguous
+interruption becomes indeterminate, not automatic replay of a possibly billed call.
+The token ceiling is checked before stages; it is not a guaranteed dollar limit.
+
+Deployment:
+1. npm run db:editorial applies additive tables and indexes, preserving source rows.
+2. Set the same AI_ENGINE_SERVICE_TOKEN on Vercel, Python and the worker.
+3. Worker needs DATABASE_URL and PYTHON_API_URL. Node 22; build npm ci --include=dev;
+   start node --import tsx scripts/editorial/worker.ts; type worker, Oregon, $7 plan.
+4. Set maximum shutdown delay to 300 seconds. Shutdown stops new claims and drains
+   the current bounded stage. A forced stop uses lease recovery without blind retry.
+5. Publish dev/main, verify both app/engine deploys and a fresh EditorialWorker
+   heartbeat matching studio-pipeline-v2, then run a synthetic end-to-end case.
+
+Rollback: stop the worker accepting new jobs before reverting app/engine versions.
+Keep the additive queue tables and saved source records. Do not drop records or
+replay indeterminate jobs to recover a deployment. Old artifacts remain subject to
+current policy/renderer checks; rollback is not permission to approve an old draft.
+
+Scope and RAG:
+Directory/practice/jurisdiction are required. Explicit document declarations are
+stored separately and compared across sources. Missing declarations are uncertainty,
+not proof of contradiction. The bounded RAG catalog uses practice/directory and
+applicable location/edition/guide metadata; project references are not independently
+verified official rules or owner-approved policy. Numeric/outcome guards are not a
+complete semantic proof. Real editorial evaluation remains necessary.
+
+Tests: node --test tests/contracts/*.test.cjs; Python unittest discover in ai-engine;
+TypeScript/build. scripts/editorial/test-schema.cjs tests actual SQL in a rolled-back
+transaction. Never run paid case evaluations or publish private reports in CI.

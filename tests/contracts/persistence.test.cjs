@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const Module=require('node:module');
 const {NextRequest}=require('next/server');
 let state, extracted, failCreate=false, failUpdate=false, conflict=false;
-const reset=()=>{state={submission:{id:'s',userId:'u',updatedAt:new Date('2026-01-01'),practiceArea:'Tax',guideRegion:'Mexico',chambersData:{original_b10:'old',release_verdict:{passed:true,status:'passed'}}},matters:[{id:'old',client:'Original',submissionId:'s'}]};extracted={success:true,ingestion_quality:{status:'ready_for_review',matters_found:1},matters:[{client:'New',summary:'Source narrative',confidentialityConfirmed:false,publish_status:'confirmation_required',isConfidential:false}]};failCreate=false;failUpdate=false;conflict=false;};
+const reset=()=>{state={submission:{id:'s',userId:'u',updatedAt:new Date('2026-01-01'),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',chambersData:{original_b10:'old',release_verdict:{passed:true,status:'passed'}}},matters:[{id:'old',client:'Original',submissionId:'s'}]};extracted={success:true,ingestion_quality:{status:'ready_for_review',matters_found:1},matters:[{client:'New',summary:'Source narrative',confidentialityConfirmed:false,publish_status:'confirmation_required',isConfidential:false}]};failCreate=false;failUpdate=false;conflict=false;};
 const apiFor=box=>({submission:{findUnique:async()=>({...box.submission,matters:box.matters}),updateMany:async({data})=>{if(conflict)return {count:0};Object.assign(box.submission,data);return {count:1};},update:async({data})=>{if(failUpdate)throw Error('Injected write failure');Object.assign(box.submission,data);return box.submission;}},matter:{deleteMany:async()=>{box.matters=[];return {count:1};},create:async({data})=>{if(failCreate)throw Error('Injected create failure');const m={id:'new',...data};box.matters.push(m);return m;},updateMany:async({where,data})=>{const m=box.matters.find(m=>m.id===where.id);if(m)Object.assign(m,data);return {count:m?1:0};}},user:{findUnique:async()=>null,upsert:async()=>({id:'u'})}});
 const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async fn=>{const pending=structuredClone(state);const result=await fn(apiFor(pending));state=pending;return result;}:apiFor(state)[key]});
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return {__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return {createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'u'}}})}})};return load.call(this,name,...args);};
@@ -88,4 +88,26 @@ test('role correction records the user, source and prior role without silently c
  result=await updateSubmissionValidatedData('s',{lawyers:[{...result.lawyers[0],roleResolution:{role:'Partner',reason:'Official team listing reviewed for this period',confirmed:true}}]});
  const lawyer=result.lawyers[0];assert.equal(lawyer.roleResolution.confirmedBy,'u');assert.ok(lawyer.roleResolution.confirmedAt);assert.equal(lawyer.roleResolution.originalRole,'Associate');assert.equal(lawyer.is_partner,true);
  assert.equal(state.submission.chambersData.release_verdict.passed,false);
+});
+
+test('Audit download serves the companion bytes, never regenerates approved prose',async()=>{
+ reset();approve();const data=state.submission.chambersData, bytes=Buffer.from('paired audit bytes');
+ data.approved_artifact.audit_base64=bytes.toString('base64');data.approved_artifact.audit_sha256=artifactHash(bytes);
+ const result=await GET(new NextRequest('http://localhost/api/generate-docx?id=s&type=audit'));
+ assert.equal(result.status,200);assert.deepEqual(Buffer.from(await result.arrayBuffer()),bytes);
+ data.approved_artifact.audit_base64=Buffer.from('tampered').toString('base64');
+ assert.equal((await GET(new NextRequest('http://localhost/api/generate-docx?id=s&type=audit'))).status,409);
+});
+
+test('missing initial filters fail before extraction or database creation',async()=>{
+ reset();const original=global.fetch;let calls=0;global.fetch=async()=>{calls++;return Response.json(extracted);};
+ try {const result=await POST(new NextRequest('http://local/api/extract-document',{method:'POST',body:JSON.stringify({text:'Source text'})}));assert.equal(result.status,422);assert.equal((await result.json()).code,'SCOPE_REQUIRED');assert.equal(calls,0);}finally{global.fetch=original;}
+});
+test('contradictory source scope preserves the entire prior register and selected filters',async()=>{
+ reset();const before=structuredClone(state);extracted.source_reports=[{source:'different.docx',source_scope:{practice_area:{value:'Labour & Employment',quote:'Practice Area: Labour & Employment'}}}];
+ const result=await extract();assert.equal(result.status,422);const body=await result.json();assert.equal(body.code,'SCOPE_CONFLICT');assert.match(body.error,/different.docx/);assert.deepEqual(state,before);
+});
+test('browser context cannot override saved scope sent to the extractor',async()=>{
+ reset();const original=global.fetch;let payload;global.fetch=async(_,options)=>{payload=JSON.parse(options.body);return Response.json(extracted);};
+ try {const result=await POST(new NextRequest('http://local/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source',context:{practice_area:'Labour & Employment',directory:'Legal 500',jurisdiction:'Chile'}})}));assert.equal(result.status,200);assert.equal(payload.context.practice_area,'Tax');assert.equal(payload.context.directory,'Chambers');assert.equal(payload.context.jurisdiction,'Mexico');}finally{global.fetch=original;}
 });

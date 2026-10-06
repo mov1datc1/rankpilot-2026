@@ -1,3 +1,5 @@
+import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { engineFetch } from '@/lib/editorial/engine';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -8,6 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { submissionId, documentUrl, text, context } = body;
     const confidentialityOnly = body.mode === 'confidentiality_review';
+    const appendSources = body.mode === 'supplement';
     if (confidentialityOnly && !submissionId) return NextResponse.json({error: 'Submission requerido.'}, {status: 400});
 
     const userInput = documentUrl || text || '';
@@ -31,6 +34,11 @@ export async function POST(request: NextRequest) {
     }
 
     let submission: any = null;
+    if (!submissionId) {
+      const issues=scopeIssues(selectedScope({...context,guideRegion:context?.jurisdiction}));
+      if(issues.length) return NextResponse.json({code:'SCOPE_REQUIRED',error:issues.map(i=>i.message).join(' '),issues},{status:422});
+      if(!String(context?.guideRegion || '').trim()) return NextResponse.json({code:'SCOPE_REQUIRED',error:'Selecciona la guía/región antes de continuar.'},{status:422});
+    }
     if (submissionId) {
       submission = await prisma.submission.findUnique({ where: { id: submissionId } });
       if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
@@ -40,15 +48,19 @@ export async function POST(request: NextRequest) {
       submission = await prisma.submission.create({
         data: {
           userId: resolvedUserId,
-          targetDirectory: context?.directory || 'Chambers',
-          practiceArea: context?.practiceArea || 'General',
-          guideRegion: context?.jurisdiction || 'Global',
+          targetDirectory: context.directory,
+          practiceArea: context.practiceArea || context.practice_area,
+          guideRegion: context.jurisdiction,
           currentBand: context?.currentBand || '',
           status: 'Draft',
           chambersData: context || {}
         }
       });
     }
+
+    const selected=selectedScope(submission);
+    const missingScope=scopeIssues(selected);
+    if(missingScope.length) return NextResponse.json({code:'SCOPE_REQUIRED',error:missingScope.map(i=>i.message).join(' '),issues:missingScope},{status:422});
 
     const sources = confidentialityOnly ? ((submission.chambersData as any)?.sources || []) : body.sources || context?.sources || [];
     const sourceInput = (confidentialityOnly ? '' : userInput) || submission.documentUrl || (sources.length > 0 ? sources[0].url : '');
@@ -60,19 +72,21 @@ export async function POST(request: NextRequest) {
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
     console.log(`[EXTRACT-DOCUMENT] Calling ${pythonApiUrl}/extract for submission ${submission.id}...`);
 
-    const extractResponse = await fetch(`${pythonApiUrl}/extract`, {
+    const extractResponse = await engineFetch(`${pythonApiUrl}/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_input: sourceInput,
         sources: sources,
         context: {
+          ...context,
+          guide_region: submission.chambersData?.guideRegion || '',
+          guideRegion: submission.chambersData?.guideRegion || '',
           directory: submission.targetDirectory,
           jurisdiction: submission.guideRegion,
           practice_area: submission.practiceArea,
           firm_name: context?.firm_name || '',
-          sources: sources,
-          ...context
+          sources: sources
         }
       })
     });
@@ -92,6 +106,8 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    const scopeConflicts=scopeIssues(selected,extractData.source_reports || []);
+    if(scopeConflicts.length) return NextResponse.json({code:'SCOPE_CONFLICT',error:scopeConflicts.map(i=>i.message).join(' '),issues:scopeConflicts},{status:422});
     const extractedMeta = extractData.metadata || {};
     const extractedB10 = extractData.original_b10 || '';
     const extractedMatters: any[] = extractData.matters || [];
@@ -122,8 +138,8 @@ export async function POST(request: NextRequest) {
     };
 
     const cleanExtractedPractice = sanitizePractice(extractedMeta.extracted_practice_area || extractedMeta.practice_area);
-    const calibratedPractice = sanitizePractice(extractedMeta.calibrated_practice_area) || sanitizePractice(submission.practiceArea);
-    const finalPracticeArea = calibratedPractice || cleanExtractedPractice || 'General Practice';
+    const calibratedPractice = sanitizePractice(submission.practiceArea);
+    const finalPracticeArea = submission.practiceArea;
 
     // ═══ JUDGE SOL EXTRACTION SANITY & SURGICAL HEALER ═══
     const { judgeSolExtractionAudit } = await import('@/lib/audit/extraction-auditor');
@@ -142,7 +158,7 @@ export async function POST(request: NextRequest) {
     });
     if (locked.count !== 1) throw new Error('DRAFT_CONFLICT: El borrador cambió durante la extracción. Recarga y reintenta.');
     // Replace the register atomically only after complete successful extraction.
-    await tx.matter.deleteMany({
+    if(!appendSources) await tx.matter.deleteMany({
       where: { submissionId: submission.id }
     });
 
@@ -170,7 +186,7 @@ export async function POST(request: NextRequest) {
           completionDate: m.completionDate || '',
           source: 'builder',
           practiceArea: finalPracticeArea,
-          jurisdiction: extractedMeta.location || submission.guideRegion
+          jurisdiction: submission.guideRegion
         }
       });
       createdMatters.push({
@@ -199,12 +215,14 @@ export async function POST(request: NextRequest) {
         practice_area: finalPracticeArea,
         extracted_practice_area: cleanExtractedPractice,
         calibrated_practice_area: calibratedPractice,
-        location: extractedMeta.location || submission.guideRegion
+        location: submission.guideRegion,
+        extracted_location: extractedMeta.location || ''
       },
       original_c2: extractData.original_c2 || '',
       sources,
       source_reports: extractData.source_reports || [],
       ingestion_quality: extractData.ingestion_quality || null,
+      analysis_scope: selected,
       draft_revision: Number(existingChambers.draft_revision || 0) + 1,
       original_b10: extractedB10,
       enhanced_b7: extractedB10,
@@ -251,6 +269,17 @@ export async function POST(request: NextRequest) {
         };
       })
     };
+
+    if(appendSources) {
+      // Add evidence without replacing prior IDs, decisions or human prose.
+      const original=existingChambers.matters || await tx.matter.findMany({where:{submissionId:submission.id,id:{notIn:createdMatters.map(m=>m.id)}}});
+      updatedChambersData.matters=[...original,...updatedChambersData.matters];
+      updatedChambersData.sources=[...(existingChambers.sources || []),...sources];
+      updatedChambersData.source_reports=[...(existingChambers.source_reports || []),...(extractData.source_reports || [])];
+      for(const key of ['original_b10','enhanced_b7','b7','confirmed_source_b10','original_c2','department','lawyers']) {
+        if(existingChambers[key]!==undefined) (updatedChambersData as any)[key]=existingChambers[key];
+      }
+    }
 
     // Update submission record
     await tx.submission.update({

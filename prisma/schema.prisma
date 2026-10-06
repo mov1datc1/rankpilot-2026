@@ -90,6 +90,7 @@ model Firm {
 }
 
 model Submission {
+  editorialJobs EditorialJob[]
   id                String           @id @default(uuid())
   userId            String
   targetDirectory   String
@@ -177,4 +178,33 @@ model AILog {
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   matter      Matter?  @relation(fields: [matterId], references: [id], onDelete: SetNull)
+}
+
+// Server-only durable editorial queue. schema.sql also installs the partial
+// unique index for one active job per submission and enables RLS (no public policies).
+model EditorialJob {
+  id           String   @id @default(uuid())
+  submissionId String
+  userId       String
+  sourceHash   String
+  snapshot     Json
+  status       String   @default("queued")
+  tasks        Json     @default("[\"selection\"]")
+  cursor       Int      @default(0)
+  stage        String   @default("selection")
+  leaseToken   String?
+  leaseUntil   DateTime? @db.Timestamptz
+  ledger       Json     @default("[]")
+  issue        Json?
+  resultHash   String?
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @default(now()) @db.Timestamptz
+  submission   Submission @relation(fields:[submissionId],references:[id],onDelete:Cascade)
+  @@index([status,createdAt],map:"EditorialJob_queue")
+  @@index([userId,submissionId,createdAt],map:"EditorialJob_owner")
+}
+model EditorialWorker {
+  id        String @id
+  version   String
+  heartbeat DateTime @default(now()) @db.Timestamptz
 }

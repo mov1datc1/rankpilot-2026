@@ -74,7 +74,7 @@ test('B10 response records provenance only after successful persistent save',asy
  try {
   const r=await optimizeB10(new NextRequest('http://localhost/api/optimize/b10',{method:'POST',body:JSON.stringify({submissionId:'s'})}));
   assert.equal(r.status,200);const result=await r.json();
-  assert.deepEqual(result.b10_optimization,{source:b10,text:'Source-grounded shortened narrative.'});
+  assert.equal(result.b10_optimization.source,b10);assert.equal(result.b10_optimization.text,'Source-grounded shortened narrative.');assert.ok(result.b10_optimization.strategy_hash);
   assert.deepEqual(state.chambersData.b10_optimization,result.b10_optimization);
   assert.equal(state.chambersData.enhanced_b7,result.enhanced_b10);
   assert.equal(state.chambersData.approved_artifact,null);
@@ -133,7 +133,7 @@ test('a renderer update retries only the exact Word and then caches its new verd
  state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.chambersData.matters)),stage:'done',lease_until:0,state:review};
  await complete({checkpoint:true});
  assert.equal(calls.length,before+1);assert.ok(calls.at(-1).url.endsWith('/verify-rendered-package'));
- assert.equal(state.chambersData.completed_renderer_version,2);
+ assert.equal(state.chambersData.completed_renderer_version,3);
  await complete({checkpoint:true});assert.equal(calls.length,before+1);
 });
 
@@ -141,6 +141,16 @@ for (const rejected of [false,true]) test(`review policy update invalidates cach
  reset();rejectFinal=rejected;await complete();const before=calls.length;
  state.chambersData.completed_review_policy_version='review-core-v1.3';
  await complete();assert.equal(calls.length,before+2);
- assert.equal(state.chambersData.completed_review_policy_version,'review-core-v1.4');
+ assert.equal(state.chambersData.completed_review_policy_version,'review-core-v2.0');
  await complete();assert.equal(calls.length,before+2);
+});
+
+test('approval binds both actual Word files to one revision and reviews both texts',async()=>{
+ reset();await complete();
+ const artifact=state.chambersData.approved_artifact;
+ assert.ok(artifact.audit_base64);assert.ok(artifact.audit_sha256);assert.ok(artifact.revision_id);
+ const final=calls.find(c=>c.url.endsWith('/verify-rendered-package'));
+ assert.ok(final.payload.package.rendered_artifact);assert.ok(final.payload.package.rendered_audit.includes('Strategic Audit'));
+ const archive=await require('jszip').loadAsync(Buffer.from(artifact.audit_base64,'base64'));
+ assert.ok((await archive.file('word/document.xml').async('string')).includes('Internal report linked'));
 });

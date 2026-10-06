@@ -1,4 +1,5 @@
 import sys
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,6 +18,7 @@ class RAGRouterTests(unittest.TestCase):
                 "# Category fit\n\nReal estate matters require property evidence.\n\n# Outcomes\n\nDistinguish interim relief from final judgments.", encoding="utf-8"
             )
             (root / "Corporate_MA_Methodology.txt").write_text("M&A acquisition method only.", encoding="utf-8")
+            (root / "rag_catalog.v2.json").write_text(json.dumps({"version":"test", "documents":[{"source":"Real_Estate_Methodology.txt","practice":"real_estate","directory":"chambers","tier":"reference","approval":"project_reference_only"}]}))
             router = RAGRouter(directory)
             context = router.get_rag_context("Real Estate", "Chambers")
             self.assertIn("NOT SUBMISSION EVIDENCE", context)

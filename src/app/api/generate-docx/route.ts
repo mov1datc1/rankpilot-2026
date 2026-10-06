@@ -89,6 +89,12 @@ export async function GET(request: NextRequest) {
     }
 
     const chambersData = submission.chambersData as any || {};
+    const pair=chambersData.approved_artifact;
+    if(docType==='audit' && chambersData.release_verdict?.passed && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
+      const bytes=Buffer.from(pair.audit_base64,'base64');
+      if(artifactHash(bytes)!==pair.audit_sha256) return NextResponse.json({error:'El Audit guardado no coincide con la revisión aprobada.'},{status:409});
+      return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':'attachment; filename="Strategic_Audit.docx"'}});
+    }
     const releaseVerdict = chambersData.release_verdict || {};
     const isSubmission = docType === 'submission';
     const isOriginalSubmissionExport = isSubmission && exportMode === 'original';

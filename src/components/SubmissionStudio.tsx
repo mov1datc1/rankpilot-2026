@@ -328,10 +328,11 @@ export default function SubmissionStudio({
   const rawPubMatters = React.useMemo(() => matters.filter(m => !m.isConfidential), [matters]);
   const rawConfMatters = React.useMemo(() => matters.filter(m => m.isConfidential), [matters]);
 
-  const optimizedMattersCount = matters.filter(m => (m.optimizedText && m.optimizedText.trim().length > 0) || (m.optimized_text && m.optimized_text.trim().length > 0)).length;
   const hasRunOptimization = hasValidatedSelection(chambersData);
-  const targetMattersCount = matters.length;
-  const isFullyOptimized = matters.length > 0 && optimizedMattersCount >= targetMattersCount;
+  const draftingPortfolio = hasRunOptimization ? [...curation.officialPubMatters,...curation.officialConfMatters] : matters;
+  const optimizedMattersCount = draftingPortfolio.filter(m => (m.optimizedText || m.optimized_text || '').trim()).length;
+  const targetMattersCount = draftingPortfolio.length;
+  const isFullyOptimized = targetMattersCount > 0 && optimizedMattersCount >= targetMattersCount;
 
   const categorized = React.useMemo(() => {
     // Before AI optimization runs, do not prematurely prune or hide confidential/surplus matters.
@@ -530,216 +531,61 @@ export default function SubmissionStudio({
     }
   };
 
-  // Master Action: Optimize entire submission (B10 + all matters in parallel + Strategic Audit synthesis)
-  const handleOptimizeAll = async (bypassReadiness: boolean = false) => {
-    if (pendingInputMatters.length) { setReviewPending(true); setShowValidationWizard(true); return; }
-    if (isOptimizingAll) return;
+  // Studio starts a durable job and observes it; the worker owns all transitions.
+  const [jobWatch, setJobWatch] = useState(0);
+  useEffect(() => {
+    let stopped=false;
+    let timer:ReturnType<typeof setTimeout>;
+    const controller=new AbortController();
+    const observe=async()=>{
+      try {
+        const response=await fetch(`/api/editorial/jobs?submissionId=${encodeURIComponent(submission.id)}`,{cache:'no-store',signal:controller.signal});
+        if(!response.ok) throw new Error('No se pudo consultar el avance. El motor continúa independientemente de esta pestaña.');
+        const data=await response.json();
+        if(stopped || !data.job) return;
+        const active=['queued','running'].includes(data.job.status);
+        setIsOptimizingAll(active);
+        setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:active?`${data.job.message}. Puedes cerrar esta pestaña; el avance se guarda.`:data.job.status==='completed'?'Submission y Audit revisados. Puedes descargar la entrega.':'Revisión detenida. Consulta el pendiente concreto.'});
+        if(active) {timer=setTimeout(observe,3000);return;}
+        setOptimizeAllComplete(data.job.status==='completed');
+        if(data.job.issue) setDraftSaveError(`${data.job.issue.owner==='rankpilot'?'RankPilot: ':''}${data.job.issue.message}`);
+        if(data.chambersData) {
+          setChambersData(data.chambersData);
+          if(data.matters) setMatters(data.matters);
+          setB10Text(data.chambersData.enhanced_b7 || data.chambersData.original_b10 || '');
+          setSubmissionStatus(data.status || 'Draft');
+        }
+      } catch(error) {
+        if(stopped) return;
+        if(jobWatch) setDraftSaveError(error instanceof Error?error.message:'No se pudo consultar el avance.');
+        timer=setTimeout(observe,10000);
+      }
+    };
+    void observe();
+    return ()=>{stopped=true;controller.abort();clearTimeout(timer);};
+  },[submission.id,jobWatch]);
 
-    // v27.0 Evidence Readiness Gate: Block ONLY on critical insufficiency (< 5 matters or score < 50)
-    if (!readiness.canOptimize) {
-      setShowReadinessModal(true);
-      return;
-    }
+  const handleOptimizeAll = async (_bypassReadiness:boolean=false) => {
+    if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);return;}
+    if(isOptimizingAll) return;
+    if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
-
+    const savedMatters=chambersData.matters || submission.matters || [];
+    const dirty=b10Text!==(chambersData.enhanced_b7 || chambersData.original_b10 || '') || JSON.stringify(matters)!==JSON.stringify(savedMatters);
+    if(dirty && !(await handleSaveDraft())) return;
     setDraftSaveError('');
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
-
-    // v26.37: Optimize ALL matters across the submission (both publishable and confidential)
-    const targetList = matters.filter(m => !(m.optimizedText || m.optimized_text || '').trim());
-    let optimizationFailed = false;
-    let optimizationError = '';
-    let stopBatch = false;
-    const failedMatters:string[]=[];
-    let savedMatters=0;
-    const totalSteps = targetList.length + 4; // B10 + matters + strategy + Audit + exact Word review
-
-    setOptimizeAllProgress({
-      current: 0,
-      total: totalSteps,
-      stage: 'Preparando la descripción del departamento con tus fuentes…'
-    });
-
-    // 1. Optimize Section B10
-    let currentB10Text = b10Text;
     try {
-      if (needsB10Optimization(chambersData, b10Text)) {
-      const b10Res = await fetch('/api/optimize/b10', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submissionId: submission.id,
-          original_b10: b10Text || chambersData.original_b10 || '',
-          directive: b10Directive
-        })
-      });
-      const b10Data = await b10Res.json();
-      if (b10Data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), b10Data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
-      if (b10Data.success && b10Data.enhanced_b10) {
-        currentB10Text = b10Data.enhanced_b10;
-        setB10Text(b10Data.enhanced_b10);
-        setChambersData((prev:any)=>({...prev,enhanced_b7:b10Data.enhanced_b10,b10_optimization:b10Data.b10_optimization}));
-      } else { optimizationFailed = true; optimizationError = processingFeedback(b10Data,b10Res.status,'optimize'); }
-      }
-    } catch (b10Err) {
-      console.warn('[Global Optimization] B10 error:', b10Err);
-      optimizationFailed = true;
-    }
-
-    if(optimizationFailed) {setDraftSaveError(optimizationError || 'No se pudo guardar la nueva redacción del departamento. La versión anterior se conserva. Reintenta antes de continuar con los asuntos.');setIsOptimizingAll(false);setOptimizeAllProgress(null);return;}
-    let completed = 1;
-    setOptimizeAllProgress({
-      current: completed,
-      total: totalSteps,
-      stage: `Descripción del departamento disponible. Preparando ${targetList.length} asuntos pendientes de redacción…`
-    });
-
-    // 2. Optimize matters in concurrent batches of 4
-    const BATCH_SIZE = 4;
-    const optimizedMap: Record<string, string> = {};
-    for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
-      const batch = targetList.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(async (m, bIdx) => {
-        const actualIdx = i + bIdx;
-        const key = m.id || `matter-${actualIdx}`;
-        const directive = matterDirectives[key] || '';
-
-        try {
-          const res = await fetch('/api/optimize/matter', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              submissionId: submission.id,
-              matterId: m.id,
-              matter: m,
-              directive: directive
-            })
-          });
-          const data = await res.json();
-          if (['AI_CREDIT_EXHAUSTED','AI_OUTPUT_LIMIT'].includes(data.code)) {
-            stopBatch = true;
-            optimizationError = processingFeedback(data,res.status,'optimize');
-          }
-          if (!res.ok || !data.success || !data.optimized_text) {optimizationFailed = true;failedMatters.push(m.name || m.client || m.id || 'Asunto sin nombre');}
-      if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
-      if (data.success && data.optimized_text) {
-            savedMatters++;
-            const optText = data.optimized_text;
-            if (m.id) {
-              optimizedMap[m.id] = optText;
-              setMatters(previous => previous.map(item => item.id === m.id ? {...item, optimizedText:optText, optimized_text:optText} : item));
-            }
-
-
-          }
-        } catch (mErr) {
-          console.warn(`[Global Optimization] Matter ${actualIdx} error:`, mErr);
-          optimizationFailed = true;
-          failedMatters.push(m.name || m.client || m.id || 'Asunto sin nombre');
-        } finally {
-          completed++;
-          setOptimizeAllProgress({
-            current: Math.min(completed, totalSteps - 1),
-            total: totalSteps,
-            stage: `Asuntos procesados: ${Math.min(completed - 1, targetList.length)} de ${targetList.length}. ${savedMatters} redacciones guardadas${failedMatters.length ? `; ${failedMatters.length} pendientes de reintento` : ''}.`
-          });
-        }
-      }));
-      if (stopBatch) break;
-    }
-
-    // Stable matter IDs are the join key. Client names can legitimately repeat.
-    const latestMatters = matters.map((item, idx) => {
-      const optText = (item.id && optimizedMap[item.id]) || item.optimizedText || item.optimized_text;
-      if (optText) {
-        return {
-          ...item,
-          optimizedText: optText,
-          optimized_text: optText
-        };
-      }
-      return item;
-    });
-    setMatters(latestMatters);
-    if (optimizationFailed) {
-      setDraftSaveError(optimizationError || `No se completaron: ${failedMatters.join(', ')}. Las ${savedMatters} nuevas redacciones confirmadas se guardaron. Reintenta para continuar con los pendientes.`);
+      const response=await fetch('/api/editorial/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissionId:submission.id,retry:true})});
+      const data=await response.json();
+      if(!response.ok) throw new Error(data.error || 'No se pudo iniciar la revisión.');
+      setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:data.job.message});
+      setJobWatch(value=>value+1);
+    } catch(error) {
       setIsOptimizingAll(false);
-      setOptimizeAllProgress(null);
-      return;
+      setDraftSaveError(error instanceof Error?error.message:'No se pudo iniciar la revisión.');
     }
-
-    // 3. Resume persisted review roles, then verify the exact Word.
-    setOptimizeAllProgress({
-      current: targetList.length + 1,
-      total: totalSteps,
-      stage: 'Reanudando la revisión desde la última etapa guardada…'
-    });
-
-    try {
-      // The server determines the next stage from persisted inputs/checkpoints.
-      // Polling a held lease never launches another paid call.
-      for (let attempts = 0; ; attempts++) {
-        if (attempts >= 90) throw new Error('La revisión sigue en curso. Las etapas guardadas se conservan; vuelve a abrir el expediente para reanudar.');
-        const stepRes = await fetch('/api/optimize/review-step', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({submissionId: submission.id}),
-        });
-        const step = await stepRes.json();
-        if (!stepRes.ok || !step.success) throw new Error(processingFeedback(step, stepRes.status, 'review'));
-        setOptimizeAllProgress({current:targetList.length + 1 + Number(step.completed || 0),total:totalSteps,stage:step.message});
-        if (step.done) break;
-        if (step.busy) await new Promise(resolve => setTimeout(resolve, 4000));
-      }
-      let compData:any;
-      for (let attempts=0; ; attempts++) {
-        if (attempts>=90) throw new Error('La revisión del Word sigue en curso. Se conserva el avance; vuelve a abrir el expediente para continuar.');
-        const compRes = await fetch('/api/optimize/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            submissionId: submission.id,
-            b10Text: currentB10Text,
-            checkpoint: true,
-            matters: latestMatters,
-            targetDirectory: selectedDirectory
-          })
-        });
-        compData = await compRes.json();
-        if (!compRes.ok || !compData.success) throw new Error(processingFeedback(compData,compRes.status,'review'));
-        if (!compData.pending) break;
-        await new Promise(resolve=>setTimeout(resolve,4000));
-      }
-      if (compData.success && compData.chambersData) {
-        setChambersData(compData.chambersData);
-        if (Array.isArray(compData.matters) && compData.matters.length > 0) {
-          setMatters(compData.matters);
-        }
-        if (compData.b10) {
-          setB10Text(compData.b10);
-        }
-        setSubmissionStatus(compData.status || 'Draft');
-        router.refresh();
-      }
-    } catch (cErr) {
-      console.warn('[Global Optimization] Complete API error:', cErr);
-      setDraftSaveError(cErr instanceof Error ? cErr.message : 'La revisión no se completó. Conserva el borrador y reintenta.');
-      setIsOptimizingAll(false);
-      setOptimizeAllComplete(false);
-      setOptimizeAllProgress(null);
-      return;
-    }
-
-    setOptimizeAllProgress({
-      current: totalSteps,
-      total: totalSteps,
-      stage: 'Revisión completada. Consulta el estado de entrega y los pendientes antes de descargar.'
-    });
-    setOptimizeAllComplete(true);
-    setIsOptimizingAll(false);
-    setTimeout(() => {
-      setOptimizeAllProgress(null);
-    }, 6000);
   };
 
   // Handler: Re-optimize B10 (3s isolated micro-call)
@@ -1230,7 +1076,7 @@ export default function SubmissionStudio({
             title={isFullyOptimized ? 'Los asuntos ya están optimizados. Revisa y genera los entregables; los pendientes se procesan al continuar.' : 'Ejecutar optimización editorial integral bajo estándares Chambers'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Optimizando Asuntos...' : isFullyOptimized ? 'Revisar entrega' : '✨ Optimizar Todo'}</span>
+            <span>{isOptimizingAll ? 'Preparando entrega…' : 'Preparar Submission y Audit'}</span>
           </button>
 
           {/* Unified Download Dropdown */}

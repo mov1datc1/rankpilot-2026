@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-export const REVIEW_POLICY_VERSION = 'review-core-v1.4';
+export const REVIEW_POLICY_VERSION = 'review-core-v2.0';
 
 export const reviewSteps = ['strategy', 'writer', 'done'] as const;
 export const reviewStepLabels = {
@@ -13,6 +13,7 @@ export const reviewStepLabels = {
 export function reviewPackage(submission: any, data: any, matters: any[]) {
   return {
     directory: submission.targetDirectory, practice_area: submission.practiceArea,
+    guide_region: data.guideRegion || data.analysis_scope?.guide_region || '',
     jurisdiction: submission.guideRegion, firm_name: data.firm_name || data.firmName || '',
     research_period: data.research_period || null, current_band: submission.currentBand,
     ranking_edition: data.ranking_edition || 'current',
@@ -27,6 +28,7 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
 
 export function reviewInputHash(payload: any) {
   const stable = (value: any): any => {
+    if (value instanceof Date) return value.toISOString();
     if (Array.isArray(value)) return value.map(stable);
     if (!value || typeof value !== 'object') return value;
     const copy = {...value};
@@ -46,6 +48,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
       delete matter.optimizedText;
       delete matter.optimized_text;
       delete matter.status;
+      delete matter.draft_provenance;
     }
   }
   // Portfolio selection compares mandates, not the candidate's biography.

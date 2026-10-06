@@ -1,0 +1,178 @@
+{
+  "version": "practice-policy-v2",
+  "owner_approval": null,
+  "scope": "Project reference methodology; not official directory requirements or client evidence. Uncatalogued documents are quarantined. Jurisdiction-specific thresholds require separately verified applicability.",
+  "documents": [
+    {
+      "source": "Chambers_Banking_Methodology_v1.txt",
+      "practice": "banking",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Chambers_Banking_Taxonomy_v1.txt",
+      "practice": "banking",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Corporate_MA_Methodology_v1.txt",
+      "practice": "corporate",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Corporate_MA_Taxonomy_v1.txt",
+      "practice": "corporate",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+      "practice": "labour",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Labour & Employment — Legal 500 Intelligence Layer.txt",
+      "practice": "labour",
+      "directory": "legal500",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Rankpilot Tax Guides Context Mapping - Chambers.txt",
+      "practice": "tax",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "UNIVERSAL LEGAL 500 TAX LOGIC.txt",
+      "practice": "tax",
+      "directory": "legal500",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Tax — IFLR Intelligence Layer.txt",
+      "practice": "tax",
+      "directory": "iflr",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Tax — Leaders League Intelligence Layer.txt",
+      "practice": "tax",
+      "directory": "leadersleague",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "RAG Disputes — lógica base - Chambers.txt",
+      "practice": "disputes",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "🧠 Chambers Intelligence Engine - Competition.txt",
+      "practice": "competition",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Leaders League RAG — Competition.txt",
+      "practice": "competition",
+      "directory": "leadersleague",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "RAG Regulatory _ Public & Administrative Law.txt",
+      "practice": "regulatory",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Real_Estate_RAG.txt",
+      "practice": "real_estate",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt",
+      "practice": "compliance",
+      "directory": "chambers",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Legal500_Banking_Methodology.txt",
+      "practice": "banking",
+      "directory": "legal500",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "IFLR1000_Banking_Methodology.txt",
+      "practice": "banking",
+      "directory": "iflr",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "LeadersLeague_Banking_Methodology.txt",
+      "practice": "banking",
+      "directory": "leadersleague",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "reference",
+      "approval": "project_reference_only"
+    }
+  ]
+}

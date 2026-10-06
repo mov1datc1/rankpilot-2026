@@ -23,6 +23,7 @@ export default function Wizard() {
   const [formData, setFormData] = useState({
     // Step 1
     firmName: '',
+    directory: '',
     jurisdiction: '',
     practice: '',
     period: '',
@@ -54,11 +55,12 @@ export default function Wizard() {
     load();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const nextStep = () => {
+    if(currentStep===1 && (!formData.directory.trim() || !formData.practice.trim() || !formData.jurisdiction.trim())) {setResult({success:false,error:'Selecciona directorio, práctica y jurisdicción antes de continuar.'});return;}
     if (currentStep === 1 && !isAdvancedMode) {
       setCurrentStep(6);
     } else if (currentStep < 6) {
@@ -79,7 +81,7 @@ export default function Wizard() {
     startTransition(async () => {
       const res = await submitWizardData(formData);
       if (res.success) {
-        setResult({ success: true, pdf_url: res.data?.data?.pdf_url, submissionId: res.submissionId });
+        setResult({ success: true, pdf_url: res.data?.data?.pdf_url || undefined, submissionId: res.submissionId });
       } else {
         setResult({ success: false, error: res.error });
       }
@@ -92,11 +94,11 @@ export default function Wizard() {
         <div style={{ width: '64px', height: '64px', background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto' }}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         </div>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', color: '#15803d' }}>¡Submission Generada Exitosamente!</h2>
-        <p style={{ color: '#475569', marginBottom: '2rem' }}>La Inteligencia Artificial ha procesado tu información y ha redactado el documento.</p>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem', color: '#15803d' }}>Expediente guardado</h2>
+        <p style={{ color: '#475569', marginBottom: '2rem' }}>Revisa tus datos en Submission Studio para preparar el Submission y el Audit.</p>
         {result.submissionId ? (
-          <a href={`/reports/${result.submissionId}`} style={{ display: 'inline-block', background: '#2563eb', color: '#fff', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 500, textDecoration: 'none', transition: 'background 0.2s' }}>
-            Ver Auditoría Estratégica
+          <a href={`/reports/${result.submissionId}?validate=true`} style={{ display: 'inline-block', background: '#2563eb', color: '#fff', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 500, textDecoration: 'none', transition: 'background 0.2s' }}>
+            Abrir Submission Studio
           </a>
         ) : (
           <p style={{ color: '#64748b', fontSize: '0.9rem' }}>El archivo PDF se está compilando en los servidores. Recibirás una notificación cuando esté listo.</p>
@@ -132,6 +134,12 @@ export default function Wizard() {
         {currentStep === 1 && (
           <div className="animate-fade-in">
             <h3 style={{ marginBottom: '1.5rem', color: '#334155', fontSize: '1.25rem', fontWeight: 600 }}>1. Información Preliminar</h3>
+            <label>Directorio requerido
+              <select name="directory" value={formData.directory} onChange={handleChange} required style={{display:'block',padding:'0.75rem',marginBottom:'1rem'}}>
+                <option value="">Selecciona directorio</option>
+                <option value="Chambers">Chambers &amp; Partners</option>
+              </select>
+            </label>
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>Nombre de la Firma</label>
               <input type="text" name="firmName" value={formData.firmName} onChange={handleChange} required style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#0f172a', fontSize: '1rem', transition: 'border-color 0.2s' }} />

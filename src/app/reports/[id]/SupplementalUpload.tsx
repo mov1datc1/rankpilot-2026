@@ -38,7 +38,9 @@ export default function SupplementalUpload({ submissionId }: { submissionId: str
         }),
       });
 
-      if (!res.ok) throw new Error('Processing failed');
+      const result=await res.json();
+      if(result.studioUrl) {window.location.assign(result.studioUrl);return;}
+      if (!res.ok) throw new Error(result.error || 'No se pudo añadir la fuente.');
 
       // Reload the page to show updated analysis
       window.location.reload();

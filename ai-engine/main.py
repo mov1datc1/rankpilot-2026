@@ -7,6 +7,7 @@ import traceback
 import base64
 import time
 import logging
+import hmac
 
 logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
@@ -84,12 +85,29 @@ api.add_middleware(
     allow_headers=["*"],
 )
 
+@api.middleware("http")
+async def service_boundary(request: Request, call_next):
+    # Legacy full-generation entry points cannot publish with different rules.
+    if request.url.path in ('/process', '/process-async', '/download', '/generate-report', '/generate-docx'):
+        return JSONResponse(status_code=410, content={'code':'STUDIO_REQUIRED','error':'Use Submission Studio and its durable editorial jobs.'})
+    if request.url.path not in ('/', '/health'):
+        expected=os.environ.get('AI_ENGINE_SERVICE_TOKEN', '')
+        supplied=request.headers.get('authorization', '').removeprefix('Bearer ')
+        if expected and not hmac.compare_digest(supplied, expected):
+            return JSONResponse(status_code=401, content={'error':'Service authentication required'})
+        if not expected and os.environ.get('RENDER'):
+            return JSONResponse(status_code=503, content={'error':'Service authentication is not configured'})
+    response=await call_next(request)
+    response.headers["X-RankPilot-Policy"]="review-core-v2.0"
+    return response
+
 @api.get("/")
 def read_root():
     return {
         "status": "online",
         "service": "RankPilot Core Engine",
-        "version": "26.26",
+        "version": "studio-pipeline-v2",
+        "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
 
@@ -101,7 +119,8 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "26.43",
+        "version": "studio-pipeline-v2",
+        "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
 
@@ -803,7 +822,9 @@ async def optimize_b10_endpoint(request: Request):
         firm_name=data.get("firm_name", ""),
         directive=data.get("directive", ""),
         strategic_context=data.get("strategic_context"),
-        narrative_architecture=data.get("narrative_architecture")
+        narrative_architecture=data.get("narrative_architecture"),
+        directory=data.get("directory", ""),
+        jurisdiction=data.get("jurisdiction", "")
     )
     status_code = 200 if result.get("success") else 400
     return JSONResponse(status_code=status_code, content=result)
@@ -826,7 +847,9 @@ async def optimize_matter_endpoint(request: Request):
         directive=data.get("directive", ""),
         practice_area=data.get("practice_area", ""),
         firm_name=data.get("firm_name", ""),
-        thesis=data.get("thesis", "")
+        thesis=data.get("thesis", ""),
+        directory=data.get("directory", ""),
+        jurisdiction=data.get("jurisdiction", "")
     )
     status_code = 200 if result.get("success") else 400
     return JSONResponse(status_code=status_code, content=result)
@@ -1072,6 +1095,11 @@ async def extract_document_endpoint(request: Request):
             result = json.loads(response.body)
             if response.status_code != 200:
                 return JSONResponse(status_code=response.status_code, content={**result, 'source_errors': [{'source': name, 'code': result.get('code', 'EXTRACTION_PROVIDER_ERROR')}]})
+            from utils.source_scope import source_scope
+            report['source_scope'] = source_scope(text)
+            missing_scope = [field for field in ('directory', 'practice_area', 'jurisdiction') if field not in report['source_scope']]
+            if missing_scope:
+                report.setdefault('warnings', []).append('No se encontró una declaración explícita de ' + ', '.join(missing_scope) + '. Los filtros seleccionados fijan el objetivo; no son hechos confirmados por esta fuente.')
             report['matter_count'] = len(result['matters'])
             report['empty_sections'] = result.pop('empty_sections', [])
             report['layout'] = 'numbered_form' if DocumentParser.extract_numbered_matter_sections(text) else 'unstructured'

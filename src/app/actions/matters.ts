@@ -268,96 +268,14 @@ export async function optimizeMatterWithAI(matterId: string) {
       throw new Error('Por favor espera 30 segundos antes de optimizar este caso nuevamente.');
     }
 
-    // 3. Setup Python API URL
-    const pythonBaseUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
-    const pythonApiUrl = `${pythonBaseUrl.replace(/\/$/, '')}/process`;
-
-    const targetDir = (matter.submission?.targetDirectory || 'Chambers').trim();
-    const isL500 = targetDir.toLowerCase().includes('500') || targetDir.toLowerCase().includes('legal');
-    const practice = matter.submission?.practiceArea || 'General Practice';
-
-    // 4. Construct the prompt following Angela Castillo's benchmark methodology
-    const userPrompt = isL500
-      ? `Eres un consultor editorial senior para The Legal 500 (${practice}).
-Por favor optimiza el siguiente asunto para el formulario oficial de The Legal 500:
-- Nombre del Asunto: ${matter.name}
-- Cliente: ${matter.client}
-- Valor / Cuantía / Magnitud: ${matter.value || 'No especificado'}
-- Abogado(s) Líder(es) / Equipo: ${matter.leadPartner || 'No especificado'}
-
-Notas Crudas del Abogado:
-${matter.rawNotes}
-
-DIRECTRICES EDITORIALES THE LEGAL 500 (Estándar de Oro):
-1. ENFOQUE EN EXCELENCIA DE EJECUCIÓN ("Delivery Excellence"): The Legal 500 prioriza la capacidad operativa práctica, la respuesta comercial ágil y la integración con el cliente sobre el mero prestigio transaccional.
-2. ESTRUCTURA FLUIDA: Redacta 2-3 párrafos continuos y elegantes. Aplica "Zero Carpentry": CERO etiquetas visibles o encabezados en negrita (NO uses "**Contexto:**", "**Impacto:**" ni viñetas).
-3. PROFUNDIDAD DEL EQUIPO ("Team Depth"): Destaca la participación del socio líder y de los asociados sénior para evidenciar consistencia en toda la estructura del despacho.
-4. RIGOR PROBATORIO: Basa el texto en hechos verificables, clientes corporativos y magnitud operativa sin lenguaje inflado ni adjetivos vacíos.`
-      : `Eres un consultor editorial senior para Chambers and Partners (${practice}).
-Por favor optimiza el siguiente asunto para Chambers:
-- Nombre del Asunto: ${matter.name}
-- Cliente: ${matter.client}
-- Valor / Cuantía / Magnitud: ${matter.value || 'No especificado'}
-- Socio Líder: ${matter.leadPartner || 'No especificado'}
-
-Notas Crudas del Abogado:
-${matter.rawNotes}
-
-DIRECTRICES EDITORIALES DE ÁNGELA CASTILLO / CHAMBERS GOLD STANDARD:
-1. ZERO CARPENTRY: Estricto estándar de 3 párrafos orgánicos y fluidos. CERO etiquetas visibles (NO uses "**Contexto:**", "**Impacto:**", "**Resultado:**" ni viñetas).
-2. PÁRRAFO 1 (Contexto & Riesgo Existencial): Coloca la transacción corporativa, adquisición o el conflicto de mayor riesgo en la PRIMERA ORACIÓN para que el researcher sepa de inmediato por qué está leyendo esto. Establece la escala (empleados afectados, cuantía o alcance geográfico/multi-planta).
-3. PÁRRAFO 2 (Intervención Técnica Diferencial): Detalla el craft legal específico de la firma (armonización de estructuras laborales, litigio coordinado, amparo constitucional, negociaciones colectivas con sindicatos o gobernanza regulatoria).
-4. PÁRRAFO 3 (Resultado, Expansión & Abogado): Cuantifica el desenlace concreto (contingencia evitada, litigios resueltos, continuidad operativa blindada), la continuidad de la relación institucional y la atribución explícita al socio líder (${matter.leadPartner || 'el socio líder'}).
-5. ZERO INFLATED CLAIMS: Prohibido usar frases infladas como "establishing a precedent" o autoelogios vacíos a menos que exista una resolución constitucional o jurisprudencia vinculante formalmente acreditada.`;
-
-    // 5. Call Python Backend API
-    const response = await fetch(pythonApiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_input: userPrompt,
-        thread_id: matter.threadId || matterId,
-        is_file: false
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Python API error: Status ${response.status}`);
-    }
-
-    const data = await response.json();
-    const durationMs = Date.now() - startTime;
-
-    let generatedText = "Error: El servidor Python no devolvio texto.";
-    if (data && data.data && data.data.response) {
-      generatedText = data.data.response.trim();
-    }
-
-    // 6. Persist thread_id from Python for future conversations
-    const returnedThreadId = data.thread_id || matterId;
-
-    // 7. Save the optimized text + thread_id
-    const updatedMatter = await prisma.matter.update({
-      where: { id: matterId },
-      data: {
-        optimizedText: generatedText,
-        status: 'AI Optimized',
-        threadId: returnedThreadId
-      }
-    });
-
-    // 8. Log the AI interaction for traceability
-    await prisma.aILog.create({
-      data: {
-        userId: user.id,
-        matterId: matterId,
-        prompt: userPrompt,
-        response: generatedText,
-        durationMs: durationMs
-      }
-    });
-
-    return { success: true, data: updatedMatter };
+    if(!matter.submissionId) throw new Error('Añade el asunto a un expediente de Submission Studio antes de optimizar.');
+    const {POST}=await import('@/app/api/optimize/matter/route');
+    const {NextRequest}=await import('next/server');
+    const response=await POST(new NextRequest('http://internal/optimize/matter',{method:'POST',body:JSON.stringify({submissionId:matter.submissionId,matterId})}));
+    const result=await response.json();
+    if(!response.ok || !result.success) throw new Error(result.error || 'La redacción no pasó la revisión.');
+    const updatedMatter=await prisma.matter.findUnique({where:{id:matterId}});
+    return {success:true,data:updatedMatter};
   } catch (error: any) {
     console.error('Error optimizing matter with Python AI:', error);
     return { success: false, error: error.message };

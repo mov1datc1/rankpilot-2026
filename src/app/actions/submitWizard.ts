@@ -1,5 +1,6 @@
 'use server';
 
+import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
@@ -8,6 +9,8 @@ export async function submitWizardData(formData: any) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
+    const issues=scopeIssues(selectedScope(formData));
+    if(issues.length) return {success:false,error:issues.map(i=>i.message).join(' ')};
 
     // Resolve user ID by email to handle Supabase/Prisma ID mismatch
     let resolvedUserId = user.id;
@@ -29,9 +32,9 @@ export async function submitWizardData(formData: any) {
     const newSubmission = await prisma.submission.create({
       data: {
         userId: resolvedUserId,
-        targetDirectory: formData.practice || 'Chambers',
-        practiceArea: formData.practice || 'General',
-        guideRegion: formData.jurisdiction || 'Global',
+        targetDirectory: formData.directory,
+        practiceArea: formData.practice,
+        guideRegion: formData.jurisdiction,
         currentBand: 'N/A',
         status: 'In Progress',
         chambersData: formData
@@ -63,80 +66,10 @@ export async function submitWizardData(formData: any) {
       }
     }
 
-    // 3. Formatting the Wizard JSON into a structured prompt for the AI
-    const structuredInput = `
-# RankPilot Submission Data (ID: ${newSubmission.id})
-
-## 1. Información Preliminar
-- Firma: ${formData.firmName}
-- Jurisdicción: ${formData.jurisdiction}
-- Práctica: ${formData.practice}
-- Periodo: ${formData.period}
-
-## 2. Detalles del Departamento
-- Descripción: ${formData.departmentDesc}
-- Tamaño del Equipo: ${formData.teamSize || 'N/A'}
-- Especialidades: ${formData.specialties || 'N/A'}
-
-## 3. Fortalezas Destacadas
-- Logros: ${formData.keyAchievements || 'N/A'}
-- Casos Relevantes: ${formData.relevantCases || 'N/A'}
-- Diferenciadores: ${formData.differentiators || 'N/A'}
-
-## 4. Feedback y Contexto
-- Feedback: ${formData.feedback || 'N/A'}
-- Enfoque Estratégico: ${formData.strategicFocus || 'N/A'}
-
-## 5. Clientes y Casos
-- Clientes: ${formData.clients || 'N/A'}
-- Descripciones de Casos: ${formData.caseDescriptions || 'N/A'}
-    `.trim();
-
-    const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:8000';
-
-    // Call the Python FastAPI endpoint (as defined in main.py)
-    const response = await fetch(`${pythonApiUrl}/process`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_input: structuredInput,
-        is_file: false,
-        thread_id: newSubmission.id, // Using the real submission ID
-        context: {
-          directory: formData.practice || 'Chambers',
-          jurisdiction: formData.jurisdiction || 'Global',
-          practice_area: formData.practice || 'General',
-          current_status: 'N/A'
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error en el servidor de IA: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    // Persist AI analysis and strategic_context back into chambersData
-    const aiAnalysis = data?.data?.analysis || {};
-    const aiStrategicContext = data?.data?.strategic_context || {};
-    await prisma.submission.update({
-      where: { id: newSubmission.id },
-      data: {
-        chambersData: {
-          ...formData,
-          ...(data?.data || {}),
-          lawyers: data?.data?.metadata?.lawyers || (formData as any).lawyers || [],
-          analysis: aiAnalysis,
-          strategicContext: aiStrategicContext
-        },
-        status: 'Submitted'
-      }
-    });
-
-    return { success: true, data, submissionId: newSubmission.id };
+    // The form creates source data. Studio owns the single editorial workflow.
+    const matters=await prisma.matter.findMany({where:{submissionId:newSubmission.id}});
+    await prisma.submission.update({where:{id:newSubmission.id},data:{status:'Draft',targetDirectory:formData.directory,currentBand:'',chambersData:{...formData,firm_name:formData.firmName || '',original_b10:formData.departmentDesc || '',research_period:formData.period || null,matters:matters.map(m=>({...m,confidentialityConfirmed:false,publish_status:'confirmation_required'}))}}});
+    return {success:true,data:{data:{pdf_url:null}},submissionId:newSubmission.id};
   } catch (error: any) {
     console.error('Error in submitWizardData:', error);
     return { success: false, error: error.message };

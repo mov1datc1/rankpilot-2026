@@ -1,3 +1,5 @@
+import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { engineFetch } from '@/lib/editorial/engine';
 import { needsInputReview } from '@/lib/audit/input-review';
 import { randomUUID } from 'node:crypto';
 import JSZip from 'jszip';
@@ -6,13 +8,14 @@ import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
 import { Packer } from 'docx';
 import prisma from '@/lib/prisma';
-import { createClient } from '@/utils/supabase/server';
+import { editorialUser } from '@/lib/editorial/identity';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import { artifactHash, deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { buildAuditDoc } from '@/app/api/generate-docx/audit-builder';
 import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
-const RENDERER_VERSION = 2;
+const RENDERER_VERSION = 3;
 
 const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
@@ -21,8 +24,7 @@ export async function POST(request: NextRequest) {
   const started=Date.now();
   const remaining=()=>Math.max(1,270000-(Date.now()-started));
   try {
-    const supabase = await createClient();
-    const {data:{user}} = await supabase.auth.getUser();
+    const user = await editorialUser(request);
     if (!user) return NextResponse.json({error:'Not authenticated'}, {status:401});
     const account = user.email ? await prisma.user.findUnique({where:{email:user.email}}) : null;
     const body = await request.json();
@@ -30,6 +32,8 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where:{id:body.submissionId},include:{matters:true}});
     if (!submission || ![user.id,account?.id].includes(submission.userId)) return NextResponse.json({error:'Not found'}, {status:404});
     const previous = submission.chambersData as any || {};
+    const scopeProblems=scopeIssues(selectedScope(submission),previous.source_reports || []);
+    if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const stored = Array.isArray(previous.matters) ? previous.matters : submission.matters;
     if (stored.some(needsInputReview)) return NextResponse.json({error:'Resuelve los permisos y montos pendientes en el asistente antes de la revisión final.'}, {status:422});
     const draft = Array.isArray(body.matters) ? body.matters : stored;
@@ -73,7 +77,7 @@ export async function POST(request: NextRequest) {
     if (cachedReview) {
       review = {success:true,...cachedReview};
     } else {
-      const reviewResponse = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
+      const reviewResponse = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
         method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
         body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
           b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:previous.lawyers || [],matters})
@@ -104,12 +108,16 @@ export async function POST(request: NextRequest) {
       try {
         const doc=buildSubmissionDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data,{...submission,chambersData:data,matters},'optimized');
         const buffer=await Packer.toBuffer(doc);
+        const auditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},review.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
+        const auditBuffer=await Packer.toBuffer(auditDoc);
+        const auditArchive=await JSZip.loadAsync(auditBuffer);
+        const renderedAudit=(await auditArchive.file('word/document.xml')!.async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
         const archive=await JSZip.loadAsync(buffer);
         const parts=Object.keys(archive.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${(await archive.files[name].async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')}`))).join('\n');
-        const finalResponse=await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
+        const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
           method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-          body:JSON.stringify({package:{directory:submission.targetDirectory,practice_area:submission.practiceArea,research_period:previous.research_period || null,current_band:submission.currentBand,ranking_verification:review.ranking_verification,b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',matters,lawyers:previous.lawyers || [],rendered_artifact:rendered},strategy:review.strategy,letter:review.letter,allow_repair:false})
+          body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false})
         });
         const finalReview=await finalResponse.json();
         if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
@@ -118,7 +126,7 @@ export async function POST(request: NextRequest) {
         data.release_verdict={passed:true,status:'passed',errors:[]};
         data.judgeVerdict=finalReview.judge;
         if(finalReview.letter) {data.editorial_review={...review,letter:finalReview.letter};data.analysis.summary=finalReview.letter.executive_assessment || '';}
-        data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
+        data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {
         data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
       }

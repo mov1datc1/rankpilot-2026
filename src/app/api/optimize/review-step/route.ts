@@ -1,10 +1,12 @@
+import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { engineFetch } from '@/lib/editorial/engine';
 import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { createClient } from '@/utils/supabase/server';
+import { editorialUser } from '@/lib/editorial/identity';
 import { needsInputReview } from '@/lib/audit/input-review';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
-import { reviewPackage, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels } from '@/lib/audit/review-checkpoint';
+import { reviewPackage, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
 export const maxDuration = 300;
 
@@ -13,7 +15,7 @@ export async function POST(request: NextRequest) {
   let locked: any = null;
   let checkpoint: any = null;
   try {
-    const { data: { user } } = await (await createClient()).auth.getUser();
+    const user = await editorialUser(request);
     if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
     const account = user.email ? await prisma.user.findUnique({where: {email: user.email}}) : null;
     const { submissionId } = await request.json();
@@ -21,11 +23,13 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
     const data: any = submission.chambersData || {};
+    const scopeProblems=scopeIssues(selectedScope(submission),data.source_reports || []);
+    if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const matters = Array.isArray(data.matters) ? data.matters : submission.matters;
     if (matters.some(needsInputReview)) return NextResponse.json({error: 'Resuelve permisos y montos antes de revisar.'}, {status: 422});
     const payload = reviewPackage(submission, data, matters);
     const saved = data.review_checkpoint;
-    if (data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {
+    if (data.completed_review_policy_version === REVIEW_POLICY_VERSION && data.completed_renderer_version === 3 && data.approved_artifact?.audit_sha256 && data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {
       return NextResponse.json({success:true,done:true,completed:2,stage:'done',message:'El documento aprobado corresponde a esta versión. Reutilizando la revisión guardada.'});
     }
     // Even after an edit, let the in-flight request finish/expire before another
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (changed.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = await prisma.submission.findUnique({where: {id: submission.id}});
     if ((locked.chambersData as any)?.review_checkpoint?.lease_id !== checkpoint.lease_id) throw new Error('DRAFT_CONFLICT');
-    const response = await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
+    const response = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
       method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(250000),
       body: JSON.stringify({stage, package: payload, state: checkpoint.state}),
     });
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
     const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
-    return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
+    return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace:result.state.trace?.at(-1) || null, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {
     // A timeout leaves the lease until expiry: a still-running provider call must
     // not overlap a retry. Successful earlier stages remain persisted.

@@ -1,0 +1,22 @@
+# Existing Next/Vercel and Python service stay in place. This is the single
+# durable queue consumer; no Redis and no browser-owned editorial stages.
+services:
+  - type: worker
+    name: rankpilot-editorial-worker
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: main
+    buildCommand: npm ci --include=dev
+    startCommand: node --import tsx scripts/editorial/worker.ts
+    maxShutdownDelaySeconds: 300
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: PYTHON_API_URL
+        value: https://rankpilot-2026.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: AI_ENGINE_SERVICE_TOKEN
+        sync: false

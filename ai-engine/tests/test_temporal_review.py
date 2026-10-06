@@ -21,7 +21,7 @@ class TemporalReviewTests(unittest.TestCase):
 
     def defect(self, basis, severity='critical'):
         return {'severity': severity, 'scope': 'submission', 'matter_id': 'm1',
-                'temporal_basis': basis, 'message': 'Hallazgo temporal con acción y evidencia.'}
+                'temporal_basis': basis, 'field_path': 'research_period' if basis=='missing_metadata' else None, 'message': 'Hallazgo temporal con acción y evidencia.'}
 
     def review(self, defects):
         with patch('core.review_graph.invoke_role', return_value=({'passed': False, 'defects': defects}, [])):
@@ -86,5 +86,5 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertIn('Unknown dates alone never justify exclusion.', messages[0][1])
             self.assertIn('Work Highlights in last 12 months', messages[0][1])
             self.assertIn('"research_period":null', messages[1][1])
-        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v1.4')
+        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v2.0')
         self.assertTrue(result['judge']['passed'])

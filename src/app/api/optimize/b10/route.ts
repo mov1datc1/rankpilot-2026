@@ -1,11 +1,15 @@
+import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
+import { stableHash } from '@/lib/editorial/contracts';
+import { engineFetch } from '@/lib/editorial/engine';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { createClient } from '@/utils/supabase/server';
+import { editorialUser } from '@/lib/editorial/identity';
+
+export const maxDuration=300;
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await editorialUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -35,28 +39,32 @@ export async function POST(request: NextRequest) {
     }
 
     const chambersData = (submission.chambersData as any) || {};
+    const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);
+    if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 
     const payload = {
       original_b10: chambersData.confirmed_source_b10 ?? chambersData.original_b10 ?? '',
       practice_area: submission.practiceArea || '',
+      directory: submission.targetDirectory,
+      jurisdiction: submission.guideRegion,
       firm_name: chambersData.firm_name || chambersData.firmName || '',
       directive: directive || '',
       strategic_context: chambersData.strategicContext || {},
-      narrative_architecture: chambersData.narrative_architecture || {}
+      narrative_architecture: {...chambersData.narrative_architecture,thesis_statement:chambersData.review_checkpoint?.state?.strategy?.thesis || ''}
     };
 
     if(!payload.original_b10.trim()) return NextResponse.json({code:'SOURCE_REQUIRED',error:'Falta la descripción de origen del departamento.'},{status:422});
-    const resp = await fetch(`${pythonApiUrl}/optimize/b10`, {
+    const resp = await engineFetch(`${pythonApiUrl}/optimize/b10`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(240000)
     });
 
     if (!resp.ok) {
-      const errText = await resp.text();
-      return NextResponse.json({ error: 'Engine optimization failed', details: errText }, { status: resp.status });
+      const failure=await resp.json().catch(()=>({code:'AI_REVIEW_UNAVAILABLE',error:'No se completó la redacción.'}));
+      return NextResponse.json(failure,{status:resp.status});
     }
 
     const result = await resp.json();
@@ -67,9 +75,9 @@ export async function POST(request: NextRequest) {
         const latest:any = current.chambersData || {};
         if ((latest.enhanced_b7 || '') !== (chambersData.enhanced_b7 || '') || (latest.original_b10 || '') !== (chambersData.original_b10 || '') || (latest.confirmed_source_b10 || '') !== (chambersData.confirmed_source_b10 || '')) throw new Error('DRAFT_CONFLICT');
         const revision=Number(latest.draft_revision || 0)+1;
-        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,b10_optimization:{source:payload.original_b10.trim(),text:result.enhanced_b10.trim()},enhanced_b7:result.enhanced_b10,enhanced_b10:result.enhanced_b10,b7:result.enhanced_b10,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Department narrative edited; review required.']}}}});
+        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,b10_optimization:{source:payload.original_b10.trim(),text:result.enhanced_b10.trim(),strategy_hash:stableHash(chambersData.review_checkpoint?.state?.strategy || {})},enhanced_b7:result.enhanced_b10,enhanced_b10:result.enhanced_b10,b7:result.enhanced_b10,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Department narrative edited; review required.']}}}});
         result.revision=revision;
-        result.b10_optimization={source:payload.original_b10.trim(),text:result.enhanced_b10.trim()};
+        result.b10_optimization={source:payload.original_b10.trim(),text:result.enhanced_b10.trim(),strategy_hash:stableHash(chambersData.review_checkpoint?.state?.strategy || {})};
       });
     }
 
