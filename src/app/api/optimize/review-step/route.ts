@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { needsInputReview } from '@/lib/audit/input-review';
-import { deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { deliveryInputHash, RENDERER_VERSION } from '@/lib/audit/artifact-binding';
 import { reviewPackage, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
 export const maxDuration = 300;
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (matters.some(needsInputReview)) return NextResponse.json({error: 'Resuelve permisos y montos antes de revisar.'}, {status: 422});
     const payload = reviewPackage(submission, data, matters);
     const saved = data.review_checkpoint;
-    if (data.completed_review_policy_version === REVIEW_POLICY_VERSION && data.completed_renderer_version === 3 && data.approved_artifact?.audit_sha256 && data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {
+    if (data.completed_review_policy_version === REVIEW_POLICY_VERSION && data.completed_renderer_version === RENDERER_VERSION && data.approved_artifact?.audit_sha256 && data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {
       return NextResponse.json({success:true,done:true,completed:2,stage:'done',message:'El documento aprobado corresponde a esta versión. Reutilizando la revisión guardada.'});
     }
     // Even after an edit, let the in-flight request finish/expire before another

@@ -22,7 +22,8 @@ export function planDrafting(data:any) {
   const text=String(data.enhanced_b7 || '').trim();
   const record=data.b10_optimization;
 
-  if(source && (!text || text===source || (record && record.text===text && (record.source!==source || record.strategy_hash!==stableHash(state.strategy))))) tasks.push('b10');
+  const currentGeneration=record?.text===text && record?.source===source && record?.strategy_hash===stableHash(state.strategy);
+  if(source && !currentGeneration && (!text || text===source || record?.text===text)) tasks.push('b10');
   tasks.push('audit','artifact');
   return tasks;
 }

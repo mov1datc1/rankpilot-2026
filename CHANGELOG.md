@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Validación real y corrección de la plantilla final
+
+- La sección pública vacía describe la ubicación de los asuntos confidenciales sin atribuir instrucciones inexistentes al cliente.
+- Versión compartida del renderer invalida la aprobación y el resultado de la cola, conservando selección y redacciones válidas. B10 validado se reutiliza aunque coincida con la fuente.
+- Redacción de asuntos/B10 fuera del bucle asíncrono del servidor; salud y otras peticiones siguen disponibles durante la llamada al modelo.
+- Prueba real con expediente sintético confirmó ejecución tras cerrar Studio y selección antes de redactar. La entrega final se revalida después del despliegue de esta corrección.
+
 ## [2026-10-06] — Flujo editorial persistente en Submission Studio
 
 - Cola PostgreSQL y worker independiente: selección antes de redactar, progreso fuera del navegador, control de concurrencia, conservación de fuentes y borradores, y reintentos acotados.

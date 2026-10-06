@@ -777,7 +777,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // D matters
   if (pubMatters.length === 0) {
     elements.push(new Paragraph({ children: [new PageBreak()] }));
-    elements.push(para('No publishable matters submitted for this practice area. All representative instructions are submitted confidentially under Section E in accordance with client confidentiality mandates.', { italics: true, size: 20, spacing: { before: 200, after: 200 } }));
+    elements.push(para('No publishable matters submitted for this practice area. Confidential matters are listed in Section E.', { italics: true, size: 20, spacing: { before: 200, after: 200 } }));
   } else {
     for (let i = 0; i < pubMatters.length; i++) {
       elements.push(new Paragraph({ children: [new PageBreak()] }));

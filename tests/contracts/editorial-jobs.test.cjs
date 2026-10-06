@@ -50,3 +50,12 @@ test('automatic repair requires literal evidence, generated provenance and an af
  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,owner:'user'}]}}}),null);
  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,code:'SOURCE_CONFLICT'}]}}}),null);
 });
+
+test('valid unchanged B10 is reused, while source or strategy changes require drafting',()=>{
+ const data={matters,original_b10:'Department source',enhanced_b7:'Department source',review_checkpoint:{state},b10_optimization:{source:'Department source',text:'Department source',strategy_hash:stableHash(state.strategy)}};
+ assert.ok(!planDrafting(data).includes('b10'));
+ assert.ok(planDrafting({...data,b10_optimization:undefined}).includes('b10'));
+ assert.ok(planDrafting({...data,original_b10:'New source'}).includes('b10'));
+ assert.ok(planDrafting({...data,b10_optimization:{...data.b10_optimization,strategy_hash:'previous'}}).includes('b10'));
+ assert.ok(!planDrafting({...data,enhanced_b7:'Human edited narrative'}).includes('b10'));
+});

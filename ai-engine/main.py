@@ -816,7 +816,7 @@ async def optimize_b10_endpoint(request: Request):
 
     from agents.micro_optimizer import optimize_b10_micro
 
-    result = optimize_b10_micro(
+    result = await asyncio.to_thread(optimize_b10_micro,
         original_b10=data.get("original_b10", ""),
         practice_area=data.get("practice_area", ""),
         firm_name=data.get("firm_name", ""),
@@ -842,7 +842,7 @@ async def optimize_matter_endpoint(request: Request):
 
     from agents.micro_optimizer import optimize_matter_micro
 
-    result = optimize_matter_micro(
+    result = await asyncio.to_thread(optimize_matter_micro,
         matter=data.get("matter", {}),
         directive=data.get("directive", ""),
         practice_area=data.get("practice_area", ""),

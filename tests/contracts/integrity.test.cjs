@@ -105,3 +105,14 @@ test('client aliases do not turn arbitrary first words of compound names into id
  assert.ok(clientAliases(['Fictional de México']).includes('Fictional'));
  assert.ok(clientAliases(['Example (ABC)']).includes('ABC'));
 });
+
+test('empty public section describes placement without inventing client instructions',async()=>{
+ const m=matter('1',{publish_status:'non_publishable',isConfidential:true,confidentialityConfirmed:true});
+ const data={matters:[m],canonical_matter_selection:{core_matter_ids:['1']}};
+ const doc=buildSubmissionDoc('Synthetic Firm','Tax',data,{practiceArea:'Tax',guideRegion:'Mexico',targetDirectory:'Chambers',matters:[m]},'optimized');
+ const zip=await JSZip.loadAsync(await Packer.toBuffer(doc));
+ const text=(await zip.file('word/document.xml').async('string')).replace(/<[^>]+>/g,'');
+ assert.match(text,/No publishable matters submitted/);
+ assert.match(text,/Confidential matters are listed in Section E/);
+ assert.doesNotMatch(text,/client confidentiality mandates|in accordance with client/);
+});

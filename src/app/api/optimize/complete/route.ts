@@ -10,12 +10,11 @@ import { Packer } from 'docx';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
-import { artifactHash, deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { artifactHash, deliveryInputHash, RENDERER_VERSION } from '@/lib/audit/artifact-binding';
 import { buildAuditDoc } from '@/app/api/generate-docx/audit-builder';
 import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
-const RENDERER_VERSION = 3;
 
 const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
