@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+export const REVIEW_POLICY_VERSION = 'review-core-v1.4';
+
 export const reviewSteps = ['strategy', 'writer', 'done'] as const;
 export const reviewStepLabels = {
   strategy: 'Comparando los asuntos y seleccionando el portafolio…',
@@ -31,7 +33,7 @@ export function reviewInputHash(payload: any) {
     if (copy.optimizedText === copy.optimized_text) delete copy.optimized_text;
     return Object.fromEntries(Object.keys(copy).sort().map(key => [key, stable(copy[key])]));
   };
-  return createHash('sha256').update(JSON.stringify(stable({version: 2, payload}))).digest('hex');
+  return createHash('sha256').update(JSON.stringify(stable({version: 2, policy: REVIEW_POLICY_VERSION, payload}))).digest('hex');
 }
 
 /** Dependencies match the role payloads in Python; a draft is not a source. */

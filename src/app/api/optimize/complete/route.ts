@@ -1,7 +1,7 @@
 import { needsInputReview } from '@/lib/audit/input-review';
 import { randomUUID } from 'node:crypto';
 import JSZip from 'jszip';
-import { reviewPackage, reviewInputHash } from '@/lib/audit/review-checkpoint';
+import { reviewPackage, reviewInputHash, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { NextRequest, NextResponse } from 'next/server';
 import { Packer } from 'docx';
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const inputHash = reviewInputHash(reviewPackage(submission, previous, stored));
     const checkpoint = previous.review_checkpoint;
     const cachedReview = checkpoint?.input_hash === inputHash && checkpoint.stage === 'done' ? checkpoint.state : null;
-    const sameReview = previous.completed_renderer_version === RENDERER_VERSION && (!cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview));
+    const sameReview = previous.completed_review_policy_version === REVIEW_POLICY_VERSION && previous.completed_renderer_version === RENDERER_VERSION && (!cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview));
     if (sameReview && previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
       return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
     }
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,completed_renderer_version:RENDERER_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
+      ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,

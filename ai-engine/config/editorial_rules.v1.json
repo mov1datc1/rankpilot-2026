@@ -1,5 +1,5 @@
 {
-  "version": "review-core-v1.3",
+  "version": "review-core-v1.4",
   "status": "implemented_project_policy",
   "owner_endorsement": "Not claimed. Derived from the approved implementation direction, observed failures and reviewed references.",
   "references": [
@@ -107,6 +107,12 @@
     {
       "id": "RP15",
       "criterion": "Review the actual rendered artifact and invalidate approval after input changes.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP16",
+      "criterion": "Temporal eligibility: missing research_period, exact start/end dates or matter status is incomplete metadata, not proof of ineligibility. These gaps are non-blocking warnings and must not prevent selection, drafting or delivery by themselves. A standard template heading such as 'Work Highlights in last 12 months' does not by itself turn missing metadata into an unsupported factual claim. Use supplied narrative evidence of activity, including ongoing work, without inventing dates or a completed outcome; longstanding matters may qualify through activity in the relevant period. Ask once for the research window or confirmation of relevant activity, not exact start AND end dates for every mandate. Do not assume the research window from today's date or the ranking edition. A critical temporal defect requires a concrete contradiction between supplied evidence and the artifact (for example, a matter ended before an explicitly supplied window with no subsequent activity but is presented as current), or an invented specific date/status/outcome. Identify the matter and quote the conflicting source and artifact claims. Unknown dates alone never justify exclusion. Keep metadata reminders in the internal Audit, not public submission prose.",
       "scope": "all_practices",
       "test_required": true
     }

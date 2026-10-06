@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Fechas ausentes sin bloqueo editorial
+
+- Criterio general RP16: periodo, fechas exactas o estado ausentes generan advertencias; no excluyen asuntos ni bloquean generación o entrega por sí solos. Actividad narrativa y asuntos en curso son evidencia utilizable. Un encabezado estándar no demuestra una contradicción temporal.
+- El juez distingue metadatos faltantes de contradicciones e invenciones. Solo los primeros se normalizan como advertencia; cargos, rankings, permisos y otros conflictos conservan sus controles.
+- Versión de política compartida entre frontend y motor invalida revisiones anteriores, incluidas selección/carta, sin reextraer documentos ni reoptimizar asuntos.
+- Validación: 192 pruebas Python, 269 contratos Node (suite completa de 268 más nueva regresión de caché), TypeScript y build. Modelos simulados; no se ejecutó una nueva evaluación pagada del expediente.
+
 ## [2026-10-06] — Correcciones puntuales sin repetir el wizard
 
 - Los pendientes del expediente abren una revisión acotada a los abogados y asuntos relacionados. «Guardar y volver al expediente» guarda y cierra sin exigir confirmar los demás pasos; revisar asuntos relacionados es opcional.

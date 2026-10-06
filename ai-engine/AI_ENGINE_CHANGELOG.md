@@ -5,6 +5,12 @@
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
 > Last updated: **2026-09-16** (v26.43 — Universal Ingestion, Anti-Contamination Gates & Multi-Practice Parity)
 
+## 2026-10-06 — Temporal evidence calibration (review-core-v1.4)
+
+- RP16 applies across practices to strategist, writer and exact-artifact judge: missing research period, exact dates or status alone are non-blocking warnings; no invented dates or automatic exclusions. Standard template headings alone do not prove a temporal conflict. Use supplied narrative activity and ongoing work; concrete conflicting or invented claims remain critical.
+- Typed temporal_basis separates missing_metadata from evidenced_conflict/unsupported_claim. Only metadata-only findings are downgraded, with verdict consistency enforced; unrelated critical defects and deterministic release gates remain authoritative.
+- Shared review policy version invalidates stale editorial outputs and final verdict caches. Validation: 192 offline Python tests, Node contracts, TypeScript and production build; no live-model quality guarantee claimed.
+
 ## v26.43 — UNIVERSAL INGESTION, ANTI-CONTAMINATION GATES & MULTI-PRACTICE PARITY (2026-09-16)
 
 | Change | Enforcement | Files |

@@ -89,3 +89,18 @@ test('expired evidence restarts verification and active edited requests cannot d
   state.chambersData.original_b10='A source edited during generation';
   assert.equal((await step()).status,202);assert.equal(calls.length,1);
 });
+
+test('review criteria version is shared with Python and old editorial outputs are rerun',async()=>{
+ const {REVIEW_POLICY_VERSION}=require('../../src/lib/audit/review-checkpoint.ts');
+ assert.equal(REVIEW_POLICY_VERSION,require('../../ai-engine/config/editorial_rules.v1.json').version);
+ reset();await step();await step();calls=[];
+ // Previous release hashed role inputs without the review policy version.
+ const {createHash}=require('node:crypto');
+ const stable=value=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
+ const source=reviewPackage(state,state.chambersData,state.matters);
+ delete source.b10_draft;delete source.c2_draft;delete source.lawyers;
+ const legacyKey=createHash('sha256').update(JSON.stringify(stable({version:2,payload:{policy:'role-deliverables-v2-single-judge',stage:'strategy',source}}))).digest('hex');
+ state.chambersData.review_checkpoint.step_keys.strategy=legacyKey;
+ await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+ await step();assert.equal(calls.length,2);
+});

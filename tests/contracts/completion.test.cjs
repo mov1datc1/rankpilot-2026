@@ -136,3 +136,11 @@ test('a renderer update retries only the exact Word and then caches its new verd
  assert.equal(state.chambersData.completed_renderer_version,2);
  await complete({checkpoint:true});assert.equal(calls.length,before+1);
 });
+
+for (const rejected of [false,true]) test(`review policy update invalidates cached verdict (rejected=${rejected})`,async()=>{
+ reset();rejectFinal=rejected;await complete();const before=calls.length;
+ state.chambersData.completed_review_policy_version='review-core-v1.3';
+ await complete();assert.equal(calls.length,before+2);
+ assert.equal(state.chambersData.completed_review_policy_version,'review-core-v1.4');
+ await complete();assert.equal(calls.length,before+2);
+});
