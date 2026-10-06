@@ -13,8 +13,56 @@ def normalized(text):
     return ' '.join(unicodedata.normalize('NFKC', str(text or '')).casefold().split())
 
 
-def numbers(text):
-    result=set()
+_UNITS = dict(zip('zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(), range(20)))
+_TENS = dict(zip('twenty thirty forty fifty sixty seventy eighty ninety'.split(), range(20,100,10)))
+_SCALES = {'thousand':1000, 'million':10**6, 'billion':10**9}
+_WORD_NUMBER = re.compile(r'(?<![\w])(?:'+'|'.join([*_UNITS,*_TENS,'hundred',*_SCALES,'and'])+r')(?![\w])')
+
+
+def _cardinal(words):
+    """Strict English cardinal grammar; never add separate numbers or list items."""
+    def small(group):
+        if not group: return None
+        base=0
+        if len(group)>=2 and group[0] in _UNITS and 1<=_UNITS[group[0]]<=9 and group[1]=='hundred':
+            base=_UNITS[group[0]]*100;group=group[2:]
+            if not group: return base
+            if group[0]=='and': group=group[1:]
+            if not group: return None
+        if len(group)==1 and group[0] in _UNITS: return base+_UNITS[group[0]]
+        if group[0] in _TENS and (len(group)==1 or (len(group)==2 and group[1] in _UNITS and 1<=_UNITS[group[1]]<=9)):
+            return base+_TENS[group[0]]+(_UNITS[group[1]] if len(group)==2 else 0)
+        return None
+    total,previous,start=0,10**12,0
+    for i,word in enumerate(words):
+        if word not in _SCALES: continue
+        scale=_SCALES[word];value=small(words[start:i])
+        if not value or scale>=previous: return None
+        total+=value*scale;previous,start=scale,i+1
+    tail=words[start:]
+    if not tail: return total or None
+    if total and tail[0]=='and': tail=tail[1:]
+    value=small(tail)
+    return total+value if value is not None else None
+
+
+def written_numbers(text):
+    text=normalized(text);groups=[]
+    for token in _WORD_NUMBER.finditer(text):
+        if groups and re.fullmatch(r'[\s\-‐‑–]+',text[groups[-1][-1].end():token.start()]): groups[-1].append(token)
+        else: groups.append([token])
+    values=set()
+    for group in groups:
+        words=[t.group() for t in group]
+        while words and words[0]=='and': words.pop(0)
+        while words and words[-1]=='and': words.pop()
+        value=_cardinal(words) if words else None
+        if value is not None: values.add(str(Decimal(value).normalize()))
+    return values
+
+
+def numbers(text, include_written=True):
+    result=written_numbers(text) if include_written else set()
     for match in re.finditer(r'(?<![\w])\d+(?:[,.]\d+)*(?:\s*(?:billion|mill[oó]n(?:es)?|million|mil|thousand|bn|mn)\b)?', normalized(text)):
         raw=match.group()
         number=re.match(r'[\d,.]+',raw).group()
@@ -44,7 +92,7 @@ def factual_issues(source, draft, entity_id=None):
             'entity_id':entity_id,'field_path':'optimizedText','owner':'rankpilot','action':'retry','retryable':True,
             'message':message,'source_evidence_ids':['source-'+hashlib.sha256(source.encode()).hexdigest()[:16]],
             'artifact_claim_ids':['claim-'+hashlib.sha256(draft.encode()).hexdigest()[:16]]})
-    if numbers(draft)-numbers(source):
+    if numbers(draft, include_written=False)-numbers(source):
         add('UNSUPPORTED_NUMBER','La redacción añadió una cifra o fecha que no aparece en la fuente. RankPilot debe corregirla; conservamos el texto anterior.')
     currency=r'\b(?:USD|MXN|EUR|GBP|CAD|BRL|COP|CLP|ARS|CHF|JPY)\b'
     if set(re.findall(currency,draft.upper()))-set(re.findall(currency,source.upper())):

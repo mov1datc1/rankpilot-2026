@@ -30,3 +30,19 @@ class MicroConcurrencyTests(unittest.IsolatedAsyncioTestCase):
                         release.set()
                         response = await task
                     self.assertEqual(response.status_code, 200)
+
+class SelectionReuseTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rechecks_failed_selection_before_paying_for_another_proposal(self):
+        import json
+        from main import review_step_endpoint
+        source='The firm manages more than twenty proceedings.'
+        strategy={'matters':[{'matter_id':'m','disposition':'core','rationale':'More than 20 proceedings.','source_quote':source}], 'hero_matter_id':'m','thesis':'Proceedings','pending_questions':[]}
+        payload={'stage':'strategy','package':{'matters':[{'id':'m','rawNotes':source}]},'state':{'selection_feedback':{'strategy':strategy}}}
+        request=type('Request',(),{'json':AsyncMock(return_value=payload)})()
+        with patch('utils.ranking_verifier.verify_ranking_claim',return_value={}),patch('core.review_graph.strategist') as model:
+            response=await review_step_endpoint(request)
+        result=json.loads(response.body)
+        self.assertEqual(result['next_stage'],'writer')
+        self.assertTrue(result['state']['selection_validated'])
+        self.assertEqual(result['state']['trace'],[])
+        model.assert_not_called()

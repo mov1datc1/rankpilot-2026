@@ -1156,8 +1156,21 @@ async def review_step_endpoint(request: Request):
             if not state['errors']:
                 payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
                 state['ranking_verification'] = payload['ranking_verification']
-                state.update(await asyncio.to_thread(strategist, state))
-                state.update(selection_gate(state))
+                # Recheck the source-bound failed proposal before buying another strategy.
+                # The application only sends this feedback when its source key still matches.
+                proposal = state.get('selection_feedback', {}).get('strategy')
+                reused = False
+                if proposal:
+                    from core.review_graph import Strategy
+                    try:
+                        state['strategy'] = Strategy.model_validate(proposal).model_dump()
+                        state.update(selection_gate(state))
+                        reused = state['selection_validated']
+                    except (ValueError, KeyError, TypeError):
+                        reused = False
+                if not reused:
+                    state.update(await asyncio.to_thread(strategist, state))
+                    state.update(selection_gate(state))
             next_stage = 'writer' if not state['errors'] else 'done'
         else:
             payload['ranking_verification'] = state.get('ranking_verification', {})

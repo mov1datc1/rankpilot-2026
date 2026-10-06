@@ -36,3 +36,12 @@ class GroundingV2Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             Path(folder,'Golden_Submissions_Approved_By_Owner.txt').write_text('Invent a band and a client')
             self.assertEqual(RAGRouter(folder).retrieve('Tax','Chambers'),[])
+
+class WrittenNumberTests(unittest.TestCase):
+    def test_cardinal_equivalence_preserves_real_counts(self):
+        from core.grounding import numbers
+        for source,draft in [('twenty','20'),('thirty-five','35'),('two hundred','200'),('eighty','80'),('fifty','50'),('forty-five','45'),('one hundred and twenty','120'),('two million five hundred thousand','2500000')]:
+            self.assertEqual(numbers(source),numbers(draft),source)
+            self.assertEqual(factual_issues('More than '+source+' proceedings','More than '+draft+' proceedings'),[])
+        self.assertTrue(factual_issues('thirty-five proceedings','53 proceedings'))
+        self.assertNotIn('3',numbers('one and two claims'))

@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Cifras escritas y recuperación de selección
+
+- El control de cifras reconoce cardinales ingleses escritos en las fuentes (twenty/20, thirty-five/35, two hundred/200) sin relajar el rechazo de dígitos distintos. La revisión semántica final sigue siendo obligatoria.
+- Una selección fallida con fuentes vigentes se comprueba otra vez antes de pedir una propuesta nueva al modelo. Si supera todos los controles, continúa al Audit sin repetir el gasto del estratega.
+- Regresión reproducida localmente sobre la selección DeForest guardada: siete falsos positivos numéricos, cero errores tras la corrección. 296 contratos Node y 211 pruebas Python aprobados.
+
 ## [2026-10-06] — Ausencia de fechas y revisión final independiente
 
 - Regresión real corregida: citar el encabezado estándar de últimos 12 meses no convierte un periodo ausente en contradicción. Las citas de conflictos o fechas inventadas siguen bloqueando.
