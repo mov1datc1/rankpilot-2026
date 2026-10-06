@@ -154,3 +154,14 @@ test('approval binds both actual Word files to one revision and reviews both tex
  const archive=await require('jszip').loadAsync(Buffer.from(artifact.audit_base64,'base64'));
  assert.ok((await archive.file('word/document.xml').async('string')).includes('Internal report linked'));
 });
+
+test('final review calibration update reuses the letter and reruns only the actual artifacts',async()=>{
+ reset();rejectFinal=true;await complete();const before=calls.length;
+ state.chambersData.completed_artifact_review_version=1;
+ const review=state.chambersData.editorial_review;
+ state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.chambersData.matters)),stage:'done',lease_until:0,state:review};
+ await complete({checkpoint:true});
+ assert.equal(calls.length,before+1);assert.ok(calls.at(-1).url.endsWith('/verify-rendered-package'));
+ assert.equal(state.chambersData.completed_artifact_review_version,2);
+ await complete({checkpoint:true});assert.equal(calls.length,before+1);
+});

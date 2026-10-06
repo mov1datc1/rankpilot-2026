@@ -1237,7 +1237,7 @@ export default function SubmissionStudio({
               <RefreshCw size={18} className="animate-spin" style={{ color: '#38BDF8' }} />
               <div>
                 <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF', marginRight: '0.5rem' }}>
-                  Optimizando Submission Global:
+                  Preparación de Submission y Audit:
                 </span>
                 <span role="status" aria-live="polite" style={{ fontSize: '0.85rem', color: '#E0E7FF' }}>
                   {optimizeAllProgress.stage}
@@ -1814,7 +1814,7 @@ export default function SubmissionStudio({
                     ? `El registro conserva ${matters.length} asuntos. La revisión editorial comparará su evidencia y aportación al portafolio antes de confirmar la selección y las reservas.`
                     : (paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
                       ? `RankPilot ha priorizado un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
-                      : `Chambers y Legal 500 recomiendan una selección curada de hasta ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar la dilución del perfil.`
+                      : `RankPilot seleccionó ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales). Consulta en el Audit la justificación de la selección y las reservas.`
                     )
                   }
                 </p>
@@ -2060,21 +2060,9 @@ export default function SubmissionStudio({
                 </div>
               </div>
 
-              {/* 4 Pillars Indicators */}
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.68rem', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '4px', color: '#475569' }}>
-                  ✓ Pilar 1: Identidad & Riesgo
-                </span>
-                <span style={{ fontSize: '0.68rem', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '4px', color: '#475569' }}>
-                  ✓ Pilar 2: Mandatos Ancla (Cifras Reales MXN/USD)
-                </span>
-                <span style={{ fontSize: '0.68rem', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '4px', color: '#475569' }}>
-                  ✓ Pilar 3: Liderazgo & Asociados Clave
-                </span>
-                <span style={{ fontSize: '0.68rem', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: '4px', color: '#475569' }}>
-                  ✓ Pilar 4: Precedente Nacional
-                </span>
-              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '1rem' }}>
+                La narrativa usa la evidencia disponible sobre la práctica, sus mandatos y el equipo. El Audit detalla los datos que faltan.
+              </p>
 
               {/* B10 Narrative Prose */}
               <div style={{
@@ -2220,7 +2208,7 @@ export default function SubmissionStudio({
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
-                      Estructurados en 3 párrafos orgánicos: Escala y Riesgo → Desafío Jurídico → Resultado y Precedente
+                      Redacción basada en las fuentes; distingue el trabajo realizado, el estado y los resultados acreditados.
                     </p>
                   </div>
                 </div>
@@ -2848,11 +2836,11 @@ export default function SubmissionStudio({
                       Asuntos fuera de selección ({categorized.pruned.length})
                     </h3>
                     <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>
-                      Estos asuntos fueron podados del Core de 20 para no diluir la ponderación de la práctica.
+                      Se conservan en el expediente. Consulta en el Audit el motivo de reserva o exclusión.
                     </p>
                   </div>
                   <span style={{ fontSize: '0.72rem', background: '#F1F5F9', color: '#64748B', padding: '2px 8px', borderRadius: '4px' }}>
-                    Protección contra dilución
+                    Fuera de la entrega actual
                   </span>
                 </div>
 
@@ -3016,7 +3004,7 @@ export default function SubmissionStudio({
                       <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                         {flagshipMatter.value && flagshipMatter.value !== 'N/A' && flagshipMatter.value !== 'Not disclosed'
                           ? `Monto verificado: ${formatCleanValue(flagshipMatter.value) || flagshipMatter.value}. Estructurado en 3 párrafos orgánicos (Mandato, Desafío Técnico y Precedente).`
-                          : `Mandato estratégico para ${firmName}. Redacción fluida en 3 párrafos orgánicos sin encabezados artificiales.`}
+                          : `Asunto priorizado para ${firmName}. El Audit explica su aportación a la selección.`}
                       </p>
                       <button
                         onClick={() => scrollTo(flagshipMatter.isConfidential || (flagshipMatter as any).publish_status === 'non_publishable' ? 'section-e' : 'section-d')}

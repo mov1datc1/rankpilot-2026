@@ -65,6 +65,23 @@ class TemporalReviewTests(unittest.TestCase):
         self.assertTrue(result['judge']['passed'])
         self.assertFalse(release_gate(result)['release_verdict']['passed'])
 
+    def test_live_missing_period_warning_with_standard_heading_stays_nonblocking(self):
+        self.state['package']['rendered_artifact'] = 'Confidential Work Highlights in last 12 months\nWork is ongoing.'
+        defect = {**self.defect('missing_metadata', 'warning'), 'code': 'MISSING_TEMPORAL_METADATA',
+            'matter_id': None, 'source_quote': '',
+            'artifact_quote': 'Confidential Work Highlights in last 12 months',
+            'message': 'No se indicó el período de investigación. Esta ausencia no contradice los estados pendiente/en curso y no impide la entrega por sí sola.'}
+        result = self.review([defect])
+        self.assertTrue(result['judge']['passed'])
+        self.assertEqual(result['judge']['defects'][0]['severity'], 'warning')
+        # A heading plus a concrete contradictory source is not just missing metadata.
+        conflict = {**defect, 'source_quote': 'The work ended in 2020.'}
+        self.assertFalse(self.review([conflict])['judge']['passed'])
+        invented = {**defect, 'artifact_quote': 'The appeal was won in 2025.'}
+        self.assertFalse(self.review([invented])['judge']['passed'])
+        self.state['package']['research_period'] = {'from': '2025-01-01', 'to': '2025-12-31'}
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
     def test_empty_negative_verdict_is_not_silently_approved(self):
         self.assertFalse(calibrate_verdict({'passed': False, 'defects': []})['passed'])
 

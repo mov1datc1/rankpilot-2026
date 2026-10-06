@@ -209,7 +209,8 @@ def calibrate_verdict(verdict, package=None):
     """RP16: an uncorroborated model label is never enough to override a defect.
 
     Only an identified, actually absent optional field with no disputed claim is
-    metadata. Quotes or invented dates/outcomes preserve the blocking finding.
+    metadata. Concrete source/claim quotes preserve a blocking finding; the
+    standard template heading alone is not a claim about a particular matter.
     Legacy ambiguous findings stay unresolved for the system, not a user task.
     """
     defects = [dict(d) for d in verdict.get('defects', [])]
@@ -228,10 +229,13 @@ def calibrate_verdict(verdict, package=None):
         entity = next((m for m in (package or {}).get('matters', []) if m.get('id') == defect.get('matter_id')), {})
         target = package or {} if field == 'research_period' else entity
         missing = field in ('research_period', 'startDate', 'completionDate', 'matter_status') and not target.get(field)
-        disputed = bool(defect.get('source_quote') or defect.get('artifact_quote'))
+        artifact_quote = ' '.join(str(defect.get('artifact_quote') or '').split())
+        standard_heading = bool(re.fullmatch(r'(?:(?:Confidential|Publishable) )?Work Highlights in last 12 months', artifact_quote, re.I))
+        heading_in_artifact = standard_heading and artifact_quote.casefold() in ' '.join(str((package or {}).get('rendered_artifact') or '').split()).casefold()
+        disputed = bool(defect.get('source_quote') or (artifact_quote and not heading_in_artifact))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
-        concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|contradic|inventad)', defect.get('message',''), re.I))
+        concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
         if package is not None and missing and not disputed and not concrete:
             defect['severity'] = 'warning'
             defect['message'] = 'Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.'

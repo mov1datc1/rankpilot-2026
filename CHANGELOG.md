@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-06] — Ausencia de fechas y revisión final independiente
+
+- Regresión real corregida: citar el encabezado estándar de últimos 12 meses no convierte un periodo ausente en contradicción. Las citas de conflictos o fechas inventadas siguen bloqueando.
+- La calibración final tiene versión propia: se repiten los controles del artefacto sin regenerar estrategia, B10, asuntos o carta vigentes.
+- Studio retira indicadores estáticos de evidencia no comprobada y no atribuye a los directorios el número de asuntos que eligió la IA.
+- Validación: 296 contratos Node, 209 Python y TypeScript; la comprobación editorial real se repite tras publicar.
+
 ## [2026-10-06] — Validación real y corrección de la plantilla final
 
 - La sección pública vacía describe la ubicación de los asuntos confidenciales sin atribuir instrucciones inexistentes al cliente.

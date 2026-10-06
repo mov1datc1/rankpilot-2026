@@ -10,7 +10,7 @@ import { Packer } from 'docx';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
-import { artifactHash, deliveryInputHash, RENDERER_VERSION } from '@/lib/audit/artifact-binding';
+import { artifactHash, deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
 import { buildAuditDoc } from '@/app/api/generate-docx/audit-builder';
 import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     const inputHash = reviewInputHash(reviewPackage(submission, previous, stored));
     const checkpoint = previous.review_checkpoint;
     const cachedReview = checkpoint?.input_hash === inputHash && checkpoint.stage === 'done' ? checkpoint.state : null;
-    const sameReview = previous.completed_review_policy_version === REVIEW_POLICY_VERSION && previous.completed_renderer_version === RENDERER_VERSION && (!cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview));
+    const sameReview = previous.completed_review_policy_version === REVIEW_POLICY_VERSION && previous.completed_renderer_version === RENDERER_VERSION && previous.completed_artifact_review_version === ARTIFACT_REVIEW_VERSION && (!cachedReview || previous.completed_review_result_hash === reviewOutputHash(cachedReview));
     if (sameReview && previous.approved_artifact?.input_hash === deliveryInputHash(submission, previous) && previous.release_verdict?.passed) {
       return NextResponse.json({success:true,status:submission.status,submission,chambersData:previous,matters:stored,b10,release:previous.release_verdict,cached:true});
     }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
+      ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
       draft_revision:Number(previous.draft_revision || 0)+1,
