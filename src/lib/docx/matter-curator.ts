@@ -14,6 +14,8 @@
  */
 
 
+import { recoverClientLegalName } from '@/lib/audit/extraction-auditor';
+
 export interface CuratedMattersResult {
   officialPubMatters: any[];
   officialConfMatters: any[];
@@ -85,7 +87,7 @@ export function curateMatters(allMatters: any[], practiceArea: string = '', cham
   const unique = new Map<string, any>();
   allMatters.forEach((m, i) => {
     const key = m.id ? String(m.id) : `source-${i}`;
-    if (!unique.has(key)) unique.set(key, {...m});
+    if (!unique.has(key)) unique.set(key, {...m, ...(m.client || m.clientName ? {client: recoverClientLegalName(m)} : {})});
   });
   const matters = [...unique.values()];
   const selection = chambersData.canonical_matter_selection;

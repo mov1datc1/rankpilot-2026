@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Nombres legales completos en extracción y entrega
+
+- La limpieza de clientes conserva sufijos legales e iniciales; solo separa descripciones explícitas.
+- Submission y Audit recuperan el sufijo desplazado en registros anteriores únicamente si el nombre completo coincide con una declaración literal y única de la fuente. No se sobrescriben fuentes ni borradores.
+- Renderer v6 exige revisar los nuevos documentos sin invalidar la estrategia y las redacciones guardadas. Las confirmaciones de cargo continúan dentro de los pendientes de RankPilot.
+- Validación: 300 contratos Node, TypeScript y build de producción; comprobación del Word con el expediente guardado, sin llamadas a modelos ni escrituras de producción.
+
 ## [2026-10-06] — Atribuciones y anonimización en la entrega real
 
 - La anonimización conserva el cargo de una trayectoria profesional sin convertir al empleador en un cliente. Se reconocen entidades completas en listas de clientes para evitar sufijos sueltos.

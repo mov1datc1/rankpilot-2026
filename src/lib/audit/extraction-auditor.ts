@@ -49,28 +49,30 @@ export function sanitizeClientName(rawClient: string): CleanedClientResult {
 
   const match = s.match(descPattern);
   if (match && match.index !== undefined && match.index > 2) {
-    const cleanClient = s.substring(0, match.index).replace(/[,.\s]+$/, '').trim();
+    const nameEnd = match.index + (s[match.index] === '.' && /(?:\b[A-Z]\.[A-Z]|\bInc|\bLtd|\bCorp)$/i.test(s.substring(0, match.index)) ? 1 : 0);
+    const cleanClient = s.substring(0, nameEnd).replace(/[,\s]+$/, '').trim();
     const clientDescription = s.substring(match.index).replace(/^[,.\s\-–—]+/, '').trim();
     return { cleanClient, cleanName: cleanClient, clientDescription, wasModified: true };
   }
 
-  // Pattern B: Split on ". " when the first part looks like an entity name (e.g. "EL CIELO COUNTRY CLUB. A first class...")
-  const dotSplit = s.split(/\.\s+/);
-  if (dotSplit.length > 1 && dotSplit[0].length >= 3 && dotSplit[0].length <= 80) {
-    const potentialClient = dotSplit[0].trim();
-    const rest = dotSplit.slice(1).join('. ').trim();
-    // Verify if first part is uppercase or has corporate suffix or is recognizable
-    if (potentialClient === potentialClient.toUpperCase() || /\b(S\.?A\.?|DE C\.?V\.?|LTD|LLC|INC|CORP|S\.?C\.?)\b/i.test(potentialClient) || potentialClient.length < 50) {
-      return {
-        cleanClient: potentialClient,
-        cleanName: potentialClient,
-        clientDescription: rest,
-        wasModified: true,
-      };
-    }
-  }
+  // A period alone is not evidence of a description: legal suffixes and
+  // personal initials contain periods too. Preserve ambiguous names verbatim.
 
   return { cleanClient: s, cleanName: s, clientDescription: '', wasModified: false };
+}
+
+/** Recover only the exact suffix displaced by the former period splitter.
+ * This projection does not overwrite a saved record or infer an entity name.
+ */
+export function recoverClientLegalName(matter: any): string {
+  const client = String(matter.client || matter.clientName || '');
+  const suffix = String(matter.clientDescription || '').trim();
+  if (!/\bS\.A$/i.test(client) || !/^de C\.V\.$/i.test(suffix)) return client;
+  const reconstructed = `${client}. ${suffix}`;
+  const declarations = String(matter.source_excerpt || '').split(/\r?\n/)
+    .map(line => line.match(/^\s*(?:Client|Cliente)\s*:\s*(.+?)\s*$/i)?.[1])
+    .filter(Boolean);
+  return declarations.length === 1 && declarations[0] === reconstructed ? reconstructed : client;
 }
 
 export interface JudgeSolExtractionAuditResult {
