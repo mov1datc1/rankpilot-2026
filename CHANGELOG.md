@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Ausencia de fechas sin falsos conflictos
+
+- Una cita JSON exacta de un campo opcional ausente se reconoce como metadato faltante; las fechas, resultados o citas contradictorias siguen bloqueando.
+- Audit convierte negritas Markdown en formato Word y conserva nombres completos. Renderer 8 exige revisión de los nuevos bytes.
+- 315 contratos Node y TypeScript pasan; regresión Python incluye citas nulas y contrapruebas con conflictos reales.
+
 ## [2026-10-07] — Secciones del Audit alineadas
 
 - Reubica el contenido cuando la IA devuelve los cinco encabezados explícitos dentro de campos desplazados; conserva la prosa y deja intactos casos parciales o ambiguos.

@@ -12,3 +12,14 @@ test('explicit misplaced sections map to correct fields without rewriting facts'
 test('partial, ambiguous or unlabelled content remains untouched',()=>{
   for(const value of [{...shifted,portfolio:'Person.'},{...shifted,next_steps:'**Cartera**\nOther.'},{...shifted,executive_assessment:'Unlabelled preface\n'+shifted.executive_assessment}]) assert.equal(normalizeLetterSections(value),value);
 });
+test('Audit uses Word bold formatting instead of literal Markdown markers',async()=>{
+  const {Packer}=require('docx');
+  const JSZip=require('jszip');
+  const {buildExecutiveAuditDoc}=require('../../src/app/api/generate-docx/audit-builder.ts');
+  const letter=normalizeLetterSections({...shifted,portfolio:'**Liderazgo**\n**Named person**.'});
+  const bytes=await Packer.toBuffer(buildExecutiveAuditDoc('Firm','Labour',{}, {},letter,{chambersData:{editorial_review:{letter}}}));
+  const xml=await(await JSZip.loadAsync(bytes)).file('word/document.xml').async('string');
+  assert.ok(!xml.includes('**Named person**'));
+  assert.match(xml,/<w:b\/>[^<]*(?:<[^>]+>)*Named person/);
+  assert.ok(!xml.includes('No assessment available.'));
+});

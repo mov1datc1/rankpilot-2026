@@ -241,7 +241,17 @@ def calibrate_verdict(verdict, package=None):
         artifact_quote = ' '.join(str(defect.get('artifact_quote') or '').split())
         standard_heading = bool(re.fullmatch(r'(?:(?:Confidential|Publishable) )?Work Highlights in last 12 months', artifact_quote, re.I))
         heading_in_artifact = standard_heading and artifact_quote.casefold() in ' '.join(str((package or {}).get('rendered_artifact') or '').split()).casefold()
-        disputed = bool(defect.get('source_quote') or (artifact_quote and not heading_in_artifact))
+        source_quote = str(defect.get('source_quote') or '').strip()
+        # A literal JSON quote of the verified absent field is evidence of
+        # missing metadata, not a conflicting source date or outcome.
+        quoted_absence = False
+        if missing and source_quote:
+            try:
+                quoted = json.loads(source_quote if source_quote.startswith('{') else '{' + source_quote + '}')
+                quoted_absence = isinstance(quoted, dict) and quoted == {field: target.get(field)} and target.get(field) in (None, '')
+            except (ValueError, TypeError):
+                pass
+        disputed = bool((source_quote and not quoted_absence) or (artifact_quote and not heading_in_artifact))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
         concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))

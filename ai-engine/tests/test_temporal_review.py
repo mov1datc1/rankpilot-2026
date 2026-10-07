@@ -85,6 +85,14 @@ class TemporalReviewTests(unittest.TestCase):
     def test_empty_negative_verdict_is_not_silently_approved(self):
         self.assertFalse(calibrate_verdict({'passed': False, 'defects': []})['passed'])
 
+    def test_literal_null_field_quote_is_absence_not_a_source_conflict(self):
+        defect = {**self.defect('missing_metadata'), 'source_quote': '"research_period":null',
+                  'artifact_quote': 'Work Highlights in last 12 months'}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        for quote in ['"research_period":"2020"', '"research_period":null,"outcome":"won"', 'The work ended in 2020.']:
+            self.assertFalse(self.review([{**defect, 'source_quote':quote}])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'artifact_quote':'Work ended in 2020.'}])['judge']['passed'])
+
     def test_typed_temporal_basis_reaches_model_for_every_editorial_role(self):
         inputs = []
         responses = [{'decisions': {'M01': {'disposition': 'core', 'priority': 1, 'rationale': 'Ongoing work', 'source_quote': 'Work is ongoing.'}}, 'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}, {'evidence_gaps': 'Confirma la actividad del periodo.'},

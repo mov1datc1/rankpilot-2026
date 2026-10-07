@@ -14,7 +14,11 @@ const CONTENT_WIDTH_DXA = 9360;
 
 function p(text: string, opts: { bold?: boolean; size?: number; color?: string; italics?: boolean; spacing?: any; alignment?: any } = {}): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold: opts.bold, size: opts.size || 22, color: opts.color, italics: opts.italics })],
+    children: text.split(/(\*\*[^*\n]+\*\*)/g).filter(Boolean).map(part => new TextRun({
+      text: part.startsWith('**') && part.endsWith('**') ? part.slice(2,-2) : part,
+      bold: opts.bold || (part.startsWith('**') && part.endsWith('**')),
+      size: opts.size || 22, color: opts.color, italics: opts.italics,
+    })),
     spacing: opts.spacing || { after: 60 },
     alignment: opts.alignment,
   });
