@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Etiquetas de estado vacías
+
+- La comprobación temporal distingue una etiqueta de formulario vacía de un estado real. Exige etiqueta literal en fuente, valor vacío o N/A y encabezado de destino sin afirmaciones. Las fechas y resultados contradictorios siguen bloqueando.
+- Se renueva la revisión final sin repetir selección ni redacción guardadas.
+
 ## [2026-10-07] — Ausencia de fechas sin falsos conflictos
 
 - Una cita JSON exacta de un campo opcional ausente se reconoce como metadato faltante; las fechas, resultados o citas contradictorias siguen bloqueando.

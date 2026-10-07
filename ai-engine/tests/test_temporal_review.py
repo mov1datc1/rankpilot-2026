@@ -93,6 +93,22 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertFalse(self.review([{**defect, 'source_quote':quote}])['judge']['passed'])
         self.assertFalse(self.review([{**defect,'artifact_quote':'Work ended in 2020.'}])['judge']['passed'])
 
+    def test_empty_status_form_labels_do_not_invent_a_conflict(self):
+        self.state['package']['matters'][0]['rawNotes'] += '\nMatter Status (closed in last year or ongoing?):'
+        self.state['package']['rendered_artifact'] += '\nD8 Date of completion or current status'
+        defect = {**self.defect('missing_metadata'), 'matter_id':None, 'field_path':'matter_status',
+                  'source_quote':'Matter Status (closed in last year or ongoing?):',
+                  'artifact_quote':'D8 Date of completion or current status'}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'source_quote':defect['source_quote']+' closed in 2020'}])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'artifact_quote':'D8 Date of completion or current status: won'}])['judge']['passed'])
+        self.state['package']['matters'][0]['rawNotes'] += ' ongoing'
+        self.assertFalse(self.review([defect])['judge']['passed'])
+        self.state['package']['matters'][0]['rawNotes'] = 'Matter Status (closed in last year or ongoing?):\n\nMatter’s Context: Source facts.'
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.state['package']['matters'][0]['matter_status']='closed'
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
     def test_typed_temporal_basis_reaches_model_for_every_editorial_role(self):
         inputs = []
         responses = [{'decisions': {'M01': {'disposition': 'core', 'priority': 1, 'rationale': 'Ongoing work', 'source_quote': 'Work is ongoing.'}}, 'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}, {'evidence_gaps': 'Confirma la actividad del periodo.'},

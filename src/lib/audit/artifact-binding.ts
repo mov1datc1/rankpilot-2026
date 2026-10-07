@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 // Template changes invalidate artifact approval, not source selection or saved prose.
 export const RENDERER_VERSION = 8;
-export const ARTIFACT_REVIEW_VERSION = 3;
+export const ARTIFACT_REVIEW_VERSION = 4;
 
 function stable(value: any): any {
   if (value instanceof Date) return value.toISOString();

@@ -240,6 +240,8 @@ def calibrate_verdict(verdict, package=None):
         missing = field in ('research_period', 'startDate', 'completionDate', 'matter_status') and not target.get(field)
         artifact_quote = ' '.join(str(defect.get('artifact_quote') or '').split())
         standard_heading = bool(re.fullmatch(r'(?:(?:Confidential|Publishable) )?Work Highlights in last 12 months', artifact_quote, re.I))
+        if field == 'matter_status':
+            standard_heading = standard_heading or bool(re.fullmatch(r'(?:[DE]8\s+)?Date of completion or current status', artifact_quote, re.I))
         heading_in_artifact = standard_heading and artifact_quote.casefold() in ' '.join(str((package or {}).get('rendered_artifact') or '').split()).casefold()
         source_quote = str(defect.get('source_quote') or '').strip()
         # A literal JSON quote of the verified absent field is evidence of
@@ -251,7 +253,14 @@ def calibrate_verdict(verdict, package=None):
                 quoted_absence = isinstance(quoted, dict) and quoted == {field: target.get(field)} and target.get(field) in (None, '')
             except (ValueError, TypeError):
                 pass
-        disputed = bool((source_quote and not quoted_absence) or (artifact_quote and not heading_in_artifact))
+        # Empty source form labels and empty destination labels are not
+        # contradictory statuses. Require the literal source label to exist.
+        source_label_absence = False
+        if missing and field == 'matter_status' and re.fullmatch(r'Matter Status \(closed in last year or ongoing\?\):', source_quote, re.I):
+            candidates = [entity] if defect.get('matter_id') else (package or {}).get('matters', [])
+            blank_status = re.compile(re.escape(source_quote) + r'\s*(?:N/A\s*)?(?:Matter[’\x27]s Context:|$)', re.I)
+            source_label_absence = any(not m.get(field) and any(blank_status.search(str(m.get(k) or '')) for k in ('source_excerpt','rawNotes','summary')) for m in candidates)
+        disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
         concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
