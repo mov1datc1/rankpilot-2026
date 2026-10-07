@@ -59,3 +59,15 @@ test('valid unchanged B10 is reused, while source or strategy changes require dr
  assert.ok(planDrafting({...data,b10_optimization:{...data.b10_optimization,strategy_hash:'previous'}}).includes('b10'));
  assert.ok(!planDrafting({...data,enhanced_b7:'Human edited narrative'}).includes('b10'));
 });
+
+test('a user question does not prevent repair of a separate source-backed generation defect',()=>{
+ const prose='The team won.';const source='The appeal is pending.';
+ const data={matters:[{id:'m1',rawNotes:source,optimizedText:prose,draft_provenance:{text_hash:stableHash(prose)}}],final_artifact_review:{judge:{defects:[{severity:'critical',owner:'user',code:'SOURCE_CONFLICT',message:'Confirm the lawyer role'},{severity:'critical',owner:'rankpilot',code:'UNSUPPORTED_CLAIM',scope:'submission',matter_id:'m1',source_quote:source,artifact_quote:prose}]}}};
+ assert.deepEqual(targetedRepair(data),{tasks:['matter:m1','audit','artifact'],letter:false});
+});
+test('generated department text can be repaired, but a human-edited B10 cannot',()=>{
+ const source='The team advises on appeals.',text='The team won every appeal.';
+ const data={original_b10:source,enhanced_b7:text,b10_optimization:{source,text},final_artifact_review:{judge:{defects:[{severity:'critical',owner:'rankpilot',code:'UNSUPPORTED_CLAIM',scope:'submission',source_quote:source,artifact_quote:text}]}}};
+ assert.deepEqual(targetedRepair(data),{tasks:['b10','audit','artifact'],letter:false});
+ assert.equal(targetedRepair({...data,enhanced_b7:'Human text.'}),null);
+});

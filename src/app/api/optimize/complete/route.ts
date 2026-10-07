@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const data:any = {
       ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
-      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,final_review_stale:false,
+      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,final_review_stale:false,review_responses:[],
       draft_revision:Number(previous.draft_revision || 0)+1,
       canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
       hero_matter_id:selectionValidated ? review.strategy?.hero_matter_id || null : null,

@@ -32,8 +32,9 @@ export async function POST(request:NextRequest) {
   try {
     const workers:any[]=await prisma.$queryRaw`SELECT "id" FROM "EditorialWorker" WHERE "version"=${EDITORIAL_VERSION} AND "heartbeat">now()-interval '90 seconds' LIMIT 1`;
     if(!workers.length) return NextResponse.json({code:'WORKER_UNAVAILABLE',error:'El motor editorial no está disponible. No iniciamos llamadas ni gastamos tokens; el expediente se conserva.'},{status:503});
-    return NextResponse.json({job:publicJob(await enqueue(submission,body.retry===true))},{status:202});
+    return NextResponse.json({job:publicJob(await enqueue(submission,body.retry===true,body.repair===true))},{status:202});
   } catch(error:any) {
+    if(error.message==='AUTO_REPAIR_UNAVAILABLE') return NextResponse.json({code:'AUTO_REPAIR_UNAVAILABLE',error:'RankPilot no encontró una reparación automática respaldada por las fuentes para este hallazgo. El expediente se conserva; no necesitas alterar tus datos para resolver un error de generación.'},{status:422});
     return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'La llamada anterior aún puede seguir activa. Espera unos minutos antes de reintentar para evitar consumo duplicado.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});
   }
 }

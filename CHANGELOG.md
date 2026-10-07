@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Pendientes individuales y reparación de generación
+
+- Cada pendiente tiene una acción directa. Guardar una respuesta la vincula a sus registros y devuelve al panel con el conteo de respuestas pendientes, sin ocultar preguntas ajenas ni confundirlas con tareas de RankPilot.
+- La reparación acotada de redacción puede continuar aunque exista otra pregunta del usuario; admite B10 generado y reintento explícito sin sobrescribir prosa humana ni duplicar trabajos activos.
+- Las referencias temporales M01/M26 del selector se proyectan a nombres antes de las etapas editoriales. La reanudación de selecciones guardadas exige que la huella del registro original siga coincidiendo; conserva IDs, selección y citas.
+- 312 contratos Node aprobados; QA Chrome con componentes reales y guardado simulado verificó conteo 2→1→0 y apertura de la persona correcta. La entrega DeForest se verifica separadamente tras publicar.
+
 ## [2026-10-07] — Confirmaciones guardadas y revisión pendiente
 
 - Las correcciones guardadas se distinguen de los hallazgos de una versión anterior; el panel conserva el historial sin pedir nuevamente la misma respuesta.

@@ -3,18 +3,21 @@
 import { reviewIssues, reviewIsStale, type ReviewDestination } from '@/lib/audit/review-actions';
 
 export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;onResolve:(destination:ReviewDestination,message:string)=>void}) {
-  const issues=reviewIssues(data,errors);
+  const issues=approved ? [] : reviewIssues(data,errors);
+  const humanCount=issues.filter(issue=>issue.owner!=='RankPilot').length;
+  const systemCount=issues.length-humanCount;
   const stale=reviewIsStale(data);
   return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Tus documentos están listos':`${issues.length} ${issues.length===1?'pendiente antes':'pendientes antes'} de descargar el Submission`}</h2>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Tus documentos están listos':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'No quedan respuestas pendientes'}</h2>
+    {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · La entrega se habilita después de comprobar el documento.</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
     <div style={{display:'grid',gap:10}}>{issues.map((issue,index)=><div key={`${index}-${issue.title}`} style={{border:'1px solid #E2E8F0',borderRadius:10,padding:14}}>
       <span style={{fontSize:11,fontWeight:700,color:issue.owner==='RankPilot'?'#4338CA':'#92400E'}}>{issue.owner}</span>
       <h3 style={{fontSize:15,margin:'5px 0'}}>{issue.title}</h3>
       <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{issue.action}</p>
-      {issue.destination!=='review' && <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 10px',fontWeight:600,cursor:'pointer'}}>{issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección'):issue.destination==='period'?'Completar periodo':issue.destination==='ranking'?'Verificar ranking':'Corregir este pendiente'} →</button>}
+      <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination==='review'?'retry-review':issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 10px',fontWeight:600,cursor:'pointer'}}>{issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Corregir con RankPilot'):issue.destination==='period'?'Completar periodo':issue.destination==='ranking'?'Verificar ranking':'Corregir este pendiente'} →</button>
       <details style={{fontSize:13,lineHeight:1.65,marginTop:10}}><summary style={{cursor:'pointer',color:'#475569'}}>Ver hallazgo y personas o asuntos afectados</summary><p style={{whiteSpace:'pre-wrap',marginBottom:0}}>{issue.message}</p></details>
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}

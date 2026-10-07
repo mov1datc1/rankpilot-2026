@@ -47,3 +47,14 @@ class SelectionContractTests(unittest.TestCase):
         self.assertEqual(payload['preferred_hero_id'], 'M01')
         self.assertEqual(package, before)
         self.assertEqual(result['strategy']['hero_matter_id'], 'uuid-0')
+
+    def test_transport_refs_resolve_in_prose_without_rewriting_source_quotes(self):
+        proposal=copy.deepcopy(self.proposal)
+        proposal['thesis']='M01 leads; M26 supports. M260 is not a registered reference.'
+        proposal['pending_questions']=['Confirm M26 activity.']
+        proposal['decisions']['M01']['rationale']='M01 leads.'
+        proposal['decisions']['M01']['source_quote']='M01 is verbatim evidence.'
+        result=project_selection(proposal,self.schema,self.refs,self.matters)
+        self.assertEqual(result['thesis'],'Client 0 leads; Client 25 supports. M260 is not a registered reference.')
+        self.assertEqual(result['matters'][0]['source_quote'],'M01 is verbatim evidence.')
+        self.assertEqual(result['matters'][0]['matter_id'],'uuid-0')

@@ -1,3 +1,4 @@
+import { recoverClientLegalName } from './extraction-auditor';
 import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
@@ -70,6 +71,9 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   if (!state.strategy || keys.strategy !== reviewStepHash('strategy',payload,state)) {
     return {...base,stage:'strategy',state:{},step_keys:{}};
   }
+  // The matching strategy key proves the original register order is unchanged.
+  // Resolve transport references before downstream roles see source document numbers.
+  state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
   if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
     selection_feedback:{strategy:state.strategy,errors:state.errors || []},
   }};
@@ -79,4 +83,10 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
     return {...base,stage:'writer',step_keys:{strategy:keys.strategy}};
   }
   return {...base,stage:'done'};
+}
+
+export function displayStrategyReferences(strategy:any, matters:any[]) {
+  const labels=new Map(matters.map((m:any,i:number)=>[`M${String(i+1).padStart(2,'0')}`,recoverClientLegalName(m) || m.name || m.id]));
+  const display=(value:string)=>String(value || '').replace(/(?<![\w-])M\d{2,}(?![\w-])/g,ref=>labels.get(ref) || ref);
+  return {...strategy,thesis:display(strategy.thesis),pending_questions:(strategy.pending_questions || []).map(display),matters:(strategy.matters || []).map((m:any)=>({...m,rationale:display(m.rationale)}))};
 }

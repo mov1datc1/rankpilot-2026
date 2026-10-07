@@ -162,6 +162,6 @@ test('final review calibration update reuses the letter and reruns only the actu
  state.chambersData.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,state.chambersData,state.chambersData.matters)),stage:'done',lease_until:0,state:review};
  await complete({checkpoint:true});
  assert.equal(calls.length,before+1);assert.ok(calls.at(-1).url.endsWith('/verify-rendered-package'));
- assert.equal(state.chambersData.completed_artifact_review_version,2);
+ assert.equal(state.chambersData.completed_artifact_review_version,require('../../src/lib/audit/artifact-binding.ts').ARTIFACT_REVIEW_VERSION);
  await complete({checkpoint:true});assert.equal(calls.length,before+1);
 });

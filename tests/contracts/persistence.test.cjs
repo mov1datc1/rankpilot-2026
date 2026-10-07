@@ -121,3 +121,11 @@ test('confirmed role save aligns a literal profile heading and preserves the ori
  assert.equal(saved.roleResolution.originalProfile.comments,old);
  assert.equal(state.submission.chambersData.final_review_stale,true);
 });
+
+test('issue answer is persisted in the same transaction as its corrected records',async()=>{
+ reset();const message='Confirma el cargo de Sofia Vega.';
+ state.submission.chambersData.lawyers=[{name:'Sofia Vega',role:'Associate',isPartner:false}];
+ state.submission.chambersData.final_artifact_review={judge:{defects:[{message,owner:'user',severity:'critical'}]}};
+ const res=await updateSubmissionValidatedData('s',{reviewIssueMessage:message,lawyers:[{name:'Sofia Vega',role:'Partner',isPartner:true,roleResolution:{role:'Partner',reason:'Confirmed by user',confirmed:true}}]});
+ assert.equal(res.success,true);assert.equal(res.reviewResponses[0].message,message);assert.equal(state.submission.chambersData.review_responses[0].savedBy,'u');
+});

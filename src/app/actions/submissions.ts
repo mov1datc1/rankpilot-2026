@@ -1,5 +1,6 @@
 'use server';
 
+import { recordReviewResponse } from '@/lib/audit/review-actions';
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { persistInputReview, validValueResolution } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
@@ -175,6 +176,7 @@ export async function updateSubmissionDepartment(submissionId: string, deptData:
 // ── Update Validated Submission Data (Post-Ingestion Wizard) ──
 export async function updateSubmissionValidatedData(submissionId: string, data: {
   expectedRevision?: number;
+  reviewIssueMessage?: string;
   firmName?: string;
   practiceArea?: string;
   location?: string;
@@ -240,6 +242,8 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...(data.matters ? { matters: data.matters } : {})
     };
 
+    Object.assign(updatedChambers, {review_responses:recordReviewResponse(chambers,updatedChambers,data.reviewIssueMessage,user.id)});
+
     await prisma.$transaction(async (tx) => {
     const locked = await tx.submission.updateMany({ where: { id: submissionId, updatedAt: existing.updatedAt }, data: { updatedAt: new Date() } });
     if (locked.count !== 1) throw new Error('El borrador cambió en otra operación. Recarga antes de guardar.');
@@ -277,7 +281,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
 
     });
-    return { success: true, revision: nextRevision, matters: data.matters, lawyers: data.lawyers };
+    return { success: true, revision: nextRevision, matters: data.matters, lawyers: data.lawyers, reviewResponses: (updatedChambers as any).review_responses };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };

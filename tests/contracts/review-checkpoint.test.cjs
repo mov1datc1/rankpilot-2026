@@ -115,3 +115,13 @@ test('failed selection retries once on the next request with diagnostics and no 
  assert.equal(calls[0].state.letter,undefined);assert.deepEqual(state.matters,source);
  await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
 });
+
+test('transport references resolve by the original register, never by source labels or sorted strategy',()=>{
+ const {displayStrategyReferences}=require('../../src/lib/audit/review-checkpoint.ts');
+ const matters=Array.from({length:26},(_,i)=>({id:`id-${i}`,client:`Client ${i}`,source_label:`MATTER NUMBER ${26-i}`}));
+ matters[25].client='Hero Client';
+ const strategy={hero_matter_id:'id-25',thesis:'M26 is the hero; M01 supports it. M260 is unknown.',pending_questions:['Confirm M26 activity.'],matters:[{matter_id:'id-25',rationale:'M26 leads.',source_quote:'M26 is a literal source token.'}]};
+ const result=displayStrategyReferences(strategy,matters);
+ assert.equal(result.thesis,'Hero Client is the hero; Client 0 supports it. M260 is unknown.');
+ assert.equal(result.hero_matter_id,strategy.hero_matter_id);assert.equal(result.matters[0].source_quote,strategy.matters[0].source_quote);assert.equal(strategy.thesis.startsWith('M26'),true);
+});

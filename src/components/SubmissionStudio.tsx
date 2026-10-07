@@ -42,7 +42,7 @@ import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
-import { focusedReviewScope, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
+import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
 import { updateSubmissionValidatedData, updateDesignatedHeroMatter } from '@/app/actions/submissions';
 
@@ -275,14 +275,17 @@ export default function SubmissionStudio({
   const pendingInputMatters = matters.filter(needsInputReview);
   const [reviewPending, setReviewPending] = useState(false);
 
+  const [activeReviewMessage,setActiveReviewMessage]=useState<string | undefined>();
   const [periodFrom, setPeriodFrom] = useState(initialChambersData?.research_period?.from || '');
   const [periodTo, setPeriodTo] = useState(initialChambersData?.research_period?.to || '');
   const saveResearchPeriod = async () => {
     setIsSavingDraft(true);setDraftSaveError('');
     try {
-      const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),researchPeriod:{from:periodFrom,to:periodTo}});
+      const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),researchPeriod:{from:periodFrom,to:periodTo},reviewIssueMessage:activeReviewMessage});
       if(!result.success) throw new Error(result.error);
-      setChambersData((prev:any)=>({...prev,research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+      setChambersData((prev:any)=>({...prev,research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+      setActiveReviewMessage(undefined);
+      document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
     } catch(error) {setDraftSaveError(error instanceof Error?error.message:'No se pudo guardar el periodo.');}
     finally {setIsSavingDraft(false);}
   };
@@ -302,8 +305,9 @@ export default function SubmissionStudio({
   };
   const deliveryState = getDeliveryState(chambersData, matters, true);
   const resolveReviewIssue = (destination: ReviewDestination, message: string) => {
-    if (destination === 'retry-selection') { void handleOptimizeAll(false); return; }
-    if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters)); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
+    if (destination === 'retry-selection' || destination === 'retry-review') { void handleOptimizeAll(false,destination==='retry-review' && !reviewIsStale(chambersData)); return; }
+    if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters,(chambersData.final_artifact_review?.judge?.defects || []).find((d:any)=>d.message===message))); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
+    setActiveReviewMessage(message);
     setActiveTab('studio');
     window.setTimeout(() => {
       const target=document.getElementById(destination === 'period' ? 'studio-research-period' : destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
@@ -565,7 +569,7 @@ export default function SubmissionStudio({
     return ()=>{stopped=true;controller.abort();clearTimeout(timer);};
   },[submission.id,jobWatch]);
 
-  const handleOptimizeAll = async (_bypassReadiness:boolean=false) => {
+  const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);return;}
     if(isOptimizingAll) return;
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
@@ -577,7 +581,7 @@ export default function SubmissionStudio({
     setIsOptimizingAll(true);
     setOptimizeAllComplete(false);
     try {
-      const response=await fetch('/api/editorial/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissionId:submission.id,retry:true})});
+      const response=await fetch('/api/editorial/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissionId:submission.id,retry:true,repair:repairGenerated})});
       const data=await response.json();
       if(!response.ok) throw new Error(data.error || 'No se pudo iniciar la revisión.');
       setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:data.job.message});
@@ -3842,15 +3846,16 @@ export default function SubmissionStudio({
         }}
         onComplete={async (data) => {
           if (data.correctionOnly && !data.lawyersChanged && !data.mattersChanged) {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);return;}
-          const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
+          const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,reviewIssueMessage:focusedReview?.message,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
           const result=await updateSubmissionValidatedData(submission.id,changes);
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
           setReviewLawyersFirst(false);
           setFocusedReview(undefined);
+          document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
           if(!data.correctionOnly && data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
         }}
       />
