@@ -67,7 +67,7 @@ export function sanitizeClientName(rawClient: string): CleanedClientResult {
 export function recoverClientLegalName(matter: any): string {
   const client = String(matter.client || matter.clientName || '');
   const suffix = String(matter.clientDescription || '').trim();
-  if (!/\bS\.A$/i.test(client) || !/^de C\.V\.$/i.test(suffix)) return client;
+  if (!/\b[A-Z]$/i.test(client) || !/^(?:(?:de|del)\s+|[A-Z]\.?\s*)+$/i.test(suffix)) return client;
   const reconstructed = `${client}. ${suffix}`;
   const declarations = String(matter.source_excerpt || '').split(/\r?\n/)
     .map(line => line.match(/^\s*(?:Client|Cliente)\s*:\s*(.+?)\s*$/i)?.[1])

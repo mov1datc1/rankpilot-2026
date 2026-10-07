@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Confirmaciones guardadas y revisión pendiente
+
+- Las correcciones guardadas se distinguen de los hallazgos de una versión anterior; el panel conserva el historial sin pedir nuevamente la misma respuesta.
+- El cargo confirmado se aplica al encabezado literal del perfil en Submission y revisión editorial, conservando el original para trazabilidad. La confirmación está disponible también sin cambiar primero el cargo.
+- Cobertura de razones sociales mexicanas ampliada: S.A. de C.V., S. de R.L. de C.V., S.A.P.I. de C.V. y variantes sin puntuación. La recuperación de registros anteriores requiere coincidencia exacta con su fuente.
+- Validación: 304 contratos Node y TypeScript; QA Chrome con componentes reales y guardado simulado confirmó cierre, reapertura con la respuesta y perfil coherente. Persistencia servidor cubierta por contratos; no se alteró el expediente real.
+
 ## [2026-10-07] — Nombres legales completos en extracción y entrega
 
 - La limpieza de clientes conserva sufijos legales e iniciales; solo separa descripciones explícitas.

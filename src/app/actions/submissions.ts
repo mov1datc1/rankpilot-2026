@@ -1,5 +1,6 @@
 'use server';
 
+import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { persistInputReview, validValueResolution } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
@@ -217,15 +218,16 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       const resolution = lawyer.roleResolution || {role:lawyer.role || '',reason:'',confirmed:false};
       const valid = resolution.confirmed === true && !!resolution.reason?.trim() && resolution.role === lawyer.role && lawyer.isPartner === (lawyer.role === 'Partner');
       const unchanged = previous?.roleResolution?.confirmed === true && previous.roleResolution.role === resolution.role && previous.roleResolution.reason === resolution.reason;
-      return {...lawyer,is_partner:lawyer.isPartner,roleResolution:{...resolution,confirmed:valid,
+      return projectConfirmedLawyerRole({...lawyer,is_partner:lawyer.isPartner,roleResolution:{...resolution,confirmed:valid,
         originalRole:previous?.roleResolution?.originalRole ?? previous?.role ?? (previous?.isPartner === true ? 'Partner' : previous?.isPartner === false ? 'Associate' : null),
         confirmedAt:valid ? (unchanged ? previous.roleResolution.confirmedAt : new Date().toISOString()) : null,
-        confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}};
+        confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}});
     });
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
       draft_revision: nextRevision,
+      final_review_stale: true,
       ...(data.practiceArea && data.practiceArea !== existing.practiceArea ? { canonical_matter_selection: null } : {}),
       release_verdict: { passed: false, status: 'needs_review', errors: ['Draft edited; validation required.'] },
       cloned_docx_b64: null,

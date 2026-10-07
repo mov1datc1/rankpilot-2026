@@ -35,3 +35,15 @@ test('DOCX client list and matter table recover source-backed legacy names witho
   assert.equal(m.client,'Example, S.A');
  }
 });
+
+test('Mexican legal forms remain intact and legacy recovery never guesses a missing suffix',()=>{
+ for (const name of ['Example, S. de R.L. de C.V.','Example, S.A.P.I. de C.V.','Example S de CV de RL','Example, S. de C.V.','Example, S.C.']) {
+  assert.equal(sanitizeClientName(name).cleanClient,name);
+  const parts=name.split(/\.\s+/);
+  if(parts.length>1) {
+   const m={client:parts[0],clientDescription:parts.slice(1).join('. '),source_excerpt:`Client: ${name}`};
+   assert.equal(recoverClientLegalName(m),name);
+   assert.equal(recoverClientLegalName({...m,source_excerpt:''}),parts[0]);
+  }
+ }
+});

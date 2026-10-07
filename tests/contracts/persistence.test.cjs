@@ -111,3 +111,13 @@ test('browser context cannot override saved scope sent to the extractor',async()
  reset();const original=global.fetch;let payload;global.fetch=async(_,options)=>{payload=JSON.parse(options.body);return Response.json(extracted);};
  try {const result=await POST(new NextRequest('http://local/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source',context:{practice_area:'Labour & Employment',directory:'Legal 500',jurisdiction:'Chile'}})}));assert.equal(result.status,200);assert.equal(payload.context.practice_area,'Tax');assert.equal(payload.context.directory,'Chambers');assert.equal(payload.context.jurisdiction,'Mexico');}finally{global.fetch=original;}
 });
+
+test('confirmed role save aligns a literal profile heading and preserves the original for traceability',async()=>{
+ reset();const old='Senior Associate · Litigation specialist. Previously an associate at another firm.';
+ state.submission.chambersData.lawyers=[{name:'Sofia Vega',isPartner:false,comments:old,bio:old}];
+ const result=await updateSubmissionValidatedData('s',{lawyers:[{name:'Sofia Vega',role:'Partner',isPartner:true,comments:old,bio:old,roleResolution:{role:'Partner',reason:'Confirmed for this period',confirmed:true}}]});
+ assert.equal(result.success,true);const saved=state.submission.chambersData.lawyers[0];
+ assert.equal(saved.comments,'Partner · Litigation specialist. Previously an associate at another firm.');
+ assert.equal(saved.roleResolution.originalProfile.comments,old);
+ assert.equal(state.submission.chambersData.final_review_stale,true);
+});

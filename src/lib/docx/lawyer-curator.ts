@@ -1,3 +1,4 @@
+import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { clientAliases } from './client-aliases';
 import { cleanLawyerNames, sanitizeBannedSuperlatives } from './artifact-integrity-check';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -126,7 +127,8 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
 /** Factual roster projection. No rankings, bios or roles are inferred from a name. */
 export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName: string, practiceArea: string, guideRegion: string, chambersData?: any): CuratedLawyer[] {
   const roster = new Map<string, any>();
-  for (const person of rawLawyers || []) {
+  for (const rawPerson of rawLawyers || []) {
+    const person = projectConfirmedLawyerRole(rawPerson);
     const name=cleanLawyerNames(person.name || person.fullName || '');
     if(name && !roster.has(normalizeName(name))) roster.set(normalizeName(name), {...person,name});
   }

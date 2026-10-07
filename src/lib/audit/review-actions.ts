@@ -26,10 +26,17 @@ export function describeReviewIssue(message: string) {
 }
 
 /** Keep individual judge findings rather than the concatenated legacy error. */
+export function reviewIsStale(data:any) {
+  return !!data?.final_artifact_review && (data.final_review_stale === true ||
+    (data.release_verdict?.errors || []).some((message:string)=>/^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)));
+}
+
 export function reviewIssues(data:any, errors:string[]) {
   const defects = data?.final_artifact_review?.judge?.defects || [];
-  const messages = defects.filter((d:any)=>d.severity==='critical').map((d:any)=>String(d.message));
+  const stale = reviewIsStale(data);
+  const messages = stale ? [] : defects.filter((d:any)=>d.severity==='critical').map((d:any)=>String(d.message));
   for (const error of errors) {
+    if (stale && (/^(Draft edited;|Borrador editado;|Genera y revisa|Reintenta la revisión editorial)/.test(error) || defects.some((d:any)=>d.message===error))) continue;
     if (messages.length && (/^El documento no superó la validación final:/.test(error) || error === 'Genera y revisa el archivo final antes de descargar.')) continue;
     messages.push(error);
   }
@@ -39,6 +46,7 @@ export function reviewIssues(data:any, errors:string[]) {
     if(defect?.owner==='rankpilot') return {message,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'review' as ReviewDestination};
     return {message,...presentation};
   });
+  if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'review' as ReviewDestination});
   const selection=issues.filter(issue=>issue.destination==='retry-selection');
   return selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
 }

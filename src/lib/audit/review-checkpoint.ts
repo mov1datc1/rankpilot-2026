@@ -1,3 +1,4 @@
+import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
 export const REVIEW_POLICY_VERSION = 'review-core-v2.0';
@@ -22,7 +23,7 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     b10_source: data.confirmed_source_b10 ?? data.original_b10 ?? '',
     b10_draft: data.enhanced_b7 || data.original_b10 || '',
     c2_source: data.original_c2 || '', c2_draft: data.enhanced_c2 || '',
-    lawyers: data.lawyers || [], matters,
+    lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole), matters,
   };
 }
 

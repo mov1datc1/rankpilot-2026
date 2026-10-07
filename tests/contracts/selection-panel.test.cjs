@@ -13,3 +13,13 @@ test('selection panel renders one explicit retry button and dispatches its actio
  assert.ok(!html.includes('Después de guardar las correcciones'));assert.ok(html.includes('1 pendiente antes'));
  assert.equal(buttons(ReviewPanel({...props,busy:true}))[0].props.disabled,true);
 });
+
+test('saved corrections display a new-review action and retain old findings as history',()=>{
+ const data={final_review_stale:true,final_artifact_review:{judge:{defects:[{severity:'critical',message:'Confirma el cargo de Sofia Vega.',owner:'user'}]}}};
+ const props={data,errors:['Draft edited; validation required.'],warnings:[],approved:false,onResolve:()=>{}};
+ const html=renderToStaticMarkup(ReviewPanel(props));
+ assert.match(html,/Cambios guardados/);assert.match(html,/Ver hallazgos de la versión anterior/);
+ assert.doesNotMatch(html,/Corregir este pendiente/);assert.match(html,/Confirma el cargo de Sofia Vega/);
+ const legacy={...data,final_review_stale:undefined,release_verdict:{errors:['Draft edited; validation required.']}};
+ assert.match(renderToStaticMarkup(ReviewPanel({...props,data:legacy})),/Guardado confirmado/);
+});

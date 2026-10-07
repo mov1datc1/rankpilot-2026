@@ -683,7 +683,7 @@ export default function PostIngestionWizardModal({
                   lawyers.map((l: any, idx: number) => {
                     const name = l.name || l.fullName || `Abogado ${idx + 1}`;
                     if (correctionOnly && reviewScope?.lawyerNames.length && !reviewScope.lawyerNames.includes(name)) return null;
-                    const role = l.role || (l.isPartner ? 'Partner' : 'Associate');
+                    const role = l.role || (l.isPartner === true ? 'Partner' : l.isPartner === false ? 'Associate' : '');
                     const ranking = l.suggestedRank || l.suggestedRanking || l.suggested_rank || l.suggested_ranking || '';
                     return (
                       <div key={idx} style={{
@@ -708,13 +708,14 @@ export default function PostIngestionWizardModal({
                             <textarea aria-label={`Perfil de ${name}`} value={l.comments || l.bio || ''} onChange={e=>{const value=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,comments:value,bio:value}:item));}} rows={5} style={{display:'block',width:'100%',boxSizing:'border-box',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #CBD5E1',borderRadius:6}} />
                           </label>
                         </details>
-                        {l.roleResolution && <div style={{fontSize:12,color:'#475569',marginTop:8}}>
+                        <div style={{fontSize:12,color:'#475569',marginTop:8}}>
                           <label>Fuente, fecha y motivo de la corrección
-                            <textarea aria-label={`Fuente del cargo de ${name}`} value={l.roleResolution.reason || ''} onChange={e=>{const reason=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,reason,confirmed:false}}:item));}} style={{width:'100%',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #cbd5e1',borderRadius:6}}/>
+                            <textarea aria-label={`Fuente del cargo de ${name}`} value={l.roleResolution?.reason || ''} onChange={e=>{const reason=e.target.value;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,role,isPartner:role==='Partner',is_partner:role==='Partner',roleResolution:{...item.roleResolution,role,reason,confirmed:false}}:item));}} style={{width:'100%',background:'#fff',color:'#0f172a',padding:8,border:'1px solid #cbd5e1',borderRadius:6}}/>
                           </label>
-                          <label style={{display:'flex',gap:6,alignItems:'start'}}><input type="checkbox" checked={l.roleResolution.confirmed===true} disabled={!l.role || !l.roleResolution.reason?.trim()} onChange={e=>{const confirmed=e.target.checked;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,confirmed}}:item));}}/>Confirmo el cargo para el periodo de este submission.</label>
-                          {!l.roleResolution.confirmed && <p>Decisión pendiente antes de aprobar la entrega. Puedes guardar y seguir trabajando.</p>}
-                        </div>}
+                          <label style={{display:'flex',gap:6,alignItems:'start'}}><input type="checkbox" checked={l.roleResolution?.confirmed===true} disabled={!role || !l.roleResolution?.reason?.trim()} onChange={e=>{const confirmed=e.target.checked;setLawyers(previous=>previous.map((item,index)=>index===idx?{...item,roleResolution:{...item.roleResolution,confirmed}}:item));}}/>Confirmo el cargo para el periodo de este submission.</label>
+                          {!l.roleResolution?.confirmed && <p>Decisión pendiente antes de aprobar la entrega. Puedes guardar y seguir trabajando.</p>}
+                          {l.roleResolution?.confirmed && <p>Cargo confirmado para este submission. El perfil utilizará este cargo; el texto original se conserva como antecedente.</p>}
+                        </div>
                         <div style={{
                           display: 'inline-block',
                           marginTop: '0.4rem',
@@ -1048,7 +1049,7 @@ export default function PostIngestionWizardModal({
           </>}
           {correctionOnly && <div style={{fontSize:13,color:'#475569',lineHeight:1.6}}>
             <strong>{currentStep===3 ? 'Corrección de abogados' : `Asuntos relacionados · ${currentStep-3} de ${totalMatterSteps}`}</strong>
-            <p style={{margin:'6px 0'}}>Guardar conserva tus cambios. La aprobación de la entrega se comprobará después, al pulsar «Revisar entrega».</p>
+            <p style={{margin:'6px 0'}}>Guardar conserva tus cambios. La aprobación de la entrega se comprobará después, al pulsar «Preparar Submission y Audit».</p>
             {currentStep===3 && visibleMatters.length>0 && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(4);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Revisar asuntos relacionados ({visibleMatters.length})</button>}
             {currentStep>=4 && currentStep<totalSteps && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(step=>step+1);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Siguientes asuntos relacionados →</button>}
           </div>}

@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       const reviewResponse = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
         method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
         body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
-          b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:previous.lawyers || [],matters})
+          b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:reviewPackage(submission, previous, matters).lawyers,matters})
       });
       if (!reviewResponse.ok) return NextResponse.json({error:'La revisión editorial no se completó. El borrador anterior se conserva.'}, {status:502});
       review = await reviewResponse.json();
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const data:any = {
       ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:reviewOutputHash(review),
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
-      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,
+      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,final_review_stale:false,
       draft_revision:Number(previous.draft_revision || 0)+1,
       canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
       hero_matter_id:selectionValidated ? review.strategy?.hero_matter_id || null : null,
