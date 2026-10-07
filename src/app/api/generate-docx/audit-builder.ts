@@ -3,6 +3,7 @@ import {
   AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, TableLayoutType
 } from 'docx';
 import { curateMatters } from '@/lib/docx/matter-curator';
+import { normalizeLetterSections } from '@/lib/audit/letter-sections';
 import { resolveCountryJurisdiction } from './submission-builder';
 
 const NAVY = '1B365D';
@@ -75,7 +76,7 @@ export function makeCustomWidthTable(headers: string[], rows: string[][], colWid
 /** Internal evidence review. This renderer never supplies missing facts or predicts a band. */
 export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, analysis: any, context: any, letter: any, submission: any): Document {
   const data = submission.chambersData || submission.chambers_data || {};
-  const letterData = data.editorial_review?.letter;
+  const letterData = normalizeLetterSections(data.editorial_review?.letter);
   if (letterData) {
     const state = data.artifact_pair_revision ? 'Internal report linked to the Submission selection. Delivery status is available in Studio.' : data.release_verdict?.passed === true ? 'Editorial review approved; final artifact checked separately.' : 'Working draft — unresolved review findings; not approved for final delivery.';
     const sections: (Paragraph | Table)[] = [sectionTitle('RANKPILOT — Strategic Audit Letter'), fieldLabel('Firm: ', firmName), fieldLabel('Practice: ', practiceArea), p(state, {bold:true}), p('Confidential internal review. Ranking outcomes are determined by the directory.')];

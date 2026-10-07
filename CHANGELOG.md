@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## [2026-10-07] — Secciones del Audit alineadas
+
+- Reubica el contenido cuando la IA devuelve los cinco encabezados explícitos dentro de campos desplazados; conserva la prosa y deja intactos casos parciales o ambiguos.
+- Submission y Audit se revisan nuevamente con renderer 7; 314 contratos Node y TypeScript pasan.
+
 ## [2026-10-07] — Pendientes individuales y reparación de generación
 
 - Cada pendiente tiene una acción directa. Guardar una respuesta la vincula a sus registros y devuelve al panel con el conteo de respuestas pendientes, sin ocultar preguntas ajenas ni confundirlas con tareas de RankPilot.
