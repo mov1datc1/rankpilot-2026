@@ -140,6 +140,9 @@ def development_errors(package, strategy, proposal):
         if candidate.get('recommendation')=='present' and _norm(candidate.get('suggested_ranking')) in ('individual ranking candidate','candidate','candidato individual','ranking candidate'):
             errors.append(f"Falta una categoría razonada o una brecha explícita: {candidate.get('name')}")
         support=candidate.get('supporting_matters',[])
+        support_ids=[item.get('matter_id') for item in support]
+        if len(support_ids)!=len(set(support_ids)):
+            errors.append(f"Asuntos duplicados en la candidatura: {candidate.get('name')}")
         if candidate.get('recommendation')=='present' and not support:
             errors.append(f"Candidatura sin asuntos atribuidos: {candidate.get('name')}")
         for item in support:

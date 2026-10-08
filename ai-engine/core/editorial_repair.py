@@ -44,7 +44,8 @@ def repair_targets(package, strategy, proposal):
             quote=literal_quote(support.get('source_quote'))
             if support.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS):
                 invalid_support.append(support.get('matter_id'))
-        if invalid_support:
+        support_ids=[s.get('matter_id') for s in candidate.get('supporting_matters',[])]
+        if invalid_support or len(support_ids)!=len(set(support_ids)) or (candidate.get('recommendation')=='present' and not support_ids):
             add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and reconcile the bio, category and recommendation with actual evidence.',{'person':person,'invalid_support_ids':invalid_support,'selected_matters':[m for mid,m in register.items() if mid in core]})
             continue
         for j,support in enumerate(candidate.get('supporting_matters',[])):

@@ -57,3 +57,10 @@ class TargetedRepairTests(unittest.TestCase):
         other={**DEV['candidates'][0],'name':'Another Person'}
         with self.assertRaisesRegex(ValueError,'identity'):
             apply_corrections(proposal,targets,{'corrections':[{'path':'candidates/0','value':other,'reason':'rename'}]})
+
+    def test_repeating_the_same_support_cannot_inflate_a_candidacy(self):
+        from core.editorial_development import development_errors
+        proposal=copy.deepcopy(DEV)
+        proposal['candidates'][0]['supporting_matters']*=2
+        self.assertTrue(any('duplicados' in e for e in development_errors(PACKAGE,STRATEGY,proposal)))
+        self.assertEqual(set(repair_targets(PACKAGE,STRATEGY,proposal)),{'candidates/0'})
