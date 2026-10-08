@@ -28,6 +28,10 @@ class ReviewGraphTests(unittest.TestCase):
         for role in ('writer','editor'):
             self.assertIn('internal_referee_notes',role_payload(payload,role)['package'])
         self.assertIn('internal_referee_notes',payload['package'])
+        repair={'repair_targets':{'b10':{'source_evidence':payload}}}
+        cleaned=role_payload(repair,'repair')
+        self.assertNotIn('internal_referee_notes',cleaned['repair_targets']['b10']['source_evidence']['package'])
+        self.assertIn('internal_referee_notes',repair['repair_targets']['b10']['source_evidence']['package'])
 
 
     def run_graph(self, strategy=STRATEGY, judge=None, package=PACKAGE):

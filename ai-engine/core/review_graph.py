@@ -140,8 +140,14 @@ def compact_review_payload(value):
 def role_payload(payload, role):
     result = compact_review_payload(payload)
     package = result.get('package', result)
-    if role in ('strategist','development','selection_reviewer'):
-        package.pop('internal_referee_notes', None)
+    if role not in ('writer','editor'):
+        def remove_internal(value):
+            if isinstance(value,dict):
+                value.pop('internal_referee_notes',None)
+                for child in value.values(): remove_internal(child)
+            elif isinstance(value,list):
+                for child in value: remove_internal(child)
+        remove_internal(result)
     if result.get('development') is not None or role in ('strategist','development','selection_reviewer'):
         package.pop('editorial_development', None)
     # Strategy and internal correspondence use source facts. Final review uses
