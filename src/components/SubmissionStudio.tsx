@@ -331,6 +331,7 @@ export default function SubmissionStudio({
   const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} saveLabel={auditAction?'Guardar y volver al Audit':undefined} openRequest={filingOpenRequest} onCancel={()=>{if(auditAction)returnToAudit();}} onSave={async filingDetails=>{
     const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails,auditActionId:auditAction?.id});
     if(!result.success){setDraftSaveError(result.error || 'No se pudo guardar.');return false;}
+    if(result.unchanged){if(auditAction)returnToAudit();return true;}
     setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...result.filingDetails,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
     if(auditAction)returnToAudit();
     return true;

@@ -158,3 +158,9 @@ test('historical download returns the exact earlier pair and rejects corrupt byt
  state.submission.chambersData.previous_approved_artifact.base64=Buffer.from('tampered').toString('base64');
  assert.equal((await GET(new NextRequest('http://localhost/api/generate-docx?id=s&type=submission&mode=previous'))).status,409);
 });
+test('saving an empty filing form does not claim a response or invalidate reviewed documents',async()=>{
+ reset();const message='Completar contacto y departamento.';state.submission.chambersData.editorial_review={letter:{next_steps:message}};
+ const before=JSON.stringify(state);
+ const saved=await updateSubmissionValidatedData('s',{expectedRevision:0,auditActionId:message,filingDetails:{departmentName:'',numPartners:'',numLawyers:'',contacts:[{name:'',email:'',phone:''}],departmentHeads:[{name:'',email:'',phone:''}],target_band:''}});
+ assert.equal(saved.success,true);assert.equal(saved.unchanged,true);assert.equal(JSON.stringify(state),before);
+});

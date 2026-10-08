@@ -14,9 +14,16 @@ export function auditActions(letter:any):AuditAction[] {
   });
 }
 function signature(data:any,kind:AuditActionKind) {
-  const value=kind==='period'?data.research_period:kind==='filing'?[data.contacts,data.departmentName,data.numPartners,data.numLawyers,data.departmentHeads,data.target_band]:kind==='references'?data.audit_referee_notes:kind==='lawyers'?data.lawyers:[data.matters,data.lawyers];
-  return JSON.stringify(value ?? null);
+  const value=kind==='period'?data.research_period:kind==='filing'?{contacts:data.contacts,departmentName:data.departmentName,numPartners:data.numPartners,numLawyers:data.numLawyers,departmentHeads:data.departmentHeads,target_band:data.target_band}:kind==='references'?data.audit_referee_notes:kind==='lawyers'?data.lawyers:[data.matters,data.lawyers];
+  const clean=(v:any):any=>{
+    if(v===undefined || v===null || v==='')return null;
+    if(Array.isArray(v)){const items=v.map(clean).filter(x=>x!==null);return items.length?items:null;}
+    if(typeof v==='object'){const entries=Object.entries(v).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>[k,clean(x)]).filter(([,x])=>x!==null);return entries.length?Object.fromEntries(entries):null;}
+    return v;
+  };
+  return JSON.stringify(clean(value));
 }
+export function auditInputChanged(before:any,after:any,kind:AuditActionKind) {return signature(before,kind)!==signature(after,kind);}
 export function recordAuditAction(before:any,after:any,id:string|undefined,userId:string) {
   const existing=before.audit_action_responses || [];
   if(!id)return existing;

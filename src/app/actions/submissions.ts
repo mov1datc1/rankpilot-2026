@@ -1,6 +1,6 @@
 'use server';
 
-import { recordAuditAction, normalizeRefereeNotes, supplementMatter } from '@/lib/audit/next-actions';
+import { recordAuditAction, normalizeRefereeNotes, supplementMatter, auditInputChanged, auditActions } from '@/lib/audit/next-actions';
 import { previousApprovedArtifact } from '@/lib/audit/artifact-binding';
 
 import { normalizeFilingDetails } from '@/lib/audit/filing-details';
@@ -205,6 +205,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     if (data.expectedRevision !== undefined && data.expectedRevision !== Number(chambers.draft_revision || 0)) {
       throw new Error('Hay una versión más reciente del borrador. Recarga antes de guardar para no sobrescribirla.');
     }
+    if(data.auditActionId && !auditActions(chambers.editorial_review?.letter).some(a=>a.id===data.auditActionId)) throw new Error('Esta recomendación cambió. Vuelve al Audit actualizado.');
     if (data.researchPeriod) {
       const {from,to}=data.researchPeriod;
       const valid=(value:string)=>/^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
@@ -234,6 +235,10 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
         confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}});
     });
     const filingDetails = data.filingDetails ? normalizeFilingDetails(data.filingDetails) : null;
+    const onlyFiling=filingDetails && Object.keys(data).every(key=>['expectedRevision','auditActionId','filingDetails'].includes(key));
+    if(onlyFiling && !auditInputChanged(chambers,{...chambers,...filingDetails},'filing')) {
+      return {success:true,unchanged:true,revision:Number(chambers.draft_revision || 0),filingDetails};
+    }
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
