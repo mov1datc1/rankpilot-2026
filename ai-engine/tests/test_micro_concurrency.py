@@ -42,7 +42,7 @@ class SelectionReuseTests(unittest.IsolatedAsyncioTestCase):
         with patch('utils.ranking_verifier.verify_ranking_claim',return_value={}),patch('core.review_graph.strategist') as model:
             response=await review_step_endpoint(request)
         result=json.loads(response.body)
-        self.assertEqual(result['next_stage'],'writer')
+        self.assertEqual(result['next_stage'],'development')
         self.assertTrue(result['state']['selection_validated'])
         self.assertEqual(result['state']['trace'],[])
         model.assert_not_called()

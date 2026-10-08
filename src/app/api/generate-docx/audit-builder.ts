@@ -82,10 +82,9 @@ export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, a
   const data = submission.chambersData || submission.chambers_data || {};
   const letterData = normalizeLetterSections(data.editorial_review?.letter);
   if (letterData) {
-    const state = data.artifact_pair_revision ? 'Internal report linked to the Submission selection. Delivery status is available in Studio.' : data.release_verdict?.passed === true ? 'Editorial review approved; final artifact checked separately.' : 'Working draft — unresolved review findings; not approved for final delivery.';
-    const sections: (Paragraph | Table)[] = [sectionTitle('RANKPILOT — Strategic Audit Letter'), fieldLabel('Firm: ', firmName), fieldLabel('Practice: ', practiceArea), p(state, {bold:true}), p('Confidential internal review. Ranking outcomes are determined by the directory.')];
-    for (const [key, heading] of [['executive_assessment','1. Executive assessment'],['portfolio','2. Selected portfolio'],['leadership','3. Leadership and attribution'],['evidence_gaps','4. Evidence gaps'],['next_steps','5. Recommended next steps']]) {
-      sections.push(sectionTitle(heading), p(String(letterData[key] || 'No assessment available.')));
+    const sections: (Paragraph | Table)[] = [sectionTitle('RANKPILOT — Strategic Audit Letter'), fieldLabel('Firm: ', firmName), fieldLabel('Practice: ', practiceArea), p('Confidential internal review. Ranking outcomes are determined by the directory.')];
+    for (const [key, heading] of [['executive_assessment','1. Executive Verdict'],['portfolio','2. Recommended Portfolio'],['leadership','3. Individual Ranking Strategy'],['evidence_gaps','4. Key Exclusions / Reserves'],['next_steps','5. Actions Before Filing']]) {
+      sections.push(sectionTitle(heading), ...String(letterData[key] || 'No assessment available.').split(/\n\s*\n/).filter(Boolean).map(text=>p(text)));
     }
     for (const issue of data.release_verdict?.errors || []) sections.push(p(String(issue)));
     return new Document({title: `RankPilot Strategic Audit - ${firmName}`,creator:'RankPilot',sections:[{children:sections}]});

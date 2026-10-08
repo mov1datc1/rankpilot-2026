@@ -9,7 +9,7 @@ const state={selection_validated:true,strategy:{matters:matters.map((m,i)=>({mat
 test('strategy selects before drafting; 12 reserves do not buy rewrites',()=>{
  const tasks=planDrafting({matters,original_b10:'Department source',review_checkpoint:{state}});
  assert.deepEqual([tasks[0],tasks.at(-2),tasks.at(-1)],['selection','audit','artifact']);
- assert.equal(tasks.filter(t=>t.startsWith('matter:')).length,20);assert.ok(!tasks.includes('matter:m31'));
+ assert.deepEqual(tasks,['selection','development','audit','artifact']);
 });
 test('rejected selection cannot advance into writers',()=>assert.throws(()=>planDrafting({matters,review_checkpoint:{state:{...state,selection_validated:false}}}),/SELECTION_REJECTED/));
 test('source edits invalidate generated prose but never overwrite human edits',()=>{
@@ -51,13 +51,8 @@ test('automatic repair requires literal evidence, generated provenance and an af
  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,code:'SOURCE_CONFLICT'}]}}}),null);
 });
 
-test('valid unchanged B10 is reused, while source or strategy changes require drafting',()=>{
- const data={matters,original_b10:'Department source',enhanced_b7:'Department source',review_checkpoint:{state},b10_optimization:{source:'Department source',text:'Department source',strategy_hash:stableHash(state.strategy)}};
- assert.ok(!planDrafting(data).includes('b10'));
- assert.ok(planDrafting({...data,b10_optimization:undefined}).includes('b10'));
- assert.ok(planDrafting({...data,original_b10:'New source'}).includes('b10'));
- assert.ok(planDrafting({...data,b10_optimization:{...data.b10_optimization,strategy_hash:'previous'}}).includes('b10'));
- assert.ok(!planDrafting({...data,enhanced_b7:'Human edited narrative'}).includes('b10'));
+test('the complete editorial development is a mandatory stage before audit and artifacts',()=>{
+ assert.deepEqual(planDrafting({matters,review_checkpoint:{state}}),['selection','development','audit','artifact']);
 });
 
 test('a user question does not prevent repair of a separate source-backed generation defect',()=>{

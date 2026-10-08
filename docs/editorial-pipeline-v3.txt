@@ -1,0 +1,13 @@
+RankPilot editorial pipeline v3
+
+Production elaboration and review execute the same LangGraph definition at persisted role boundaries: register -> strategy -> selection -> development -> writer -> editor -> release. Studio is the interface to that pipeline. The worker persists each stage and renders both deliverables before final editorial approval. A pre-render pass permits rendering only.
+
+Development covers the complete selected portfolio, B10, B9 and C2. It also produces candidate-specific current/proposed ranking, supporting mandates and personal roles, external evidence, gaps, recommended actions, an executive recommendation and explicit comparisons with reserves. Identity enums and literal source checks bind generated proposals to registered people and mandates. Prior drafts are retained; source facts and the source roster are not replaced.
+
+RAG v3 routes scoped practice references plus catalogued global editorial and individual-leadership methodology. All chunks compete using task terms; selection reserves coverage per reference before filling the bounded context. Project methodology is not treated as official directory authority or evidence of client work.
+
+The final-artifact reviewer must explicitly account for factual fidelity, preservation of decisive source evidence, entity confidentiality, individual strategy, B9 development, C2 argument, comparative selection and executive Audit quality. An incomplete or failed acceptance checklist blocks delivery even when the model's top-level passed field is true. Editorial omissions belong to RankPilot and receive one bounded repair opportunity.
+
+Operational safeguards remain: immutable source snapshot per job, stage checkpoints, leases, no overlapping paid calls, source-edit conflict detection, exact artifact hashes, protected human edits and a bounded token budget. Model role traces record retrieved sources and usage; node_events record executed deterministic and model nodes. Reused stages do not imply a new model execution.
+
+Validation: Node contract suite, Python graph/grounding/acceptance suite, TypeScript and production build. A synthetic live development call confirmed schema transport, methodology retrieval, personal attribution and outcome preservation. Decorative quotation marks are normalized without changing the quoted facts. Real case acceptance must still be checked on the final documents; test success is not an editorial quality certification.

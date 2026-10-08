@@ -23,9 +23,9 @@ global.fetch=async(url,options)=>{
   const state={...payload.state};
   if(payload.stage==='strategy') {
    state.strategy={matters:submission.matters.map((m,i)=>({matter_id:m.id,disposition:i<2?'core':'reserve',rationale:'Pending appeal',source_quote:'No decision has been issued.'})),hero_matter_id:'m0',thesis:'Tax appeals'};state.selection_validated=true;
-  } else {state.letter={executive_assessment:'Tax appeals',portfolio:'Synthetic client 0 and Synthetic client 1. Synthetic client 2 is in reserve.',leadership:'No individual attribution supplied.',evidence_gaps:'Outcomes pending',next_steps:'Update outcomes when available.'};state.render_gate={passed:true,errors:[]};state.release_verdict={passed:false,status:'awaiting_artifact_review',errors:[]};}
+  } else if(payload.stage==='development') {state.development_validated=true;state.development={version:'editorial-development-v1',candidates:[],b10:submission.chambersData.original_b10,c2:'Our case is supported by pending tax appeals.',matters:submission.matters.slice(0,2).map(m=>({matter_id:m.id,text:repairMode && m.id==='m0'?'The team won the appeal.':m.rawNotes}))};} else {state.letter={executive_assessment:'Tax appeals',portfolio:'Synthetic client 0 and Synthetic client 1. Synthetic client 2 is in reserve.',leadership:'No individual attribution supplied.',evidence_gaps:'Outcomes pending',next_steps:'Update outcomes when available.'};state.render_gate={passed:true,errors:[]};state.release_verdict={passed:false,status:'awaiting_artifact_review',errors:[]};}
   state.trace=[...(state.trace || []),{role:payload.stage,usage:{total_tokens:100},provider_request_id:`fake-${payload.stage}`}];
-  return Response.json({success:true,next_stage:payload.stage==='strategy'?'writer':'done',state});
+  return Response.json({success:true,next_stage:({strategy:'development',development:'writer',writer:'done'})[payload.stage],state});
  }
  if(url.endsWith('/optimize/matter'))return Response.json({success:true,optimized_text:repairMode && payload.matter.id==='m0'?'The team won the appeal.':payload.matter.rawNotes,trace:{usage:{total_tokens:30}}});
  if(url.endsWith('/optimize/b10'))return Response.json({success:true,enhanced_b10:payload.original_b10,trace:{usage:{total_tokens:20}}});
@@ -40,14 +40,14 @@ test('worker completes real paired DOCX with strategy first, reserves untouched,
  reset();for(let guard=0;guard<9;guard++){await stage();if(job.status!=='queued')break;}
  assert.equal(job.status,'completed',JSON.stringify(job));assert.ok(submission.chambersData.approved_artifact.audit_base64);
  assert.equal(submission.chambersData.matters[2].optimizedText,'');
- assert.deepEqual(calls.map(c=>c.url.split('/').pop()),['review-step','matter','matter','b10','review-step','verify-rendered-package']);
- assert.deepEqual(job.ledger.map(s=>s.stage),['selection','matter:m0','matter:m1','b10','audit','artifact']);
- assert.equal(job.ledger.reduce((sum,s)=>sum+(s.trace?.usage?.total_tokens||0),0),430);
+ assert.deepEqual(calls.map(c=>c.url.split('/').pop()),['review-step','review-step','review-step','verify-rendered-package']);
+ assert.deepEqual(job.ledger.map(s=>s.stage),['selection','development','audit','artifact']);
+ assert.equal(job.ledger.reduce((sum,s)=>sum+(s.trace?.usage?.total_tokens||0),0),450);
 });
 test('recreated coordinator continues from persisted cursor without rerunning selection',async()=>{
  reset();await stage();await stage();
  const saved=structuredClone(job);const count=calls.length;job=JSON.parse(JSON.stringify(saved));
- await stage();assert.equal(calls.length,count+1);assert.equal(calls.at(-1).payload.matter.id,'m1');assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
+ await stage();assert.equal(calls.length,count+1);assert.equal(calls.at(-1).payload.stage,'writer');assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
 });
 test('source changes stop the next stage before a paid request',async()=>{
  reset();await stage();const count=calls.length;submission.chambersData.matters[0].rawNotes='Corrected source';
@@ -60,7 +60,7 @@ test('artifact repair is targeted, carries evidence, and stops after one attempt
  assert.equal(job.status,'needs_review',JSON.stringify(job));
  assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,2);
  const repairs=calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m0');
- assert.equal(repairs.length,2);assert.match(repairs[1].payload.directive,/No decision has been issued/);
- assert.equal(calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m1').length,1);
+ assert.equal(repairs.length,1);assert.match(repairs[0].payload.directive,/No decision has been issued/);
+ assert.equal(calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m1').length,0);
  assert.equal(submission.chambersData.approved_artifact,null);
 });

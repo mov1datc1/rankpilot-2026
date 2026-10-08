@@ -2,11 +2,12 @@ import { recoverClientLegalName } from './extraction-auditor';
 import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
-export const REVIEW_POLICY_VERSION = 'review-core-v2.0';
+export const REVIEW_POLICY_VERSION = 'review-core-v3.0';
 
-export const reviewSteps = ['strategy', 'writer', 'done'] as const;
+export const reviewSteps = ['strategy', 'development', 'writer', 'done'] as const;
 export const reviewStepLabels = {
   strategy: 'Comparando los asuntos y seleccionando el portafolio…',
+  development: 'Desarrollando el Submission y las candidaturas con sus fuentes…',
   writer: 'Redactando el Audit con la selección guardada…',
   done: 'Revisando las fuentes, el Audit y el documento Word final…',
 };
@@ -24,7 +25,8 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     b10_source: data.confirmed_source_b10 ?? data.original_b10 ?? '',
     b10_draft: data.enhanced_b7 || data.original_b10 || '',
     c2_source: data.original_c2 || '', c2_draft: data.enhanced_c2 || '',
-    lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole), matters,
+    editorial_development: data.editorial_development || null,
+    lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole), matters:matters.map(m=>({...m,client:recoverClientLegalName(m) || m.client})),
   };
 }
 
@@ -55,9 +57,10 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   }
   // Portfolio selection compares mandates, not the candidate's biography.
   // Candidate corrections belong to the leadership letter and its review.
-  if (stage === 'strategy') delete source.lawyers;
+  delete source.editorial_development;
   return reviewInputHash({policy:'role-deliverables-v2-single-judge',stage,source,
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
+    ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),
   });
 }
@@ -77,10 +80,16 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
     selection_feedback:{strategy:state.strategy,errors:state.errors || []},
   }};
+  if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {
+    if(state.development && state.errors?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
+    if(!state.repair_feedback?.length) delete state.development;delete state.letter;delete state.judge;delete state.release_verdict;
+    state.errors=[];
+    return {...base,stage:'development',step_keys:{strategy:keys.strategy}};
+  }
   if (!state.letter || keys.writer !== reviewStepHash('writer',payload,state)) {
     delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];state.writer_attempts=0;
-    return {...base,stage:'writer',step_keys:{strategy:keys.strategy}};
+    return {...base,stage:'writer',step_keys:{strategy:keys.strategy,development:keys.development}};
   }
   return {...base,stage:'done'};
 }

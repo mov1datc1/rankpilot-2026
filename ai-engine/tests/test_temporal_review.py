@@ -127,5 +127,5 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertIn('Unknown dates alone never justify exclusion.', messages[0][1])
             self.assertIn('Work Highlights in last 12 months', messages[0][1])
             self.assertIn('"research_period":null', messages[1][1])
-        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v2.0')
+        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.0')
         self.assertTrue(result['judge']['passed'])

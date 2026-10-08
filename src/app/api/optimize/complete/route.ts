@@ -17,7 +17,7 @@ import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
 
-const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
+const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,development:review.development,development_validated:review.development_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
 /** One completion authority: source register → bounded editorial review → exact artifact. */
 export async function POST(request: NextRequest) {
@@ -77,15 +77,10 @@ export async function POST(request: NextRequest) {
     if (cachedReview) {
       review = {success:true,...cachedReview};
     } else {
-      const reviewResponse = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-package`, {
-        method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(Math.min(180000,remaining())),
-        body:JSON.stringify({directory:submission.targetDirectory,practice_area:submission.practiceArea,jurisdiction:submission.guideRegion,firm_name:previous.firm_name || previous.firmName || '',research_period:previous.research_period || null,current_band:submission.currentBand,ranking_edition:previous.ranking_edition || 'current',ranking_jurisdiction:previous.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),preferred_hero_id:previous.user_selected_hero_id || null,
-          b10_source:previous.confirmed_source_b10 ?? previous.original_b10 ?? '',b10_draft:b10,c2_source:previous.original_c2 || '',c2_draft:previous.enhanced_c2 || '',lawyers:reviewPackage(submission, previous, matters).lawyers,matters})
-      });
-      if (!reviewResponse.ok) return NextResponse.json({error:'La revisión editorial no se completó. El borrador anterior se conserva.'}, {status:502});
-      review = await reviewResponse.json();
+      return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Prepara el Submission y Audit para completar la elaboración y revisión del expediente.'},{status:409});
     }
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
+    if(review.selection_validated && (!review.development_validated || review.development?.version!=='editorial-development-v1')) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
     const originalReviewHash = reviewOutputHash(review);
     review = {...review,letter:normalizeLetterSections(review.letter)};
     const decisions = review.strategy?.matters || [];
@@ -97,11 +92,14 @@ export async function POST(request: NextRequest) {
       draft_revision:Number(previous.draft_revision || 0)+1,
       canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
       hero_matter_id:selectionValidated ? review.strategy?.hero_matter_id || null : null,
+      editorial_development:review.development || previous.editorial_development,
       editorial_review:{...review,selection_validated:selectionValidated},ranking_verification:review.ranking_verification,ranking_claim:submission.currentBand || null,
       analysis:{summary:review.letter?.executive_assessment || '',score:null,matter_evaluations:decisions},
       judgeScore:null,judgeFeedback:(review.release_verdict.errors || []).join(' '),judgeVerdict:review.judge,
       release_verdict:review.release_verdict,
     };
+    if(data.review_checkpoint) data.review_checkpoint.input_hash=reviewInputHash(reviewPackage(submission,data,matters));
+    data.completed_review_input_hash=reviewInputHash(reviewPackage(submission,data,matters));
     // Deterministic gates permit rendering; only the exact-artifact judge can
     // approve delivery. Never persist a provisional approval before that judge.
     const readiness=getDeliveryState(review.render_gate ? {...data,release_verdict:review.render_gate} : data,matters);

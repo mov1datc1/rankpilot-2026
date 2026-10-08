@@ -98,7 +98,7 @@ async def service_boundary(request: Request, call_next):
         if not expected and os.environ.get('RENDER'):
             return JSONResponse(status_code=503, content={'error':'Service authentication is not configured'})
     response=await call_next(request)
-    response.headers["X-RankPilot-Policy"]="review-core-v2.0"
+    response.headers["X-RankPilot-Policy"]="review-core-v3.0"
     return response
 
 @api.get("/")
@@ -106,7 +106,7 @@ def read_root():
     return {
         "status": "online",
         "service": "RankPilot Core Engine",
-        "version": "studio-pipeline-v2",
+        "version": "rankpilot-pipeline-v3",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
@@ -119,7 +119,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "studio-pipeline-v2",
+        "version": "rankpilot-pipeline-v3",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
@@ -1146,52 +1146,24 @@ async def review_step_endpoint(request: Request):
         body = await request.json()
         payload = body.get('package')
         stage = body.get('stage')
-        if not isinstance(payload, dict) or not isinstance(payload.get('matters'), list) or stage not in ('strategy', 'writer', 'editor'):
+        if not isinstance(payload, dict) or not isinstance(payload.get('matters'), list) or stage not in ('strategy', 'development', 'writer', 'editor'):
             return JSONResponse(status_code=400, content={'success': False, 'error': 'Invalid review step'})
-        from core.review_graph import register_gate, strategist, selection_gate, writer, editor, release_gate
+        from core.review_graph import run_editorial_stage, release_gate
+        from utils.ranking_verifier import verify_ranking_claim
         state = {**(body.get('state') or {}), 'package': payload}
-        if stage == 'strategy':
-            from utils.ranking_verifier import verify_ranking_claim
-            state.update(register_gate(state))
-            if not state['errors']:
-                payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
-                state['ranking_verification'] = payload['ranking_verification']
-                # Recheck the source-bound failed proposal before buying another strategy.
-                # The application only sends this feedback when its source key still matches.
-                proposal = state.get('selection_feedback', {}).get('strategy')
-                reused = False
-                if proposal:
-                    from core.review_graph import Strategy
-                    try:
-                        state['strategy'] = Strategy.model_validate(proposal).model_dump()
-                        state.update(selection_gate(state))
-                        reused = state['selection_validated']
-                    except (ValueError, KeyError, TypeError):
-                        reused = False
-                if not reused:
-                    state.update(await asyncio.to_thread(strategist, state))
-                    state.update(selection_gate(state))
-            next_stage = 'writer' if not state['errors'] else 'done'
+        if stage in ('strategy','development'):
+            payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
+            state['ranking_verification'] = payload['ranking_verification']
         else:
             payload['ranking_verification'] = state.get('ranking_verification', {})
-            if not state.get('selection_validated') or not state.get('strategy'):
-                return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing validated strategy'})
-            if stage == 'writer':
-                # Roster edits reuse the mandate strategy, but need observations
-                # for the current people. The shared table cache avoids another
-                # model call or one search per lawyer.
-                from utils.ranking_verifier import verify_ranking_claim
-                payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
-                state['ranking_verification'] = payload['ranking_verification']
-                state.update(await asyncio.to_thread(writer, state))
-                next_stage = 'done'
-            else:
-                if not state.get('letter'):
-                    return JSONResponse(status_code=400, content={'success': False, 'error': 'Missing letter'})
-                state.update(await asyncio.to_thread(editor, state))
-                next_stage = 'done'
-        if next_stage == 'done':
-            state.update(release_gate(state, require_judge=stage == 'editor'))
+        state = await asyncio.to_thread(run_editorial_stage, stage, state)
+        if state.get('errors'):
+            next_stage = 'done'
+            state.update(release_gate(state, require_judge=False))
+        else:
+            next_stage = {'strategy':'development','development':'writer','writer':'done','editor':'done'}[stage]
+            if next_stage == 'done':
+                state.update(release_gate(state, require_judge=stage == 'editor'))
         # Sources already live in the submission; do not duplicate them in checkpoints.
         state.pop('package', None)
         return JSONResponse(content={'success': True, 'next_stage': next_stage, 'state': state})
@@ -1211,7 +1183,7 @@ async def review_package_endpoint(request: Request):
         payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
         from core.review_graph import review_graph
         result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
-        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','letter','judge','release_verdict','trace')}})
+        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','development','development_validated','letter','judge','render_gate','release_verdict','trace')}})
     except Exception as error:
         logger.exception('Editorial package review failed')
         from utils.provider_errors import provider_failure

@@ -30,8 +30,8 @@ export async function runJobStage(job:any) {
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
     if(cursor>=40) throw new Error('STAGE_BUDGET');
     const spent=(job.ledger || []).reduce((total:number,item:any)=>total+Number(item.trace?.usage?.total_tokens || 0),0);
-    if(spent>=Number(process.env.EDITORIAL_TOKEN_BUDGET || 250000)) throw new Error('TOKEN_BUDGET');
-    const handler=stage==='selection'||stage==='audit'?review:stage==='b10'?b10:stage==='artifact'?complete:stage?.startsWith('matter:')?matter:null;
+    if(spent>=Number(process.env.EDITORIAL_TOKEN_BUDGET || 500000)) throw new Error('TOKEN_BUDGET');
+    const handler=stage==='selection'||stage==='development'||stage==='audit'?review:stage==='b10'?b10:stage==='artifact'?complete:stage?.startsWith('matter:')?matter:null;
     if(!handler) throw new Error('INVALID_STAGE');
     const previousFailure=(job.ledger || []).filter((entry:any)=>entry.stage===stage && entry.issue).at(-1);
     const feedback=(stage?.startsWith('matter:') || stage==='b10') && (job.ledger || []).some((entry:any)=>entry.stage==='artifact')
@@ -54,6 +54,7 @@ export async function runJobStage(job:any) {
       if(repair) {
         const checkpoint=structuredClone(data.review_checkpoint);
         checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
+        if(repair.tasks.includes('development')) {delete checkpoint.step_keys.development;checkpoint.state.development_validated=false;}
         if(repair.letter) {delete checkpoint.state.letter;delete checkpoint.step_keys.writer;}
         const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,completed_review_input_hash:null,review_checkpoint:checkpoint}}});
         if(saved.count!==1) throw new Error('SOURCE_CHANGED');
@@ -68,7 +69,7 @@ export async function runJobStage(job:any) {
     status=code==='SOURCE_CHANGED'?'superseded':code==='HUMAN_DRAFT_STALE'?'needs_review':['EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE'].includes(code)?'indeterminate':'failed';
     issue=code==='HUMAN_DRAFT_STALE'?{...systemIssue(code,'Cambió una fuente de un texto editado. Revisa esa redacción antes de continuar.',false),owner:'user',action:'review'}:
       systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.');
-    if(['SELECTION_REJECTED','GROUNDING_REJECTED'].includes(code) && !(job.ledger || []).some((entry:any)=>entry.stage===stage && entry.issue?.code===code)) status='queued';
+    if(['SELECTION_REJECTED','DEVELOPMENT_REJECTED','GROUNDING_REJECTED'].includes(code) && !(job.ledger || []).some((entry:any)=>entry.stage===stage && entry.issue?.code===code)) status='queued';
   } finally {clearInterval(heartbeat);}
   const entry={stage,status,started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=NULL,"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;

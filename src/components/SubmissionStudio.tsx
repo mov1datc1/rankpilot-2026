@@ -459,10 +459,10 @@ export default function SubmissionStudio({
   const hiresList: any[] = chambersData.hires || chambersData.department?.hires_departures || [];
   const lawyersList: any[] = chambersData.lawyers || [];
 
-  const c2Text = chambersData.analysis?.audit_letter?.competitive_positioning_text
+  const c2Text = chambersData.enhanced_c2
+    || chambersData.analysis?.audit_letter?.competitive_positioning_text
     || chambersData.analysis?.competitive_positioning_text
     || chambersData.competitive_positioning_text
-    || chambersData.enhanced_c2
     || chambersData.feedback
     || chambersData.c2
     || '';

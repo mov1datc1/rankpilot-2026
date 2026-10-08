@@ -27,22 +27,22 @@ global.fetch=async(url,options)=>{
   const body=JSON.parse(options.body);calls.push(body);
   if(mutate){state.chambersData.original_b10='Concurrent new source';state.updatedAt=new Date(state.updatedAt.getTime()+1);}
   if(failure)return Response.json({success:false,code:'AI_CREDIT_EXHAUSTED',error:'No credit'},{status:502});
-  const next={strategy:'writer',writer:'done'}[body.stage];
-  const output=body.stage==='strategy'?{strategy:{saved:true},selection_validated:true}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
+  const next={strategy:'development',development:'writer',writer:'done'}[body.stage];
+  const output=body.stage==='strategy'?{strategy:{saved:true,matters:[{matter_id:'m',disposition:'core'}]},selection_validated:true}:body.stage==='development'?{development_validated:true,development:{version:'editorial-development-v1',matters:[{matter_id:'m',text:'Pending appeal'}],candidates:[],b10:'Tax disputes team',c2:'Our coverage case.'}}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
   return Response.json({success:true,next_stage:next,state:{...body.state,...output}});
 };
 const step=()=>POST(new NextRequest('http://localhost/api/optimize/review-step',{method:'POST',body:JSON.stringify({submissionId:'s'})}));
 test('resume runs one new role per call, then serves persisted completion without spending',async()=>{
-  reset();for(let i=0;i<2;i++)assert.equal((await step()).status,200);
-  assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+  reset();for(let i=0;i<3;i++)assert.equal((await step()).status,200);
+  assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
   assert.ok(calls[1].state.strategy.saved);assert.ok(state.chambersData.review_checkpoint.state.letter.saved);
-  assert.equal((await (await step()).json()).done,true);assert.equal(calls.length,2);
+  assert.equal((await (await step()).json()).done,true);assert.equal(calls.length,3);
 });
 test('quota exhaustion preserves earlier stages and returns a specific error without retry',async()=>{
   reset();await step();failure=true;
   const result=await step();assert.equal(result.status,502);assert.equal((await result.json()).code,'AI_CREDIT_EXHAUSTED');
-  assert.equal(state.chambersData.review_checkpoint.stage,'writer');assert.ok(state.chambersData.review_checkpoint.state.strategy.saved);
-  assert.equal(calls.length,2);failure=false;await step();assert.equal(calls[2].stage,'writer');
+  assert.equal(state.chambersData.review_checkpoint.stage,'development');assert.ok(state.chambersData.review_checkpoint.state.strategy.saved);
+  assert.equal(calls.length,2);failure=false;await step();assert.equal(calls[2].stage,'development');
 });
 test('active lease does not launch a duplicate paid request',async()=>{
   reset();const payload=reviewPackage(state,state.chambersData,state.matters);
@@ -60,29 +60,29 @@ test('ownership, missing session and conflicting acquisition prevent model calls
 });
 
 test('editing prose reuses strategy and audit without a pre-render model call',async()=>{
-  reset();for(let i=0;i<2;i++)await step();calls=[];
+  reset();for(let i=0;i<3;i++)await step();calls=[];
   state.chambersData.enhanced_b7='Edited department prose, same original source';
   const result=await step();assert.equal((await result.json()).done,true);
   assert.equal(calls.length,0);
   assert.ok(state.chambersData.review_checkpoint.state.strategy.saved);assert.ok(state.chambersData.review_checkpoint.state.letter.saved);
 });
 
-test('editing a candidate role reuses portfolio selection but rewrites leadership and reviews it',async()=>{
+test('editing a candidate role reconsiders selection, personal strategy and leadership',async()=>{
   reset();state.chambersData.lawyers=[{name:'Sofia Vega',isPartner:false}];
-  for(let i=0;i<2;i++)await step();calls=[];
+  for(let i=0;i<3;i++)await step();calls=[];
   state.chambersData.lawyers[0].isPartner=true;
-  await step();await step();assert.deepEqual(calls.map(c=>c.stage),['writer']);
-  assert.ok(calls[0].state.strategy.saved);assert.equal(calls[0].state.letter,undefined);
+  await step();await step();await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
+  assert.equal(calls[0].state.strategy,undefined);assert.equal(calls[0].state.letter,undefined);
 });
 
 test('changing source facts invalidates every dependent deliverable',async()=>{
-  reset();for(let i=0;i<2;i++)await step();calls=[];
-  state.matters[0].rawNotes='New source: a ruling has now been issued';
-  for(let i=0;i<2;i++)await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+  reset();for(let i=0;i<3;i++)await step();calls=[];
+  state.chambersData.matters[0].rawNotes='New source: a ruling has now been issued';
+  for(let i=0;i<3;i++)await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
 });
 
 test('expired evidence restarts verification and active edited requests cannot duplicate a paid role',async()=>{
-  reset();for(let i=0;i<2;i++)await step();calls=[];
+  reset();for(let i=0;i<3;i++)await step();calls=[];
   state.chambersData.review_checkpoint.created_at=Date.now()-86400001;
   await step();assert.equal(calls[0].stage,'strategy');
   state.chambersData.review_checkpoint.lease_until=Date.now()+300000;
@@ -93,7 +93,7 @@ test('expired evidence restarts verification and active edited requests cannot d
 test('review criteria version is shared with Python and old editorial outputs are rerun',async()=>{
  const {REVIEW_POLICY_VERSION}=require('../../src/lib/audit/review-checkpoint.ts');
  assert.equal(REVIEW_POLICY_VERSION,require('../../ai-engine/config/editorial_rules.v1.json').version);
- reset();await step();await step();calls=[];
+ reset();await step();await step();await step();calls=[];
  // Previous release hashed role inputs without the review policy version.
  const {createHash}=require('node:crypto');
  const stable=value=>Array.isArray(value)?value.map(stable):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,stable(value[k])])):value;
@@ -101,8 +101,8 @@ test('review criteria version is shared with Python and old editorial outputs ar
  delete source.b10_draft;delete source.c2_draft;delete source.lawyers;
  const legacyKey=createHash('sha256').update(JSON.stringify(stable({version:2,payload:{policy:'role-deliverables-v2-single-judge',stage:'strategy',source}}))).digest('hex');
  state.chambersData.review_checkpoint.step_keys.strategy=legacyKey;
- await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
- await step();assert.equal(calls.length,2);
+ await step();await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
+ await step();assert.equal(calls.length,3);
 });
 
 test('failed selection retries once on the next request with diagnostics and no source edits',async()=>{
@@ -113,7 +113,7 @@ test('failed selection retries once on the next request with diagnostics and no 
  await step();assert.equal(calls.length,1);assert.equal(calls[0].stage,'strategy');
  assert.deepEqual(calls[0].state.selection_feedback.errors,['Missing decision; mixed quote']);
  assert.equal(calls[0].state.letter,undefined);assert.deepEqual(state.matters,source);
- await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','writer']);
+ await step();await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
 });
 
 test('transport references resolve by the original register, never by source labels or sorted strategy',()=>{

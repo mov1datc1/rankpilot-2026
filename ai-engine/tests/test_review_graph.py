@@ -1,18 +1,24 @@
 import unittest
 from unittest.mock import patch
-from core.review_graph import create_review_graph
+from core.review_graph import create_review_graph, ACCEPTANCE_CRITERIA
 
 SOURCE='The team represented Synthetic Client in a tax appeal. The appeal remains pending.'
 PACKAGE={'directory':'Chambers','practice_area':'Tax','b10_source':'The department advises on tax disputes.','matters':[{'id':'m1','client':'Synthetic Client','rawNotes':SOURCE,'publish_status':'publishable','confidentialityConfirmed':True}]}
 STRATEGY={'matters':[{'matter_id':'m1','disposition':'core','rationale':'Tax appeal','source_quote':'The appeal remains pending.'}],'hero_matter_id':'m1','pending_questions':[],'thesis':'Tax disputes'}
 LETTER={k:'Source-grounded text.' for k in ['executive_assessment','portfolio','leadership','evidence_gaps','next_steps']}
 
+def development(package):
+    source=package['matters'][0].get('rawNotes',SOURCE)
+    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'decisive_source_quotes':[source]}]}
+
 class ReviewGraphTests(unittest.TestCase):
     def run_graph(self, strategy=STRATEGY, judge=None, package=PACKAGE):
         calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            result=strategy if role=='strategist' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[]})
+            result=strategy if role=='strategist' else development(package) if role=='development' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[], 'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]})
+            if role=='editor' and 'acceptance' not in result:
+                result={**result,'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]}
             return result, state.get('trace',[])+[{'role':role}]
         def select(state):
             result, trace = invoke(state, 'strategist')
@@ -23,8 +29,8 @@ class ReviewGraphTests(unittest.TestCase):
 
     def test_three_roles_share_one_strategy(self):
         result,calls=self.run_graph()
-        self.assertEqual(calls,['strategist','writer','editor'])
-        self.assertTrue(result['release_verdict']['passed'])
+        self.assertEqual(calls,['strategist','development','writer','editor'])
+        self.assertTrue(result['render_gate']['passed']);self.assertFalse(result['release_verdict']['passed'])
 
     def test_unknown_id_stops_before_writing(self):
         strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'matter_id':'invented'}]}
@@ -40,7 +46,7 @@ class ReviewGraphTests(unittest.TestCase):
 
     def test_letter_repair_is_bounded_and_does_not_redo_strategy(self):
         result,calls=self.run_graph(judge={'passed':False,'defects':[{'severity':'critical','scope':'letter','matter_id':None,'message':'Unsupported claim'}]})
-        self.assertEqual(calls,['strategist','writer','editor','writer','editor'])
+        self.assertEqual(calls,['strategist','development','writer','editor','writer','editor'])
         self.assertFalse(result['release_verdict']['passed'])
 
     def test_missing_permission_overrides_positive_model_judge(self):
@@ -76,7 +82,7 @@ class ReviewGraphTests(unittest.TestCase):
         package={**PACKAGE,'matters':[{**PACKAGE['matters'][0],'rawNotes':'The appeal remains pending, with a hearing scheduled.'}]}
         result,calls=self.run_graph(package=package)
         self.assertTrue(result['selection_validated'])
-        self.assertEqual(calls,['strategist','writer','editor'])
+        self.assertEqual(calls,['strategist','development','writer','editor'])
 
     def test_terminal_tolerance_does_not_accept_changed_words(self):
         strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'source_quote':'The appeal was successful.'}]}

@@ -12,24 +12,12 @@ export function planDrafting(data:any) {
   const core=state.strategy.matters.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id);
   const register=new Map((data.matters || []).map((m:any)=>[m.id,m]));
   if(!core.length || core.length>20 || new Set(core).size!==core.length || core.some((id:string)=>!register.has(id))) throw new Error('SELECTION_REJECTED');
-  const tasks=['selection'];
-  for(const id of core) {
-    const disposition=draftDisposition(register.get(id),stableHash(state.strategy));
-    // Human prose is preserved and compared against the new sources by the final reviewer.
-    if(disposition==='write') tasks.push(`matter:${id}`);
-  }
-  const source=String(data.confirmed_source_b10 ?? data.original_b10 ?? '').trim();
-  const text=String(data.enhanced_b7 || '').trim();
-  const record=data.b10_optimization;
-
-  const currentGeneration=record?.text===text && record?.source===source && record?.strategy_hash===stableHash(state.strategy);
-  if(source && !currentGeneration && (!text || text===source || record?.text===text)) tasks.push('b10');
-  tasks.push('audit','artifact');
+  const tasks=['selection','development','audit','artifact'];
   return tasks;
 }
 export function publicJob(job:any) {
   if(!job) return null;
-  const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
+  const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',development:'Desarrollando Submission, candidaturas y posicionamiento',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
   return {id:job.id,status:job.status,stage:job.stage,message:labels[job.stage] || 'Redactando un asunto seleccionado',completed:job.cursor,total:job.tasks.length,issue:job.issue,updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 export async function latestJob(submissionId:string) {
@@ -59,6 +47,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       const checkpoint=structuredClone(data.review_checkpoint);
       if(!checkpoint?.state) throw new Error('AUTO_REPAIR_UNAVAILABLE');
       checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
+      if(repair.tasks.includes('development')) {delete checkpoint.step_keys.development;checkpoint.state.development_validated=false;}
       if(repair.letter) {delete checkpoint.state.letter;delete checkpoint.step_keys.writer;}
       await tx.submission.update({where:{id:current.id},data:{chambersData:{...data,completed_review_input_hash:null,review_checkpoint:checkpoint}}});
     }
@@ -72,6 +61,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
 export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='critical');
   if(!defects.length) return null;
+  if(data.editorial_development && defects.some((d:any)=>d.code==='EDITORIAL_OMISSION' && d.owner==='rankpilot')) return {tasks:['development','audit','artifact'],letter:true};
   const ids=new Set<string>();let letter=false;let b10=false;
   for(const defect of defects) {
     if(defect.code!=='UNSUPPORTED_CLAIM' || defect.owner!=='rankpilot' || !defect.source_quote || !defect.artifact_quote || defect.source_quote===defect.artifact_quote) continue;

@@ -146,11 +146,12 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
       ['verified_match','verified_observation','verified_mismatch'].includes(item.status) &&
       item.subject_type === 'individual' && item.observed_band && item.evidence?.source_url);
     const isPartner=booleanOrUnknown(person.isPartner,person.is_partner);
-    const proposed=person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
+    const candidacy=chambersData?.editorial_development?.candidates?.find((c:any)=>normalizeName(c.name)===normalizeName(person.name));
+    const proposed=candidacy?.recommendation==='present' ? candidacy.suggested_ranking : candidacy ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
     const suggestedRank=isPartner === true && /associate/i.test(proposed) ? '' : proposed;
-    const sourceBio=String(person.comments || person.bio || '');
+    const sourceBio=String(candidacy?.submission_bio || person.comments || person.bio || '');
     const bio=anonymizeConfidentialClients(sourceBio,confNames);
     return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:person.url || '',comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
   });

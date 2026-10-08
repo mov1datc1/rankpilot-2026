@@ -27,9 +27,10 @@ class GroundingV2Tests(unittest.TestCase):
         self.assertFalse(result['passed']);self.assertEqual(result['defects'][0]['owner'],'rankpilot')
     def test_tax_does_not_match_taxonomy_and_directory_is_a_filter(self):
         router=RAGRouter();chunks=router.retrieve('Tax','Chambers')
-        self.assertTrue(chunks);self.assertTrue(all(c.source=='Rankpilot Tax Guides Context Mapping - Chambers.txt' for c in chunks))
+        self.assertTrue(chunks);self.assertTrue(any(c.source=='Rankpilot Tax Guides Context Mapping - Chambers.txt' for c in chunks))
+        self.assertFalse(any('Banking' in c.source for c in chunks))
         labour=router.retrieve('Labour & Employment','Chambers')
-        self.assertTrue(labour);self.assertTrue(all(c.source=='UNIVERSAL CHAMBERS LABOUR LOGIC.txt' for c in labour))
+        self.assertTrue(labour);self.assertTrue(any(c.source=='UNIVERSAL CHAMBERS LABOUR LOGIC.txt' for c in labour))
     def test_uncatalogued_sources_do_not_become_policy(self):
         import tempfile
         from pathlib import Path

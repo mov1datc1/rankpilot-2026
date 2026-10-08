@@ -1,5 +1,5 @@
 {
-  "version": "practice-policy-v2",
+  "version": "practice-policy-v3",
   "owner_approval": null,
   "scope": "Project reference methodology; not official directory requirements or client evidence. Uncatalogued documents are quarantined. Jurisdiction-specific thresholds require separately verified applicability.",
   "documents": [
@@ -172,6 +172,33 @@
       "jurisdiction": "*",
       "edition": "unspecified",
       "tier": "reference",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+      "practice": "*",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "¿Cómo rankeamos abogado_as__.txt",
+      "practice": "*",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "EDITORIAL_CONSTITUTION.txt",
+      "practice": "*",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
       "approval": "project_reference_only"
     }
   ]

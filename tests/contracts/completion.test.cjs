@@ -11,27 +11,34 @@ const {POST}=require('../../src/app/api/optimize/complete/route.ts');
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
 global.fetch=async(url,options)=>{
  const payload=JSON.parse(options.body);calls.push({url,payload});
- if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
+ if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,development_validated:true,development:{version:'editorial-development-v1'},ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
  return Response.json({success:true,judge:{passed:!rejectFinal,defects:rejectFinal?[{severity:'critical',message:'Injected rendered claim defect'}]:[]}});
 };
-const complete=body=>POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));
+function seedReview(){
+ const data=state.chambersData;
+ const development={version:'editorial-development-v1',candidates:[],matters:[{matter_id:'m1',text:source,decisive_source_quotes:['The appeal remains pending']}],b10,c2:'Our practice requests consideration based on this tax appeal.'};
+ data.editorial_development=development;data.enhanced_c2=development.c2;
+ const review={success:true,selection_validated:true,development_validated:true,development,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}};
+ data.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,data,data.matters)),stage:'done',state:review,lease_until:0};
+}
+const complete=body=>{if(!state.chambersData.review_checkpoint)seedReview();return POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));};
 test('completion defaults to the current ranking table and selected country without inventing a research period',async()=>{
  reset();state.guideRegion='Latin America — Mexico';
  assert.equal((await complete()).status,200);
- assert.equal(calls[0].payload.ranking_edition,'current');
- assert.equal(calls[0].payload.ranking_jurisdiction,'Mexico');
- assert.equal(calls[0].payload.research_period,null);
+ assert.equal(calls[0].payload.package.ranking_edition,'current');
+ assert.equal(calls[0].payload.package.ranking_jurisdiction,'Mexico');
+ assert.equal(calls[0].payload.package.research_period,null);
 });
 test('completion preserves the explicitly selected ranking scope and research period',async()=>{
  reset();Object.assign(state.chambersData,{ranking_edition:'2026',ranking_jurisdiction:'Brazil',research_period:{from:'2025-01-01',to:'2025-12-31'}});
  assert.equal((await complete()).status,200);
- assert.equal(calls[0].payload.ranking_edition,'2026');
- assert.equal(calls[0].payload.ranking_jurisdiction,'Brazil');
- assert.deepEqual(calls[0].payload.research_period,{from:'2025-01-01',to:'2025-12-31'});
+ assert.equal(calls[0].payload.package.ranking_edition,'2026');
+ assert.equal(calls[0].payload.package.ranking_jurisdiction,'Brazil');
+ assert.deepEqual(calls[0].payload.package.research_period,{from:'2025-01-01',to:'2025-12-31'});
 });
-test('completion reviews actual DOCX and binds exact bytes to current draft',async()=>{reset();const r=await complete();assert.equal(r.status,200);const data=state.chambersData;assert.equal(data.release_verdict.passed,true,JSON.stringify(data.release_verdict));assert.equal(calls.length,2);assert.ok(calls[1].payload.package.rendered_artifact.includes('MXN 1000000'));const bytes=Buffer.from(data.approved_artifact.base64,'base64');assert.ok((await JSZip.loadAsync(bytes)).file('word/document.xml'));assert.equal(data.approved_artifact.sha256,artifactHash(bytes));assert.equal(data.approved_artifact.input_hash,deliveryInputHash(state));});
-test('final reviewer defect blocks artifact despite positive initial review',async()=>{reset();rejectFinal=true;const r=await complete();assert.equal(r.status,200);assert.equal(state.chambersData.release_verdict.passed,false);assert.equal(state.chambersData.approved_artifact,null);assert.equal(state.status,'Draft');assert.equal(calls.length,2);assert.ok(state.chambersData.release_verdict.errors[0].includes('Injected rendered claim defect'));});
-test('concurrent save during review rejects completion without overwriting draft',async()=>{reset();conflict=true;const before=structuredClone(state);assert.equal((await complete()).status,409);assert.deepEqual(state,before);});
+test('completion reviews actual DOCX and binds exact bytes to current draft',async()=>{reset();const r=await complete();assert.equal(r.status,200);const data=state.chambersData;assert.equal(data.release_verdict.passed,true,JSON.stringify(data.release_verdict));assert.equal(calls.length,1);assert.ok(calls[0].payload.package.rendered_artifact.includes('MXN 1000000'));const bytes=Buffer.from(data.approved_artifact.base64,'base64');assert.ok((await JSZip.loadAsync(bytes)).file('word/document.xml'));assert.equal(data.approved_artifact.sha256,artifactHash(bytes));assert.equal(data.approved_artifact.input_hash,deliveryInputHash(state));});
+test('final reviewer defect blocks artifact despite positive initial review',async()=>{reset();rejectFinal=true;const r=await complete();assert.equal(r.status,200);assert.equal(state.chambersData.release_verdict.passed,false);assert.equal(state.chambersData.approved_artifact,null);assert.equal(state.status,'Draft');assert.equal(calls.length,1);assert.ok(state.chambersData.release_verdict.errors[0].includes('Injected rendered claim defect'));});
+test('concurrent save during review rejects completion without overwriting draft',async()=>{reset();seedReview();conflict=true;const before=structuredClone(state);assert.equal((await complete()).status,409);assert.deepEqual(state,before);});
 test('unsaved optimized text cannot bypass persisted version',async()=>{reset();assert.equal((await complete({matters:[{...state.matters[0],optimizedText:'Invented outcome'}]})).status,409);assert.equal(calls.length,0);});
 const {POST:optimizeMatter}=require('../../src/app/api/optimize/matter/route.ts');
 test('optimizing one mandate preserves a concurrent result for a second mandate with the same client',async()=>{
@@ -54,9 +61,9 @@ test('pending source decisions block optimization before any model call',async()
  }
 });
 test('rejected source selection is a proposal, never a canonical portfolio or approved artifact',async()=>{
- reset();const saved=global.fetch;
- global.fetch=async()=>Response.json({success:true,selection_validated:false,strategy:{matters:[{matter_id:'m1',disposition:'core'}],hero_matter_id:'m1'},release_verdict:{passed:false,status:'needs_review',errors:['Source quote not supported']}});
- try {assert.equal((await complete()).status,200);assert.equal(state.chambersData.canonical_matter_selection,null);assert.equal(state.chambersData.hero_matter_id,null);assert.equal(state.chambersData.approved_artifact,null);assert.deepEqual(state.chambersData.release_verdict.errors,['Source quote not supported']);} finally {global.fetch=saved;}
+ reset();seedReview();const review=state.chambersData.review_checkpoint.state;
+ review.selection_validated=false;review.render_gate={passed:false,errors:['Source quote not supported']};review.release_verdict={passed:false,status:'needs_review',errors:['Source quote not supported']};
+ assert.equal((await complete()).status,200);assert.equal(state.chambersData.canonical_matter_selection,null);assert.equal(state.chambersData.approved_artifact,null);assert.deepEqual(state.chambersData.release_verdict.errors,['Source quote not supported']);
 });
 const {needsB10Optimization,hasValidatedSelection}=require('../../src/lib/audit/optimization-state.ts');
 test('resume optimizes an imported enhanced B10 but preserves an existing revision',()=>{
@@ -140,9 +147,9 @@ test('a renderer update retries only the exact Word and then caches its new verd
 for (const rejected of [false,true]) test(`review policy update invalidates cached verdict (rejected=${rejected})`,async()=>{
  reset();rejectFinal=rejected;await complete();const before=calls.length;
  state.chambersData.completed_review_policy_version='review-core-v1.3';
- await complete();assert.equal(calls.length,before+2);
- assert.equal(state.chambersData.completed_review_policy_version,'review-core-v2.0');
- await complete();assert.equal(calls.length,before+2);
+ await complete();assert.equal(calls.length,before+1);
+ assert.equal(state.chambersData.completed_review_policy_version,'review-core-v3.0');
+ await complete();assert.equal(calls.length,before+1);
 });
 
 test('approval binds both actual Word files to one revision and reviews both texts',async()=>{
@@ -152,7 +159,7 @@ test('approval binds both actual Word files to one revision and reviews both tex
  const final=calls.find(c=>c.url.endsWith('/verify-rendered-package'));
  assert.ok(final.payload.package.rendered_artifact);assert.ok(final.payload.package.rendered_audit.includes('Strategic Audit'));
  const archive=await require('jszip').loadAsync(Buffer.from(artifact.audit_base64,'base64'));
- assert.ok((await archive.file('word/document.xml').async('string')).includes('Internal report linked'));
+ assert.ok(!(await archive.file('word/document.xml').async('string')).includes('Internal report linked'));
 });
 
 test('final review calibration update reuses the letter and reruns only the actual artifacts',async()=>{

@@ -10,11 +10,13 @@ class ReviewCostTests(unittest.TestCase):
     def test_short_tasks_do_not_inherit_register_sized_allowance(self):
         with patch.dict(os.environ, {}, clear=True):
             self.assertEqual(get_model_settings('extraction')['max_tokens'], 32768)
-            for purpose in ('rewrite', 'letter'):
+            for purpose in ('rewrite',):
                 config = get_model_settings(purpose)
                 self.assertEqual(config['max_tokens'], 4096)
                 self.assertEqual(config['reasoning_effort'], 'low')
                 self.assertEqual(config['max_retries'], 0)
+            self.assertEqual(get_model_settings('letter')['max_tokens'], 8192)
+            self.assertEqual(get_model_settings('development')['max_tokens'], 24576)
             self.assertEqual(get_model_settings('editorial')['reasoning_effort'], 'high')
 
     def test_purpose_override_wins_without_changing_other_tasks(self):
@@ -50,11 +52,11 @@ class ReviewCostTests(unittest.TestCase):
         self.assertEqual(package['rendered_artifact'], 'Exact Word text')
         self.assertNotIn('optimizedText', package['matters'][0])
 
-    def test_portfolio_role_does_not_repeat_candidate_leadership_analysis(self):
+    def test_portfolio_receives_candidate_evidence_for_incremental_contribution(self):
         package = {'lawyers':[{'name':'Sofia Vega','isPartner':True}], 'matters':[{'id':'m','rawNotes':'Pending appeal','optimizedText':'Draft','status':'Optimized'}], 'ranking_verification':{'status':'verified_match','individuals':[{'name':'Sofia Vega'}]}}
         strategy_input = role_payload(package,'strategist')
-        self.assertNotIn('lawyers',strategy_input)
-        self.assertNotIn('individuals',strategy_input['ranking_verification'])
+        self.assertIn('lawyers',strategy_input)
+        self.assertIn('individuals',strategy_input['ranking_verification'])
         self.assertNotIn('status',strategy_input['matters'][0])
         letter_input = role_payload({'package':package},'writer')['package']
         self.assertEqual(letter_input['lawyers'][0]['name'],'Sofia Vega')
@@ -74,7 +76,7 @@ class ReviewCostTests(unittest.TestCase):
     def test_final_judge_does_not_start_a_hidden_repair_loop(self):
         verdict = {'judge': {'passed': False, 'defects': [{'severity': 'critical', 'scope': 'letter', 'message': 'Role conflict'}]}, 'trace': []}
         with patch('core.review_graph.editor', return_value=verdict) as editor, patch('core.review_graph.writer') as writer:
-            result = review_rendered_package({'letter': {}, 'trace': []}, allow_repair=False)
+            result = review_rendered_package({'package':{'directory':'Chambers','b10_source':'Source','matters':[]},'strategy':{},'letter': {}, 'trace': []}, allow_repair=False)
         self.assertFalse(result['judge']['passed'])
         editor.assert_called_once()
         writer.assert_not_called()
@@ -101,7 +103,8 @@ class ReviewCostTests(unittest.TestCase):
         self.assertEqual(register_gate(state)['errors'], [])
         self.assertFalse(release_gate(state)['release_verdict']['passed'])
         state['package']['lawyers'][0]['roleResolution']['confirmed'] = True
-        self.assertTrue(release_gate(state)['release_verdict']['passed'])
+        self.assertTrue(release_gate(state)['render_gate']['passed'])
+        self.assertFalse(release_gate(state)['release_verdict']['passed'])
 
     def test_render_permission_never_implies_delivery_approval(self):
         from core.review_graph import release_gate

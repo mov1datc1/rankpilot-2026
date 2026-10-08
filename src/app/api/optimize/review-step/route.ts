@@ -1,3 +1,4 @@
+import { projectDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { engineFetch } from '@/lib/editorial/engine';
 import { randomUUID } from 'node:crypto';
@@ -6,7 +7,7 @@ import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { needsInputReview } from '@/lib/audit/input-review';
 import { deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
-import { reviewPackage, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
+import { reviewPackage, reviewInputHash, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
 export const maxDuration = 300;
 
@@ -64,9 +65,12 @@ export async function POST(request: NextRequest) {
     const nextStage = result.next_stage;
     if (!reviewSteps.includes(nextStage) || !result.state || reviewSteps.indexOf(nextStage) <= reviewSteps.indexOf(stage)) throw new Error('Invalid review response');
     const step_keys = {...checkpoint.step_keys,[stage]:reviewStepHash(stage,payload,result.state)};
-    const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
+    const projected = stage === 'development' && result.state.development_validated ? projectDevelopment({...locked.chambersData,matters}, result.state) : locked.chambersData;
+    const projectedHash = reviewInputHash(reviewPackage(submission,projected,projected.matters || matters));
+    const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...projected, review_checkpoint: {...checkpoint, input_hash:projectedHash, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
+    if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),trace:result.state.trace?.at(-1) || null},{status:422});
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace:result.state.trace?.at(-1) || null, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {
     // A timeout leaves the lease until expiry: a still-running provider call must

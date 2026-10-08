@@ -111,7 +111,7 @@ class RAGRouter:
             return "example"
         return "reference"
 
-    def retrieve(self, practice_area: str, directory: str, jurisdiction: str = "", edition: str = "", guide_region: str = "") -> List[RAGChunk]:
+    def retrieve(self, practice_area: str, directory: str, jurisdiction: str = "", edition: str = "", guide_region: str = "", task: str = "") -> List[RAGChunk]:
         # Routing is an exact metadata join. Filenames and model text have no
         # authority to opt a document into a practice or directory.
         keywords = tuple(self._practice_keywords(str(practice_area)))
@@ -122,7 +122,7 @@ class RAGRouter:
         directory_key = {"chamber":"chambers", "legal 500":"legal500", "iflr":"iflr", "leader":"leadersleague"}.get(next(iter(self._directory_keywords(str(directory))), ""))
         candidates = []
         for entry in self.catalog.get("documents", []):
-            if not practice or not directory_key or entry.get("practice") != practice or entry.get("directory") not in (directory_key, "*"):
+            if not practice or not directory_key or entry.get("practice") not in (practice, "*") or entry.get("directory") not in (directory_key, "*"):
                 continue
             # Unscoped project methodology is usable across locations; a local or
             # edition-specific reference needs an exact supplied match.
@@ -136,22 +136,34 @@ class RAGRouter:
                 raise ValueError("Catalog source must be a basename")
             # A bounded excerpt per document prevents long files from displacing
             # all other applicable references. Core policy is supplied separately.
-            for index, text in enumerate(self._split_chunks(self._read_file(os.path.join(self.knowledge_dir, filename)))[:3]):
+            for index, text in enumerate(self._split_chunks(self._read_file(os.path.join(self.knowledge_dir, filename)))):
                 text = text[:self.CHUNK_CHARS]
                 digest = hashlib.sha256(f"{filename}:{index}:{text}".encode()).hexdigest()[:12]
-                candidates.append(RAGChunk(f"rag-{digest}", filename, entry["tier"], 1, text))
-        selected = []
-        total = 0
-        for chunk in candidates:
-            if len(selected) >= 6 or total + len(chunk.text) > 12000:
+                terms = set(re.findall(r"\w{4,}", task.casefold()))
+                words = set(re.findall(r"\w{4,}", text.casefold()))
+                score = 1 + len(terms & words)
+                candidates.append(RAGChunk(f"rag-{digest}", filename, entry["tier"], score, text))
+        # Reserve one best matching chunk per applicable reference before filling
+        # the remaining budget. Later sections compete equally with introductions.
+        ranked = sorted(candidates, key=lambda chunk: -chunk.score)
+        first_by_source = {}
+        for chunk in ranked:
+            first_by_source.setdefault(chunk.source, chunk)
+        first_ids = {chunk.chunk_id for chunk in first_by_source.values()}
+        ordered = list(first_by_source.values()) + [c for c in ranked if c.chunk_id not in first_ids]
+        selected, total = [], 0
+        for chunk in ordered:
+            if len(selected) >= self.MAX_CHUNKS:
                 break
+            if total + len(chunk.text) > self.MAX_CONTEXT_CHARS:
+                continue
             selected.append(chunk)
             total += len(chunk.text)
         self.last_manifest = [{**{k:v for k,v in asdict(c).items() if k != "text"}, "policy_version":self.policy_version, "approval":"project_reference_only"} for c in selected]
         return selected
 
-    def get_rag_context(self, practice_area: str, directory: str, jurisdiction: str = "", edition: str = "", guide_region: str = "") -> str:
-        chunks = self.retrieve(practice_area, directory, jurisdiction, edition, guide_region)
+    def get_rag_context(self, practice_area: str, directory: str, jurisdiction: str = "", edition: str = "", guide_region: str = "", task: str = "") -> str:
+        chunks = self.retrieve(practice_area, directory, jurisdiction, edition, guide_region, task)
         print(f"[RAG ROUTER] practice={practice_area} directory={directory} chunks={len(chunks)} sources={len(set(c.source for c in chunks))}")
         blocks = [
             "RAG METHODOLOGY CONTEXT — NOT SUBMISSION EVIDENCE",

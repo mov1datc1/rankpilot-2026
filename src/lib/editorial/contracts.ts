@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { reviewPackage, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
-export const EDITORIAL_VERSION = 'studio-pipeline-v2';
+export const EDITORIAL_VERSION = 'rankpilot-pipeline-v3';
 export type JobStatus = 'queued'|'running'|'completed'|'needs_review'|'failed'|'indeterminate'|'superseded';
 export interface ReviewIssue {
   code:string; rule_id:string; entity_id:string|null; field_path:string|null;
@@ -15,6 +15,7 @@ export function stableHash(value:unknown):string {
 export function sourceSnapshot(submission:any) {
   const data=submission.chambersData || {};
   const payload=reviewPackage(submission,data,data.matters || submission.matters || []);
+  delete (payload as any).editorial_development;
   delete (payload as any).b10_draft; delete (payload as any).c2_draft;
   payload.matters=payload.matters.map((m:any)=>{
     const {optimizedText,optimized_text,status,draft_provenance,createdAt,updatedAt,...source}=m;
