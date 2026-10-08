@@ -48,6 +48,7 @@ class Defect(BaseModel):
     conflict_basis: Optional[Literal['source_vs_source', 'source_vs_artifact']] = Field(default=None, description='SOURCE_CONFLICT is only conflicting SOURCE records. A generated draft contradicting an unambiguous source is UNSUPPORTED_CLAIM, source_vs_artifact, and RankPilot must repair it; never ask the user to reconfirm the clear source.')
     source_quote: str = Field(default='', description='Verbatim source evidence for a material defect; empty only for missing optional metadata.')
     artifact_quote: str = Field(default='', description='Verbatim questioned claim; never invent a quote.')
+    artifact_claim_kind: Optional[Literal['factual_assertion', 'request_for_information', 'template_label']] = Field(default=None, description='Classify what the quoted text actually does. An Audit action asking to confirm missing research dates is request_for_information, not an assertion of those dates or an unsupported factual claim. Use factual_assertion for stated dates, status or outcomes, even if the surrounding paragraph also requests information.')
     field_path: Optional[str] = Field(default=None, description='For missing metadata only: research_period, startDate, completionDate or matter_status.')
     temporal_basis: Optional[Literal['missing_metadata', 'evidenced_conflict', 'unsupported_claim']] = Field(default=None, description='Set only for temporal findings. missing_metadata means ONLY absent dates, research period or status, without a contradicted or invented claim. evidenced_conflict requires concrete conflicting source and artifact evidence; unsupported_claim means an invented specific date/status/outcome. Separate unrelated defects; never label a mixed factual conflict as missing_metadata.')
 
@@ -302,7 +303,15 @@ def calibrate_verdict(verdict, package=None):
             candidates = [entity] if defect.get('matter_id') else (package or {}).get('matters', [])
             blank_status = re.compile(re.escape(source_quote) + r'\s*(?:N/A\s*)?(?:Matter[’\x27]s Context:|$)', re.I)
             source_label_absence = any(not m.get(field) and any(blank_status.search(str(m.get(k) or '')) for k in ('source_excerpt','rawNotes','summary')) for m in candidates)
-        disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact))
+        # The semantic reviewer distinguishes a request from an assertion;
+        # independently bind it to the internal Audit and corroborate absence.
+        # Concrete dates or a quote repeated as Submission prose stay disputed.
+        audit_text=' '.join(str((package or {}).get('rendered_audit') or '').split())
+        submission_text=' '.join(str((package or {}).get('rendered_artifact') or '').split())
+        metadata_request = (missing and defect.get('artifact_claim_kind') == 'request_for_information'
+            and bool(artifact_quote) and artifact_quote in audit_text and artifact_quote not in submission_text
+            and not re.search(r'\d|\b(?:January|February|March|April|May|June|July|August|September|October|November|December|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',artifact_quote,re.I))
+        disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact and not metadata_request))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
         concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))

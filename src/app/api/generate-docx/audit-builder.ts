@@ -14,10 +14,10 @@ const CONTENT_WIDTH_DXA = 9360;
 
 function p(text: string, opts: { bold?: boolean; size?: number; color?: string; italics?: boolean; spacing?: any; alignment?: any } = {}): Paragraph {
   return new Paragraph({
-    children: text.split(/(\*\*[^*\n]+\*\*)/g).filter(Boolean).map(part => new TextRun({
-      text: part.startsWith('**') && part.endsWith('**') ? part.slice(2,-2) : part,
+    children: text.split(/(\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g).filter(Boolean).map(part => new TextRun({
+      text: part.startsWith('**') && part.endsWith('**') ? part.slice(2,-2) : part.startsWith('*') && part.endsWith('*') ? part.slice(1,-1) : part,
       bold: opts.bold || (part.startsWith('**') && part.endsWith('**')),
-      size: opts.size || 22, color: opts.color, italics: opts.italics,
+      size: opts.size || 22, color: opts.color, italics: opts.italics || (part.startsWith('*') && !part.startsWith('**') && part.endsWith('*')),
     })),
     spacing: opts.spacing || { after: 60 },
     alignment: opts.alignment,
@@ -84,7 +84,10 @@ export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, a
   if (letterData) {
     const sections: (Paragraph | Table)[] = [sectionTitle('RANKPILOT — Strategic Audit Letter'), fieldLabel('Firm: ', firmName), fieldLabel('Practice: ', practiceArea), p('Confidential internal review. Ranking outcomes are determined by the directory.')];
     for (const [key, heading] of [['executive_assessment','1. Executive Verdict'],['portfolio','2. Recommended Portfolio'],['leadership','3. Individual Ranking Strategy'],['evidence_gaps','4. Key Exclusions / Reserves'],['next_steps','5. Actions Before Filing']]) {
-      sections.push(sectionTitle(heading), ...String(letterData[key] || 'No assessment available.').split(/\n\s*\n/).filter(Boolean).map(text=>p(text)));
+      sections.push(sectionTitle(heading), ...String(letterData[key] || 'No assessment available.').replace(/\bnot_found\b/g,'sin coincidencia exacta en la consulta').split(/\n+/).filter(Boolean).map(text=>{
+        const heading=/^\s*#{1,6}\s+/.test(text);
+        return p(text.replace(/^\s*#{1,6}\s+/,''),heading?{bold:true}:{});
+      }));
     }
     for (const issue of data.release_verdict?.errors || []) sections.push(p(String(issue)));
     return new Document({title: `RankPilot Strategic Audit - ${firmName}`,creator:'RankPilot',sections:[{children:sections}]});

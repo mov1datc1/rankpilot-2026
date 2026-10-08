@@ -85,6 +85,21 @@ class TemporalReviewTests(unittest.TestCase):
     def test_empty_negative_verdict_is_not_silently_approved(self):
         self.assertFalse(calibrate_verdict({'passed': False, 'defects': []})['passed'])
 
+    def test_semantic_metadata_request_requires_literal_audit_and_absent_field(self):
+        quote='Confirmar la ventana de investigación aplicable o la actividad material durante ella.'
+        self.state['package']['rendered_audit']=quote
+        defect={**self.defect('missing_metadata'),'artifact_quote':quote,
+                'artifact_claim_kind':'request_for_information','source_quote':''}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        for changes in [{'artifact_claim_kind':'factual_assertion'}, {'artifact_quote':'Texto ausente'},
+                        {'source_quote':'The mandate ended.'}, {'artifact_quote':quote+' 2025'}]:
+            self.assertFalse(self.review([{**defect,**changes}])['judge']['passed'])
+        self.state['package']['rendered_artifact']+=quote
+        self.assertFalse(self.review([defect])['judge']['passed'])
+        self.state['package']['rendered_artifact']=''
+        self.state['package']['research_period']={'from':'2025-01-01','to':'2025-12-31'}
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
     def test_literal_null_field_quote_is_absence_not_a_source_conflict(self):
         defect = {**self.defect('missing_metadata'), 'source_quote': '"research_period":null',
                   'artifact_quote': 'Work Highlights in last 12 months'}
