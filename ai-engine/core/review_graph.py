@@ -87,6 +87,7 @@ class ReviewState(TypedDict, total=False):
     selection_validated: bool
     selection_review: dict
     selection_review_validated: bool
+    selection_review_unavailable: bool
     selection_review_attempts: int
     writer_attempts: int
     release_verdict: dict
@@ -240,7 +241,7 @@ def selection_review(state):
         trace = list(state.get('trace', []))
         if getattr(error, 'trace', None): trace.append(error.trace)
         errors = ['RankPilot no pudo completar la comprobación de la selección; la propuesta y las fuentes se conservan para reintentar.']
-        return {'selection_review_validated':False,'selection_validated':False,
+        return {'selection_review_validated':False,'selection_review_unavailable':True,'selection_validated':False,
                 'selection_review_attempts':2,'errors':errors,'trace':trace,
                 'selection_feedback':{'strategy':state['strategy'],'errors':errors,'semantic_rejection':False}}
 
@@ -399,7 +400,7 @@ def select_or_reuse(state):
         trace=list(state.get('trace',[]))
         if getattr(error,'trace',None): trace.append(error.trace)
         errors=['RankPilot conserva la selección anterior; falta completar su corrección antes de redactar.']
-        return {'errors':errors,'trace':trace,'selection_validated':False,
+        return {'errors':errors,'trace':trace,'selection_validated':False,'selection_review_unavailable':True,
                 'selection_review_validated':False,'selection_feedback':{
                     'strategy':state['strategy'],'errors':state.get('errors') or errors,'semantic_rejection':True}}
 

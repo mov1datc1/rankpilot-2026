@@ -35,7 +35,7 @@ def review_selection(state, invoke):
                 check['source_quote'] = quote
                 errors.append(f"Revisar la interpretación de {matter.get('client') or matter['id']}: {check['explanation']}")
     result['checks'] = {refs[ref]['id']: check for ref, check in result['checks'].items()}
-    return {'selection_review': result, 'selection_review_validated': not errors,
+    return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':False,
             'selection_validated': not errors, 'errors': errors, 'trace': trace,
             'selection_review_attempts': state.get('selection_review_attempts', 0) + 1,
             'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors)}}
