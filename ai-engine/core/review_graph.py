@@ -98,7 +98,7 @@ Severity policy: critical defects are concrete material factual changes, confide
 A firm's name never determines strength or ranking. Do not predict a band, invent a score, fill a quota, or add facts from prior knowledge.
 Ranking statements in source documents are unverified claims, including lawyer ranks. Only ranking_verification with a verified status establishes the scoped firm position; never use a firm observation to verify a lawyer or a different directory/edition. If the draft, strategy or letter presents a ranking claim as established without corresponding official evidence, report a critical defect and request verification or removal. An unverified declaration may remain in the source register or be described explicitly as unverified; do not mistake such attribution for an established ranking.
 A valid valueResolution (confirmed=true, value matching the matter value, source explanation supplied) is a user-confirmed correction to the disputed amount, not an unresolved conflict. Use that value and explanation while retaining original source text for traceability. Reject a draft that silently reinstates the superseded value; distinguish different monetary concepts described in the explanation. A correction is not independent documentary verification.
-Explicit confidentialityConfirmed=true together with publish_status=publishable or non_publishable is the user's saved decision; historical confidentialityEvidence describes extraction provenance and does not reopen that decision. Confidential matters are eligible for section E and hero selection without an additional publication permission.
+Explicit confidentialityConfirmed=true together with publish_status=publishable, confidential or non_publishable is the user's saved decision; historical confidentialityEvidence describes extraction provenance and does not reopen that decision. Confidential matters are eligible for section E and hero selection without an additional publication permission.
 Unknown practice requirements require questions or abstention. A user's requested ranking is an objective, not an established fact.
 '''
 
@@ -186,7 +186,9 @@ def register_gate(state):
     if not matters: errors.append('No source matters supplied.')
     if any(not i for i in ids) or len(ids)!=len(set(ids)): errors.append('Matter IDs must be present and unique.')
     if any(not (m.get('source_excerpt') or m.get('rawNotes') or m.get('summary')) for m in matters): errors.append('Every matter requires source evidence.')
-    if any(m.get('confidentialityConfirmed') is False or m.get('publish_status') not in ('publishable','non_publishable') for m in matters):
+    # Studio persists "confidential"; older editorial packages used the
+    # equivalent "non_publishable". Neither is an unresolved permission.
+    if any(m.get('confidentialityConfirmed') is False or m.get('publish_status') not in ('publishable','non_publishable','confidential') for m in matters):
         errors.append('Confirma la confidencialidad de los asuntos pendientes antes de preparar la candidatura.')
     return {'errors':errors,'trace':[],'writer_attempts':0,'selection_validated':False}
 

@@ -62,6 +62,14 @@ class SelectionSemanticTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'semantic'):
             run_editorial_stage('development',{'selection_validated':True})
 
+    def test_studio_saved_confidential_decision_does_not_reopen_permission(self):
+        for status in ('confidential', 'non_publishable', 'publishable'):
+            matter={**MATTER,'publish_status':status,'confidentialityConfirmed':True}
+            self.assertEqual(register_gate({'package':{'matters':[matter]}})['errors'],[])
+            self.assertTrue(register_gate({'package':{'matters':[{**matter,'confidentialityConfirmed':False}]}})['errors'])
+        for status in (None, '', 'confirmation_required', 'unknown'):
+            self.assertTrue(register_gate({'package':{'matters':[{**MATTER,'publish_status':status}]}})['errors'])
+
     def test_tax_venezuela_has_no_mexican_examples(self):
         router=RAGRouter()
         for task in ['strategist tax portfolio','selection_reviewer legal issue','editor tax currency jurisdiction','writer authority outcomes']:
