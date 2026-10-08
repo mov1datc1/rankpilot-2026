@@ -82,3 +82,21 @@ class SelectionSemanticTests(unittest.TestCase):
         self.assertEqual(market_context({'status':'not_found'},benchmark)['status'],'unavailable')
         result=market_context({'status':'verified_match','firm_name':'Our Firm'},benchmark)
         self.assertEqual(result['status'],'table_only');self.assertEqual([c['name'] for c in result['competitors']],['Peer'])
+
+    def test_unavailable_reviewer_preserves_selector_without_fabricating_approval(self):
+        from core.review_graph import selection_review, select_or_reuse
+        state={'package':{'matters':[MATTER]},'strategy':GOOD,'trace':[{'role':'strategist'}]}
+        with patch('core.review_graph.invoke_role',side_effect=TimeoutError('provider unavailable')):
+            result=selection_review(state)
+        self.assertFalse(result['selection_review_validated'])
+        self.assertFalse(result['selection_feedback']['semantic_rejection'])
+        with patch('core.review_graph.strategist') as model:
+            reused=select_or_reuse({**state,**result})
+        model.assert_not_called();self.assertEqual(reused['strategy']['hero_matter_id'],'property-1')
+
+    def test_stage_deadline_stops_before_starting_another_paid_call(self):
+        from core.review_graph import invoke_role
+        with patch('core.review_graph.create_chat_model') as factory:
+            with self.assertRaises(TimeoutError):
+                invoke_role({'stage_deadline':0},'selection_reviewer',None,'test',{})
+        factory.assert_not_called()

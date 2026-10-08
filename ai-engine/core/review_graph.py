@@ -71,6 +71,7 @@ class ReviewState(TypedDict, total=False):
     render_gate: dict
     node_events: list
     operation: str
+    stage_deadline: float
     development: dict
     development_validated: bool
     development_reusable: bool
@@ -157,7 +158,9 @@ def invoke_role(state, role, schema, instruction, payload):
     package = state.get('package', {})
     router = RAGRouter()
     methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
-    model=create_chat_model(purpose)
+    remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
+    if remaining<20: raise TimeoutError('Editorial stage budget exhausted before next call')
+    model=create_chat_model(purpose, request_timeout=remaining-5) if remaining!=float('inf') else create_chat_model(purpose)
     if state.get('output_recovery_attempt'):
         model=model.model_copy(update={'max_tokens':min(32768,max(16384,get_model_settings(purpose)['max_tokens']*2))})
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
@@ -202,7 +205,7 @@ def strategist(state):
     # hero first. Both exports project this exact order; the renderer never ranks.
     hero = strategy.get('hero_matter_id')
     strategy['matters'] = sorted(strategy['matters'], key=lambda item: 0 if item['matter_id'] == hero else 1)
-    return {'strategy':strategy,'trace':trace}
+    return {'strategy':strategy,'trace':trace,'errors':[]}
 
 def selection_gate(state):
     source={m['id']:m for m in state['package']['matters']}; decisions=state['strategy']['matters'];ids=[m['matter_id'] for m in decisions];errors=[]
@@ -388,7 +391,17 @@ def select_or_reuse(state):
                 return {'strategy':strategy,**checked}
         except (ValueError, KeyError, TypeError):
             pass
-    return strategist(state)
+    try:
+        return strategist(state)
+    except Exception as error:
+        if not state.get('strategy'): raise
+        # A timed-out repair must not discard the already saved interpretation.
+        trace=list(state.get('trace',[]))
+        if getattr(error,'trace',None): trace.append(error.trace)
+        errors=['RankPilot conserva la selección anterior; falta completar su corrección antes de redactar.']
+        return {'errors':errors,'trace':trace,'selection_validated':False,
+                'selection_review_validated':False,'selection_feedback':{
+                    'strategy':state['strategy'],'errors':state.get('errors') or errors,'semantic_rejection':True}}
 
 def create_review_graph():
     """One executable editorial graph, resumable at paid-role boundaries.
@@ -408,7 +421,7 @@ def create_review_graph():
         return {'strategy':'register','development':'development','writer':'writer','editor':'editor'}.get(s.get('operation'),'register')
     g.set_conditional_entry_point(entry, {n:n for n in ('register','development','writer','editor')})
     g.add_conditional_edges('register',lambda s:'release' if s['errors'] else 'strategy',{'release':'release','strategy':'strategy'})
-    g.add_edge('strategy','selection')
+    g.add_conditional_edges('strategy',lambda s:'release' if s.get('errors') else 'selection',{'release':'release','selection':'selection'})
     g.add_conditional_edges('selection',lambda s:'release' if s['errors'] else 'selection_review',{'release':'release','selection_review':'selection_review'})
     def after_selection_review(s):
         if s.get('errors'):
@@ -435,7 +448,7 @@ def run_editorial_stage(stage, state):
         raise ValueError('Source-grounded semantic selection review required')
     if stage == 'writer' and not state.get('development_validated'):
         raise ValueError('Validated editorial development required')
-    return create_review_graph().invoke({**state,'operation':stage}, {'recursion_limit':16})
+    return create_review_graph().invoke({**state,'operation':stage,'stage_deadline':time.monotonic()+225}, {'recursion_limit':16})
 
 
 def review_rendered_package(state, allow_repair=True):

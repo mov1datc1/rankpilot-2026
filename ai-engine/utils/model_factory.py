@@ -87,6 +87,10 @@ def get_model_profile(purpose: ModelPurpose = "standard") -> Dict[str, str]:
 
 
 def create_chat_model(
-    purpose: ModelPurpose = "standard", model_override: str = ""
+    purpose: ModelPurpose = "standard", model_override: str = "", request_timeout: float = None
 ) -> ChatOpenAI:
-    return ChatOpenAI(**get_model_settings(purpose, model_override=model_override))
+    settings=get_model_settings(purpose, model_override=model_override)
+    if request_timeout is not None:
+        if request_timeout<=0: raise ValueError("Request timeout must be positive")
+        settings["request_timeout"]=min(settings["request_timeout"],request_timeout)
+    return ChatOpenAI(**settings)
