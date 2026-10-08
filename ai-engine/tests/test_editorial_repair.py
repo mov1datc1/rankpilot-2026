@@ -134,3 +134,17 @@ class TargetedRepairTests(unittest.TestCase):
         for field in ('portfolio','leadership','evidence_gaps','next_steps','next_actions'):self.assertEqual(result['letter'][field],letter[field])
         self.assertEqual(state['development'],DEV);self.assertEqual(state['letter'],letter)
         self.assertEqual(result['letter_repair_report']['corrected_fields'],['executive_assessment'])
+
+    def test_mixed_scope_defects_do_not_send_audit_issue_to_submission_locator(self):
+        proposal=copy.deepcopy(DEV)
+        proposal['matters'][0]['text']='The team negotiated.'
+        submission={'severity':'critical','owner':'rankpilot','scope':'submission','code':'EDITORIAL_OMISSION','message':'Restore supported outcome.'}
+        letter={'severity':'critical','owner':'rankpilot','scope':'letter','code':'UNSUPPORTED_CLAIM','message':'Core matter incorrectly described as reserve.'}
+        plan={'locations':[{'path':'matters/0/text','defect_index':0,'reason':'Restore the omitted outcome.'}],'unresolved':[]}
+        fix={'corrections':[{'path':'matters/0/text','value':DEV['matters'][0]['text'],'reason':'Restore source-backed result.'}],'unresolved':[]}
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True,'repair_feedback':[submission,letter]}
+        with patch('core.review_graph.invoke_role',side_effect=[(plan,[]),(fix,[])]) as model:
+            result=develop(state)
+        self.assertTrue(result['development_validated'])
+        self.assertEqual(model.call_args_list[0].args[4]['defects'],[submission])
+        self.assertEqual(state['repair_feedback'],[submission,letter])

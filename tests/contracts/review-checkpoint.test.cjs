@@ -135,3 +135,18 @@ test('rejected executive length retries only the writer and preserves validated 
  assert.ok(calls[0].state.development_validated);
  assert.ok(calls[0].state.selection_review_validated);
 });
+
+
+test('retry retains concrete unresolved repair defects instead of replacing them with a generic locator error',async()=>{
+ reset();await step();await step();
+ const saved=state.chambersData.review_checkpoint;
+ const defect={severity:'critical',owner:'rankpilot',scope:'submission',code:'EDITORIAL_OMISSION',matter_id:'m',message:'Restore the source-backed amount.'};
+ saved.state.development_validated=false;
+ saved.state.repair_feedback=[defect];
+ saved.state.errors=['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'];
+ const {resumeReviewCheckpoint}=require('../../src/lib/audit/review-checkpoint.ts');
+ const resumed=resumeReviewCheckpoint(reviewPackage(state,state.chambersData,state.matters),saved);
+ assert.equal(resumed.stage,'development');
+ assert.deepEqual(resumed.state.repair_feedback,[defect]);
+ assert.equal(resumed.state.development_validated,false);
+});
