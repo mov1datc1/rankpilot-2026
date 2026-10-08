@@ -59,6 +59,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   // Candidate corrections belong to the leadership letter and its review.
   delete source.editorial_development;
   return reviewInputHash({policy:'role-deliverables-v2-single-judge',stage,source,
+    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v2'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),

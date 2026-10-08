@@ -26,3 +26,11 @@ test('missing development or missing selected matter cannot be projected',()=>{
  assert.throws(()=>projectDevelopment(data,{...state,development_validated:false}),/DEVELOPMENT_REJECTED/);
  assert.throws(()=>projectDevelopment(data,{...state,development:{...state.development,matters:[]}}),/DEVELOPMENT_REJECTED/);
 });
+
+test('confirmed non-partner matter leaders remain in the team without being presented as partners',()=>{
+ const {projectMatterLeadership}=require('../../src/lib/docx/lawyer-curator.ts');
+ const roster=[{name:'Sofía Vega',isPartner:false},{name:'Elena Ruiz',isPartner:true}];
+ assert.deepEqual(projectMatterLeadership('Sofía Vega.','N/A',roster),{lead:'',team:'Sofía Vega — lead lawyer'});
+ assert.deepEqual(projectMatterLeadership('Elena Ruiz, Sofía Vega','Mateo Soto',roster),{lead:'Elena Ruiz',team:'Mateo Soto; Sofía Vega — lead lawyer'});
+ assert.deepEqual(projectMatterLeadership('Unknown Lawyer','',roster),{lead:'Unknown Lawyer',team:''});
+});

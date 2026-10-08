@@ -4,7 +4,7 @@ import {
   VerticalAlign, Header, Footer, PageBreak, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
-import { curateLawyers, anonymizeConfidentialClients } from '@/lib/docx/lawyer-curator';
+import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership } from '@/lib/docx/lawyer-curator';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -215,8 +215,9 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   let rawLead = matter.leadPartner || (Array.isArray(matter.leadPartners) ? matter.leadPartners.join(', ') : matter.leadPartners) || '';
   let rawTeam = matter.teamMembers || (Array.isArray(matter.otherLawyers) ? matter.otherLawyers.join(', ') : matter.otherLawyers) || '';
 
-  const leadPartnerText = cleanLawyerNames(rawLead);
-  const teamMembersText = cleanLawyerNames(rawTeam);
+  const leadership=projectMatterLeadership(cleanLawyerNames(rawLead),cleanLawyerNames(rawTeam),lawyers);
+  const leadPartnerText = leadership.lead;
+  const teamMembersText = leadership.team;
 
   const rawStatus = matter.completionDate || matter.completion_date || matter.date || '';
   const statusText = cleanTablePipes(sanitizeMatterSummary(rawStatus));

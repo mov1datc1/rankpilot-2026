@@ -156,3 +156,13 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:person.url || '',comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
   });
 }
+
+/** Respect known non-partner status without changing the historical source field. */
+export function projectMatterLeadership(rawLead:string, rawTeam:string, lawyers:any[]) {
+  const parts=String(rawLead || '').split(/\s*(?:[,;\n]|\band\b|\by\b|&)\s*/i).filter(Boolean);
+  const nonPartners=parts.filter(name=>lawyers.some(person=>person.isPartner===false && normalizeName(name)===normalizeName(person.name)));
+  if(!nonPartners.length) return {lead:rawLead,team:rawTeam};
+  const lead=parts.filter(name=>!nonPartners.includes(name)).join(', ');
+  const team=[/^(?:n\/?a|none|not applicable|-)\.?$/i.test(String(rawTeam || '').trim())?'':rawTeam,...nonPartners.map(name=>`${name.replace(/\.$/,'')} — lead lawyer`)].filter(Boolean).join('; ');
+  return {lead,team};
+}
