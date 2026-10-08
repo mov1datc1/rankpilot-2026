@@ -76,3 +76,22 @@ test('a new job after rejected development reuses selection and keeps each paid 
  assert.equal(calls.at(-1).payload.state.development_reusable,true);
  await stage();assert.equal(calls.at(-1).payload.stage,'writer');
 });
+
+test('a completed but truncated response retries only that role once and accounts for failed usage',async()=>{
+ reset();const originalFetch=global.fetch;let attempts=0;
+ global.fetch=async(url,options)=>{const p=JSON.parse(options.body);if(url.endsWith('/review-step')&&p.stage==='writer'&&attempts++===0){calls.push({url,payload:p});return Response.json({success:false,code:'AI_OUTPUT_LIMIT',error:'Incomplete response',trace:{role:'writer',usage:{total_tokens:200}}},{status:502});}return originalFetch(url,options);};
+ try {for(let i=0;i<8;i++){await stage();if(job.status!=='queued')break;}
+ assert.equal(job.status,'completed',JSON.stringify(job));const writers=calls.filter(c=>c.payload.stage==='writer');assert.equal(writers.length,2);assert.equal(writers[1].payload.state.output_recovery_attempt,1);assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);assert.equal(job.ledger.find(l=>l.issue?.code==='AI_OUTPUT_LIMIT').trace.usage.total_tokens,200);
+ }finally{global.fetch=originalFetch;}
+});
+test('repeated truncation stops after the bounded recovery and never approves a partial document',async()=>{
+ reset();const originalFetch=global.fetch;let attempts=0;
+ global.fetch=async(url,options)=>{const p=JSON.parse(options.body);if(url.endsWith('/review-step')&&p.stage==='writer'){attempts++;return Response.json({success:false,code:'AI_OUTPUT_LIMIT',error:'Incomplete response',trace:{role:'writer',usage:{total_tokens:200}}},{status:502});}return originalFetch(url,options);};
+ try{for(let i=0;i<8;i++){await stage();if(job.status!=='queued')break;}assert.equal(attempts,2);assert.equal(job.status,'failed');assert.ok(!submission.chambersData.approved_artifact);}finally{global.fetch=originalFetch;}
+});
+
+test('truncated final review retries the judge without regenerating approved upstream work',async()=>{
+ reset();const originalFetch=global.fetch;let attempts=0,recovery;
+ global.fetch=async(url,options)=>{const p=JSON.parse(options.body);if(url.endsWith('/verify-rendered-package')){attempts++;if(attempts===1)return Response.json({success:false,code:'AI_OUTPUT_LIMIT',trace:{role:'editor',usage:{total_tokens:201}}},{status:502});recovery=p.output_recovery;}return originalFetch(url,options);};
+ try{for(let i=0;i<8;i++){await stage();if(job.status!=='queued')break;}assert.equal(job.status,'completed',JSON.stringify(job));assert.equal(attempts,2);assert.equal(recovery,true);assert.equal(calls.filter(c=>c.payload.stage==='writer').length,1);assert.equal(job.ledger.find(l=>l.issue?.code==='AI_OUTPUT_LIMIT').trace.usage.total_tokens,201);}finally{global.fetch=originalFetch;}
+});

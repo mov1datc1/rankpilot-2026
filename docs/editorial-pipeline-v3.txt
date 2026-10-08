@@ -31,3 +31,8 @@ Recovery of rejected proposals
   execute a later role under the earlier label.
 - Internal validation diagnostics remain in the ledger. Studio displays a clear
   preparation status and resume action, separately from genuine user questions.
+- Structured responses retain raw provider status and token usage before local
+  schema validation. A truncated response is never accepted as a partial draft.
+  Known output-limit failures permit one durable retry of that same role with
+  a bounded larger allowance. Network failures with unknown outcomes do not.
+  This applies to both editorial generation and the exact-document judge.

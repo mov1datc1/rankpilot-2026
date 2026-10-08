@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const user = await editorialUser(request);
     if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
     const account = user.email ? await prisma.user.findUnique({where: {email: user.email}}) : null;
-    const { submissionId, reviewStage } = await request.json();
+    const { submissionId, reviewStage, outputRecovery } = await request.json();
     if (!submissionId) return NextResponse.json({error: 'Missing submissionId'}, {status: 400});
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
@@ -62,11 +62,11 @@ export async function POST(request: NextRequest) {
     if ((locked.chambersData as any)?.review_checkpoint?.lease_id !== checkpoint.lease_id) throw new Error('DRAFT_CONFLICT');
     const response = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
       method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(250000),
-      body: JSON.stringify({stage, package: payload, state: checkpoint.state}),
+      body: JSON.stringify({stage, package: payload, state: {...checkpoint.state,output_recovery_attempt:outputRecovery===true?1:0}}),
     });
     const result = await response.json();
     if (!response.ok || !result.success) {
-      const failure = {code: result.code || 'AI_REVIEW_UNAVAILABLE', error: result.error || 'No se completó esta etapa. El avance se conserva.'};
+      const failure = {code: result.code || 'AI_REVIEW_UNAVAILABLE', error: result.error || 'No se completó esta etapa. El avance se conserva.',trace:result.trace || null};
       await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, lease_until: 0, error: failure}}}});
       locked = null;
       return NextResponse.json(failure, {status: 502});

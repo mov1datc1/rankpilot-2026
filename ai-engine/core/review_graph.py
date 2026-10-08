@@ -11,8 +11,9 @@ from pathlib import Path
 from typing import List, Literal, Optional
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
+from openai.lib._pydantic import to_strict_json_schema
 from langgraph.graph import StateGraph, END
-from utils.model_factory import create_chat_model
+from utils.model_factory import create_chat_model, get_model_settings
 from utils.model_response import require_complete_response
 from utils.rag_router import RAGRouter
 from core.grounding import factual_issues
@@ -73,6 +74,7 @@ class ReviewState(TypedDict, total=False):
     development_reusable: bool
     repair_feedback: list
     repair_report: dict
+    output_recovery_attempt: int
     strategy: dict
     letter: dict
     judge: dict
@@ -137,21 +139,36 @@ def role_payload(payload, role):
             matter.pop('draft_provenance', None)
     return result
 
+class EditorialResponseError(ValueError):
+    def __init__(self, message, trace):
+        super().__init__(message)
+        self.trace=trace
+
+
 def invoke_role(state, role, schema, instruction, payload):
     started = time.monotonic()
     purpose = 'judge' if role == 'editor' else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
     methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
-    result = create_chat_model(purpose).with_structured_output(schema, include_raw=True).invoke([
+    model=create_chat_model(purpose)
+    if state.get('output_recovery_attempt'):
+        model=model.model_copy(update={'max_tokens':min(32768,max(16384,get_model_settings(purpose)['max_tokens']*2))})
+    # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
+    # otherwise raises before returning metadata. Validate locally after status.
+    result = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True).invoke([
         ('system', BASE + '\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
-    require_complete_response(result.get('raw'))
-    if result.get('parsing_error') or result.get('parsed') is None:
-        raise ValueError(f'{role}: structured response unavailable')
-    parsed = result['parsed']
     raw = result.get('raw')
     trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':getattr(raw,'response_metadata',{}).get('model_name'), 'prompt_version':_RULES['version'], 'retrieved_rules':router.get_rag_manifest(), 'provider_request_id':getattr(raw,'id',None)}]
-    return parsed.model_dump() if hasattr(parsed,'model_dump') else parsed, trace
+    try:
+        require_complete_response(raw)
+        if result.get('parsing_error') or result.get('parsed') is None:
+            raise ValueError('structured response unavailable')
+        parsed=schema.model_validate(result['parsed'])
+    except Exception as error:
+        message='max_output_tokens: incomplete response' if 'max_output_tokens' in str(error) else 'structured response unavailable'
+        raise EditorialResponseError(message,trace[-1]) from error
+    return parsed.model_dump(), trace
 
 def register_gate(state):
     package=state['package']; matters=package.get('matters',[]); ids=[m.get('id') for m in matters]

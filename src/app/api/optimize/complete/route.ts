@@ -117,9 +117,16 @@ export async function POST(request: NextRequest) {
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${(await archive.files[name].async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')}`))).join('\n');
         const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
           method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-          body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false})
+          body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
         });
         const finalReview=await finalResponse.json();
+        if(!finalResponse.ok && finalReview.code==='AI_OUTPUT_LIMIT') {
+          // The provider returned a terminal response, so this lease can safely
+          // be released. Timeouts with unknown outcomes retain their lease.
+          const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...previous,review_checkpoint:{...previous.review_checkpoint,lease_until:0}}}});
+          if(released.count!==1) throw new Error('DRAFT_CONFLICT');
+          return NextResponse.json({success:false,code:finalReview.code,error:'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
+        }
         if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
         data.final_artifact_review=finalReview;
         if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');

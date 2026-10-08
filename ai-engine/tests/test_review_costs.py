@@ -15,7 +15,7 @@ class ReviewCostTests(unittest.TestCase):
                 self.assertEqual(config['max_tokens'], 4096)
                 self.assertEqual(config['reasoning_effort'], 'low')
                 self.assertEqual(config['max_retries'], 0)
-            self.assertEqual(get_model_settings('letter')['max_tokens'], 8192)
+            self.assertEqual(get_model_settings('letter')['max_tokens'], 16384)
             self.assertEqual(get_model_settings('development')['max_tokens'], 24576)
             self.assertEqual(get_model_settings('editorial')['reasoning_effort'], 'high')
 
@@ -115,3 +115,24 @@ class ReviewCostTests(unittest.TestCase):
         self.assertFalse(release_gate(state)['release_verdict']['passed'])
         state['package']['matters'] = [{'id':'m','confidentialityConfirmed':False}]
         self.assertFalse(release_gate(state, require_judge=False)['render_gate']['passed'])
+
+class ResponseRecoveryTests(unittest.TestCase):
+    def test_truncated_raw_response_preserves_usage_before_any_parsed_content(self):
+        from types import SimpleNamespace
+        from core.review_graph import invoke_role, Letter, EditorialResponseError
+        raw=SimpleNamespace(id='response-test',usage_metadata={'total_tokens':8123},response_metadata={'status':'incomplete','incomplete_details':{'reason':'max_output_tokens'}})
+        with patch('core.review_graph.create_chat_model') as model:
+            model.return_value.with_structured_output.return_value.invoke.return_value={'raw':raw,'parsed':{k:'Incomplete proposal' for k in Letter.model_fields}}
+            with self.assertRaises(EditorialResponseError) as caught:invoke_role({'package':{}},'writer',Letter,'Write a letter',{})
+        self.assertEqual(caught.exception.trace['usage']['total_tokens'],8123)
+        self.assertEqual(provider_failure(caught.exception)['code'],'AI_OUTPUT_LIMIT')
+        self.assertIsInstance(model.return_value.with_structured_output.call_args.args[0],dict)
+    def test_recovery_increases_only_one_response_budget_and_never_retries_sdk(self):
+        from types import SimpleNamespace
+        from core.review_graph import invoke_role, Letter
+        with patch.dict(os.environ,{},clear=True),patch('core.review_graph.create_chat_model') as model:
+            model.return_value.model_copy.return_value.with_structured_output.return_value.invoke.return_value={'raw':SimpleNamespace(response_metadata={},usage_metadata={}), 'parsed':{k:'Supported text' for k in Letter.model_fields}}
+            invoke_role({'package':{},'output_recovery_attempt':1},'writer',Letter,'Write a letter',{})
+        self.assertEqual(model.return_value.model_copy.call_args.kwargs['update']['max_tokens'],32768)
+    def test_legacy_eof_is_an_output_failure_not_an_unknown_live_request(self):
+        self.assertEqual(provider_failure(ValueError('Invalid JSON: EOF while parsing a string'))['code'],'AI_OUTPUT_LIMIT')

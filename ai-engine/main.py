@@ -1169,7 +1169,7 @@ async def review_step_endpoint(request: Request):
         return JSONResponse(content={'success': True, 'next_stage': next_stage, 'state': state})
     except Exception as error:
         logger.exception('Editorial step failed')
-        return JSONResponse(status_code=502, content=provider_failure(error))
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
 
 
 @api.post('/review-package')
@@ -1187,7 +1187,7 @@ async def review_package_endpoint(request: Request):
     except Exception as error:
         logger.exception('Editorial package review failed')
         from utils.provider_errors import provider_failure
-        return JSONResponse(status_code=502, content=provider_failure(error))
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
 
 
 @api.post('/verify-rendered-package')
@@ -1198,12 +1198,12 @@ async def verify_rendered_package_endpoint(request: Request):
         if not isinstance(payload.get('package'), dict) or not payload['package'].get('rendered_artifact'):
             return JSONResponse(status_code=400, content={'success':False,'error':'Missing rendered artifact'})
         from core.review_graph import review_rendered_package
-        result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[]}, payload.get('allow_repair', True))
+        result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[],'output_recovery_attempt':1 if payload.get('output_recovery') is True else 0}, payload.get('allow_repair', True))
         return JSONResponse(content={'success':True,**result})
     except Exception as error:
         logger.exception('Rendered artifact review failed')
         from utils.provider_errors import provider_failure
-        return JSONResponse(status_code=502, content=provider_failure(error))
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
 
 
 @api.post('/verify-ranking')

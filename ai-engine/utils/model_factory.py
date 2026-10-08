@@ -28,7 +28,7 @@ DEFAULT_REASONING: Dict[ModelPurpose, str] = {
 # verdicts do not need the same allowance (reasoning also consumes this budget).
 DEFAULT_OUTPUT_TOKENS = {
     "extraction": 32768, "standard": 8192, "editorial": 12288,
-    "judge": 8192, "rewrite": 4096, "letter": 8192, "development": 24576,
+    "judge": 8192, "rewrite": 4096, "letter": 16384, "development": 24576,
 }
 
 
