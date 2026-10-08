@@ -9,6 +9,7 @@ import time
 import logging
 import hmac
 from utils.engine_identity import engine_fingerprint
+from utils.review_policy import REVIEW_POLICY_VERSION
 
 logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
@@ -99,7 +100,7 @@ async def service_boundary(request: Request, call_next):
         if not expected and os.environ.get('RENDER'):
             return JSONResponse(status_code=503, content={'error':'Service authentication is not configured'})
     response=await call_next(request)
-    response.headers["X-RankPilot-Policy"]="review-core-v3.1"
+    response.headers["X-RankPilot-Policy"]=REVIEW_POLICY_VERSION
     return response
 
 @api.get("/")
