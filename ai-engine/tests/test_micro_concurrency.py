@@ -37,9 +37,9 @@ class SelectionReuseTests(unittest.IsolatedAsyncioTestCase):
         from main import review_step_endpoint
         source='The firm manages more than twenty proceedings.'
         strategy={'matters':[{'matter_id':'m','disposition':'core','rationale':'More than 20 proceedings.','source_quote':source}], 'hero_matter_id':'m','thesis':'Proceedings','pending_questions':[]}
-        payload={'stage':'strategy','package':{'matters':[{'id':'m','rawNotes':source}]},'state':{'selection_feedback':{'strategy':strategy}}}
+        payload={'stage':'strategy','package':{'matters':[{'id':'m','rawNotes':source,'publish_status':'publishable','confidentialityConfirmed':True}]},'state':{'selection_feedback':{'strategy':strategy}}}
         request=type('Request',(),{'json':AsyncMock(return_value=payload)})()
-        with patch('utils.ranking_verifier.verify_ranking_claim',return_value={}),patch('core.review_graph.strategist') as model:
+        with patch('utils.ranking_verifier.verify_ranking_claim',return_value={}),patch('core.review_graph.strategist') as model, patch('core.review_graph.selection_review',return_value={'selection_review_validated':True,'errors':[]}):
             response=await review_step_endpoint(request)
         result=json.loads(response.body)
         self.assertEqual(result['next_stage'],'development')

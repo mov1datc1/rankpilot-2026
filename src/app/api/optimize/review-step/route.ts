@@ -1,3 +1,4 @@
+import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { projectDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { engineFetch } from '@/lib/editorial/engine';
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...projected, review_checkpoint: {...checkpoint, input_hash:projectedHash, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
-    const trace=(result.state.trace?.length || 0)>(checkpoint.state.trace?.length || 0)?result.state.trace.at(-1):null;
+    const trace=stageTraceDelta(checkpoint.state.trace,result.state.trace);
     if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),trace},{status:422});
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {

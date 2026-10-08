@@ -1,5 +1,5 @@
 {
-  "version": "practice-policy-v3",
+  "version": "practice-policy-v4",
   "owner_approval": null,
   "scope": "Project reference methodology; not official directory requirements or client evidence. Uncatalogued documents are quarantined. Jurisdiction-specific thresholds require separately verified applicability.",
   "documents": [
@@ -58,7 +58,7 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "Rankpilot Tax Guides Context Mapping - Chambers.txt",
+      "source": "Tax_Editorial_Methodology.txt",
       "practice": "tax",
       "directory": "chambers",
       "jurisdiction": "*",
@@ -130,7 +130,7 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "Real_Estate_RAG.txt",
+      "source": "Real_Estate_Editorial_Methodology.txt",
       "practice": "real_estate",
       "directory": "*",
       "jurisdiction": "*",

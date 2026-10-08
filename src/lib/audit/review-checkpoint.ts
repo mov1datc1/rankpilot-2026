@@ -2,7 +2,7 @@ import { recoverClientLegalName } from './extraction-auditor';
 import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
-export const REVIEW_POLICY_VERSION = 'review-core-v3.0';
+export const REVIEW_POLICY_VERSION = 'review-core-v3.1';
 
 export const reviewSteps = ['strategy', 'development', 'writer', 'done'] as const;
 export const reviewStepLabels = {
@@ -19,6 +19,9 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     guide_region: data.guideRegion || data.analysis_scope?.guide_region || '',
     jurisdiction: submission.guideRegion, firm_name: data.firm_name || data.firmName || '',
     research_period: data.research_period || null, current_band: submission.currentBand,
+    requested_target: data.target_band || data.targetBand || data.ranking_target || null,
+    filing_details: {contacts:data.contacts || [],department_name:data.departmentName || null,num_partners:data.numPartners ?? null,num_lawyers:data.numLawyers ?? null,heads:data.departmentHeads || data.department?.department_heads || []},
+    objectives: {primary: data.primaryObjective || null, secondary: data.secondaryObjective || null},
     ranking_edition: data.ranking_edition || 'current',
     ranking_jurisdiction: data.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),
     preferred_hero_id: data.user_selected_hero_id || null,
@@ -58,7 +61,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   // Portfolio selection compares mandates, not the candidate's biography.
   // Candidate corrections belong to the leadership letter and its review.
   delete source.editorial_development;
-  return reviewInputHash({policy:'role-deliverables-v2-single-judge',stage,source,
+  return reviewInputHash({policy:'role-deliverables-v3-semantic-selection',stage,source,
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v2'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
@@ -79,8 +82,9 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   // Resolve transport references before downstream roles see source document numbers.
   state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
   if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
-    selection_feedback:{strategy:state.strategy,errors:state.errors || []},
+    selection_feedback:{strategy:state.strategy,errors:state.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
   }};
+  if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};
   if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {
     state.development_reusable=!!state.development && keys.development===reviewStepHash('development',payload,state);
     if(state.development && state.errors?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
@@ -109,4 +113,13 @@ export function reviewTaskDisposition(requested:string|undefined, resumed:string
   const next=reviewSteps.indexOf(resumed as typeof reviewSteps[number]);
   if(wanted<0 || requested==='done' || next<0) return 'invalid';
   return wanted<next?'reuse':wanted===next?'run':'out_of_order';
+}
+
+/** All paid calls in a stage, including semantic review and its bounded repair. */
+export function stageTraceDelta(previous:any[], current:any[]) {
+  const calls=(current || []).slice((previous || []).length);
+  if(calls.length<2) return calls[0] || null;
+  const usage:any={input_tokens:0,output_tokens:0,total_tokens:0};
+  for(const call of calls) for(const key of Object.keys(usage)) usage[key]+=Number(call.usage?.[key] || 0);
+  return {role:'selection_with_review',usage,seconds:calls.reduce((n:number,c:any)=>n+Number(c.seconds || 0),0),calls};
 }

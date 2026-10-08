@@ -8,6 +8,7 @@ class SelectionDecision(BaseModel):
     model_config = ConfigDict(extra='forbid')
     disposition: Literal['core', 'reserve', 'excluded']
     priority: int = Field(ge=1, description='Comparative editorial order, 1 strongest. Not a quality score.')
+    legal_understanding: str = Field(description='Source-based asset/transaction, legal issue, work, outcome versus pending relief, and direct or mixed practice nexus. Never infer from sector or amount. State missing facts, not invented details.')
     rationale: str
     source_quote: str = Field(description='One contiguous verbatim excerpt from THIS reference only. Never combine matters or translate the quote.')
 

@@ -17,7 +17,7 @@ import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
 
-const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,development:review.development,development_validated:review.development_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
+const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,selection_review:review.selection_review,selection_review_validated:review.selection_review_validated,development:review.development,development_validated:review.development_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
 /** One completion authority: source register → bounded editorial review → exact artifact. */
 export async function POST(request: NextRequest) {
@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Prepara el Submission y Audit para completar la elaboración y revisión del expediente.'},{status:409});
     }
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
+    if(review.selection_validated && !review.selection_review_validated) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta contrastar la interpretación y selección con las fuentes antes de preparar los documentos.'},{status:409});
     if(review.selection_validated && (!review.development_validated || review.development?.version!=='editorial-development-v1')) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
     const originalReviewHash = reviewOutputHash(review);
     review = {...review,letter:normalizeLetterSections(review.letter)};

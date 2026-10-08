@@ -1,5 +1,5 @@
 {
-  "version": "review-core-v3.0",
+  "version": "review-core-v3.1",
   "status": "implemented_project_policy",
   "owner_endorsement": "Not claimed. Derived from the approved implementation direction, observed failures and reviewed references.",
   "references": [
@@ -34,7 +34,7 @@
     },
     {
       "id": "RP03",
-      "criterion": "Unconfirmed publication permission blocks public release; confidentiality is not guessed.",
+      "criterion": "Resolve publication permission during extraction review before editorial reasoning. Search client and matter sources; absent or conflicting flags require a saved user decision. Explicit confidentiality propagates globally; never infer public from absence or reopen unchanged confirmed decisions.",
       "scope": "all_practices",
       "test_required": true
     },
@@ -113,6 +113,18 @@
     {
       "id": "RP16",
       "criterion": "Temporal eligibility: missing research_period, exact start/end dates or matter status is incomplete metadata, not proof of ineligibility. These gaps are non-blocking warnings and must not prevent selection, drafting or delivery by themselves. A standard template heading such as 'Work Highlights in last 12 months' does not by itself turn missing metadata into an unsupported factual claim. Use supplied narrative evidence of activity, including ongoing work, without inventing dates or a completed outcome; longstanding matters may qualify through activity in the relevant period. Ask once for the research window or confirmation of relevant activity, not exact start AND end dates for every mandate. Do not assume the research window from today's date or the ranking edition. A critical temporal defect requires a concrete contradiction between supplied evidence and the artifact (for example, a matter ended before an explicitly supplied window with no subsequent activity but is presented as current), or an invented specific date/status/outcome. Identify the matter and quote the conflicting source and artifact claims. Unknown dates alone never justify exclusion. Keep metadata reminders in the internal Audit, not public submission prose.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP17",
+      "criterion": "Validate the legal understanding of EVERY selection decision against original evidence, including reserves and exclusions. A literal quote alone does not prove that the rationale is supported. Repair concrete false premises before developing the selected portfolio.",
+      "scope": "all_practices",
+      "test_required": true
+    },
+    {
+      "id": "RP18",
+      "criterion": "Keep source-declared current rank, dated official observation and requested target separate. Explain specific individual categories and changes to requested objectives; generic candidacy is not an individual ranking strategy. Methodology RAG is not external market research. Describe table-only or unavailable research honestly.",
       "scope": "all_practices",
       "test_required": true
     }

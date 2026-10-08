@@ -42,10 +42,10 @@ def repair_targets(package, strategy, proposal):
             if support.get('matter_id') in core and (not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS)):
                 add(f'candidates/{i}/supporting_matters/{j}/source_quote',quote,'Quote must substantiate this person’s stated role in this matter.',{'person':person,'claimed_role':support.get('personal_role'),'matter':matter})
             if not str(support.get('personal_role','')).strip():add(f'candidates/{i}/supporting_matters/{j}/personal_role','','Missing personal role; do not upgrade membership to leadership.',{'person':person,'matter':matter})
-        for field in ('current_ranking','suggested_ranking','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
-            if not str(candidate.get(field,'')).strip() or field=='suggested_ranking' and any(e==f"Categoría incompatible con cargo confirmado: {candidate.get('name')}" for e in errors):
-                add(f'candidates/{i}/{field}',candidate.get(field,''),'Missing individual field or category incompatible with confirmed role.',{'person':person,'support':candidate.get('supporting_matters',[]),'matters':[register.get(s.get('matter_id'),{}) for s in candidate.get('supporting_matters',[])]})
-    for field in ('filing_recommendation','positioning','target','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
+        for field in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
+            if not str(candidate.get(field,'')).strip() or field=='suggested_ranking' and any(e in (f"Categoría incompatible con cargo confirmado: {candidate.get('name')}", f"Falta una categoría razonada o una brecha explícita: {candidate.get('name')}") for e in errors):
+                add(f'candidates/{i}/{field}',candidate.get(field,''),'Specify a reasoned directory category, or Category pending with the precise missing criterion; explain changes to input objectives. Never invent eligibility or ranking.',{'person':person,'support':candidate.get('supporting_matters',[]),'matters':[register.get(s.get('matter_id'),{}) for s in candidate.get('supporting_matters',[])]})
+    for field in ('filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
         if not str(proposal.get(field,'')).strip() or field=='b10' and len(proposal.get(field,'').split())>500:
             add(field,proposal.get(field,''),'Missing editorial field; B10 must not exceed 500 words.',{'package':package,'strategy':strategy})
     for i,comparison in enumerate(proposal.get('comparisons',[])):

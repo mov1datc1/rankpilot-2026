@@ -28,7 +28,7 @@ global.fetch=async(url,options)=>{
   if(mutate){state.chambersData.original_b10='Concurrent new source';state.updatedAt=new Date(state.updatedAt.getTime()+1);}
   if(failure)return Response.json({success:false,code:'AI_CREDIT_EXHAUSTED',error:'No credit'},{status:502});
   const next={strategy:'development',development:'writer',writer:'done'}[body.stage];
-  const output=body.stage==='strategy'?{strategy:{saved:true,matters:[{matter_id:'m',disposition:'core'}]},selection_validated:true}:body.stage==='development'?{development_validated:true,development:{version:'editorial-development-v1',matters:[{matter_id:'m',text:'Pending appeal'}],candidates:[],b10:'Tax disputes team',c2:'Our coverage case.'}}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
+  const output=body.stage==='strategy'?{strategy:{saved:true,matters:[{matter_id:'m',disposition:'core'}]},selection_validated:true,selection_review_validated:true}:body.stage==='development'?{development_validated:true,development:{version:'editorial-development-v1',matters:[{matter_id:'m',text:'Pending appeal'}],candidates:[],b10:'Tax disputes team',c2:'Our coverage case.'}}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
   return Response.json({success:true,next_stage:next,state:{...body.state,...output}});
 };
 const step=()=>POST(new NextRequest('http://localhost/api/optimize/review-step',{method:'POST',body:JSON.stringify({submissionId:'s'})}));

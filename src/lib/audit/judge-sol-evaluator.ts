@@ -844,16 +844,7 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
       repairsCount++;
     }
 
-    // Foreign authority leaks in matter
-    if (isVenezuela && /\bSAT\b/.test(text)) {
-      text = text.replace(/\bSAT\b/g, 'SENIAT');
-      repairsLog.push(`[Asunto #${num}] Reemplazada mención foránea SAT por SENIAT.`);
-      repairsCount++;
-    } else if (isMexico && /\bSENIAT\b/.test(text)) {
-      text = text.replace(/\bSENIAT\b/g, 'SAT');
-      repairsLog.push(`[Asunto #${num}] Reemplazada mención foránea SENIAT por SAT.`);
-      repairsCount++;
-    }
+    // Foreign authorities require source-based review, never acronym substitution.
 
     // Ensure 3 organic paragraphs
     const paras = text.split(/\n\s*\n/).map((p: string) => p.trim()).filter(Boolean);
@@ -870,18 +861,6 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
     copy.optimized_text = text;
     if (!copy.summary || copy.summary === copy.optimizedText) {
       copy.summary = text;
-    }
-
-    // C. Domestic vs Cross-border consistency
-    const clientLower = (copy.client || '').toLowerCase();
-    if (clientLower.includes('tecnipiscinas')) {
-      if (copy.isCrossBorder === true || copy.crossBorder !== 'No.') {
-        copy.isCrossBorder = false;
-        copy.crossBorder = 'No.';
-        copy.cross_border = 'No.';
-        repairsLog.push(`[Asunto #${num}] Corregido estado cross-border de Tecnipiscinas a 'No.' (estricto derecho doméstico).`);
-        repairsCount++;
-      }
     }
 
     return copy;

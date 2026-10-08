@@ -10,7 +10,7 @@ class SelectionContractTests(unittest.TestCase):
     def setUp(self):
         self.matters = [{'id': f'uuid-{i}', 'client': f'Client {i}', 'rawNotes': f'The team advised on mandate {i}.'} for i in range(32)]
         self.schema, self.refs = selection_contract(self.matters)
-        self.proposal = {'decisions': {ref: {'disposition': 'core' if i < 20 else 'reserve', 'priority': i + 1,
+        self.proposal = {'decisions': {ref: {'disposition': 'core' if i < 20 else 'reserve', 'legal_understanding':'Source-backed work and status.', 'priority': i + 1,
             'rationale': 'Source-backed mandate', 'source_quote': self.matters[i]['rawNotes']} for i, ref in enumerate(self.refs)},
             'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}
 

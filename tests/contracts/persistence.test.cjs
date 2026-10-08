@@ -129,3 +129,10 @@ test('issue answer is persisted in the same transaction as its corrected records
  const res=await updateSubmissionValidatedData('s',{reviewIssueMessage:message,lawyers:[{name:'Sofia Vega',role:'Partner',isPartner:true,roleResolution:{role:'Partner',reason:'Confirmed by user',confirmed:true}}]});
  assert.equal(res.success,true);assert.equal(res.reviewResponses[0].message,message);assert.equal(state.submission.chambersData.review_responses[0].savedBy,'u');
 });
+test('filing details save atomically, preserve sources and invalidate the old document approval',async()=>{
+ reset();const before=state.submission.chambersData.original_b10;
+ const res=await updateSubmissionValidatedData('s',{expectedRevision:0,filingDetails:{departmentName:'Tax',numPartners:0,numLawyers:3,contacts:[{name:'Ana',email:'ana@example.test',phone:''}],departmentHeads:[{name:'Ana',email:'',phone:''}],target_band:'Band 1'}});
+ assert.equal(res.success,true);assert.equal(state.submission.chambersData.numPartners,0);assert.equal(state.submission.chambersData.target_band,'Band 1');
+ assert.equal(state.submission.chambersData.original_b10,before);assert.equal(state.submission.chambersData.release_verdict.passed,false);
+ const stale=await updateSubmissionValidatedData('s',{expectedRevision:0,filingDetails:{}});assert.equal(stale.success,false);
+});

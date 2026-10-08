@@ -1,5 +1,7 @@
 'use server';
 
+import { normalizeFilingDetails } from '@/lib/audit/filing-details';
+
 import { recordReviewResponse } from '@/lib/audit/review-actions';
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { persistInputReview, validValueResolution } from '@/lib/audit/input-review';
@@ -183,6 +185,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
   b10Text?: string;
   confirmedSourceB10?: string;
   researchPeriod?: { from: string; to: string };
+  filingDetails?: unknown;
   lawyers?: any[];
   matters?: any[];
 }) {
@@ -225,9 +228,11 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
         confirmedAt:valid ? (unchanged ? previous.roleResolution.confirmedAt : new Date().toISOString()) : null,
         confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}});
     });
+    const filingDetails = data.filingDetails ? normalizeFilingDetails(data.filingDetails) : null;
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
+      ...(filingDetails || {}),
       draft_revision: nextRevision,
       final_review_stale: true,
       ...(data.practiceArea && data.practiceArea !== existing.practiceArea ? { canonical_matter_selection: null } : {}),
@@ -281,7 +286,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
 
     });
-    return { success: true, revision: nextRevision, matters: data.matters, lawyers: data.lawyers, reviewResponses: (updatedChambers as any).review_responses };
+    return { success: true, revision: nextRevision, filingDetails, matters: data.matters, lawyers: data.lawyers, reviewResponses: (updatedChambers as any).review_responses };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };

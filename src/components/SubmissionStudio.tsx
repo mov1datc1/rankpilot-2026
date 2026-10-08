@@ -41,6 +41,7 @@ import {
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
+import { FilingDetails } from '@/components/FilingDetails';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
 import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
@@ -316,7 +317,12 @@ export default function SubmissionStudio({
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
   };
-  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} />;
+  const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} onSave={async filingDetails=>{
+    const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails});
+    if(!result.success){setDraftSaveError(result.error || 'No se pudo guardar.');return false;}
+    setChambersData((prev:any)=>({...prev,...result.filingDetails,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+    return true;
+  }} /></>;
 
 
   // Calculations
@@ -891,7 +897,7 @@ export default function SubmissionStudio({
             }}
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.level === 'critical' ? '#DC2626' : readiness.color }} />
-            <span>{readiness.score}% datos · {deliveryState.approved ? 'aprobado' : 'sin aprobar'}</span>
+            <span>{readiness.score}% campos básicos · {deliveryState.approved ? 'documentos revisados' : 'revisión pendiente'}</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
@@ -2185,7 +2191,7 @@ export default function SubmissionStudio({
                     <Award size={14} color="#4F46E5" /> C2 — Feedback on our coverage of this practice area (Optional)
                   </span>
                   <span style={{ fontSize: '0.68rem', color: '#64748B' }}>
-                    {c2Text.includes('telephone interview') ? 'Respuesta estándar segura' : 'Posicionamiento estratégico calibrado'}
+                    {c2Text.includes('telephone interview') ? 'Respuesta estándar segura' : 'Argumento de posicionamiento'}
                   </span>
                 </div>
                 <p style={{ fontSize: '0.84rem', lineHeight: 1.6, color: '#1E293B', margin: 0, whiteSpace: 'pre-line' }}>

@@ -522,8 +522,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(para('', { spacing: { after: 120 } }));
 
   // B2+B3 combined table (single column, full width)
-  const numPartners = String(chambersData.numPartners || '');
-  const numLawyers = String(chambersData.numLawyers || '');
+  const numPartners = String(chambersData.numPartners ?? '');
+  const numLawyers = String(chambersData.numLawyers ?? '');
   elements.push(new Table({
     rows: [
       new TableRow({ children: [labelCell([new Paragraph({ children: [txt('B2', { size: 14 }), txt(' ', { size: 14 }), txt('Number of partners in the department', { bold: true, size: 14 })] })], { width: PAGE_WIDTH_DXA })] }),

@@ -272,58 +272,8 @@ export function runArtifactIntegrityCheck(
       }
     }
 
-    // Check 2b: Real Estate Core Purity (Angela Castillo directive: Pure Real Estate substantive merit)
-    // Pure property tax (predial) refunds, income tax, or highway toll concessions belong in Reserve, not Core Real Estate.
-    const isRealEstate = (options.practiceArea || '').toLowerCase().includes('real estate') || (options.practiceArea || '').toLowerCase().includes('inmobiliario');
-    if (isRealEstate) {
-      const combinedLower = `${clientLower} ${mName.toLowerCase()} ${summary.toLowerCase()}`;
-      
-      const isHighwayConcession = /\b(toll concession|concesi[oó]n de peaje|vialidades|concesi[oó]n carretera)\b/i.test(combinedLower) && /\b(income tax|impuesto sobre la renta|sat|peaje)\b/i.test(combinedLower);
-      const isPredialRefund = /\b(predial|property tax)\b/i.test(combinedLower) && /\b(refund|devoluci[oó]n|nullity|nulidad)\b/i.test(combinedLower);
-
-      if (isHighwayConcession) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Real Estate Core Purity',
-          description: 'Highway toll concession / Income Tax dispute detected in Real Estate Core. Substantively unaligned; must remain in Reserve Roster.',
-          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
-        });
-      }
-      if (isPredialRefund) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Real Estate Core Purity',
-          description: 'Municipal property tax (predial) refund dispute detected in Real Estate Core. Substantively unaligned; must remain in Reserve Roster.',
-          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
-        });
-      }
-
-      // Off-category Energy / Lighting concession
-      const isEnergyConcession = /\b(clean-energy|national electric system|sistema el[ée]ctrico nacional|public lighting|alumbrado p[uú]blico|estaciones de servicio|fuel service stations)\b/i.test(combinedLower) || (combinedLower.includes('concesi') && combinedLower.includes('zapopan'));
-      if (isEnergyConcession) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Real Estate Core Purity',
-          description: 'Energy infrastructure / public lighting concession detected in Real Estate Core. Benchmarks under Energy or Public Concessions; must remain in Reserve Roster.',
-          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
-        });
-      }
-
-      // Off-category Pure Environmental Amparo
-      const isPureEnvironmental = (combinedLower.includes('conciencia ambiental') || combinedLower.includes('devangary')) && !combinedLower.includes('desarrollo inmobiliario');
-      if (isPureEnvironmental) {
-        criticalErrors.push({
-          severity: 'CRITICAL',
-          matterName: mName,
-          field: 'Real Estate Core Purity',
-          description: 'Pure environmental amparo / ecosystem litigation detected in Real Estate Core. Benchmarks under Environment; must remain in Reserve Roster.',
-          actionTaken: 'Prohibited from Official Core; routed to Reserve Roster.'
-        });
-      }
-    }
+    // Practice fit is validated against sources in the shared semantic selection
+    // node. The renderer must not override that decision using names or keywords.
 
     // Check 2c: Venezuela Jurisdiction Guardrail (Angela Castillo directive: Zero cross-border institutional contamination)
     const isVenezuela = (options.jurisdiction || '').toLowerCase().includes('venezuela') ||
@@ -336,31 +286,20 @@ export function runArtifactIntegrityCheck(
         { regex: /\bPRODECON\b/gi, name: 'PRODECON' },
         { regex: /\bIMSS\b/gi, name: 'IMSS' },
         { regex: /\bINFONAVIT\b/gi, name: 'INFONAVIT' },
-        { regex: /\bamparo\b/gi, name: 'Amparo (Mexican constitutional remedy)' }
       ];
       for (const auth of mexicanAuthorities) {
-        if (auth.regex.test(summary) || auth.regex.test(client)) {
+        const sourceText = [m.source_excerpt, m.rawNotes].filter(Boolean).join(' ');
+        const supported = new RegExp(auth.regex.source, 'i').test(sourceText);
+        if (!supported && (new RegExp(auth.regex.source, 'i').test(summary) || new RegExp(auth.regex.source, 'i').test(client))) {
           criticalErrors.push({
             severity: 'CRITICAL',
             matterName: mName,
             field: 'Jurisdiction Purity Guardrail',
-            description: `Jurisdiction contamination detected: Mexican entity/remedy '${auth.name}' found in Venezuelan submission. Venezuelan authorities (SENIAT, TSJ, Tribunales Superiores de lo Contencioso Tributario) must be referenced instead.`,
+            description: `Foreign authority '${auth.name}' is not supported by this matter's source. Review the evidence; do not substitute another authority.`,
             actionTaken: 'Flagged as CRITICAL failure to prevent cross-jurisdiction contamination.'
           });
         }
       }
-    }
-
-    // Check 3: Matter-to-Client Relational Consistency
-    // E.g. client is a landowner, but summary describes motorcycle manufacturing or tax fines
-    if (clientLower.includes('adm hermosillo') && summary.toLowerCase().includes('motorcycle')) {
-      criticalErrors.push({
-        severity: 'CRITICAL',
-        matterName: mName,
-        field: 'Matter-to-Client Relational Integrity',
-        description: 'Client is ADM Hermosillo (real estate developer) but summary references motorcycle manufacturer.',
-        actionTaken: 'Critical mismatch detected; prohibited from delivery.'
-      });
     }
 
     // Check 4: Confidentiality Invariant

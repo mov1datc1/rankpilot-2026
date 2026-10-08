@@ -126,7 +126,7 @@ class TemporalReviewTests(unittest.TestCase):
 
     def test_typed_temporal_basis_reaches_model_for_every_editorial_role(self):
         inputs = []
-        responses = [{'decisions': {'M01': {'disposition': 'core', 'priority': 1, 'rationale': 'Ongoing work', 'source_quote': 'Work is ongoing.'}}, 'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}, {k:'Confirma la actividad del periodo.' for k in ['executive_assessment','portfolio','leadership','evidence_gaps','next_steps']},
+        responses = [{'decisions': {'M01': {'disposition': 'core', 'legal_understanding':'Source-backed work and status.', 'priority': 1, 'rationale': 'Ongoing work', 'source_quote': 'Work is ongoing.'}}, 'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}, {k:'Confirma la actividad del periodo.' for k in ['executive_assessment','portfolio','leadership','evidence_gaps','next_steps']},
                      Verdict(passed=False, defects=[self.defect('missing_metadata')])]
         def invoke(messages):
             inputs.append(messages)
@@ -142,5 +142,5 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertIn('Unknown dates alone never justify exclusion.', messages[0][1])
             self.assertIn('Work Highlights in last 12 months', messages[0][1])
             self.assertIn('"research_period":null', messages[1][1])
-        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.0')
+        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.1')
         self.assertTrue(result['judge']['passed'])

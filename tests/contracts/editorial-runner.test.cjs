@@ -22,7 +22,7 @@ global.fetch=async(url,options)=>{
  if(url.endsWith('/review-step')) {
   const state={...payload.state};
   if(payload.stage==='strategy') {
-   state.strategy={matters:submission.matters.map((m,i)=>({matter_id:m.id,disposition:i<2?'core':'reserve',rationale:'Pending appeal',source_quote:'No decision has been issued.'})),hero_matter_id:'m0',thesis:'Tax appeals'};state.selection_validated=true;
+   state.strategy={matters:submission.matters.map((m,i)=>({matter_id:m.id,disposition:i<2?'core':'reserve',rationale:'Pending appeal',source_quote:'No decision has been issued.'})),hero_matter_id:'m0',thesis:'Tax appeals'};state.selection_validated=true;state.selection_review_validated=true;
   } else if(payload.stage==='development') {state.development_validated=true;state.development={version:'editorial-development-v1',candidates:[],b10:submission.chambersData.original_b10,c2:'Our case is supported by pending tax appeals.',matters:submission.matters.slice(0,2).map(m=>({matter_id:m.id,text:repairMode && m.id==='m0'?'The team won the appeal.':m.rawNotes}))};} else {state.letter={executive_assessment:'Tax appeals',portfolio:'Synthetic client 0 and Synthetic client 1. Synthetic client 2 is in reserve.',leadership:'No individual attribution supplied.',evidence_gaps:'Outcomes pending',next_steps:'Update outcomes when available.'};state.render_gate={passed:true,errors:[]};state.release_verdict={passed:false,status:'awaiting_artifact_review',errors:[]};}
   state.trace=[...(state.trace || []),{role:payload.stage,usage:{total_tokens:100},provider_request_id:`fake-${payload.stage}`}];
   return Response.json({success:true,next_stage:({strategy:'development',development:'writer',writer:'done'})[payload.stage],state});

@@ -21,6 +21,7 @@ class Candidate(BaseModel):
     recommendation: Literal['present', 'develop', 'do_not_present']
     current_ranking: str
     suggested_ranking: str
+    category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
     why_candidate: str
     supporting_matters: list[SupportingMatter]
     external_evidence: str
@@ -43,6 +44,7 @@ class Development(BaseModel):
     filing_recommendation: str
     positioning: str
     target: str
+    target_rationale: str = Field(description='Preserve the requested target or explain any recommended change using evidence; distinguish objective from verified current ranking.')
     principal_strength: str
     principal_vulnerability: str
     hero_rationale: str = Field(description='Explain why this hero best proves the candidature relative to the strongest other selected mandate.')
@@ -53,6 +55,7 @@ class Development(BaseModel):
     c2: str = Field(description='English firm-voice case for inclusion/coverage built from the selected evidence. No invented current ranking, band or external reputation.')
 
 TASK = '''Develop the complete editorial case, not a summary of the register. If repair_feedback is supplied, repair the identified defects in previous_development and preserve unaffected source-backed content.
+Keep requested_target and objectives distinct from current_band and official observations. Preserve a supplied target as an objective or explicitly justify a recommended change in target_rationale. Preserve useful source-backed career history without treating it as current matter leadership. Use category_rationale to explain each proposed category and any change to the input suggestedRank. Generic labels such as Individual ranking candidate are not a category; use a reasoned specific category or Category pending with the exact gap, without guessing eligibility.
 Return one candidate for EACH supplied lawyer and one matter draft for EACH core matter, no reserves.
 Use only supplied source evidence. Existing drafts are proposals, not evidence; preserve supported human corrections.
 For every core matter, retain decisive documented outcomes, legally significant acts, scale and attributed personal roles. Do not reduce a documented result to an intention or merely list services. Preserve reported/approximate amounts and pending proceedings alongside any completed interim outcomes. Use 1–3 organic paragraphs as evidence warrants; no arbitrary minimum length.
@@ -132,8 +135,10 @@ def development_errors(package, strategy, proposal):
         person=roster.get(_norm(candidate.get('name')), {})
         if person.get('isPartner') is True and re.search(r'associate|asociado',candidate.get('suggested_ranking',''),re.I):
             errors.append(f"Categoría incompatible con cargo confirmado: {candidate.get('name')}")
-        for field in ('current_ranking','suggested_ranking','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
+        for field in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
             if not str(candidate.get(field,'')).strip():errors.append(f"Falta {field}: {candidate.get('name')}")
+        if candidate.get('recommendation')=='present' and _norm(candidate.get('suggested_ranking')) in ('individual ranking candidate','candidate','candidato individual','ranking candidate'):
+            errors.append(f"Falta una categoría razonada o una brecha explícita: {candidate.get('name')}")
         support=candidate.get('supporting_matters',[])
         if candidate.get('recommendation')=='present' and not support:
             errors.append(f"Candidatura sin asuntos atribuidos: {candidate.get('name')}")
@@ -143,7 +148,7 @@ def development_errors(package, strategy, proposal):
             if item.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in fields):
                 errors.append(f"Atribución sin evidencia literal del asunto: {candidate.get('name')}")
             if not str(item.get('personal_role','')).strip():errors.append(f"Falta papel personal: {candidate.get('name')}")
-    for field in ('filing_recommendation','positioning','target','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
+    for field in ('filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
         if not str(proposal.get(field,'')).strip():errors.append(f'Falta desarrollo editorial: {field}')
     if len(proposal.get('b10','').split())>500:errors.append('B10 excede 500 palabras.')
     comparisons=proposal.get('comparisons',[])

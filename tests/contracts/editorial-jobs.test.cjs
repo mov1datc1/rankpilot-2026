@@ -13,7 +13,7 @@ test('rolling deployments only claim work when worker and engine commits agree',
  assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},''),true);
 });
 const matters=Array.from({length:32},(_,i)=>({id:`m${i}`,rawNotes:`Matter ${i} is pending`,publish_status:'non_publishable',confidentialityConfirmed:true}));
-const state={selection_validated:true,strategy:{matters:matters.map((m,i)=>({matter_id:m.id,disposition:i<20?'core':'reserve'})),hero_matter_id:'m0'}};
+const state={selection_validated:true,selection_review_validated:true,strategy:{matters:matters.map((m,i)=>({matter_id:m.id,disposition:i<20?'core':'reserve'})),hero_matter_id:'m0'}};
 test('strategy selects before drafting; 12 reserves do not buy rewrites',()=>{
  const tasks=planDrafting({matters,original_b10:'Department source',review_checkpoint:{state}});
  assert.deepEqual([tasks[0],tasks.at(-2),tasks.at(-1)],['selection','audit','artifact']);

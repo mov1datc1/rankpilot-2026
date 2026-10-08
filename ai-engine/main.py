@@ -98,7 +98,7 @@ async def service_boundary(request: Request, call_next):
         if not expected and os.environ.get('RENDER'):
             return JSONResponse(status_code=503, content={'error':'Service authentication is not configured'})
     response=await call_next(request)
-    response.headers["X-RankPilot-Policy"]="review-core-v3.0"
+    response.headers["X-RankPilot-Policy"]="review-core-v3.1"
     return response
 
 @api.get("/")
@@ -106,7 +106,7 @@ def read_root():
     return {
         "status": "online",
         "service": "RankPilot Core Engine",
-        "version": "rankpilot-pipeline-v3.1",
+        "version": "rankpilot-pipeline-v3.2",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
@@ -119,7 +119,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "rankpilot-pipeline-v3.1",
+        "version": "rankpilot-pipeline-v3.2",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "environment": "Ubuntu/Docker"
     }
@@ -1183,7 +1183,7 @@ async def review_package_endpoint(request: Request):
         payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
         from core.review_graph import review_graph
         result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
-        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','development','development_validated','letter','judge','render_gate','release_verdict','trace')}})
+        return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','selection_review','selection_review_validated','development','development_validated','letter','judge','render_gate','release_verdict','trace')}})
     except Exception as error:
         logger.exception('Editorial package review failed')
         from utils.provider_errors import provider_failure

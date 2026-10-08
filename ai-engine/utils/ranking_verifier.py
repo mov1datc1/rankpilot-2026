@@ -100,6 +100,19 @@ def verify_ranking_claim(package):
     result = compare_claim(*args, benchmark)
     # Reuse the same downloaded table for every candidate; no extra model/search
     # request per person and no speculative worldwide ranking inference.
+    result['market_context'] = market_context(result, benchmark)
     result['individuals'] = [compare_individual_claim(lawyer, args[0], args[1], args[2], args[3], args[5], benchmark)
                              for lawyer in package.get('lawyers', [])]
     return result
+
+
+def market_context(verification, benchmark):
+    """Expose verified table evidence; no fabricated profiles, trajectory or gaps."""
+    valid = verification.get('status', '').startswith('verified')
+    if not valid:
+        return {'status': 'unavailable', 'competitors': [], 'limitations': ['No matched, current, scoped table observation for this firm. Do not claim market calibration.']}
+    firms = (benchmark or {}).get('firms', [])
+    return {'status': 'table_only', 'source': verification.get('evidence'),
+            'competitors': [{'name': f.get('name'), 'band': f.get('band'), 'profile_path': f.get('profile_path')}
+                            for f in firms if normalize(f.get('name')) != normalize(verification.get('firm_name'))],
+            'limitations': ['Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration.']}

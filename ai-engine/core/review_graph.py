@@ -24,6 +24,7 @@ class Disposition(BaseModel):
     matter_id: str
     disposition: Literal['core', 'reserve', 'excluded']
     rationale: str
+    legal_understanding: str = ""
     source_quote: str = Field(description='Exact source words supporting this decision; never invented.')
 
 class Strategy(BaseModel):
@@ -83,6 +84,9 @@ class ReviewState(TypedDict, total=False):
     trace: list
     selection_feedback: dict
     selection_validated: bool
+    selection_review: dict
+    selection_review_validated: bool
+    selection_review_attempts: int
     writer_attempts: int
     release_verdict: dict
 
@@ -98,6 +102,7 @@ Unknown practice requirements require questions or abstention. A user's requeste
 
 _RULES = json.loads((Path(__file__).resolve().parents[1] / 'config' / 'editorial_rules.v1.json').read_text())
 BASE += "\nVERSIONED REVIEW CRITERIA:\n" + "\n".join(f"{r['id']}: {r['criterion']}" for r in _RULES['rules'])
+BASE += '''\nSEMANTIC CONSISTENCY: Check every client and lawyer identity across all sections, current versus proposed ranking, exact nature of the hero, cross-border narrative versus fields, and foreign authorities against SOURCE evidence. Do not replace authorities by country. Template instructions are allowed in template headings, never in generated answers. An incomplete sentence or lost decisive paragraph requires repair. A specific supplied target must survive as an objective or have an explicit evidence-based change rationale. Generic individual candidacy without a category or precise unresolved criterion does not satisfy individual_strategy. Career history can strengthen a bio but never substitutes for current personally attributed work. No market-calibrated claim without actual comparative external evidence; project RAG is methodology, not official directory authority.\n'''
 BASE += '\nIndividual evidence appears in ranking_verification.individuals. Only verified observations/matches establish a named lawyer ranking in their exact practice, jurisdiction and edition. Not found never means globally Unranked. A confirmed roleResolution records a user correction for this submission period, with its source/reason; preserve the original role for traceability. Pending role decisions block final delivery, not draft writing.\n'
 
 def compact_review_payload(value):
@@ -125,12 +130,12 @@ def compact_review_payload(value):
 def role_payload(payload, role):
     result = compact_review_payload(payload)
     package = result.get('package', result)
-    if result.get('development') is not None or role in ('strategist','development'):
+    if result.get('development') is not None or role in ('strategist','development','selection_reviewer'):
         package.pop('editorial_development', None)
     # Strategy and internal correspondence use source facts. Final review uses
     # the exact rendered document, so a second copy of its prior drafts adds
     # neither evidence nor authority. Pre-render review still sees all drafts.
-    if role in ('strategist', 'writer', 'development') or package.get('rendered_artifact'):
+    if role in ('strategist', 'writer', 'development', 'selection_reviewer') or package.get('rendered_artifact'):
         for key in ('b10_draft', 'c2_draft'):
             package.pop(key, None)
         for matter in package.get('matters', []):
@@ -148,7 +153,7 @@ class EditorialResponseError(ValueError):
 
 def invoke_role(state, role, schema, instruction, payload):
     started = time.monotonic()
-    purpose = 'judge' if role == 'editor' else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
+    purpose = 'judge' if role in ('editor', 'selection_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
     methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
@@ -177,6 +182,8 @@ def register_gate(state):
     if not matters: errors.append('No source matters supplied.')
     if any(not i for i in ids) or len(ids)!=len(set(ids)): errors.append('Matter IDs must be present and unique.')
     if any(not (m.get('source_excerpt') or m.get('rawNotes') or m.get('summary')) for m in matters): errors.append('Every matter requires source evidence.')
+    if any(m.get('confidentialityConfirmed') is False or m.get('publish_status') not in ('publishable','non_publishable') for m in matters):
+        errors.append('Confirma la confidencialidad de los asuntos pendientes antes de preparar la candidatura.')
     return {'errors':errors,'trace':[],'writer_attempts':0,'selection_validated':False}
 
 def strategist(state):
@@ -189,7 +196,7 @@ def strategist(state):
         payload['previous_failed_selection'] = {'errors': feedback.get('errors', []),
             'decisions': [{**d, 'matter_id': reverse.get(d.get('matter_id'), 'UNKNOWN')} for d in feedback.get('strategy', {}).get('matters', [])]}
     proposal,trace=invoke_role(state,'strategist',schema,
-        'Return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
+        'First reconstruct each mandate in legal_understanding: asset or transaction, legal problem, work performed, result versus pending relief, and practice nexus. A legal procedure or client sector is not the practice classification. Then return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
     strategy = project_selection(proposal, schema, references, state['package']['matters'])
     # Keep the comparative order supplied by the strategist, with the validated
     # hero first. Both exports project this exact order; the renderer never ranks.
@@ -219,9 +226,25 @@ def selection_gate(state):
         errors.extend(issue['message'] for issue in factual_issues(text + ' ' + str(m.get('value') or ''), d.get('rationale',''), d['matter_id']))
     return {'errors':errors,'selection_validated':not errors}
 
+
+def selection_review(state):
+    from core.selection_review import review_selection
+    try:
+        return review_selection(state, invoke_role)
+    except Exception as error:
+        # Preserve the successful selector and its usage if the independent
+        # reviewer is unavailable. A later retry reuses it, never invents a pass.
+        trace = list(state.get('trace', []))
+        if getattr(error, 'trace', None): trace.append(error.trace)
+        errors = ['RankPilot no pudo completar la comprobación de la selección; la propuesta y las fuentes se conservan para reintentar.']
+        return {'selection_review_validated':False,'selection_validated':False,
+                'selection_review_attempts':2,'errors':errors,'trace':trace,
+                'selection_feedback':{'strategy':state['strategy'],'errors':errors,'semantic_rejection':False}}
+
+
 def writer(state):
     letter,trace=invoke_role(state,'writer',Letter,
-        'Write a concise internal executive letter in Spanish in five sections, approximately 1200–1800 words when the evidence warrants it, structured for a 3–5 page executive document, without padding. Use client/person names, never database IDs or UUIDs in reader-facing prose. Use executive_assessment for the filing verdict, target, main strength/vulnerability and comparative hero rationale; portfolio for the core; leadership for individual strategy; evidence_gaps for key comparative exclusions/reserves; next_steps for the short actionable pre-filing list and genuine evidence gaps. The CURRENT Submission wording is development.b10, development.c2 and development.candidates[].submission_bio. b10_source and source bios are historical evidence, not the delivered prose. Do not carry forward warnings or correction tasks for claims already removed from the current proposal. State unresolved source limitations only where they still matter. Put all concrete reserve/exclusion comparisons in evidence_gaps and only the ordered core in portfolio; never use evidence_gaps for a general checklist of missing facts. The validated development contains all required decisions: reconcile them without dropping its individual fields or borderline comparisons. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Conflicting role evidence requires user resolution, never silently choose a role. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
+        'Write a concise internal executive letter in Spanish in five sections, approximately 1200–1800 words when the evidence warrants it, structured for a 3–5 page executive document, without padding. Use client/person names, never database IDs or UUIDs in reader-facing prose. Use executive_assessment for the filing verdict, target, main strength/vulnerability and comparative hero rationale; portfolio for the core; leadership for individual strategy; evidence_gaps for key comparative exclusions/reserves; next_steps for the short actionable pre-filing list and genuine evidence gaps. The CURRENT Submission wording is development.b10, development.c2 and development.candidates[].submission_bio. b10_source and source bios are historical evidence, not the delivered prose. Do not carry forward warnings or correction tasks for claims already removed from the current proposal. State unresolved source limitations only where they still matter. Put all concrete reserve/exclusion comparisons in evidence_gaps and only the ordered core in portfolio; never use evidence_gaps for a general checklist of missing facts. Include development.target_rationale and each candidate category_rationale: explain specific category choices or their precise unresolved criterion, and changes to supplied targets. State outstanding filing_details accurately without inferring contacts or headcount. The validated development contains all required decisions: reconcile them without dropping its individual fields or borderline comparisons. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Conflicting role evidence requires user resolution, never silently choose a role. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
         {'package':state['package'],'strategy':state['strategy'],'development':state.get('development'), 'previous_letter':state.get('letter'),'defects':state.get('repair_feedback') or state.get('judge',{}).get('defects',[])})
     # Internal stable IDs remain in strategy JSON, not reader-facing prose.
     names = {str(m['id']): str(m.get('client') or m.get('name') or m.get('title') or '') for m in state['package'].get('matters', [])}
@@ -357,7 +380,7 @@ def release_gate(state, require_judge=True):
 
 def select_or_reuse(state):
     proposal=state.get('selection_feedback',{}).get('strategy')
-    if proposal:
+    if proposal and not state.get('selection_feedback',{}).get('semantic_rejection'):
         try:
             strategy=Strategy.model_validate(proposal).model_dump()
             checked=selection_gate({**state,'strategy':strategy})
@@ -380,13 +403,18 @@ def create_review_graph():
             result['node_events']=list(state.get('node_events',[]))+[{'node':name,'seconds':round(time.monotonic()-started,3),'status':'rejected' if result.get('errors') else 'completed'}]
             return result
         return run
-    for name,fn in [('register',register_gate),('strategy',select_or_reuse),('selection',selection_gate),('development',develop),('writer',writer),('editor',editor),('release',release_gate)]:g.add_node(name,observed(name,fn))
+    for name,fn in [('register',register_gate),('strategy',select_or_reuse),('selection',selection_gate),('selection_review',selection_review),('development',develop),('writer',writer),('editor',editor),('release',release_gate)]:g.add_node(name,observed(name,fn))
     def entry(s):
         return {'strategy':'register','development':'development','writer':'writer','editor':'editor'}.get(s.get('operation'),'register')
     g.set_conditional_entry_point(entry, {n:n for n in ('register','development','writer','editor')})
     g.add_conditional_edges('register',lambda s:'release' if s['errors'] else 'strategy',{'release':'release','strategy':'strategy'})
     g.add_edge('strategy','selection')
-    g.add_conditional_edges('selection',lambda s:'release' if s['errors'] else 'stop' if s.get('operation')=='strategy' else 'development',{'release':'release','stop':END,'development':'development'})
+    g.add_conditional_edges('selection',lambda s:'release' if s['errors'] else 'selection_review',{'release':'release','selection_review':'selection_review'})
+    def after_selection_review(s):
+        if s.get('errors'):
+            return 'strategy' if s.get('selection_review_attempts',0)<2 else 'release'
+        return 'stop' if s.get('operation')=='strategy' else 'development'
+    g.add_conditional_edges('selection_review',after_selection_review,{'strategy':'strategy','release':'release','stop':END,'development':'development'})
     g.add_conditional_edges('development',lambda s:'release' if s['errors'] else 'stop' if s.get('operation')=='development' else 'writer',{'release':'release','stop':END,'writer':'writer'})
     g.add_conditional_edges('writer',lambda s:'stop' if s.get('operation')=='writer' else 'editor',{'stop':END,'editor':'editor'})
     def after_editor(s):
@@ -403,6 +431,8 @@ def run_editorial_stage(stage, state):
         raise ValueError('Unknown editorial graph stage')
     if stage != 'strategy' and not state.get('selection_validated'):
         raise ValueError('Validated selection required')
+    if stage in ('development','writer') and not state.get('selection_review_validated'):
+        raise ValueError('Source-grounded semantic selection review required')
     if stage == 'writer' and not state.get('development_validated'):
         raise ValueError('Validated editorial development required')
     return create_review_graph().invoke({**state,'operation':stage}, {'recursion_limit':16})

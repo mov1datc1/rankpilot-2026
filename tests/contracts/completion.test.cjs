@@ -11,14 +11,14 @@ const {POST}=require('../../src/app/api/optimize/complete/route.ts');
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
 global.fetch=async(url,options)=>{
  const payload=JSON.parse(options.body);calls.push({url,payload});
- if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,development_validated:true,development:{version:'editorial-development-v1'},ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
+ if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,selection_review_validated:true,development_validated:true,development:{version:'editorial-development-v1'},ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
  return Response.json({success:true,judge:{passed:!rejectFinal,defects:rejectFinal?[{severity:'critical',message:'Injected rendered claim defect'}]:[]}});
 };
 function seedReview(){
  const data=state.chambersData;
  const development={version:'editorial-development-v1',candidates:[],matters:[{matter_id:'m1',text:source,decisive_source_quotes:['The appeal remains pending']}],b10,c2:'Our practice requests consideration based on this tax appeal.'};
  data.editorial_development=development;data.enhanced_c2=development.c2;
- const review={success:true,selection_validated:true,development_validated:true,development,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}};
+ const review={success:true,selection_validated:true,selection_review_validated:true,development_validated:true,development,ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}};
  data.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,data,data.matters)),stage:'done',state:review,lease_until:0};
 }
 const complete=body=>{if(!state.chambersData.review_checkpoint)seedReview();return POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));};
@@ -72,7 +72,7 @@ test('resume optimizes an imported enhanced B10 but preserves an existing revisi
  assert.equal(needsB10Optimization({original_b10:b10,b10_optimization:{source:b10,text:b10}},b10),false);
  assert.equal(needsB10Optimization({original_b10:b10,confirmed_source_b10:'New source',b10_optimization:{source:b10,text:b10}},'New source'),true);
  assert.equal(hasValidatedSelection({canonical_matter_selection:{core_matter_ids:['m1']},editorial_review:{strategy:{},letter:null,judge:null}}),false);
- assert.equal(hasValidatedSelection({canonical_matter_selection:{core_matter_ids:['m1']},editorial_review:{selection_validated:true}}),true);
+ assert.equal(hasValidatedSelection({canonical_matter_selection:{core_matter_ids:['m1']},editorial_review:{selection_validated:true,selection_review_validated:true}}),true);
 });
 const {POST:optimizeB10}=require('../../src/app/api/optimize/b10/route.ts');
 test('B10 response records provenance only after successful persistent save',async()=>{
@@ -148,7 +148,7 @@ for (const rejected of [false,true]) test(`review policy update invalidates cach
  reset();rejectFinal=rejected;await complete();const before=calls.length;
  state.chambersData.completed_review_policy_version='review-core-v1.3';
  await complete();assert.equal(calls.length,before+1);
- assert.equal(state.chambersData.completed_review_policy_version,'review-core-v3.0');
+ assert.equal(state.chambersData.completed_review_policy_version,require('../../src/lib/audit/review-checkpoint.ts').REVIEW_POLICY_VERSION);
  await complete();assert.equal(calls.length,before+1);
 });
 

@@ -82,7 +82,7 @@ class ReviewCostTests(unittest.TestCase):
         writer.assert_not_called()
 
     def test_hero_order_is_shared_with_letter_and_exports(self):
-        decisions = {ref: {'disposition': 'core', 'priority': i, 'rationale': 'Evidence', 'source_quote': 'Source'} for i, ref in enumerate(['M01', 'M02', 'M03'], 1)}
+        decisions = {ref: {'disposition': 'core', 'legal_understanding':'Source-backed work and status.', 'priority': i, 'rationale': 'Evidence', 'source_quote': 'Source'} for i, ref in enumerate(['M01', 'M02', 'M03'], 1)}
         proposal = {'decisions': decisions, 'hero_reference': 'M03', 'pending_questions': [], 'thesis': 'Source'}
         with patch('core.review_graph.invoke_role', return_value=(proposal, [])):
             result = strategist({'package': {'matters': [{'id': x} for x in ['a', 'b', 'c']]}})
@@ -99,7 +99,7 @@ class ReviewCostTests(unittest.TestCase):
 
     def test_role_correction_blocks_only_release_until_confirmed(self):
         from core.review_graph import release_gate, register_gate
-        state = {'package': {'directory':'Chambers','b10_source':'Source', 'matters':[{'id':'m','rawNotes':'Source'}], 'lawyers':[{'name':'Sofia Vega','role':'Partner','isPartner':True,'roleResolution':{'role':'Partner','reason':'Official roster for the submission period','confirmed':False}}]}, 'judge':{'passed':True,'defects':[]}}
+        state = {'package': {'directory':'Chambers','b10_source':'Source', 'matters':[{'id':'m','rawNotes':'Source','publish_status':'publishable','confidentialityConfirmed':True}], 'lawyers':[{'name':'Sofia Vega','role':'Partner','isPartner':True,'roleResolution':{'role':'Partner','reason':'Official roster for the submission period','confirmed':False}}]}, 'judge':{'passed':True,'defects':[]}}
         self.assertEqual(register_gate(state)['errors'], [])
         self.assertFalse(release_gate(state)['release_verdict']['passed'])
         state['package']['lawyers'][0]['roleResolution']['confirmed'] = True
