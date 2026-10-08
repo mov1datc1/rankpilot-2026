@@ -1,3 +1,4 @@
+import { filingPreparationNeeded } from '@/lib/audit/filing-details';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
@@ -29,6 +30,7 @@ export async function POST(request:NextRequest) {
   const issues=scopeIssues(selectedScope(submission),data.source_reports || []);
   if(issues.length) return NextResponse.json({code:issues[0].code,error:issues.map(i=>i.message).join(' '),issues},{status:422});
   if((data.matters || submission.matters).some(needsInputReview)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Confirma los permisos y montos pendientes.'},{status:422});
+  if(filingPreparationNeeded(data)) return NextResponse.json({code:'FILING_REVIEW_REQUIRED',error:'Revisa los datos del departamento en el asistente antes de preparar los documentos. Puedes confirmar que continuarás con los campos aún desconocidos.'},{status:422});
   try {
     const workers:any[]=await prisma.$queryRaw`SELECT "id" FROM "EditorialWorker" WHERE "version"=${EDITORIAL_VERSION} AND "heartbeat">now()-interval '90 seconds' LIMIT 1`;
     if(!workers.length) return NextResponse.json({code:'WORKER_UNAVAILABLE',error:'El motor editorial no está disponible. No iniciamos llamadas ni gastamos tokens; el expediente se conserva.'},{status:503});

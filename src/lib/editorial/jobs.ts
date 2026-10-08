@@ -70,10 +70,10 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
 
 /** Repairs may change generated prose, never source facts or human-edited text. */
 export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
-  const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='critical');
+  const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='critical' || (d.code==='EDITORIAL_STYLE' && d.owner==='rankpilot' && d.field_path && d.artifact_quote));
   if(!defects.length) return null;
   if(data.editorial_development) {
-    const generated=defects.filter((d:any)=>d.owner==='rankpilot' && ['EDITORIAL_OMISSION','UNSUPPORTED_CLAIM','EDITORIAL_STYLE'].includes(d.code));
+    const generated=defects.filter((d:any)=>d.owner==='rankpilot' && ['EDITORIAL_OMISSION','UNSUPPORTED_CLAIM','EDITORIAL_STYLE','SELECTION_MISMATCH','PUBLICATION_PERMISSION'].includes(d.code));
     const concrete=generated.filter((d:any)=>!String(d.message || '').startsWith('La aceptación editorial no está completa:'));
     const targets=concrete.length?concrete:generated;
     if(targets.some((d:any)=>d.scope==='submission')) return {tasks:['development','audit','artifact'],letter:true};

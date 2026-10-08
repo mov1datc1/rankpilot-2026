@@ -120,3 +120,11 @@ class ReviewGraphTests(unittest.TestCase):
         result,calls=self.run_graph(package=package)
         self.assertFalse(result['selection_validated'])
         self.assertEqual(calls,['strategist'])
+
+class PublicationRepairOwnershipTests(unittest.TestCase):
+    def test_known_permissions_make_generated_leak_a_system_repair(self):
+        from core.review_graph import calibrate_verdict
+        defect={'code':'PUBLICATION_PERMISSION','severity':'critical','scope':'submission','message':'Client identity leaked','matter_id':'x'}
+        for confirmed, expected in [(True,'rankpilot'),(False,'user')]:
+            result=calibrate_verdict({'passed':False,'defects':[defect]}, {'matters':[{'id':'x','confidentialityConfirmed':confirmed,'publish_status':'confidential'}]})
+            self.assertEqual(result['defects'][0]['owner'],expected)

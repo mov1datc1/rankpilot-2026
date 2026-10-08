@@ -109,7 +109,7 @@ Severity policy: critical defects are concrete material factual changes, confide
 A firm's name never determines strength or ranking. Do not predict a band, invent a score, fill a quota, or add facts from prior knowledge.
 Ranking statements in source documents are unverified claims, including lawyer ranks. Only ranking_verification with a verified status establishes the scoped firm position; never use a firm observation to verify a lawyer or a different directory/edition. If the draft, strategy or letter presents a ranking claim as established without corresponding official evidence, report a critical defect and request verification or removal. An unverified declaration may remain in the source register or be described explicitly as unverified; do not mistake such attribution for an established ranking.
 A valid valueResolution (confirmed=true, value matching the matter value, source explanation supplied) is a user-confirmed correction to the disputed amount, not an unresolved conflict. Use that value and explanation while retaining original source text for traceability. Reject a draft that silently reinstates the superseded value; distinguish different monetary concepts described in the explanation. A correction is not independent documentary verification.
-Explicit confidentialityConfirmed=true together with publish_status=publishable, confidential or non_publishable is the user's saved decision; historical confidentialityEvidence describes extraction provenance and does not reopen that decision. Confidential matters are eligible for section E and hero selection without an additional publication permission.
+Explicit confidentialityConfirmed=true together with publish_status=publishable, confidential or non_publishable is the user's saved decision; historical confidentialityEvidence describes extraction provenance and does not reopen that decision. Confidential matters are eligible for section E and hero selection without an additional publication permission. These section-placement flags alone do not ban source-grounded anonymized descriptions of legal work in B9/B10/C2. In public prose remove restricted client identities and identifying details; preserve substantive roles and work with neutral descriptions. An explicit source restriction on disclosure of a result, amount, or the work itself must still be obeyed. Never interpret the legacy non_publishable flag alone as a global ban on all anonymous facts, nor invent such a source restriction.
 Value confidentiality is distinct from matter publication permission. Matter-level flags such as isConfidential=true, confidential=true or publish_status=confidential place a matter in the confidential submission section; they do NOT by themselves restrict its monetary facts or make that section public prose. Preserve source-backed amounts, exposures and project scales in confidential-section answers, distinguishing each economic concept and currency. Suppress a value only when the value itself or a specific monetary disclosure is explicitly restricted by the source or a confirmed user instruction. A numeric confirmed value is not a confidentiality restriction. An explicitly confidential value remains restricted even if the source narrative mentions its range or order of magnitude. Public prose must omit that economic detail automatically; this is a generated confidentiality violation (UNSUPPORTED_CLAIM, source_vs_artifact, field_path=value), not a user confirmation task. Preserve the supported legal work and any separately publishable result. A generated D8/E8 status that selects a disputed definitive outcome while the narrative correctly states undisputed progress is also a RankPilot repair: qualify that output field and retain the actual source uncertainty in the Audit. Do not reopen a source question merely to correct avoidable generated wording.
 Unknown practice requirements require questions or abstention. A user's requested ranking is an objective, not an established fact.
 '''
@@ -181,7 +181,7 @@ class EditorialResponseError(ValueError):
 
 def invoke_role(state, role, schema, instruction, payload):
     started = time.monotonic()
-    purpose = 'judge' if role in ('editor', 'selection_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
+    purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
     methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
@@ -307,6 +307,13 @@ def reconcile_next_actions(letter, package):
     return letter
 
 def writer(state):
+    feedback=state.get('repair_feedback',[])
+    if state.get('letter') and feedback and all(d.get('code')=='SELECTION_MISMATCH' and d.get('scope')=='letter' for d in feedback):
+        from core.portfolio_consistency import verify_portfolio_consistency
+        conflicts,trace=verify_portfolio_consistency(state,state['letter'])
+        if not conflicts and audit_word_count(state['letter'])<=AUDIT_WORD_LIMIT:
+            return {'letter':state['letter'],'trace':trace,'writer_validated':True,'errors':[],'repair_feedback':[],'letter_repair_requested':False,'letter_repair_report':{'corrected_fields':[],'classification_rechecked':True,'unresolved':[]}}
+        state={**state,'trace':trace,'repair_feedback':conflicts or feedback}
     if state.get('letter') and state.get('repair_feedback'):
         from core.editorial_repair import repair_letter
         return repair_letter(state)
@@ -332,6 +339,11 @@ def writer(state):
             if name:
                 text = re.sub(r'(?<!\w)' + re.escape(matter_id) + r'(?!\w)', lambda _: name, text)
         letter[field] = text
+    from core.portfolio_consistency import verify_portfolio_consistency
+    conflicts,trace = verify_portfolio_consistency({**state,'trace':trace},letter)
+    if conflicts:
+        from core.editorial_repair import repair_letter
+        return repair_letter({**state, 'letter':letter, 'trace':trace, 'repair_feedback':conflicts})
     return {'letter':letter,'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1,'writer_validated':not errors,'errors':errors}
 
 def editor(state):
@@ -347,6 +359,9 @@ def editor(state):
         if failed or missing or len(present) != len(set(present)):
             verdict.setdefault('defects', []).append({'code':'EDITORIAL_OMISSION','severity':'critical','scope':'submission','matter_id':None,'message':'La aceptación editorial no está completa: ' + ', '.join(sorted(set(failed) | missing)), 'source_quote':'','artifact_quote':''})
             verdict['passed'] = False
+    from core.portfolio_consistency import verify_portfolio_consistency
+    conflicts,trace=verify_portfolio_consistency({**state,'trace':trace},state.get('letter',{}))
+    verdict.setdefault('defects', []).extend(conflicts)
     return {'judge':calibrate_verdict(verdict, state.get('package')),'trace':trace}
 
 def calibrate_verdict(verdict, package=None):
@@ -369,7 +384,11 @@ def calibrate_verdict(verdict, package=None):
             if source_quote and claim and any(source_quote in literal(s) for s in source_fields) and any(claim in literal(a) for a in artifact_fields):
                 defect['code'] = code = 'UNSUPPORTED_CLAIM'
         if code:
-            defect['owner']='user' if code in ('SOURCE_CONFLICT','PUBLICATION_PERMISSION') else 'rankpilot'
+            permissions=(package or {}).get('matters', [])
+            if defect.get('matter_id'):
+                permissions=[m for m in permissions if m.get('id')==defect['matter_id']]
+            permissions_known=bool(permissions) and all(m.get('confidentialityConfirmed') is True and m.get('publish_status') in ('publishable','confidential','non_publishable') for m in permissions)
+            defect['owner']='user' if code=='SOURCE_CONFLICT' or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
             defect['action']='confirm' if defect['owner']=='user' else 'retry'
             defect['retryable']=defect['owner']=='rankpilot'
             defect['entity_id']=defect.get('matter_id')

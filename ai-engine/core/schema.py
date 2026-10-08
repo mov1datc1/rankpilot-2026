@@ -63,8 +63,8 @@ class HireDeparture(BaseModel):
 class DepartmentInfo(BaseModel):
     """Department-level information for the submission."""
     department_name: Optional[str] = Field(default="", description="Department name as used by the firm.")
-    num_partners: Optional[int] = Field(default=0, description="Number of partners in the department.")
-    num_lawyers: Optional[int] = Field(default=0, description="Number of other qualified lawyers.")
+    num_partners: Optional[int] = Field(default=None, description="Explicit number of partners in this department, never firm-wide totals or a count inferred from biographies. Null when unknown.")
+    num_lawyers: Optional[int] = Field(default=None, description="Explicit number of other qualified lawyers in this department. Null when unknown, zero only when explicitly stated.")
     department_heads: List[ContactPerson] = Field(default_factory=list, description="Explicitly identified department heads only. A partner is not necessarily a head.")
     hires_departures: List[HireDeparture] = Field(default_factory=list, description="Partner hires and departures in last 12 months.")
     department_description: Optional[str] = Field(default="", description="What the department is best known for (B7 section).")
@@ -76,8 +76,17 @@ class FirmMetadata(BaseModel):
     location: str = Field(description="The jurisdiction or location of the firm.")
     narrative_overview: str = Field(description="A brief summary of the firm's narrative or intro.")
 
+class FilingFinding(BaseModel):
+    """An administrative fact with literal source evidence, including conflicting alternatives."""
+    field: Literal['departmentName','numPartners','numLawyers','contacts','departmentHeads']
+    text_value: str = Field(default='', description='Explicit department name, never inferred from the target practice.')
+    number_value: Optional[int] = Field(default=None, description='Department count only, never firm totals or a count of named biographies. Zero only if explicit.')
+    people: List[ContactPerson] = Field(default_factory=list, description='Only explicitly identified interview contacts or department heads for the selected field. Do not promote marketing contacts, partners, or other key partners to those roles.')
+    source_quote: str = Field(description='Contiguous verbatim passage identifying this fact AND its department/role scope. Omit finding if missing or ambiguous. Return separate findings for conflicting explicit alternatives.')
+
 class SubmissionSchema(BaseModel):
     """The full structured representation of a law firm's practice submission."""
+    filing_findings: List[FilingFinding] = Field(default_factory=list, description='Recover administrative facts from any source layout/language using literal evidence. Keep firm totals separate. Do not infer a current fact from multiple contradictory periods.')
     metadata: FirmMetadata = Field(description="Core details about the law firm.")
     department: DepartmentInfo = Field(default_factory=DepartmentInfo, description="Department-level information.")
     lawyers: List[LawyerProfile] = Field(default_factory=list, description="Lawyer profiles for B6 section.")

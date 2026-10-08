@@ -1142,6 +1142,7 @@ def extraction_node(state: AgentState) -> Dict:
             "department": ext_dept,
             "lawyers": ext_lawyers,
             "contacts": ext_contacts,
+            "filing_findings": data_dict.get("filing_findings", []),
         },
         "matters": matters_list,
         "_original_extracted_matters": [dict(m) for m in matters_list if isinstance(m, dict)],

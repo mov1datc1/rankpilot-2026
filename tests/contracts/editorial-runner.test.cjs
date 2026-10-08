@@ -33,7 +33,7 @@ global.fetch=async(url,options)=>{
  assert.ok(payload.package.rendered_audit.includes('Synthetic client 0'));
  assert.ok(payload.package.rendered_artifact.includes('Synthetic client 0'));
  if(repairMode) return Response.json({success:true,judge:{passed:false,defects:[{code:'UNSUPPORTED_CLAIM',owner:'rankpilot',severity:'critical',scope:'submission',matter_id:'m0',source_quote:'No decision has been issued.',artifact_quote:'The team won the appeal.',message:'La fuente indica que no hay decisión; retirar la victoria.'}]},trace:[{role:'editor',usage:{total_tokens:150}}]});
- return Response.json({success:true,judge:{passed:true,defects:[]},trace:[{role:'editor',usage:{total_tokens:150}}]});
+ return Response.json({success:true,judge:{passed:true,defects:[]},trace:[{role:'editor',usage:{total_tokens:150}},{role:'portfolio_reviewer',usage:{total_tokens:25}}]});
 };
 async function stage(){job.status='running';job.leaseToken=`lease-${job.cursor}`;await runJobStage(structuredClone(job));}
 test('worker completes real paired DOCX with strategy first, reserves untouched, no browser authentication',async()=>{
@@ -42,7 +42,7 @@ test('worker completes real paired DOCX with strategy first, reserves untouched,
  assert.equal(submission.chambersData.matters[2].optimizedText,'');
  assert.deepEqual(calls.map(c=>c.url.split('/').pop()),['review-step','review-step','review-step','verify-rendered-package']);
  assert.deepEqual(job.ledger.map(s=>s.stage),['selection','development','audit','artifact']);
- assert.equal(job.ledger.reduce((sum,s)=>sum+(s.trace?.usage?.total_tokens||0),0),450);
+ assert.equal(job.ledger.reduce((sum,s)=>sum+(s.trace?.usage?.total_tokens||0),0),475);
 });
 test('recreated coordinator continues from persisted cursor without rerunning selection',async()=>{
  reset();await stage();await stage();

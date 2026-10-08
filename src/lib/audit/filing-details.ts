@@ -7,6 +7,7 @@ export function normalizeFilingDetails(input:any) {
     return n;
   };
   const people=(rows:any)=>{
+    if(rows===undefined || rows===null) return [];
     if(!Array.isArray(rows) || rows.length>50) throw new Error('Revisa los contactos del formulario.');
     return rows.map(r=>({name:text(r.name),email:text(r.email),phone:text(r.phone,100)})).filter(r=>r.name || r.email || r.phone);
   };
@@ -22,4 +23,9 @@ export function filingDetailsGaps(data:any):string[] {
   if(data.numLawyers===undefined || data.numLawyers===null || data.numLawyers==='') missing.push('B3: número de otros abogados');
   if(!(data.departmentHeads || data.department?.department_heads || []).some((p:any)=>p.name)) missing.push('B7: responsables del departamento');
   return missing;
+}
+
+/** Ask once, before paid preparation; users may explicitly defer genuinely unknown facts. */
+export function filingPreparationNeeded(data:any):boolean {
+  return data.filing_reviewed!==true && (filingDetailsGaps(data).length>0 || Object.values(data.filing_field_status || {}).includes('conflicting'));
 }

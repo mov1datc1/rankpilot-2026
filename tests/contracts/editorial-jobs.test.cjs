@@ -111,3 +111,10 @@ test('mutable research cache does not change runtime identity but methodology do
   assert.notEqual(engineFingerprint(root),before);assert.equal(py(),engineFingerprint(root));
  } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
+
+test('concrete punctuation defects are repaired automatically without making optional style preferences a user task',()=>{
+ const defect={code:'EDITORIAL_STYLE',severity:'warning',owner:'rankpilot',scope:'submission',field_path:'b10',artifact_quote:'The team,, advised.',message:'Remove duplicate comma.'};
+ const data={editorial_development:{b10:'The team,, advised.'},final_artifact_review:{judge:{defects:[defect]}}};
+ assert.deepEqual(targetedRepair(data),{tasks:['development','audit','artifact'],letter:true});
+ assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,artifact_quote:'',field_path:null,message:'I prefer shorter prose.'}]}}}),null);
+});

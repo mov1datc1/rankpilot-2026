@@ -11,7 +11,7 @@ export function FilingDetails({data,onSave,openRequest=0,onCancel,saveLabel='Gua
   const change=(key:string,value:any)=>setDraft((d:any)=>({...d,[key]:value}));
   return <section id="studio-filing-details" aria-label="Datos antes de presentar" style={{border:'1px solid #CBD5E1',borderRadius:12,padding:18,marginTop:12,background:'#fff'}}>
     <strong>Datos antes de presentar</strong>
-    <p>{gaps.length?`${gaps.length} campos por completar o revisar: ${gaps.join('; ')}.`:'Datos administrativos registrados.'} La revisión de los documentos no sustituye comprobar estos datos y la ventana de investigación.</p>
+    <p>{gaps.length?`${gaps.length} campos por completar o revisar: ${gaps.join('; ')}.`:'Datos administrativos registrados.'} Puedes completar los pendientes aquí. Se analiza todo el historial; la selección para presentar considera las reglas de la guía.</p>
     {!editing?<button type="button" onClick={open}>Revisar datos y objetivo →</button>:<form onSubmit={async e=>{e.preventDefault();setBusy(true);try{if(await onSave(draft))setEditing(false);}finally{setBusy(false);}}}>
       <div style={{display:'grid',gap:12}}>
         {[['departmentName','Nombre del departamento'],['numPartners','Número de socios'],['numLawyers','Número de otros abogados'],['target_band','Objetivo de ranking (si está definido)']].map(([key,label])=><label key={key}>{label}<input aria-label={label} disabled={busy} type={key.startsWith('num')?'number':'text'} min={0} step={1} value={draft[key]} onChange={e=>change(key,e.target.value)} style={{display:'block',width:'100%',border:'1px solid #CBD5E1',padding:8}} /></label>)}

@@ -191,6 +191,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
   confirmedSourceB10?: string;
   researchPeriod?: { from: string; to: string };
   filingDetails?: unknown;
+  filingReviewed?: boolean;
   lawyers?: any[];
   matters?: any[];
 }) {
@@ -235,14 +236,15 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
         confirmedBy:valid ? (unchanged ? previous.roleResolution.confirmedBy : user.id) : null}});
     });
     const filingDetails = data.filingDetails ? normalizeFilingDetails(data.filingDetails) : null;
-    const onlyFiling=filingDetails && Object.keys(data).every(key=>['expectedRevision','auditActionId','filingDetails'].includes(key));
-    if(onlyFiling && !auditInputChanged(chambers,{...chambers,...filingDetails},'filing')) {
+    const onlyFiling=filingDetails && Object.keys(data).every(key=>['expectedRevision','auditActionId','filingDetails','filingReviewed'].includes(key));
+    if(onlyFiling && (chambers.filing_reviewed || data.filingReviewed!==true) && !auditInputChanged(chambers,{...chambers,...filingDetails},'filing')) {
       return {success:true,unchanged:true,revision:Number(chambers.draft_revision || 0),filingDetails};
     }
     const nextRevision = Number(chambers.draft_revision || 0) + 1;
     const updatedChambers = {
       ...chambers,
       ...(filingDetails || {}),
+      ...(filingDetails ? {filing_reviewed:data.filingReviewed !== false} : {}),
       draft_revision: nextRevision,
       previous_approved_artifact: previousApprovedArtifact(existing,chambers),
       ...(data.refereeNotes !== undefined ? {audit_referee_notes:normalizeRefereeNotes(data.refereeNotes)} : {}),

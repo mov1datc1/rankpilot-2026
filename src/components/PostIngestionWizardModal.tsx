@@ -19,6 +19,8 @@ import {
   X,
   Check
 } from 'lucide-react';
+import { FilingFields } from '@/components/FilingFields';
+import { filingDetailsGaps } from '@/lib/audit/filing-details';
 import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
 import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
@@ -28,6 +30,8 @@ export interface PostIngestionWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: (data: {
+    filingDetails?: any;
+    filingReviewed?: boolean;
     firmName: string;
     practiceArea: string;
     location: string;
@@ -41,6 +45,10 @@ export interface PostIngestionWizardModalProps {
     mattersChanged?: boolean;
   }) => void | Promise<void>;
   initialData: {
+    filingDetails?: any;
+    filingEvidence?: any;
+    filingFieldStatus?: any;
+    filingReviewed?: boolean;
     sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[] }[];
     draftRevision?: number;
     firmName?: string;
@@ -106,6 +114,8 @@ export default function PostIngestionWizardModal({
   // Local state for all fields being validated
   const initialPractice = calibratedPractice || sanitizeStr(initialData.practiceArea);
 
+  const [filingDetails,setFilingDetails]=useState<any>(initialData.filingDetails || {});
+  const [filingReviewed,setFilingReviewed]=useState(!!initialData.filingReviewed);
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
   const [practiceArea, setPracticeArea] = useState(initialPractice);
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
@@ -162,6 +172,8 @@ export default function PostIngestionWizardModal({
       setExpectedRevision(initialData.draftRevision || 0);
       setInitialB10Source(initialData.b10Text || '');
       setSaveError('');
+      setFilingDetails(initialData.filingDetails || {});
+      setFilingReviewed(!!initialData.filingReviewed);
       setFirmName(sanitizeStr(initialData.firmName));
       setPracticeArea(calibratedPractice || sanitizeStr(initialData.practiceArea));
       setLocation(sanitizeStr(initialData.location));
@@ -176,12 +188,13 @@ export default function PostIngestionWizardModal({
   const saveReview = async () => {
     if(isSaving)return;
     setIsSaving(true);setSaveError('');
-    try {await onComplete({firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
+    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
     catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
     finally {setIsSaving(false);}
   };
   const handleNext = () => {
     if (correctionOnly) { void saveReview(); return; }
+    if(currentStep===2 && !filingReviewed) {setValidationError('Revisa los datos del departamento y confirma cómo continuar antes de preparar los documentos.');return;}
     if (currentMatterChunk.some(needsInputReview)) {
       setValidationError('Resuelve los permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
       return;
@@ -586,6 +599,14 @@ export default function PostIngestionWizardModal({
           {/* STEP 2: DEPARTMENT & B10 OVERVIEW */}
           {currentStep === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <section style={{padding:16,border:'1px solid #C7D2FE',borderRadius:10,marginBottom:20,background:'#F8FAFC'}}>
+                <h3>Datos del departamento</h3>
+                <p>Comprueba los datos recuperados antes de preparar los documentos. Los campos vacíos no quedaron identificados de forma inequívoca; puedes completarlos aquí.</p>
+                <FilingFields value={filingDetails} evidence={initialData.filingEvidence} statuses={initialData.filingFieldStatus} onChange={value=>{setFilingDetails(value);setFilingReviewed(false);}} />
+                {filingDetailsGaps(filingDetails).length>0 && <p role="status">Pendientes: {filingDetailsGaps(filingDetails).join('; ')}. No se inventarán datos para completar estos campos.</p>}
+                <label><input type="checkbox" checked={filingReviewed} onChange={e=>setFilingReviewed(e.target.checked)} /> {filingDetailsGaps(filingDetails).length?'Revisé estos datos y continuaré con los campos pendientes indicados.':'Confirmo los datos del departamento.'}</label>
+              </section>
+
               <div style={{
                 background: '#F0FDF4',
                 border: '1px solid #BBF7D0',
@@ -1059,7 +1080,7 @@ export default function PostIngestionWizardModal({
             {currentStep===3 && visibleMatters.length>0 && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(4);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Revisar asuntos relacionados ({visibleMatters.length})</button>}
             {currentStep>=4 && currentStep<totalSteps && <button type="button" disabled={isSaving} onClick={()=>{setCurrentStep(step=>step+1);setIsEditingInline(true);}} style={{padding:'8px 10px',color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:6,cursor:'pointer'}}>Siguientes asuntos relacionados →</button>}
           </div>}
-          {validationError && currentMatterChunk.some(needsInputReview) && <p role="alert" style={{color: '#B91C1C'}}>{validationError}</p>}
+          {validationError && <p role="alert" style={{color: '#B91C1C'}}>{validationError}</p>}
           {/* Action Buttons */}
           <div style={{ display: 'flex', flexWrap:'wrap', gap:10, alignItems: 'center', justifyContent: 'space-between', marginTop: '0.35rem' }}>
             <div>

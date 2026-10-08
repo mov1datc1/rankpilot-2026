@@ -148,3 +148,19 @@ class TargetedRepairTests(unittest.TestCase):
         self.assertTrue(result['development_validated'])
         self.assertEqual(model.call_args_list[0].args[4]['defects'],[submission])
         self.assertEqual(state['repair_feedback'],[submission,letter])
+
+class NoOpRepairTests(unittest.TestCase):
+    def test_unchanged_development_cannot_claim_correction(self):
+        proposal={'b10':'Same generated text'}
+        targets={'b10':{'current_value':proposal['b10']}}
+        with self.assertRaisesRegex(ValueError,'unchanged'):
+            apply_corrections(proposal,targets,{'corrections':[{'path':'b10','value':proposal['b10'],'reason':'Claimed fix'}]})
+        with self.assertRaisesRegex(ValueError,'unchanged'):
+            apply_corrections(proposal,targets,{'corrections':[]})
+    def test_unchanged_audit_with_critical_letter_feedback_is_rejected(self):
+        from core.editorial_repair import repair_letter
+        letter={k:'Unchanged text.' for k in ['executive_assessment','portfolio','leadership','evidence_gaps','next_steps']}
+        state={'package':{'matters':[]},'strategy':{'matters':[]},'letter':letter,'repair_feedback':[{'scope':'letter','severity':'critical','message':'Incorrect classification.'}]}
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])):
+            result=repair_letter(state)
+        self.assertFalse(result['writer_validated'])

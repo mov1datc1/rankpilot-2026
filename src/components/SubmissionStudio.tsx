@@ -43,6 +43,8 @@ import {
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
+import { PreparationBanner } from '@/components/PreparationBanner';
+import { filingPreparationNeeded } from '@/lib/audit/filing-details';
 import { FilingDetails } from '@/components/FilingDetails';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
 import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
@@ -329,10 +331,10 @@ export default function SubmissionStudio({
     resolveReviewIssue(action.kind==='period'?'period':action.kind==='lawyers'?'lawyers':'wizard',action.message);
   };
   const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} saveLabel={auditAction?'Guardar y volver al Audit':undefined} openRequest={filingOpenRequest} onCancel={()=>{if(auditAction)returnToAudit();}} onSave={async filingDetails=>{
-    const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails,auditActionId:auditAction?.id});
+    const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails,filingReviewed:true,auditActionId:auditAction?.id});
     if(!result.success){setDraftSaveError(result.error || 'No se pudo guardar.');return false;}
     if(result.unchanged){if(auditAction)returnToAudit();return true;}
-    setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...result.filingDetails,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+    setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...result.filingDetails,filing_reviewed:true,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
     if(auditAction)returnToAudit();
     return true;
   }} /></>;
@@ -593,6 +595,7 @@ export default function SubmissionStudio({
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);return;}
     if(isOptimizingAll) return;
+    if(filingPreparationNeeded(chambersData)) {setReviewPending(false);setShowValidationWizard(true);return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const savedMatters=chambersData.matters || submission.matters || [];
@@ -910,7 +913,7 @@ export default function SubmissionStudio({
             }}
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.level === 'critical' ? '#DC2626' : readiness.color }} />
-            <span>{readiness.score}% campos básicos · {deliveryState.approved ? 'documentos revisados' : 'revisión pendiente'}</span>
+            <span>Revisar datos del expediente</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 
@@ -1638,170 +1641,18 @@ export default function SubmissionStudio({
               <p>Resuelve los permisos y los montos en el asistente. Tus decisiones se guardarán juntas antes de optimizar.</p>
               <button type="button" onClick={() => {setReviewPending(true); setShowValidationWizard(true);}}>Resolver pendientes en el asistente <ArrowRight size={16} /></button>
             </section>}
-            {/* ═══ MASTER ACTION HERO BANNER: OPTIMIZAR TODO CON IA ═══ */}
-            <div style={{
-              background: 'linear-gradient(135deg, #1A237E 0%, #283593 50%, #312E81 100%)',
-              borderRadius: '14px',
-              padding: '1.5rem 2rem',
-              color: '#FFFFFF',
-              boxShadow: '0 10px 25px -5px rgba(26, 35, 126, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ flex: 1, minWidth: '280px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                    <span style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      background: 'rgba(255,255,255,0.15)',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      color: '#E0E7FF'
-                    }}>
-                      Flujo de Trabajo Interactivo SaaS
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: '#93C5FD' }}>
-                      • Vista Previa Inmediata
-                    </span>
-                  </div>
-                  <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                    {isFullyOptimized ? 'Borrador optimizado — consulta la revisión' : 'Optimización Estratégica Integral'}
-                  </h2>
-                  <p style={{ fontSize: '0.85rem', color: '#C7D2FE', margin: '0.35rem 0 0 0', lineHeight: 1.45 }}>
-                    {isFullyOptimized 
-                      ? `Redacción guardada para ${optimizedMattersCount}/${targetMattersCount} asuntos. B10: ${b10WordCount} palabras. ${deliveryState.label}.`
-                      : 'Reescribe la Sección B10 bajo los 4 Pilares Institucionales y transforma cada asunto en prosa orgánica de 3 párrafos (Asset/Scale → Craft/Outcome → Team/Precedent).'}
-                  </p>
-
-                  {/* Evidence Readiness Interactive Bar */}
-                  <div
-                    onClick={() => setShowReadinessModal(true)}
-                    style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      borderRadius: '8px',
-                      padding: '0.5rem 0.85rem',
-                      marginTop: '0.75rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.75rem'
-                    }}
-                    title="Haz clic para ver el Diagnóstico de Suficiencia de Evidencia"
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{
-                        background: readiness.color,
-                        color: '#FFFFFF',
-                        fontSize: '0.72rem',
-                        fontWeight: 800,
-                        padding: '2px 8px',
-                        borderRadius: '4px'
-                      }}>
-                        {readiness.score}%
-                      </span>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E0E7FF' }}>
-                        Salud de Evidencia: {readiness.label}
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: '#C7D2FE' }}>
-                        ({readiness.missingElements.mattersWithoutClient} sin cliente, {readiness.missingElements.mattersWithoutValue} sin monto)
-                      </span>
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#93C5FD', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                      Diagnóstico y Checklist →
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <button
-                    onClick={() => handleSaveDraftAndExit()}
-                    disabled={isSavingDraft || isOptimizingAll}
-                    title="Guarda los cambios actuales y vuelve al panel de submissions para continuar más tarde"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.12)',
-                      color: '#FFFFFF',
-                      border: '1px solid rgba(255, 255, 255, 0.28)',
-                      borderRadius: '10px',
-                      padding: '0.85rem 1.35rem',
-                      fontSize: '0.88rem',
-                      fontWeight: 600,
-                      cursor: (isSavingDraft || isOptimizingAll) ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    <Save size={16} />
-                    {isSavingDraft ? 'Guardando...' : 'Guardar y Continuar Después'}
-                  </button>
-
-                  <button
-                    onClick={() => handleOptimizeAll(false)}
-                    disabled={isOptimizingAll}
-                    style={{
-                      background: isOptimizingAll ? 'rgba(255,255,255,0.2)' : isFullyOptimized ? '#EEF2FF' : '#FFFFFF',
-                      color: isOptimizingAll ? '#FFFFFF' : '#1A237E',
-                      border: 'none',
-                      borderRadius: '10px',
-                      padding: '0.85rem 1.75rem',
-                      fontSize: '0.92rem',
-                      fontWeight: 700,
-                      cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      boxShadow: isOptimizingAll ? 'none' : '0 4px 12px rgba(0,0,0,0.15)',
-                      transition: 'all 0.2s ease',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {isOptimizingAll ? (
-                      <>
-                        <RefreshCw size={18} className="animate-spin" />
-                        Optimizando Submission...
-                      </>
-                    ) : isFullyOptimized ? (
-                      <>
-                        <RefreshCw size={16} />
-                        ↻ Reintentar revisión
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={18} color="#4F46E5" />
-                        ✨ Optimizar Todo el Submission
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Real-time Live Progress Bar */}
-              {optimizeAllProgress && (
-                <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem', color: '#E0E7FF' }}>
-                    <span style={{ fontWeight: 600 }}>{optimizeAllProgress.stage}</span>
-                    <span style={{ fontWeight: 700 }}>{optimizeAllProgress.current} / {optimizeAllProgress.total}</span>
-                  </div>
-                  <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${Math.min(100, Math.round((optimizeAllProgress.current / Math.max(1, optimizeAllProgress.total)) * 100))}%`,
-                      height: '100%',
-                      background: '#38BDF8',
-                      borderRadius: '4px',
-                      transition: 'width 0.3s ease'
-                    }} />
-                  </div>
-                </div>
-              )}
-            </div>
+            <PreparationBanner
+              approved={deliveryState.approved}
+              busy={isOptimizingAll}
+              needsReview={pendingInputMatters.length > 0 || !!editorialJob?.issue || editorialJob?.status === 'needs_review' || (isFullyOptimized && !deliveryState.approved)}
+              progress={optimizeAllProgress}
+              onPrepare={() => void handleOptimizeAll(false)}
+              onReview={() => {
+                if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);}
+                else document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
+              }}
+              onAudit={() => {setActiveTab('audit');window.scrollTo({top:0,behavior:'smooth'});}}
+            />
 
             {/* Pre-flight Portfolio Strategy Bar */}
             <div style={{
@@ -3852,6 +3703,10 @@ export default function SubmissionStudio({
         onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);if(auditAction)returnToAudit();}}
         targetDirectory={selectedDirectory}
         initialData={{
+          filingDetails:{departmentName:chambersData.departmentName,numPartners:chambersData.numPartners,numLawyers:chambersData.numLawyers,contacts:chambersData.contacts || [],departmentHeads:chambersData.departmentHeads || chambersData.department?.department_heads || [],target_band:chambersData.target_band || ''},
+          filingEvidence:chambersData.filing_evidence,
+          filingFieldStatus:chambersData.filing_field_status,
+          filingReviewed:chambersData.filing_reviewed,
           sourceReports: chambersData.source_reports || [],
           draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
@@ -3874,7 +3729,7 @@ export default function SubmissionStudio({
           const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,reviewIssueMessage:focusedReview?.message,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
           const result=await updateSubmissionValidatedData(submission.id,{...changes,auditActionId:auditAction?.id});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{...data.filingDetails,filing_reviewed:!!data.filingReviewed,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);

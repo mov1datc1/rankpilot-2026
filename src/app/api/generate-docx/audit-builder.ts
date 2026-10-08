@@ -36,6 +36,7 @@ function fieldLabel(label: string, value: string): Paragraph {
 
 function sectionTitle(text: string): Paragraph {
   return new Paragraph({
+    keepNext: true,
     children: [new TextRun({ text, bold: true, size: 26, color: NAVY })],
     spacing: { before: 360, after: 180 },
     border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: NAVY } },

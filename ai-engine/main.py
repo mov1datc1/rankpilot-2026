@@ -876,6 +876,8 @@ async def _extract_readable_source(doc_text, context):
             if len(identities)!=len(set(identities)):
                 raise SourceError('SOURCE_DUPLICATE_LABELS')
         # Extract deterministic metadata and sections
+        from utils.filing_extraction import extract_filing_fields
+        filing = extract_filing_fields(doc_text)
         prelim = DocumentParser.extract_chambers_preliminary_fields(doc_text)
         heads = DocumentParser.extract_department_heads(doc_text)
         roster = DocumentParser.extract_lawyer_roster(doc_text)
@@ -1010,6 +1012,8 @@ async def _extract_readable_source(doc_text, context):
                     "optimizedText": "",
                 })
             extracted_metadata = extract_res.get("metadata", {})
+            from utils.filing_extraction import merge_model_filing_fields
+            filing = merge_model_filing_fields(filing, extracted_metadata.get("filing_findings", []), doc_text)
             prelim = {**extracted_metadata, **{k: v for k, v in prelim.items() if v}}
             if not roster:
                 roster = extracted_metadata.get("lawyers", [])
@@ -1040,6 +1044,7 @@ async def _extract_readable_source(doc_text, context):
             "original_b10": original_b10,
             "original_c2": original_c2,
             "matters": matters,
+            **filing,
             "total_matters": len(matters),
             "source_errors": source_errors,
             "partial": False,
@@ -1121,6 +1126,7 @@ async def extract_document_endpoint(request: Request):
                 report.setdefault('warnings', []).append('No se identificaron asuntos en esta fuente. Comprueba si solo aporta información complementaria.')
             for matter in result['matters']:
                 matter['source_document'] = name
+            result["source"] = name
             results.append(result)
         except SourceError as error:
             return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': [error.as_dict(name)]})
@@ -1134,7 +1140,10 @@ async def extract_document_endpoint(request: Request):
     firm_names = {re.sub(r'\W+', '', result['metadata'].get('firm_name', '')).casefold() for result in results if result['metadata'].get('firm_name')}
     if len(firm_names) > 1:
         return JSONResponse(status_code=422, content={'success': False, 'code': 'SOURCE_PREFLIGHT_FAILED', 'source_errors': [SourceError('SOURCE_IDENTITY_CONFLICT').as_dict('Fuentes del submission')]})
+    from utils.filing_extraction import resolve_filing_fields
+    filing = resolve_filing_fields(results)
     merged = results[0]
+    merged.update(filing)
     merged['metadata'] = {key: next((result['metadata'][key] for result in results if result['metadata'].get(key)), '') for key in merged['metadata']}
     for field in ('original_b10', 'original_c2'):
         merged[field] = '\n\n'.join(dict.fromkeys(result[field] for result in results if result[field]))

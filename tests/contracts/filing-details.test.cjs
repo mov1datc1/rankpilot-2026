@@ -40,3 +40,9 @@ test('stage usage accounts for selector and independent reviewer, without recoun
  assert.equal(result.usage.total_tokens,25);assert.equal(result.calls.length,2);
  assert.equal(stageTraceDelta([old],[old]),null);
 });
+test('missing filing data is reviewed before paid preparation, with explicit deferral allowed',()=>{
+ const {filingPreparationNeeded}=require('../../src/lib/audit/filing-details.ts');
+ assert.equal(filingPreparationNeeded({}),true);
+ assert.equal(filingPreparationNeeded({filing_reviewed:true}),false);
+ assert.equal(filingPreparationNeeded({departmentName:'Tax',numPartners:0,numLawyers:0,contacts:[{name:'Ana',email:'a@example.test'}],departmentHeads:[{name:'Ana'}]}),false);
+});
