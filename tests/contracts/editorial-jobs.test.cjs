@@ -4,6 +4,14 @@ const {planDrafting,publicJob,targetedRepair}=require('../../src/lib/editorial/j
 const {sourceSnapshot,stableHash,draftSourceHash,draftDisposition}=require('../../src/lib/editorial/contracts.ts');
 const {editorialIdentity,editorialUser}=require('../../src/lib/editorial/identity.ts');
 const {reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
+const {engineMatchesWorker,EDITORIAL_VERSION}=require('../../src/lib/editorial/contracts.ts');
+test('rolling deployments only claim work when worker and engine commits agree',()=>{
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'new'},'old'),false);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'new'},'new'),true);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},'new'),false);
+ assert.equal(engineMatchesWorker({version:'old',commit:'new'},'new'),false);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},''),true);
+});
 const matters=Array.from({length:32},(_,i)=>({id:`m${i}`,rawNotes:`Matter ${i} is pending`,publish_status:'non_publishable',confidentialityConfirmed:true}));
 const state={selection_validated:true,strategy:{matters:matters.map((m,i)=>({matter_id:m.id,disposition:i<20?'core':'reserve'})),hero_matter_id:'m0'}};
 test('strategy selects before drafting; 12 reserves do not buy rewrites',()=>{

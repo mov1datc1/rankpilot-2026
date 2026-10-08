@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 import { reviewPackage, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
-export const EDITORIAL_VERSION = 'rankpilot-pipeline-v3';
+export const EDITORIAL_VERSION = 'rankpilot-pipeline-v3.1';
+/** A rolling deployment must not mix old renderers with a new engine. */
+export function engineMatchesWorker(health:any, commit=process.env.RENDER_GIT_COMMIT) {
+  return health?.version===EDITORIAL_VERSION && (!commit || health.commit===commit);
+}
 export type JobStatus = 'queued'|'running'|'completed'|'needs_review'|'failed'|'indeterminate'|'superseded';
 export interface ReviewIssue {
   code:string; rule_id:string; entity_id:string|null; field_path:string|null;

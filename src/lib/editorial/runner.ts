@@ -71,6 +71,6 @@ export async function runJobStage(job:any) {
       systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.');
     if(['SELECTION_REJECTED','DEVELOPMENT_REJECTED','GROUNDING_REJECTED','AI_OUTPUT_LIMIT'].includes(code) && !(job.ledger || []).some((entry:any)=>entry.stage===stage && entry.issue?.code===code)) status='queued';
   } finally {clearInterval(heartbeat);}
-  const entry={stage,status,started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
+  const entry={stage,status,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=NULL,"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;
 }
