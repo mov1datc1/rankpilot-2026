@@ -62,6 +62,26 @@ class SelectionSemanticTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'semantic'):
             run_editorial_stage('development',{'selection_validated':True})
 
+    def test_semantic_reviewer_receives_saved_role_resolutions(self):
+        lawyers=[{'name':'Synthetic Lawyer','role':'Associate','isPartner':False,'roleResolution':{'confirmed':True,'role':'Associate','reason':'User confirmed from source'}}]
+        def invoke(state,role,schema,instruction,payload):
+            self.assertEqual(payload['lawyers'],lawyers)
+            return verdict(),[]
+        self.assertTrue(review_selection({'package':{'matters':[MATTER],'lawyers':lawyers},'strategy':GOOD},invoke)['selection_review_validated'])
+
+    def test_review_deferred_before_provider_call_reuses_saved_selection(self):
+        import time
+        from core.review_graph import selection_review, select_or_reuse
+        state={'package':{'matters':[MATTER]},'strategy':GOOD,'stage_deadline':time.monotonic()+45,'trace':[{'role':'strategist'}]}
+        with patch('core.review_graph.create_chat_model') as model:
+            result=selection_review(state)
+        model.assert_not_called()
+        self.assertTrue(result['selection_review_deferred'])
+        self.assertFalse(result['selection_review_validated'])
+        with patch('core.review_graph.strategist') as select:
+            reused=select_or_reuse({**state,**result})
+        select.assert_not_called(); self.assertEqual(reused['strategy']['hero_matter_id'],'property-1')
+
     def test_studio_saved_confidential_decision_does_not_reopen_permission(self):
         for status in ('confidential', 'non_publishable', 'publishable'):
             matter={**MATTER,'publish_status':status,'confidentialityConfirmed':True}

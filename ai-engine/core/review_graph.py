@@ -88,6 +88,7 @@ class ReviewState(TypedDict, total=False):
     selection_review: dict
     selection_review_validated: bool
     selection_review_unavailable: bool
+    selection_review_deferred: bool
     selection_review_attempts: int
     writer_attempts: int
     release_verdict: dict
@@ -147,6 +148,9 @@ def role_payload(payload, role):
             matter.pop('draft_provenance', None)
     return result
 
+class SelectionReviewDeferred(TimeoutError):
+    """No request started: checkpoint the selector and give review a fresh budget."""
+
 class EditorialResponseError(ValueError):
     def __init__(self, message, trace):
         super().__init__(message)
@@ -160,6 +164,8 @@ def invoke_role(state, role, schema, instruction, payload):
     router = RAGRouter()
     methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
+    if role=='selection_reviewer' and remaining<90:
+        raise SelectionReviewDeferred('Save the proposal before starting independent review')
     if remaining<20: raise TimeoutError('Editorial stage budget exhausted before next call')
     model=create_chat_model(purpose, request_timeout=remaining-5) if remaining!=float('inf') else create_chat_model(purpose)
     if state.get('output_recovery_attempt'):
@@ -243,7 +249,7 @@ def selection_review(state):
         trace = list(state.get('trace', []))
         if getattr(error, 'trace', None): trace.append(error.trace)
         errors = ['RankPilot no pudo completar la comprobación de la selección; la propuesta y las fuentes se conservan para reintentar.']
-        return {'selection_review_validated':False,'selection_review_unavailable':True,'selection_validated':False,
+        return {'selection_review_validated':False,'selection_review_unavailable':True,'selection_review_deferred':isinstance(error,SelectionReviewDeferred),'selection_validated':False,
                 'selection_review_attempts':2,'errors':errors,'trace':trace,
                 'selection_feedback':{'strategy':state['strategy'],'errors':errors,'semantic_rejection':False}}
 

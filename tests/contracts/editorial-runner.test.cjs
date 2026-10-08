@@ -95,3 +95,21 @@ test('truncated final review retries the judge without regenerating approved ups
  global.fetch=async(url,options)=>{const p=JSON.parse(options.body);if(url.endsWith('/verify-rendered-package')){attempts++;if(attempts===1)return Response.json({success:false,code:'AI_OUTPUT_LIMIT',trace:{role:'editor',usage:{total_tokens:201}}},{status:502});recovery=p.output_recovery;}return originalFetch(url,options);};
  try{for(let i=0;i<8;i++){await stage();if(job.status!=='queued')break;}assert.equal(job.status,'completed',JSON.stringify(job));assert.equal(attempts,2);assert.equal(recovery,true);assert.equal(calls.filter(c=>c.payload.stage==='writer').length,1);assert.equal(job.ledger.find(l=>l.issue?.code==='AI_OUTPUT_LIMIT').trace.usage.total_tokens,201);}finally{global.fetch=originalFetch;}
 });
+
+test('unstarted semantic review is checkpointed and automatically continued without user cooldown',async()=>{
+ reset();const normal=global.fetch;let attempts=0;
+ global.fetch=async(url,options)=>{
+  const response=await normal(url,options);if(!url.endsWith('/review-step') || ++attempts!==1)return response;
+  const result=await response.json();const s=result.state;
+  s.selection_validated=false;s.selection_review_validated=false;s.selection_review_unavailable=true;s.selection_review_deferred=true;
+  s.errors=['Review deferred before provider request'];s.selection_feedback={strategy:s.strategy,errors:s.errors,semantic_rejection:false};
+  return Response.json({...result,next_stage:'done',state:s});
+ };
+ try{
+  await stage();assert.equal(job.status,'queued');assert.equal(job.issue.code,'SELECTION_REVIEW_DEFERRED');
+  assert.ok(submission.chambersData.review_checkpoint.state.strategy);
+  await stage();assert.equal(job.status,'queued');assert.equal(job.stage,'development');
+  assert.ok(calls[1].payload.state.selection_feedback.strategy);
+  assert.equal(calls[1].payload.state.selection_feedback.semantic_rejection,false);
+ }finally{global.fetch=normal;}
+});
