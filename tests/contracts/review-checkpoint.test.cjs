@@ -125,3 +125,13 @@ test('transport references resolve by the original register, never by source lab
  assert.equal(result.thesis,'Hero Client is the hero; Client 0 supports it. M260 is unknown.');
  assert.equal(result.hero_matter_id,strategy.hero_matter_id);assert.equal(result.matters[0].source_quote,strategy.matters[0].source_quote);assert.equal(strategy.thesis.startsWith('M26'),true);
 });
+
+test('rejected executive length retries only the writer and preserves validated development',async()=>{
+ reset();for(let i=0;i<3;i++)await step();calls=[];
+ state.chambersData.review_checkpoint.state.writer_validated=false;
+ state.chambersData.review_checkpoint.state.errors=['Condense the executive Audit'];
+ await step();
+ assert.deepEqual(calls.map(c=>c.stage),['writer']);
+ assert.ok(calls[0].state.development_validated);
+ assert.ok(calls[0].state.selection_review_validated);
+});

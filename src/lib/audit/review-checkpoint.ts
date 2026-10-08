@@ -63,7 +63,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   // Candidate corrections belong to the leadership letter and its review.
   delete source.editorial_development;
   return reviewInputHash({policy:'role-deliverables-v3-semantic-selection',stage,source,
-    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v2'}:{}),
+    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v3-bounded'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),
@@ -93,7 +93,7 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
     state.errors=[];
     return {...base,stage:'development',step_keys:{strategy:keys.strategy}};
   }
-  if (!state.letter || keys.writer !== reviewStepHash('writer',payload,state)) {
+  if (!state.letter || state.writer_validated===false || keys.writer !== reviewStepHash('writer',payload,state)) {
     delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];state.writer_attempts=0;
     return {...base,stage:'writer',step_keys:{strategy:keys.strategy,development:keys.development}};

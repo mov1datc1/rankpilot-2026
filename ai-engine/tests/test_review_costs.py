@@ -106,6 +106,31 @@ class ReviewCostTests(unittest.TestCase):
         self.assertTrue(release_gate(state)['render_gate']['passed'])
         self.assertFalse(release_gate(state)['release_verdict']['passed'])
 
+    def test_excessive_audit_is_condensed_once_with_decisions_and_usage_preserved(self):
+        from core.review_graph import writer
+        state={'package':{'matters':[]},'strategy':{'hero_matter_id':'m'},'development':{'target':'First inclusion'}}
+        original={'portfolio':'word '*1801}
+        compact={'portfolio':'A source-backed portfolio.'}
+        with patch('core.review_graph.invoke_role',side_effect=[(original,[{'role':'writer','usage':1}]),(compact,[{'role':'writer','usage':1},{'role':'writer','usage':2}])]) as invoke:
+            result=writer(state)
+        self.assertEqual(invoke.call_count,2)
+        payload=invoke.call_args.args[4]
+        self.assertEqual(payload['strategy'],state['strategy'])
+        self.assertEqual(payload['development'],state['development'])
+        self.assertEqual(payload['previous_letter'],original)
+        self.assertEqual(len(result['trace']),2)
+        self.assertTrue(result['writer_validated'])
+        self.assertEqual(result['letter'],compact)
+
+    def test_audit_cannot_pass_by_ignoring_the_executive_length_contract(self):
+        from core.review_graph import writer
+        with patch('core.review_graph.invoke_role',return_value=({'portfolio':'word '*1801},[])) as invoke:
+            result=writer({'package':{'matters':[]},'strategy':{}})
+        self.assertEqual(invoke.call_count,2)
+        self.assertFalse(result['writer_validated'])
+        self.assertTrue(result['errors'])
+        self.assertEqual(len(result['letter']['portfolio'].split()),1801)
+
     def test_render_permission_never_implies_delivery_approval(self):
         from core.review_graph import release_gate
         state = {'package': {'directory':'Chambers','b10_source':'Source','matters':[]}}
