@@ -64,3 +64,11 @@ class TargetedRepairTests(unittest.TestCase):
         proposal['candidates'][0]['supporting_matters']*=2
         self.assertTrue(any('duplicados' in e for e in development_errors(PACKAGE,STRATEGY,proposal)))
         self.assertEqual(set(repair_targets(PACKAGE,STRATEGY,proposal)),{'candidates/0'})
+
+    def test_prior_generated_prose_is_not_passed_as_repair_source_evidence(self):
+        package=copy.deepcopy(PACKAGE)
+        package['matters'][0]['optimizedText']='Generated false claim'
+        proposal=copy.deepcopy(DEV);proposal['candidates'][0]['supporting_matters'][0]['source_quote']='Wrong generated quote'
+        target=repair_targets(package,STRATEGY,proposal)['candidates/0']
+        self.assertNotIn('optimizedText',target['source_evidence']['selected_matters'][0])
+        self.assertEqual(package['matters'][0]['optimizedText'],'Generated false claim')
