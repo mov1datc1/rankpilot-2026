@@ -49,3 +49,9 @@ test('selection failures become one system-owned retry action, not source edits'
  assert.ok(issues[0].message.includes('Client 32'));assert.ok(issues[0].action.includes('No necesitas corregir las fuentes'));
  assert.equal(describeReviewIssue('RankPilot no pudo conciliar la selección con todos los asuntos registrados.').destination,'retry-selection');
 });
+
+test('an outdated document approval is a RankPilot task, not a user answer',()=>{
+ const issues=reviewIssues({},['Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.']);
+ assert.equal(issues[0].owner,'RankPilot');
+ assert.equal(issues[0].destination,'retry-review');
+});
