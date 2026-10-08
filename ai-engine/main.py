@@ -862,14 +862,18 @@ async def _extract_readable_source(doc_text, context):
     from utils.doc_parser import DocumentParser
     from utils.document_preflight import SourceError
     from agents.nodes import sanitize_text
-    doc_text = sanitize_text(doc_text)
+    doc_text = sanitize_text(doc_text.replace("\x07", " | "))
     source_errors = []
     empty_sections = []
     try:
-        # Reject duplicate labels before any source sections can be merged/renumbered.
+        # Repeated numbering is recoverable when the original blocks differ.
+        # Preserve each literal block and its original heading independently.
         labels = DocumentParser._count_matter_labels_in_text(doc_text)
         if labels['label_validation'].get('duplicate_labels'):
-            raise SourceError('SOURCE_DUPLICATE_LABELS')
+            blocks=list(DocumentParser.extract_numbered_matter_sections(doc_text).values())
+            identities=[(b.get('source_heading','').casefold(),' '.join(b['text'].split()).casefold()) for b in blocks]
+            if len(identities)!=len(set(identities)):
+                raise SourceError('SOURCE_DUPLICATE_LABELS')
         # Extract deterministic metadata and sections
         prelim = DocumentParser.extract_chambers_preliminary_fields(doc_text)
         heads = DocumentParser.extract_department_heads(doc_text)
@@ -946,7 +950,9 @@ async def _extract_readable_source(doc_text, context):
                     "publish_status": "confirmation_required" if is_unconfirmed else ("non_publishable" if is_conf else "publishable"),
                     "valueConflict": fields.get("value_conflict") or "",
                     "source_excerpt": sec["text"],
-                    "source_label": source_heading,
+                    "source_label": sec["label"],
+                    "source_heading": source_heading,
+                    "source_occurrence": sec.get("source_occurrence"),
                     "confidentialityEvidence": sec.get("confidentiality_evidence"),
                     "optimizedText": "",
                 })
@@ -1105,6 +1111,8 @@ async def extract_document_endpoint(request: Request):
                 report.setdefault('warnings', []).append('No se encontró una declaración explícita de ' + ', '.join(missing_scope) + '. Los filtros seleccionados fijan el objetivo; no son hechos confirmados por esta fuente.')
             report['matter_count'] = len(result['matters'])
             report['empty_sections'] = result.pop('empty_sections', [])
+            repeated=DocumentParser._count_matter_labels_in_text(text)['label_validation'].get('duplicate_labels',[])
+            if repeated:report['numbering_reconciliation']={'repeated_headings':repeated,'method':'Distinct literal blocks retained with occurrence IDs; original headings preserved.'}
             report['layout'] = 'numbered_form' if DocumentParser.extract_numbered_matter_sections(text) else 'unstructured'
             if report['layout'] == 'unstructured':
                 report.setdefault('warnings', []).append('Fuente sin formulario numerado: confirma que el total y la identidad de los asuntos correspondan al documento; no hay un conteo independiente verificado.')
@@ -1155,7 +1163,7 @@ async def review_step_endpoint(request: Request):
         from utils.ranking_verifier import verify_ranking_claim
         state = {**(body.get('state') or {}), 'package': payload}
         if stage in ('strategy','development'):
-            payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
+            payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload, state.get('ranking_verification'))
             state['ranking_verification'] = payload['ranking_verification']
         else:
             payload['ranking_verification'] = state.get('ranking_verification', {})

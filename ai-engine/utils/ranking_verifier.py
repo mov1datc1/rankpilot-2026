@@ -1,5 +1,8 @@
 """Evidence-based firm ranking verification. No fuzzy identity or inferred absence."""
 import re
+import json
+import hashlib
+import copy
 import unicodedata
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse
@@ -89,7 +92,21 @@ def compare_individual_claim(lawyer, firm, directory, practice, jurisdiction, ed
     return result
 
 
-def verify_ranking_claim(package):
+def research_scope(package):
+    fields={k:package.get(k) for k in ('firm_name','directory','practice_area','ranking_jurisdiction','jurisdiction','current_band','ranking_edition')}
+    fields['lawyers']=[{k:l.get(k) for k in ('name','fullName','current_ranking','currentRanking','url')} for l in package.get('lawyers',[])]
+    return hashlib.sha256(json.dumps(fields,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+
+
+def verify_ranking_claim(package, previous=None):
+    from utils.ranking_profiles import research_profiles, VERSION
+    scope_key=research_scope(package)
+    if previous and previous.get('research_scope')==scope_key and previous.get('profile_research',{}).get('version')==VERSION:
+        try:
+            age=datetime.now(timezone.utc)-datetime.fromisoformat(previous['checked_at'])
+            if timedelta(0)<=age<timedelta(days=1):
+                reused=copy.deepcopy(previous);reused['research_execution']='reused_current_scoped_snapshot';return reused
+        except (KeyError,ValueError,TypeError):pass
     args = (package.get('firm_name',''), package.get('directory',''), package.get('practice_area',''),
             package.get('ranking_jurisdiction') or package.get('jurisdiction',''),
             package.get('current_band'), package.get('ranking_edition'))
@@ -100,15 +117,48 @@ def verify_ranking_claim(package):
     result = compare_claim(*args, benchmark)
     # Reuse the same downloaded table for every candidate; no extra model/search
     # request per person and no speculative worldwide ranking inference.
+    # A newcomer need not have its own ranking to research the scoped market.
+    firms=(benchmark or {}).get('firms',[])
+    table_probe=compare_claim(firms[0].get('name',''),args[1],args[2],args[3],None,args[5],benchmark) if firms else {}
+    result['table_scope_verified']=table_probe.get('status','').startswith('verified')
     result['market_context'] = market_context(result, benchmark)
     result['individuals'] = [compare_individual_claim(lawyer, args[0], args[1], args[2], args[3], args[5], benchmark)
                              for lawyer in package.get('lawyers', [])]
+    subjects=[]
+    own=next((f for f in firms if normalize(f.get('name'))==normalize(args[0])),None)
+    if result.get('table_scope_verified'):
+        if own and own.get('profile_path'):subjects.append({**own,'kind':'firm'})
+        peers=[f for f in firms if normalize(f.get('name'))!=normalize(args[0])]
+        def band_number(value):
+            match=re.search(r'\d+',str(value or ''))
+            return int(match.group()) if match else 99
+        target=band_number((own or {}).get('band') or package.get('requested_target') or package.get('target_band'))
+        peers.sort(key=lambda f:abs(band_number(f.get('band'))-target))
+        subjects.extend({**f,'kind':'competitor'} for f in peers[:3] if f.get('profile_path'))
+    for person in result['individuals']:
+        if person['status'].startswith('verified') and person.get('evidence',{}).get('profile_path'):
+            subjects.append({'name':person['lawyer_name'],'firm':args[0],'kind':'individual','profile_path':person['evidence']['profile_path']})
+    for lawyer in package.get('lawyers',[]):
+        url=lawyer.get('url','')
+        if url and not any(s.get('kind')=='individual' and normalize(s.get('name'))==normalize(lawyer.get('name') or lawyer.get('fullName')) for s in subjects):
+            from utils.ranking_profiles import official_url
+            try:path=official_url(url)
+            except ValueError:continue
+            subjects.append({'name':lawyer.get('name') or lawyer.get('fullName'),'firm':args[0],'kind':'individual','profile_path':path,'identity_basis':'source_supplied_official_profile'})
+    result['profile_research']=research_profiles(subjects,args[2],args[3],args[5])
+    for person in result['individuals']:
+        profile=next((p for p in result['profile_research'].get('profiles',[]) if p.get('subject',{}).get('kind')=='individual' and p['subject']['name']==person['lawyer_name'] and p.get('status') in ('retrieved','no_editorial_commentary') and p.get('observed_band')),None)
+        if profile and not person['status'].startswith('verified'):
+            declared=person.get('declared_band')
+            status='verified_observation' if not declared or normalize(declared)=='ranked' else 'verified_match' if normalize(declared)==normalize(profile['observed_band']) else 'verified_mismatch'
+            person.update(status=status,observed_band=profile['observed_band'],evidence={k:profile.get(k) for k in ('source_url','content_sha256','retrieved_at','edition','practice_area','jurisdiction','parser_version','observed_name')},message='Observación individual del perfil oficial vinculado en la fuente, con identidad, firma, práctica, país y edición reconciliados.')
+    result.update(research_scope=scope_key,research_execution='retrieved_table_and_profiles')
     return result
 
 
 def market_context(verification, benchmark):
     """Expose verified table evidence; no fabricated profiles, trajectory or gaps."""
-    valid = verification.get('status', '').startswith('verified')
+    valid = verification.get('status', '').startswith('verified') or verification.get('table_scope_verified') is True
     if not valid:
         return {'status': 'unavailable', 'competitors': [], 'limitations': ['No matched, current, scoped table observation for this firm. Do not claim market calibration.']}
     firms = (benchmark or {}).get('firms', [])

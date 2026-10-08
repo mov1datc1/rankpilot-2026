@@ -56,6 +56,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
     for (const matter of source.matters || []) {
       delete matter.optimizedText;
       delete matter.optimized_text;
+      delete matter.editorial_completion_status;
       delete matter.status;
       delete matter.draft_provenance;
     }
@@ -65,7 +66,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   delete source.editorial_development;
   // References inform the internal Audit, not portfolio selection or public prose.
   if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
-  return reviewInputHash({policy:'role-deliverables-v3-semantic-selection',stage,source,
+  return reviewInputHash({policy:'role-deliverables-v4-acceptance-research',stage,source,
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v4-actions'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
@@ -86,18 +87,18 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   // Resolve transport references before downstream roles see source document numbers.
   state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
   if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
-    selection_feedback:{strategy:state.strategy,errors:state.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
+    selection_feedback:{...state.selection_feedback,strategy:state.strategy,errors:state.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
   }};
   if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};
   if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {
     state.development_reusable=!!state.development && keys.development===reviewStepHash('development',payload,state);
     if(state.development && state.errors?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
-    if(!state.repair_feedback?.length) delete state.development;delete state.letter;delete state.judge;delete state.release_verdict;
+    if(!state.repair_feedback?.length) delete state.development;if(!state.letter_repair_requested)delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];
     return {...base,stage:'development',step_keys:{strategy:keys.strategy}};
   }
   if (!state.letter || state.writer_validated===false || keys.writer !== reviewStepHash('writer',payload,state)) {
-    delete state.letter;delete state.judge;delete state.release_verdict;
+    if(!state.letter_repair_requested)delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];state.writer_attempts=0;
     return {...base,stage:'writer',step_keys:{strategy:keys.strategy,development:keys.development}};
   }

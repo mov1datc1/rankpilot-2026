@@ -59,9 +59,15 @@ test('artifact repair is targeted, carries evidence, and stops after one attempt
  for(let guard=0;guard<15;guard++){await stage();if(job.status!=='queued')break;}
  assert.equal(job.status,'needs_review',JSON.stringify(job));
  assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,2);
- const repairs=calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m0');
- assert.equal(repairs.length,1);assert.match(repairs[0].payload.directive,/No decision has been issued/);
- assert.equal(calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m1').length,0);
+ const developments=calls.filter(c=>c.payload.stage==='development');
+ assert.equal(developments.length,2);
+ const repair=developments[1].payload.state;
+ assert.equal(repair.development_reusable,true);
+ assert.equal(repair.repair_feedback[0].matter_id,'m0');
+ assert.equal(repair.repair_feedback[0].source_quote,'No decision has been issued.');
+ assert.deepEqual(repair.development,developments[0].payload.state.development || submission.chambersData.editorial_development);
+ assert.equal(calls.filter(c=>c.url.endsWith('/optimize/matter')).length,0);
+ assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
  assert.equal(submission.chambersData.approved_artifact,null);
 });
 

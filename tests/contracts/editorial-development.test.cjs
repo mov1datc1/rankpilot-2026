@@ -34,3 +34,15 @@ test('confirmed non-partner matter leaders remain in the team without being pres
  assert.deepEqual(projectMatterLeadership('Elena Ruiz, Sofía Vega','Mateo Soto',roster),{lead:'Elena Ruiz',team:'Mateo Soto; Sofía Vega — lead lawyer'});
  assert.deepEqual(projectMatterLeadership('Unknown Lawyer','',roster),{lead:'Unknown Lawyer',team:''});
 });
+
+test('generated D8 status preserves source and does not invalidate source identity',()=>{
+ const source=structuredClone(data);source.matters[0].completionDate='Conflicting final outcome from one source paragraph.';
+ const proposal=structuredClone(state);proposal.development.matters[0].completion_status='Four interim orders were revoked.';
+ const projected=projectDevelopment(source,proposal);
+ assert.equal(projected.matters[0].completionDate,source.matters[0].completionDate);
+ assert.equal(projected.matters[0].editorial_completion_status,'Four interim orders were revoked.');
+ const sub={targetDirectory:'Chambers',practiceArea:'Tax',chambersData:source};
+ assert.equal(stableHash(sourceSnapshot(sub)),stableHash(sourceSnapshot({...sub,chambersData:projected})));
+ const {draftSourceHash}=require('../../src/lib/editorial/contracts.ts');
+ assert.equal(projected.matters[0].draft_provenance.source_hash,draftSourceHash(projected.matters[0]));
+});

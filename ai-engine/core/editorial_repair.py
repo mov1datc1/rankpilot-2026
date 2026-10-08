@@ -23,7 +23,7 @@ TASK+=''' When an entire candidates/N object is an allowed target, reassess that
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
 
 def repair_targets(package, strategy, proposal):
-    from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors
+    from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors, submission_voice_paths
     errors=development_errors(package,strategy,proposal)
     source_keys=set(SOURCE_FIELDS) | {'id','client','name','title','source_label','source_heading','publish_status','confidentialityConfirmed','isConfidential','confidentialityEvidence','valueResolution','valueConflict'}
     register={m['id']:{k:v for k,v in m.items() if k in source_keys} for m in package.get('matters',[])}
@@ -65,6 +65,20 @@ def repair_targets(package, strategy, proposal):
     for i,comparison in enumerate(proposal.get('comparisons',[])):
         for field in ('incremental_contribution','tradeoff'):
             if not comparison.get(field):add(f'comparisons/{i}/{field}','','Explain the specific incremental contribution and tradeoff.',{'selected':register.get(comparison.get('selected_id')),'reserve':register.get(comparison.get('alternative_id'))})
+    for path in submission_voice_paths(proposal):
+        parts=path.split('/')
+        if parts[0]=='matters':
+            item=proposal['matters'][int(parts[1])]
+            evidence=register.get(item.get('matter_id'),{})
+            value=item.get(parts[-1], '')
+        elif parts[0]=='candidates':
+            if '/'.join(parts[:2]) in targets:continue
+            item=proposal['candidates'][int(parts[1])]
+            evidence={'person':roster.get(_norm(item.get('name')),{}),'matters':[register.get(s.get('matter_id'),{}) for s in item.get('supporting_matters',[])]}
+            value=item['submission_bio']
+        else:
+            evidence={'package':package,'strategy':strategy};value=proposal[path]
+        add(path,value,'Remove auditor commentary about sources from this Submission field. Present supported work directly; preserve numbers, outcomes, attribution and uncertainty. Do not invent a completed outcome or delete substantive legal evidence/audit work.',evidence)
     return targets
 
 def apply_corrections(proposal, targets, repair):
@@ -93,7 +107,7 @@ def repair_development(state, proposal, targets):
     from core.editorial_development import bind_development, development_errors
     correction=create_model('AllowedEditorialCorrection',__base__=Correction,path=(Literal[tuple(targets)],...))
     schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
-    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':targets,'feedback':state.get('repair_feedback',[])})
+    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':targets,'feedback':state.get('repair_feedback',[]),'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
     try:
         fixed=apply_corrections(proposal,targets,repair)
     except ValueError as error:
@@ -103,3 +117,63 @@ def repair_development(state, proposal, targets):
     if repair.get('unresolved'):errors.extend('Reparación pendiente: '+str(e) for e in repair['unresolved'])
     return {'development':fixed,'development_validated':not errors,'errors':errors,'trace':trace,
             'repair_report':{'corrected_paths':[c['path'] for c in repair.get('corrections',[])],'unresolved':repair.get('unresolved',[])}}
+
+class RepairLocation(BaseModel):
+    path: str
+    defect_index: int
+    reason: str
+
+class RepairPlan(BaseModel):
+    locations: list[RepairLocation]
+    unresolved: list[str]
+
+
+def repair_rejected_development(state, proposal, defects):
+    """Locate semantic defects before editing; no full-proposal regeneration."""
+    from core.review_graph import invoke_role, role_payload
+    source_package=role_payload({'package':state['package']},'development')['package']
+    allowed={key:value for key,value in proposal.items() if isinstance(value,str) and key!='version'}
+    for i,item in enumerate(proposal.get('matters',[])):
+        allowed[f'matters/{i}/text']=item.get('text','')
+        allowed[f'matters/{i}/completion_status']=item.get('completion_status','')
+    for i,item in enumerate(proposal.get('candidates',[])):allowed[f'candidates/{i}']=item
+    for i,item in enumerate(proposal.get('comparisons',[])):
+        for field in ('incremental_contribution','tradeoff'):allowed[f'comparisons/{i}/{field}']=item.get(field,'')
+    location=create_model('AllowedRepairLocation',__base__=RepairLocation,path=(Literal[tuple(allowed)],...))
+    schema=create_model('BoundedRepairPlan',__base__=RepairPlan,locations=(list[location],...),unresolved=(list[str],...))
+    plan,trace=invoke_role(state,'repair',schema,
+        'Locate the smallest set of generated fields that must change to resolve each supplied defect. Do not rewrite anything. Map each location to its zero-based defect_index. Source facts and validated selection are immutable. Do not use an Audit-only defect to rewrite the Submission. For a missing outcome, locate its one matter narrative; include a candidate only if their attributed case is also affected. A missing acceptance check alone is not evidence that every field is defective. Report unlocatable defects in unresolved. Never select unaffected fields for general improvement.',
+        {'defects':defects,'generated_fields':allowed,'package':source_package,'strategy':state['strategy']})
+    targets={};covered=set()
+    for item in plan.get('locations',[]):
+        path=item.get('path');index=item.get('defect_index')
+        if path not in allowed or not isinstance(index,int) or not 0<=index<len(defects) or not item.get('reason'):
+            return {'development':proposal,'development_validated':False,'errors':['Invalid bounded repair location.'],'trace':trace}
+        covered.add(index)
+        targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':{'package':source_package,'strategy':state['strategy']}}
+    if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
+        return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace}
+    return repair_development({**state,'trace':trace},proposal,targets)
+
+
+def repair_letter(state):
+    """Patch only returned Audit fields; unaffected sections remain byte-identical."""
+    from core.review_graph import invoke_role, Letter, NextAction, reconcile_next_actions, audit_word_count, AUDIT_WORD_LIMIT
+    fields=('executive_assessment','portfolio','leadership','evidence_gaps','next_actions')
+    change=create_model('AuditFieldCorrection',path=(Literal[fields],...),value=(Union[str,list[NextAction]],...),reason=(str,...))
+    schema=create_model('AuditDelta',corrections=(list[change],...),unresolved=(list[str],...))
+    result,trace=invoke_role(state,'writer',schema,
+        'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
+        {'previous_letter':state['letter'],'defects':state.get('repair_feedback',[]),'package':state['package'],'strategy':state['strategy'],'development':state.get('development')})
+    fixed=copy.deepcopy(state['letter']);seen=set()
+    for correction in result['corrections']:
+        key=correction['path'];value=correction['value']
+        if key not in fields or key in seen or not correction['reason'] or (not isinstance(value,list) if key=='next_actions' else not isinstance(value,str)):
+            return {'letter':state['letter'],'writer_validated':False,'errors':['Invalid bounded Audit correction.'],'trace':trace}
+        seen.add(key);fixed[key]=value
+    fixed=reconcile_next_actions(Letter.model_validate(fixed).model_dump(),state['package'])
+    errors=['RankPilot debe completar la corrección del Audit.'] if result.get('unresolved') else []
+    if audit_word_count(fixed)>AUDIT_WORD_LIMIT:errors.append('El Audit excede la extensión ejecutiva acordada.')
+    return {'letter':fixed,'writer_validated':not errors,'errors':errors,'trace':trace,
+            'letter_repair_requested':bool(errors),'writer_attempts':state.get('writer_attempts',0)+1,
+            'letter_repair_report':{'corrected_fields':list(seen),'unresolved':result.get('unresolved',[])}}

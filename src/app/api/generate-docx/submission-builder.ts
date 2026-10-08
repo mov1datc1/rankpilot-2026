@@ -8,6 +8,7 @@ import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership } 
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
+import { draftSourceHash } from '@/lib/editorial/contracts';
 
 const YELLOW = 'FFFFCC';
 const FONT = 'Times New Roman';
@@ -113,33 +114,15 @@ function dataTable(headerLabel: string, columns: string[], rows: string[][], opt
 
 export function cleanTablePipes(str: any): string {
   if (!str || typeof str !== 'string') return typeof str === 'number' ? String(str) : '';
-  return str.replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
+  // Legacy Word extraction can expose the field instruction and its cached URL.
+  // Remove only that recognized wrapper; retain the literal link and surrounding names.
+  return str.replace(/\bHYPERLINK\s+"(https?:\/\/[^"\r\n]+)"(?:\s*\1)?/g, '$1')
+    .replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
 }
 
 export function cleanLawyerNames(nameStr: string): string {
-  if (!nameStr) return '';
-  let s = cleanTablePipes(nameStr);
-  // Standardize Mónica Dariane Cárdenas Fregoso (correcting 'Fragoso' and missing accents)
-  s = s.replace(/M[oó]nica\s+Dariane\s+C[aá]rdenas\s+Fragoso/gi, 'Mónica Dariane Cárdenas Fregoso');
-  s = s.replace(/C[aá]rdenas\s+Fragoso/gi, 'Cárdenas Fregoso');
-  s = s.replace(/Monica\s+Dariane\s+Cardenas\s+Fregoso/gi, 'Mónica Dariane Cárdenas Fregoso');
-  // Standardize Daniel Rocha Peña (correcting 'Daniel Peña Rocha')
-  s = s.replace(/Daniel\s+Pe[ñn]a\s+Rocha/gi, 'Daniel Rocha Peña');
-  // Standardize Héctor Alejandro Sánchez Carrera (accents)
-  s = s.replace(/Hector\s+Alejandro\s+S[aá]nchez\s+Carrera/gi, 'Héctor Alejandro Sánchez Carrera');
-  s = s.replace(/Hector\s+Alejandro\s+Sanchez/gi, 'Héctor Alejandro Sánchez');
-  // Standardize Edgar Adrián Moro López (accents)
-  s = s.replace(/Edgar\s+Adriad?n\s+Moro\s+L[oó]pez/gi, 'Edgar Adrián Moro López');
-  s = s.replace(/Edgar\s+Adriad?n\s+Moro/gi, 'Edgar Adrián Moro López');
-  // Standardize José Pablo Ramos Castillo
-  s = s.replace(/Jose\s+Pablo\s+Ramos\s+Castillo/gi, 'José Pablo Ramos Castillo');
-  // Standardize Cecilia Cortés Díaz Corona
-  s = s.replace(/Cecilia\s+Cortes\s+Diaz\s+Corona/gi, 'Cecilia Cortés Díaz Corona');
-  // Standardize Sara Elena Vizcaíno Sedano
-  s = s.replace(/Sara\s+Elena\s+Vizcaino\s+Sedano/gi, 'Sara Elena Vizcaíno Sedano');
-  // Standardize Juan Carlos de Obeso Orendain
-  s = s.replace(/Juan\s+Carlos\s+De\s+Obeso\s+Orendain/gi, 'Juan Carlos de Obeso Orendain');
-  return cleanTablePipes(s);
+  // Formatting only. Names, spelling and surname order are source evidence.
+  return String(nameStr || '').replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
 }
 
 function sanitizeMatterValue(val: string, clientName: string = ''): string {
@@ -167,7 +150,7 @@ function matterTable(
   matter: any, 
   exportMode: string, 
   lawyers: any[] = [],
-  heroContext: { heroId?: string; heroTitle?: string } = {}
+  heroContext: { heroId?: string; heroTitle?: string; sourceMatters?: any[] } = {}
 ): Table {
   const isConf = prefix === 'E';
   const clientLabel = isConf
@@ -219,7 +202,8 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   const leadPartnerText = leadership.lead;
   const teamMembersText = leadership.team;
 
-  const rawStatus = matter.completionDate || matter.completion_date || matter.date || '';
+  const sourceMatter = heroContext.sourceMatters?.find(m => m.id === matter.id) || matter;
+  const rawStatus = (exportMode !== 'original' && sourceMatter.draft_provenance?.origin === 'generated' && sourceMatter.draft_provenance.source_hash === draftSourceHash(sourceMatter) && sourceMatter.editorial_completion_status) || matter.completionDate || matter.completion_date || matter.date || '';
   const statusText = cleanTablePipes(sanitizeMatterSummary(rawStatus));
 
   let crossBorderVal = cleanTablePipes(matter.crossBorder || matter.cross_border || '');
@@ -773,7 +757,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     || chambersData?.canonical_matter_selection?.hero_matter_title
     || chambersData?.narrative_architecture?.hero_matter
     || chambersData?.analysis?.narrative_architecture?.hero_matter;
-  const heroContext = { heroId: docHeroId, heroTitle: docHeroTitle };
+  const heroContext = { heroId: docHeroId, heroTitle: docHeroTitle, sourceMatters: rawMattersList };
 
   // D matters
   if (pubMatters.length === 0) {
@@ -1077,7 +1061,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     || chambersData?.canonical_matter_selection?.hero_matter_title
     || chambersData?.narrative_architecture?.hero_matter
     || chambersData?.analysis?.narrative_architecture?.hero_matter;
-  const l500HeroContext = { heroId: l500HeroId, heroTitle: l500HeroTitle };
+  const l500HeroContext = { heroId: l500HeroId, heroTitle: l500HeroTitle, sourceMatters: rawMattersListL500 };
 
   // Publishable matters
   for (let i = 0; i < pubMatters.length; i++) {

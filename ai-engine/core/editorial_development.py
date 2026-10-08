@@ -32,7 +32,8 @@ class Candidate(BaseModel):
 class MatterDraft(BaseModel):
     matter_id: str
     text: str
-    decisive_source_quotes: list[str] = Field(description='Verbatim source clauses covering the decisive outcome, contribution, scale and personal role which must survive in the final text. Not a claim of independent verification.')
+    completion_status: str = Field(default='', description='Source-grounded English D8/E8 status. Reconcile with the matter narrative: preserve dated and interim outcomes, never select a disputed definitive outcome. State only undisputed progress when source outcomes conflict. Empty only if no status evidence exists.')
+    decisive_source_quotes: list[str] = Field(description='Internal evidence only: copy exact contiguous source spans covering decisive outcomes, contribution, scale and personal roles. Never anonymize, add square-bracket substitutions, translate, add a final period or complete a source fragment. These quotes are not exported as public prose and do not claim independent verification.')
 
 class Comparison(BaseModel):
     selected_id: str
@@ -66,6 +67,24 @@ Use a concise English category or target label in suggested_ranking, and put its
 Compare the weakest selected mandates with the strongest reserves using their incremental evidentiary contribution to this particular candidacy, including support for individuals and missing capabilities. Provide concrete selected/alternative ID pairs, tradeoffs and why the selected contribution wins; do not use a generic 'avoid dilution' explanation. At least one comparison if both core and reserves exist. Do not change the validated selection; clearly flag a decision needing reconsideration instead of silently changing it.
 For each matter supply decisive verbatim source quotes as a preservation checklist. Include documented outcomes when present, not just general context. These are source claims, never permission to exaggerate. All IDs and names must exactly match supplied records. No UI status, approval declarations or pipeline terminology in client-facing prose.'''
 
+# Narrow metadiscourse patterns: legal evidence and audits can be the work itself.
+# Never remove these words globally or rewrite a factual claim with a regex.
+AUDIT_VOICE = re.compile(
+    r"\b(?:the (?:submitted )?source (?:describes|states|does not state|doesn't state|establishes|does not explain)|"
+    r"verified evidentiary record|evidence completeness|our analysis indicates|the audit demonstrates|"
+    r"the submitted evidence (?:shows|supports|demonstrates)|no verified ranking|without asserting a ranking)\b",
+    re.I,
+)
+
+def submission_voice_paths(proposal):
+    fields = {'b10': proposal.get('b10', ''), 'c2': proposal.get('c2', '')}
+    fields.update({f'matters/{i}/text': item.get('text', '') for i, item in enumerate(proposal.get('matters', []))})
+    fields.update({f'matters/{i}/completion_status': item.get('completion_status', '') for i, item in enumerate(proposal.get('matters', []))})
+    fields.update({f'candidates/{i}/submission_bio': item.get('submission_bio', '') for i, item in enumerate(proposal.get('candidates', []))})
+    return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or ''))]
+
+TASK += " All Submission fields, including confidential matter narratives and completion_status for D8/E8, must present the firm's source-backed work directly. Never narrate what the source states or omits. Keep uncertainty in the underlying fact (for example, proceedings remain pending), and keep evidence assessments in internal Audit fields. Do not erase genuine legal work involving evidence or audits. A confidential matter VALUE is distinct from confidential identity: keep an otherwise publishable matter public, but never reveal its restricted amount, range or order of magnitude in public prose. Omit that economic detail automatically; do not ask the user to authorize disclosure when the source already restricts it."
+
 def literal_quote(value):
     value=str(value or '').strip()
     if len(value)>1 and (value[0],value[-1]) in [('“','”'),('\"','\"'),('‘','’')]:
@@ -75,7 +94,7 @@ def literal_quote(value):
 def _norm(value):
     return ' '.join(str(value or '').split()).casefold()
 
-SOURCE_FIELDS=('source_excerpt','rawNotes','summary','leadPartner','teamMembers','value')
+SOURCE_FIELDS=('source_excerpt','rawNotes','summary','leadPartner','teamMembers','value','completionDate')
 
 def bind_quote(value, matter):
     """Recover an exact source span; only tolerate a clause-ending period.
@@ -109,7 +128,7 @@ def bind_development(package, proposal):
 
 def development_errors(package, strategy, proposal):
     """Identity, coverage and quotation checks independent of model approval."""
-    errors=[]
+    errors=[f'Voz auditora en Submission: {path}' for path in submission_voice_paths(proposal)]
     register={m['id']:m for m in package.get('matters', [])}
     core={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='core'}
     reserves={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'}
@@ -182,6 +201,12 @@ def develop(state):
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
+        semantic=[d for d in state.get('repair_feedback',[]) if isinstance(d,dict) and d.get('severity')=='critical' and d.get('owner')=='rankpilot']
+        concrete=[d for d in semantic if not str(d.get('message','')).startswith('La aceptación editorial no está completa:')]
+        if concrete:semantic=concrete
+        if semantic:
+            from core.editorial_repair import repair_rejected_development
+            return repair_rejected_development({**state,'repair_feedback':semantic},bound,semantic)
         if not errors:
             return {'development':bound,'errors':[],'development_validated':True}
         from core.editorial_repair import repair_targets, repair_development

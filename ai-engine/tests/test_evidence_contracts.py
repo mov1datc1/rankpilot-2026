@@ -686,7 +686,7 @@ Provide up to 20 matters.
         text = "C2 Feedback on our coverage\nSource answer.Source answer.Source answer.\nC3 Next"
         self.assertEqual("Source answer.", DocumentParser.extract_c2_source(text))
 
-    def test_lawyer_roster_recovers_ranked_and_unranked_rows(self):
+    def test_lawyer_roster_recovers_rows_without_inventing_rank_flags_from_urls(self):
         text = """Information regarding Ranked and Unranked lawyers in this practice area.
 Pedro I Sosa Mendoza
 https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:1
@@ -696,8 +696,8 @@ B10 What is this department best known for?
 """
         roster = DocumentParser.extract_lawyer_roster(text)
         self.assertEqual(2, len(roster))
-        self.assertTrue(roster[0]["is_ranked"])
-        self.assertFalse(roster[1]["is_ranked"])
+        self.assertIsNone(roster[0]["is_ranked"])
+        self.assertIsNone(roster[1]["is_ranked"])
 
     def test_deterministic_lawyer_roster_overrides_model_omission(self):
         source = [

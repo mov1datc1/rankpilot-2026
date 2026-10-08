@@ -1,4 +1,4 @@
 /** Browser-safe approval contract shared by Studio, worker and downloads. */
-export const REVIEW_POLICY_VERSION = 'review-core-v3.1';
-export const RENDERER_VERSION = 12;
-export const ARTIFACT_REVIEW_VERSION = 8;
+export const REVIEW_POLICY_VERSION = 'review-core-v3.2';
+export const RENDERER_VERSION = 14;
+export const ARTIFACT_REVIEW_VERSION = 9;

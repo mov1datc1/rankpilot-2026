@@ -45,7 +45,7 @@ export function sanitizeClientName(rawClient: string): CleanedClientResult {
   s = s.replace(/^(?:publishable|confidential)\s+matter\s+\d+\s*[-—:]\s*/gi, '').trim();
 
   // Pattern A: Period, dash, or comma followed by typical corporate descriptors
-  const descPattern = /(?:\.|\s+[-–—]\s+|,\s*)(?:\s*(?:is an?|it is an?|it is dedicated to|is dedicated to|a first class|company dedicated to|company specializing in|specializing in|with more than \d+|leader in the|individual private owner|wealthy family|empresa dedicada|sociedad dedicada|dedicada a|con más de \d+|propietario individual|reconocida regionalmente)\b|\s*\((?:wealthy family|private owner|empresa|familia|promoter)[^\)]*\))/i;
+  const descPattern = /(?:\.|\s+[-–—]\s+|,\s*)(?:\s*(?:is an?|it is an?|it is dedicated to|is dedicated to|a first class|company dedicated to|company engaged in|company specializing in|located in|world leader in|specializing in|with more than \d+|leader in the|individual private owner|wealthy family|empresa dedicada|sociedad dedicada|dedicada a|con más de \d+|propietario individual|reconocida regionalmente)\b|\s*\((?:wealthy family|private owner|empresa|familia|promoter)[^\)]*\))/i;
 
   const match = s.match(descPattern);
   if (match && match.index !== undefined && match.index > 2) {

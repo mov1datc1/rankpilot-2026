@@ -94,3 +94,20 @@ test('durable tasks reuse completed roles instead of executing the next paid rol
  assert.equal(reviewTaskDisposition('development','development'),'run');
  assert.equal(reviewTaskDisposition('writer','development'),'out_of_order');
 });
+
+test('mutable research cache does not change runtime identity but methodology does',()=>{
+ const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+ const {engineFingerprint}=require('../../src/lib/editorial/engine-identity.ts');
+ const {execFileSync}=require('node:child_process');
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rankpilot-identity-'));
+ try {
+  for(const name of ['main.py','requirements.txt','Dockerfile'])fs.writeFileSync(path.join(root,name),'fixture');
+  for(const dir of ['agents','chains','config','core','rag_knowledge','templates','utils'])fs.mkdirSync(path.join(root,dir));
+  const py=()=>execFileSync('python3',['-c','from utils.engine_identity import engine_fingerprint; import sys; print(engine_fingerprint(sys.argv[1]))',root],{cwd:path.resolve(__dirname,'../../ai-engine'),encoding:'utf8'}).trim();
+  const before=engineFingerprint(root);assert.equal(py(),before);
+  fs.mkdirSync(path.join(root,'config/benchmark_cache'));fs.writeFileSync(path.join(root,'config/benchmark_cache/live.json'),'cached research');
+  assert.equal(engineFingerprint(root),before);assert.equal(py(),before);
+  fs.writeFileSync(path.join(root,'rag_knowledge/rules.md'),'New methodology');
+  assert.notEqual(engineFingerprint(root),before);assert.equal(py(),engineFingerprint(root));
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});

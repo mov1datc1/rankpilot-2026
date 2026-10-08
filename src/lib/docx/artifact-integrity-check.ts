@@ -16,21 +16,8 @@ import { clientAliases } from './client-aliases';
  */
 
 export function cleanLawyerNames(nameStr: string): string {
-  if (!nameStr) return '';
-  let s = String(nameStr);
-  s = s.replace(/M[oó]nica\s+Dariane\s+C[aá]rdenas\s+Fragoso/gi, 'Mónica Dariane Cárdenas Fregoso');
-  s = s.replace(/C[aá]rdenas\s+Fragoso/gi, 'Cárdenas Fregoso');
-  s = s.replace(/Monica\s+Dariane\s+Cardenas\s+Fregoso/gi, 'Mónica Dariane Cárdenas Fregoso');
-  s = s.replace(/Daniel\s+Pe[ñn]a\s+Rocha/gi, 'Daniel Rocha Peña');
-  s = s.replace(/Hector\s+Alejandro\s+S[aá]nchez\s+Carrera/gi, 'Héctor Alejandro Sánchez Carrera');
-  s = s.replace(/Hector\s+Alejandro\s+Sanchez/gi, 'Héctor Alejandro Sánchez');
-  s = s.replace(/Edgar\s+Adriad?n\s+Moro\s+L[oó]pez/gi, 'Edgar Adrián Moro López');
-  s = s.replace(/Edgar\s+Adriad?n\s+Moro/gi, 'Edgar Adrián Moro López');
-  s = s.replace(/Jose\s+Pablo\s+Ramos\s+Castillo/gi, 'José Pablo Ramos Castillo');
-  s = s.replace(/Cecilia\s+Cortes\s+Diaz\s+Corona/gi, 'Cecilia Cortés Díaz Corona');
-  s = s.replace(/Sara\s+Elena\s+Vizcaino\s+Sedano/gi, 'Sara Elena Vizcaíno Sedano');
-  s = s.replace(/Juan\s+Carlos\s+De\s+Obeso\s+Orendain/gi, 'Juan Carlos de Obeso Orendain');
-  return s.trim();
+  // Formatting only. Names, spelling and surname order are source evidence.
+  return String(nameStr || '').replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
 }
 
 export function sanitizeBannedSuperlatives(text: string): string {

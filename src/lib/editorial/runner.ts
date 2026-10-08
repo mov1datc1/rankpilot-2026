@@ -54,8 +54,8 @@ export async function runJobStage(job:any) {
       if(repair) {
         const checkpoint=structuredClone(data.review_checkpoint);
         checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
-        if(repair.tasks.includes('development')) {delete checkpoint.step_keys.development;checkpoint.state.development_validated=false;}
-        if(repair.letter) {delete checkpoint.state.letter;delete checkpoint.step_keys.writer;}
+        if(repair.tasks.includes('development')) {checkpoint.state.development_validated=false;}
+        if(repair.letter) {checkpoint.state.writer_validated=false;checkpoint.state.letter_repair_requested=true;delete checkpoint.step_keys.writer;}
         const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,completed_review_input_hash:null,review_checkpoint:checkpoint}}});
         if(saved.count!==1) throw new Error('SOURCE_CHANGED');
         tasks=tasks.concat(repair.tasks);

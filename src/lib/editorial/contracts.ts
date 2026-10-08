@@ -22,13 +22,13 @@ export function sourceSnapshot(submission:any) {
   delete (payload as any).editorial_development;
   delete (payload as any).b10_draft; delete (payload as any).c2_draft;
   payload.matters=payload.matters.map((m:any)=>{
-    const {optimizedText,optimized_text,status,draft_provenance,createdAt,updatedAt,...source}=m;
+    const {optimizedText,optimized_text,editorial_completion_status,status,draft_provenance,createdAt,updatedAt,...source}=m;
     return source;
   });
   return {version:EDITORIAL_VERSION,policy_version:REVIEW_POLICY_VERSION,payload};
 }
 export function draftSourceHash(matter:any) {
-  const {optimizedText,optimized_text,status,draft_provenance,createdAt,updatedAt,...source}=matter;
+  const {optimizedText,optimized_text,editorial_completion_status,status,draft_provenance,createdAt,updatedAt,...source}=matter;
   return stableHash(source);
 }
 export function draftDisposition(matter:any,strategyHash?:string):'write'|'reuse'|'review' {

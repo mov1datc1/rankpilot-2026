@@ -135,3 +135,47 @@ test('Studio rejects historical artifact approval after a review contract update
    assert.match(getDeliveryState(stale,[matter('1')],true).errors.join(' '),/revisión anterior/);
  }
 });
+
+test('company profiles and locations never become confidential entity aliases',()=>{
+ const {clientAliases}=require('../../src/lib/docx/client-aliases.ts');
+ const aliases=clientAliases([
+  'EXAMPLE HOLDINGS, S.A. DE C.V. Company engaged in the acquisition, administration, construction, development and leasing of real estate.',
+  'SAMPLE PACKAGING MEXICO, located in Tlaquepaque, Jalisco. A packaging company.',
+  'A global leader in the manufacture of packaging, design and processes. It is located in Jalisco.',
+  'TRANSPORTES EXAMPLE (https://example.com/). It is a company based in Guadalajara.',
+ ]);
+ for(const word of ['administration','construction','development','processes','Jalisco','https://example.com/']) assert.ok(!aliases.includes(word),word);
+ assert.ok(aliases.includes('EXAMPLE HOLDINGS, S.A. DE C.V.'));
+ assert.ok(aliases.includes('SAMPLE PACKAGING MEXICO'));
+ assert.ok(aliases.includes('TRANSPORTES EXAMPLE'));
+ assert.match(anonymizeConfidentialClients('SAMPLE PACKAGING MEXICO retained us. Construction matters involve development.',aliases),/a confidential client retained us\. Construction matters involve development\./);
+});
+
+test('Word rendering never substitutes known lawyer names or surname order',()=>{
+ const builder=require('../../src/app/api/generate-docx/submission-builder.ts');
+ const checker=require('../../src/lib/docx/artifact-integrity-check.ts');
+ for(const name of ['Daniel Peña Rocha','Mónica Dariane Cárdenas Fragoso','Edgar Adrian Moro','Unseen Person']) {
+  assert.equal(builder.cleanLawyerNames(name),name);assert.equal(checker.cleanLawyerNames(name),name);
+ }
+});
+
+test('D8 uses source-bound editorial status; original export and stale proposals retain source',async()=>{
+ const {draftSourceHash}=require('../../src/lib/editorial/contracts.ts');
+ const m=matter('status',{rawNotes:'Four interim orders were revoked. Sources disagree on the final outcome.',optimizedText:'The firm obtained revocation of four interim orders.',completionDate:'Original disputed final victory.',editorial_completion_status:'Four interim orders were revoked.'});
+ m.draft_provenance={origin:'generated',source_hash:draftSourceHash(m)};
+ for(const [mode,changed,expected] of [['optimized',false,'Four interim orders were revoked.'],['original',false,'Original disputed final victory.'],['optimized',true,'Corrected source status.']]) {
+  const current=changed?{...m,completionDate:'Corrected source status.'}:m;
+  const data={matters:[current],canonical_matter_selection:{core_matter_ids:['status']}};
+  const zip=await JSZip.loadAsync(await Packer.toBuffer(buildSubmissionDoc('Example','Tax',data,{practiceArea:'Tax',guideRegion:'Mexico',targetDirectory:'Chambers',matters:[current]},mode)));
+  const xml=await zip.file('word/document.xml').async('string');const text=xml.replace(/<[^>]+>/g,'');
+  const status=text.slice(text.indexOf('D8 Date of completion or current status'));
+  assert.ok(status.includes(expected),status);
+  if(mode==='optimized'&&!changed)assert.ok(!status.includes('Original disputed final victory.'));
+ }
+});
+test('legacy Word hyperlink instructions render as one literal link without losing adviser names',()=>{
+ const {cleanTablePipes}=require('../../src/app/api/generate-docx/submission-builder.ts');
+ assert.equal(cleanTablePipes('Example Advisors - HYPERLINK "https://example.test/a?lang=es"https://example.test/a?lang=es'), 'Example Advisors - https://example.test/a?lang=es');
+ assert.equal(cleanTablePipes('HYPERLINK "https://example.test" Display label'), 'https://example.test Display label');
+ assert.equal(cleanTablePipes('HYPERLINK is the name of an unrelated product'), 'HYPERLINK is the name of an unrelated product');
+});

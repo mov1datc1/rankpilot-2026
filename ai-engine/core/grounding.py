@@ -84,6 +84,17 @@ def numbers(text, include_written=True):
     return result
 
 
+def currency_codes(text):
+    value=str(text or '').upper()
+    codes=set(re.findall(r'\b(?:USD|MXN|EUR|GBP|CAD|BRL|COP|CLP|ARS|CHF|JPY)\b',value))
+    # Explicit currency designations only. A bare $ never establishes USD/MXN.
+    aliases={'USD':r'(?<!\w)US\s*\$|\bU\.?S\.?\s+DOLLARS?\b|\bUNITED STATES DOLLARS?\b',
+             'MXN':r'(?<!\w)MX\s*\$|\bMEXICAN PESOS?\b|\bPESOS? MEXICANOS?\b',
+             'EUR':r'€|\bEUROS?\b', 'GBP':r'\bPOUNDS? STERLING\b|\bBRITISH POUNDS?\b'}
+    codes.update(code for code,pattern in aliases.items() if re.search(pattern,value))
+    return codes
+
+
 def factual_issues(source, draft, entity_id=None):
     source, draft=str(source or ''),str(draft or '')
     issues=[]
@@ -94,8 +105,7 @@ def factual_issues(source, draft, entity_id=None):
             'artifact_claim_ids':['claim-'+hashlib.sha256(draft.encode()).hexdigest()[:16]]})
     if numbers(draft, include_written=False)-numbers(source):
         add('UNSUPPORTED_NUMBER','La redacción añadió una cifra o fecha que no aparece en la fuente. RankPilot debe corregirla; conservamos el texto anterior.')
-    currency=r'\b(?:USD|MXN|EUR|GBP|CAD|BRL|COP|CLP|ARS|CHF|JPY)\b'
-    if set(re.findall(currency,draft.upper()))-set(re.findall(currency,source.upper())):
+    if currency_codes(draft)-currency_codes(source):
         add('UNSUPPORTED_CURRENCY','La redacción añadió una moneda no acreditada por la fuente. RankPilot debe corregirla.')
     pending=r'\b(pending|pendiente|no decision|sin resoluci[oó]n|no judgment)\b'
     victory=r'\b(won|victory|victoria|awarded|recovered|gan[oó]|obtuvo sentencia favorable)\b'

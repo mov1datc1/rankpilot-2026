@@ -1,0 +1,26 @@
+{
+  "version": "angela-acceptance-2026-10-08-v1",
+  "scope_frozen": true,
+  "policy": "No new product features during closure. Changes repair known failures. Any changed criterion requires an explicit revision, never silently relax a failed gate.",
+  "criteria": [
+    {"id":"A01","class":"material","requirement":"All source matters and lawyers reconciled one-to-one, including irregular numbering, complete legal names and source spans."},
+    {"id":"A02","class":"material","requirement":"Publication permission propagates by entity and aliases. Explicit confidentiality wins. Unknown permission is confirmed before reasoning, never inferred as public."},
+    {"id":"A03","class":"material","requirement":"Amounts retain currency, approximation and economic meaning. Exposure, project value and outcome are distinct. No invented FX conversions."},
+    {"id":"A04","class":"material","requirement":"Every inclusion, reserve and exclusion rests on the source legal work, not client industry, amount or keyword guesses."},
+    {"id":"A05","class":"material","requirement":"Canonical selection, global hero, order, identities, outcomes and classifications agree across source register, Audit and Submission."},
+    {"id":"A06","class":"material","requirement":"Individual roles and work attribution match source or saved confirmation. Current rank, requested target and proposed category remain distinct; no firm rank transfers to a lawyer."},
+    {"id":"A07","class":"material","requirement":"No unsupported authority, geography, transaction/litigation conversion, outcome, achievement or foreign-practice contamination."},
+    {"id":"A08","class":"material","requirement":"Read both actual Word artifacts before approval; reject truncation, empty substantive sections, template instructions, confidential leakage or factual divergence."},
+    {"id":"A09","class":"acceptance","requirement":"External official table, own profile, detected individual profiles and adjacent competitor profiles retrieved where available with scope, source hash, date and attribution. Historical movement requires observed historical evidence; missing pages are explicit limitations."},
+    {"id":"A10","class":"acceptance","requirement":"Source-backed B9 candidacies, B10 within applicable limit and substantive C2 implement the strategy. Matter outcomes and distinctive contribution survive rewriting."},
+    {"id":"A11","class":"acceptance","requirement":"Submission speaks for the firm. No source-auditor commentary, unsupported superlatives or invented superiority. Audit evaluates evidence and recommends."},
+    {"id":"A12","class":"acceptance","requirement":"Audit is an executive 3–5 page letter with verdict, ordered portfolio, individual strategy, meaningful reserves/exclusions and genuine actions. No intermediate contradictions, invented scores or uncalculated zeros."},
+    {"id":"A13","class":"operational","requirement":"System failures are handled by RankPilot, never questions asking users to fix generated punctuation or technical errors. Real missing facts have a direct save/return path."},
+    {"id":"A14","class":"operational","requirement":"Persist trace of applicable graph nodes, scoped RAG sources, provider calls, stage reuse and bounded repairs. Unaffected text and source inputs survive repairs."},
+    {"id":"A15","class":"acceptance","requirement":"Borderline selected and reserve matters are compared on incremental evidentiary contribution. Professional preferences about final order remain distinguishable from factual errors."}
+  ],
+  "preferences_not_gates": ["Exact paragraph count when complete organic prose is readable", "A particular adjective or synonym absent unsupported claims", "A preferred hero or tail order when a factual comparative rationale supports the alternative"],
+  "required_runs": ["DeForest Labour and Employment Mexico", "Ramos Castillo Real Estate Mexico", "ARAQUEREYNA Tax Venezuela"],
+  "adversarial_checks": ["false personal attribution", "confidential alias in public prose", "currency or economic-meaning drift", "false legal classification", "missing evidence vs invented outcome", "cross-document contradictory selection", "auditor voice", "technical failure ownership", "no-op and scoped repair"],
+  "exit": "All material, acceptance and operational criteria pass for applicable cases; no known unresolved material defect; all adversarial checks detect intended failures without rejecting supported counterexamples. Missing source or unavailable mandatory verification means incomplete, not pass. Deliver a candidate for professional acceptance, not an assurance for all unseen cases."
+}

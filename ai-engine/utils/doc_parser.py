@@ -580,6 +580,7 @@ class DocumentParser:
             sections[label.lower()] = {
                 "label": label,
                 "source_heading": source_heading,
+                "source_occurrence": index + 1,
                 "confidentiality_evidence": confidentiality_evidence,
                 "text": excerpt,
                 "confidentiality_status": conf_status,
@@ -792,7 +793,7 @@ class DocumentParser:
         2. Standard Chambers B9 tables (converted from .doc or .docx) with Name, Comments/Web Link,
            Partner Y/N, Ranked Y/N.
         3. Preserves composite Spanish names without truncation or splitting (e.g. María Alejandra García Nieto).
-        4. Recovers key recurring associates (e.g. José Alberto Díaz Méndez in DeForest).
+        4. Explicit candidate sections and named department specialists.
         """
         source = text or ""
         roster = []
@@ -806,7 +807,7 @@ class DocumentParser:
             t2 = clean_toks(name2)
             if not t1 or not t2:
                 return False
-            return t1.issubset(t2) or t2.issubset(t1) or (len(t1.intersection(t2)) >= 2 and len(t1) <= 3 and len(t2) <= 3)
+            return min(len(t1), len(t2)) >= 2 and (t1.issubset(t2) or t2.issubset(t1))
 
         phone_regex = re.compile(r'^\+?[\d\s\-\.\(\)]{7,}$')
 
@@ -850,8 +851,8 @@ class DocumentParser:
                 'isRanked': is_ranked,
                 'current_ranking': current_rank,
                 'currentRank': current_rank,
-                'suggested_rank': 'Band 5' if 'Eduardo Garduño' in clean_n else ('Associate to Watch' if 'Javier Atzin' in clean_n else None),
-                'suggestedRank': 'Band 5' if 'Eduardo Garduño' in clean_n else ('Associate to Watch' if 'Javier Atzin' in clean_n else None),
+                'suggested_rank': None,
+                'suggestedRank': None,
                 'url': url or '',
                 'comments': clean_comm,
                 'bio': clean_comm,
@@ -873,8 +874,11 @@ class DocumentParser:
                 i += 1
                 while i < len(lines):
                     row_l = lines[i].strip()
-                    if not row_l or any(row_l.startswith(k) for k in ['Composition of', 'Number of', 'B10', 'C1', 'C2', 'D1', 'MATTER']):
+                    if any(row_l.startswith(k) for k in ['Composition of', 'Number of', 'B10', 'C1', 'C2', 'D1', 'MATTER']):
                         break
+                    if not row_l:
+                        i += 1
+                        continue
                     cols = [c.strip() for c in row_l.split('|')]
                     if len(cols) >= 2:
                         cand_name = cols[0]
@@ -887,8 +891,12 @@ class DocumentParser:
                                 comm = ''
                             if phone_regex.match(p_status):
                                 p_status = ''
-                            is_p = bool(re.match(r'^\d{4}$|^Y$|^YES$|^SI$|^SÍ$', p_status.strip(), re.I)) if p_status else ('partner' in comm.lower())
-                            add_lawyer(cand_name, is_p, False, None, email if '@' in email else '', comm, row_l)
+                            is_p = True if re.fullmatch(r'\d{4}|Y|YES|SI|SÍ',p_status.strip(),re.I) else False if re.fullmatch(r'N|NO',p_status.strip(),re.I) else None
+                            add_lawyer(cand_name, is_p, None, None, email if '@' in email else '', comm, row_l)
+                    elif roster and row_l:
+                        roster[-1]['comments'] += '\n'+row_l
+                        roster[-1]['bio'] = roster[-1]['comments']
+                        roster[-1]['source_excerpt'] += '\n'+row_l
                     i += 1
                 continue
             i += 1
@@ -929,9 +937,9 @@ class DocumentParser:
                         firm_url = next((u for u in urls if 'chambers.com' not in u), '')
                         yn_matches = [tok.strip().upper() for tok in re.split(r'[\s|]+', block_text) if tok.strip().upper() in ('Y', 'N', 'YES', 'NO', 'SI', 'SÍ')]
                         is_p = yn_matches[0] in ('Y', 'YES', 'SI', 'SÍ') if len(yn_matches) >= 1 else None
-                        is_r = yn_matches[1] in ('Y', 'YES', 'SI', 'SÍ') if len(yn_matches) >= 2 else bool(chambers_url)
+                        is_r = yn_matches[1] in ('Y', 'YES', 'SI', 'SÍ') if len(yn_matches) >= 2 else None
                         
-                        add_lawyer(cand, is_p, is_r, 'Ranked' if is_r else 'Not Ranked', chambers_url or firm_url, '', block_text)
+                        add_lawyer(cand, is_p, is_r, 'Ranked' if is_r is True else 'Not Ranked' if is_r is False else None, chambers_url or firm_url, '', block_text)
                         k = j
                         continue
                 k += 1
@@ -945,9 +953,8 @@ class DocumentParser:
             next_cand = re.search(r'(?im)^\s*(?:\d+\.\s*)?[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñA-ZÁÉÍÓÚÜÑ\.\'\-\s]+?\s*[—–\-]\s*(?:principal|second|third|senior|candidate)|^\s*\d+\.\s*Selected matters|^\s*B10\b', source[start_pos:])
             c_bio = source[start_pos : start_pos + next_cand.start()].strip() if next_cand else source[start_pos : start_pos + 1200].strip()
             c_bio = re.sub(r'\n+', ' ', c_bio)
-            is_p = True if ('principal' in c_role or 'partner' in c_role or 'senior' in c_role) else False
-            is_r = False
-            add_lawyer(c_name, is_p, is_r, 'Unranked', '', c_bio, cm.group(0))
+            is_p = True if 'partner' in c_role else False if 'associate' in c_role else None
+            add_lawyer(c_name, is_p, None, None, '', c_bio, cm.group(0))
 
         # Strategy 4: Mentioned department specialists in narrative
         team_m = re.search(r'(?i)(?:The wider team includes specialists such as|specialists such as|alongside practitioners with complementary strengths in[^\.]*?\.\s*The wider team includes)\s+([^.]+)', source)
@@ -958,27 +965,7 @@ class DocumentParser:
                 p_clean = re.sub(r'^(?:specialists\s+such\s+as|including|practitioners|lawyers)\s+', '', p.strip(), flags=re.I)
                 p_clean = re.sub(r'[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s\.\'-]', '', p_clean).strip()
                 if len(p_clean.split()) >= 2 and len(p_clean) < 40 and not any(k in p_clean.lower() for k in ['team', 'deforest', 'firm', 'specialist', 'practice']):
-                    add_lawyer(p_clean, False, False, 'Not Ranked', '', f'Specialist practitioner in labor and employment matters representing domestic and multinational employers.', p_clean)
-
-        # Strategy 5: Full DeForest 8-lawyer roster reconciliation guardrail
-        if 'deforest' in source.lower() and any(k in source.lower() for k in ['garduño', 'garduno', 'labour', 'labor', 'employment']):
-            deforest_team = [
-                ('Eduardo Garduño', True, False, 'Band 5', 'Lead Partner · National workforce governance / complex employer strategy / post-M&A / high-stakes collective matters.'),
-                ('Javier Atzin Vallejo', True, False, 'Associate to Watch', 'Partner · Industrial relations, collective labour, social security and complex employment matters across manufacturing operations.'),
-                ('Jaime Bustamante', True, False, 'Up and Coming', 'Senior Practitioner · Workforce strategy, labour disputes, compliance and employment risk management.'),
-                ('José Alberto Díaz Méndez', False, False, 'Not Ranked', 'Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.'),
-                ('Erick Pérez', False, False, 'Not Ranked', 'Labor and employment practitioner advising on collective negotiations, workforce inspections, and administrative compliance.'),
-                ('Andrés Cabrera', False, False, 'Not Ranked', 'Key member of the contentious labor team representing domestic and multinational employers in individual and collective dispute proceedings.'),
-                ('Raymundo Carreño', False, False, 'Not Ranked', 'Employment litigation specialist managing employer-side defense, terminations, and judicial conciliation hearings across Mexican jurisdictions.'),
-                ('Edgar Barreto', False, False, 'Not Ranked', 'Labor practitioner supporting corporate clients on day-to-day employment compliance, workplace investigations, and labor agreement drafting.')
-            ]
-            for d_name, d_partner, d_ranked, d_sug, d_comm in deforest_team:
-                existing = next((l for l in roster if d_name.lower() in l['name'].lower() or l['name'].lower() in d_name.lower()), None)
-                if not existing:
-                    add_lawyer(d_name, d_partner, d_ranked, 'Unranked', '', d_comm, d_name)
-                elif not existing.get('comments'):
-                    existing['comments'] = d_comm
-                    existing['bio'] = d_comm
+                    add_lawyer(p_clean, None, None, None, '', '', team_m.group(0))
 
         return roster
 

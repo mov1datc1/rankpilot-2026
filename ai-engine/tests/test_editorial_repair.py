@@ -72,3 +72,65 @@ class TargetedRepairTests(unittest.TestCase):
         target=repair_targets(package,STRATEGY,proposal)['candidates/0']
         self.assertNotIn('optimizedText',target['source_evidence']['selected_matters'][0])
         self.assertEqual(package['matters'][0]['optimizedText'],'Generated false claim')
+
+    def test_audit_voice_is_detected_and_repaired_locally(self):
+        from core.editorial_development import development_errors
+        for path in ('b10','c2','matters/0/text','candidates/0/submission_bio'):
+            with self.subTest(path=path):
+                proposal=copy.deepcopy(DEV)
+                parts=path.split('/');parent=proposal
+                for part in parts[:-1]:parent=parent[int(part)] if isinstance(parent,list) else parent[part]
+                original=parent[parts[-1]]
+                parent[parts[-1]]='The source does not state a completed outcome. '+original
+                self.assertIn('Voz auditora en Submission: '+path,development_errors(PACKAGE,STRATEGY,proposal))
+                self.assertEqual(set(repair_targets(PACKAGE,STRATEGY,proposal)),{path})
+                repair={'corrections':[{'path':path,'value':original,'reason':'Remove commentary; retain supported work.'}],'unresolved':[]}
+                with patch('core.review_graph.invoke_role',return_value=(repair,[])) as model:
+                    result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
+                self.assertTrue(result['development_validated']);self.assertEqual(result['development'],DEV)
+                self.assertEqual(model.call_args.args[1],'repair');model.assert_called_once()
+
+    def test_actual_legal_evidence_and_audit_work_are_not_source_commentary(self):
+        from core.editorial_development import submission_voice_paths
+        for text in ('The team challenged the evidence submitted by the tax authority.',
+                     'We advised on a tax audit and the defensibility of the assessment.',
+                     'Proceedings remain pending; the team secured interim relief.'):
+            self.assertEqual(submission_voice_paths({'b10':text,'matters':[{'text':text}]}),[])
+
+    def test_voice_repair_retaining_commentary_does_not_pass(self):
+        proposal=copy.deepcopy(DEV);proposal['matters'][0]['text']='The verified evidentiary record demonstrates success.'
+        repair={'corrections':[{'path':'matters/0/text','value':'Our analysis indicates success.','reason':'Changed wording'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',return_value=(repair,[])):
+            result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
+        self.assertFalse(result['development_validated'])
+
+    def test_semantic_repair_locates_one_field_and_preserves_rest(self):
+        proposal=copy.deepcopy(DEV)
+        proposal['matters'][0]['text']='The team negotiated.'
+        defects=[{'severity':'critical','owner':'rankpilot','code':'EDITORIAL_OMISSION','matter_id':'m1','message':'Omitted strike prevention and exposure reduction.'}]
+        plan={'locations':[{'path':'matters/0/text','defect_index':0,'reason':'Restore documented results in this matter.'}],'unresolved':[]}
+        fix={'corrections':[{'path':'matters/0/text','value':DEV['matters'][0]['text'],'reason':'Restore source-backed outcomes.'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',side_effect=[(plan,[]),(fix,[])]) as model:
+            result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True,'repair_feedback':defects})
+        self.assertEqual(result['development'],DEV);self.assertTrue(result['development_validated'])
+        self.assertEqual([call.args[1] for call in model.call_args_list],['repair','repair'])
+        self.assertEqual(result['repair_report']['corrected_paths'],['matters/0/text'])
+
+    def test_unlocatable_semantic_defect_does_not_trigger_full_regeneration(self):
+        defects=[{'severity':'critical','owner':'rankpilot','code':'EDITORIAL_OMISSION','message':'Acceptance check missing.'}]
+        with patch('core.review_graph.invoke_role',return_value=({'locations':[],'unresolved':['No concrete omitted fact identified.']},[])) as model:
+            result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':defects})
+        self.assertFalse(result['development_validated']);self.assertEqual(result['development'],DEV)
+        model.assert_called_once();self.assertEqual(model.call_args.args[1],'repair')
+
+    def test_audit_delta_preserves_other_sections_and_submission(self):
+        from core.editorial_repair import repair_letter
+        letter={'executive_assessment':'Incorrect diagnostic.','portfolio':'Ordered source-backed portfolio.','leadership':'Source-backed candidates.','evidence_gaps':'Meaningful reserves.','next_steps':'No se identifican acciones adicionales con la información disponible.','next_actions':[]}
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'letter':letter,'repair_feedback':[{'scope':'letter','message':'Withdraw incorrect diagnostic.'}]}
+        response={'corrections':[{'path':'executive_assessment','value':'Qualified strategic recommendation.','reason':'The original source supports the B10 figures.'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',return_value=(response,[])):
+            result=repair_letter(state)
+        self.assertTrue(result['writer_validated'])
+        for field in ('portfolio','leadership','evidence_gaps','next_steps','next_actions'):self.assertEqual(result['letter'][field],letter[field])
+        self.assertEqual(state['development'],DEV);self.assertEqual(state['letter'],letter)
+        self.assertEqual(result['letter_repair_report']['corrected_fields'],['executive_assessment'])

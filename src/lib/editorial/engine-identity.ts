@@ -6,7 +6,7 @@ export function engineFingerprint(root=join(process.cwd(),'ai-engine')) {
   const files=['main.py','requirements.txt','Dockerfile'].map(name=>join(root,name));
   const suffixes=new Set(['.py','.json','.txt','.md','.j2','.jinja2','.html','.tex']);
   const walk=(dir:string)=>{for(const entry of readdirSync(dir,{withFileTypes:true})) {
-    if(entry.name==='__pycache__') continue;
+    if(['__pycache__','benchmark_cache'].includes(entry.name)) continue;
     const path=join(dir,entry.name);
     if(entry.isDirectory()) walk(path);
     else if(entry.isFile() && suffixes.has(extname(path))) files.push(path);

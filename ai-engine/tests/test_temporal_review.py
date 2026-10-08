@@ -142,5 +142,15 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertIn('Unknown dates alone never justify exclusion.', messages[0][1])
             self.assertIn('Work Highlights in last 12 months', messages[0][1])
             self.assertIn('"research_period":null', messages[1][1])
-        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.1')
+        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.2')
         self.assertTrue(result['judge']['passed'])
+
+    def test_decorative_quotes_do_not_turn_an_optional_audit_request_into_a_blocker(self):
+        quote='Confirmar la ventana de investigación aplicable.'
+        self.state['package']['rendered_audit']=quote
+        defect={**self.defect('missing_metadata'),'artifact_claim_kind':'request_for_information','source_quote':''}
+        for quoted in ('“'+quote+'”','"'+quote+'"','‘'+quote+'’'):
+            result=self.review([{**defect,'artifact_quote':quoted}])
+            self.assertTrue(result['judge']['passed'])
+            self.assertEqual(result['judge']['defects'][0]['severity'],'warning')
+        self.assertFalse(self.review([{**defect,'artifact_quote':'“The team won in 2025.”'}])['judge']['passed'])

@@ -24,6 +24,7 @@ class SelectionSemanticTests(unittest.TestCase):
             return {'strategy':BAD if len(calls)==1 else GOOD,'errors':[]}
         def invoke(state,role,*args):
             calls.append(role)
+            if role=='strategist':return {'corrections':GOOD['matters'],'unresolved':[]},[]
             return (verdict('repair_required',SOURCE) if calls.count(role)==1 else verdict()),[]
         # Use a nonempty core on first attempt so the deterministic selection gate passes.
         bad_core={**BAD,'matters':[{**BAD['matters'][0],'disposition':'core'}],'hero_matter_id':'property-1'}
@@ -33,7 +34,7 @@ class SelectionSemanticTests(unittest.TestCase):
             return result
         with patch('core.review_graph.strategist',side_effect=select_core),patch('core.review_graph.invoke_role',side_effect=invoke):
             result=create_review_graph().invoke({'package':package,'operation':'strategy'})
-        self.assertEqual(calls,['select','selection_reviewer','select','selection_reviewer'])
+        self.assertEqual(calls,['select','selection_reviewer','strategist','selection_reviewer'])
         self.assertTrue(result['selection_review_validated'])
         self.assertEqual(result['strategy'],GOOD)
         self.assertEqual(package,before)
@@ -128,3 +129,25 @@ class SelectionSemanticTests(unittest.TestCase):
             with self.assertRaises(TimeoutError):
                 invoke_role({'stage_deadline':0},'selection_reviewer',None,'test',{})
         factory.assert_not_called()
+
+    def test_reference_label_numbers_do_not_become_local_matter_claims(self):
+        from core.review_graph import selection_gate
+        peer={**MATTER,'id':'peer','client':'Peer manufacturer with 150 years and 17000 employees'}
+        own={**GOOD['matters'][0],'rationale':'Compare with '+peer['client']+'.'}
+        other={**GOOD['matters'][0],'matter_id':'peer','disposition':'reserve','rationale':'Reserve for overlapping work.'}
+        state={'package':{'matters':[MATTER,peer]},'strategy':{**GOOD,'matters':[own,other]}}
+        self.assertTrue(selection_gate(state)['selection_validated'])
+        state['strategy']['matters'][0]['rationale']+=' This mandate covers 17000 employees.'
+        self.assertFalse(selection_gate(state)['selection_validated'])
+
+    def test_bounded_selection_repair_preserves_every_unaffected_decision(self):
+        from core.selection_review import repair_selection
+        peer={**MATTER,'id':'peer','client':'Other Client'}
+        untouched={**GOOD['matters'][0],'matter_id':'peer','disposition':'reserve','rationale':'Distinct source-backed decision.'}
+        previous={**GOOD,'matters':[GOOD['matters'][0],untouched]}
+        repaired={**GOOD['matters'][0],'rationale':'Qualified outcome; the source does not establish final resolution.'}
+        state={'package':{'matters':[MATTER,peer]},'strategy':previous,'selection_feedback':{'strategy':previous,'semantic_rejection':True,'failed_checks':{'property-1':{'status':'repair_required','source_quote':SOURCE}}}}
+        result=repair_selection(state,lambda *args:({'corrections':[repaired],'unresolved':[]},[]))
+        self.assertEqual(result['strategy']['matters'][1],untouched)
+        self.assertEqual(result['selection_repair_report']['corrected_matter_ids'],['property-1'])
+        self.assertEqual(previous['matters'][0],GOOD['matters'][0])

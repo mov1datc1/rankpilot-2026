@@ -39,4 +39,34 @@ def review_selection(state, invoke):
     return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':False, 'selection_review_deferred':False,
             'selection_validated': not errors, 'errors': errors, 'trace': trace,
             'selection_review_attempts': state.get('selection_review_attempts', 0) + 1,
-            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors)}}
+            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors),'failed_checks':{mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}}}
+
+
+def repair_selection(state, invoke):
+    """Repair rejected decisions only; retain every unaffected decision verbatim."""
+    import copy
+    feedback=state.get('selection_feedback',{})
+    previous=feedback.get('strategy') or state['strategy']
+    failed=feedback.get('failed_checks') or {
+        mid:check for mid,check in state.get('selection_review',{}).get('checks',{}).items()
+        if check.get('status')=='repair_required'}
+    if not failed:return None
+    register={m['id']:m for m in state['package']['matters']}
+    ids=tuple(d['matter_id'] for d in previous['matters'] if d['matter_id'] in failed and d['matter_id'] in register)
+    if not ids:return None
+    from core.review_graph import Disposition
+    decision=create_model('RejectedDecisionCorrection',__base__=Disposition,matter_id=(Literal[ids],...))
+    schema=create_model('BoundedSelectionRepair',corrections=(list[decision],...),unresolved=(list[str],...))
+    result,trace=invoke(state,'strategist',schema,
+        'Correct ONLY the supplied rejected selection decisions against original sources. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
+        {'scope':{k:state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
+         'failed_checks':failed,'sources':[register[mid] for mid in ids],
+         'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
+    fixed=copy.deepcopy(previous);corrections={d['matter_id']:d for d in result['corrections']}
+    if set(corrections)!=set(ids) or len(corrections)!=len(result['corrections']):
+        return {'strategy':previous,'errors':['RankPilot debe completar la corrección de las decisiones señaladas; las demás se conservan.'],'trace':trace,'selection_validated':False}
+    fixed['matters']=[corrections.get(d['matter_id'],d) for d in previous['matters']]
+    core=[d['matter_id'] for d in fixed['matters'] if d['disposition']=='core']
+    if fixed.get('hero_matter_id') not in core:
+        return {'strategy':previous,'errors':['La corrección requiere revisar el Hero Matter; se conserva la selección anterior.'],'trace':trace,'selection_validated':False}
+    return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_report':{'corrected_matter_ids':list(corrections),'unaffected_decisions_preserved':True,'source_uncertainties':result.get('unresolved',[])}}

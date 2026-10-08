@@ -115,6 +115,17 @@ class ExtractionPreflightTests(unittest.TestCase):
     def test_repeated_labels_within_a_source_are_rejected(self):
         status,data=self.extract({'text':form()+form()})
         self.assertEqual(status,422);self.assertEqual(data['source_errors'][0]['code'],'SOURCE_DUPLICATE_LABELS')
+    def test_distinct_repeated_number_blocks_survive_with_original_heading(self):
+        source=form()+form().replace(SOURCE,'The team advised on a separate property acquisition.')
+        status,data=self.extract({'text':source})
+        self.assertEqual(status,200);self.assertEqual(len(data['matters']),2)
+        first,second=data['matters']
+        self.assertNotEqual(first['id'],second['id'])
+        self.assertNotEqual(first['source_label'],second['source_label'])
+        self.assertEqual(first['source_heading'],second['source_heading'])
+        self.assertNotEqual(first['source_occurrence'],second['source_occurrence'])
+        self.assertIn('separate property acquisition',second['source_excerpt'])
+        self.assertIn('numbering_reconciliation',data['source_reports'][0])
     def test_same_labels_in_different_sources_do_not_merge_matters(self):
         status,data=self.extract({'sources':[{'name':'first','text':form()},{'name':'second','text':form()}]})
         self.assertEqual(status,200);self.assertEqual(len(data['matters']),2);self.assertNotEqual(data['matters'][0]['id'],data['matters'][1]['id']);self.assertEqual([m['source_document'] for m in data['matters']],['first','second'])

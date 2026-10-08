@@ -20,7 +20,7 @@ export function projectDevelopment(data:any, state:any) {
     const old=String(m.optimizedText || m.optimized_text || '').trim();
     if(m.draft_provenance?.text_hash && m.draft_provenance.text_hash!==hash(old))return m;
     if(old && old!==proposal.text)previous.push({matter_id:m.id,text:old,provenance:m.draft_provenance || null});
-    return {...m,optimizedText:proposal.text,optimized_text:proposal.text,status:'Optimized',draft_provenance:{origin:'generated',source_hash:draftSourceHash(m),text_hash:stableHash(proposal.text.trim()),strategy_hash:stableHash(state.strategy),development_version:DEVELOPMENT_VERSION}};
+    return {...m,optimizedText:proposal.text,optimized_text:proposal.text,editorial_completion_status:proposal.completion_status || '',status:'Optimized',draft_provenance:{origin:'generated',source_hash:draftSourceHash(m),text_hash:stableHash(proposal.text.trim()),strategy_hash:stableHash(state.strategy),development_version:DEVELOPMENT_VERSION}};
   });
   return {...data,matters,editorial_development:development,
     editorial_previous_drafts:previous.length?[...(data.editorial_previous_drafts || []),{version:DEVELOPMENT_VERSION,matters:previous,b10:data.enhanced_b7 || '',c2:data.enhanced_c2 || ''}]:data.editorial_previous_drafts,

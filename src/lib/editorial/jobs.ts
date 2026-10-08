@@ -58,8 +58,8 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       const checkpoint=structuredClone(data.review_checkpoint);
       if(!checkpoint?.state) throw new Error('AUTO_REPAIR_UNAVAILABLE');
       checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
-      if(repair.tasks.includes('development')) {delete checkpoint.step_keys.development;checkpoint.state.development_validated=false;}
-      if(repair.letter) {delete checkpoint.state.letter;delete checkpoint.step_keys.writer;}
+      if(repair.tasks.includes('development')) {checkpoint.state.development_validated=false;}
+      if(repair.letter) {checkpoint.state.writer_validated=false;checkpoint.state.letter_repair_requested=true;delete checkpoint.step_keys.writer;}
       await tx.submission.update({where:{id:current.id},data:{chambersData:{...data,completed_review_input_hash:null,review_checkpoint:checkpoint}}});
     }
     const id=randomUUID();
@@ -72,7 +72,13 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
 export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='critical');
   if(!defects.length) return null;
-  if(data.editorial_development && defects.some((d:any)=>d.code==='EDITORIAL_OMISSION' && d.owner==='rankpilot')) return {tasks:['development','audit','artifact'],letter:true};
+  if(data.editorial_development) {
+    const generated=defects.filter((d:any)=>d.owner==='rankpilot' && ['EDITORIAL_OMISSION','UNSUPPORTED_CLAIM','EDITORIAL_STYLE'].includes(d.code));
+    const concrete=generated.filter((d:any)=>!String(d.message || '').startsWith('La aceptación editorial no está completa:'));
+    const targets=concrete.length?concrete:generated;
+    if(targets.some((d:any)=>d.scope==='submission')) return {tasks:['development','audit','artifact'],letter:true};
+    if(targets.length && targets.every((d:any)=>d.scope==='letter')) return {tasks:['audit','artifact'],letter:true};
+  }
   const ids=new Set<string>();let letter=false;let b10=false;
   for(const defect of defects) {
     if(defect.code!=='UNSUPPORTED_CLAIM' || defect.owner!=='rankpilot' || !defect.source_quote || !defect.artifact_quote || defect.source_quote===defect.artifact_quote) continue;
