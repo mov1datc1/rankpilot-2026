@@ -36,3 +36,24 @@ class TargetedRepairTests(unittest.TestCase):
         proposal=copy.deepcopy(DEV);proposal['b10']='word '*501;proposal['c2']=''
         targets=repair_targets(PACKAGE,STRATEGY,proposal)
         self.assertEqual(set(targets),{'b10','c2'})
+
+    def test_unsupported_attribution_repairs_the_candidate_without_rewriting_matters(self):
+        proposal=copy.deepcopy(DEV)
+        proposal['candidates'][0]['supporting_matters'].append({'matter_id':proposal['matters'][0]['matter_id'],'personal_role':'Invented leadership','source_quote':'This person won an unrelated case.'})
+        proposal['candidates'][0]['submission_bio']='Includes an unsupported attribution.'
+        targets=repair_targets(PACKAGE,STRATEGY,proposal)
+        self.assertEqual(set(targets),{'candidates/0'})
+        repair={'corrections':[{'path':'candidates/0','value':DEV['candidates'][0],'reason':'Withdraw unsupported attribution and reconcile bio.'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',return_value=(repair,[{'role':'repair'}])) as model:
+            result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
+        self.assertTrue(result['development_validated']);model.assert_called_once()
+        self.assertEqual(result['development']['matters'],proposal['matters'])
+        self.assertEqual(result['development']['b10'],proposal['b10'])
+        self.assertEqual(result['development']['candidates'],DEV['candidates'])
+
+    def test_candidate_repair_cannot_rename_person(self):
+        proposal=copy.deepcopy(DEV);proposal['candidates'][0]['supporting_matters'][0]['source_quote']='Invented attribution'
+        targets=repair_targets(PACKAGE,STRATEGY,proposal)
+        other={**DEV['candidates'][0],'name':'Another Person'}
+        with self.assertRaisesRegex(ValueError,'identity'):
+            apply_corrections(proposal,targets,{'corrections':[{'path':'candidates/0','value':other,'reason':'rename'}]})

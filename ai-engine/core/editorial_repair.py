@@ -5,12 +5,13 @@ sources, selection, permissions, user answers, or approval state. Its result is
 still a proposal and must pass the original validators and final document judge.
 """
 import copy
-from typing import Literal
+from typing import Literal, Union
 from pydantic import BaseModel, create_model
+from core.editorial_development import Candidate
 
 class Correction(BaseModel):
     path: str
-    value: str
+    value: Union[str, Candidate]
     reason: str
 
 class Repair(BaseModel):
@@ -18,6 +19,7 @@ class Repair(BaseModel):
     unresolved: list[str]
 
 TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct incompatible ranking categories using the confirmed seniority; do not invent a current rank. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
+TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and selected matters. If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
 
 def repair_targets(package, strategy, proposal):
     from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors
@@ -36,6 +38,15 @@ def repair_targets(package, strategy, proposal):
         if not str(draft.get('text','')).strip():add(f'matters/{i}/text',draft.get('text',''),'Missing source-backed matter prose.',matter)
     for i,candidate in enumerate(proposal.get('candidates',[])):
         person=roster.get(_norm(candidate.get('name')), {})
+        invalid_support=[]
+        for support in candidate.get('supporting_matters',[]):
+            matter=register.get(support.get('matter_id'),{})
+            quote=literal_quote(support.get('source_quote'))
+            if support.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS):
+                invalid_support.append(support.get('matter_id'))
+        if invalid_support:
+            add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and reconcile the bio, category and recommendation with actual evidence.',{'person':person,'invalid_support_ids':invalid_support,'selected_matters':[m for mid,m in register.items() if mid in core]})
+            continue
         for j,support in enumerate(candidate.get('supporting_matters',[])):
             matter=register.get(support.get('matter_id'),{})
             quote=literal_quote(support.get('source_quote'))
@@ -57,12 +68,21 @@ def apply_corrections(proposal, targets, repair):
     result=copy.deepcopy(proposal);seen=set()
     for fix in repair.get('corrections',[]):
         path=fix.get('path')
-        if path not in targets or path in seen or not isinstance(fix.get('value'),str) or not fix.get('reason'):
+        if path not in targets or path in seen or not fix.get('reason'):
             raise ValueError('Repair attempted an invalid or repeated generated field')
+        value=fix.get('value')
+        if isinstance(targets[path]['current_value'],dict):
+            if not isinstance(value,dict) or len(path.split('/'))!=2 or not path.startswith('candidates/'):
+                raise ValueError('Invalid candidate correction')
+            value=Candidate.model_validate(value).model_dump()
+            if value['name']!=targets[path]['current_value']['name']:
+                raise ValueError('Repair cannot change candidate identity')
+        elif not isinstance(value,str):
+            raise ValueError('Invalid text correction')
         seen.add(path);parts=path.split('/');parent=result
         for part in parts[:-1]:parent=parent[int(part)] if isinstance(parent,list) else parent[part]
         key=int(parts[-1]) if isinstance(parent,list) else parts[-1]
-        parent[key]=fix['value']
+        parent[key]=value
     return result
 
 def repair_development(state, proposal, targets):
