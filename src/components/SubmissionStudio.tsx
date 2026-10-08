@@ -1813,14 +1813,14 @@ export default function SubmissionStudio({
                     color: hasRunOptimization ? '#4338CA' : '#B45309',
                     border: `1px solid ${hasRunOptimization ? '#C7D2FE' : '#FDE68A'}`
                   }}>
-                    {hasRunOptimization ? '✓ Calibrado con IA' : '⏳ Por calibrar con IA'}
+                    {hasRunOptimization ? '✓ Selección evaluada' : '⏳ Por evaluar'}
                   </span>
                 </div>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
                   {!hasRunOptimization
                     ? `Portafolio Extraído: ${matters.length} Asuntos (${rawPubMatters.length} Públicos, ${rawConfMatters.length} Confidenciales)`
                     : showCoreOnly
-                      ? `Mostrando Selección Principal de ${coreCount} Asuntos (Calibrado con IA)`
+                      ? `Mostrando Selección Principal de ${coreCount} Asuntos (Evaluación editorial)`
                       : `Mostrando los ${matters.length} Asuntos del Portafolio Completo`
                   }
                 </h2>
@@ -2106,7 +2106,7 @@ export default function SubmissionStudio({
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
                     type="text"
-                    placeholder="Instrucción de ajuste (ej: enfatizar experiencia en Durango o litigio DIAGEO)..."
+                    placeholder="Indica qué evidencia del departamento quieres destacar…"
                     value={b10Directive}
                     onChange={(e) => setB10Directive(e.target.value)}
                     style={{
@@ -2219,7 +2219,7 @@ export default function SubmissionStudio({
                         color: hasRunOptimization ? '#166534' : '#B45309',
                         border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
                       }}>
-                        {hasRunOptimization ? '✓ Calibrado' : '⏳ Por calibrar con IA'}
+                        {hasRunOptimization ? '✓ Selección evaluada' : '⏳ Por evaluar'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
@@ -2374,7 +2374,7 @@ export default function SubmissionStudio({
                           )}
                           {m.leadPartner && (
                             <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                              Socio: <strong style={{ color: '#0F172A' }}>{m.leadPartner}</strong>
+                              Responsable: <strong style={{ color: '#0F172A' }}>{m.leadPartner}</strong>
                             </span>
                           )}
                           {/* Evidence Readiness Badges */}
@@ -2595,7 +2595,7 @@ export default function SubmissionStudio({
                         color: hasRunOptimization ? '#166534' : '#B45309',
                         border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
                       }}>
-                        {hasRunOptimization ? '✓ Selección revisada' : '⏳ Por calibrar con IA'}
+                        {hasRunOptimization ? '✓ Selección revisada' : '⏳ Por evaluar'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
@@ -2940,7 +2940,7 @@ export default function SubmissionStudio({
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    {deliveryState.approved && !isOptimizingAll ? 'Listo para presentación' : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
+                    {deliveryState.approved && !isOptimizingAll ? 'Documentos revisados' : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
                     {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'B10 conserva la redacción de origen; Preparar Submission y Audit completará ese paso.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
@@ -3103,7 +3103,7 @@ export default function SubmissionStudio({
                         background: hasRunOptimization ? '#DCFCE7' : '#FEF3C7',
                         color: hasRunOptimization ? '#166534' : '#B45309'
                       }}>
-                        {hasRunOptimization ? 'Calibrado' : 'Por calibrar con IA'}
+                        {hasRunOptimization ? 'Evaluado' : 'Por evaluar'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
