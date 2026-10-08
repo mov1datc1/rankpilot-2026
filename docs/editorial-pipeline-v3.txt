@@ -11,3 +11,23 @@ The final-artifact reviewer must explicitly account for factual fidelity, preser
 Operational safeguards remain: immutable source snapshot per job, stage checkpoints, leases, no overlapping paid calls, source-edit conflict detection, exact artifact hashes, protected human edits and a bounded token budget. Model role traces record retrieved sources and usage; node_events record executed deterministic and model nodes. Reused stages do not imply a new model execution.
 
 Validation: Node contract suite, Python graph/grounding/acceptance suite, TypeScript and production build. A synthetic live development call confirmed schema transport, methodology retrieval, personal attribution and outcome preservation. Decorative quotation marks are normalized without changing the quoted facts. Real case acceptance must still be checked on the final documents; test success is not an editorial quality certification.
+
+Recovery of rejected proposals
+- Harmless quotation framing is rebound to an exact source span before validation.
+- A failed proposal is retained with its source/strategy fingerprint. On resume,
+  local validation runs before buying another model call.
+- Remaining repairable defects are sent to the shared engine's repair role with
+  validator-identified paths and relevant original evidence. The model can patch
+  only those generated fields. Sources, permissions, identities, portfolio and
+  unaffected prose cannot be changed through this repair contract.
+- Quote binding, missing editorial fields, incompatible individual categories and
+  excessive B10 length use the same correction mechanism. Unsupported structural
+  defects retain the existing bounded regeneration path with failure feedback.
+- Every repaired proposal passes the original validators; independent review of
+  both rendered documents remains mandatory. Unresolved claims never authorize
+  delivery. The durable worker allows one automatic retry, not an unbounded loop.
+- Stage labels are pinned to their graph operations. A previously completed role
+  returns as reused with no new model trace or token charge; it cannot silently
+  execute a later role under the earlier label.
+- Internal validation diagnostics remain in the ledger. Studio displays a clear
+  preparation status and resume action, separately from genuine user questions.

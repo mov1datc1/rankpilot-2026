@@ -64,3 +64,15 @@ test('artifact repair is targeted, carries evidence, and stops after one attempt
  assert.equal(calls.filter(c=>c.url.endsWith('/optimize/matter') && c.payload.matter.id==='m1').length,0);
  assert.equal(submission.chambersData.approved_artifact,null);
 });
+
+test('a new job after rejected development reuses selection and keeps each paid role in its own stage',async()=>{
+ reset();await stage();await stage();
+ const checkpoint=submission.chambersData.review_checkpoint;
+ checkpoint.state.development_validated=false;checkpoint.state.errors=['Cita decisiva sin vínculo literal: m0'];
+ job={...job,tasks:['selection'],cursor:0,stage:'selection',ledger:[],status:'queued'};
+ const count=calls.length;
+ await stage();assert.equal(calls.length,count);assert.equal(job.cursor,1);assert.equal(job.ledger[0].trace,null);
+ await stage();assert.equal(calls.length,count+1);assert.equal(calls.at(-1).payload.stage,'development');assert.equal(job.ledger.at(-1).stage,'development');
+ assert.equal(calls.at(-1).payload.state.development_reusable,true);
+ await stage();assert.equal(calls.at(-1).payload.stage,'writer');
+});

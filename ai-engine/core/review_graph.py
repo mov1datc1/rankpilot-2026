@@ -72,6 +72,7 @@ class ReviewState(TypedDict, total=False):
     development_validated: bool
     development_reusable: bool
     repair_feedback: list
+    repair_report: dict
     strategy: dict
     letter: dict
     judge: dict

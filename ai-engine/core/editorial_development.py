@@ -176,6 +176,10 @@ def develop(state):
         errors=development_errors(state['package'],state['strategy'],bound)
         if not errors:
             return {'development':bound,'errors':[],'development_validated':True}
+        from core.editorial_repair import repair_targets, repair_development
+        targets=repair_targets(state['package'],state['strategy'],bound)
+        if targets:
+            return repair_development(state,bound,targets)
     proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[])})
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
