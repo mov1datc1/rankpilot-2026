@@ -81,6 +81,7 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
     selection_feedback:{strategy:state.strategy,errors:state.errors || []},
   }};
   if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {
+    state.development_reusable=!!state.development && keys.development===reviewStepHash('development',payload,state);
     if(state.development && state.errors?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
     if(!state.repair_feedback?.length) delete state.development;delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];
@@ -98,4 +99,13 @@ export function displayStrategyReferences(strategy:any, matters:any[]) {
   const labels=new Map(matters.map((m:any,i:number)=>[`M${String(i+1).padStart(2,'0')}`,recoverClientLegalName(m) || m.name || m.id]));
   const display=(value:string)=>String(value || '').replace(/(?<![\w-])M\d{2,}(?![\w-])/g,ref=>labels.get(ref) || ref);
   return {...strategy,thesis:display(strategy.thesis),pending_questions:(strategy.pending_questions || []).map(display),matters:(strategy.matters || []).map((m:any)=>({...m,rationale:display(m.rationale)}))};
+}
+
+/** A durable task must never execute a later role under an earlier stage label. */
+export function reviewTaskDisposition(requested:string|undefined, resumed:string) {
+  if (!requested) return 'run';
+  const wanted=reviewSteps.indexOf(requested as typeof reviewSteps[number]);
+  const next=reviewSteps.indexOf(resumed as typeof reviewSteps[number]);
+  if(wanted<0 || requested==='done' || next<0) return 'invalid';
+  return wanted<next?'reuse':wanted===next?'run':'out_of_order';
 }

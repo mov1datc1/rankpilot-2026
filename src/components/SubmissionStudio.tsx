@@ -163,6 +163,7 @@ export default function SubmissionStudio({
   const [matterSuccessMsg, setMatterSuccessMsg] = useState<Record<string, string>>({});
 
   // Global Optimization State
+  const [editorialJob, setEditorialJob] = useState<any>(null);
   const [isOptimizingAll, setIsOptimizingAll] = useState<boolean>(false);
   const [optimizeAllProgress, setOptimizeAllProgress] = useState<{
     current: number;
@@ -315,7 +316,7 @@ export default function SubmissionStudio({
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
   };
-  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} onResolve={resolveReviewIssue} busy={isOptimizingAll} />;
+  const reviewPanel = <ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} />;
 
 
   // Calculations
@@ -547,9 +548,10 @@ export default function SubmissionStudio({
         if(!response.ok) throw new Error('No se pudo consultar el avance. El motor continúa independientemente de esta pestaña.');
         const data=await response.json();
         if(stopped || !data.job) return;
+        setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
         setIsOptimizingAll(active);
-        setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:active?`${data.job.message}. Puedes cerrar esta pestaña; el avance se guarda.`:data.job.status==='completed'?'Submission y Audit revisados. Puedes descargar la entrega.':'Revisión detenida. Consulta el pendiente concreto.'});
+        setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:active?`${data.job.message}. Puedes cerrar esta pestaña; el avance se guarda.`:data.job.status==='completed'?'Submission y Audit revisados. Puedes descargar la entrega.':data.job.issue?.owner==='rankpilot'?'Preparación detenida por RankPilot. Puedes reanudar desde el panel.':'Revisión detenida. Consulta el pendiente concreto.'});
         if(active) {timer=setTimeout(observe,3000);return;}
         setOptimizeAllComplete(data.job.status==='completed');
         if(data.job.issue) setDraftSaveError(`${data.job.issue.owner==='rankpilot'?'RankPilot: ':''}${data.job.issue.message}`);
@@ -2935,7 +2937,7 @@ export default function SubmissionStudio({
                     {deliveryState.approved && !isOptimizingAll ? 'Listo para presentación' : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
-                    {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'B10 conserva la redacción de origen; Optimizar Todo completará ese paso.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
+                    {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'B10 conserva la redacción de origen; Preparar Submission y Audit completará ese paso.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
                   </p>
                 </div>
 

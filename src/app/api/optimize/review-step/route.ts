@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { needsInputReview } from '@/lib/audit/input-review';
 import { deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
-import { reviewPackage, reviewInputHash, reviewStepHash, resumeReviewCheckpoint, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
+import { reviewPackage, reviewInputHash, reviewStepHash, resumeReviewCheckpoint, reviewTaskDisposition, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
 export const maxDuration = 300;
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const user = await editorialUser(request);
     if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
     const account = user.email ? await prisma.user.findUnique({where: {email: user.email}}) : null;
-    const { submissionId } = await request.json();
+    const { submissionId, reviewStage } = await request.json();
     if (!submissionId) return NextResponse.json({error: 'Missing submissionId'}, {status: 400});
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
     if (saved?.lease_until > Date.now()) return NextResponse.json({success:true,done:false,busy:true,completed:reviewSteps.indexOf(saved.stage),stage:saved.stage,message:'Hay una etapa en curso. Conservamos los entregables guardados.'},{status:202});
     checkpoint = resumeReviewCheckpoint(payload,saved);
     const stage = checkpoint.stage as keyof typeof reviewStepLabels;
+    const disposition=reviewTaskDisposition(reviewStage,stage);
+    if(disposition==='reuse') {
+      if(saved.input_hash!==checkpoint.input_hash) {
+        const updated=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,review_checkpoint:checkpoint}}});
+        if(updated.count!==1) throw new Error('DRAFT_CONFLICT');
+      }
+      return NextResponse.json({success:true,cached:true,stage:reviewStage,trace:null,message:'Etapa guardada reutilizada; sin nueva llamada al modelo.'});
+    }
+    if(disposition!=='run') return NextResponse.json({success:false,code:'REVIEW_STAGE_MISMATCH',error:'La preparación necesita reanudarse desde su última etapa guardada.'},{status:409});
     if (!reviewSteps.includes(stage)) throw new Error('Invalid review stage');
     if (stage === 'done') {
       if (saved.input_hash !== checkpoint.input_hash) {
@@ -70,8 +79,9 @@ export async function POST(request: NextRequest) {
     const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...projected, review_checkpoint: {...checkpoint, input_hash:projectedHash, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
-    if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),trace:result.state.trace?.at(-1) || null},{status:422});
-    return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace:result.state.trace?.at(-1) || null, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
+    const trace=(result.state.trace?.length || 0)>(checkpoint.state.trace?.length || 0)?result.state.trace.at(-1):null;
+    if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),trace},{status:422});
+    return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {
     // A timeout leaves the lease until expiry: a still-running provider call must
     // not overlap a retry. Successful earlier stages remain persisted.

@@ -10,7 +10,7 @@ test('selection panel renders one explicit retry button and dispatches its actio
  const tree=ReviewPanel(props);const found=buttons(tree);assert.equal(found.length,1);
  found[0].props.onClick();assert.equal(calls[0][0],'retry-selection');
  const html=renderToStaticMarkup(tree);assert.ok(html.includes('Reintentar selección'));assert.ok(html.includes('No necesitas corregir las fuentes'));
- assert.ok(!html.includes('Después de guardar las correcciones'));assert.ok(html.includes('1 tarea de RankPilot'));assert.ok(html.includes('No quedan respuestas pendientes'));
+ assert.ok(!html.includes('Después de guardar las correcciones'));assert.ok(html.includes('1 tarea de RankPilot'));assert.ok(html.includes('Listo para preparar Submission y Audit'));
  assert.equal(buttons(ReviewPanel({...props,busy:true}))[0].props.disabled,true);
 });
 
@@ -43,4 +43,14 @@ test('every user or system finding has a direct action; known matter IDs focus e
  const tree=ReviewPanel({data,errors:[],warnings:[],approved:false,onResolve:(...args)=>calls.push(args)});
  const actions=buttons(tree);assert.equal(actions.length,2);actions.forEach(b=>b.props.onClick());assert.deepEqual(calls.map(c=>c[0]),['wizard','retry-review']);
  assert.deepEqual(focusedReviewScope('Confirma el dato',[],[{id:'m1',client:'One'},{id:'m2',client:'Two'}],{matter_id:'m2'}).matterIds,['m2']);
+});
+
+
+test('a stopped internal job gives a clear resume action instead of a user correction',()=>{
+ const {publicJobIssue}=require('../../src/lib/editorial/jobs.ts');
+ const issue=publicJobIssue({owner:'rankpilot',code:'DEVELOPMENT_REJECTED',message:'Cita decisiva sin vínculo literal: secret-id'});
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:['La revisión editorial se ejecutará después de guardar la redacción.'],warnings:[],approved:false,job:{status:'failed',issue},onResolve:()=>{}}));
+ assert.ok(html.includes('RankPilot no pudo completar la preparación'));
+ assert.ok(html.includes('Reanudar preparación'));assert.ok(!html.includes('secret-id'));
+ assert.ok(!html.includes('No quedan respuestas pendientes'));
 });

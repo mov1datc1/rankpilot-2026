@@ -5,6 +5,7 @@ The register remains immutable: this node produces a versioned proposal, which i
 validated before any application projection or final-artifact approval.
 """
 import re
+import copy
 from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
@@ -71,6 +72,38 @@ def literal_quote(value):
 def _norm(value):
     return ' '.join(str(value or '').split()).casefold()
 
+SOURCE_FIELDS=('source_excerpt','rawNotes','summary','leadPartner','teamMembers','value')
+
+def bind_quote(value, matter):
+    """Recover an exact source span; only tolerate a clause-ending period.
+
+    Never fuzzy-match words, numbers, negation or quotes from another matter.
+    The returned quote is copied from the source, not the model's punctuation.
+    """
+    quote=literal_quote(value)
+    variants=[quote]
+    if len(quote)>20 and re.search(r'[^\W\d_]\.$',quote):
+        variants.append(quote[:-1])
+    for index,variant in enumerate(variants):
+        if not variant:continue
+        pattern=r'(?<!\w)'+r'\s+'.join(re.escape(part) for part in variant.split())
+        pattern+=r'(?=\s*[,;])' if index else r'(?!\w)'
+        for field in SOURCE_FIELDS:
+            match=re.search(pattern,str(matter.get(field) or ''),re.I)
+            if match:return match.group()
+    return None
+
+def bind_development(package, proposal):
+    proposal=copy.deepcopy(proposal)
+    register={m['id']:m for m in package.get('matters',[])}
+    for draft in proposal.get('matters',[]):
+        matter=register.get(draft.get('matter_id'),{})
+        draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
+    for candidate in proposal.get('candidates',[]):
+        for support in candidate.get('supporting_matters',[]):
+            support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
+    return proposal
+
 def development_errors(package, strategy, proposal):
     """Identity, coverage and quotation checks independent of model approval."""
     errors=[]
@@ -81,7 +114,7 @@ def development_errors(package, strategy, proposal):
     ids=[m.get('matter_id') for m in drafts]
     if set(ids)!=core or len(ids)!=len(set(ids)):
         errors.append('La elaboración debe cubrir exactamente todos los asuntos seleccionados.')
-    fields=('source_excerpt','rawNotes','summary','leadPartner','teamMembers','value')
+    fields=SOURCE_FIELDS
     for draft in drafts:
         matter=register.get(draft.get('matter_id'),{})
         quotes=draft.get('decisive_source_quotes',[])
@@ -135,11 +168,16 @@ def development_contract(package, strategy):
 
 def develop(state):
     from core.review_graph import invoke_role
+    # The caller retains previous proposals only while their source/strategy key
+    # matches. Revalidate locally before purchasing another generation.
+    previous=state.get('development')
+    if previous and state.get('development_reusable'):
+        bound=bind_development(state['package'],previous)
+        errors=development_errors(state['package'],state['strategy'],bound)
+        if not errors:
+            return {'development':bound,'errors':[],'development_validated':True}
     proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[])})
-    for matter in proposal.get('matters',[]):
-        matter['decisive_source_quotes']=[literal_quote(q) for q in matter.get('decisive_source_quotes',[])]
-    for candidate in proposal.get('candidates',[]):
-        for support in candidate.get('supporting_matters',[]):support['source_quote']=literal_quote(support.get('source_quote',''))
+    proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)
     return {'development':proposal,'errors':errors,'trace':trace,'development_validated':not errors}

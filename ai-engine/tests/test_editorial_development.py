@@ -49,3 +49,24 @@ class DevelopmentTests(unittest.TestCase):
         old={'rag-0e14054bcbd1','rag-2591427b0a2e','rag-15e8447cf657'}
         self.assertTrue(any(c.chunk_id not in old for c in labour))
         self.assertGreater(max(c.score for c in chunks),1)
+
+class QuoteRecoveryTests(unittest.TestCase):
+    def test_terminal_period_binds_to_exact_source_clause_only(self):
+        from core.editorial_development import bind_quote
+        source={'source_excerpt':'The team reduced exposure by approximately 80 percent, while other proceedings remained pending.'}
+        self.assertEqual(bind_quote('The team reduced exposure by approximately 80 percent.',source),'The team reduced exposure by approximately 80 percent')
+        for quote in ['The team reduced exposure by approximately 90 percent.','The team did not reduce exposure by approximately 80 percent.','The team reduced exposure by approximately 80.']:
+            self.assertIsNone(bind_quote(quote,source))
+        self.assertIsNone(bind_quote('The team reduced exposure by approximately 80 percent.',{'source_excerpt':'An unrelated mandate.'}))
+    def test_matching_saved_development_revalidates_without_paid_call(self):
+        from core.editorial_development import develop
+        proposal=copy.deepcopy(DEV)
+        proposal['matters'][0]['decisive_source_quotes']=['Partner Sofia Vega led the negotiations.']
+        package=copy.deepcopy(PACKAGE)
+        package['matters'][0]['source_excerpt']='Partner Sofia Vega led the negotiations, and prevented a strike. Exposure fell by approximately eighty percent.'
+        with patch('core.review_graph.invoke_role') as model:
+            result=develop({'package':package,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
+        model.assert_not_called()
+        self.assertTrue(result['development_validated'])
+        self.assertEqual(result['development']['matters'][0]['decisive_source_quotes'],['Partner Sofia Vega led the negotiations'])
+        self.assertNotIn('trace',result)

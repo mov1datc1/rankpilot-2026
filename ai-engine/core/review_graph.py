@@ -70,6 +70,8 @@ class ReviewState(TypedDict, total=False):
     operation: str
     development: dict
     development_validated: bool
+    development_reusable: bool
+    repair_feedback: list
     strategy: dict
     letter: dict
     judge: dict

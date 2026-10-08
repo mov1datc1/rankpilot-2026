@@ -66,3 +66,16 @@ test('generated department text can be repaired, but a human-edited B10 cannot',
  assert.deepEqual(targetedRepair(data),{tasks:['b10','audit','artifact'],letter:false});
  assert.equal(targetedRepair({...data,enhanced_b7:'Human text.'}),null);
 });
+
+test('public failures explain the next action without leaking validator IDs',()=>{
+ const j=publicJob({id:'j',status:'failed',stage:'development',cursor:1,tasks:['selection','development','audit','artifact'],issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED',message:'Cita decisiva sin vínculo literal: secret-uuid'}});
+ assert.match(j.issue.message,/Reanudar preparación/);assert.match(j.issue.message,/No necesitas modificar tus datos/);assert.ok(!j.issue.message.includes('secret-uuid'));
+});
+test('durable tasks reuse completed roles instead of executing the next paid role under the wrong label',()=>{
+ const {reviewTaskDisposition}=require('../../src/lib/audit/review-checkpoint.ts');
+ assert.equal(reviewTaskDisposition('strategy','development'),'reuse');
+ assert.equal(reviewTaskDisposition('development','writer'),'reuse');
+ assert.equal(reviewTaskDisposition('writer','done'),'reuse');
+ assert.equal(reviewTaskDisposition('development','development'),'run');
+ assert.equal(reviewTaskDisposition('writer','development'),'out_of_order');
+});
