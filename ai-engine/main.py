@@ -8,6 +8,7 @@ import base64
 import time
 import logging
 import hmac
+from utils.engine_identity import engine_fingerprint
 
 logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
@@ -108,6 +109,7 @@ def read_root():
         "service": "RankPilot Core Engine",
         "version": "rankpilot-pipeline-v3.2",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
+        "engine_fingerprint": engine_fingerprint(),
         "environment": "Ubuntu/Docker"
     }
 
@@ -121,6 +123,7 @@ async def health_check():
         "message": "RankPilot Core is online",
         "version": "rankpilot-pipeline-v3.2",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
+        "engine_fingerprint": engine_fingerprint(),
         "environment": "Ubuntu/Docker"
     }
 

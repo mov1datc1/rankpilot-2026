@@ -5,12 +5,19 @@ const {sourceSnapshot,stableHash,draftSourceHash,draftDisposition}=require('../.
 const {editorialIdentity,editorialUser}=require('../../src/lib/editorial/identity.ts');
 const {reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
 const {engineMatchesWorker,EDITORIAL_VERSION}=require('../../src/lib/editorial/contracts.ts');
-test('rolling deployments only claim work when worker and engine commits agree',()=>{
- assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'new'},'old'),false);
- assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'new'},'new'),true);
- assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},'new'),false);
- assert.equal(engineMatchesWorker({version:'old',commit:'new'},'new'),false);
- assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},''),true);
+test('rolling deployments require identical engine code and RAG, not identical UI commits',()=>{
+ const fingerprint='a'.repeat(64);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'previous-ui',engine_fingerprint:fingerprint},fingerprint),true);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,engine_fingerprint:'b'.repeat(64)},fingerprint),false);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},fingerprint),false);
+ assert.equal(engineMatchesWorker({version:'old',engine_fingerprint:fingerprint},fingerprint),false);
+ assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION},''),false);
+});
+test('Python engine and Node worker compute the same runtime fingerprint',()=>{
+ const {execFileSync}=require('node:child_process');
+ const {engineFingerprint}=require('../../src/lib/editorial/engine-identity.ts');
+ const actual=execFileSync('python3',['-c','from utils.engine_identity import engine_fingerprint; print(engine_fingerprint())'],{cwd:require('node:path').resolve(__dirname,'../../ai-engine'),encoding:'utf8'}).trim();
+ assert.equal(engineFingerprint(),actual);
 });
 const matters=Array.from({length:32},(_,i)=>({id:`m${i}`,rawNotes:`Matter ${i} is pending`,publish_status:'non_publishable',confidentialityConfirmed:true}));
 const state={selection_validated:true,selection_review_validated:true,strategy:{matters:matters.map((m,i)=>({matter_id:m.id,disposition:i<20?'core':'reserve'})),hero_matter_id:'m0'}};
