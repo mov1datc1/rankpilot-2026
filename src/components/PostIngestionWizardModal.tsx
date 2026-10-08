@@ -998,6 +998,12 @@ export default function PostIngestionWizardModal({
                       </div>
                     )}
 
+                    {correctionOnly && <fieldset style={{marginTop:16,border:'1px solid #CBD5E1',padding:12}}>
+                      <legend>Ampliar la evidencia de este asunto</legend>
+                      <p>Añade hechos documentados: actuación de la firma, resultado, escala o participación de los abogados. El extracto original se conserva. No necesitas volver a subir el borrador completo.</p>
+                      <label>Información adicional<textarea aria-label={`Información adicional de ${matter.client || matter.name}`} rows={5} maxLength={8000} value={matter.additionalEvidence || ''} onChange={e=>updateMatterField(matter.id,'additionalEvidence',e.target.value)} style={{display:'block',width:'100%'}} /></label>
+                      <label>Fuente y fecha, si la conoces<input aria-label={`Fuente adicional de ${matter.client || matter.name}`} maxLength={8000} value={matter.additionalEvidenceSource || ''} onChange={e=>updateMatterField(matter.id,'additionalEvidenceSource',e.target.value)} style={{display:'block',width:'100%'}} /></label>
+                    </fieldset>}
                     {/* Summary facts preview */}
                     <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#475569', lineHeight: '1.5' }}>
                       <span style={{ fontWeight: 600, color: '#334155' }}>Hechos fácticos extraídos: </span>

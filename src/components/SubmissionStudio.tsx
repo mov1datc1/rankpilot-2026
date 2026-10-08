@@ -1,5 +1,7 @@
 'use client';
 
+import { AuditNextActions } from '@/components/AuditNextActions';
+import { type AuditAction } from '@/lib/audit/next-actions';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { needsB10Optimization, hasValidatedSelection } from '@/lib/audit/optimization-state';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
@@ -277,17 +279,21 @@ export default function SubmissionStudio({
   const pendingInputMatters = matters.filter(needsInputReview);
   const [reviewPending, setReviewPending] = useState(false);
 
+  const [auditAction,setAuditAction]=useState<AuditAction|null>(null);
+  const [filingOpenRequest,setFilingOpenRequest]=useState(0);
+  const returnToAudit=()=>{setAuditAction(null);setFilingOpenRequest(0);setActiveTab('audit');window.setTimeout(()=>document.getElementById('audit-next-actions')?.scrollIntoView({behavior:'smooth',block:'start'}),100);};
+  const applyAuditSave=(result:any)=>({audit_action_responses:result.auditActionResponses,previous_approved_artifact:result.previousApprovedArtifact});
   const [activeReviewMessage,setActiveReviewMessage]=useState<string | undefined>();
   const [periodFrom, setPeriodFrom] = useState(initialChambersData?.research_period?.from || '');
   const [periodTo, setPeriodTo] = useState(initialChambersData?.research_period?.to || '');
   const saveResearchPeriod = async () => {
     setIsSavingDraft(true);setDraftSaveError('');
     try {
-      const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),researchPeriod:{from:periodFrom,to:periodTo},reviewIssueMessage:activeReviewMessage});
+      const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),researchPeriod:{from:periodFrom,to:periodTo},auditActionId:auditAction?.id,reviewIssueMessage:activeReviewMessage});
       if(!result.success) throw new Error(result.error);
-      setChambersData((prev:any)=>({...prev,research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+      setChambersData((prev:any)=>({...prev,...applyAuditSave(result),research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
       setActiveReviewMessage(undefined);
-      document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if(auditAction)returnToAudit();else document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
     } catch(error) {setDraftSaveError(error instanceof Error?error.message:'No se pudo guardar el periodo.');}
     finally {setIsSavingDraft(false);}
   };
@@ -317,10 +323,16 @@ export default function SubmissionStudio({
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
   };
-  const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} onSave={async filingDetails=>{
-    const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails});
+  const navigateAuditAction=(action:AuditAction)=>{
+    setAuditAction(action);setDraftSaveError('');
+    if(action.kind==='filing') {setActiveTab('studio');setFilingOpenRequest(n=>n+1);window.setTimeout(()=>document.getElementById('studio-filing-details')?.scrollIntoView({behavior:'smooth',block:'start'}),100);return;}
+    resolveReviewIssue(action.kind==='period'?'period':action.kind==='lawyers'?'lawyers':'wizard',action.message);
+  };
+  const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} saveLabel={auditAction?'Guardar y volver al Audit':undefined} openRequest={filingOpenRequest} onCancel={()=>{if(auditAction)returnToAudit();}} onSave={async filingDetails=>{
+    const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails,auditActionId:auditAction?.id});
     if(!result.success){setDraftSaveError(result.error || 'No se pudo guardar.');return false;}
-    setChambersData((prev:any)=>({...prev,...result.filingDetails,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+    setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...result.filingDetails,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+    if(auditAction)returnToAudit();
     return true;
   }} /></>;
 
@@ -1326,7 +1338,11 @@ export default function SubmissionStudio({
               </button>
             </div>
           )}
-          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} /></div> : chambersData.editorial_review ? <article><h2>Audit pendiente de generación</h2><p>La revisión se interrumpió antes de redactar el Audit. Las redacciones guardadas se conservan; reintenta Optimizar Todo para continuar.</p><ul>{deliveryState.errors.map((message:string)=><li key={message}>{message}</li>)}</ul></article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
+          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} actions={<AuditNextActions data={chambersData} submissionId={submission.id} busy={isOptimizingAll || isSavingDraft} onNavigate={navigateAuditAction} onPrepare={()=>void handleOptimizeAll(false)} onReferences={async (action,notes)=>{
+            const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),auditActionId:action.id,refereeNotes:notes});
+            if(!result.success)throw new Error(result.error || 'No se pudo guardar.');
+            setChambersData((prev:any)=>({...prev,...applyAuditSave(result),audit_referee_notes:result.refereeNotes,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          }} />} /></div> : chambersData.editorial_review ? <article><h2>Audit pendiente de generación</h2><p>La revisión se interrumpió antes de redactar el Audit. Las redacciones guardadas se conservan; reintenta Optimizar Todo para continuar.</p><ul>{deliveryState.errors.map((message:string)=><li key={message}>{message}</li>)}</ul></article> : <><p role="note">Informe previo: requiere una nueva revisión antes de considerarse aprobado para entrega.</p>{auditChildren}</>}
 
         </div>
       )}
@@ -1596,7 +1612,7 @@ export default function SubmissionStudio({
               <p>Sirve para comprobar si la actividad de los asuntos corresponde al periodo solicitado. Puedes optimizar sin completarlo; la cobertura temporal quedará sin verificar. Añádelo solo si conoces las fechas de las instrucciones del directorio.</p>
               <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
               <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
-              <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>Guardar periodo</button>
+              <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>{auditAction?'Guardar y volver al Audit':'Guardar periodo'}</button>{auditAction&&<button type="button" disabled={isSavingDraft} onClick={returnToAudit}>Volver al Audit sin cambios</button>}
             </details>
             <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Verificación oficial del ranking</strong>
@@ -3832,7 +3848,7 @@ export default function SubmissionStudio({
         reviewPending={reviewPending}
         startAtLawyers={reviewLawyersFirst}
         reviewScope={focusedReview}
-        onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);}}
+        onClose={() => {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);if(auditAction)returnToAudit();}}
         targetDirectory={selectedDirectory}
         initialData={{
           sourceReports: chambersData.source_reports || [],
@@ -3853,17 +3869,17 @@ export default function SubmissionStudio({
           matters: matters
         }}
         onComplete={async (data) => {
-          if (data.correctionOnly && !data.lawyersChanged && !data.mattersChanged) {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);return;}
+          if (data.correctionOnly && !data.lawyersChanged && !data.mattersChanged) {setShowValidationWizard(false);setReviewLawyersFirst(false);setFocusedReview(undefined);if(auditAction)returnToAudit();return;}
           const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,reviewIssueMessage:focusedReview?.message,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
-          const result=await updateSubmissionValidatedData(submission.id,changes);
+          const result=await updateSubmissionValidatedData(submission.id,{...changes,auditActionId:auditAction?.id});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);
           setReviewLawyersFirst(false);
           setFocusedReview(undefined);
-          document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
+          if(auditAction)returnToAudit();else document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
           if(!data.correctionOnly && data.practiceArea && data.practiceArea!==submission.practiceArea)window.location.reload();
         }}
       />

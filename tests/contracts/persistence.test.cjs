@@ -138,3 +138,23 @@ test('filing details save atomically, preserve sources and invalidate the old do
  assert.equal(state.submission.chambersData.original_b10,before);assert.equal(state.submission.chambersData.release_verdict.passed,false);
  const stale=await updateSubmissionValidatedData('s',{expectedRevision:0,filingDetails:{}});assert.equal(stale.success,false);
 });
+test('Audit response and evidence persist atomically and remain visible after reload',async()=>{
+ reset();const message='Incorporar referencias de clientes.';
+ state.submission.chambersData.editorial_review={letter:{next_steps:message}};
+ const saved=await updateSubmissionValidatedData('s',{expectedRevision:0,auditActionId:message,refereeNotes:'Synthetic contact for Ana, supplied by firm.'});
+ assert.equal(saved.success,true);assert.equal(saved.auditActionResponses.length,1);assert.equal(state.submission.chambersData.audit_referee_notes,saved.refereeNotes);
+ assert.equal(state.submission.chambersData.release_verdict.passed,false);
+ const stale=await updateSubmissionValidatedData('s',{expectedRevision:0,auditActionId:message,refereeNotes:'Overwrite'});assert.equal(stale.success,false);
+ const before=JSON.stringify(state);
+ const unknown=await updateSubmissionValidatedData('s',{expectedRevision:1,auditActionId:'Invented task',refereeNotes:'Overwrite'});assert.equal(unknown.success,false);assert.equal(JSON.stringify(state),before);
+});
+test('historical download returns the exact earlier pair and rejects corrupt bytes',async()=>{
+ reset();const s=state.submission,d=s.chambersData;const sub=Buffer.from('Approved submission'),audit=Buffer.from('Approved audit');
+ d.editorial_review={letter:{next_steps:'Incorporar referencias de clientes.'}};
+ d.approved_artifact={input_hash:deliveryInputHash(s),base64:sub.toString('base64'),sha256:artifactHash(sub),audit_base64:audit.toString('base64'),audit_sha256:artifactHash(audit)};
+ const saved=await updateSubmissionValidatedData('s',{expectedRevision:0,refereeNotes:'New internal reference'});assert.equal(saved.success,true);assert.ok(saved.previousApprovedArtifact);
+ const response=await GET(new NextRequest('http://localhost/api/generate-docx?id=s&type=submission&mode=previous'));
+ assert.equal(response.status,200);assert.equal(Buffer.from(await response.arrayBuffer()).toString(),sub.toString());assert.match(response.headers.get('content-disposition'),/version_anterior/);
+ state.submission.chambersData.previous_approved_artifact.base64=Buffer.from('tampered').toString('base64');
+ assert.equal((await GET(new NextRequest('http://localhost/api/generate-docx?id=s&type=submission&mode=previous'))).status,409);
+});

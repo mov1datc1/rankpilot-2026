@@ -1,5 +1,8 @@
 'use server';
 
+import { recordAuditAction, normalizeRefereeNotes, supplementMatter } from '@/lib/audit/next-actions';
+import { previousApprovedArtifact } from '@/lib/audit/artifact-binding';
+
 import { normalizeFilingDetails } from '@/lib/audit/filing-details';
 
 import { recordReviewResponse } from '@/lib/audit/review-actions';
@@ -179,6 +182,8 @@ export async function updateSubmissionDepartment(submissionId: string, deptData:
 export async function updateSubmissionValidatedData(submissionId: string, data: {
   expectedRevision?: number;
   reviewIssueMessage?: string;
+  auditActionId?: string;
+  refereeNotes?: string;
   firmName?: string;
   practiceArea?: string;
   location?: string;
@@ -207,7 +212,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     }
     if (data.matters) data.matters = data.matters.map(m => {
       const previous = chambers.matters?.find((saved: any) => saved.id === m.id);
-      const reviewed = persistInputReview(m, previous);
+      const reviewed = persistInputReview(supplementMatter(m,previous,user.id), previous);
       if (validValueResolution(reviewed)) {
         const unchanged = previous?.valueResolution?.value === reviewed.valueResolution.value && previous?.valueResolution?.reason === reviewed.valueResolution.reason;
         reviewed.valueResolution = {...reviewed.valueResolution,
@@ -234,6 +239,8 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...chambers,
       ...(filingDetails || {}),
       draft_revision: nextRevision,
+      previous_approved_artifact: previousApprovedArtifact(existing,chambers),
+      ...(data.refereeNotes !== undefined ? {audit_referee_notes:normalizeRefereeNotes(data.refereeNotes)} : {}),
       final_review_stale: true,
       ...(data.practiceArea && data.practiceArea !== existing.practiceArea ? { canonical_matter_selection: null } : {}),
       release_verdict: { passed: false, status: 'needs_review', errors: ['Draft edited; validation required.'] },
@@ -247,6 +254,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...(data.matters ? { matters: data.matters } : {})
     };
 
+    Object.assign(updatedChambers, {audit_action_responses:recordAuditAction(chambers,updatedChambers,data.auditActionId,user.id)});
     Object.assign(updatedChambers, {review_responses:recordReviewResponse(chambers,updatedChambers,data.reviewIssueMessage,user.id)});
 
     await prisma.$transaction(async (tx) => {
@@ -286,7 +294,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
 
     });
-    return { success: true, revision: nextRevision, filingDetails, matters: data.matters, lawyers: data.lawyers, reviewResponses: (updatedChambers as any).review_responses };
+    return { success: true, revision: nextRevision, auditActionResponses:(updatedChambers as any).audit_action_responses, refereeNotes:(updatedChambers as any).audit_referee_notes, previousApprovedArtifact:updatedChambers.previous_approved_artifact, filingDetails, matters: data.matters, lawyers: data.lawyers, reviewResponses: (updatedChambers as any).review_responses };
   } catch (error: any) {
     console.error('Error updating validated data:', error);
     return { success: false, error: error.message };

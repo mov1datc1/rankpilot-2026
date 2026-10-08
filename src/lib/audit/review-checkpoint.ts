@@ -22,6 +22,7 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     research_period: data.research_period || null, current_band: submission.currentBand,
     requested_target: data.target_band || data.targetBand || data.ranking_target || null,
     filing_details: {contacts:data.contacts || [],department_name:data.departmentName || null,num_partners:data.numPartners ?? null,num_lawyers:data.numLawyers ?? null,heads:data.departmentHeads || data.department?.department_heads || []},
+    ...(data.audit_referee_notes ? {internal_referee_notes:data.audit_referee_notes} : {}),
     objectives: {primary: data.primaryObjective || null, secondary: data.secondaryObjective || null},
     ranking_edition: data.ranking_edition || 'current',
     ranking_jurisdiction: data.ranking_jurisdiction || submission.guideRegion?.split('—').pop()?.trim(),
@@ -62,8 +63,10 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   // Portfolio selection compares mandates, not the candidate's biography.
   // Candidate corrections belong to the leadership letter and its review.
   delete source.editorial_development;
+  // References inform the internal Audit, not portfolio selection or public prose.
+  if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
   return reviewInputHash({policy:'role-deliverables-v3-semantic-selection',stage,source,
-    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v3-bounded'}:{}),
+    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v4-actions'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),

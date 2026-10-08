@@ -156,7 +156,7 @@ class ResponseRecoveryTests(unittest.TestCase):
         from types import SimpleNamespace
         from core.review_graph import invoke_role, Letter
         with patch.dict(os.environ,{},clear=True),patch('core.review_graph.create_chat_model') as model:
-            model.return_value.model_copy.return_value.with_structured_output.return_value.invoke.return_value={'raw':SimpleNamespace(response_metadata={},usage_metadata={}), 'parsed':{k:'Supported text' for k in Letter.model_fields}}
+            model.return_value.model_copy.return_value.with_structured_output.return_value.invoke.return_value={'raw':SimpleNamespace(response_metadata={},usage_metadata={}), 'parsed':{k:[] if k=='next_actions' else 'Supported text' for k in Letter.model_fields}}
             invoke_role({'package':{},'output_recovery_attempt':1},'writer',Letter,'Write a letter',{})
         self.assertEqual(model.return_value.model_copy.call_args.kwargs['update']['max_tokens'],32768)
     def test_legacy_eof_is_an_output_failure_not_an_unknown_live_request(self):

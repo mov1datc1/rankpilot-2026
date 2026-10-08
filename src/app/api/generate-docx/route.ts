@@ -89,6 +89,15 @@ export async function GET(request: NextRequest) {
     }
 
     const chambersData = submission.chambersData as any || {};
+    if(exportMode==='previous') {
+      const prior=chambersData.previous_approved_artifact;
+      const encoded=docType==='submission'?prior?.base64:docType==='audit'?prior?.audit_base64:null;
+      const expected=docType==='submission'?prior?.sha256:prior?.audit_sha256;
+      if(!encoded || !prior?.input_hash || !prior?.archived_at) return NextResponse.json({error:'No hay una versión anterior revisada disponible.'},{status:404});
+      const bytes=Buffer.from(encoded,'base64');
+      if(artifactHash(bytes)!==expected)return NextResponse.json({error:'No se pudo comprobar la versión anterior.'},{status:409});
+      return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
+    }
     const pair=chambersData.approved_artifact;
     if(docType==='audit' && chambersData.release_verdict?.passed && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
       const bytes=Buffer.from(pair.audit_base64,'base64');
