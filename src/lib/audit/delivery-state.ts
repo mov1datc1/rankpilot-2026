@@ -1,4 +1,5 @@
 import { publicationStatus, valueConflict, validValueResolution } from './input-review';
+import { REVIEW_POLICY_VERSION, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from './review-versions';
 /** Shared by Studio and the download endpoint. Optimization is not approval. */
 export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false) {
   const verdict = data?.release_verdict || {};
@@ -26,6 +27,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   }
   if (matters.some(m => valueConflict(m) || (m.valueResolution && !validValueResolution(m)))) errors.push('Resuelve los importes o monedas contradictorios antes de la entrega final.');
   if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
+  if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== REVIEW_POLICY_VERSION || data.completed_renderer_version !== RENDERER_VERSION || data.completed_artifact_review_version !== ARTIFACT_REVIEW_VERSION)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
   const warnings = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
   return { approved: errors.length === 0, errors: [...new Set(errors)], warnings, label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
 }

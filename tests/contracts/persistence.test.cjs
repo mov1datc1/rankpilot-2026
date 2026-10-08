@@ -25,6 +25,8 @@ test('blocked verdict prevents optimized download despite existing matters',asyn
 test('stale browser revision cannot overwrite a newer draft',async()=>{reset();state.submission.chambersData.draft_revision=3;const res=await updateSubmissionValidatedData('s',{expectedRevision:2,b10Text:'stale'});assert.equal(res.success,false);assert.equal(state.submission.chambersData.original_b10,'old');});
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
 function approve(){
+ const v=require('../../src/lib/audit/review-versions.ts');
+ Object.assign(state.submission.chambersData,{completed_review_policy_version:v.REVIEW_POLICY_VERSION,completed_renderer_version:v.RENDERER_VERSION,completed_artifact_review_version:v.ARTIFACT_REVIEW_VERSION});
  state.submission.chambersData.matters=[{id:'old',client:'Original',isConfidential:false,publish_status:'publishable'}];
  const bytes=Buffer.from('opaque QA artifact');
  state.submission.chambersData.approved_artifact={base64:bytes.toString('base64'),sha256:artifactHash(bytes),input_hash:deliveryInputHash(state.submission)};

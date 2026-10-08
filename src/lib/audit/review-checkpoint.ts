@@ -2,7 +2,8 @@ import { recoverClientLegalName } from './extraction-auditor';
 import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
-export const REVIEW_POLICY_VERSION = 'review-core-v3.1';
+import { REVIEW_POLICY_VERSION } from './review-versions';
+export { REVIEW_POLICY_VERSION } from './review-versions';
 
 export const reviewSteps = ['strategy', 'development', 'writer', 'done'] as const;
 export const reviewStepLabels = {

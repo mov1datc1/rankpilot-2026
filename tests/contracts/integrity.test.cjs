@@ -124,3 +124,14 @@ test('anonymization preserves employment roles without inventing a client relati
  assert.match(result,/advises a confidential client on confidential matters/);
  assert.doesNotMatch(result,/Synthetic Motors|a confidential client de México|a company de México/);
 });
+
+test('Studio rejects historical artifact approval after a review contract update',()=>{
+ const versions=require('../../src/lib/audit/review-versions.ts');
+ const data={release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:versions.REVIEW_POLICY_VERSION,completed_renderer_version:versions.RENDERER_VERSION,completed_artifact_review_version:versions.ARTIFACT_REVIEW_VERSION};
+ assert.equal(getDeliveryState(data,[matter('1')],true).approved,true);
+ for(const key of ['completed_review_policy_version','completed_renderer_version','completed_artifact_review_version']) {
+   const stale={...data,[key]:'previous'};
+   assert.equal(getDeliveryState(stale,[matter('1')],true).approved,false);
+   assert.match(getDeliveryState(stale,[matter('1')],true).errors.join(' '),/revisión anterior/);
+ }
+});
