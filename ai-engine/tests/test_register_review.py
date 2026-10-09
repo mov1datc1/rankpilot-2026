@@ -1,5 +1,5 @@
 import unittest
-from core.register_review import register_defects
+from core.register_review import register_defects, register_output_limit
 from core.editorial_development import submission_voice_paths
 
 class RegisterReviewTests(unittest.TestCase):
@@ -24,3 +24,12 @@ class RegisterReviewTests(unittest.TestCase):
     def test_source_commentary_is_repaired_but_legal_audits_are_preserved(self):
         proposal={'matters':[{'text':'The firm conducted evidence audits.','completion_status':'The source records completion of the negotiation.'},{'text':'The formal status field is N/A, while the narrative describes ongoing work.'}]}
         self.assertEqual(submission_voice_paths(proposal),['matters/1/text','matters/0/completion_status'])
+
+class RegisterOutputBudgetTests(unittest.TestCase):
+    def test_first_call_has_room_for_required_record_checks_and_stays_bounded(self):
+        matter={'confidentialityEvidence':{'client_register':[{'quote':'Example | Sector'}]}}
+        package={'rendered_artifact':'Final','matters':[{**matter,'id':str(i)} for i in range(32)]}
+        self.assertEqual(register_output_limit(package,8192),16384)
+        package['matters']=[{**matter,'id':str(i)} for i in range(200)]
+        self.assertEqual(register_output_limit(package,8192),32768)
+        self.assertEqual(register_output_limit({},8192),8192)

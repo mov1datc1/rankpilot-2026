@@ -17,7 +17,7 @@ from utils.model_factory import create_chat_model, get_model_settings
 from utils.model_response import require_complete_response
 from utils.rag_router import RAGRouter
 from core.grounding import factual_issues
-from core.register_review import RegisterCheck, register_rows, register_defects
+from core.register_review import RegisterCheck, register_rows, register_defects, register_output_limit
 from core.selection_contract import selection_contract, project_selection
 from core.editorial_development import develop, development_errors, literal_quote
 
@@ -238,8 +238,16 @@ def invoke_role(state, role, schema, instruction, payload):
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
     if remaining<20: raise TimeoutError('Editorial stage budget exhausted before next call')
     model=create_chat_model(purpose, request_timeout=remaining-5) if remaining!=float('inf') else create_chat_model(purpose)
+    output_limit=get_model_settings(purpose)['max_tokens']
+    if role=='editor' and package.get('rendered_artifact'):
+        # Mandatory per-record checks need room on the FIRST call, not only
+        # after a paid truncation. Keep a bounded allowance for each register.
+        planned_limit=register_output_limit(package,output_limit)
+        if planned_limit!=output_limit:
+            output_limit=planned_limit
+            model=model.model_copy(update={'max_tokens':output_limit})
     if state.get('output_recovery_attempt'):
-        model=model.model_copy(update={'max_tokens':min(32768,max(16384,get_model_settings(purpose)['max_tokens']*2))})
+        model=model.model_copy(update={'max_tokens':min(32768,max(16384,output_limit*2))})
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
     # otherwise raises before returning metadata. Validate locally after status.
     result = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True).invoke([

@@ -11,9 +11,9 @@ class RegisterClaim(BaseModel):
 class RegisterCheck(BaseModel):
     matter_id: str
     relationship: Literal['consistent','conflicting','not_comparable']
-    rationale: str = Field(description='Compare the client industry in its original register row with the SAME client in the matter narrative. Service descriptions are not client industries. Explain compatible broader/narrower descriptions rather than inventing a conflict.')
-    register_quote: str = ''
-    narrative_quote: str = ''
+    rationale: str = Field(description='Use at most 25 words. Compare the client industry in its original register row with the SAME client in the matter narrative. Service descriptions are not client industries. Explain compatible broader/narrower descriptions rather than inventing a conflict.')
+    register_quote: str = Field(default='',description='Empty unless relationship is conflicting. For a conflict, copy only the short literal register phrase identifying the disputed industry.')
+    narrative_quote: str = Field(default='',description='Empty unless relationship is conflicting. For a conflict, copy only the short literal narrative phrase identifying the competing industry.')
     nonessential_sector: bool = Field(default=False,description='True only if withdrawing an optional industry descriptor preserves all legally significant facts, scale, roles and selection. Never use for identity, amounts, outcomes or permissions.')
     claims: list[RegisterClaim] = Field(default_factory=list,description='For a conflicting sector ONLY: all remaining assertions in the exact Submission or Audit, each with its literal disputed sector term. Empty when already neutralized. Do not flag department-wide capabilities merely because one client register differs.')
 
@@ -48,3 +48,7 @@ def register_defects(package, checks):
                 'source_quote':check['register_quote']+'\n'+check['narrative_quote'],**claim,
                 'message':('Retira el descriptor sectorial discutido de la redacción, conservando los hechos jurídicos y las fuentes originales. ' if check.get('nonessential_sector') else 'Confirma la discrepancia sectorial que afecta sustancialmente al asunto. ')+check['rationale']})
     return defects
+
+def register_output_limit(package, default):
+    count=len(register_rows(package)) if package.get('rendered_artifact') else 0
+    return min(32768,max(default,8192+256*count)) if count else default
