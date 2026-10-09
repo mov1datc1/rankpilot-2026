@@ -154,3 +154,19 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertTrue(result['judge']['passed'])
             self.assertEqual(result['judge']['defects'][0]['severity'],'warning')
         self.assertFalse(self.review([{**defect,'artifact_quote':'“The team won in 2025.”'}])['judge']['passed'])
+
+    def test_adjacent_empty_status_labels_are_not_temporal_assertions(self):
+        defect={**self.defect('missing_metadata','warning'),'code':'MISSING_TEMPORAL_METADATA',
+                'field_path':'matter_status','artifact_claim_kind':'template_label','source_quote':''}
+        for section in ('D','E'):
+            quote=f'{section}8 Date of completion or current status\n\n{section}9 Other information about this matter – e.g. link to press coverage'
+            self.state['package']['rendered_artifact']=quote
+            self.assertTrue(self.review([{**defect,'artifact_quote':quote}])['judge']['passed'])
+            for edited in (quote.replace('\n\n',' Ongoing in 2025 '),quote+' won',quote.replace(f'{section}9','D9' if section=='E' else 'E9')):
+                self.state['package']['rendered_artifact']=edited
+                self.assertFalse(self.review([{**defect,'artifact_quote':edited}])['judge']['passed'])
+            self.state['package']['rendered_artifact']=quote
+            self.assertFalse(self.review([{**defect,'artifact_quote':quote,'source_quote':'The mandate ended in 2020.'}])['judge']['passed'])
+            self.state['package']['matters'][0]['matter_status']='closed'
+            self.assertFalse(self.review([{**defect,'artifact_quote':quote}])['judge']['passed'])
+            del self.state['package']['matters'][0]['matter_status']

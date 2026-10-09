@@ -511,6 +511,10 @@ def calibrate_verdict(verdict, package=None, strategy=None):
         standard_heading = bool(re.fullmatch(r'(?:(?:Confidential|Publishable) )?Work Highlights in last 12 months', artifact_quote, re.I))
         if field == 'matter_status':
             standard_heading = standard_heading or bool(re.fullmatch(r'(?:[DE]8\s+)?Date of completion or current status', artifact_quote, re.I))
+            # Adjacent empty form cells can be quoted together by the reviewer.
+            # Accept only the exact next label, never intervening status prose.
+            standard_heading = standard_heading or bool(re.fullmatch(
+                r'(?P<section>[DE])8\s+Date of completion or current status\s+(?P=section)9\s+Other information about this matter\s*[–—-]\s*e\.g\. link to press coverage', artifact_quote, re.I))
         heading_in_artifact = standard_heading and artifact_quote.casefold() in ' '.join(str((package or {}).get('rendered_artifact') or '').split()).casefold()
         source_quote = literal_quote(defect.get('source_quote'))
         # A literal JSON quote of the verified absent field is evidence of

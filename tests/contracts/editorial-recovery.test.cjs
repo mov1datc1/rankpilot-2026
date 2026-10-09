@@ -39,3 +39,11 @@ test('only ungrounded global review failures qualify for diagnostic recovery',()
  }
  assert.equal(needsDiagnosticReview({}),false);
 });
+
+test('ambiguous template-label diagnostics are reassessed without approving or taking over factual disputes',()=>{
+ const {needsDiagnosticReview}=require('../../src/lib/editorial/recovery.ts');
+ const defect={code:'TEMPORAL_FINDING_UNRESOLVED',severity:'critical',owner:'rankpilot',retryable:true,temporal_basis:'missing_metadata',artifact_claim_kind:'template_label',source_quote:'',artifact_quote:'E8 Date of completion or current status'};
+ const state=d=>({final_artifact_review:{judge:{acceptance:[{criterion:'source_fidelity',status:'met'}],defects:[d]}}});
+ assert.equal(needsDiagnosticReview(state(defect)),true);
+ for(const changes of [{owner:'user'},{source_quote:'Work ended in 2020'},{temporal_basis:'evidenced_conflict'},{artifact_claim_kind:'factual_assertion'},{retryable:false}]) assert.equal(needsDiagnosticReview(state({...defect,...changes})),false);
+});

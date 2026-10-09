@@ -25,8 +25,13 @@ export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{
  * never a source-confirmation request. Reassess it; never turn it into approval. */
 export function needsDiagnosticReview(data:any):boolean {
   const judge=data?.final_artifact_review?.judge;
-  if(!judge || !judge.acceptance?.some((c:any)=>c.status==='failed')) return false;
+  if(!judge) return false;
   const critical=(judge.defects || []).filter((d:any)=>d.severity==='critical');
-  return critical.length>0 && critical.every((d:any)=>d.owner!=='user' && d.code==='EDITORIAL_OMISSION' &&
-    String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.artifact_quote && !d.source_quote);
+  const failedAcceptance=judge.acceptance?.some((c:any)=>c.status==='failed');
+  return critical.length>0 && critical.every((d:any)=>d.owner!=='user' && (
+    (failedAcceptance && d.code==='EDITORIAL_OMISSION' &&
+      String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.artifact_quote && !d.source_quote) ||
+    (d.owner==='rankpilot' && d.retryable===true && d.code==='TEMPORAL_FINDING_UNRESOLVED' &&
+      d.temporal_basis==='missing_metadata' && d.artifact_claim_kind==='template_label' && !d.source_quote)
+  ));
 }
