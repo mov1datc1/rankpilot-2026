@@ -37,6 +37,12 @@ def repair_targets(package, strategy, proposal):
         targets[path]={'current_value':value,'problem':problem,'source_evidence':evidence}
     for i,draft in enumerate(proposal.get('matters',[])):
         matter=register.get(draft.get('matter_id'),{})
+        from core.editorial_development import DEVELOPMENT_VERSION
+        if proposal.get('version') == DEVELOPMENT_VERSION or 'legal_issue_source_quote' in draft:
+            issue=literal_quote(draft.get('legal_issue_source_quote',''))
+            if not _norm(issue) or not any(_norm(issue) in _norm(matter.get(f)) for f in SOURCE_FIELDS):
+                add(f'matters/{i}/legal_issue_source_quote',draft.get('legal_issue_source_quote',''),
+                    'Copy the exact passage identifying this matter’s legal problem or purpose from its own original source. Never invent or borrow an issue.',matter)
         for j,quote in enumerate(draft.get('decisive_source_quotes',[])):
             if not _norm(literal_quote(quote)) or not any(_norm(literal_quote(quote)) in _norm(matter.get(f)) for f in SOURCE_FIELDS):
                 add(f'matters/{i}/decisive_source_quotes/{j}',quote,'Quotation is not literal in this matter.',matter)
@@ -180,6 +186,11 @@ def repair_rejected_development(state, proposal, defects):
             indices=[i for i,m in enumerate(proposal.get('matters',[])) if m.get('matter_id')==defect['matter_id']]
             candidates=[path for path in candidates if any(path.startswith(f'matters/{i}/') for i in indices)]
         exact=[path for path in candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
+        if not exact and defect.get('scope') == 'submission':
+            # A matter-specific finding may quote the firm overview or coverage
+            # argument. A unique literal match needs no paid location inference.
+            shared=[path for path in ('b10','c2') if path in allowed and quote and quote in norm(allowed[path])]
+            if len(shared)==1:exact=shared
         if not exact:
             remaining.append(defect);continue
         if defect.get('conflict_resolution')=='omit_nonessential_descriptor' and defect.get('matter_id'):

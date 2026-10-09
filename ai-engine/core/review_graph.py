@@ -217,6 +217,28 @@ def role_payload(payload, role):
             matter.pop('editorial_completion_status', None)
             matter.pop('status', None)
             matter.pop('draft_provenance', None)
+    if role == 'editor' and package.get('rendered_artifact'):
+        # The exact files are the final review target. Drop only generated
+        # prose already present verbatim in those files, never source evidence,
+        # reasoning, legal-issue anchors or a draft that differs from the file.
+        norm=lambda value:' '.join(str(value or '').split())
+        submission=norm(package['rendered_artifact'])
+        audit=norm(package.get('rendered_audit'))
+        def remove_copy(record, field, rendered):
+            value=record.get(field)
+            if isinstance(value,str) and value.strip() and norm(value) in rendered:
+                record.pop(field)
+        development=result.get('development') or {}
+        for field in ('b10','c2'):
+            remove_copy(development,field,submission)
+        for matter in development.get('matters',[]):
+            for field in ('text','completion_status'):
+                remove_copy(matter,field,submission)
+        for candidate in development.get('candidates',[]):
+            remove_copy(candidate,'submission_bio',submission)
+        if audit and isinstance(result.get('letter'),dict):
+            for field in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps'):
+                remove_copy(result['letter'],field,audit)
     return result
 
 class SelectionReviewDeferred(TimeoutError):
@@ -229,11 +251,15 @@ class EditorialResponseError(ValueError):
 
 
 def invoke_role(state, role, schema, instruction, payload):
+    from core.editorial_reasoning import reasoning_guidance, REASONING_VERSION
+    instruction += '\n' + reasoning_guidance(role)
     started = time.monotonic()
     purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
-    methodology = router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
+    # This narrow role interprets a supplied clause's membership predicate.
+    # Directory/practice examples add no evidence and can distract from negation.
+    methodology = '' if role == 'portfolio_reviewer' else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
@@ -255,6 +281,7 @@ def invoke_role(state, role, schema, instruction, payload):
         ('system', BASE + '\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
     raw = result.get('raw')
     trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':getattr(raw,'response_metadata',{}).get('model_name'), 'prompt_version':_RULES['version'], 'retrieved_rules':router.get_rag_manifest(), 'provider_request_id':getattr(raw,'id',None)}]
+    trace[-1]['reasoning_version']=REASONING_VERSION if reasoning_guidance(role) else None
     try:
         require_complete_response(raw)
         if result.get('parsing_error') or result.get('parsed') is None:
@@ -445,9 +472,10 @@ def editor(state):
     verdict.setdefault('defects', []).extend(conflicts)
     from core.editorial_repair import unique_defects
     verdict['defects']=unique_defects(verdict.get('defects',[]))
-    return {'judge':calibrate_verdict(verdict, state.get('package'), state.get('strategy')),'trace':trace}
+    return {'judge':calibrate_verdict(verdict, state.get('package'), state.get('strategy'),
+            draft_context={'letter':state.get('letter',{}),'development':development or {}}),'trace':trace}
 
-def calibrate_verdict(verdict, package=None, strategy=None):
+def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
     """RP16: an uncorroborated model label is never enough to override a defect.
 
     Only an identified, actually absent optional field with no disputed claim is
@@ -538,8 +566,21 @@ def calibrate_verdict(verdict, package=None, strategy=None):
         # Concrete dates or a quote repeated as Submission prose stay disputed.
         audit_text=' '.join(str((package or {}).get('rendered_audit') or '').split())
         submission_text=' '.join(str((package or {}).get('rendered_artifact') or '').split())
+        if not (package or {}).get('rendered_artifact') and draft_context:
+            # Pre-render review binds questions to actual internal draft prose.
+            # Never use this fallback when checking delivered document bytes.
+            letter=draft_context.get('letter',{})
+            audit_text=' '.join(' '.join(str(letter.get(k) or '').split()) for k in
+                ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps'))
+            development=draft_context.get('development',{})
+            public=[development.get(k,'') for k in ('b10','c2')]
+            public += [m.get(k,'') for m in development.get('matters',[]) for k in ('text','completion_status')]
+            public += [c.get('submission_bio','') for c in development.get('candidates',[])]
+            submission_text=' '.join(' '.join(str(v or '').split()) for v in public)
         metadata_request = (missing and defect.get('artifact_claim_kind') == 'request_for_information'
-            and bool(artifact_quote) and artifact_quote in audit_text and artifact_quote not in submission_text
+            and bool(artifact_quote) and (artifact_quote in audit_text or any(
+                artifact_quote in ' '.join(str(q).split()) for q in (strategy or {}).get('pending_questions',[])))
+            and artifact_quote not in submission_text
             and not re.search(r'\d|\b(?:January|February|March|April|May|June|July|August|September|October|November|December|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',artifact_quote,re.I))
         disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact and not metadata_request))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained

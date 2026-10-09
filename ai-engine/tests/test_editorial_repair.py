@@ -228,6 +228,18 @@ class AuditResponsibilityTests(unittest.TestCase):
         self.assertEqual(result['repair_feedback'],[defect])
 
 class LiteralRepairRoutingTests(unittest.TestCase):
+    def test_matter_specific_claim_in_overview_uses_unique_literal_location(self):
+        from core.editorial_repair import repair_rejected_development
+        proposal={'b10':'In a recent tax controversy, the firm challenged the assessment.',
+                  'c2':'The firm requests appropriate coverage.',
+                  'matters':[{'matter_id':'m','text':'The firm challenged the assessment.'}]}
+        defect={'code':'UNSUPPORTED_CLAIM','severity':'critical','scope':'submission','matter_id':'m',
+                'artifact_quote':proposal['b10'],'message':'Remove ungrounded recency.'}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair,patch('core.review_graph.invoke_role') as locator:
+            repair_rejected_development({'package':{'matters':[]},'strategy':{}},proposal,[defect])
+        locator.assert_not_called()
+        self.assertEqual(set(repair.call_args.args[2]),{'b10'})
+
     def test_duplicate_warnings_and_critical_claims_use_one_direct_repair_without_locator(self):
         from core.editorial_repair import repair_rejected_development
         proposal={'matters':[{'matter_id':'m','text':'An industrial employer retained the firm.','completion_status':'Ongoing work for an industrial workforce.'}]}

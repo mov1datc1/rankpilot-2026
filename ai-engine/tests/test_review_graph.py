@@ -9,7 +9,7 @@ LETTER={k:'Source-grounded text.' for k in ['executive_assessment','portfolio','
 
 def development(package):
     source=package['matters'][0].get('rawNotes',SOURCE)
-    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'decisive_source_quotes':[source]}]}
+    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
 
 class ReviewGraphTests(unittest.TestCase):
     def test_word_and_studio_share_the_same_named_actions(self):

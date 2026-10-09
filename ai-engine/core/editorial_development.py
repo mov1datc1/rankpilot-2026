@@ -9,7 +9,7 @@ import copy
 from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
-DEVELOPMENT_VERSION = 'editorial-development-v1'
+DEVELOPMENT_VERSION = 'editorial-development-v2'
 
 class SupportingMatter(BaseModel):
     matter_id: str
@@ -32,6 +32,7 @@ class Candidate(BaseModel):
 class MatterDraft(BaseModel):
     matter_id: str
     text: str
+    legal_issue_source_quote: str = Field(description='One exact contiguous source span identifying the distinctive legal problem, obstacle or mandate purpose. Preserve the specific issue, not merely a procedure label, client name, value or outcome. Internal evidence only, never invent a problem absent from the source.')
     completion_status: str = Field(default='', description='Source-grounded English D8/E8 status. Reconcile with the matter narrative: preserve dated and interim outcomes, never select a disputed definitive outcome. State only undisputed progress when source outcomes conflict. Empty only if no status evidence exists.')
     decisive_source_quotes: list[str] = Field(description='Internal evidence only: copy exact contiguous source spans covering decisive outcomes, contribution, scale and personal roles. Never anonymize, add square-bracket substitutions, translate, add a final period or complete a source fragment. These quotes are not exported as public prose and do not claim independent verification.')
 
@@ -59,7 +60,7 @@ TASK = '''Develop the complete editorial case, not a summary of the register. If
 Keep requested_target and objectives distinct from current_band and official observations. Preserve a supplied target as an objective or explicitly justify a recommended change in target_rationale. Preserve useful source-backed career history without treating it as current matter leadership. Use category_rationale to explain each proposed category and any change to the input suggestedRank. Generic labels such as Individual ranking candidate are not a category; use a reasoned specific category or Category pending with the exact gap, without guessing eligibility.
 Return one candidate for EACH supplied lawyer and one matter draft for EACH core matter, no reserves.
 Use only supplied source evidence. Existing drafts are proposals, not evidence; preserve supported human corrections.
-For every core matter, retain decisive documented outcomes, legally significant acts, scale and attributed personal roles. Do not reduce a documented result to an intention or merely list services. Preserve reported/approximate amounts and pending proceedings alongside any completed interim outcomes. Use 1–3 organic paragraphs as evidence warrants; no arbitrary minimum length.
+For every core matter, retain the distinctive legal problem and mechanism as well as decisive documented outcomes, legally significant acts, scale and attributed personal roles. Do not reduce a documented result to an intention or merely list services. Preserve reported/approximate amounts and pending proceedings alongside any completed interim outcomes. Let evidentiary richness determine length; no fixed paragraph count or arbitrary minimum. Select legal_issue_source_quote from the original matter as the separate legal-issue preservation anchor.
 For each candidate, reason from status/seniority, quality and number of personally attributed matters, personal role, leadership, specialization, external evidence, verified current ranking and proposed category, in that order. Supporting quotes must be contiguous in the named matter's source fields, including leadPartner/teamMembers. Do not upgrade a team member to leader. A biography cannot substitute for matter-linked evidence. Assess every supplied lawyer; recommend present, develop or do_not_present. If evidence is insufficient, state a precise gap/action in the INTERNAL fields; the public bio must still accurately convey any supported relevant work. A partner cannot be proposed as an associate. Never assert an unverified current ranking. Propose a reasoned candidacy/category when supported; distinguish a target from a prediction. Do not put evidence gaps or internal recommendations in B9. Public B9/B10/C2 must speak as the firm: never say 'submitted evidence', 'this evidence supports', 'without asserting a ranking', 'no verified ranking', 'not a prediction' or describe what the source establishes. Keep those caveats in internal fields. In C2 make a direct, grounded request for coverage.
 Write developed, source-grounded B9 bios in professional English. For candidates supported by multiple mandates, explain their personal role and distinct legal contribution across representative mandates, not a one-line practice label. Client names mentioned only in a biography must not appear in public prose unless the canonical register establishes publication permission; use neutral descriptions instead. Confidential/unresolved client identities must be anonymized using accurate neutral descriptions, without deleting the substance of the work. Public prose may cite confidential work anonymously; names remain allowed in confidential matter drafts.
 Write B10 (at most 500 words) and C2 in English: articulate the practice's evidenced identity and case for inclusion/appropriate coverage. C2 must make the argument from actual capabilities, representative work and leadership without claiming a ranking not verified. C2 is distinct from repeating B10. Do not introduce competitor assertions without sources.
@@ -121,6 +122,8 @@ def bind_development(package, proposal):
     for draft in proposal.get('matters',[]):
         matter=register.get(draft.get('matter_id'),{})
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
+        if 'legal_issue_source_quote' in draft:
+            draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
     for candidate in proposal.get('candidates',[]):
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
@@ -140,6 +143,10 @@ def development_errors(package, strategy, proposal):
     for draft in drafts:
         matter=register.get(draft.get('matter_id'),{})
         quotes=draft.get('decisive_source_quotes',[])
+        if proposal.get('version') == DEVELOPMENT_VERSION or 'legal_issue_source_quote' in draft:
+            issue=literal_quote(draft.get('legal_issue_source_quote',''))
+            if not _norm(issue) or not any(_norm(issue) in _norm(matter.get(f)) for f in fields):
+                errors.append(f"Falta evidencia literal del problema jurídico: {draft.get('matter_id')}")
         if not str(draft.get('text','')).strip() or not quotes:
             errors.append(f"Falta redacción o evidencia decisiva: {draft.get('matter_id')}")
         for raw_quote in quotes:

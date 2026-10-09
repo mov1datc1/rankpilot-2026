@@ -758,6 +758,7 @@ CONFIDENTIALITY
 - For unstructured notes: explicit publication authorization means publishable. Absent or ambiguous permission means confirmation_required, not confirmed confidential or public.
 - Never move a matter between sections.
 - For contradictory amounts or currencies in the same mandate, leave matter_value empty and describe BOTH alternatives in value_conflict.
+- Different currencies alone do not establish a contradiction. Preserve explicitly supplied equivalents without verifying or inventing an exchange rate, and distinguish transaction/project value, claim exposure, settlement, recovery and fees. Flag incompatible source statements about the SAME economic concept, identifying the two passages and why they conflict; never ask the user to resolve separate concepts merely because their numbers differ. A bare $ does not establish USD or MXN.
 - Merge references to the same unstructured mandate across sources; keep unrelated mandates distinct.
 
 SEMANTIC ROLES

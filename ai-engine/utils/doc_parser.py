@@ -452,16 +452,11 @@ class DocumentParser:
             if status_m:
                 fields[8] = status_m.group(1).strip()
 
-        # Value discrepancy detection right at extraction (e.g. Cinemex USD 553k vs MXN 60.5M)
+        # Literal extraction cannot decide whether different currencies describe
+        # an equivalent or different economic concepts. Preserve both passages;
+        # the semantic extractor/reviewer must identify a real contradiction.
         matter_val_str = fields.get(3, "")
         summary_str = fields.get(2, "")
-        value_conflict = None
-        has_usd_val = bool(re.search(r'US[D\$]\s*[\d\.,]+', matter_val_str, re.I))
-        has_mxn_sum = bool(re.search(r'MXN\s*[\d\.]+\s*(?:million|millones|m\b)', summary_str, re.I))
-        if has_usd_val and has_mxn_sum:
-            mxn_match = re.search(r'(MXN\s*[\d\.]+\s*(?:million|millones|m\b)?)', summary_str, re.I)
-            mxn_val = mxn_match.group(1) if mxn_match else "MXN figure"
-            value_conflict = f"SOURCE VALUE CONFLICT: Discrepancy detected between table ({matter_val_str}) and narrative ({mxn_val})."
 
         result = {
             "client": fields.get(1, ""),
@@ -474,7 +469,7 @@ class DocumentParser:
             "completion_date": fields.get(8, ""),
             "is_confidential": is_confidential if 'is_confidential' in locals() else False,
             "confidentiality_status": confidentiality_status if 'confidentiality_status' in locals() else "confirmation_required",
-            "value_conflict": value_conflict,
+            "value_conflict": None,
         }
         result["_observed_field_numbers"] = sorted(fields)
         return result

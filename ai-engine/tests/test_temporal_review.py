@@ -108,6 +108,35 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertFalse(self.review([{**defect, 'source_quote':quote}])['judge']['passed'])
         self.assertFalse(self.review([{**defect,'artifact_quote':'Work ended in 2020.'}])['judge']['passed'])
 
+    def test_internal_strategy_question_is_not_a_claim_in_the_document(self):
+        quote='Please confirm activity within the applicable research period.'
+        self.state['strategy']['pending_questions']=[quote]
+        defect={**self.defect('missing_metadata'),'scope':'strategy','artifact_quote':quote,
+                'artifact_claim_kind':'request_for_information','source_quote':''}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.assertTrue(self.review([{**defect,'scope':'submission'}])['judge']['passed'])
+        for changes in [{'artifact_quote':'Question absent from the strategy.'},
+                        {'artifact_claim_kind':'factual_assertion'}, {'source_quote':'Ended in 2020.'}]:
+            self.assertFalse(self.review([{**defect,**changes}])['judge']['passed'])
+        self.state['package']['rendered_artifact']+=quote
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
+    def test_pre_render_optional_request_binds_to_internal_draft_only(self):
+        quote='Confirmar la ventana aplicable o la actividad relevante durante ella.'
+        defect={**self.defect('missing_metadata'),'artifact_quote':quote,
+                'artifact_claim_kind':'request_for_information','source_quote':''}
+        del self.state['package']['rendered_artifact']
+        self.state['letter']={'next_steps':quote}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'artifact_quote':'Texto no escrito.'}])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'source_quote':'Work ended in 2020.'}])['judge']['passed'])
+        # Public draft contamination and stale internal drafts cannot explain
+        # away a claim in a final document under review.
+        context={'letter':self.state['letter'],'development':{'b10':quote}}
+        self.assertFalse(calibrate_verdict({'passed':False,'defects':[defect]},self.state['package'],draft_context=context)['passed'])
+        self.state['package']['rendered_artifact']='Actual final document.'
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
     def test_empty_status_form_labels_do_not_invent_a_conflict(self):
         self.state['package']['matters'][0]['rawNotes'] += '\nMatter Status (closed in last year or ongoing?):'
         self.state['package']['rendered_artifact'] += '\nD8 Date of completion or current status'
