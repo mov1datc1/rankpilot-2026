@@ -20,3 +20,13 @@ export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{
   const delay=uncertain.has(code)?360000:Math.min(120000,15000*2**attempts);
   return {retryAt:new Date(now+delay),attempt:attempts+1};
 }
+
+/** A global rejection with no concrete critical finding is a reviewer failure,
+ * never a source-confirmation request. Reassess it; never turn it into approval. */
+export function needsDiagnosticReview(data:any):boolean {
+  const judge=data?.final_artifact_review?.judge;
+  if(!judge || !judge.acceptance?.some((c:any)=>c.status==='failed')) return false;
+  const critical=(judge.defects || []).filter((d:any)=>d.severity==='critical');
+  return critical.length>0 && critical.every((d:any)=>d.owner!=='user' && d.code==='EDITORIAL_OMISSION' &&
+    String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.artifact_quote && !d.source_quote);
+}

@@ -11,18 +11,29 @@ import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
 import { POST as b10 } from '@/app/api/optimize/b10/route';
 import { POST as complete } from '@/app/api/optimize/complete/route';
-import { editorialTokenBudget, spentTokens, recoveryPlan } from './recovery';
+import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview } from './recovery';
 
 /** Recover only the latest job, with unchanged owned sources, under the same lock as enqueue. */
 export async function recoverStoppedJobs() {
-  const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot' AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
+  const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE ((j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot') OR (j."status"='needs_review' AND j."stage"='artifact')) AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
   for(const candidate of candidates) {
-    const plan=recoveryPlan(candidate,candidate.issue?.code,process.env.RENDER_GIT_COMMIT || 'local',new Date(candidate.updatedAt).getTime());
+    const diagnostic=candidate.status==='needs_review';
+    if(diagnostic && (candidate.cursor!==candidate.tasks?.length || candidate.tasks.at(-1)!=='artifact')) continue;
+    const replayCursor=diagnostic?candidate.cursor-1:candidate.cursor;
+    const issue=diagnostic?systemIssue('AI_REVIEW_INVALID','RankPilot debe comprobar una decisión interna del revisor.'):candidate.issue;
+    const marker={stage:'artifact',cursor:replayCursor,issue,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',status:'queued',diagnostic_recovery:true};
+    const plan=recoveryPlan({...candidate,cursor:replayCursor,issue,ledger:diagnostic?[...(candidate.ledger || []),marker]:candidate.ledger},issue?.code,process.env.RENDER_GIT_COMMIT || 'local',new Date(candidate.updatedAt).getTime());
     if(!plan) continue;
     await prisma.$transaction(async tx=>{
       await tx.$queryRaw`SELECT "id" FROM "Submission" WHERE "id"=${candidate.submissionId} FOR UPDATE`;
       const current=await tx.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
       if(!current || current.userId!==candidate.userId || stableHash(sourceSnapshot(current))!==candidate.sourceHash) return;
+      if(diagnostic) {
+        if(!needsDiagnosticReview(current.chambersData)) return;
+        const changed=await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${replayCursor},"issue"=${JSON.stringify(issue)}::jsonb,"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"leaseToken"=NULL,"leaseUntil"=${plan.retryAt},"updatedAt"=now() WHERE "id"=${candidate.id} AND "status"='needs_review' AND "cursor"=${candidate.cursor} AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND newer."id"<>${candidate.id} AND (newer."createdAt">=(SELECT "createdAt" FROM "EditorialJob" WHERE "id"=${candidate.id}) OR newer."status" IN ('queued','running')))`;
+        if(changed===1) await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),completed_review_input_hash:null}}});
+        return;
+      }
       // Compare timestamps inside PostgreSQL: JS Date truncates microseconds
       // and could incorrectly classify this very job as a newer competitor.
       await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"leaseToken"=NULL,"leaseUntil"=${plan.retryAt},"updatedAt"=now() WHERE "id"=${candidate.id} AND "status" IN ('failed','indeterminate') AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND newer."id"<>${candidate.id} AND (newer."createdAt">=(SELECT "createdAt" FROM "EditorialJob" WHERE "id"=${candidate.id}) OR newer."status" IN ('queued','running')))`;

@@ -37,7 +37,13 @@ class DevelopmentTests(unittest.TestCase):
         self.assertEqual(result['judge']['defects'][0]['code'],'EDITORIAL_OMISSION')
     def test_omitted_source_outcome_overrides_positive_judge_flag(self):
         checks=[{'criterion':key,'status':'failed' if key=='decisive_evidence' else 'met','evidence':'Source says eighty percent; final account omits it.'} for key in ACCEPTANCE_CRITERIA]
-        with patch('core.review_graph.invoke_role',return_value=({'passed':True,'defects':[],'acceptance':checks},[])):
+        from core.review_graph import EditorialResponseError
+        with patch('core.review_graph.invoke_role',return_value=({'passed':True,'defects':[],'acceptance':checks},[{'usage':{'total_tokens':123}}])):
+            with self.assertRaisesRegex(EditorialResponseError,'no concrete critical finding') as error:
+                editor({'package':{**PACKAGE,'editorial_development':DEV},'strategy':STRATEGY,'letter':{}})
+        self.assertEqual(error.exception.trace['usage']['total_tokens'],123)
+        defect={'code':'EDITORIAL_OMISSION','severity':'critical','scope':'submission','matter_id':'m1','field_path':'matters/0/text','source_quote':SOURCE,'artifact_quote':'The team negotiated.','message':'Restore the documented strike prevention.'}
+        with patch('core.review_graph.invoke_role',return_value=({'passed':True,'defects':[defect],'acceptance':checks},[])):
             result=editor({'package':{**PACKAGE,'editorial_development':DEV},'strategy':STRATEGY,'letter':{}})
         self.assertFalse(result['judge']['passed'])
     def test_production_rag_includes_individual_methodology_and_later_practice_sections(self):

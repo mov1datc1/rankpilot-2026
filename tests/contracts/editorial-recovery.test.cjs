@@ -28,3 +28,14 @@ test('an invalid completed review retries promptly and still respects the failur
  const ledger=Array.from({length:3},()=>({stage:'audit',cursor:2,worker_commit:'build',issue:{code:'AI_REVIEW_INVALID'}}));
  assert.equal(recoveryPlan({...job,ledger},'AI_REVIEW_INVALID','build'),null);
 });
+
+test('only ungrounded global review failures qualify for diagnostic recovery',()=>{
+ const {needsDiagnosticReview}=require('../../src/lib/editorial/recovery.ts');
+ const defect={code:'EDITORIAL_OMISSION',severity:'critical',owner:'rankpilot',message:'La aceptación editorial no está completa: source_fidelity',source_quote:'',artifact_quote:''};
+ const state={final_artifact_review:{judge:{acceptance:[{criterion:'source_fidelity',status:'failed'}],defects:[defect]}}};
+ assert.equal(needsDiagnosticReview(state),true);
+ for(const changes of [{owner:'user'},{artifact_quote:'A concrete disputed assertion'},{source_quote:'A concrete omitted source fact'},{code:'SOURCE_CONFLICT'}]){
+  assert.equal(needsDiagnosticReview({final_artifact_review:{judge:{...state.final_artifact_review.judge,defects:[{...defect,...changes}]}}}),false);
+ }
+ assert.equal(needsDiagnosticReview({}),false);
+});
