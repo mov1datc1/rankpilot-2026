@@ -709,6 +709,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
   b10Text = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned, confNamesList);
+  // Keep the department narrative together instead of stranding its last paragraph.
+  elements.push(pageStart());
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
 
   // ═══ SECTION C ═══

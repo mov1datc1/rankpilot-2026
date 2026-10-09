@@ -70,8 +70,8 @@ For each matter supply decisive verbatim source quotes as a preservation checkli
 # Narrow metadiscourse patterns: legal evidence and audits can be the work itself.
 # Never remove these words globally or rewrite a factual claim with a regex.
 AUDIT_VOICE = re.compile(
-    r"\b(?:the (?:submitted )?source (?:describes|states|does not state|doesn't state|establishes|does not explain)|"
-    r"verified evidentiary record|evidence completeness|our analysis indicates|the audit demonstrates|"
+    r"\b(?:the (?:submitted )?source (?:describes|states|records|reports|does not state|doesn't state|establishes|does not explain)|"
+    r"the formal status field|the narrative describes|verified evidentiary record|evidence completeness|our analysis indicates|the audit demonstrates|"
     r"the submitted evidence (?:shows|supports|demonstrates)|no verified ranking|without asserting a ranking)\b",
     re.I,
 )
