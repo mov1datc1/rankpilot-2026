@@ -64,27 +64,26 @@ def verify_portfolio_consistency(state, letter):
 
     class Interpretation(BaseModel):
         index: int
-        disposition: Literal['core', 'reserve', 'excluded', 'comparison', 'not_classified']
-        quote: str
+        disposition: Literal['core', 'reserve', 'excluded', 'comparison', 'not_classified', 'ambiguous']
         reason: str
 
     class ClauseReview(BaseModel):
         interpretations: list[Interpretation]
 
     result, trace = invoke_role(state, 'portfolio_reviewer', ClauseReview,
-        'Interpret the portfolio classification actually asserted for EACH named matter in its quoted clause, considering ONLY that clause’s own section as context. Other sections can contradict this section: never use their classification to excuse a local contradiction. A shared reserve/exclusion introductory predicate applies to a following coordinated list even when the list sentence describes legal work rather than repeating the word reserve. Do not judge factual outcomes or rewrite prose. A client listed among reserves under an exclusion heading may be implicitly classified reserve; a statement that all named clients remain selected means core. Mere mention, procedural gaps, or a genuine comparison with a reserve does not classify a selected matter as reserved. Return comparison for a comparative reference without reclassification, not_classified when no selection claim is made. Preserve negation and shared predicates in lists. Copy a literal quote from that candidate’s own section supporting your reading; include the named client. One interpretation per index, no omissions. Do not infer classification from the section heading alone.',
+        'Interpret the portfolio classification actually asserted for EACH named matter in its quoted clause, considering ONLY that clause’s own section as context. Other sections can contradict this section: never use their classification to excuse a local contradiction. A shared reserve/exclusion introductory predicate applies to a following coordinated list even when the list sentence describes legal work rather than repeating the word reserve. Do not judge factual outcomes or rewrite prose. A client listed among reserves under an exclusion heading may be implicitly classified reserve; a statement that all named clients remain selected means core. Mere mention, procedural gaps, or a genuine comparison with a reserve does not classify a selected matter as reserved. Return comparison for a comparative reference without reclassification. Return not_classified for a factual evidence gap or sector discrepancy that makes NO membership claim. Return ambiguous only when portfolio membership is actually asserted but its meaning is unclear, such as an unclear shared inclusion/exclusion predicate. Preserve negation and shared predicates in lists. Identify evidence by the supplied index; the application retains its exact original clause, so do not copy or paraphrase quotations. One interpretation per index, no omissions. Do not infer classification from the section heading alone.',
         {'clauses':[{'index':i,'matter':next((m.get('client') for m in state.get('package',{}).get('matters',[]) if m['id']==d['matter_id']),''),'field':d['field_path'],'section_context':letter.get(d['field_path'],''),'clause':d['artifact_quote']} for i,d in enumerate(candidates)]})
     decisions={m['matter_id']:m['disposition'] for m in state.get('strategy',{}).get('matters',[])}
     seen=set(); defects=[]
     for item in result.get('interpretations',[]):
         i=item['index']
-        if i in seen or not 0<=i<len(candidates) or not item.get('reason') or not item.get('quote') or item['quote'] not in letter.get(candidates[i]['field_path'],''):
-            raise ValueError('Portfolio classification review lacks literal evidence')
+        if i in seen or not 0<=i<len(candidates) or not item.get('reason'):
+            raise ValueError('Portfolio classification review has invalid clause references')
         seen.add(i)
         # Ambiguous membership in a portfolio/reserves section needs generated
         # clarification, never a new question about the saved selection.
-        if item['disposition'] not in ('comparison',decisions[candidates[i]['matter_id']]):
-            defects.append({**candidates[i],'artifact_quote':item['quote'],'message':candidates[i]['message']+' '+('La pertenencia queda ambigua; explicita la clasificación guardada sin alterar los hechos. ' if item['disposition']=='not_classified' else '')+item['reason']})
+        if item['disposition'] not in ('comparison','not_classified',decisions[candidates[i]['matter_id']]):
+            defects.append({**candidates[i],'message':candidates[i]['message']+' '+('La pertenencia queda ambigua; explicita la clasificación guardada sin alterar los hechos. ' if item['disposition']=='ambiguous' else '')+item['reason']})
     if len(seen)!=len(candidates):
         raise ValueError('Portfolio classification review omitted a candidate clause')
     return defects, trace

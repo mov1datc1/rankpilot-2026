@@ -49,11 +49,33 @@ class AmbiguousMembershipTests(unittest.TestCase):
         from unittest.mock import patch
         from core.portfolio_consistency import verify_portfolio_consistency
         clause='Delta Industries y NORTHSTAR son asesoría menos diferenciadora.'
-        result={'interpretations':[{'index':0,'disposition':'not_classified','quote':clause,'reason':'Unclear collective membership.'}]}
+        result={'interpretations':[{'index':0,'disposition':'ambiguous','reason':'Unclear collective membership.'}]}
         with patch('core.review_graph.invoke_role',return_value=(result,[])):
             defects,_=verify_portfolio_consistency({'package':PACKAGE,'strategy':STRATEGY},{'evidence_gaps':clause})
         self.assertEqual(defects[0]['owner'],'rankpilot')
         self.assertIn('ambigua',defects[0]['message'])
+
+    def test_sector_discrepancy_is_not_a_portfolio_classification(self):
+        from unittest.mock import patch
+        from core.portfolio_consistency import verify_portfolio_consistency
+        clause='NORTHSTAR tiene descripciones contradictorias de su sector en las fuentes.'
+        result={'interpretations':[{'index':0,'disposition':'not_classified','reason':'Sector discrepancy only; no membership assertion.'}]}
+        with patch('core.review_graph.invoke_role',return_value=(result,[])):
+            defects,_=verify_portfolio_consistency({'package':PACKAGE,'strategy':STRATEGY},{'evidence_gaps':clause})
+        self.assertEqual(defects,[])
+
+    def test_evidence_is_bound_to_the_original_clause_without_model_recopied_quotes(self):
+        from unittest.mock import patch
+        from core.portfolio_consistency import verify_portfolio_consistency
+        clause='NORTHSTAR queda en reserva.'
+        result={'interpretations':[{'index':0,'disposition':'reserve','reason':'Explicit reserve assertion.'}]}
+        with patch('core.review_graph.invoke_role',return_value=(result,[])):
+            defects,_=verify_portfolio_consistency({'package':PACKAGE,'strategy':STRATEGY},{'evidence_gaps':clause})
+        self.assertEqual(defects[0]['artifact_quote'],clause)
+        result['interpretations'][0]['index']=3
+        with patch('core.review_graph.invoke_role',return_value=(result,[])):
+            with self.assertRaisesRegex(ValueError,'references'):
+                verify_portfolio_consistency({'package':PACKAGE,'strategy':STRATEGY},{'evidence_gaps':clause})
 
     def test_comparison_does_not_hide_a_reclassification_of_its_subject(self):
         defects=portfolio_defects(PACKAGE,STRATEGY,{'evidence_gaps':'NORTHSTAR frente a Delta Industries pierde prioridad y queda en reserva.'})
