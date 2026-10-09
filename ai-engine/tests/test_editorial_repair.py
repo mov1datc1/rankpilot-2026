@@ -214,3 +214,15 @@ class AuditResponsibilityTests(unittest.TestCase):
             result=develop(state)
         locator.assert_called_once()
         self.assertFalse(result['development_validated'])
+
+    def test_submission_repairs_are_context_not_audit_field_tasks(self):
+        from core.editorial_repair import repair_letter
+        state=self.state()
+        defect={'scope':'submission','severity':'critical','owner':'rankpilot','code':'UNSUPPORTED_CLAIM','field_path':'filing_details.heads','message':'Withdraw unsupported head title from Submission.'}
+        state['repair_feedback']=[defect]
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])) as model:
+            result=repair_letter(state)
+        self.assertTrue(result['writer_validated'])
+        self.assertEqual(model.call_args.args[4]['defects'],[])
+        self.assertEqual(model.call_args.args[4]['submission_review_context'],[defect])
+        self.assertEqual(result['repair_feedback'],[defect])
