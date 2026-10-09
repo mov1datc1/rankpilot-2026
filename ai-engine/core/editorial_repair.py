@@ -161,8 +161,8 @@ def repair_rejected_development(state, proposal, defects):
 
 
 def repair_letter(state):
-    """Patch only returned Audit fields; unaffected sections remain byte-identical."""
-    from core.review_graph import invoke_role, Letter, NextAction, reconcile_next_actions, audit_word_count, AUDIT_WORD_LIMIT
+    """Patch rejected Audit fields; condense globally only for a length violation."""
+    from core.review_graph import invoke_role, Letter, NextAction, reconcile_next_actions, audit_word_count, AUDIT_WORD_LIMIT, condense_audit_letter
     fields=('executive_assessment','portfolio','leadership','evidence_gaps','next_actions')
     feedback=state.get('repair_feedback',[])
     located=[d.get('field_path') for d in feedback]
@@ -186,6 +186,13 @@ def repair_letter(state):
             continue
         seen.add(key);fixed[key]=value
     fixed=reconcile_next_actions(Letter.model_validate(fixed).model_dump(),state['package'])
+    # Repair additions are subject to the same executive-length contract as
+    # initial writing. Condense once before validation instead of replaying
+    # the expensive source-grounded repair with identical feedback.
+    needs_condensation=audit_word_count(fixed)>AUDIT_WORD_LIMIT
+    before_condensation=copy.deepcopy(fixed)
+    fixed,trace=condense_audit_letter(state,fixed,trace)
+    condensed_fields=[key for key in fixed if fixed[key]!=before_condensation.get(key)]
     from core.portfolio_consistency import verify_portfolio_consistency
     conflicts,trace=verify_portfolio_consistency({**state,'trace':trace},fixed)
     errors=[d['message'] for d in conflicts]
@@ -195,4 +202,6 @@ def repair_letter(state):
     return {'letter':fixed,'writer_validated':not errors,'errors':errors,'trace':trace,
             'repair_feedback':conflicts or state.get('repair_feedback',[]),
             'letter_repair_requested':bool(errors),'writer_attempts':state.get('writer_attempts',0)+1,
-            'letter_repair_report':{'corrected_fields':list(seen),'unresolved':result.get('unresolved',[])}}
+            'letter_repair_report':{'corrected_fields':sorted(seen | set(condensed_fields)),
+                                    'condensation_requested':needs_condensation,'condensed_fields':condensed_fields,
+                                    'unresolved':result.get('unresolved',[])}}

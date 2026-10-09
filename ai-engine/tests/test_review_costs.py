@@ -40,6 +40,38 @@ class ReviewCostTests(unittest.TestCase):
             self.assertEqual(result['code'], 'AI_CREDIT_EXHAUSTED')
             self.assertNotIn('secret', result['error'])
 
+    def test_form_narrative_copy_does_not_duplicate_literal_source_paragraphs(self):
+        excerpt = 'Client: Example\nContext:\nExposure: EUR 4 million.\n\nRole:\nAppeal remains pending.'
+        narrative = 'Exposure: EUR 4 million.\n\nAppeal remains pending.'
+        source = {'source_excerpt': excerpt, 'rawNotes': narrative, 'summary': narrative,
+                  'valueResolution': {'value': 'EUR 4 million', 'confirmed': True}}
+        compact = compact_review_payload(source)
+        self.assertEqual(compact['source_excerpt'], excerpt)
+        self.assertNotIn('rawNotes', compact)
+        self.assertNotIn('summary', compact)
+        self.assertEqual(compact['valueResolution'], source['valueResolution'])
+        self.assertEqual(source['rawNotes'], narrative)
+
+    def test_compaction_preserves_conflicting_missing_or_reordered_source_evidence(self):
+        excerpt = 'Claim pending.\n\nAppeal granted.'
+        for narrative in ('Claim granted.\n\nAppeal granted.',
+                          'Claim pending.\n\nDamages paid.',
+                          'Appeal granted.\n\nClaim pending.'):
+            with self.subTest(narrative=narrative):
+                compact = compact_review_payload({'source_excerpt': excerpt, 'rawNotes': narrative})
+                self.assertEqual(compact['rawNotes'], narrative)
+        self.assertEqual(compact_review_payload({'rawNotes': 'Only source'})['rawNotes'], 'Only source')
+        for excerpt in ('Not granted relief.', 'granted relief, but later reversed.'):
+            compact = compact_review_payload({'source_excerpt': excerpt, 'rawNotes': 'granted relief'})
+            self.assertEqual(compact['rawNotes'], 'granted relief')
+
+    def test_duplicate_profile_removed_but_distinct_profile_and_role_preserved(self):
+        source = {'comments': 'Associate, appeal pending.', 'bio': 'Associate, appeal pending.', 'isPartner': False}
+        self.assertNotIn('bio', compact_review_payload(source))
+        self.assertFalse(compact_review_payload(source)['isPartner'])
+        source['bio'] = 'Partner, appeal granted.'
+        self.assertEqual(compact_review_payload(source)['bio'], source['bio'])
+
     def test_role_context_keeps_sources_and_the_actual_text_being_reviewed(self):
         payload = {'package': {'b10_source': 'Source', 'b10_draft': 'Draft', 'matters': [{'rawNotes': 'Source facts', 'optimizedText': 'Draft facts'}]}}
         for role in ('strategist', 'writer'):
@@ -130,6 +162,36 @@ class ReviewCostTests(unittest.TestCase):
         self.assertFalse(result['writer_validated'])
         self.assertTrue(result['errors'])
         self.assertEqual(len(result['letter']['portfolio'].split()),1801)
+
+    def test_repaired_audit_is_condensed_before_validation_without_replaying_repair(self):
+        from core.editorial_repair import repair_letter
+        letter={k:'Supported text.' for k in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps')}
+        letter['next_actions']=[]
+        fixed={**letter, 'executive_assessment':'Qualified recommendation with named peer comparison.'}
+        response={'corrections':[{'path':'executive_assessment','value':'word '*1801,'reason':'Add the supported comparison.'}],'unresolved':[]}
+        state={'package':{'matters':[]},'strategy':{'matters':[]},'letter':letter,
+               'repair_feedback':[{'scope':'letter','severity':'critical','message':'Missing comparison.'}]}
+        with patch('core.review_graph.invoke_role',side_effect=[(response,[{'role':'writer','usage':1}]),(fixed,[{'role':'writer','usage':1},{'role':'writer','usage':2}])]) as invoke:
+            result=repair_letter(state)
+        self.assertTrue(result['writer_validated'])
+        self.assertEqual(invoke.call_count,2)
+        self.assertNotIn('package',invoke.call_args.args[4])
+        self.assertEqual(len(result['trace']),2)
+        self.assertTrue(result['letter_repair_report']['condensation_requested'])
+        self.assertIn('executive_assessment',result['letter_repair_report']['condensed_fields'])
+        self.assertEqual(state['letter'],letter)
+
+    def test_repair_still_fails_when_condensation_ignores_word_limit(self):
+        from core.editorial_repair import repair_letter
+        letter={k:'Supported text.' for k in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps')}
+        letter['next_actions']=[]
+        excessive={**letter,'executive_assessment':'word '*1801}
+        delta={'corrections':[{'path':'executive_assessment','value':excessive['executive_assessment'],'reason':'Add comparison.'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',side_effect=[(delta,[]),(excessive,[])]) as invoke:
+            result=repair_letter({'package':{'matters':[]},'strategy':{'matters':[]},'letter':letter,'repair_feedback':[]})
+        self.assertFalse(result['writer_validated'])
+        self.assertEqual(invoke.call_count,2)
+        self.assertTrue(any('extensión' in message for message in result['errors']))
 
     def test_render_permission_never_implies_delivery_approval(self):
         from core.review_graph import release_gate

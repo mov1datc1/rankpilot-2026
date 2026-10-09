@@ -122,7 +122,7 @@ BASE += '\nIndividual evidence appears in ranking_verification.individuals. Only
 BASE += '\nExternal profile_research contains scoped official commentary. Compare actually retrieved peer capabilities with the submission evidence, explaining limits; do not call table-only research full calibration. Profile commentary is external context, never proof of work in uploaded matters, never publication permission for a restricted entity. Do not infer historical band movement from years ranked or treat supplied biographies as independent directory assessments. Missing retrieval is a system research limitation, not a request for the user to repair a technical failure.\n'
 
 def compact_review_payload(value):
-    """Remove only byte-identical aliases, never truncate or summarize evidence.
+    """Remove literal source copies, never truncate or summarize evidence.
 
     The register commonly carries three copies of source prose and two copies
     of the draft. Different versions must remain visible to the reviewer.
@@ -141,6 +141,36 @@ def compact_review_payload(value):
                     del result[key]
                 else:
                     seen.add(text)
+    # Parsed narratives join source paragraphs after removing form labels.
+    # They are not byte-identical to the complete excerpt, but need not be
+    # sent a second time when every paragraph is present literally and in
+    # order. A changed word, missing paragraph or reordered account survives.
+    excerpt = result.get('source_excerpt')
+    if isinstance(excerpt, str) and excerpt:
+        for key in ('rawNotes', 'summary'):
+            narrative = result.get(key)
+            if not isinstance(narrative, str) or not narrative.strip():
+                continue
+            paragraphs = [p.strip() for p in re.split(r'\n\s*\n', narrative) if p.strip()]
+            cursor = 0
+            for paragraph in paragraphs:
+                found = excerpt.find(paragraph, cursor)
+                while found >= 0:
+                    end = found + len(paragraph)
+                    line_start = excerpt.rfind('\n', 0, found) + 1
+                    line_end = excerpt.find('\n', end)
+                    if line_end < 0:
+                        line_end = len(excerpt)
+                    if not excerpt[line_start:found].strip() and not excerpt[end:line_end].strip():
+                        break
+                    found = excerpt.find(paragraph, found + 1)
+                if found < 0:
+                    break
+                cursor = found + len(paragraph)
+            else:
+                del result[key]
+    if result.get('comments') and result.get('bio') == result['comments']:
+        del result['bio']
     return result
 
 def role_payload(payload, role):
@@ -306,6 +336,18 @@ def reconcile_next_actions(letter, package):
     letter['next_steps']='\n'.join(f"{i+1}. {action['message']}" for i,action in enumerate(actions)) or 'No se identifican acciones adicionales con la información disponible.'
     return letter
 
+def condense_audit_letter(state, letter, trace):
+    # A requested executive length is an output contract, not merely a prompt.
+    # Condense using the same validated decisions; never truncate paragraphs or
+    # remove candidates/matters mechanically to meet the budget.
+    letter=reconcile_next_actions(letter,state['package'])
+    if audit_word_count(letter) > AUDIT_WORD_LIMIT:
+        letter,trace=invoke_role({**state,'trace':trace},'writer',Letter,
+            'Condense this internal Audit into 1200–1700 Spanish words, with an absolute maximum of 1800 words across all five fields. Preserve the same verdict, target rationale, complete ordered core and hero, concrete reserve comparisons, and individual recommendations. Use one compact paragraph per person rather than eight repeated labels. Retain each person’s current/proposed category, reason, supporting matters and role, external evidence or its absence, gaps and action; common limitations may be stated once with explicit scope. Suggested budgets: verdict 220, portfolio 420, individuals 650, reserves 230, actions 130. These are allocation guides, not permission to drop decisive facts. Preserve numbers, currencies, outcomes, uncertainty and confirmed roles. No new facts or changed decisions. Remove repetition and source-auditor phrasing; do not tell the user to repair already resolved generated wording. Return all five fields. The following source-grounded final review remains mandatory.',
+            {'previous_letter':letter,'strategy':state['strategy'],'development':state.get('development')})
+    letter=reconcile_next_actions(letter,state['package'])
+    return letter, trace
+
 def writer(state):
     feedback=state.get('repair_feedback',[])
     if state.get('letter') and feedback and all(d.get('code')=='SELECTION_MISMATCH' and d.get('scope')=='letter' for d in feedback):
@@ -320,15 +362,7 @@ def writer(state):
     letter,trace=invoke_role(state,'writer',Letter,
         'Write a concise internal executive letter in Spanish in five sections, approximately 1200–1800 words when the evidence warrants it, structured for a 3–5 page executive document, without padding. Use compact paragraphs per candidate instead of repeating eight numbered labels; express common ranking-verification limitations once with explicit scope. Budget roughly 220 words for verdict, 420 for portfolio, 650 for individuals, 230 for reserves and 130 for actions. Preserve all material decisions within 1800 words total. Use client/person names, never database IDs or UUIDs in reader-facing prose. Use executive_assessment for the filing verdict, target, main strength/vulnerability and comparative hero rationale; portfolio for the core; leadership for individual strategy; evidence_gaps for key comparative exclusions/reserves; next_steps for the short actionable pre-filing list and genuine evidence gaps. The CURRENT Submission wording is development.b10, development.c2 and development.candidates[].submission_bio. b10_source and source bios are historical evidence, not the delivered prose. Do not carry forward warnings or correction tasks for claims already removed from the current proposal. State unresolved source limitations only where they still matter. Put all concrete reserve/exclusion comparisons in evidence_gaps and only the ordered core in portfolio; never use evidence_gaps for a general checklist of missing facts. Include development.target_rationale and each candidate category_rationale: explain specific category choices or their precise unresolved criterion, and changes to supplied targets. Treat internal_referee_notes as user-supplied contact planning, never a verified endorsement or public evidence. Do not expose email addresses, telephone numbers or contact details in either document. Acknowledge supplied references in next_steps without claiming they were contacted or repeating a request already answered; ask only for specific remaining gaps. State outstanding filing_details accurately without inferring contacts or headcount. The validated development contains all required decisions: reconcile them without dropping its individual fields or borderline comparisons. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Conflicting role evidence requires user resolution, never silently choose a role. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
         {'package':state['package'],'strategy':state['strategy'],'development':state.get('development'), 'previous_letter':state.get('letter'),'defects':state.get('repair_feedback') or state.get('judge',{}).get('defects',[])})
-    # A requested executive length is an output contract, not merely a prompt.
-    # Condense using the same validated decisions; never truncate paragraphs or
-    # remove candidates/matters mechanically to meet the budget.
-    letter=reconcile_next_actions(letter,state['package'])
-    if audit_word_count(letter) > AUDIT_WORD_LIMIT:
-        letter,trace=invoke_role({**state,'trace':trace},'writer',Letter,
-            'Condense this internal Audit into 1200–1700 Spanish words, with an absolute maximum of 1800 words across all five fields. Preserve the same verdict, target rationale, complete ordered core and hero, concrete reserve comparisons, and individual recommendations. Use one compact paragraph per person rather than eight repeated labels. Retain each person’s current/proposed category, reason, supporting matters and role, external evidence or its absence, gaps and action; common limitations may be stated once with explicit scope. Suggested budgets: verdict 220, portfolio 420, individuals 650, reserves 230, actions 130. These are allocation guides, not permission to drop decisive facts. Preserve numbers, currencies, outcomes, uncertainty and confirmed roles. No new facts or changed decisions. Remove repetition and source-auditor phrasing; do not tell the user to repair already resolved generated wording. Return all five fields. The following source-grounded final review remains mandatory.',
-            {'previous_letter':letter,'strategy':state['strategy'],'development':state.get('development')})
-    letter=reconcile_next_actions(letter,state['package'])
+    letter,trace=condense_audit_letter(state,letter,trace)
     errors=[] if audit_word_count(letter)<=AUDIT_WORD_LIMIT else ['RankPilot debe condensar el Audit ejecutivo conservando las decisiones y su respaldo.']
     # Internal stable IDs remain in strategy JSON, not reader-facing prose.
     names = {str(m['id']): str(m.get('client') or m.get('name') or m.get('title') or '') for m in state['package'].get('matters', [])}
