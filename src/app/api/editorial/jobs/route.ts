@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 import { enqueue, latestJob, publicJob } from '@/lib/editorial/jobs';
 import { needsInputReview } from '@/lib/audit/input-review';
 import { EDITORIAL_VERSION } from '@/lib/editorial/contracts';
+import { REVIEW_CONTRACT } from '@/lib/audit/review-versions';
 
 async function owned(id:string|null) {
   const {data:{user}}=await (await createClient()).auth.getUser();
@@ -19,7 +20,7 @@ export async function GET(request:NextRequest) {
   if(!submission) return NextResponse.json({error:'Expediente no disponible.'},{status:404});
   try {
     const job=await latestJob(submission.id);
-    return NextResponse.json({job:publicJob(job),...(!job || ['queued','running'].includes(job.status)?{}:{chambersData:submission.chambersData,matters:(submission.chambersData as any)?.matters || submission.matters,status:submission.status})},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({reviewContract:REVIEW_CONTRACT,job:publicJob(job),...(!job || ['queued','running'].includes(job.status)?{}:{chambersData:submission.chambersData,matters:(submission.chambersData as any)?.matters || submission.matters,status:submission.status})},{headers:{'Cache-Control':'no-store'}});
   } catch {return NextResponse.json({error:'No se pudo consultar el avance. Tus datos se conservan.'},{status:503});}
 }
 export async function POST(request:NextRequest) {

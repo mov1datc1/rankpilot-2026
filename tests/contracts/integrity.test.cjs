@@ -136,6 +136,16 @@ test('Studio rejects historical artifact approval after a review contract update
  }
 });
 
+test('open tabs follow the server review contract without accepting stale documents',()=>{
+ const {REVIEW_CONTRACT}=require('../../src/lib/audit/review-versions.ts');
+ const next={...REVIEW_CONTRACT,artifact:REVIEW_CONTRACT.artifact+1};
+ const data={release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:next.policy,completed_renderer_version:next.renderer,completed_artifact_review_version:next.artifact};
+ assert.equal(getDeliveryState(data,[matter('1')],true).approved,false);
+ assert.equal(getDeliveryState(data,[matter('1')],true,next).approved,true);
+ assert.equal(getDeliveryState({...data,completed_artifact_review_version:REVIEW_CONTRACT.artifact},[matter('1')],true,next).approved,false);
+ assert.equal(getDeliveryState({...data,release_verdict:{passed:false,errors:['Unresolved source conflict']}},[matter('1')],true,next).approved,false);
+});
+
 test('company profiles and locations never become confidential entity aliases',()=>{
  const {clientAliases}=require('../../src/lib/docx/client-aliases.ts');
  const aliases=clientAliases([

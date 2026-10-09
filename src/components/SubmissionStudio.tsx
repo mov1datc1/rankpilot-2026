@@ -6,6 +6,7 @@ import { type AuditAction } from '@/lib/audit/next-actions';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
 import { needsB10Optimization, hasValidatedSelection } from '@/lib/audit/optimization-state';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
+import { REVIEW_CONTRACT } from '@/lib/audit/review-versions';
 import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { curateMatters } from '@/lib/docx/matter-curator';
@@ -163,6 +164,7 @@ export default function SubmissionStudio({
   const [matterSuccessMsg, setMatterSuccessMsg] = useState<Record<string, string>>({});
 
   // Global Optimization State
+  const [reviewContract, setReviewContract] = useState(REVIEW_CONTRACT);
   const [editorialJob, setEditorialJob] = useState<any>(null);
   const [isOptimizingAll, setIsOptimizingAll] = useState<boolean>(false);
   const [optimizeAllProgress, setOptimizeAllProgress] = useState<{
@@ -308,7 +310,7 @@ export default function SubmissionStudio({
     } catch(error) {setDraftSaveError(error instanceof Error ? error.message : 'La consulta no está disponible.');}
     finally {setCheckingRanking(false);}
   };
-  const deliveryState = getDeliveryState(chambersData, matters, true);
+  const deliveryState = getDeliveryState(chambersData, matters, true, reviewContract);
   const resolveReviewIssue = (destination: ReviewDestination, message: string) => {
     if (destination === 'retry-selection' || destination === 'retry-review') { void handleOptimizeAll(false,destination==='retry-review' && !reviewIsStale(chambersData)); return; }
     if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters,(chambersData.final_artifact_review?.judge?.defects || []).find((d:any)=>d.message===message))); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
@@ -566,6 +568,7 @@ export default function SubmissionStudio({
         if(!response.ok) throw new Error('No se pudo consultar el avance. El motor continúa independientemente de esta pestaña.');
         const data=await response.json();
         if(stopped) return;
+        if(data.reviewContract) setReviewContract(data.reviewContract);
         if(!data.job) {timer=setTimeout(observe,15000);return;}
         setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
