@@ -1,5 +1,6 @@
 'use client';
 
+import { studioMatters, studioDraftChanged } from '@/lib/editorial/studio-draft';
 import { AuditNextActions } from '@/components/AuditNextActions';
 import { type AuditAction } from '@/lib/audit/next-actions';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
@@ -129,17 +130,7 @@ export default function SubmissionStudio({
   
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});
-  const [matters, setMatters] = useState<MatterItem[]>(() => {
-    // Database fields plus revision-specific provenance/permissions from the JSON register.
-    const dbMatters = submission.matters || [];
-    const sourceMatters = dbMatters.length > 0 ? dbMatters : (chambersData.matters || []);
-    const evidenceById = new Map((chambersData.matters || []).map((m: any) => [m.id, m]));
-    return sourceMatters.map((m: any, idx: number) => ({
-      ...(evidenceById.get(m.id) as any || {}),
-      ...m,
-      id: m.id || m._id || `matter-${idx}-${(m.client || m.name || m.title || 'item').toString().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`
-    }));
-  });
+  const [matters, setMatters] = useState<MatterItem[]>(() => studioMatters(chambersData,submission.matters || []));
 
   // Directory Determination
   const selectedDirectory = (
@@ -564,8 +555,7 @@ export default function SubmissionStudio({
   // Studio starts a durable job and observes it; the worker owns all transitions.
   const [jobWatch, setJobWatch] = useState(0);
   const unsavedDraft = React.useRef(false);
-  unsavedDraft.current = b10Text !== (chambersData.enhanced_b7 || chambersData.original_b10 || '') ||
-    JSON.stringify(matters) !== JSON.stringify(chambersData.matters || submission.matters || []);
+  unsavedDraft.current = studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
   useEffect(() => {
     let stopped=false;
     let timer:ReturnType<typeof setTimeout>;
@@ -608,8 +598,7 @@ export default function SubmissionStudio({
     if(filingPreparationNeeded(chambersData)) {setReviewPending(false);setShowValidationWizard(true);return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
-    const savedMatters=chambersData.matters || submission.matters || [];
-    const dirty=b10Text!==(chambersData.enhanced_b7 || chambersData.original_b10 || '') || JSON.stringify(matters)!==JSON.stringify(savedMatters);
+    const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
     if(dirty && !(await handleSaveDraft())) return;
     setDraftSaveError('');
     setIsOptimizingAll(true);
