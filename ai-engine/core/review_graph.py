@@ -53,10 +53,11 @@ class Defect(BaseModel):
     matter_id: Optional[str]
     message: str = Field(description='Plain Spanish: explain the concrete issue and the action needed. Preserve names, figures and source quotes verbatim.')
     conflict_basis: Optional[Literal['source_vs_source', 'source_vs_artifact']] = Field(default=None, description='SOURCE_CONFLICT is only conflicting SOURCE records. A generated draft contradicting an unambiguous source is UNSUPPORTED_CLAIM, source_vs_artifact, and RankPilot must repair it; never ask the user to reconfirm the clear source.')
+    conflict_resolution: Optional[Literal['omit_nonessential_descriptor','confirm_source']] = Field(default=None, description='For source_vs_source only. omit_nonessential_descriptor is allowed ONLY for a nonessential client-sector descriptor that generated prose unnecessarily asserts: withdraw that descriptor without choosing either source, changing selection or losing decisive evidence. Set field_path=client_sector and provide the literal artifact claim. Never use this for identity, amounts, dates, outcomes, roles, permissions or an industry essential to the legal/strategic case. All material source conflicts require confirm_source. Withholding a disputed optional descriptor does not resolve or edit the original source.')
     source_quote: str = Field(default='', description='Verbatim source evidence for a material defect; empty only for missing optional metadata.')
     artifact_quote: str = Field(default='', description='Verbatim questioned claim; never invent a quote.')
     artifact_claim_kind: Optional[Literal['factual_assertion', 'request_for_information', 'template_label']] = Field(default=None, description='Classify what the quoted text actually does. An Audit action asking to confirm missing research dates is request_for_information, not an assertion of those dates or an unsupported factual claim. Use factual_assertion for stated dates, status or outcomes, even if the surrounding paragraph also requests information.')
-    field_path: Optional[str] = Field(default=None, description='For missing metadata only: research_period, startDate, completionDate or matter_status.')
+    field_path: Optional[str] = Field(default=None, description='Affected field when known; missing metadata uses research_period, startDate, completionDate or matter_status. A nonessential disputed client industry uses client_sector.')
     temporal_basis: Optional[Literal['missing_metadata', 'evidenced_conflict', 'unsupported_claim']] = Field(default=None, description='Set only for temporal findings. missing_metadata means ONLY absent dates, research period or status, without a contradicted or invented claim. evidenced_conflict requires concrete conflicting source and artifact evidence; unsupported_claim means an invented specific date/status/outcome. Separate unrelated defects; never label a mixed factual conflict as missing_metadata.')
 
 ACCEPTANCE_CRITERIA = ('source_fidelity', 'decisive_evidence', 'confidentiality', 'individual_strategy', 'b9_development', 'c2_argument', 'portfolio_comparison', 'executive_audit')
@@ -120,6 +121,7 @@ BASE += '''\nSEMANTIC CONSISTENCY: Check every client and lawyer identity across
 BASE += '\nIndividual evidence appears in ranking_verification.individuals. Only verified observations/matches establish a named lawyer ranking in their exact practice, jurisdiction and edition. Not found never means globally Unranked. A confirmed roleResolution records a user correction for this submission period, with its source/reason; preserve the original role for traceability. Pending role decisions block final delivery, not draft writing.\n'
 
 BASE += '\nExternal profile_research contains scoped official commentary. Compare actually retrieved peer capabilities with the submission evidence, explaining limits; do not call table-only research full calibration. Profile commentary is external context, never proof of work in uploaded matters, never publication permission for a restricted entity. Do not infer historical band movement from years ranked or treat supplied biographies as independent directory assessments. Missing retrieval is a system research limitation, not a request for the user to repair a technical failure.\n'
+BASE += '\nCONFLICT CONTAINMENT: If source records disagree solely on a nonessential client-sector descriptor, generated prose must not select one version. RankPilot can withdraw that optional descriptor while preserving all supported legal work, scale, roles and outcomes; use conflict_resolution=omit_nonessential_descriptor, field_path=client_sector, and scope=submission or letter for the actual affected prose. Do not ask the user to perform that editorial deletion. Retain the original discrepancy for traceability, do not declare a canonical sector or edit source tables. A remaining discrepancy that is no longer asserted or relied upon in the final documents is a warning, not a delivery blocker. Material conflicts affecting identity, values, chronology, outcomes, attribution, permission or selection remain critical and require source confirmation. This exception never permits dropping decisive evidence to obtain approval.\n'
 
 def compact_review_payload(value):
     """Remove literal source copies, never truncate or summarize evidence.
@@ -422,7 +424,17 @@ def calibrate_verdict(verdict, package=None):
             if defect.get('matter_id'):
                 permissions=[m for m in permissions if m.get('id')==defect['matter_id']]
             permissions_known=bool(permissions) and all(m.get('confidentialityConfirmed') is True and m.get('publish_status') in ('publishable','confidential','non_publishable') for m in permissions)
-            defect['owner']='user' if code=='SOURCE_CONFLICT' or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
+            # Route a narrowly identified editorial omission to the repairer;
+            # the source conflict and its critical severity remain untouched.
+            artifact_field='rendered_artifact' if defect.get('scope')=='submission' else 'rendered_audit'
+            claim=' '.join(str(defect.get('artifact_quote') or '').split())
+            rendered=' '.join(str((package or {}).get(artifact_field) or '').split())
+            containment=(code=='SOURCE_CONFLICT' and defect.get('conflict_basis')=='source_vs_source'
+                and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
+                and defect.get('field_path')=='client_sector' and defect.get('scope') in ('submission','letter')
+                and bool(defect.get('source_quote')) and bool(claim) and claim in rendered
+                and any(m.get('id')==defect.get('matter_id') for m in permissions))
+            defect['owner']='user' if (code=='SOURCE_CONFLICT' and not containment) or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
             defect['action']='confirm' if defect['owner']=='user' else 'retry'
             defect['retryable']=defect['owner']=='rankpilot'
             defect['entity_id']=defect.get('matter_id')

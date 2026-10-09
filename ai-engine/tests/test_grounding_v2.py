@@ -48,6 +48,21 @@ class WrittenNumberTests(unittest.TestCase):
         self.assertNotIn('3',numbers('one and two claims'))
 
 class ConflictOwnershipTests(unittest.TestCase):
+    def test_optional_sector_withdrawal_is_an_editorial_repair_not_a_source_confirmation(self):
+        defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'submission','matter_id':'m','conflict_basis':'source_vs_source','conflict_resolution':'omit_nonessential_descriptor','field_path':'client_sector','source_quote':'Sector: education','artifact_quote':'security business','message':'Withdraw only the disputed descriptor.'}
+        package={'matters':[{'id':'m','source_excerpt':'Sector: education. Narrative: security business. 50 proceedings.'}],'rendered_artifact':'The security business retained the firm for 50 proceedings.'}
+        result=calibrate_verdict({'passed':False,'defects':[defect]},package)
+        self.assertFalse(result['passed'])
+        self.assertEqual(result['defects'][0]['owner'],'rankpilot')
+        self.assertEqual(result['defects'][0]['severity'],'critical')
+        self.assertEqual(result['defects'][0]['code'],'SOURCE_CONFLICT')
+        self.assertIn('Sector: education',package['matters'][0]['source_excerpt'])
+        for changes in [{'field_path':'outcome'},{'field_path':'value'},{'scope':'facts'},{'matter_id':'other'},{'artifact_quote':'Absent quotation'},{'conflict_resolution':'confirm_source'}]:
+            with self.subTest(changes=changes):
+                actual=calibrate_verdict({'passed':False,'defects':[{**defect,**changes}]},package)
+                self.assertEqual(actual['defects'][0]['owner'],'user')
+                self.assertFalse(actual['passed'])
+
     def test_literal_source_to_artifact_attribution_error_belongs_to_rankpilot(self):
         defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'letter','matter_id':'m','conflict_basis':'source_vs_artifact','source_quote':'Lead: Alice','artifact_quote':'Bob led the matter.','message':'Incorrect generated attribution.'}
         package={'matters':[{'id':'m','source_excerpt':'Lead: Alice'}],'rendered_audit':'Bob led the matter.'}

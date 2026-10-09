@@ -68,7 +68,7 @@ export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='critical' || (d.code==='EDITORIAL_STYLE' && d.owner==='rankpilot' && d.field_path && d.artifact_quote));
   if(!defects.length) return null;
   if(data.editorial_development) {
-    const generated=defects.filter((d:any)=>d.owner==='rankpilot' && ['EDITORIAL_OMISSION','UNSUPPORTED_CLAIM','EDITORIAL_STYLE','SELECTION_MISMATCH','PUBLICATION_PERMISSION'].includes(d.code));
+    const generated=defects.filter((d:any)=>d.owner==='rankpilot' && (['EDITORIAL_OMISSION','UNSUPPORTED_CLAIM','EDITORIAL_STYLE','SELECTION_MISMATCH','PUBLICATION_PERMISSION'].includes(d.code) || (d.code==='SOURCE_CONFLICT' && d.conflict_resolution==='omit_nonessential_descriptor' && d.field_path==='client_sector')));
     const concrete=generated.filter((d:any)=>!String(d.message || '').startsWith('La aceptación editorial no está completa:'));
     const targets=concrete.length?concrete:generated;
     if(targets.some((d:any)=>d.scope==='submission')) return {tasks:['development','audit','artifact'],letter:true};

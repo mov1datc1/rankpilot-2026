@@ -118,3 +118,11 @@ test('concrete punctuation defects are repaired automatically without making opt
  assert.deepEqual(targetedRepair(data),{tasks:['development','audit','artifact'],letter:true});
  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,artifact_quote:'',field_path:null,message:'I prefer shorter prose.'}]}}}),null);
 });
+test('a disputed optional sector is withdrawn automatically only with the explicit editorial containment verdict',()=>{
+ const defect={code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',scope:'submission',field_path:'client_sector',conflict_resolution:'omit_nonessential_descriptor'};
+ const data={editorial_development:{},final_artifact_review:{judge:{defects:[defect]}}};
+ assert.deepEqual(targetedRepair(data),{tasks:['development','audit','artifact'],letter:true});
+ for(const changes of [{owner:'user'},{field_path:'value'},{conflict_resolution:'confirm_source'}]){
+  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,...changes}]}}}),null);
+ }
+});
