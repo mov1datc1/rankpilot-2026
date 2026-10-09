@@ -11,12 +11,28 @@ import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
 import { POST as b10 } from '@/app/api/optimize/b10/route';
 import { POST as complete } from '@/app/api/optimize/complete/route';
+import { editorialTokenBudget, spentTokens, recoveryPlan } from './recovery';
+
+/** Recover only the latest job, with unchanged owned sources, under the same lock as enqueue. */
+export async function recoverStoppedJobs() {
+  const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot' AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
+  for(const candidate of candidates) {
+    const plan=recoveryPlan(candidate,candidate.issue?.code,process.env.RENDER_GIT_COMMIT || 'local',new Date(candidate.updatedAt).getTime());
+    if(!plan) continue;
+    await prisma.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT "id" FROM "Submission" WHERE "id"=${candidate.submissionId} FOR UPDATE`;
+      const current=await tx.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
+      if(!current || current.userId!==candidate.userId || stableHash(sourceSnapshot(current))!==candidate.sourceHash) return;
+      await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"leaseToken"=NULL,"leaseUntil"=${plan.retryAt},"updatedAt"=now() WHERE "id"=${candidate.id} AND "status" IN ('failed','indeterminate') AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND (newer."createdAt">${candidate.createdAt} OR newer."status" IN ('queued','running')))`;
+    });
+  }
+}
 
 export async function claimJob() {
-  // Do not replay an external call after process death: its billing outcome is unknown.
-  await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"='indeterminate',"updatedAt"=now(),"issue"=${JSON.stringify(systemIssue('INTERRUPTED','Se interrumpió una etapa. Conservamos lo guardado; revisa el resultado antes de autorizar otro intento.'))}::jsonb WHERE "status"='running' AND "leaseUntil"<now()`;
+  // Expired work is quarantined before the recovery sweep may replay it.
+  await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"='indeterminate',"updatedAt"=now(),"issue"=${JSON.stringify(systemIssue('INTERRUPTED','La etapa se interrumpió. RankPilot conserva el avance.'))}::jsonb,"ledger"="ledger" || jsonb_build_array(jsonb_build_object('stage',"stage",'cursor',"cursor",'worker_commit',${process.env.RENDER_GIT_COMMIT || 'local'}::text,'issue',jsonb_build_object('code','INTERRUPTED'),'status','indeterminate')) WHERE "status"='running' AND "leaseUntil"<now()`;
   const token=randomUUID();
-  const rows:any[]=await prisma.$queryRaw`UPDATE "EditorialJob" SET "status"='running',"leaseToken"=${token},"leaseUntil"=now()+interval '90 seconds',"updatedAt"=now() WHERE "id"=(SELECT "id" FROM "EditorialJob" WHERE "status"='queued' ORDER BY "createdAt" FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`;
+  const rows:any[]=await prisma.$queryRaw`UPDATE "EditorialJob" SET "status"='running',"leaseToken"=${token},"leaseUntil"=now()+interval '90 seconds',"updatedAt"=now() WHERE "id"=(SELECT "id" FROM "EditorialJob" WHERE "status"='queued' AND ("leaseUntil" IS NULL OR "leaseUntil"<=now()) ORDER BY "createdAt" FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *`;
   return rows[0] || null;
 }
 export async function runJobStage(job:any) {
@@ -28,12 +44,12 @@ export async function runJobStage(job:any) {
   let result:any=null;
   let trace:any=null;
   let generatedHash:string|null=null;
+  let retryAt:Date|null=null;
   try {
     const submission=await prisma.submission.findUnique({where:{id:job.submissionId},include:{matters:true}});
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
     if(cursor>=40) throw new Error('STAGE_BUDGET');
-    const spent=(job.ledger || []).reduce((total:number,item:any)=>total+Number(item.trace?.usage?.total_tokens || 0),0);
-    if(spent>=Number(process.env.EDITORIAL_TOKEN_BUDGET || 500000)) throw new Error('TOKEN_BUDGET');
+    if(spentTokens(job.ledger)>=editorialTokenBudget()) throw new Error('TOKEN_BUDGET');
     const handler=stage==='selection'||stage==='development'||stage==='audit'?review:stage==='b10'?b10:stage==='artifact'?complete:stage?.startsWith('matter:')?matter:null;
     if(!handler) throw new Error('INVALID_STAGE');
     const previousFailure=(job.ledger || []).filter((entry:any)=>entry.stage===stage && entry.issue).at(-1);
@@ -73,8 +89,10 @@ export async function runJobStage(job:any) {
     status=code==='SOURCE_CHANGED'?'superseded':code==='HUMAN_DRAFT_STALE'?'needs_review':['EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE'].includes(code)?'indeterminate':'failed';
     issue=code==='HUMAN_DRAFT_STALE'?{...systemIssue(code,'Cambió una fuente de un texto editado. Revisa esa redacción antes de continuar.',false),owner:'user',action:'review'}:
       systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.');
-    if(['SELECTION_REJECTED','SELECTION_REVIEW_DEFERRED','DEVELOPMENT_REJECTED','GROUNDING_REJECTED','AI_OUTPUT_LIMIT'].includes(code) && !(job.ledger || []).some((entry:any)=>entry.stage===stage && entry.issue?.code===code)) status='queued';
+    const failure={stage,cursor:job.cursor,issue,trace,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};
+    const plan=recoveryPlan({...job,issue,ledger:[...(job.ledger || []),failure]},code,process.env.RENDER_GIT_COMMIT || 'local');
+    if(plan) {status='queued';retryAt=plan.retryAt;}
   } finally {clearInterval(heartbeat);}
-  const entry={stage,status,generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
-  await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=NULL,"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;
+  const entry={stage,cursor:job.cursor,status,retry_at:retryAt?.toISOString(),generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
+  await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=${retryAt},"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;
 }

@@ -572,16 +572,17 @@ export default function SubmissionStudio({
         setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
         setIsOptimizingAll(active);
-        setOptimizeAllProgress({current:data.job.completed,total:data.job.total,stage:active?`${data.job.message}. Puedes cerrar esta pestaña; el avance se guarda.`:data.job.status==='completed'?'Submission y Audit revisados. Puedes descargar la entrega.':data.job.issue?.owner==='rankpilot'?'Preparación detenida por RankPilot. Puedes reanudar desde el panel.':'Revisión detenida. Consulta el pendiente concreto.'});
+        setOptimizeAllProgress(active?{current:data.job.completed,total:data.job.total,stage:`${data.job.message}. El avance se guarda automáticamente.`}:null);
         if(active) {timer=setTimeout(observe,3000);return;}
         setOptimizeAllComplete(data.job.status==='completed');
-        if(data.job.issue) setDraftSaveError(`${data.job.issue.owner==='rankpilot'?'RankPilot: ':''}${data.job.issue.message}`);
         if(data.chambersData) {
           setChambersData(data.chambersData);
           if(data.matters) setMatters(data.matters);
           setB10Text(data.chambersData.enhanced_b7 || data.chambersData.original_b10 || '');
           setSubmissionStatus(data.status || 'Draft');
         }
+        // The server may recover a stopped job after a deployment; keep observing.
+        if(['failed','indeterminate'].includes(data.job.status)) timer=setTimeout(observe,10000);
       } catch(error) {
         if(stopped) return;
         if(jobWatch) setDraftSaveError(error instanceof Error?error.message:'No se pudo consultar el avance.');
@@ -1249,7 +1250,7 @@ export default function SubmissionStudio({
       </div>
 
       {/* ═══ GLOBAL OPTIMIZATION PROGRESS BANNER ═══ */}
-      {optimizeAllProgress && (
+      {isOptimizingAll && optimizeAllProgress && (
         <div style={{
           position: 'sticky',
           top: '57px',

@@ -18,18 +18,13 @@ export function planDrafting(data:any) {
 export function publicJob(job:any) {
   if(!job) return null;
   const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',development:'Desarrollando Submission, candidaturas y posicionamiento',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
-  return {id:job.id,status:job.status,stage:job.stage,message:labels[job.stage] || 'Redactando un asunto seleccionado',completed:job.cursor,total:job.tasks.length,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const recovering=['queued','running'].includes(job.status) && job.issue?.owner==='rankpilot';
+  return {id:job.id,status:job.status,stage:job.stage,recovering,message:recovering?'RankPilot está recuperando la preparación automáticamente':labels[job.stage] || 'Redactando un asunto seleccionado',completed:job.cursor,total:job.tasks.length,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
   if(!issue || issue.owner==='user') return issue;
-  const messages:Record<string,string>={
-    DEVELOPMENT_REJECTED:'RankPilot detuvo la redacción porque no pudo comprobar una referencia generada con su fuente. No necesitas modificar tus datos. Pulsa «Reanudar preparación»; se conservarán la selección y las etapas vigentes.',
-    SELECTION_REJECTED:'RankPilot no pudo comprobar su propuesta de selección. Tus fuentes se conservan. Pulsa «Reanudar preparación» para volver a comprobar esa etapa.',
-    SOURCE_CHANGED:'Las fuentes cambiaron durante la preparación. Pulsa «Reanudar preparación» para revisar la versión actual y conservar las etapas que sigan vigentes.',
-    TOKEN_BUDGET:'La preparación alcanzó su límite de procesamiento. Tus datos y el avance se conservan. La entrega todavía no está aprobada.',
-  };
-  return {...issue,message:messages[issue.code] || 'RankPilot no pudo completar esta etapa. Tus datos y el avance se conservan. Pulsa «Reanudar preparación» para continuar desde la última etapa vigente.'};
+  return {...issue,message:'La preparación requiere una comprobación interna de RankPilot. Tus datos y el avance están guardados. No necesitas corregir textos ni volver a subir el documento.'};
 }
 export async function latestJob(submissionId:string) {
   const rows:any[]=await prisma.$queryRaw`SELECT * FROM "EditorialJob" WHERE "submissionId"=${submissionId} ORDER BY "createdAt" DESC LIMIT 1`;

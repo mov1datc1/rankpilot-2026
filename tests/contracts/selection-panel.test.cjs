@@ -46,11 +46,11 @@ test('every user or system finding has a direct action; known matter IDs focus e
 });
 
 
-test('a stopped internal job gives a clear resume action instead of a user correction',()=>{
+test('a stopped internal job remains RankPilot responsibility without a user repair button',()=>{
  const {publicJobIssue}=require('../../src/lib/editorial/jobs.ts');
  const issue=publicJobIssue({owner:'rankpilot',code:'DEVELOPMENT_REJECTED',message:'Cita decisiva sin vínculo literal: secret-id'});
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:['La revisión editorial se ejecutará después de guardar la redacción.'],warnings:[],approved:false,job:{status:'failed',issue},onResolve:()=>{}}));
- assert.ok(html.includes('RankPilot no pudo completar la preparación'));
- assert.ok(html.includes('Reanudar preparación'));assert.ok(!html.includes('secret-id'));
+ assert.ok(html.includes('Preparación pendiente de RankPilot'));
+ assert.ok(!html.includes('Reanudar preparación'));assert.ok(!html.includes('secret-id'));assert.ok(!html.includes('<button'));
  assert.ok(!html.includes('No quedan respuestas pendientes'));
 });

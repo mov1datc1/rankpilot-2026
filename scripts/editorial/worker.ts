@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import prisma from '../../src/lib/prisma';
-import { claimJob, runJobStage } from '../../src/lib/editorial/runner';
+import { claimJob, runJobStage, recoverStoppedJobs } from '../../src/lib/editorial/runner';
 import { engineFingerprint } from '../../src/lib/editorial/engine-identity';
 import { EDITORIAL_VERSION, engineMatchesWorker } from '../../src/lib/editorial/contracts';
 
@@ -15,11 +15,13 @@ async function main() {
   await heartbeat();
   const timer=setInterval(()=>{void heartbeat().catch(()=>{});},20000);
   console.log('Editorial worker ready',EDITORIAL_VERSION,process.env.RENDER_GIT_COMMIT || 'local');
+  let lastRecovery=0;
   try {
     while(!stopping) {
       try {
         const health=await fetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/health`,{signal:AbortSignal.timeout(15000)});
         if(!health.ok || !engineMatchesWorker(await health.json(),expectedFingerprint)) {await new Promise(r=>setTimeout(r,5000));continue;}
+        if(Date.now()-lastRecovery>30000) {await recoverStoppedJobs();lastRecovery=Date.now();}
         const job=await claimJob();
         if(job) await runJobStage(job);
         else await new Promise(r=>setTimeout(r,2000));
