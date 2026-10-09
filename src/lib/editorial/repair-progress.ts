@@ -20,7 +20,7 @@ export function unrepairedGeneratedClaims(feedback:any[],submissionText:string,a
   return (feedback || []).filter(d=>{
     if(d.owner!=='rankpilot' || !d.field_path || !d.artifact_quote || !['submission','letter'].includes(d.scope)) return false;
     const correction=(d.code==='UNSUPPORTED_CLAIM' && d.source_quote) || d.code==='EDITORIAL_STYLE' ||
-      (d.code==='SOURCE_CONFLICT' && d.field_path==='client_sector' && d.conflict_resolution==='omit_nonessential_descriptor');
+      (d.code==='SOURCE_CONFLICT' && d.field_path==='client_sector' && d.conflict_resolution==='omit_nonessential_descriptor' && d.conflicting_artifact_term && literal(d.artifact_quote).toLowerCase().includes(literal(d.conflicting_artifact_term).toLowerCase()));
     return correction && literal(d.scope==='submission'?submissionText:auditText).includes(literal(d.artifact_quote));
   }).map(d=>({...d,severity:'critical',verification:'unchanged_generated_claim'}));
 }

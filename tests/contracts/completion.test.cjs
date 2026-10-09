@@ -181,3 +181,20 @@ test('unchanged prior generated correction blocks approval before another paid j
  assert.equal(state.chambersData.final_artifact_review.verification_gate,'unapplied_editorial_correction');
  assert.equal(state.chambersData.final_artifact_review.judge.defects[0].verification,'unchanged_generated_claim');
 });
+test('the most recent rejected claim remains enforced even when repair feedback predates it',async()=>{
+ reset();seedReview();
+ state.chambersData.completed_review_input_hash=state.chambersData.review_checkpoint.input_hash;
+ state.chambersData.final_artifact_review={judge:{passed:false,defects:[{code:'UNSUPPORTED_CLAIM',owner:'rankpilot',scope:'submission',severity:'critical',field_path:'m1',source_quote:'Original source',artifact_quote:source,message:'Concrete generated claim requires correction.'}]}};
+ const result=await (await complete({checkpoint:true})).json();
+ assert.equal(result.release.passed,false);assert.equal(calls.length,0);
+ assert.equal(state.chambersData.final_artifact_review.verification_gate,'unapplied_editorial_correction');
+});
+test('a grounded-diagnostic retry releases the terminal provider lease and retains usage',async()=>{
+ reset();const saved=global.fetch;
+ global.fetch=async()=>Response.json({success:false,code:'AI_REVIEW_INVALID',trace:{usage:{total_tokens:321}}},{status:502});
+ try {
+  const response=await complete({checkpoint:true});const result=await response.json();
+  assert.equal(response.status,502);assert.equal(result.code,'AI_REVIEW_INVALID');
+  assert.equal(result.trace.usage.total_tokens,321);assert.equal(state.chambersData.review_checkpoint.lease_until,0);
+ }finally{global.fetch=saved;}
+});

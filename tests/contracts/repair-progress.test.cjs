@@ -12,7 +12,7 @@ test('automatic repair continues only with content progress and within bounded a
 });
 const {unrepairedGeneratedClaims}=require('../../src/lib/editorial/repair-progress.ts');
 test('a concrete requested correction cannot disappear from review while the rejected claim survives',()=>{
- const sector={code:'SOURCE_CONFLICT',owner:'rankpilot',severity:'warning',scope:'submission',field_path:'client_sector',artifact_quote:'The industrial workforce.',source_quote:'Source has two sectors.',conflict_resolution:'omit_nonessential_descriptor'};
+ const sector={code:'SOURCE_CONFLICT',owner:'rankpilot',severity:'warning',scope:'submission',field_path:'client_sector',artifact_quote:'The industrial workforce.',conflicting_artifact_term:'industrial',source_quote:'Source has two sectors.',conflict_resolution:'omit_nonessential_descriptor'};
  const unrelated={...sector,owner:'user'};
  const found=unrepairedGeneratedClaims([sector,unrelated],'The industrial\nworkforce.','');
  assert.equal(found.length,1);assert.equal(found[0].severity,'critical');assert.equal(found[0].verification,'unchanged_generated_claim');
@@ -20,4 +20,9 @@ test('a concrete requested correction cannot disappear from review while the rej
  assert.deepEqual(unrepairedGeneratedClaims([sector],'The workforce.','The industrial workforce.'),[]);
  assert.deepEqual(unrepairedGeneratedClaims([{...sector,code:'MISSING_TEMPORAL_METADATA'}],'The industrial workforce.',''),[]);
  assert.deepEqual(unrepairedGeneratedClaims([{...sector,conflict_resolution:'preserve_source_aliases',field_path:'client'}],'The industrial workforce.',''),[]);
+});
+test('an invalid sector diagnostic cannot lock already-neutral prose into a repair loop',()=>{
+ const defect={code:'SOURCE_CONFLICT',owner:'rankpilot',scope:'submission',field_path:'client_sector',artifact_quote:'A workforce of 17000 employees.',conflicting_artifact_term:'industrial',conflict_resolution:'omit_nonessential_descriptor'};
+ assert.deepEqual(unrepairedGeneratedClaims([defect],defect.artifact_quote,''),[]);
+ assert.deepEqual(unrepairedGeneratedClaims([{...defect,conflicting_artifact_term:null}],defect.artifact_quote,''),[]);
 });

@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import List, Literal, Optional
 from typing_extensions import TypedDict
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator, ValidationError
 from openai.lib._pydantic import to_strict_json_schema
 from langgraph.graph import StateGraph, END
 from utils.model_factory import create_chat_model, get_model_settings
@@ -54,11 +54,21 @@ class Defect(BaseModel):
     message: str = Field(description='Plain Spanish: explain the concrete issue and the action needed. Preserve names, figures and source quotes verbatim.')
     conflict_basis: Optional[Literal['source_vs_source', 'source_vs_artifact']] = Field(default=None, description='SOURCE_CONFLICT is only conflicting SOURCE records. A generated draft contradicting an unambiguous source is UNSUPPORTED_CLAIM, source_vs_artifact, and RankPilot must repair it; never ask the user to reconfirm the clear source.')
     conflict_resolution: Optional[Literal['omit_nonessential_descriptor','preserve_source_aliases','confirm_source']] = Field(default=None, description='For source_vs_source only. omit_nonessential_descriptor is allowed ONLY for a nonessential client-sector descriptor that generated prose unnecessarily asserts: withdraw that descriptor without choosing either source, changing selection or losing decisive evidence. Set field_path=client_sector and provide the literal artifact claim. Never use this for identity, amounts, dates, outcomes, roles, permissions or an industry essential to the legal/strategic case. preserve_source_aliases is allowed only in the internal Audit for a reserve/excluded record: quote both supplied name variants explicitly, without deciding identity or rewriting a canonical name; field_path=client. All other material source conflicts require confirm_source. Withholding a disputed optional descriptor does not resolve or edit the original source.')
+    conflicting_artifact_term: Optional[str] = Field(default=None, description='For omit_nonessential_descriptor, copy the exact disputed sector WORDS still present in artifact_quote. Required for this resolution. If the words were already removed, withdraw that finding; a neutral workforce description does not assert an industry.')
     source_quote: str = Field(default='', description='Verbatim source evidence for a material defect; empty only for missing optional metadata.')
     artifact_quote: str = Field(default='', description='Verbatim questioned claim; never invent a quote.')
     artifact_claim_kind: Optional[Literal['factual_assertion', 'request_for_information', 'template_label']] = Field(default=None, description='Classify what the quoted text actually does. An Audit action asking to confirm missing research dates is request_for_information, not an assertion of those dates or an unsupported factual claim. Use factual_assertion for stated dates, status or outcomes, even if the surrounding paragraph also requests information.')
     field_path: Optional[str] = Field(default=None, description='Affected field when known; missing metadata uses research_period, startDate, completionDate or matter_status. A nonessential disputed client industry uses client_sector.')
     temporal_basis: Optional[Literal['missing_metadata', 'evidenced_conflict', 'unsupported_claim']] = Field(default=None, description='Set only for temporal findings. missing_metadata means ONLY absent dates, research period or status, without a contradicted or invented claim. evidenced_conflict requires concrete conflicting source and artifact evidence; unsupported_claim means an invented specific date/status/outcome. Separate unrelated defects; never label a mixed factual conflict as missing_metadata.')
+
+    @model_validator(mode='after')
+    def disputed_descriptor_must_still_be_asserted(self):
+        if self.conflict_resolution=='omit_nonessential_descriptor':
+            term=' '.join(str(self.conflicting_artifact_term or '').split()).casefold()
+            quote=' '.join(self.artifact_quote.split()).casefold()
+            if not term or not re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',quote):
+                raise ValueError('review diagnostic not grounded: disputed sector term absent from artifact quote')
+        return self
 
 ACCEPTANCE_CRITERIA = ('source_fidelity', 'decisive_evidence', 'confidentiality', 'individual_strategy', 'b9_development', 'c2_argument', 'portfolio_comparison', 'executive_audit')
 
@@ -123,6 +133,7 @@ BASE += '\nIndividual evidence appears in ranking_verification.individuals. Only
 BASE += '\nExternal profile_research contains scoped official commentary. Compare actually retrieved peer capabilities with the submission evidence, explaining limits; do not call table-only research full calibration. Profile commentary is external context, never proof of work in uploaded matters, never publication permission for a restricted entity. Do not infer historical band movement from years ranked or treat supplied biographies as independent directory assessments. Missing retrieval is a system research limitation, not a request for the user to repair a technical failure.\n'
 BASE += '\nCONFLICT CONTAINMENT: If source records disagree solely on a nonessential client-sector descriptor, generated prose must not select one version. RankPilot can withdraw that optional descriptor while preserving all supported legal work, scale, roles and outcomes; use conflict_resolution=omit_nonessential_descriptor, field_path=client_sector, and scope=submission or letter for the actual affected prose. Do not ask the user to perform that editorial deletion. Retain the original discrepancy for traceability, do not declare a canonical sector or edit source tables. A remaining discrepancy that is no longer asserted or relied upon in the final documents is a warning, not a delivery blocker. Material conflicts affecting identity, values, chronology, outcomes, attribution, permission or selection remain critical and require source confirmation. This exception never permits dropping decisive evidence to obtain approval.\n'
 
+BASE += '\nPUBLIC ANONYMIZATION: For a confidential matter, consider the combination of public identifiers, not just the client name. Generalize identifying combinations of acquisition, exact geography and case-specific metrics in B9/B10/C2 while preserving all exact supported facts in confidential section E. This limited public generalization is not an editorial omission when the substantive legal work and personal role remain clear and the exact evidence remains in E. Do not demand mutually incompatible disclosure and omission repairs.\n'
 BASE += '\nSOURCE SCOPE: A roster of heads AND other key partners is not a closed department census. Do not infer a contradictory partner count merely by counting names or Partner Since dates in that broader roster; preserve the explicitly declared department count and each documented professional role. A critical count conflict requires incompatible counts for the SAME confirmed population and period, not an assumed membership scope. An explicit same-scope contradiction still requires confirmation. Do not infer department head status from a Partner title.\n'
 BASE += '\nRESERVE NAME VARIANTS: When an internal Audit mentions a reserve/excluded record whose field and narrative use differing name variants, it can identify that SAME record transparently by quoting BOTH supplied variants (field name and narrative name). Use conflict_resolution=preserve_source_aliases, field_path=client, scope=letter, and quote the current one-sided claim. This repairs ambiguous internal labeling without deciding a corporate identity, deleting a reserve, or altering the canonical source. Do not request spelling corrections that this transparent representation can handle. If the Audit already preserves both variants explicitly without pretending to reconcile identity, the source discrepancy is an optional warning. Conflicting identities in selected Submission matters, uncertain role attribution and publication permissions remain material and require evidence.\n'
 
@@ -239,6 +250,8 @@ def invoke_role(state, role, schema, instruction, payload):
             raise ValueError('structured response unavailable')
         parsed=schema.model_validate(result['parsed'])
     except Exception as error:
+        if isinstance(error,ValidationError) and 'review diagnostic not grounded' in str(error):
+            raise EditorialResponseError('review diagnostic not grounded',trace[-1]) from error
         message='max_output_tokens: incomplete response' if 'max_output_tokens' in str(error) else 'structured response unavailable'
         raise EditorialResponseError(message,trace[-1]) from error
     return parsed.model_dump(), trace
@@ -436,6 +449,7 @@ def calibrate_verdict(verdict, package=None, strategy=None):
                 and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
                 and defect.get('field_path')=='client_sector' and defect.get('scope') in ('submission','letter')
                 and bool(defect.get('source_quote')) and bool(claim) and claim in rendered
+                and bool(defect.get('conflicting_artifact_term')) and str(defect['conflicting_artifact_term']).casefold() in claim.casefold()
                 and any(m.get('id')==defect.get('matter_id') for m in permissions))
             alias_containment=(code=='SOURCE_CONFLICT' and defect.get('conflict_basis')=='source_vs_source'
                 and defect.get('conflict_resolution')=='preserve_source_aliases' and defect.get('field_path')=='client'
@@ -445,6 +459,14 @@ def calibrate_verdict(verdict, package=None, strategy=None):
             defect['owner']='user' if (code=='SOURCE_CONFLICT' and not (containment or alias_containment)) or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
             defect['action']='confirm' if defect['owner']=='user' else 'retry'
             defect['retryable']=defect['owner']=='rankpilot'
+            # A nonblocking note on cached internal strategy is not a request
+            # for the user to rewrite RankPilot's generated interpretation.
+            if (code=='SOURCE_CONFLICT' and defect.get('severity')=='warning'
+                and defect.get('scope')=='strategy' and defect.get('field_path')=='client_sector'
+                and defect.get('conflict_resolution')=='omit_nonessential_descriptor'):
+                defect.update(owner='rankpilot',action='review',retryable=False,
+                    internal_diagnostic=defect.get('message'),
+                    message='RankPilot conserva una discrepancia sectorial como observación de su análisis interno. No necesitas modificar tus datos por esta observación.')
             defect['entity_id']=defect.get('matter_id')
             defect['rule_id']='RP16' if defect.get('temporal_basis') else 'RP01'
     for defect in defects:

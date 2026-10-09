@@ -49,7 +49,7 @@ class WrittenNumberTests(unittest.TestCase):
 
 class ConflictOwnershipTests(unittest.TestCase):
     def test_optional_sector_withdrawal_is_an_editorial_repair_not_a_source_confirmation(self):
-        defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'submission','matter_id':'m','conflict_basis':'source_vs_source','conflict_resolution':'omit_nonessential_descriptor','field_path':'client_sector','source_quote':'Sector: education','artifact_quote':'security business','message':'Withdraw only the disputed descriptor.'}
+        defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'submission','matter_id':'m','conflict_basis':'source_vs_source','conflict_resolution':'omit_nonessential_descriptor','field_path':'client_sector','source_quote':'Sector: education','artifact_quote':'security business','conflicting_artifact_term':'security','message':'Withdraw only the disputed descriptor.'}
         package={'matters':[{'id':'m','source_excerpt':'Sector: education. Narrative: security business. 50 proceedings.'}],'rendered_artifact':'The security business retained the firm for 50 proceedings.'}
         result=calibrate_verdict({'passed':False,'defects':[defect]},package)
         self.assertFalse(result['passed'])
@@ -88,3 +88,25 @@ class ConflictOwnershipTests(unittest.TestCase):
             result=calibrate_verdict({'passed':False,'defects':[defect]},package,{'matters':[{'matter_id':'m','disposition':disposition}]})
             self.assertEqual(result['defects'][0]['owner'],'user')
         self.assertEqual(package['matters'][0]['source_excerpt'],defect['source_quote'])
+
+class DiagnosticGroundingTests(unittest.TestCase):
+    def test_sector_deletion_cannot_target_a_word_already_absent(self):
+        from core.review_graph import Defect
+        from pydantic import ValidationError
+        base={'code':'SOURCE_CONFLICT','severity':'warning','scope':'submission','matter_id':'m','message':'Withdraw industry descriptor.','conflict_resolution':'omit_nonessential_descriptor','field_path':'client_sector','artifact_quote':'The workforce has 17000 employees.'}
+        for term in (None,'industrial','work'):
+            with self.subTest(term=term),self.assertRaises(ValidationError):
+                Defect.model_validate({**base,'conflicting_artifact_term':term})
+        valid=Defect.model_validate({**base,'artifact_quote':'The industrial workforce has 17000 employees.','conflicting_artifact_term':'industrial'})
+        self.assertEqual(valid.conflicting_artifact_term,'industrial')
+
+    def test_invalid_diagnostic_is_not_a_token_limit_or_a_user_question(self):
+        from utils.provider_errors import provider_failure
+        failure=provider_failure(ValueError('review diagnostic not grounded'))
+        self.assertEqual(failure['code'],'AI_REVIEW_INVALID')
+
+    def test_optional_internal_strategy_note_is_never_a_user_editing_task(self):
+        defect={'code':'SOURCE_CONFLICT','severity':'warning','scope':'strategy','matter_id':'m','field_path':'client_sector','conflict_resolution':'omit_nonessential_descriptor','conflicting_artifact_term':'industrial','artifact_quote':'Industrial workforce','message':'Remove industrial from generated strategy.'}
+        result=calibrate_verdict({'passed':True,'defects':[defect]})['defects'][0]
+        self.assertEqual(result['owner'],'rankpilot');self.assertFalse(result['retryable'])
+        self.assertEqual(result['internal_diagnostic'],defect['message'])

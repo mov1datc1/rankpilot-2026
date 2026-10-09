@@ -21,3 +21,10 @@ test('a new repair pass does not inherit failures from a different cursor',()=>{
  const ledger=Array.from({length:3},()=>({stage:'audit',cursor:2,worker_commit:'same',issue:{code:'DEVELOPMENT_REJECTED'}}));
  assert.ok(recoveryPlan({...job,cursor:5,ledger},'DEVELOPMENT_REJECTED','same'));
 });
+
+test('an invalid completed review retries promptly and still respects the failure ceiling',()=>{
+ const plan=recoveryPlan(job,'AI_REVIEW_INVALID','build',1000);
+ assert.equal(+plan.retryAt,16000);
+ const ledger=Array.from({length:3},()=>({stage:'audit',cursor:2,worker_commit:'build',issue:{code:'AI_REVIEW_INVALID'}}));
+ assert.equal(recoveryPlan({...job,ledger},'AI_REVIEW_INVALID','build'),null);
+});

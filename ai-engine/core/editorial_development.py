@@ -205,7 +205,7 @@ def develop(state):
             and d.get('owner')=='rankpilot' and d.get('scope')!='letter'
             and (d.get('severity')=='critical' or (d.get('artifact_quote') and (
                 (d.get('code')=='EDITORIAL_STYLE' and d.get('field_path')) or
-                (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and d.get('field_path')=='client_sector'))))]
+                (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and d.get('field_path')=='client_sector' and d.get('conflicting_artifact_term') and str(d['conflicting_artifact_term']).casefold() in str(d['artifact_quote']).casefold()))))]
         concrete=[d for d in semantic if not str(d.get('message','')).startswith('La aceptación editorial no está completa:')]
         if concrete:semantic=concrete
         if semantic:

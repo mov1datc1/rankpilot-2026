@@ -563,6 +563,9 @@ export default function SubmissionStudio({
 
   // Studio starts a durable job and observes it; the worker owns all transitions.
   const [jobWatch, setJobWatch] = useState(0);
+  const unsavedDraft = React.useRef(false);
+  unsavedDraft.current = b10Text !== (chambersData.enhanced_b7 || chambersData.original_b10 || '') ||
+    JSON.stringify(matters) !== JSON.stringify(chambersData.matters || submission.matters || []);
   useEffect(() => {
     let stopped=false;
     let timer:ReturnType<typeof setTimeout>;
@@ -572,21 +575,23 @@ export default function SubmissionStudio({
         const response=await fetch(`/api/editorial/jobs?submissionId=${encodeURIComponent(submission.id)}`,{cache:'no-store',signal:controller.signal});
         if(!response.ok) throw new Error('No se pudo consultar el avance. El motor continúa independientemente de esta pestaña.');
         const data=await response.json();
-        if(stopped || !data.job) return;
+        if(stopped) return;
+        if(!data.job) {timer=setTimeout(observe,15000);return;}
         setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
         setIsOptimizingAll(active);
         setOptimizeAllProgress(active?{current:data.job.completed,total:data.job.total,stage:`${data.job.message}. El avance se guarda automáticamente.`}:null);
         if(active) {timer=setTimeout(observe,3000);return;}
         setOptimizeAllComplete(data.job.status==='completed');
-        if(data.chambersData) {
+        if(data.chambersData && !unsavedDraft.current) {
           setChambersData(data.chambersData);
           if(data.matters) setMatters(data.matters);
           setB10Text(data.chambersData.enhanced_b7 || data.chambersData.original_b10 || '');
           setSubmissionStatus(data.status || 'Draft');
         }
-        // The server may recover a stopped job after a deployment; keep observing.
-        if(['failed','indeterminate'].includes(data.job.status)) timer=setTimeout(observe,10000);
+        // New jobs and automatic recovery can begin outside this tab, even
+        // after completion. Keep the visible status current without overwriting edits.
+        timer=setTimeout(observe,15000);
       } catch(error) {
         if(stopped) return;
         if(jobWatch) setDraftSaveError(error instanceof Error?error.message:'No se pudo consultar el avance.');

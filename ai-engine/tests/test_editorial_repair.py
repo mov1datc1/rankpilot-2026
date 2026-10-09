@@ -209,7 +209,7 @@ class AuditResponsibilityTests(unittest.TestCase):
         self.assertEqual(targets,before)
 
     def test_warning_sector_containment_still_runs_the_automatic_repair(self):
-        state={'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':[{'severity':'warning','owner':'rankpilot','scope':'submission','code':'SOURCE_CONFLICT','field_path':'client_sector','artifact_quote':'Disputed optional sector','conflict_resolution':'omit_nonessential_descriptor'}]}
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':[{'severity':'warning','owner':'rankpilot','scope':'submission','code':'SOURCE_CONFLICT','field_path':'client_sector','artifact_quote':'Disputed optional sector','conflicting_artifact_term':'sector','conflict_resolution':'omit_nonessential_descriptor'}]}
         with patch('core.editorial_repair.repair_rejected_development',return_value={'development_validated':False}) as locator:
             result=develop(state)
         locator.assert_called_once()

@@ -23,6 +23,8 @@ TASK+=''' When an entire candidates/N object is an allowed target, reassess that
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
 TASK+=''' For a defect explicitly marked conflict_resolution=omit_nonessential_descriptor and field_path=client_sector, withdraw ONLY the disputed optional industry descriptor from generated prose, choosing neither source version. Keep all supported mandate facts, scale, outcomes, roles and the canonical selection. This editorial containment is resolvable without confirming or changing the source sector. Retain the original source discrepancy; never extend this exception to material identity, amount, date, outcome, attribution or permission conflicts.'''
 
+TASK+=''' When a confidentiality defect identifies a revealing combination in public B9/B10/C2, generalize ONLY that combination in the permitted public fields. Keep the legal work, personal attribution and supported scale in non-identifying terms. Preserve every exact source fact and metric in confidential section E; never weaken the confidential matter narrative merely to anonymize a public profile. This is an allowed privacy transformation, not invented evidence or a source edit.'''
+
 def repair_targets(package, strategy, proposal):
     from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors, submission_voice_paths
     errors=development_errors(package,strategy,proposal)

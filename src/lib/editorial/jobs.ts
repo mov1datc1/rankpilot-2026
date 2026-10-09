@@ -66,7 +66,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
 /** Repairs may change generated prose, never source facts or human-edited text. */
 export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const containedConflict=(d:any)=>d.code==='SOURCE_CONFLICT' && (
-    (d.conflict_resolution==='omit_nonessential_descriptor' && d.field_path==='client_sector') ||
+    (d.conflict_resolution==='omit_nonessential_descriptor' && d.field_path==='client_sector' && d.conflicting_artifact_term && String(d.artifact_quote || '').toLowerCase().includes(String(d.conflicting_artifact_term).toLowerCase())) ||
     (d.conflict_resolution==='preserve_source_aliases' && d.field_path==='client' && d.scope==='letter'));
   const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>
     d.severity==='critical' || (d.owner==='rankpilot' && d.artifact_quote &&
