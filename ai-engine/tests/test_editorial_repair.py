@@ -226,3 +226,22 @@ class AuditResponsibilityTests(unittest.TestCase):
         self.assertEqual(model.call_args.args[4]['defects'],[])
         self.assertEqual(model.call_args.args[4]['submission_review_context'],[defect])
         self.assertEqual(result['repair_feedback'],[defect])
+
+class LiteralRepairRoutingTests(unittest.TestCase):
+    def test_duplicate_warnings_and_critical_claims_use_one_direct_repair_without_locator(self):
+        from core.editorial_repair import repair_rejected_development
+        proposal={'matters':[{'matter_id':'m','text':'An industrial employer retained the firm.','completion_status':'Ongoing work for an industrial workforce.'}]}
+        defect={'code':'SOURCE_CONFLICT','severity':'warning','scope':'submission','matter_id':'m','field_path':'client_sector','conflict_resolution':'omit_nonessential_descriptor','conflicting_artifact_term':'industrial','artifact_quote':'An industrial employer retained the firm.','message':'Withdraw only the optional sector.'}
+        state={'package':{'matters':[]},'strategy':{},'trace':[]}
+        with patch('core.editorial_repair.repair_development',return_value={'development_validated':True}) as repair,patch('core.review_graph.invoke_role') as locator:
+            repair_rejected_development(state,proposal,[defect,{**defect,'severity':'critical'}])
+        locator.assert_not_called()
+        self.assertEqual(set(repair.call_args.args[2]),{'matters/0/text','matters/0/completion_status'})
+        self.assertEqual(len(repair.call_args.args[0]['repair_feedback']),1)
+    def test_known_style_path_still_requires_the_rejected_quote_to_match(self):
+        from core.editorial_repair import repair_rejected_development
+        proposal={'matters':[{'matter_id':'m','text':'Legal work.','completion_status':'The source records a settlement.'}]}
+        defect={'code':'EDITORIAL_STYLE','severity':'critical','scope':'submission','field_path':'matters/0/completion_status','artifact_quote':'The source records a settlement.','message':'Describe the settlement directly.'}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair,patch('core.review_graph.invoke_role') as locator:
+            repair_rejected_development({'package':{'matters':[]},'strategy':{}},proposal,[defect])
+        locator.assert_not_called();self.assertEqual(list(repair.call_args.args[2]),['matters/0/completion_status'])

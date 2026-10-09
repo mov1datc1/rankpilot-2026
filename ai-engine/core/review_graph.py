@@ -438,6 +438,8 @@ def editor(state):
     from core.portfolio_consistency import verify_portfolio_consistency
     conflicts,trace=verify_portfolio_consistency({**state,'trace':trace},state.get('letter',{}))
     verdict.setdefault('defects', []).extend(conflicts)
+    from core.editorial_repair import unique_defects
+    verdict['defects']=unique_defects(verdict.get('defects',[]))
     return {'judge':calibrate_verdict(verdict, state.get('package'), state.get('strategy')),'trace':trace}
 
 def calibrate_verdict(verdict, package=None, strategy=None):

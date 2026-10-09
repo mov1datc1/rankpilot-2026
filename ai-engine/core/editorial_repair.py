@@ -143,9 +143,24 @@ class RepairPlan(BaseModel):
     unresolved: list[str]
 
 
+def unique_defects(defects):
+    """One concrete correction per identical claim; retain the strongest severity."""
+    result=[];positions={}
+    for defect in defects:
+        quote=' '.join(str(defect.get('artifact_quote') or '').split())
+        key=tuple(defect.get(k) for k in ('code','scope','matter_id','field_path','conflict_basis','conflict_resolution','conflicting_artifact_term'))+(quote,)
+        if quote and key in positions:
+            at=positions[key]
+            if defect.get('severity')=='critical':result[at]=defect
+        else:
+            if quote:positions[key]=len(result)
+            result.append(defect)
+    return result
+
 def repair_rejected_development(state, proposal, defects):
     """Locate semantic defects before editing; no full-proposal regeneration."""
     from core.review_graph import invoke_role, role_payload
+    defects=unique_defects(defects)
     source_package=role_payload({'package':state['package']},'development')['package']
     allowed={key:value for key,value in proposal.items() if isinstance(value,str) and key!='version'}
     for i,item in enumerate(proposal.get('matters',[])):
@@ -154,12 +169,33 @@ def repair_rejected_development(state, proposal, defects):
     for i,item in enumerate(proposal.get('candidates',[])):allowed[f'candidates/{i}']=item
     for i,item in enumerate(proposal.get('comparisons',[])):
         for field in ('incremental_contribution','tradeoff'):allowed[f'comparisons/{i}/{field}']=item.get(field,'')
+    # A literal claim already bound to a generated field needs no model to
+    # rediscover its address. Only genuinely semantic locations buy a locator.
+    norm=lambda value:' '.join(str(value or '').split())
+    targets={};remaining=[]
+    for defect in defects:
+        quote=norm(defect.get('artifact_quote'))
+        candidates=list(allowed)
+        if defect.get('matter_id'):
+            indices=[i for i,m in enumerate(proposal.get('matters',[])) if m.get('matter_id')==defect['matter_id']]
+            candidates=[path for path in candidates if any(path.startswith(f'matters/{i}/') for i in indices)]
+        exact=[path for path in candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
+        if not exact:
+            remaining.append(defect);continue
+        if defect.get('conflict_resolution')=='omit_nonessential_descriptor' and defect.get('matter_id'):
+            term=norm(defect.get('conflicting_artifact_term')).casefold()
+            if term:exact=list(dict.fromkeys(exact+[path for path in candidates if isinstance(allowed[path],str) and term in norm(allowed[path]).casefold()]))
+        for path in exact:
+            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':{'package':source_package,'strategy':state['strategy']}}
+    if not remaining:
+        return repair_development({**state,'repair_feedback':defects},proposal,targets)
+    all_feedback=defects;defects=remaining
     location=create_model('AllowedRepairLocation',__base__=RepairLocation,path=(Literal[tuple(allowed)],...))
     schema=create_model('BoundedRepairPlan',__base__=RepairPlan,locations=(list[location],...),unresolved=(list[str],...))
     plan,trace=invoke_role(state,'repair',schema,
         'Locate the smallest set of generated fields that must change to resolve each supplied defect. Do not rewrite anything. Map each location to its zero-based defect_index. Source facts and validated selection are immutable. Do not use an Audit-only defect to rewrite the Submission. For a missing outcome, locate its one matter narrative; include a candidate only if their attributed case is also affected. A missing acceptance check alone is not evidence that every field is defective. Report unlocatable defects in unresolved. Never select unaffected fields for general improvement.',
         {'defects':defects,'generated_fields':allowed,'package':source_package,'strategy':state['strategy']})
-    targets={};covered=set()
+    covered=set()
     for item in plan.get('locations',[]):
         path=item.get('path');index=item.get('defect_index')
         if path not in allowed or not isinstance(index,int) or not 0<=index<len(defects) or not item.get('reason'):
@@ -168,7 +204,7 @@ def repair_rejected_development(state, proposal, defects):
         targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':{'package':source_package,'strategy':state['strategy']}}
     if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
         return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace}
-    return repair_development({**state,'trace':trace},proposal,targets)
+    return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)
 
 
 def repair_letter(state):
