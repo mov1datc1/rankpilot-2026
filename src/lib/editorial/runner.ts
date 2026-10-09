@@ -23,7 +23,9 @@ export async function recoverStoppedJobs() {
       await tx.$queryRaw`SELECT "id" FROM "Submission" WHERE "id"=${candidate.submissionId} FOR UPDATE`;
       const current=await tx.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
       if(!current || current.userId!==candidate.userId || stableHash(sourceSnapshot(current))!==candidate.sourceHash) return;
-      await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"leaseToken"=NULL,"leaseUntil"=${plan.retryAt},"updatedAt"=now() WHERE "id"=${candidate.id} AND "status" IN ('failed','indeterminate') AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND (newer."createdAt">${candidate.createdAt} OR newer."status" IN ('queued','running')))`;
+      // Compare timestamps inside PostgreSQL: JS Date truncates microseconds
+      // and could incorrectly classify this very job as a newer competitor.
+      await tx.$executeRaw`UPDATE "EditorialJob" SET "status"='queued',"leaseToken"=NULL,"leaseUntil"=${plan.retryAt},"updatedAt"=now() WHERE "id"=${candidate.id} AND "status" IN ('failed','indeterminate') AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=${candidate.submissionId} AND newer."id"<>${candidate.id} AND (newer."createdAt">=(SELECT "createdAt" FROM "EditorialJob" WHERE "id"=${candidate.id}) OR newer."status" IN ('queued','running')))`;
     });
   }
 }
