@@ -72,3 +72,19 @@ class ConflictOwnershipTests(unittest.TestCase):
         self.assertEqual(result['defects'][0]['code'],'UNSUPPORTED_CLAIM')
         conflict={**defect,'conflict_basis':'source_vs_source'}
         self.assertEqual(calibrate_verdict({'passed':False,'defects':[conflict]},package)['defects'][0]['owner'],'user')
+
+    def test_reserve_alias_containment_preserves_critical_review_and_never_canonicalizes_core(self):
+        defect={'code':'SOURCE_CONFLICT','severity':'critical','scope':'letter','matter_id':'m','conflict_basis':'source_vs_source','conflict_resolution':'preserve_source_aliases','field_path':'client','source_quote':'Field: Alpha. Narrative: Alfa.','artifact_quote':'Alpha is reserve.','message':'Retain both supplied variants in the internal comparison.'}
+        package={'matters':[{'id':'m','source_excerpt':defect['source_quote']}],'rendered_audit':'Alpha is reserve.'}
+        strategy={'matters':[{'matter_id':'m','disposition':'reserve'}]}
+        result=calibrate_verdict({'passed':False,'defects':[defect]},package,strategy)
+        self.assertFalse(result['passed']);self.assertEqual(result['defects'][0]['owner'],'rankpilot')
+        self.assertEqual(result['defects'][0]['severity'],'critical')
+        for changes in [{'scope':'submission'},{'field_path':'role'},{'artifact_quote':'Invented quote'},{'matter_id':'unknown'},{'conflict_resolution':'confirm_source'}]:
+            with self.subTest(changes=changes):
+                result=calibrate_verdict({'passed':False,'defects':[{**defect,**changes}]},package,strategy)
+                self.assertEqual(result['defects'][0]['owner'],'user')
+        for disposition in ('core','hero'):
+            result=calibrate_verdict({'passed':False,'defects':[defect]},package,{'matters':[{'matter_id':'m','disposition':disposition}]})
+            self.assertEqual(result['defects'][0]['owner'],'user')
+        self.assertEqual(package['matters'][0]['source_excerpt'],defect['source_quote'])

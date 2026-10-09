@@ -201,7 +201,11 @@ def develop(state):
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
-        semantic=[d for d in state.get('repair_feedback',[]) if isinstance(d,dict) and (d.get('severity')=='critical' or (d.get('code')=='EDITORIAL_STYLE' and d.get('field_path') and d.get('artifact_quote'))) and d.get('owner')=='rankpilot' and d.get('scope')!='letter']
+        semantic=[d for d in state.get('repair_feedback',[]) if isinstance(d,dict)
+            and d.get('owner')=='rankpilot' and d.get('scope')!='letter'
+            and (d.get('severity')=='critical' or (d.get('artifact_quote') and (
+                (d.get('code')=='EDITORIAL_STYLE' and d.get('field_path')) or
+                (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and d.get('field_path')=='client_sector'))))]
         concrete=[d for d in semantic if not str(d.get('message','')).startswith('La aceptación editorial no está completa:')]
         if concrete:semantic=concrete
         if semantic:

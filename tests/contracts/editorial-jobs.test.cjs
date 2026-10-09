@@ -126,3 +126,12 @@ test('a disputed optional sector is withdrawn automatically only with the explic
   assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,...changes}]}}}),null);
  }
 });
+
+test('optional sector warnings and internal reserve aliases get bounded automatic prose repair',()=>{
+ const route=defect=>targetedRepair({editorial_development:{},final_artifact_review:{judge:{defects:[defect]}}});
+ const sector={code:'SOURCE_CONFLICT',severity:'warning',owner:'rankpilot',scope:'submission',field_path:'client_sector',artifact_quote:'Disputed sector',conflict_resolution:'omit_nonessential_descriptor'};
+ assert.deepEqual(route(sector),{tasks:['development','audit','artifact'],letter:true});
+ const aliases={...sector,scope:'letter',field_path:'client',conflict_resolution:'preserve_source_aliases'};
+ assert.deepEqual(route(aliases),{tasks:['audit','artifact'],letter:true});
+ for(const changes of [{owner:'user'},{scope:'submission'},{field_path:'value'},{artifact_quote:''}])assert.equal(route({...aliases,...changes}),null);
+});

@@ -164,3 +164,53 @@ class NoOpRepairTests(unittest.TestCase):
         with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])):
             result=repair_letter(state)
         self.assertFalse(result['writer_validated'])
+
+class AuditResponsibilityTests(unittest.TestCase):
+    def state(self):
+        return {'package':{'matters':[]},'strategy':{'matters':[]},'letter':{**{k:'Source-backed text.' for k in ('executive_assessment','portfolio','leadership','evidence_gaps')},'next_steps':'No se identifican acciones adicionales con la información disponible.','next_actions':[]}}
+
+    def test_unanswered_source_question_is_context_not_a_required_generated_change(self):
+        from core.editorial_repair import repair_letter
+        state=self.state()
+        question={'scope':'letter','severity':'critical','owner':'user','code':'SOURCE_CONFLICT','message':'Two original records state different amounts.'}
+        state['repair_feedback']=[question]
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])) as model:
+            result=repair_letter(state)
+        self.assertTrue(result['writer_validated'])
+        self.assertEqual(model.call_args.args[4]['defects'],[])
+        self.assertEqual(model.call_args.args[4]['source_questions'],[question])
+        self.assertEqual(result['repair_feedback'],[question])
+        self.assertEqual(result['letter']['evidence_gaps'],state['letter']['evidence_gaps'])
+
+    def test_audit_schema_binds_each_field_to_its_actual_value_type(self):
+        from core.editorial_repair import repair_letter
+        from pydantic import ValidationError
+        state=self.state();state['repair_feedback']=[]
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])) as model:
+            repair_letter(state)
+        schema=model.call_args.args[2]
+        for field,value in [('portfolio',[]),('next_actions','Not an action list')]:
+            with self.subTest(field=field),self.assertRaises(ValidationError):
+                schema.model_validate({'corrections':[{'path':field,'value':value,'reason':'Invalid shape'}],'unresolved':[]})
+        schema.model_validate({'corrections':[{'path':'portfolio','value':'Supported comparison.','reason':'Correction'},{'path':'next_actions','value':[],'reason':'Resolved actions'}],'unresolved':[]})
+
+    def test_shared_repair_evidence_is_sent_once_without_changing_distinct_sources(self):
+        from core.editorial_repair import repair_development
+        shared={'package':PACKAGE,'strategy':STRATEGY}
+        targets={key:{'current_value':DEV[key],'source_evidence':copy.deepcopy(shared)} for key in ('b10','c2')}
+        targets['matters/0/text']={'current_value':DEV['matters'][0]['text'],'source_evidence':{'package':{'other':'Different source'},'strategy':STRATEGY}}
+        before=copy.deepcopy(targets)
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':['Fixture has no repair']},[])) as model:
+            repair_development({'package':PACKAGE,'strategy':STRATEGY},DEV,targets)
+        payload=model.call_args.args[4]
+        self.assertEqual(payload['shared_source_evidence'],shared)
+        for key in ('b10','c2'):self.assertEqual(payload['repair_targets'][key]['source_evidence'],{'reference':'shared_source_evidence'})
+        self.assertEqual(payload['repair_targets']['matters/0/text'],before['matters/0/text'])
+        self.assertEqual(targets,before)
+
+    def test_warning_sector_containment_still_runs_the_automatic_repair(self):
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':[{'severity':'warning','owner':'rankpilot','scope':'submission','code':'SOURCE_CONFLICT','field_path':'client_sector','artifact_quote':'Disputed optional sector','conflict_resolution':'omit_nonessential_descriptor'}]}
+        with patch('core.editorial_repair.repair_rejected_development',return_value={'development_validated':False}) as locator:
+            result=develop(state)
+        locator.assert_called_once()
+        self.assertFalse(result['development_validated'])

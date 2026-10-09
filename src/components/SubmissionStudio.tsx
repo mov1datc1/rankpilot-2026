@@ -98,7 +98,11 @@ export default function SubmissionStudio({
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('validate') === 'true') {
-        setShowValidationWizard(true);
+        if(initialChambersData.filing_reviewed!==true) setShowValidationWizard(true);
+        // This is a one-time ingestion entry point, not a persistent command.
+        urlParams.delete('validate');
+        const query=urlParams.toString();
+        window.history.replaceState(window.history.state,'',`${window.location.pathname}${query?`?${query}`:''}${window.location.hash}`);
       }
     }
   }, []);

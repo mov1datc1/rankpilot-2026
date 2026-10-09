@@ -112,7 +112,15 @@ def repair_development(state, proposal, targets):
     from core.editorial_development import bind_development, development_errors
     correction=create_model('AllowedEditorialCorrection',__base__=Correction,path=(Literal[tuple(targets)],...))
     schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
-    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':targets,'feedback':state.get('repair_feedback',[]),'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
+    # Semantic targets share the same complete evidence. Send it once, not once
+    # per generated path; distinct target-specific evidence remains untouched.
+    shared=None;payload_targets=copy.deepcopy(targets)
+    for target in payload_targets.values():
+        evidence=target.get('source_evidence')
+        if isinstance(evidence,dict) and set(evidence)=={'package','strategy'}:
+            if shared is None:shared=evidence
+            if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
+    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'shared_source_evidence':shared,'feedback':state.get('repair_feedback',[]),'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
     try:
         fixed=apply_corrections(proposal,targets,repair)
     except ValueError as error:
@@ -165,7 +173,8 @@ def repair_letter(state):
     """Patch rejected Audit fields; condense globally only for a length violation."""
     from core.review_graph import invoke_role, Letter, NextAction, reconcile_next_actions, audit_word_count, AUDIT_WORD_LIMIT, condense_audit_letter
     fields=('executive_assessment','portfolio','leadership','evidence_gaps','next_actions')
-    feedback=state.get('repair_feedback',[])
+    source_questions=[d for d in state.get('repair_feedback',[]) if d.get('owner')=='user']
+    feedback=[d for d in state.get('repair_feedback',[]) if d.get('owner')!='user']
     located=[d.get('field_path') for d in feedback]
     if located and all(key in fields for key in located):
         fields=tuple(dict.fromkeys(located))
@@ -173,11 +182,12 @@ def repair_letter(state):
     source_package=state['package']
     if classification_only:
         source_package={'matters':[{k:m.get(k) for k in ('id','client','name')} for m in state['package'].get('matters',[])]}
-    change=create_model('AuditFieldCorrection',path=(Literal[fields],...),value=(Union[str,list[NextAction]],...),reason=(str,...))
+    variants=tuple(create_model('AuditCorrection_'+field,path=(Literal[field],...),value=(list[NextAction] if field=='next_actions' else str,...),reason=(str,...)) for field in fields)
+    change=Union[variants] if len(variants)>1 else variants[0]
     schema=create_model('AuditDelta',corrections=(list[change],...),unresolved=(list[str],...))
     result,trace=invoke_role(state,'writer',schema,
-        'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
-        {'previous_letter':state['letter'],'defects':feedback,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else state.get('development')})
+        'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. For preserve_source_aliases on an internal reserve label, explicitly retain BOTH original name variants in the comparison; do not choose a canonical identity or ask the user to correct spelling. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. source_questions are context, NOT editing tasks: retain genuine unanswered factual questions without inventing answers and never put them in unresolved merely because the user has not answered. unresolved is only for a requested GENERATED correction that cannot be applied. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a generated field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
+        {'previous_letter':state['letter'],'defects':feedback,'source_questions':source_questions,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else state.get('development')})
     fixed=copy.deepcopy(state['letter']);seen=set()
     for correction in result['corrections']:
         key=correction['path'];value=correction['value']
@@ -197,7 +207,7 @@ def repair_letter(state):
     from core.portfolio_consistency import verify_portfolio_consistency
     conflicts,trace=verify_portfolio_consistency({**state,'trace':trace},fixed)
     errors=[d['message'] for d in conflicts]
-    requires_change=any(d.get('scope')=='letter' and d.get('severity')=='critical' for d in state.get('repair_feedback',[]))
+    requires_change=any(d.get('scope')=='letter' and d.get('severity')=='critical' for d in feedback)
     if result.get('unresolved') or (requires_change and not seen):errors.append('RankPilot debe completar la corrección del Audit; no se acepta una reparación sin cambios.')
     if audit_word_count(fixed)>AUDIT_WORD_LIMIT:errors.append('El Audit excede la extensión ejecutiva acordada.')
     return {'letter':fixed,'writer_validated':not errors,'errors':errors,'trace':trace,
