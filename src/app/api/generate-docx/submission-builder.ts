@@ -1,7 +1,7 @@
 import {
   Document, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, ShadingType, AlignmentType, BorderStyle,
-  VerticalAlign, Header, Footer, PageBreak, TableLayoutType
+  VerticalAlign, Header, Footer, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
 import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership } from '@/lib/docx/lawyer-curator';
@@ -29,6 +29,12 @@ function para(text: string, opts: { bold?: boolean; size?: number; italics?: boo
     alignment: opts.alignment,
     spacing: opts.spacing || { after: 80 },
   });
+}
+
+// An inline break can itself overflow onto a blank page after a full table.
+// A paragraph-level break starts the next page without consuming the old one.
+function pageStart(): Paragraph {
+  return new Paragraph({pageBreakBefore:true,spacing:{before:0,after:0,line:1},children:[]});
 }
 
 function yellowCell(children: Paragraph[], opts: { width?: number; columnSpan?: number; rowSpan?: number } = {}): TableCell {
@@ -499,7 +505,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('Contact person(s) to arrange interviews about this practice area', ['Name', 'Email', 'Telephone number'], contactRows, { labelPrefix: 'A4' }));
 
   // ═══ SECTION B ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('B. DEPARTMENT INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
 
   elements.push(fieldTable('Department name (used by firm)', chambersData.departmentName || '', 'B1'));
@@ -539,7 +545,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('Hires / Departures of partners in last 12 months \n(state if they joined or left, and name of the other firm)', ['Name', 'Joined / Departed', 'Joined From / Destination (firm)'], hireRows, { labelPrefix: 'B8' }));
 
   // B9 Lawyer bios table — 5 columns with explicit DXA widths for Google Docs (Official Chambers: B9)
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
 
   // Column widths: Name(1500) + Comments(4260) + Partner(1000) + Ranked(1000) + Leave(1600) = 9360
   const b6ColWidths = [1500, 4260, 1000, 1000, 1600];
@@ -706,7 +712,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
 
   // ═══ SECTION C ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
 
   // C1 Barristers
   const emptyBarRows = Array(8).fill(null).map(() => ['', '', '']);
@@ -721,7 +727,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
   // ═══ SECTION D ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('D. PUBLISHABLE INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
   elements.push(para("All information in section 'D' is considered PUBLISHABLE. Do not include any confidential information in this section. Confidential information can be included in section 'E'. Information in section 'D' may be printed in Chambers and Partners publications.", { italics: true, size: 16, spacing: { after: 200 } }));
 
@@ -764,13 +770,13 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     elements.push(para('No publishable matters submitted for this practice area. Confidential matters are listed in Section E.', { italics: true, size: 20, spacing: { before: 200, after: 200 } }));
   } else {
     for (let i = 0; i < pubMatters.length; i++) {
-      elements.push(new Paragraph({ children: [new PageBreak()] }));
+      elements.push(pageStart());
       elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers, heroContext));
     }
   }
 
   // ═══ SECTION E ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('E. CONFIDENTIAL INFORMATION', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
   elements.push(para("All information in section 'E' is considered CONFIDENTIAL and NOT FOR PUBLICATION. Information in this section will only be used for our internal ranking purposes. If any part of a matter is confidential it should be included in this section 'E' not section 'D'.", { italics: true, size: 16, spacing: { after: 200 } }));
 
@@ -784,7 +790,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   // E matters
   for (let i = 0; i < confMatters.length; i++) {
-    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(pageStart());
     elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers, heroContext));
   }
 
@@ -792,18 +798,18 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // NOTE: Surplus matters belong exclusively to internal intelligence & Studio UI.
   // They must NEVER be appended to the official Chambers Submission Form DOCX unless explicitly requested via exportMode === 'with_surplus'.
   if (exportMode === 'with_surplus' && (curation.surplusPubMatters.length > 0 || curation.surplusConfMatters.length > 0)) {
-    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(pageStart());
     elements.push(para('SURPLUS MATTERS (RESERVE ROSTER — EXCEEDING CHAMBERS 20-CASE CEILING)', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 100 } }));
     elements.push(para('The following matters were preserved from your original upload but held in reserve to protect your submission against the Chambers 20-case limit. They can be substituted into the official sections above if desired.', { italics: true, size: 16, spacing: { after: 200 } }));
 
     let surplusNum = 1;
     for (const sm of curation.surplusPubMatters) {
-      elements.push(new Paragraph({ children: [new PageBreak()] }));
+      elements.push(pageStart());
       elements.push(matterTable(surplusNum++, 'D', 'Publishable', sm, exportMode, lawyers, heroContext));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
     for (const sm of curation.surplusConfMatters) {
-      elements.push(new Paragraph({ children: [new PageBreak()] }));
+      elements.push(pageStart());
       elements.push(matterTable(surplusNum++, 'E', 'Confidential', sm, exportMode, lawyers, heroContext));
       elements.push(para('NOTE: Preserved in Surplus / Reserve Roster.', { italics: true, size: 16, color: '64748B', spacing: { before: 60, after: 60 } }));
     }
@@ -971,7 +977,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('Contact person(s)', ['Name', 'Email', 'Telephone number'], contactRows));
 
   // ═══ DEPARTMENT OVERVIEW ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('DEPARTMENT OVERVIEW', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
 
   const dept = chambersData.department || {};
@@ -998,7 +1004,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   elements.push(dataTable('Hires / Departures of partners in last 12 months', ['Name', 'Joined / Departed', 'From / To'], hdRows));
 
   // ═══ WHAT SETS YOUR PRACTICE APART ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   const lawyers = chambersData.lawyers || [];
   let b7Val = exportMode === 'original'
     ? (chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '')
@@ -1011,7 +1017,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
   // ═══ LEADING PARTNERS ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('LEADING PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
   
   const partners = lawyers.filter((l: any) => l.isPartner);
@@ -1042,7 +1048,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   }
 
   // ═══ PUBLISHABLE WORK HIGHLIGHTS ═══
-  elements.push(new Paragraph({ children: [new PageBreak()] }));
+  elements.push(pageStart());
   elements.push(para('PUBLISHABLE WORK HIGHLIGHTS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
   elements.push(para('All information in this section is considered PUBLISHABLE.', { italics: true, size: 16, spacing: { after: 200 } }));
 
@@ -1064,7 +1070,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   // Publishable matters
   for (let i = 0; i < pubMatters.length; i++) {
-    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(pageStart());
     elements.push(para(`Publishable Work Highlights in last 12 months`, { bold: true, size: 20, spacing: { after: 80 } }));
     elements.push(para(`Publishable Matter ${i + 1}`, { bold: true, size: 18, color: '333333', spacing: { after: 120 } }));
     elements.push(matterTable(i + 1, 'D', 'Publishable', pubMatters[i], exportMode, lawyers, l500HeroContext));
@@ -1072,7 +1078,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   // ═══ DETAILED (CONFIDENTIAL) WORK HIGHLIGHTS ═══
   if (confMatters.length > 0) {
-    elements.push(new Paragraph({ children: [new PageBreak()] }));
+    elements.push(pageStart());
     elements.push(para('DETAILED (NON-PUBLISHABLE) WORK HIGHLIGHTS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 200, after: 100 } }));
     elements.push(para('All information in this section is CONFIDENTIAL and NOT FOR PUBLICATION. This information will only be used for internal ranking purposes.', { italics: true, size: 16, spacing: { after: 200 } }));
 
@@ -1084,7 +1090,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     elements.push(dataTable('NON-PUBLISHABLE CLIENTS', ['', 'Name of Client', 'New Client (Y/N)'], e0Rows));
 
     for (let i = 0; i < confMatters.length; i++) {
-      elements.push(new Paragraph({ children: [new PageBreak()] }));
+      elements.push(pageStart());
       elements.push(matterTable(i + 1, 'E', 'Confidential', confMatters[i], exportMode, lawyers, l500HeroContext));
     }
   }

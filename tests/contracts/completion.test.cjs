@@ -172,3 +172,12 @@ test('final review calibration update reuses the letter and reruns only the actu
  assert.equal(state.chambersData.completed_artifact_review_version,require('../../src/lib/audit/artifact-binding.ts').ARTIFACT_REVIEW_VERSION);
  await complete({checkpoint:true});assert.equal(calls.length,before+1);
 });
+test('unchanged prior generated correction blocks approval before another paid judge call',async()=>{
+ reset();seedReview();
+ state.chambersData.review_checkpoint.state.repair_feedback=[{code:'EDITORIAL_STYLE',owner:'rankpilot',scope:'submission',field_path:'matters/m1/text',severity:'warning',artifact_quote:source,message:'Concrete editorial correction still pending.'}];
+ const result=await (await complete({checkpoint:true})).json();
+ assert.equal(calls.length,0);assert.equal(result.release.passed,false);
+ assert.equal(state.chambersData.approved_artifact,null);
+ assert.equal(state.chambersData.final_artifact_review.verification_gate,'unapplied_editorial_correction');
+ assert.equal(state.chambersData.final_artifact_review.judge.defects[0].verification,'unchanged_generated_claim');
+});
