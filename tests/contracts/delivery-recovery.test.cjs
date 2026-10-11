@@ -55,3 +55,11 @@ test('an outdated document approval is a RankPilot task, not a user answer',()=>
  assert.equal(issues[0].owner,'RankPilot');
  assert.equal(issues[0].destination,'retry-review');
 });
+
+test('newly extracted evidence awaiting review is not a factual question for the user',()=>{
+ const issues=reviewIssues({},['Source evidence changed; validation required.','B3: número de otros abogados']);
+ assert.equal(issues[0].owner,'RankPilot');
+ assert.equal(issues[0].destination,'retry-review');
+ assert.equal(issues[1].destination,'wizard');
+ assert.equal(issues.length,2);
+});
