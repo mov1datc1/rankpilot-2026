@@ -10,6 +10,13 @@ import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAutho
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 import { draftSourceHash } from '@/lib/editorial/contracts';
 
+/** Preserve the explicit value restriction without publishing adjacent amount prose. */
+export function publicationValue(value:string, confidential:boolean, original:boolean) {
+  if(confidential || original) return value;
+  const marker=String(value).split(/\r?\n/).find(line=>/^\s*(?:confidential|confidencial)[.!]?\s*$/i.test(line));
+  return marker?.trim() || value;
+}
+
 const YELLOW = 'FFFFCC';
 const FONT = 'Times New Roman';
 const BORDER = { style: BorderStyle.SINGLE, size: 1, color: '000000' };
@@ -189,7 +196,7 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
   }
 
   let summaryText = ensureEnglishMatterSummary(cleanLawyerNames(sanitizeMatterSummary(rawSummary)));
-  const valueText = sanitizeMatterValue(matter.value || matter.dealValue || '', rawClient);
+  const valueText = sanitizeMatterValue(publicationValue(matter.value || matter.dealValue || '',prefix==='E',exportMode==='original'),rawClient);
 
   // Point 3 & 7: Value conflict banner
   if (matter.sourceValueConflict && !summaryText.includes('SOURCE VALUE CONFLICT')) {

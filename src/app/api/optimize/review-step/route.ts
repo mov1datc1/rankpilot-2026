@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const trace=receivedTrace;
     if(result.state.selection_review_deferred) return NextResponse.json({success:false,code:'SELECTION_REVIEW_DEFERRED',error:'Selección guardada. RankPilot continuará automáticamente con su revisión independiente.',trace},{status:503});
     if(result.state.selection_review_unavailable) return NextResponse.json({success:false,code:'AI_REVIEW_UNAVAILABLE',error:'La comprobación no pudo terminar. La selección guardada se conserva para reanudar sin repetirla.',trace},{status:502});
-    if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),retryable:stage!=='strategy',trace},{status:422});
+    if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),retryable:stage!=='strategy' && result.state.development_repair_unlocatable!==true,trace},{status:422});
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {
     // A paid response already arrived: retain it before retrying application

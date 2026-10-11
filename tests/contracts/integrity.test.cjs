@@ -190,3 +190,28 @@ test('legacy Word hyperlink instructions render as one literal link without losi
  assert.equal(cleanTablePipes('HYPERLINK "https://example.test" Display label'), 'https://example.test Display label');
  assert.equal(cleanTablePipes('HYPERLINK is the name of an unrelated product'), 'HYPERLINK is the name of an unrelated product');
 });
+
+test('public value cells honor the explicit source restriction without changing private or original exports',()=>{
+ const {publicationValue}=require('../../src/app/api/generate-docx/submission-builder.ts');
+ const value='A six-figure amount.\nConfidential.';
+ assert.equal(publicationValue(value,false,false),'Confidential.');
+ assert.equal(publicationValue(value,true,false),value);
+ assert.equal(publicationValue(value,false,true),value);
+ assert.equal(publicationValue('USD 200,000',false,false),'USD 200,000');
+ assert.equal(publicationValue('Not confidential',false,false),'Not confidential');
+});
+
+test('rendered public D3 withholds restricted amount while confidential E3 and original retain it',async()=>{
+ for(const [mode,privateMatter] of [['optimized',false],['optimized',true],['original',false]]) {
+  const m=matter('restricted',{value:'A six-figure amount.\nConfidential.',isConfidential:privateMatter,publish_status:privateMatter?'confidential':'publishable'});
+  const data={matters:[m],canonical_matter_selection:{core_matter_ids:['restricted']}};
+  const doc=buildSubmissionDoc('Synthetic Firm','Tax',data,{practiceArea:'Tax',guideRegion:'Mexico',targetDirectory:'Chambers',matters:[m]},mode);
+  const zip=await JSZip.loadAsync(await Packer.toBuffer(doc));
+  const text=(await zip.file('word/document.xml').async('string')).replace(/<[^>]+>/g,'');
+  const prefix=privateMatter?'E':'D';
+  const cell=text.slice(text.indexOf(prefix+'3 Matter value'),text.indexOf(prefix+'4 Is this a cross-border matter'));
+  assert.ok(cell.includes('Confidential.'));
+  assert.equal(cell.includes('six-figure'),privateMatter||mode==='original');
+  assert.equal(m.value,'A six-figure amount.\nConfidential.');
+ }
+});

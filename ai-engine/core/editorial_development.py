@@ -202,6 +202,27 @@ def development_contract(package, strategy):
     comparison=create_model('RegisteredComparison',__base__=Comparison,selected_id=(Literal[core],...),alternative_id=(Literal[reserves] if reserves else str,...))
     return create_model('RegisteredDevelopment',__base__=Development,candidates=(list[candidate],...),matters=(list[draft],...),comparisons=(list[comparison],...))
 
+def renderer_owned_finding(defect, package):
+    """Only the renderer owns D3; preserve the explicit source restriction.
+
+    This skips a prose locator, never the independent final artifact review.
+    """
+    if (defect.get('code') == 'TEMPORAL_FINDING_UNRESOLVED'
+        and defect.get('field_path') == 'research_period' and not package.get('research_period')
+        and defect.get('temporal_basis') == 'missing_metadata'
+        and defect.get('artifact_claim_kind') == 'template_label' and not defect.get('source_quote')
+        and re.fullmatch(r'(?:(?:Confidential|Publishable) )?Work Highlights in last 12 months',
+                         _norm(defect.get('artifact_quote')),re.I)):
+        return True
+    if defect.get('scope') != 'submission' or defect.get('field_path') != 'value':
+        return False
+    matter=next((m for m in package.get('matters',[]) if m.get('id')==defect.get('matter_id')), {})
+    value=str(matter.get('value') or '')
+    return (matter.get('publish_status') == 'publishable'
+        and bool(re.search(r'(?im)^\s*(?:confidential|confidencial)[.!]?\s*$',value))
+        and _norm(defect.get('artifact_quote')) == _norm(value))
+
+
 def develop(state):
     from core.review_graph import invoke_role
     # The caller retains previous proposals only while their source/strategy key
@@ -210,13 +231,16 @@ def develop(state):
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
-        semantic=[d for d in state.get('repair_feedback',[]) if isinstance(d,dict)
+        feedback=state.get('repair_feedback',[])
+        renderer_only=[d for d in feedback if isinstance(d,dict) and renderer_owned_finding(d,state['package'])]
+        semantic=[d for d in feedback if isinstance(d,dict) and not renderer_owned_finding(d,state['package'])
             and d.get('owner')=='rankpilot' and d.get('scope')!='letter'
             and (d.get('severity')=='critical' or (d.get('artifact_quote') and (
                 (d.get('code')=='EDITORIAL_STYLE' and d.get('field_path')) or
                 (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and d.get('field_path')=='client_sector' and d.get('conflicting_artifact_term') and str(d['conflicting_artifact_term']).casefold() in str(d['artifact_quote']).casefold()))))]
         concrete=[d for d in semantic if not str(d.get('message','')).startswith('La aceptación editorial no está completa:')]
         if concrete:semantic=concrete
+        elif renderer_only:semantic=[]
         if semantic:
             from core.editorial_repair import repair_rejected_development
             return repair_rejected_development({**state,'repair_feedback':semantic},bound,semantic)

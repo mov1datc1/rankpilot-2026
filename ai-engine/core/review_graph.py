@@ -94,6 +94,7 @@ class ReviewState(TypedDict, total=False):
     stage_deadline: float
     development: dict
     development_validated: bool
+    development_repair_unlocatable: bool
     development_reusable: bool
     repair_feedback: list
     repair_report: dict
@@ -139,6 +140,8 @@ BASE += '\nCONFLICT CONTAINMENT: If source records disagree solely on a nonessen
 BASE += '\nACCEPTANCE CONSISTENCY: source_fidelity assesses the final Submission/Audit and material selection decisions. A nonessential sector discrepancy already neutralized in both final documents is an internal warning, even if an older strategy note retains that descriptor; it does not fail source_fidelity unless you identify a concrete material effect on selection or delivery. Every failed acceptance criterion must identify a corresponding concrete critical defect with evidence and a locatable correction. Never contradict your own warning classification with an unexplained global failure.\n'
 BASE += '\nPUBLIC ANONYMIZATION: For a confidential matter, consider the combination of public identifiers, not just the client name. Generalize identifying combinations of acquisition, exact geography and case-specific metrics in B9/B10/C2 while preserving all exact supported facts in confidential section E. This limited public generalization is not an editorial omission when the substantive legal work and personal role remain clear and the exact evidence remains in E. Do not demand mutually incompatible disclosure and omission repairs.\n'
 BASE += '\nSOURCE SCOPE: A roster of heads AND other key partners is not a closed department census. Do not infer a contradictory partner count merely by counting names or Partner Since dates in that broader roster; preserve the explicitly declared department count and each documented professional role. A critical count conflict requires incompatible counts for the SAME confirmed population and period, not an assumed membership scope. An explicit same-scope contradiction still requires confirmation. Do not infer department head status from a Partner title.\n'
+BASE += '\nSAME-SCOPE CONTRADICTIONS: Different levels of detail are not automatically incompatible facts. Associate is a broad category that can include Senior Associate; a dated matter-team title can be more specific than a general roster. Do not infer a promotion or downgrade, but require mutually exclusive same-period roles before calling a source conflict. Likewise, project location and the jurisdictions involved in cross-border advice can describe different scopes: differing non-exclusive country lists alone do not prove contradiction. Preserve each field with its original scope; never silently combine them into a definitive exclusive list. A genuine same-scope contradiction, unsupported added country, false leadership attribution or incompatible rank remains critical.\n'
+
 BASE += '\nRESERVE NAME VARIANTS: When an internal Audit mentions a reserve/excluded record whose field and narrative use differing name variants, it can identify that SAME record transparently by quoting BOTH supplied variants (field name and narrative name). Use conflict_resolution=preserve_source_aliases, field_path=client, scope=letter, and quote the current one-sided claim. This repairs ambiguous internal labeling without deciding a corporate identity, deleting a reserve, or altering the canonical source. Do not request spelling corrections that this transparent representation can handle. If the Audit already preserves both variants explicitly without pretending to reconcile identity, the source discrepancy is an optional warning. Conflicting identities in selected Submission matters, uncertain role attribution and publication permissions remain material and require evidence.\n'
 
 def compact_review_payload(value):
@@ -586,7 +589,7 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
         disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact and not metadata_request))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
-        concrete = bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
+        concrete = not (heading_in_artifact and defect.get('artifact_claim_kind') == 'template_label' and not source_quote) and bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
         if package is not None and missing and not disputed and not concrete:
             defect['severity'] = 'warning'
             defect['message'] = 'Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.'

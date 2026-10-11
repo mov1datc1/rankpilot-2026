@@ -6,6 +6,19 @@ from core.editorial_development import develop
 from core.editorial_repair import repair_targets, apply_corrections
 
 class TargetedRepairTests(unittest.TestCase):
+    def test_renderer_value_restriction_does_not_buy_a_prose_locator(self):
+        package=copy.deepcopy(PACKAGE)
+        package['matters'][0].update(value='A six-figure amount.\nConfidential.',publish_status='publishable')
+        defect={'owner':'rankpilot','severity':'critical','scope':'submission','field_path':'value',
+                'matter_id':package['matters'][0]['id'],'artifact_quote':'A six-figure amount.\nConfidential.'}
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No paid locator for renderer field')):
+            result=develop({'package':package,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':[defect]})
+        self.assertTrue(result['development_validated'])
+        self.assertNotIn('release_verdict',result)
+        from core.editorial_development import renderer_owned_finding
+        self.assertFalse(renderer_owned_finding({**defect,'artifact_quote':'Invented amount.'},package))
+        self.assertFalse(renderer_owned_finding({**defect,'field_path':'teamMembers'},package))
+
     def broken(self):
         proposal=copy.deepcopy(DEV)
         proposal['matters'][0]['decisive_source_quotes']=['The team prevented a walkout.']
@@ -122,6 +135,8 @@ class TargetedRepairTests(unittest.TestCase):
             result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':defects})
         self.assertFalse(result['development_validated']);self.assertEqual(result['development'],DEV)
         model.assert_called_once();self.assertEqual(model.call_args.args[1],'repair')
+
+        self.assertTrue(result['development_repair_unlocatable'])
 
     def test_audit_delta_preserves_other_sections_and_submission(self):
         from core.editorial_repair import repair_letter

@@ -214,7 +214,7 @@ def repair_rejected_development(state, proposal, defects):
         covered.add(index)
         targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':{'package':source_package,'strategy':state['strategy']}}
     if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
-        return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace}
+        return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace,'development_repair_unlocatable':True}
     return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)
 
 

@@ -82,6 +82,15 @@ class TemporalReviewTests(unittest.TestCase):
         self.state['package']['research_period'] = {'from': '2025-01-01', 'to': '2025-12-31'}
         self.assertFalse(self.review([defect])['judge']['passed'])
 
+    def test_template_heading_does_not_become_a_date_claim_from_diagnostic_prose(self):
+        defect={**self.defect('missing_metadata','warning'),'code':'MISSING_TEMPORAL_METADATA',
+                'source_quote':'','artifact_quote':'Work Highlights in last 12 months',
+                'artifact_claim_kind':'template_label',
+                'message':'Confirm the window for the documented 2023 work; this heading alone is not a factual assertion.'}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'source_quote':'Work ended in 2020.'}])['judge']['passed'])
+        self.assertFalse(self.review([{**defect,'artifact_quote':'The work ended in 2023.'}])['judge']['passed'])
+
     def test_empty_negative_verdict_is_not_silently_approved(self):
         self.assertFalse(calibrate_verdict({'passed': False, 'defects': []})['passed'])
 
