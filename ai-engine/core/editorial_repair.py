@@ -181,9 +181,11 @@ def repair_rejected_development(state, proposal, defects):
     def source_for(path):
         if path.startswith('matters/'):
             matter_id=proposal['matters'][int(path.split('/')[1])]['matter_id']
-            return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
-                    'matter':next(m for m in source_package['matters'] if m['id']==matter_id),
-                    'selection':next(d for d in state['strategy']['matters'] if d['matter_id']==matter_id)}
+            matter=next((m for m in source_package.get('matters',[]) if m['id']==matter_id),None)
+            if matter is not None:
+                return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
+                        'matter':matter,
+                        'selection':next((d for d in state['strategy'].get('matters',[]) if d['matter_id']==matter_id),None)}
         return {'package':source_package,'strategy':state['strategy']}
     targets={};remaining=[]
     for defect in defects:
@@ -237,6 +239,17 @@ def repair_letter(state):
         fields=tuple(dict.fromkeys(located))
     classification_only=bool(feedback) and all(d.get('code')=='SELECTION_MISMATCH' and d.get('scope')=='letter' for d in feedback)
     source_package=state['package']
+    development=state.get('development')
+    # A matter-only correction does not require repurchasing every other source.
+    # The full original dossier still goes to the independent final reviewer.
+    concrete=[d for d in submission_context if d.get('severity')=='critical'
+              and not str(d.get('message','')).startswith('La aceptación editorial no está completa:')
+              and d.get('code')!='TEMPORAL_FINDING_UNRESOLVED']
+    changed_ids={d.get('matter_id') for d in concrete}
+    scoped_delta=bool(concrete) and None not in changed_ids and not feedback and not source_questions
+    if scoped_delta:
+        source_package={**source_package,'matters':[m for m in source_package.get('matters',[]) if m['id'] in changed_ids]}
+        development={'matters':[m for m in (development or {}).get('matters',[]) if m['matter_id'] in changed_ids]}
     if classification_only:
         source_package={'matters':[{k:m.get(k) for k in ('id','client','name')} for m in state['package'].get('matters',[])]}
     variants=tuple(create_model('AuditCorrection_'+field,path=(Literal[field],...),value=(list[NextAction] if field=='next_actions' else str,...),reason=(str,...)) for field in fields)
@@ -244,7 +257,8 @@ def repair_letter(state):
     schema=create_model('AuditDelta',corrections=(list[change],...),unresolved=(list[str],...))
     result,trace=invoke_role(state,'writer',schema,
         'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. For preserve_source_aliases on an internal reserve label, explicitly retain BOTH original name variants in the comparison; do not choose a canonical identity or ask the user to correct spelling. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. submission_review_context describes a separate Submission review: reconcile the Audit with CURRENT development, but never try to edit Submission fields or report those separate defects as unresolved Audit tasks. source_questions are context, NOT editing tasks: retain genuine unanswered factual questions without inventing answers and never put them in unresolved merely because the user has not answered. unresolved is only for a requested GENERATED correction that cannot be applied. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a generated field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
-        {'previous_letter':state['letter'],'defects':feedback,'source_questions':source_questions,'submission_review_context':submission_context,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else state.get('development')})
+        {'previous_letter':state['letter'],'defects':feedback,'source_questions':source_questions,'submission_review_context':submission_context,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else development,
+         'scope_instruction':'Only reconcile mentions of the supplied changed matters. Preserve unrelated text and recommendations; the full independent source review still follows.' if scoped_delta else None})
     fixed=copy.deepcopy(state['letter']);seen=set()
     for correction in result['corrections']:
         key=correction['path'];value=correction['value']

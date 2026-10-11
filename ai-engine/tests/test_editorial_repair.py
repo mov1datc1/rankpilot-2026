@@ -211,6 +211,24 @@ class AuditResponsibilityTests(unittest.TestCase):
         self.assertEqual(result['repair_feedback'],[question])
         self.assertEqual(result['letter']['evidence_gaps'],state['letter']['evidence_gaps'])
 
+    def test_audit_delta_reads_changed_matter_sources_without_discarding_the_full_dossier(self):
+        from core.editorial_repair import repair_letter
+        state=self.state()
+        state['package']['matters']=[{'id':'changed','rawNotes':'Supported contribution.'},{'id':'unrelated','rawNotes':'Other source.'}]
+        state['development']={'matters':[{'matter_id':'changed','text':'Restored contribution.'},{'matter_id':'unrelated','text':'Unchanged.'}]}
+        state['repair_feedback']=[{'scope':'submission','severity':'critical','owner':'rankpilot','code':'EDITORIAL_OMISSION','matter_id':'changed'}]
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])) as model:
+            repair_letter(state)
+        payload=model.call_args.args[4]
+        self.assertEqual([m['id'] for m in payload['package']['matters']],['changed'])
+        self.assertEqual([m['matter_id'] for m in payload['development']['matters']],['changed'])
+        self.assertEqual(len(state['package']['matters']),2)
+        self.assertEqual(len(state['development']['matters']),2)
+        state['repair_feedback'].append({'owner':'user','scope':'facts','code':'SOURCE_CONFLICT'})
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':[]},[])) as model:
+            repair_letter(state)
+        self.assertEqual(len(model.call_args.args[4]['package']['matters']),2)
+
     def test_audit_schema_binds_each_field_to_its_actual_value_type(self):
         from core.editorial_repair import repair_letter
         from pydantic import ValidationError
