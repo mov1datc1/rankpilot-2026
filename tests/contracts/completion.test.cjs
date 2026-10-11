@@ -211,6 +211,13 @@ test('a grounded-diagnostic retry releases the terminal provider lease and retai
  }finally{global.fetch=saved;}
 });
 
+test('service authentication failure is not saved as an editorial verdict or retried as generation',async()=>{
+ reset();seedReview();const original=global.fetch;const previous=structuredClone(state.chambersData.final_artifact_review);
+ global.fetch=async()=>Response.json({error:'Service authentication required'},{status:401});
+ try {const response=await complete({checkpoint:true});const result=await response.json();assert.equal(response.status,503);assert.equal(result.code,'ENGINE_AUTH_FAILED');assert.equal(result.retryable,false);assert.deepEqual(state.chambersData.final_artifact_review,previous);assert.ok(!state.chambersData.completed_review_input_hash);assert.equal(state.chambersData.review_checkpoint.lease_until,0);assert.ok(!state.chambersData.approved_artifact);}
+ finally{global.fetch=original;}
+});
+
 test('all preparation endpoints reject a deferred required count before any model call',async()=>{
  const endpoints=[POST,require('../../src/app/api/optimize/review-step/route.ts').POST,require('../../src/app/api/optimize/matter/route.ts').POST,require('../../src/app/api/optimize/b10/route.ts').POST,require('../../src/app/api/editorial/jobs/route.ts').POST];
  for(const endpoint of endpoints){

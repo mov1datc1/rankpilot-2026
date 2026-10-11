@@ -1,11 +1,12 @@
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
-import { generatedContentHash, mayRepairAutomatically } from './repair-progress';
+import { generatedContentHash } from './repair-progress';
+import { superviseArtifact } from './supervisor';
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
 import { editorialIdentity } from './identity';
 import { sourceSnapshot, stableHash } from './contracts';
-import { planDrafting, systemIssue, targetedRepair } from './jobs';
+import { planDrafting, systemIssue } from './jobs';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
 import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
@@ -58,6 +59,7 @@ export async function runJobStage(job:any) {
   let trace:any=null;
   let generatedHash:string|null=null;
   let retryAt:Date|null=null;
+  let supervision:ReturnType<typeof superviseArtifact>|null=null;
   try {
     const submission=await prisma.submission.findUnique({where:{id:job.submissionId},include:{matters:true}});
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
@@ -83,7 +85,8 @@ export async function runJobStage(job:any) {
     if(stage==='selection') tasks=planDrafting({...data,matters:data.matters || updated.matters});
     cursor++;
     if(cursor>=tasks.length) {
-      const repair=stage==='artifact' && mayRepairAutomatically(job.ledger || [],data) ? targetedRepair(data):null;
+      if(stage==='artifact') supervision=superviseArtifact({...job,ledger:[...(job.ledger || []),{trace}]},data,process.env.RENDER_GIT_COMMIT || 'local');
+      const repair=supervision?.action==='repair'?supervision.repair:null;
       if(repair) {
         const checkpoint=structuredClone(data.review_checkpoint);
         checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
@@ -92,8 +95,16 @@ export async function runJobStage(job:any) {
         const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,approved_artifact:null,release_verdict:{passed:false,status:'repairing',errors:[]},completed_review_input_hash:null,review_checkpoint:checkpoint}}});
         if(saved.count!==1) throw new Error('SOURCE_CHANGED');
         tasks=tasks.concat(repair.tasks);
+      } else if(supervision?.action==='reassess') {
+        // Retry only the diagnostic over the same saved documents, never their
+        // extraction, selection or drafting. The normal independent gate runs.
+        cursor=job.cursor;
+        issue=systemIssue('AI_REVIEW_INVALID','RankPilot está comprobando el diagnóstico de la revisión.');
+        retryAt=supervision.retryAt || null;
+        const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,completed_review_input_hash:null}}});
+        if(saved.count!==1) throw new Error('SOURCE_CHANGED');
       } else {
-      status=data.release_verdict?.passed?'completed':'needs_review';
+      status=supervision?.action==='complete'?'completed':'needs_review';
       resultHash=deliveryInputHash(updated,data);
       }
     }
@@ -106,6 +117,6 @@ export async function runJobStage(job:any) {
     const plan=recoveryPlan({...job,issue,ledger:[...(job.ledger || []),failure]},code,process.env.RENDER_GIT_COMMIT || 'local');
     if(plan) {status='queued';retryAt=plan.retryAt;}
   } finally {clearInterval(heartbeat);}
-  const entry={stage,cursor:job.cursor,status,retry_at:retryAt?.toISOString(),generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
+  const entry={stage,cursor:job.cursor,status,retry_at:retryAt?.toISOString(),supervision,generated_content_hash:generatedHash,worker_commit:process.env.RENDER_GIT_COMMIT || 'local',started_at:new Date(started).toISOString(),duration_ms:Date.now()-started,source_hash:job.sourceHash,output_hash:result?stableHash(result):null,trace,issue};
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"=${status},"tasks"=${JSON.stringify(tasks)}::jsonb,"cursor"=${cursor},"stage"=${tasks[Math.min(cursor,tasks.length-1)]},"issue"=${JSON.stringify(issue)}::jsonb,"resultHash"=${resultHash},"ledger"="ledger" || ${JSON.stringify([entry])}::jsonb,"leaseToken"=NULL,"leaseUntil"=${retryAt},"updatedAt"=now() WHERE "id"=${job.id} AND "leaseToken"=${job.leaseToken} AND "status"='running'`;
 }
