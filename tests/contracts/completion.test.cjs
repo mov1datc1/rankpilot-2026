@@ -1,12 +1,12 @@
 const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test');const assert=require('node:assert/strict');const Module=require('node:module');const {NextRequest}=require('next/server');const JSZip=require('jszip');
-let state,calls,conflict,rejectFinal;
+let state,calls,conflict,rejectFinal,saveFailures=0,saveAttempts=0;
 const source='Synthetic Buyer retained the team in a tax appeal in Mexico. Partner Sofia Vega led the representation. The disputed assessment is MXN 1000000. The appeal remains pending; there has been no ruling.';
 const b10='Synthetic Legal advises on tax disputes in Mexico. The supplied mandate is a pending tax appeal. No ranking or broader team size is claimed.';
 function reset(){conflict=false;rejectFinal=false;calls=[];state={id:'s',userId:'u',updatedAt:new Date('2026-01-01'),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',currentBand:null,status:'Draft',matters:[{id:'m1',submissionId:'s',client:'Synthetic Buyer',name:'Tax appeal',leadPartner:'Sofia Vega',summary:source,rawNotes:source,source_excerpt:source,optimizedText:source,value:'MXN 1000000',isConfidential:false,confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{...completeFiling(),firm_name:'Synthetic Legal',original_b10:b10,enhanced_b7:b10,draft_revision:1}};state.chambersData.matters=structuredClone(state.matters);}
 const db=box=>({submission:{findUnique:async()=>structuredClone(box),updateMany:async({data})=>{if(conflict)return{count:0};Object.assign(box,data);return{count:1};},update:async({data})=>Object.assign(box,data)},matter:{updateMany:async({where,data})=>{Object.assign(box.matters.find(m=>m.id===where.id),data);return{count:1};}},user:{findUnique:async()=>null}});
-const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async fn=>{const pending=structuredClone(state);const result=await fn(db(pending));state=pending;return result;}:db(state)[key]});
+const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async (fn,options)=>{const pending=structuredClone(state);const result=await fn(db(pending));saveAttempts++;if(saveFailures>0){saveFailures--;assert.equal(options.timeout,30000);throw Object.assign(new Error('A commit cannot be executed on an expired transaction'),{code:'P2028'});}state=pending;return result;}:db(state)[key]});
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'u'}}})}})};return load.call(this,name,...args);};
 const {POST}=require('../../src/app/api/optimize/complete/route.ts');
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
@@ -23,6 +23,17 @@ function seedReview(){
  data.review_checkpoint={input_hash:reviewInputHash(reviewPackage(state,data,data.matters)),stage:'done',state:review,lease_until:0};
 }
 const complete=body=>{if(!state.chambersData.review_checkpoint)seedReview();return POST(new NextRequest('http://localhost/api/optimize/complete',{method:'POST',body:JSON.stringify({submissionId:'s',...body})}));};
+test('expired commit retries only persistence of the same reviewed bytes, never the paid reviewer',async()=>{
+ reset();saveFailures=1;saveAttempts=0;
+ try {const response=await complete();assert.equal(response.status,200);assert.equal(saveAttempts,2);assert.equal(calls.length,1);assert.equal(state.chambersData.release_verdict.passed,true);assert.equal(state.chambersData.approved_artifact.input_hash,deliveryInputHash(state));}
+ finally{saveFailures=0;}
+});
+test('persistent storage failure stops and reports paid usage without repeating the reviewer',async()=>{
+ reset();saveFailures=2;saveAttempts=0;const normal=global.fetch;
+ global.fetch=async(...args)=>{const response=await normal(...args);return Response.json({...await response.json(),trace:[{usage:{total_tokens:654}}]});};
+ try {const response=await complete();const result=await response.json();assert.equal(response.status,503);assert.equal(result.code,'ARTIFACT_SAVE_FAILED');assert.equal(result.retryable,false);assert.equal(result.trace[0].usage.total_tokens,654);assert.equal(calls.length,1);assert.equal(saveAttempts,2);assert.ok(!state.chambersData.approved_artifact);}
+ finally{saveFailures=0;global.fetch=normal;}
+});
 test('completion defaults to the current ranking table and selected country without inventing a research period',async()=>{
  reset();state.guideRegion='Latin America — Mexico';
  assert.equal((await complete()).status,200);

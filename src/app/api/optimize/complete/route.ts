@@ -25,6 +25,8 @@ const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strate
 export async function POST(request: NextRequest) {
   const started=Date.now();
   const remaining=()=>Math.max(1,270000-(Date.now()-started));
+  let receivedTrace:any=null;
+  let savingArtifact=false;
   try {
     const user = await editorialUser(request);
     if (!user) return NextResponse.json({error:'Not authenticated'}, {status:401});
@@ -132,6 +134,7 @@ export async function POST(request: NextRequest) {
             body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
           });
           finalReview=await finalResponse.json();
+          receivedTrace=finalReview.trace || null;
           if(!finalResponse.ok && ['AI_OUTPUT_LIMIT','AI_REVIEW_INVALID'].includes(finalReview.code)) {
             // The provider returned a terminal response, so this lease can safely
             // be released. Timeouts with unknown outcomes retain their lease.
@@ -151,15 +154,26 @@ export async function POST(request: NextRequest) {
         data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
       }
     }
-    const updated=await prisma.$transaction(async tx=>{
+    // The paid review and exact DOCX bytes stay outside the transaction. Retry
+    // only a known rollback, using the same in-memory result and version guard.
+    savingArtifact=true;
+    const save=()=>prisma.$transaction(async tx=>{
       const lock=await tx.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date()}});
       if(lock.count!==1) throw new Error('DRAFT_CONFLICT');
       for(const m of matters) await tx.matter.updateMany({where:{id:m.id,submissionId:submission.id},data:{optimizedText:m.optimizedText,status:'Optimized'}});
       return tx.submission.update({where:{id:submission.id},data:{status:data.release_verdict.passed?'Optimized':'Draft',chambersData:data},include:{matters:true}});
-    });
+    },{timeout:30000,maxWait:5000});
+    let updated;
+    try { updated=await save(); }
+    catch(error:any) {
+      const expired=error.code==='P2028' && /expired transaction/i.test(String(error.message));
+      if(!expired && error.code!=='P2034') throw error;
+      updated=await save();
+    }
     return NextResponse.json({success:true,status:updated.status,submission:updated,chambersData:data,matters,b10,c2:data.enhanced_c2 || '',judgeScore:null,judgeFeedback:data.judgeFeedback,repairsCount:0,repairsLog:[],release:data.release_verdict});
   } catch(error:any) {
     console.error('[Editorial completion]',error);
+    if(savingArtifact && error.message!=='DRAFT_CONFLICT') return NextResponse.json({success:false,code:'ARTIFACT_SAVE_FAILED',retryable:false,error:'No se pudo guardar la comprobación final. El borrador se conserva.',trace:receivedTrace},{status:503});
     return NextResponse.json({error:error.message==='DRAFT_CONFLICT'?'El borrador cambió durante la revisión. Recarga antes de reintentar.':'No se pudo completar la revisión; el borrador se conserva.'},{status:error.message==='DRAFT_CONFLICT'?409:500});
   }
 }
