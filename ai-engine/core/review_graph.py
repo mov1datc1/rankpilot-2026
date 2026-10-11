@@ -305,7 +305,7 @@ def register_gate(state):
     # equivalent "non_publishable". Neither is an unresolved permission.
     if any(m.get('confidentialityConfirmed') is False or m.get('publish_status') not in ('publishable','non_publishable','confidential') for m in matters):
         errors.append('Confirma la confidencialidad de los asuntos pendientes antes de preparar la candidatura.')
-    return {'errors':errors,'trace':[],'writer_attempts':0,'selection_validated':False}
+    return {'errors':errors,'trace':list(state.get('trace',[])),'writer_attempts':0,'selection_validated':False}
 
 def strategist(state):
     schema, references = selection_contract(state['package']['matters'])

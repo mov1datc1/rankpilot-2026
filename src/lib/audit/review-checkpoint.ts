@@ -125,7 +125,16 @@ export function reviewTaskDisposition(requested:string|undefined, resumed:string
 
 /** All paid calls in a stage, including semantic review and its bounded repair. */
 export function stageTraceDelta(previous:any[], current:any[]) {
-  const calls=(current || []).slice((previous || []).length);
+  // Match call identity: older engines can reset traces when resuming selection.
+  // Positional slicing would silently omit newly billed calls in that case.
+  const identity=(call:any)=>call.provider_request_id || JSON.stringify(call);
+  const prior=new Map<string,number>();
+  for(const call of previous || []) {const key=identity(call);prior.set(key,(prior.get(key) || 0)+1);}
+  const calls=(current || []).filter(call=>{
+    const key=identity(call), count=prior.get(key) || 0;
+    if(!count) return true;
+    prior.set(key,count-1);return false;
+  });
   if(calls.length<2) return calls[0] || null;
   const usage:any={input_tokens:0,output_tokens:0,total_tokens:0};
   for(const call of calls) for(const key of Object.keys(usage)) usage[key]+=Number(call.usage?.[key] || 0);

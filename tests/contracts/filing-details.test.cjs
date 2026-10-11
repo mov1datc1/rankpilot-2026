@@ -53,3 +53,12 @@ test('a rejected saved selector survives lease acquisition without losing its re
  assert.deepEqual(second.state.strategy,state.strategy);assert.equal(second.step_keys.strategy,saved.step_keys.strategy);assert.equal(second.state.selection_feedback.semantic_rejection,false);assert.equal(second.state.trace[0].usage.total_tokens,500);
  const changed=resumeReviewCheckpoint({matters:[{id:'m',rawNotes:'Changed source'}]},first);assert.deepEqual(changed.state,{});
 });
+
+test('stage usage preserves new calls after a legacy engine resets its trace',()=>{
+ const {stageTraceDelta}=require('../../src/lib/audit/review-checkpoint.ts');
+ const old={provider_request_id:'old',role:'strategist',usage:{total_tokens:500}};
+ const next={provider_request_id:'new',role:'selection_reviewer',usage:{total_tokens:100}};
+ assert.deepEqual(stageTraceDelta([old],[next]),next);
+ assert.deepEqual(stageTraceDelta([old],[{...old,seconds:1},next]),next);
+ assert.equal(stageTraceDelta([old],[old]),null);
+});

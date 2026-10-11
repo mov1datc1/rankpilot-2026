@@ -12,6 +12,13 @@ def development(package):
     return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
 
 class ReviewGraphTests(unittest.TestCase):
+    def test_register_revalidation_preserves_paid_call_history(self):
+        from core.review_graph import register_gate
+        paid=[{'role':'strategist','provider_request_id':'prior-call','usage':{'total_tokens':500}}]
+        result=register_gate({'package':PACKAGE,'trace':paid})
+        self.assertEqual(result['trace'],paid)
+        self.assertIsNot(result['trace'],paid)
+
     def test_word_and_studio_share_the_same_named_actions(self):
         from core.review_graph import reconcile_next_actions
         letter={'next_steps':'Obsolete instruction','next_actions':[{'kind':'matters','message':'Complete m1 evidence.'},{'kind':'matters','message':'Complete m1 evidence.'}]}
