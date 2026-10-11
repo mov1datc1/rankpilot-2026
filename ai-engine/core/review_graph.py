@@ -479,6 +479,16 @@ def editor(state):
     return {'judge':calibrate_verdict(verdict, state.get('package'), state.get('strategy'),
             draft_context={'letter':state.get('letter',{}),'development':development or {}}),'trace':trace}
 
+def grounded_metadata_reference(quote, package):
+    """An optional-period question may cite source years, never invent a date."""
+    if re.search(r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',quote,re.I):
+        return False
+    numbers=re.findall(r'\d+',quote)
+    source=' '.join(str(m.get(k) or '') for m in (package or {}).get('matters',[]) for k in ('source_excerpt','rawNotes','summary','startDate','completionDate'))
+    years=set(re.findall(r'\b(?:19|20)\d{2}\b',source))
+    return all(re.fullmatch(r'(?:19|20)\d{2}',n) and n in years for n in numbers)
+
+
 def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
     """RP16: an uncorroborated model label is never enough to override a defect.
 
@@ -585,11 +595,11 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
             and bool(artifact_quote) and (artifact_quote in audit_text or any(
                 artifact_quote in ' '.join(str(q).split()) for q in (strategy or {}).get('pending_questions',[])))
             and artifact_quote not in submission_text
-            and not re.search(r'\d|\b(?:January|February|March|April|May|June|July|August|September|October|November|December|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',artifact_quote,re.I))
+            and grounded_metadata_reference(artifact_quote,package))
         disputed = bool((source_quote and not quoted_absence and not source_label_absence) or (artifact_quote and not heading_in_artifact and not metadata_request))
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
-        concrete = not (heading_in_artifact and defect.get('artifact_claim_kind') == 'template_label' and not source_quote) and bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
+        concrete = not (metadata_request or (heading_in_artifact and defect.get('artifact_claim_kind') == 'template_label' and not source_quote)) and bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
         if package is not None and missing and not disputed and not concrete:
             defect['severity'] = 'warning'
             defect['message'] = 'Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.'

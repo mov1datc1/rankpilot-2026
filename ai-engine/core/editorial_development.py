@@ -231,7 +231,11 @@ def develop(state):
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
-        feedback=state.get('repair_feedback',[])
+        from core.review_graph import calibrate_verdict
+        feedback=[calibrate_verdict({'defects':[d]},state['package'],state['strategy'],
+                  draft_context={'letter':state.get('letter',{}),'development':bound})['defects'][0]
+                  if isinstance(d,dict) and d.get('code')=='TEMPORAL_FINDING_UNRESOLVED' and d.get('artifact_claim_kind')=='request_for_information'
+                  else d for d in state.get('repair_feedback',[])]
         renderer_only=[d for d in feedback if isinstance(d,dict) and renderer_owned_finding(d,state['package'])]
         semantic=[d for d in feedback if isinstance(d,dict) and not renderer_owned_finding(d,state['package'])
             and d.get('owner')=='rankpilot' and d.get('scope')!='letter'

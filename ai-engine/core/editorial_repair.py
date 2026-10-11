@@ -178,6 +178,13 @@ def repair_rejected_development(state, proposal, defects):
     # A literal claim already bound to a generated field needs no model to
     # rediscover its address. Only genuinely semantic locations buy a locator.
     norm=lambda value:' '.join(str(value or '').split())
+    def source_for(path):
+        if path.startswith('matters/'):
+            matter_id=proposal['matters'][int(path.split('/')[1])]['matter_id']
+            return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
+                    'matter':next(m for m in source_package['matters'] if m['id']==matter_id),
+                    'selection':next(d for d in state['strategy']['matters'] if d['matter_id']==matter_id)}
+        return {'package':source_package,'strategy':state['strategy']}
     targets={};remaining=[]
     for defect in defects:
         quote=norm(defect.get('artifact_quote'))
@@ -197,7 +204,7 @@ def repair_rejected_development(state, proposal, defects):
             term=norm(defect.get('conflicting_artifact_term')).casefold()
             if term:exact=list(dict.fromkeys(exact+[path for path in candidates if isinstance(allowed[path],str) and term in norm(allowed[path]).casefold()]))
         for path in exact:
-            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':{'package':source_package,'strategy':state['strategy']}}
+            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':source_for(path)}
     if not remaining:
         return repair_development({**state,'repair_feedback':defects},proposal,targets)
     all_feedback=defects;defects=remaining
@@ -212,7 +219,7 @@ def repair_rejected_development(state, proposal, defects):
         if path not in allowed or not isinstance(index,int) or not 0<=index<len(defects) or not item.get('reason'):
             return {'development':proposal,'development_validated':False,'errors':['Invalid bounded repair location.'],'trace':trace}
         covered.add(index)
-        targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':{'package':source_package,'strategy':state['strategy']}}
+        targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':source_for(path)}
     if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
         return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace,'development_repair_unlocatable':True}
     return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)

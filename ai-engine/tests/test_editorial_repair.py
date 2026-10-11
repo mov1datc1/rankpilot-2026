@@ -19,6 +19,20 @@ class TargetedRepairTests(unittest.TestCase):
         self.assertFalse(renderer_owned_finding({**defect,'artifact_quote':'Invented amount.'},package))
         self.assertFalse(renderer_owned_finding({**defect,'field_path':'teamMembers'},package))
 
+    def test_exact_matter_repair_uses_only_its_own_full_source(self):
+        from core.editorial_repair import repair_rejected_development
+        package=copy.deepcopy(PACKAGE)
+        package['matters'].append({'id':'unrelated','rawNotes':'Unrelated private source'})
+        defect={'scope':'submission','matter_id':DEV['matters'][0]['matter_id'],
+                'artifact_quote':DEV['matters'][0]['text'],'message':'Restore the documented contribution.'}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair:
+            repair_rejected_development({'package':package,'strategy':STRATEGY},DEV,[defect])
+        targets=repair.call_args.args[2]
+        evidence=targets['matters/0/text']['source_evidence']
+        self.assertEqual(evidence['matter']['id'],DEV['matters'][0]['matter_id'])
+        self.assertNotIn('package',evidence)
+        self.assertNotIn('Unrelated private source',str(evidence))
+
     def broken(self):
         proposal=copy.deepcopy(DEV)
         proposal['matters'][0]['decisive_source_quotes']=['The team prevented a walkout.']

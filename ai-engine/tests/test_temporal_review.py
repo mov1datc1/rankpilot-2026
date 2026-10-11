@@ -91,6 +91,19 @@ class TemporalReviewTests(unittest.TestCase):
         self.assertFalse(self.review([{**defect,'source_quote':'Work ended in 2020.'}])['judge']['passed'])
         self.assertFalse(self.review([{**defect,'artifact_quote':'The work ended in 2023.'}])['judge']['passed'])
 
+    def test_optional_question_can_cite_a_source_year_but_cannot_invent_one(self):
+        quote='Confirmar la ventana aplicable a la actividad de 2023.'
+        self.state['package']['matters'][0]['rawNotes']+=' Activity in 2023 is documented.'
+        self.state['package']['rendered_audit']=quote
+        defect={**self.defect('missing_metadata'),'artifact_claim_kind':'request_for_information',
+                'artifact_quote':quote,'source_quote':'','message':'Confirmar pertinencia de actividad de 2023.'}
+        self.assertTrue(self.review([defect])['judge']['passed'])
+        self.state['package']['matters'][0]['rawNotes']='Work is ongoing.'
+        self.assertFalse(self.review([defect])['judge']['passed'])
+        self.state['package']['matters'][0]['rawNotes']='Activity in 2023 is documented.'
+        self.state['package']['rendered_artifact']+=quote
+        self.assertFalse(self.review([defect])['judge']['passed'])
+
     def test_empty_negative_verdict_is_not_silently_approved(self):
         self.assertFalse(calibrate_verdict({'passed': False, 'defects': []})['passed'])
 
