@@ -86,8 +86,9 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   // The matching strategy key proves the original register order is unchanged.
   // Resolve transport references before downstream roles see source document numbers.
   state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
-  if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{},state:{
-    selection_feedback:{...state.selection_feedback,strategy:state.strategy,errors:state.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
+  if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{strategy:keys.strategy},state:{
+    strategy:state.strategy,selection_validated:false,trace:state.trace || [],
+    selection_feedback:{...state.selection_feedback,strategy:state.strategy,errors:state.errors || state.selection_feedback?.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
   }};
   if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};
   if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {

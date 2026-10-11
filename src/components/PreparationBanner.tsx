@@ -1,12 +1,13 @@
 'use client';
 
+import { PreparationProgress } from './PreparationProgress';
 import { ArrowRight, CheckCircle2, FileText, LoaderCircle } from 'lucide-react';
 
 type Props = {
   approved: boolean;
   busy: boolean;
   needsReview: boolean;
-  progress?: {current:number;total:number;stage:string} | null;
+  progress?: {current:number;total:number;stage:string;startedAt?:string;waiting?:boolean} | null;
   onPrepare: () => void;
   onReview: () => void;
   onAudit: () => void;
@@ -17,7 +18,6 @@ export function PreparationBanner({approved,busy,needsReview,progress,onPrepare,
   const title=busy?'Preparando documentos':approved?'Documentos revisados':needsReview?'Revisión pendiente':'Prepara tus documentos';
   const description=busy?'Estamos preparando y revisando el Submission y el Audit.':approved?'Submission y Audit disponibles en Descargar.':needsReview?'Consulta los pendientes para continuar con el Submission y el Audit.':'Genera el Submission y el Audit a partir de la información de tu expediente.';
   const Icon=busy?LoaderCircle:approved?CheckCircle2:FileText;
-  const value=progress && progress.total>0 ? Math.max(0,Math.min(100,progress.current/progress.total*100)):undefined;
   return <section aria-label="Preparación de documentos" aria-busy={busy} style={{background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'1.25rem',color:'#1E1B4B'}}>
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,flexWrap:'wrap'}}>
       <div style={{display:'flex',alignItems:'flex-start',gap:12,flex:'1 1 260px',minWidth:0}}>
@@ -33,7 +33,7 @@ export function PreparationBanner({approved,busy,needsReview,progress,onPrepare,
     </div>
     {busy && <div style={{marginTop:16}}>
       <p role="status" style={{fontSize:'.8125rem',color:'#475569',margin:'0 0 8px'}}>{progress?.stage || 'Iniciando preparación…'}</p>
-      <progress aria-label="Avance de la preparación" max={100} value={value} style={{display:'block',width:'100%',height:6,accentColor:'#4338CA'}} />
+      {progress && <PreparationProgress progress={progress} />}
     </div>}
   </section>;
 }

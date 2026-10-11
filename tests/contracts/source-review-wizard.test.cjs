@@ -29,3 +29,8 @@ test('pending preparation banner offers resolution instead of generation',()=>{
  const html=renderToStaticMarkup(React.createElement(PreparationBanner,{approved:false,busy:false,needsReview:true,onPrepare(){},onReview(){},onAudit(){}}));
  assert.match(html,/Ver pendientes/);assert.doesNotMatch(html,/>Preparar documentos</);
 });
+test('first preparation stage is indeterminate with a real stage count, not a frozen zero percent',()=>{
+ const {PreparationProgress}=require('../../src/components/PreparationProgress.tsx');
+ const html=renderToStaticMarkup(React.createElement(PreparationProgress,{progress:{current:0,total:4}}));
+ assert.match(html,/Etapa 1 de 4/);assert.doesNotMatch(html,/>0%<|value="0"/);assert.match(html,/Puedes salir y volver/);
+});

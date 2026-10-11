@@ -84,7 +84,7 @@ test('generated department text can be repaired, but a human-edited B10 cannot',
 
 test('public failures explain the next action without leaking validator IDs',()=>{
  const j=publicJob({id:'j',status:'failed',stage:'development',cursor:1,tasks:['selection','development','audit','artifact'],issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED',message:'Cita decisiva sin vínculo literal: secret-uuid'}});
- assert.doesNotMatch(j.issue.message,/Reanudar|Pulsa/);assert.match(j.issue.message,/No necesitas corregir textos/);assert.ok(!j.issue.message.includes('secret-uuid'));
+ assert.doesNotMatch(j.issue.message,/Reanudar|Pulsa/);assert.match(j.issue.message,/No necesitas modificar/);assert.ok(!j.issue.message.includes('secret-uuid'));
 });
 test('durable tasks reuse completed roles instead of executing the next paid role under the wrong label',()=>{
  const {reviewTaskDisposition}=require('../../src/lib/audit/review-checkpoint.ts');
@@ -134,4 +134,10 @@ test('optional sector warnings and internal reserve aliases get bounded automati
  const aliases={...sector,scope:'letter',field_path:'client',conflict_resolution:'preserve_source_aliases'};
  assert.deepEqual(route(aliases),{tasks:['audit','artifact'],letter:true});
  for(const changes of [{owner:'user'},{scope:'submission'},{field_path:'value'},{artifact_quote:''}])assert.equal(route({...aliases,...changes}),null);
+});
+test('initial preparation shows the four real stages and separates waiting from working',()=>{
+ const base={id:'j',stage:'selection',cursor:0,tasks:['selection'],createdAt:'2026-10-11T20:00:00Z'};
+ const running=publicJob({...base,status:'running'});assert.equal(running.total,4);assert.equal(running.completed,0);assert.equal(running.startedAt,base.createdAt);assert.match(running.message,/Comparando/);
+ const waiting=publicJob({...base,status:'queued',issue:{owner:'rankpilot'}});assert.equal(waiting.waiting,true);assert.match(waiting.message,/espera/);
+ const paused=publicJob({...base,status:'failed',issue:{owner:'rankpilot',message:'secret error'}});assert.match(paused.message,/pausada/);assert.doesNotMatch(paused.issue.message,/secret|recuperando/);
 });

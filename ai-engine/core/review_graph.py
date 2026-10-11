@@ -4,6 +4,7 @@ Facts and draft are separate inputs. Three model roles propose strategy, write a
 internal letter, and review both. Deterministic gates remain authoritative.
 This graph does not replace ingestion or mutate user records.
 """
+from utils.literal_source import table_text_view
 import json
 import re
 import time
@@ -340,8 +341,8 @@ def selection_gate(state):
         quote=d.get('source_quote','').strip()
         # A clipped literal clause may end in a period instead of the source comma.
         # Preserve every internal word, number and punctuation mark; require token boundaries.
-        literal=' '.join(quote.split()).casefold().rstrip('.,;:!?')
-        supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(str(m.get(k) or '').split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+        literal=' '.join(table_text_view(quote).split()).casefold().rstrip('.,;:!?')
+        supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
         if not supported:errors.append(f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial.")
         rationale=d.get('rationale','')
         # Projection expands transport references into registered client labels.

@@ -47,3 +47,6 @@ test('ambiguous template-label diagnostics are reassessed without approving or t
  assert.equal(needsDiagnosticReview(state(defect)),true);
  for(const changes of [{owner:'user'},{source_quote:'Work ended in 2020'},{temporal_basis:'evidenced_conflict'},{artifact_claim_kind:'factual_assertion'},{retryable:false}]) assert.equal(needsDiagnosticReview(state({...defect,...changes})),false);
 });
+test('a rejected selection never buys another complete selector automatically',()=>{
+ assert.equal(recoveryPlan({stage:'selection',cursor:0,issue:{owner:'rankpilot'},ledger:[]},'SELECTION_REJECTED','fixed'),null);
+});

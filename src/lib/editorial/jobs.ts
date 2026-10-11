@@ -19,12 +19,17 @@ export function publicJob(job:any) {
   if(!job) return null;
   const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',development:'Desarrollando Submission, candidaturas y posicionamiento',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
   const recovering=['queued','running'].includes(job.status) && job.issue?.owner==='rankpilot';
-  return {id:job.id,status:job.status,stage:job.stage,recovering,message:recovering?'RankPilot está recuperando la preparación automáticamente':labels[job.stage] || 'Redactando un asunto seleccionado',completed:job.cursor,total:job.tasks.length,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const active=['queued','running'].includes(job.status);
+  const waiting=job.status==='queued';
+  const paused=!active && job.status!=='completed';
+  const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
+  const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
   if(!issue || issue.owner==='user') return issue;
-  return {...issue,message:'La preparación requiere una comprobación interna de RankPilot. Tus datos y el avance están guardados. No necesitas corregir textos ni volver a subir el documento.'};
+  return {...issue,message:'La preparación está pausada. Tu información y el avance están guardados. No necesitas modificar ni volver a subir el documento.'};
 }
 export async function latestJob(submissionId:string) {
   const rows:any[]=await prisma.$queryRaw`SELECT * FROM "EditorialJob" WHERE "submissionId"=${submissionId} ORDER BY "createdAt" DESC LIMIT 1`;

@@ -46,3 +46,10 @@ test('missing required filing data blocks preparation even after a legacy deferr
  assert.equal(filingPreparationNeeded({filing_reviewed:true}),true);
  assert.equal(filingPreparationNeeded({departmentName:'Tax',numPartners:0,numLawyers:0,contacts:[{name:'Ana',email:'a@example.test'}],departmentHeads:[{name:'Ana'}]}),false);
 });
+test('a rejected saved selector survives lease acquisition without losing its reuse key',()=>{
+ const pkg={matters:[{id:'m',rawNotes:'Source facts'}]},state={strategy:{thesis:'',pending_questions:[],matters:[{matter_id:'m',source_quote:'Source facts',rationale:''}]},selection_validated:false,errors:['Source binding pending'],trace:[{role:'strategist',usage:{total_tokens:500}}]};
+ const saved={created_at:Date.now(),state,step_keys:{strategy:reviewStepHash('strategy',pkg,state)}};
+ const first=resumeReviewCheckpoint(pkg,saved);const second=resumeReviewCheckpoint(pkg,first);
+ assert.deepEqual(second.state.strategy,state.strategy);assert.equal(second.step_keys.strategy,saved.step_keys.strategy);assert.equal(second.state.selection_feedback.semantic_rejection,false);assert.equal(second.state.trace[0].usage.total_tokens,500);
+ const changed=resumeReviewCheckpoint({matters:[{id:'m',rawNotes:'Changed source'}]},first);assert.deepEqual(changed.state,{});
+});

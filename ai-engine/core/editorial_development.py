@@ -5,6 +5,7 @@ The register remains immutable: this node produces a versioned proposal, which i
 validated before any application projection or final-artifact approval.
 """
 import re
+from utils.literal_source import table_text_view
 import copy
 from typing import Literal
 from pydantic import BaseModel, Field, create_model
@@ -109,11 +110,12 @@ def bind_quote(value, matter):
         variants.append(quote[:-1])
     for index,variant in enumerate(variants):
         if not variant:continue
-        pattern=r'(?<!\w)'+r'\s+'.join(re.escape(part) for part in variant.split())
+        pattern=r'(?<!\w)'+r'\s+'.join(re.escape(part) for part in table_text_view(variant).split())
         pattern+=r'(?=\s*[,;])' if index else r'(?!\w)'
         for field in SOURCE_FIELDS:
-            match=re.search(pattern,str(matter.get(field) or ''),re.I)
-            if match:return match.group()
+            source=str(matter.get(field) or '')
+            match=re.search(pattern,table_text_view(source),re.I)
+            if match:return source[match.start():match.end()]
     return None
 
 def bind_development(package, proposal):
