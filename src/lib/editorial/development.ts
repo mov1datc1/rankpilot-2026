@@ -1,7 +1,9 @@
 import { draftSourceHash, stableHash } from './contracts';
 import { createHash } from 'node:crypto';
 
-export const DEVELOPMENT_VERSION = 'editorial-development-v1';
+export const DEVELOPMENT_VERSION = 'editorial-development-v2';
+/** v1 saved proposals remain reviewable; v2 adds source-bound legal reasoning. */
+export const supportedDevelopment = (value:any) => ['editorial-development-v1', DEVELOPMENT_VERSION].includes(value?.version);
 const hash=(text:string)=>createHash('sha256').update(JSON.stringify(text)).digest('hex');
 
 /** Apply generated proposals without changing the source roster or evidence.
@@ -10,7 +12,7 @@ const hash=(text:string)=>createHash('sha256').update(JSON.stringify(text)).dige
  */
 export function projectDevelopment(data:any, state:any) {
   const development=state.development;
-  if(state.development_validated!==true || development?.version!==DEVELOPMENT_VERSION) throw new Error('DEVELOPMENT_REJECTED');
+  if(state.development_validated!==true || !supportedDevelopment(development)) throw new Error('DEVELOPMENT_REJECTED');
   const core=new Set(state.strategy.matters.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id));
   const drafts=new Map<string,any>((development.matters || []).map((d:any)=>[d.matter_id,d]));
   if(drafts.size!==core.size || [...core].some(id=>!drafts.has(String(id)))) throw new Error('DEVELOPMENT_REJECTED');
@@ -20,7 +22,7 @@ export function projectDevelopment(data:any, state:any) {
     const old=String(m.optimizedText || m.optimized_text || '').trim();
     if(m.draft_provenance?.text_hash && m.draft_provenance.text_hash!==hash(old))return m;
     if(old && old!==proposal.text)previous.push({matter_id:m.id,text:old,provenance:m.draft_provenance || null});
-    return {...m,optimizedText:proposal.text,optimized_text:proposal.text,editorial_completion_status:proposal.completion_status || '',status:'Optimized',draft_provenance:{origin:'generated',source_hash:draftSourceHash(m),text_hash:stableHash(proposal.text.trim()),strategy_hash:stableHash(state.strategy),development_version:DEVELOPMENT_VERSION}};
+    return {...m,optimizedText:proposal.text,optimized_text:proposal.text,editorial_completion_status:proposal.completion_status || '',status:'Optimized',draft_provenance:{origin:'generated',source_hash:draftSourceHash(m),text_hash:stableHash(proposal.text.trim()),strategy_hash:stableHash(state.strategy),development_version:development.version}};
   });
   return {...data,matters,editorial_development:development,
     editorial_previous_drafts:previous.length?[...(data.editorial_previous_drafts || []),{version:DEVELOPMENT_VERSION,matters:previous,b10:data.enhanced_b7 || '',c2:data.enhanced_c2 || ''}]:data.editorial_previous_drafts,

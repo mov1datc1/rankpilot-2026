@@ -1,4 +1,5 @@
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
+import { supportedDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { normalizeLetterSections } from '@/lib/audit/letter-sections';
 import { engineFetch } from '@/lib/editorial/engine';
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
     if(review.selection_validated && !review.selection_review_validated) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta contrastar la interpretación y selección con las fuentes antes de preparar los documentos.'},{status:409});
-    if(review.selection_validated && (!review.development_validated || review.development?.version!=='editorial-development-v1')) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
+    if(review.selection_validated && (!review.development_validated || !supportedDevelopment(review.development))) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
     const originalReviewHash = reviewOutputHash(review);
     review = {...review,letter:normalizeLetterSections(review.letter)};
     const decisions = review.strategy?.matters || [];

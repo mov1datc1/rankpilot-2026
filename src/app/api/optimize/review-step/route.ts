@@ -16,6 +16,9 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   let locked: any = null;
   let checkpoint: any = null;
+  let received: any = null;
+  let receivedTrace: any = null;
+  let replaying = false;
   try {
     const user = await editorialUser(request);
     if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
@@ -61,11 +64,15 @@ export async function POST(request: NextRequest) {
     if (changed.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = await prisma.submission.findUnique({where: {id: submission.id}});
     if ((locked.chambersData as any)?.review_checkpoint?.lease_id !== checkpoint.lease_id) throw new Error('DRAFT_CONFLICT');
-    const response = await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
+    const pending = saved?.pending_result;
+    replaying = pending?.input_hash === checkpoint.input_hash && pending?.stage === stage;
+    const response = replaying ? NextResponse.json(pending.result) : await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
       method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(250000),
       body: JSON.stringify({stage, package: payload, state: {...checkpoint.state,output_recovery_attempt:outputRecovery===true?1:0}}),
     });
     const result = await response.json();
+    received = result;
+    receivedTrace = replaying ? null : (result.state ? stageTraceDelta(checkpoint.state.trace,result.state.trace) : result.trace || null);
     if (!response.ok || !result.success) {
       const failure = {code: result.code || 'AI_REVIEW_UNAVAILABLE', error: result.error || 'No se completó esta etapa. El avance se conserva.',trace:result.trace || null};
       await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...(locked.chambersData as any), review_checkpoint: {...checkpoint, lease_until: 0, error: failure}}}});
@@ -80,14 +87,25 @@ export async function POST(request: NextRequest) {
     const savedResult = await prisma.submission.updateMany({where: {id: submission.id, updatedAt: locked.updatedAt}, data: {updatedAt: new Date(), chambersData: {...projected, review_checkpoint: {...checkpoint, input_hash:projectedHash, step_keys, stage: nextStage, state: result.state, lease_until: 0}}}});
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
-    const trace=stageTraceDelta(checkpoint.state.trace,result.state.trace);
+    const trace=receivedTrace;
     if(result.state.selection_review_deferred) return NextResponse.json({success:false,code:'SELECTION_REVIEW_DEFERRED',error:'Selección guardada. RankPilot continuará automáticamente con su revisión independiente.',trace},{status:503});
     if(result.state.selection_review_unavailable) return NextResponse.json({success:false,code:'AI_REVIEW_UNAVAILABLE',error:'La comprobación no pudo terminar. La selección guardada se conserva para reanudar sin repetirla.',trace},{status:502});
     if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),trace},{status:422});
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});
   } catch (error: any) {
+    // A paid response already arrived: retain it before retrying application
+    // projection, and return its usage even if projection/storage failed.
+    if(received?.success && received.state && locked && error.message !== 'DRAFT_CONFLICT') {
+      let retained=false;
+      try {
+        const saved=await prisma.submission.updateMany({where:{id:locked.id,updatedAt:locked.updatedAt},data:{updatedAt:new Date(),chambersData:{...locked.chambersData,review_checkpoint:{...checkpoint,lease_until:0,pending_result:{input_hash:checkpoint.input_hash,stage:checkpoint.stage,result:received}}}}});
+        retained=saved.count===1;
+      } catch { /* Usage still returns to the durable job ledger. */ }
+      console.error('[EDITORIAL_RESPONSE_APPLY_FAILED]', {submissionId:locked.id,stage:checkpoint.stage,reason:error.message,retained});
+      return NextResponse.json({code:'EDITORIAL_RESPONSE_APPLY_FAILED',error:'La IA respondió, pero RankPilot no pudo guardar el resultado. Se detuvieron los reintentos automáticos para evitar duplicar consumo.',retryable:false,trace:receivedTrace,responseRetained:retained},{status:502});
+    }
     // A timeout leaves the lease until expiry: a still-running provider call must
     // not overlap a retry. Successful earlier stages remain persisted.
-    return NextResponse.json({code: error.message === 'DRAFT_CONFLICT' ? 'DRAFT_CONFLICT' : 'AI_REVIEW_UNAVAILABLE', error: 'La etapa no se completó. Las etapas anteriores están guardadas.'}, {status: error.message === 'DRAFT_CONFLICT' ? 409 : 502});
+    return NextResponse.json({code: error.message === 'DRAFT_CONFLICT' ? 'DRAFT_CONFLICT' : 'AI_REVIEW_UNAVAILABLE', error: 'La etapa no se completó. Las etapas anteriores están guardadas.',trace:receivedTrace}, {status: error.message === 'DRAFT_CONFLICT' ? 409 : 502});
   }
 }

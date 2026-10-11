@@ -101,7 +101,7 @@ export async function runJobStage(job:any) {
     const code=error.message;
     status=code==='SOURCE_CHANGED'?'superseded':code==='HUMAN_DRAFT_STALE'?'needs_review':['EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE'].includes(code)?'indeterminate':'failed';
     issue=code==='HUMAN_DRAFT_STALE'?{...systemIssue(code,'Cambió una fuente de un texto editado. Revisa esa redacción antes de continuar.',false),owner:'user',action:'review'}:
-      systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.');
+      systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.',result?.retryable!==false);
     const failure={stage,cursor:job.cursor,issue,trace,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};
     const plan=recoveryPlan({...job,issue,ledger:[...(job.ledger || []),failure]},code,process.env.RENDER_GIT_COMMIT || 'local');
     if(plan) {status='queued';retryAt=plan.retryAt;}

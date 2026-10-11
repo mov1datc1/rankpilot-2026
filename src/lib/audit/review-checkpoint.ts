@@ -95,7 +95,9 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
     if(state.development && state.errors?.length && !state.repair_feedback?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
     if(!state.repair_feedback?.length) delete state.development;if(!state.letter_repair_requested)delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];
-    return {...base,stage:'development',step_keys:{strategy:keys.strategy}};
+    // Retain the dependency key of a rejected proposal while repairing it.
+    // Losing it at lease acquisition makes the next attempt regenerate everything.
+    return {...base,stage:'development',step_keys:{strategy:keys.strategy,...(state.development_reusable?{development:keys.development}:{})}};
   }
   if (!state.letter || state.writer_validated===false || keys.writer !== reviewStepHash('writer',payload,state)) {
     if(!state.letter_repair_requested)delete state.letter;delete state.judge;delete state.release_verdict;

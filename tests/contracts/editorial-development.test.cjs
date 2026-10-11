@@ -5,7 +5,7 @@ const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts'
 const {curateLawyers}=require('../../src/lib/docx/lawyer-curator.ts');
 const {generateDynamicC2}=require('../../src/app/api/generate-docx/submission-builder.ts');
 const data={original_b10:'Tax team',lawyers:[{name:'Sofia Vega',isPartner:true,bio:'Tax lawyer.'}],matters:[{id:'m1',client:'Private Client',publish_status:'non_publishable',isConfidential:true,source_excerpt:'Sofia Vega led negotiations; exposure fell 80%.',optimizedText:'The firm advised.'},{id:'m2',source_excerpt:'Reserve matter',optimizedText:'Existing reserve'}]};
-const state={selection_validated:true,selection_review_validated:true,development_validated:true,strategy:{matters:[{matter_id:'m1',disposition:'core'},{matter_id:'m2',disposition:'reserve'}]},development:{version:'editorial-development-v1',b10:'Tax team with negotiation experience.',c2:'We request consideration based on demonstrated negotiation work.',matters:[{matter_id:'m1',text:'Sofia Vega led negotiations, reducing exposure by 80%.'}],candidates:[{name:'Sofia Vega',recommendation:'present',suggested_ranking:'Partner candidacy',submission_bio:'Sofia Vega led negotiations for Private Client, reducing exposure by 80%.'}]}};
+const state={selection_validated:true,selection_review_validated:true,development_validated:true,strategy:{matters:[{matter_id:'m1',disposition:'core'},{matter_id:'m2',disposition:'reserve'}]},development:{version:'editorial-development-v2',b10:'Tax team with negotiation experience.',c2:'We request consideration based on demonstrated negotiation work.',matters:[{matter_id:'m1',text:'Sofia Vega led negotiations, reducing exposure by 80%.'}],candidates:[{name:'Sofia Vega',recommendation:'present',suggested_ranking:'Partner candidacy',submission_bio:'Sofia Vega led negotiations for Private Client, reducing exposure by 80%.'}]}};
 test('development persists B9/C2 and outcomes without replacing source evidence or reserves',()=>{
  const result=projectDevelopment(data,state);
  assert.equal(result.matters[0].source_excerpt,data.matters[0].source_excerpt);
@@ -45,4 +45,13 @@ test('generated D8 status preserves source and does not invalidate source identi
  assert.equal(stableHash(sourceSnapshot(sub)),stableHash(sourceSnapshot({...sub,chambersData:projected})));
  const {draftSourceHash}=require('../../src/lib/editorial/contracts.ts');
  assert.equal(projected.matters[0].draft_provenance.source_hash,draftSourceHash(projected.matters[0]));
+});
+
+test('frontend development contract tracks the actual Python version',()=>{
+ const {DEVELOPMENT_VERSION,supportedDevelopment}=require('../../src/lib/editorial/development.ts');
+ const python=require('node:fs').readFileSync(require('node:path').join(__dirname,'../../ai-engine/core/editorial_development.py'),'utf8');
+ assert.equal(DEVELOPMENT_VERSION,python.match(/DEVELOPMENT_VERSION = '([^']+)'/)[1]);
+ assert.equal(supportedDevelopment({version:DEVELOPMENT_VERSION}),true);
+ assert.equal(supportedDevelopment({version:'editorial-development-v1'}),true);
+ assert.equal(supportedDevelopment({version:'unknown-future-version'}),false);
 });

@@ -28,7 +28,7 @@ global.fetch=async(url,options)=>{
   if(mutate){state.chambersData.original_b10='Concurrent new source';state.updatedAt=new Date(state.updatedAt.getTime()+1);}
   if(failure)return Response.json({success:false,code:'AI_CREDIT_EXHAUSTED',error:'No credit'},{status:502});
   const next={strategy:'development',development:'writer',writer:'done'}[body.stage];
-  const output=body.stage==='strategy'?{strategy:{saved:true,matters:[{matter_id:'m',disposition:'core'}]},selection_validated:true,selection_review_validated:true}:body.stage==='development'?{development_validated:true,development:{version:'editorial-development-v1',matters:[{matter_id:'m',text:'Pending appeal'}],candidates:[],b10:'Tax disputes team',c2:'Our coverage case.'}}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
+  const output=body.stage==='strategy'?{strategy:{saved:true,matters:[{matter_id:'m',disposition:'core'}]},selection_validated:true,selection_review_validated:true}:body.stage==='development'?{development_validated:true,development:{version:'editorial-development-v2',matters:[{matter_id:'m',text:'Pending appeal'}],candidates:[],b10:'Tax disputes team',c2:'Our coverage case.'}}:body.stage==='writer'?{letter:{saved:true},render_gate:{passed:true,errors:[]},release_verdict:{passed:false,status:'awaiting_artifact_review',errors:[]}}:{judge:{passed:true,defects:[]},release_verdict:{passed:true,errors:[]}};
   return Response.json({success:true,next_stage:next,state:{...body.state,...output}});
 };
 const step=()=>POST(new NextRequest('http://localhost/api/optimize/review-step',{method:'POST',body:JSON.stringify({submissionId:'s'})}));
@@ -149,4 +149,37 @@ test('retry retains concrete unresolved repair defects instead of replacing them
  assert.equal(resumed.stage,'development');
  assert.deepEqual(resumed.state.repair_feedback,[defect]);
  assert.equal(resumed.state.development_validated,false);
+});
+
+test('paid projection failure retains response and usage; replay does not call AI again',async()=>{
+ reset();await step();
+ const original=global.fetch;
+ global.fetch=async(...args)=>{
+  const response=await original(...args);const body=await response.json();
+  if(body.state.development){body.state.development.version='unsupported-version';body.state.trace=[{role:'development',usage:{total_tokens:123},provider_request_id:'paid-response'}];}
+  return Response.json(body);
+ };
+ try {
+  const response=await step();const body=await response.json();
+  assert.equal(response.status,502);assert.equal(body.code,'EDITORIAL_RESPONSE_APPLY_FAILED');
+  assert.equal(body.retryable,false);assert.equal(body.trace.usage.total_tokens,123);
+  assert.equal(body.responseRetained,true);assert.equal(state.chambersData.review_checkpoint.pending_result.result.state.development.version,'unsupported-version');
+  const paidCalls=calls.length;
+  const repeat=await (await step()).json();assert.equal(calls.length,paidCalls);assert.equal(repeat.trace,null);
+  // Simulate a compatible adapter being deployed; only the stored proposal is applied.
+  state.chambersData.review_checkpoint.pending_result.result.state.development.version='editorial-development-v2';
+  assert.equal((await step()).status,200);assert.equal(calls.length,paidCalls);
+  assert.equal(state.chambersData.editorial_development.version,'editorial-development-v2');
+  assert.equal(state.chambersData.review_checkpoint.pending_result,undefined);
+ } finally {global.fetch=original;}
+});
+
+test('repair dependency key survives repeated lease acquisition',()=>{
+ const {resumeReviewCheckpoint,reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
+ reset();const payload=reviewPackage(state,state.chambersData,state.matters);
+ const stageState={strategy:{thesis:'Tax appeals',pending_questions:[],matters:[{matter_id:'m',disposition:'core',rationale:'Pending appeal'}]},selection_validated:true,selection_review_validated:true,development:{version:'editorial-development-v2'},development_validated:false,errors:['Generated status needs repair']};
+ const saved={created_at:Date.now(),state:stageState,step_keys:{strategy:reviewStepHash('strategy',payload,stageState),development:reviewStepHash('development',payload,stageState)}};
+ const first=resumeReviewCheckpoint(payload,saved);const second=resumeReviewCheckpoint(payload,first);
+ assert.equal(first.state.development_reusable,true);assert.equal(second.state.development_reusable,true);
+ assert.equal(second.step_keys.development,saved.step_keys.development);
 });
