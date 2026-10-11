@@ -1,9 +1,9 @@
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
 import { supportedDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { normalizeLetterSections } from '@/lib/audit/letter-sections';
 import { engineFetch } from '@/lib/editorial/engine';
-import { needsInputReview, sourceReviewPending } from '@/lib/audit/input-review';
 import { randomUUID } from 'node:crypto';
 import JSZip from 'jszip';
 import { reviewPackage, reviewInputHash, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where:{id:body.submissionId},include:{matters:true}});
     if (!submission || ![user.id,account?.id].includes(submission.userId)) return NextResponse.json({error:'Not found'}, {status:404});
     const previous = submission.chambersData as any || {};
-    if(sourceReviewPending(previous)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve las dudas de la extracción en el asistente antes de continuar.'},{status:422});
+    const inputIssues=preparationInputIssues(previous,previous.matters || submission.matters || []);
+    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),previous.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const stored = Array.isArray(previous.matters) ? previous.matters : submission.matters;
-    if (stored.some(needsInputReview)) return NextResponse.json({error:'Resuelve los permisos y montos pendientes en el asistente antes de la revisión final.'}, {status:422});
     const draft = Array.isArray(body.matters) ? body.matters : stored;
     const ids = draft.map((m:any) => m.id);
     if (!draft.length || ids.some((id:any)=>!id) || new Set(ids).size !== ids.length) return NextResponse.json({error:'El expediente debe contener asuntos con IDs únicos.'}, {status:422});

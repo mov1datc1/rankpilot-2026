@@ -1,3 +1,4 @@
+const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {normalizeReviewValue,valueResolutionIssues,valueAlternatives}=require('../../src/lib/audit/input-review.ts');
 const {test}=require('node:test');
@@ -78,7 +79,7 @@ test('source recheck only fills undecided confidentiality and preserves edits an
 test('role correction can be saved pending but cannot approve delivery without matching confirmation',()=>{
  const {getDeliveryState}=require('../../src/lib/audit/delivery-state.ts');
  const lawyer={name:'Sofia Vega',role:'Partner',isPartner:true,roleResolution:{role:'Partner',reason:'Official team page for this period',confirmed:false}};
- const data={release_verdict:{passed:true},lawyers:[lawyer]};const matters=[{id:'m',confidentialityConfirmed:true,isConfidential:true}];
+ const data={...completeFiling(),release_verdict:{passed:true},lawyers:[lawyer]};const matters=[{id:'m',confidentialityConfirmed:true,isConfidential:true}];
  assert.equal(getDeliveryState(data,matters).approved,false);lawyer.roleResolution.confirmed=true;assert.equal(getDeliveryState(data,matters).approved,true);
  lawyer.role='Associate';assert.equal(getDeliveryState(data,matters).approved,false);
 });
@@ -92,4 +93,12 @@ test('source discrepancies require a value-bound confirmation and remain after a
  assert.equal(needsInputReview({...resolved,leadPartner:'Bea'}),true);
  const forged=persistInputReview({...original,extraction_issues:[]},original);
  assert.equal(needsInputReview(forged),true);
+});
+test('changed lawyer roles must be confirmed before paid work, not during final review',()=>{
+ const {sourceReviewPending}=require('../../src/lib/audit/input-review.ts');
+ const lawyer={name:'New Lawyer',role:'Partner',isPartner:true,roleResolution:{role:'Partner',reason:'Source role declaration',confirmed:false}};
+ assert.equal(sourceReviewPending({lawyers:[lawyer]}),true);
+ lawyer.roleResolution.confirmed=true;assert.equal(sourceReviewPending({lawyers:[lawyer]}),false);
+ lawyer.role='Associate';assert.equal(sourceReviewPending({lawyers:[lawyer]}),true);
+ assert.equal(sourceReviewPending({lawyers:[{name:'New Lawyer',role:'Partner',isPartner:true}]}),false);
 });

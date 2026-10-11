@@ -1,3 +1,4 @@
+const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict'),Module=require('node:module');
 let submission,job,calls=[],repairMode=false;
@@ -14,7 +15,7 @@ const {runJobStage}=require('../../src/lib/editorial/runner.ts');
 function reset(){
  calls=[];repairMode=false;
  const matters=Array.from({length:3},(_,i)=>({id:`m${i}`,client:`Synthetic client ${i}`,rawNotes:`Client ${i} retained the team for a pending appeal. No decision has been issued.`,optimizedText:'',confidentialityConfirmed:true,publish_status:'non_publishable',isConfidential:true}));
- submission={id:'s',userId:'u',practiceArea:'Tax',targetDirectory:'Chambers',guideRegion:'Mexico',currentBand:'',updatedAt:new Date('2026-01-01'),status:'Draft',matters:structuredClone(matters),chambersData:{matters,firm_name:'Synthetic Firm',original_b10:'The team advises on tax appeals.',enhanced_b7:'',draft_revision:0}};
+ submission={id:'s',userId:'u',practiceArea:'Tax',targetDirectory:'Chambers',guideRegion:'Mexico',currentBand:'',updatedAt:new Date('2026-01-01'),status:'Draft',matters:structuredClone(matters),chambersData:{...completeFiling(),matters,firm_name:'Synthetic Firm',original_b10:'The team advises on tax appeals.',enhanced_b7:'',draft_revision:0}};
  const snapshot=sourceSnapshot(submission);job={id:'job',submissionId:'s',userId:'u',snapshot,sourceHash:stableHash(snapshot),status:'running',tasks:['selection'],cursor:0,stage:'selection',leaseToken:'initial',ledger:[]};
 }
 global.fetch=async(url,options)=>{

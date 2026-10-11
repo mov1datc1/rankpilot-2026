@@ -1,3 +1,4 @@
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { projectDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
@@ -6,7 +7,6 @@ import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
-import { needsInputReview, sourceReviewPending } from '@/lib/audit/input-review';
 import { deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
 import { reviewPackage, reviewInputHash, reviewStepHash, resumeReviewCheckpoint, reviewTaskDisposition, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
@@ -28,11 +28,11 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
     const data: any = submission.chambersData || {};
-    if(sourceReviewPending(data)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve las dudas de la extracción en el asistente antes de continuar.'},{status:422});
+    const inputIssues=preparationInputIssues(data,data.matters || submission.matters || []);
+    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),data.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const matters = Array.isArray(data.matters) ? data.matters : submission.matters;
-    if (matters.some(needsInputReview)) return NextResponse.json({error: 'Resuelve permisos y montos antes de revisar.'}, {status: 422});
     const payload = reviewPackage(submission, data, matters);
     const saved = data.review_checkpoint;
     if (data.completed_review_policy_version === REVIEW_POLICY_VERSION && data.completed_renderer_version === RENDERER_VERSION && data.completed_artifact_review_version === ARTIFACT_REVIEW_VERSION && data.approved_artifact?.audit_sha256 && data.release_verdict?.passed && data.approved_artifact?.input_hash === deliveryInputHash(submission,data)) {

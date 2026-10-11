@@ -118,6 +118,11 @@ export function applySourceConfidentiality(matters: any[], extracted: any[]): an
 }
 
 /** Source/roster discrepancies must be resolved before paid editorial work. */
+export function lawyerInputPending(lawyer:any):boolean {
+  const resolution=lawyer?.roleResolution;
+  return pendingExtractionIssues(lawyer).length>0 || !!(resolution && (resolution.confirmed!==true || !resolution.reason?.trim() || resolution.role!==lawyer.role || lawyer.isPartner!==(lawyer.role==='Partner')));
+}
+
 export function sourceReviewPending(data:any):boolean {
-  return [data?.source_fact_review,...(data?.lawyers || [])].some(record=>pendingExtractionIssues(record).length>0);
+  return pendingExtractionIssues(data?.source_fact_review).length>0 || (data?.lawyers || []).some(lawyerInputPending);
 }

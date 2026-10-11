@@ -1,9 +1,10 @@
+const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test');const assert=require('node:assert/strict');const Module=require('node:module');const {NextRequest}=require('next/server');const JSZip=require('jszip');
 let state,calls,conflict,rejectFinal;
 const source='Synthetic Buyer retained the team in a tax appeal in Mexico. Partner Sofia Vega led the representation. The disputed assessment is MXN 1000000. The appeal remains pending; there has been no ruling.';
 const b10='Synthetic Legal advises on tax disputes in Mexico. The supplied mandate is a pending tax appeal. No ranking or broader team size is claimed.';
-function reset(){conflict=false;rejectFinal=false;calls=[];state={id:'s',userId:'u',updatedAt:new Date('2026-01-01'),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',currentBand:null,status:'Draft',matters:[{id:'m1',submissionId:'s',client:'Synthetic Buyer',name:'Tax appeal',leadPartner:'Sofia Vega',summary:source,rawNotes:source,source_excerpt:source,optimizedText:source,value:'MXN 1000000',isConfidential:false,confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{firm_name:'Synthetic Legal',original_b10:b10,enhanced_b7:b10,draft_revision:1}};state.chambersData.matters=structuredClone(state.matters);}
+function reset(){conflict=false;rejectFinal=false;calls=[];state={id:'s',userId:'u',updatedAt:new Date('2026-01-01'),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',currentBand:null,status:'Draft',matters:[{id:'m1',submissionId:'s',client:'Synthetic Buyer',name:'Tax appeal',leadPartner:'Sofia Vega',summary:source,rawNotes:source,source_excerpt:source,optimizedText:source,value:'MXN 1000000',isConfidential:false,confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{...completeFiling(),firm_name:'Synthetic Legal',original_b10:b10,enhanced_b7:b10,draft_revision:1}};state.chambersData.matters=structuredClone(state.matters);}
 const db=box=>({submission:{findUnique:async()=>structuredClone(box),updateMany:async({data})=>{if(conflict)return{count:0};Object.assign(box,data);return{count:1};},update:async({data})=>Object.assign(box,data)},matter:{updateMany:async({where,data})=>{Object.assign(box.matters.find(m=>m.id===where.id),data);return{count:1};}},user:{findUnique:async()=>null}});
 const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async fn=>{const pending=structuredClone(state);const result=await fn(db(pending));state=pending;return result;}:db(state)[key]});
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'u'}}})}})};return load.call(this,name,...args);};
@@ -197,4 +198,13 @@ test('a grounded-diagnostic retry releases the terminal provider lease and retai
   assert.equal(response.status,502);assert.equal(result.code,'AI_REVIEW_INVALID');
   assert.equal(result.trace.usage.total_tokens,321);assert.equal(state.chambersData.review_checkpoint.lease_until,0);
  }finally{global.fetch=saved;}
+});
+
+test('all preparation endpoints reject a deferred required count before any model call',async()=>{
+ const endpoints=[POST,require('../../src/app/api/optimize/review-step/route.ts').POST,require('../../src/app/api/optimize/matter/route.ts').POST,require('../../src/app/api/optimize/b10/route.ts').POST,require('../../src/app/api/editorial/jobs/route.ts').POST];
+ for(const endpoint of endpoints){
+  reset();delete state.chambersData.numLawyers;state.chambersData.filing_reviewed=true;
+  const res=await endpoint(new NextRequest('http://localhost/api/test',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));
+  assert.equal(res.status,422);const body=await res.json();assert.equal(body.code,'INPUT_REQUIRED');assert.match(body.issues.join(' '),/B3/);assert.equal(calls.length,0);
+ }
 });

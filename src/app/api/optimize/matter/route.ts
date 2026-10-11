@@ -1,8 +1,8 @@
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { engineFetch } from '@/lib/editorial/engine';
 import { draftSourceHash, stableHash } from '@/lib/editorial/contracts';
 import { NextRequest, NextResponse } from 'next/server';
-import { needsInputReview, sourceReviewPending } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 
@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
 
     // A browser draft is not a replacement for the persisted source register.
     const chambersData = (submission.chambersData as any) || {};
-    if(sourceReviewPending(chambersData)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve las dudas de la extracción en el asistente antes de continuar.'},{status:422});
+    const inputIssues=preparationInputIssues(chambersData,chambersData.matters || submission.matters || []);
+    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const stableId = matterId || inlineMatter?.id;
@@ -50,7 +51,6 @@ export async function POST(request: NextRequest) {
     const dbMatter = submission.matters.find(m=>m.id===stableId);
     if (!stableId || !sourceMatter || !dbMatter) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
     const targetMatter = {...dbMatter,...sourceMatter};
-    if (needsInputReview(targetMatter)) return NextResponse.json({error:'Confirma los permisos y resuelve los montos en el asistente antes de optimizar.'}, {status:422});
 
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 

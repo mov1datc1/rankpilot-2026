@@ -25,7 +25,7 @@ export function filingDetailsGaps(data:any):string[] {
   return missing;
 }
 
-/** Ask once, before paid preparation; users may explicitly defer genuinely unknown facts. */
+/** Saving a partial draft never waives required source data. */
 export function filingPreparationNeeded(data:any):boolean {
-  return data.filing_reviewed!==true && (filingDetailsGaps(data).length>0 || Object.values(data.filing_field_status || {}).includes('conflicting'));
+  return filingDetailsGaps(data).length>0 || (data.filing_reviewed!==true && Object.values(data.filing_field_status || {}).includes('conflicting'));
 }

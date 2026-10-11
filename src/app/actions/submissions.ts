@@ -3,7 +3,7 @@
 import { recordAuditAction, normalizeRefereeNotes, supplementMatter, auditInputChanged, auditActions } from '@/lib/audit/next-actions';
 import { previousApprovedArtifact } from '@/lib/audit/artifact-binding';
 
-import { normalizeFilingDetails } from '@/lib/audit/filing-details';
+import { normalizeFilingDetails, filingDetailsGaps } from '@/lib/audit/filing-details';
 
 import { recordReviewResponse } from '@/lib/audit/review-actions';
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
@@ -247,7 +247,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...chambers,
       ...(filingDetails || {}),
       ...(data.sourceFactReview ? {source_fact_review:preserveExtractionReview(data.sourceFactReview,chambers.source_fact_review),original_c2:String(data.sourceFactReview.original_c2 || chambers.original_c2 || '')} : {}),
-      ...(filingDetails ? {filing_reviewed:data.filingReviewed !== false} : {}),
+      ...(filingDetails ? {filing_reviewed:data.filingReviewed !== false && !filingDetailsGaps(filingDetails).length} : {}),
       draft_revision: nextRevision,
       previous_approved_artifact: previousApprovedArtifact(existing,chambers),
       ...(data.refereeNotes !== undefined ? {audit_referee_notes:normalizeRefereeNotes(data.refereeNotes)} : {}),

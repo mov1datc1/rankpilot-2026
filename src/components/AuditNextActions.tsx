@@ -2,7 +2,7 @@
 import {useState} from 'react';
 import {auditActions,auditActionHasResponse,type AuditAction} from '@/lib/audit/next-actions';
 const buttonStyle={border:'1px solid #C7D2FE',borderRadius:7,padding:'8px 12px',background:'#EEF2FF',color:'#3730A3',fontWeight:600,cursor:'pointer'};
-export function AuditNextActions({data,busy,onNavigate,onReferences,onPrepare,submissionId}:{data:any;busy:boolean;onNavigate:(action:AuditAction)=>void;onReferences:(action:AuditAction,notes:string)=>Promise<void>;onPrepare:()=>void;submissionId:string}) {
+export function AuditNextActions({data,busy,onNavigate,onReferences,onPrepare,submissionId,prepareBlocked=false,onResolveInputs}:{prepareBlocked?:boolean;onResolveInputs?:()=>void;data:any;busy:boolean;onNavigate:(action:AuditAction)=>void;onReferences:(action:AuditAction,notes:string)=>Promise<void>;onPrepare:()=>void;submissionId:string}) {
   const [editing,setEditing]=useState<AuditAction|null>(null),[notes,setNotes]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState('');
   const actions=auditActions(data.editorial_review?.letter),answered=actions.filter(a=>auditActionHasResponse(data,a)).length;
   return <section id="audit-next-actions" aria-label="Acciones del Audit" style={{scrollMarginTop:110}}>
@@ -20,7 +20,8 @@ export function AuditNextActions({data,busy,onNavigate,onReferences,onPrepare,su
       </form>}
     </section>)}
     <p>Cuando añadas información, pulsa «Actualizar documentos» para incorporarla y comprobar qué recomendaciones siguen vigentes. Se reutilizarán las etapas cuyo contenido no haya cambiado. Más información puede fortalecer la candidatura, pero no garantiza un ranking.</p>
-    <button style={buttonStyle} type="button" disabled={busy||saving} onClick={onPrepare}>{busy?'Preparando…':'Actualizar documentos'}</button>
+    <button style={buttonStyle} type="button" disabled={busy||saving||prepareBlocked} onClick={onPrepare}>{busy?'Preparando…':'Actualizar documentos'}</button>
+    {prepareBlocked&&<p><button style={buttonStyle} type="button" disabled={busy||saving} onClick={onResolveInputs}>Resolver pendientes antes de actualizar</button></p>}
     {data.previous_approved_artifact&&<p>Mientras se revisan tus cambios, puedes descargar la última versión revisada, que todavía no los incluye: <a href={`/api/generate-docx?id=${encodeURIComponent(submissionId)}&type=submission&mode=previous`}>Submission anterior</a>{' · '}<a href={`/api/generate-docx?id=${encodeURIComponent(submissionId)}&type=audit&mode=previous`}>Audit anterior</a>.</p>}
   </section>;
 }

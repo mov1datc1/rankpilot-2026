@@ -20,3 +20,12 @@ test('a genuinely missing filing count still has its review step',()=>{
  const data=initial();delete data.filingDetails.numLawyers;
  assert.match(render(data),/Paso 1 de 2/);
 });
+test('legacy reviewed flag cannot hide a missing required count after reopening',()=>{
+ const data=initial();data.filingReviewed=true;delete data.filingDetails.numLawyers;
+ assert.match(render(data),/Paso 1 de 2/);
+});
+test('pending preparation banner offers resolution instead of generation',()=>{
+ const {PreparationBanner}=require('../../src/components/PreparationBanner.tsx');
+ const html=renderToStaticMarkup(React.createElement(PreparationBanner,{approved:false,busy:false,needsReview:true,onPrepare(){},onReview(){},onAudit(){}}));
+ assert.match(html,/Ver pendientes/);assert.doesNotMatch(html,/>Preparar documentos</);
+});

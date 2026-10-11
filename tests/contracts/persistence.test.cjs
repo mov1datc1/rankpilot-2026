@@ -26,6 +26,7 @@ test('blocked verdict prevents optimized download despite existing matters',asyn
 test('stale browser revision cannot overwrite a newer draft',async()=>{reset();state.submission.chambersData.draft_revision=3;const res=await updateSubmissionValidatedData('s',{expectedRevision:2,b10Text:'stale'});assert.equal(res.success,false);assert.equal(state.submission.chambersData.original_b10,'old');});
 const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
 function approve(){
+ Object.assign(state.submission.chambersData,require('./filing-fixture.cjs').completeFiling());
  const v=require('../../src/lib/audit/review-versions.ts');
  Object.assign(state.submission.chambersData,{completed_review_policy_version:v.REVIEW_POLICY_VERSION,completed_renderer_version:v.RENDERER_VERSION,completed_artifact_review_version:v.ARTIFACT_REVIEW_VERSION});
  state.submission.chambersData.matters=[{id:'old',client:'Original',isConfidential:false,publish_status:'publishable'}];
@@ -202,4 +203,18 @@ test('supplemental source cannot erase a prior institutional discrepancy',async(
  const res=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'additional source',mode:'supplement'})}));
  assert.equal(res.status,200);assert.equal(state.submission.chambersData.source_fact_review.extraction_issues.length,1);
  assert.equal(state.submission.chambersData.source_fact_review.firm_name,'Original Firm');
+});
+test('partial filing save survives reopening but cannot waive preparation requirements',async()=>{
+ reset();const result=await updateSubmissionValidatedData('s',{filingDetails:{departmentName:'Tax',numPartners:1,numLawyers:'',contacts:[],departmentHeads:[]},filingReviewed:true});
+ assert.equal(result.success,true);const saved=structuredClone(state.submission.chambersData);
+ assert.equal(saved.departmentName,'Tax');assert.equal(saved.numPartners,1);assert.equal(saved.numLawyers,'');assert.equal(saved.filing_reviewed,false);
+ assert.equal(require('../../src/lib/audit/filing-details.ts').filingPreparationNeeded(saved),true);
+});
+test('an old approved artifact cannot bypass missing inputs in either final download',async()=>{
+ for(const type of ['submission','audit']){
+  reset();approve();const data=state.submission.chambersData;delete data.numLawyers;data.filing_reviewed=true;
+  data.approved_artifact.audit_base64=Buffer.from('audit').toString('base64');data.approved_artifact.audit_sha256=artifactHash(Buffer.from('audit'));data.approved_artifact.input_hash=deliveryInputHash(state.submission);
+  const res=await GET(new NextRequest(`http://localhost/api/generate-docx?id=s&type=${type}`,{headers:{accept:'application/json'}}));
+  assert.ok([409,422].includes(res.status),type);
+ }
 });

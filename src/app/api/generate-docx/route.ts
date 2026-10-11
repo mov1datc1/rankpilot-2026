@@ -98,6 +98,7 @@ export async function GET(request: NextRequest) {
       if(artifactHash(bytes)!==expected)return NextResponse.json({error:'No se pudo comprobar la versión anterior.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
     }
+    if(docType==='audit' && !getDeliveryState(chambersData,chambersData.matters || submission.matters,true).approved) return NextResponse.json({code:'DELIVERY_NOT_READY',error:'Resuelve los pendientes y completa la revisión antes de descargar el Audit.'},{status:422});
     const pair=chambersData.approved_artifact;
     if(docType==='audit' && chambersData.release_verdict?.passed && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
       const bytes=Buffer.from(pair.audit_base64,'base64');

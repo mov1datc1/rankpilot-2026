@@ -1,3 +1,4 @@
+const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
@@ -22,7 +23,7 @@ for(const practice of practices) {
  });
  for(const mode of ['A','B']) for(const variant of ['complete','empty','duplicate','excluded','unconfirmed','canonical']) test(`${practice}/${mode}/${variant}: register and release invariants`,()=>{
   // Mode labels exercise the shared contract, not browser uploads or parsers.
-  let matters=[matter('1'),matter('2')];let data={release_verdict:{passed:true,status:'passed'}};
+  let matters=[matter('1'),matter('2')];let data={...completeFiling(),release_verdict:{passed:true,status:'passed'}};
   if(variant==='empty')matters=[];
   if(variant==='duplicate')matters.push(matter('1'));
   if(variant==='excluded')matters[0].isExcluded=true;
@@ -127,7 +128,7 @@ test('anonymization preserves employment roles without inventing a client relati
 
 test('Studio rejects historical artifact approval after a review contract update',()=>{
  const versions=require('../../src/lib/audit/review-versions.ts');
- const data={release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:versions.REVIEW_POLICY_VERSION,completed_renderer_version:versions.RENDERER_VERSION,completed_artifact_review_version:versions.ARTIFACT_REVIEW_VERSION};
+ const data={...completeFiling(),release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:versions.REVIEW_POLICY_VERSION,completed_renderer_version:versions.RENDERER_VERSION,completed_artifact_review_version:versions.ARTIFACT_REVIEW_VERSION};
  assert.equal(getDeliveryState(data,[matter('1')],true).approved,true);
  for(const key of ['completed_review_policy_version','completed_renderer_version','completed_artifact_review_version']) {
    const stale={...data,[key]:'previous'};
@@ -139,7 +140,7 @@ test('Studio rejects historical artifact approval after a review contract update
 test('open tabs follow the server review contract without accepting stale documents',()=>{
  const {REVIEW_CONTRACT}=require('../../src/lib/audit/review-versions.ts');
  const next={...REVIEW_CONTRACT,artifact:REVIEW_CONTRACT.artifact+1};
- const data={release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:next.policy,completed_renderer_version:next.renderer,completed_artifact_review_version:next.artifact};
+ const data={...completeFiling(),release_verdict:{passed:true},approved_artifact:{input_hash:'saved'},completed_review_policy_version:next.policy,completed_renderer_version:next.renderer,completed_artifact_review_version:next.artifact};
  assert.equal(getDeliveryState(data,[matter('1')],true).approved,false);
  assert.equal(getDeliveryState(data,[matter('1')],true,next).approved,true);
  assert.equal(getDeliveryState({...data,completed_artifact_review_version:REVIEW_CONTRACT.artifact},[matter('1')],true,next).approved,false);

@@ -1,10 +1,9 @@
-import { filingPreparationNeeded } from '@/lib/audit/filing-details';
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import { enqueue, latestJob, publicJob } from '@/lib/editorial/jobs';
-import { needsInputReview, sourceReviewPending } from '@/lib/audit/input-review';
 import { EDITORIAL_VERSION } from '@/lib/editorial/contracts';
 import { REVIEW_CONTRACT } from '@/lib/audit/review-versions';
 
@@ -28,11 +27,10 @@ export async function POST(request:NextRequest) {
   const submission=await owned(body.submissionId);
   if(!submission) return NextResponse.json({error:'Expediente no disponible.'},{status:404});
   const data:any=submission.chambersData || {};
+  const inputIssues=preparationInputIssues(data,data.matters || submission.matters || []);
+  if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
   const issues=scopeIssues(selectedScope(submission),data.source_reports || []);
   if(issues.length) return NextResponse.json({code:issues[0].code,error:issues.map(i=>i.message).join(' '),issues},{status:422});
-  if((data.matters || submission.matters).some(needsInputReview)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Confirma los permisos y montos pendientes.'},{status:422});
-  if(sourceReviewPending(data)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve las dudas de la extracción en el asistente antes de continuar.'},{status:422});
-  if(filingPreparationNeeded(data)) return NextResponse.json({code:'FILING_REVIEW_REQUIRED',error:'Revisa los datos del departamento en el asistente antes de preparar los documentos. Puedes confirmar que continuarás con los campos aún desconocidos.'},{status:422});
   try {
     const workers:any[]=await prisma.$queryRaw`SELECT "id" FROM "EditorialWorker" WHERE "version"=${EDITORIAL_VERSION} AND "heartbeat">now()-interval '90 seconds' LIMIT 1`;
     if(!workers.length) return NextResponse.json({code:'WORKER_UNAVAILABLE',error:'El motor editorial no está disponible. No iniciamos llamadas ni gastamos tokens; el expediente se conserva.'},{status:503});

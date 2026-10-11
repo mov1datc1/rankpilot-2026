@@ -44,9 +44,9 @@ import {
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
-import { sourceReviewPending, needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
+import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { PreparationBanner } from '@/components/PreparationBanner';
-import { filingPreparationNeeded } from '@/lib/audit/filing-details';
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { FilingDetails } from '@/components/FilingDetails';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
 import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
@@ -275,7 +275,12 @@ export default function SubmissionStudio({
     if (await handleSaveDraft()) router.push('/reports');
   };
 
-  const pendingInputMatters = matters.filter(needsInputReview);
+  const inputIssues=preparationInputIssues(chambersData,matters);
+  const preparationBlocked=inputIssues.length>0 || !readiness.canOptimize;
+  const resolvePreparationInputs=()=>{
+    if(inputIssues.length){setReviewPending(true);setShowValidationWizard(true);}
+    else setShowReadinessModal(true);
+  };
   const [reviewPending, setReviewPending] = useState(false);
 
   const [auditAction,setAuditAction]=useState<AuditAction|null>(null);
@@ -596,9 +601,8 @@ export default function SubmissionStudio({
   },[submission.id,jobWatch]);
 
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
-    if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);return;}
+    if(preparationBlocked) {resolvePreparationInputs();return;}
     if(isOptimizingAll) return;
-    if(filingPreparationNeeded(chambersData) || sourceReviewPending(chambersData)) {setReviewPending(false);setShowValidationWizard(true);return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
@@ -1079,12 +1083,13 @@ export default function SubmissionStudio({
             )}
           </div>
 
+          {preparationBlocked && <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs} style={{padding:'8px 12px',border:'1px solid #D97706',borderRadius:7,background:'#FFFBEB',color:'#92400E',cursor:'pointer'}}>Resolver pendientes</button>}
           {/* Primary CTA: Optimizar Todo */}
           <button
             onClick={() => handleOptimizeAll(false)}
-            disabled={isOptimizingAll}
+            disabled={isOptimizingAll || preparationBlocked}
             style={{
-              background: isOptimizingAll 
+              background: isOptimizingAll || preparationBlocked
                 ? '#CBD5E1' 
                 : isFullyOptimized 
                   ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
@@ -1098,7 +1103,7 @@ export default function SubmissionStudio({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
+              cursor: isOptimizingAll || preparationBlocked ? 'not-allowed' : 'pointer',
               boxShadow: isOptimizingAll 
                 ? 'none' 
                 : isFullyOptimized 
@@ -1106,22 +1111,25 @@ export default function SubmissionStudio({
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={isFullyOptimized ? 'Los asuntos ya están optimizados. Revisa y genera los entregables; los pendientes se procesan al continuar.' : 'Ejecutar optimización editorial integral bajo estándares Chambers'}
+            title={preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Preparando entrega…' : 'Preparar Submission y Audit'}</span>
+            <span>{isOptimizingAll ? 'Preparando entrega…' : 'Revisar y generar'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
           {draftSaveError && <div role="alert" style={{position:'fixed',bottom:16,right:16,zIndex:100,color:'#991B1B',background:'#FFF7ED',border:'1px solid #FDBA74',borderRadius:10,padding:16,width:'calc(100vw - 32px)',maxWidth:440,maxHeight:'30vh',overflowY:'auto',fontSize:14,boxShadow:'0 4px 20px #0002'}}>{draftSaveError.length <= 220 ? draftSaveError : <><strong>No se pudo completar esta acción.</strong><details style={{marginTop:8}}><summary>Ver motivo completo</summary><p style={{whiteSpace:'pre-wrap'}}>{draftSaveError}</p></details></>}<button type="button" aria-label="Ocultar aviso" onClick={()=>setDraftSaveError('')} style={{display:'block',marginTop:8}}>Entendido</button></div>}
           <div style={{ position: 'relative' }} data-dropdown="download">
             <button
+              disabled={preparationBlocked || !deliveryState.approved || isOptimizingAll}
+              title={preparationBlocked ? 'Resuelve los datos pendientes antes de generar y descargar.' : !deliveryState.approved ? 'Los documentos estarán disponibles cuando termine su revisión.' : 'Descargar documentos revisados'}
               onClick={() => {
                 setShowDownloadMenu(prev => !prev);
                 setShowToolsMenu(false);
               }}
               style={{
                 background: '#1A237E',
+                opacity: preparationBlocked || !deliveryState.approved || isOptimizingAll ? 0.45 : 1,
                 color: '#FFFFFF',
                 border: 'none',
                 padding: '0.5rem 1rem',
@@ -1141,7 +1149,7 @@ export default function SubmissionStudio({
               <ChevronDown size={14} style={{ transform: showDownloadMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
             </button>
 
-            {showDownloadMenu && (
+            {showDownloadMenu && !preparationBlocked && deliveryState.approved && (
               <div style={{
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
@@ -1326,8 +1334,9 @@ export default function SubmissionStudio({
               </div>
               <button
                 onClick={() => handleOptimizeAll(false)}
-                disabled={isOptimizingAll}
+                disabled={isOptimizingAll || preparationBlocked}
                 style={{
+                  opacity: preparationBlocked ? 0.45 : 1,
                   background: '#2563EB',
                   color: '#FFFFFF',
                   border: 'none',
@@ -1344,7 +1353,7 @@ export default function SubmissionStudio({
               </button>
             </div>
           )}
-          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} actions={<AuditNextActions data={chambersData} submissionId={submission.id} busy={isOptimizingAll || isSavingDraft} onNavigate={navigateAuditAction} onPrepare={()=>void handleOptimizeAll(false)} onReferences={async (action,notes)=>{
+          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} actions={<AuditNextActions prepareBlocked={preparationBlocked} onResolveInputs={resolvePreparationInputs} data={chambersData} submissionId={submission.id} busy={isOptimizingAll || isSavingDraft} onNavigate={navigateAuditAction} onPrepare={()=>void handleOptimizeAll(false)} onReferences={async (action,notes)=>{
             const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),auditActionId:action.id,refereeNotes:notes});
             if(!result.success)throw new Error(result.error || 'No se pudo guardar.');
             setChambersData((prev:any)=>({...prev,...applyAuditSave(result),audit_referee_notes:result.refereeNotes,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
@@ -1638,19 +1647,20 @@ export default function SubmissionStudio({
               </details>}
               {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
             </section>
-            {pendingInputMatters.length > 0 && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
-              <strong>{pendingInputMatters.length} asuntos necesitan tu revisión</strong>
-              <p>Resuelve los permisos y los montos en el asistente. Tus decisiones se guardarán juntas antes de optimizar.</p>
-              <button type="button" onClick={() => {setReviewPending(true); setShowValidationWizard(true);}}>Resolver pendientes en el asistente <ArrowRight size={16} /></button>
+            {preparationBlocked && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
+              <strong>Completa los datos antes de revisar y generar</strong>
+              <ul>{[...inputIssues,...readiness.blockers].map((issue,index)=><li key={index}>{issue}</li>)}</ul>
+              <p>Puedes guardar el borrador, salir y continuar después. La generación y las descargas se habilitarán cuando corresponda.</p>
+              <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs}>Resolver pendientes <ArrowRight size={16} /></button>
             </section>}
             <PreparationBanner
               approved={deliveryState.approved}
               busy={isOptimizingAll}
-              needsReview={pendingInputMatters.length > 0 || !!editorialJob?.issue || editorialJob?.status === 'needs_review' || (isFullyOptimized && !deliveryState.approved)}
+              needsReview={preparationBlocked || !!editorialJob?.issue || editorialJob?.status === 'needs_review' || (isFullyOptimized && !deliveryState.approved)}
               progress={optimizeAllProgress}
               onPrepare={() => void handleOptimizeAll(false)}
               onReview={() => {
-                if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);}
+                if(preparationBlocked) {resolvePreparationInputs();}
                 else document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
               }}
               onAudit={() => {setActiveTab('audit');window.scrollTo({top:0,behavior:'smooth'});}}
@@ -1991,7 +2001,7 @@ export default function SubmissionStudio({
                   />
                   <button
                     onClick={handleOptimizeB10}
-                    disabled={isOptimizingB10}
+                    disabled={isOptimizingB10 || preparationBlocked}
                     style={{
                       background: '#4F46E5',
                       color: '#FFFFFF',
@@ -2404,7 +2414,7 @@ export default function SubmissionStudio({
                           />
                           <button
                             onClick={() => handleOptimizeMatter(m, idx)}
-                            disabled={isOptimizingThis}
+                            disabled={isOptimizingThis || preparationBlocked}
                             style={{
                               background: '#4F46E5',
                               color: '#FFFFFF',

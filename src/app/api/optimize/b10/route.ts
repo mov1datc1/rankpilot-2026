@@ -1,3 +1,4 @@
+import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { stableHash } from '@/lib/editorial/contracts';
 import { engineFetch } from '@/lib/editorial/engine';
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const submission = await prisma.submission.findUnique({
-      where: { id: submissionId }
+      where: { id: submissionId }, include:{matters:true}
     });
 
     if (!submission || (submission.userId !== user.id && submission.userId !== resolvedUserId)) {
@@ -39,6 +40,8 @@ export async function POST(request: NextRequest) {
     }
 
     const chambersData = (submission.chambersData as any) || {};
+    const inputIssues=preparationInputIssues(chambersData,chambersData.matters || submission.matters || []);
+    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';

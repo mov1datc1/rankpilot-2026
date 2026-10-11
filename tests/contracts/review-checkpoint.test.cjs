@@ -1,3 +1,4 @@
+const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
@@ -5,7 +6,7 @@ const Module=require('node:module');
 const {NextRequest}=require('next/server');
 let state, calls, conflict, failure, mutate, user;
 function reset() {
-  state={id:'s',userId:'u',updatedAt:new Date(0),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',matters:[{id:'m',rawNotes:'Pending appeal',confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{original_b10:'Tax team',enhanced_b7:'Tax disputes team'}};
+  state={id:'s',userId:'u',updatedAt:new Date(0),targetDirectory:'Chambers',practiceArea:'Tax',guideRegion:'Mexico',matters:[{id:'m',rawNotes:'Pending appeal',confidentialityConfirmed:true,publish_status:'publishable'}],chambersData:{...completeFiling(),original_b10:'Tax team',enhanced_b7:'Tax disputes team'}};
   calls=[];conflict=false;failure=false;mutate=false;user={id:'u'};
 }
 const prisma={user:{findUnique:async()=>null},submission:{
