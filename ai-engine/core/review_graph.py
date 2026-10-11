@@ -666,6 +666,7 @@ def create_review_graph():
     def observed(name, fn):
         def run(state):
             started=time.monotonic(); result=fn(state)
+            if name=='development':result.setdefault('development_repair_unlocatable',False)
             result['node_events']=list(state.get('node_events',[]))+[{'node':name,'seconds':round(time.monotonic()-started,3),'status':'rejected' if result.get('errors') else 'completed'}]
             return result
         return run
