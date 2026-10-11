@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
         sources: sources,
         context: {
           ...context,
-          reconcile_filing: !confidentialityOnly,
+          reconcile_source: !confidentialityOnly,
           guide_region: submission.chambersData?.guideRegion || '',
           guideRegion: submission.chambersData?.guideRegion || '',
           directory: submission.targetDirectory,
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
       const failure = await extractResponse.json().catch(()=>({}));
       const status = extractResponse.status >= 400 && extractResponse.status < 500 ? extractResponse.status : 502;
       const code = failure.code || (status===409?'DRAFT_CONFLICT':'EXTRACTION_UNAVAILABLE');
-      return NextResponse.json({code,error:processingFeedback({...failure,code},status,'extract'),source_errors:failure.source_errors || [],issues:failure.issues || []},{status});
+      return NextResponse.json({code,error:processingFeedback({...failure,code},status,'extract'),source_errors:failure.source_errors || [],issues:failure.issues || [],usage:failure.usage || null,retryable:failure.retryable ?? false},{status});
     }
 
     const extractData = await extractResponse.json();
@@ -126,6 +128,10 @@ export async function POST(request: NextRequest) {
     if (confidentialityOnly) {
       if (extractData.confidentiality_contract_version !== 1) return NextResponse.json({error: 'El motor de confidencialidad se está actualizando. Reintenta en unos minutos.'}, {status: 503});
       return NextResponse.json({success: true, matters: extractedMatters});
+    }
+    const reports=extractData.source_reports;
+    if(!Array.isArray(reports) || !reports.length || reports.some((r:any)=>r.source_reconciliation?.version!=='source-reconciliation-v1' || r.source_reconciliation?.status!=='reviewed' || !(r.source_reconciliation.source_characters>0) || r.source_reconciliation.covered_characters!==r.source_reconciliation.source_characters || r.source_reconciliation.matters_reviewed!==r.matter_count)) {
+      return NextResponse.json({code:'EXTRACTION_VALIDATION_REQUIRED',error:processingFeedback({code:'EXTRACTION_VALIDATION_REQUIRED'},422)},{status:422});
     }
     const extractedLawyers = extractData.lawyers || [];
 
@@ -222,6 +228,13 @@ export async function POST(request: NextRequest) {
       original_c2: extractData.original_c2 || '',
       sources,
       source_reports: extractData.source_reports || [],
+      source_fact_review: {
+        firm_name: extractedMeta.firm_name || '', practice_area: cleanExtractedPractice, location: extractedMeta.location || '',
+        original_b10: extractedB10, original_c2: extractData.original_c2 || '',
+        extractionResolutions: {} as Record<string,any>,
+        extraction_issues: (extractData.source_reports || []).flatMap((r:any)=>r.administration_issues || []),
+        extraction_evidence: (extractData.source_reports || []).map((r:any)=>({source:r.source,fields:r.administration_evidence || {}}))
+      },
       ingestion_quality: extractData.ingestion_quality || null,
       analysis_scope: selected,
       draft_revision: Number(existingChambers.draft_revision || 0) + 1,
@@ -263,6 +276,10 @@ export async function POST(request: NextRequest) {
           valueConflict: healedM.valueConflict || '',
           source_label: healedM.source_label || healedM.sourceLabel || '',
           source_excerpt: healedM.source_excerpt || '',
+          extraction_evidence: healedM.extraction_evidence || {},
+          extraction_issues: healedM.extraction_issues || [],
+          extraction_review_version: healedM.extraction_review_version || '',
+          original_code_extraction: healedM.original_code_extraction || {},
           confidentialityEvidence: healedM.confidentialityEvidence || null,
           crossBorder: m.crossBorder,
           teamMembers: m.teamMembers,
@@ -285,6 +302,16 @@ export async function POST(request: NextRequest) {
       updatedChambersData.matters=[...original,...updatedChambersData.matters];
       updatedChambersData.sources=[...(existingChambers.sources || []),...sources];
       updatedChambersData.source_reports=[...(existingChambers.source_reports || []),...(extractData.source_reports || [])];
+      if(existingChambers.source_fact_review) {
+        const previous=existingChambers.source_fact_review;
+        const incoming=updatedChambersData.source_fact_review;
+        const resolutions={...(previous.extractionResolutions || {})};
+        for(const issue of incoming.extraction_issues) delete resolutions[issue.field];
+        updatedChambersData.source_fact_review={...incoming,...previous,
+          extraction_issues:[...(previous.extraction_issues || []),...incoming.extraction_issues],
+          extraction_evidence:[...(previous.extraction_evidence || []),...incoming.extraction_evidence],
+          extractionResolutions:resolutions};
+      }
       for(const key of ['original_b10','enhanced_b7','b7','confirmed_source_b10','original_c2','department','lawyers']) {
         if(existingChambers[key]!==undefined) (updatedChambersData as any)[key]=existingChambers[key];
       }

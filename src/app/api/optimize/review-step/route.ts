@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
-import { needsInputReview } from '@/lib/audit/input-review';
+import { needsInputReview, sourceReviewPending } from '@/lib/audit/input-review';
 import { deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
 import { reviewPackage, reviewInputHash, reviewStepHash, resumeReviewCheckpoint, reviewTaskDisposition, reviewSteps, reviewStepLabels, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
     const data: any = submission.chambersData || {};
+    if(sourceReviewPending(data)) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve las dudas de la extracción en el asistente antes de continuar.'},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),data.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
     const matters = Array.isArray(data.matters) ? data.matters : submission.matters;

@@ -919,7 +919,7 @@ async def _extract_readable_source(doc_text, context):
                 if not any(str(fields.get(key) or '').strip() for key in ('client', 'summary', 'matter_value', 'lead_partner', 'team_members', 'completion_date')):
                     empty_sections.append(sec['label'])
                     continue
-                if not str(fields.get('summary') or '').strip():
+                if not str(fields.get('summary') or '').strip() and not context.get('reconcile_source'):
                     raise SourceError('SOURCE_INCOMPLETE_MATTERS', matters=[sec['label']])
                 conf_status = sec.get("confidentiality_status") or "confirmation_required"
                 is_unconfirmed = conf_status == "confirmation_required"
@@ -959,7 +959,7 @@ async def _extract_readable_source(doc_text, context):
                     "confidentialityEvidence": sec.get("confidentiality_evidence"),
                     "optimizedText": "",
                 })
-        else:
+        elif not context.get('reconcile_source'):
             # Fallback to extraction_node if no standard numbered headers found
             from agents.nodes import extraction_node
             state = {
@@ -1020,7 +1020,22 @@ async def _extract_readable_source(doc_text, context):
             if not heads:
                 heads = [h.get("name", "") for h in extracted_metadata.get("department", {}).get("department_heads", []) if h.get("name")]
 
-        if context.get('reconcile_filing'):
+        reconciliation = {}
+        if context.get('reconcile_source'):
+            from utils.source_reconciliation import reconcile_source
+            try:
+                reviewed = await asyncio.to_thread(reconcile_source, doc_text, matters, filing, lawyers=roster)
+                matters = reviewed['matters']
+                roster = reviewed['lawyers']
+                admin = reviewed['administration']
+                prelim = {'firm_name': admin['firm_name'], 'practice_area': admin['practice_area'], 'location': admin['location']}
+                original_b10, original_c2 = admin['original_b10'], admin['original_c2']
+                filing = {k: reviewed[k] for k in ('filing_details', 'filing_evidence', 'filing_field_status')}
+                reconciliation = {k: reviewed[k] for k in ('source_reconciliation', 'administration_evidence', 'administration_issues')}
+            except Exception as error:
+                logger.exception('Full source reconciliation failed; recorded usage=%s', getattr(error, 'usage', {}))
+                return JSONResponse(status_code=502, content={'success': False, 'code': 'SOURCE_RECONCILIATION_UNAVAILABLE', 'usage': getattr(error, 'usage', {}), 'retryable': False})
+        elif context.get('reconcile_filing'):
             from utils.filing_reconciliation import reconcile_filing
             try:
                 filing = await asyncio.to_thread(reconcile_filing, doc_text, filing)
@@ -1053,6 +1068,7 @@ async def _extract_readable_source(doc_text, context):
             "original_c2": original_c2,
             "matters": matters,
             **filing,
+            **reconciliation,
             "total_matters": len(matters),
             "source_errors": source_errors,
             "partial": False,
@@ -1127,12 +1143,14 @@ async def extract_document_endpoint(request: Request):
             if missing_scope:
                 report.setdefault('warnings', []).append('No se encontró una declaración explícita de ' + ', '.join(missing_scope) + '. Los filtros seleccionados fijan el objetivo; no son hechos confirmados por esta fuente.')
             report['filing_reconciliation'] = result.pop('filing_reconciliation', {'status': 'not_requested'})
+            for key in ('source_reconciliation', 'administration_evidence', 'administration_issues'):
+                if key in result: report[key] = result.pop(key)
             report['matter_count'] = len(result['matters'])
             report['empty_sections'] = result.pop('empty_sections', [])
             repeated=DocumentParser._count_matter_labels_in_text(text)['label_validation'].get('duplicate_labels',[])
             if repeated:report['numbering_reconciliation']={'repeated_headings':repeated,'method':'Distinct literal blocks retained with occurrence IDs; original headings preserved.'}
             report['layout'] = 'numbered_form' if DocumentParser.extract_numbered_matter_sections(text) else 'unstructured'
-            if report['layout'] == 'unstructured':
+            if report['layout'] == 'unstructured' and not report.get('source_reconciliation'):
                 report.setdefault('warnings', []).append('Fuente sin formulario numerado: confirma que el total y la identidad de los asuntos correspondan al documento; no hay un conteo independiente verificado.')
             if not result['matters']:
                 report.setdefault('warnings', []).append('No se identificaron asuntos en esta fuente. Comprueba si solo aporta información complementaria.')

@@ -33,10 +33,23 @@ def reconcile_filing(text, deterministic):
     parsed = response.get('parsed')
     if response.get('parsing_error') or parsed is None:
         raise ValueError('Incomplete administrative reconciliation')
+    findings, rejected = validate_findings(text, parsed.findings)
+    merged = merge_model_filing_fields(deterministic, findings, text)
+    raw = response.get('raw')
+    merged['filing_reconciliation'] = {
+        'status': 'reviewed', 'method': 'independent_source_read_with_literal_evidence',
+        'source_characters': len(text), 'accepted_findings': len(findings),
+        'rejected_fields': sorted(set(rejected)),
+        'usage': getattr(raw, 'usage_metadata', None) or {},
+    }
+    return merged
+
+
+def validate_findings(text, items):
     findings = []
     rejected = []
     norm = lambda value: ' '.join(str(value).split()).casefold()
-    for item in parsed.findings:
+    for item in items:
         finding = item.model_dump()
         quote = finding['source_quote']
         if not quote or norm(quote) not in norm(text):
@@ -55,12 +68,4 @@ def reconcile_filing(text, deterministic):
                 rejected.append(finding['field'])
                 continue
         findings.append(finding)
-    merged = merge_model_filing_fields(deterministic, findings, text)
-    raw = response.get('raw')
-    merged['filing_reconciliation'] = {
-        'status': 'reviewed', 'method': 'independent_source_read_with_literal_evidence',
-        'source_characters': len(text), 'accepted_findings': len(findings),
-        'rejected_fields': sorted(set(rejected)),
-        'usage': getattr(raw, 'usage_metadata', None) or {},
-    }
-    return merged
+    return findings, rejected

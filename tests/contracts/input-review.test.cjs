@@ -82,3 +82,14 @@ test('role correction can be saved pending but cannot approve delivery without m
  assert.equal(getDeliveryState(data,matters).approved,false);lawyer.roleResolution.confirmed=true;assert.equal(getDeliveryState(data,matters).approved,true);
  lawyer.role='Associate';assert.equal(getDeliveryState(data,matters).approved,false);
 });
+
+test('source discrepancies require a value-bound confirmation and remain after an edit',()=>{
+ const {pendingExtractionIssues}=require('../../src/lib/audit/input-review.ts');
+ const original={id:'new',isConfidential:true,leadPartner:'',extraction_issues:[{field:'leadPartner',kind:'conflicting',alternatives:['Ana','Bea']}]};
+ assert.equal(needsInputReview(original),true);
+ const resolved={...original,leadPartner:'Ana',extractionResolutions:{leadPartner:{value:'Ana',confirmed:true}}};
+ assert.equal(pendingExtractionIssues(resolved).length,0);assert.equal(needsInputReview(resolved),false);
+ assert.equal(needsInputReview({...resolved,leadPartner:'Bea'}),true);
+ const forged=persistInputReview({...original,extraction_issues:[]},original);
+ assert.equal(needsInputReview(forged),true);
+});

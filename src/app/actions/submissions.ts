@@ -7,7 +7,7 @@ import { normalizeFilingDetails } from '@/lib/audit/filing-details';
 
 import { recordReviewResponse } from '@/lib/audit/review-actions';
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
-import { persistInputReview, validValueResolution } from '@/lib/audit/input-review';
+import { persistInputReview, validValueResolution, preserveExtractionReview } from '@/lib/audit/input-review';
 import prisma from '@/lib/prisma';
 import { createClient } from '@/utils/supabase/server';
 
@@ -192,6 +192,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
   researchPeriod?: { from: string; to: string };
   filingDetails?: unknown;
   filingReviewed?: boolean;
+  sourceFactReview?: any;
   lawyers?: any[];
   matters?: any[];
 }) {
@@ -225,6 +226,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     });
     if (data.lawyers) data.lawyers = data.lawyers.map(lawyer => {
       const previous = chambers.lawyers?.find((saved:any) => (saved.name || saved.fullName) === (lawyer.name || lawyer.fullName));
+      lawyer = preserveExtractionReview(lawyer,previous);
       const changed = previous && (previous.role !== lawyer.role || previous.isPartner !== lawyer.isPartner);
       if (!changed && !lawyer.roleResolution) return lawyer;
       const resolution = lawyer.roleResolution || {role:lawyer.role || '',reason:'',confirmed:false};
@@ -244,6 +246,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
     const updatedChambers = {
       ...chambers,
       ...(filingDetails || {}),
+      ...(data.sourceFactReview ? {source_fact_review:preserveExtractionReview(data.sourceFactReview,chambers.source_fact_review),original_c2:String(data.sourceFactReview.original_c2 || chambers.original_c2 || '')} : {}),
       ...(filingDetails ? {filing_reviewed:data.filingReviewed !== false} : {}),
       draft_revision: nextRevision,
       previous_approved_artifact: previousApprovedArtifact(existing,chambers),

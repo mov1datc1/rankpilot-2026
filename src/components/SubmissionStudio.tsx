@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
-import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
+import { sourceReviewPending, needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { PreparationBanner } from '@/components/PreparationBanner';
 import { filingPreparationNeeded } from '@/lib/audit/filing-details';
 import { FilingDetails } from '@/components/FilingDetails';
@@ -598,7 +598,7 @@ export default function SubmissionStudio({
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(pendingInputMatters.length) {setReviewPending(true);setShowValidationWizard(true);return;}
     if(isOptimizingAll) return;
-    if(filingPreparationNeeded(chambersData)) {setReviewPending(false);setShowValidationWizard(true);return;}
+    if(filingPreparationNeeded(chambersData) || sourceReviewPending(chambersData)) {setReviewPending(false);setShowValidationWizard(true);return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
@@ -3710,6 +3710,7 @@ export default function SubmissionStudio({
           filingFieldStatus:chambersData.filing_field_status,
           filingReviewed:chambersData.filing_reviewed,
           sourceReports: chambersData.source_reports || [],
+          sourceFactReview: chambersData.source_fact_review,
           draftRevision:Number(chambersData.draft_revision || 0),
           firmName: chambersData.firm_name || chambersData.firmName || (submission as any).firmName || '',
           practiceArea: (() => {
@@ -3731,7 +3732,7 @@ export default function SubmissionStudio({
           const changes=data.correctionOnly ? {expectedRevision:data.expectedRevision,reviewIssueMessage:focusedReview?.message,...(data.lawyersChanged ? {lawyers:data.lawyers} : {}),...(data.mattersChanged ? {matters:data.matters} : {})} : {...data,b10Text:data.b10SourceChanged?data.b10Text:undefined,confirmedSourceB10:data.b10SourceChanged?data.b10Text:undefined,expectedRevision:data.expectedRevision};
           const result=await updateSubmissionValidatedData(submission.id,{...changes,auditActionId:auditAction?.id});
           if(!result.success) throw new Error(result.error || 'No se pudo guardar la revisión.');
-          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{...data.filingDetails,filing_reviewed:!!data.filingReviewed,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
+          setChambersData((prev:any)=>({...prev,...applyAuditSave(result),...(!data.correctionOnly?{...data.filingDetails,filing_reviewed:!!data.filingReviewed,firm_name:data.firmName,firmName:data.firmName,practice_area:data.practiceArea,source_fact_review:data.sourceFactReview}:{}),lawyers:result.lawyers || data.lawyers,matters:result.matters || data.matters,...(data.b10SourceChanged?{confirmed_source_b10:data.b10Text,enhanced_b7:data.b10Text,b7:data.b10Text}:{}),draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
           setMatters(result.matters || data.matters);
           if(data.b10SourceChanged)setB10Text(data.b10Text);
           setShowValidationWizard(false);

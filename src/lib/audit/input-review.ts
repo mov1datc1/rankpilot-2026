@@ -20,7 +20,7 @@ export function valueConflict(m: any): string {
 /** Offer only alternatives explicitly labelled by the extractor; never infer an FX rate. */
 export function valueAlternatives(m: any): {label: string; value: string}[] {
   const match = valueConflict(m).match(/between table \((.+?)\) and narrative \((.+?)\)/i);
-  if (!match) return [];
+  if (!match) return (m.extraction_issues || []).filter((i:any)=>i.field==='value').flatMap((i:any)=>(i.alternatives || []).map((value:string,index:number)=>({label:`Monto en la fuente ${index+1}`,value:normalizeReviewValue(value)})));
   return [{label: 'Monto de la tabla', value: match[1]}, {label: 'Monto de la narrativa', value: match[2]}]
     .map(option => ({...option, value: normalizeReviewValue(option.value)}));
 }
@@ -47,15 +47,33 @@ export function validValueResolution(m: any): boolean {
     && typeof r.reason === 'string' && r.reason.trim().length > 0;
 }
 
+export function extractionFieldLabel(field:string):string {
+  return ({client:'Cliente',rawNotes:'Descripción completa del asunto',leadPartner:'Socio responsable',teamMembers:'Equipo',crossBorder:'Jurisdicciones',otherFirms:'Otras firmas',completionDate:'Fecha o estado',otherInfo:'Información adicional',firm_name:'Firma',practice_area:'Área de práctica',location:'Jurisdicción',original_b10:'Descripción del departamento',original_c2:'Comentarios de ranking',name:'Nombre',bio:'Biografía',url:'Enlace',current_ranking:'Ranking actual',key_focus:'Especialidad',standout_work:'Trabajo destacado',role:'Cargo'} as Record<string,string>)[field] || field;
+}
+
+export function pendingExtractionIssues(record:any):any[] {
+  return (record?.extraction_issues || []).filter((issue:any)=>{
+    if(issue.field==='value')return !validValueResolution(record);
+    const value=String(record[issue.field] || '');const resolution=record.extractionResolutions?.[issue.field];
+    return !value.trim() || resolution?.confirmed!==true || resolution.value!==value;
+  });
+}
+
+export function preserveExtractionReview(record:any,previous?:any) {
+  if(!previous?.extraction_issues)return record;
+  return {...record,extraction_issues:previous.extraction_issues,extraction_evidence:previous.extraction_evidence,
+    extraction_review_version:previous.extraction_review_version,original_code_extraction:previous.original_code_extraction};
+}
+
 export function needsInputReview(m: any): boolean {
-  return publicationStatus(m) === 'confirmation_required' || ((!!valueConflict(m) || !!m.valueResolution) && !validValueResolution(m));
+  return pendingExtractionIssues(m).length>0 || publicationStatus(m) === 'confirmation_required' || ((!!valueConflict(m) || !!m.valueResolution) && !validValueResolution(m));
 }
 
 /** Preserve the original discrepancy; clear active blockers only after an explicit resolution. */
 export function persistInputReview(m: any, previous?: any) {
   // A saved confidential matter cannot be made public by a review payload.
   const status = previous && publicationStatus(previous) === 'confidential' ? 'confidential' : publicationStatus(m);
-  let reviewed = confirmPublicationStatus(m, status);
+  let reviewed = preserveExtractionReview(confirmPublicationStatus(m, status), previous);
   const conflict = valueConflict(previous || {}) || valueConflict(m);
   if (conflict) {
     if (validValueResolution(m)) {
@@ -97,4 +115,9 @@ export function applySourceConfidentiality(matters: any[], extracted: any[]): an
     return {...confirmPublicationStatus(m, 'confidential'), confidentialityEvidence: source.confidentialityEvidence,
       source_label: source.source_label, name: source.name, title: source.title};
   });
+}
+
+/** Source/roster discrepancies must be resolved before paid editorial work. */
+export function sourceReviewPending(data:any):boolean {
+  return [data?.source_fact_review,...(data?.lawyers || [])].some(record=>pendingExtractionIssues(record).length>0);
 }

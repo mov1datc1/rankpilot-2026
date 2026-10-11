@@ -1,4 +1,4 @@
-import { publicationStatus, valueConflict, validValueResolution } from './input-review';
+import { publicationStatus, valueConflict, validValueResolution, pendingExtractionIssues } from './input-review';
 import { REVIEW_CONTRACT } from './review-versions';
 /** Shared by Studio and the download endpoint. Optimization is not approval. */
 export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false, expectedContract = REVIEW_CONTRACT) {
@@ -19,6 +19,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
       errors.push(`Confirma el cargo y su fuente para ${lawyer.name || lawyer.fullName || 'el abogado'} antes de aprobar la entrega.`);
     }
   }
+  if ([data?.source_fact_review,...(data?.lawyers || []),...matters].some(record=>pendingExtractionIssues(record).length)) errors.push('Resuelve las dudas de extracción pendientes antes de aprobar la entrega.');
   if (!matters.length) errors.push('No hay asuntos disponibles.');
   const ids = matters.map(m => m.id).filter(Boolean);
   if (new Set(ids).size !== ids.length) errors.push('Hay asuntos duplicados en el expediente.');

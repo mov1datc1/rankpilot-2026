@@ -100,7 +100,7 @@ def resolve_filing_fields(results):
             if isinstance(value, list):
                 return str(sorted(json.dumps({field: str(person.get(field) or '').strip() for field in ('name', 'email', 'phone')}, sort_keys=True, ensure_ascii=False).casefold() for person in value))
             return str(value).strip().casefold()
-        unique = {identity(item['value']): item['value'] for item in items}
+        unique = {identity(item['value']): item['value'] for item in items if item.get('value') is not None}
         status[key] = 'found' if len(unique) == 1 else 'conflicting' if unique else 'not_found'
         if len(unique) == 1:
             values[key] = next(iter(unique.values()))

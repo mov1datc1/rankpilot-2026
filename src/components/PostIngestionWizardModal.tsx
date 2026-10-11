@@ -19,11 +19,12 @@ import {
   X,
   Check
 } from 'lucide-react';
+import { ExtractionIssues } from '@/components/ExtractionIssues';
 import { FilingFields } from '@/components/FilingFields';
 import { filingDetailsGaps } from '@/lib/audit/filing-details';
 import type { FocusedReviewScope } from '@/lib/audit/review-actions';
 import { getCanonicalPracticeArea } from '@/lib/constants';
-import { publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
+import { pendingExtractionIssues, publicationStatus, confirmPublicationStatus, valueConflict, valueAlternatives, validValueResolution, needsInputReview, normalizeReviewValue, valueResolutionIssues, applySourceConfidentiality } from '@/lib/audit/input-review';
 import { detectPracticeAreaDiscrepancy } from '@/lib/audit/practice-area-classifier';
 
 export interface PostIngestionWizardModalProps {
@@ -32,6 +33,7 @@ export interface PostIngestionWizardModalProps {
   onComplete: (data: {
     filingDetails?: any;
     filingReviewed?: boolean;
+    sourceFactReview?: any;
     firmName: string;
     practiceArea: string;
     location: string;
@@ -49,7 +51,8 @@ export interface PostIngestionWizardModalProps {
     filingEvidence?: any;
     filingFieldStatus?: any;
     filingReviewed?: boolean;
-    sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[] }[];
+    sourceFactReview?: any;
+    sourceReports?: { source: string; detected_format: string; matter_count?: number; warnings?: string[]; empty_sections?: string[]; source_reconciliation?: {status:string} }[];
     draftRevision?: number;
     firmName?: string;
     practiceArea?: string;
@@ -114,8 +117,11 @@ export default function PostIngestionWizardModal({
   // Local state for all fields being validated
   const initialPractice = calibratedPractice || sanitizeStr(initialData.practiceArea);
 
+  const fullSourceReviewed=!!initialData.sourceReports?.length && initialData.sourceReports.every(r=>r.source_reconciliation?.status==='reviewed');
+  const [reviewAll,setReviewAll]=useState(false);
+  const [sourceFactReview,setSourceFactReview]=useState<any>(initialData.sourceFactReview || {});
   const [filingDetails,setFilingDetails]=useState<any>(initialData.filingDetails || {});
-  const [filingReviewed,setFilingReviewed]=useState(!!initialData.filingReviewed);
+  const [filingReviewed,setFilingReviewed]=useState(!!initialData.filingReviewed || (fullSourceReviewed && !filingDetailsGaps(initialData.filingDetails || {}).length && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
   const [practiceArea, setPracticeArea] = useState(initialPractice);
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
@@ -130,8 +136,9 @@ export default function PostIngestionWizardModal({
   const mattersChunkSize = 2;
   const matterChunks: any[][] = [];
   // Filter navigation only. The complete register remains in state for saving.
+  const pendingIds=new Set((initialData.matters || []).filter(needsInputReview).map(m=>m.id));
   const visibleMatters = correctionOnly && reviewScope?.matterIds.length
-    ? matters.filter(m=>reviewScope.matterIds.includes(m.id)) : correctionOnly && startAtLawyers ? [] : matters;
+    ? matters.filter(m=>reviewScope.matterIds.includes(m.id)) : correctionOnly && startAtLawyers ? [] : fullSourceReviewed && !reviewAll ? matters.filter(m=>pendingIds.has(m.id) || needsInputReview(m)) : matters;
   for (let i = 0; i < visibleMatters.length; i += mattersChunkSize) {
     matterChunks.push(visibleMatters.slice(i, i + mattersChunkSize));
   }
@@ -165,7 +172,7 @@ export default function PostIngestionWizardModal({
     if (isOpen) {
       const pendingIndex = (initialData.matters || []).findIndex(needsInputReview);
       initialReview.current={lawyers:JSON.stringify(initialData.lawyers || []),matters:JSON.stringify(initialData.matters || [])};
-      setCurrentStep(startAtLawyers ? 3 : correctionOnly ? 4 : reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
+      setCurrentStep(startAtLawyers ? 3 : correctionOnly ? 4 : fullSourceReviewed ? 1 : reviewPending && pendingIndex >= 0 ? 4 + Math.floor(pendingIndex / mattersChunkSize) : 1);
       contentRef.current?.scrollTo({top: 0});
       setIsEditingInline(correctionOnly && !startAtLawyers);
       setValidationError('');
@@ -173,7 +180,9 @@ export default function PostIngestionWizardModal({
       setInitialB10Source(initialData.b10Text || '');
       setSaveError('');
       setFilingDetails(initialData.filingDetails || {});
-      setFilingReviewed(!!initialData.filingReviewed);
+      setReviewAll(false);
+      setSourceFactReview(initialData.sourceFactReview || {});
+      setFilingReviewed(!!initialData.filingReviewed || (fullSourceReviewed && !filingDetailsGaps(initialData.filingDetails || {}).length && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
       setFirmName(sanitizeStr(initialData.firmName));
       setPracticeArea(calibratedPractice || sanitizeStr(initialData.practiceArea));
       setLocation(sanitizeStr(initialData.location));
@@ -183,20 +192,34 @@ export default function PostIngestionWizardModal({
     }
   }, [isOpen]);
 
+  const sourceRecord={...sourceFactReview,firm_name:firmName,practice_area:practiceArea,location,original_b10:b10Text};
+  const focused=fullSourceReviewed && !reviewAll && !correctionOnly;
+  const navigation=focused ? [1,...((!initialData.filingReviewed && (filingDetailsGaps(initialData.filingDetails || {}).length>0 || Object.values(initialData.filingFieldStatus || {}).includes('conflicting'))) || !initialData.b10Text ? [2]:[]),...((initialData.lawyers || []).some(l=>pendingExtractionIssues(l).length) ? [3]:[]),...matterChunks.map((_,i)=>i+4)] : Array.from({length:totalSteps},(_,i)=>i+1);
   if (!isOpen) return null;
 
   const saveReview = async () => {
     if(isSaving)return;
     setIsSaving(true);setSaveError('');
-    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
+    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed,sourceFactReview:sourceRecord}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
     catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
     finally {setIsSaving(false);}
   };
   const handleNext = () => {
     if (correctionOnly) { void saveReview(); return; }
+    if(currentStep===1 && pendingExtractionIssues(sourceRecord).length) {setValidationError('Confirma los datos de la fuente señalados antes de continuar.');return;}
+    if(currentStep===3 && lawyers.some(l=>pendingExtractionIssues(l).length)) {setValidationError('Confirma las dudas señaladas en los perfiles.');return;}
     if(currentStep===2 && !filingReviewed) {setValidationError('Revisa los datos del departamento y confirma cómo continuar antes de preparar los documentos.');return;}
     if (currentMatterChunk.some(needsInputReview)) {
-      setValidationError('Resuelve los permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
+      setValidationError('Resuelve las dudas, permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
+      return;
+    }
+    if (focused) {
+      const next=navigation.find(step=>step>currentStep);
+      if(next) {setCurrentStep(next);setIsEditingInline(false);}
+      else if(!filingReviewed) setCurrentStep(2);
+      else if(pendingExtractionIssues(sourceRecord).length) setCurrentStep(1);
+      else if(lawyers.some(l=>pendingExtractionIssues(l).length)) setCurrentStep(3);
+      else {const pendingChunk=matterChunks.findIndex(chunk=>chunk.some(needsInputReview));if(pendingChunk>=0)setCurrentStep(pendingChunk+4);else void saveReview();}
       return;
     }
     if (reviewPending) {
@@ -213,7 +236,7 @@ export default function PostIngestionWizardModal({
     if(currentStep<totalSteps)setCurrentStep(prev=>prev+1);
     else void saveReview();
   };
-  const handleBack = () => {setIsEditingInline(false);if(currentStep>(correctionOnly ? (startAtLawyers ? 3 : 4) : 1))setCurrentStep(prev=>prev-1);};
+  const handleBack = () => {setIsEditingInline(false);if(focused)setCurrentStep([...navigation].reverse().find(step=>step<currentStep) || 1);else if(currentStep>(correctionOnly ? (startAtLawyers ? 3 : 4) : 1))setCurrentStep(prev=>prev-1);};
   const handleSkip = () => {void saveReview();};
 
   const updateMatterField = (matterId: string, field: string, value: any) => {
@@ -226,7 +249,7 @@ export default function PostIngestionWizardModal({
   };
 
   const currentMatterChunk = currentStep >= 4 ? matterChunks[currentStep - 4] || [] : [];
-  const progressPercent = Math.round(((currentStep - 1) / totalSteps) * 100);
+  const progressPercent = Math.round((Math.max(0,navigation.indexOf(currentStep)) / navigation.length) * 100);
   const pendingCount = matters.filter(needsInputReview).length;
 
   return (
@@ -325,6 +348,8 @@ export default function PostIngestionWizardModal({
             <p style={{fontSize: '.8rem', marginTop: 8}}>Cruza los permisos pendientes con la tabla de clientes. Conserva tus decisiones, textos y montos.</p>
             {recheckMessage && <p role="status">{recheckMessage}</p>}
           </section>}
+          {fullSourceReviewed && !correctionOnly && <section className="review-decision"><strong>Extracción contrastada con la fuente</strong><p>{matters.length} asuntos recuperados. {matters.filter(needsInputReview).length} tienen dudas o decisiones pendientes. Puedes consultar todos los datos cuando quieras.</p><button type="button" onClick={()=>{setReviewAll(!reviewAll);setCurrentStep(1);}}>{reviewAll?'Mostrar solo pendientes':'Revisar todos los datos'}</button></section>}
+          {currentStep===1 && <ExtractionIssues value={sourceRecord} onChange={next=>{setSourceFactReview(next);setFirmName(next.firm_name);setPracticeArea(next.practice_area);setLocation(next.location);setB10Text(next.original_b10);}} />}
           {/* STEP 1: FIRM & PRACTICE METADATA */}
           {correctionOnly && reviewScope?.message && <details style={{marginBottom:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer',fontWeight:600}}>Recordar qué hay que corregir</summary><p style={{whiteSpace:'pre-wrap'}}>{reviewScope.message}</p></details>}
           {currentStep === 1 && (
@@ -714,6 +739,7 @@ export default function PostIngestionWizardModal({
                         padding: '0.85rem',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                       }}>
+                        <ExtractionIssues value={l} onChange={next=>setLawyers(previous=>previous.map((item,i)=>i===idx?next:item))} />
                         <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0F172A' }}>{name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.15rem' }}>{role}</div>
                         <label style={{display:'block',marginTop:8,fontSize:13,color:'#334155'}}>Cargo en este submission
@@ -884,6 +910,7 @@ export default function PostIngestionWizardModal({
                       </div>
                     )}
 
+                    <ExtractionIssues value={matter} onChange={next=>setMatters(previous=>previous.map(m=>m.id===matter.id?next:m))} />
                     {needsPublicationChoice ? <fieldset className="review-decision">
                       <legend>Permiso de publicación {isUnconfirmed ? '· Requiere tu decisión' : '· Confirmado'}</legend>
                       <p>Indica cómo puede presentarse este asunto al directorio.</p>
@@ -1050,7 +1077,7 @@ export default function PostIngestionWizardModal({
           {!correctionOnly && <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
-              Paso {currentStep} de {totalSteps}
+              Paso {Math.max(1,navigation.indexOf(currentStep)+1)} de {navigation.length}
             </span>
             <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
               {progressPercent}% completado
@@ -1148,7 +1175,7 @@ export default function PostIngestionWizardModal({
                   transition: 'all 0.15s ease'
                 }}
               >
-                <span>{correctionOnly ? 'Guardar y volver al expediente' : reviewPending ? (pendingCount ? 'Continuar con los pendientes' : 'Guardar decisiones e ir al Studio') : currentStep === totalSteps ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
+                <span>{correctionOnly ? 'Guardar y volver al expediente' : reviewPending ? (pendingCount ? 'Continuar con los pendientes' : 'Guardar decisiones e ir al Studio') : !navigation.some(step=>step>currentStep) ? 'Finalizar Validación e ir al Studio' : '✓ Confirmar y Continuar'}</span>
                 <ArrowRight size={14} />
               </button>
             </div>
