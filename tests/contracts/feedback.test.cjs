@@ -12,3 +12,9 @@ test('provider details do not leak into product feedback',()=>{assert.ok(!proces
 test('irrelevant documents and partial sources have different recovery instructions',()=>{assert.ok(processingFeedback({code:'NO_LEGAL_MATTERS'},422).includes('No encontramos asuntos legales'));assert.ok(processingFeedback({code:'PARTIAL_EXTRACTION',source_errors:[{source:'damaged.docx'}]},422).includes('damaged.docx'));});
 test('preflight recovery identifies unreadable pages without leaking parser traces',()=>{const text=processingFeedback({code:'SOURCE_PREFLIGHT_FAILED',source_errors:[{source:'source.pdf',code:'SOURCE_OCR_REQUIRED',pages:[2,5],message:'Secret parser stack'}]},422);assert.ok(text.includes('source.pdf'));assert.ok(text.includes('2, 5'));assert.ok(text.includes('OCR'));assert.ok(!text.includes('Secret'));});
 test('old Word conversion and pending revisions have distinct recovery',()=>{assert.ok(processingFeedback({code:'SOURCE_DOC_CONVERSION'},422).includes('Word antiguo'));assert.ok(processingFeedback({code:'SOURCE_REVISIONS'},422).includes('Acepta o rechaza'));});
+
+test('scope errors survive the builder second feedback pass',()=>{
+ const message='source.docx: elegiste Chambers, pero la fuente indica Legal 500.';
+ assert.equal(processingFeedback({code:'SCOPE_CONFLICT',issues:[{message}]},422),message);
+ assert.match(processingFeedback({code:'SOURCE_PREFLIGHT_FAILED',source_errors:[{code:'SOURCE_DIRECTORY_MISMATCH',source:'original.docx'}]},422),/otro directorio/);
+});

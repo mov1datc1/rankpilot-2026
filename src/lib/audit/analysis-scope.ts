@@ -10,7 +10,12 @@ const aliases:Record<string,string>={
 };
 function canonical(value:unknown,field:keyof AnalysisScope) {
  let text=String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
- if(field==='jurisdiction') text=text.split('—').at(-1)!.trim();
+ if(field==='jurisdiction') {
+  text=text.split('—').at(-1)!.trim();
+  // Explicit locality, state, country is compatible with that country filter.
+  const tail=text.split(',').at(-1)!.trim();
+  if(['mexico','venezuela','chile','colombia','peru','argentina','brazil','brasil','united states','usa','united kingdom','spain','espana','canada','ecuador','uruguay','paraguay','bolivia','costa rica','panama'].includes(tail)) text=tail;
+ }
  text=text.replace(/&/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
  return aliases[text] || text;
 }

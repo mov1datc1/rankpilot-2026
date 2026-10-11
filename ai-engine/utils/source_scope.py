@@ -27,4 +27,25 @@ def source_scope(text):
                     quote += '\n' + following
             if value and len(value) <= 80 and '?' not in value and not re.match(r'^[A-E]\d+\b', value):
                 result[field] = {'value': value, 'quote': quote}
+    # Identify template ownership from its intake instructions, never from a
+    # firm's narrative saying that it was ranked in a different directory.
+    if 'directory' not in result:
+        signatures = [
+            ('Chambers & Partners', r'Please upload submissions online at:[^\n]*myaccount\.chambers\.com'),
+            ('Legal 500', r'Please contact researchreports@legal500\.com for further information\.'),
+            ('Legal 500', r'(?:THE\s+)?LEGAL\s+500[^\n]*(?:SUBMISSION|RESEARCH)\s+(?:FORM|TEMPLATE)'),
+        ]
+        matches = [(value, m.group()) for value, pattern in signatures for m in [re.search(pattern, text[:6000], re.I)] if m]
+        if len(set(value for value, _ in matches)) == 1:
+            result['directory'] = {'value': matches[0][0], 'quote': matches[0][1]}
     return result
+
+
+def validate_draft_directory(text, target):
+    from utils.document_preflight import SourceError
+    normalize = lambda value: re.sub(r'[^a-z0-9]', '', value.casefold()).replace('and', '').replace('partners', '').removeprefix('the')
+    evidence = source_scope(text).get('directory')
+    if not evidence:
+        raise SourceError('SOURCE_DIRECTORY_UNKNOWN', selected=target)
+    if normalize(evidence['value']) != normalize(target):
+        raise SourceError('SOURCE_DIRECTORY_MISMATCH', selected=target, detected=evidence['value'], quote=evidence['quote'])

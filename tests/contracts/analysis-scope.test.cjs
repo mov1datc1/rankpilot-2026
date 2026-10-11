@@ -28,3 +28,9 @@ test('explicit guide declarations must agree with the selected guide',()=>{
  const issues=scopeIssues({...selected,guide_region:'Latin America'},[report]);
  assert.equal(issues.length,1);assert.equal(issues[0].field,'guide_region');
 });
+
+test('city and state within an explicitly named country match that country',()=>{
+ const source_scope={jurisdiction:{value:'Guadalajara, Estate of Jalisco, Mexico',quote:'A3 Location (Jurisdiction)\nGuadalajara, Estate of Jalisco, Mexico'}};
+ assert.deepEqual(scopeIssues({...selected,jurisdiction:'Latin America — Mexico'},[{source_scope}]),[]);
+ assert.equal(scopeIssues({...selected,jurisdiction:'Chile'},[{source_scope}])[0].field,'jurisdiction');
+});

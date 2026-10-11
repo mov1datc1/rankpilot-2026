@@ -1,4 +1,6 @@
 const sourceMessages: Record<string, string> = {
+  "SOURCE_DIRECTORY_UNKNOWN": "No pudimos identificar el directorio de la plantilla. Sube el formulario del directorio elegido o utiliza la modalidad de fuentes libres.",
+  "SOURCE_DIRECTORY_MISMATCH": "El borrador pertenece a otro directorio. Cambia el directorio elegido o sube su formulario correspondiente.",
   "SOURCE_TOO_LARGE": "El archivo excede los límites de lectura. Divide el documento por asuntos (máximo 30 MB por archivo).",
   "SOURCE_UNSUPPORTED": "El contenido no es un DOCX, DOC, PDF o TXT compatible. Guarda una copia DOCX desde Word; renombrar la extensión no convierte el archivo.",
   "SOURCE_CORRUPT": "El archivo está dañado o tiene una estructura ilegible. Ábrelo en Word y guarda una nueva copia DOCX.",
@@ -19,12 +21,15 @@ const sourceMessages: Record<string, string> = {
 /** Product messages describe the outcome and recovery, never raw provider traces. */
 export function processingFeedback(payload: any, status = 0, operation: 'extract' | 'review' | 'optimize' = 'extract') {
   const code = String(payload?.code || (status === 409 ? 'DRAFT_CONFLICT' : status === 401 ? 'SESSION_EXPIRED' : ''));
+  if (code === 'SCOPE_CONFLICT' || code === 'SCOPE_REQUIRED') return Array.isArray(payload?.issues) && payload.issues.length ? payload.issues.map((issue: any)=>String(issue.message || '')).join(' ') : 'Revisa el directorio, la práctica y la jurisdicción seleccionados y su correspondencia con el documento.';
+  if (code === 'FILING_RECONCILIATION_UNAVAILABLE') return 'El documento se leyó, pero no terminó el contraste de datos con IA. El borrador guardado se conserva; vuelve a intentar la lectura.';
   if (code === 'AI_CREDIT_EXHAUSTED') return 'El proveedor de IA no tiene crédito disponible. El administrador debe revisar la facturación antes de continuar. Las redacciones y etapas guardadas se conservan.';
   if (code === 'AI_OUTPUT_LIMIT') return 'La respuesta de IA quedó incompleta dentro del límite de tokens. Se conserva el avance guardado. No se reintentó automáticamente; contacta con soporte para ajustar esta etapa.';
   if (code === 'AI_REVIEW_UNAVAILABLE') return 'Esta etapa de IA no terminó. Las etapas anteriores se conservan. Espera antes de reanudar para evitar duplicar una petición que aún esté en curso.';
   if (code === 'SOURCE_PREFLIGHT_FAILED' || sourceMessages[code]) {
     const failures = Array.isArray(payload?.source_errors) ? payload.source_errors : [{code}];
     const details = failures.map((failure: any) => {
+      if (failure.code === 'SOURCE_DIRECTORY_MISMATCH' && failure.detected && failure.selected) return `${failure.source || 'El borrador'}: la plantilla es de ${failure.detected}, pero elegiste ${failure.selected}. Sube la plantilla correspondiente o cambia el directorio.`;
       const pages = Array.isArray(failure.pages) ? failure.pages.filter((page: any) => Number.isInteger(page) && page > 0) : [];
       return `${failure.source ? String(failure.source) + ': ' : ''}${sourceMessages[failure.code] || sourceMessages.SOURCE_UNREADABLE}${pages.length ? ' Páginas: ' + pages.join(', ') + '.' : ''}`;
     });

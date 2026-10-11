@@ -13,6 +13,8 @@ import fitz
 MAX_BYTES = 30 * 1024 * 1024
 MAX_EXPANDED = 120 * 1024 * 1024
 MESSAGES = {
+    'SOURCE_DIRECTORY_UNKNOWN': 'No pudimos identificar el directorio de esta plantilla. Para la modalidad Borrador, sube el formulario del directorio elegido o utiliza la modalidad de fuentes libres.',
+    'SOURCE_DIRECTORY_MISMATCH': 'El borrador pertenece a otro directorio. Cambia el directorio elegido o sube su formulario correspondiente.',
     'SOURCE_TOO_LARGE': 'El archivo excede el límite de 30 MB o su contenido descomprimido es demasiado grande. Divide el documento por asuntos.',
     'SOURCE_UNSUPPORTED': 'El contenido no corresponde a un DOCX, DOC de Word, PDF o TXT compatible. Guarda una copia DOCX desde Word; cambiar la extensión no convierte el archivo.',
     'SOURCE_CORRUPT': 'El archivo está dañado o su estructura interna no puede leerse. Ábrelo en Word y guarda una copia nueva en DOCX.',

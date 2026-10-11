@@ -53,3 +53,43 @@ class FilingExtractionTests(unittest.TestCase):
         self.assertNotIn('numPartners',result['filing_details'])
         self.assertNotIn('numLawyers',result['filing_details'])
         self.assertEqual(result['filing_details']['departmentHeads'][0]['name'],'Ana Sol')
+
+    def test_classic_chambers_closed_headcount_lists_and_legacy_contact(self):
+        text='''A4 Contact person to arrange interviews about this practice area
+Name
+Email
+Telephone number
+Alex River\x07 HYPERLINK "mailto:alex@example.test" alex@example.test\x07(+52) 5551234567
+B1 Department name (used by firm)
+Tax
+B2 Number of partners in the department
+Indicate Male/Female ratio as a %
+Ana River
+Juan Sol
+50% Female
+50% Male
+B3 Number of other qualified lawyers
+Indicate Male/Female ratio as a %
+Casey Hill
+100% Female
+B5 identify as LGBT+
+'''
+        details=extract_filing_fields(text)['filing_details']
+        self.assertEqual(details['numPartners'],2)
+        self.assertEqual(details['numLawyers'],1)
+        self.assertEqual(details['contacts'],[{'name':'Alex River','email':'alex@example.test','phone':'(+52) 5551234567'}])
+
+    def test_counts_with_adjacent_demographic_column(self):
+        text='B2 Number of partners in the department | Indicate Male/Female ratio as a %\n1 | 100 % male\nB3 Number of other qualified lawyers | Indicate Male/Female ratio as a %\n9 | 55,55% Male / 44,44% Female\nB5 identify as LGBT+ | 0\n'
+        self.assertEqual(extract_filing_fields(text)['filing_details'],{'numPartners':1,'numLawyers':9})
+
+    def test_partial_roster_and_biographies_are_not_a_census(self):
+        for text in ['B2 Number of partners in the department\nIncluding Ana River\nB3 Number of other qualified lawyers\nUnknown\n', 'B9 Key partners\nAna River\nJuan Sol\n']:
+            self.assertNotIn('numPartners',extract_filing_fields(text)['filing_details'])
+
+    def test_missing_labels_are_not_names_and_contact_order_is_not_conflict(self):
+        for value in ['Not available','Not provided','Pending confirmation']:
+            self.assertNotIn('numPartners',extract_filing_fields('B2 Number of partners in the department\n'+value+'\n')['filing_details'])
+        a={'filing_evidence':{'contacts':[{'value':[{'name':'Alex River','email':'','phone':''},{'name':'Casey Hill','email':'','phone':''}],'quote':'source'}]}}
+        b={'filing_evidence':{'contacts':[{'value':[{'name':'Casey Hill','email':None,'phone':None},{'name':'Alex River','email':None,'phone':None}],'quote':'source'}]}}
+        self.assertEqual(resolve_filing_fields([a,b])['filing_field_status']['contacts'],'found')

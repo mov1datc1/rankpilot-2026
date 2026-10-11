@@ -3,15 +3,19 @@
 Missing and conflicting values are not zero. Evidence survives multi-file ingestion.
 """
 import re
+import json
 
 FIELDS = ('departmentName', 'numPartners', 'numLawyers', 'contacts', 'departmentHeads')
 
 
 def extract_filing_fields(text):
+    text = text.replace('\x07', ' | ')
     findings = {key: [] for key in FIELDS}
 
     def add(key, value, quote):
-        findings[key].append({'value': value, 'quote': quote.strip()})
+        item = {'value': value, 'quote': quote.strip()}
+        if item not in findings[key]:
+            findings[key].append(item)
 
     # Explicit Chambers fields, including inline and table-flattened answers.
     labels = {
@@ -48,7 +52,20 @@ def extract_filing_fields(text):
             # Require both columns; a blank column is unknown, not zero.
             if len({re.sub(r'female|mujeres', 'female', re.sub(r'\bmale\b|hombres', 'male', h)) for h, _ in partners}) == 2:
                 add('numPartners', sum(n for _, n in partners), section.group())
-    for key, header in [('contacts', r'A4\s+Contact(?:s)? for (?:arranging )?interviews[^\n]*'), ('departmentHeads', r'B7\s+Head or Heads of department[^\n]*')]:
+    # A closed list in the explicit headcount cell is a countable answer.
+    # Never count B9 biographies, key partners or matter teams as a census.
+    for key, code in [('numPartners', 'B2'), ('numLawyers', 'B3')]:
+        match = re.search(r'^\s*' + code + r'\s+(?:Number|No\.) of [^\n]*\n(.*?)(?=^\s*(?:B\d+\b|\*Please)|\Z)', text, re.I | re.M | re.S)
+        if not match:
+            continue
+        lines = [line.split('|')[0].strip() for line in match.group(1).splitlines()]
+        lines = [line for line in lines if line and not re.match(r'Indicate\b|\d+(?:[.,]\d+)?\s*%', line, re.I)]
+        if lines and re.fullmatch(r'\d{1,5}', lines[0]):
+            add(key, int(lines[0]), match.group())
+        elif lines and all(re.fullmatch(r"[^\W\d_]+(?:[ .’'-]+[^\W\d_]+)+\.?", line, re.UNICODE) and not re.search(r'\b(?:including|include|other|others|etc|vacant|unknown|partners|lawyers|not|available|provided|pending|none|confirmar|pendiente)\b', line, re.I) for line in lines):
+            add(key, len(set(line.rstrip('.').casefold() for line in lines)), match.group())
+
+    for key, header in [('contacts', r'A4\s+Contact(?:s)?(?: person to arrange| for (?:arranging )?)\s*interviews[^\n]*'), ('departmentHeads', r'B7\s+Head or Heads of department[^\n]*')]:
         match = re.search(r'^\s*' + header + r'\n', text, re.I | re.M)
         if not match:
             continue
@@ -62,8 +79,9 @@ def extract_filing_fields(text):
                 continue
             if not re.fullmatch(r"[\wÀ-ÿ .’'-]{3,100}", cells[0]) or any(c.isdigit() for c in cells[0]):
                 continue
-            email = next((c for c in cells[1:] if re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', c)), '')
-            phone = next((c for c in cells[1:] if re.fullmatch(r'\+?[\d ()-]{7,30}', c)), '')
+            # Legacy Word converters retain HYPERLINK field instructions.
+            email = next((m.group() for c in cells[1:] for m in re.finditer(r'(?<![\w@])[^\s@"<>:]+@[^\s@"<>]+\.[^\s@"<>]+', c)), '')
+            phone = next((c for c in cells[1:] if re.fullmatch(r'[+\d ()-]{7,30}', c)), '')
             people.append({'name':cells[0], 'email':email, 'phone':phone})
         if people:
             add(key, people, match.group() + block)
@@ -78,7 +96,11 @@ def resolve_filing_fields(results):
                 evidence[key].append({**item, **({'source': result['source']} if result.get('source') else {})})
     values, status = {}, {}
     for key, items in evidence.items():
-        unique = {str(item['value']).strip().casefold(): item['value'] for item in items}
+        def identity(value):
+            if isinstance(value, list):
+                return str(sorted(json.dumps({field: str(person.get(field) or '').strip() for field in ('name', 'email', 'phone')}, sort_keys=True, ensure_ascii=False).casefold() for person in value))
+            return str(value).strip().casefold()
+        unique = {identity(item['value']): item['value'] for item in items}
         status[key] = 'found' if len(unique) == 1 else 'conflicting' if unique else 'not_found'
         if len(unique) == 1:
             values[key] = next(iter(unique.values()))

@@ -1020,6 +1020,14 @@ async def _extract_readable_source(doc_text, context):
             if not heads:
                 heads = [h.get("name", "") for h in extracted_metadata.get("department", {}).get("department_heads", []) if h.get("name")]
 
+        if context.get('reconcile_filing'):
+            from utils.filing_reconciliation import reconcile_filing
+            try:
+                filing = await asyncio.to_thread(reconcile_filing, doc_text, filing)
+            except Exception:
+                logger.exception('Administrative source reconciliation failed')
+                return JSONResponse(status_code=502, content={'success': False, 'code': 'FILING_RECONCILIATION_UNAVAILABLE'})
+
         firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
         raw_practice = prelim.get("practice_area") or ""
         if "SOURCE DOCUMENT" in raw_practice or raw_practice.startswith("===") or "END DOCUMENT" in raw_practice:
@@ -1094,6 +1102,9 @@ async def extract_document_endpoint(request: Request):
             else:
                 text = readable_text(str(source.get('text') or ''))
                 report = {'source': name, 'detected_format': 'text', 'method': 'user_notes', 'character_count': len(text)}
+            if context.get('modality') == 'draft':
+                from utils.source_scope import validate_draft_directory
+                validate_draft_directory(text, str(context.get('directory') or ''))
             prepared.append((name, text))
             reports.append(report)
         except SourceError as error:
@@ -1115,6 +1126,7 @@ async def extract_document_endpoint(request: Request):
             missing_scope = [field for field in ('directory', 'practice_area', 'jurisdiction') if field not in report['source_scope']]
             if missing_scope:
                 report.setdefault('warnings', []).append('No se encontró una declaración explícita de ' + ', '.join(missing_scope) + '. Los filtros seleccionados fijan el objetivo; no son hechos confirmados por esta fuente.')
+            report['filing_reconciliation'] = result.pop('filing_reconciliation', {'status': 'not_requested'})
             report['matter_count'] = len(result['matters'])
             report['empty_sections'] = result.pop('empty_sections', [])
             repeated=DocumentParser._count_matter_labels_in_text(text)['label_validation'].get('duplicate_labels',[])

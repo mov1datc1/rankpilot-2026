@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         sources: sources,
         context: {
           ...context,
+          reconcile_filing: !confidentialityOnly,
           guide_region: submission.chambersData?.guideRegion || '',
           guideRegion: submission.chambersData?.guideRegion || '',
           directory: submission.targetDirectory,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
       const failure = await extractResponse.json().catch(()=>({}));
       const status = extractResponse.status >= 400 && extractResponse.status < 500 ? extractResponse.status : 502;
       const code = failure.code || (status===409?'DRAFT_CONFLICT':'EXTRACTION_UNAVAILABLE');
-      return NextResponse.json({code,error:processingFeedback({...failure,code},status,'extract'),source_errors:failure.source_errors || []},{status});
+      return NextResponse.json({code,error:processingFeedback({...failure,code},status,'extract'),source_errors:failure.source_errors || [],issues:failure.issues || []},{status});
     }
 
     const extractData = await extractResponse.json();

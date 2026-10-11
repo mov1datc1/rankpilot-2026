@@ -205,6 +205,7 @@ function BuilderContent() {
         text: freeformNotes || '',
         sources: sourcesPayload,
         context: {
+          modality,
           directory: targetDirectory,
           jurisdiction: `${guideRegion} — ${country}`,
           practiceArea,

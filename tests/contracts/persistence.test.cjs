@@ -164,3 +164,20 @@ test('saving an empty filing form does not claim a response or invalidate review
  const saved=await updateSubmissionValidatedData('s',{expectedRevision:0,auditActionId:message,filingDetails:{departmentName:'',numPartners:'',numLawyers:'',contacts:[{name:'',email:'',phone:''}],departmentHeads:[{name:'',email:'',phone:''}],target_band:''}});
  assert.equal(saved.success,true);assert.equal(saved.unchanged,true);assert.equal(JSON.stringify(state),before);
 });
+
+test('administrative findings reach the wizard saved fields with source evidence',async()=>{
+ reset();
+ extracted.filing_details={departmentName:'Tax',numPartners:4,numLawyers:5,contacts:[{name:'Alex River',email:'alex@example.test',phone:'+52 5551234567'}],departmentHeads:[{name:'Casey Hill',email:'',phone:''}]};
+ extracted.filing_evidence={numPartners:[{value:4,quote:'B2 Number of partners\n4',source:'original.docx'}]};
+ extracted.filing_field_status={numPartners:'found',numLawyers:'found',contacts:'found'};
+ const original=global.fetch;let payload;
+ global.fetch=async(url,options)=>{payload=JSON.parse(options.body);return Response.json(extracted);};
+ try {
+  assert.equal((await extract()).status,200);
+  assert.equal(payload.context.reconcile_filing,true);
+  const data=state.submission.chambersData;
+  for(const [key,value] of Object.entries(extracted.filing_details)) assert.deepEqual(data[key],value);
+  assert.deepEqual(data.filing_evidence,extracted.filing_evidence);
+  assert.equal(data.filing_reviewed,false);
+ } finally {global.fetch=original;}
+});
