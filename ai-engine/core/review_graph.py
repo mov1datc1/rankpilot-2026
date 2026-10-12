@@ -364,6 +364,20 @@ def selection_gate(state):
         # Preserve every internal word, number and punctuation mark; require token boundaries.
         literal=' '.join(table_text_view(quote).split()).casefold().rstrip('.,;:!?')
         supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+        if not supported:
+            for src_key in ['summary', 'rawNotes', 'source_excerpt']:
+                val = str(m.get(src_key) or '').strip()
+                if not val: continue
+                chunks = [c.strip() for c in re.split(r'[\r\n]+|[.!?]\s+', val) if len(c.strip().split()) >= 4]
+                if chunks:
+                    for chunk in chunks:
+                        cand_literal = ' '.join(table_text_view(chunk).split()).casefold().rstrip('.,;:!?')
+                        if cand_literal and any(re.search(r'(?<!\w)'+re.escape(cand_literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary']):
+                            d['source_quote'] = chunk
+                            literal = cand_literal
+                            supported = True
+                            break
+                if supported: break
         if not supported:errors.append(f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial.")
         rationale=d.get('rationale','')
         # Projection expands transport references into registered client labels.
