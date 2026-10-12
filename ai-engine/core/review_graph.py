@@ -540,6 +540,8 @@ def grounded_metadata_reference(quote, package):
     cleaned=re.sub(r'\bLegal\s*500\b','',quote,flags=re.I)
     numbers=re.findall(r'\d+',cleaned)
     source=' '.join(str(m.get(k) or '') for m in (package or {}).get('matters',[]) for k in ('source_excerpt','rawNotes','summary','startDate','completionDate'))
+    if package:
+        source += f" {package.get('research_period') or ''} {package.get('ranking_edition') or ''}"
     years=set(re.findall(r'\b(?:19|20)\d{2}\b',source))
     return all(re.fullmatch(r'(?:19|20)\d{2}',n) and n in years for n in numbers)
 

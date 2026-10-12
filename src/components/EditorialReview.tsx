@@ -20,16 +20,23 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const stale=reviewIsStale(data);
   return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':totalIssues ? `${totalIssues} ${totalIssues===1?'pendiente por resolver':'pendientes por resolver'}` : stopped?'Preparación pausada':'Listo para preparar Submission y Audit'}</h2>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':totalIssues ? `${totalIssues} ${totalIssues===1?'pendiente por resolver':'pendientes por resolver'}` : stopped?'Preparación pausada':'Pendientes de revisión editorial'}</h2>
     {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · La entrega se habilita después de comprobar el documento.</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
-    <div style={{display:'grid',gap:10}}>{issues.map((issue,index)=><div key={`${index}-${issue.title}`} style={{border:'1px solid #E2E8F0',borderRadius:10,padding:14}}>
+    <div style={{display:'grid',gap:10}}>{issues.map((issue,index)=><div key={`${index}-${issue.title}`} style={{border:'1px solid #E2E8F0',borderRadius:10,padding:14,background:'#FAFAFA'}}>
       <span style={{fontSize:11,fontWeight:700,color:issue.owner==='RankPilot'?'#4338CA':'#92400E'}}>{issue.owner}</span>
       <h3 style={{fontSize:15,margin:'5px 0'}}>{issue.title}</h3>
       <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{issue.action}</p>
-      {(!systemManaged || issue.owner!=='RankPilot') && <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination==='review'?'retry-review':issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 10px',fontWeight:600,cursor:'pointer'}}>{issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Preparar Submission y Audit'):issue.destination==='period'?'Completar periodo':issue.destination==='ranking'?'Verificar ranking':'Corregir este pendiente'} →</button>}
-      {issue.owner!=='RankPilot' && <details style={{fontSize:13,lineHeight:1.65,marginTop:10}}><summary style={{cursor:'pointer',color:'#475569'}}>Ver hallazgo y personas o asuntos afectados</summary><p style={{whiteSpace:'pre-wrap',marginBottom:0}}>{issue.message}</p></details>}
+      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
+        <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination==='review'?'retry-review':issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 12px',fontWeight:600,cursor:'pointer',fontSize:13}}>
+          {issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección de asuntos'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Revisar y preparar documentos'):issue.destination==='period'?'Ajustar periodo de investigación':issue.destination==='ranking'?'Verificar ranking oficial':issue.destination==='lawyers'?'Ajustar abogado en Studio':issue.destination==='wizard'?'Ajustar asunto en Studio':'Ajustar este pendiente'} →
+        </button>
+      </div>
+      <details open style={{fontSize:13,lineHeight:1.65,marginTop:10}}>
+        <summary style={{cursor:'pointer',color:'#475569',fontWeight:500}}>Detalles del pendiente y cómo ajustarlo</summary>
+        <p style={{whiteSpace:'pre-wrap',marginBottom:0,marginTop:6,color:'#334155'}}>{issue.message}</p>
+      </details>
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}
     {!stale && warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}

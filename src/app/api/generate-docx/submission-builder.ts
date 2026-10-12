@@ -968,7 +968,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // ═══ LEGAL 500 TITLE PAGE ═══
   elements.push(
     para('The Legal 500', { bold: true, size: 40, alignment: AlignmentType.CENTER, spacing: { before: 400, after: 0 } }),
-    para('LATIN AMERICA 2027 EDITION', { bold: true, size: 20, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
+    para('LATIN AMERICA EDITION', { bold: true, size: 20, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
     para('SUBMISSION FORM', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { after: 300 } }),
     para('Please complete and return to your researcher. Do not alter this template.', { italics: true, size: 18, alignment: AlignmentType.CENTER, spacing: { after: 200 } }),
   );

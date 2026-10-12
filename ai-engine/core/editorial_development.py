@@ -103,10 +103,12 @@ def literal_quote(value):
     return value
 
 def strip_template_prefix(value):
+    val = str(value or '').strip()
+    val = re.sub(r'^(?:Lead\s+partners?(?:\(s\))?|Other\s+team\s+members?(?:\(s\))?|Name\s*\|\s*Office[^\n]*)\s*\n?', '', val, flags=re.I).strip()
     return re.sub(
-        r'^(?:[DE]\d\s+[^\n:]*[:\n]\s*|(?:Lead\s+)?partner[:\s]+|(?:Other\s+)?team\s+members?[:\s]+|Leader[:\s]+)',
+        r'^(?:[DE]\d\s+[^\n:]*[:\n]\s*|(?:Lead\s+)?partners?(?:\(s\))?[:\s\n]+|(?:Other\s+)?team\s+members?(?:\(s\))?[:\s\n]+|Leader[:\s]+|Name\s*\|\s*Office[^\n]*\n?)',
         '',
-        str(value or ''),
+        val,
         flags=re.I
     ).strip()
 
@@ -126,6 +128,10 @@ def bind_quote(value, matter):
     stripped=strip_template_prefix(quote)
     if stripped and stripped!=quote:
         candidates.append(stripped)
+    for c in list(candidates):
+        for line in [l.strip() for l in c.split('\n') if l.strip()]:
+            if line not in candidates:
+                candidates.append(line)
     for c in candidates:
         variants=[c]
         if len(c)>20 and re.search(r'[^\W\d_]\.$',c):
@@ -180,7 +186,12 @@ def development_errors(package, strategy, proposal):
         for raw_quote in quotes:
             quote=literal_quote(raw_quote)
             stripped=strip_template_prefix(quote)
-            found_quote=any(_norm(c) and any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in (quote, stripped))
+            quote_candidates = [c for c in (quote, stripped) if _norm(c)]
+            for qc in list(quote_candidates):
+                for line in [l.strip() for l in qc.split('\n') if _norm(l)]:
+                    if line not in quote_candidates:
+                        quote_candidates.append(line)
+            found_quote=any(any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in quote_candidates)
             if not found_quote:
                 errors.append(f"Cita decisiva sin vínculo literal: {draft.get('matter_id')}")
     roster={_norm(l.get('name') or l.get('fullName')):l for l in package.get('lawyers',[])}
@@ -205,7 +216,12 @@ def development_errors(package, strategy, proposal):
             matter=register.get(item.get('matter_id'),{})
             quote=literal_quote(item.get('source_quote',''))
             stripped=strip_template_prefix(quote)
-            found_support=any(_norm(c) and any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in (quote, stripped))
+            support_candidates = [c for c in (quote, stripped) if _norm(c)]
+            for sc in list(support_candidates):
+                for line in [l.strip() for l in sc.split('\n') if _norm(l)]:
+                    if line not in support_candidates:
+                        support_candidates.append(line)
+            found_support=any(any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in support_candidates)
             if item.get('matter_id') not in core or not found_support:
                 errors.append(f"Atribución sin evidencia literal del asunto: {candidate.get('name')}")
             if not str(item.get('personal_role','')).strip():errors.append(f"Falta papel personal: {candidate.get('name')}")

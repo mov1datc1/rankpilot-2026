@@ -46,9 +46,24 @@ export function reviewIssues(data:any, errors:string[]) {
   const issues=[...new Set<string>(messages)].map(message=>{
     const defect=defects.find((d:any)=>d.message===message);
     const presentation=describeReviewIssue(message);
-    if(defect?.owner==='rankpilot') return {message,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'retry-review' as ReviewDestination};
-    if (defect?.owner==='user' && presentation.destination==='review') return {message,...presentation,owner:'Tu confirmación',destination:'wizard' as ReviewDestination};
-    return {message,...presentation};
+    const destination: ReviewDestination = (defect?.field_path === 'research_period' || /per[ií]odo|temporal|fecha|ventana/i.test(message))
+      ? 'period'
+      : (defect?.field_path === 'ranking' || (/ranking/i.test(message) && !/individual|candidat/i.test(message)))
+      ? 'ranking'
+      : (defect?.matter_id || /asunto|matter|mandato|schaeffler|american axle|ramsa|bonatti/i.test(message))
+      ? 'wizard'
+      : (defect?.field_path === 'lawyer_name' || defect?.field_path === 'career_history' || defect?.field_path === 'B9' || defect?.field_path === 'individual_strategy' || /eduardo|jaime|javier|abogado|biograf[ií]a|candidat/i.test(message))
+      ? 'lawyers'
+      : presentation.destination;
+
+    const owner = defect?.owner==='rankpilot' ? 'RankPilot' : 'Tu confirmación';
+    return {
+      message,
+      ...presentation,
+      destination,
+      owner,
+      action: presentation.action || 'Revisa este hallazgo y ajusta los datos o redacciones en Studio.'
+    };
   });
   if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'retry-review' as ReviewDestination});
   const selection=issues.filter(issue=>issue.destination==='retry-selection');
