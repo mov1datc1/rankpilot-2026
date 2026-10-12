@@ -1055,7 +1055,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   // Helper to fallback lawyer focus and standout work to editorial candidates
   const normLawyer = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const findCandidate = (name: string) => (chambersData?.editorial_development?.candidates || []).find((c: any) => normLawyer(c.name) === normLawyer(name));
+  const findCandidate = (name: string) => (chambersData?.editorial_development?.candidates || chambersData?.review_checkpoint?.state?.development?.candidates || []).find((c: any) => normLawyer(c.name) === normLawyer(name));
   const confClientNames = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
 
   const cleanRanking = (rank: string) => {
@@ -1066,12 +1066,6 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
 
   const sanitizeBio = (name: string, rawText: string) => {
     let t = (rawText || '').replace(/Garruño/g, 'Garduño');
-    if (name.includes('Jaime Bustamante') && !t.includes('four')) {
-      t = `Jaime brings extensive experience in complex employment disputes, workforce governance, labour compliance and collective-relations advice. In this submission, he serves as lead partner across four major mandates—including nationwide litigation portfolios, workforce transitions, collective bargaining negotiations and sensitive corporate terminations. Prior to joining DeForest, he served as Legal Director for Latin America at ManpowerGroup.`;
-    }
-    if (name.includes('Javier Atzin Vallejo') && !t.includes('four')) {
-      t = `Javier is a Partner focusing on labour law, social security and regulatory compliance. In this submission, he serves as lead partner on four landmark mandates—spanning an international engineering and construction contractor for major pipeline infrastructure, a global automotive mechatronics manufacturer, a specialized transport and logistics enterprise, and a corporate services entity—directing collective transitions, workforce demobilisation and sensitive labour litigation.`;
-    }
     return anonymizeConfidentialClients(t, confClientNames)
       .replace(/\bSCHAEFFLER\b/gi, 'a leading global automotive component manufacturer')
       .replace(/\bVolkswagen de México y VW Financial Services\b/gi, 'a major multinational automotive manufacturer and its financial services arm')
@@ -1140,8 +1134,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       return [
         name,
         cleanRanking(l.currentRank || l.currentRanking || l.current_ranking || ''),
-        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || ''),
-        sanitizeBio(name, l.standoutWork || l.standout_work || cand?.submission_bio || ''),
+        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || ''),
       ];
     });
     elements.push(dataTable('Information regarding Leading Partners', ['Name', 'Current Ranking', 'Key Focus', 'Standout Work'], partnerRows));
@@ -1156,8 +1150,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       const name = (l.name || '').replace(/Garruño/g, 'Garduño');
       return [
         name,
-        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || ''),
-        sanitizeBio(name, l.standoutWork || l.standout_work || cand?.submission_bio || '')
+        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || '')
       ];
     });
     elements.push(dataTable('Next Generation Partners', ['Name', 'Key Focus', 'Standout Work'], ngRows));
@@ -1172,8 +1166,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       const name = (l.name || '').replace(/Garruño/g, 'Garduño');
       return [
         name,
-        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || ''),
-        sanitizeBio(name, l.standoutWork || l.standout_work || cand?.submission_bio || '')
+        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || '')
       ];
     });
     elements.push(dataTable('Leading Associates', ['Name', 'Key Focus', 'Standout Work'], assocRows));
