@@ -415,7 +415,7 @@ export default function ReportsPage() {
                         ) : (
                           <button
                             title={hasPendingReview ? 'Resolver observaciones en Studio antes de descargar el documento oficial' : 'Borrador en preparación'}
-                            onClick={() => window.location.href = destination}
+                            onClick={() => window.location.href = hasPendingReview ? `${destination}#studio-delivery-review` : destination}
                             style={{
                               padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0',
                               background: '#f8fafc',

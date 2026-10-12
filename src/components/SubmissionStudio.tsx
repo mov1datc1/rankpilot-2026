@@ -129,6 +129,15 @@ export default function SubmissionStudio({
     window.addEventListener('click', handleOutsideClick);
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#studio-delivery-review') {
+      window.setTimeout(() => {
+        const el = document.getElementById('studio-delivery-review');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, []);
   
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});

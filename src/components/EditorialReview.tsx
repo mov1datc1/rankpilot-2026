@@ -4,19 +4,23 @@ import { reviewIssues, reviewIsStale, type ReviewDestination } from '@/lib/audit
 
 export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onResolve:(destination:ReviewDestination,message:string)=>void}) {
   const stopped=job?.issue && !['queued','running','completed'].includes(job.status);
-  const systemManaged=!!job && !approved;
-  const recovering=job?.recovering || (job?.issue?.owner==='rankpilot' && ['queued','running'].includes(job.status));
+  const isRunning=!!job && ['queued','running'].includes(job.status);
+  const systemManaged=isRunning;
+  const recovering=job?.recovering || (job?.issue?.owner==='rankpilot' && isRunning);
   const issues=approved ? [] : reviewIssues(data,errors);
-  if(stopped && job.issue.owner==='rankpilot') {
-    const remaining=issues.filter(issue=>!['retry-review','review','retry-selection'].includes(issue.destination));
-    issues.splice(0,issues.length,{title:'Preparación pausada',owner:'RankPilot',action:job.issue.message,destination:'retry-review',message:'La entrega aún no está aprobada. El avance y las fuentes se conservan.'},...remaining);
+  if(stopped && job.issue?.owner==='rankpilot') {
+    const hasRetry=issues.some(issue=>['retry-review','review','retry-selection'].includes(issue.destination));
+    if(!hasRetry) {
+      issues.unshift({title:'Preparación pausada',owner:'RankPilot',action:job.issue.message,destination:'retry-review',message:'La entrega aún no está aprobada. El avance y las fuentes se conservan.'});
+    }
   }
   const humanCount=issues.filter(issue=>issue.owner!=='RankPilot').length;
   const systemCount=issues.length-humanCount;
+  const totalIssues=issues.length;
   const stale=reviewIsStale(data);
   return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : stopped?'Preparación pausada':'Listo para preparar Submission y Audit'}</h2>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':totalIssues ? `${totalIssues} ${totalIssues===1?'pendiente por resolver':'pendientes por resolver'}` : stopped?'Preparación pausada':'Listo para preparar Submission y Audit'}</h2>
     {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · La entrega se habilita después de comprobar el documento.</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
