@@ -658,7 +658,7 @@ def release_gate(state, require_judge=True):
         if resolution and (resolution.get('confirmed') is not True or not str(resolution.get('reason') or '').strip() or resolution.get('role') != lawyer.get('role') or lawyer.get('isPartner') != (lawyer.get('role') == 'Partner')):
             errors.append(f"Confirma el cargo y su fuente para {lawyer.get('name') or lawyer.get('fullName') or 'el abogado'} antes de aprobar la entrega.")
     if not state['package'].get('b10_source'):errors.append('Department source narrative is missing.')
-    if not state['package'].get('directory','').lower().startswith('chambers'):errors.append('This review policy has only been configured for Chambers; directory-specific review required.')
+    if not any(state['package'].get('directory','').lower().startswith(d) for d in ('chambers', 'legal')):errors.append('This review policy has only been configured for Chambers and Legal 500; directory-specific review required.')
     if state.get('development'):
         errors.extend(development_errors(state['package'],state['strategy'],state['development']))
     verdict = {'passed':not errors,'status':'passed' if not errors else 'needs_review','errors':list(dict.fromkeys(errors))}
