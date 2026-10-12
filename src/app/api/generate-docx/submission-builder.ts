@@ -136,8 +136,6 @@ export function cleanTablePipes(str: any): string {
 export function cleanLawyerNames(nameStr: string): string {
   // Formatting only. Names, spelling and surname order are source evidence.
   return String(nameStr || '')
-    .replace(/\bDaniel Peña Rocha\b/g, 'Daniel Rocha Peña')
-    .replace(/\bCárdenas Fragoso\b/g, 'Cárdenas Fregoso')
     .replace(/\bEduardo Garruño\b/g, 'Eduardo Garduño')
     .replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
 }
@@ -221,7 +219,8 @@ REQUIRED FACTUAL CONFIRMATIONS TO UNLOCK REWRITE:
 
   const sourceMatter = heroContext.sourceMatters?.find(m => m.id === matter.id) || matter;
   const rawStatus = (exportMode !== 'original' && sourceMatter.draft_provenance?.origin === 'generated' && sourceMatter.draft_provenance.source_hash === draftSourceHash(sourceMatter) && sourceMatter.editorial_completion_status) || matter.completionDate || matter.completion_date || matter.date || '';
-  const statusText = cleanTablePipes(sanitizeMatterSummary(rawStatus));
+  const cleanedStatus = String(rawStatus || '').replace(/Start\s*date\s*\|\s*End\s*date\s*\|?/gi, '').replace(/^\|\s*/, '').trim();
+  const statusText = cleanTablePipes(sanitizeMatterSummary(cleanedStatus));
 
   let crossBorderVal = cleanTablePipes(matter.crossBorder || matter.cross_border || '');
   const crossBorderLower = crossBorderVal.toLowerCase();
@@ -1134,7 +1133,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       return [
         name,
         cleanRanking(l.currentRank || l.currentRanking || l.current_ranking || ''),
-        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.key_focus || cand?.submission_bio || ''),
         sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || ''),
       ];
     });
@@ -1150,7 +1149,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       const name = (l.name || '').replace(/Garruño/g, 'Garduño');
       return [
         name,
-        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.key_focus || cand?.submission_bio || ''),
         sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || '')
       ];
     });
@@ -1166,7 +1165,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
       const name = (l.name || '').replace(/Garruño/g, 'Garduño');
       return [
         name,
-        sanitizeBio(name, cand?.category_rationale || cand?.why_candidate || l.keyFocus || l.key_focus || ''),
+        sanitizeBio(name, l.keyFocus || l.key_focus || cand?.key_focus || cand?.submission_bio || ''),
         sanitizeBio(name, cand?.submission_bio || l.standoutWork || l.standout_work || '')
       ];
     });
