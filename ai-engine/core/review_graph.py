@@ -704,7 +704,7 @@ def release_gate(state, require_judge=True):
     return {'release_verdict':verdict}
 
 def select_or_reuse(state):
-    proposal=state.get('selection_feedback',{}).get('strategy')
+    proposal = state.get('selection_feedback',{}).get('strategy') or state.get('strategy')
     if proposal and not state.get('selection_feedback',{}).get('semantic_rejection'):
         try:
             strategy=Strategy.model_validate(proposal).model_dump()
