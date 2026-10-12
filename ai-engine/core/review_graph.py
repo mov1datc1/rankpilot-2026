@@ -364,6 +364,12 @@ def selection_gate(state):
         # Preserve every internal word, number and punctuation mark; require token boundaries.
         literal=' '.join(table_text_view(quote).split()).casefold().rstrip('.,;:!?')
         supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+        if not supported and quote:
+            bound = bind_quote(quote, m)
+            if bound:
+                d['source_quote'] = bound
+                literal = ' '.join(table_text_view(bound).split()).casefold().rstrip('.,;:!?')
+                supported = bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
         if not supported and not quote:
             for src_key in ['summary', 'rawNotes', 'source_excerpt']:
                 val = str(m.get(src_key) or '').strip()
