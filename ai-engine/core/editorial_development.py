@@ -78,10 +78,19 @@ AUDIT_VOICE = re.compile(
     re.I,
 )
 
+def sanitize_completion_status(status):
+    text = str(status or '').strip()
+    return re.sub(
+        r'^(?:the (?:formal )?status field (?:states|records|indicates)|the source (?:states|describes))\s*[:,-]?\s*',
+        '',
+        text,
+        flags=re.I
+    ).strip()
+
 def submission_voice_paths(proposal):
     fields = {'b10': proposal.get('b10', ''), 'c2': proposal.get('c2', '')}
     fields.update({f'matters/{i}/text': item.get('text', '') for i, item in enumerate(proposal.get('matters', []))})
-    fields.update({f'matters/{i}/completion_status': item.get('completion_status', '') for i, item in enumerate(proposal.get('matters', []))})
+    fields.update({f'matters/{i}/completion_status': sanitize_completion_status(item.get('completion_status', '')) for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'candidates/{i}/submission_bio': item.get('submission_bio', '') for i, item in enumerate(proposal.get('candidates', []))})
     return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or ''))]
 
@@ -92,6 +101,14 @@ def literal_quote(value):
     if len(value)>1 and (value[0],value[-1]) in [('“','”'),('\"','\"'),('‘','’')]:
         return value[1:-1].strip()
     return value
+
+def strip_template_prefix(value):
+    return re.sub(
+        r'^(?:[DE]\d\s+[^\n:]*[:\n]\s*|(?:Lead\s+)?partner[:\s]+|(?:Other\s+)?team\s+members?[:\s]+|Leader[:\s]+)',
+        '',
+        str(value or ''),
+        flags=re.I
+    ).strip()
 
 def _norm(value):
     return ' '.join(str(value or '').split()).casefold()
@@ -105,17 +122,22 @@ def bind_quote(value, matter):
     The returned quote is copied from the source, not the model's punctuation.
     """
     quote=literal_quote(value)
-    variants=[quote]
-    if len(quote)>20 and re.search(r'[^\W\d_]\.$',quote):
-        variants.append(quote[:-1])
-    for index,variant in enumerate(variants):
-        if not variant:continue
-        pattern=r'(?<!\w)'+r'\s+'.join(re.escape(part) for part in table_text_view(variant).split())
-        pattern+=r'(?=\s*[,;])' if index else r'(?!\w)'
-        for field in SOURCE_FIELDS:
-            source=str(matter.get(field) or '')
-            match=re.search(pattern,table_text_view(source),re.I)
-            if match:return source[match.start():match.end()]
+    candidates=[quote]
+    stripped=strip_template_prefix(quote)
+    if stripped and stripped!=quote:
+        candidates.append(stripped)
+    for c in candidates:
+        variants=[c]
+        if len(c)>20 and re.search(r'[^\W\d_]\.$',c):
+            variants.append(c[:-1])
+        for index,variant in enumerate(variants):
+            if not variant:continue
+            pattern=r'(?<!\w)'+r'\s+'.join(re.escape(part) for part in table_text_view(variant).split())
+            pattern+=r'(?=\s*[,;])' if index else r'(?!\w)'
+            for field in SOURCE_FIELDS:
+                source=str(matter.get(field) or '')
+                match=re.search(pattern,table_text_view(source),re.I)
+                if match:return source[match.start():match.end()]
     return None
 
 def bind_development(package, proposal):
@@ -126,6 +148,8 @@ def bind_development(package, proposal):
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
+        if 'completion_status' in draft:
+            draft['completion_status']=sanitize_completion_status(draft['completion_status'])
     for candidate in proposal.get('candidates',[]):
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
@@ -147,13 +171,17 @@ def development_errors(package, strategy, proposal):
         quotes=draft.get('decisive_source_quotes',[])
         if proposal.get('version') == DEVELOPMENT_VERSION or 'legal_issue_source_quote' in draft:
             issue=literal_quote(draft.get('legal_issue_source_quote',''))
-            if not _norm(issue) or not any(_norm(issue) in _norm(matter.get(f)) for f in fields):
+            issue_stripped=strip_template_prefix(issue)
+            found_issue=any(_norm(c) and any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in (issue, issue_stripped))
+            if not found_issue:
                 errors.append(f"Falta evidencia literal del problema jurídico: {draft.get('matter_id')}")
         if not str(draft.get('text','')).strip() or not quotes:
             errors.append(f"Falta redacción o evidencia decisiva: {draft.get('matter_id')}")
         for raw_quote in quotes:
             quote=literal_quote(raw_quote)
-            if not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in fields):
+            stripped=strip_template_prefix(quote)
+            found_quote=any(_norm(c) and any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in (quote, stripped))
+            if not found_quote:
                 errors.append(f"Cita decisiva sin vínculo literal: {draft.get('matter_id')}")
     roster={_norm(l.get('name') or l.get('fullName')):l for l in package.get('lawyers',[])}
     names=[_norm(c.get('name')) for c in proposal.get('candidates',[])]
@@ -176,7 +204,9 @@ def development_errors(package, strategy, proposal):
         for item in support:
             matter=register.get(item.get('matter_id'),{})
             quote=literal_quote(item.get('source_quote',''))
-            if item.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in fields):
+            stripped=strip_template_prefix(quote)
+            found_support=any(_norm(c) and any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in (quote, stripped))
+            if item.get('matter_id') not in core or not found_support:
                 errors.append(f"Atribución sin evidencia literal del asunto: {candidate.get('name')}")
             if not str(item.get('personal_role','')).strip():errors.append(f"Falta papel personal: {candidate.get('name')}")
     for field in ('filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
