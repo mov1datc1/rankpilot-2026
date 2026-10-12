@@ -364,7 +364,7 @@ def selection_gate(state):
         # Preserve every internal word, number and punctuation mark; require token boundaries.
         literal=' '.join(table_text_view(quote).split()).casefold().rstrip('.,;:!?')
         supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
-        if not supported:
+        if not supported and not quote:
             for src_key in ['summary', 'rawNotes', 'source_excerpt']:
                 val = str(m.get(src_key) or '').strip()
                 if not val: continue
@@ -524,7 +524,8 @@ def grounded_metadata_reference(quote, package):
     """An optional-period question may cite source years, never invent a date."""
     if re.search(r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b',quote,re.I):
         return False
-    numbers=re.findall(r'\d+',quote)
+    cleaned=re.sub(r'\bLegal\s*500\b','',quote,flags=re.I)
+    numbers=re.findall(r'\d+',cleaned)
     source=' '.join(str(m.get(k) or '') for m in (package or {}).get('matters',[]) for k in ('source_excerpt','rawNotes','summary','startDate','completionDate'))
     years=set(re.findall(r'\b(?:19|20)\d{2}\b',source))
     return all(re.fullmatch(r'(?:19|20)\d{2}',n) and n in years for n in numbers)

@@ -151,15 +151,6 @@ class RepairPlan(BaseModel):
 
 def unique_defects(defects):
     """One concrete correction per identical claim; retain the strongest severity."""
-    defects = [
-        d for d in defects
-        if not (
-            d.get('code') == 'EDITORIAL_OMISSION'
-            and str(d.get('message') or '').startswith('La aceptación editorial no está completa:')
-            and not d.get('source_quote')
-            and not d.get('artifact_quote')
-        )
-    ]
     result=[];positions={}
     for defect in defects:
         quote=' '.join(str(defect.get('artifact_quote') or '').split())

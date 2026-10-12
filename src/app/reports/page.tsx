@@ -312,8 +312,9 @@ export default function ReportsPage() {
                 } else if (needsEvidence) {
                   statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle; displayStatus = 'Needs Evidence';
                 } else if (hasPendingReview && sub.status !== 'Optimized') {
+                  const isStale = cd?.final_review_stale === true;
                   statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
-                  displayStatus = criticalDefects.length > 0 ? `Pendientes (${criticalDefects.length})` : 'Requiere revisión';
+                  displayStatus = isStale ? 'Revisión pendiente' : criticalDefects.length > 0 ? `Pendientes (${criticalDefects.length})` : 'Requiere revisión';
                 } else if (sub.status === 'Submitted' && !needsEvidence) {
                   statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
                 } else if (sub.status === 'Processing') {
@@ -425,7 +426,7 @@ export default function ReportsPage() {
                             }}
                           >
                             <FileText size={14} />
-                            {hasPendingReview ? 'Resolver' : 'Borrador'}
+                            {hasPendingReview ? (cd?.final_review_stale ? 'Revisar' : 'Resolver') : 'Borrador'}
                           </button>
                         )}
 
