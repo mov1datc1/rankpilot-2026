@@ -1,3 +1,22 @@
+## 2026-10-11 — Eliminación del bloqueo de selección, soporte integral de Legal 500 y validación de producción
+
+- **Extracción multiformato y Legal 500 (`doc_parser.py`, `filing_extraction.py`)**:
+  - Ingestión de áreas con prefijos desplegables (`►Labour & Employment`) y normalización de cadenas pegadas o guiones finales (`Tax -` → `Tax`, `CountryMéxico` → `México`).
+  - Detección flexible de encabezados Legal 500 (`Head(s) of Team`, `Contact details to arrange interviews`, tablas pipe-delimited de socios) extrayendo contactos con correo electrónico y biografías profesionales (e.g., Volkswagen, ManpowerGroup).
+- **Desbloqueo de compuerta de selección (`review_graph.py:selection_gate`)**:
+  - Eliminación de falsos positivos en `UNSUPPORTED_NUMBER` al evaluar cifras de prelación interna (prioridades 1-3, años y cardinales escritos). Se acota la comprobación estricta a cifras monetarias no respaldadas >= 100.
+- **Continuidad de selección acotada (`review_graph.py:select_or_reuse`, `after_selection_review`)**:
+  - Si los intentos de reparación acotada sobre un asunto en debate se agotan pero la cartera cumple las reglas estructurales (hero en core, 1 <= core <= 20, citas delimitadas), el grafo preserva las notas calificadas en `selection_qualified_notes` y avanza a redacción (`development`), evitando abortos automáticos a `release` con 0 asuntos redactados.
+- **Validación multi-directorio en entrega (`review_graph.py:release_gate`)**:
+  - Se autoriza oficialmente tanto `chambers` como `legal 500` en la compuerta de entrega, permitiendo el cierre exitoso de expedientes de Legal 500.
+- **Validación de producción en Render y artefactos generados**:
+  - Desplegado en Render con commits `1238877` y `fdea429` (servicios `srv-d97b0bcs728c73d8mckg` y `srv-db2locaj9qps73d0rua0` en estado LIVE).
+  - Casos desbloqueados y procesados de punta a punta:
+    - **DeForest Abogados** (`Labour & Employment Mexico`, Legal 500): Selección, redacción y auditoría completas con Schaeffler como hero #1 y contacto marketing verificado. Generados `DeForest_Submission.docx` y `DeForest_Strategic_Audit.docx`.
+    - **Ramos Castillo Abogados** (`Real Estate Mexico`, Chambers): Selección, redacción de 13 asuntos core y auditoría completas con El Cielo Country Club como hero #1 y candidatura B9 de José Pablo Ramos Castillo. Generados `RamosCastillo_Submission.docx` y `RamosCastillo_Strategic_Audit.docx`.
+    - **ARAQUEREYNA** (`Tax Venezuela`, Chambers): 20 asuntos core redactados y aprobados; generados `AraqueReyna_Submission.docx` y `AraqueReyna_Strategic_Audit.docx`.
+    - **Caso Sintético Benchmark**: Ejecución autónoma integral de prueba de estrés sin intervención humana (`Synthetic_Tax_Submission.docx`, `Synthetic_Tax_Strategic_Audit.docx`).
+
 ## 2026-10-09 — Estados opcionales sin falsos conflictos
 
 - La comprobación reconoce celdas vacías delimitadas por los encabezados consecutivos del formulario. No confunde esos rótulos con una fecha o un estado afirmado.

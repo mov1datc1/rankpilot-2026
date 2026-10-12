@@ -3,7 +3,22 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-10-04** (publication fd58224 / f2b7432; health version string remains historical)
+> Last updated: **2026-10-11** (selection freeze elimination, Legal 500 support & production verification)
+
+## 2026-10-11 — Selection freeze resolution, Legal 500 directory policy & extraction hardening
+
+- **Extraction & Parser (`doc_parser.py`, `filing_extraction.py`)**:
+  - Added robust detection for Legal 500 header variants (`Head(s) of Team`, `Contact details to arrange interviews`, `Partner: leading partner...`).
+  - Normalization of trailing hyphens and concatenated jurisdiction strings (`Tax -` -> `Tax`, `CountryMéxico` -> `México`).
+  - Multi-line / pipe-delimited table ingestion with contact emails and partner biography preservation.
+- **Selection Gate Semantic Calibration (`review_graph.py:selection_gate`)**:
+  - Restricts `UNSUPPORTED_NUMBER` to ungrounded currency amounts >= 100 and enables written cardinal reconciliation; prevents false rejections on small ranking priority digits (1, 2, 3) and years.
+- **Non-aborting bounded selection repairs (`review_graph.py:select_or_reuse`, `after_selection_review`)**:
+  - When selection review attempts on disputed matters expire, structurally sound portfolios (1 <= core <= 20 with hero in core) record notes in `selection_qualified_notes` and proceed to `development` instead of aborting to `release` with 0 drafted matters.
+- **Directory Scope Alignment (`review_graph.py:release_gate`)**:
+  - Enabled Legal 500 alongside Chambers in the delivery gate policy.
+- **Production Verification**:
+  - Full end-to-end live pipeline passes on DeForest (Legal 500 Labour), Ramos Castillo (Chambers Real Estate), AraqueReyna (Chambers Tax), and autonomous synthetic benchmark case.
 
 ## 2026-10-06 — Temporal evidence calibration (review-core-v1.4)
 
