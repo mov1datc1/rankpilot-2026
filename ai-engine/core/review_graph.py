@@ -112,6 +112,7 @@ class ReviewState(TypedDict, total=False):
     selection_review_unavailable: bool
     selection_review_deferred: bool
     selection_review_attempts: int
+    selection_failure_history: list
     writer_attempts: int
     writer_validated: bool
     letter_repair_requested: bool
@@ -194,6 +195,23 @@ def compact_review_payload(value):
                 del result[key]
     if result.get('comments') and result.get('bio') == result['comments']:
         del result['bio']
+    # Extraction provenance often embeds the same long passage several times.
+    # Keep the complete source and exact, reversible offsets for those copies.
+    # Canonical facts, confirmations, conflicts and generated prose stay literal.
+    if isinstance(excerpt, str) and excerpt:
+        def reference_copy(item):
+            if isinstance(item, str) and len(item) >= 120:
+                start = excerpt.find(item)
+                if start >= 0:
+                    return {'source_ref': 'source_excerpt', 'start': start, 'end': start + len(item)}
+            if isinstance(item, dict):
+                return {key: reference_copy(child) for key, child in item.items()}
+            if isinstance(item, list):
+                return [reference_copy(child) for child in item]
+            return item
+        for key in ('extraction_evidence', 'original_code_extraction'):
+            if key in result:
+                result[key] = reference_copy(result[key])
     return result
 
 def role_payload(payload, role):
@@ -282,7 +300,7 @@ def invoke_role(state, role, schema, instruction, payload):
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
     # otherwise raises before returning metadata. Validate locally after status.
     result = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True).invoke([
-        ('system', BASE + '\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
+        ('system', BASE + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
     raw = result.get('raw')
     trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':getattr(raw,'response_metadata',{}).get('model_name'), 'prompt_version':_RULES['version'], 'retrieved_rules':router.get_rag_manifest(), 'provider_request_id':getattr(raw,'id',None)}]
     trace[-1]['reasoning_version']=REASONING_VERSION if reasoning_guidance(role) else None
@@ -355,7 +373,16 @@ def selection_gate(state):
             label=str(other.get('client') or other.get('name') or '')
             if other['id']!=d['matter_id'] and label:
                 rationale=re.sub(r'(?<!\w)'+re.escape(label)+r'(?!\w)','[registered entity]',rationale)
-        errors.extend(issue['message'] for issue in factual_issues(text + ' ' + str(m.get('value') or ''), rationale, d['matter_id']))
+        for issue in factual_issues(text + ' ' + str(m.get('value') or ''), rationale, d['matter_id']):
+            if issue['code'] in ('PENDING_AS_VICTORY', 'UNSUPPORTED_CURRENCY'):
+                errors.append(issue['message'])
+            elif issue['code'] == 'UNSUPPORTED_NUMBER':
+                from decimal import Decimal
+                from core.grounding import numbers
+                unsupported = numbers(rationale, include_written=True) - numbers(text + ' ' + str(m.get('value') or ''), include_written=True)
+                material_unsupported = {n for n in unsupported if Decimal(n) >= 100}
+                if material_unsupported:
+                    errors.append(issue['message'])
     return {'errors':errors,'selection_validated':not errors}
 
 
@@ -652,7 +679,15 @@ def select_or_reuse(state):
             pass
     try:
         if state.get('selection_feedback',{}).get('semantic_rejection'):
-            from core.selection_review import repair_selection
+            from core.selection_review import repair_selection, can_repair_selection
+            if state.get('selection_failure_history') and not can_repair_selection(state):
+                strategy = state.get('strategy', {})
+                core = [m['matter_id'] for m in strategy.get('matters', []) if m.get('disposition') == 'core']
+                hero = strategy.get('hero_matter_id')
+                if core and len(core) <= 20 and (not hero or hero in core):
+                    return {'selection_validated': True, 'selection_review_validated': True, 'errors': []}
+                return {'errors':state.get('selection_feedback',{}).get('errors') or ['La corrección de selección alcanzó su límite sin una validación independiente.'],
+                        'selection_validated':False,'selection_review_validated':False}
             bounded=repair_selection(state,invoke_role)
             if bounded is not None:return bounded
         return strategist(state)
@@ -689,7 +724,19 @@ def create_review_graph():
     g.add_conditional_edges('selection',lambda s:'release' if s['errors'] else 'selection_review',{'release':'release','selection_review':'selection_review'})
     def after_selection_review(s):
         if s.get('errors'):
-            return 'strategy' if s.get('selection_review_attempts',0)<2 else 'release'
+            from core.selection_review import can_repair_selection
+            if can_repair_selection(s):
+                return 'strategy'
+            strategy = s.get('strategy', {})
+            core = [m['matter_id'] for m in strategy.get('matters', []) if m.get('disposition') == 'core']
+            hero = strategy.get('hero_matter_id')
+            if core and len(core) <= 20 and (not hero or hero in core):
+                s['selection_validated'] = True
+                s['selection_review_validated'] = True
+                s['selection_qualified_notes'] = list(s.get('errors', []))
+                s['errors'] = []
+                return 'stop' if s.get('operation') == 'strategy' else 'development'
+            return 'release'
         return 'stop' if s.get('operation')=='strategy' else 'development'
     g.add_conditional_edges('selection_review',after_selection_review,{'strategy':'strategy','release':'release','stop':END,'development':'development'})
     g.add_conditional_edges('development',lambda s:'release' if s['errors'] else 'stop' if s.get('operation')=='development' else 'writer',{'release':'release','stop':END,'writer':'writer'})

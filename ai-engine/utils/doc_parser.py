@@ -647,8 +647,18 @@ class DocumentParser:
         
         # Priority 1: Check explicit A2 Practice Area header directly from Chambers form
         practice = answer_after(r"^\s*(?:A2\s+)?Practice\s+Area(?!\s+Description)(?P<inline>[^\n]*)$")
+        if practice and (practice.lower().startswith(("either", "select", "choose", "please", "or if")) or len(practice) > 80):
+            practice = ""
 
-        # Priority 2: Fallback to scanning header lines if A2 header wasn't found
+        # Priority 2: Check drop-down or selection markers (e.g. Legal 500 ►Labour & Employment)
+        if not practice:
+            for m in re.finditer(r"►\s*([A-Za-zÀ-ÿ &/-]+)", source):
+                val = m.group(1).strip()
+                if not re.search(r"(?i)\b(?:select|choose|enter|drop-down|list)\b", val):
+                    practice = val
+                    break
+
+        # Priority 3: Fallback to scanning header lines if A2 header wasn't found
         if not practice:
             for line in source.splitlines()[:25]:
                 l = line.strip()
@@ -659,18 +669,25 @@ class DocumentParser:
                 l_lower = l.lower()
                 if any(k in l_lower for k in ["labour", "labor", "tax", "real estate", "banking", "corporate", "litigation", "m&a", "mergers", "energy", "intellectual property", "dispute resolution", "competition", "environment"]):
                     if not l_lower.startswith("practice area description"):
-                        clean_l = re.sub(r'(?i)^\s*(?:submission\s+[-–—:]*|practice\s+area\s*[-–—:]*|area\s*[-–—:]*)\s*', '', l).strip()
-                        if clean_l and len(clean_l) <= 80:
+                        clean_l = re.sub(r'(?i)^\s*(?:submission\s+[-–—:]*|practice\s+area\s*[-–—:]*|area\s*[-–—:]*)\s*', '', l)
+                        clean_l = re.sub(r'(?i)^.*?(?:type in this box:\s*|►\s*)', '', clean_l).strip(" -–—:\t\r\n")
+                        if clean_l and len(clean_l) <= 80 and not re.search(r"(?i)\bselect\b", clean_l):
                             practice = clean_l
                             break
 
         # Safety: Sanitize practice area if any delimiter artifact leaked or too long
+        if practice:
+            practice = re.sub(r'[\s\-–—:]+$', '', practice).strip()
         if not practice or len(practice) > 80 or "SOURCE DOCUMENT" in practice or practice.startswith("===") or "END DOCUMENT" in practice or "?" in practice:
             practice = ""
 
         jurisdiction = answer_after(
-            r"^\s*(?:A3\s+)?Location(?:\s*\(Jurisdiction\))?(?P<inline>[^\n]*)$"
+            r"^\s*(?:A3\s+)?(?:Location(?:\s*\(Jurisdiction\))?|Country)\s*[:]?\s*(?P<inline>[^\n]*)$"
         )
+        if not jurisdiction:
+            country_m = re.search(r"(?im)^\s*(?:A3\s+)?(?:Location(?:\s*\(Jurisdiction\))?|Country)\s*[:\s]*([A-Za-zÀ-ÿ]+(?:[ \t]+[A-Za-zÀ-ÿ]+)*)\s*$", source)
+            if country_m:
+                jurisdiction = country_m.group(1).strip()
         if len(jurisdiction) > 80 or "?" in jurisdiction:
             jurisdiction = ""
 
@@ -682,34 +699,34 @@ class DocumentParser:
 
     @staticmethod
     def extract_department_heads(text: str) -> list:
-        """Recover every B7 department head without promoting emails/phones."""
+        """Recover every department head without promoting emails/phones."""
 
         header = re.search(
-            r"(?im)^\s*B7\s+Head\s+or\s+Heads\s+of\s+department\s*$",
+            r"(?im)^\s*(?:B7\b[^\n]*|Head\(s\)\s+of\s+(?:Team|Department)|(?:Head|Heads|Name of the Head\(s\))\s+(?:or Heads\s+)?of\s+(?:the\s+)?(?:department|team))[^\n]*",
             text or "",
         )
         if not header:
             return []
         tail = (text or "")[header.end():]
-        boundary = re.search(r"(?im)^\s*B8\b", tail)
+        boundary = re.search(r"(?im)^\s*(?:B8\b|Number\s+of\s+PARTNERS|Your\s+team|[A-E]\d\b)", tail)
         block = tail[:boundary.start()] if boundary else tail[:1200]
         heads = []
         for line in block.splitlines():
             value = re.split(r"\x07|\bHYPERLINK\b|\bmailto:", line, maxsplit=1, flags=re.I)[0].strip()
             if not value:
                 continue
-            # Native DOCX tables are normalized as pipe-delimited rows.  Do not
+            # Native DOCX tables are normalized as pipe-delimited rows. Do not
             # promote the column-heading row to a person, and take only the name
             # cell from an actual B7 data row.
             cells = [cell.strip() for cell in value.split("|")]
             normalized_cells = [cell.casefold() for cell in cells if cell]
             if normalized_cells and all(
-                cell in {"name", "email", "telephone number"}
+                cell in {"name", "email", "telephone number", "job title", "location", "phone"}
                 for cell in normalized_cells
             ):
                 continue
             value = cells[0] if cells else value
-            if value.casefold() in {"name", "email", "telephone number"}:
+            if value.casefold() in {"name", "email", "telephone number", "job title", "location", "phone"}:
                 continue
             if (
                 "@" in value
@@ -806,7 +823,7 @@ class DocumentParser:
 
         phone_regex = re.compile(r'^\+?[\d\s\-\.\(\)]{7,}$')
 
-        def add_lawyer(name: str, is_partner, is_ranked, current_rank, url, comments, excerpt=''):
+        def add_lawyer(name: str, is_partner, is_ranked, current_rank, url, comments, excerpt='', email=''):
             clean_n = name.strip().rstrip('.')
             if not clean_n or len(clean_n.split()) < 2:
                 return
@@ -816,6 +833,12 @@ class DocumentParser:
             clean_comm = (comments or '').strip()
             if phone_regex.match(clean_comm) or clean_comm.upper() in ('Y', 'N', 'YES', 'NO', 'SI', 'SÍ'):
                 clean_comm = ''
+
+            clean_email = email.strip() if email else ''
+            clean_url = url.strip() if url else ''
+            if not clean_email and '@' in clean_url and not clean_url.startswith(('http://', 'https://')):
+                clean_email = clean_url
+                clean_url = ''
 
             # Check if this person is already in the roster under a similar or partial name
             for existing in roster:
@@ -831,8 +854,10 @@ class DocumentParser:
                         existing['isRanked'] = True
                         existing['current_ranking'] = current_rank or existing.get('current_ranking') or 'Ranked'
                         existing['currentRank'] = existing['current_ranking']
-                    if url and ('chambers.com/lawyer/' in url or not existing.get('url')):
-                        existing['url'] = url
+                    if clean_url and ('chambers.com/lawyer/' in clean_url or not existing.get('url')):
+                        existing['url'] = clean_url
+                    if clean_email and not existing.get('email'):
+                        existing['email'] = clean_email
                     if clean_comm and not existing.get('comments'):
                         existing['comments'] = clean_comm
                         existing['bio'] = clean_comm
@@ -848,7 +873,8 @@ class DocumentParser:
                 'currentRank': current_rank,
                 'suggested_rank': None,
                 'suggestedRank': None,
-                'url': url or '',
+                'email': clean_email,
+                'url': clean_url,
                 'comments': clean_comm,
                 'bio': clean_comm,
                 'source_excerpt': excerpt or clean_n
@@ -887,7 +913,7 @@ class DocumentParser:
                             if phone_regex.match(p_status):
                                 p_status = ''
                             is_p = True if re.fullmatch(r'\d{4}|Y|YES|SI|SÍ',p_status.strip(),re.I) else False if re.fullmatch(r'N|NO',p_status.strip(),re.I) else None
-                            add_lawyer(cand_name, is_p, None, None, email if '@' in email else '', comm, row_l)
+                            add_lawyer(cand_name, is_p, None, None, '', comm, row_l, email=email if '@' in email else '')
                     elif roster and row_l:
                         roster[-1]['comments'] += '\n'+row_l
                         roster[-1]['bio'] = roster[-1]['comments']
@@ -961,6 +987,31 @@ class DocumentParser:
                 p_clean = re.sub(r'[^a-zA-ZÁÉÍÓÚÜÑáéíóúüñ\s\.\'-]', '', p_clean).strip()
                 if len(p_clean.split()) >= 2 and len(p_clean) < 40 and not any(k in p_clean.lower() for k in ['team', 'deforest', 'firm', 'specialist', 'practice']):
                     add_lawyer(p_clean, None, None, None, '', '', team_m.group(0))
+
+        # Strategy 5: Legal 500 partner sections (e.g. Partner: leading partner 1, next generation partner, etc.)
+        l500_partner_pat = re.compile(r'(?im)^\s*(?:Partner:\s*)?(?:leading\s+partner|next\s+generation\s+partner|leading\s+associate)\s*\d*\b')
+        l500_matches = list(l500_partner_pat.finditer(source))
+        for idx, lm in enumerate(l500_matches):
+            start = lm.end()
+            end = l500_matches[idx + 1].start() if idx + 1 < len(l500_matches) else start + 3000
+            block = source[start:end]
+            cand_name, loc, ranked = None, "", ""
+            for bline in block.splitlines():
+                bline = bline.strip()
+                if "|" in bline:
+                    cols = [c.strip() for c in bline.split("|")]
+                    if cols[0].lower() in ("name", "nombre", ""):
+                        continue
+                    if len(cols[0].split()) >= 2 and not any(k in cols[0].lower() for k in ["partner", "ranked", "leading"]):
+                        cand_name = cols[0]
+                        loc = cols[1] if len(cols) > 1 else ""
+                        ranked = cols[2] if len(cols) > 2 else ""
+                        break
+            sup_m = re.search(r"(?is)Supporting\s+information\s*\n(.*?)(?=^\s*(?:Partner:|Your\s+team|Next\s+generation|Leading\s+associate|Practice\s+area|Choose|$)|\Z)", block)
+            bio = sup_m.group(1).strip() if sup_m else ""
+            if cand_name:
+                is_r = True if re.search(r'(?i)\b(?:yes|y|si|sí)\b', ranked) else False if re.search(r'(?i)\b(?:no|n)\b', ranked) else None
+                add_lawyer(cand_name, True, is_r, 'Ranked' if is_r else None, '', bio, block)
 
         return roster
 

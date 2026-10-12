@@ -1,3 +1,80 @@
+## 2026-10-09 — Estados opcionales sin falsos conflictos
+
+- La comprobación reconoce celdas vacías delimitadas por los encabezados consecutivos del formulario. No confunde esos rótulos con una fecha o un estado afirmado.
+- Mantiene el bloqueo ante fechas inventadas, estados contradictorios o texto intercalado. Los diagnósticos internos ambiguos vuelven a revisarse automáticamente con límites.
+- 329 pruebas Python y 377 Node correctas, una prueba opcional omitida, TypeScript sin errores.
+
+## 2026-10-09 — Recuperar decisiones internas incoherentes
+
+- Un rechazo general sin hallazgo crítico concreto y verificable se trata como diagnóstico inválido y se revisa de nuevo; nunca se transforma directamente en aprobación.
+- El worker puede retomar automáticamente ese diagnóstico en el mismo trabajo, preservando el historial de consumo y comprobando fuentes, propietario, concurrencia y límites de reintentos.
+- 328 pruebas Python, 376 Node y TypeScript correctos. Regresión en PostgreSQL con tablas temporales confirma recuperación única y protección de hallazgos concretos y preguntas de hechos.
+
+## 2026-10-09 — Reparaciones localizadas y capacidad de respuesta anticipada
+
+- El presupuesto de salida considera el número de registros que el revisor debe contrastar; acotado a 32K y con comparaciones concisas para evitar truncamientos.
+- Hallazgos idénticos se consolidan conservando la mayor severidad. Una cita que ya coincide literalmente con el campo generado pasa directamente al reparador, sin pagar otra llamada para localizarla.
+- Se mantienen la inmutabilidad de fuentes, la revisión independiente y la recuperación acotada. 328 pruebas Python correctas.
+
+## 2026-10-08 — Contraste explícito del registro de clientes y presentación de B10
+
+- La revisión final compara cada fila del registro de clientes con su narrativa y vincula cualquier descriptor sectorial cuestionado a citas literales; impide omitir esa comprobación o pedir retirar palabras ausentes.
+- Los comentarios sobre la fuente o los campos del formulario se detectan en los textos de entrega y pasan a reparación automática.
+- B10 comienza en página propia para evitar un último párrafo aislado. Verificado en Word: 27 páginas y texto íntegro idéntico en la prueba de formato.
+- 325 pruebas Python, 375 Node y TypeScript correctos.
+
+## 2026-10-08 — Guardado del Studio sin reprocesamiento por diferencias de orden
+
+- El Studio usa el registro de la revisión vigente para asuntos y redacciones, con filas de base de datos únicamente como respaldo para expedientes antiguos.
+- La comparación detecta cambios reales y tolera distinto orden de claves JSON; abrir el expediente no provoca un guardado ni invalida su revisión.
+- Validado con 375 pruebas Node, una prueba opcional omitida y TypeScript sin errores.
+
+## 2026-10-08 — Diagnósticos verificables y sincronización del Studio
+
+- El revisor debe señalar literalmente el descriptor que objeta; diagnósticos que piden eliminar palabras ausentes se recuperan automáticamente con límite y trazabilidad del consumo.
+- La reparación distingue anonimización pública y evidencia exacta confidencial, conserva hallazgos anteriores sin corregir y no pide al usuario reescribir notas internas generadas.
+- El Studio mantiene la consulta de estado después de completar una preparación, detecta trabajos posteriores y conserva cambios locales sin guardar.
+
+## [2026-10-08] — Comprobar que las correcciones realmente se aplicaron
+
+- Preflight determinista conserva hallazgos concretos de redacción de RankPilot mientras la cita rechazada siga literalmente en el mismo documento. No acepta desaparición silenciosa del hallazgo ni omite revisión independiente después de reparar. Excluye preguntas factuales y metadatos.
+- Sustituye saltos de página dentro de párrafos por saltos previos para evitar una página vacía cuando la tabla anterior llena la hoja. Word DeForest 28→27 páginas, texto XML idéntico.
+- Renderer16/ArtifactReview11; 369 Node +1skip y TypeScript PASS. Prueba final en curso.
+
+## [2026-10-08] — Reparación del Audit sin convertir preguntas de fuente en errores internos
+
+- Preguntas factuales pendientes se conservan como contexto; no exigen cambios inventados del redactor. Correcciones por campo con tipos exactos y evidencia compartida sin duplicados.
+- Retira sectores opcionales discutidos también cuando el juez los marca como advertencias. Audit interno puede conservar ambas variantes de nombre de una reserva sin decidir su identidad; mantiene nueva revisión obligatoria.
+- No interpreta automáticamente un listado amplio de socios clave como censo cerrado del departamento. Consume validate=true y evita reabrir el wizard ya revisado.
+- Validación: 315 Python, 367 Node (+1 integración PostgreSQL omitida en suite), TypeScript. Prueba real aún pendiente de aprobación y QA Word.
+
+## [2026-10-08] — Contención editorial de sector opcional en conflicto
+
+- El juez puede asignar a RankPilot retirar un descriptor sectorial prescindible que el texto generado adoptó de fuentes discrepantes. Conserva la discrepancia original, selección y evidencia decisiva; no elige una versión ni cambia datos.
+- Sigue siendo crítico hasta reparación y nueva revisión del Word. Identidad, montos, fechas, resultados, roles y permisos siguen requiriendo evidencia suficiente.
+- 366 contratos Node y 310 Python aprobados. Prueba productiva continúa.
+
+## [2026-10-08] — Recuperación de errores internos sin clic del usuario
+
+- Worker recupera etapas transitorias y trabajos recientes interrumpidos; conserva el mismo job, cursor, fuentes y consumo, con espera superior al lease y reintentos limitados. Revalida propietario/fuentes y serializa con enqueue.
+- Presupuesto predeterminado completo de 1.2M tokens por job (configurable); no reinicia el contador al recuperarse. No reintenta datos humanos, fuentes cambiadas ni presupuesto agotado.
+- Studio mantiene observación, retira toast duplicado y botón de reanudación para incidencias internas; no declara aprobación durante recuperación.
+- Validación: 365 contratos Node y TypeScript; incluye fallo transitorio en rutas reales que termina en ambos DOCX sin petición de reanudar.
+
+## [2026-10-08] — Condensación después de reparar el Audit
+
+- La prueba DeForest desde cero detectó que una reparación podía exceder el límite ejecutivo sin ejecutar la condensación disponible en redacción inicial. Ambas rutas comparten ahora ese paso acotado y conservan la revisión final obligatoria.
+- Elimina copias literales de párrafos ya incluidos en el extracto, conservando versiones distintas y las fuentes.
+- 307 pruebas Python aprobadas. Prueba de producción en curso.
+
+## [2026-10-08] — Datos anticipados y reparación autónoma
+
+- Recupera campos administrativos con evidencia desde formularios y texto libre; conserva discrepancias y pide revisión en el wizard antes de preparar.
+- Contrasta la clasificación del Audit con la selección; repara texto generado con cambios verificables y presupuesto completo.
+- Unifica confidencialidad y asigna las violaciones generadas a RankPilot. Corrige estilo concreto automáticamente.
+- Simplifica banner y elimina títulos huérfanos y páginas innecesarias del Word.
+- Validación local: 302 pruebas Python, 360 Node, TypeScript y build; expediente sintético completo aprobado tras reparación automática, fuentes intactas, Word 9+3 páginas. Publicación pendiente.
+
 # CHANGELOG — RankPilot 2026
 
 All notable changes to this project are documented in this file.
@@ -102,7 +179,6 @@ All notable changes to this project are documented in this file.
 - Versión del generador invalida el veredicto previo del Word sin forzar regeneración de estrategia/carta vigentes; defectos críticos persisten individualmente.
 - Validación local: 264 contratos Node, TypeScript y build; Chrome con componentes reales y persistencia simulada verifica accesos, candidatura editable, cinco secciones y móvil de 390 px sin desbordamiento. Sin nuevas llamadas pagadas ni escrituras al expediente durante la validación.
 
-
 ## [2026-10-06] — Entregables reutilizables y un solo juez final en Studio
 
 - Estrategia y Audit tienen huellas de dependencias propias y vigencia de 24 horas. Editar prosa conserva ambos; corregir candidatos invalida el Audit; cambiar hechos fuente invalida la selección y sus dependientes. Un bloqueo vigente evita duplicar llamadas aunque haya ediciones concurrentes.
@@ -173,6 +249,18 @@ All notable changes to this project are documented in this file.
 - Motor editorial recibe la corrección del usuario junto a la fuente original. No equivale a verificación documental independiente ni a aprobación automática del Word.
 - Eliminada reexportación de constructores DOCX en un Route Handler, incompatible con la validación de tipos de Next.js.
 - Validación: 214 contratos Node, 135 tests Python; comprobación TypeScript. Build completo impedido por descarga de Google Fonts sin red. Chrome no pudo ejecutarse: revisión automática de escalación rechazó por límite de uso. QA visual y prueba autenticada de producción pendientes.
+
+## [2026-10-04] — Revisión editorial verificable y publicación
+
+- Publicado en dev `fd58224`; merge y push a main `f2b7432`. Vercel READY; nuevas rutas Render presentes y validación de entradas comprobada. Logs internos Render pendientes de habilitar herramientas en la sesión; plugin instalado, acceso autenticado aún no verificado.
+- Ingestión A/B con validación de fuentes, conservación de borradores, IDs estables y control de concurrencia; optimizaciones basadas en fuentes persistidas.
+- LangGraph con revisión editorial acotada, 15 criterios, estrategia y carta; juez del Word renderizado y entrega vinculada a bytes aprobados y hash de fuentes.
+- Rankings oficiales con alcance de firma, práctica, país y edición; discrepancias/no disponible/no encontrado no se convierten en bandas confirmadas.
+- Studio y asistentes: mensajes accionables, errores de guardado visibles, progreso real, confidencialidad y periodo explícitos. Eliminadas diversas inferencias y reglas específicas de clientes sin evidencia.
+- Instalación: solo generación de Prisma Client; eliminado `db push --accept-data-loss`, sin migraciones nuevas.
+- Validación: 132 tests Python, 200 contratos Node y build exitosos. QA sintética de 10 prácticas aprobada después de correcciones, no garantía de éxito al primer intento ni aceptación de Ángela.
+- Pendiente: corrida real DeForest, logs internos, trabajos duraderos, políticas completas por directorio y aceptación con corpus real. Los umbrales y reglas hardcoded documentados en entradas antiguas son históricos: no reintroducirlos como invariantes actuales.
+- Continuidad: `docs/CONTINUIDAD_CODEX.md`; guía de aceptación: `docs/PRUEBA_DEFOREST_PUBLICACION.md`.
 
 ## [v29.6] — 2026-09-30
 

@@ -19,9 +19,9 @@ def extract_filing_fields(text):
 
     # Explicit Chambers fields, including inline and table-flattened answers.
     labels = {
-        'departmentName': r'(?:B1\s+)?Department name(?:\s*\(used by firm\))?',
-        'numPartners': r'B2\s+(?:Number of partners|No\.? of partners)',
-        'numLawyers': r'B3\s+(?:Number of (?:other )?(?:qualified )?lawyers|No\.? of lawyers)',
+        'departmentName': r'(?:(?:B1\s+)?(?:What\s+is\s+the\s+)?(?:Team\s+or\s+)?Department\s+name(?:\s*\([^)]*\))?|(?:B1\s+)?Department\s+name(?:\s*\(used by firm\))?)',
+        'numPartners': r'(?:B2\s+(?:Number of partners|No\.? of partners)|Number\s+of\s+PARTNERS(?:\s+in\s+the\s+team)?)',
+        'numLawyers': r'(?:B3\s+(?:Number of (?:other )?(?:qualified )?lawyers|No\.? of lawyers)|Number of NON-PARTNERS(?:\s+in\s+the\s+team)?|Non-partners\s+who\s+spend[^\n|]*)',
     }
     for key, label in labels.items():
         value = r'([^\n|]{1,100})' if key == 'departmentName' else r'(\d{1,5})'
@@ -30,6 +30,16 @@ def extract_filing_fields(text):
             if key == 'departmentName' and (re.match(r'B\d\b', answer) or answer.lower() in ('n/a', 'not provided')):
                 continue
             add(key, answer if key == 'departmentName' else int(answer), match.group())
+
+    # Fallback headcount extraction from pipe-delimited Legal 500 partner tables
+    if 'numPartners' not in findings:
+        p_m = re.search(r'(?im)Number\s+of\s+PARTNERS\b.*?(?:\|\s*(\d{1,5})\s*\|)', text, re.S)
+        if p_m:
+            add('numPartners', int(p_m.group(1)), p_m.group())
+    if 'numLawyers' not in findings:
+        np_m = re.search(r'(?im)Non-partners\s+who\s+spend\b.*?\|\s*(\d{1,5})', text)
+        if np_m:
+            add('numLawyers', int(np_m.group(1)), np_m.group())
 
     # Department table scope is essential: never use Composition of the firm.
     for section in re.finditer(r'(?:Composition of (?:the|this) department|Composici[oó]n del departamento)\s*:\s*\n([^\n]+)\n\s*([^\n]+)', text, re.I):
@@ -65,17 +75,22 @@ def extract_filing_fields(text):
         elif lines and all(re.fullmatch(r"[^\W\d_]+(?:[ .’'-]+[^\W\d_]+)+\.?", line, re.UNICODE) and not re.search(r'\b(?:including|include|other|others|etc|vacant|unknown|partners|lawyers|not|available|provided|pending|none|confirmar|pendiente)\b', line, re.I) for line in lines):
             add(key, len(set(line.rstrip('.').casefold() for line in lines)), match.group())
 
-    for key, header in [('contacts', r'A4\s+Contact(?:s)?(?: person to arrange| for (?:arranging )?)\s*interviews[^\n]*'), ('departmentHeads', r'B7\s+Head or Heads of department[^\n]*')]:
-        match = re.search(r'^\s*' + header + r'\n', text, re.I | re.M)
+    for key, header in [
+        ('contacts', r'(?:A4\s+Contact(?:s)?(?: person to arrange| for (?:arranging )?)\s*interviews|Contact details to arrange interviews)[^\n]*'),
+        ('departmentHeads', r'(?:B7\s+Head or Heads of department|Head\(s\)\s+of\s+(?:Team|department)|(?:Head|Heads|Name of the Head\(s\))\s+(?:or Heads\s+)?of\s+(?:the\s+)?(?:department|team))[^\n]*')
+    ]:
+        match = re.search(r'^\s*' + header + r'(?:\n|\Z)', text, re.I | re.M)
         if not match:
             continue
         tail = text[match.end():]
-        boundary = re.search(r'^\s*[A-E]\d+\b', tail, re.M)
+        boundary = re.search(r'^\s*(?:[A-E]\d\b|Number\s+of\s+PARTNERS|Your\s+team|What\s+is\s+the\s+Team)', tail, re.M | re.I)
         block = tail[:boundary.start()] if boundary else tail[:1200]
         people = []
         for line in block.splitlines():
-            cells = [x.strip() for x in line.split('|')]
-            if len(cells) < 2 or cells[0].lower() in ('name', 'nombre', ''):
+            cells = [x.strip() for x in re.split(r'[|\x07]', line)]
+            if len(cells) < 1 or cells[0].lower() in ('name', 'nombre', 'email', 'e-mail', 'telephone number', 'phone', 'telephone', 'job title', 'location', ''):
+                continue
+            if len(cells[0].split()) < 2:
                 continue
             if not re.fullmatch(r"[\wÀ-ÿ .’'-]{3,100}", cells[0]) or any(c.isdigit() for c in cells[0]):
                 continue

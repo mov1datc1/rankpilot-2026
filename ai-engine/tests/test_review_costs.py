@@ -7,6 +7,23 @@ from utils.provider_errors import provider_failure
 
 
 class ReviewCostTests(unittest.TestCase):
+    def test_provenance_references_are_lossless_and_preserve_conflicting_versions(self):
+        import copy
+        passage = 'The appeal remains pending and no final judgment has been issued. ' * 5
+        conflict = passage.replace('remains pending', 'was granted')
+        original = {'source_excerpt': 'Original form:\n' + passage,
+                    'rawNotes': passage, 'valueResolution': {'reason': passage},
+                    'extraction_evidence': {'outcome': {'quotes': [passage, conflict], 'status': 'found'}},
+                    'original_code_extraction': {'outcome': passage}}
+        before = copy.deepcopy(original)
+        result = compact_review_payload(original)
+        ref = result['extraction_evidence']['outcome']['quotes'][0]
+        self.assertEqual(result['source_excerpt'][ref['start']:ref['end']], passage)
+        self.assertEqual(result['extraction_evidence']['outcome']['quotes'][1], conflict)
+        self.assertEqual(result['valueResolution'], original['valueResolution'])
+        self.assertEqual(result['source_excerpt'], original['source_excerpt'])
+        self.assertEqual(original, before)
+
     def test_short_tasks_do_not_inherit_register_sized_allowance(self):
         with patch.dict(os.environ, {}, clear=True):
             self.assertEqual(get_model_settings('extraction')['max_tokens'], 32768)

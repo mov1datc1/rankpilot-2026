@@ -16,6 +16,43 @@ def verdict(status='supported',quote=''):
     return {'checks':{'M01':{'status':status,'explanation':'Property rights, not a tax assessment.', 'source_quote':quote}}}
 
 class SelectionSemanticTests(unittest.TestCase):
+    def test_recovery_requires_new_evidenced_failure_and_keeps_a_hard_limit(self):
+        from core.selection_review import can_repair_selection
+        self.assertTrue(can_repair_selection({'selection_review_attempts':1,'selection_failure_history':[['a']]}))
+        self.assertTrue(can_repair_selection({'selection_review_attempts':2,'selection_failure_history':[['a'],['b']]}))
+        self.assertFalse(can_repair_selection({'selection_review_attempts':2,'selection_failure_history':[['a'],['a','b']]}))
+        self.assertFalse(can_repair_selection({'selection_review_attempts':3,'selection_failure_history':[['a'],['b'],['c']]}))
+        self.assertFalse(can_repair_selection({'selection_failure_history':[[]]}))
+
+    def test_resuming_exhausted_repair_does_not_make_another_paid_call(self):
+        from core.review_graph import select_or_reuse
+        state={'package':{'matters':[MATTER]},'strategy':BAD,'selection_review_attempts':3,
+               'selection_failure_history':[['a'],['b'],['c']],
+               'selection_feedback':{'semantic_rejection':True,'strategy':BAD,'errors':['Still rejected']}}
+        with patch('core.review_graph.invoke_role') as invoke:
+            result=select_or_reuse(state)
+        invoke.assert_not_called()
+        self.assertFalse(result['selection_validated'])
+
+    def test_new_failure_can_be_repaired_without_recreating_unaffected_decisions(self):
+        peer={**MATTER,'id':'property-2'}
+        strategy={**GOOD,'matters':[GOOD['matters'][0],{**GOOD['matters'][0],'matter_id':'property-2','disposition':'reserve'}]}
+        calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(role)
+            if role=='strategist':
+                self.assertEqual(len(payload['rejected_decisions']),1)
+                return {'corrections':payload['rejected_decisions'],'unresolved':[]},[]
+            attempt=calls.count('selection_reviewer')
+            checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE} for i in (1,2)}
+            return {'checks':checks},[]
+        with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=create_review_graph().invoke({'package':{'directory':'Chambers','matters':[MATTER,peer]},'operation':'strategy'})
+        self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer','strategist','selection_reviewer'])
+        self.assertTrue(result['selection_review_validated'])
+        self.assertEqual(result['strategy'],strategy)
+
+
     def test_semantic_rejection_repairs_before_any_development(self):
         package={'directory':'Chambers','practice_area':'Real Estate','matters':[MATTER]}
         before=copy.deepcopy(package); calls=[]

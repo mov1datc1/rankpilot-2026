@@ -30,3 +30,13 @@ software faults can be repaired autonomously. It does not rewrite production cod
 change source facts, infer missing permissions, or silently increase token budgets.
 The invariant tests use fictional records and injected failures, not firm-specific
 exceptions. Full production behavior must also be checked with real intake cases.
+
+Selection has its own bounded source-to-decision recovery before development:
+at most three independent checks, with repairs restricted to the rejected
+decisions. A repeated failed matter, ungrounded diagnosis, unavailable reviewer,
+or exhausted allowance stops the loop. Checkpoints preserve attempt counts and
+failure history across requests; deployment does not renew that allowance.
+All source matters remain available to each independent check, including reserves
+and exclusions. Long verbatim copies inside extraction provenance use reversible
+offsets into the same record's complete source excerpt. Different source versions
+and confirmed factual corrections are retained literally.

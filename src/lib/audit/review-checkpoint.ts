@@ -88,6 +88,8 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
   if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{strategy:keys.strategy},state:{
     strategy:state.strategy,selection_validated:false,trace:state.trace || [],
+    selection_review_attempts:state.selection_review_attempts || 0,
+    selection_failure_history:state.selection_failure_history || [],
     selection_feedback:{...state.selection_feedback,strategy:state.strategy,errors:state.errors || state.selection_feedback?.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
   }};
   if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};

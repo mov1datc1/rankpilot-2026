@@ -4,6 +4,17 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from core.editorial_development import bind_quote
 
 
+def can_repair_selection(state):
+    """Permit a new evidenced failure, never loop on an unchanged failed matter."""
+    if state.get('selection_review_unavailable') or state.get('selection_review_attempts', 0) >= 3:
+        return False
+    history = state.get('selection_failure_history', [])
+    if not history or not history[-1]:
+        return False
+    previous = {mid for batch in history[:-1] for mid in batch}
+    return not previous.intersection(history[-1])
+
+
 class DecisionCheck(BaseModel):
     model_config = ConfigDict(extra='forbid')
     status: Literal['supported', 'repair_required']
@@ -36,10 +47,15 @@ def review_selection(state, invoke):
                 check['source_quote'] = quote
                 errors.append(f"Revisar la interpretación de {matter.get('client') or matter['id']}: {check['explanation']}")
     result['checks'] = {refs[ref]['id']: check for ref, check in result['checks'].items()}
+    failed = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}
+    # Unbound diagnoses must not buy a correction or become a passing review.
+    bound = all(bind_quote(c['source_quote'], next(m for m in matters if m['id']==mid)) for mid,c in failed.items())
+    history = list(state.get('selection_failure_history', [])) + [sorted(failed) if bound else []]
     return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':False, 'selection_review_deferred':False,
+            'selection_failure_history': history,
             'selection_validated': not errors, 'errors': errors, 'trace': trace,
             'selection_review_attempts': state.get('selection_review_attempts', 0) + 1,
-            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors),'failed_checks':{mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}}}
+            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors),'failed_checks':failed}}
 
 
 def repair_selection(state, invoke):

@@ -3,13 +3,23 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-09-16** (v26.43 — Universal Ingestion, Anti-Contamination Gates & Multi-Practice Parity)
+> Last updated: **2026-10-04** (publication fd58224 / f2b7432; health version string remains historical)
 
 ## 2026-10-06 — Temporal evidence calibration (review-core-v1.4)
 
 - RP16 applies across practices to strategist, writer and exact-artifact judge: missing research period, exact dates or status alone are non-blocking warnings; no invented dates or automatic exclusions. Standard template headings alone do not prove a temporal conflict. Use supplied narrative activity and ongoing work; concrete conflicting or invented claims remain critical.
 - Typed temporal_basis separates missing_metadata from evidenced_conflict/unsupported_claim. Only metadata-only findings are downgraded, with verdict consistency enforced; unrelated critical defects and deterministic release gates remain authoritative.
 - Shared review policy version invalidates stale editorial outputs and final verdict caches. Validation: 192 offline Python tests, Node contracts, TypeScript and production build; no live-model quality guarantee claimed.
+
+## 2026-10-04 — Source-grounded review and deployment
+
+- Added bounded review graph (source registration, strategy, letter, adversarial review, deterministic release) and 15 editorial criteria. Existing graph retained; not a wholesale four-agent replacement.
+- Added `/review-package`, `/verify-rendered-package`, `/verify-ranking`; official ranking identity/scope/edition/provenance and freshness checks.
+- Hardened ingestion and source authority; removed unsupported client-specific defaults. Unknown permission and contradictory currency evidence cannot silently become approval.
+- Final review evaluates rendered DOCX text with bounded letter correction. Frontend binds delivery to approved bytes and source hash.
+- 132 Python tests and 200 Node contracts passed; frontend build passed. Runtime endpoints confirmed, internal Render logs still pending authenticated access. Health version 26.43 does not prove deployed SHA.
+- Outstanding: durable execution, complete directory/edition policy and real owner acceptance. Prior entries document history, not permission to restore unsupported thresholds or hardcoded case outcomes.
+- Resume from `docs/CONTINUIDAD_CODEX.md` at repository root.
 
 ## v26.43 — UNIVERSAL INGESTION, ANTI-CONTAMINATION GATES & MULTI-PRACTICE PARITY (2026-09-16)
 

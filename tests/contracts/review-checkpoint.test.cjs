@@ -110,9 +110,12 @@ test('failed selection retries once on the next request with diagnostics and no 
  reset();await step();const source=structuredClone(state.matters);
  const saved=state.chambersData.review_checkpoint;
  saved.stage='done';saved.state.selection_validated=false;saved.state.errors=['Missing decision; mixed quote'];
+ saved.state.selection_review_attempts=2;saved.state.selection_failure_history=[['first'],['second']];
  saved.state.letter={stale:true};calls=[];
  await step();assert.equal(calls.length,1);assert.equal(calls[0].stage,'strategy');
  assert.deepEqual(calls[0].state.selection_feedback.errors,['Missing decision; mixed quote']);
+ assert.equal(calls[0].state.selection_review_attempts,2);
+ assert.deepEqual(calls[0].state.selection_failure_history,[['first'],['second']]);
  assert.equal(calls[0].state.letter,undefined);assert.deepEqual(state.matters,source);
  await step();await step();await step();assert.deepEqual(calls.map(c=>c.stage),['strategy','development','writer']);
 });
