@@ -1,0 +1,866 @@
+{
+  "source": "chambers",
+  "practice_area": "Labour & Employment",
+  "jurisdiction": "Mexico",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": true,
+    "firm_bands": [
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Band 5"
+    ],
+    "individual_categories": [
+      "Senior Statespeople",
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Up and Coming",
+      "Star Associates",
+      "Associates to watch"
+    ]
+  },
+  "firms": [
+    {
+      "name": "Basham, Ringe y Correa S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 3314,
+      "profile_path": "/department/basham-ringe-y-correa-sc-labour-employment-latin-america-9:1596:144:1:3314"
+    },
+    {
+      "name": "De la Vega & Martínez Rojas S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 22913710,
+      "profile_path": "/department/de-la-vega-martinez-rojas-sc-labour-employment-latin-america-9:1596:144:1:22913710"
+    },
+    {
+      "name": "Santamarina y Steta SC",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 3327,
+      "profile_path": "/department/santamarina-y-steta-sc-labour-employment-latin-america-9:1596:144:1:3327"
+    },
+    {
+      "name": "Baker McKenzie",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 9042,
+      "profile_path": "/department/baker-mckenzie-labour-employment-latin-america-9:1596:144:1:2692"
+    },
+    {
+      "name": "Hogan Lovells Cadwalader",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 3310,
+      "profile_path": "/department/hogan-lovells-cadwalader-labour-employment-latin-america-9:1596:144:1:257"
+    },
+    {
+      "name": "Marván, González Graf y González Larrazolo",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 22790718,
+      "profile_path": "/department/marvan-gonzalez-graf-y-gonzalez-larrazolo-labour-employment-latin-america-9:1596:144:1:22790718"
+    },
+    {
+      "name": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2669,
+      "profile_path": "/department/creel-garcia-cuellar-aiza-y-enriquez-sc-labour-employment-latin-america-9:1596:144:1:2669"
+    },
+    {
+      "name": "Garrigues",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 103202,
+      "profile_path": "/department/garrigues-labour-employment-latin-america-9:1596:144:1:3983"
+    },
+    {
+      "name": "Pizá Abogados",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 22850463,
+      "profile_path": "/department/piza-abogados-labour-employment-latin-america-9:1596:144:1:22850463"
+    },
+    {
+      "name": "Von Wobeser y Sierra, SC",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2429,
+      "profile_path": "/department/von-wobeser-y-sierra-sc-labour-employment-latin-america-9:1596:144:1:2429"
+    },
+    {
+      "name": "EC Rubio",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 115434,
+      "profile_path": "/department/ec-rubio-labour-employment-latin-america-9:1596:144:1:115434"
+    },
+    {
+      "name": "Ferran Martínez Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23200875,
+      "profile_path": "/department/ferran-martinez-abogados-labour-employment-latin-america-9:1596:144:1:23200875"
+    },
+    {
+      "name": "Fisher Phillips",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23562737,
+      "profile_path": "/department/fisher-phillips-labour-employment-latin-america-9:1596:144:1:65335"
+    },
+    {
+      "name": "Littler Mendelson, PC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 22402643,
+      "profile_path": "/department/littler-mexico-labour-employment-latin-america-9:1596:144:1:2816"
+    },
+    {
+      "name": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 2549,
+      "profile_path": "/department/mijares-angoitia-cortes-y-fuentes-sc-labour-employment-latin-america-9:1596:144:1:2549"
+    },
+    {
+      "name": "Monsalvo Duclaud",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23472963,
+      "profile_path": "/department/monsalvo-duclaud-labour-employment-latin-america-9:1596:144:1:23472963"
+    },
+    {
+      "name": "Cacheaux, Cavazos & Newton",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 184985,
+      "profile_path": "/department/cacheaux-cavazos-newton-labour-employment-latin-america-9:1596:144:1:184985"
+    },
+    {
+      "name": "CHEVEZ",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 102185,
+      "profile_path": "/department/chevez-labour-employment-latin-america-9:1596:144:1:102185"
+    },
+    {
+      "name": "Cuesta Campos y Asociados S.C.",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 169808,
+      "profile_path": "/department/cuesta-campos-y-asociados-sc-labour-employment-latin-america-9:1596:144:1:181030"
+    },
+    {
+      "name": "Goodrich Riquelme y Asociados",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 3318,
+      "profile_path": "/department/goodrich-riquelme-y-asociados-labour-employment-latin-america-9:1596:144:1:3318"
+    },
+    {
+      "name": "Greenberg Traurig, LLP",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 22369558,
+      "profile_path": "/department/greenberg-traurig-sc-labour-employment-latin-america-9:1596:144:1:3579"
+    },
+    {
+      "name": "Pérez-Llorca",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 117545,
+      "profile_path": "/department/perez-llorca-labour-employment-latin-america-9:1596:144:1:3998"
+    },
+    {
+      "name": "Vega, Guerrero & Asociados",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 23045086,
+      "profile_path": "/department/vega-guerrero-asociados-labour-employment-latin-america-9:1596:144:1:23045086"
+    },
+    {
+      "name": "EY Mexico",
+      "band": "Band 5",
+      "rank_type": "5",
+      "edition": 2027,
+      "organisation_id": 102496,
+      "profile_path": "/department/ey-mexico-labour-employment-latin-america-9:1596:144:1:102496"
+    }
+  ],
+  "individuals": [
+    {
+      "name": "Julio Flores Luna",
+      "firm": "Goodrich Riquelme y Asociados",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/julio-flores-luna-latin-america-9:508538"
+    },
+    {
+      "name": "Luis Ricardo Ruíz Gutiérrez",
+      "firm": "Hogan Lovells Cadwalader",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/luis-ricardo-ruiz-gutierrez-latin-america-9:508474"
+    },
+    {
+      "name": "Pedro Velasco",
+      "firm": "Santamarina y Steta SC",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/pedro-velasco-latin-america-9:530865"
+    },
+    {
+      "name": "Hugo Italo Morales Saldaña",
+      "firm": "Hugo Italo y Asociados",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/hugo-italo-morales-saldana-latin-america-9:531012"
+    },
+    {
+      "name": "Luis Díaz Mirón",
+      "firm": "Bufete Díaz Mirón Y Asociados, S.C.",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/luis-diaz-miron-latin-america-9:530809"
+    },
+    {
+      "name": "Tomás Natividad Sánchez",
+      "firm": "Natividad Abogados, S.C",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/tomas-natividad-sanchez-latin-america-9:392594"
+    },
+    {
+      "name": "Alfredo Kupfer Domínguez",
+      "firm": "Garrigues",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/alfredo-kupfer-dominguez-latin-america-9:495508"
+    },
+    {
+      "name": "Jorge G De Presno-Arizpe",
+      "firm": "Basham, Ringe y Correa S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/jorge-g-de-presno-arizpe-latin-america-9:391649"
+    },
+    {
+      "name": "Juan Carlos De la Vega",
+      "firm": "Santamarina y Steta, SC",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-carlos-de-la-vega-latin-america-9:516701"
+    },
+    {
+      "name": "Oscar de la Vega",
+      "firm": "De la Vega & Martínez Rojas S.C.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/oscar-de-la-vega-latin-america-9:391654"
+    },
+    {
+      "name": "Andres Rodríguez Rodríguez",
+      "firm": "Santamarina y Steta SC",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 10,
+      "edition": 2027,
+      "profile_path": "/lawyer/andres-rodriguez-rodriguez-latin-america-9:1115024"
+    },
+    {
+      "name": "David Eugenio Puente Tostado",
+      "firm": "Basham, Ringe y Correa",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/david-eugenio-puente-tostado-latin-america-9:391642"
+    },
+    {
+      "name": "Francisco Javier Peniche Beguerisse",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/francisco-javier-peniche-beguerisse-latin-america-9:767767"
+    },
+    {
+      "name": "Germán de la Garza de Vecchi",
+      "firm": "Fisher Phillips",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 8,
+      "edition": 2027,
+      "profile_path": "/lawyer/german-de-la-garza-de-vecchi-latin-america-9:25638232"
+    },
+    {
+      "name": "Héctor González Graf",
+      "firm": "Marván, González Graf y González Larrazolo",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 13,
+      "edition": 2027,
+      "profile_path": "/lawyer/hector-gonzalez-graf-latin-america-9:1447187"
+    },
+    {
+      "name": "Hugo Hernández-Ojeda Alvírez",
+      "firm": "Hogan Lovells Cadwalader",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/hugo-hernandez-ojeda-alvirez-latin-america-9:629476"
+    },
+    {
+      "name": "Javier Canseco",
+      "firm": "EC Rubio",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 12,
+      "edition": 2027,
+      "profile_path": "/lawyer/javier-canseco-latin-america-9:1361327"
+    },
+    {
+      "name": "Maria del Rosario Lombera González",
+      "firm": "Baker McKenzie",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 8,
+      "edition": 2027,
+      "profile_path": "/lawyer/maria-del-rosario-lombera-gonzalez-latin-america-9:1452215"
+    },
+    {
+      "name": "Mónica Schiaffino",
+      "firm": "Littler Mexico",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 11,
+      "edition": 2027,
+      "profile_path": "/lawyer/monica-schiaffino-latin-america-9:1288917"
+    },
+    {
+      "name": "Nadia González",
+      "firm": "Nadia González - Sole Practitioner",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 11,
+      "edition": 2027,
+      "profile_path": "/lawyer/nadia-gonzalez-latin-america-9:1546335"
+    },
+    {
+      "name": "Rafael Vallejo",
+      "firm": "Von Wobeser y Sierra, SC",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 10,
+      "edition": 2027,
+      "profile_path": "/lawyer/rafael-vallejo-latin-america-9:1397276"
+    },
+    {
+      "name": "Carlos Ferrán Martínez Carrillo",
+      "firm": "Ferran Martínez Abogados",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 7,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-ferran-martinez-carrillo-latin-america-9:25671086"
+    },
+    {
+      "name": "Enrique Ballesteros Alvarado",
+      "firm": "Pizá Abogados",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 6,
+      "edition": 2027,
+      "profile_path": "/lawyer/enrique-ballesteros-alvarado-latin-america-9:25477173"
+    },
+    {
+      "name": "Francisco Udave T.",
+      "firm": "Santamarina y Steta SC",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/francisco-udave-t-latin-america-9:25639288"
+    },
+    {
+      "name": "Jaime Rodríguez",
+      "firm": "Fisher Phillips",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/jaime-rodriguez-latin-america-9:25474173"
+    },
+    {
+      "name": "Javiera Medina-Reza",
+      "firm": "Baker McKenzie",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/javiera-medina-reza-latin-america-9:530800"
+    },
+    {
+      "name": "Leslie Palma",
+      "firm": "Greenberg Traurig, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 8,
+      "edition": 2027,
+      "profile_path": "/lawyer/leslie-palma-latin-america-9:629907"
+    },
+    {
+      "name": "Mary Carmen Fuertes Abascal",
+      "firm": "Hogan Lovells Cadwalader",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 6,
+      "edition": 2027,
+      "profile_path": "/lawyer/mary-carmen-fuertes-abascal-latin-america-9:25775453"
+    },
+    {
+      "name": "Mayeli Cabral",
+      "firm": "CHEVEZ",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/mayeli-cabral-latin-america-9:26851619"
+    },
+    {
+      "name": "Octavio Cantón Jaramillo",
+      "firm": "Galicia Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/octavio-canton-jaramillo-latin-america-9:25604485"
+    },
+    {
+      "name": "Ricardo Martínez Rojas",
+      "firm": "De la Vega & Martínez Rojas S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 14,
+      "edition": 2027,
+      "profile_path": "/lawyer/ricardo-martinez-rojas-latin-america-9:530792"
+    },
+    {
+      "name": "Salvador Pasquel Villegas",
+      "firm": "Baker McKenzie",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 9,
+      "edition": 2027,
+      "profile_path": "/lawyer/salvador-pasquel-villegas-latin-america-9:1452304"
+    },
+    {
+      "name": "Santiago Marván Urquiza",
+      "firm": "Marván, González Graf y González Larrazolo",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 12,
+      "edition": 2027,
+      "profile_path": "/lawyer/santiago-marvan-urquiza-latin-america-9:1450327"
+    },
+    {
+      "name": "Alan Duclaud",
+      "firm": "Monsalvo Duclaud",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/alan-duclaud-latin-america-9:26858544"
+    },
+    {
+      "name": "Alejandro Díaz Fernández",
+      "firm": "Pizá Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandro-diaz-fernandez-latin-america-9:1597307"
+    },
+    {
+      "name": "Alejandro Nila Rosales",
+      "firm": "Sainz Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 9,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandro-nila-rosales-latin-america-9:507686"
+    },
+    {
+      "name": "Alix Airam Trimmer Espinosa",
+      "firm": "LAIN Laboral Interseccional",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 6,
+      "edition": 2027,
+      "profile_path": "/lawyer/alix-airam-trimmer-espinosa-latin-america-9:25508830"
+    },
+    {
+      "name": "Amado Díaz Pérez",
+      "firm": "Bufete Amado Díaz",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/amado-diaz-perez-latin-america-9:25603824"
+    },
+    {
+      "name": "Claudio Jimenez De Leon",
+      "firm": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 5,
+      "edition": 2027,
+      "profile_path": "/lawyer/claudio-jimenez-de-leon-latin-america-9:25458170"
+    },
+    {
+      "name": "Francisco Peña",
+      "firm": "IBC International Business Consultants LLC",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/francisco-pena-latin-america-9:26856449"
+    },
+    {
+      "name": "Gerardo Valencia",
+      "firm": "Cuesta Campos y Asociados S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/gerardo-valencia-latin-america-9:25337661"
+    },
+    {
+      "name": "Hector de la Cruz",
+      "firm": "De la Vega & Martínez Rojas S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/hector-de-la-cruz-latin-america-9:26596442"
+    },
+    {
+      "name": "Juan Soto Arias",
+      "firm": "Pérez-Llorca",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-soto-arias-latin-america-9:25658603"
+    },
+    {
+      "name": "Julio Alvarez",
+      "firm": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 7,
+      "edition": 2027,
+      "profile_path": "/lawyer/julio-alvarez-latin-america-9:26006551"
+    },
+    {
+      "name": "Liliana Hernández-Salgado",
+      "firm": "Baker McKenzie",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/liliana-hernandez-salgado-latin-america-9:25658256"
+    },
+    {
+      "name": "Luis A. Álvarez",
+      "firm": "Basham, Ringe y Correa S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 7,
+      "edition": 2027,
+      "profile_path": "/lawyer/luis-a-alvarez-latin-america-9:25676352"
+    },
+    {
+      "name": "Luis Monsalvo Álvarez",
+      "firm": "Monsalvo Duclaud",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/luis-monsalvo-alvarez-latin-america-9:26856986"
+    },
+    {
+      "name": "Nelson Guerrero Robles",
+      "firm": "Marván, González Graf y González Larrazolo",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/nelson-guerrero-robles-latin-america-9:1451069"
+    },
+    {
+      "name": "Oziel Guerrero",
+      "firm": "Vega, Guerrero & Asociados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 5,
+      "edition": 2027,
+      "profile_path": "/lawyer/oziel-guerrero-latin-america-9:26002828"
+    },
+    {
+      "name": "Rodrigo Del Valle Prieto",
+      "firm": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/rodrigo-del-valle-prieto-latin-america-9:25493223"
+    },
+    {
+      "name": "Tania Avila",
+      "firm": "ECIJA",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/tania-avila-latin-america-9:27134131"
+    },
+    {
+      "name": "Carlos de Buen Unna",
+      "firm": "Bufete de Buen S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-de-buen-unna-latin-america-9:530902"
+    },
+    {
+      "name": "Elvia Palazuelos",
+      "firm": "Ruiz Ahumada Palazuelos",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/elvia-palazuelos-latin-america-9:1370585"
+    },
+    {
+      "name": "Jimena Adriana Sánchez Argoytia",
+      "firm": "Employment Legal Aid",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/jimena-adriana-sanchez-argoytia-latin-america-9:26360864"
+    },
+    {
+      "name": "Jorge Sales Boyoli",
+      "firm": "Sales Boyoli",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/jorge-sales-boyoli-latin-america-9:26788052"
+    },
+    {
+      "name": "César Maillard Cárdenas",
+      "firm": "Maillard Abogados Laborales",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/cesar-maillard-cardenas-latin-america-9:26159666"
+    },
+    {
+      "name": "Fermin Lecumberri Cano",
+      "firm": "Garrigues",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/fermin-lecumberri-cano-latin-america-9:26165325"
+    },
+    {
+      "name": "Isabel Pizarro",
+      "firm": "Monsalvo Duclaud",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/isabel-pizarro-latin-america-9:26856819"
+    },
+    {
+      "name": "Jorge García de Presno Graham",
+      "firm": "Cuatrecasas",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/jorge-garcia-de-presno-graham-latin-america-9:26596250"
+    },
+    {
+      "name": "José Alberto Sánchez Medina",
+      "firm": "Ferran Martínez Abogados",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/jose-alberto-sanchez-medina-latin-america-9:26358479"
+    },
+    {
+      "name": "Sofía Gómez Bautista",
+      "firm": "Assembla",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/sofia-gomez-bautista-latin-america-9:1599585"
+    },
+    {
+      "name": "Alejandro Caro",
+      "firm": "EY Mexico",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandro-caro-latin-america-9:26191356"
+    },
+    {
+      "name": "Angel Isai Hernandez",
+      "firm": "Hernández + Abogados",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/angel-isai-hernandez-latin-america-9:26860474"
+    },
+    {
+      "name": "Alejandra Arizpe",
+      "firm": "Von Wobeser y Sierra, SC",
+      "band": "Star Associates",
+      "rank_type": "SA",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandra-arizpe-latin-america-9:26857491"
+    },
+    {
+      "name": "Clara Santana",
+      "firm": "Goodrich Riquelme y Asociados",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/clara-santana-latin-america-9:26595724"
+    },
+    {
+      "name": "Fernando Lopez Soriano",
+      "firm": "Pizá Abogados",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/fernando-lopez-soriano-latin-america-9:27145230"
+    },
+    {
+      "name": "Javier Ambriz",
+      "firm": "Vega, Guerrero & Asociados",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/javier-ambriz-latin-america-9:26002829"
+    },
+    {
+      "name": "Regina Torrero",
+      "firm": "Hogan Lovells Cadwalader",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/regina-torrero-latin-america-9:27209087"
+    },
+    {
+      "name": "Sandra Chavez",
+      "firm": "Cuesta Campos y Asociados S.C.",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/sandra-chavez-latin-america-9:26161902"
+    },
+    {
+      "name": "Alejandra Massud",
+      "firm": "Grepe Abogados",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandra-massud-latin-america-9:27139156"
+    }
+  ],
+  "total_firms": 24,
+  "total_individuals": 70,
+  "editorial_summary": "Mexico continues to face significant hurdles and challenges. Following the tendency during the past...",
+  "observed_practice": "Labour & Employment",
+  "observed_jurisdiction": "Mexico",
+  "edition": "2027",
+  "listing_complete": false,
+  "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+  "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+  "parser_version": "ranking-evidence-v1",
+  "scraped_at": "2026-10-08T17:48:59Z",
+  "cache_valid_until": "2026-11-07T17:48:59Z",
+  "cache_key": "chambers_partners_labour_employment_mexico"
+}

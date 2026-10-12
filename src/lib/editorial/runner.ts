@@ -89,7 +89,9 @@ export async function runJobStage(job:any) {
       const repair=supervision?.action==='repair'?supervision.repair:null;
       if(repair) {
         const checkpoint=structuredClone(data.review_checkpoint);
-        checkpoint.state.repair_feedback=data.final_artifact_review.judge.defects;
+        const concreteDefects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>
+          !(d.code==='EDITORIAL_OMISSION' && String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.source_quote && !d.artifact_quote));
+        checkpoint.state.repair_feedback=concreteDefects;
         if(repair.tasks.includes('development')) {checkpoint.state.development_validated=false;}
         if(repair.letter) {checkpoint.state.writer_validated=false;checkpoint.state.letter_repair_requested=true;delete checkpoint.step_keys.writer;}
         const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,approved_artifact:null,release_verdict:{passed:false,status:'repairing',errors:[]},completed_review_input_hash:null,review_checkpoint:checkpoint}}});

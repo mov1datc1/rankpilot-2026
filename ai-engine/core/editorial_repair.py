@@ -151,6 +151,15 @@ class RepairPlan(BaseModel):
 
 def unique_defects(defects):
     """One concrete correction per identical claim; retain the strongest severity."""
+    defects = [
+        d for d in defects
+        if not (
+            d.get('code') == 'EDITORIAL_OMISSION'
+            and str(d.get('message') or '').startswith('La aceptación editorial no está completa:')
+            and not d.get('source_quote')
+            and not d.get('artifact_quote')
+        )
+    ]
     result=[];positions={}
     for defect in defects:
         quote=' '.join(str(defect.get('artifact_quote') or '').split())
@@ -200,6 +209,8 @@ def repair_rejected_development(state, proposal, defects):
             # argument. A unique literal match needs no paid location inference.
             shared=[path for path in ('b10','c2') if path in allowed and quote and quote in norm(allowed[path])]
             if len(shared)==1:exact=shared
+        if not exact and defect.get('field_path') in allowed:
+            exact=[defect['field_path']]
         if not exact:
             remaining.append(defect);continue
         if defect.get('conflict_resolution')=='omit_nonessential_descriptor' and defect.get('matter_id'):

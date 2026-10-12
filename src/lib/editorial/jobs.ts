@@ -65,7 +65,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     const id=randomUUID();
     const jobs:any[]=await tx.$queryRaw`INSERT INTO "EditorialJob" ("id","submissionId","userId","sourceHash","snapshot","tasks","stage","ledger") VALUES (${id},${current.id},${current.userId},${sourceHash},${JSON.stringify(snapshot)}::jsonb,${JSON.stringify(tasks)}::jsonb,${tasks[0]},${JSON.stringify(ledger)}::jsonb) RETURNING *`;
     return jobs[0];
-  });
+  },{timeout:30000,maxWait:10000});
 }
 
 /** Repairs may change generated prose, never source facts or human-edited text. */

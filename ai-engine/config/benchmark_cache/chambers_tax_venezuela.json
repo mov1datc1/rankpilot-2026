@@ -1,0 +1,484 @@
+{
+  "source": "chambers",
+  "practice_area": "Tax",
+  "jurisdiction": "Venezuela",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": true,
+    "firm_bands": [
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4"
+    ],
+    "individual_categories": [
+      "Senior Statespeople",
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Up and Coming",
+      "Star Associates"
+    ]
+  },
+  "firms": [
+    {
+      "name": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 2665,
+      "profile_path": "/department/dempaire-tax-latin-america-9:49:229:1:2665"
+    },
+    {
+      "name": "Palacios, Torres & Korody",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 345683,
+      "profile_path": "/department/palacios-torres-korody-tax-latin-america-9:49:229:1:345683"
+    },
+    {
+      "name": "Torres Plaz & Araujo",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 3335,
+      "profile_path": "/department/torres-plaz-araujo-tax-latin-america-9:49:229:1:3335"
+    },
+    {
+      "name": "ARAQUEREYNA",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 2254,
+      "profile_path": "/department/araquereyna-tax-latin-america-9:49:229:1:2254"
+    },
+    {
+      "name": "Baker McKenzie",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 9043,
+      "profile_path": "/department/baker-mckenzie-sc-tax-latin-america-9:49:229:1:2692"
+    },
+    {
+      "name": "Sol, Caballero & Asociados",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 23371252,
+      "profile_path": "/department/sol-caballero-asociados-tax-latin-america-9:49:229:1:23371252"
+    },
+    {
+      "name": "LEĜA",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2256,
+      "profile_path": "/department/leĝa-tax-latin-america-9:49:229:1:2256"
+    },
+    {
+      "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 3333,
+      "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-tax-latin-america-9:49:229:1:3333"
+    },
+    {
+      "name": "Ponte Andrade & Casanova",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 22756886,
+      "profile_path": "/department/ponte-andrade-casanova-tax-latin-america-9:49:229:1:22756886"
+    },
+    {
+      "name": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2247,
+      "profile_path": "/department/tinoco-travieso-planchart-nunez-tax-latin-america-9:49:229:1:2247"
+    },
+    {
+      "name": "Dentons",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 7821,
+      "profile_path": "/department/dentons-tax-latin-america-9:49:229:1:7821"
+    },
+    {
+      "name": "Travieso Evans Arria Rengel & Paz",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2670,
+      "profile_path": "/department/travieso-evans-arria-rengel-paz-tax-latin-america-9:49:229:1:2670"
+    },
+    {
+      "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 2252,
+      "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-tax-latin-america-9:49:229:1:2252"
+    },
+    {
+      "name": "Rodríguez & Mendoza",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 2251,
+      "profile_path": "/department/rodriguez-mendoza-tax-latin-america-9:49:229:1:2251"
+    },
+    {
+      "name": "VICTUM Legal",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23596443,
+      "profile_path": "/department/victum-legal-tax-latin-america-9:49:229:1:23596443"
+    },
+    {
+      "name": "AdvanTax Abogados S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23120446,
+      "profile_path": "/department/advantax-abogados-sc-tax-latin-america-9:49:229:1:23120446"
+    },
+    {
+      "name": "ArnStein Legal",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23727670,
+      "profile_path": "/department/arnstein-legal-tax-latin-america-9:49:229:1:23727670"
+    }
+  ],
+  "individuals": [
+    {
+      "name": "Alfredo Travieso Passios",
+      "firm": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/alfredo-travieso-passios-latin-america-9:138481"
+    },
+    {
+      "name": "Gabriel Ruán Santos",
+      "firm": "ARAQUEREYNA",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/gabriel-ruan-santos-latin-america-9:177712"
+    },
+    {
+      "name": "Rodolfo Plaz Abreu",
+      "firm": "Torres Plaz & Araujo",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/rodolfo-plaz-abreu-latin-america-9:32024"
+    },
+    {
+      "name": "Humberto Romero-Muci",
+      "firm": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/humberto-romero-muci-latin-america-9:30291"
+    },
+    {
+      "name": "Jesús Alberto Sol Gil",
+      "firm": "Sol, Caballero & Asociados",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 14,
+      "edition": 2027,
+      "profile_path": "/lawyer/jesus-alberto-sol-gil-latin-america-9:1192233"
+    },
+    {
+      "name": "Juan Carlos Castillo Carvajal",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-carlos-castillo-carvajal-latin-america-9:715373"
+    },
+    {
+      "name": "Juan Carlos Garantón-Blanco",
+      "firm": "Torres Plaz & Araujo",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-carlos-garanton-blanco-latin-america-9:140428"
+    },
+    {
+      "name": "Juan Korody Tagliaferro",
+      "firm": "Palacios, Torres & Korody",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 13,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-korody-tagliaferro-latin-america-9:1107551"
+    },
+    {
+      "name": "Leonardo Palacios Márquez",
+      "firm": "Palacios, Torres & Korody",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/leonardo-palacios-marquez-latin-america-9:177621"
+    },
+    {
+      "name": "Ronald Evans",
+      "firm": "Baker McKenzie SC",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/ronald-evans-latin-america-9:30292"
+    },
+    {
+      "name": "Jorge A Jraige Roa",
+      "firm": "ArnStein Legal",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/jorge-a-jraige-roa-latin-america-9:414619"
+    },
+    {
+      "name": "José Valecillos",
+      "firm": "D'Empaire",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 8,
+      "edition": 2027,
+      "profile_path": "/lawyer/jose-valecillos-latin-america-9:25440298"
+    },
+    {
+      "name": "María Carolina Cano González",
+      "firm": "ARAQUEREYNA",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375"
+    },
+    {
+      "name": "Andrés L Halvorssen",
+      "firm": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/andres-l-halvorssen-latin-america-9:266485"
+    },
+    {
+      "name": "Elina Pou",
+      "firm": "LEĜA",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 13,
+      "edition": 2027,
+      "profile_path": "/lawyer/elina-pou-latin-america-9:25334999"
+    },
+    {
+      "name": "Elvira Dupouy Mendoza",
+      "firm": "Rodríguez & Mendoza",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/elvira-dupouy-mendoza-latin-america-9:414622"
+    },
+    {
+      "name": "José Rafael Belisario Rincón",
+      "firm": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/jose-rafael-belisario-rincon-latin-america-9:26613166"
+    },
+    {
+      "name": "Ramón Andrade",
+      "firm": "Ponte Andrade & Casanova",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/ramon-andrade-latin-america-9:26234652"
+    },
+    {
+      "name": "Rosa Caballero",
+      "firm": "Sol, Caballero & Asociados",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 9,
+      "edition": 2027,
+      "profile_path": "/lawyer/rosa-caballero-latin-america-9:25436122"
+    },
+    {
+      "name": "Serviliano Abache",
+      "firm": "Baker McKenzie",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 3,
+      "edition": 2027,
+      "profile_path": "/lawyer/serviliano-abache-latin-america-9:27174803"
+    },
+    {
+      "name": "Valentina Cabrera Medina",
+      "firm": "Torres Plaz & Araujo",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/valentina-cabrera-medina-latin-america-9:412572"
+    },
+    {
+      "name": "Manuel Iturbe Alarcón",
+      "firm": "Travieso Evans Arria Rengel & Paz",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/manuel-iturbe-alarcon-latin-america-9:347688"
+    },
+    {
+      "name": "Moisés Vallenilla",
+      "firm": "Dentons",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/moises-vallenilla-latin-america-9:140883"
+    },
+    {
+      "name": "Alejandro Silva Ortiz",
+      "firm": "SLV Consultores",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandro-silva-ortiz-latin-america-9:26902877"
+    },
+    {
+      "name": "Ingrid García",
+      "firm": "ARAQUEREYNA",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 13,
+      "edition": 2027,
+      "profile_path": "/lawyer/ingrid-garcia-latin-america-9:1202668"
+    },
+    {
+      "name": "José Gregorio Torres",
+      "firm": "Palacios, Torres & Korody",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 11,
+      "edition": 2027,
+      "profile_path": "/lawyer/jose-gregorio-torres-latin-america-9:1107549"
+    },
+    {
+      "name": "María Genoveva Páez Pumar Linares",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 9,
+      "edition": 2027,
+      "profile_path": "/lawyer/maria-genoveva-paez-pumar-linares-latin-america-9:715376"
+    },
+    {
+      "name": "Andreina Lusinchi Martinez",
+      "firm": "Travieso Evans Arria Rengel & Paz",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/andreina-lusinchi-martinez-latin-america-9:26536467"
+    },
+    {
+      "name": "Carlos Fernández-Smith",
+      "firm": "AdvanTax Abogados S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-fernandez-smith-latin-america-9:266687"
+    },
+    {
+      "name": "Fernando Fernández",
+      "firm": "AdvanTax Abogados S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/fernando-fernandez-latin-america-9:266690"
+    },
+    {
+      "name": "Juan Andrés Osorio",
+      "firm": "Dentons",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-andres-osorio-latin-america-9:26613192"
+    },
+    {
+      "name": "Oscar Cunto",
+      "firm": "Dentons",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/oscar-cunto-latin-america-9:859204"
+    },
+    {
+      "name": "Rodrigo Lepervanche",
+      "firm": "VICTUM Legal",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/rodrigo-lepervanche-latin-america-9:26886252"
+    },
+    {
+      "name": "Ignacio Julio Andrade Cifuentes",
+      "firm": "Ponte Andrade & Casanova",
+      "band": "Star Associates",
+      "rank_type": "SA",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/ignacio-julio-andrade-cifuentes-latin-america-9:26880531"
+    }
+  ],
+  "total_firms": 17,
+  "total_individuals": 34,
+  "editorial_summary": "",
+  "observed_practice": "Tax",
+  "observed_jurisdiction": "Venezuela",
+  "edition": "2027",
+  "listing_complete": false,
+  "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+  "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+  "parser_version": "ranking-evidence-v1",
+  "scraped_at": "2026-10-08T17:48:51Z",
+  "cache_valid_until": "2026-11-07T17:48:51Z",
+  "cache_key": "chambers_tax_venezuela"
+}

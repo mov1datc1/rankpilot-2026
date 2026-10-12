@@ -1025,18 +1025,31 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   b7Val = sanitizeBannedSuperlatives(String(b7Val));
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
+  let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
+  if (c2Val) {
+    elements.push(para('', { spacing: { after: 120 } }));
+    elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
+  }
+
+  // Helper to fallback lawyer focus and standout work to editorial candidates
+  const normLawyer = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const findCandidate = (name: string) => (chambersData?.editorial_development?.candidates || []).find((c: any) => normLawyer(c.name) === normLawyer(name));
+
   // ═══ LEADING PARTNERS ═══
   elements.push(pageStart());
   elements.push(para('LEADING PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
   
   const partners = lawyers.filter((l: any) => l.isPartner);
   if (partners.length > 0) {
-    const partnerRows = partners.map((l: any) => [
-      l.name || '',
-      l.currentRank || l.currentRanking || '',
-      l.keyFocus || '',
-      l.standoutWork || '',
-    ]);
+    const partnerRows = partners.map((l: any) => {
+      const cand = findCandidate(l.name);
+      return [
+        l.name || '',
+        l.currentRank || l.currentRanking || l.current_ranking || '',
+        l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || '',
+        l.standoutWork || l.standout_work || cand?.submission_bio || '',
+      ];
+    });
     elements.push(dataTable('Information regarding Leading Partners', ['Name', 'Current Ranking', 'Key Focus', 'Standout Work'], partnerRows));
   }
 
@@ -1044,7 +1057,14 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   const nextGen = lawyers.filter((l: any) => l.isPartner && (l.currentRanking || '').toLowerCase().includes('next gen'));
   if (nextGen.length > 0) {
     elements.push(para('NEXT GENERATION PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
-    const ngRows = nextGen.map((l: any) => [l.name || '', l.keyFocus || '', l.standoutWork || '']);
+    const ngRows = nextGen.map((l: any) => {
+      const cand = findCandidate(l.name);
+      return [
+        l.name || '',
+        l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || '',
+        l.standoutWork || l.standout_work || cand?.submission_bio || ''
+      ];
+    });
     elements.push(dataTable('Next Generation Partners', ['Name', 'Key Focus', 'Standout Work'], ngRows));
   }
 
@@ -1052,7 +1072,14 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   const associates = lawyers.filter((l: any) => l.isPartner === false);
   if (associates.length > 0) {
     elements.push(para('LEADING ASSOCIATES', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
-    const assocRows = associates.map((l: any) => [l.name || '', l.keyFocus || '', l.standoutWork || '']);
+    const assocRows = associates.map((l: any) => {
+      const cand = findCandidate(l.name);
+      return [
+        l.name || '',
+        l.keyFocus || l.key_focus || cand?.category_rationale || cand?.why_candidate || '',
+        l.standoutWork || l.standout_work || cand?.submission_bio || ''
+      ];
+    });
     elements.push(dataTable('Leading Associates', ['Name', 'Key Focus', 'Standout Work'], assocRows));
   }
 

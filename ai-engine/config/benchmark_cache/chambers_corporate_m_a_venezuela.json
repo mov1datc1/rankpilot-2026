@@ -1,0 +1,567 @@
+{
+  "source": "chambers",
+  "practice_area": "Corporate/M&A",
+  "jurisdiction": "Venezuela",
+  "guide": "Latin America",
+  "structure": {
+    "has_firm_bands": true,
+    "has_individual_bands": true,
+    "firm_bands": [
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4"
+    ],
+    "individual_categories": [
+      "Senior Statespeople",
+      "Star Individuals",
+      "Band 1",
+      "Band 2",
+      "Band 3",
+      "Band 4",
+      "Up and Coming",
+      "Star Associates",
+      "Associates to watch"
+    ]
+  },
+  "firms": [
+    {
+      "name": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 2665,
+      "profile_path": "/department/dempaire-corporate-ma-latin-america-9:354:229:1:2665"
+    },
+    {
+      "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "edition": 2027,
+      "organisation_id": 3333,
+      "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-corporate-ma-latin-america-9:354:229:1:3333"
+    },
+    {
+      "name": "ARAQUEREYNA",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 2254,
+      "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254"
+    },
+    {
+      "name": "LEĜA",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 2256,
+      "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256"
+    },
+    {
+      "name": "InterJuris Abogados, S.C.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 236408,
+      "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408"
+    },
+    {
+      "name": "Travieso Evans Arria Rengel & Paz",
+      "band": "Band 2",
+      "rank_type": "2",
+      "edition": 2027,
+      "organisation_id": 2670,
+      "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670"
+    },
+    {
+      "name": "Baker McKenzie",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 9043,
+      "profile_path": "/department/baker-mckenzie-sc-corporate-ma-latin-america-9:354:229:1:2692"
+    },
+    {
+      "name": "Ponte Andrade & Casanova",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 22756886,
+      "profile_path": "/department/ponte-andrade-casanova-corporate-ma-latin-america-9:354:229:1:22756886"
+    },
+    {
+      "name": "SLV Consultores",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 23493985,
+      "profile_path": "/department/slv-consultores-corporate-ma-latin-america-9:354:229:1:23493985"
+    },
+    {
+      "name": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 2247,
+      "profile_path": "/department/tinoco-travieso-planchart-nunez-corporate-ma-latin-america-9:354:229:1:2247"
+    },
+    {
+      "name": "Dentons",
+      "band": "Band 3",
+      "rank_type": "3",
+      "edition": 2027,
+      "organisation_id": 7821,
+      "profile_path": "/department/dentons-corporate-ma-latin-america-9:354:229:1:7821"
+    },
+    {
+      "name": "Ágora Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23719512,
+      "profile_path": "/department/agora-abogados-corporate-ma-latin-america-9:354:229:1:23719512"
+    },
+    {
+      "name": "LANDAEZ Abogados – Consultores",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 23167606,
+      "profile_path": "/department/landaez-abogados-consultores-corporate-ma-latin-america-9:354:229:1:23167606"
+    },
+    {
+      "name": "Lapadula Esteban Cadenas - LEC Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 22817510,
+      "profile_path": "/department/lapadula-esteban-cadenas-lec-abogados-corporate-ma-latin-america-9:354:229:1:22817510"
+    },
+    {
+      "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 2252,
+      "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-corporate-ma-latin-america-9:354:229:1:2252"
+    },
+    {
+      "name": "Torres Plaz & Araujo",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 3335,
+      "profile_path": "/department/torres-plaz-araujo-corporate-ma-latin-america-9:354:229:1:3335"
+    },
+    {
+      "name": "WDA legal, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "edition": 2027,
+      "organisation_id": 9500,
+      "profile_path": "/department/wda-legal-sc-corporate-ma-latin-america-9:354:229:1:9500"
+    }
+  ],
+  "individuals": [
+    {
+      "name": "Alfredo Travieso Passios",
+      "firm": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/alfredo-travieso-passios-latin-america-9:138481"
+    },
+    {
+      "name": "Gustavo J Reyna",
+      "firm": "ARAQUEREYNA",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589"
+    },
+    {
+      "name": "Olga Nass de Massiani",
+      "firm": "Travieso Evans Arria Rengel & Paz",
+      "band": "Senior Statespeople",
+      "rank_type": "S",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/olga-nass-de-massiani-latin-america-9:31582"
+    },
+    {
+      "name": "Fulvio Italiani",
+      "firm": "D'Empaire",
+      "band": "Star Individuals",
+      "rank_type": "*",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/fulvio-italiani-latin-america-9:31590"
+    },
+    {
+      "name": "Inés Parra Wallis",
+      "firm": "D'Empaire",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/ines-parra-wallis-latin-america-9:311790"
+    },
+    {
+      "name": "Manuel Acedo Sucre",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/manuel-acedo-sucre-latin-america-9:32013"
+    },
+    {
+      "name": "María Eugenia Reyes",
+      "firm": "Ágora Abogados",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/maria-eugenia-reyes-latin-america-9:570356"
+    },
+    {
+      "name": "Simón Guevara Camacho",
+      "firm": "Travieso Evans Arria Rengel & Paz",
+      "band": "Band 1",
+      "rank_type": "1",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/simon-guevara-camacho-latin-america-9:251943"
+    },
+    {
+      "name": "Arnoldo Troconis",
+      "firm": "D'Empaire",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/arnoldo-troconis-latin-america-9:267484"
+    },
+    {
+      "name": "Carlos Eduardo Acedo Sucre",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-eduardo-acedo-sucre-latin-america-9:32012"
+    },
+    {
+      "name": "Luisa Acedo",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/luisa-acedo-latin-america-9:189871"
+    },
+    {
+      "name": "Pedro Ignacio Sosa Mendoza",
+      "firm": "ARAQUEREYNA",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116"
+    },
+    {
+      "name": "Sergio Casinelli",
+      "firm": "Dentons",
+      "band": "Band 2",
+      "rank_type": "2",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/sergio-casinelli-latin-america-9:338701"
+    },
+    {
+      "name": "Alejandro Silva Ortiz",
+      "firm": "SLV Consultores",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/alejandro-silva-ortiz-latin-america-9:26902877"
+    },
+    {
+      "name": "Diego Lepervanche",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 9,
+      "edition": 2027,
+      "profile_path": "/lawyer/diego-lepervanche-latin-america-9:25354741"
+    },
+    {
+      "name": "Guillermo de la Rosa Stolk",
+      "firm": "Torres Plaz & Araujo",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/guillermo-de-la-rosa-stolk-latin-america-9:209018"
+    },
+    {
+      "name": "Gustavo Enrique Planchart Pocaterra",
+      "firm": "Tinoco, Travieso, Planchart & Núñez",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/gustavo-enrique-planchart-pocaterra-latin-america-9:138482"
+    },
+    {
+      "name": "Ibrahím García",
+      "firm": "HEXA LEGAL",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 17,
+      "edition": 2027,
+      "profile_path": "/lawyer/ibrahim-garcia-latin-america-9:263437"
+    },
+    {
+      "name": "Ignacio Andrade Monagas",
+      "firm": "Ponte Andrade & Casanova",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 11,
+      "edition": 2027,
+      "profile_path": "/lawyer/ignacio-andrade-monagas-latin-america-9:1367434"
+    },
+    {
+      "name": "Juan Enrique Aigster",
+      "firm": "LEĜA",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-enrique-aigster-latin-america-9:482990"
+    },
+    {
+      "name": "Leoncio Landaez",
+      "firm": "LANDAEZ Abogados – Consultores",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/leoncio-landaez-latin-america-9:26898589"
+    },
+    {
+      "name": "Luis E López-Durán",
+      "firm": "LEĜA",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/luis-e-lopez-duran-latin-america-9:354442"
+    },
+    {
+      "name": "Manuel Reyna",
+      "firm": "ARAQUEREYNA",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057"
+    },
+    {
+      "name": "Rafael de Lemos Matheus",
+      "firm": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/rafael-de-lemos-matheus-latin-america-9:340326"
+    },
+    {
+      "name": "Ramón Andrade",
+      "firm": "Ponte Andrade & Casanova",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/ramon-andrade-latin-america-9:26234652"
+    },
+    {
+      "name": "Ramón Azpúrua",
+      "firm": "WDA legal, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 16,
+      "edition": 2027,
+      "profile_path": "/lawyer/ramon-azpurua-latin-america-9:481598"
+    },
+    {
+      "name": "Carlos E. Delgado Álvarez",
+      "firm": "InterJuris Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-e-delgado-alvarez-latin-america-9:178778"
+    },
+    {
+      "name": "María de los Ángeles Celis",
+      "firm": "InterJuris Abogados, S.C.",
+      "band": "Band 3",
+      "rank_type": "3",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/maria-de-los-angeles-celis-latin-america-9:339516"
+    },
+    {
+      "name": "Alvaro Posada",
+      "firm": "Ágora Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/alvaro-posada-latin-america-9:210039"
+    },
+    {
+      "name": "Carlos Luis Plaza Frachia",
+      "firm": "Palacios, Torres & Korody",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/carlos-luis-plaza-frachia-latin-america-9:25997403"
+    },
+    {
+      "name": "César Uzcátegui",
+      "firm": "LANDAEZ Abogados – Consultores",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 5,
+      "edition": 2027,
+      "profile_path": "/lawyer/cesar-uzcategui-latin-america-9:26119432"
+    },
+    {
+      "name": "Francisco Utrera",
+      "firm": "Rodríguez & Mendoza",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/francisco-utrera-latin-america-9:177713"
+    },
+    {
+      "name": "Homero Moreno Riera",
+      "firm": "SLV Consultores",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 1,
+      "edition": 2027,
+      "profile_path": "/lawyer/homero-moreno-riera-latin-america-9:27482789"
+    },
+    {
+      "name": "Jorge E. Paul Betancourt",
+      "firm": "Lapadula Esteban Cadenas - LEC Abogados",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 12,
+      "edition": 2027,
+      "profile_path": "/lawyer/jorge-e-paul-betancourt-latin-america-9:1511119"
+    },
+    {
+      "name": "Luisa Lepervanche",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/luisa-lepervanche-latin-america-9:25667655"
+    },
+    {
+      "name": "Pedro Urdaneta",
+      "firm": "LEĜA",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 19,
+      "edition": 2027,
+      "profile_path": "/lawyer/pedro-urdaneta-latin-america-9:347873"
+    },
+    {
+      "name": "René Plinio Lepervanche Orellana",
+      "firm": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 18,
+      "edition": 2027,
+      "profile_path": "/lawyer/rene-plinio-lepervanche-orellana-latin-america-9:427857"
+    },
+    {
+      "name": "Roberto Mas",
+      "firm": "D'Empaire",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 5,
+      "edition": 2027,
+      "profile_path": "/lawyer/roberto-mas-latin-america-9:1366516"
+    },
+    {
+      "name": "Juan José Delgado",
+      "firm": "InterJuris Abogados, S.C.",
+      "band": "Band 4",
+      "rank_type": "4",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/juan-jose-delgado-latin-america-9:179202"
+    },
+    {
+      "name": "Jesús Villegas Ruiz",
+      "firm": "Baker McKenzie SC",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 2,
+      "edition": 2027,
+      "profile_path": "/lawyer/jesus-villegas-ruiz-latin-america-9:27179149"
+    },
+    {
+      "name": "Daniela Del Vecchio",
+      "firm": "Travieso Evans Arria Rengel & Paz",
+      "band": "Up and Coming",
+      "rank_type": "U",
+      "years_ranked": 0,
+      "edition": 2027,
+      "profile_path": "/lawyer/daniela-del-vecchio-latin-america-9:25475158"
+    },
+    {
+      "name": "Ignacio Julio Andrade Cifuentes",
+      "firm": "Ponte Andrade & Casanova",
+      "band": "Star Associates",
+      "rank_type": "SA",
+      "years_ranked": 4,
+      "edition": 2027,
+      "profile_path": "/lawyer/ignacio-julio-andrade-cifuentes-latin-america-9:26880531"
+    },
+    {
+      "name": "Adriana Gonçalves",
+      "firm": "Baker McKenzie SC",
+      "band": "Associates to watch",
+      "rank_type": "W",
+      "years_ranked": 5,
+      "edition": 2027,
+      "profile_path": "/lawyer/adriana-goncalves-latin-america-9:25660914"
+    }
+  ],
+  "total_firms": 17,
+  "total_individuals": 43,
+  "editorial_summary": "",
+  "observed_practice": "Corporate/M&A",
+  "observed_jurisdiction": "Venezuela",
+  "edition": "2027",
+  "listing_complete": false,
+  "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+  "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+  "parser_version": "ranking-evidence-v1",
+  "scraped_at": "2026-10-08T18:27:44Z",
+  "cache_valid_until": "2026-11-07T18:27:44Z",
+  "cache_key": "chambers_corporate_m_a_venezuela"
+}
