@@ -51,8 +51,13 @@ export default function ReportsPage() {
 
   useEffect(() => {
     loadData();
-    const refreshInterval = window.setInterval(() => loadData(false), 12_000);
-    return () => window.clearInterval(refreshInterval);
+    const handleFocus = () => loadData(false);
+    window.addEventListener('focus', handleFocus);
+    const refreshInterval = window.setInterval(() => loadData(false), 10_000);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.clearInterval(refreshInterval);
+    };
   }, [loadData]);
 
   const handleDownload = (subId: string, format: 'docx' | 'pdf') => {
@@ -289,6 +294,12 @@ export default function ReportsPage() {
                 const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
                 const needsEvidence = editorialConf === 'insufficient' || editorialConf === 'low';
 
+                const verdict = cd?.release_verdict;
+                const defects = cd?.final_artifact_review?.judge?.defects || [];
+                const criticalDefects = defects.filter((d: any) => d.severity === 'critical');
+                const hasPendingReview = verdict?.status === 'needs_review' || criticalDefects.length > 0;
+                const isApproved = sub.status === 'Optimized' && (verdict?.passed === true || !verdict);
+
                 // Derive display status
                 let displayStatus = sub.status;
                 let statusBg = '#eff6ff';
@@ -300,6 +311,9 @@ export default function ReportsPage() {
                   statusBg = '#fee2e2'; statusColor = '#b91c1c'; StatusIcon = AlertTriangle; displayStatus = 'Rejected';
                 } else if (needsEvidence) {
                   statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle; displayStatus = 'Needs Evidence';
+                } else if (hasPendingReview && sub.status !== 'Optimized') {
+                  statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
+                  displayStatus = criticalDefects.length > 0 ? `Pendientes (${criticalDefects.length})` : 'Requiere revisión';
                 } else if (sub.status === 'Submitted' && !needsEvidence) {
                   statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
                 } else if (sub.status === 'Processing') {
@@ -378,24 +392,42 @@ export default function ReportsPage() {
                           <Download size={18} />
                         </button>
 
-                        <a
-                          title="Download Chambers Submission DOCX"
-                          href={`/api/generate-docx?id=${sub.id}&type=submission`}
-                          aria-disabled={isProcessing}
-                          style={{
-                            padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #c7d2fe',
-                            background: '#eef2ff',
-                            color: '#4338ca',
-                            cursor: isProcessing ? 'not-allowed' : 'pointer',
-                            pointerEvents: isProcessing ? 'none' : 'auto',
-                            opacity: isProcessing ? 0.5 : 1,
-                            transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            gap: '0.375rem', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 600
-                          }}
-                        >
-                          <FileText size={14} />
-                          DOCX
-                        </a>
+                        {isApproved ? (
+                          <a
+                            title="Download Chambers Submission DOCX"
+                            href={`/api/generate-docx?id=${sub.id}&type=submission`}
+                            aria-disabled={isProcessing}
+                            style={{
+                              padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #c7d2fe',
+                              background: '#eef2ff',
+                              color: '#4338ca',
+                              cursor: isProcessing ? 'not-allowed' : 'pointer',
+                              pointerEvents: isProcessing ? 'none' : 'auto',
+                              opacity: isProcessing ? 0.5 : 1,
+                              transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              gap: '0.375rem', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 600
+                            }}
+                          >
+                            <FileText size={14} />
+                            DOCX
+                          </a>
+                        ) : (
+                          <button
+                            title={hasPendingReview ? 'Resolver observaciones en Studio antes de descargar el documento oficial' : 'Borrador en preparación'}
+                            onClick={() => window.location.href = destination}
+                            style={{
+                              padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0',
+                              background: '#f8fafc',
+                              color: hasPendingReview ? '#b45309' : '#64748b',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              gap: '0.375rem', fontSize: '0.75rem', fontWeight: 600
+                            }}
+                          >
+                            <FileText size={14} />
+                            {hasPendingReview ? 'Resolver' : 'Borrador'}
+                          </button>
+                        )}
 
                         <button
                           title="Delete Report"
