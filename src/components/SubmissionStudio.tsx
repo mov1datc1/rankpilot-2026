@@ -1305,6 +1305,28 @@ export default function SubmissionStudio({
       {/* ═══ AUDIT TAB VIEW ═══ */}
       {activeTab === 'audit' && (
         <div style={{ maxWidth: '64rem', margin: '2rem auto', width: '100%', padding: '0 2rem' }}>
+          {lawyersList.length === 0 && (
+            <div style={{
+              background: '#F0F9FF',
+              border: '1px solid #BAE6FD',
+              borderRadius: '12px',
+              padding: '1rem 1.25rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem'
+            }}>
+              <Info size={20} color="#0284C7" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600, color: '#0369A1' }}>
+                  Análisis Estratégico Institucional (Submission Parcial sin Roster de Abogados)
+                </h4>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.82rem', color: '#0C4A6E', lineHeight: '1.45' }}>
+                  El documento fuente no incluyó la sección de perfiles individuales de abogados (B9/C). El Strategic Audit evalúa la fuerza probatoria a nivel institucional (asuntos, clientes, complejidad y narrativa B10). Para evaluar el rol de abogados individuales y su proyección en bandas de Chambers, agrega sus perfiles en la sección de Abogados.
+                </p>
+              </div>
+            </div>
+          )}
           {(!chambersData.editorial_review?.letter && !chambersData.analysis?.score && !chambersData.analysis?.audit_letter?.the_state_of_play) && (
             <div style={{
               background: '#EFF6FF',

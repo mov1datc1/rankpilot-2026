@@ -121,7 +121,7 @@ export default function PostIngestionWizardModal({
   const [reviewAll,setReviewAll]=useState(false);
   const [sourceFactReview,setSourceFactReview]=useState<any>(initialData.sourceFactReview || {});
   const [filingDetails,setFilingDetails]=useState<any>(initialData.filingDetails || {});
-  const [filingReviewed,setFilingReviewed]=useState(!!initialData.filingReviewed || (fullSourceReviewed && !filingDetailsGaps(initialData.filingDetails || {}).length && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
+  const [filingReviewed,setFilingReviewed]=useState(!!initialData.filingReviewed || (fullSourceReviewed && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
   const [firmName, setFirmName] = useState(sanitizeStr(initialData.firmName));
   const [practiceArea, setPracticeArea] = useState(initialPractice);
   const [location, setLocation] = useState(sanitizeStr(initialData.location));
@@ -172,7 +172,7 @@ export default function PostIngestionWizardModal({
     if (isOpen) {
       const pendingIndex = (initialData.matters || []).findIndex(needsInputReview);
       initialReview.current={lawyers:JSON.stringify(initialData.lawyers || []),matters:JSON.stringify(initialData.matters || [])};
-      const filingPending=filingDetailsGaps(initialData.filingDetails || {}).length>0 || (!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting'));
+      const filingPending=!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting');
       const firstPending=pendingExtractionIssues(initialData.sourceFactReview || {}).length ? 1 : filingPending ? 2 : (initialData.lawyers || []).some(lawyerInputPending) ? 3 : pendingIndex>=0 ? (fullSourceReviewed ? 4 : 4+Math.floor(pendingIndex/mattersChunkSize)) : 1;
       setCurrentStep(startAtLawyers ? 3 : correctionOnly ? 4 : reviewPending ? firstPending : 1);
       contentRef.current?.scrollTo({top: 0});
@@ -184,7 +184,7 @@ export default function PostIngestionWizardModal({
       setFilingDetails(initialData.filingDetails || {});
       setReviewAll(false);
       setSourceFactReview(initialData.sourceFactReview || {});
-      setFilingReviewed(!!initialData.filingReviewed || (fullSourceReviewed && !filingDetailsGaps(initialData.filingDetails || {}).length && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
+      setFilingReviewed(!!initialData.filingReviewed || (fullSourceReviewed && !Object.values(initialData.filingFieldStatus || {}).includes('conflicting')));
       setFirmName(sanitizeStr(initialData.firmName));
       setPracticeArea(calibratedPractice || sanitizeStr(initialData.practiceArea));
       setLocation(sanitizeStr(initialData.location));
@@ -196,13 +196,13 @@ export default function PostIngestionWizardModal({
 
   const sourceRecord={...sourceFactReview,firm_name:firmName,practice_area:practiceArea,location,original_b10:b10Text};
   const focused=fullSourceReviewed && !reviewAll && !correctionOnly;
-  const navigation=focused ? [1,...((filingDetailsGaps(initialData.filingDetails || {}).length>0 || (!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting'))) || !initialData.b10Text ? [2]:[]),...((initialData.lawyers || []).some(lawyerInputPending) ? [3]:[]),...matterChunks.map((_,i)=>i+4)] : Array.from({length:totalSteps},(_,i)=>i+1);
+  const navigation=focused ? [1,...(((!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) || !initialData.b10Text) ? [2]:[]),...((initialData.lawyers || []).some(lawyerInputPending) ? [3]:[]),...matterChunks.map((_,i)=>i+4)] : Array.from({length:totalSteps},(_,i)=>i+1);
   if (!isOpen) return null;
 
   const saveReview = async () => {
     if(isSaving)return;
     setIsSaving(true);setSaveError('');
-    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed:filingReviewed && !filingDetailsGaps(filingDetails).length,sourceFactReview:sourceRecord}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
+    try {await onComplete({...(!correctionOnly?{filingDetails,filingReviewed,sourceFactReview:sourceRecord}:{}),firmName,practiceArea,location,b10Text,lawyers,matters,expectedRevision,b10SourceChanged:!correctionOnly && b10Text!==initialB10Source,correctionOnly,lawyersChanged:JSON.stringify(lawyers)!==initialReview.current.lawyers,mattersChanged:JSON.stringify(matters)!==initialReview.current.matters});}
     catch(error) {setSaveError(error instanceof Error?error.message:'No se pudo guardar. Tus cambios siguen en esta ventana; vuelve a intentar.');}
     finally {setIsSaving(false);}
   };
@@ -210,7 +210,7 @@ export default function PostIngestionWizardModal({
     if (correctionOnly) { void saveReview(); return; }
     if(currentStep===1 && pendingExtractionIssues(sourceRecord).length) {setValidationError('Confirma los datos de la fuente señalados antes de continuar.');return;}
     if(currentStep===3 && lawyers.some(lawyerInputPending)) {setValidationError('Confirma las dudas señaladas en los perfiles.');return;}
-    if(currentStep===2 && (filingDetailsGaps(filingDetails).length || !filingReviewed)) {setValidationError('Completa y confirma los datos del departamento. Si aún no los tienes, guarda la revisión parcial y continúa después.');return;}
+    if(currentStep===2 && !filingReviewed) {setValidationError('Marca la casilla de confirmación para continuar. Los datos administrativos pendientes podrás completarlos en Studio antes de la exportación final.');return;}
     if (currentMatterChunk.some(needsInputReview)) {
       setValidationError('Resuelve las dudas, permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
       return;
@@ -218,14 +218,14 @@ export default function PostIngestionWizardModal({
     if (focused) {
       const next=navigation.find(step=>step>currentStep);
       if(next) {setCurrentStep(next);setIsEditingInline(false);}
-      else if(filingDetailsGaps(filingDetails).length || !filingReviewed) setCurrentStep(2);
+      else if(!filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) setCurrentStep(2);
       else if(pendingExtractionIssues(sourceRecord).length) setCurrentStep(1);
       else if(lawyers.some(lawyerInputPending)) setCurrentStep(3);
       else {const pendingChunk=matterChunks.findIndex(chunk=>chunk.some(needsInputReview));if(pendingChunk>=0)setCurrentStep(pendingChunk+4);else void saveReview();}
       return;
     }
     if (reviewPending) {
-      if(filingDetailsGaps(filingDetails).length || !filingReviewed) {setCurrentStep(2);return;}
+      if(!filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) {setCurrentStep(2);return;}
       if(pendingExtractionIssues(sourceRecord).length) {setCurrentStep(1);return;}
       if(lawyers.some(lawyerInputPending)) {setCurrentStep(3);return;}
       const pendingIndex = matters.findIndex(needsInputReview);
@@ -633,8 +633,18 @@ export default function PostIngestionWizardModal({
                 <h3>Datos del departamento</h3>
                 <p>Comprueba los datos recuperados antes de preparar los documentos. Los campos vacíos no quedaron identificados de forma inequívoca; puedes completarlos aquí.</p>
                 <FilingFields value={filingDetails} evidence={initialData.filingEvidence} statuses={initialData.filingFieldStatus} onChange={value=>{setFilingDetails(value);setFilingReviewed(false);}} />
-                {filingDetailsGaps(filingDetails).length>0 && <p role="status">Pendientes: {filingDetailsGaps(filingDetails).join('; ')}. Puedes guardar la revisión parcial y volver cuando tengas la información. La generación seguirá bloqueada.</p>}
-                <label><input type="checkbox" checked={filingReviewed && !filingDetailsGaps(filingDetails).length} disabled={filingDetailsGaps(filingDetails).length>0} onChange={e=>setFilingReviewed(e.target.checked)} /> Confirmo los datos del departamento.</label>
+                {filingDetailsGaps(filingDetails).length>0 && (
+                  <div style={{marginTop:8,padding:'10px 14px',background:'#FFFBEB',border:'1px solid #FCD34D',borderRadius:8,fontSize:'0.85rem',color:'#92400E'}}>
+                    <strong>Campos administrativos pendientes para plantilla oficial:</strong> {filingDetailsGaps(filingDetails).join('; ')}.
+                    <span style={{display:'block',marginTop:4,color:'#78350F'}}>
+                      Puedes continuar al Studio para el análisis estratégico de asuntos y B10, y completar estos datos administrativos antes de la exportación final.
+                    </span>
+                  </div>
+                )}
+                <label style={{display:'flex',alignItems:'center',gap:8,marginTop:12,cursor:'pointer',fontWeight:500,color:'#1E293B'}}>
+                  <input type="checkbox" checked={filingReviewed} onChange={e=>setFilingReviewed(e.target.checked)} />
+                  Confirmo que he revisado los datos del departamento.
+                </label>
               </section>
 
               <div style={{

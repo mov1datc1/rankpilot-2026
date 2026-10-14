@@ -735,7 +735,9 @@ class DocumentParser:
                 continue
             if not re.search(r"[A-Za-zÀ-ÖØ-öø-ÿ]", value):
                 continue
-            heads.append(value)
+            from utils.validators import is_valid_person_name
+            if is_valid_person_name(value):
+                heads.append(value)
         return list(dict.fromkeys(heads))
 
     @staticmethod

@@ -94,6 +94,9 @@ def extract_filing_fields(text):
                 continue
             if not re.fullmatch(r"[\wÀ-ÿ .’'-]{3,100}", cells[0]) or any(c.isdigit() for c in cells[0]):
                 continue
+            from utils.validators import is_valid_person_name
+            if not is_valid_person_name(cells[0]):
+                continue
             # Legacy Word converters retain HYPERLINK field instructions.
             email = next((m.group() for c in cells[1:] for m in re.finditer(r'(?<![\w@])[^\s@"<>:]+@[^\s@"<>]+\.[^\s@"<>]+', c)), '')
             phone = next((c for c in cells[1:] if re.fullmatch(r'[+\d ()-]{7,30}', c)), '')

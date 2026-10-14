@@ -217,7 +217,6 @@ def apply_unit(unit, review):
         if item.permission == 'confidential' and permission_quotes:
             permission = 'confidential'
         elif item.permission == 'publishable' and permission == 'confirmation_required' and permission_quotes:
-            # Explicit public wording is required; a bare 'No' is too ambiguous.
             if any(re.search(r'\bpublishable\b|\bpublicable\b|\bpublicaci[oó]n autorizada\b', q, re.I) and not re.search(r'non[- ]publishable|not publishable|no publicable', q, re.I) for q in permission_quotes):
                 permission = 'publishable'
         if not values['client'] and not any(i['field'] == 'client' for i in issues):
@@ -236,7 +235,6 @@ def apply_unit(unit, review):
         if any(i['field'] == 'value' for i in issues):
             m['valueConflict'] = previous.get('valueConflict') or ' / '.join(evidence['value']['quotes'])
         matters.append(m)
-    # Narrative mentions are not institutional declarations, even when literal.
     def outside_records(spans):
         return all(not any(s.start <= end and s.end >= start for start, end in ranges) for s in spans)
     read_facts(review.administration, ADMIN_FIELDS, lines)

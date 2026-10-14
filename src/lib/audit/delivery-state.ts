@@ -1,10 +1,16 @@
 import { publicationStatus, valueConflict, validValueResolution, pendingExtractionIssues } from './input-review';
 import { REVIEW_CONTRACT } from './review-versions';
-import {preparationInputIssues} from './preparation-input';
+import {preparationInputIssues, officialFilingGaps} from './preparation-input';
 /** Shared by Studio and the download endpoint. Optimization is not approval. */
 export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false, expectedContract = REVIEW_CONTRACT) {
   const verdict = data?.release_verdict || {};
   const errors: string[] = preparationInputIssues(data || {},matters);
+  if (requireArtifact) {
+    const gaps = officialFilingGaps(data || {});
+    if (gaps.length) {
+      errors.push(`Campos pendientes para plantilla oficial: ${gaps.join('; ')}.`);
+    }
+  }
   if (verdict.passed !== true || (verdict.status && !['passed', 'approved'].includes(verdict.status))) {
     if (!verdict.errors?.length) errors.push(data?.editorial_review ? 'Reintenta la revisión editorial para evaluar el borrador actual.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
   }

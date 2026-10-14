@@ -2017,8 +2017,14 @@ def analysis_node(state: AgentState) -> Dict:
     universe_facts.append(f"CROSS-BORDER MATTERS: {cross_border_count}")
     if cross_border_matters:
         universe_facts.append(f"CROSS-BORDER MATTER CLIENTS: {', '.join(cross_border_matters[:10])}")
-    universe_facts.append(f"TEAM MEMBERS INVOLVED: {len(team_members_set)}")
-    
+    # Inject lawyer profiles count and institutional scoping
+    canonical_lawyers = state.get("canonical_submission", {}).get("lawyers", []) or state.get("lawyers", [])
+    if canonical_lawyers:
+        universe_facts.append(f"LAWYER PROFILES PROVIDED: {len(canonical_lawyers)} ({', '.join(l.get('name', '') for l in canonical_lawyers if l.get('name'))})")
+    else:
+        universe_facts.append("LAWYER PROFILES PROVIDED: 0 (No individual lawyer profiles were included in the source submission).")
+        universe_facts.append("CRITICAL LAWYER DIRECTIVE: Because no individual lawyer profiles were submitted, do NOT evaluate individual lawyer standing or fabricate leadership roles. The audit MUST evaluate the submission strictly at the institutional/firm level (mandates, counterparties, B10 narrative). Explicitly state: 'El submission no incluye perfiles individuales de abogados; el análisis estratégico se restringe al nivel institucional de la firma.'")
+
     # v10.2: Inject current date for deadline accuracy
     current_date = datetime.now().strftime("%d %B %Y")
     universe_facts.append(f"CURRENT DATE: {current_date}")

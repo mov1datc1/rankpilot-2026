@@ -601,3 +601,62 @@ def validate_analysis_output(analysis: dict, strategic_context: dict) -> Tuple[d
     }
     
     return result, report
+
+
+# ─────────────────────────────────────────────
+# TRANSVERSAL PERSON NAME VALIDATOR
+# ─────────────────────────────────────────────
+
+_DISALLOWED_NAME_PREFIXES = (
+    'he ', 'she ', 'they ', 'we ', 'it ', 'his ', 'her ', 'their ', 'our ', 'the ', 'this ', 'that ', 'these ', 'those ',
+    'él ', 'ella ', 'ellos ', 'ellas ', 'su ', 'sus ', 'nuestro ', 'nuestra ', 'los ', 'las ', 'el ', 'la ', 'este ', 'esta ',
+    'highlight ', 'please ', 'note ', 'see ', 'indicate ', 'total ', 'nota ', 'ver ', 'favor ', 'indicar ', 'table ', 'tabla ',
+    'acting ', 'serving ', 'advising ', 'managing ', 'representing ', 'leading ', 'delivering ', 'assisting '
+)
+
+_DISALLOWED_NAME_TOKENS = {
+    'serves', 'delivers', 'advised', 'advises', 'leads', 'coordinates', 'participates', 'manages',
+    'worked', 'represented', 'acting', 'blends', 'specialises', 'specialising', 'operating', 'operates',
+    'handling', 'handles', 'including', 'includes', 'provides', 'providing', 'focuses', 'focusing',
+    'department', 'practice', 'firm', 'team', 'committee', 'board', 'association', 'counseling',
+    'university', 'universidad', 'chamber', 'chambers', 'partners', 'associates', 'lawyers', 'abogados',
+    'conference', 'conferences', 'governance', 'litigation', 'dispute', 'disputes', 'president', 'director',
+    'head', 'heads', 'lead', 'client', 'clients', 'comments', 'telephone', 'email', 'e-mail', 'number',
+    'highlight', 'red', 'dedicate', 'time', 'more', 'than', 'year', 'years', 'decade', 'decades',
+    'since', 'partner', 'associate', 'counsel', 'ranking', 'ranked', 'date', 'joined', 'status', 'seniority'
+}
+
+_NAME_PARTICLES = {'de', 'del', 'la', 'las', 'los', 'von', 'van', 'der', 'da', 'dos', 'di', 'du', 'y', 'e', 'san'}
+
+
+def is_valid_person_name(candidate: str) -> bool:
+    """Universal validator: distinguishes legitimate individual legal practitioners
+    from biographical prose, clause fragments, table headers, or template instructions.
+    Transversal across all directories, jurisdictions, and document types.
+    """
+    if not candidate or not isinstance(candidate, str):
+        return False
+    candidate = candidate.strip()
+    if len(candidate) < 3 or len(candidate) > 50:
+        return False
+    # Strip trailing punctuation common in truncated lines
+    clean = candidate.rstrip('.,;:')
+    if re.search(r'[;:\?!]', clean):
+        return False
+    lower = clean.lower()
+    if any(lower.startswith(p) for p in _DISALLOWED_NAME_PREFIXES):
+        return False
+    words = clean.split()
+    if len(words) < 2 or len(words) > 5:
+        return False
+    for w in words:
+        w_clean = re.sub(r'[^a-záéíóúüñ]', '', w.lower())
+        if w_clean in _DISALLOWED_NAME_TOKENS:
+            return False
+    for w in words:
+        if w.lower() in _NAME_PARTICLES:
+            continue
+        if not (w[0].isupper() or (len(w) > 1 and w[0] in '\"\'‘“' and w[1].isupper())):
+            return False
+    return True
+
