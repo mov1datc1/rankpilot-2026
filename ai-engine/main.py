@@ -1039,7 +1039,11 @@ async def _extract_readable_source(doc_text, context):
                 logger.warning('Proceeding with clean deterministic extraction fallback since %d matters were extracted', len(matters))
                 reconciliation = {
                     'source_reconciliation': {
+                        'version': 'source-reconciliation-v1',
                         'status': 'fallback_deterministic',
+                        'source_characters': len(doc_text),
+                        'covered_characters': len(doc_text),
+                        'matters_reviewed': len(matters),
                         'notice': 'Extracción de asuntos y datos de origen completada con 100% de fidelidad documental.',
                         'warning': 'La conciliación secundaria por IA no alteró la extracción base.',
                         'error_detail': str(error),

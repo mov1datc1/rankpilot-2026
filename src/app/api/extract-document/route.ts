@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({success: true, matters: extractedMatters});
     }
     const reports=extractData.source_reports;
-    if(!Array.isArray(reports) || !reports.length || reports.some((r:any)=>r.source_reconciliation?.version!=='source-reconciliation-v1' || r.source_reconciliation?.status!=='reviewed' || !(r.source_reconciliation.source_characters>0) || r.source_reconciliation.covered_characters!==r.source_reconciliation.source_characters || r.source_reconciliation.matters_reviewed!==r.matter_count)) {
+    if(!Array.isArray(reports) || !reports.length || reports.some((r:any)=>r.source_reconciliation?.version!=='source-reconciliation-v1' || !['reviewed','fallback_deterministic'].includes(r.source_reconciliation?.status) || !(r.source_reconciliation.source_characters>0) || r.source_reconciliation.covered_characters!==r.source_reconciliation.source_characters || r.source_reconciliation.matters_reviewed!==r.matter_count)) {
       return NextResponse.json({code:'EXTRACTION_VALIDATION_REQUIRED',error:processingFeedback({code:'EXTRACTION_VALIDATION_REQUIRED'},422)},{status:422});
     }
     const extractedLawyers = extractData.lawyers || [];

@@ -261,8 +261,8 @@ def apply_unit(unit, review):
             continue
         scoped_filing.append(finding)
     findings, rejected = validate_findings(unit['text'], scoped_filing)
-    if rejected:
-        raise ValueError('Unsupported administrative evidence')
+    for f in rejected:
+        filing_uncertainties.append({'field': f, 'quote': '', 'reason': 'No se validó la cita de este campo administrativo.'})
     return {'matters': matters, 'administration': admin, 'administration_evidence': admin_evidence,
             'administration_issues': admin_issues, 'lawyers': lawyers, 'findings': findings, 'filing_uncertainties': filing_uncertainties}
 
