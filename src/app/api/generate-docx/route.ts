@@ -104,10 +104,10 @@ export async function GET(request: NextRequest) {
       if(artifactHash(bytes)!==pair.audit_sha256) return NextResponse.json({error:'El Audit guardado no coincide con la revisión aprobada.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':'attachment; filename="Strategic_Audit.docx"'}});
     }
+    const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
     const isSubmission = docType === 'submission';
     const isOriginalSubmissionExport = isSubmission && exportMode === 'original';
     if (isSubmission && !isOriginalSubmissionExport) {
-      const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
       const artifact = chambersData.approved_artifact;
       if (isApproved && artifact && artifact.input_hash === deliveryInputHash(submission, chambersData)) {
         const requestedFormat = searchParams.get('template') || searchParams.get('format') || '';
@@ -248,7 +248,9 @@ export async function GET(request: NextRequest) {
     const buffer = await Packer.toBuffer(doc);
     const uint8 = new Uint8Array(buffer);
 
-    const prefix = docType === 'submission' ? 'Submission_Form' : 'Strategic_Audit';
+    const prefix = docType === 'submission'
+      ? (isOriginalSubmissionExport ? 'Submission_Original' : isApproved ? 'Submission_Form' : 'Submission_Borrador_Preliminar')
+      : (isApproved ? 'Strategic_Audit' : 'Strategic_Audit_Preliminar');
     return new NextResponse(uint8, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
