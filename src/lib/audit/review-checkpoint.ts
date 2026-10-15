@@ -31,7 +31,18 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     b10_draft: data.enhanced_b7 || data.original_b10 || '',
     c2_source: data.original_c2 || '', c2_draft: data.enhanced_c2 || '',
     editorial_development: data.editorial_development || null,
-    lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole), matters:matters.map(m=>({...m,client:recoverClientLegalName(m) || m.client})),
+    lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole),
+    matters: matters.map(m => {
+      const isPublic = m.publish_status === 'publishable' && m.confidentialityConfirmed !== false;
+      return {
+        ...m,
+        client: recoverClientLegalName(m) || m.client,
+        publish_status: isPublic ? 'publishable' : 'confidential',
+        isConfidential: !isPublic,
+        confidential: !isPublic,
+        confidentialityConfirmed: true
+      };
+    }),
   };
 }
 
