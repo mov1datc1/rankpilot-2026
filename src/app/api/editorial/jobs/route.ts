@@ -26,7 +26,7 @@ export async function POST(request:NextRequest) {
   const body=await request.json();
   const submission=await owned(body.submissionId);
   if(!submission) return NextResponse.json({error:'Expediente no disponible.'},{status:404});
-  const data:any=submission.chambersData || {};
+  const data:any={...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
   const inputIssues=preparationInputIssues(data,data.matters || submission.matters || []);
   if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
   const issues=scopeIssues(selectedScope(submission),data.source_reports || []);

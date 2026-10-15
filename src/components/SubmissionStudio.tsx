@@ -287,7 +287,11 @@ export default function SubmissionStudio({
     if (await handleSaveDraft()) router.push('/reports');
   };
 
-  const inputIssues=preparationInputIssues(chambersData,matters);
+  const inputIssues = preparationInputIssues({
+    ...chambersData,
+    firm_name: chambersData.firm_name || chambersData.firmName || (submission as any).firmName,
+    practice_area: currentPracticeArea
+  }, matters);
   const preparationBlocked=inputIssues.length>0 || !readiness.canOptimize;
   const resolvePreparationInputs=()=>{
     if(inputIssues.length){setReviewPending(true);setShowValidationWizard(true);}

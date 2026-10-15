@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // A browser draft is not a replacement for the persisted source register.
-    const chambersData = (submission.chambersData as any) || {};
+    const chambersData = {...((submission.chambersData as any) || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
     const inputIssues=preparationInputIssues(chambersData,chambersData.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);

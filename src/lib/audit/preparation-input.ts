@@ -8,8 +8,8 @@ import {needsInputReview,sourceReviewPending} from './input-review';
  */
 export function preparationInputIssues(data:any,matters:any[]=data?.matters || []):string[] {
   const issues: string[] = [];
-  const firm = data?.firm_name || data?.firmName;
-  const practice = data?.practice_area || data?.practiceArea;
+  const firm = data?.firm_name || data?.firmName || data?.firm;
+  const practice = data?.practice_area || data?.practiceArea || data?.practice || data?.metadata?.extracted_practice_area || data?.metadata?.calibrated_practice_area;
   if (!firm || !String(firm).trim()) issues.push('Indica el nombre de la firma.');
   if (!practice || !String(practice).trim()) issues.push('Indica el área de práctica.');
   if (!matters.length) issues.push('No hay asuntos cargados en el expediente.');
