@@ -34,8 +34,16 @@ def source_scope(text):
             ('Chambers & Partners', r'Please upload submissions online at:[^\n]*myaccount\.chambers\.com'),
             ('Legal 500', r'Please contact researchreports@legal500\.com for further information\.'),
             ('Legal 500', r'(?:THE\s+)?LEGAL\s+500[^\n]*(?:SUBMISSION|RESEARCH)\s+(?:FORM|TEMPLATE)'),
+            ('Leaders League', r'Leaders\s+League\s*[\r\n]+\s*(?:\d+,\s*boulevard\b|Paris\b)'),
+            ('Leaders League', r'(?:position\s+in\s+)?Leaders\s+League[’\x27]s\s+[^\n]*ranking'),
+            ('Leaders League', r'(?:THE\s+)?LEADERS\s+LEAGUE[^\n]*(?:SUBMISSION|RESEARCH)\s+(?:FORM|TEMPLATE)'),
+            ('IFLR1000', r'(?:THE\s+)?IFLR\s*1000[^\n]*(?:SUBMISSION|RESEARCH)\s+(?:FORM|TEMPLATE|PORTAL)'),
+            ('Latin Lawyer', r'(?:THE\s+)?LATIN\s+LAWYER[^\n]*(?:SUBMISSION|RESEARCH)\s+(?:FORM|TEMPLATE)'),
         ]
-        matches = [(value, m.group()) for value, pattern in signatures for m in [re.search(pattern, text[:6000], re.I)] if m]
+        intro_and_footers = text[:8000]
+        if '[Contenido adicional:' in text:
+            intro_and_footers += '\n' + text[text.find('[Contenido adicional:'):]
+        matches = [(value, m.group()) for value, pattern in signatures for m in [re.search(pattern, intro_and_footers, re.I)] if m]
         if len(set(value for value, _ in matches)) == 1:
             result['directory'] = {'value': matches[0][0], 'quote': matches[0][1]}
     return result
