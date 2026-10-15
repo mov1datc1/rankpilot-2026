@@ -17,12 +17,16 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (verdict.passed !== true || (verdict.status && !['passed', 'approved'].includes(verdict.status))) {
     if (!verdict.errors?.length) errors.push(data?.editorial_review ? 'Reintenta la revisión editorial para evaluar el borrador actual.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
   }
+  const isUnrankedClaim = (claim?: string | null) => !claim || /^(?:unranked|not ranked|sin ranking|none|n\/?a|primera inclusi[oó]n|first-time candidate)$/i.test(String(claim).trim());
   if (Array.isArray(verdict.errors) && verdict.errors.length) {
-    const details = verdict.errors.map(String).filter((message:string)=>message !== 'La revisión final está pendiente o tiene bloqueos.');
-    errors.push(...(details.length ? details : ['La revisión editorial del borrador está pendiente.']));
+    const details = verdict.errors.map(String).filter((message:string)=>{
+      if (message === 'La revisión final está pendiente o tiene bloqueos.') return false;
+      if (isUnrankedClaim(data?.ranking_claim || data?.current_band) && /posici[oó]n declarada/i.test(message)) return false;
+      return true;
+    });
+    if (details.length) errors.push(...details);
   }
-  if (data?.editorial_review?.selection_validated === false && !errors.length) errors.push('La selección de asuntos aún no ha superado la revisión de fuentes.');
-  if (data?.ranking_claim && data?.ranking_verification?.status !== 'verified_match') errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
+  if (data?.ranking_claim && !isUnrankedClaim(data.ranking_claim) && data?.ranking_verification?.status !== 'verified_match') errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
   for (const lawyer of data?.lawyers || []) {
     const resolution = lawyer.roleResolution;
     if (resolution && (resolution.confirmed !== true || !resolution.reason?.trim() || resolution.role !== lawyer.role || lawyer.isPartner !== (lawyer.role === 'Partner'))) {

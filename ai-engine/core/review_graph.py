@@ -688,7 +688,9 @@ def release_gate(state, require_judge=True):
         if resolution and (resolution.get('confirmed') is not True or str(resolution.get('value', '')).strip() != str(m.get('value', '')).strip() or not resolution.get('reason')):
             errors.append(f"Value confirmation no longer matches: {m['id']}")
         if m.get('valueConflict') or m.get('value_conflict') or m.get('sourceValueConflict'):errors.append(f"Value conflict unresolved: {m['id']}")
-    if state['package'].get('current_band') and state['package'].get('ranking_verification',{}).get('status') != 'verified_match':errors.append('La posición declarada no está verificada o discrepa de la fuente oficial. Revisa firma, país, práctica y edición.')
+    current_band = state['package'].get('current_band', '')
+    is_unranked = not current_band or bool(re.search(r'^(?:unranked|not ranked|sin ranking|none|n/?a|primera inclusi[oó]n|first-time candidate)$', str(current_band).strip(), re.I))
+    if current_band and not is_unranked and state['package'].get('ranking_verification',{}).get('status') != 'verified_match':errors.append('La posición declarada no está verificada o discrepa de la fuente oficial. Revisa firma, país, práctica y edición.')
     for lawyer in state['package'].get('lawyers', []):
         resolution = lawyer.get('roleResolution')
         if resolution and (resolution.get('confirmed') is not True or not str(resolution.get('reason') or '').strip() or resolution.get('role') != lawyer.get('role') or lawyer.get('isPartner') != (lawyer.get('role') == 'Partner')):

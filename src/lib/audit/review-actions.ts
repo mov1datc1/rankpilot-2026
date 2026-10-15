@@ -55,7 +55,18 @@ export function reviewIssues(data:any, errors:string[]) {
   });
   if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'retry-review' as ReviewDestination});
   const selection=issues.filter(issue=>issue.destination==='retry-selection');
-  return selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
+  const baseIssues = selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
+
+  // Deduplicate issues by title to avoid presenting duplicate pending cards to the user
+  const seenTitles = new Set<string>();
+  const deduplicated: typeof baseIssues = [];
+  for (const item of baseIssues) {
+    const key = `${item.title}-${item.destination}`;
+    if (seenTitles.has(key)) continue;
+    seenTitles.add(key);
+    deduplicated.push(item);
+  }
+  return deduplicated;
 }
 
 /** An answer is saved, not editorially approved. Bind it to the relevant current fields. */

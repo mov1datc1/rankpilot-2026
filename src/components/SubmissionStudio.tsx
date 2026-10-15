@@ -338,7 +338,7 @@ export default function SubmissionStudio({
     setActiveReviewMessage(message);
     setActiveTab('studio');
     window.setTimeout(() => {
-      const target=document.getElementById(destination === 'period' ? 'studio-research-period' : destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
+      const target=document.getElementById(destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
       if (target instanceof HTMLDetailsElement) target.open=true;
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
@@ -1647,13 +1647,6 @@ export default function SubmissionStudio({
             <div id="studio-delivery-review" style={{scrollMarginTop:100}}>
               {isOptimizingAll ? <section role="status" className="studio-review-panel"><strong>Optimización y revisión en curso</strong><p>{optimizeAllProgress?.stage} Las redacciones guardadas se conservan.</p></section> : reviewPanel}
             </div>
-            <details id="studio-research-period" className="studio-review-panel" aria-label="Periodo de trabajo del submission" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
-              <summary style={{cursor:'pointer',fontWeight:600}}>Periodo del directorio · opcional para optimizar</summary>
-              <p>Sirve para comprobar si la actividad de los asuntos corresponde al periodo solicitado. Puedes optimizar sin completarlo; la cobertura temporal quedará sin verificar. Añádelo solo si conoces las fechas de las instrucciones del directorio.</p>
-              <label>Desde <input aria-label="Inicio del periodo" type="date" value={periodFrom} onChange={e=>setPeriodFrom(e.target.value)} /></label>
-              <label>Hasta <input aria-label="Fin del periodo" type="date" value={periodTo} onChange={e=>setPeriodTo(e.target.value)} /></label>
-              <button type="button" disabled={isSavingDraft} onClick={()=>void saveResearchPeriod()}>{auditAction?'Guardar y volver al Audit':'Guardar periodo'}</button>{auditAction&&<button type="button" disabled={isSavingDraft} onClick={returnToAudit}>Volver al Audit sin cambios</button>}
-            </details>
             <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
               <strong>Verificación oficial del ranking</strong>
               <p>Al optimizar todo, consultamos la fuente oficial con la firma, el directorio, la práctica y el país ya seleccionados. Sin una edición específica, comparamos la tabla pública actual.</p>
