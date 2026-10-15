@@ -1,39 +1,52 @@
 const sourceMessages: Record<string, string> = {
-  "SOURCE_DIRECTORY_UNKNOWN": "No pudimos identificar el directorio de la plantilla. Sube el formulario del directorio elegido o utiliza la modalidad de fuentes libres.",
-  "SOURCE_DIRECTORY_MISMATCH": "El borrador pertenece a otro directorio. Cambia el directorio elegido o sube su formulario correspondiente.",
-  "SOURCE_TOO_LARGE": "El archivo excede los límites de lectura. Divide el documento por asuntos (máximo 30 MB por archivo).",
-  "SOURCE_UNSUPPORTED": "El contenido no es un DOCX, DOC, PDF o TXT compatible. Guarda una copia DOCX desde Word; renombrar la extensión no convierte el archivo.",
-  "SOURCE_CORRUPT": "El archivo está dañado o tiene una estructura ilegible. Ábrelo en Word y guarda una nueva copia DOCX.",
-  "SOURCE_ENCRYPTED": "El archivo está protegido con contraseña. Sube una copia sin contraseña.",
-  "SOURCE_REVISIONS": "El Word contiene cambios controlados pendientes. Acepta o rechaza las revisiones y guarda una copia antes de subirla.",
-  "SOURCE_EMBEDDED_CONTENT": "Hay contenido incrustado que no podemos leer íntegramente. Integra ese contenido como texto o tablas en un DOCX nuevo.",
-  "SOURCE_OCR_REQUIRED": "Hay páginas del PDF sin texto legible. Sube el Word original o aplica OCR a todas las páginas y revisa el resultado.",
-  "SOURCE_EMPTY": "El documento no contiene texto legible. Sube una versión con texto seleccionable y los asuntos completados.",
-  "SOURCE_TEXT_DAMAGED": "El texto contiene caracteres dañados. Vuelve a exportar el documento desde el original.",
-  "SOURCE_DOC_CONVERSION": "No pudimos convertir este Word antiguo con fiabilidad. Ábrelo en Word o LibreOffice y guárdalo como DOCX.",
-  "SOURCE_UNREADABLE": "No pudimos abrir o descargar el archivo. Comprueba que abre correctamente y vuelve a cargarlo.",
-  "SOURCE_DUPLICATE_LABELS": "Hay encabezados de asuntos repetidos. Corrige la numeración para evitar mezclar asuntos.",
-  "SOURCE_INCOMPLETE_MATTERS": "Hay asuntos con datos pero sin descripción legible del trabajo realizado. Completa esas descripciones antes de continuar.",
-  "SOURCE_UNGROUNDED_MATTERS": "No pudimos vincular los asuntos extraídos con fragmentos literales de la fuente. Sube el formulario DOCX completo o separa las notas por asunto.",
-  "SOURCE_IDENTITY_CONFLICT": "Los documentos indican firmas distintas. Comprueba que todas las fuentes correspondan al mismo submission."
+  "SOURCE_DIRECTORY_UNKNOWN": "No se reconoció el membrete o formato oficial del directorio en este archivo. Asegúrate de subir la plantilla oficial del directorio seleccionado o utiliza la 'Modalidad B: Documentos Dispersos' para subir notas y fuentes libres.",
+  "SOURCE_DIRECTORY_MISMATCH": "El documento cargado pertenece a otro directorio. Sube la plantilla oficial correspondiente o ajusta el directorio en el paso de calibración.",
+  "SOURCE_TOO_LARGE": "El archivo excede el límite máximo de lectura (30 MB). Divide el documento por asuntos antes de subirlo.",
+  "SOURCE_UNSUPPORTED": "El archivo no tiene un formato compatible (DOCX, DOC o PDF). Por favor abre el documento en Word y guárdalo como DOCX.",
+  "SOURCE_CORRUPT": "El archivo presenta daños en su estructura interna. Ábrelo en Word y guárdalo como una copia nueva en formato DOCX.",
+  "SOURCE_ENCRYPTED": "El archivo está protegido con contraseña. Por favor sube una copia sin contraseña.",
+  "SOURCE_REVISIONS": "El archivo contiene control de cambios pendientes. Acepta o rechaza las revisiones en Word y guarda una copia antes de cargarlo.",
+  "SOURCE_EMBEDDED_CONTENT": "El archivo contiene objetos incrustados no legibles. Transforma el contenido a texto o tablas nativas en Word.",
+  "SOURCE_OCR_REQUIRED": "El PDF contiene imágenes sin texto seleccionable. Aplica OCR o sube el documento Word original.",
+  "SOURCE_EMPTY": "No se encontró texto en el documento. Sube un archivo con los asuntos y campos completados.",
+  "SOURCE_TEXT_DAMAGED": "El texto contiene caracteres ilegibles o corruptos. Vuelve a exportar el documento desde Word.",
+  "SOURCE_DOC_CONVERSION": "No pudimos convertir este archivo Word antiguo (.doc). Guárdalo como .docx moderno desde Word antes de subirlo.",
+  "SOURCE_UNREADABLE": "No fue posible leer el archivo. Comprueba que no esté dañado y vuelve a intentarlo.",
+  "SOURCE_DUPLICATE_LABELS": "Existen números de asunto duplicados en el documento. Corrige la numeración de los asuntos.",
+  "SOURCE_INCOMPLETE_MATTERS": "Hay asuntos sin una descripción suficiente del trabajo realizado. Completa la narrativa de los asuntos.",
+  "SOURCE_UNGROUNDED_MATTERS": "No pudimos vincular los asuntos con el contenido del documento. Sube la plantilla completa con los mandatos desarrollados.",
+  "SOURCE_IDENTITY_CONFLICT": "Los documentos cargados mencionan firmas de abogados diferentes. Asegúrate de que correspondan al mismo despacho."
 };
+
+function formatSourceName(source?: string): string {
+  if (!source) return '';
+  const s = String(source).trim();
+  if (s.length > 40) {
+    const ext = s.includes('.') ? '.' + s.split('.').pop() : '';
+    return `"${s.slice(0, 32)}…${ext}": `;
+  }
+  return `"${s}": `;
+}
 
 /** Product messages describe the outcome and recovery, never raw provider traces. */
 export function processingFeedback(payload: any, status = 0, operation: 'extract' | 'review' | 'optimize' = 'extract') {
   const code = String(payload?.code || (status === 409 ? 'DRAFT_CONFLICT' : status === 401 ? 'SESSION_EXPIRED' : ''));
   if (code === 'SCOPE_CONFLICT' || code === 'SCOPE_REQUIRED') return Array.isArray(payload?.issues) && payload.issues.length ? payload.issues.map((issue: any)=>String(issue.message || '')).join(' ') : 'Revisa el directorio, la práctica y la jurisdicción seleccionados y su correspondencia con el documento.';
-  if (code === 'FILING_RECONCILIATION_UNAVAILABLE' || code === 'SOURCE_RECONCILIATION_UNAVAILABLE') return 'El documento se leyó, pero no terminó el contraste de datos con IA. El borrador guardado se conserva; vuelve a intentar la lectura.';
-  if (code === 'AI_CREDIT_EXHAUSTED') return 'El proveedor de IA no tiene crédito disponible. El administrador debe revisar la facturación antes de continuar. Las redacciones y etapas guardadas se conservan.';
-  if (code === 'AI_OUTPUT_LIMIT') return 'La respuesta de IA quedó incompleta dentro del límite de tokens. Se conserva el avance guardado. No se reintentó automáticamente; contacta con soporte para ajustar esta etapa.';
-  if (code === 'AI_REVIEW_UNAVAILABLE') return 'Esta etapa de IA no terminó. Las etapas anteriores se conservan. Espera antes de reanudar para evitar duplicar una petición que aún esté en curso.';
+  if (code === 'FILING_RECONCILIATION_UNAVAILABLE' || code === 'SOURCE_RECONCILIATION_UNAVAILABLE') return 'El documento se leyó correctamente, pero el contraste con IA requiere un reintento. Tu borrador está guardado; vuelve a intentar la extracción.';
+  if (code === 'AI_CREDIT_EXHAUSTED') return 'El proveedor de IA no tiene crédito disponible. Por favor contacta al administrador para revisar la facturación.';
+  if (code === 'AI_OUTPUT_LIMIT') return 'La respuesta superó el límite de tokens. Tu avance está guardado; contacta a soporte para calibrar esta etapa.';
+  if (code === 'AI_REVIEW_UNAVAILABLE') return 'Esta etapa de análisis no concluyó. Tu avance se conserva; por favor espera unos momentos antes de reintentar.';
   if (code === 'SOURCE_PREFLIGHT_FAILED' || sourceMessages[code]) {
     const failures = Array.isArray(payload?.source_errors) ? payload.source_errors : [{code}];
     const details = failures.map((failure: any) => {
-      if (failure.code === 'SOURCE_DIRECTORY_MISMATCH' && failure.detected && failure.selected) return `${failure.source || 'El borrador'}: la plantilla es de ${failure.detected}, pero elegiste ${failure.selected}. Sube la plantilla correspondiente o cambia el directorio.`;
+      const srcPrefix = formatSourceName(failure.source);
+      if (failure.code === 'SOURCE_DIRECTORY_MISMATCH' && failure.detected && failure.selected) {
+        return `${srcPrefix}La plantilla corresponde a ${failure.detected}, pero seleccionaste ${failure.selected}. Sube la plantilla de ${failure.selected} o cambia el directorio en la calibración.`;
+      }
       const pages = Array.isArray(failure.pages) ? failure.pages.filter((page: any) => Number.isInteger(page) && page > 0) : [];
-      return `${failure.source ? String(failure.source) + ': ' : ''}${sourceMessages[failure.code] || sourceMessages.SOURCE_UNREADABLE}${pages.length ? ' Páginas: ' + pages.join(', ') + '.' : ''}`;
+      return `${srcPrefix}${sourceMessages[failure.code] || sourceMessages.SOURCE_UNREADABLE}${pages.length ? ' (Páginas: ' + pages.join(', ') + ')' : ''}`;
     });
-    return `${details.join(' ')} No iniciamos la revisión; el borrador guardado se conserva.`;
+    return details.join(' ');
   }
   if (code === 'EXTRACTION_VALIDATION_REQUIRED') return 'La lectura no incluyó una comprobación de integridad completa. No abrimos el asistente ni reemplazamos tu borrador. Reintenta la extracción; si persiste, contacta con soporte.';
   if (code === 'NO_LEGAL_MATTERS') return 'No encontramos asuntos legales en estas fuentes. Añade un documento o notas que indiquen cliente, trabajo realizado y estado del asunto. El borrador guardado se conserva.';

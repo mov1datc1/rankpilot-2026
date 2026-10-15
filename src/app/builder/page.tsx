@@ -938,17 +938,33 @@ function BuilderContent() {
             <div style={{
               background: '#FEF2F2',
               border: '1px solid #FECACA',
-              borderRadius: '8px',
-              padding: '0.75rem 1rem',
+              borderRadius: '10px',
+              padding: '1rem 1.25rem',
               marginTop: '1.25rem',
-              color: '#B91C1C',
-              fontSize: '0.85rem',
+              color: '#991B1B',
+              fontSize: '0.88rem',
               display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
             }}>
-              <AlertCircle size={16} />
-              <div role="alert"><p style={{margin:0}}>{errorMessage}</p>{savedDraftId && <p style={{marginBottom:0}}>Los datos iniciales ya están guardados. Puedes reintentar aquí con los archivos seleccionados o <a href={`/reports/${savedDraftId}`}>abrir el borrador</a>. Las notas aún no extraídas siguen solamente en esta pantalla.</p>}</div>
+              <AlertCircle size={20} style={{ color: '#DC2626', flexShrink: 0, marginTop: '2px' }} />
+              <div role="alert" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
+                <span style={{ fontWeight: 700, color: '#991B1B', fontSize: '0.92rem' }}>
+                  Atención con el archivo cargado
+                </span>
+                <p style={{ margin: 0, lineHeight: 1.5, color: '#7F1D1D' }}>
+                  {errorMessage}
+                </p>
+                <div style={{ fontSize: '0.82rem', color: '#B91C1C', borderTop: '1px solid #FECACA', paddingTop: '0.45rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span>💡 <strong>¿Qué hacer?</strong> Puedes cambiar de archivo arriba o regresar al <strong>Paso 1</strong> para procesar documentos en modalidad libre.</span>
+                  {savedDraftId && (
+                    <a href={`/reports/${savedDraftId}`} style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'underline' }}>
+                      Ver borrador guardado →
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
