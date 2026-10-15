@@ -363,22 +363,22 @@ def selection_gate(state):
         # A clipped literal clause may end in a period instead of the source comma.
         # Preserve every internal word, number and punctuation mark; require token boundaries.
         literal=' '.join(table_text_view(quote).split()).casefold().rstrip('.,;:!?')
-        supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+        supported=bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary','otherInfo'])
         if not supported and quote:
             bound = bind_quote(quote, m)
             if bound:
                 d['source_quote'] = bound
                 literal = ' '.join(table_text_view(bound).split()).casefold().rstrip('.,;:!?')
-                supported = bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary'])
+                supported = bool(literal) and any(re.search(r'(?<!\w)'+re.escape(literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary','otherInfo'])
         if not supported and not quote:
-            for src_key in ['summary', 'rawNotes', 'source_excerpt']:
+            for src_key in ['summary', 'rawNotes', 'source_excerpt', 'otherInfo']:
                 val = str(m.get(src_key) or '').strip()
                 if not val: continue
                 chunks = [c.strip() for c in re.split(r'[\r\n]+|[.!?]\s+', val) if len(c.strip().split()) >= 4]
                 if chunks:
                     for chunk in chunks:
                         cand_literal = ' '.join(table_text_view(chunk).split()).casefold().rstrip('.,;:!?')
-                        if cand_literal and any(re.search(r'(?<!\w)'+re.escape(cand_literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary']):
+                        if cand_literal and any(re.search(r'(?<!\w)'+re.escape(cand_literal)+r'(?!\w)', ' '.join(table_text_view(m.get(k)).split()).casefold()) for k in ['source_excerpt','rawNotes','summary','otherInfo']):
                             d['source_quote'] = chunk
                             literal = cand_literal
                             supported = True
