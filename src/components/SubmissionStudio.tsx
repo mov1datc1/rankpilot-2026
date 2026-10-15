@@ -1657,8 +1657,25 @@ export default function SubmissionStudio({
               <label style={{display:'block'}}>País de la tabla <input aria-label="País de la tabla" value={rankingCountry} onChange={e=>setRankingCountry(e.target.value)} placeholder="Ej. Mexico" style={{maxWidth:'100%'}} /></label>
               <button type="button" disabled={checkingRanking} onClick={()=>void checkRanking()}>{checkingRanking?'Consultando fuente oficial…':'Guardar declaración y verificar'}</button>
               </details>
-              <p role="status">{chambersData.ranking_verification?.message || 'La consulta se realizará durante la revisión de la optimización.'}</p>
-              {chambersData.ranking_verification?.observed_band && <p>Posición observada: {chambersData.ranking_verification.observed_band}. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
+              {chambersData.ranking_verification?.message ? (
+                <div style={{
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  marginTop: 10,
+                  marginBottom: 10,
+                  background: chambersData.ranking_verification.status === 'verified_mismatch' ? '#FFFBEB' : '#F0FDF4',
+                  border: `1px solid ${chambersData.ranking_verification.status === 'verified_mismatch' ? '#FCD34D' : '#86EFAC'}`,
+                  color: chambersData.ranking_verification.status === 'verified_mismatch' ? '#92400E' : '#166534',
+                  fontSize: 13,
+                  lineHeight: 1.5
+                }}>
+                  <strong>{chambersData.ranking_verification.status === 'verified_mismatch' ? '⚠ Discrepancia detectada en fuente oficial:' : '✓ Verificación oficial de ranking:'}</strong>
+                  <p style={{margin:'4px 0 0'}}>{chambersData.ranking_verification.message}</p>
+                </div>
+              ) : (
+                <p role="status" style={{color:'#64748B',fontSize:13,marginTop:10}}>La consulta se realizará durante la revisión de la optimización.</p>
+              )}
+              {chambersData.ranking_verification?.observed_band && <p style={{fontSize:13,color:'#334155'}}>Posición observada: <strong>{chambersData.ranking_verification.observed_band}</strong>. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
               {chambersData.ranking_verification?.individuals?.length > 0 && <details><summary>Verificación individual de candidatos</summary>
                 <p>Se contrasta persona y firma en la misma tabla oficial, sin otra llamada de IA. Un ranking en otra práctica o edición no se transfiere a esta candidatura.</p>
                 <ul>{chambersData.ranking_verification.individuals.map((item:any,index:number)=><li key={index}><strong>{item.lawyer_name}</strong>: {String(item.status).startsWith('verified') ? `${item.observed_band} · ${item.practice_area} · ${item.jurisdiction} · ${item.evidence?.edition || 'tabla actual'}` : item.message}</li>)}</ul>

@@ -40,8 +40,20 @@ def compare_claim(firm, directory, practice, jurisdiction, claimed_band, edition
         result.update(status='scope_mismatch',message='La página no acredita la práctica y el país solicitados.')
         return result
     matches = [f for f in benchmark.get('firms',[]) if normalize(f.get('name')) == normalize(firm) and normalize(firm)]
+    is_unranked = not claimed_band or bool(re.search(r'^(?:unranked|not ranked|sin ranking|none|n/?a|primera inclusi[oó]n|first-time candidate)$', str(claimed_band).strip(), re.I))
+    dir_label = 'Chambers' if 'chambers' in directory.lower() else 'The Legal 500' if '500' in directory.lower() else directory
     if not matches:
-        result.update(status='not_found',message='No se encontró una coincidencia exacta de la firma en esta tabla. Revisar identidad y alcance; no se ha acreditado que esté sin ranking.')
+        if is_unranked:
+            result.update(
+                status='verified_unranked',
+                observed_band='Unranked',
+                message=f"Colocaste la firma como unranked, y la revisión oficial en {dir_label} confirma que no figura en ninguna de las bandas correspondientes de {practice} ({jurisdiction}), ratificando la postulación de primera inclusión."
+            )
+            return result
+        result.update(
+            status='not_found',
+            message=f"Declaraste posición ({claimed_band}), pero la revisión oficial en {dir_label} no encontró a la firma en las bandas de {practice} ({jurisdiction}). Revisa la identidad de la firma o el alcance consultado."
+        )
         return result
     if len(matches) != 1:
         result.update(status='ambiguous',message='Hay más de una coincidencia; se necesita resolver la identidad de la firma.')
@@ -57,14 +69,19 @@ def compare_claim(firm, directory, practice, jurisdiction, claimed_band, edition
     if not current_table and str(edition) != str(benchmark['edition']):
         result.update(status='edition_mismatch',message='La edición encontrada no coincide con la declarada; no se comparan como si fueran el mismo ranking.')
         return result
-    if not claimed_band:
-        result.update(status='verified_observation',message='Posición oficial observada para esta firma, práctica, país y edición; no había una banda declarada para comparar.')
+    if is_unranked:
+        result.update(
+            status='verified_mismatch',
+            message=f"Discrepancia detectada: colocaste la firma como unranked, pero la revisión oficial en {dir_label} confirma que figura en {match.get('band')} para {practice} ({jurisdiction}). Puedes definir o confirmar esta posición."
+        )
+    elif not claimed_band:
+        result.update(status='verified_observation',message=f"Posición oficial observada ({match.get('band')}) para esta firma, práctica, país y edición; no había una banda declarada para comparar.")
     elif normalize(claimed_band) == normalize(match.get('band')):
-        result.update(status='verified_match',message='La posición declarada coincide con la tabla oficial para esta edición, práctica y país.')
+        result.update(status='verified_match',message=f"La posición declarada ({claimed_band}) coincide con la tabla oficial en {dir_label} para {practice} ({jurisdiction}).")
     else:
-        result.update(status='verified_mismatch',message=f"Discrepancia: se declaró {claimed_band}, pero la tabla oficial muestra {match.get('band')} para esta edición, práctica y país.")
+        result.update(status='verified_mismatch',message=f"Discrepancia detectada: se declaró {claimed_band}, pero la tabla oficial en {dir_label} confirma {match.get('band')} para {practice} ({jurisdiction}). Puedes definir o confirmar esta posición.")
     if current_table:
-        result['message'] += ' Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.'
+        result['message'] += ' Comparación con la tabla pública actual consultada.'
     return result
 
 
@@ -85,7 +102,10 @@ def compare_individual_claim(lawyer, firm, directory, practice, jurisdiction, ed
     result['lawyer_name'] = name
     result['firm_name'] = firm
     result['subject_type'] = 'individual'
-    if result['status'] == 'not_found':
+    dir_label = 'Chambers' if 'chambers' in directory.lower() else 'The Legal 500' if '500' in directory.lower() else directory
+    if result['status'] == 'verified_unranked':
+        result['message'] = f"El abogado se declaró como sin ranking (Unranked) y la consulta oficial en {dir_label} confirma que no figura en las bandas individuales de esta tabla."
+    elif result['status'] == 'not_found':
         result['message'] = 'No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.'
     elif result['status'].startswith('verified'):
         result['message'] = 'Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.'

@@ -394,7 +394,7 @@ def selection_gate(state):
             if other['id']!=d['matter_id'] and label:
                 rationale=re.sub(r'(?<!\w)'+re.escape(label)+r'(?!\w)','[registered entity]',rationale)
         for issue in factual_issues(text + ' ' + str(m.get('value') or ''), rationale, d['matter_id']):
-            if issue['code'] in ('PENDING_AS_VICTORY', 'UNSUPPORTED_CURRENCY'):
+            if issue['code'] == 'UNSUPPORTED_CURRENCY':
                 errors.append(issue['message'])
             elif issue['code'] == 'UNSUPPORTED_NUMBER':
                 from decimal import Decimal
@@ -690,7 +690,9 @@ def release_gate(state, require_judge=True):
         if m.get('valueConflict') or m.get('value_conflict') or m.get('sourceValueConflict'):errors.append(f"Value conflict unresolved: {m['id']}")
     current_band = state['package'].get('current_band', '')
     is_unranked = not current_band or bool(re.search(r'^(?:unranked|not ranked|sin ranking|none|n/?a|primera inclusi[oó]n|first-time candidate)$', str(current_band).strip(), re.I))
-    if current_band and not is_unranked and state['package'].get('ranking_verification',{}).get('status') != 'verified_match':errors.append('La posición declarada no está verificada o discrepa de la fuente oficial. Revisa firma, país, práctica y edición.')
+    verif_status = state['package'].get('ranking_verification',{}).get('status')
+    if current_band and not is_unranked and verif_status not in ('verified_match', 'verified_unranked'):
+        errors.append('La posición declarada no está verificada o discrepa de la fuente oficial. Revisa firma, país, práctica y edición.')
     for lawyer in state['package'].get('lawyers', []):
         resolution = lawyer.get('roleResolution')
         if resolution and (resolution.get('confirmed') is not True or not str(resolution.get('reason') or '').strip() or resolution.get('role') != lawyer.get('role') or lawyer.get('isPartner') != (lawyer.get('role') == 'Partner')):
@@ -702,7 +704,9 @@ def release_gate(state, require_judge=True):
     verdict = {'passed':not errors,'status':'passed' if not errors else 'needs_review','errors':list(dict.fromkeys(errors))}
     if not require_judge or not state['package'].get('rendered_artifact'):
         # Permission to construct bytes is never permission to deliver them.
-        return {'render_gate':verdict,'release_verdict':{'passed':False,'status':'awaiting_artifact_review','errors':verdict['errors']}}
+        render_errors = [e for e in errors if not ('posición declarada' in e.lower() or 'ranking' in e.lower())]
+        render_verdict = {'passed':not render_errors,'status':'passed' if not render_errors else 'needs_review','errors':list(dict.fromkeys(render_errors))}
+        return {'render_gate':render_verdict,'release_verdict':{'passed':False,'status':'awaiting_artifact_review','errors':verdict['errors']}}
     return {'release_verdict':verdict}
 
 def select_or_reuse(state):

@@ -26,7 +26,9 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
     });
     if (details.length) errors.push(...details);
   }
-  if (data?.ranking_claim && !isUnrankedClaim(data.ranking_claim) && data?.ranking_verification?.status !== 'verified_match') errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
+  if (requireArtifact && data?.ranking_claim && !isUnrankedClaim(data.ranking_claim) && !['verified_match','verified_unranked'].includes(data?.ranking_verification?.status)) {
+    errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
+  }
   for (const lawyer of data?.lawyers || []) {
     const resolution = lawyer.roleResolution;
     if (resolution && (resolution.confirmed !== true || !resolution.reason?.trim() || resolution.role !== lawyer.role || lawyer.isPartner !== (lawyer.role === 'Partner'))) {
@@ -44,5 +46,13 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
   if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== expectedContract.policy || data.completed_renderer_version !== expectedContract.renderer || data.completed_artifact_review_version !== expectedContract.artifact)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
   const warnings = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
-  return { approved: errors.length === 0, errors: [...new Set(errors)], warnings, label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
+  const dirLabel = /500/i.test(data?.targetDirectory || data?.directory || '') ? 'The Legal 500' : 'Chambers';
+  if (isUnrankedClaim(data?.ranking_claim || data?.current_band)) {
+    if (data?.ranking_verification?.status === 'verified_unranked' || data?.ranking_verification?.message) {
+      warnings.push(data.ranking_verification.message || `Colocaste la firma como unranked, y la revisión en ${dirLabel} confirma que no apareciste en ninguna de las bandas correspondientes, ratificando la postulación de primera inclusión.`);
+    }
+  } else if (data?.ranking_verification?.status === 'verified_mismatch') {
+    warnings.push(data.ranking_verification.message || `Discrepancia detectada en ${dirLabel}: declaraste posición ${data?.ranking_claim || data?.current_band}, pero la consulta oficial muestra ${data?.ranking_verification?.observed_band}. Puedes definir o confirmar esta posición en Verificación de ranking.`);
+  }
+  return { approved: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
 }
