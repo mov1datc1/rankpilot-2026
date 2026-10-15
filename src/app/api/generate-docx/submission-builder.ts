@@ -476,8 +476,12 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     }
   );
   if (!integrityReport.passed) {
-    console.error('[ARTIFACT-INTEGRITY-CHECK] Submission failed integrity validation:', integrityReport.criticalErrors);
-    throw new Error(`Final Artifact Integrity Check failed: ${integrityReport.criticalErrors.map(e => e.description).join('; ')}`);
+    console.error('[ARTIFACT-INTEGRITY-CHECK] Submission integrity findings:', integrityReport.criticalErrors);
+    if (exportMode === 'approved') {
+      throw new Error(`Final Artifact Integrity Check failed: ${integrityReport.criticalErrors.map(e => e.description).join('; ')}`);
+    } else {
+      console.warn('[ARTIFACT-INTEGRITY-CHECK] Allowing working draft download with pending integrity items.');
+    }
   }
 
   // ═══ TITLE PAGE ═══
@@ -859,8 +863,12 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   );
 
   if (!finalDeliveryCheck.passed) {
-    console.error('[FINAL-ARTIFACT-VALIDATION] Delivery blocked due to critical integrity issues:', finalDeliveryCheck.criticalErrors);
-    throw new Error(`Final Deliverable Validation failed: ${finalDeliveryCheck.criticalErrors.map(e => e.description).join('; ')}`);
+    console.error('[FINAL-ARTIFACT-VALIDATION] Delivery check findings:', finalDeliveryCheck.criticalErrors);
+    if (exportMode === 'approved') {
+      throw new Error(`Final Deliverable Validation failed: ${finalDeliveryCheck.criticalErrors.map(e => e.description).join('; ')}`);
+    } else {
+      console.warn('[FINAL-ARTIFACT-VALIDATION] Generating working draft with pending validation items.');
+    }
   }
 
   // Build document with header/footer and cross-platform compatibility (v8.0)
@@ -960,8 +968,12 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     }
   );
   if (!integrityReportL500.passed) {
-    console.error('[ARTIFACT-INTEGRITY-CHECK] Legal 500 submission failed integrity validation:', integrityReportL500.criticalErrors);
-    throw new Error(`Final Artifact Integrity Check failed: ${integrityReportL500.criticalErrors.map(e => e.description).join('; ')}`);
+    console.error('[ARTIFACT-INTEGRITY-CHECK] Legal 500 submission findings:', integrityReportL500.criticalErrors);
+    if (exportMode === 'approved') {
+      throw new Error(`Final Artifact Integrity Check failed: ${integrityReportL500.criticalErrors.map(e => e.description).join('; ')}`);
+    } else {
+      console.warn('[ARTIFACT-INTEGRITY-CHECK] Allowing Legal 500 working draft download with pending items.');
+    }
   }
 
   // ═══ LEGAL 500 TITLE PAGE ═══
