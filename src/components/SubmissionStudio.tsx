@@ -46,7 +46,7 @@ import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { PreparationBanner } from '@/components/PreparationBanner';
-import {preparationInputIssues} from '@/lib/audit/preparation-input';
+import {preparationInputIssues, officialFilingGaps} from '@/lib/audit/preparation-input';
 import { FilingDetails } from '@/components/FilingDetails';
 import { PreparationProgress } from '@/components/PreparationProgress';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
@@ -1095,7 +1095,11 @@ export default function SubmissionStudio({
             )}
           </div>
 
-          {preparationBlocked && <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs} style={{padding:'8px 12px',border:'1px solid #D97706',borderRadius:7,background:'#FFFBEB',color:'#92400E',cursor:'pointer'}}>Resolver pendientes</button>}
+          {preparationBlocked ? (
+            <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs} style={{padding:'8px 12px',border:'1px solid #D97706',borderRadius:7,background:'#FFFBEB',color:'#92400E',cursor:'pointer'}}>Resolver pendientes</button>
+          ) : (matters.some(needsInputReview) || officialFilingGaps(chambersData).length > 0) ? (
+            <button type="button" disabled={isOptimizingAll} onClick={() => { setReviewPending(true); setShowValidationWizard(true); }} style={{padding:'8px 12px',border:'1px solid #CBD5E1',borderRadius:7,background:'#F8FAFC',color:'#475569',cursor:'pointer',fontSize:'0.82rem',fontWeight:500}} title="Revisar datos de expediente o permisos antes de la exportación oficial">Revisar expediente</button>
+          ) : null}
           {/* Primary CTA: Optimizar Todo */}
           <button
             onClick={() => handleOptimizeAll(false)}

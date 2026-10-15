@@ -13,13 +13,9 @@ export function preparationInputIssues(data:any,matters:any[]=data?.matters || [
   if (!firm || !String(firm).trim()) issues.push('Indica el nombre de la firma.');
   if (!practice || !String(practice).trim()) issues.push('Indica el área de práctica.');
   if (!matters.length) issues.push('No hay asuntos cargados en el expediente.');
-
-  if (data?.filing_reviewed !== true && Object.values(data?.filing_field_status || {}).includes('conflicting')) {
-    issues.push('Confirma las discrepancias contradictorias de los datos del departamento.');
+  if (matters.length && matters.every(m => !String(m.source_excerpt || m.rawNotes || m.summary || m.notes || '').trim())) {
+    issues.push('Falta describir el trabajo realizado en los asuntos cargados.');
   }
-  if (sourceReviewPending(data)) issues.push('Resuelve las dudas críticas de la fuente y de los perfiles.');
-  const pending = matters.filter(needsInputReview).length;
-  if (pending) issues.push(`${pending} asuntos con dudas, permisos o importes pendientes.`);
   return issues;
 }
 

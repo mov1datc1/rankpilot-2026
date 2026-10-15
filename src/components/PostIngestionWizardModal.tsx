@@ -196,7 +196,7 @@ export default function PostIngestionWizardModal({
 
   const sourceRecord={...sourceFactReview,firm_name:firmName,practice_area:practiceArea,location,original_b10:b10Text};
   const focused=fullSourceReviewed && !reviewAll && !correctionOnly;
-  const navigation=focused ? [1,...(((!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) || !initialData.b10Text) ? [2]:[]),...((initialData.lawyers || []).some(lawyerInputPending) ? [3]:[]),...matterChunks.map((_,i)=>i+4)] : Array.from({length:totalSteps},(_,i)=>i+1);
+  const navigation=focused ? [1,...((filingDetailsGaps(initialData.filingDetails || {}).length > 0 || (!initialData.filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) || !initialData.b10Text) ? [2]:[]),...((initialData.lawyers || []).some(lawyerInputPending) ? [3]:[]),...matterChunks.map((_,i)=>i+4)] : Array.from({length:totalSteps},(_,i)=>i+1);
   if (!isOpen) return null;
 
   const saveReview = async () => {
