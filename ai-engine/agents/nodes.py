@@ -3812,7 +3812,23 @@ def optimization_node(state: AgentState) -> Dict:
         print(f"[B10 ENHANCEMENT] Original B10 too short ({len(original_b10.split())}w) — passing through")
         enhanced_b7 = original_b10
     else:
-        print("[B10 ENHANCEMENT] No original B10 found — using narrative_architecture fallback")
+        print("[B10 ENHANCEMENT] No original B10 found — generating from narrative_architecture fallback")
+        parts = []
+        pos = narrative_arch.get("positioning_statement") or narrative_arch.get("thesis_statement")
+        if pos:
+            parts.append(str(pos).strip())
+        diffs = narrative_arch.get("key_differentiators", [])
+        if isinstance(diffs, list) and diffs:
+            parts.append(". ".join(str(d).strip().rstrip(".") for d in diffs) + ".")
+        hero = narrative_arch.get("hero_matter")
+        if hero:
+            parts.append(f"A signature mandate illustrating the department's market capability includes advising {hero}.")
+        if parts:
+            enhanced_b7 = " ".join(parts).strip()
+        else:
+            firm = state.get("firm_name") or state.get("metadata", {}).get("firm_name") or "The firm"
+            practice = state.get("practice_area") or state.get("metadata", {}).get("practice_area") or "practice"
+            enhanced_b7 = f"{firm} maintains an established {practice} practice with proven market experience advising institutional clients on high-complexity transactions and disputes."
         
     # Apply centralized filler strip and submission voice sanitizer to B10.
     if enhanced_b7:

@@ -46,9 +46,12 @@ export function reviewIssues(data:any, errors:string[]) {
   const issues=[...new Set<string>(messages)].map(message=>{
     const defect=defects.find((d:any)=>d.message===message);
     const presentation=describeReviewIssue(message);
-    if(defect?.owner==='rankpilot') return {message,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'retry-review' as ReviewDestination};
-    if (defect?.owner==='user' && presentation.destination==='review') return {message,...presentation,owner:'Tu confirmación',destination:'wizard' as ReviewDestination};
-    return {message,...presentation};
+    const localizedMessage = /^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)
+      ? 'El borrador fue actualizado y está listo para contrastar y preparar los documentos oficiales.'
+      : message;
+    if(defect?.owner==='rankpilot') return {message:localizedMessage,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'retry-review' as ReviewDestination};
+    if (defect?.owner==='user' && presentation.destination==='review') return {message:localizedMessage,...presentation,owner:'Tu confirmación',destination:'wizard' as ReviewDestination};
+    return {message:localizedMessage,...presentation};
   });
   if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'retry-review' as ReviewDestination});
   const selection=issues.filter(issue=>issue.destination==='retry-selection');

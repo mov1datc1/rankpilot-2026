@@ -253,7 +253,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...(data.refereeNotes !== undefined ? {audit_referee_notes:normalizeRefereeNotes(data.refereeNotes)} : {}),
       final_review_stale: true,
       ...(data.practiceArea && data.practiceArea !== existing.practiceArea ? { canonical_matter_selection: null } : {}),
-      release_verdict: { passed: false, status: 'needs_review', errors: ['Draft edited; validation required.'] },
+      release_verdict: { passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.'] },
       cloned_docx_b64: null,
       approved_artifact: null,
       ...(data.firmName ? { firm_name: data.firmName, firmName: data.firmName } : {}),

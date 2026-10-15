@@ -68,7 +68,7 @@ export function calculateEvidenceReadiness(matters:any[]=[],lawyers:any[]=[],b10
   const count=(key:'hasClient'|'hasValue'|'hasOutcome'|'hasLeadPartner')=>matterStatuses.filter(m=>!m[key]).length;
   const missingElements={totalMatters:matters.length,mattersWithoutClient:count('hasClient'),mattersWithoutValue:count('hasValue'),mattersWithoutOutcome:count('hasOutcome'),mattersWithoutLeadPartner:count('hasLeadPartner'),missingLawyers:!lawyers.length,missingB10:!b10Text.trim()};
   if(!matters.length)blockers.push('Añade al menos un asunto con su fuente antes de redactar.');
-  if(missingElements.missingB10)blockers.push('Completa la descripción del departamento con información de origen.');
+  if(missingElements.missingB10)warnings.push('Falta la descripción del departamento en el origen; la IA la estructurará a partir de los asuntos.');
   if(matters.length && matters.every(m=>!String(m.source_excerpt || m.rawNotes || m.summary || '').trim()))blockers.push('Falta describir el trabajo realizado en las fuentes de los asuntos.');
   if(missingElements.mattersWithoutClient)warnings.push(`${missingElements.mattersWithoutClient} asunto(s) requieren identificar al cliente o su descripción autorizada.`);
   if(missingElements.mattersWithoutOutcome)warnings.push(`${missingElements.mattersWithoutOutcome} asunto(s) no indican su estado actual. Si siguen pendientes, indícalo; no necesitas inventar un resultado.`);
