@@ -87,9 +87,15 @@ def sanitize_completion_status(status):
         flags=re.I
     ).strip()
 
+def sanitize_narrative_voice(text):
+    text = str(text or '').strip()
+    text = re.sub(r'^(?:Reparaci[oó]n pendiente|Repair pending|Finding|Problem|Defect)[:\s][^\n]*\n?', '', text, flags=re.I).strip()
+    text = re.sub(r'\b(?:the\s+(?:submitted\s+)?source\s+(?:reports|describes|states|records)|the\s+corrected\s+matter\s+text\s+therefore\s+attributes\s+the\s+outcome\s+to\s+the\s+source\s+rather\s+than\s+presenting\s+it\s+as\s+independently\s+established\.?)\s*', '', text, flags=re.I).strip()
+    return text
+
 def submission_voice_paths(proposal):
-    fields = {'b10': proposal.get('b10', ''), 'c2': proposal.get('c2', '')}
-    fields.update({f'matters/{i}/text': item.get('text', '') for i, item in enumerate(proposal.get('matters', []))})
+    fields = {'b10': sanitize_narrative_voice(proposal.get('b10', '')), 'c2': proposal.get('c2', '')}
+    fields.update({f'matters/{i}/text': sanitize_narrative_voice(item.get('text', '')) for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'matters/{i}/completion_status': sanitize_completion_status(item.get('completion_status', '')) for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'candidates/{i}/submission_bio': item.get('submission_bio', '') for i, item in enumerate(proposal.get('candidates', []))})
     return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or ''))]
@@ -149,8 +155,12 @@ def bind_quote(value, matter):
 def bind_development(package, proposal):
     proposal=copy.deepcopy(proposal)
     register={m['id']:m for m in package.get('matters',[])}
+    if 'b10' in proposal:
+        proposal['b10'] = sanitize_narrative_voice(proposal['b10'])
     for draft in proposal.get('matters',[]):
         matter=register.get(draft.get('matter_id'),{})
+        if 'text' in draft:
+            draft['text'] = sanitize_narrative_voice(draft['text'])
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
