@@ -1,8 +1,15 @@
 import { publicationStatus, valueConflict, validValueResolution, pendingExtractionIssues } from './input-review';
 import { REVIEW_CONTRACT } from './review-versions';
 import {preparationInputIssues, officialFilingGaps} from './preparation-input';
+export interface DeliveryStateResult {
+  approved: boolean;
+  errors: string[];
+  warnings: string[];
+  label: string;
+}
+
 /** Shared by Studio and the download endpoint. Optimization is not approval. */
-export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false, expectedContract = REVIEW_CONTRACT) {
+export function getDeliveryState(data: any, matters: any[] = data?.matters || [], requireArtifact = false, expectedContract = REVIEW_CONTRACT): DeliveryStateResult {
   const verdict = data?.release_verdict || {};
   const errors: string[] = preparationInputIssues(data || {},matters);
   if (requireArtifact) {
@@ -45,7 +52,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (matters.some(m => valueConflict(m) || (m.valueResolution && !validValueResolution(m)))) errors.push('Resuelve los importes o monedas contradictorios antes de la entrega final.');
   if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
   if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== expectedContract.policy || data.completed_renderer_version !== expectedContract.renderer || data.completed_artifact_review_version !== expectedContract.artifact)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
-  const warnings = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
+  const warnings: string[] = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
   const dirLabel = /500/i.test(data?.targetDirectory || data?.directory || '') ? 'The Legal 500' : 'Chambers';
   if (isUnrankedClaim(data?.ranking_claim || data?.current_band)) {
     if (data?.ranking_verification?.status === 'verified_unranked' || data?.ranking_verification?.message) {
@@ -54,5 +61,5 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   } else if (data?.ranking_verification?.status === 'verified_mismatch') {
     warnings.push(data.ranking_verification.message || `Discrepancia detectada en ${dirLabel}: declaraste posición ${data?.ranking_claim || data?.current_band}, pero la consulta oficial muestra ${data?.ranking_verification?.observed_band}. Puedes definir o confirmar esta posición en Verificación de ranking.`);
   }
-  return { approved: errors.length === 0, errors: [...new Set(errors)], warnings: [...new Set(warnings)], label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
+  return { approved: errors.length === 0, errors: Array.from(new Set(errors)), warnings: Array.from(new Set(warnings)), label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
 }
