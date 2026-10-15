@@ -211,31 +211,21 @@ export default function PostIngestionWizardModal({
     if(currentStep===1 && pendingExtractionIssues(sourceRecord).length) {setValidationError('Confirma los datos de la fuente señalados antes de continuar.');return;}
     if(currentStep===3 && lawyers.some(lawyerInputPending)) {setValidationError('Confirma las dudas señaladas en los perfiles.');return;}
     if(currentStep===2 && !filingReviewed) {setValidationError('Marca la casilla de confirmación para continuar. Los datos administrativos pendientes podrás completarlos en Studio antes de la exportación final.');return;}
-    if (currentMatterChunk.some(needsInputReview)) {
-      setValidationError('Resuelve las dudas, permisos y montos señalados antes de continuar. Puedes guardar una revisión parcial si necesitas consultar la fuente.');
-      return;
-    }
     if (focused) {
       const next=navigation.find(step=>step>currentStep);
       if(next) {setCurrentStep(next);setIsEditingInline(false);}
       else if(!filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) setCurrentStep(2);
       else if(pendingExtractionIssues(sourceRecord).length) setCurrentStep(1);
       else if(lawyers.some(lawyerInputPending)) setCurrentStep(3);
-      else {const pendingChunk=matterChunks.findIndex(chunk=>chunk.some(needsInputReview));if(pendingChunk>=0)setCurrentStep(pendingChunk+4);else void saveReview();}
+      else void saveReview();
       return;
     }
     if (reviewPending) {
       if(!filingReviewed && Object.values(initialData.filingFieldStatus || {}).includes('conflicting')) {setCurrentStep(2);return;}
       if(pendingExtractionIssues(sourceRecord).length) {setCurrentStep(1);return;}
       if(lawyers.some(lawyerInputPending)) {setCurrentStep(3);return;}
-      const pendingIndex = matters.findIndex(needsInputReview);
-      if (pendingIndex >= 0) setCurrentStep(4 + Math.floor(pendingIndex / mattersChunkSize));
-      else void saveReview();
+      void saveReview();
       return;
-    }
-    if (currentStep === totalSteps) {
-      const pendingIndex = matters.findIndex(needsInputReview);
-      if (pendingIndex >= 0) { setCurrentStep(4 + Math.floor(pendingIndex / mattersChunkSize)); return; }
     }
     setIsEditingInline(false);
     if(currentStep<totalSteps)setCurrentStep(prev=>prev+1);
