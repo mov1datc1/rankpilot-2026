@@ -200,9 +200,11 @@ def repair_rejected_development(state, proposal, defects):
             # argument. A unique literal match needs no paid location inference.
             shared=[path for path in ('b10','c2') if path in allowed and quote and quote in norm(allowed[path])]
             if len(shared)==1:exact=shared
-        if not exact and defect.get('field_path') in allowed:
-            exact=[defect['field_path']]
+        if not exact and str(defect.get('field_path','')).lower() in allowed:
+            exact=[str(defect['field_path']).lower()]
         if not exact:
+            if defect.get('field_path') in ('research_period', 'period', 'metadata', 'dates') or defect.get('temporal_basis') or defect.get('severity') == 'warning':
+                continue
             remaining.append(defect);continue
         if defect.get('conflict_resolution')=='omit_nonessential_descriptor' and defect.get('matter_id'):
             term=norm(defect.get('conflicting_artifact_term')).casefold()
