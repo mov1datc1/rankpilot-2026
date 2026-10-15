@@ -243,8 +243,12 @@ export async function POST(request: NextRequest) {
       b7: extractedB10,
       department: extractedDept,
       departmentName: extractData.filing_details?.departmentName ?? '',
-      numPartners: extractData.filing_details?.numPartners ?? '',
-      numLawyers: extractData.filing_details?.numLawyers ?? '',
+      numPartners: (extractData.filing_details?.numPartners !== undefined && extractData.filing_details?.numPartners !== '')
+        ? extractData.filing_details.numPartners
+        : (extractedLawyers.filter((l: any) => l.isPartner || l.role === 'Partner').length || ''),
+      numLawyers: (extractData.filing_details?.numLawyers !== undefined && extractData.filing_details?.numLawyers !== '')
+        ? extractData.filing_details.numLawyers
+        : (extractedLawyers.filter((l: any) => !l.isPartner && l.role !== 'Partner').length || ''),
       contacts: extractData.filing_details?.contacts || [],
       departmentHeads: extractData.filing_details?.departmentHeads || (extractData.filing_field_status?.departmentHeads === 'conflicting' ? [] : extractedDept.department_heads || []),
       filing_evidence: extractData.filing_evidence || {},

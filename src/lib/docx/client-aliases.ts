@@ -3,7 +3,7 @@ import { sanitizeClientName } from '../audit/extraction-auditor';
 /** Conservative name variants derived from supplied identities, never an external client dictionary. */
 export function clientAliases(names: string[]): string[] {
   const aliases = new Set<string>();
-  const generic = /^(grupo|group|private|confidential|client|cliente|empresa|company|corporation|new|nueva|the|manufacturing|manufactura|services|servicios|industries|industria|logistics|logística)$/i;
+  const generic = /^(grupo|group|private|confidential|client|cliente|empresa|company|corporation|new|nueva|the|manufacturing|manufactura|services|servicios|industries|industria|logistics|logística|instituto|institute|sociedad|asociación|asociacion|fundación|fundacion|banco|bank|fondo|asociados|associates)$/i;
   for (const value of names) {
     const raw = String(value || '').trim();
     // Client fields can contain an entire company profile. Descriptive prose
@@ -16,7 +16,7 @@ export function clientAliases(names: string[]): string[] {
       const alias = match[1].trim();
       if (!/^(?:wealthy family|private owner|located|company|empresa|familia)\b/i.test(alias)) aliases.add(alias);
     }
-    for (const entity of name.split(/\s+and\s+|\s+&\s+|,\s+(?!S\.?A\b)/i)) {
+    for (const entity of name.split(/\s+and\s+|\s+&\s+|,\s+(?!S\.?A\.?\b|S\.?\b)/i)) {
       const trimmedEntity = entity.trim();
       if (trimmedEntity.length >= 2 && !generic.test(trimmedEntity)) aliases.add(trimmedEntity);
       const first = trimmedEntity.match(/^[\p{L}\p{N}]+/u)?.[0];

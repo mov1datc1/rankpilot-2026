@@ -8,6 +8,26 @@ import json
 FIELDS = ('departmentName', 'numPartners', 'numLawyers', 'contacts', 'departmentHeads')
 
 
+NUMBER_WORDS = {
+    'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+    'un': 1, 'uno': 1, 'una': 1, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5, 'seis': 6, 'siete': 7, 'ocho': 8, 'nueve': 9, 'diez': 10,
+    'once': 11, 'doce': 12, 'trece': 13, 'catorce': 14, 'quince': 15, 'dieciséis': 16, 'dieciseis': 16, 'diecisiete': 17, 'dieciocho': 18, 'diecinueve': 19, 'veinte': 20,
+}
+
+def parse_headcount_value(text: str):
+    if not text:
+        return None
+    cleaned = re.sub(r'\bindicate\b.*', '', text, flags=re.I).strip()
+    m = re.search(r'\b(\d{1,5})\b', cleaned)
+    if m:
+        return int(m.group(1))
+    for word, val in NUMBER_WORDS.items():
+        if re.search(r'\b' + word + r'\b', cleaned, re.I):
+            return val
+    return None
+
+
 def extract_filing_fields(text):
     text = text.replace('\x07', ' | ')
     findings = {key: [] for key in FIELDS}
@@ -24,12 +44,17 @@ def extract_filing_fields(text):
         'numLawyers': r'(?:B3\s+(?:Number of (?:other )?(?:qualified )?lawyers|No\.? of lawyers)|Number of NON-PARTNERS(?:\s+in\s+the\s+team)?|Non-partners\s+who\s+spend[^\n|]*)',
     }
     for key, label in labels.items():
-        value = r'([^\n|]{1,100})' if key == 'departmentName' else r'(\d{1,5})'
+        value = r'([^\n|]{1,100})'
         for match in re.finditer(r'^\s*' + label + r'[ \t:|]*\n?\s*' + value + r'[ \t]*(?=\n|\||$)', text, re.I | re.M):
             answer = match.group(1).strip()
-            if key == 'departmentName' and (re.match(r'B\d\b', answer) or answer.lower() in ('n/a', 'not provided')):
-                continue
-            add(key, answer if key == 'departmentName' else int(answer), match.group())
+            if key == 'departmentName':
+                if re.match(r'B\d\b', answer) or answer.lower() in ('n/a', 'not provided'):
+                    continue
+                add(key, answer, match.group())
+            else:
+                parsed = parse_headcount_value(answer)
+                if parsed is not None:
+                    add(key, parsed, match.group())
 
     # Fallback headcount extraction from pipe-delimited Legal 500 partner tables
     if 'numPartners' not in findings:
@@ -70,9 +95,10 @@ def extract_filing_fields(text):
             continue
         lines = [line.split('|')[0].strip() for line in match.group(1).splitlines()]
         lines = [line for line in lines if line and not re.match(r'Indicate\b|\d+(?:[.,]\d+)?\s*%', line, re.I)]
-        if lines and re.fullmatch(r'\d{1,5}', lines[0]):
-            add(key, int(lines[0]), match.group())
-        elif lines and all(re.fullmatch(r"[^\W\d_]+(?:[ .’'-]+[^\W\d_]+)+\.?", line, re.UNICODE) and not re.search(r'\b(?:including|include|other|others|etc|vacant|unknown|partners|lawyers|not|available|provided|pending|none|confirmar|pendiente)\b', line, re.I) for line in lines):
+        parsed_val = parse_headcount_value(lines[0]) if lines else None
+        if parsed_val is not None:
+            add(key, parsed_val, match.group())
+        elif lines and all(re.fullmatch(r"[^\W\d_]+(?:[ .’'-]+[^\W\d_]+)+\.?", line, re.UNICODE) and not re.search(r'\b(?:including|include|other|others|etc|vacant|unknown|partners|lawyers|associates|not|available|provided|pending|none|confirmar|pendiente)\b', line, re.I) for line in lines):
             add(key, len(set(line.rstrip('.').casefold() for line in lines)), match.group())
 
     for key, header in [

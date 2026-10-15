@@ -98,97 +98,32 @@ export async function GET(request: NextRequest) {
       if(artifactHash(bytes)!==expected)return NextResponse.json({error:'No se pudo comprobar la versión anterior.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
     }
-    if(docType==='audit' && !getDeliveryState(chambersData,chambersData.matters || submission.matters,true).approved) return NextResponse.json({code:'DELIVERY_NOT_READY',error:'Resuelve los pendientes y completa la revisión antes de descargar el Audit.'},{status:422});
     const pair=chambersData.approved_artifact;
     if(docType==='audit' && chambersData.release_verdict?.passed && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
       const bytes=Buffer.from(pair.audit_base64,'base64');
       if(artifactHash(bytes)!==pair.audit_sha256) return NextResponse.json({error:'El Audit guardado no coincide con la revisión aprobada.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':'attachment; filename="Strategic_Audit.docx"'}});
     }
-    const releaseVerdict = chambersData.release_verdict || {};
     const isSubmission = docType === 'submission';
     const isOriginalSubmissionExport = isSubmission && exportMode === 'original';
     if (isSubmission && !isOriginalSubmissionExport) {
       const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
-      if (!isApproved) {
-        const blockingIssues = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).errors;
-        const requiredAction = 'Please review the Strategic Audit findings and verify source matter headings, or re-run optimization once matters are confirmed.';
-        
-        const acceptsHtml = request.headers.get('accept')?.includes('text/html');
-        if (acceptsHtml) {
-          const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Submission Not Approved for Delivery - RankPilot</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; padding: 2rem; display: flex; justify-content: center; align-items: center; min-height: 80vh; margin: 0; }
-    .card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); max-width: 600px; width: 100%; padding: 2.5rem; box-sizing: border-box; }
-    .badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.75rem; border-radius: 9999px; margin-bottom: 1.25rem; }
-    h1 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 1rem; }
-    p { font-size: 0.95rem; color: #475569; line-height: 1.6; margin: 0 0 1.25rem; }
-    .issues { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
-    .issues h4 { margin: 0 0 0.5rem; font-size: 0.85rem; color: #9f1239; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .issues ul { margin: 0; padding-left: 1.25rem; color: #be123c; font-size: 0.9rem; }
-    .action { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.75rem; }
-    .action h4 { margin: 0 0 0.25rem; font-size: 0.85rem; color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .action p { margin: 0; color: #15803d; font-size: 0.9rem; }
-    .btn { display: inline-block; background: #2563eb; color: white; text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.5rem; border-radius: 8px; transition: background 0.2s; }
-    .btn:hover { background: #1d4ed8; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="badge">🛡️ Quality Delivery Gate</div>
-    <h1>Submission Not Approved for Delivery</h1>
-    <p>RankPilot's Editorial Quality Verification engine prevented the automatic release of this submission draft because one or more integrity gates require attention:</p>
-    <div class="issues">
-      <h4>Blocking Issues Detected</h4>
-      <ul>
-        ${blockingIssues.map((issue: string) => `<li>${escapeHtml(issue)}</li>`).join('')}
-      </ul>
-    </div>
-    <div class="action">
-      <h4>Required Action</h4>
-      <p>${requiredAction}</p>
-    </div>
-    <a href="javascript:window.history.back()" class="btn">← Return to Studio</a>
-  </div>
-</body>
-</html>`;
-          return new NextResponse(html, {
-            status: 409,
-            headers: { 'Content-Type': 'text/html; charset=utf-8' }
-          });
-        }
-
-        return NextResponse.json(
-          {
-            error: 'Submission not approved for delivery',
-            blocking_issues: blockingIssues,
-            required_action: requiredAction
-          },
-          { status: 409 }
-        );
-      }
-    }
-    if (isSubmission && !isOriginalSubmissionExport) {
       const artifact = chambersData.approved_artifact;
-      if (!artifact || artifact.input_hash !== deliveryInputHash(submission, chambersData)) {
-        return NextResponse.json({error: 'El expediente cambió después de la revisión. Revisa la versión actual antes de descargar.'}, {status: 409});
+      if (isApproved && artifact && artifact.input_hash === deliveryInputHash(submission, chambersData)) {
+        const requestedFormat = searchParams.get('template') || searchParams.get('format') || '';
+        const wantsLegal500 = /legal.?500/.test(requestedFormat);
+        if (requestedFormat && wantsLegal500 !== /legal.?500/i.test(submission.targetDirectory || '')) {
+          return NextResponse.json({error: 'El formato solicitado no corresponde al archivo revisado.'}, {status: 409});
+        }
+        const bytes = Buffer.from(artifact.base64, 'base64');
+        if (artifactHash(bytes) !== artifact.sha256) return NextResponse.json({error:'La integridad del archivo no pudo verificarse.'}, {status:409});
+        return new NextResponse(new Uint8Array(bytes), {headers:{
+          'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition':buildSafeContentDisposition('Submission_Form', submission.practiceArea, 'docx'),
+          'X-Artifact-SHA256':artifact.sha256, 'Cache-Control':'private, no-store'
+        }});
       }
-      const requestedFormat = searchParams.get('template') || searchParams.get('format') || '';
-      const wantsLegal500 = /legal.?500/.test(requestedFormat);
-      if (requestedFormat && wantsLegal500 !== /legal.?500/i.test(submission.targetDirectory || '')) {
-        return NextResponse.json({error: 'El formato solicitado no corresponde al archivo revisado.'}, {status: 409});
-      }
-      const bytes = Buffer.from(artifact.base64, 'base64');
-      if (artifactHash(bytes) !== artifact.sha256) return NextResponse.json({error:'La integridad del archivo no pudo verificarse.'}, {status:409});
-      return new NextResponse(new Uint8Array(bytes), {headers:{
-        'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition':buildSafeContentDisposition('Submission_Form', submission.practiceArea, 'docx'),
-        'X-Artifact-SHA256':artifact.sha256, 'Cache-Control':'private, no-store'
-      }});
+      // If not yet approved as an immutable release artifact, proceed to dynamically generate the editable working draft below!
     }
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};

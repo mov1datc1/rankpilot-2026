@@ -416,9 +416,34 @@ export function runArtifactIntegrityCheck(
     if (rawC.length >= 2) {
       confClientNames.push(rawC);
       // Also extract clean entity if formatted like "Familia de Anda — ..."
-      const prefix = rawC.split(/[\—\-\:\.]/)[0].trim();
+      const prefix = rawC.split(/\s*[\—\:]\s*|\s+[-–—]\s+/)[0].trim();
       if (prefix.length >= 2 && prefix.toLowerCase() !== 'confidential') {
         confClientNames.push(prefix);
+      }
+    }
+  }
+
+  const normalizeClientRoot = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+      .replace(/\b(s\s*a|s\s*p\s*a|s\s*r\s*l|de\s+c\s*v|inc|llc|ltd|corp|corporation)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const publicClientNames = new Set<string>();
+  const publicClientRoots = new Set<string>();
+  for (const pm of [...officialPubMatters, ...surplusMatters.filter((m: any) => !m.isConfidential && !m.confidential && m.publish_status !== 'non_publishable')]) {
+    const rawP = (pm.client || pm.clientName || '').trim();
+    if (rawP.length >= 2) {
+      publicClientNames.add(rawP.toLowerCase());
+      const rootP = normalizeClientRoot(rawP);
+      if (rootP.length >= 3) publicClientRoots.add(rootP);
+      for (const a of clientAliases([rawP])) {
+        publicClientNames.add(a.toLowerCase());
+        const rootA = normalizeClientRoot(a);
+        if (rootA.length >= 3) publicClientRoots.add(rootA);
       }
     }
   }
@@ -428,8 +453,9 @@ export function runArtifactIntegrityCheck(
       const contentLower = (sec.content || '').toLowerCase();
       for (const confClient of clientAliases(confClientNames)) {
         const confLower = confClient.toLowerCase();
-        // Guard against short generic tokens
-        if (confLower.length < 2 || confLower === 'confidential' || confLower === 'client' || confLower === 'private') continue;
+        const confRoot = normalizeClientRoot(confClient);
+        // Guard against short generic tokens or clients that are explicitly authorized as public
+        if (confLower.length < 2 || confLower === 'confidential' || confLower === 'client' || confLower === 'private' || publicClientNames.has(confLower) || (confRoot.length >= 3 && publicClientRoots.has(confRoot))) continue;
         
         // Exact word boundary or distinct inclusion check
         const regex = new RegExp(`\\b${confLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');

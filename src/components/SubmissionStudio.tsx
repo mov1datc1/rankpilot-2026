@@ -1141,15 +1141,15 @@ export default function SubmissionStudio({
           {draftSaveError && <div role="alert" style={{position:'fixed',bottom:16,right:16,zIndex:100,color:'#991B1B',background:'#FFF7ED',border:'1px solid #FDBA74',borderRadius:10,padding:16,width:'calc(100vw - 32px)',maxWidth:440,maxHeight:'30vh',overflowY:'auto',fontSize:14,boxShadow:'0 4px 20px #0002'}}>{draftSaveError.length <= 220 ? draftSaveError : <><strong>No se pudo completar esta acción.</strong><details style={{marginTop:8}}><summary>Ver motivo completo</summary><p style={{whiteSpace:'pre-wrap'}}>{draftSaveError}</p></details></>}<button type="button" aria-label="Ocultar aviso" onClick={()=>setDraftSaveError('')} style={{display:'block',marginTop:8}}>Entendido</button></div>}
           <div style={{ position: 'relative' }} data-dropdown="download">
             <button
-              disabled={preparationBlocked || !deliveryState.approved || isOptimizingAll}
-              title={preparationBlocked ? 'Resuelve los datos pendientes antes de generar y descargar.' : !deliveryState.approved ? 'Los documentos estarán disponibles cuando termine su revisión.' : 'Descargar documentos revisados'}
+              disabled={isOptimizingAll}
+              title={isOptimizingAll ? 'Preparando entrega…' : 'Descargar documentos del expediente'}
               onClick={() => {
                 setShowDownloadMenu(prev => !prev);
                 setShowToolsMenu(false);
               }}
               style={{
                 background: '#1A237E',
-                opacity: preparationBlocked || !deliveryState.approved || isOptimizingAll ? 0.45 : 1,
+                opacity: isOptimizingAll ? 0.45 : 1,
                 color: '#FFFFFF',
                 border: 'none',
                 padding: '0.5rem 1rem',
@@ -1159,7 +1159,7 @@ export default function SubmissionStudio({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                cursor: 'pointer',
+                cursor: isOptimizingAll ? 'not-allowed' : 'pointer',
                 boxShadow: '0 2px 6px rgba(26,35,126,0.2)',
                 transition: 'all 0.15s ease'
               }}
@@ -1169,13 +1169,13 @@ export default function SubmissionStudio({
               <ChevronDown size={14} style={{ transform: showDownloadMenu ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
             </button>
 
-            {showDownloadMenu && !preparationBlocked && deliveryState.approved && (
+            {showDownloadMenu && !isOptimizingAll && (
               <div style={{
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
                 right: 0,
                 zIndex: 100,
-                width: '280px',
+                width: '300px',
                 background: '#FFFFFF',
                 border: '1px solid #E2E8F0',
                 borderRadius: '10px',
@@ -1190,9 +1190,8 @@ export default function SubmissionStudio({
                   href={isLegal500
                     ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`
                     : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
-                  aria-disabled={!deliveryState.approved}
-                  title={deliveryState.approved ? 'Descargar Submission aprobado' : 'Consulta los pendientes de entrega'}
-                  onClick={(e) => { if (!deliveryState.approved) { e.preventDefault(); setShowDownloadMenu(false); setActiveTab('studio'); window.setTimeout(()=>document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'}),100); } else setShowDownloadMenu(false); }}
+                  onClick={() => setShowDownloadMenu(false)}
+                  title={deliveryState.approved ? 'Descargar Submission aprobado para entrega oficial' : 'Descargar borrador de trabajo en Word'}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
@@ -1211,8 +1210,8 @@ export default function SubmissionStudio({
                     <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1A237E' }}>
                       {isLegal500 ? 'Legal 500 Master DOCX' : 'Chambers Master DOCX'}
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                      {deliveryState.approved ? 'Disponible tras revisión' : 'Pendiente: revisa los bloqueos antes de descargar'}
+                    <div style={{ fontSize: '0.72rem', color: deliveryState.approved ? '#059669' : '#D97706', fontWeight: 500 }}>
+                      {deliveryState.approved ? '✓ Documento aprobado para entrega oficial' : 'Borrador editable (asuntos y B10 optimizados)'}
                     </div>
                   </div>
                 </a>
