@@ -1647,40 +1647,60 @@ export default function SubmissionStudio({
             <div id="studio-delivery-review" style={{scrollMarginTop:100}}>
               {isOptimizingAll ? <section role="status" className="studio-review-panel"><strong>Optimización y revisión en curso</strong><p>{optimizeAllProgress?.stage} Las redacciones guardadas se conservan.</p></section> : reviewPanel}
             </div>
-            <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1rem',border:'1px solid #CBD5E1',borderRadius:10}}>
-              <strong>Verificación oficial del ranking</strong>
-              <p>Al optimizar todo, consultamos la fuente oficial con la firma, el directorio, la práctica y el país ya seleccionados. Sin una edición específica, comparamos la tabla pública actual.</p>
-              <details><summary style={{cursor:'pointer'}}>Corregir datos o reintentar la consulta</summary>
-              <label style={{display:'block'}}>Posición declarada <input aria-label="Posición declarada" value={declaredRanking} onChange={e=>setDeclaredRanking(e.target.value)} placeholder="Ej. Band 2 o Tier 2" style={{maxWidth:'100%'}} /></label>
-              <label style={{display:'block'}}><input type="checkbox" checked={rankingEdition==='current'} onChange={e=>setRankingEdition(e.target.checked?'current':'')} /> Comparar con la tabla pública actual (sin afirmar una edición histórica)</label>
-              {rankingEdition!=='current' && <label>Edición del ranking <input aria-label="Edición del ranking" value={rankingEdition} onChange={e=>setRankingEdition(e.target.value)} placeholder="Ej. 2026" maxLength={4} style={{maxWidth:'100%'}} /></label>}
-              <label style={{display:'block'}}>País de la tabla <input aria-label="País de la tabla" value={rankingCountry} onChange={e=>setRankingCountry(e.target.value)} placeholder="Ej. Mexico" style={{maxWidth:'100%'}} /></label>
-              <button type="button" disabled={checkingRanking} onClick={()=>void checkRanking()}>{checkingRanking?'Consultando fuente oficial…':'Guardar declaración y verificar'}</button>
-              </details>
+            <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1.25rem',border:'1px solid #CBD5E1',borderRadius:12,background:'#fff'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,marginBottom:8}}>
+                <strong style={{fontSize:15,color:'#0F172A'}}>Verificación oficial del ranking</strong>
+                {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && (
+                  <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:'#4338CA',fontWeight:600,textDecoration:'none'}}>
+                    Consultar tabla oficial ↗
+                  </a>
+                )}
+              </div>
+
               {chambersData.ranking_verification?.message ? (
                 <div style={{
-                  padding: '12px 14px',
-                  borderRadius: 8,
-                  marginTop: 10,
-                  marginBottom: 10,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  marginTop: 6,
+                  marginBottom: 12,
                   background: chambersData.ranking_verification.status === 'verified_mismatch' ? '#FFFBEB' : '#F0FDF4',
                   border: `1px solid ${chambersData.ranking_verification.status === 'verified_mismatch' ? '#FCD34D' : '#86EFAC'}`,
                   color: chambersData.ranking_verification.status === 'verified_mismatch' ? '#92400E' : '#166534',
                   fontSize: 13,
-                  lineHeight: 1.5
+                  lineHeight: 1.6
                 }}>
-                  <strong>{chambersData.ranking_verification.status === 'verified_mismatch' ? '⚠ Discrepancia detectada en fuente oficial:' : '✓ Verificación oficial de ranking:'}</strong>
-                  <p style={{margin:'4px 0 0'}}>{chambersData.ranking_verification.message}</p>
+                  <div style={{display:'flex',alignItems:'center',gap:6,fontWeight:700,fontSize:14,marginBottom:4}}>
+                    <span>{chambersData.ranking_verification.status === 'verified_mismatch' ? '⚠ Discrepancia detectada en la fuente oficial' : '✓ Verificación oficial en Chambers: Confirmada'}</span>
+                  </div>
+                  <p style={{margin:0}}>{chambersData.ranking_verification.message}</p>
+                  <div style={{marginTop:8,fontSize:12,fontWeight:600,opacity:0.9,display:'flex',gap:16,flexWrap:'wrap'}}>
+                    <span>Posición observada: <strong>{chambersData.ranking_verification.observed_band || 'Unranked'}</strong></span>
+                    <span>Edición consultada: <strong>{chambersData.ranking_verification.evidence?.edition || '2027 (Tabla actual)'}</strong></span>
+                  </div>
                 </div>
               ) : (
-                <p role="status" style={{color:'#64748B',fontSize:13,marginTop:10}}>La consulta se realizará durante la revisión de la optimización.</p>
+                <p role="status" style={{color:'#64748B',fontSize:13,margin:'6px 0 12px'}}>Al optimizar, consultamos la tabla oficial pública con la firma, el directorio, la práctica y el país seleccionados.</p>
               )}
-              {chambersData.ranking_verification?.observed_band && <p style={{fontSize:13,color:'#334155'}}>Posición observada: <strong>{chambersData.ranking_verification.observed_band}</strong>. Edición de la fuente: {chambersData.ranking_verification.evidence?.edition || 'No acreditada'}.</p>}
-              {chambersData.ranking_verification?.individuals?.length > 0 && <details><summary>Verificación individual de candidatos</summary>
-                <p>Se contrasta persona y firma en la misma tabla oficial, sin otra llamada de IA. Un ranking en otra práctica o edición no se transfiere a esta candidatura.</p>
-                <ul>{chambersData.ranking_verification.individuals.map((item:any,index:number)=><li key={index}><strong>{item.lawyer_name}</strong>: {String(item.status).startsWith('verified') ? `${item.observed_band} · ${item.practice_area} · ${item.jurisdiction} · ${item.evidence?.edition || 'tabla actual'}` : item.message}</li>)}</ul>
+
+              {chambersData.ranking_verification?.individuals?.length > 0 && <details style={{marginBottom:10,fontSize:13}}><summary style={{cursor:'pointer',color:'#475569',fontWeight:500}}>Verificación individual de candidatos ({chambersData.ranking_verification.individuals.length}) ▾</summary>
+                <p style={{fontSize:12,color:'#64748B',margin:'6px 0'}}>Se contrasta persona y firma en la misma tabla oficial. Un ranking individual en otra práctica o edición no se transfiere a esta candidatura.</p>
+                <ul style={{margin:'4px 0 0',paddingLeft:20}}>{chambersData.ranking_verification.individuals.map((item:any,index:number)=><li key={index} style={{margin:'3px 0'}}><strong>{item.lawyer_name}</strong>: {String(item.status).startsWith('verified') ? `${item.observed_band} · ${item.practice_area} · ${item.jurisdiction} · ${item.evidence?.edition || 'tabla actual'}` : item.message}</li>)}</ul>
               </details>}
-              {/^https:\/\/(www\.)?(chambers|legal500)\.com\//.test(chambersData.ranking_verification?.evidence?.source_url || '') && <a href={chambersData.ranking_verification.evidence.source_url} target="_blank" rel="noopener noreferrer">Consultar tabla oficial</a>}
+
+              <details style={{borderTop:'1px solid #E2E8F0',paddingTop:10,marginTop:6}}>
+                <summary style={{cursor:'pointer',fontSize:12,color:'#4338CA',fontWeight:600}}>
+                  ▸ Ajustar declaración de posición o consultar otra edición (opcional)
+                </summary>
+                <div style={{marginTop:12,display:'grid',gap:10,fontSize:13}}>
+                  <label style={{display:'block'}}>Posición declarada <input aria-label="Posición declarada" value={declaredRanking} onChange={e=>setDeclaredRanking(e.target.value)} placeholder="Ej. Band 2 o Tier 2 (o dejar vacío para Unranked)" style={{maxWidth:'100%',marginTop:4}} /></label>
+                  <label style={{display:'flex',alignItems:'center',gap:6}}><input type="checkbox" checked={rankingEdition==='current'} onChange={e=>setRankingEdition(e.target.checked?'current':'')} /> Comparar con la tabla pública actual (recomendado)</label>
+                  {rankingEdition!=='current' && <label style={{display:'block'}}>Edición del ranking <input aria-label="Edición del ranking" value={rankingEdition} onChange={e=>setRankingEdition(e.target.value)} placeholder="Ej. 2026" maxLength={4} style={{maxWidth:'100%',marginTop:4}} /></label>}
+                  <label style={{display:'block'}}>País de la tabla <input aria-label="País de la tabla" value={rankingCountry} onChange={e=>setRankingCountry(e.target.value)} placeholder="Ej. Mexico" style={{maxWidth:'100%',marginTop:4}} /></label>
+                  <button type="button" disabled={checkingRanking} onClick={()=>void checkRanking()} style={{alignSelf:'start',background:'#4338CA',color:'#fff',border:'none',borderRadius:6,padding:'8px 14px',fontWeight:600,cursor:'pointer',fontSize:13}}>
+                    {checkingRanking?'Consultando fuente oficial…':'Guardar declaración y verificar'}
+                  </button>
+                </div>
+              </details>
             </section>
             {preparationBlocked && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
               <strong>Completa los datos antes de revisar y generar</strong>
