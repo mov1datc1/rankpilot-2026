@@ -1028,10 +1028,27 @@ async def _extract_readable_source(doc_text, context):
                 matters = reviewed['matters']
                 roster = reviewed['lawyers']
                 admin = reviewed['administration']
-                prelim = {'firm_name': admin['firm_name'], 'practice_area': admin['practice_area'], 'location': admin['location']}
-                original_b10, original_c2 = admin['original_b10'], admin['original_c2']
+                prelim = {
+                    'firm_name': admin['firm_name'] or prelim.get('firm_name', ''),
+                    'practice_area': admin['practice_area'] or prelim.get('practice_area', ''),
+                    'location': admin['location'] or prelim.get('location', '')
+                }
+                original_b10 = admin['original_b10'] if admin.get('original_b10') else original_b10
+                original_c2 = admin['original_c2'] if admin.get('original_c2') else original_c2
                 filing = {k: reviewed[k] for k in ('filing_details', 'filing_evidence', 'filing_field_status')}
                 reconciliation = {k: reviewed[k] for k in ('source_reconciliation', 'administration_evidence', 'administration_issues')}
+                if original_b10:
+                    admin_ev = reconciliation.setdefault('administration_evidence', {})
+                    b10_ev = admin_ev.setdefault('original_b10', {})
+                    if b10_ev.get('status') != 'found' or not b10_ev.get('quotes'):
+                        b10_ev['status'] = 'found'
+                        b10_ev['quotes'] = [original_b10]
+                if original_c2:
+                    admin_ev = reconciliation.setdefault('administration_evidence', {})
+                    c2_ev = admin_ev.setdefault('original_c2', {})
+                    if c2_ev.get('status') != 'found' or not c2_ev.get('quotes'):
+                        c2_ev['status'] = 'found'
+                        c2_ev['quotes'] = [original_c2]
             except Exception as error:
                 logger.exception('Full source reconciliation failed; recorded usage=%s', getattr(error, 'usage', {}))
                 if not matters:
