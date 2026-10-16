@@ -35,10 +35,13 @@ export function reviewIsStale(data:any) {
 }
 
 export function reviewIssues(data:any, errors:string[]) {
-  const defects = data?.final_artifact_review?.judge?.defects || [];
+  const allDefects = data?.final_artifact_review?.judge?.defects || [];
+  const defects = allDefects.filter((d:any)=>
+    !(d.code==='EDITORIAL_OMISSION' && String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.source_quote && !d.artifact_quote));
   const stale = reviewIsStale(data);
   const messages = defects.filter((d:any)=>d.severity==='critical' && (!stale || (d.owner!=='rankpilot' && !issueHasSavedResponse(data,d)))).map((d:any)=>String(d.message));
   for (const error of errors) {
+    if (String(error).startsWith('La aceptación editorial no está completa:')) continue;
     if (stale && (/^(Draft edited;|Borrador editado;|Genera y revisa|Reintenta la revisión editorial)/.test(error) || defects.some((d:any)=>d.message===error))) continue;
     if (messages.length && (/^El documento no superó la validación final:/.test(error) || error === 'Genera y revisa el archivo final antes de descargar.')) continue;
     messages.push(error);

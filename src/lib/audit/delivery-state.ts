@@ -29,6 +29,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
     const details = verdict.errors.map(String).filter((message:string)=>{
       if (message === 'La revisión final está pendiente o tiene bloqueos.') return false;
       if (isUnrankedClaim(data?.ranking_claim || data?.current_band) && /posici[oó]n declarada/i.test(message)) return false;
+      if (message.startsWith('La aceptación editorial no está completa:')) return false;
       return true;
     });
     if (details.length) errors.push(...details);
