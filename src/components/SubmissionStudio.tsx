@@ -608,7 +608,6 @@ export default function SubmissionStudio({
         timer=setTimeout(observe,15000);
       } catch(error) {
         if(stopped) return;
-        if(jobWatch) setDraftSaveError(error instanceof Error?error.message:'No se pudo consultar el avance.');
         timer=setTimeout(observe,10000);
       }
     };
