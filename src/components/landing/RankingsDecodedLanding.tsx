@@ -529,63 +529,104 @@ export default function RankingsDecodedLanding() {
             </h2>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '1.75rem'
-          }}>
+          <div className="when-we-help-grid">
             {[
               {
-                icon: <FileText size={24} color="#4338CA" />,
+                tag: 'COMMUNICATION & IMPACT',
+                icon: <FileText size={22} color="#4338CA" />,
                 title: 'Your submissions are not communicating the strength of your practice.',
-                desc: 'We examine the evidence, the positioning, and the way your work is presented to identify what needs attention.'
+                desc: 'We examine the evidence, the positioning, and the way your work is presented to identify what needs attention.',
+                outcome: 'Evidence & narrative audit to surface overlooked technical complexity and market impact.'
               },
               {
-                icon: <Award size={24} color="#4338CA" />,
+                tag: 'NEW CAPABILITIES',
+                icon: <Award size={22} color="#4338CA" />,
                 title: 'You want recognition in a new practice or market.',
-                desc: 'We assess how far your existing capabilities support that ambition, what remains to be developed, and whether another category offers a stronger fit.'
+                desc: 'We assess how far your existing capabilities support that ambition, what remains to be developed, and whether another category offers a stronger fit.',
+                outcome: 'Strategic triage to test track record and establish the highest-probability category.'
               },
               {
-                icon: <Globe size={24} color="#4338CA" />,
+                tag: 'STRATEGIC REALIGNMENT',
+                icon: <Globe size={22} color="#4338CA" />,
                 title: 'Your business is changing.',
-                desc: 'As client needs, sectors, and growth priorities evolve, we help you reassess what your rankings strategy should support.'
+                desc: 'As client needs, sectors, and growth priorities evolve, we help you reassess what your rankings strategy should support.',
+                outcome: 'Aligning directory efforts with current client mandates and commercial growth priorities.'
               },
               {
-                icon: <Users size={24} color="#4338CA" />,
+                tag: 'EXECUTION & PARTNERSHIP',
+                icon: <Users size={22} color="#4338CA" />,
                 title: 'Your team needs experienced guidance and delivery support.',
-                desc: 'We work alongside partners and business development or marketing teams to bring direction, structure, and specialist execution to the process.'
+                desc: 'We work alongside partners and business development or marketing teams to bring direction, structure, and specialist execution to the process.',
+                outcome: 'Collaborative delivery model with agreed milestones, clear roles and partner coaching.'
               }
             ].map((card, idx) => (
               <div
                 key={idx}
+                className="when-we-help-card"
                 style={{
                   backgroundColor: '#FFFFFF',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   border: '1px solid #E2E8F0',
-                  padding: '2.25rem 1.75rem',
+                  padding: '2.25rem 2rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1.2rem',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  justifyContent: 'space-between',
+                  gap: '1.25rem',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                  position: 'relative'
                 }}
               >
-                <div style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 10,
-                  backgroundColor: '#EEF2FF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {card.icon}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      backgroundColor: '#EEF2FF',
+                      border: '1px solid #E0E7FF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {card.icon}
+                    </div>
+                    <span style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      color: '#4338CA',
+                      backgroundColor: '#F8FAFC',
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid #E2E8F0',
+                      textTransform: 'uppercase'
+                    }}>
+                      {card.tag}
+                    </span>
+                  </div>
+
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, margin: '0 0 0.85rem' }}>
+                    {card.title}
+                  </h3>
+
+                  <p style={{ fontSize: '0.98rem', color: '#475569', lineHeight: 1.68, margin: 0 }}>
+                    {card.desc}
+                  </p>
                 </div>
-                <h3 style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.4, margin: 0 }}>
-                  {card.title}
-                </h3>
-                <p style={{ fontSize: '0.94rem', color: '#64748B', lineHeight: 1.65, margin: 0 }}>
-                  {card.desc}
-                </p>
+
+                <div style={{
+                  borderTop: '1px solid #F1F5F9',
+                  paddingTop: '1rem',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '0.5rem',
+                  fontSize: '0.86rem',
+                  color: '#64748B',
+                  lineHeight: 1.5
+                }}>
+                  <span style={{ fontWeight: 700, color: '#4338CA' }}>Focus:</span>
+                  <span>{card.outcome}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -1585,6 +1626,24 @@ export default function RankingsDecodedLanding() {
 
       {/* Global Scoped Responsive CSS */}
       <style jsx>{`
+        .when-we-help-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.75rem;
+        }
+        @media (min-width: 768px) {
+          .when-we-help-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+        .when-we-help-card {
+          transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .when-we-help-card:hover {
+          transform: translateY(-2px);
+          border-color: #C7D2FE !important;
+          box-shadow: 0 12px 24px -6px rgba(67, 56, 202, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
+        }
         @media (min-width: 860px) {
           .desktop-menu {
             display: flex !important;
