@@ -208,3 +208,19 @@ model EditorialWorker {
   version   String
   heartbeat DateTime @default(now()) @db.Timestamptz
 }
+
+// =====================================================
+// LEAD INQUIRY — Rankings Decoded Advisory Contact Form
+// =====================================================
+model LeadInquiry {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  firmName  String
+  role      String?
+  country   String?
+  message   String   @db.Text
+  status    String   @default("NEW") // NEW, CONTACTED, PROPOSAL, CLOSED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
