@@ -12,23 +12,24 @@ import {
   Compass,
   FileText,
   Users,
-  Calendar,
-  Layers,
   Award,
   Globe,
-  HelpCircle,
   ExternalLink,
-  Lock,
   Send,
   Loader2,
   Menu,
-  X
+  X,
+  TrendingUp,
+  Target,
+  Search,
+  Briefcase
 } from 'lucide-react';
 
 export default function RankingsDecodedLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [laurelModalOpen, setLaurelModalOpen] = useState(false);
 
   // Form State
@@ -83,34 +84,51 @@ export default function RankingsDecodedLanding() {
     }
   };
 
+  // 11 FAQs from official October 2026 specification
   const faqs = [
     {
-      q: 'Which directories do you support?',
-      a: 'We support submissions to Chambers and Partners, The Legal 500, IFLR1000, and Leaders League. Each proposal specifies the relevant guides, practices, and submissions.'
+      q: 'What does Rankings Decoded do?',
+      a: 'Rankings Decoded is a specialist advisory firm providing competitive intelligence, legal market positioning, communications strategy, rankings and recognition advisory, and guidance on publisher-related commercial investments. We help law firms make better-informed decisions about their competitive position, market visibility, and business development priorities.'
     },
     {
-      q: 'Can you help us decide whether to submit?',
-      a: 'Yes. Assessing whether your ambitions are supported by the available evidence is a core part of our work. We may recommend proceeding, strengthening the practice before submitting, or directing your effort towards a more appropriate category.'
+      q: 'Which legal directories do you work with?',
+      a: 'We work with submissions to legal directories, specialist rankings, and recognition programmes worldwide. Our experience includes major international directories such as Chambers and Partners, The Legal 500, IFLR1000, and Leaders League, but our services are not limited to these publications. Each engagement is assessed according to the relevant methodology, jurisdiction, research requirements, and timetable.'
     },
     {
-      q: 'Can we engage you for a single practice?',
-      a: 'Yes. We can scope a focused assessment or submission engagement, as well as broader programmes covering several practices and directories.'
+      q: 'Can you assess how our firm compares with competitors?',
+      a: 'Yes. We conduct competitive assessments within selected practice areas and markets, examining the firm’s track record, available evidence, and positioning against relevant competitors. Our objective is to identify meaningful gaps, credible opportunities, and the actions needed to strengthen the firm’s competitive position.'
     },
     {
-      q: 'Can you work alongside our business development or marketing team?',
-      a: 'Yes. We collaborate with your existing team. Your firm appoints an internal lead to consolidate materials and coordinate partner input.'
+      q: 'Can you help us decide whether we should submit?',
+      a: 'Yes. We evaluate whether the firm’s ambitions are supported by its current track record and evidence. Sometimes the right recommendation is to pursue recognition. In other cases, it may be to reconsider the category, strengthen the evidence, or defer participation.'
     },
     {
-      q: 'How are fees structured?',
-      a: 'Fees reflect the scope, complexity, and level of support required. Your proposal sets out deliverables, responsibilities, timelines, and payment terms before work begins.'
+      q: 'Can you advise on our advertising and directory budgets?',
+      a: 'Yes. We help firms evaluate publisher products, advertising opportunities, market intelligence services, and related commercial proposals. Our recommendations are based on the firm’s objectives, available resources, and the potential strategic relevance of each investment. We can also provide support in reviewing and negotiating commercial terms with publishers.'
+    },
+    {
+      q: 'Can you help us improve our market narrative?',
+      a: 'Yes. We assess how firms communicate their strengths and differentiators across practice areas, professional profiles, directories, and business development materials. Our recommendations focus on developing clear, credible messages supported by the firm’s actual experience and capabilities.'
+    },
+    {
+      q: 'Can we engage you for a single submission or a specific project?',
+      a: 'Absolutely. We work on individual submissions, competitive assessments, practice-specific assignments, and broader strategic engagements. You do not need to commission a comprehensive strategy project to access a specific service.'
+    },
+    {
+      q: 'Do you work alongside our business development or marketing team?',
+      a: 'Yes. We collaborate with internal teams and designated contacts to gather information, coordinate responsibilities, and ensure that the work progresses efficiently.'
+    },
+    {
+      q: 'How are your fees structured?',
+      a: 'Fees depend on the scope, complexity, research requirements, and level of support involved. We agree on deliverables, timelines, responsibilities, and commercial terms before work begins.'
     },
     {
       q: 'Do we need a software subscription?',
-      a: 'No. You can engage Rankings Decoded for specialist advice and submission support without purchasing a software subscription. Technology supports our delivery where appropriate.'
+      a: 'No. Our advisory and submission services are available independently of any software subscription.'
     },
     {
       q: 'Can you guarantee a ranking?',
-      a: 'Ranking decisions belong to each directory. Our commitment is to provide candid advice, rigorous analysis, and submissions that communicate your firm’s work accurately and effectively.'
+      a: 'No. Rankings and individual recognitions are determined independently by the relevant directories or award organisers. Our role is to help firms make informed decisions, present their evidence effectively, and approach the research process with a clear strategy. Advertising or commercial investments with publishers do not guarantee editorial recognition.'
     }
   ];
 
@@ -131,7 +149,7 @@ export default function RankingsDecodedLanding() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        backgroundColor: 'rgba(250, 249, 246, 0.92)',
+        backgroundColor: 'rgba(250, 249, 246, 0.94)',
         backdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(15, 23, 42, 0.08)'
       }}>
@@ -144,10 +162,10 @@ export default function RankingsDecodedLanding() {
           justifyContent: 'space-between'
         }}>
           {/* Brand Logo */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: 8,
               backgroundColor: '#0F172A',
               display: 'flex',
@@ -155,24 +173,24 @@ export default function RankingsDecodedLanding() {
               justifyContent: 'center',
               color: '#F8FAFC',
               fontWeight: 800,
-              fontSize: '1rem',
+              fontSize: '1.05rem',
               letterSpacing: '-0.02em',
               boxShadow: '0 2px 8px rgba(15, 23, 42, 0.15)'
             }}>
               RD
             </div>
             <div>
-              <span style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em', display: 'block', lineHeight: 1.1 }}>
+              <span style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em', display: 'block', lineHeight: 1.1 }}>
                 Rankings Decoded
               </span>
-              <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Legal Rankings Strategy
+              <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                Legal Market Intelligence, Strategy & Advisory
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <div style={{ display: 'none', gap: '2rem', alignItems: 'center' }} className="desktop-menu">
+          <div style={{ display: 'none', gap: '1.75rem', alignItems: 'center' }} className="desktop-menu">
             <button onClick={() => scrollToSection('services')} style={navLinkStyle}>Our Services</button>
             <button onClick={() => scrollToSection('approach')} style={navLinkStyle}>Our Approach</button>
             <button onClick={() => scrollToSection('technology')} style={navLinkStyle}>Technology</button>
@@ -201,7 +219,7 @@ export default function RankingsDecodedLanding() {
                 transition: 'all 0.2s ease'
               }}
             >
-              Let’s Talk
+              Discuss Your Priorities
             </button>
           </div>
 
@@ -233,7 +251,7 @@ export default function RankingsDecodedLanding() {
             <button onClick={() => scrollToSection('laurel-and-hell')} style={{ ...navLinkStyle, textAlign: 'left' }}>Laurel & Hell</button>
             <button onClick={() => scrollToSection('faq')} style={{ ...navLinkStyle, textAlign: 'left' }}>FAQ</button>
             <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '0.5rem 0' }} />
-            <Link href="/login" style={{ fontSize: '0.95rem', color: '#475569', fontWeight: 600 }}>Client Portal (Sign In)</Link>
+            <Link href="/login" style={{ fontSize: '0.95rem', color: '#475569', fontWeight: 600 }}>Client Portal</Link>
             <button
               onClick={() => scrollToSection('contact')}
               style={{
@@ -247,7 +265,7 @@ export default function RankingsDecodedLanding() {
                 textAlign: 'center'
               }}
             >
-              Let’s Talk
+              Discuss Your Priorities
             </button>
           </div>
         )}
@@ -281,18 +299,18 @@ export default function RankingsDecodedLanding() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            padding: '0.35rem 1rem',
+            padding: '0.4rem 1.15rem',
             borderRadius: '9999px',
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
             border: '1px solid rgba(255, 255, 255, 0.16)',
             fontSize: '0.78rem',
-            fontWeight: 600,
+            fontWeight: 700,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: '#CBD5E1',
             marginBottom: '2rem'
           }}>
-            <Compass size={14} color="#818CF8" /> Legal Rankings Strategy & Advisory
+            <Compass size={14} color="#818CF8" /> LEGAL MARKET INTELLIGENCE, STRATEGY & ADVISORY
           </div>
 
           {/* H1 Headline */}
@@ -310,7 +328,7 @@ export default function RankingsDecodedLanding() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
-              A stronger case for recognition.
+              A stronger competitive position.
             </span>
           </h1>
 
@@ -319,20 +337,20 @@ export default function RankingsDecodedLanding() {
             fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
             lineHeight: 1.65,
             color: '#94A3B8',
-            maxWidth: '820px',
+            maxWidth: '840px',
             margin: '0 auto 2.5rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem'
           }}>
             <p style={{ margin: 0 }}>
-              Understand where your firm stands, uncover its strengths, and recognise the gaps between its ambitions and its evidence.
+              Understand where your firm stands, how it compares with competitors, and where its strengths create genuine opportunities.
             </p>
             <p style={{ margin: 0, color: '#E2E8F0', fontWeight: 500 }}>
-              We turn that clarity into a focused legal rankings strategy—one that reflects your capabilities today and supports the practice you want to build.
+              We turn competitive intelligence into focused strategies for market positioning, legal recognition, communications, and smarter investment decisions.
             </p>
-            <p style={{ margin: 0, fontSize: '0.98rem', color: '#64748B' }}>
-              Specialist advice, personal attention, and submission support, backed by proprietary technology.
+            <p style={{ margin: 0, fontSize: '1rem', color: '#818CF8', fontWeight: 600, letterSpacing: '0.02em' }}>
+              Independent advice. Rigorous analysis. Practical execution.
             </p>
           </div>
 
@@ -365,7 +383,7 @@ export default function RankingsDecodedLanding() {
               Discuss Your Firm’s Priorities <ArrowRight size={17} />
             </button>
             <button
-              onClick={() => scrollToSection('approach')}
+              onClick={() => scrollToSection('services')}
               style={{
                 backgroundColor: 'transparent',
                 color: '#E2E8F0',
@@ -378,7 +396,7 @@ export default function RankingsDecodedLanding() {
                 transition: 'all 0.2s ease'
               }}
             >
-              Explore Our Approach
+              Explore Our Services
             </button>
           </div>
 
@@ -392,7 +410,7 @@ export default function RankingsDecodedLanding() {
             gap: '1rem'
           }}>
             <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#64748B', fontWeight: 600 }}>
-              Supporting Submissions & Strategy Across Leading Directories
+              Supporting Submissions & Strategy Across Leading Directories Worldwide
             </span>
             <div style={{
               display: 'flex',
@@ -421,23 +439,23 @@ export default function RankingsDecodedLanding() {
       {/* ═════════════════════════════════════════════════════════════ */}
       <section style={{ padding: '6rem 1.75rem', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
-          <div style={{ maxWidth: '780px', marginBottom: '3.5rem' }}>
+          <div style={{ maxWidth: '820px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Strategic Perspective</span>
             <h2 style={sectionH2Style}>
               Your next move starts with an honest assessment.
             </h2>
-            <p style={{ fontSize: '1.15rem', color: '#475569', lineHeight: 1.7, margin: '1rem 0 1.25rem' }}>
+            <p style={{ fontSize: '1.15rem', color: '#475569', lineHeight: 1.7, margin: '1rem 0 0.85rem' }}>
               Your ambitions, your reputation, and the work you actually do may tell different stories.
             </p>
             <p style={{ fontSize: '1.05rem', color: '#64748B', lineHeight: 1.7 }}>
-              We work with you to understand how they connect: where your strengths are established, where the evidence falls short, and where your capabilities may support an opportunity you have overlooked.
+              We help you understand how they connect, where your competitive strengths are established, where the evidence falls short, and which opportunities deserve your attention and resources.
             </p>
           </div>
 
           {/* 5 Questions Cards Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '1.5rem',
             marginBottom: '3rem'
           }}>
@@ -445,27 +463,27 @@ export default function RankingsDecodedLanding() {
               {
                 num: '01',
                 q: 'What do you want recognition to achieve for your firm?',
-                note: 'Connecting directory participation with real business development and market positioning.'
+                note: 'Connecting visibility and recognition initiatives with business development priorities and long-term market positioning.'
               },
               {
                 num: '02',
-                q: 'Does the practice you want recognised have the track record to support it?',
-                note: 'Evaluating if the current client roster and mandates sustain a top-tier band claim.'
+                q: 'How does your practice genuinely compare with its competitors?',
+                note: 'Evaluating the firm’s track record, capabilities, and evidence against the competitive landscape within a selected practice area or market.'
               },
               {
                 num: '03',
-                q: 'Are your strongest matters being presented in the right category?',
-                note: 'Identifying whether adjacent practices or sub-sectors offer a far more credible fit.'
+                q: 'Are you competing in the right categories and markets?',
+                note: 'Identifying where your capabilities support credible opportunities—and where a different strategic focus may deliver greater value.'
               },
               {
                 num: '04',
-                q: 'What can your clients credibly say about your work?',
-                note: 'Structuring referee strategy around substantiated first-hand buyer experience.'
+                q: 'Does your market narrative reflect what makes your firm competitive?',
+                note: 'Assessing whether your communications convey your genuine strengths, differentiate your practices, and support your commercial objectives.'
               },
               {
                 num: '05',
-                q: 'As your clients and markets change, where should you concentrate your efforts?',
-                note: 'Directing partner hours and marketing budget towards maximum strategic return.'
+                q: 'Are your investments in visibility and recognition advancing your business goals?',
+                note: 'Examining whether advertising, directory participation, market intelligence products, and related investments are aligned with measurable strategic priorities.'
               }
             ].map((item) => (
               <div
@@ -489,7 +507,7 @@ export default function RankingsDecodedLanding() {
                     {item.q}
                   </h3>
                 </div>
-                <p style={{ fontSize: '0.9rem', color: '#64748B', margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '0.85rem' }}>
+                <p style={{ fontSize: '0.92rem', color: '#64748B', margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '0.85rem', lineHeight: 1.6 }}>
                   {item.note}
                 </p>
               </div>
@@ -518,46 +536,63 @@ export default function RankingsDecodedLanding() {
       </section>
 
       {/* ═════════════════════════════════════════════════════════════ */}
-      {/* 4. WHEN WE CAN HELP (4 Key Triggers)                         */}
+      {/* 4. WHEN WE CAN HELP (6 Scenarios Grid)                       */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section style={{ padding: '6rem 1.75rem', backgroundColor: '#FAF9F6' }}>
         <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
-          <div style={{ maxWidth: '780px', marginBottom: '3.5rem' }}>
+          <div style={{ maxWidth: '820px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>When We Can Help</span>
             <h2 style={sectionH2Style}>
-              Support for the decisions that shape your next research cycle.
+              Different challenges. One starting point: clarity.
             </h2>
+            <p style={{ fontSize: '1.1rem', color: '#64748B', lineHeight: 1.7, margin: '1rem 0 0' }}>
+              We work with law firms facing a range of strategic and operational challenges.
+            </p>
           </div>
 
           <div className="when-we-help-grid">
             {[
               {
-                tag: 'COMMUNICATION & IMPACT',
-                icon: <FileText size={22} color="#4338CA" />,
-                title: 'Your submissions are not communicating the strength of your practice.',
-                desc: 'We examine the evidence, the positioning, and the way your work is presented to identify what needs attention.',
-                outcome: 'Evidence & narrative audit to surface overlooked technical complexity and market impact.'
+                tag: 'COMPETITIVE ASSESSMENT',
+                icon: <Search size={22} color="#4338CA" />,
+                title: 'Your firm is pursuing recognition without a clear competitive assessment.',
+                desc: 'You need to understand whether your track record supports your ambitions and how your practice compares with established competitors.',
+                focus: 'Validating band viability and evidentiary support against the competitive landscape.'
               },
               {
-                tag: 'NEW CAPABILITIES',
-                icon: <Award size={22} color="#4338CA" />,
-                title: 'You want recognition in a new practice or market.',
-                desc: 'We assess how far your existing capabilities support that ambition, what remains to be developed, and whether another category offers a stronger fit.',
-                outcome: 'Strategic triage to test track record and establish the highest-probability category.'
+                tag: 'SUBMISSIONS & EVIDENCE',
+                icon: <FileText size={22} color="#4338CA" />,
+                title: 'Your submissions are not communicating your strongest work.',
+                desc: 'You have the experience and matters, but the evidence, selection, or presentation may not adequately reflect the practice’s capabilities.',
+                focus: 'Surfacing technical complexity, commercial significance, and team contribution.'
+              },
+              {
+                tag: 'MARKET POSITIONING',
+                icon: <Target size={22} color="#4338CA" />,
+                title: 'Your market positioning lacks differentiation.',
+                desc: 'Your practice descriptions, professional profiles, and communications may not clearly explain what sets your firm apart.',
+                focus: 'Developing clear, credible messaging supported by genuine capabilities.'
+              },
+              {
+                tag: 'BUDGET & INVESTMENTS',
+                icon: <Briefcase size={22} color="#4338CA" />,
+                title: 'You are unsure where to allocate your budget.',
+                desc: 'You need independent guidance on directory participation, advertising, publisher products, and other visibility-related investments.',
+                focus: 'Evaluating publisher products, commercial terms, and budget priorities.'
               },
               {
                 tag: 'STRATEGIC REALIGNMENT',
                 icon: <Globe size={22} color="#4338CA" />,
-                title: 'Your business is changing.',
-                desc: 'As client needs, sectors, and growth priorities evolve, we help you reassess what your rankings strategy should support.',
-                outcome: 'Aligning directory efforts with current client mandates and commercial growth priorities.'
+                title: 'Your business development priorities are changing.',
+                desc: 'You are entering a new market, developing a practice, repositioning a team, or reconsidering where recognition efforts should be focused.',
+                focus: 'Aligning recognition strategy with emerging practices and market expansion.'
               },
               {
-                tag: 'EXECUTION & PARTNERSHIP',
+                tag: 'SPECIALIST EXECUTION',
                 icon: <Users size={22} color="#4338CA" />,
-                title: 'Your team needs experienced guidance and delivery support.',
-                desc: 'We work alongside partners and business development or marketing teams to bring direction, structure, and specialist execution to the process.',
-                outcome: 'Collaborative delivery model with agreed milestones, clear roles and partner coaching.'
+                title: 'Your team needs specialist guidance or execution support.',
+                desc: 'You need experienced assistance with research cycles, submissions, competitive analysis, or the coordination of a broader positioning strategy.',
+                focus: 'Collaborative partnership providing senior direction and milestone delivery.'
               }
             ].map((card, idx) => (
               <div
@@ -605,11 +640,11 @@ export default function RankingsDecodedLanding() {
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, margin: '0 0 0.85rem' }}>
+                  <h3 style={{ fontSize: '1.22rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.35, margin: '0 0 0.85rem' }}>
                     {card.title}
                   </h3>
 
-                  <p style={{ fontSize: '0.98rem', color: '#475569', lineHeight: 1.68, margin: 0 }}>
+                  <p style={{ fontSize: '0.96rem', color: '#475569', lineHeight: 1.68, margin: 0 }}>
                     {card.desc}
                   </p>
                 </div>
@@ -625,7 +660,7 @@ export default function RankingsDecodedLanding() {
                   lineHeight: 1.5
                 }}>
                   <span style={{ fontWeight: 700, color: '#4338CA' }}>Focus:</span>
-                  <span>{card.outcome}</span>
+                  <span>{card.focus}</span>
                 </div>
               </div>
             ))}
@@ -638,44 +673,60 @@ export default function RankingsDecodedLanding() {
       {/* ═════════════════════════════════════════════════════════════ */}
       <section id="services" style={{ padding: '6rem 1.75rem', backgroundColor: '#FFFFFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
-          <div style={{ maxWidth: '780px', marginBottom: '3.5rem' }}>
+          <div style={{ maxWidth: '840px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Our Services</span>
             <h2 style={sectionH2Style}>
-              From understanding your practice to presenting its strongest case.
+              Better intelligence. Sharper positioning. Smarter decisions.
             </h2>
+            <div style={{ fontSize: '1.05rem', color: '#475569', lineHeight: 1.75, margin: '1.25rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <p style={{ margin: 0 }}>
+                Recognition is only one part of a law firm’s competitive strategy.
+              </p>
+              <p style={{ margin: 0 }}>
+                We help firms understand where they stand, how they compare with competitors, what differentiates their practices, and where their resources can create the greatest strategic value.
+              </p>
+              <p style={{ margin: 0, color: '#0F172A', fontWeight: 600 }}>
+                From competitive intelligence and market positioning to submissions, communications, and publisher negotiations, our work connects evidence-based analysis with practical business decisions.
+              </p>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gap: '2rem' }}>
             {[
               {
                 num: '01',
-                title: 'Practice Assessment & Strategic Direction',
-                subtitle: 'Build an honest picture of your practice and its prospects for recognition.',
-                desc: 'We assess your work, client base, team capabilities, and current positioning against your ambitions and the relevant directory categories. From there, we recommend what to pursue now, what needs strengthening, and where to refocus—connecting your rankings strategy with the direction in which you want your firm to grow.'
+                title: 'Competitive Intelligence & Market Positioning',
+                subtitle: 'Know where you stand before deciding where to compete.',
+                desc: 'We conduct rigorous assessments of law firms’ competitive positions within selected practice areas, jurisdictions, and legal market segments. Our analysis examines the firm’s track record, client portfolio, matter complexity, sector strengths, and available evidence against the competitive landscape. We identify material gaps, test the credibility of ranking ambitions, and assess where the firm has a defensible opportunity to compete—and where its resources may be better directed elsewhere.',
+                deliverables: 'Competitive benchmarking, practice assessments, gap analyses, positioning diagnostics, and prioritised strategic recommendations.'
               },
               {
                 num: '02',
-                title: 'Matter Selection & Evidence Review',
-                subtitle: 'Identify what your work demonstrates—and what needs further explanation.',
-                desc: 'We analyse available materials, select and prioritise matters, and identify gaps in the evidence. Targeted questions help bring out the legal complexity, commercial significance, and contribution of your team. The aim is to build a credible account of your capabilities, grounded in the work you have actually done.'
+                title: 'Strategic Positioning & Communications',
+                subtitle: 'Build a narrative your evidence can support.',
+                desc: 'Strong legal work does not automatically translate into a clear or differentiated market position. We assess how a firm communicates its capabilities across practice areas, identify inconsistencies or missed opportunities, and help develop narratives that reflect its genuine strengths and commercial priorities. Our work may include reviewing practice descriptions, identifying differentiating messages, and advising on how the firm’s positioning should evolve across directories, professional profiles, and other business development communications.',
+                deliverables: 'Narrative assessments, practice positioning recommendations, key messaging frameworks, and communications improvement plans.'
               },
               {
                 num: '03',
-                title: 'Submission Development & Review',
-                subtitle: 'Translate your evidence into a clear, well-supported submission.',
-                desc: 'We develop and refine practice narratives, matter descriptions, and lawyer profiles, adapting the material to each directory’s requirements. Every submission is reviewed for accuracy, relevance, and consistency, in coordination with your designated internal contact.'
+                title: 'Legal Rankings & Recognition Advisory',
+                subtitle: 'Make every submission a stronger reflection of your work.',
+                desc: 'We advise on the full legal recognition process, from selecting the right categories and evaluating available evidence to developing submissions and preparing for research cycles. Our services include matter selection, evidence review, submission drafting and editing, referee strategy, research coordination, and post-cycle assessments. We work across legal directories, specialist rankings, individual lawyer nominations, industry awards, diversity and inclusion submissions, pro bono recognition, and other professional recognition programmes worldwide.',
+                deliverables: 'Submission strategies, prioritised matter selections, completed or reviewed submissions, referee recommendations, and research cycle action plans.'
               },
               {
                 num: '04',
-                title: 'Referee Strategy',
-                subtitle: 'Choose people who can speak meaningfully about your work.',
-                desc: 'We advise on referee selection, considering first-hand experience, relevance to the practice, and the perspective each person can contribute. We also guide your team’s approach to outreach and follow-up, with clear responsibilities agreed from the outset.'
+                title: 'Investment & Publisher Advisory',
+                subtitle: 'Invest with purpose, not out of habit.',
+                desc: 'Legal publishers offer an extensive range of advertising, enhanced profiles, market intelligence products, research services, and commercial partnerships. We help firms assess which opportunities are relevant to their objectives, how to allocate budgets, and whether proposed investments are commercially justified. Our support may include evaluating publisher proposals, comparing products, reviewing fees and commercial conditions, and advising on negotiations concerning pricing, payment terms, and contractual arrangements.',
+                deliverables: 'Investment assessments, budget allocation recommendations, publisher product evaluations, commercial proposal reviews, and negotiation support.'
               },
               {
                 num: '05',
-                title: 'Research Cycle Advisory',
-                subtitle: 'Keep priorities, decisions, and delivery connected.',
-                desc: 'We establish milestones, guide key decisions, and coordinate agreed reviews with your internal lead. As the cycle progresses, we identify evidence gaps and practical steps to strengthen future submissions.'
+                title: 'Integrated Legal Market Strategy',
+                subtitle: 'Connect recognition, reputation, and investment to business goals.',
+                desc: 'A ranking, an advertising investment, or a communications initiative should not be an end in itself. We help firms build coordinated strategies that connect their competitive position, practice priorities, recognition ambitions, communications, and commercial investments. Our approach begins with the firm’s business objectives and works backwards to identify the initiatives, resources, and evidence needed to support them.',
+                deliverables: 'Integrated positioning strategies, investment priorities, cross-practice action plans, and strategic roadmaps with defined objectives and review points.'
               }
             ].map((srv) => (
               <div
@@ -702,32 +753,68 @@ export default function RankingsDecodedLanding() {
                     {srv.subtitle}
                   </p>
                 </div>
-                <div>
-                  <p style={{ fontSize: '0.98rem', color: '#64748B', lineHeight: 1.75, margin: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <p style={{ fontSize: '0.98rem', color: '#475569', lineHeight: 1.75, margin: 0 }}>
                     {srv.desc}
                   </p>
+                  <div style={{
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '8px',
+                    padding: '0.85rem 1.15rem',
+                    fontSize: '0.86rem',
+                    color: '#64748B',
+                    lineHeight: 1.55
+                  }}>
+                    <strong style={{ color: '#0F172A' }}>Typical deliverables:</strong> {srv.deliverables}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* DEI and Pro Bono Scope Callout */}
+          {/* Bottom Callout Banner */}
           <div style={{
-            marginTop: '2.5rem',
-            padding: '1.25rem 1.75rem',
-            borderRadius: '10px',
-            backgroundColor: '#F1F5F9',
-            border: '1px solid #CBD5E1',
-            fontSize: '0.92rem',
-            color: '#475569',
+            marginTop: '3.5rem',
+            padding: '2.5rem',
+            borderRadius: '14px',
+            backgroundColor: '#0F172A',
+            color: '#FFFFFF',
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '0.75rem'
+            flexWrap: 'wrap',
+            gap: '1.5rem',
+            boxShadow: '0 8px 30px rgba(15, 23, 42, 0.08)'
           }}>
-            <Sparkles size={18} color="#4338CA" />
-            <span>
-              <strong>Additional Scope:</strong> DEI, pro bono, and awards submissions can be included through a separately defined scope.
-            </span>
+            <div style={{ maxWidth: '640px' }}>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#F8FAFC' }}>
+                Every engagement begins with a question worth answering.
+              </h3>
+              <p style={{ fontSize: '0.98rem', color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
+                Whether your firm needs a single submission, a competitive assessment, or a broader strategy, we define the scope around the decisions you need to make.
+              </p>
+            </div>
+            <button
+              onClick={() => scrollToSection('contact')}
+              style={{
+                backgroundColor: '#F8FAFC',
+                color: '#0F172A',
+                padding: '0.85rem 1.75rem',
+                borderRadius: '8px',
+                fontSize: '0.92rem',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Discuss Your Firm’s Priorities <ArrowRight size={16} />
+            </button>
           </div>
         </div>
       </section>
@@ -755,22 +842,22 @@ export default function RankingsDecodedLanding() {
               {
                 step: '1',
                 title: 'Understand your priorities',
-                desc: 'We discuss your firm’s objectives, directory experience, current challenges, and upcoming research cycles.'
+                desc: 'We discuss your firm’s business objectives, competitive position, market ambitions, current challenges, and existing investments in visibility and recognition.'
               },
               {
                 step: '2',
-                title: 'Assess the evidence and agree direction',
-                desc: 'We examine the available materials, test the assumptions behind your ambitions, and establish priorities for the engagement.'
+                title: 'Assess the evidence and competitive landscape',
+                desc: 'We examine the available information, test the assumptions behind your ambitions, identify material gaps, and evaluate the opportunities supported by your firm’s capabilities.'
               },
               {
                 step: '3',
-                title: 'Build and refine submissions',
-                desc: 'We develop the agreed materials, raise focused questions, and work through reviews with your designated contact.'
+                title: 'Develop the strategy and deliverables',
+                desc: 'Depending on the engagement, we prepare competitive assessments, positioning recommendations, submissions, communications guidance, investment evaluations, or integrated strategic plans. We work closely with your designated contact to validate information and refine the agreed deliverables.'
               },
               {
                 step: '4',
-                title: 'Prepare for the next cycle',
-                desc: 'We identify what to retain, what to improve, and what your team should begin documenting to support future ambitions.'
+                title: 'Turn insights into next steps',
+                desc: 'We translate our findings into practical recommendations, helping your team understand what to prioritise, what to improve, and how to prepare for future opportunities.'
               }
             ].map((st) => (
               <div
@@ -810,31 +897,31 @@ export default function RankingsDecodedLanding() {
             ))}
           </div>
 
-          {/* Operating Agreement Box */}
+          {/* Flexible Engagement Model Callout */}
           <div style={{
             backgroundColor: '#FFFFFF',
             borderRadius: '12px',
             border: '1px solid #E2E8F0',
-            padding: '2rem 2.25rem',
+            padding: '2.25rem',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.5rem',
-            alignItems: 'center'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '2rem',
+            alignItems: 'start'
           }}>
             <div>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
-                Collaborative Operating Model
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
+                A flexible engagement model
               </h4>
-              <p style={{ fontSize: '0.94rem', color: '#475569', lineHeight: 1.65, margin: 0 }}>
-                Your firm appoints an internal lead to consolidate information and coordinate partner input. Rankings Decoded provides specialist direction and delivers the agreed work.
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, margin: 0 }}>
+                These stages provide a framework, not a mandatory sequence. Engagements may cover a single submission, a competitive assessment, a specific commercial decision, or a broader programme of strategic support.
               </p>
             </div>
             <div>
-              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
-                Defined Engagements
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
+                Clear commercial terms upfront
               </h4>
-              <p style={{ fontSize: '0.94rem', color: '#475569', lineHeight: 1.65, margin: 0 }}>
-                Each engagement defines the practices, directories, deliverables, review rounds, timetable, and fees upfront with absolute clarity.
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, margin: 0 }}>
+                Scope, responsibilities, deliverables, timelines, and fees are agreed in advance, ensuring complete predictability and focus throughout.
               </p>
             </div>
           </div>
@@ -878,30 +965,43 @@ export default function RankingsDecodedLanding() {
               }}>
                 Expert-led advice, supported by technology.
               </h2>
-              <p style={{ fontSize: '1.05rem', color: '#94A3B8', lineHeight: 1.75, margin: '0 0 1.25rem' }}>
-                We are developing proprietary technology to support the analysis, preparation, and review of legal directory submissions.
-              </p>
-              <p style={{ fontSize: '1.02rem', color: '#CBD5E1', lineHeight: 1.75, margin: '0 0 1.5rem' }}>
-                Introduced progressively into our workflow, it helps us streamline repeatable tasks and create more capacity for substantive analysis and personal attention.
-              </p>
-              <p style={{ fontSize: '0.95rem', color: '#94A3B8', lineHeight: 1.7, margin: '0 0 2rem' }}>
-                Professional judgment guides the process: understanding the significance of a matter, assessing the strength of a practice, identifying appropriate referees, and recommending where to focus.
-              </p>
+              <div style={{ fontSize: '1.02rem', color: '#94A3B8', lineHeight: 1.75, display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '2rem' }}>
+                <p style={{ margin: 0 }}>
+                  Rankings Decoded is developing proprietary technology to support the analysis, organisation, and review of legal directory submissions and related evidence.
+                </p>
+                <p style={{ margin: 0 }}>
+                  Our technology is designed to complement professional judgement—not replace it.
+                </p>
+                <p style={{ margin: 0 }}>
+                  As the platform evolves, its capabilities are being tested and progressively introduced into our workflow, with expert oversight remaining central to every engagement.
+                </p>
+                <p style={{ margin: 0 }}>
+                  Our broader advisory services draw on professional expertise, structured analysis, and appropriate research methodologies, independently of the software development timetable.
+                </p>
+              </div>
+
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: '#FCD34D', letterSpacing: '-0.01em' }}>
+                  Strategic analysis comes first. Technology helps us execute it more effectively.
+                </p>
+              </div>
 
               <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.65rem',
-                padding: '0.75rem 1.25rem',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
                 fontSize: '0.88rem',
-                color: '#E2E8F0',
+                color: '#CBD5E1',
                 fontWeight: 500
               }}>
                 <Shield size={16} color="#818CF8" />
-                Our advisory services are available independently of a software subscription.
+                Clients can engage Rankings Decoded without purchasing a software subscription.
               </div>
             </div>
 
@@ -918,27 +1018,27 @@ export default function RankingsDecodedLanding() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #334155', paddingBottom: '1.25rem' }}>
                 <Sparkles size={20} color="#818CF8" />
-                <span style={{ fontSize: '1rem', fontWeight: 700, color: '#F8FAFC' }}>
+                <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#F8FAFC' }}>
                   The Rankings Decoded Difference
                 </span>
               </div>
 
-              <div style={{ display: 'grid', gap: '1.2rem', fontSize: '0.92rem', color: '#CBD5E1' }}>
+              <div style={{ display: 'grid', gap: '1.35rem', fontSize: '0.94rem', color: '#CBD5E1', lineHeight: 1.6 }}>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'start' }}>
-                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div><strong>Strategic Triage:</strong> Distinguishing wishful thinking from genuine evidentiary weight.</div>
+                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 3 }} />
+                  <div><strong>Strategic Triage:</strong> Distinguishing wishful thinking from genuine evidentiary weight before committing partner time.</div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'start' }}>
-                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div><strong>Evidence Deep-Dive:</strong> Uncovering technical legal complexity that associates often miss.</div>
+                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 3 }} />
+                  <div><strong>Evidence Deep-Dive:</strong> Uncovering technical complexity and deal significance that drafting teams routinely miss.</div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'start' }}>
-                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div><strong>AI Substantive Audit:</strong> Automated validation against directory guidelines and peer precedents.</div>
+                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 3 }} />
+                  <div><strong>Competitive Benchmarking:</strong> Testing practice strengths against ranked peers in your specific market and category.</div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'start' }}>
-                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 2 }} />
-                  <div><strong>Executive Supervision:</strong> 1-on-1 strategic leadership by Ángela Castillo throughout.</div>
+                  <CheckCircle2 size={18} color="#818CF8" style={{ flexShrink: 0, marginTop: 3 }} />
+                  <div><strong>Executive Leadership:</strong> Senior-level strategic guidance and substantive review led personally by Ángela Castillo.</div>
                 </div>
               </div>
             </div>
@@ -950,12 +1050,13 @@ export default function RankingsDecodedLanding() {
       {/* 8. ABOUT SECTION (Led by Ángela Castillo)                   */}
       {/* ═════════════════════════════════════════════════════════════ */}
       <section id="about" style={{ padding: '6rem 1.75rem', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
             gap: '3.5rem',
-            alignItems: 'center'
+            alignItems: 'start',
+            marginBottom: '4rem'
           }}>
             {/* Left Bio Avatar / Credential Card */}
             <div style={{
@@ -968,54 +1069,58 @@ export default function RankingsDecodedLanding() {
               gap: '1.25rem'
             }}>
               <div style={{
-                width: 80,
-                height: 80,
+                width: 84,
+                height: 84,
                 borderRadius: '50%',
                 backgroundColor: '#0F172A',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
+                fontSize: '1.85rem',
                 fontWeight: 700,
-                letterSpacing: '-0.02em'
+                letterSpacing: '-0.02em',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)'
               }}>
                 AC
               </div>
               <div>
-                <h3 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' }}>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' }}>
                   Ángela Castillo
                 </h3>
-                <span style={{ fontSize: '0.88rem', color: '#4338CA', fontWeight: 600, display: 'block' }}>
+                <span style={{ fontSize: '0.92rem', color: '#4338CA', fontWeight: 700, display: 'block' }}>
                   Founder & Principal Strategist
                 </span>
-                <span style={{ fontSize: '0.82rem', color: '#64748B' }}>
-                  Co-founder of LexLatin · Legal Rankings Authority
+                <span style={{ fontSize: '0.82rem', color: '#64748B', display: 'block', marginTop: '0.2rem' }}>
+                  Chambers and Partners · Thomson Reuters · IBA · Co-founder of LexLatin
                 </span>
               </div>
-              <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.6, margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-                Advising partners and law firms across international markets with deep sector knowledge and editorial precision.
+              <p style={{ fontSize: '0.9rem', color: '#64748B', lineHeight: 1.65, margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
+                Combines firsthand experience within legal information, research, publishing, and international professional organisations with years of advising law firms on positioning and recognition.
               </p>
             </div>
 
-            {/* Right Narrative */}
+            {/* Right Narrative (All 5 Paragraphs) */}
             <div>
               <span style={sectionEyebrowStyle}>About</span>
               <h2 style={{ ...sectionH2Style, margin: '0 0 1.5rem' }}>
                 Led by Ángela Castillo.
               </h2>
-              <div style={{ fontSize: '1.02rem', color: '#475569', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div style={{ fontSize: '1.02rem', color: '#475569', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 <p style={{ margin: 0 }}>
-                  Ángela Castillo brings together experience in legal directory strategy and submissions with her perspective as a co-founder of <strong>LexLatin</strong>.
+                  Ángela Castillo brings extensive experience across the international legal industry, with a professional background spanning Chambers and Partners, Thomson Reuters, the International Bar Association (IBA), and LexLatin, which she co-founded.
                 </p>
                 <p style={{ margin: 0 }}>
-                  She leads the strategy of each engagement and participates directly in key decisions and reviews, working with your firm’s designated team.
+                  Her career has given her a distinctive perspective on the legal market, combining experience within legal information, research, publishing, and professional organisations with years of advising law firms on their positioning, visibility, and recognition strategies.
                 </p>
                 <p style={{ margin: 0 }}>
-                  Her approach begins with the substance of your practice: understanding the work, questioning assumptions, and identifying the evidence that supports a credible case for recognition.
+                  Having worked on different sides of the legal publishing and rankings ecosystem, Ángela understands not only how firms seek recognition, but also how research organisations, publishers, and commercial stakeholders operate.
                 </p>
-                <p style={{ margin: 0, color: '#64748B', fontSize: '0.95rem' }}>
-                  Built with an international outlook, Rankings Decoded welcomes enquiries from firms across <strong>Asia-Pacific, Europe, Latin America, and beyond</strong>. Each engagement is assessed against the relevant jurisdiction, research requirements, language needs, and timetable.
+                <p style={{ margin: 0 }}>
+                  Her international professional network and longstanding industry relationships complement an approach grounded in independent judgement, rigorous evidence assessment, and a realistic understanding of each firm’s competitive position.
+                </p>
+                <p style={{ margin: 0, color: '#0F172A', fontWeight: 600 }}>
+                  At Rankings Decoded, Ángela personally leads strategic assessments, key recommendations, and substantive reviews, working closely with clients to identify genuine strengths, challenge unsupported ambitions, and turn market intelligence into informed decisions.
                 </p>
               </div>
 
@@ -1039,6 +1144,49 @@ export default function RankingsDecodedLanding() {
                   Discuss Your Firm’s Priorities <ArrowRight size={16} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* 2 Sub-Cards: Collaborative Delivery & Working Worldwide */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+            gap: '2rem',
+            borderTop: '1px solid #E2E8F0',
+            paddingTop: '3.5rem'
+          }}>
+            <div style={{
+              backgroundColor: '#FAF9F6',
+              border: '1px solid #E2E8F0',
+              borderRadius: '12px',
+              padding: '2rem 2.25rem'
+            }}>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.75rem' }}>
+                Specialist leadership, collaborative delivery
+              </h4>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, margin: '0 0 0.85rem' }}>
+                Rankings Decoded combines founder-led strategic advice with dedicated operational and project support.
+              </p>
+              <p style={{ fontSize: '0.92rem', color: '#64748B', lineHeight: 1.65, margin: 0 }}>
+                Every engagement benefits from direct senior-level oversight, while research coordination, information gathering, and project delivery are supported by a collaborative working model designed around each client’s needs.
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: '#FAF9F6',
+              border: '1px solid #E2E8F0',
+              borderRadius: '12px',
+              padding: '2rem 2.25rem'
+            }}>
+              <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.75rem' }}>
+                Working with firms worldwide
+              </h4>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, margin: '0 0 0.85rem' }}>
+                Rankings Decoded welcomes enquiries from law firms anywhere in the world.
+              </p>
+              <p style={{ fontSize: '0.92rem', color: '#64748B', lineHeight: 1.65, margin: 0 }}>
+                Our advice is tailored to each firm’s jurisdiction, market positioning, competitive landscape, research requirements, and business objectives. Every engagement is assessed individually to ensure that its scope and methodology reflect the realities of the relevant legal market.
+              </p>
             </div>
           </div>
         </div>
@@ -1069,7 +1217,7 @@ export default function RankingsDecodedLanding() {
             color: '#FCD34D',
             marginBottom: '1.75rem'
           }}>
-            <BookOpen size={14} color="#FCD34D" /> A Rankings Decoded Publication
+            <BookOpen size={14} color="#FCD34D" /> Behind every submission, there’s a story
           </div>
 
           <h2 style={{
@@ -1080,18 +1228,18 @@ export default function RankingsDecodedLanding() {
             letterSpacing: '-0.02em',
             color: '#FFFDF9'
           }}>
-            Behind every submission, there’s a story.
+            Laurel & Hell by Ángela Castillo
           </h2>
 
           <p style={{
-            fontSize: '1.35rem',
+            fontSize: '1.25rem',
             fontWeight: 500,
             color: '#D4CEBA',
-            lineHeight: 1.5,
-            margin: '0 0 1.5rem',
+            lineHeight: 1.55,
+            margin: '0 0 1.25rem',
             fontStyle: 'italic'
           }}>
-            “Ambitious partners. Undocumented matters. Deadlines approaching faster than the information.”
+            An independent editorial publication exploring the language, contradictions, ambitions, and realities of recognition in the legal industry.
           </p>
 
           <p style={{
@@ -1101,7 +1249,7 @@ export default function RankingsDecodedLanding() {
             maxWidth: '680px',
             margin: '0 auto 2.5rem'
           }}>
-            <strong>Laurel & Hell</strong> explores the decisions, tensions, and habits behind legal rankings—with humour, perspective, and practical insight. Written by Ángela Castillo.
+            Sharp observations, critical perspectives, and informed commentary on the business of being recognised.
           </p>
 
           <div>
@@ -1166,7 +1314,7 @@ export default function RankingsDecodedLanding() {
                       border: 'none',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      fontSize: '1.1rem',
+                      fontSize: '1.08rem',
                       fontWeight: 700,
                       color: '#0F172A',
                       gap: '1rem'
@@ -1188,7 +1336,7 @@ export default function RankingsDecodedLanding() {
                       padding: '0 1.75rem 1.5rem',
                       fontSize: '0.98rem',
                       color: '#475569',
-                      lineHeight: 1.7,
+                      lineHeight: 1.75,
                       borderTop: '1px solid #F1F5F9',
                       paddingTop: '1rem'
                     }}>
@@ -1212,11 +1360,14 @@ export default function RankingsDecodedLanding() {
             <h2 style={{ ...sectionH2Style, margin: '0 0 1rem' }}>
               Let’s bring clarity to your next move.
             </h2>
-            <p style={{ fontSize: '1.15rem', color: '#475569', lineHeight: 1.6, margin: '0 auto 0.5rem', maxWidth: '640px' }}>
+            <p style={{ fontSize: '1.15rem', color: '#0F172A', fontWeight: 600, lineHeight: 1.6, margin: '0 auto 0.75rem', maxWidth: '680px' }}>
               What does your firm want to achieve—and what is making the process difficult?
             </p>
-            <p style={{ fontSize: '0.98rem', color: '#64748B', lineHeight: 1.6, margin: 0 }}>
-              Tell us a little about your priorities. We will review your enquiry and get in touch to explore the right next step.
+            <p style={{ fontSize: '0.98rem', color: '#64748B', lineHeight: 1.65, margin: '0 auto', maxWidth: '680px' }}>
+              Whether you are evaluating your competitive position, preparing submissions, reviewing your market narrative, or reconsidering your investment priorities, we would be pleased to explore how we can help.
+            </p>
+            <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, margin: '0.75rem auto 0', maxWidth: '680px' }}>
+              Tell us a little about your objectives. We will review your enquiry and get in touch to discuss the right next step.
             </p>
           </div>
 
@@ -1285,7 +1436,7 @@ export default function RankingsDecodedLanding() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. María González"
+                      placeholder="Jane Smith"
                       value={formState.name}
                       onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                       style={formInputStyle}
@@ -1297,7 +1448,7 @@ export default function RankingsDecodedLanding() {
                     <input
                       type="email"
                       required
-                      placeholder="e.g. mgonzalez@firm.com"
+                      placeholder="jane.smith@firm.com"
                       value={formState.email}
                       onChange={(e) => setFormState({ ...formState, email: e.target.value })}
                       style={formInputStyle}
@@ -1311,7 +1462,7 @@ export default function RankingsDecodedLanding() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. González & Partners Abogados"
+                      placeholder="Smith & Partners"
                       value={formState.firmName}
                       onChange={(e) => setFormState({ ...formState, firmName: e.target.value })}
                       style={formInputStyle}
@@ -1322,7 +1473,7 @@ export default function RankingsDecodedLanding() {
                     <label style={formLabelStyle}>Role / Title</label>
                     <input
                       type="text"
-                      placeholder="e.g. Managing Partner / BD Director"
+                      placeholder="Managing Partner / BD Director"
                       value={formState.role}
                       onChange={(e) => setFormState({ ...formState, role: e.target.value })}
                       style={formInputStyle}
@@ -1334,7 +1485,7 @@ export default function RankingsDecodedLanding() {
                   <label style={formLabelStyle}>Country / Jurisdiction</label>
                   <input
                     type="text"
-                    placeholder="e.g. Mexico, Colombia, Spain, Regional"
+                    placeholder="United Kingdom, Mexico, Singapore, or multiple jurisdictions"
                     value={formState.country}
                     onChange={(e) => setFormState({ ...formState, country: e.target.value })}
                     style={formInputStyle}
@@ -1343,12 +1494,12 @@ export default function RankingsDecodedLanding() {
 
                 <div>
                   <label style={formLabelStyle}>
-                    What would you like to achieve or improve through your legal directory participation? *
+                    What would you like to achieve or improve? *
                   </label>
                   <textarea
                     required
                     rows={4}
-                    placeholder="Please provide a general overview of your practice areas, current challenges, or upcoming cycles..."
+                    placeholder="Tell us about your firm’s priorities, competitive challenges, recognition objectives, or investment decisions."
                     value={formState.message}
                     onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                     style={{ ...formInputStyle, resize: 'vertical' }}
@@ -1428,8 +1579,8 @@ export default function RankingsDecodedLanding() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
                 <div style={{
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   borderRadius: 6,
                   backgroundColor: '#FFFFFF',
                   color: '#0F172A',
@@ -1437,34 +1588,39 @@ export default function RankingsDecodedLanding() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 800,
-                  fontSize: '0.9rem'
+                  fontSize: '0.95rem'
                 }}>
                   RD
                 </div>
-                <span style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F8FAFC' }}>
-                  Rankings Decoded
-                </span>
+                <div>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F8FAFC', display: 'block', lineHeight: 1.1 }}>
+                    Rankings Decoded
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Legal Market Intelligence, Strategy & Advisory
+                  </span>
+                </div>
               </div>
-              <p style={{ fontSize: '0.92rem', color: '#64748B', maxWidth: '380px', margin: 0, lineHeight: 1.6 }}>
-                Legal rankings strategy. Evidence. Expert guidance.
+              <p style={{ fontSize: '0.92rem', color: '#64748B', maxWidth: '420px', margin: 0, lineHeight: 1.6 }}>
+                Independent advice for stronger competitive positioning and smarter business decisions.
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', fontSize: '0.9rem', color: '#CBD5E1' }}>
-              <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" style={footerLinkStyle}>
-                LinkedIn
-              </a>
-              <button onClick={() => setLaurelModalOpen(true)} style={{ ...footerLinkStyle, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                Laurel & Hell
-              </button>
-              <button onClick={() => scrollToSection('contact')} style={{ ...footerLinkStyle, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                Contact
-              </button>
-              <button onClick={() => setPrivacyModalOpen(true)} style={{ ...footerLinkStyle, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                Privacy Notice
-              </button>
-              <Link href="/login" style={{ ...footerLinkStyle, color: '#818CF8', fontWeight: 600 }}>
-                Client Sign In
+            <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap', fontSize: '0.9rem', color: '#CBD5E1' }}>
+              <button onClick={() => scrollToSection('services')} style={footerNavButtonStyle}>Our Services</button>
+              <button onClick={() => scrollToSection('approach')} style={footerNavButtonStyle}>Our Approach</button>
+              <button onClick={() => scrollToSection('technology')} style={footerNavButtonStyle}>Technology</button>
+              <button onClick={() => scrollToSection('about')} style={footerNavButtonStyle}>About</button>
+              <button onClick={() => scrollToSection('laurel-and-hell')} style={footerNavButtonStyle}>Laurel & Hell</button>
+              <button onClick={() => scrollToSection('faq')} style={footerNavButtonStyle}>FAQ</button>
+              <button onClick={() => scrollToSection('contact')} style={footerNavButtonStyle}>Contact</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.86rem', color: '#64748B' }}>
+              <button onClick={() => setPrivacyModalOpen(true)} style={footerNavButtonStyle}>Privacy Notice</button>
+              <button onClick={() => setTermsModalOpen(true)} style={footerNavButtonStyle}>Terms of Use</button>
+              <Link href="/login" style={{ ...footerNavButtonStyle, color: '#818CF8', fontWeight: 600 }}>
+                Client Portal
               </Link>
             </div>
           </div>
@@ -1484,7 +1640,7 @@ export default function RankingsDecodedLanding() {
               Rankings Decoded is an independent consultancy and is not affiliated with the directories named on this website.
             </p>
             <p style={{ margin: 0 }}>
-              © {new Date().getFullYear()} Rankings Decoded. All rights reserved.
+              © 2026 Rankings Decoded. All rights reserved.
             </p>
           </div>
         </div>
@@ -1522,13 +1678,69 @@ export default function RankingsDecodedLanding() {
               At Rankings Decoded, we treat all enquiries with strict professional discretion.
             </p>
             <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6 }}>
-              The information you provide in the contact form is used solely to respond to your enquiry, assess the potential fit of an engagement, and communicate with you about our legal rankings strategy services.
+              The information you provide in the contact form is used solely to respond to your enquiry, assess the potential fit of an engagement, and communicate with you about our legal market intelligence, strategy, and advisory services.
             </p>
             <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6 }}>
               We do not share your information with third parties. Prior to formal engagement, we recommend sharing only non-confidential information. Confidential client or matter information should only be shared under an agreed Non-Disclosure Agreement (NDA).
             </p>
             <button
               onClick={() => setPrivacyModalOpen(false)}
+              style={{
+                marginTop: '1rem',
+                backgroundColor: '#0F172A',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.65rem 1.25rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {/* TERMS OF USE MODAL                                           */}
+      {/* ═════════════════════════════════════════════════════════════ */}
+      {termsModalOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '14px',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '2rem',
+            maxHeight: '85vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Terms of Use</h3>
+              <button onClick={() => setTermsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6 }}>
+              The materials and information contained on this website are provided for general informational and marketing purposes only and do not constitute formal legal advice or a binding contractual commitment.
+            </p>
+            <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6 }}>
+              Rankings Decoded is an independent consultancy. All client advisory services, deliverables, scopes of work, and fees are governed exclusively by formal, written engagement agreements entered into between Rankings Decoded and the respective client law firm.
+            </p>
+            <p style={{ fontSize: '0.92rem', color: '#475569', lineHeight: 1.6 }}>
+              Directory names and trademarks (such as Chambers and Partners, The Legal 500, IFLR1000, and Leaders League) are the property of their respective owners and are referenced solely for descriptive and informational purposes.
+            </p>
+            <button
+              onClick={() => setTermsModalOpen(false)}
               style={{
                 marginTop: '1rem',
                 backgroundColor: '#0F172A',
@@ -1585,7 +1797,7 @@ export default function RankingsDecodedLanding() {
               “Ambitious partners. Undocumented matters. Deadlines approaching faster than the information.”
             </p>
             <p style={{ fontSize: '0.95rem', color: '#A8A29E', lineHeight: 1.75, marginBottom: '2rem' }}>
-              Laurel & Hell is an exclusive editorial column exploring the real decisions, political tensions, and ingrained habits behind international legal rankings—delivered with humour, sharp perspective, and practical wisdom.
+              Laurel & Hell is an independent editorial publication exploring the language, contradictions, ambitions, and realities of recognition in the legal industry. Sharp observations, critical perspectives, and informed commentary on the business of being recognised.
             </p>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button
@@ -1603,7 +1815,7 @@ export default function RankingsDecodedLanding() {
                   cursor: 'pointer'
                 }}
               >
-                Subscribe / Inquire about Laurel & Hell
+                Inquire / Subscribe to Laurel & Hell
               </button>
               <button
                 onClick={() => setLaurelModalOpen(false)}
@@ -1671,6 +1883,17 @@ const navLinkStyle: React.CSSProperties = {
   transition: 'color 0.15s ease'
 };
 
+const footerNavButtonStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  fontSize: '0.88rem',
+  color: '#CBD5E1',
+  fontWeight: 500,
+  cursor: 'pointer',
+  padding: 0,
+  transition: 'color 0.15s ease'
+};
+
 const sectionEyebrowStyle: React.CSSProperties = {
   fontSize: '0.8rem',
   fontWeight: 700,
@@ -1708,12 +1931,4 @@ const formInputStyle: React.CSSProperties = {
   color: '#0F172A',
   outline: 'none',
   boxSizing: 'border-box'
-};
-
-const footerLinkStyle: React.CSSProperties = {
-  textDecoration: 'none',
-  color: '#94A3B8',
-  fontSize: '0.88rem',
-  fontWeight: 500,
-  transition: 'color 0.15s ease'
 };
