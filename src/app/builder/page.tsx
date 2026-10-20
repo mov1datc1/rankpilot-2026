@@ -431,10 +431,10 @@ function BuilderContent() {
                 Modalidad B
               </span>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0F172A', margin: '0.4rem 0 0.5rem 0' }}>
-                Documentos Dispersos o Desde Cero
+                Documentos Dispersos, Submissions Previos o Desde Cero
               </h3>
               <p style={{ fontSize: '0.88rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
-                Ideal si tienes información desconectada (múltiples PDFs, Word, hilos de correo o notas sueltas). RankPilot contrastará las fuentes para identificar cada asunto; dos mandatos del mismo cliente se mantendrán separados cuando sean distintos.
+                Ideal si tienes submissions anteriores de otros directorios (ej. Leaders League, Legal 500), múltiples documentos Word/PDF de mandatos, notas de socios o hilos de correo. RankPilot extraerá los hechos fácticos y los adaptará automáticamente a la plantilla oficial de tu directorio objetivo.
               </p>
             </div>
           </div>
@@ -826,10 +826,10 @@ function BuilderContent() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                    Archivos de Respaldo y Documentos de Asuntos
+                    Archivos de Respaldo, Submissions Previos y Notas
                   </h3>
                   <p style={{ fontSize: '0.88rem', color: '#64748B', marginTop: '0.2rem', marginBottom: 0 }}>
-                    Puedes subir múltiples PDFs, documentos Word, notas de texto o correos electrónicos.
+                    Sube submissions previos de cualquier directorio (Leaders League, Legal 500, etc.), múltiples PDFs, documentos Word, notas de texto o transcripciones de audio para alimentar tu postulación.
                   </p>
                 </div>
                 <button
@@ -913,13 +913,13 @@ function BuilderContent() {
               {/* Additional Freeform Notes */}
               <div>
                 <label style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.4rem' }}>
-                  Notas de Texto Adicionales o Hilos de Correo Pegados
+                  Notas de Texto, Transcripciones de Audio o Hilos de Correo Pegados
                 </label>
                 <textarea
                   rows={4}
                   value={freeformNotes}
                   onChange={e => setFreeformNotes(e.target.value)}
-                  placeholder="Pega aquí correos con instrucciones de socios, acuerdos comerciales o resúmenes breves..."
+                  placeholder="Pega aquí transcripciones de notas de voz de socios, correos con instrucciones de mandatos o resúmenes de operaciones..."
                   style={{
                     width: '100%',
                     padding: '0.75rem',

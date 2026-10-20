@@ -41,7 +41,7 @@ export function processingFeedback(payload: any, status = 0, operation: 'extract
     const details = failures.map((failure: any) => {
       const srcPrefix = formatSourceName(failure.source);
       if (failure.code === 'SOURCE_DIRECTORY_MISMATCH' && failure.detected && failure.selected) {
-        return `${srcPrefix}La plantilla corresponde a ${failure.detected}, pero seleccionaste ${failure.selected}. Sube la plantilla de ${failure.selected} o cambia el directorio en la calibración.`;
+        return `${srcPrefix}La plantilla cargada corresponde a ${failure.detected}, pero el directorio objetivo seleccionado es ${failure.selected}. La Modalidad A requiere el formulario oficial de ${failure.selected}. Si deseas aprovechar el contenido y los asuntos de este documento previo como fuente para tu nueva candidatura, cárgalo en la 'Modalidad B: Documentos Dispersos'.`;
       }
       const pages = Array.isArray(failure.pages) ? failure.pages.filter((page: any) => Number.isInteger(page) && page > 0) : [];
       return `${srcPrefix}${sourceMessages[failure.code] || sourceMessages.SOURCE_UNREADABLE}${pages.length ? ' (Páginas: ' + pages.join(', ') + ')' : ''}`;

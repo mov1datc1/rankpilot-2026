@@ -60,8 +60,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const selected=selectedScope(submission);
-    const missingScope=scopeIssues(selected);
+    const selected=selectedScope({ ...submission, modality: context?.modality || (submission.chambersData as any)?.modality });
+    const missingScope=scopeIssues(selected, [], context?.modality || selected.modality);
     if(missingScope.length) return NextResponse.json({code:'SCOPE_REQUIRED',error:missingScope.map(i=>i.message).join(' '),issues:missingScope},{status:422});
 
     const sources = confidentialityOnly ? ((submission.chambersData as any)?.sources || []) : body.sources || context?.sources || [];
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    const scopeConflicts=scopeIssues(selected,extractData.source_reports || []);
+    const scopeConflicts=scopeIssues(selected,extractData.source_reports || [], context?.modality || selected.modality);
     if(scopeConflicts.length) return NextResponse.json({code:'SCOPE_CONFLICT',error:scopeConflicts.map(i=>i.message).join(' '),issues:scopeConflicts},{status:422});
     const extractedMeta = extractData.metadata || {};
     const extractedB10 = extractData.original_b10 || '';

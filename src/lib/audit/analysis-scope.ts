@@ -1,6 +1,6 @@
 /** Selected scope is user input; detected scope remains source evidence. Never merge them. */
-export type AnalysisScope = {directory:string;practice_area:string;jurisdiction:string;guide_region?:string};
-const labels:Record<keyof AnalysisScope,string>={directory:'directorio',practice_area:'práctica',jurisdiction:'jurisdicción',guide_region:'guía/región'};
+export type AnalysisScope = {directory:string;practice_area:string;jurisdiction:string;guide_region?:string;modality?:string};
+const labels:Record<keyof AnalysisScope,string>={directory:'directorio',practice_area:'práctica',jurisdiction:'jurisdicción',guide_region:'guía/región',modality:'modalidad'};
 const aliases:Record<string,string>={
  'chambers partners':'chambers','chambers and partners':'chambers',
  'the legal 500':'legal 500','legal500':'legal 500',
@@ -20,16 +20,29 @@ function canonical(value:unknown,field:keyof AnalysisScope) {
  return aliases[text] || text;
 }
 export function selectedScope(input:any):AnalysisScope {
- return {directory:input.targetDirectory ?? input.directory ?? '',practice_area:input.practiceArea ?? input.practice_area ?? input.practice ?? '',jurisdiction:input.guideRegion ?? input.jurisdiction ?? '',guide_region:input.guide_region ?? input.chambersData?.guideRegion ?? input.chambersData?.analysis_scope?.guide_region};
+ return {
+  directory:input.targetDirectory ?? input.directory ?? '',
+  practice_area:input.practiceArea ?? input.practice_area ?? input.practice ?? '',
+  jurisdiction:input.guideRegion ?? input.jurisdiction ?? '',
+  guide_region:input.guide_region ?? input.chambersData?.guideRegion ?? input.chambersData?.analysis_scope?.guide_region,
+  modality:input.modality ?? input.chambersData?.modality ?? input.context?.modality
+ };
 }
-export function scopeIssues(scope:AnalysisScope,reports:any[]=[]) {
+export function scopeIssues(scope:AnalysisScope,reports:any[]=[],modality?:string) {
+ const activeModality = modality || scope.modality || '';
+ const isScratch = activeModality === 'scratch' || activeModality === 'sources';
  const issues:{code:string;field:keyof AnalysisScope;selected:string;detected:string;source:string;quote:string;message:string}[]=[];
  for(const field of Object.keys(labels) as (keyof AnalysisScope)[]) {
+  if(field==='modality') continue;
   if(field==='guide_region' && scope[field]===undefined) continue; // Legacy scope has no asserted guide; never invent one.
   if(!canonical(scope[field],field) || ['general','general practice','n a','unknown','seleccionar'].includes(canonical(scope[field],field)))
    issues.push({code:'SCOPE_REQUIRED',field,selected:scope[field] || '',detected:'',source:'',quote:'',message:`Selecciona ${labels[field]} antes de continuar.`});
  }
  for(const report of reports) for(const field of Object.keys(labels) as (keyof AnalysisScope)[]) {
+  if(field==='modality') continue;
+  // In Modalidad B (scratch/dispersed), background sources from other directories (e.g. Leaders League, Legal 500)
+  // are historical source documents to be adapted into the target directory, never a scope conflict.
+  if(field==='directory' && isScratch) continue;
   const evidence=report.source_scope?.[field];
   if(!evidence?.value || !evidence?.quote || !scope[field]) continue;
   if(canonical(scope[field],field)!==canonical(evidence.value,field)) issues.push({code:'SCOPE_CONFLICT',field,selected:scope[field] || '',detected:evidence.value,source:report.source || '',quote:evidence.quote,message:`${report.source || 'El documento'}: elegiste ${labels[field]} «${scope[field]}», pero la fuente indica «${evidence.value}». Corrige el filtro o aporta la fuente correspondiente antes de analizar.`});
