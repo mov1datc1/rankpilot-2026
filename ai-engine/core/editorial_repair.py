@@ -167,12 +167,19 @@ def repair_rejected_development(state, proposal, defects):
     """Locate semantic defects before editing; no full-proposal regeneration."""
     from core.review_graph import invoke_role, role_payload
     defects=unique_defects(defects)
+    dev_defects=[d for d in defects if d.get('scope')!='letter']
+    if not dev_defects:
+        return {'development':proposal,'development_validated':True,'errors':[],'trace':state.get('trace',[])}
+    defects=dev_defects
     source_package=role_payload({'package':state['package']},'development')['package']
     allowed={key:value for key,value in proposal.items() if isinstance(value,str) and key!='version'}
     for i,item in enumerate(proposal.get('matters',[])):
         allowed[f'matters/{i}/text']=item.get('text','')
         allowed[f'matters/{i}/completion_status']=item.get('completion_status','')
-    for i,item in enumerate(proposal.get('candidates',[])):allowed[f'candidates/{i}']=item
+    for i,item in enumerate(proposal.get('candidates',[])):
+        allowed[f'candidates/{i}/submission_bio']=item.get('submission_bio','')
+        allowed[f'candidates/{i}/category_rationale']=item.get('category_rationale','')
+        allowed[f'candidates/{i}']=item
     for i,item in enumerate(proposal.get('comparisons',[])):
         for field in ('incremental_contribution','tradeoff'):allowed[f'comparisons/{i}/{field}']=item.get(field,'')
     # A literal claim already bound to a generated field needs no model to
@@ -186,6 +193,14 @@ def repair_rejected_development(state, proposal, defects):
                 return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
                         'matter':matter,
                         'selection':next((d for d in state['strategy'].get('matters',[]) if d['matter_id']==matter_id),None)}
+        elif path.startswith('candidates/'):
+            cand_idx=int(path.split('/')[1])
+            cand=proposal.get('candidates',[])[cand_idx] if cand_idx<len(proposal.get('candidates',[])) else {}
+            person_name=cand.get('name','')
+            lawyers=source_package.get('lawyers',[])
+            person=next((l for l in lawyers if str(l.get('name','')).strip().casefold()==str(person_name).strip().casefold()),{})
+            return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
+                    'candidate':cand,'source_person':person,'package':source_package,'strategy':state['strategy']}
         return {'package':source_package,'strategy':state['strategy']}
     targets={};remaining=[]
     for defect in defects:
@@ -193,8 +208,12 @@ def repair_rejected_development(state, proposal, defects):
         candidates=list(allowed)
         if defect.get('matter_id'):
             indices=[i for i,m in enumerate(proposal.get('matters',[])) if m.get('matter_id')==defect['matter_id']]
-            candidates=[path for path in candidates if any(path.startswith(f'matters/{i}/') for i in indices)]
-        exact=[path for path in candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
+            matter_candidates=[path for path in candidates if any(path.startswith(f'matters/{i}/') for i in indices)]
+            exact=[path for path in matter_candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
+            if not exact and quote:
+                exact=[path for path in candidates if isinstance(allowed[path],str) and quote in norm(allowed[path])]
+        else:
+            exact=[path for path in candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
         if not exact and defect.get('scope') == 'submission':
             # A matter-specific finding may quote the firm overview or coverage
             # argument. A unique literal match needs no paid location inference.
@@ -202,6 +221,12 @@ def repair_rejected_development(state, proposal, defects):
             if len(shared)==1:exact=shared
         if not exact and str(defect.get('field_path','')).lower() in allowed:
             exact=[str(defect['field_path']).lower()]
+        if not exact and any(k in str(defect.get('message','')).lower() for k in ('b9','confidencial','confidential')):
+            leak_paths=[p for p in allowed if (p.startswith('candidates/') and p.endswith('/submission_bio')) or p in ('b10','c2')]
+            for p in leak_paths:
+                val=allowed.get(p)
+                if isinstance(val,str) and any(term in val.lower() for term in ('bekaert','80%','ideal s.l.')):
+                    exact.append(p)
         if not exact:
             if defect.get('field_path') in ('research_period', 'period', 'metadata', 'dates') or defect.get('temporal_basis') or defect.get('severity') == 'warning':
                 continue

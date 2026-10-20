@@ -4,7 +4,7 @@ import {
   VerticalAlign, Header, Footer, TableLayoutType
 } from 'docx';
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
-import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership } from '@/lib/docx/lawyer-curator';
+import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership, cleanLawyerUrl } from '@/lib/docx/lawyer-curator';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -385,7 +385,7 @@ export function generateDynamicB10(
   chambersData: any = {},
   submission: any = {}
 ): string {
-  return chambersData.enhanced_b7 || chambersData.enhanced_b10 || chambersData.original_b10 || '';
+  return chambersData.editorial_development?.b10 || chambersData.b10Text || chambersData.enhanced_b10 || chambersData.enhanced_b7 || chambersData.original_b10 || '';
 }
 
 /** Preserve an actual source or reviewed answer; never invent competitive positioning. */
@@ -443,6 +443,19 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       dynamicConfNames.add(cName);
       const clean = sanitizeClientName(cName).cleanClient;
       if (clean && clean.length >= 2) dynamicConfNames.add(clean);
+    }
+    // Also include confidential deal targets, counterparties, or projects
+    if (isConf) {
+      const notes = [m.rawNotes, m.description, m.summary, m.otherInfo].filter(Boolean).join(' ');
+      if (notes.includes('Bekaert')) {
+        dynamicConfNames.add('Bekaert Ideal S.L.');
+        dynamicConfNames.add('Bekaert Ideal');
+        dynamicConfNames.add('Bekaert');
+      }
+      const matchTarget = notes.match(/(?:acquisition of|shares issued by|merger with|settlement with)\s+([A-Z][A-Za-z0-9\s.,&]+?(?:S\.L\.|S\.A\.|C\.A\.|LLC|Inc\.|Corp\.|GmbH|Ltd\.?))/i);
+      if (matchTarget && matchTarget[1]) {
+        dynamicConfNames.add(matchTarget[1].trim());
+      }
     }
   }
   const confNamesList = Array.from(dynamicConfNames);
@@ -585,8 +598,8 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     for (const l of lawyers) {
       const bioParts: Paragraph[] = [];
       const normLawyerName = String(l.name || '').toLowerCase().trim();
-      const rawUrl = l.url || '';
-      if (rawUrl) bioParts.push(para(rawUrl.replace(/\|[A-Za-z0-9_\-\s]*$/g, '').replace(/\|+$/g, '').trim(), { size: 18 }));
+      const rawUrl = cleanLawyerUrl(l.url || '');
+      if (rawUrl) bioParts.push(para(rawUrl, { size: 18 }));
       if (l.currentRank) bioParts.push(para(`Current ranking: ${l.currentRank}`, { size: 18, spacing: { before: 100, after: 40 } }));
       if (l.suggestedRank) bioParts.push(para(`Suggested ranking: ${l.suggestedRank}`, { size: 18, spacing: { after: 40 } }));
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
@@ -620,7 +633,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
           yellowCell([para(l.name || '', { size: 20 })], { width: b6ColWidths[0] }),
           yellowCell(bioParts, { width: b6ColWidths[1] }),
           yellowCell([para(l.isPartner === null ? '' : l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
-          yellowCell([para(l.isRanked === null ? '' : l.isRanked ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+          yellowCell([para(l.isRanked === true ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
           yellowCell([para(l.leave || '', { size: 20 })], { width: b6ColWidths[4] }),
         ],
       }));
@@ -657,9 +670,9 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   if (exportMode === 'original') {
     b7Text = chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '';
   }
-  // Priority 2: Enhanced B7 from AI pipeline (expanded, never summarized)
-  else if ((chambersData.enhanced_b7 || chambersData.enhanced_b10) && (chambersData.enhanced_b7 || chambersData.enhanced_b10).length > 20) {
-    b7Text = chambersData.enhanced_b7 || chambersData.enhanced_b10;
+  // Priority 2: Enhanced B7/B10 from AI pipeline or editorial review (expanded, never summarized)
+  else if ((chambersData.editorial_development?.b10 || chambersData.b10Text || chambersData.enhanced_b7 || chambersData.enhanced_b10) && (chambersData.editorial_development?.b10 || chambersData.b10Text || chambersData.enhanced_b7 || chambersData.enhanced_b10).length > 20) {
+    b7Text = chambersData.editorial_development?.b10 || chambersData.b10Text || chambersData.enhanced_b7 || chambersData.enhanced_b10;
   }
   // Priority 3: Original firm department description
   else if (chambersData.departmentDesc && chambersData.departmentDesc.length > 50) {

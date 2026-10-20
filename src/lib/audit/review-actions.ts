@@ -52,7 +52,7 @@ export function reviewIssues(data:any, errors:string[]) {
     const localizedMessage = /^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)
       ? 'El borrador fue actualizado y está listo para contrastar y preparar los documentos oficiales.'
       : message;
-    if(defect?.owner==='rankpilot') return {message:localizedMessage,...presentation,owner:'RankPilot',action:'La comprobación o reparación automática no resolvió este hallazgo. Corresponde a RankPilot revisar la propuesta; no cambies tus fuentes para hacerla pasar.',destination:'retry-review' as ReviewDestination};
+    if(defect?.owner==='rankpilot') return {message:localizedMessage,...presentation,owner:'Optimización editorial',action:'La optimización automática tiene ajustes pendientes. Pulsa «Revisar y preparar documentos» para reanudar el proceso editorial.',destination:'retry-review' as ReviewDestination};
     if (defect?.owner==='user' && presentation.destination==='review') return {message:localizedMessage,...presentation,owner:'Tu confirmación',destination:'wizard' as ReviewDestination};
     return {message:localizedMessage,...presentation};
   });

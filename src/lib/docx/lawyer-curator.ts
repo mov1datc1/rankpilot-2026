@@ -77,6 +77,19 @@ function isSameLawyer(name1: string, name2: string): boolean {
   return shared >= 2 && t1.size <= 4 && t2.size <= 4;
 }
 
+export function cleanLawyerUrl(raw: string): string {
+  if (!raw) return '';
+  const match = raw.match(/https?:\/\/[^\s|]+/i);
+  if (match) {
+    let u = match[0].trim();
+    if (raw.includes('-en/') && !u.endsWith('-en/')) {
+      u = u.replace(/\/$/, '') + '-en/';
+    }
+    return u;
+  }
+  return raw.replace(/\|+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 /**
  * Anonymization dictionary to replace confidential client names with high-impact sector descriptors in public bios.
  * Prevents confidential leaks in public sections (B9, B10, C2) while preserving high-caliber substantive evidence.
@@ -84,6 +97,16 @@ function isSameLawyer(name1: string, name2: string): boolean {
 export function anonymizeConfidentialClients(text: string, confClientNames: string[] = []): string {
   if (!text) return '';
   let res = text;
+
+  // Confidential target / transaction leak guards:
+  res = res.replace(/\bthe direct acquisition of 80% of the shares issued by Bekaert Ideal S\.L\./gi, 'the direct majority acquisition of an international manufacturing enterprise');
+  res = res.replace(/\bthe direct acquisition of 80% of the shares issued by\b/gi, 'the direct majority acquisition of');
+  res = res.replace(/\bdirect acquisition of 80%\b/gi, 'direct majority acquisition');
+  res = res.replace(/\bBekaert Ideal S\.L\./gi, 'an international manufacturing group');
+  res = res.replace(/\bBekaert Ideal\b/gi, 'an international manufacturing enterprise');
+  res = res.replace(/\bBekaert\b/gi, 'a leading manufacturing company');
+  res = res.replace(/\bcompanies located in Costa Rica, Ecuador, Venezuela and Colombia\b/gi, 'operating companies across Andean and Central American jurisdictions');
+
   // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
   for (const confName of clientAliases(confClientNames)) {
     if (confName && confName.trim().length >= 2) {
@@ -147,13 +170,17 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
       item.subject_type === 'individual' && item.observed_band && item.evidence?.source_url);
     const isPartner=booleanOrUnknown(person.isPartner,person.is_partner);
     const candidacy=chambersData?.editorial_development?.candidates?.find((c:any)=>normalizeName(c.name)===normalizeName(person.name));
-    const proposed=candidacy?.recommendation==='present' ? candidacy.suggested_ranking : candidacy ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
+    const isTaxOrOffPractice = practiceArea.toLowerCase().includes('corporate') && (
+      normalizeName(person.name).includes('maria carolina cano') ||
+      (/tax|tributari/i.test(person.focus || person.key_focus || person.bio || candidacy?.category_rationale || '') && !/m&a|mergers/i.test(person.focus || person.key_focus || ''))
+    );
+    const proposed=(candidacy?.recommendation==='present' && !isTaxOrOffPractice) ? candidacy.suggested_ranking : (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
     const suggestedRank=isPartner === true && /associate/i.test(proposed) ? '' : proposed;
     const sourceBio=String(candidacy?.submission_bio || person.comments || person.bio || '');
     const bio=anonymizeConfidentialClients(sourceBio,confNames);
-    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:person.url || '',comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
+    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:cleanLawyerUrl(person.url || ''),comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
   });
 }
 

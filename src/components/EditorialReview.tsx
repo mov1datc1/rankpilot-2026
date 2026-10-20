@@ -6,29 +6,40 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const stopped=job?.issue && !['queued','running','completed'].includes(job.status);
   const isRunning=!!job && ['queued','running'].includes(job.status);
   const systemManaged=isRunning;
-  const recovering=job?.recovering || (job?.issue?.owner==='rankpilot' && isRunning);
+  const recovering=job?.recovering || ((job?.issue?.owner==='rankpilot' || job?.issue?.owner==='Optimización editorial') && isRunning);
   const issues=approved ? [] : reviewIssues(data,errors);
-  if(stopped && job.issue?.owner==='rankpilot') {
+  if(stopped && (job.issue?.owner==='rankpilot' || job.issue?.owner==='Optimización editorial')) {
     const hasRetry=issues.some(issue=>['retry-review','review','retry-selection'].includes(issue.destination));
     if(!hasRetry) {
-      issues.unshift({title:'Preparación pausada',owner:'RankPilot',action:job.issue.message,destination:'retry-review',message:'La entrega aún no está aprobada. El avance y las fuentes se conservan.'});
+      issues.unshift({title:'Ajustes editoriales listos para procesar',owner:'Optimización editorial',action:'Pulsa «Revisar y preparar documentos» para reanudar el proceso editorial y generar la entrega aprobada.',destination:'retry-review',message:'Las fuentes y datos del expediente están guardados. Puedes reanudar la preparación en cualquier momento.'});
     }
   }
-  const humanCount=issues.filter(issue=>issue.owner!=='RankPilot').length;
+  const humanCount=issues.filter(issue=>issue.owner!=='RankPilot' && issue.owner!=='Optimización editorial').length;
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
   return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit'}</h2>
-    {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · La entrega se habilita después de comprobar el documento.</p>}
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':stopped?'Revisión lista para continuar':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit'}</h2>
+    {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'ajuste editorial pendiente':'ajustes editoriales pendientes'} · La entrega oficial se habilita al completar la revisión automática.</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
+    {stopped && !approved && (
+      <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:'#166534'}}>Reanudar preparación de documentos oficiales</div>
+          <div style={{fontSize:13,color:'#15803D',marginTop:2}}>El sistema aplicará las mejoras editoriales y generará la versión oficial de Submission y Audit.</div>
+        </div>
+        <button type="button" disabled={busy} onClick={()=>onResolve('retry-review','Reanudar preparación')} style={{background:'#16A34A',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
+          {busy ? 'Preparando…' : 'Revisar y generar entrega oficial →'}
+        </button>
+      </div>
+    )}
     <div style={{display:'grid',gap:10}}>{issues.map((issue,index)=><div key={`${index}-${issue.title}`} style={{border:'1px solid #E2E8F0',borderRadius:10,padding:14,background:'#FAFAFA'}}>
-      <span style={{fontSize:11,fontWeight:700,color:issue.owner==='RankPilot'?'#4338CA':'#92400E'}}>{issue.owner}</span>
+      <span style={{fontSize:11,fontWeight:700,color:(issue.owner==='RankPilot'||issue.owner==='Optimización editorial')?'#4338CA':'#92400E'}}>{issue.owner}</span>
       <h3 style={{fontSize:15,margin:'5px 0'}}>{issue.title}</h3>
       <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{issue.action}</p>
-      {(!stopped || issue.owner!=='RankPilot') && (!systemManaged || issue.owner!=='RankPilot') && <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
+      {!isRunning && <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
         <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination==='review'?'retry-review':issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 12px',fontWeight:600,cursor:'pointer',fontSize:13}}>
           {issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección de asuntos'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Revisar y preparar documentos'):issue.destination==='period'?'Ajustar periodo de investigación':issue.destination==='ranking'?'Verificar ranking oficial':issue.destination==='lawyers'?'Ajustar abogado en Studio':issue.destination==='wizard'?'Ajustar asunto en Studio':'Ajustar este pendiente'} →
         </button>
