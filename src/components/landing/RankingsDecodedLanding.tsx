@@ -25,6 +25,8 @@ import {
   Briefcase
 } from 'lucide-react';
 
+import RankingsDecodedLogo, { RankingsDecodedMark } from './RankingsDecodedLogo';
+
 export default function RankingsDecodedLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -136,7 +138,7 @@ export default function RankingsDecodedLanding() {
     <div style={{
       backgroundColor: '#FAF9F6', // Luxury Alabaster / warm ivory
       color: '#0F172A',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      fontFamily: "'Neue Montreal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
       lineHeight: 1.6,
       minHeight: '100vh',
       overflowX: 'hidden'
@@ -161,32 +163,9 @@ export default function RankingsDecodedLanding() {
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          {/* Brand Logo */}
-          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 8,
-              backgroundColor: '#0F172A',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#F8FAFC',
-              fontWeight: 800,
-              fontSize: '1.05rem',
-              letterSpacing: '-0.02em',
-              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.15)'
-            }}>
-              RD
-            </div>
-            <div>
-              <span style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em', display: 'block', lineHeight: 1.1 }}>
-                Rankings Decoded
-              </span>
-              <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Legal Market Intelligence, Strategy & Advisory
-              </span>
-            </div>
+          {/* Brand Logo with Official Logomark */}
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <RankingsDecodedLogo variant="dark" size={38} />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -207,15 +186,15 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                backgroundColor: '#0F172A',
+                background: 'linear-gradient(135deg, #1B44ED 0%, #0F172A 100%)',
                 color: '#FFFFFF',
-                padding: '0.65rem 1.4rem',
+                padding: '0.65rem 1.45rem',
                 borderRadius: '8px',
                 fontSize: '0.88rem',
                 fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(15, 23, 42, 0.12)',
+                boxShadow: '0 2px 10px rgba(27, 68, 237, 0.25)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -281,15 +260,15 @@ export default function RankingsDecodedLanding() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Subtle Radial Glow */}
+        {/* Subtle Dual Radial Glow: Cobalt Blue & Coral Sunset */}
         <div style={{
           position: 'absolute',
-          top: '-15%',
+          top: '-20%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '70vw',
-          height: '40vw',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(9, 14, 23, 0) 70%)',
+          width: '85vw',
+          height: '45vw',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(27, 68, 237, 0.28) 0%, rgba(255, 94, 54, 0.10) 45%, rgba(9, 14, 23, 0) 75%)',
           pointerEvents: 'none'
         }} />
 
@@ -298,8 +277,8 @@ export default function RankingsDecodedLanding() {
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.4rem 1.15rem',
+            gap: '0.6rem',
+            padding: '0.45rem 1.25rem',
             borderRadius: '9999px',
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
             border: '1px solid rgba(255, 255, 255, 0.16)',
@@ -310,7 +289,7 @@ export default function RankingsDecodedLanding() {
             color: '#CBD5E1',
             marginBottom: '2rem'
           }}>
-            <Compass size={14} color="#818CF8" /> LEGAL MARKET INTELLIGENCE, STRATEGY & ADVISORY
+            <RankingsDecodedMark size={16} variant="gradient" /> LEGAL MARKET INTELLIGENCE, STRATEGY & ADVISORY
           </div>
 
           {/* H1 Headline */}
@@ -349,7 +328,7 @@ export default function RankingsDecodedLanding() {
             <p style={{ margin: 0, color: '#E2E8F0', fontWeight: 500 }}>
               We turn competitive intelligence into focused strategies for market positioning, legal recognition, communications, and smarter investment decisions.
             </p>
-            <p style={{ margin: 0, fontSize: '1rem', color: '#818CF8', fontWeight: 600, letterSpacing: '0.02em' }}>
+            <p style={{ margin: 0, fontSize: '1rem', color: '#38BDF8', fontWeight: 600, letterSpacing: '0.02em' }}>
               Independent advice. Rigorous analysis. Practical execution.
             </p>
           </div>
@@ -365,18 +344,18 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                backgroundColor: '#F8FAFC',
-                color: '#0F172A',
-                padding: '0.95rem 2rem',
+                background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
+                color: '#FFFFFF',
+                padding: '0.95rem 2.25rem',
                 borderRadius: '9px',
                 fontSize: '0.98rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.6rem',
-                boxShadow: '0 4px 20px rgba(255, 255, 255, 0.15)',
+                gap: '0.65rem',
+                boxShadow: '0 6px 25px rgba(255, 94, 54, 0.38)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -385,13 +364,13 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('services')}
               style={{
-                backgroundColor: 'transparent',
-                color: '#E2E8F0',
-                padding: '0.95rem 1.85rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                color: '#F8FAFC',
+                padding: '0.95rem 1.95rem',
                 borderRadius: '9px',
                 fontSize: '0.98rem',
-                fontWeight: 500,
-                border: '1px solid rgba(255, 255, 255, 0.25)',
+                fontWeight: 600,
+                border: '1px solid rgba(255, 255, 255, 0.22)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
@@ -778,14 +757,15 @@ export default function RankingsDecodedLanding() {
             marginTop: '3.5rem',
             padding: '2.5rem',
             borderRadius: '14px',
-            backgroundColor: '#0F172A',
+            backgroundColor: '#090E17',
+            border: '1px solid rgba(27, 68, 237, 0.25)',
             color: '#FFFFFF',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '1.5rem',
-            boxShadow: '0 8px 30px rgba(15, 23, 42, 0.08)'
+            boxShadow: '0 8px 30px rgba(9, 14, 23, 0.12)'
           }}>
             <div style={{ maxWidth: '640px' }}>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#F8FAFC' }}>
@@ -798,18 +778,18 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                backgroundColor: '#F8FAFC',
-                color: '#0F172A',
-                padding: '0.85rem 1.75rem',
+                background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
+                color: '#FFFFFF',
+                padding: '0.9rem 2rem',
                 borderRadius: '8px',
-                fontSize: '0.92rem',
-                fontWeight: 600,
+                fontSize: '0.94rem',
+                fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)',
+                gap: '0.55rem',
+                boxShadow: '0 4px 20px rgba(255, 94, 54, 0.35)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -1072,23 +1052,21 @@ export default function RankingsDecodedLanding() {
                 width: 84,
                 height: 84,
                 borderRadius: '50%',
-                backgroundColor: '#0F172A',
+                background: 'linear-gradient(135deg, #090E17 0%, #1B44ED 100%)',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.85rem',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)'
+                boxShadow: '0 6px 20px rgba(27, 68, 237, 0.25)',
+                border: '2px solid rgba(255, 255, 255, 0.8)'
               }}>
-                AC
+                <RankingsDecodedMark size={44} variant="light" />
               </div>
               <div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' }}>
                   Ángela Castillo
                 </h3>
-                <span style={{ fontSize: '0.92rem', color: '#4338CA', fontWeight: 700, display: 'block' }}>
+                <span style={{ fontSize: '0.92rem', color: '#1B44ED', fontWeight: 700, display: 'block' }}>
                   Founder & Principal Strategist
                 </span>
                 <span style={{ fontSize: '0.82rem', color: '#64748B', display: 'block', marginTop: '0.2rem' }}>
@@ -1128,7 +1106,7 @@ export default function RankingsDecodedLanding() {
                 <button
                   onClick={() => scrollToSection('contact')}
                   style={{
-                    backgroundColor: '#0F172A',
+                    background: 'linear-gradient(135deg, #1B44ED 0%, #0F172A 100%)',
                     color: '#FFFFFF',
                     padding: '0.85rem 1.8rem',
                     borderRadius: '8px',
@@ -1138,7 +1116,8 @@ export default function RankingsDecodedLanding() {
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 15px rgba(27, 68, 237, 0.25)'
                   }}
                 >
                   Discuss Your Firm’s Priorities <ArrowRight size={16} />
@@ -1525,19 +1504,19 @@ export default function RankingsDecodedLanding() {
                   type="submit"
                   disabled={isSubmitting}
                   style={{
-                    backgroundColor: '#0F172A',
+                    background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
                     color: '#FFFFFF',
                     padding: '1rem 2rem',
                     borderRadius: '8px',
                     fontSize: '1rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     border: 'none',
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.65rem',
-                    boxShadow: '0 4px 15px rgba(15, 23, 42, 0.15)',
+                    boxShadow: '0 6px 20px rgba(255, 94, 54, 0.35)',
                     transition: 'all 0.2s ease',
                     marginTop: '0.5rem'
                   }}
@@ -1577,29 +1556,8 @@ export default function RankingsDecodedLanding() {
             marginBottom: '3rem'
           }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
-                <div style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 6,
-                  backgroundColor: '#FFFFFF',
-                  color: '#0F172A',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: '0.95rem'
-                }}>
-                  RD
-                </div>
-                <div>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F8FAFC', display: 'block', lineHeight: 1.1 }}>
-                    Rankings Decoded
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Legal Market Intelligence, Strategy & Advisory
-                  </span>
-                </div>
+              <div style={{ marginBottom: '0.85rem' }}>
+                <RankingsDecodedLogo variant="light" size={38} />
               </div>
               <p style={{ fontSize: '0.92rem', color: '#64748B', maxWidth: '420px', margin: 0, lineHeight: 1.6 }}>
                 Independent advice for stronger competitive positioning and smarter business decisions.
@@ -1897,7 +1855,7 @@ const footerNavButtonStyle: React.CSSProperties = {
 const sectionEyebrowStyle: React.CSSProperties = {
   fontSize: '0.8rem',
   fontWeight: 700,
-  color: '#4338CA',
+  color: '#1B44ED', // Official Brand Cobalt Blue
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   display: 'block',
