@@ -156,20 +156,21 @@ export default function RankingsDecodedLanding() {
         borderBottom: '1px solid rgba(15, 23, 42, 0.08)'
       }}>
         <div style={{
-          maxWidth: '1200px',
+          maxWidth: '1280px',
           margin: '0 auto',
-          padding: '1.1rem 1.75rem',
+          padding: '0.85rem 1.75rem',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          gap: '1rem'
         }}>
           {/* Brand Logo with Official Logomark */}
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <RankingsDecodedLogo variant="dark" size={38} />
+          <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <RankingsDecodedLogo variant="dark" size={34} textKicker="Legal Market Intelligence, Strategy & Advisory" />
           </Link>
 
           {/* Desktop Nav Links */}
-          <div style={{ display: 'none', gap: '1.75rem', alignItems: 'center' }} className="desktop-menu">
+          <div style={{ display: 'none', gap: '1.1rem', alignItems: 'center' }} className="desktop-menu">
             <button onClick={() => scrollToSection('services')} style={navLinkStyle}>Our Services</button>
             <button onClick={() => scrollToSection('approach')} style={navLinkStyle}>Our Approach</button>
             <button onClick={() => scrollToSection('technology')} style={navLinkStyle}>Technology</button>
@@ -179,8 +180,18 @@ export default function RankingsDecodedLanding() {
           </div>
 
           {/* Desktop Right CTA */}
-          <div style={{ display: 'none', alignItems: 'center', gap: '1.25rem' }} className="desktop-cta">
-            <Link href="/login" style={{ fontSize: '0.88rem', color: '#475569', fontWeight: 500, textDecoration: 'none', transition: 'color 0.15s' }}>
+          <div style={{ display: 'none', alignItems: 'center', gap: '1rem', flexShrink: 0 }} className="desktop-cta">
+            <Link
+              href="/login"
+              style={{
+                fontSize: '0.84rem',
+                color: '#475569',
+                fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'color 0.15s',
+                whiteSpace: 'nowrap'
+              }}
+            >
               Client Portal
             </Link>
             <button
@@ -188,14 +199,15 @@ export default function RankingsDecodedLanding() {
               style={{
                 background: 'linear-gradient(135deg, #1B44ED 0%, #0F172A 100%)',
                 color: '#FFFFFF',
-                padding: '0.65rem 1.45rem',
+                padding: '0.55rem 1.25rem',
                 borderRadius: '8px',
-                fontSize: '0.88rem',
+                fontSize: '0.84rem',
                 fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
                 boxShadow: '0 2px 10px rgba(27, 68, 237, 0.25)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap'
               }}
             >
               Discuss Your Priorities
@@ -431,12 +443,12 @@ export default function RankingsDecodedLanding() {
             </p>
           </div>
 
-          {/* 5 Questions Cards Grid */}
+          {/* 6 Cards Balanced Grid (5 Questions + Strategic Synthesis Outcome) */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: '1.5rem',
-            marginBottom: '3rem'
+            marginBottom: '1rem'
           }}>
             {[
               {
@@ -479,7 +491,7 @@ export default function RankingsDecodedLanding() {
                 }}
               >
                 <div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#4338CA', letterSpacing: '0.05em', display: 'block', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1B44ED', letterSpacing: '0.06em', display: 'block', marginBottom: '0.75rem' }}>
                     QUESTION {item.num}
                   </span>
                   <h3 style={{ fontSize: '1.18rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.4, margin: '0 0 0.75rem' }}>
@@ -491,25 +503,56 @@ export default function RankingsDecodedLanding() {
                 </p>
               </div>
             ))}
-          </div>
 
-          {/* Standout Takeaway Callout */}
-          <div style={{
-            backgroundColor: '#0F172A',
-            color: '#FFFFFF',
-            borderRadius: '14px',
-            padding: '2.5rem 3rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            boxShadow: '0 8px 30px rgba(15, 23, 42, 0.08)'
-          }}>
-            <p style={{ fontSize: '1.25rem', fontWeight: 600, color: '#E2E8F0', margin: 0, lineHeight: 1.5 }}>
-              The result is a clearer view of what to put forward, what to strengthen, and where to change direction.
-            </p>
-            <p style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FCD34D', margin: 0, letterSpacing: '-0.01em' }}>
-              “Sometimes, the most valuable recommendation is to redirect the effort.”
-            </p>
+            {/* 6th Slot: Strategic Outcome & Executive Synthesis (Zero Dead Whitespace) */}
+            <div
+              style={{
+                backgroundColor: '#090E17',
+                border: '1px solid rgba(27, 68, 237, 0.4)',
+                borderRadius: '12px',
+                padding: '2rem 1.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 8px 24px rgba(9, 14, 23, 0.25)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FF5E36', letterSpacing: '0.06em' }}>
+                    THE STRATEGIC RESULT
+                  </span>
+                  <Sparkles size={18} color="#FF5E36" />
+                </div>
+                <h3 style={{ fontSize: '1.18rem', fontWeight: 700, color: '#F8FAFC', lineHeight: 1.4, margin: '0 0 0.75rem' }}>
+                  A clearer view of what to put forward, what to strengthen, and where to change direction.
+                </h3>
+              </div>
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.12)', paddingTop: '0.85rem' }}>
+                <p style={{ fontSize: '0.92rem', color: '#CBD5E1', fontStyle: 'italic', margin: '0 0 0.75rem', lineHeight: 1.6 }}>
+                  “Sometimes, the most valuable recommendation is to redirect the effort.”
+                </p>
+                <button
+                  onClick={() => scrollToSection('approach')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#60A5FA',
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    padding: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Explore our approach <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -716,37 +759,44 @@ export default function RankingsDecodedLanding() {
                   border: '1px solid #E2E8F0',
                   padding: '2.5rem 2.25rem',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '2rem',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: '2.5rem',
                   alignItems: 'start'
                 }}
               >
-                <div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#4338CA', letterSpacing: '0.05em', display: 'block', marginBottom: '0.5rem' }}>
+                {/* Left Column: Number, Title, Subtitle + Deliverables (Fills Left Column Gracefully) */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1B44ED', letterSpacing: '0.06em', display: 'block', marginBottom: '0.5rem' }}>
                     SERVICE {srv.num}
                   </span>
-                  <h3 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem', lineHeight: 1.25 }}>
+                  <h3 style={{ fontSize: '1.42rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem', lineHeight: 1.25 }}>
                     {srv.title}
                   </h3>
-                  <p style={{ fontSize: '1rem', color: '#475569', fontWeight: 600, margin: 0 }}>
+                  <p style={{ fontSize: '0.98rem', color: '#475569', fontWeight: 600, margin: '0 0 1.25rem', lineHeight: 1.45 }}>
                     {srv.subtitle}
-                  </p>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <p style={{ fontSize: '0.98rem', color: '#475569', lineHeight: 1.75, margin: 0 }}>
-                    {srv.desc}
                   </p>
                   <div style={{
                     backgroundColor: '#FFFFFF',
                     border: '1px solid #E2E8F0',
                     borderRadius: '8px',
-                    padding: '0.85rem 1.15rem',
+                    padding: '0.95rem 1.15rem',
                     fontSize: '0.86rem',
-                    color: '#64748B',
-                    lineHeight: 1.55
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
                   }}>
-                    <strong style={{ color: '#0F172A' }}>Typical deliverables:</strong> {srv.deliverables}
+                    <strong style={{ display: 'block', color: '#0F172A', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                      Typical deliverables
+                    </strong>
+                    <span style={{ color: '#64748B', lineHeight: 1.55 }}>
+                      {srv.deliverables}
+                    </span>
                   </div>
+                </div>
+
+                {/* Right Column: Strategic Narrative Paragraph */}
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <p style={{ fontSize: '1rem', color: '#475569', lineHeight: 1.8, margin: 0 }}>
+                    {srv.desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -1038,44 +1088,142 @@ export default function RankingsDecodedLanding() {
             alignItems: 'start',
             marginBottom: '4rem'
           }}>
-            {/* Left Bio Avatar / Credential Card */}
+            {/* Left Column: Bio Card + Institutional Foundation & Experience (Eliminating Empty Space) */}
             <div style={{
-              backgroundColor: '#FAF9F6',
-              border: '1px solid #E2E8F0',
-              borderRadius: '16px',
-              padding: '2.5rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.25rem'
+              gap: '1.25rem',
+              position: 'sticky',
+              top: '90px'
             }}>
+              {/* Profile Card */}
               <div style={{
-                width: 84,
-                height: 84,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #090E17 0%, #1B44ED 100%)',
-                color: '#FFFFFF',
+                backgroundColor: '#FAF9F6',
+                border: '1px solid #E2E8F0',
+                borderRadius: '16px',
+                padding: '2.25rem',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 6px 20px rgba(27, 68, 237, 0.25)',
-                border: '2px solid rgba(255, 255, 255, 0.8)'
+                flexDirection: 'column',
+                gap: '1.15rem'
               }}>
-                <RankingsDecodedMark size={44} variant="light" />
+                <div style={{
+                  width: 78,
+                  height: 78,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #090E17 0%, #1B44ED 100%)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 6px 20px rgba(27, 68, 237, 0.25)',
+                  border: '2px solid rgba(255, 255, 255, 0.8)'
+                }}>
+                  <RankingsDecodedMark size={42} variant="light" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' }}>
+                    Ángela Castillo
+                  </h3>
+                  <span style={{ fontSize: '0.9rem', color: '#1B44ED', fontWeight: 700, display: 'block' }}>
+                    Founder & Principal Strategist
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', display: 'block', marginTop: '0.2rem' }}>
+                    Chambers and Partners · Thomson Reuters · IBA · Co-founder of LexLatin
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.6, margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '0.9rem' }}>
+                  Combines firsthand experience within legal information, research, publishing, and international professional organisations with years of advising law firms on positioning and recognition.
+                </p>
               </div>
-              <div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem' }}>
-                  Ángela Castillo
-                </h3>
-                <span style={{ fontSize: '0.92rem', color: '#1B44ED', fontWeight: 700, display: 'block' }}>
-                  Founder & Principal Strategist
+
+              {/* Institutional Pedigree & Credentials Block (Balances Height with Right Column) */}
+              <div style={{
+                backgroundColor: '#FAF9F6',
+                border: '1px solid #E2E8F0',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem'
+              }}>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  color: '#1B44ED',
+                  textTransform: 'uppercase'
+                }}>
+                  Institutional Foundation & Ecosystem
                 </span>
-                <span style={{ fontSize: '0.82rem', color: '#64748B', display: 'block', marginTop: '0.2rem' }}>
-                  Chambers and Partners · Thomson Reuters · IBA · Co-founder of LexLatin
-                </span>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
+                  {[
+                    {
+                      name: 'Chambers and Partners',
+                      role: 'Former Editor & Research Lead',
+                      tag: 'Editorial'
+                    },
+                    {
+                      name: 'Thomson Reuters',
+                      role: 'Legal Intelligence & Solutions',
+                      tag: 'Intelligence'
+                    },
+                    {
+                      name: 'International Bar Association (IBA)',
+                      role: 'Global Professional Relationships',
+                      tag: 'Global Network'
+                    },
+                    {
+                      name: 'LexLatin',
+                      role: 'Co-founder & Legal Publishing',
+                      tag: 'Founding Lead'
+                    }
+                  ].map((inst, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        padding: '0.75rem 0.95rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0F172A' }}>{inst.name}</span>
+                        <span style={{ fontSize: '0.76rem', color: '#64748B' }}>{inst.role}</span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        color: '#1B44ED',
+                        backgroundColor: 'rgba(27, 68, 237, 0.08)',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {inst.tag}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{
+                  borderTop: '1px solid #E2E8F0',
+                  paddingTop: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <CheckCircle2 size={15} color="#1B44ED" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>
+                    Direct founder leadership on all strategic client reviews
+                  </span>
+                </div>
               </div>
-              <p style={{ fontSize: '0.9rem', color: '#64748B', lineHeight: 1.65, margin: 0, borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-                Combines firsthand experience within legal information, research, publishing, and international professional organisations with years of advising law firms on positioning and recognition.
-              </p>
             </div>
 
             {/* Right Narrative (All 5 Paragraphs) */}
@@ -1814,7 +1962,7 @@ export default function RankingsDecodedLanding() {
           border-color: #C7D2FE !important;
           box-shadow: 0 12px 24px -6px rgba(67, 56, 202, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
         }
-        @media (min-width: 860px) {
+        @media (min-width: 1024px) {
           .desktop-menu {
             display: flex !important;
           }
@@ -1833,12 +1981,13 @@ export default function RankingsDecodedLanding() {
 const navLinkStyle: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  fontSize: '0.9rem',
-  color: '#475569',
+  fontSize: '0.84rem',
+  color: '#334155',
   fontWeight: 500,
   cursor: 'pointer',
-  padding: 0,
-  transition: 'color 0.15s ease'
+  padding: '0.2rem 0.2rem',
+  transition: 'color 0.15s ease',
+  whiteSpace: 'nowrap'
 };
 
 const footerNavButtonStyle: React.CSSProperties = {

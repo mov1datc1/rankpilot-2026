@@ -140,14 +140,15 @@ export default function RankingsDecodedLogo({
 
       {/* Brand Text Lockup */}
       {showText && (
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
           <span
             style={{
-              fontSize: size > 32 ? '1.22rem' : '1.05rem',
+              fontSize: size > 32 ? '1.2rem' : '1.02rem',
               fontWeight: 700,
               color: isDarkBg ? '#F8FAFC' : '#0F172A',
               letterSpacing: '-0.025em',
-              fontFamily: "'Neue Montreal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+              fontFamily: "'Neue Montreal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+              whiteSpace: 'nowrap'
             }}
           >
             Rankings Decoded
@@ -155,12 +156,13 @@ export default function RankingsDecodedLogo({
           {textKicker && (
             <span
               style={{
-                fontSize: size > 32 ? '0.68rem' : '0.62rem',
+                fontSize: size > 32 ? '0.62rem' : '0.56rem',
                 color: isDarkBg ? '#94A3B8' : '#64748B',
                 fontWeight: 600,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
-                marginTop: '0.15rem'
+                marginTop: '0.18rem',
+                whiteSpace: 'nowrap'
               }}
             >
               {textKicker}
