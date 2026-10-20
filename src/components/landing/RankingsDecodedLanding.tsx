@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
   CheckCircle2,
   ChevronDown,
+  ChevronUp,
   Shield,
   Sparkles,
   BookOpen,
@@ -33,6 +34,15 @@ export default function RankingsDecodedLanding() {
   const [privacyModalOpen, setPrivacyModalOpen] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [laurelModalOpen, setLaurelModalOpen] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 350);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Form State
   const [formState, setFormState] = useState({
@@ -170,26 +180,29 @@ export default function RankingsDecodedLanding() {
           </Link>
 
           {/* Desktop Nav Links */}
-          <div style={{ display: 'none', gap: '1.1rem', alignItems: 'center' }} className="desktop-menu">
-            <button onClick={() => scrollToSection('services')} style={navLinkStyle}>Our Services</button>
-            <button onClick={() => scrollToSection('approach')} style={navLinkStyle}>Our Approach</button>
-            <button onClick={() => scrollToSection('technology')} style={navLinkStyle}>Technology</button>
-            <button onClick={() => scrollToSection('about')} style={navLinkStyle}>About</button>
-            <button onClick={() => scrollToSection('laurel-and-hell')} style={navLinkStyle}>Laurel & Hell</button>
-            <button onClick={() => scrollToSection('faq')} style={navLinkStyle}>FAQ</button>
+          <div style={{ display: 'none', gap: '0.65rem', alignItems: 'center' }} className="desktop-menu">
+            <button onClick={() => scrollToSection('services')} className="desktop-nav-link">Our Services</button>
+            <button onClick={() => scrollToSection('approach')} className="desktop-nav-link">Our Approach</button>
+            <button onClick={() => scrollToSection('technology')} className="desktop-nav-link">Technology</button>
+            <button onClick={() => scrollToSection('about')} className="desktop-nav-link">About</button>
+            <button onClick={() => scrollToSection('laurel-and-hell')} className="desktop-nav-link">Laurel & Hell</button>
+            <button onClick={() => scrollToSection('faq')} className="desktop-nav-link">FAQ</button>
           </div>
 
           {/* Desktop Right CTA */}
-          <div style={{ display: 'none', alignItems: 'center', gap: '1rem', flexShrink: 0 }} className="desktop-cta">
+          <div style={{ display: 'none', alignItems: 'center', gap: '0.9rem', flexShrink: 0 }} className="desktop-cta">
             <Link
               href="/login"
+              className="client-portal-link"
               style={{
                 fontSize: '0.84rem',
                 color: '#475569',
                 fontWeight: 500,
                 textDecoration: 'none',
-                transition: 'color 0.15s',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '6px',
+                transition: 'all 0.2s ease'
               }}
             >
               Client Portal
@@ -227,33 +240,46 @@ export default function RankingsDecodedLanding() {
 
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
-          <div style={{
-            backgroundColor: '#FAF9F6',
-            borderBottom: '1px solid #E2E8F0',
-            padding: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.2rem'
-          }}>
-            <button onClick={() => scrollToSection('services')} style={{ ...navLinkStyle, textAlign: 'left' }}>Our Services</button>
-            <button onClick={() => scrollToSection('approach')} style={{ ...navLinkStyle, textAlign: 'left' }}>Our Approach</button>
-            <button onClick={() => scrollToSection('technology')} style={{ ...navLinkStyle, textAlign: 'left' }}>Technology</button>
-            <button onClick={() => scrollToSection('about')} style={{ ...navLinkStyle, textAlign: 'left' }}>About</button>
-            <button onClick={() => scrollToSection('laurel-and-hell')} style={{ ...navLinkStyle, textAlign: 'left' }}>Laurel & Hell</button>
-            <button onClick={() => scrollToSection('faq')} style={{ ...navLinkStyle, textAlign: 'left' }}>FAQ</button>
-            <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '0.5rem 0' }} />
-            <Link href="/login" style={{ fontSize: '0.95rem', color: '#475569', fontWeight: 600 }}>Client Portal</Link>
+          <div
+            className="mobile-menu-drawer"
+            style={{
+              backgroundColor: '#FAF9F6',
+              borderBottom: '1px solid #E2E8F0',
+              padding: '1.25rem 1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}
+          >
+            <button onClick={() => scrollToSection('services')} className="mobile-nav-link">Our Services</button>
+            <button onClick={() => scrollToSection('approach')} className="mobile-nav-link">Our Approach</button>
+            <button onClick={() => scrollToSection('technology')} className="mobile-nav-link">Technology</button>
+            <button onClick={() => scrollToSection('about')} className="mobile-nav-link">About</button>
+            <button onClick={() => scrollToSection('laurel-and-hell')} className="mobile-nav-link">Laurel & Hell</button>
+            <button onClick={() => scrollToSection('faq')} className="mobile-nav-link">FAQ</button>
+            <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '0.4rem 0' }} />
+            <Link
+              href="/login"
+              className="mobile-nav-link"
+              style={{ fontWeight: 600, color: '#1B44ED' }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Client Portal
+            </Link>
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                backgroundColor: '#0F172A',
+                background: 'linear-gradient(135deg, #1B44ED 0%, #0F172A 100%)',
                 color: '#FFFFFF',
-                padding: '0.8rem',
+                padding: '0.85rem',
                 borderRadius: '8px',
                 fontWeight: 600,
+                fontSize: '0.92rem',
                 border: 'none',
                 cursor: 'pointer',
-                textAlign: 'center'
+                textAlign: 'center',
+                boxShadow: '0 4px 15px rgba(27, 68, 237, 0.25)',
+                marginTop: '0.35rem'
               }}
             >
               Discuss Your Priorities
@@ -346,7 +372,7 @@ export default function RankingsDecodedLanding() {
           </div>
 
           {/* Action CTAs */}
-          <div style={{
+          <div className="hero-ctas" style={{
             display: 'flex',
             gap: '1.25rem',
             justifyContent: 'center',
@@ -446,7 +472,7 @@ export default function RankingsDecodedLanding() {
           {/* 6 Cards Balanced Grid (5 Questions + Strategic Synthesis Outcome) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.5rem',
             marginBottom: '1rem'
           }}>
@@ -753,13 +779,13 @@ export default function RankingsDecodedLanding() {
             ].map((srv) => (
               <div
                 key={srv.num}
+                className="service-card-item"
                 style={{
                   backgroundColor: '#FAF9F6',
                   borderRadius: '14px',
                   border: '1px solid #E2E8F0',
-                  padding: '2.5rem 2.25rem',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                   gap: '2.5rem',
                   alignItems: 'start'
                 }}
@@ -1089,12 +1115,10 @@ export default function RankingsDecodedLanding() {
             marginBottom: '4rem'
           }}>
             {/* Left Column: Bio Card + Institutional Foundation & Experience (Eliminating Empty Space) */}
-            <div style={{
+            <div className="about-left-sticky" style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.25rem',
-              position: 'sticky',
-              top: '90px'
+              gap: '1.25rem'
             }}>
               {/* Profile Card */}
               <div style={{
@@ -1498,13 +1522,15 @@ export default function RankingsDecodedLanding() {
             </p>
           </div>
 
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '16px',
-            padding: '2.75rem',
-            boxShadow: '0 10px 35px rgba(0, 0, 0, 0.04)'
-          }}>
+          <div
+            className="contact-card-box"
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '16px',
+              boxShadow: '0 10px 35px rgba(0, 0, 0, 0.04)'
+            }}
+          >
             {submitSuccess ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                 <div style={{
@@ -1942,8 +1968,109 @@ export default function RankingsDecodedLanding() {
         </div>
       )}
 
+      {/* Back to Top Floating Button */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="back-to-top-btn"
+          aria-label="Volver arriba"
+          title="Volver arriba"
+        >
+          <ChevronUp size={22} color="#FFFFFF" />
+        </button>
+      )}
+
       {/* Global Scoped Responsive CSS */}
       <style jsx>{`
+        /* Desktop Navigation Links Hover State */
+        .desktop-nav-link {
+          background: none;
+          border: none;
+          font-size: 0.85rem;
+          color: #475569;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 0.35rem 0.65rem;
+          border-radius: 6px;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
+        }
+        .desktop-nav-link:hover {
+          color: #0F172A !important;
+          background-color: rgba(15, 23, 42, 0.06);
+        }
+        .client-portal-link:hover {
+          color: #0F172A !important;
+          background-color: rgba(15, 23, 42, 0.05);
+        }
+
+        /* Mobile Menu Links */
+        .mobile-nav-link {
+          background: none;
+          border: none;
+          font-size: 0.95rem;
+          color: #334155;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 0.65rem 0.75rem;
+          border-radius: 8px;
+          text-align: left;
+          transition: all 0.15s ease;
+          display: block;
+          text-decoration: none;
+        }
+        .mobile-nav-link:hover, .mobile-nav-link:active {
+          color: #0F172A;
+          background-color: rgba(15, 23, 42, 0.06);
+        }
+        .mobile-menu-drawer {
+          animation: slideDownMenu 0.22s ease-out forwards;
+        }
+        @keyframes slideDownMenu {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Back to Top Floating Button */
+        .back-to-top-btn {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #090E17 0%, #1B44ED 100%);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          color: #FFFFFF;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 8px 24px rgba(9, 14, 23, 0.35), 0 2px 8px rgba(27, 68, 237, 0.25);
+          z-index: 49;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .back-to-top-btn:hover {
+          transform: translateY(-3px) scale(1.06);
+          background: #1B44ED !important;
+          border-color: rgba(255, 255, 255, 0.45);
+          box-shadow: 0 12px 30px rgba(27, 68, 237, 0.45);
+        }
+
+        /* Card Paddings & Layout */
+        .service-card-item {
+          padding: 2.5rem 2.25rem;
+        }
+        .contact-card-box {
+          padding: 2.75rem;
+        }
+
         .when-we-help-grid {
           display: grid;
           grid-template-columns: 1fr;
@@ -1962,6 +2089,8 @@ export default function RankingsDecodedLanding() {
           border-color: #C7D2FE !important;
           box-shadow: 0 12px 24px -6px rgba(67, 56, 202, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
         }
+
+        /* Desktop Breakpoint for Navbar & Sticky Columns */
         @media (min-width: 1024px) {
           .desktop-menu {
             display: flex !important;
@@ -1971,6 +2100,46 @@ export default function RankingsDecodedLanding() {
           }
           .mobile-toggle {
             display: none !important;
+          }
+          .about-left-sticky {
+            position: sticky !important;
+            top: 90px !important;
+          }
+        }
+
+        /* Tablet & Mobile Specific Tweaks */
+        @media (max-width: 1023px) {
+          .about-left-sticky {
+            position: static !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .service-card-item {
+            padding: 1.65rem 1.25rem !important;
+            gap: 1.5rem !important;
+          }
+          .contact-card-box {
+            padding: 1.75rem 1.25rem !important;
+          }
+          .hero-ctas {
+            flex-direction: column !important;
+            width: 100% !important;
+            align-items: stretch !important;
+            gap: 0.85rem !important;
+          }
+          .hero-ctas button {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .back-to-top-btn {
+            bottom: 1.25rem !important;
+            right: 1.25rem !important;
+            width: 44px !important;
+            height: 44px !important;
+          }
+          input, textarea {
+            font-size: 16px !important;
           }
         }
       `}</style>
