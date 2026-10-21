@@ -237,6 +237,7 @@ export async function POST(request: NextRequest) {
       },
       ingestion_quality: extractData.ingestion_quality || null,
       analysis_scope: selected,
+      modality: context?.modality || existingChambers.modality || selected.modality || '',
       draft_revision: Number(existingChambers.draft_revision || 0) + 1,
       original_b10: extractedB10,
       enhanced_b7: extractedB10,

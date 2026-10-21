@@ -48,14 +48,16 @@ export async function createSubmission(data: {
   deadline?: string;
   primaryObjective?: string;
   secondaryObjective?: string;
+  modality?: string;
 }) {
   try {
     const user = await getAuthenticatedUser();
 
-    // v13.0: Store objectives in chambersData JSON field
+    // v13.0: Store objectives & modality in chambersData JSON field
     const chambersData = {
       primaryObjective: data.primaryObjective,
       secondaryObjective: data.secondaryObjective,
+      modality: data.modality,
     };
 
     const submission = await prisma.submission.create({

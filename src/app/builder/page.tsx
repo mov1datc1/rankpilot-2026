@@ -147,7 +147,7 @@ function BuilderContent() {
       const configuration=JSON.stringify({targetDirectory,practiceArea,guideRegion,country,currentBand,primaryObjective,secondaryObjective});
       let submissionId=draftAttempt.current?.configuration===configuration?draftAttempt.current.id:'';
       if(!submissionId) {
-        const subRes=await createSubmission({targetDirectory,practiceArea,guideRegion:`${guideRegion} — ${country}`,currentBand,primaryObjective,secondaryObjective});
+        const subRes=await createSubmission({targetDirectory,practiceArea,guideRegion:`${guideRegion} — ${country}`,currentBand,primaryObjective,secondaryObjective,modality});
         if(!subRes.success || !subRes.data) throw new Error('No pudimos crear el borrador. Tus archivos y notas siguen seleccionados; vuelve a intentar.');
         submissionId=subRes.data.id;
         draftAttempt.current={id:submissionId,configuration};

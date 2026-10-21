@@ -29,8 +29,8 @@ export function selectedScope(input:any):AnalysisScope {
  };
 }
 export function scopeIssues(scope:AnalysisScope,reports:any[]=[],modality?:string) {
- const activeModality = modality || scope.modality || '';
- const isScratch = activeModality === 'scratch' || activeModality === 'sources';
+ const rawModality = String(modality || scope.modality || '').trim().toLowerCase();
+ const isScratch = rawModality === 'scratch' || rawModality === 'sources' || rawModality === 'b' || rawModality.startsWith('b') || rawModality.includes('scratch');
  const issues:{code:string;field:keyof AnalysisScope;selected:string;detected:string;source:string;quote:string;message:string}[]=[];
  for(const field of Object.keys(labels) as (keyof AnalysisScope)[]) {
   if(field==='modality') continue;
