@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+ai-engine
+docs
+scratch
+angela-20octubre
+rag_specs
+*.docx
+*.doc
+*.pdf
+*.log
