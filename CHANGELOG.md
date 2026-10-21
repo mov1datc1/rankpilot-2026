@@ -1,3 +1,24 @@
+## 2026-10-21 — Optimización quirúrgica de asuntos, comparador visual (Diff), banner de borrador y calibraciones editoriales
+
+- **Optimización quirúrgica y granular de asuntos (`SubmissionStudio.tsx`, `/api/optimize/matter/route.ts`, `micro_optimizer.py`)**:
+  - Desacoplamiento total de la optimización individual de asuntos de los bloqueos globales de validación (`preparationInputIssues`), permitiendo pulir asuntos individuales con IA de forma independiente sin importar si faltan datos administrativos en la postulación general.
+  - Persistencia de doble versión con trazabilidad: `originalText` / `rawNotes` (borrador original de la firma) junto a `optimizedText` / `narrativeDescription` (versión Chambers IA) y `editorialRationale` estructurado.
+  - Selector de vista segmentado de 3 estados en cada tarjeta de asunto: `Versión Chambers (IA)`, `Borrador Original` y `⚖️ Comparar Cambios`.
+  - Comparador visual interactivo (Diff split-screen): contraste lado a lado entre original y refinamiento IA, acompañado de un banner prominente de *Justificación Editorial* que explica los motivos estratégicos de los cambios y barra de acción (*«Aceptar Versión IA»* vs. *«Restaurar Texto Original»*).
+  - Cajón de optimización quirúrgica (Drawer) unificado en Sección D (Publicables) y Sección E (Confidenciales), con chips de directivas rápidas (*🎯 Reforzar Relevancia y Escala*, *🔍 Identificar y Cubrir Vacíos*, *✍️ 3 Párrafos Concisos*, *👥 Destacar Rol de Socios*) y soporte de instrucciones personalizadas.
+  - Navegación reactiva con evento `jump-to-matter` para saltar y resaltar la tarjeta del asunto directamente desde los hallazgos del Strategic Audit.
+- **Banner de «Borrador de Trabajo» (Working Draft) y desacople de descargas**:
+  - Distinción entre bloqueos de integridad fatal y advertencias o recomendaciones editoriales pendientes.
+  - Si existen campos pendientes o advertencias de verificación, el visor de entrega y el entregable muestran un banner ámbar prominente indicando el estado de *Borrador de Trabajo*, manteniendo habilitadas la navegación y la descarga de documentos Word para trabajo de consultoría.
+- **Calibraciones editoriales derivadas del feedback de Ángela Castillo (AraqueReyna y DeForest)**:
+  - Criterios de ponderación explícitos para la selección del *Hero Matter* en mandatos internacionales (evaluación de rol local vs. coliderazgo global).
+  - Filtro estricto de especialización de abogados: se evita postular para rankings individuales a socios de apoyo multidisciplinario (ej. socio tributario en operación de M&A).
+  - Narrativa B10 basada en capacidades agregadas demostradas (reestructuraciones, transfronterizo, gobierno corporativo) en lugar de una recopilación fragmentaria de casos.
+  - Unificación de fuente única de verdad entre los asuntos evaluados en el Audit y los numerados en la versión final de la candidatura.
+- **Despliegue y control de calidad**:
+  - 36/36 rutas estáticas y dinámicas compiladas en Next.js 16.2 Turbopack sin errores de tipos TypeScript.
+  - Ramas `dev` y `main` sincronizadas y desplegadas en Vercel Producción (`https://rankpilot-2026.vercel.app`).
+
 ## 2026-10-13 — Conciliación de producción, autorreparación adversarial y validación de Banking & Finance (ARAQUEREYNA)
 
 - **Validación de producción de ARAQUEREYNA (Banking & Finance Venezuela, Chambers)**:

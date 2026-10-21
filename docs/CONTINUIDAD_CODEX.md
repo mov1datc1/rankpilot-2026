@@ -780,3 +780,26 @@ Correcciónpequeña68cabcf sólo review-actions+téstregresión: avisoSourceevid
    - 374/374 pruebas unitarias de `ai-engine` pasan en limpio (`python3 -m unittest discover -s tests -p "test_*.py"`).
    - TypeScript compilation (`npx tsc --noEmit`) 100% limpia.
 
+### Actualización 2026-10-21: Optimización Quirúrgica de Asuntos, Comparador Visual (Diff), Banner de Borrador y Resoluciones de Feedback de Ángela Castillo
+1. **Desacoplamiento de Optimización Individual de Asuntos:**
+   - En `/api/optimize/matter/route.ts` y `SubmissionStudio.tsx`, se liberó la optimización quirúrgica de asuntos de los bloqueos globales de validación del submission (`preparationInputIssues`). Un usuario o consultor puede pulir y reescribir con IA cualquier asunto de forma 100% independiente, incluso si la postulación global tiene datos pendientes.
+   - En `micro_optimizer.py`, la respuesta ahora incluye explícitamente `original_text` y `rationale`.
+2. **Conservación de Borrador Original vs Versión Chambers IA:**
+   - Se persisten tanto el texto original (`rawNotes` / `originalText`) como la redacción pulida (`optimizedText` / `narrativeDescription`) y la justificación técnica (`editorialRationale`).
+3. **Selector Segmentado y Comparador (Diff Split-Screen):**
+   - En cada tarjeta de asunto (Sección D y Sección E), se incorporó un interruptor de 3 vistas: `Versión Chambers (IA)`, `Borrador Original` y `⚖️ Comparar Cambios`.
+   - La vista de comparación contrasta lado a lado el texto original con el refinamiento de IA, muestra un banner prominente de Justificación Editorial con los criterios aplicados y ofrece botones para aceptar la versión IA o restaurar el texto original.
+4. **Cajón Quirúrgico (Drawer) con Directivas Rápidas:**
+   - Habilitado tanto para asuntos públicos como confidenciales con chips predefinidos: *🎯 Reforzar Relevancia y Escala*, *🔍 Identificar y Cubrir Vacíos*, *✍️ 3 Párrafos Concisos*, *👥 Destacar Rol de Socios*, más campo de instrucciones libres.
+   - Event listener `jump-to-matter` para navegar desde los hallazgos del Strategic Audit directamente a la tarjeta del asunto.
+5. **Banner Ámbar de "Borrador de Trabajo" (Working Draft):**
+   - Se desacoplaron las alertas no fatales del bloqueo de descarga. Si hay campos pendientes o recomendaciones por revisar, el sistema muestra un banner informativo ámbar de *Borrador de Trabajo* y mantiene habilitada la navegación y descarga en Word sin trabar el flujo de consultoría.
+6. **Resolución de Puntos Clave del Feedback de Ángela (AraqueReyna M&A y DeForest):**
+   - *Hero Matter*: Ponderación explícita para mandatos con firmas internacionales (rol local vs global, como en caso Pampero con DLA Piper).
+   - *Abogados*: Distinción estricta de especialidad principal vs apoyo multidisciplinario (socio fiscal no postulado a ranking individual de M&A).
+   - *B10*: Síntesis de capacidades institucionales demostradas.
+   - *Fuente Única de Verdad*: Consistencia absoluta entre Audit y Submission final (ej. telemedicina).
+7. **Despliegue y Estado en Producción:**
+   - Ramas `dev` y `main` fusionadas, probadas (36/36 rutas Next.js Turbopack) y sincronizadas en GitHub (`mov1datc1/rankpilot-2026`).
+   - Despliegue en producción exitoso en Vercel (`https://rankpilot-2026.vercel.app`).
+
