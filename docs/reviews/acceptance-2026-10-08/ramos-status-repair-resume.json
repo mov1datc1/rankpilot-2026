@@ -1,0 +1,12 @@
+{
+  "matter_id": "matter-ext-3",
+  "changed_field": "completion_status",
+  "source_quotes": [
+    "The judgment was duly enforced in July 2024.",
+    "issued a ruling that upheld the amparo granted by the Court of First Instance."
+  ],
+  "source_fields_unchanged": true,
+  "letter_unchanged": true,
+  "strategy_unchanged": true,
+  "approval": "pending new exact Word review"
+}

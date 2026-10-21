@@ -1,0 +1,392 @@
+{
+  "scope": "Real model post-render review, actual DOCX text, synthetic cases. No authenticated production workflow.",
+  "results": [
+    {
+      "practice": "Tax",
+      "passed": false,
+      "judge": {
+        "passed": false,
+        "defects": [
+          {
+            "severity": "critical",
+            "scope": "letter",
+            "matter_id": null,
+            "message": "The letter’s evidence_gaps and next_steps incorrectly state that the final rendered submission has not been supplied and must still be provided. A rendered_artifact is present and must be treated as the exact artifact under review. This creates a material conflict about review and delivery status. Update the letter to acknowledge that the artifact was supplied and reviewed; remove the obsolete conditional request. The rendered submission’s substantive claims otherwise align with the supplied sources, publication authorization, canonical matter selection and pending status."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 17.731,
+          "usage": {
+            "input_tokens": 3266,
+            "output_tokens": 1166,
+            "total_tokens": 4432,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1034
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Labour & Employment",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-2",
+            "message": "D2 contains internal evidentiary/audit phrasing: “with documented work on 15 September 2026” and “The source reports ...; no final outcome or financial recovery is claimed.” For cleaner public prose under RP12, retain the supported pending status and role, place the value only in D3, and remove or neutrally rewrite the source/audit commentary without implying an outcome."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 26.355,
+          "usage": {
+            "input_tokens": 3284,
+            "output_tokens": 2036,
+            "total_tokens": 5320,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1918
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Corporate/M&A",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "B7 is blank even though the supplied B10 source supports identifying Sofia Vega as the practice leader. This is a completeness issue, not a factual conflict; her name can be entered while unsupported contact details remain blank."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact contains visible HTML entities such as “&apos;” in the section D and E boilerplate. Confirm the delivered document displays apostrophes correctly."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 26.364,
+          "usage": {
+            "input_tokens": 3241,
+            "output_tokens": 1922,
+            "total_tokens": 5163,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1794
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Banking & Finance",
+      "passed": false,
+      "judge": {
+        "passed": false,
+        "defects": [
+          {
+            "severity": "critical",
+            "scope": "letter",
+            "matter_id": null,
+            "message": "The internal letter is stale and contradicts the package: it states that no final rendered submission was supplied and that artifact review remains a future condition, but rendered_artifact is present. Update the executive assessment, evidence-gaps section and next steps to record review of this exact artifact; the current letter cannot serve as post-render approval."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "B7 is blank even though the supplied B10 source supports identifying Partner Sofia Vega as the practice lead. Add her name to B7 while leaving unsupported contact details blank."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact displays literal HTML entities such as “&apos;” in the D and E section text. Correct the rendering and review the resulting artifact again before delivery."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 35.398,
+          "usage": {
+            "input_tokens": 3286,
+            "output_tokens": 2790,
+            "total_tokens": 6076,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2588
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Energy & Natural Resources",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-6",
+            "message": "Public section D2 contains internal evidence/audit phrasing: “documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” Under RP12, present the supported facts directly rather than discussing the source or claim-checking process. For example, retain the firm’s role, Sofia Vega’s lead role, and the pending status; the matter value can remain in D3. Do not add an unsupported explanation of the matter’s importance."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 35.801,
+          "usage": {
+            "input_tokens": 3240,
+            "output_tokens": 2720,
+            "total_tokens": 5960,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2588
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Competition",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-7",
+            "message": "Section D2 uses internal evidence/audit phrasing: “The source reports,” “documented work,” and “No final outcome or financial recovery is claimed.” The underlying facts are supported and accurately preserve the pending status, but RP12 favors direct public-facing prose without source-validation commentary."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 37.835,
+          "usage": {
+            "input_tokens": 3229,
+            "output_tokens": 3013,
+            "total_tokens": 6242,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2918
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Intellectual Property",
+      "passed": false,
+      "judge": {
+        "passed": false,
+        "defects": [
+          {
+            "severity": "critical",
+            "scope": "letter",
+            "matter_id": null,
+            "message": "The letter states that no rendered Chambers submission has been supplied and that artifact review remains pending, but rendered_artifact is present. This stale pre-render assessment conflicts with the package and cannot serve as the required post-render release conclusion. Update the letter after review of this exact artifact; any later input change must trigger another review."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-8",
+            "message": "Public D2 includes internal evidence/audit phrasing: “documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” Retain the supported substantive facts, but remove provenance and validation commentary from public prose; D3 and D8 already record the value and pending status."
+          },
+          {
+            "severity": "warning",
+            "scope": "letter",
+            "matter_id": "qa-8",
+            "message": "The evidence-gaps section treats B10’s statement that “the team” represented the client as needing further support or alignment. The B10 source expressly says the department represented the client, so this is not an evidence gap. Remove that concern or identify it only as an optional stylistic edit."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 71.81,
+          "usage": {
+            "input_tokens": 3302,
+            "output_tokens": 5953,
+            "total_tokens": 9255,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 5696
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Data Protection",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-9",
+            "message": "Rendered section D2 contains internal evidence/audit phrasing: “with documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” Although supported and non-confidential, this is unsuitable for public submission prose under RP12. Retain the substantive advice, leadership and pending-status facts; keep the value in D3; and remove the source/claim-status commentary."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 40.947,
+          "usage": {
+            "input_tokens": 3243,
+            "output_tokens": 3161,
+            "total_tokens": 6404,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 3044
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Dispute Resolution",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": []
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 37.612,
+          "usage": {
+            "input_tokens": 3336,
+            "output_tokens": 2911,
+            "total_tokens": 6247,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2892
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    },
+    {
+      "practice": "Real Estate",
+      "passed": false,
+      "judge": {
+        "passed": false,
+        "defects": [
+          {
+            "severity": "critical",
+            "scope": "letter",
+            "matter_id": null,
+            "message": "The internal letter is a stale pre-render assessment. It states that no rendered final artifact was supplied and that rendering and review remain outstanding, but this package contains a rendered_artifact. This materially conflicts with the review record and leaves the letter’s approval status unreliable. Reissue the letter after auditing this exact artifact and remove the obsolete pre-render blocker before delivery."
+          },
+          {
+            "severity": "warning",
+            "scope": "letter",
+            "matter_id": null,
+            "message": "The letter characterizes changing “the team” to “the firm” and rephrasing “the transaction remained pending closing” as evidence corrections. The supplied sources support the department’s work and pending closing status, so these are editorial refinements rather than factual evidence gaps. Reclassify or remove this commentary to keep evidence quality distinct from editorial preference."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "A4 is blank, and the package supplies no interview-contact name, email or telephone number. This is a document-completeness gap; obtain the contact information rather than inventing it if the artifact is intended for filing."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "B7 is blank even though the B10 source says Partner Sofia Vega leads the practice. Clarify whether this establishes formal department-head status; if it does, populate her name in B7 while leaving unsupported contact details blank."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-1",
+            "message": "D2 describes the work and preserves the pending status but does not explain why the matter was important. No sourced importance rationale is supplied, so obtain one if this part of the form is to be completed; do not infer importance from the client or matter value."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 175.757,
+          "usage": {
+            "input_tokens": 3315,
+            "output_tokens": 6673,
+            "total_tokens": 9988,
+            "input_token_details": {
+              "cache_read": 3312
+            },
+            "output_token_details": {
+              "reasoning": 6288
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ]
+    }
+  ]
+}

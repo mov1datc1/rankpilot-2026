@@ -1,0 +1,57 @@
+{
+  "revision": 18,
+  "ui_download_hash_match": true,
+  "word_pdf_pages": {
+    "Submission": 27,
+    "Audit": 4
+  },
+  "visually_inspected_pages": {
+    "Submission": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ],
+    "Audit": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "clipping_or_overlap": false,
+  "remaining_findings": [
+    "B9 Javier Atzin row continues with two lines on page4; improve general row pagination",
+    "Legacy revision18 Nueva Empresa compresses legally valid identity changes; check new v2 generation preserves mechanism",
+    "Sidebar incorrectly claims fixed three-paragraph structure and verified amount"
+  ],
+  "files": {
+    "Submission.docx": "d713b774622386daba9d4d39e834354a6fabe2a8c0bf69c590e69aaa6d330644",
+    "Audit.docx": "f118d6f8bb2cba6e1792c87578a4775fca271a4accc0348551d58e8893aacd30",
+    "Submission-final-v18.pdf": "a99ce8924238a0008e837e0cc350e51df3621656fb1ccabd712c98b4d3a5cdb5",
+    "Audit-final-v18.pdf": "ecaf805f62c99cc5ca422280399c35d0f0d0f4bcba86d989647d95c28c9328e5"
+  }
+}

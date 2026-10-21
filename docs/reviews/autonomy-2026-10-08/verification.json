@@ -1,0 +1,68 @@
+{
+  "new_case": "Faro Fiscal QA Fictional, invented tax matters",
+  "cold_run_completed": true,
+  "cold_run_stages": [
+    "selection",
+    "development",
+    "audit",
+    "artifact",
+    "development",
+    "audit",
+    "artifact"
+  ],
+  "automatic_repairs": {
+    "corrected_paths": [
+      "matters/2/text",
+      "b10",
+      "candidates/0"
+    ],
+    "unresolved": []
+  },
+  "source_unchanged": true,
+  "manual_prose_corrections": 0,
+  "final_approval": {
+    "passed": true,
+    "status": "passed",
+    "errors": []
+  },
+  "layout_final_stages": [
+    {
+      "stage": "selection",
+      "tokens": 0
+    },
+    {
+      "stage": "development",
+      "tokens": 0
+    },
+    {
+      "stage": "audit",
+      "tokens": 0
+    },
+    {
+      "stage": "artifact",
+      "tokens": 29821
+    }
+  ],
+  "visual_qa": {
+    "application": "Microsoft Word",
+    "submission_pages": 9,
+    "audit_pages": 3,
+    "all_pages_reviewed": true,
+    "issues_corrected_in_generator": [
+      "orphan Audit headings",
+      "empty public-matters page"
+    ]
+  },
+  "files": {
+    "Submission": "4416db3341c52bab6d8e474693ca39eb0c23f8163235bc0949114ada70a1dc62",
+    "Audit": "2538abd7e81836da6b29cfdc57f7a09dd1d957e4f53757807f2f0026de595c40"
+  },
+  "tests": {
+    "python": 302,
+    "node": 360,
+    "typescript": "passed",
+    "production_build": "passed"
+  },
+  "deployment": "blocked by automatic approval review; explicit commit/destination authorization pending",
+  "commit": "3c415fd"
+}

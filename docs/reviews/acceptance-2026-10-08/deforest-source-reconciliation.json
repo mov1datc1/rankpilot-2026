@@ -1,0 +1,505 @@
+{
+  "scope": "Private acceptance input only; production unchanged. Preserve saved human role confirmations. Replace legacy prefabricated bios/ranks with actual source rows. No missing fact invented.",
+  "changes": [
+    {
+      "name": "Eduardo Garduño",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.327Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "old": {
+        "bio": "Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.",
+        "url": "garduno@deforest.mx",
+        "name": "Eduardo Garduño",
+        "role": "Partner",
+        "comments": "Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.",
+        "isRanked": false,
+        "isPartner": true,
+        "is_ranked": false,
+        "is_partner": true,
+        "currentRank": null,
+        "suggestedRank": "Band 5",
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.327Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Eduardo Garduño | garduno@deforest.mx | 1999 | Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.",
+        "suggested_rank": "Band 5",
+        "current_ranking": null
+      },
+      "new": {
+        "bio": "Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.\nHe regularly delivers conferences on labor developments and legal updates at CLAUZ, CANACINTRA and the American Chamber of Commerce in Guadalajara, as well as at universities including Universidad Anáhuac Puebla.\nHe serves as President of the labor Committee of ANADE Puebla and actively participates in various labor forums, including business chambers.",
+        "url": "garduno@deforest.mx",
+        "name": "Eduardo Garduño",
+        "role": "Partner",
+        "comments": "Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.\nHe regularly delivers conferences on labor developments and legal updates at CLAUZ, CANACINTRA and the American Chamber of Commerce in Guadalajara, as well as at universities including Universidad Anáhuac Puebla.\nHe serves as President of the labor Committee of ANADE Puebla and actively participates in various labor forums, including business chambers.",
+        "isRanked": null,
+        "isPartner": true,
+        "is_ranked": null,
+        "is_partner": true,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.327Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Eduardo Garduño | garduno@deforest.mx | 1999 | Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable.\nHe regularly delivers conferences on labor developments and legal updates at CLAUZ, CANACINTRA and the American Chamber of Commerce in Guadalajara, as well as at universities including Universidad Anáhuac Puebla.\nHe serves as President of the labor Committee of ANADE Puebla and actively participates in various labor forums, including business chambers.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Javier Atzin Vallejo",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.327Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "old": {
+        "bio": "Partner · Industrial relations, collective labour, social security and complex employment matters across manufacturing operations.",
+        "url": "",
+        "name": "Javier Atzin Vallejo",
+        "role": "Partner",
+        "comments": "Partner · Industrial relations, collective labour, social security and complex employment matters across manufacturing operations.",
+        "isRanked": false,
+        "isPartner": true,
+        "is_ranked": false,
+        "is_partner": true,
+        "currentRank": "Unranked",
+        "suggestedRank": "Associate to Watch",
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.327Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Javier Atzin Vallejo",
+        "suggested_rank": "Associate to Watch",
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "Javier is a technical specialist whose practice sits at the intersection of labor law, social security and regulatory compliance. His experience includes conducting complex audits, harmonising documentation across multi-plant structures and advising on labor components of acquisitions and restructurings. Known for his precise analytical approach, Javier is essential in mandates requiring meticulous documentation, accurate risk assessment and alignment with global corporate standards. His work is particularly relevant for industrial, infrastructure and advanced-manufacturing groups.",
+        "url": "",
+        "name": "Javier Atzin Vallejo",
+        "role": "Partner",
+        "comments": "Javier is a technical specialist whose practice sits at the intersection of labor law, social security and regulatory compliance. His experience includes conducting complex audits, harmonising documentation across multi-plant structures and advising on labor components of acquisitions and restructurings. Known for his precise analytical approach, Javier is essential in mandates requiring meticulous documentation, accurate risk assessment and alignment with global corporate standards. His work is particularly relevant for industrial, infrastructure and advanced-manufacturing groups.",
+        "isRanked": null,
+        "isPartner": true,
+        "is_ranked": null,
+        "is_partner": true,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.327Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Javier Atzin Vallejo | vallejo@deforest.mx | 2019 | Javier is a technical specialist whose practice sits at the intersection of labor law, social security and regulatory compliance. His experience includes conducting complex audits, harmonising documentation across multi-plant structures and advising on labor components of acquisitions and restructurings. Known for his precise analytical approach, Javier is essential in mandates requiring meticulous documentation, accurate risk assessment and alignment with global corporate standards. His work is particularly relevant for industrial, infrastructure and advanced-manufacturing groups.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Jaime Bustamante",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "old": {
+        "bio": "Senior Practitioner · Workforce strategy, labour disputes, compliance and employment risk management.",
+        "url": "",
+        "name": "Jaime Bustamante",
+        "role": "Partner",
+        "comments": "Senior Practitioner · Workforce strategy, labour disputes, compliance and employment risk management.",
+        "isRanked": false,
+        "isPartner": true,
+        "is_ranked": false,
+        "is_partner": true,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Jaime Bustamante",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "Jaime brings the perspective of someone who has managed labor structures on a global scale. Before joining DeForest, he served as Legal Director for Mexico, Central and South America at ManpowerGroup, overseeing one of the largest employer workforces in the region. This experience shapes his approach to complex disputes, mass-litigation management, workforce transitions and collective bargaining negotiations in high-pressure environments. His influence extends into national policy circles through his role as Vice President of the labor, Social Security and HR Commission at CONCAMIN, reinforcing his standing as a reference point for employers navigating regulatory reform, cross-border HR structures and large-scale labor exposure.",
+        "url": "",
+        "name": "Jaime Bustamante",
+        "role": "Partner",
+        "comments": "Jaime brings the perspective of someone who has managed labor structures on a global scale. Before joining DeForest, he served as Legal Director for Mexico, Central and South America at ManpowerGroup, overseeing one of the largest employer workforces in the region. This experience shapes his approach to complex disputes, mass-litigation management, workforce transitions and collective bargaining negotiations in high-pressure environments. His influence extends into national policy circles through his role as Vice President of the labor, Social Security and HR Commission at CONCAMIN, reinforcing his standing as a reference point for employers navigating regulatory reform, cross-border HR structures and large-scale labor exposure.",
+        "isRanked": null,
+        "isPartner": true,
+        "is_ranked": null,
+        "is_partner": true,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Partner",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Partner"
+        },
+        "source_excerpt": "Jaime Bustamante | bustamante@deforest.mx | 2022 | Jaime brings the perspective of someone who has managed labor structures on a global scale. Before joining DeForest, he served as Legal Director for Mexico, Central and South America at ManpowerGroup, overseeing one of the largest employer workforces in the region. This experience shapes his approach to complex disputes, mass-litigation management, workforce transitions and collective bargaining negotiations in high-pressure environments. His influence extends into national policy circles through his role as Vice President of the labor, Social Security and HR Commission at CONCAMIN, reinforcing his standing as a reference point for employers navigating regulatory reform, cross-border HR structures and large-scale labor exposure.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "José Alberto Díaz Méndez",
+      "source_roster_match": false,
+      "preserved_role_confirmation": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate",
+        "originalProfile": {
+          "bio": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+          "comments": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates."
+        }
+      },
+      "old": {
+        "bio": "Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+        "url": "",
+        "name": "José Alberto Díaz Méndez",
+        "role": "Associate",
+        "comments": "Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+        "isRanked": false,
+        "isPartner": false,
+        "is_ranked": false,
+        "is_partner": false,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate",
+          "originalProfile": {
+            "bio": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+            "comments": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates."
+          }
+        },
+        "source_excerpt": "José Alberto Díaz Méndez",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "",
+        "url": "",
+        "name": "José Alberto Díaz Méndez",
+        "role": "Associate",
+        "comments": "",
+        "isRanked": null,
+        "isPartner": false,
+        "is_ranked": null,
+        "is_partner": false,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate",
+          "originalProfile": {
+            "bio": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+            "comments": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates."
+          }
+        },
+        "source_excerpt": "Name of the Matter: | Confidential (Y/N):\nClient: SCOTCH\nMatter’s Value (specify currency) and/or other key numbers:\nMatter Status (closed in last year or ongoing?):\n\t\t\n\t\t\tMatter’s Context:\nSCOTCH engaged DeForest to review and restructure its corporate and labor framework following the introduction of Mexico's specialised services regime (REPSE). The matter required a multidisciplinary approach combining labor, corporate and regulatory expertise to ensure that the client's business model remained fully aligned with the country's evolving outsourcing framework.\n\t\t\n\t\tFirm’s role and main output:\nWorking jointly across its corporate and labor practices, DeForest carried out a comprehensive review of the client's corporate structure, specialised services model, bylaws and REPSE registration while simultaneously conducting an audit of more than eighty suppliers to determine the appropriate regulatory treatment of specialised services agreements.\n\nThe engagement demonstrates the firm's ability to advise clients on complex regulatory transformations where employment, corporate governance and commercial operations converge.\n\t\t\n\t\tLead Partner(s):\nJosé Alberto Díaz Méndez.\n\t\t\n\t\tOther team members:\nN/A\n\t\t\n\t\tOther firms advising on the matter and their role:\nN/A\n\t\t\n\t\tLinks to press coverage:\nN/A\nName of the Matter: | Confidential (Y/N):\nClient: Grupo Solana\nMatter’s Value (specify currency) and/or other key numbers:\nMatter Status (closed in last year or ongoing?):\n\t\t\n\t\t\tMatter’s Context:\nGrupo Solana, a diversified automotive and real estate group employing more than 1,200 people, retained DeForest to implement a complex employer substitution process affecting its workforce structure. The matter required careful coordination between labor and regulatory authorities to ensure business continuity while restructuring the group's employment platform.\n\t\t\n\t\tFirm’s role and main output:\nDeForest designed and executed the legal strategy necessary to reactivate the employer registration that had previously been cancelled, allowing the employer substitution process to proceed without disrupting the client's operations. The firm coordinated the labor transition while ensuring full compliance with applicable employment regulations and preserving workforce stability throughout the restructuring.\n\nThe engagement illustrates the firm's ability to support complex corporate reorganisations where labor law plays a critical role in enabling business transformation.\n\t\t\n\t\tLead Partner(s):\nJosé Alberto Díaz Méndez.\n\t\t\n\t\tOther team members:\nN/A\n\t\t\n\t\tOther firms advising on the matter and their role:\nN/A\n\t\t\n\t\tLinks to press coverage:\nN/A\nName of the Matter: | Confidential (Y/N):\nClient: Poliuretanos Summa Woodbridge (PSW)\nMatter’s Value (specify currency) and/or other key numbers:\nMatter Status (closed in last year or ongoing?):\n\t\t\n\t\t\tMatter’s Context:\nPSW engaged DeForest to design and implement a comprehensive restructuring affecting approximately eight companies operating across multiple Mexican states. The project required the separation of business functions, the redesign of the group's employment model and the creation of a specialised services platform aligned with Mexico's post-outsourcing regulatory framework.\n\t\t\n\t\tFirm’s role and main output:\nDeForest developed the legal strategy supporting the group's restructuring, including the creation of a specialised services entity, employer substitution processes, the redesign of corporate purposes and the implementation of a workforce transition affecting multiple operating companies. In parallel, the firm represents the client in social security litigation before the Federal Court of Administrative Justice challenging tax assessments relating to two manufacturing facilities, while continuing to advise on broader labor and social security governance matters.\n\nThe engagement reflects the firm's ability to coordinate multidisciplinary projects where labor law, corporate restructuring and social security litigation converge to support large-scale business transformation.\n\t\t\n\t\tLead Partner(s):\nJosé Alberto Díaz Méndez.\n\t\t\n\t\tOther team members:\nN/A\n\t\t\n\t\tOther firms advising on the matter and their role:\nN/A\n\t\t\n\t\tLinks to press coverage:\nN/A\n\n[Contenido adicional: footer1]\nLeaders League\n\t\t88, boulevard de la Villette\n\t\tParis – France, 75 019\n\n[Contenido adicional: footer2]\nLeaders League\n\t\t88, boulevard de la Villette\n\t\tParis – France, 75 019",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Erick Pérez",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "old": {
+        "bio": "Labor and employment practitioner advising on collective negotiations, workforce inspections, and administrative compliance.",
+        "url": "",
+        "name": "Erick Pérez",
+        "role": "Associate",
+        "comments": "Labor and employment practitioner advising on collective negotiations, workforce inspections, and administrative compliance.",
+        "isRanked": false,
+        "isPartner": false,
+        "is_ranked": false,
+        "is_partner": false,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Erick Pérez",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "",
+        "url": "",
+        "name": "Erick Pérez",
+        "role": "Associate",
+        "comments": "",
+        "isRanked": null,
+        "isPartner": false,
+        "is_ranked": null,
+        "is_partner": false,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Erick Pérez | perezg@deforest.mx | N/A",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Andrés Cabrera Gómez",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "old": {
+        "bio": "Key member of the contentious labor team representing domestic and multinational employers in individual and collective dispute proceedings.",
+        "url": "",
+        "name": "Andrés Cabrera",
+        "role": "Associate",
+        "comments": "Key member of the contentious labor team representing domestic and multinational employers in individual and collective dispute proceedings.",
+        "isRanked": false,
+        "isPartner": false,
+        "is_ranked": false,
+        "is_partner": false,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Andrés Cabrera",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "Andrés leads the firm’s practice in the Bajío region, one of Mexico’s most active industrial corridors. He is recognised for his ability to execute litigation strategies with speed, clarity and sensitivity to local dynamics—particularly in jurisdictions adapting to the post-reform judicial system. His work bridges the strategic frameworks designed by senior partners with the practical realities of implementation in critical regions. For many clients, Andrés provides the on-the-ground coordination that ensures consistency across the firm’s national approach.",
+        "url": "",
+        "name": "Andrés Cabrera Gómez",
+        "role": "Associate",
+        "comments": "Andrés leads the firm’s practice in the Bajío region, one of Mexico’s most active industrial corridors. He is recognised for his ability to execute litigation strategies with speed, clarity and sensitivity to local dynamics—particularly in jurisdictions adapting to the post-reform judicial system. His work bridges the strategic frameworks designed by senior partners with the practical realities of implementation in critical regions. For many clients, Andrés provides the on-the-ground coordination that ensures consistency across the firm’s national approach.",
+        "isRanked": null,
+        "isPartner": false,
+        "is_ranked": null,
+        "is_partner": false,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Andrés Cabrera Gómez | cabrera@deforest.mx | 2023 | Andrés leads the firm’s practice in the Bajío region, one of Mexico’s most active industrial corridors. He is recognised for his ability to execute litigation strategies with speed, clarity and sensitivity to local dynamics—particularly in jurisdictions adapting to the post-reform judicial system. His work bridges the strategic frameworks designed by senior partners with the practical realities of implementation in critical regions. For many clients, Andrés provides the on-the-ground coordination that ensures consistency across the firm’s national approach.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Raymundo Carreño",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "old": {
+        "bio": "Employment litigation specialist managing employer-side defense, terminations, and judicial conciliation hearings across Mexican jurisdictions.",
+        "url": "",
+        "name": "Raymundo Carreño",
+        "role": "Associate",
+        "comments": "Employment litigation specialist managing employer-side defense, terminations, and judicial conciliation hearings across Mexican jurisdictions.",
+        "isRanked": false,
+        "isPartner": false,
+        "is_ranked": false,
+        "is_partner": false,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Raymundo Carreño",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "With nearly forty years at Volkswagen de México, including his tenure as General Legal Director, Raymundo embodies an uncommon depth of experience in corporate labor relations. He has played a central role in major regulatory transitions, high-stakes union negotiations and organisational restructurings that have defined the automotive sector in Mexico. His judgement is sought in matters where legal interpretation intersects with operational continuity and corporate strategy. His presence within the practice adds a level of senior insight that few labor teams in the country can access.",
+        "url": "",
+        "name": "Raymundo Carreño",
+        "role": "Associate",
+        "comments": "With nearly forty years at Volkswagen de México, including his tenure as General Legal Director, Raymundo embodies an uncommon depth of experience in corporate labor relations. He has played a central role in major regulatory transitions, high-stakes union negotiations and organisational restructurings that have defined the automotive sector in Mexico. His judgement is sought in matters where legal interpretation intersects with operational continuity and corporate strategy. His presence within the practice adds a level of senior insight that few labor teams in the country can access.",
+        "isRanked": null,
+        "isPartner": false,
+        "is_ranked": null,
+        "is_partner": false,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Raymundo Carreño | carreno@deforest.mx | 2016 | With nearly forty years at Volkswagen de México, including his tenure as General Legal Director, Raymundo embodies an uncommon depth of experience in corporate labor relations. He has played a central role in major regulatory transitions, high-stakes union negotiations and organisational restructurings that have defined the automotive sector in Mexico. His judgement is sought in matters where legal interpretation intersects with operational continuity and corporate strategy. His presence within the practice adds a level of senior insight that few labor teams in the country can access.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    },
+    {
+      "name": "Edgar Barreto",
+      "source_roster_match": true,
+      "preserved_role_confirmation": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "old": {
+        "bio": "Labor practitioner supporting corporate clients on day-to-day employment compliance, workplace investigations, and labor agreement drafting.",
+        "url": "",
+        "name": "Edgar Barreto",
+        "role": "Associate",
+        "comments": "Labor practitioner supporting corporate clients on day-to-day employment compliance, workplace investigations, and labor agreement drafting.",
+        "isRanked": false,
+        "isPartner": false,
+        "is_ranked": false,
+        "is_partner": false,
+        "currentRank": "Unranked",
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Edgar Barreto",
+        "suggested_rank": null,
+        "current_ranking": "Unranked"
+      },
+      "new": {
+        "bio": "Edgar brings more than two decades of experience in labor litigation, social security and internal governance for large-scale employers. His practice focuses on early identification of contingencies, documentation harmonisation in high-volume environments and continuous advisory for industrial plants requiring predictable labor operations. His deep command of IMSS processes and inspection frameworks makes him a strategic ally for employers seeking to reduce recurrent risks and strengthen compliance mechanisms.",
+        "url": "",
+        "name": "Edgar Barreto",
+        "role": "Associate",
+        "comments": "Edgar brings more than two decades of experience in labor litigation, social security and internal governance for large-scale employers. His practice focuses on early identification of contingencies, documentation harmonisation in high-volume environments and continuous advisory for industrial plants requiring predictable labor operations. His deep command of IMSS processes and inspection frameworks makes him a strategic ally for employers seeking to reduce recurrent risks and strengthen compliance mechanisms.",
+        "isRanked": null,
+        "isPartner": false,
+        "is_ranked": null,
+        "is_partner": false,
+        "currentRank": null,
+        "suggestedRank": null,
+        "roleResolution": {
+          "role": "Associate",
+          "reason": "si",
+          "confirmed": true,
+          "confirmedAt": "2026-10-08T01:05:55.328Z",
+          "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+          "originalRole": "Associate"
+        },
+        "source_excerpt": "Edgar Barreto | dirgeneral@mrb.mx |  | Edgar brings more than two decades of experience in labor litigation, social security and internal governance for large-scale employers. His practice focuses on early identification of contingencies, documentation harmonisation in high-volume environments and continuous advisory for industrial plants requiring predictable labor operations. His deep command of IMSS processes and inspection frameworks makes him a strategic ally for employers seeking to reduce recurrent risks and strengthen compliance mechanisms.",
+        "suggested_rank": null,
+        "current_ranking": null,
+        "currentRanking": null
+      }
+    }
+  ]
+}

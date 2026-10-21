@@ -1,0 +1,251 @@
+{
+  "criteria_version": "angela-acceptance-2026-10-08-v1",
+  "scope": "Three private reviewed pairs, plus DeForest production revision 16; no blanket assurance or complete external filing.",
+  "cases": [
+    {
+      "case": "araquereyna",
+      "source_matters": 22,
+      "criteria": [
+        {
+          "id": "A01",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source_reports, source-manifest.json, complete source/strategy ID reconciliation; DeForest roster supplement"
+        },
+        {
+          "id": "A02",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final exact-Word confidentiality check; generated alias regression controls"
+        },
+        {
+          "id": "A03",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source monetary semantics and currency tests; final source_fidelity review"
+        },
+        {
+          "id": "A04",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "selection_review_validated with all original IDs, source excerpts and legal-work rationale"
+        },
+        {
+          "id": "A05",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "canonical strategy, portfolio comparison and exact-Word final reviews"
+        },
+        {
+          "id": "A06",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "saved human role confirmations and scoped official individual ranking records"
+        },
+        {
+          "id": "A07",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final source_fidelity; supported evidence vs invented facts adversarial tests"
+        },
+        {
+          "id": "A08",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "matching exact-Word hashes, reviewed all Word-rendered pages, source text final review"
+        },
+        {
+          "id": "A09",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "official research snapshots with scope, URL, hash/date and explicit unavailable/historical limitations"
+        },
+        {
+          "id": "A10",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "development_validated plus final decisive_evidence, b9_development and c2_argument reviews"
+        },
+        {
+          "id": "A11",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source-bound firm voice checks and independent exact-Word review"
+        },
+        {
+          "id": "A12",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "Word page counts 3–5; executive_audit review and sections inspected"
+        },
+        {
+          "id": "A13",
+          "status": "pending_deployed_validation",
+          "evidence": "contract tests pass; current deployed case still to verify"
+        },
+        {
+          "id": "A14",
+          "status": "pending_deployed_validation",
+          "evidence": "saved graph trace, RAG roles, bounded repairs and unchanged source; deployed execution still to verify"
+        },
+        {
+          "id": "A15",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "explicit selected/reserve comparison in development and final portfolio_comparison review"
+        }
+      ]
+    },
+    {
+      "case": "deforest",
+      "source_matters": 32,
+      "criteria": [
+        {
+          "id": "A01",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source_reports, source-manifest.json, complete source/strategy ID reconciliation; DeForest roster supplement"
+        },
+        {
+          "id": "A02",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final exact-Word confidentiality check; generated alias regression controls"
+        },
+        {
+          "id": "A03",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source monetary semantics and currency tests; final source_fidelity review"
+        },
+        {
+          "id": "A04",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "selection_review_validated with all original IDs, source excerpts and legal-work rationale"
+        },
+        {
+          "id": "A05",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "canonical strategy, portfolio comparison and exact-Word final reviews"
+        },
+        {
+          "id": "A06",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "saved human role confirmations and scoped official individual ranking records"
+        },
+        {
+          "id": "A07",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final source_fidelity; supported evidence vs invented facts adversarial tests"
+        },
+        {
+          "id": "A08",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "matching exact-Word hashes, reviewed all Word-rendered pages, source text final review"
+        },
+        {
+          "id": "A09",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "official research snapshots with scope, URL, hash/date and explicit unavailable/historical limitations"
+        },
+        {
+          "id": "A10",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "development_validated plus final decisive_evidence, b9_development and c2_argument reviews"
+        },
+        {
+          "id": "A11",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source-bound firm voice checks and independent exact-Word review"
+        },
+        {
+          "id": "A12",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "Word page counts 3–5; executive_audit review and sections inspected"
+        },
+        {
+          "id": "A13",
+          "status": "pass_for_reviewed_live_case",
+          "evidence": "c41f026 deployed, revision16 completed job101e74fd; source hash unchanged, prior stages reused, exact downloadable pair approved. SEBNMX Audit wording received a bounded manual correction documented in continuity."
+        },
+        {
+          "id": "A14",
+          "status": "pass_for_reviewed_live_case",
+          "evidence": "c41f026 deployed, revision16 completed job101e74fd; source hash unchanged, prior stages reused, exact downloadable pair approved. SEBNMX Audit wording received a bounded manual correction documented in continuity."
+        },
+        {
+          "id": "A15",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "explicit selected/reserve comparison in development and final portfolio_comparison review"
+        }
+      ],
+      "live_verification": "live-final/verification.json"
+    },
+    {
+      "case": "ramos",
+      "source_matters": 33,
+      "criteria": [
+        {
+          "id": "A01",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source_reports, source-manifest.json, complete source/strategy ID reconciliation; DeForest roster supplement"
+        },
+        {
+          "id": "A02",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final exact-Word confidentiality check; generated alias regression controls"
+        },
+        {
+          "id": "A03",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source monetary semantics and currency tests; final source_fidelity review"
+        },
+        {
+          "id": "A04",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "selection_review_validated with all original IDs, source excerpts and legal-work rationale"
+        },
+        {
+          "id": "A05",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "canonical strategy, portfolio comparison and exact-Word final reviews"
+        },
+        {
+          "id": "A06",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "saved human role confirmations and scoped official individual ranking records"
+        },
+        {
+          "id": "A07",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "final source_fidelity; supported evidence vs invented facts adversarial tests"
+        },
+        {
+          "id": "A08",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "matching exact-Word hashes, reviewed all Word-rendered pages, source text final review"
+        },
+        {
+          "id": "A09",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "official research snapshots with scope, URL, hash/date and explicit unavailable/historical limitations"
+        },
+        {
+          "id": "A10",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "development_validated plus final decisive_evidence, b9_development and c2_argument reviews"
+        },
+        {
+          "id": "A11",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "source-bound firm voice checks and independent exact-Word review"
+        },
+        {
+          "id": "A12",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "Word page counts 3–5; executive_audit review and sections inspected"
+        },
+        {
+          "id": "A13",
+          "status": "pending_deployed_validation",
+          "evidence": "contract tests pass; current deployed case still to verify"
+        },
+        {
+          "id": "A14",
+          "status": "pending_deployed_validation",
+          "evidence": "saved graph trace, RAG roles, bounded repairs and unchanged source; deployed execution still to verify"
+        },
+        {
+          "id": "A15",
+          "status": "pass_for_reviewed_candidate",
+          "evidence": "explicit selected/reserve comparison in development and final portfolio_comparison review"
+        }
+      ]
+    }
+  ],
+  "status": "pending_deployed_workflow"
+}

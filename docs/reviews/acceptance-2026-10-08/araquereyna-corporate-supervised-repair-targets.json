@@ -1,0 +1,2469 @@
+{
+  "candidates/3": {
+    "current_value": {
+      "name": "Manuel Reyna",
+      "recommendation": "present",
+      "current_ranking": "Ranked (as recorded in the supplied person source; no verified directory, jurisdiction, edition or band observation was supplied).",
+      "suggested_ranking": "Present without a stated band; any retention objective should follow verification of the current individual ranking’s practice, jurisdiction, edition and category.",
+      "category_rationale": "Manuel Reyna is identified as a Senior Partner and is named among the lead partners for the completed Pampero acquisition and as lead partner for the ongoing Dragados mandate. This supports presenting him as a senior Corporate/M&A practitioner. Category pending: a verified individual ranking observation establishing the applicable directory, practice, jurisdiction, edition and category was not supplied.",
+      "why_candidate": "The selected matters personally identify Manuel Reyna as a lead partner on a completed cross-border acquisition and on an ongoing mandate involving the liquidation of consortia and sales of equity stakes. The Dragados matter documents the department’s due diligence, negotiation, execution and SPA drafting work.",
+      "supporting_matters": [
+        {
+          "matter_id": "matter-ext-1",
+          "personal_role": "Named as a lead partner for the Venezuelan legal work on Gruppo Montenegro’s acquisition of the Pampero brand and related Venezuelan operating, production, commercialisation and distribution arrangements.",
+          "source_quote": "Maria Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee), Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee), and Gustavo Reyna (Senior Partner)"
+        },
+        {
+          "matter_id": "matter-ext-4",
+          "personal_role": "Named as lead partner for the ongoing Dragados mandate concerning the downsizing of its Venezuelan operations.",
+          "source_quote": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)"
+        }
+      ],
+      "external_evidence": "The supplied person record identifies Manuel Reyna as ranked and provides a Chambers profile URL. No ranking_verification record or official observation confirming a particular band, practice, jurisdiction or edition was supplied.",
+      "evidence_gaps": "The matters identify Manuel Reyna as lead partner but do not separately attribute the department’s specific negotiation, diligence, liquidation or SPA-drafting tasks to him personally. Official verification is also needed before stating a current band or pursuing a retention objective in a specified category.",
+      "recommended_action": "Present Manuel Reyna with the Pampero and Dragados matters, describing him as a named lead partner. Verify the current individual ranking scope before including any band-specific retention statement.",
+      "submission_bio": "Manuel Reyna is a Senior Partner at ARAQUEREYNA. He is named as a lead partner for the Venezuelan legal work on Gruppo Montenegro’s acquisition of the Pampero rum brand from Diageo, covering legal aspects of the acquisition and the brand’s operation, production, commercialisation and distribution in Venezuela. The acquisition was completed on 17 July 2024, while work continued on Montenegro’s local operating arrangements and permits. He is also named as lead partner for ARAQUEREYNA’s ongoing advice to Dragados and its Venezuelan subsidiary on the downsizing of Venezuelan operations. During 2024, the department closed and liquidated several consortia and conducted due diligence, negotiated and executed sales of Dragados’ stakes in Venezuelan construction and services companies, including SPA drafting."
+    },
+    "problem": "The previous duplicate-removal repair lacked the already retrieved ranking_verification and incorrectly removed verified external context. Reconcile this one candidate with the supplied official Corporate/M&A Venezuela observation (Manuel Reyna Band 3 in its recorded edition); preserve source-backed work and remove duplicate supporting matter IDs. Do not claim that the official observation is absent. Other candidates and all matters remain unchanged.",
+    "source_evidence": {
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Corporate/M&A",
+        "guide_region": "",
+        "jurisdiction": "Venezuela",
+        "firm_name": "ARAQUEREYNA",
+        "research_period": null,
+        "requested_target": null,
+        "filing_details": {
+          "contacts": [],
+          "department_name": null,
+          "num_partners": null,
+          "num_lawyers": null,
+          "heads": [
+            {
+              "name": "Pedro Ignacio Sosa Mendoza",
+              "email": "",
+              "phone": ""
+            },
+            {
+              "name": "Manuel Reyna",
+              "email": "",
+              "phone": ""
+            }
+          ]
+        },
+        "objectives": {
+          "primary": null,
+          "secondary": null
+        },
+        "ranking_edition": "current",
+        "ranking_jurisdiction": "Venezuela",
+        "preferred_hero_id": null,
+        "b10_source": "ARAQUEREYNA’s Corporate and M&A practice offers comprehensive legal counsel across a wide range of corporate and transactional matters, including general corporate law, incorporation, governance, restructuring, mergers, acquisitions, divestitures, joint ventures, corporate and project finance, capital markets, real estate transactions, infrastructure, construction, domestic and international contracts, distribution agreements, foreign investment, exchange control, compliance, fintech, and e-commerce.\n\nAs a leading firm in Venezuela, ARAQUEREYNA has a strong track record of successfully advising clients on complex corporate and M&A transactions. Our team excels in navigating the complex legal landscape in Venezuela, conducting thorough due diligence investigations, structuring, negotiating, and closing deals efficiently, and ensuring compliance with US sanctions and local regulations.\n\nWe work closely with our Banking, Tax, and Compliance teams to provide comprehensive solutions tailored to our clients’ specific needs.\n\nARAQUEREYNA stands out among our peers for innovating in the sector and for our ability to adapt to change. A distinguished example for that is ARAQUEREYNA WithU (HYPERLINK \"https://mailchi.mp/acc861a2cc48/emprendedores\"https://mailchi.mp/acc861a2cc48/emprendedores). A project that offers legal kits and preferential rates to startups, entrepreneurs and new businesses. The goal is for entrepreneurs to have access to top legal assistance, for their new businesses, by one of the most recognized law firms in Venezuela. Corporate law is one of the practice areas included in ARAQUEREYNA WithU for its relevance on any startup’s success.\n\nWe are also promoting Widu Legal (HYPERLINK \"https://widulegal.com/\"https://widulegal.com/), an online platform for legal documents. This project, which was born in our firm, has managed to expand to eight countries in Latin America, positioning ARAQUEREYNA in the Legal Tech sector.\n\nProviding better services to our clients has been made possible by our continuous and active participation in important business associations and chambers, such as The Venezuelan American Chamber of Commerce and Industry (VENAMCHAM), The Caracas Chamber of Commerce, Industry and Services (Cámara de Caracas), Venezuelan Colombian Economic Integration Chamber (CAVECOL), British Venezuelan Chamber of Commerce (BRITCHAM), Venezuelan Chamber of Construction (CVC) and others.\n\nJuan José Figueroa is an expert in corporate structuring, mergers, acquisitions and restructuring. His strategic approach and ability to resolve complex issues make him a benchmark in corporate counselling, helping clients navigate a challenging legal environment with practical and effective solutions.\n\nFederica Mena, whose practice focuses on mergers and acquisitions, corporate restructurings, real estate and the sanctions regime, is also the General Coordinator of ARAQUEREYNA WithU (mentioned above). Her practical approach and commitment to her clients reinforce her position as a leading practitioner among her peers in the corporate sector.\n\nBoth reflect ARAQUEREYNA's commitment to excellence and innovation in the corporate sector, providing comprehensive advice and outstanding results, which is why we firmly believe that both should be ranked in next year’s guide.",
+        "b10_draft": "ARAQUEREYNA’s Corporate and M&A practice offers comprehensive legal counsel across a wide range of corporate and transactional matters, including general corporate law, incorporation, governance, restructuring, mergers, acquisitions, divestitures, joint ventures, corporate and project finance, capital markets, real estate transactions, infrastructure, construction, domestic and international contracts, distribution agreements, foreign investment, exchange control, compliance, fintech, and e-commerce.\n\nAs a leading firm in Venezuela, ARAQUEREYNA has a strong track record of successfully advising clients on complex corporate and M&A transactions. Our team excels in navigating the complex legal landscape in Venezuela, conducting thorough due diligence investigations, structuring, negotiating, and closing deals efficiently, and ensuring compliance with US sanctions and local regulations.\n\nWe work closely with our Banking, Tax, and Compliance teams to provide comprehensive solutions tailored to our clients’ specific needs.\n\nARAQUEREYNA stands out among our peers for innovating in the sector and for our ability to adapt to change. A distinguished example for that is ARAQUEREYNA WithU (HYPERLINK \"https://mailchi.mp/acc861a2cc48/emprendedores\"https://mailchi.mp/acc861a2cc48/emprendedores). A project that offers legal kits and preferential rates to startups, entrepreneurs and new businesses. The goal is for entrepreneurs to have access to top legal assistance, for their new businesses, by one of the most recognized law firms in Venezuela. Corporate law is one of the practice areas included in ARAQUEREYNA WithU for its relevance on any startup’s success.\n\nWe are also promoting Widu Legal (HYPERLINK \"https://widulegal.com/\"https://widulegal.com/), an online platform for legal documents. This project, which was born in our firm, has managed to expand to eight countries in Latin America, positioning ARAQUEREYNA in the Legal Tech sector.\n\nProviding better services to our clients has been made possible by our continuous and active participation in important business associations and chambers, such as The Venezuelan American Chamber of Commerce and Industry (VENAMCHAM), The Caracas Chamber of Commerce, Industry and Services (Cámara de Caracas), Venezuelan Colombian Economic Integration Chamber (CAVECOL), British Venezuelan Chamber of Commerce (BRITCHAM), Venezuelan Chamber of Construction (CVC) and others.\n\nJuan José Figueroa is an expert in corporate structuring, mergers, acquisitions and restructuring. His strategic approach and ability to resolve complex issues make him a benchmark in corporate counselling, helping clients navigate a challenging legal environment with practical and effective solutions.\n\nFederica Mena, whose practice focuses on mergers and acquisitions, corporate restructurings, real estate and the sanctions regime, is also the General Coordinator of ARAQUEREYNA WithU (mentioned above). Her practical approach and commitment to her clients reinforce her position as a leading practitioner among her peers in the corporate sector.\n\nBoth reflect ARAQUEREYNA's commitment to excellence and innovation in the corporate sector, providing comprehensive advice and outstanding results, which is why we firmly believe that both should be ranked in next year’s guide.",
+        "c2_source": "",
+        "c2_draft": "",
+        "editorial_development": null,
+        "lawyers": [
+          {
+            "name": "Pedro I Sosa Mendoza",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Pedro I Sosa Mendoza |  HYPERLINK \"https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116\" https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116 \n HYPERLINK \"https://araquereyna.com/abogados_araquereyna/pedro-ignacio-sosa-en/\" https://araquereyna.com/abogados_araquereyna/pedro-ignacio-sosa-en/ \n Y \n Y"
+          },
+          {
+            "name": "Maripi Viso",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Maripi Viso |  HYPERLINK \"https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164\" https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164 \n HYPERLINK \"https://araquereyna.com/abogados_araquereyna/maripi-viso-en/\" https://araquereyna.com/abogados_araquereyna/maripi-viso-en/ \n Y \n Y"
+          },
+          {
+            "name": "María Carolina Cano",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "María Carolina Cano | HYPERLINK \"https://araquereyna.com/abogados_araquereyna/ma-carolina-cano/\"https://araquereyna.com/abogados_araquereyna/ma-carolina-cano/ \n HYPERLINK \"https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375\"https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375 \n Y \n Y"
+          },
+          {
+            "name": "Manuel Reyna",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Manuel Reyna |  HYPERLINK \"https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057\" https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057 \n HYPERLINK \"https://araquereyna.com/abogados_araquereyna/luis-alfredo-araque-en/manuel-reyna-en/\" https://araquereyna.com/abogados_araquereyna/luis-alfredo-araque-en/manuel-reyna-en/ \n Y \n Y"
+          },
+          {
+            "name": "Gustavo J Reyna",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Gustavo J Reyna |  HYPERLINK \"https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589\" https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589 \n HYPERLINK \"https://araquereyna.com/abogados_araquereyna/gustavo-j-reyna-en/\" https://araquereyna.com/abogados_araquereyna/gustavo-j-reyna-en/ \n Y \n Y"
+          },
+          {
+            "name": "Pedro Luis Planchart",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": true,
+            "isRanked": true,
+            "current_ranking": "Ranked",
+            "currentRank": "Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Pedro Luis Planchart |  HYPERLINK \"https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298\" https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298 \n HYPERLINK \"https://araquereyna.com/abogados_araquereyna/pedro-luis-planchart-en/\" https://araquereyna.com/abogados_araquereyna/pedro-luis-planchart-en/ \n Y \n Y"
+          },
+          {
+            "name": "Juan José Figueroa",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": false,
+            "isRanked": false,
+            "current_ranking": "Not Ranked",
+            "currentRank": "Not Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://araquereyna.com/abogados_araquereyna/juan-jose-figueroa-en/",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Juan José Figueroa |  HYPERLINK \"https://araquereyna.com/abogados_araquereyna/juan-jose-figueroa-en/\" https://araquereyna.com/abogados_araquereyna/juan-jose-figueroa-en/ \n Y \n N"
+          },
+          {
+            "name": "Federica Mena",
+            "is_partner": true,
+            "isPartner": true,
+            "is_ranked": false,
+            "isRanked": false,
+            "current_ranking": "Not Ranked",
+            "currentRank": "Not Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://araquereyna.com/abogados_araquereyna/federica-mena-en/",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Federica Mena |  HYPERLINK \"https://araquereyna.com/abogados_araquereyna/federica-mena-en/\" https://araquereyna.com/abogados_araquereyna/federica-mena-en/ \n Y \n N"
+          },
+          {
+            "name": "Loriane Damian",
+            "is_partner": false,
+            "isPartner": false,
+            "is_ranked": false,
+            "isRanked": false,
+            "current_ranking": "Not Ranked",
+            "currentRank": "Not Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://araquereyna.com/abogados_araquereyna/loriane-damian-en/",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Loriane Damian | HYPERLINK \"https://araquereyna.com/abogados_araquereyna/loriane-damian-en/\"https://araquereyna.com/abogados_araquereyna/loriane-damian-en/ \n N \n N"
+          },
+          {
+            "name": "Estefanía Lizardo",
+            "is_partner": false,
+            "isPartner": false,
+            "is_ranked": false,
+            "isRanked": false,
+            "current_ranking": "Not Ranked",
+            "currentRank": "Not Ranked",
+            "suggested_rank": null,
+            "suggestedRank": null,
+            "url": "https://araquereyna.com/abogados_araquereyna/estefania-lizardo-en/",
+            "comments": "",
+            "bio": "",
+            "source_excerpt": "Estefanía Lizardo  |  HYPERLINK \"https://araquereyna.com/abogados_araquereyna/estefania-lizardo-en/\" https://araquereyna.com/abogados_araquereyna/estefania-lizardo-en/ \n N \n N"
+          }
+        ],
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Gruppo Montenegro (Montenegro S.r.l.)",
+            "value": "Confidential",
+            "leadPartner": "Maria Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee), Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee), and Gustavo Reyna (Senior Partner)",
+            "lead_partner": "Maria Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee), Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee), and Gustavo Reyna (Senior Partner)",
+            "rawNotes": "Through a joint work, coordinated by Andrea Di Dio, of DLA Piper Italy, ARAQUEREYNA's Corporate and M&A Department advised Gruppo Montenegro (a leading Italian Food and Spirits manufacturer) on all the legal aspects related to the acquisition of the Venezuelan rum brand Pampero from Diageo and on the operation, production, commercialisation, and distribution of such brand in Venezuela, which enjoys the attributes and protection of the Denomination of Controlled Origin “Ron de Venezuela.”",
+            "summary": "Through a joint work, coordinated by Andrea Di Dio, of DLA Piper Italy, ARAQUEREYNA's Corporate and M&A Department advised Gruppo Montenegro (a leading Italian Food and Spirits manufacturer) on all the legal aspects related to the acquisition of the Venezuelan rum brand Pampero from Diageo and on the operation, production, commercialisation, and distribution of such brand in Venezuela, which enjoys the attributes and protection of the Denomination of Controlled Origin “Ron de Venezuela.”",
+            "teamMembers": "Loriane Damian (Senior Associate), Samuel Morales (Associate), Estefania Lizardo (Associate)",
+            "team_members": "Loriane Damian (Senior Associate), Samuel Morales (Associate), Estefania Lizardo (Associate)",
+            "crossBorder": "Yes – Venezuela, Italy, and United Kingdom",
+            "otherFirms": "DLA Piper Italy – Leading firm on the matter.",
+            "completionDate": "Date of completion: July 17th, 2024\nStatus: Although the acquisition has been completed, there is currently a transitional period during which Montenegro´s legal organization for the further development of the Pampero brand in Venezuela is being advanced through the incorporation of its local entity and the obtaining of all the necessary permits to act directly as operator, producer, and distributor of the Pampero rum brand in Venezuela.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nGruppo Montenegro (Montenegro S.r.l.)\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nThrough a joint work, coordinated by Andrea Di Dio, of DLA Piper Italy, ARAQUEREYNA's Corporate and M&A Department advised Gruppo Montenegro (a leading Italian Food and Spirits manufacturer) on all the legal aspects related to the acquisition of the Venezuelan rum brand Pampero from Diageo and on the operation, production, commercialisation, and distribution of such brand in Venezuela, which enjoys the attributes and protection of the Denomination of Controlled Origin “Ron de Venezuela.”\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes – Venezuela, Italy, and United Kingdom\nD5 Lead partner\nMaria Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee), Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee), and Gustavo Reyna (Senior Partner)\nD6 Other team members\nLoriane Damian (Senior Associate), Samuel Morales (Associate), Estefania Lizardo (Associate)\nD7 Other firms advising on the matter and their role(s)\nDLA Piper Italy – Leading firm on the matter.\nD8 Date of completion or current status\nDate of completion: July 17th, 2024\n\nStatus: Although the acquisition has been completed, there is currently a transitional period during which Montenegro´s legal organization for the further development of the Pampero brand in Venezuela is being advanced through the incorporation of its local entity and the obtaining of all the necessary permits to act directly as operator, producer, and distributor of the Pampero rum brand in Venezuela.\nD9 Other information about this matter – e.g. link to press coverage\nHYPERLINK \"https://gruppomontenegro.com/en/gruppo-montenegro-acquires-rum-pampero/\"https://gruppomontenegro.com/en/gruppo-montenegro-acquires-rum-pampero/\nHYPERLINK \"https://liderlegal.com/araquereyna-y-dla-piper-en-adquisicion-de-la-venezolana-ron-pampero-por-gruppo-montenegro/\"https://liderlegal.com/araquereyna-y-dla-piper-en-adquisicion-de-la-venezolana-ron-pampero-por-gruppo-montenegro/\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 1",
+            "source_heading": "Publishable Matter 1",
+            "source_occurrence": 1,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 1",
+              "matter_status": "publishable",
+              "matched_client": "Gruppo Montenegro (Montenegro S.r.l.)",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-2",
+            "name": "Publishable Matter 2",
+            "title": "Publishable Matter 2",
+            "client": "SUMMUS, S.A.",
+            "value": "Confidential",
+            "leadPartner": "María Carolina Cano (Senior Partner)",
+            "lead_partner": "María Carolina Cano (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department successfully onboarded a new client for 2024, SUMMUS, a leading cross-border payment intermediary. We provided comprehensive legal advice to facilitate SUMMUS' entry into the Venezuelan market, providing expert opinions on a wide range of regulatory issues, including FINTECH, taxation, banking services and international sanctions.\nWorking closely with SUMMUS, we facilitated strategic partnerships with major Venezuelan banks, culminating in the establishment of a premier banking relationship with Banco Activo. Our team played a key role in structuring and negotiating numerous export and import transactions, particularly between Colombia and Venezuela, ensuring compliance with all applicable laws and regulations. We also drafted and negotiated key contracts to support the operations of SUMMUS.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department successfully onboarded a new client for 2024, SUMMUS, a leading cross-border payment intermediary. We provided comprehensive legal advice to facilitate SUMMUS' entry into the Venezuelan market, providing expert opinions on a wide range of regulatory issues, including FINTECH, taxation, banking services and international sanctions.\nWorking closely with SUMMUS, we facilitated strategic partnerships with major Venezuelan banks, culminating in the establishment of a premier banking relationship with Banco Activo. Our team played a key role in structuring and negotiating numerous export and import transactions, particularly between Colombia and Venezuela, ensuring compliance with all applicable laws and regulations. We also drafted and negotiated key contracts to support the operations of SUMMUS.",
+            "teamMembers": "Gustavo J. Reyna (Senior Partner) Federica Mena (Partner)",
+            "team_members": "Gustavo J. Reyna (Senior Partner) Federica Mena (Partner)",
+            "crossBorder": "Yes. Colombia, China and Venezuela.",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nSUMMUS, S.A.\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department successfully onboarded a new client for 2024, SUMMUS, a leading cross-border payment intermediary. We provided comprehensive legal advice to facilitate SUMMUS' entry into the Venezuelan market, providing expert opinions on a wide range of regulatory issues, including FINTECH, taxation, banking services and international sanctions.\n\nWorking closely with SUMMUS, we facilitated strategic partnerships with major Venezuelan banks, culminating in the establishment of a premier banking relationship with Banco Activo. Our team played a key role in structuring and negotiating numerous export and import transactions, particularly between Colombia and Venezuela, ensuring compliance with all applicable laws and regulations. We also drafted and negotiated key contracts to support the operations of SUMMUS.\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. Colombia, China and Venezuela.\nD5 Lead partner\nMaría Carolina Cano (Senior Partner)\nD6 Other team members\nGustavo J. Reyna (Senior Partner) Federica Mena (Partner)\n\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 2",
+            "source_heading": "Publishable Matter 2",
+            "source_occurrence": 2,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 2",
+              "matter_status": "publishable",
+              "matched_client": "SUMMUS, S.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-3",
+            "name": "Publishable Matter 3",
+            "title": "Publishable Matter 3",
+            "client": "Sanu Corp, C.A. and  Has Higiene, Agua y Saneamiento, C.A.",
+            "value": "Confidential",
+            "leadPartner": "Federica Mena (Partner)",
+            "lead_partner": "Federica Mena (Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department is currently advising SANU Corp and HAS, certified Type B companies, a leading provider of food services to non-profit organizations and schools across Venezuela, on a significant corporate restructuring and financing initiative. Our team is collaborating closely with the company's shareholders and CEO, Luis Medina, to negotiate critical agreements and facilitate debt financing arrangements. Additionally, the team has been instrumental in developing internal corporate governance policies",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department is currently advising SANU Corp and HAS, certified Type B companies, a leading provider of food services to non-profit organizations and schools across Venezuela, on a significant corporate restructuring and financing initiative. Our team is collaborating closely with the company's shareholders and CEO, Luis Medina, to negotiate critical agreements and facilitate debt financing arrangements. Additionally, the team has been instrumental in developing internal corporate governance policies",
+            "teamMembers": "Pedro I. Sosa (Senior and Managing Partner) Juan Jose Figueroa (Senior Partner)",
+            "team_members": "Pedro I. Sosa (Senior and Managing Partner) Juan Jose Figueroa (Senior Partner)",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nSanu Corp, C.A. and  Has Higiene, Agua y Saneamiento, C.A.\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department is currently advising SANU Corp and HAS, certified Type B companies, a leading provider of food services to non-profit organizations and schools across Venezuela, on a significant corporate restructuring and financing initiative. Our team is collaborating closely with the company's shareholders and CEO, Luis Medina, to negotiate critical agreements and facilitate debt financing arrangements. Additionally, the team has been instrumental in developing internal corporate governance policies\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nD5 Lead partner\nFederica Mena (Partner)\nD6 Other team members\nPedro I. Sosa (Senior and Managing Partner) Juan Jose Figueroa (Senior Partner)\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 3",
+            "source_heading": "Publishable Matter 3",
+            "source_occurrence": 3,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 3",
+              "matter_status": "publishable",
+              "matched_client": "Sanu Corp, C.A. and  Has Higiene, Agua y Saneamiento, C.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-4",
+            "name": "Publishable Matter 4",
+            "title": "Publishable Matter 4",
+            "client": "Dragados, S.A.",
+            "value": "Confidential",
+            "leadPartner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "lead_partner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department provides comprehensive legal services to Dragados, a multinational holding company, and its Venezuelan subsidiary, DYCVENSA.\nIn alignment with Dragados’ strategic decision to downsize its Venezuelan operations, our department has played a pivotal role in streamlining the company’s presence. During 2024, we successfully closed and liquidated several significant consortia in which DYCVENSA was a member, previously involved in major infrastructure projects nationwide.\nWe also conducted due diligence, negotiated, and executed the sale of Dragados’ stakes in two prominent Venezuelan companies in the construction and services sectors. We assisted with sale negotiations, execution and the drafting of Share Purchase Agreements (SPAs).",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department provides comprehensive legal services to Dragados, a multinational holding company, and its Venezuelan subsidiary, DYCVENSA.\nIn alignment with Dragados’ strategic decision to downsize its Venezuelan operations, our department has played a pivotal role in streamlining the company’s presence. During 2024, we successfully closed and liquidated several significant consortia in which DYCVENSA was a member, previously involved in major infrastructure projects nationwide.\nWe also conducted due diligence, negotiated, and executed the sale of Dragados’ stakes in two prominent Venezuelan companies in the construction and services sectors. We assisted with sale negotiations, execution and the drafting of Share Purchase Agreements (SPAs).",
+            "teamMembers": "Federica Mena (Partner)",
+            "team_members": "Federica Mena (Partner)",
+            "crossBorder": "Yes, Spain",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nDragados, S.A.\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department provides comprehensive legal services to Dragados, a multinational holding company, and its Venezuelan subsidiary, DYCVENSA.\n\nIn alignment with Dragados’ strategic decision to downsize its Venezuelan operations, our department has played a pivotal role in streamlining the company’s presence. During 2024, we successfully closed and liquidated several significant consortia in which DYCVENSA was a member, previously involved in major infrastructure projects nationwide.\n\nWe also conducted due diligence, negotiated, and executed the sale of Dragados’ stakes in two prominent Venezuelan companies in the construction and services sectors. We assisted with sale negotiations, execution and the drafting of Share Purchase Agreements (SPAs).\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes, Spain\nD5 Lead partner\nManuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)\nD6 Other team members\nFederica Mena (Partner)\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing.\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 4",
+            "source_heading": "Publishable Matter 4",
+            "source_occurrence": 4,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 4",
+              "matter_status": "publishable",
+              "matched_client": "Dragados, S.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-5",
+            "name": "Publishable Matter 5",
+            "title": "Publishable Matter 5",
+            "client": "The Gold Stone, C.A.",
+            "value": "Confidential",
+            "leadPartner": "Pedro Ignacio Sosa (Senior and Managing Partner)",
+            "lead_partner": "Pedro Ignacio Sosa (Senior and Managing Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A department has assisted this leading construction company in Venezuela with its corporate restructuring and the development of new corporate agreements. In addition, our team has mediated various corporate disputes between its shareholders, achieving mutual concessions that have allowed the business to continue and the company to function.\nFurthermore, we have assisted the company in the management and negotiation of the execution of a major construction project in a premium area of Caracas.",
+            "summary": "ARAQUEREYNA's Corporate and M&A department has assisted this leading construction company in Venezuela with its corporate restructuring and the development of new corporate agreements. In addition, our team has mediated various corporate disputes between its shareholders, achieving mutual concessions that have allowed the business to continue and the company to function.\nFurthermore, we have assisted the company in the management and negotiation of the execution of a major construction project in a premium area of Caracas.",
+            "teamMembers": "Federica Mena (Partner) and Juan José Figueroa (Senior Partner)",
+            "team_members": "Federica Mena (Partner) and Juan José Figueroa (Senior Partner)",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nThe Gold Stone, C.A.\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A department has assisted this leading construction company in Venezuela with its corporate restructuring and the development of new corporate agreements. In addition, our team has mediated various corporate disputes between its shareholders, achieving mutual concessions that have allowed the business to continue and the company to function.\nFurthermore, we have assisted the company in the management and negotiation of the execution of a major construction project in a premium area of Caracas.\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nD5 Lead partner\nPedro Ignacio Sosa (Senior and Managing Partner)\nD6 Other team members\nFederica Mena (Partner) and Juan José Figueroa (Senior Partner)\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 5",
+            "source_heading": "Publishable Matter 5",
+            "source_occurrence": 5,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 5",
+              "matter_status": "publishable",
+              "matched_client": "The Gold Stone, C.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-6",
+            "name": "Publishable Matter 6",
+            "title": "Publishable Matter 6",
+            "client": "Instituto de Estudios Superiores de Administración (IESA)",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department has provided comprehensive legal support to the Instituto de Estudios Superiores de Administración (IESA) throughout 2023 and 2024. This year, we have specifically supported IESA in developing various legal opinions and consultations related to the new Non-Profit Organizations Law.\nAdditionally, our team has been instrumental in evaluating and designing the structural framework for IESA's internationalization efforts, including its subsidiaries, Fundación de Estudios Avanzados de Gerencia (FEAG), in Panama, Barbados, and the Dominican Republic. We have also assisted IESA's Development Management Unit in negotiating and drafting agreements for strategic alliances with global institutions.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department has provided comprehensive legal support to the Instituto de Estudios Superiores de Administración (IESA) throughout 2023 and 2024. This year, we have specifically supported IESA in developing various legal opinions and consultations related to the new Non-Profit Organizations Law.\nAdditionally, our team has been instrumental in evaluating and designing the structural framework for IESA's internationalization efforts, including its subsidiaries, Fundación de Estudios Avanzados de Gerencia (FEAG), in Panama, Barbados, and the Dominican Republic. We have also assisted IESA's Development Management Unit in negotiating and drafting agreements for strategic alliances with global institutions.",
+            "teamMembers": "Pedro I Sosa (Senior and Managing Partner) and Samuel Morales (Public Law Associate)",
+            "team_members": "Pedro I Sosa (Senior and Managing Partner) and Samuel Morales (Public Law Associate)",
+            "crossBorder": "Yes, Panama, Barbados, Spain, Perú, Chile, Colombia and Dominican Republic",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nInstituto de Estudios Superiores de Administración (IESA)\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department has provided comprehensive legal support to the Instituto de Estudios Superiores de Administración (IESA) throughout 2023 and 2024. This year, we have specifically supported IESA in developing various legal opinions and consultations related to the new Non-Profit Organizations Law.\n\nAdditionally, our team has been instrumental in evaluating and designing the structural framework for IESA's internationalization efforts, including its subsidiaries, Fundación de Estudios Avanzados de Gerencia (FEAG), in Panama, Barbados, and the Dominican Republic. We have also assisted IESA's Development Management Unit in negotiating and drafting agreements for strategic alliances with global institutions.\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes, Panama, Barbados, Spain, Perú, Chile, Colombia and Dominican Republic\nD5 Lead partner\nJuan José Figueroa (Senior Partner)\nD6 Other team members\nPedro I Sosa (Senior and Managing Partner) and Samuel Morales (Public Law Associate)\n\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing.\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 6",
+            "source_heading": "Publishable Matter 6",
+            "source_occurrence": 6,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 6",
+              "matter_status": "publishable",
+              "matched_client": "Instituto de Estudios Superiores de Administración (IESA)",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-7",
+            "name": "Publishable Matter 7",
+            "title": "Publishable Matter 7",
+            "client": "BDO Colombia",
+            "value": "Confidential",
+            "leadPartner": "Pedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee",
+            "lead_partner": "Pedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department provides legal counsel to BDO Colombia (a BDO Group member) as they establish operations in Venezuela. We assist in structuring, organizing, and designing the optimal legal entities for their local activities. Our team tailored solutions to BDO Colombia's specific business needs, drafts necessary legal documents, and guides the incorporation process within the Venezuelan legal framework.\nAdditionally, we advise on the negotiation and structuring of shareholder agreements, including shareholder contracts, to regulate partner relationships within the Venezuelan company. This year, we successfully completed all steps necessary for BDO Colombia's establishment in Venezuela.\n.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department provides legal counsel to BDO Colombia (a BDO Group member) as they establish operations in Venezuela. We assist in structuring, organizing, and designing the optimal legal entities for their local activities. Our team tailored solutions to BDO Colombia's specific business needs, drafts necessary legal documents, and guides the incorporation process within the Venezuelan legal framework.\nAdditionally, we advise on the negotiation and structuring of shareholder agreements, including shareholder contracts, to regulate partner relationships within the Venezuelan company. This year, we successfully completed all steps necessary for BDO Colombia's establishment in Venezuela.\n.",
+            "teamMembers": "Gustavo Reyna (Senior Partner), Federica Mena (Partner) and Estefanía Lizardo (Associate)",
+            "team_members": "Gustavo Reyna (Senior Partner), Federica Mena (Partner) and Estefanía Lizardo (Associate)",
+            "crossBorder": "Yes, Colombia.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nBDO Colombia\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department provides legal counsel to BDO Colombia (a BDO Group member) as they establish operations in Venezuela. We assist in structuring, organizing, and designing the optimal legal entities for their local activities. Our team tailored solutions to BDO Colombia's specific business needs, drafts necessary legal documents, and guides the incorporation process within the Venezuelan legal framework.\n\nAdditionally, we advise on the negotiation and structuring of shareholder agreements, including shareholder contracts, to regulate partner relationships within the Venezuelan company. This year, we successfully completed all steps necessary for BDO Colombia's establishment in Venezuela.\n.\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes, Colombia.\nD5 Lead partner\nPedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee\nD6 Other team members\nGustavo Reyna (Senior Partner), Federica Mena (Partner) and Estefanía Lizardo (Associate)\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing.\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 7",
+            "source_heading": "Publishable Matter 7",
+            "source_occurrence": 7,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 7",
+              "matter_status": "publishable",
+              "matched_client": "BDO Colombia",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-8",
+            "name": "Publishable Matter 8",
+            "title": "Publishable Matter 8",
+            "client": "GMAC de Venezuela, C.A. General Motors affíliate",
+            "value": "Confidential.",
+            "leadPartner": "Pedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee.",
+            "lead_partner": "Pedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee.",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department has been working in the process of winding down of the operations of this GM affiliate, specially related to pending financing of vehicles and the selling process of important real estate.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department has been working in the process of winding down of the operations of this GM affiliate, specially related to pending financing of vehicles and the selling process of important real estate.",
+            "teamMembers": "Estefanía Lizardo (Associate).",
+            "team_members": "Estefanía Lizardo (Associate).",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "In process.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nGMAC de Venezuela, C.A. General Motors affíliate\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department has been working in the process of winding down of the operations of this GM affiliate, specially related to pending financing of vehicles and the selling process of important real estate.\nD3 Matter value – include currency and amount in figures\nConfidential.\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nD5 Lead partner\nPedro I. Sosa (Senior and Managing Partner) and María Carolina Cano (Tax Senior Partner, member of ARAQUEREYNA’s Executive Committee.\nD6 Other team members\nEstefanía Lizardo (Associate).\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nIn process.\nD9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Publishable Matter 8",
+            "source_heading": "Publishable Matter 8",
+            "source_occurrence": 8,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 8",
+              "matter_status": "publishable",
+              "matched_client": "GMAC de Venezuela, C.A. General Motors affíliate",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-9",
+            "name": "Publishable Matter 9",
+            "title": "Publishable Matter 9",
+            "client": "Bitesccs, C.A.",
+            "value": "NA",
+            "leadPartner": "Federica Mena (Partner)",
+            "lead_partner": "Federica Mena (Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department has assisted the client in establishing the first franchise of Venezuela's leading coffee chain. Our work involved updating the company, drafting contracts with suppliers and employees, and ensuring regulatory compliance. Notably, we focused on drafting the franchise agreement for this and future franchises.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department has assisted the client in establishing the first franchise of Venezuela's leading coffee chain. Our work involved updating the company, drafting contracts with suppliers and employees, and ensuring regulatory compliance. Notably, we focused on drafting the franchise agreement for this and future franchises.",
+            "teamMembers": "Yohengri Silva (Associate).",
+            "team_members": "Yohengri Silva (Associate).",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nBitesccs, C.A.\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Corporate and M&A Department has assisted the client in establishing the first franchise of Venezuela's leading coffee chain. Our work involved updating the company, drafting contracts with suppliers and employees, and ensuring regulatory compliance. Notably, we focused on drafting the franchise agreement for this and future franchises.\nD3 Matter value – include currency and amount in figures\nNA\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nD5 Lead partner\nFederica Mena (Partner)\nD6 Other team members\nYohengri Silva (Associate).\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing\nD9 Other information about this matter – e.g. link to press coverage",
+            "source_label": "Publishable Matter 9",
+            "source_heading": "Publishable Matter 9",
+            "source_occurrence": 9,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 9",
+              "matter_status": "publishable",
+              "matched_client": "Bitesccs, C.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-10",
+            "name": "Publishable Matter 10",
+            "title": "Publishable Matter 10",
+            "client": "Simmons & Simmons Solutions Limited",
+            "value": "Confidential",
+            "leadPartner": "Pedro Luis Planchart P. (Senior Partner)",
+            "lead_partner": "Pedro Luis Planchart P. (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Banking and Corporate departments have been advising Simmons & Simmons Solutions Limited every year, for almost two decades, on banking, capital markets, project finance and secured transactions, international contracts and cross-border transactions, arbitration, real estate and trusts, international private law, real and personal property, crypto assets, exchange control regulations and financing in general.",
+            "summary": "ARAQUEREYNA's Banking and Corporate departments have been advising Simmons & Simmons Solutions Limited every year, for almost two decades, on banking, capital markets, project finance and secured transactions, international contracts and cross-border transactions, arbitration, real estate and trusts, international private law, real and personal property, crypto assets, exchange control regulations and financing in general.",
+            "teamMembers": "Estefanía Lizardo (Associate) and Samuel David Morales (Associate).",
+            "team_members": "Estefanía Lizardo (Associate) and Samuel David Morales (Associate).",
+            "crossBorder": "Yes. Venezuela, United States, United Kingdom and European Union.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client – this will be publishable. If you cannot reveal the client name, give a general description.\nSimmons & Simmons Solutions Limited\nD2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played.\nARAQUEREYNA's Banking and Corporate departments have been advising Simmons & Simmons Solutions Limited every year, for almost two decades, on banking, capital markets, project finance and secured transactions, international contracts and cross-border transactions, arbitration, real estate and trusts, international private law, real and personal property, crypto assets, exchange control regulations and financing in general.\nD3 Matter value – include currency and amount in figures\nConfidential\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. Venezuela, United States, United Kingdom and European Union.\nE5 Lead partner\nPedro Luis Planchart P. (Senior Partner)\nE6 Other team members\nEstefanía Lizardo (Associate) and Samuel David Morales (Associate).\nD7 Other firms advising on the matter and their role(s)\n\nD8 Date of completion or current status\nOngoing.\nD9 Other information about this matter – e.g. link to press coverage",
+            "source_label": "Publishable Matter 10",
+            "source_heading": "Publishable Matter 10",
+            "source_occurrence": 10,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Publishable Matter 10",
+              "matter_status": "publishable",
+              "matched_client": "Simmons & Simmons Solutions Limited",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-11",
+            "name": "Confidential Matter 1",
+            "title": "Confidential Matter 1",
+            "client": "Bursagro Casa de Bolsa Agrícola, C.A.",
+            "value": "Confidential",
+            "leadPartner": "Pedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Pedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA’s Corporate and M&A team assisted Bursagro Casa de Bolsa Agrícola, C.A. (Bursagro) in preparing the sale materials, negotiating the Share Purchase Agreement (SPA), and overseeing the escrow of the purchase price, while awaiting regulatory approval from the Venezuelan Securities Regulator (SUNAVAL) for the sale of Bursagro, a Venezuelan securities firm specializing in agricultural products.",
+            "summary": "ARAQUEREYNA’s Corporate and M&A team assisted Bursagro Casa de Bolsa Agrícola, C.A. (Bursagro) in preparing the sale materials, negotiating the Share Purchase Agreement (SPA), and overseeing the escrow of the purchase price, while awaiting regulatory approval from the Venezuelan Securities Regulator (SUNAVAL) for the sale of Bursagro, a Venezuelan securities firm specializing in agricultural products.",
+            "teamMembers": "Estefanía Lizardo (Associate)",
+            "team_members": "Estefanía Lizardo (Associate)",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nBursagro Casa de Bolsa Agrícola, C.A.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\n\nARAQUEREYNA’s Corporate and M&A team assisted Bursagro Casa de Bolsa Agrícola, C.A. (Bursagro) in preparing the sale materials, negotiating the Share Purchase Agreement (SPA), and overseeing the escrow of the purchase price, while awaiting regulatory approval from the Venezuelan Securities Regulator (SUNAVAL) for the sale of Bursagro, a Venezuelan securities firm specializing in agricultural products.\n\n\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nE5 Lead partner\nPedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)\nE6 Other team members\nEstefanía Lizardo (Associate)\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 1",
+            "source_heading": "Confidential Matter 1",
+            "source_occurrence": 11,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 1",
+              "matter_status": "confidential",
+              "matched_client": "Bursagro Casa de Bolsa Agrícola, C.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-12",
+            "name": "Confidential Matter 2",
+            "title": "Confidential Matter 2",
+            "client": "Sedgwick International",
+            "value": "Confidential.",
+            "leadPartner": "Federica Mena (Partner).",
+            "lead_partner": "Federica Mena (Partner).",
+            "rawNotes": "ARAQUEREYNA’s Corporate and M&A department is assisting the client with the wind-down of its Venezuelan operations. We are currently negotiating the termination of contracts and the director's employment.\nAdditionally, we will be appointed as their legal representatives to complete the closure process and handle all necessary filings with the Insurance Superintendency.",
+            "summary": "ARAQUEREYNA’s Corporate and M&A department is assisting the client with the wind-down of its Venezuelan operations. We are currently negotiating the termination of contracts and the director's employment.\nAdditionally, we will be appointed as their legal representatives to complete the closure process and handle all necessary filings with the Insurance Superintendency.",
+            "teamMembers": "Pedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)",
+            "team_members": "Pedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nSedgwick International\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA’s Corporate and M&A department is assisting the client with the wind-down of its Venezuelan operations. We are currently negotiating the termination of contracts and the director's employment.\n\nAdditionally, we will be appointed as their legal representatives to complete the closure process and handle all necessary filings with the Insurance Superintendency.\nE3 Matter value – include currency and amount in figures\nConfidential.\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nE5 Lead partner\nFederica Mena (Partner).\nE6 Other team members\nPedro I. Sosa (Senior and Managing Partner) and Juan José Figueroa (Senior Partner)\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 2",
+            "source_heading": "Confidential Matter 2",
+            "source_occurrence": 12,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 2",
+              "matter_status": "confidential",
+              "matched_client": "Sedgwick International",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-13",
+            "name": "Confidential Matter 3",
+            "title": "Confidential Matter 3",
+            "client": "Kyndryl Venezuela, S.C.A.",
+            "value": "N/A",
+            "leadPartner": "Juan Carlos Balzan (Senior Partner, Public Law Department)",
+            "lead_partner": "Juan Carlos Balzan (Senior Partner, Public Law Department)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A department is assisting Kyndryl Venezuela, S.C.A. (Kyndryl), an American multinational provider of information technology infrastructure services, with its corporate reorganisation and the planning and modification of its corporate governance, as part of a broader strategy to minimize its operations in Venezuela.\nThe team is also assisting Kyndryl with the drafting, modification and termination of various service contracts with public and private entities.",
+            "summary": "ARAQUEREYNA's Corporate and M&A department is assisting Kyndryl Venezuela, S.C.A. (Kyndryl), an American multinational provider of information technology infrastructure services, with its corporate reorganisation and the planning and modification of its corporate governance, as part of a broader strategy to minimize its operations in Venezuela.\nThe team is also assisting Kyndryl with the drafting, modification and termination of various service contracts with public and private entities.",
+            "teamMembers": "Pedro I. Sosa (Senior and Managing Partner) and Federica Mena (Partner)",
+            "team_members": "Pedro I. Sosa (Senior and Managing Partner) and Federica Mena (Partner)",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nKyndryl Venezuela, S.C.A.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A department is assisting Kyndryl Venezuela, S.C.A. (Kyndryl), an American multinational provider of information technology infrastructure services, with its corporate reorganisation and the planning and modification of its corporate governance, as part of a broader strategy to minimize its operations in Venezuela.\n\nThe team is also assisting Kyndryl with the drafting, modification and termination of various service contracts with public and private entities.\nE3 Matter value – include currency and amount in figures\nN/A\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nE5 Lead partner\nJuan Carlos Balzan (Senior Partner, Public Law Department)\nE6 Other team members\nPedro I. Sosa (Senior and Managing Partner) and Federica Mena (Partner)\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 3",
+            "source_heading": "Confidential Matter 3",
+            "source_occurrence": 13,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 3",
+              "matter_status": "confidential",
+              "matched_client": "Kyndryl Venezuela, S.C.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-14",
+            "name": "Confidential Matter 4",
+            "title": "Confidential Matter 4",
+            "client": "Dragados, S.A. (Hidrocapital)",
+            "value": "€1,000,000.00",
+            "leadPartner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "lead_partner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "rawNotes": "ARAQUEREYNA’s Corporate and M&A team provided legal counsel to Dragados, S.A. in negotiations with the Venezuelan Attorney General’s Office to resolve a matter stemming from an advance payment made by Hidrocapital for a project that was never completed.\nFollowing Hidrocapital's decision to terminate the contract, as outlined in Administrative Provision No. 0096/2017, our firm successfully negotiated a settlement agreement and mutual release with the Attorney General's Office on behalf of Dragados, resolving the dispute over the repayment of both Bolivar and US dollar-denominated advances, including accrued interest.",
+            "summary": "ARAQUEREYNA’s Corporate and M&A team provided legal counsel to Dragados, S.A. in negotiations with the Venezuelan Attorney General’s Office to resolve a matter stemming from an advance payment made by Hidrocapital for a project that was never completed.\nFollowing Hidrocapital's decision to terminate the contract, as outlined in Administrative Provision No. 0096/2017, our firm successfully negotiated a settlement agreement and mutual release with the Attorney General's Office on behalf of Dragados, resolving the dispute over the repayment of both Bolivar and US dollar-denominated advances, including accrued interest.",
+            "teamMembers": "Guido Mejía (DR Partner) and Federica Mena (Partner)",
+            "team_members": "Guido Mejía (DR Partner) and Federica Mena (Partner)",
+            "crossBorder": "Yes. Spain and Venezuela.",
+            "otherFirms": "",
+            "completionDate": "Completed in June 2024",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nDragados, S.A. (Hidrocapital)\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA’s Corporate and M&A team provided legal counsel to Dragados, S.A. in negotiations with the Venezuelan Attorney General’s Office to resolve a matter stemming from an advance payment made by Hidrocapital for a project that was never completed.\n\nFollowing Hidrocapital's decision to terminate the contract, as outlined in Administrative Provision No. 0096/2017, our firm successfully negotiated a settlement agreement and mutual release with the Attorney General's Office on behalf of Dragados, resolving the dispute over the repayment of both Bolivar and US dollar-denominated advances, including accrued interest.\nE3 Matter value – include currency and amount in figures\n€1,000,000.00\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. Spain and Venezuela.\nE5 Lead partner\nManuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)\nE6 Other team members\nGuido Mejía (DR Partner) and Federica Mena (Partner)\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nCompleted in June 2024\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 4",
+            "source_heading": "Confidential Matter 4",
+            "source_occurrence": 14,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 4",
+              "matter_status": "confidential",
+              "matched_client": "Dragados, S.A. (Hidrocapital)",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-15",
+            "name": "Confidential Matter 5",
+            "title": "Confidential Matter 5",
+            "client": "Domi Investment Inc.",
+            "value": "",
+            "leadPartner": "Pedro I. Sosa (Managing Partner)",
+            "lead_partner": "Pedro I. Sosa (Managing Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A department assisted Domi Investment Inc. in negotiating its participation in a Saint Lucian company called Franchise Holdings Limited, which is the Master Franchise of Domino's Pizza in Saint Lucia.",
+            "summary": "ARAQUEREYNA's Corporate and M&A department assisted Domi Investment Inc. in negotiating its participation in a Saint Lucian company called Franchise Holdings Limited, which is the Master Franchise of Domino's Pizza in Saint Lucia.",
+            "teamMembers": "Juan José Figueroa (Senior Partner)",
+            "team_members": "Juan José Figueroa (Senior Partner)",
+            "crossBorder": "Yes. Saint Lucia.",
+            "otherFirms": "",
+            "completionDate": "First trimester of 2024",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nDomi Investment Inc.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A department assisted Domi Investment Inc. in negotiating its participation in a Saint Lucian company called Franchise Holdings Limited, which is the Master Franchise of Domino's Pizza in Saint Lucia.\nE3 Matter value – include currency and amount in figures\n\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. Saint Lucia.\nE5 Lead partner\nPedro I. Sosa (Managing Partner)\nE6 Other team members\nJuan José Figueroa (Senior Partner)\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nFirst trimester of 2024\nE9 Other information about this matter – e.g. link to press coverage",
+            "source_label": "Confidential Matter 5",
+            "source_heading": "Confidential Matter 5",
+            "source_occurrence": 15,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 5",
+              "matter_status": "confidential",
+              "matched_client": "Domi Investment Inc.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-16",
+            "name": "Confidential Matter 6",
+            "title": "Confidential Matter 6",
+            "client": "Instituto de Estudios Superiores de Administración (IESA)",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department assisted IESA in 2024 with the design of a corporate structure for registration with the relevant authorities in the United States of America to operate, as well as the analysis of various contracts.\nThe team also assessed the legality of the transaction under the US sanctions regime.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department assisted IESA in 2024 with the design of a corporate structure for registration with the relevant authorities in the United States of America to operate, as well as the analysis of various contracts.\nThe team also assessed the legality of the transaction under the US sanctions regime.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "Yes. United States.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nInstituto de Estudios Superiores de Administración (IESA)\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department assisted IESA in 2024 with the design of a corporate structure for registration with the relevant authorities in the United States of America to operate, as well as the analysis of various contracts.\n\nThe team also assessed the legality of the transaction under the US sanctions regime.\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. United States.\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 6",
+            "source_heading": "Confidential Matter 6",
+            "source_occurrence": 16,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 6",
+              "matter_status": "confidential",
+              "matched_client": "Instituto de Estudios Superiores de Administración (IESA)",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-17",
+            "name": "Confidential Matter 7",
+            "title": "Confidential Matter 7",
+            "client": "Maute LLC",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A department assisted the Maute Group, one of the owners of a summer camp called Camp La Llanada, based in Venezuela, USA and Spain, in the negotiation process due to important differences with other camp owners.\nThe team also participated in the negotiation and drafting of agreements for the joint use of the \"La Llanada\" brand.\nNegotiations continued in 2024.",
+            "summary": "ARAQUEREYNA's Corporate and M&A department assisted the Maute Group, one of the owners of a summer camp called Camp La Llanada, based in Venezuela, USA and Spain, in the negotiation process due to important differences with other camp owners.\nThe team also participated in the negotiation and drafting of agreements for the joint use of the \"La Llanada\" brand.\nNegotiations continued in 2024.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "Yes. United States, Panama, Spain and Venezuela.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nMaute LLC\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A department assisted the Maute Group, one of the owners of a summer camp called Camp La Llanada, based in Venezuela, USA and Spain, in the negotiation process due to important differences with other camp owners.\n\nThe team also participated in the negotiation and drafting of agreements for the joint use of the \"La Llanada\" brand.\n\nNegotiations continued in 2024.\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. United States, Panama, Spain and Venezuela.\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 7",
+            "source_heading": "Confidential Matter 7",
+            "source_occurrence": 17,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 7",
+              "matter_status": "confidential",
+              "matched_client": "Maute LLC",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-18",
+            "name": "Confidential Matter 8",
+            "title": "Confidential Matter 8",
+            "client": "Tomás Sanabria",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an alliance agreement for the provision of telemedicine services in very remote areas of Venezuela and some Latin American countries. It is a joint work with Fe y Alegría, a very well-known non-profit organisation in Venezuela and some Latin American countries.\nNegotiations continued in 2024.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an alliance agreement for the provision of telemedicine services in very remote areas of Venezuela and some Latin American countries. It is a joint work with Fe y Alegría, a very well-known non-profit organisation in Venezuela and some Latin American countries.\nNegotiations continued in 2024.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nTomás Sanabria\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an alliance agreement for the provision of telemedicine services in very remote areas of Venezuela and some Latin American countries. It is a joint work with Fe y Alegría, a very well-known non-profit organisation in Venezuela and some Latin American countries.\n\nNegotiations continued in 2024.\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 8",
+            "source_heading": "Confidential Matter 8",
+            "source_occurrence": 18,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 8",
+              "matter_status": "confidential",
+              "matched_client": "Tomás Sanabria",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-19",
+            "name": "Confidential Matter 9",
+            "title": "Confidential Matter 9",
+            "client": "Inversiones Palmar, S.A.",
+            "value": "Confidential",
+            "leadPartner": "Gustavo J. Reyna (Senior Partner) and María Carolina Cano (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "lead_partner": "Gustavo J. Reyna (Senior Partner) and María Carolina Cano (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department is participating in the equity restructuring of Empresas PMC, C.A., which involves the issue of capitalisation rights in a wholly owned subsidiary of Central El Palmar, S.A. (CEPSA) for a period of five years for US$14 million, plus a premium on the shares to be issued equivalent to 10% per annum of the nominal value of the capitalisation rights.\nThis restructuring involves an interesting process of allocation of the capitalisation rights associated with the issue. The commercial and tax aspects of the transaction had to be analysed with the active participation of lawyers and partners from different departments of ARAQUEREYNA.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department is participating in the equity restructuring of Empresas PMC, C.A., which involves the issue of capitalisation rights in a wholly owned subsidiary of Central El Palmar, S.A. (CEPSA) for a period of five years for US$14 million, plus a premium on the shares to be issued equivalent to 10% per annum of the nominal value of the capitalisation rights.\nThis restructuring involves an interesting process of allocation of the capitalisation rights associated with the issue. The commercial and tax aspects of the transaction had to be analysed with the active participation of lawyers and partners from different departments of ARAQUEREYNA.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "Ongoing.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nInversiones Palmar, S.A.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department is participating in the equity restructuring of Empresas PMC, C.A., which involves the issue of capitalisation rights in a wholly owned subsidiary of Central El Palmar, S.A. (CEPSA) for a period of five years for US$14 million, plus a premium on the shares to be issued equivalent to 10% per annum of the nominal value of the capitalisation rights.\n\nThis restructuring involves an interesting process of allocation of the capitalisation rights associated with the issue. The commercial and tax aspects of the transaction had to be analysed with the active participation of lawyers and partners from different departments of ARAQUEREYNA.\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nE5 Lead partner\nGustavo J. Reyna (Senior Partner) and María Carolina Cano (Senior Partner, member of ARAQUEREYNA’s Executive Committee)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing.\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 9",
+            "source_heading": "Confidential Matter 9",
+            "source_occurrence": 19,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 9",
+              "matter_status": "confidential",
+              "matched_client": "Inversiones Palmar, S.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-20",
+            "name": "Confidential Matter 10",
+            "title": "Confidential Matter 10",
+            "client": "Dragados, S.A.",
+            "value": "US $10,000,000.00",
+            "leadPartner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "lead_partner": "Manuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department acted as legal counsel in a negotiation on behalf of the Spanish company Dragados, S.A. with the Attorney General's Office of the Bolivarian Republic of Venezuela in relation to an advance payment made to Dragados in 1999 for the construction of the \"Las Palmas\" dam in the state of Cojedes in Venezuela. The Venezuelan government tacitly withdrew from the contract.  As a result of the withdrawal, the Republic of Venezuela was obliged to pay Dragados 16% of the value of the contract (US$60,000,000.00) under Venezuela's general rules on government contracts.\nHowever, the Republic of Venezuela brought an action against Dragados before the Venezuelan Supreme Court, arguing that the contract provided for the jurisdiction of the Venezuelan courts under Venezuelan law. On the other hand, Dragados S.A. filed a lawsuit against the Republic of Venezuela in the courts of Madrid on the grounds of \"forum non-conveniens\" before the lawsuit was filed in Venezuela.\nARAQUEREYNA's involvement consisted of negotiating and implementing a solution to the situation and designing a mechanism for compliance with the agreements with the Attorney General of the Republic, which led to the signing of a settlement agreement that put an end to the entire dispute. To implement the settlement, it was necessary to design and carry out transfers and banking operations for currency exchange, payment and the execution of the final contract, with the necessary waivers and settlements, both in the Courts of Madrid, Spain, and in the Supreme Court of Venezuela.\nAs a result of the team's professional intervention and coordination, both parties were satisfied, and the entire dispute was finally resolved in relation to a construction contract originally valued at US $60,000,000.00.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department acted as legal counsel in a negotiation on behalf of the Spanish company Dragados, S.A. with the Attorney General's Office of the Bolivarian Republic of Venezuela in relation to an advance payment made to Dragados in 1999 for the construction of the \"Las Palmas\" dam in the state of Cojedes in Venezuela. The Venezuelan government tacitly withdrew from the contract.  As a result of the withdrawal, the Republic of Venezuela was obliged to pay Dragados 16% of the value of the contract (US$60,000,000.00) under Venezuela's general rules on government contracts.\nHowever, the Republic of Venezuela brought an action against Dragados before the Venezuelan Supreme Court, arguing that the contract provided for the jurisdiction of the Venezuelan courts under Venezuelan law. On the other hand, Dragados S.A. filed a lawsuit against the Republic of Venezuela in the courts of Madrid on the grounds of \"forum non-conveniens\" before the lawsuit was filed in Venezuela.\nARAQUEREYNA's involvement consisted of negotiating and implementing a solution to the situation and designing a mechanism for compliance with the agreements with the Attorney General of the Republic, which led to the signing of a settlement agreement that put an end to the entire dispute. To implement the settlement, it was necessary to design and carry out transfers and banking operations for currency exchange, payment and the execution of the final contract, with the necessary waivers and settlements, both in the Courts of Madrid, Spain, and in the Supreme Court of Venezuela.\nAs a result of the team's professional intervention and coordination, both parties were satisfied, and the entire dispute was finally resolved in relation to a construction contract originally valued at US $60,000,000.00.",
+            "teamMembers": "Guido Mejía (DR Partner)",
+            "team_members": "Guido Mejía (DR Partner)",
+            "crossBorder": "Yes. Spain and Venezuela.",
+            "otherFirms": "Cuatrecasas (Madrid, Spain) – Alberto Fortun and Gustavo Mata Morreo  - HYPERLINK \"https://www.cuatrecasas.com/es/latam/\"https://www.cuatrecasas.com/es/latam/",
+            "completionDate": "December 2023. Completed",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nDragados, S.A.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department acted as legal counsel in a negotiation on behalf of the Spanish company Dragados, S.A. with the Attorney General's Office of the Bolivarian Republic of Venezuela in relation to an advance payment made to Dragados in 1999 for the construction of the \"Las Palmas\" dam in the state of Cojedes in Venezuela. The Venezuelan government tacitly withdrew from the contract.  As a result of the withdrawal, the Republic of Venezuela was obliged to pay Dragados 16% of the value of the contract (US$60,000,000.00) under Venezuela's general rules on government contracts.\n\nHowever, the Republic of Venezuela brought an action against Dragados before the Venezuelan Supreme Court, arguing that the contract provided for the jurisdiction of the Venezuelan courts under Venezuelan law. On the other hand, Dragados S.A. filed a lawsuit against the Republic of Venezuela in the courts of Madrid on the grounds of \"forum non-conveniens\" before the lawsuit was filed in Venezuela.\n\nARAQUEREYNA's involvement consisted of negotiating and implementing a solution to the situation and designing a mechanism for compliance with the agreements with the Attorney General of the Republic, which led to the signing of a settlement agreement that put an end to the entire dispute. To implement the settlement, it was necessary to design and carry out transfers and banking operations for currency exchange, payment and the execution of the final contract, with the necessary waivers and settlements, both in the Courts of Madrid, Spain, and in the Supreme Court of Venezuela.\n\nAs a result of the team's professional intervention and coordination, both parties were satisfied, and the entire dispute was finally resolved in relation to a construction contract originally valued at US $60,000,000.00.\nE3 Matter value – include currency and amount in figures\nUS $10,000,000.00\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nYes. Spain and Venezuela.\nE5 Lead partner\nManuel Reyna (Senior Partner, member of ARAQUEREYNA’s Executive Committee)\nE6 Other team members\nGuido Mejía (DR Partner)\nE7 Other firms advising on the matter and their role(s)\nCuatrecasas (Madrid, Spain) – Alberto Fortun and Gustavo Mata Morreo  - HYPERLINK \"https://www.cuatrecasas.com/es/latam/\"https://www.cuatrecasas.com/es/latam/\nE8 Date of completion or current status\nDecember 2023. Completed\nE9 Other information about this matter – e.g. link to press coverage\nStrictly confidential.\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 10",
+            "source_heading": "Confidential Matter 10",
+            "source_occurrence": 20,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 10",
+              "matter_status": "confidential",
+              "matched_client": "Dragados, S.A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-21",
+            "name": "Confidential Matter 11",
+            "title": "Confidential Matter 11",
+            "client": "Tomas Sanabria and Ricardo Sanabria",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an agreement with other persons for the creation of a company for the management of aircraft.\nThe service includes a private shareholders' agreement, with particular attention to the issue of capital increases or decreases, the management regime of the company and the use of the aircraft, as well as the regime for the exit of partners with mandatory share purchase or sale regimes.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an agreement with other persons for the creation of a company for the management of aircraft.\nThe service includes a private shareholders' agreement, with particular attention to the issue of capital increases or decreases, the management regime of the company and the use of the aircraft, as well as the regime for the exit of partners with mandatory share purchase or sale regimes.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nTomas Sanabria and Ricardo Sanabria\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Tomas Sanabria in the negotiation of an agreement with other persons for the creation of a company for the management of aircraft.\n\nThe service includes a private shareholders' agreement, with particular attention to the issue of capital increases or decreases, the management regime of the company and the use of the aircraft, as well as the regime for the exit of partners with mandatory share purchase or sale regimes.\n\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 11",
+            "source_heading": "Confidential Matter 11",
+            "source_occurrence": 21,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 11",
+              "matter_status": "confidential",
+              "matched_client": "Tomas Sanabria and Ricardo Sanabria",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-22",
+            "name": "Confidential Matter 12",
+            "title": "Confidential Matter 12",
+            "client": "Aeromed Servicios Aéreos, C. A.  and Aitheras Aviation Group",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department provides legal assistance to Aeromed Servicios Aéreos, C.A. and Aitheras Aviation Group, both companies dedicated to air ambulance services.\nWe have assisted them in the updating of corporate aspects, such as the payment of share capital, the reformulation of the management regime, the approval of financial statements, and we have assisted them in complying with regulatory issues at the National Institute of Civil Aeronautic (INAC).",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department provides legal assistance to Aeromed Servicios Aéreos, C.A. and Aitheras Aviation Group, both companies dedicated to air ambulance services.\nWe have assisted them in the updating of corporate aspects, such as the payment of share capital, the reformulation of the management regime, the approval of financial statements, and we have assisted them in complying with regulatory issues at the National Institute of Civil Aeronautic (INAC).",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nAeromed Servicios Aéreos, C. A.  and Aitheras Aviation Group\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department provides legal assistance to Aeromed Servicios Aéreos, C.A. and Aitheras Aviation Group, both companies dedicated to air ambulance services.\n\nWe have assisted them in the updating of corporate aspects, such as the payment of share capital, the reformulation of the management regime, the approval of financial statements, and we have assisted them in complying with regulatory issues at the National Institute of Civil Aeronautic (INAC).\n\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 12",
+            "source_heading": "Confidential Matter 12",
+            "source_occurrence": 22,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 12",
+              "matter_status": "confidential",
+              "matched_client": "Aeromed Servicios Aéreos, C. A.  and Aitheras Aviation Group",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-23",
+            "name": "Confidential Matter 13",
+            "title": "Confidential Matter 13",
+            "client": "Financorp Consulting, C. A.  y Grupo Financorp, C. A.",
+            "value": "Confidential",
+            "leadPartner": "Manuel Reyna (Corporate Partner, member of ARAQUEREYNA´s Executive Committee) and Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Manuel Reyna (Corporate Partner, member of ARAQUEREYNA´s Executive Committee) and Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Financorp Consulting and Grupo Financorp, C.A. in the process of terminating the corporate relationship and the employment of a senior executive of the company on amicable terms and in compliance with commercial and labour law.",
+            "summary": "ARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Financorp Consulting and Grupo Financorp, C.A. in the process of terminating the corporate relationship and the employment of a senior executive of the company on amicable terms and in compliance with commercial and labour law.",
+            "teamMembers": "Patricia Lozada (Associate).",
+            "team_members": "Patricia Lozada (Associate).",
+            "crossBorder": "No",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nFinancorp Consulting, C. A.  y Grupo Financorp, C. A.\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA's Corporate and M&A Department is providing legal assistance to Financorp Consulting and Grupo Financorp, C.A. in the process of terminating the corporate relationship and the employment of a senior executive of the company on amicable terms and in compliance with commercial and labour law.\n\n\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo\nE5 Lead partner\nManuel Reyna (Corporate Partner, member of ARAQUEREYNA´s Executive Committee) and Juan José Figueroa (Senior Partner)\nE6 Other team members\nPatricia Lozada (Associate).\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 13",
+            "source_heading": "Confidential Matter 13",
+            "source_occurrence": 23,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 13",
+              "matter_status": "confidential",
+              "matched_client": "Financorp Consulting, C. A.  y Grupo Financorp, C. A.",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-24",
+            "name": "Confidential Matter 14",
+            "title": "Confidential Matter 14",
+            "client": "Cámara Venezolana de la Construcción",
+            "value": "Confidential",
+            "leadPartner": "Juan José Figueroa (Senior Partner)",
+            "lead_partner": "Juan José Figueroa (Senior Partner)",
+            "rawNotes": "ARAQUEREYNA’s Corporate and M&A Department assists Cámara Venezolana de la Construcción in its corporate affairs and its relations with national and foreign institutions, including the review of contracts and legislation/regulations that involve the development of programmes and the gathering of information to determine the current state of the construction sector in Venezuela and the recovery of the construction sector.",
+            "summary": "ARAQUEREYNA’s Corporate and M&A Department assists Cámara Venezolana de la Construcción in its corporate affairs and its relations with national and foreign institutions, including the review of contracts and legislation/regulations that involve the development of programmes and the gathering of information to determine the current state of the construction sector in Venezuela and the recovery of the construction sector.",
+            "teamMembers": "",
+            "team_members": "",
+            "crossBorder": "No.",
+            "otherFirms": "",
+            "completionDate": "Ongoing",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\nCámara Venezolana de la Construcción\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\nARAQUEREYNA’s Corporate and M&A Department assists Cámara Venezolana de la Construcción in its corporate affairs and its relations with national and foreign institutions, including the review of contracts and legislation/regulations that involve the development of programmes and the gathering of information to determine the current state of the construction sector in Venezuela and the recovery of the construction sector.\nE3 Matter value – include currency and amount in figures\nConfidential\nE4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\nNo.\nE5 Lead partner\nJuan José Figueroa (Senior Partner)\nE6 Other team members\n\nE7 Other firms advising on the matter and their role(s)\n\nE8 Date of completion or current status\nOngoing\nE9 Other information about this matter – e.g. link to press coverage\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 14",
+            "source_heading": "Confidential Matter 14",
+            "source_occurrence": 24,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 14",
+              "matter_status": "confidential",
+              "matched_client": "Cámara Venezolana de la Construcción",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          },
+          {
+            "id": "matter-ext-25",
+            "name": "Confidential Matter 15",
+            "title": "Confidential Matter 15",
+            "client": "Corporación de Aceros Arequipa",
+            "value": "Confidential",
+            "leadPartner": "Pedro I Sosa (Senior and Managing Partner)",
+            "lead_partner": "Pedro I Sosa (Senior and Managing Partner)",
+            "rawNotes": "ARAQUEREYNA’s Corporate and M&A Department assisted the client in the due diligence and bidding process for the direct acquisition of 80% of the shares issued by Bekaert Ideal S.L. and the indirect acquisition of shares in companies located in Costa Rica, Ecuador, Venezuela and Colombia. We analyse corporate, contractual, insurance, real estate, labour and regulatory aspects.\nIn the case of the Venezuelan company, the corporate aspects were particularly relevant because, at the time of the bid, the Venezuelan subsidiary was in the process of merging with another company.",
+            "summary": "ARAQUEREYNA’s Corporate and M&A Department assisted the client in the due diligence and bidding process for the direct acquisition of 80% of the shares issued by Bekaert Ideal S.L. and the indirect acquisition of shares in companies located in Costa Rica, Ecuador, Venezuela and Colombia. We analyse corporate, contractual, insurance, real estate, labour and regulatory aspects.\nIn the case of the Venezuelan company, the corporate aspects were particularly relevant because, at the time of the bid, the Venezuelan subsidiary was in the process of merging with another company.",
+            "teamMembers": "Federica Mena (Partner), Juan Carlos Balzan (Partner), Samuel Morales (Associate) and Loriane Damián (Associate)",
+            "team_members": "Federica Mena (Partner), Juan Carlos Balzan (Partner), Samuel Morales (Associate) and Loriane Damián (Associate)",
+            "crossBorder": "Yes. Peru, Costa Rica, Ecuador, Venezuela and Colombia",
+            "otherFirms": "Payet, Rey, Cauvi, Pérez Abogados (Peru) - HYPERLINK \"https://prcp.com.pe/\"https://prcp.com.pe/",
+            "completionDate": "August, 2024.",
+            "isConfidential": true,
+            "confidentialityStatus": "confidential",
+            "confidentialityConfirmed": true,
+            "publish_status": "non_publishable",
+            "valueConflict": "",
+            "source_excerpt": "E1 Name of client (for ranking purposes only)\n\nCorporación de Aceros Arequipa\n\nE2 Summary of matter and your department's role – Please say why this matter was important. Also, tell us exactly what role your department played\n\nARAQUEREYNA’s Corporate and M&A Department assisted the client in the due diligence and bidding process for the direct acquisition of 80% of the shares issued by Bekaert Ideal S.L. and the indirect acquisition of shares in companies located in Costa Rica, Ecuador, Venezuela and Colombia. We analyse corporate, contractual, insurance, real estate, labour and regulatory aspects.\n\nIn the case of the Venezuelan company, the corporate aspects were particularly relevant because, at the time of the bid, the Venezuelan subsidiary was in the process of merging with another company.\n\nE3 Matter value – include currency and amount in figures\n\nConfidential\n\nD4 Is this a cross-border matter? If yes, please indicate the jurisdictions involved.\n\nYes. Peru, Costa Rica, Ecuador, Venezuela and Colombia\n\nD5 Lead partner\n\nPedro I Sosa (Senior and Managing Partner)\n\nD6 Other team members\n\nFederica Mena (Partner), Juan Carlos Balzan (Partner), Samuel Morales (Associate) and Loriane Damián (Associate)\n\nD7 Other firms advising on the matter and their role(s)\n\nPayet, Rey, Cauvi, Pérez Abogados (Peru) - HYPERLINK \"https://prcp.com.pe/\"https://prcp.com.pe/\n\nD8 Date of completion or current status\n\nAugust, 2024.\n\nE9 Other information about this matter – e.g. link to press coverage\n\n\nIMPORTANT: Please do not exceed one page per deal.",
+            "source_label": "Confidential Matter 15",
+            "source_heading": "Confidential Matter 15",
+            "source_occurrence": 25,
+            "confidentialityEvidence": {
+              "version": 1,
+              "source_heading": "Confidential Matter 15",
+              "matter_status": "confidential",
+              "matched_client": "Corporación de Aceros Arequipa",
+              "match_method": null,
+              "client_register": [],
+              "requires_review": false,
+              "basis": "matter_field_or_heading"
+            },
+            "optimizedText": "",
+            "source_document": "Submission Corporate and MA 2024.doc"
+          }
+        ],
+        "ranking_verification": {
+          "status": "verified_observation",
+          "declared_band": null,
+          "requested_edition": "current",
+          "firm_name": "ARAQUEREYNA",
+          "directory": "Chambers",
+          "practice_area": "Corporate/M&A",
+          "jurisdiction": "Venezuela",
+          "observed_band": "Band 2",
+          "checked_at": "2026-10-08T18:27:44.721047+00:00",
+          "message": "Posición oficial observada para esta firma, práctica, país y edición; no había una banda declarada para comparar. Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.",
+          "evidence": {
+            "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+            "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+            "scraped_at": "2026-10-08T18:27:44Z",
+            "edition": "2027",
+            "guide": "Latin America",
+            "observed_practice": "Corporate/M&A",
+            "observed_jurisdiction": "Venezuela",
+            "parser_version": "ranking-evidence-v1",
+            "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+            "organisation_id": 2254
+          },
+          "matched_firm": "ARAQUEREYNA",
+          "comparison_scope": "current_table_as_of_retrieval",
+          "table_scope_verified": true,
+          "market_context": {
+            "status": "table_only",
+            "source": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": "2027",
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1",
+              "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+              "organisation_id": 2254
+            },
+            "competitors": [
+              {
+                "name": "D'Empaire",
+                "band": "Band 1",
+                "profile_path": "/department/dempaire-corporate-ma-latin-america-9:354:229:1:2665"
+              },
+              {
+                "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+                "band": "Band 1",
+                "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-corporate-ma-latin-america-9:354:229:1:3333"
+              },
+              {
+                "name": "LEĜA",
+                "band": "Band 2",
+                "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256"
+              },
+              {
+                "name": "InterJuris Abogados, S.C.",
+                "band": "Band 2",
+                "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408"
+              },
+              {
+                "name": "Travieso Evans Arria Rengel & Paz",
+                "band": "Band 2",
+                "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670"
+              },
+              {
+                "name": "Baker McKenzie",
+                "band": "Band 3",
+                "profile_path": "/department/baker-mckenzie-sc-corporate-ma-latin-america-9:354:229:1:2692"
+              },
+              {
+                "name": "Ponte Andrade & Casanova",
+                "band": "Band 3",
+                "profile_path": "/department/ponte-andrade-casanova-corporate-ma-latin-america-9:354:229:1:22756886"
+              },
+              {
+                "name": "SLV Consultores",
+                "band": "Band 3",
+                "profile_path": "/department/slv-consultores-corporate-ma-latin-america-9:354:229:1:23493985"
+              },
+              {
+                "name": "Tinoco, Travieso, Planchart & Núñez",
+                "band": "Band 3",
+                "profile_path": "/department/tinoco-travieso-planchart-nunez-corporate-ma-latin-america-9:354:229:1:2247"
+              },
+              {
+                "name": "Dentons",
+                "band": "Band 3",
+                "profile_path": "/department/dentons-corporate-ma-latin-america-9:354:229:1:7821"
+              },
+              {
+                "name": "Ágora Abogados",
+                "band": "Band 4",
+                "profile_path": "/department/agora-abogados-corporate-ma-latin-america-9:354:229:1:23719512"
+              },
+              {
+                "name": "LANDAEZ Abogados – Consultores",
+                "band": "Band 4",
+                "profile_path": "/department/landaez-abogados-consultores-corporate-ma-latin-america-9:354:229:1:23167606"
+              },
+              {
+                "name": "Lapadula Esteban Cadenas - LEC Abogados",
+                "band": "Band 4",
+                "profile_path": "/department/lapadula-esteban-cadenas-lec-abogados-corporate-ma-latin-america-9:354:229:1:22817510"
+              },
+              {
+                "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+                "band": "Band 4",
+                "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-corporate-ma-latin-america-9:354:229:1:2252"
+              },
+              {
+                "name": "Torres Plaz & Araujo",
+                "band": "Band 4",
+                "profile_path": "/department/torres-plaz-araujo-corporate-ma-latin-america-9:354:229:1:3335"
+              },
+              {
+                "name": "WDA legal, S.C.",
+                "band": "Band 4",
+                "profile_path": "/department/wda-legal-sc-corporate-ma-latin-america-9:354:229:1:9500"
+              }
+            ],
+            "limitations": [
+              "Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration."
+            ]
+          },
+          "individuals": [
+            {
+              "status": "not_found",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.721833+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Pedro I Sosa Mendoza",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.722053+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Maripi Viso",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.722298+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "María Carolina Cano",
+              "subject_type": "individual"
+            },
+            {
+              "status": "verified_mismatch",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": "Band 3",
+              "checked_at": "2026-10-08T18:27:44.722508+00:00",
+              "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": "2027",
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1",
+                "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057",
+                "organisation_id": null
+              },
+              "matched_firm": "Manuel Reyna",
+              "comparison_scope": "current_table_as_of_retrieval",
+              "lawyer_name": "Manuel Reyna",
+              "subject_type": "individual"
+            },
+            {
+              "status": "verified_mismatch",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": "Senior Statespeople",
+              "checked_at": "2026-10-08T18:27:44.722751+00:00",
+              "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": "2027",
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1",
+                "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589",
+                "organisation_id": null
+              },
+              "matched_firm": "Gustavo J Reyna",
+              "comparison_scope": "current_table_as_of_retrieval",
+              "lawyer_name": "Gustavo J Reyna",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.722998+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Pedro Luis Planchart",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Not Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.723231+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Juan José Figueroa",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Not Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.723431+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Federica Mena",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Not Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.723629+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Loriane Damian",
+              "subject_type": "individual"
+            },
+            {
+              "status": "not_found",
+              "declared_band": "Not Ranked",
+              "requested_edition": "current",
+              "firm_name": "ARAQUEREYNA",
+              "directory": "Chambers",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "observed_band": null,
+              "checked_at": "2026-10-08T18:27:44.723847+00:00",
+              "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+              "evidence": {
+                "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+                "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+                "scraped_at": "2026-10-08T18:27:44Z",
+                "edition": null,
+                "guide": "Latin America",
+                "observed_practice": "Corporate/M&A",
+                "observed_jurisdiction": "Venezuela",
+                "parser_version": "ranking-evidence-v1"
+              },
+              "lawyer_name": "Estefanía Lizardo",
+              "subject_type": "individual"
+            }
+          ],
+          "profile_research": {
+            "version": "official-profile-evidence-v1",
+            "profiles": [
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "ARAQUEREYNA",
+                  "band": "Band 2",
+                  "rank_type": "2",
+                  "edition": 2027,
+                  "organisation_id": 2254,
+                  "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+                  "kind": "firm"
+                },
+                "source_url": "https://chambers.com/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+                "content_sha256": "69bc7ddeeb9915b5e943fa92c5a61d233901581983c7723dc6f2bf66a9c61d7f",
+                "retrieved_at": "2026-10-08T18:27:45.570333+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "ARAQUEREYNA",
+                "observed_band": "Band 2",
+                "commentary": [
+                  {
+                    "heading": "What the Team is Known For",
+                    "text": "ARAQUEREYNA has a notable corporate department within a well-established full-service firm, experienced in advising clients drawn from sectors including telecommunications, oil and gas, and real estate. The team's expertise encompasses corporate restructuring, liquidation and due diligence for joint ventures. The department also advises on day-to-day operations, including corporate governance mandates, and both shareholder and commercial agreements.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Strengths",
+                    "text": "The ARAQUEREYNA team enjoys a great deal of credibility and prestige in the local market. Their legal excellence is backed by top-notch management and lawyers who are always available and willing to assist clients promptly.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Work Highlights",
+                    "text": "ARAQUEREYNA advised Alpina Venezuela on the design and implementation of a corporate restructuring programme aimed at optimising the company's ownership structure.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "LEĜA",
+                  "band": "Band 2",
+                  "rank_type": "2",
+                  "edition": 2027,
+                  "organisation_id": 2256,
+                  "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+                  "kind": "competitor"
+                },
+                "source_url": "https://chambers.com/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+                "content_sha256": "6d39d77390b66acf26c79b52e130826b3f55ea05122425e38381681ff1b1e557",
+                "retrieved_at": "2026-10-08T18:27:46.132324+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "LEĜA",
+                "observed_band": "Band 2",
+                "commentary": [
+                  {
+                    "heading": "What the Team is Known For",
+                    "text": "Multidisciplinary law firm LEĜA possesses a respected team acting across a range of corporate mandates. The team regularly advises on negotiating service agreements, as well as exchange control issues. The department is well placed to assist with share purchase agreements for M&A, including spin-off processes. The firm's client roster spans sectors such as food and beverages, technology and pharmaceuticals. The law firm is also regularly retained by startups.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Strengths",
+                    "text": "LEĜA stands out for its knowledge of the Venezuelan legal and regulatory framework. It has a specialised team who provide timely and accurate advice.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Work Highlights",
+                    "text": "LEĜA advised Guy Carpenter on its strategic expansion into Venezuela, assisting with the establishment of a new local branch.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "InterJuris Abogados, S.C.",
+                  "band": "Band 2",
+                  "rank_type": "2",
+                  "edition": 2027,
+                  "organisation_id": 236408,
+                  "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+                  "kind": "competitor"
+                },
+                "source_url": "https://chambers.com/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+                "content_sha256": "fb52967dc55c9aa9f6a67c62e8d226d3aa9b35daa6d0ae8c4ac2ea52b1a72a37",
+                "retrieved_at": "2026-10-08T18:27:45.635126+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "InterJuris Abogados, S.C.",
+                "observed_band": "Band 2",
+                "commentary": [
+                  {
+                    "heading": "What the Team is Known For",
+                    "text": "Full-service law firm InterJuris Abogados possesses a solid corporate practice, advising a broad spectrum of clients from sectors such as technology, construction and banking. The team's experience encompasses corporate restructuring, share purchase agreements and the termination of distribution agreements. The department also provides advice on due diligence matters as well as corporate compliance.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Strengths",
+                    "text": "InterJuris Abogados is characterised by the lawyers' understanding of their clients' businesses, their ability to develop multiple scenarios and their capacity to provide solutions for complex and sophisticated operations across multiple jurisdictions.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Work Highlights",
+                    "text": "InterJuris Abogados advised Vinccler on the financing and corporate restructuring of the Petrodelta Project.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "Travieso Evans Arria Rengel & Paz",
+                  "band": "Band 2",
+                  "rank_type": "2",
+                  "edition": 2027,
+                  "organisation_id": 2670,
+                  "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+                  "kind": "competitor"
+                },
+                "source_url": "https://chambers.com/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+                "content_sha256": "c75105899071649feeeb9e103542dcc1ac1007474b452a4f6b711700195f5ffc",
+                "retrieved_at": "2026-10-08T18:27:46.556590+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "Travieso Evans Arria Rengel & Paz",
+                "observed_band": "Band 2",
+                "commentary": [
+                  {
+                    "heading": "What the Team is Known For",
+                    "text": "Full-service law firm Travieso Evans Arria Rengel & Paz benefits from an experienced team skilled in handling a wide range of corporate matters. The department offers expertise spanning corporate disposals and acquisitions, restructuring and liquidation procedures, as well as the execution of distribution agreements. It advises domestic and international clients from sectors including pharmaceuticals, manufacturing and telecommunications.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Strengths",
+                    "text": "Travieso Evans Arria Rengel & Paz has an excellent ability to handle complex issues, demonstrating great skill in difficult legal situations.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Work Highlights",
+                    "text": "Travieso Evans Arria Rengel & Paz advised Unilever Andina Venezuela on the Venezuelan law aspects of a business transition and corporate restructuring affecting its local operations.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "Manuel Reyna",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057"
+                },
+                "source_url": "https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057",
+                "content_sha256": "59a97f610d0093e2be40ce5b5b32eb4c868e018f1d7d73a24a8c56b536f97f6a",
+                "retrieved_at": "2026-10-08T18:27:46.669158+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "Manuel Reyna",
+                "observed_band": "Band 3",
+                "commentary": [
+                  {
+                    "heading": "Individual Editorial",
+                    "text": "Founding partner Manuel Reyna advises domestic and multinational clients on corporate reorganisations and the liquidation of local subsidiaries. He is also frequently sought out by clients to advise on the drafting of commercial agreements.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "retrieved",
+                "subject": {
+                  "name": "Gustavo J Reyna",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589"
+                },
+                "source_url": "https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589",
+                "content_sha256": "e86b36cd9cc5c8ac07aa7d05c7d8ccfef68df6f9743f25a96aee3f4bb59e529a",
+                "retrieved_at": "2026-10-08T18:27:47.025763+00:00",
+                "parser_version": "official-profile-evidence-v1",
+                "practice_area": "Corporate/M&A",
+                "jurisdiction": "Venezuela",
+                "edition": 2027,
+                "observed_name": "Gustavo J Reyna",
+                "observed_band": "Senior Statespeople",
+                "commentary": [
+                  {
+                    "heading": "Individual Editorial",
+                    "text": "Seasoned practitioner Gustavo Reyna boasts a longstanding presence in the corporate sphere. He offers extensive experience advising on a range of mandates, including M&A transactions.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  },
+                  {
+                    "heading": "Strengths",
+                    "text": "Gustavo Reyna provides an excellent service and very good corporate advice.",
+                    "attribution": "Chambers editorial / attributed interview commentary"
+                  }
+                ],
+                "limitations": [
+                  "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+                ]
+              },
+              {
+                "status": "scope_or_identity_unresolved",
+                "subject": {
+                  "name": "Pedro I Sosa Mendoza",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116",
+                  "identity_basis": "source_supplied_official_profile"
+                },
+                "source_url": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116"
+              },
+              {
+                "status": "unavailable",
+                "subject": {
+                  "name": "Maripi Viso",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164",
+                  "identity_basis": "source_supplied_official_profile"
+                },
+                "limitations": [
+                  "Official profile could not be retrieved or verified. Do not infer absence of ranking or reputation."
+                ]
+              },
+              {
+                "status": "scope_or_identity_unresolved",
+                "subject": {
+                  "name": "María Carolina Cano",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+                  "identity_basis": "source_supplied_official_profile"
+                },
+                "source_url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375"
+              },
+              {
+                "status": "scope_or_identity_unresolved",
+                "subject": {
+                  "name": "Pedro Luis Planchart",
+                  "firm": "ARAQUEREYNA",
+                  "kind": "individual",
+                  "profile_path": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298",
+                  "identity_basis": "source_supplied_official_profile"
+                },
+                "source_url": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298"
+              }
+            ],
+            "requested": 10,
+            "attempted": 10,
+            "limitations": [
+              "Historical band movement has not been independently retrieved."
+            ]
+          },
+          "research_scope": "36c1d4be8019d4e8b4f96b477d3f5f7977d18910264a6a10187f6629dbbb42ed",
+          "research_execution": "reused_current_scoped_snapshot"
+        }
+      },
+      "ranking_verification": {
+        "status": "verified_observation",
+        "declared_band": null,
+        "requested_edition": "current",
+        "firm_name": "ARAQUEREYNA",
+        "directory": "Chambers",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "observed_band": "Band 2",
+        "checked_at": "2026-10-08T18:27:44.721047+00:00",
+        "message": "Posición oficial observada para esta firma, práctica, país y edición; no había una banda declarada para comparar. Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.",
+        "evidence": {
+          "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+          "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+          "scraped_at": "2026-10-08T18:27:44Z",
+          "edition": "2027",
+          "guide": "Latin America",
+          "observed_practice": "Corporate/M&A",
+          "observed_jurisdiction": "Venezuela",
+          "parser_version": "ranking-evidence-v1",
+          "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+          "organisation_id": 2254
+        },
+        "matched_firm": "ARAQUEREYNA",
+        "comparison_scope": "current_table_as_of_retrieval",
+        "table_scope_verified": true,
+        "market_context": {
+          "status": "table_only",
+          "source": {
+            "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+            "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+            "scraped_at": "2026-10-08T18:27:44Z",
+            "edition": "2027",
+            "guide": "Latin America",
+            "observed_practice": "Corporate/M&A",
+            "observed_jurisdiction": "Venezuela",
+            "parser_version": "ranking-evidence-v1",
+            "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+            "organisation_id": 2254
+          },
+          "competitors": [
+            {
+              "name": "D'Empaire",
+              "band": "Band 1",
+              "profile_path": "/department/dempaire-corporate-ma-latin-america-9:354:229:1:2665"
+            },
+            {
+              "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+              "band": "Band 1",
+              "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-corporate-ma-latin-america-9:354:229:1:3333"
+            },
+            {
+              "name": "LEĜA",
+              "band": "Band 2",
+              "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256"
+            },
+            {
+              "name": "InterJuris Abogados, S.C.",
+              "band": "Band 2",
+              "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408"
+            },
+            {
+              "name": "Travieso Evans Arria Rengel & Paz",
+              "band": "Band 2",
+              "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670"
+            },
+            {
+              "name": "Baker McKenzie",
+              "band": "Band 3",
+              "profile_path": "/department/baker-mckenzie-sc-corporate-ma-latin-america-9:354:229:1:2692"
+            },
+            {
+              "name": "Ponte Andrade & Casanova",
+              "band": "Band 3",
+              "profile_path": "/department/ponte-andrade-casanova-corporate-ma-latin-america-9:354:229:1:22756886"
+            },
+            {
+              "name": "SLV Consultores",
+              "band": "Band 3",
+              "profile_path": "/department/slv-consultores-corporate-ma-latin-america-9:354:229:1:23493985"
+            },
+            {
+              "name": "Tinoco, Travieso, Planchart & Núñez",
+              "band": "Band 3",
+              "profile_path": "/department/tinoco-travieso-planchart-nunez-corporate-ma-latin-america-9:354:229:1:2247"
+            },
+            {
+              "name": "Dentons",
+              "band": "Band 3",
+              "profile_path": "/department/dentons-corporate-ma-latin-america-9:354:229:1:7821"
+            },
+            {
+              "name": "Ágora Abogados",
+              "band": "Band 4",
+              "profile_path": "/department/agora-abogados-corporate-ma-latin-america-9:354:229:1:23719512"
+            },
+            {
+              "name": "LANDAEZ Abogados – Consultores",
+              "band": "Band 4",
+              "profile_path": "/department/landaez-abogados-consultores-corporate-ma-latin-america-9:354:229:1:23167606"
+            },
+            {
+              "name": "Lapadula Esteban Cadenas - LEC Abogados",
+              "band": "Band 4",
+              "profile_path": "/department/lapadula-esteban-cadenas-lec-abogados-corporate-ma-latin-america-9:354:229:1:22817510"
+            },
+            {
+              "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+              "band": "Band 4",
+              "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-corporate-ma-latin-america-9:354:229:1:2252"
+            },
+            {
+              "name": "Torres Plaz & Araujo",
+              "band": "Band 4",
+              "profile_path": "/department/torres-plaz-araujo-corporate-ma-latin-america-9:354:229:1:3335"
+            },
+            {
+              "name": "WDA legal, S.C.",
+              "band": "Band 4",
+              "profile_path": "/department/wda-legal-sc-corporate-ma-latin-america-9:354:229:1:9500"
+            }
+          ],
+          "limitations": [
+            "Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration."
+          ]
+        },
+        "individuals": [
+          {
+            "status": "not_found",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.721833+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Pedro I Sosa Mendoza",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.722053+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Maripi Viso",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.722298+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "María Carolina Cano",
+            "subject_type": "individual"
+          },
+          {
+            "status": "verified_mismatch",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": "Band 3",
+            "checked_at": "2026-10-08T18:27:44.722508+00:00",
+            "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": "2027",
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1",
+              "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057",
+              "organisation_id": null
+            },
+            "matched_firm": "Manuel Reyna",
+            "comparison_scope": "current_table_as_of_retrieval",
+            "lawyer_name": "Manuel Reyna",
+            "subject_type": "individual"
+          },
+          {
+            "status": "verified_mismatch",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": "Senior Statespeople",
+            "checked_at": "2026-10-08T18:27:44.722751+00:00",
+            "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": "2027",
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1",
+              "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589",
+              "organisation_id": null
+            },
+            "matched_firm": "Gustavo J Reyna",
+            "comparison_scope": "current_table_as_of_retrieval",
+            "lawyer_name": "Gustavo J Reyna",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.722998+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Pedro Luis Planchart",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Not Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.723231+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Juan José Figueroa",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Not Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.723431+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Federica Mena",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Not Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.723629+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Loriane Damian",
+            "subject_type": "individual"
+          },
+          {
+            "status": "not_found",
+            "declared_band": "Not Ranked",
+            "requested_edition": "current",
+            "firm_name": "ARAQUEREYNA",
+            "directory": "Chambers",
+            "practice_area": "Corporate/M&A",
+            "jurisdiction": "Venezuela",
+            "observed_band": null,
+            "checked_at": "2026-10-08T18:27:44.723847+00:00",
+            "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+            "evidence": {
+              "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+              "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+              "scraped_at": "2026-10-08T18:27:44Z",
+              "edition": null,
+              "guide": "Latin America",
+              "observed_practice": "Corporate/M&A",
+              "observed_jurisdiction": "Venezuela",
+              "parser_version": "ranking-evidence-v1"
+            },
+            "lawyer_name": "Estefanía Lizardo",
+            "subject_type": "individual"
+          }
+        ],
+        "profile_research": {
+          "version": "official-profile-evidence-v1",
+          "profiles": [
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "ARAQUEREYNA",
+                "band": "Band 2",
+                "rank_type": "2",
+                "edition": 2027,
+                "organisation_id": 2254,
+                "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+                "kind": "firm"
+              },
+              "source_url": "https://chambers.com/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+              "content_sha256": "69bc7ddeeb9915b5e943fa92c5a61d233901581983c7723dc6f2bf66a9c61d7f",
+              "retrieved_at": "2026-10-08T18:27:45.570333+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "ARAQUEREYNA",
+              "observed_band": "Band 2",
+              "commentary": [
+                {
+                  "heading": "What the Team is Known For",
+                  "text": "ARAQUEREYNA has a notable corporate department within a well-established full-service firm, experienced in advising clients drawn from sectors including telecommunications, oil and gas, and real estate. The team's expertise encompasses corporate restructuring, liquidation and due diligence for joint ventures. The department also advises on day-to-day operations, including corporate governance mandates, and both shareholder and commercial agreements.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Strengths",
+                  "text": "The ARAQUEREYNA team enjoys a great deal of credibility and prestige in the local market. Their legal excellence is backed by top-notch management and lawyers who are always available and willing to assist clients promptly.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Work Highlights",
+                  "text": "ARAQUEREYNA advised Alpina Venezuela on the design and implementation of a corporate restructuring programme aimed at optimising the company's ownership structure.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "LEĜA",
+                "band": "Band 2",
+                "rank_type": "2",
+                "edition": 2027,
+                "organisation_id": 2256,
+                "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+                "kind": "competitor"
+              },
+              "source_url": "https://chambers.com/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+              "content_sha256": "6d39d77390b66acf26c79b52e130826b3f55ea05122425e38381681ff1b1e557",
+              "retrieved_at": "2026-10-08T18:27:46.132324+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "LEĜA",
+              "observed_band": "Band 2",
+              "commentary": [
+                {
+                  "heading": "What the Team is Known For",
+                  "text": "Multidisciplinary law firm LEĜA possesses a respected team acting across a range of corporate mandates. The team regularly advises on negotiating service agreements, as well as exchange control issues. The department is well placed to assist with share purchase agreements for M&A, including spin-off processes. The firm's client roster spans sectors such as food and beverages, technology and pharmaceuticals. The law firm is also regularly retained by startups.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Strengths",
+                  "text": "LEĜA stands out for its knowledge of the Venezuelan legal and regulatory framework. It has a specialised team who provide timely and accurate advice.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Work Highlights",
+                  "text": "LEĜA advised Guy Carpenter on its strategic expansion into Venezuela, assisting with the establishment of a new local branch.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "InterJuris Abogados, S.C.",
+                "band": "Band 2",
+                "rank_type": "2",
+                "edition": 2027,
+                "organisation_id": 236408,
+                "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+                "kind": "competitor"
+              },
+              "source_url": "https://chambers.com/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+              "content_sha256": "fb52967dc55c9aa9f6a67c62e8d226d3aa9b35daa6d0ae8c4ac2ea52b1a72a37",
+              "retrieved_at": "2026-10-08T18:27:45.635126+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "InterJuris Abogados, S.C.",
+              "observed_band": "Band 2",
+              "commentary": [
+                {
+                  "heading": "What the Team is Known For",
+                  "text": "Full-service law firm InterJuris Abogados possesses a solid corporate practice, advising a broad spectrum of clients from sectors such as technology, construction and banking. The team's experience encompasses corporate restructuring, share purchase agreements and the termination of distribution agreements. The department also provides advice on due diligence matters as well as corporate compliance.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Strengths",
+                  "text": "InterJuris Abogados is characterised by the lawyers' understanding of their clients' businesses, their ability to develop multiple scenarios and their capacity to provide solutions for complex and sophisticated operations across multiple jurisdictions.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Work Highlights",
+                  "text": "InterJuris Abogados advised Vinccler on the financing and corporate restructuring of the Petrodelta Project.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "Travieso Evans Arria Rengel & Paz",
+                "band": "Band 2",
+                "rank_type": "2",
+                "edition": 2027,
+                "organisation_id": 2670,
+                "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+                "kind": "competitor"
+              },
+              "source_url": "https://chambers.com/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+              "content_sha256": "c75105899071649feeeb9e103542dcc1ac1007474b452a4f6b711700195f5ffc",
+              "retrieved_at": "2026-10-08T18:27:46.556590+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "Travieso Evans Arria Rengel & Paz",
+              "observed_band": "Band 2",
+              "commentary": [
+                {
+                  "heading": "What the Team is Known For",
+                  "text": "Full-service law firm Travieso Evans Arria Rengel & Paz benefits from an experienced team skilled in handling a wide range of corporate matters. The department offers expertise spanning corporate disposals and acquisitions, restructuring and liquidation procedures, as well as the execution of distribution agreements. It advises domestic and international clients from sectors including pharmaceuticals, manufacturing and telecommunications.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Strengths",
+                  "text": "Travieso Evans Arria Rengel & Paz has an excellent ability to handle complex issues, demonstrating great skill in difficult legal situations.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Work Highlights",
+                  "text": "Travieso Evans Arria Rengel & Paz advised Unilever Andina Venezuela on the Venezuelan law aspects of a business transition and corporate restructuring affecting its local operations.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "Manuel Reyna",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057"
+              },
+              "source_url": "https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057",
+              "content_sha256": "59a97f610d0093e2be40ce5b5b32eb4c868e018f1d7d73a24a8c56b536f97f6a",
+              "retrieved_at": "2026-10-08T18:27:46.669158+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "Manuel Reyna",
+              "observed_band": "Band 3",
+              "commentary": [
+                {
+                  "heading": "Individual Editorial",
+                  "text": "Founding partner Manuel Reyna advises domestic and multinational clients on corporate reorganisations and the liquidation of local subsidiaries. He is also frequently sought out by clients to advise on the drafting of commercial agreements.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "retrieved",
+              "subject": {
+                "name": "Gustavo J Reyna",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589"
+              },
+              "source_url": "https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589",
+              "content_sha256": "e86b36cd9cc5c8ac07aa7d05c7d8ccfef68df6f9743f25a96aee3f4bb59e529a",
+              "retrieved_at": "2026-10-08T18:27:47.025763+00:00",
+              "parser_version": "official-profile-evidence-v1",
+              "practice_area": "Corporate/M&A",
+              "jurisdiction": "Venezuela",
+              "edition": 2027,
+              "observed_name": "Gustavo J Reyna",
+              "observed_band": "Senior Statespeople",
+              "commentary": [
+                {
+                  "heading": "Individual Editorial",
+                  "text": "Seasoned practitioner Gustavo Reyna boasts a longstanding presence in the corporate sphere. He offers extensive experience advising on a range of mandates, including M&A transactions.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                },
+                {
+                  "heading": "Strengths",
+                  "text": "Gustavo Reyna provides an excellent service and very good corporate advice.",
+                  "attribution": "Chambers editorial / attributed interview commentary"
+                }
+              ],
+              "limitations": [
+                "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+              ]
+            },
+            {
+              "status": "scope_or_identity_unresolved",
+              "subject": {
+                "name": "Pedro I Sosa Mendoza",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116",
+                "identity_basis": "source_supplied_official_profile"
+              },
+              "source_url": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116"
+            },
+            {
+              "status": "unavailable",
+              "subject": {
+                "name": "Maripi Viso",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164",
+                "identity_basis": "source_supplied_official_profile"
+              },
+              "limitations": [
+                "Official profile could not be retrieved or verified. Do not infer absence of ranking or reputation."
+              ]
+            },
+            {
+              "status": "scope_or_identity_unresolved",
+              "subject": {
+                "name": "María Carolina Cano",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+                "identity_basis": "source_supplied_official_profile"
+              },
+              "source_url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375"
+            },
+            {
+              "status": "scope_or_identity_unresolved",
+              "subject": {
+                "name": "Pedro Luis Planchart",
+                "firm": "ARAQUEREYNA",
+                "kind": "individual",
+                "profile_path": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298",
+                "identity_basis": "source_supplied_official_profile"
+              },
+              "source_url": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298"
+            }
+          ],
+          "requested": 10,
+          "attempted": 10,
+          "limitations": [
+            "Historical band movement has not been independently retrieved."
+          ]
+        },
+        "research_scope": "36c1d4be8019d4e8b4f96b477d3f5f7977d18910264a6a10187f6629dbbb42ed",
+        "research_execution": "reused_current_scoped_snapshot"
+      }
+    }
+  }
+}

@@ -1,0 +1,390 @@
+{
+  "table_roster_count": 7,
+  "saved_roster_count": 8,
+  "rows": [
+    {
+      "saved_name": "Eduardo Garduño",
+      "table_match": [
+        "Eduardo Garduño"
+      ],
+      "source_occurrences": [
+        {
+          "line": 37,
+          "text": "Eduardo Garduño | garduno@deforest.mx | 1999 | Eduardo is the Partner of DeForest’s Labor & Employment practice and one of the most respected voices in labor governance in Mexico. His background blends more than two decades advising multinational employers with senior public-sector experience, allowing him to translate complex regulatory environments into stable operational frameworks. He is known for structuring policies and documentation systems that support high-risk, labor-intensive operations, as well as for steering high-value disputes that require strategic judgement and procedural precision. His leadership extends across mandates involving litigation coordination, cross-state governance and preventive frameworks for clients such as Volkswagen, Cinemex, GeNi, Scheaffler, Benteler, SKF and Megacable."
+        },
+        {
+          "line": 65,
+          "text": "The department is led by one of the country's most experienced labor teams. Eduardo Garduño has become one of Mexico's leading labor strategists for multinational employers, combining more than two decades of experience advising major corporations with senior public-sector insight that enables him to translate complex regulatory environments into practical business solutions."
+        },
+        {
+          "line": 157,
+          "text": "DeForest Abogados / Eduardo Garduño,"
+        },
+        {
+          "line": 294,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 322,
+          "text": "Eduardo Garduño and Carlos Rivera."
+        },
+        {
+          "line": 438,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 608,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 673,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 700,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 729,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 756,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 810,
+          "text": "Eduardo Garduño and Fernanda Priego."
+        },
+        {
+          "line": 864,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 891,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 918,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 945,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 972,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 999,
+          "text": "Eduardo Garduño."
+        },
+        {
+          "line": 1026,
+          "text": "Eduardo Garduño."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.327Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "Javier Atzin Vallejo",
+      "table_match": [
+        "Javier Atzin Vallejo"
+      ],
+      "source_occurrences": [
+        {
+          "line": 43,
+          "text": "Javier Atzin Vallejo | vallejo@deforest.mx | 2019 | Javier is a technical specialist whose practice sits at the intersection of labor law, social security and regulatory compliance. His experience includes conducting complex audits, harmonising documentation across multi-plant structures and advising on labor components of acquisitions and restructurings. Known for his precise analytical approach, Javier is essential in mandates requiring meticulous documentation, accurate risk assessment and alignment with global corporate standards. His work is particularly relevant for industrial, infrastructure and advanced-manufacturing groups."
+        },
+        {
+          "line": 68,
+          "text": "The leadership team is further strengthened by Javier Atzin Vallejo, whose practice focuses on labor compliance, social security and workforce integration; Edgar Barreto, recognised for his experience in labor litigation and IMSS matters; Andrés Cabrera, who leads the firm's labor practice across the Bajío region; Erick Pérez, a specialist in complex litigation and constitutional proceedings; and José Alberto Díaz, whose practice combines labor, social security and administrative litigation in highly regulated industries."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        },
+        {
+          "line": 234,
+          "text": "Javier Atzin Vallejo."
+        },
+        {
+          "line": 267,
+          "text": "Javier Atzin Vallejo."
+        },
+        {
+          "line": 351,
+          "text": "Javier Atzin Vallejo."
+        },
+        {
+          "line": 379,
+          "text": "Javier Atzin Vallejo."
+        },
+        {
+          "line": 580,
+          "text": "Javier Atzin Vallejo."
+        },
+        {
+          "line": 646,
+          "text": "Javier Atzin Vallejo."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.327Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "Jaime Bustamante",
+      "table_match": [
+        "Jaime Bustamante"
+      ],
+      "source_occurrences": [
+        {
+          "line": 42,
+          "text": "Jaime Bustamante | bustamante@deforest.mx | 2022 | Jaime brings the perspective of someone who has managed labor structures on a global scale. Before joining DeForest, he served as Legal Director for Mexico, Central and South America at ManpowerGroup, overseeing one of the largest employer workforces in the region. This experience shapes his approach to complex disputes, mass-litigation management, workforce transitions and collective bargaining negotiations in high-pressure environments. His influence extends into national policy circles through his role as Vice President of the labor, Social Security and HR Commission at CONCAMIN, reinforcing his standing as a reference point for employers navigating regulatory reform, cross-border HR structures and large-scale labor exposure."
+        },
+        {
+          "line": 66,
+          "text": "Jaime Bustamante contributes the perspective of one of the region's largest employers, having previously served as Legal Director for Mexico, Central and South America at ManpowerGroup, where he oversaw workforce structures across multiple jurisdictions."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        },
+        {
+          "line": 466,
+          "text": "Jaime Bustamante."
+        },
+        {
+          "line": 494,
+          "text": "Jaime Bustamante."
+        },
+        {
+          "line": 522,
+          "text": "Jaime Bustamante."
+        },
+        {
+          "line": 550,
+          "text": "Jaime Bustamante."
+        },
+        {
+          "line": 783,
+          "text": "Jaime Bustamante."
+        },
+        {
+          "line": 838,
+          "text": "Jaime Bustamante."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Partner",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Partner"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "José Alberto Díaz Méndez",
+      "table_match": [],
+      "source_occurrences": [
+        {
+          "line": 68,
+          "text": "The leadership team is further strengthened by Javier Atzin Vallejo, whose practice focuses on labor compliance, social security and workforce integration; Edgar Barreto, recognised for his experience in labor litigation and IMSS matters; Andrés Cabrera, who leads the firm's labor practice across the Bajío region; Erick Pérez, a specialist in complex litigation and constitutional proceedings; and José Alberto Díaz, whose practice combines labor, social security and administrative litigation in highly regulated industries."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        },
+        {
+          "line": 611,
+          "text": "José Alberto Díaz, Ana Ruiz, Erick Pérez and Ariam Barrientos."
+        },
+        {
+          "line": 649,
+          "text": "José Alberto Díaz."
+        },
+        {
+          "line": 676,
+          "text": "José Alberto Díaz and Maximiliano Hernández."
+        },
+        {
+          "line": 732,
+          "text": "José Alberto Díaz and Ana Ruíz."
+        },
+        {
+          "line": 759,
+          "text": "José Alberto Díaz, Erick Pérez and Ariam Barrientos"
+        },
+        {
+          "line": 1053,
+          "text": "José Alberto Díaz Méndez."
+        },
+        {
+          "line": 1080,
+          "text": "José Alberto Díaz Méndez."
+        },
+        {
+          "line": 1107,
+          "text": "José Alberto Díaz Méndez."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate",
+        "originalProfile": {
+          "bio": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates.",
+          "comments": "Senior Associate · Specialist in labor, social security and administrative litigation with lead responsibility across multiple complex dispute and inspection mandates."
+        }
+      },
+      "finding": "Present in narrative and matter teams; full surname and role retained from saved human record"
+    },
+    {
+      "saved_name": "Erick Pérez",
+      "table_match": [
+        "Erick Pérez"
+      ],
+      "source_occurrences": [
+        {
+          "line": 47,
+          "text": "Erick Pérez | perezg@deforest.mx | N/A"
+        },
+        {
+          "line": 68,
+          "text": "The leadership team is further strengthened by Javier Atzin Vallejo, whose practice focuses on labor compliance, social security and workforce integration; Edgar Barreto, recognised for his experience in labor litigation and IMSS matters; Andrés Cabrera, who leads the firm's labor practice across the Bajío region; Erick Pérez, a specialist in complex litigation and constitutional proceedings; and José Alberto Díaz, whose practice combines labor, social security and administrative litigation in highly regulated industries."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        },
+        {
+          "line": 441,
+          "text": "Maximiliano Hernández and Erick Pérez."
+        },
+        {
+          "line": 611,
+          "text": "José Alberto Díaz, Ana Ruiz, Erick Pérez and Ariam Barrientos."
+        },
+        {
+          "line": 759,
+          "text": "José Alberto Díaz, Erick Pérez and Ariam Barrientos"
+        },
+        {
+          "line": 813,
+          "text": "Erick Pérez and Ariam Barrientos."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "Andrés Cabrera Gómez",
+      "table_match": [
+        "Andrés Cabrera Gómez"
+      ],
+      "source_occurrences": [
+        {
+          "line": 46,
+          "text": "Andrés Cabrera Gómez | cabrera@deforest.mx | 2023 | Andrés leads the firm’s practice in the Bajío region, one of Mexico’s most active industrial corridors. He is recognised for his ability to execute litigation strategies with speed, clarity and sensitivity to local dynamics—particularly in jurisdictions adapting to the post-reform judicial system. His work bridges the strategic frameworks designed by senior partners with the practical realities of implementation in critical regions. For many clients, Andrés provides the on-the-ground coordination that ensures consistency across the firm’s national approach."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "Raymundo Carreño",
+      "table_match": [
+        "Raymundo Carreño"
+      ],
+      "source_occurrences": [
+        {
+          "line": 44,
+          "text": "Raymundo Carreño | carreno@deforest.mx | 2016 | With nearly forty years at Volkswagen de México, including his tenure as General Legal Director, Raymundo embodies an uncommon depth of experience in corporate labor relations. He has played a central role in major regulatory transitions, high-stakes union negotiations and organisational restructurings that have defined the automotive sector in Mexico. His judgement is sought in matters where legal interpretation intersects with operational continuity and corporate strategy. His presence within the practice adds a level of senior insight that few labor teams in the country can access."
+        },
+        {
+          "line": 67,
+          "text": "Raymundo Carreño brings the institutional knowledge accumulated during nearly four decades as General Legal Director of Volkswagen de México, offering clients strategic judgement developed through some of the country's most significant labor negotiations and organisational transformations."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "finding": "Present in B9 table"
+    },
+    {
+      "saved_name": "Edgar Barreto",
+      "table_match": [
+        "Edgar Barreto"
+      ],
+      "source_occurrences": [
+        {
+          "line": 45,
+          "text": "Edgar Barreto | dirgeneral@mrb.mx |  | Edgar brings more than two decades of experience in labor litigation, social security and internal governance for large-scale employers. His practice focuses on early identification of contingencies, documentation harmonisation in high-volume environments and continuous advisory for industrial plants requiring predictable labor operations. His deep command of IMSS processes and inspection frameworks makes him a strategic ally for employers seeking to reduce recurrent risks and strengthen compliance mechanisms."
+        },
+        {
+          "line": 68,
+          "text": "The leadership team is further strengthened by Javier Atzin Vallejo, whose practice focuses on labor compliance, social security and workforce integration; Edgar Barreto, recognised for his experience in labor litigation and IMSS matters; Andrés Cabrera, who leads the firm's labor practice across the Bajío region; Erick Pérez, a specialist in complex litigation and constitutional proceedings; and José Alberto Díaz, whose practice combines labor, social security and administrative litigation in highly regulated industries."
+        },
+        {
+          "line": 158,
+          "text": "Jaime Bustamante, Raymundo Carreño, Javier Atzin Vallejo, Edgar Barreto, Andrés Cabrera, Erick Pérez and José Alberto Díaz. | Leading labor and employment practice with strong capabilities in both advisory and contentious matters. The team is known for its technical rigor, hands-on approach, and ability to handle complex, high-impact mandates, making it a trusted advisor for both domestic and multinational clients."
+        }
+      ],
+      "saved_human_role": {
+        "role": "Associate",
+        "reason": "si",
+        "confirmed": true,
+        "confirmedAt": "2026-10-08T01:05:55.328Z",
+        "confirmedBy": "90e761a0-451e-43a1-8099-5ee3c61de4e1",
+        "originalRole": "Associate"
+      },
+      "finding": "Present in B9 table"
+    }
+  ],
+  "conclusion": "Seven source table rows plus Jose Alberto Diaz in narrative and matters reconcile eight saved people. No deletion, merged identities or invented role required.",
+  "production_changed": false
+}

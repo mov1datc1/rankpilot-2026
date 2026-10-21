@@ -1,0 +1,270 @@
+{
+  "artifacts": [
+    {
+      "kind": "Submission",
+      "bytes": 24882,
+      "sha256": "333a49afa1abf7d96785d0a78cfd0ca41721692776818d7902ad16fac7f87a29",
+      "words": 4539
+    },
+    {
+      "kind": "Audit",
+      "bytes": 13803,
+      "sha256": "d787b4725c73d19ea45898ff4a0fc1d1458fc74083e3ea907f7ca241c4415767",
+      "words": 1721
+    }
+  ],
+  "result": {
+    "judge": {
+      "passed": false,
+      "defects": [
+        {
+          "code": "UNSUPPORTED_CLAIM",
+          "severity": "critical",
+          "scope": "submission",
+          "matter_id": "matter-ext-3",
+          "message": "El D8 de El Cielo Country Club conserva como actuales dos estados procesales anteriores que ya fueron superados por la actualización de 2024 incluida en la propia fuente y también en el documento. Debe sustituirse el texto histórico por un estado actual coherente: el amparo de 2018 fue confirmado por el Sexto Tribunal Colegiado Administrativo y la sentencia del amparo de 2021 fue ejecutada en julio de 2024, únicamente respecto de los inmuebles del cliente.",
+          "conflict_basis": "source_vs_artifact",
+          "source_quote": "In continuation of this matter, for the amparo filed in 2018, the Sixth Collegiate Administrative Court of the Third Circuit, under case file 347/2022, issued a ruling that upheld the amparo granted by the Court of First Instance.\n\nRegarding the 2021 amparo, a favorable ruling was obtained, nullifying the Decree updating the Local Ecological Management Program for the Municipality of Tlajomulco de Zúñiga, but solely as it pertains to the properties owned by our client. The judgment was duly enforced in July 2024.",
+          "artifact_quote": "The amparo filed in 2018 obtained a favorable ruling, nullifying the Governor's Decree, and is currently under review by the Collegiate Court.\nThe 2021 amparo is currently in the stage of gathering expert evidence, with a resolution expected in early 2023.",
+          "artifact_claim_kind": "factual_assertion",
+          "field_path": null,
+          "temporal_basis": "evidenced_conflict",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": "matter-ext-3",
+          "rule_id": "RP16"
+        },
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "facts",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "",
+          "artifact_quote": "",
+          "artifact_claim_kind": null,
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        },
+        {
+          "code": "EDITORIAL_OMISSION",
+          "severity": "critical",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "La aceptación editorial no está completa: source_fidelity",
+          "source_quote": "",
+          "artifact_quote": "",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP01"
+        }
+      ],
+      "acceptance": [
+        {
+          "criterion": "source_fidelity",
+          "status": "failed",
+          "evidence": "La identidad de clientes, abogados, valores, monedas, roles y estados de los asuntos seleccionados coincide en general con las fuentes. Sin embargo, el D8 de matter-ext-3 afirma que el amparo de 2018 está “currently under review” y que el de 2021 sigue reuniendo prueba con resolución esperada en 2023, aunque la actualización fuente registra confirmación colegiada y ejecución en julio de 2024. Esa contradicción temporal material impide aprobar el documento."
+        },
+        {
+          "criterion": "decisive_evidence",
+          "status": "met",
+          "evidence": "Los once asuntos seleccionados conservan sus elementos decisivos: El Cielo incluye los dos amparos y la ejecución de julio de 2024; Duranpark conserva las 207.5306 hectáreas, la suspensión definitiva y la audiencia pendiente; Diageo conserva el juicio 2017/2024 y la medida cautelar; La Primavera conserva el amparo 932/2017 y la pericial; los restantes asuntos mantienen contribución, resultado o estado, valor y liderazgo disponibles. Brasilia se limita correctamente a la revocación documentada de cuatro suspensiones y la Audit explica la referencia adversa no conciliada a la Suprema Corte."
+        },
+        {
+          "criterion": "confidentiality",
+          "status": "met",
+          "evidence": "Los asuntos matter-ext-23, matter-ext-26 y matter-ext-28 aparecen con identidad únicamente en la sección confidencial E y en la Audit interna. B9, B10 y C2 solo aluden a ellos mediante descripciones genéricas, sin revelar Familia De Anda, ADM Hermosillo o Familia Leaño. Los ocho asuntos de D cuentan con publish_status=publishable y confidentialityConfirmed=true."
+        },
+        {
+          "criterion": "individual_strategy",
+          "status": "met",
+          "evidence": "La Audit distingue la ausencia de coincidencia verificada en la tabla de Chambers de una declaración global de falta de ranking. Para Jose Pablo Ramos Castillo identifica ranking actual no verificado, propuesta específica Up and Coming, fundamento, diez asuntos, roles personales, evidencia externa disponible, carencias y acciones. La categoría es compatible con su condición acreditada de socio fundador y se presenta como propuesta, no como ranking establecido."
+        },
+        {
+          "criterion": "b9_development",
+          "status": "met",
+          "evidence": "B9 desarrolla una candidatura personal sustantiva: identifica a José Pablo Ramos Castillo como socio fundador, describe su enfoque en litigio inmobiliario administrativo y constitucional, desarrolla su liderazgo en El Cielo y Duranpark y añade mandatos sobre apropiaciones, NOM-247-SE-2021 y delimitación de propiedad. No se limita a una especialidad genérica ni le atribuye el asunto Diageo liderado por Edgar Adrián Moro López."
+        },
+        {
+          "criterion": "c2_argument",
+          "status": "met",
+          "evidence": "C2 contiene el argumento de cobertura desarrollado: solicita consideración para Chambers Real Estate Mexico, define la diferenciación contentious/regulatory, enumera decretos de uso de suelo, expropiación, licencias, amparos, acciones de nulidad, prueba pericial y medidas urgentes, y conecta esa evidencia con el liderazgo de José Pablo Ramos Castillo. No afirma una banda ni una posición verificada inexistente."
+        },
+        {
+          "criterion": "portfolio_comparison",
+          "status": "met",
+          "evidence": "Submission, Audit, strategy y development comparten hero matter-ext-3 y la misma cartera de ocho asuntos publicables y tres confidenciales. La Audit compara El Cielo con Duranpark y explica por qué prevalece; también compara El Cielo/Villas del Colli, Duranpark/Inmobiliaria MIDI y La Primavera/SMB Promotora, y justifica reservas y exclusiones por relevancia jurídica y calidad probatoria."
+        },
+        {
+          "criterion": "executive_audit",
+          "status": "met",
+          "evidence": "La Audit ofrece veredicto ejecutivo y objetivo de cobertura con limitaciones, justificación comparativa del hero, cartera ordenada, reservas y exclusiones concretas, estrategia individual con ranking actual/propuesto, roles, asuntos, evidencia externa, carencias y acciones. También delimita que la investigación competitiva recuperada es parcial y evita presentar la tabla o el RAG metodológico como calibración completa del mercado."
+        }
+      ]
+    },
+    "trace": [
+      {
+        "role": "editor",
+        "seconds": 44.481,
+        "usage": {
+          "input_tokens": 75509,
+          "output_tokens": 3531,
+          "total_tokens": 79040,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 2194
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-5d6b0226bae6",
+            "source": "Real_Estate_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 43,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 26,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 20,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 17,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 3,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "msg_0807eb6406108bb1006ac7ea326fa887d1bb99a79bb922d70b"
+      }
+    ],
+    "letter": {
+      "executive_assessment": "**Veredicto ejecutivo — presentar con posicionamiento contencioso/regulatorio.** La candidatura para Chambers Real Estate Mexico debe solicitar cobertura, sin proponer banda ni afirmar una posición actual. La verificación de la tabla de Chambers Latin America 2027 no encontró una coincidencia exacta de Ramos Castillo Abogados ni de José Pablo Ramos Castillo en Real Estate Mexico; ese resultado no acredita ausencia de ranking en otros alcances o ediciones. La investigación externa es limitada: los perfiles recuperados de firmas Band 4 describen principalmente adquisiciones, arrendamientos, joint ventures, inversión y financiación inmobiliaria. La presente evidencia muestra una identidad distinta y defendible: litigio administrativo y constitucional para proteger desarrollos, permisos, uso de suelo, propiedad y posesión frente a medidas de autoridades.\n\nLa fortaleza principal es una línea coherente de mandatos directamente inmobiliarios: restricciones a la urbanización, decretos ambientales y territoriales, expropiaciones, delimitación entre propiedad privada y zonas públicas, y medidas cautelares para sostener la continuidad de proyectos. La vulnerabilidad es que buena parte de los asuntos sigue pendiente o cuenta con tutela cautelar, no con decisión definitiva; además, la selección no acredita una práctica transaccional de adquisiciones, financiamiento o inversión inmobiliaria. La narrativa debe sostener exactamente esa diferenciación, sin convertir suspensiones, legitimación procesal o pretensiones de restitución en resultados finales.\n\nEl Cielo Country Club es el hero frente a Duranpark porque une un desarrollo identificable, restricciones directas a la urbanización derivadas de decretos públicos, dos amparos y resultados posteriores claramente delimitados: la confirmación colegiada del amparo de 2018 y la ejecución, en julio de 2024, de la sentencia obtenida en el amparo de 2021, únicamente respecto de los inmuebles del cliente. Duranpark conserva gran peso por la suspensión definitiva sobre un inmueble de 207.5306 hectáreas, pero la audiencia constitucional sigue pendiente.\n\nEl objetivo propuesto es cobertura en Chambers Real Estate Mexico; no hay un objetivo de ranking suministrado ni evidencia para formular una predicción de banda.",
+      "portfolio": "**Cartera recomendada — núcleo, en orden estratégico.**\n\n1. **El Cielo Country Club — hero.** José Pablo Ramos Castillo lideró dos amparos frente a decretos estatales y municipales que declararon el área del desarrollo como zona natural protegida y detuvieron su urbanización. El Sexto Tribunal Colegiado Administrativo confirmó el amparo de 2018; el amparo de 2021 produjo la nulidad del programa ecológico únicamente respecto de los predios del cliente y esa sentencia fue ejecutada en julio de 2024. Valor reportado: MXN 3.000.000.000,00.\n\n2. **Duranpark.** El equipo impugnó mediante amparo indirecto el decreto expropiatorio que afectó el Durango Logistics and Industrial Center, de 207.5306 hectáreas, después de que se rechazara la inscripción del título. Obtuvo suspensión definitiva para proteger propiedad, posesión y actos administrativos o registrales vinculados al decreto; la audiencia constitucional permanece pendiente. José Pablo Ramos Castillo lidera. Valor reportado: MXN 698,400,750.00.\n\n3. **Diageo.** Edgar Adrián Moro López lidera la defensa de un proyecto agroindustrial en La Barca frente a obstáculos municipales para renovar o ampliar licencias que permiten procesos de urbanización. La firma promovió el juicio de nulidad 2017/2024 y obtuvo una medida cautelar que permite continuar procesos constructivos y operaciones autorizadas. Asunto activo. Inversión reportada: MXN 1,000,000,000.00.\n\n4. **Inmobiliaria Desarrollo La Primavera.** José Pablo Ramos Castillo lidera la estrategia, incluido el amparo 932/2017 y prueba pericial de identificación inmobiliaria, frente a una recuperación administrativa que presuntamente invadió propiedad privada en Zapopan. El cliente obtuvo legitimación para solicitar compensación expropiatoria o restitución; ninguna de esas vías debe presentarse como obtenida. Asunto en curso. Valor aproximado: MXN 100,000,000.00.\n\n5. **Mandato confidencial: afectación gubernamental de inmueble en Zapopan.** José Pablo Ramos Castillo lidera un nuevo amparo relativo a una propiedad de 11,283.33 m². Tras analizar, entre otros elementos, el régimen matrimonial de los titulares, el equipo identificó una vía para solicitar la recuperación del inmueble o, subsidiariamente, indemnización. Asunto en curso. Valor aproximado: MXN 150,000,000.00.\n\n6. **Mandato confidencial: impugnación de NOM-247-SE-2021.** La firma promovió un amparo para una empresa de desarrollo residencial contra la norma sobre información comercial, publicidad y contratos relativos a inmuebles de uso habitacional. José Pablo Ramos Castillo lidera; el juicio espera sentencia definitiva. El importe indicado es una estimación ante una afectación alegada indeterminada, por lo que no debe tratarse como valor fijo del asunto.\n\n7. **Mandato confidencial: terreno afectado por cesión y transferencias públicas en Tonalá.** José Pablo Ramos Castillo dirige la estrategia para buscar la nulidad de actos administrativos que afectaron aproximadamente diez hectáreas y que culminaron en la incorporación del área como propiedad nacional. La recuperación o indemnización son objetivos del litigio, no resultados obtenidos.\n\n8. **Edificaciones y Construcciones San Carlos.** La firma defiende en curso un desarrollo en San Pedro Tlaquepaque después de que un amparo contra licencias y autorizaciones del proyecto derivara en la suspensión de actividades de movimiento de material geológico. José Pablo Ramos Castillo lidera la defensa para contrarrestar esa medida y sostener la continuidad del proyecto. Valor aproximado: MXN 200.000.000,00.\n\n9. **Conciencia Ambiental Devangary.** José Pablo Ramos Castillo dirige el amparo sobre la demarcación, acceso e intervención municipal en un predio de La Paz. La firma diseñó la estrategia para frenar actos que afectarían la propiedad; el asunto está en revisión para sentencia final y la suspensión sigue vigente.\n\n10. **Rosa Dorina Ochoa Gamboa.** José Pablo Ramos Castillo lidera un amparo en etapa probatoria relativo a la delimitación entre propiedad privada y un cauce subterráneo con zona federal. El mandato exige prueba técnica sobre la clasificación de parte del predio y la posible compensación; no existe resultado definitivo reportado.\n\n11. **IDEX – Brasilia.** La firma actuó respecto de un desarrollo vertical de 328 viviendas y 20 unidades comerciales y logró revocar cuatro suspensiones que habían ordenado su cierre por alegaciones ambientales. José Pablo Ramos Castillo lideró. La contribución seleccionada es esa revocación documentada; no debe describirse el asunto como una victoria definitiva integral porque la fuente también contiene una referencia no conciliada a una decisión adversa de la Suprema Corte. Valor reportado: MXN 1.300.000.000,00.",
+      "leadership": "**Estrategia individual — José Pablo Ramos Castillo.** Es socio fundador según la fuente institucional y figura como lead partner en diez mandatos inmobiliarios del núcleo. La evidencia personalmente atribuida es amplia: lideró los dos amparos de El Cielo Country Club; el amparo indirecto y la estrategia frente al decreto expropiatorio de Duranpark; el amparo 932/2017 y la prueba pericial de identificación inmobiliaria para Inmobiliaria Desarrollo La Primavera; y los mandatos confidenciales relativos a afectaciones gubernamentales de inmuebles, NOM-247-SE-2021 y el terreno en Tonalá. También es lead partner en la defensa del desarrollo de Tlaquepaque, la controversia de La Paz, el asunto de Lomas del Valle y Brasilia.\n\nLa candidatura debe presentarse como **Up and Coming**, no como reconocimiento establecido. La categoría propuesta responde a liderazgo repetido y directamente atribuido en asuntos de uso de suelo, continuidad de desarrollos, expropiación, propiedad y regulación residencial. La condición de socio excluye cualquier posicionamiento de asociado. No se justifica una categoría de banda individual: no se aportaron referencias de clientes, biografía profesional desarrollada, trayectoria, publicaciones o reconocimientos externos que complementen los mandatos.\n\nLa observación individual de Chambers para Real Estate Mexico no encontró una coincidencia exacta de persona y firma en la tabla consultada. Es una limitación circunscrita a esa tabla y no prueba que el abogado no esté reconocido en otra práctica o edición. Tampoco se recuperó comentario externo sobre él. Por ello, la candidatura individual debe descansar en su papel de lead partner, sin trasladarle resultados o responsabilidades de otros abogados.\n\nLa bio propuesta es coherente con la evidencia: liderazgo de litigios administrativos y constitucionales sobre restricciones de uso de suelo, permisos de desarrollo, medidas expropiatorias y protección de propiedad privada. La siguiente mejora concreta es aportar referencias de clientes capaces de describir su liderazgo, criterio técnico y respuesta en estos mandatos, y confirmar actividad relevante durante el periodo de investigación.",
+      "evidence_gaps": "**Reservas y exclusiones comparativas.**\n\n**Villas del Colli** es la reserva más cercana a El Cielo Country Club: ambos tratan restricciones ambientales y de ordenamiento sobre inmuebles. No obstante, Villas del Colli declara a la vez que la firma logró restitución del derecho de propiedad y un precedente jurisdiccional, mientras el estado del asunto sigue registrado como “ongoing”. El Cielo prevalece porque su resultado está delimitado por decisiones y ejecución de 2024; Villas del Colli debe mantenerse en reserva hasta precisar el alcance y estado procesal del resultado afirmado.\n\n**Inmobiliaria MIDI** sería una alternativa relevante frente a Duranpark por su conexión con ordenamiento territorial y derechos de uso de un predio destinado a vivienda. Sin embargo, la fuente atribuye el decreto al Gobernador de Jalisco y sitúa el predio en León, Guanajuato. Duranpark ofrece una base más segura: activo identificado, problema de inscripción y expropiación, y suspensión definitiva vigente. MIDI queda en reserva hasta reconciliar autoridad, instrumento aplicable y ubicación del inmueble.\n\n**SMB Promotora** queda por detrás de Inmobiliaria Desarrollo La Primavera. Aporta una suspensión contra un embargo de activos de una desarrolladora, pero la cuestión jurídica es una orden de cobro municipal. La Primavera añade afectación directa a propiedad, pericial de identificación inmobiliaria y amparo relacionado con una recuperación administrativa; por ello contribuye de manera más clara a la narrativa de Real Estate.\n\n**Holcim México Operaciones** y el asunto de **impuesto predial** de un cliente confidencial son reservas genuinas, pero no desplazan al núcleo: el primero trata autorizaciones operativas de plantas y el segundo una devolución por sobrevaluación catastral. Ambos son más estrechos o menos centrales que los asuntos seleccionados de propiedad, uso de suelo, desarrollo y expropiación. Los mandatos de concesión de alumbrado, movilidad, licitaciones de obra y litigios fiscales se excluyen porque la actividad o sector del cliente no transforma su objeto jurídico en trabajo inmobiliario.",
+      "next_steps": "1. Confirme la ventana de investigación aplicable o la actividad material de los asuntos seleccionados dentro de ella.\n2. Complete el nombre del departamento y el número de socios y abogados para los datos de presentación de Ramos Castillo Abogados.\n3. Aporte referencias de clientes para José Pablo Ramos Castillo que puedan validar su liderazgo en litigios inmobiliarios seleccionados.\n4. Aclare el alcance de la decisión de la Suprema Corte mencionada en Brasilia antes de ampliar cualquier descripción del resultado más allá de la revocación de cuatro suspensiones.",
+      "next_actions": [
+        {
+          "message": "Confirme la ventana de investigación aplicable o la actividad material de los asuntos seleccionados dentro de ella.",
+          "kind": "period"
+        },
+        {
+          "message": "Complete el nombre del departamento y el número de socios y abogados para los datos de presentación de Ramos Castillo Abogados.",
+          "kind": "filing"
+        },
+        {
+          "message": "Aporte referencias de clientes para José Pablo Ramos Castillo que puedan validar su liderazgo en litigios inmobiliarios seleccionados.",
+          "kind": "references"
+        },
+        {
+          "message": "Aclare el alcance de la decisión de la Suprema Corte mencionada en Brasilia antes de ampliar cualquier descripción del resultado más allá de la revocación de cuatro suspensiones.",
+          "kind": "matters"
+        }
+      ]
+    },
+    "node_events": [
+      {
+        "node": "editor",
+        "seconds": 44.482,
+        "status": "completed"
+      },
+      {
+        "node": "release",
+        "seconds": 0.003,
+        "status": "completed"
+      }
+    ]
+  }
+}

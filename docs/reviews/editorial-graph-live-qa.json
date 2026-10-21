@@ -1,0 +1,194 @@
+{
+  "scope": "Synthetic live model graph; no DB/browser or rendering. Grounded case requires completed review, not automatic approval.",
+  "results": [
+    {
+      "case": "grounded",
+      "check": "complete review; editorial approval recorded separately",
+      "passed": true,
+      "seconds": 22.5,
+      "strategy": {
+        "matters": [
+          {
+            "matter_id": "qa-1",
+            "disposition": "core",
+            "rationale": "Relevant, evidenced Mexican tax-dispute mandate. The firm’s role, court, lead lawyer, amount, pending status, and publication authorization are stated. It may be used only with its pending status and without implying a ruling or recovery.",
+            "source_quote": "Synthetic Aurora Legal represented Synthetic Buyer in a tax appeal before the Mexican Federal Administrative Justice Court in 2026. Partner Sofia Vega led the representation. The disputed assessment is MXN 1000000. The appeal remains pending; no ruling or financial recovery has occurred. Publication is explicitly authorized."
+          }
+        ],
+        "hero_matter_id": "qa-1",
+        "pending_questions": [],
+        "thesis": "The supplied evidence supports one publishable, pending tax appeal before the Mexican Federal Administrative Justice Court, led by Sofia Vega. No outcome, recovery, broader team information, geographic footprint, or market ranking is evidenced."
+      },
+      "letter": {
+        "executive_assessment": "The validated strategy supports a narrowly scoped Chambers Mexico Tax submission centred on one publishable matter: a pending tax appeal. The evidence supports the firm’s tax-disputes positioning, Sofia Vega’s role on the mandate, the court, the disputed assessment of MXN 1,000,000, and the absence of any ruling or financial recovery. No ranking, market position, broader footprint or team-size claim should be made.",
+        "portfolio": "Use qa-1 as the sole core and hero matter across the submission and related internal materials. Synthetic Aurora Legal represented Synthetic Buyer in a 2026 tax appeal before the Mexican Federal Administrative Justice Court. Sofia Vega led the representation. The disputed assessment is MXN 1,000,000. The appeal remains pending; the materials expressly state that no ruling or financial recovery has occurred. Publication is explicitly authorized.",
+        "leadership": "The supplied B10 text states that Sofia Vega, a partner, leads the department. The mandate evidence independently supports that she led the representation in qa-1. Keep these propositions distinct: the matter supports lead responsibility on that appeal, while the departmental-lead statement is limited to the supplied B10 evidence. Do not add claims about other lawyers, team depth or individual directory recognition.",
+        "evidence_gaps": "The evidence supports only one matter and does not establish an outcome, recovery, wider tax capability, team size, geographic footprint or market ranking. No ranking claim is currently made, so no ranking verification is required for the proposed narrow narrative. If any ranking or lawyer-recognition statement is introduced, obtain official, scope-matched verification or remove it. Do not recast the pending appeal as a result.",
+        "next_steps": "Retain the existing matter wording with its pending-status qualifier and MXN currency. Maintain qa-1 as the sole canonical hero selection. Before expanding the submission, obtain source-supported, publication-authorized matters that identify the legal mandate, the firm’s role, relevant dates, responsible lawyers and current status. No correction is required to the validated core matter."
+      },
+      "judge": {
+        "passed": true,
+        "defects": []
+      },
+      "release": {
+        "passed": true,
+        "status": "passed",
+        "errors": []
+      },
+      "trace": [
+        {
+          "role": "strategist",
+          "seconds": 5.823,
+          "usage": {
+            "input_tokens": 1155,
+            "output_tokens": 262,
+            "total_tokens": 1417,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 64
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1"
+        },
+        {
+          "role": "writer",
+          "seconds": 9.189,
+          "usage": {
+            "input_tokens": 1266,
+            "output_tokens": 699,
+            "total_tokens": 1965,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 277
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1"
+        },
+        {
+          "role": "editor",
+          "seconds": 7.479,
+          "usage": {
+            "input_tokens": 1815,
+            "output_tokens": 479,
+            "total_tokens": 2294,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 460
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1"
+        }
+      ]
+    },
+    {
+      "case": "invented_outcome",
+      "check": "reject fabricated outcome",
+      "passed": true,
+      "seconds": 23.04,
+      "strategy": {
+        "matters": [
+          {
+            "matter_id": "qa-1",
+            "disposition": "core",
+            "rationale": "Relevant Mexico tax-dispute mandate with a specified court, identified lead partner, stated amount in dispute, and express publication authorization. It remains pending, so it must not be described as a win, recovery, or completed result. The supplied optimized text materially conflicts with the source and requires correction before use.",
+            "source_quote": "Synthetic Aurora Legal represented Synthetic Buyer in a tax appeal before the Mexican Federal Administrative Justice Court in 2026. Partner Sofia Vega led the representation. The disputed assessment is MXN 1000000. The appeal remains pending; no ruling or financial recovery has occurred. Publication is explicitly authorized."
+          }
+        ],
+        "hero_matter_id": "qa-1",
+        "pending_questions": [
+          "Critical defect: remove or replace the optimized text, “The team won the appeal and recovered MXN 9000000 for the client.” The matter source instead states: “The appeal remains pending; no ruling or financial recovery has occurred.”",
+          "If a public matter description is prepared, retain the pending status and the stated disputed assessment of MXN 1000000; do not characterize it as a recovery or outcome."
+        ],
+        "thesis": "One evidenced, publication-authorized Mexico tax appeal before the Mexican Federal Administrative Justice Court, led by Sofia Vega and pending with MXN 1000000 in dispute."
+      },
+      "letter": {
+        "executive_assessment": "The validated strategy supports a single core and hero matter for Chambers Tax, Mexico: qa-1. It is an evidenced, publication-authorized tax appeal before the Mexican Federal Administrative Justice Court, with Sofia Vega identified as lead partner. The appeal is pending. Delivery is blocked until the conflicting optimized text is removed or replaced, because it asserts a win and recovery contrary to the matter record.",
+        "portfolio": "Use qa-1 as the sole selected matter and hero matter across the submission and related materials. The record states that Synthetic Aurora Legal represented Synthetic Buyer in a 2026 tax appeal before the Mexican Federal Administrative Justice Court; the disputed assessment is MXN 1000000. Sofia Vega led the representation. Do not add matters or pad the portfolio. The firm description may state that the firm advises on tax disputes in Mexico and that Sofia Vega leads the department, as supplied.",
+        "leadership": "The matter evidence identifies Sofia Vega as the lead partner for qa-1. The firm description identifies her as the department lead. These facts support attribution of the representation to her, but do not establish any ranking, broader team size, geographic footprint or other unprovided credentials.",
+        "evidence_gaps": "The optimized text is a critical factual conflict: “The team won the appeal and recovered MXN 9000000 for the client.” The source instead states that the appeal remains pending, with no ruling and no financial recovery. No firm ranking claim is included or verified; none should be added without scoped official ranking verification. No outcome should be stated or implied while the appeal remains pending.",
+        "next_steps": "Replace the optimized text only with a source-faithful pending-matter description, retaining the court, 2026 reference, Sofia Vega’s lead role, and MXN 1000000 disputed assessment where needed. State that the appeal remains pending and omit any win, recovery, ruling or completed-result language. Retain the express publication authorization. Re-review the rendered submission after this correction before release."
+      },
+      "judge": {
+        "passed": false,
+        "defects": [
+          {
+            "severity": "critical",
+            "scope": "submission",
+            "matter_id": "qa-1",
+            "message": "The optimized text claims that the team won the appeal and recovered MXN 9000000, directly contradicting the source, which says the appeal remains pending, the disputed assessment is MXN 1000000, and no ruling or financial recovery has occurred. Remove or replace the optimized text with a source-faithful pending-matter description, then re-review the final rendered artifact before release."
+          }
+        ]
+      },
+      "release": {
+        "passed": false,
+        "status": "needs_review",
+        "errors": [
+          "Editorial review did not approve this package.",
+          "The optimized text claims that the team won the appeal and recovered MXN 9000000, directly contradicting the source, which says the appeal remains pending, the disputed assessment is MXN 1000000, and no ruling or financial recovery has occurred. Remove or replace the optimized text with a source-faithful pending-matter description, then re-review the final rendered artifact before release."
+        ]
+      },
+      "trace": [
+        {
+          "role": "strategist",
+          "seconds": 4.789,
+          "usage": {
+            "input_tokens": 1114,
+            "output_tokens": 396,
+            "total_tokens": 1510,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 110
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1"
+        },
+        {
+          "role": "writer",
+          "seconds": 7.819,
+          "usage": {
+            "input_tokens": 1315,
+            "output_tokens": 586,
+            "total_tokens": 1901,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 174
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1"
+        },
+        {
+          "role": "editor",
+          "seconds": 10.428,
+          "usage": {
+            "input_tokens": 1854,
+            "output_tokens": 633,
+            "total_tokens": 2487,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 516
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1"
+        }
+      ]
+    }
+  ]
+}

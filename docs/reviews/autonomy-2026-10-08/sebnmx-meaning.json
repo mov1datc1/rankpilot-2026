@@ -1,0 +1,22 @@
+{
+  "interpretations": [
+    {
+      "index": 0,
+      "disposition": "core",
+      "quote": "Grupo Radio Centro, en cambio, se mantiene como asunto core por añadir investigación interna sensible y prevención de controversias.",
+      "reason": "La cláusula clasifica expresamente a Grupo Radio Centro como asunto core."
+    },
+    {
+      "index": 1,
+      "disposition": "comparison",
+      "quote": "Securitas y Natividad Abogados muestran volumen, pero menos detalle jurídico que Cinemex, Volkswagen y los asuntos colectivos del núcleo.",
+      "reason": "Cinemex aparece únicamente como referencia comparativa frente a Securitas y Natividad Abogados; la cláusula no reclasifica expresamente el asunto Cinemex."
+    },
+    {
+      "index": 2,
+      "disposition": "core",
+      "quote": "SEBNMX se mantiene como asunto core: aporta un proyecto definido de actualización de reglamentos, contratos, políticas y comisiones mixtas para una plantilla aproximada de 2.000 personas.",
+      "reason": "La cláusula clasifica expresamente a SEBNMX como asunto core."
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "status": 200,
+  "result": {
+    "success": true,
+    "judge": {
+      "passed": false,
+      "defects": [
+        {
+          "severity": "critical",
+          "scope": "submission",
+          "matter_id": "qa-1",
+          "message": "The matter is presented under “Publishable Work Highlights in last 12 months,” but the supplied facts provide only the year 2026 and no submission-cycle cutoff or sufficiently precise activity date. Its eligibility for that period is therefore unverified. Obtain and verify the relevant work date against the submission period, or remove the matter from this section."
+        },
+        {
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": "qa-1",
+          "message": "Public sections contain internal selection, permission and evidence-gap commentary: “Hero Matter,” “The supplied mandate,” “Publication is explicitly authorized,” and “No broader team size, geographic footprint or market ranking is claimed.” Remove these process notes from B10 and D while retaining the supported substantive description and pending-status qualifier."
+        },
+        {
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": "qa-1",
+          "message": "D8 is blank even though the source expressly states that the appeal remains pending. Populate D8 with “Pending”; the status appearing in D2 prevents a contradiction but does not cure the incomplete dedicated field."
+        },
+        {
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "B7 is blank despite supplied support that Sofia Vega leads the department. Add her name to B7 while leaving unsupported email and telephone details blank. A4 is also empty; obtain an authorized interview contact before filing if Chambers requires that field."
+        }
+      ]
+    },
+    "trace": [
+      {
+        "role": "editor",
+        "seconds": 69.571,
+        "usage": {
+          "input_tokens": 2949,
+          "output_tokens": 5452,
+          "total_tokens": 8401,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 5143
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v1.1"
+      }
+    ]
+  }
+}

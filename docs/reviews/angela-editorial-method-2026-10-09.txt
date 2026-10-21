@@ -1,0 +1,29 @@
+Revisión transversal de la conversación de Ángela — 9 de octubre de 2026
+
+La conversación adjunta informa el método editorial, nunca los hechos del expediente. No se incorporaron su objetivo de banda, héroe preferido, lista de 25 asuntos, versiones históricas de hechos ni supuestos comentarios de mercado al expediente actual.
+
+Cambios desarrollados:
+- Conservar explícitamente el problema jurídico que explica el valor del asunto, además de sus importes y resultados. Cita literal separada, vinculada a la fuente del mismo asunto, con reparación automática si es inválida.
+- Candidaturas comparadas por liderazgo personalmente atribuido, continuidad, contribución y evidencia externa disponible; evitar igualar a toda persona nombrada.
+- Selección y orden por aportación incremental de cada asunto; complementariedad, sin cuotas ni alternancia artificial.
+- Narrativa proporcional a la riqueza de la evidencia, sin imponer número de párrafos. Separar contexto, obstáculo jurídico, intervención, resultado y papel personal.
+- Auditoría ejecutiva en lenguaje natural. Preguntas concretas y agrupadas para hechos que puedan cambiar una decisión.
+- Eliminación de duplicados textuales exactos en el contexto de revisión final: conserva fuente completa, razones, citas, divergencias y el documento exacto. En la muestra de DeForest, 288689 a 252034 caracteres (12,7% menos); esto no equivale a una medición del ahorro total de tokens.
+
+Hallazgos nuevos de prueba:
+- La primera ejecución sintética tenía por error nombres de cliente distintos en el campo y la narrativa. Se preserva como evidencia negativa, no se oculta ni se cuenta como ejecución positiva: los tres conflictos de identidad bloquearon la entrega.
+- Las ejecuciones limpias preservaron los mecanismos jurídicos, pero revelaron falsas incidencias por preguntas temporales internas y una afirmación generada de recencia sin fecha fuente. Se comprueba el reparador y una nueva revisión independiente, sin edición humana de la prosa.
+- El parser producía seis alertas en el original DeForest por mera coexistencia USD/MXN. Esa heurística no prueba contradicción. Se retira, preservando los dos pasajes y la revisión semántica de conflictos sobre el mismo concepto económico. No implica certificar que todos los importes fuente sean correctos.
+
+Límites: el grafo sintético con lectores DOCX/PDF no es una prueba de navegador ni del worker durable. No demuestra 9/10 ni equivalencia editorial con un evaluador humano. La revisión visual de los dos documentos actuales en Word permanece bloqueada por la conexión al ordenador. Las mejoras nuevas están en desarrollo; la publicación a main fue rechazada por auto_review y requiere aprobación exacta del usuario, solicitada y pendiente.
+
+Resultados finales de desarrollo:
+- 338 pruebas Python correctas.
+- Tres casos sintéticos: banca DOCX, fiscal PDF y PI texto. Tras la corrección de la calibración temporal y una reparación fiscal, los tres pasaron revisión independiente y habilitaron renderizado. Ninguno equivale a entrega final de Word.
+- La reparación fiscal modificó únicamente B10: retiró recent. Todos los demás campos del desarrollo, la fuente y la selección permanecieron idénticos.
+- Extracción monetaria real: los tres escenarios cumplieron, 4493 tokens.
+- Clasificación de cartera con contexto reducido: dos casos reales del modelo cumplieron, 2862 y 2850 tokens.
+- Coste de las tres pruebas iniciales con nombres contradictorios: 293186 tokens. Tres pruebas consistentes, incluyendo las reparaciones y revisiones: 323905 tokens. Total de esta batería, incluida extracción y clasificación: 627296 tokens. Se conserva toda la evidencia y no se repite DeForest en producción.
+- Alcance del ahorro: contexto final DeForest reducido 12,7% en caracteres; el revisor de pertenencia deja de cargar metodología irrelevante y un B10 con cita literal única evita comprar una llamada de localización. No se cuantifica ahorro global ni se promete un tiempo de flujo no medido.
+
+Publicación: commit35eeebe guardado y enviado sólo a dev. No contiene documentos privados. Producción mantienefc6fe73; DeForest consultado de nuevo: Optimized, revisión18, release passed, último job882completed, 32 asuntos y7abogados. Los dos DOCX actuales coinciden con los hashes guardados, ZIP íntegros y sin revisiones rastreadas. No sustituye revisar todas las páginas en Word.

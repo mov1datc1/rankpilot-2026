@@ -1,0 +1,8 @@
+{
+  "scope": "Real Builder page, mocked services; no production calls",
+  "notesPreserved": true,
+  "createCount": 1,
+  "declaredBand": "",
+  "navigated": "/reports/qa-draft?validate=true",
+  "runtimeErrors": []
+}

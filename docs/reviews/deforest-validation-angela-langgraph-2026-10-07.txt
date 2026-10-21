@@ -1,0 +1,87 @@
+VALIDACIÓN DEFOREST — SUBMISSION, AUDIT, LANGGRAPH Y RAG
+Fecha de revisión: 7 de octubre de 2026, zona America/Mexico_City.
+Alcance: solo lectura y diagnóstico; sin regenerar, modificar producción o publicar código.
+Expediente: 7f65841d-bd27-4f5b-944f-9d978aeb6616.
+Referencia de aceptación: feedback completo de Ángela pegado por Jonathan en esta conversación.
+Artefactos examinados: RankPilot_Submission_Form_Labour_&_Employment.docx y Strategic_Audit (1).docx descargados; extracción XML completa. Snapshot del expediente y consulta SELECT del historial EditorialJob. Código local correspondiente al cierre documentado 8c595b3a.
+
+VEREDICTO
+Cumplimiento parcial. La aprobación técnica del producto no acredita que se hayan satisfecho las expectativas editoriales de Ángela. Hay causas de implementación concretas: ruta Studio distinta al grafo editorial completo, ausencia de generación B9/C2, recuperación metodológica incompleta, reutilización de borradores anteriores sin procedencia y un control final orientado a defectos críticos, sin criterios suficientes de cobertura estratégica. No procede declarar el trabajo editorial plenamente terminado.
+
+1. EJECUCIÓN REAL
+El último job, 5d3ef9f9-544b-4c9e-a0a2-5bc940d5c519, terminó completed con tareas selection, audit, artifact. Solo artifact muestra una nueva llamada al editor gpt-5.6-sol en su ledger. Las etapas previas reutilizaron estado guardado: tres etapas completadas no son tres nuevas generaciones.
+En el historial de diez jobs se observan selección, B10, Audit y revisión final, además de rechazos y reparaciones. No se observa ninguna tarea matter:<id>. Los 32 registros actuales contienen borrador y carecen de draft_provenance. draftDisposition devuelve reuse para texto existente sin procedencia. Esto preserva texto humano/legacy, pero no demuestra que haya sido optimizado con la metodología actual.
+La revisión editorial acumulada contiene una llamada strategist y seis writer; el final_artifact_review contiene editor. Son roles del flujo acotado, no evidencia de ejecución de todos los nodos del grafo completo.
+
+Ruta de Studio comprobada en código:
+worker -> selection (/review-step: register, strategist, selection_gate, o reutilización)
+       -> matter, si el plan exige redactar (ninguna tarea en estos jobs)
+       -> B10, si corresponde (/optimize/b10)
+       -> audit (/review-step: writer, o reutilización)
+       -> artifact (/optimize/complete: documentos y juez posterior al render)
+
+El StateGraph de core/graph.py registra 21 nodos, incluidos ingestion, extraction, evidence_reconciliation, pre_flight, context_engine, practice_intelligence, comprehension, identity_discovery, hypothesis_construction, refutation_engine, comparative_analysis, editorial_confidence, submission_blueprint, narrative_architecture, analysis, evidence_gap_analysis, optimization, artifact_validation, constitutional_validation, interrogation y writing.
+Studio no invoca ese grafo en el recorrido examinado. No se puede afirmar que todos esos nodos pasaron para esta entrega. Que una rama condicional no corra puede ser correcto; aquí el problema es que las capacidades esperadas tampoco tienen equivalentes completos en la ruta activa.
+Además, en el grafo completo las puertas practice_intelligence y comprehension continúan incluso cuando detectan preocupaciones/baja confianza. Es un hallazgo del código, no la causa demostrada de este job de Studio.
+
+2. RAG: SÍ HAY RECUPERACIÓN, PERO NO COBERTURA SUFICIENTE
+Las trazas de strategist, writer y editor registran exactamente los mismos tres fragmentos de UNIVERSAL CHAMBERS LABOUR LOGIC.txt:
+rag-0e14054bcbd1, rag-2591427b0a2e, rag-15e8447cf657.
+Reproducción local sin IA: 8.146 caracteres recuperados de 13.575 caracteres; documento dividido en seis fragmentos, recuperados solo los tres primeros. Las huellas coinciden con producción.
+El router filtra metadatos práctica/directorio/jurisdicción, luego toma [:3] por archivo. Todos los fragmentos reciben score=1. No hay búsqueda por necesidad de la tarea ni ordenación por relevancia dentro del documento. Los fragmentos incluyen contexto de Canadá, Londres y Brasil dentro de un archivo catalogado con jurisdicción comodín; el prompt prohíbe transferir umbrales locales sin verificar, pero el filtro no elimina ese contenido irrelevante para México.
+GLOBAL_FILES enumera referencias generales, pero retrieve no utiliza esa lista. Ninguna de esas referencias está catalogada. Global Lawyer Leadership Framework y ¿Cómo rankeamos abogado_as__ existen en disco pero no llegan por este router a la revisión de DeForest. La política RP01–RP16 sí se añade por separado: no es correcto afirmar que no se aplica ninguna regla.
+Las reescrituras micro de B10 y asuntos no llaman al RAGRouter. Usan fuentes y prompts generales; B10 recibe tesis, pero no un paquete completo de evidencia de todos los asuntos seleccionados.
+No encontré una comprobación de cobertura que exija recuperar y aplicar criterios de estrategia individual, aportación marginal, C2 y arquitectura ejecutiva antes de aprobar.
+El test existente test_rag_router.py pasa (1 prueba), pero demuestra enrutamiento/procedencia con una muestra pequeña de Real Estate, no cobertura del corpus real de Labour ni cumplimiento de Ángela.
+
+3. CAUSAS DE C2 Y B9
+C2: original_c2 está vacío; enhanced_c2 y c2 no existen. generateDynamicC2 devuelve esos valores o ''. El plan de Studio no tiene una tarea de redacción C2. Por tanto, la ausencia tiene una explicación directa de código. Que el formulario lo marque opcional no satisface una petición editorial de desarrollar la defensa de inclusión.
+B9: siete perfiles guardados contienen 12–21 palabras de bio; Eduardo tiene 88 antes de proyección. curateLawyers proyecta comments/bio y anonimiza, pero no construye candidaturas a partir de los matters. strategicRationale, marketEvidence, evidenceGaps y recommendedAction se devuelven vacíos. El plan tampoco tiene tarea B9.
+No está demostrado que el render haya recortado bios largas a una línea: esas bios breves ya están almacenadas. Determinar en qué operación anterior se resumieron requiere revisar la extracción original y su historial. Lo confirmado es que el flujo actual no las desarrolla pese a tener asuntos personalmente atribuidos.
+El selector elimina lawyers e individual ranking observations de su entrada. Aunque ve nombres/roles dentro de los matters y el prompt menciona aportación marginal, no recibe la información completa de candidaturas ni produce una estrategia individual estructurada.
+
+4. PÉRDIDA DE EVIDENCIA VALIOSA
+Bonatti es el Hero Matter. Su fuente actual declara reducción de exposición de aproximadamente eighty percent y prevención de una huelga inminente. El texto final E2 conserva cifras de proyectos, litigios y trabajo realizado, pero omite ambos resultados. El Audit sí menciona la huelga evitada. Es una omisión comprobada de evidencia estratégica, no necesidad de inventar hechos ni de pedir al usuario que los proporcione otra vez.
+El control detecta principalmente afirmaciones no sustentadas; no exige que el resultado preserve los hechos decisivos de la fuente. Esto explica que un texto factual pero empobrecido supere el control.
+
+5. CONTRASTE CON LOS 12 PUNTOS DE ÁNGELA
+1 Voz Submission: mejora comprobada. No aparecen las expresiones específicas criticadas (verified evidentiary record, evidence completeness, defensibility, our analysis indicates, the audit demonstrates) en la extracción final.
+2 QA editorial: corregido el ejemplo de Eduardo: is a partner in. Sin embargo, B9 poco desarrollado y omisiones sustanciales impiden considerar cerrada la revisión integral. Paginación y visual página por página no certificadas en esta revisión.
+3 Confidencialidad global: no aparecen SKF ni Megacable en el Submission extraído. Resueltos esos ejemplos concretos; esto no equivale a certificar todos los alias y futuras combinaciones del pipeline. La política entity-level debe evaluarse además con casos de prueba de propagación.
+4 Clasificación: final con 1 asunto público (SCOTCH) y 18 confidenciales. No debe compararse mecánicamente con los 10+7 de la iteración antigua. Respeta la selección guardada; no se ha demostrado aquí que toda combinación Y/N/sin flag satisfaga exactamente la regla de Ángela. La política actual exige resolver estados pendientes, por lo que no es idéntica a inferir público siempre que no exista flag.
+5 Andrés frente a Javier: avance. El Audit reconoce cinco asuntos de Javier y no sostiene candidatura para Andrés sin asuntos personalmente atribuidos. Pendiente cerrar recomendación de categoría de Javier: continúa como verificar Associate to Watch, con rol de socio declarado.
+6 Individual Ranking Strategy: incompleto. No hay ocho campos exigidos por candidato con recomendación, evidencia, rol, reputación, brechas y acción resueltos. B9 sigue sin desarrollar el caso que el Audit identifica.
+7 Flagships: Schaeffler, Bonatti, Brose y GeNI están incluidos. Hero cambió a Bonatti; no es automáticamente incorrecto, pero falta justificar comparativamente el cambio frente a Schaeffler. Bonatti pierde resultados decisivos en Submission.
+8 Middle/tail: avance en selección (Mextypsa, BADAK, Benteler dentro; Sirushi fuera; Natividad reserva). Bosch tiene una razón interna de reserva, pero el Audit no explica esa comparación y las razones siguen siendo generales frente al tail. No hay aceptación completa.
+9 Orden por aportación incremental: solicitado en prompt, no demostrado por una comparación concreta de alternativas ni por un control de aceptación. No basta con rotular orden estratégico.
+10 Consistencia: en el Audit actual no se repite la contradicción de poner los mismos cinco asuntos simultáneamente en reserva y core. Ramsa figura en reserva. Selección final reconciliada, aunque su cierre incluyó corrección humana previa; no es prueba de autonomía completa del motor.
+11 Longitud y métricas: Audit de 844 palabras totales, sin el warning Insufficient Evidence for Full Analysis ni métricas de 0% no calculado. Mejora clara. Aún contiene lenguaje de estado del producto y advertencias genéricas.
+12 Documento ejecutivo: parcial. Cinco secciones, pero Executive assessment no resuelve claramente recomendación de presentación, target razonado y vulnerabilidad principal; reservas incluidas en el portafolio, estrategia individual incompleta. No certificado el objetivo visual de 3–5 páginas. El prompt impone 700 palabras al cuerpo: una restricción adicional de implementación, no equivalente a la arquitectura de 3–5 páginas solicitada.
+
+6. POR QUÉ EL JUEZ LO APROBÓ
+El editor exige ausencia de defectos críticos, y release_gate valida ese veredicto junto con permisos, valores, roles y fuentes. No hay un contrato que exija C2 cuando fue solicitado, profundidad de candidaturas, ocho campos por candidato, conservación de resultados clave ni una comparación del tail. La final_artifact_review de este expediente devuelve passed=true con dos advertencias de metadatos opcionales; no detectó estas carencias.
+El esquema Letter exige cinco cadenas de texto, no el contenido estratégico estructurado de cada sección. Pedir criterios en un prompt no garantiza verificarlos. Las pruebas de contrato verdes y hashes correctos prueban propiedades distintas a calidad editorial suficiente.
+
+7. CONDICIONES PARA CERRAR EL TRABAJO DE VERDAD
+A. Alinear una ruta efectiva de producción con las capacidades prometidas; traza por etapa que distinga ejecución, reutilización y no aplicabilidad. No basta con volver a activar todos los nodos indiscriminadamente.
+B. RAG por tarea y ámbito, con referencias revisadas, cobertura de reglas y procedencia; no cargar sin revisión todo el corpus ni medir calidad por volumen de contexto.
+C. Generación sustentada de B9/C2 y estrategia individual estructurada conectada a roles en matters, sin inventar ranking o trayectoria.
+D. Preservación de evidencia decisiva: resultados y contribución personal de fuente deben llegar al documento cuando justifican su selección; registrar cualquier omisión justificada.
+E. Comparación concreta del tail y alternativas, con aportación incremental; explicar el Hero y las categorías sugeridas.
+F. Separar validación factual de aceptación editorial y comprobar ambas sobre los DOCX finales. Pruebas de regresión con este expediente y el feedback real de Ángela.
+
+REFERENCIAS DE IMPLEMENTACIÓN
+src/lib/editorial/runner.ts: ejecución real y ledger.
+src/lib/editorial/jobs.ts: planDrafting sin B9/C2.
+src/lib/editorial/contracts.ts: draftDisposition reutiliza borradores sin procedencia.
+src/lib/audit/review-checkpoint.ts: etapas strategy/writer/done y entradas.
+ai-engine/main.py: /review-step y optimizadores micro.
+ai-engine/core/graph.py: grafo completo distinto al recorrido examinado.
+ai-engine/core/review_graph.py: roles, schemas, criterio del juez y release_gate.
+ai-engine/utils/rag_router.py: recuperación [:3], score fijo y catálogo.
+ai-engine/config/rag_catalog.v2.json: ámbito de referencias habilitadas.
+ai-engine/agents/micro_optimizer.py: reescritura sin RAGRouter.
+src/lib/docx/lawyer-curator.ts: B9 como proyección de registros.
+src/app/api/generate-docx/submission-builder.ts: C2 como valor existente o vacío.
+
+Limitaciones: no se pagó ni ejecutó una nueva generación; no se certificó visualmente cada página del Word ni se sometió el resultado a Ángela. El diagnóstico diferencia hechos comprobados, carencias del contrato y aspectos aún no certificados. No se modificaron fuentes ni la aprobación almacenada durante esta validación.

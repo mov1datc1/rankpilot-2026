@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-09T05:38:33.205Z",
+  "all_source_fields_equal_by_id": true,
+  "original_hash": "1abe6d51612c9fb0284e1cc39b1a29a27ae45a7b1031a5c31127a4bb361b89d9",
+  "current_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+  "normalized_source_hash": "f31e572257203ab8c867f40263e35312ef1d5f04c73e189a0901e524deaa08ea",
+  "source_order_changed": true,
+  "matters": 32,
+  "regression_fixed_by": "06c2014",
+  "production_review_fix": "b0e898e",
+  "original_source_preserved": true
+}

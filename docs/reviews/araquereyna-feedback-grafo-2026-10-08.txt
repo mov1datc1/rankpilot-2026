@@ -1,0 +1,64 @@
+ARAQUEREYNA TAX — CONTRASTE DE FEEDBACK, GRAFO Y RAG
+Fecha: 7 octubre México / 8 octubre 2026 UTC.
+
+ALCANCE Y AUTORÍA
+Leídas las 723 líneas del intercambio adjunto. Se priorizan observaciones de Ángela; el correo de Jonathan del 17 de septiembre afirma correcciones, pero no prueba su efectividad. La respuesta posterior de Ángela vuelve a detectar fallos. Se distinguen tres iteraciones: registro vacío; registro recuperado con errores de entidades/Audit; mejoras estratégicas con inconsistencias persistentes. No se han recibido aquí el DOCX original 2024, los artefactos de aquellas corridas ni sus trazas. No afirmar que los errores históricos están presentes o resueltos en una nueva ejecución ARAQUEREYNA sin reproducirla.
+
+CONCLUSIÓN CONSOLIDADA
+DeForest: se pierde precisión estratégica entre evidencia, candidaturas y entrega.
+Ramos Castillo: una clasificación jurídica falsa puede sostener una exclusión aparentemente razonada.
+ARAQUEREYNA: identidad, ranking, jurisdicción y hechos pueden divergir entre secciones, y metodología interna no equivale a inteligencia competitiva externa.
+La solución debe ser transversal: hechos y decisiones versionados compartidos, controles semánticos por responsabilidad, corpus bien delimitado y relectura real de ambos documentos. No convertir nombres históricos en reglas universales.
+
+REQUISITOS DERIVADOS DE ÁNGELA
+1. Lectura del documento no equivale a extracción estructurada. Numeración irregular no debe producir cero asuntos cuando hay texto legible. Registrar detecciones, objetos aceptados, pendientes y causa; no emitir completeness=0 como si significase ausencia probada de evidencia.
+2. Clientes, asuntos y personas tienen identidades distintas y relaciones explícitas. SUMMUS debe conservar identidad coherente entre D0/D1/D2/B10/C2/Audit; no inventar sector. María Alejandra García Nieto no puede dividirse por espacios ni perder sus campos/links. No fusionar todos los asuntos de un cliente en uno.
+3. Ranking declarado histórico, observación oficial acotada y ranking propuesto son campos diferentes. La propuesta Band 1 de María Carolina no se convierte en posición actual. Los estados citados por Ángela describen su revisión histórica, no un ranking vigente verificado hoy.
+4. Gabriel Ruán: reconocimiento externo + participación actual demostrada por fuentes pueden aportar valor conjunto. Ni prestigio histórico prueba actuación actual, ni falta de coincidencia en una búsqueda prueba Unranked.
+5. Individual Ranking Strategy debe alimentar B9 y el argumento B10/C2, incluyendo profundidad del equipo y sucesión cuando estén sustentadas. Categorías concretas y motivos, sin fabricar evidencia para rellenar.
+6. Hero correcto no basta: adquisición Pampero no debe transformarse en litigio fiscal en el Audit. Mismo ID debe conservar problema jurídico, acción y resultado; el Audit puede evaluar esos hechos, no inventar otros.
+7. Aislamiento de país/práctica/directorio/edición/corrida. Una autoridad extranjera requiere soporte en el asunto; no basta prohibir todas por país porque puede existir trabajo transfronterizo real. Nunca corregir una autoridad solo sustituyendo siglas.
+8. Cross-border: narrativa y campo deben reconciliarse con hechos y jurisdicciones concretas. La mención de tratados exige evaluación; no permite forzar Sí ni No por nombre del cliente. Tecnipiscinas es un caso de regresión, no una excepción codificada.
+9. Portfolio de origen, core, reserva y exclusiones deben reconciliar todos los IDs. 22→19 es válido si las tres decisiones se explican; los clientes adicionales no pueden figurar como core en Audit sin estar seleccionados.
+10. Matter-specific evidence: identificar el hecho diferenciador por asunto; ante una carencia material, formular pregunta concreta con consecuencia estratégica. No pedir al usuario hechos ya presentes ni exigir que complete asuntos descartados sin necesidad.
+11. Prosa persuasiva por evidencia, sin superlativos ni bloques formulaicos. Mantener lo que ya funciona de la redacción.
+12. Texto de plantilla legítimo en rótulos no es fuga. Texto de instrucciones incrustado en una respuesta generada sí debe detectarse y repararse sin borrar partes del formulario.
+13. Releer DOCX de Audit y Submission: identidad, hechos del héroe, ranking actual/propuesto, moneda/tipo de valor, país, practice fit, cross-border, atribución, confidencialidad, selección y completitud.
+14. No declarar Verified for Directory, 100% o market calibrated sin evidencia del control o investigación correspondiente. Una puntuación interna no prueba probabilidad de ranking.
+15. Metodología propia debe identificarse como RankPilot; no atribuir preferencias a Chambers sin fuente verificable.
+
+COMPROBACIONES DE CÓDIGO ACTUAL
+A. utils/ranking_verifier.py distingue firma y persona, requiere persona+firma y alcance; registra fecha, URL/hash, edición y estado. No interpreta not_found como ausencia global. verify_ranking_claim reutiliza una tabla para candidatos.
+LIMITACIÓN: su resultado contiene observaciones de firma/personas, no el análisis completo de competidores, perfiles editoriales, trayectoria histórica y diferencias que pide Ángela. Que benchmark_scraper obtenga una tabla con competidores no demuestra que el grafo haga esa síntesis. review-step ejecuta verificación en strategy/development: no afirmar cero repetición de consulta sin inspeccionar caché y trazas reales.
+
+B. utils/rag_router.py + config/rag_catalog.v2.json: Tax Chambers tiene una referencia con jurisdiction=*. Prueba LOCAL sin red ni IA: retrieve('Tax','Chambers & Partners','Venezuela', task='strategist portfolio tax matters legal complexity outcome role sector diversity') recupera fragmentos con Mexico/SAT del archivo Rankpilot Tax Guides Context Mapping - Chambers.txt (rag-5c57839f1b9d, rag-1105dc10194f). Esto demuestra exposición a contexto mexicano, no que el modelo necesariamente lo copie ni la causa probada de la corrida histórica. El aviso de que RAG no es evidencia ayuda, pero no sustituye segmentación de reglas por alcance.
+
+C. core/review_graph.py pide revisión fuente/estrategia/Audit/artefactos. Hay gate final y verificación de selección; ya no corresponde decir que no existe QA. La cobertura semántica de los errores señalados necesita tests y evidencia de ejecución, no solo prompts amplios.
+
+D. Código heredado judge-sol-evaluator.ts contiene sustitución SAT→SENIAT según país y regla por nombre Tecnipiscinas→No cross-border. Búsqueda en src/ai-engine/tests no encontró invocaciones de autoPolishAndHealDeliverables ni evaluateJudgeSolSubmission fuera de sus definiciones. No atribuirle efectos actuales: es deuda de código que no debe reactivarse como solución general.
+
+E. artifact-integrity-check.ts sí es llamado por submission-builder.ts. Incluye controles de texto de plantilla/confidencialidad, pero también reglas específicas por clientes (ADM Hermosillo, Conciencia Ambiental) y lista jurisdiccional sin comprobar en ese bloque si la mención está respaldada por fuente. Deben revisarse por posibles falsos positivos y reemplazarse por contratos generales basados en evidencia. No se ejecutó aquí un expediente para demostrar activación concreta.
+
+ENTREGABLES QUE DEBE EXIGIR EL GRAFO
+- Extracción/reconciliación: inventario completo + identidades + relación matter/cliente/abogado + preguntas preeditoriales.
+- Comprensión jurídica: hechos, trabajo, estado y encaje por asunto, sustentados y revisados.
+- Recuperación metodológica: manifiesto de reglas con alcance y procedencia, sin colar ejemplos como hechos.
+- Investigación externa: observaciones oficiales de firma/personas y conjunto de comparación, con edición/fecha y cobertura; unavailable explícito cuando falte.
+- Síntesis: target y categorías razonados, portfolio comparativo, evidencia/gaps y vínculo con posicionamiento.
+- Desarrollo/Audit: salidas distintas que consumen las mismas decisiones versionadas.
+- Editor/release: revisión semántica y de artefactos, reparaciones acotadas, hashes y estados honestos.
+Cada uno necesita condición de aceptación y recuperación; no basta contar nodos. Confirmar confidencialidad ausente durante extracción, conforme aclaración expresa de Jonathan.
+
+REGRESIONES A CONSOLIDAR
+- María Carolina: current != target; Gabriel: reconocimiento != participación actual.
+- María Alejandra: una persona, nombre completo, rol/ranking/links preservados.
+- Pampero: misma operación en ambos documentos.
+- SUMMUS: una identidad sustentada en todas las secciones.
+- Tecnipiscinas: contradicción narrativa/campo detectada sin respuesta codificada.
+- Venezuela con SAT no sustentado: reparar con fuente, no sustituir por SENIAT. Contraprueba: autoridad extranjera sustentada en asunto cross-border no bloqueada por país.
+- Numeración irregular: todos los asuntos reconocidos una sola vez y conciliados.
+- 22→19 con reservas: misma decisión en Audit/Submission.
+- Texto de instrucciones en respuesta: rechazo/reparación; rótulo original de plantilla: permitido.
+- Sin mercado consultado: evaluación interna, nunca market calibrated.
+
+No se modificó código ni producción. No se verificaron rankings actuales por web: esta revisión analiza los requisitos históricos y la implementación, no certifica categorías actuales de ARAQUEREYNA.

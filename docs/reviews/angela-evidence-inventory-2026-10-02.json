@@ -1,0 +1,907 @@
+{
+  "scope": "Local corpus inventory; hash and text statistics do not imply every artifact is owner-approved or fully reviewed.",
+  "files": [
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (7-sept).docx",
+      "bytes": 15721,
+      "sha256": "386dbf0b3bbd0c8e40def6d910d47bf09db9f3f9c1f6af6f47ca08557c125beb",
+      "paragraphs": 283,
+      "words": 2304,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-3).docx",
+      "bytes": 15181,
+      "sha256": "0c6d6150583a62a44067bfa27a93912f728b53ee81707882a63db560eb5d908b",
+      "paragraphs": 283,
+      "words": 2253,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-jonathan-23).docx",
+      "bytes": 36914,
+      "sha256": "ae4dc53c68cdc653752277b9693cb596eb365fe94ac63b6dd47c814fd597814e",
+      "paragraphs": 666,
+      "words": 8937,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-angela-2).docx",
+      "bytes": 38017,
+      "sha256": "cf01ebdd9ff358226c3e4e73b191f6b97dee8a9befda6745657152cdd75bf9d6",
+      "paragraphs": 704,
+      "words": 9543,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-angela-2).docx",
+      "bytes": 38649,
+      "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+      "paragraphs": 736,
+      "words": 9559,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (2).docx",
+      "bytes": 29771,
+      "sha256": "f077e3eb2761f689a7ae22ddf5c3dadb7cb8b8efb5f21f1405ba70c989d51086",
+      "paragraphs": 491,
+      "words": 8045,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept).docx",
+      "bytes": 49677,
+      "sha256": "8a8df9893d94bf4b15c4fd545e157aad5d14947094c5d46f2f7ae04064797d20",
+      "paragraphs": 1024,
+      "words": 14386,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-1).docx",
+      "bytes": 15273,
+      "sha256": "9dc405cdcb33c134224bdfc6b906a158c737dcf9373339ceafc29e629c82f23d",
+      "paragraphs": 283,
+      "words": 2340,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (14-angela-1).docx",
+      "bytes": 32803,
+      "sha256": "0fafcf067f35aeabe80fa7abfcd13596c6ce9b4abc1d26c0a6183eade20b0d79",
+      "paragraphs": 557,
+      "words": 7397,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-5).docx",
+      "bytes": 15082,
+      "sha256": "431f0ab3ad7741c76853714b9ee9f9db04dea24dd52ca6aca121cef2b039a73c",
+      "paragraphs": 283,
+      "words": 2295,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (15-angela-1).docx",
+      "bytes": 34957,
+      "sha256": "3c3cd0c4483c0559ce2140e43e83dfbaaa7c34ab68653fba623fcc420924aad7",
+      "paragraphs": 613,
+      "words": 8220,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (29-angela-1).docx",
+      "bytes": 123047,
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "paragraphs": 1432,
+      "words": 14652,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept-2).docx",
+      "bytes": 50663,
+      "sha256": "480b245437e4eb7264e48589ccba147786731860a54e8d60b4710e84669a457b",
+      "paragraphs": 984,
+      "words": 14857,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (7-sept-2).docx",
+      "bytes": 15721,
+      "sha256": "6b9aea53ea6eb6d30d6b425912cbe9a37e68404e00ffbe561ec40f2f7a2b3041",
+      "paragraphs": 283,
+      "words": 2304,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-2).docx",
+      "bytes": 39243,
+      "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+      "paragraphs": 736,
+      "words": 9817,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (2).docx",
+      "bytes": 123047,
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "paragraphs": 1432,
+      "words": 14652,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-angela-1).docx",
+      "bytes": 38649,
+      "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+      "paragraphs": 736,
+      "words": 9559,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-3).docx",
+      "bytes": 38128,
+      "sha256": "be5c0687bd62ef212e4c8c129bf406af548e6958778a36077c52376def9d8823",
+      "paragraphs": 626,
+      "words": 8555,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-1).docx",
+      "bytes": 38016,
+      "sha256": "892277ffcebd35143174cf408633c299daa8825655dde56e5cec18200d55445c",
+      "paragraphs": 704,
+      "words": 9543,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (29-jonathan-1).docx",
+      "bytes": 19352,
+      "sha256": "cbd47bb5f16cb84c87efe50f0a17b6c454b9dabfbea4d2851cc4048f24a62bfb",
+      "paragraphs": 424,
+      "words": 3785,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-setp-angela).docx",
+      "bytes": 15539,
+      "sha256": "8d857e22d7ea4c1874840eff9219455f106d8acfe0241278abc79928fa1e9d9d",
+      "paragraphs": 283,
+      "words": 2336,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-5).docx",
+      "bytes": 33954,
+      "sha256": "bdcb60605b4ee35dab4f3eb7baf007779ff31164b1c54b4a9711ad7c5af04d2f",
+      "paragraphs": 600,
+      "words": 7936,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (8-sept-jonathan).docx",
+      "bytes": 15552,
+      "sha256": "61df496e8f855bcc54d7c361d4dac84df3e9252b12bb19cc7b593168b3e0ef78",
+      "paragraphs": 283,
+      "words": 2340,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (29-angela-1).docx",
+      "bytes": 22515,
+      "sha256": "86119f330d87f2f8c4f29609cde74360dba8ea0d5acf44f23bffb49887e36033",
+      "paragraphs": 439,
+      "words": 6119,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-setp-angela).docx",
+      "bytes": 38355,
+      "sha256": "11a63fd52c2340d80ff0dbc9a3743beeb07d5f5b3039d49ccc7e67465a37d283",
+      "paragraphs": 656,
+      "words": 9983,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-1).docx",
+      "bytes": 39243,
+      "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+      "paragraphs": 736,
+      "words": 9817,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (29-jonathan-1).docx",
+      "bytes": 27061,
+      "sha256": "7b82aa4419023188ae6f0f811e204209507b89c49c6f31ace2d0d8cf9601a050",
+      "paragraphs": 441,
+      "words": 5056,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (8-sept-jonathan).docx",
+      "bytes": 37852,
+      "sha256": "90bd95a241f9e4a84b99153e7bedf3eede5756f08a38649b3029e54f2e577b12",
+      "paragraphs": 656,
+      "words": 9713,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (8-sept-angela).docx",
+      "bytes": 15577,
+      "sha256": "69358915775ca4f80591f259a0e1ccb7dfaa3fc0a44f306475716e5f9bb53e8d",
+      "paragraphs": 283,
+      "words": 2365,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (15-angela-1).docx",
+      "bytes": 15638,
+      "sha256": "8469d084e1a1d247f7c4a26288df5e3aeba8675def24feec87fbb2612b87e592",
+      "paragraphs": 198,
+      "words": 2131,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (10-jonathan-1).docx",
+      "bytes": 15063,
+      "sha256": "5deeae02e9df2fbae4bdbcd6c474f969e0bafddf770f27216a3aeb7cff775732",
+      "paragraphs": 283,
+      "words": 2295,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-2).docx",
+      "bytes": 15202,
+      "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+      "paragraphs": 218,
+      "words": 2077,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-jonathan-1).docx",
+      "bytes": 39056,
+      "sha256": "6a99a4a44205451df60f7fb3a5cf2c0b5e3f5375924b6524d638726c01889add",
+      "paragraphs": 736,
+      "words": 9839,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (2) (1).docx",
+      "bytes": 123047,
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "paragraphs": 1432,
+      "words": 14652,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (jonathan).docx",
+      "bytes": 115973,
+      "sha256": "0410ac408994c3ca819ecd1c146437b413e09b62a4dae9684cebd251b48e2d0c",
+      "paragraphs": 1320,
+      "words": 17252,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (8-sept-angela).docx",
+      "bytes": 48696,
+      "sha256": "69df2182aad91e96e4cea4320f61f3dbdc713f1f67d35ce6ed074989345b9cbe",
+      "paragraphs": 996,
+      "words": 14422,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (31-08).docx",
+      "bytes": 28619,
+      "sha256": "daaf8bd9cfeb7f879a10f7ca2fd37c6c3d222e8587bb10f640d6763b0161492e",
+      "paragraphs": 492,
+      "words": 7511,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (3-agosto).docx",
+      "bytes": 26118,
+      "sha256": "cab08305a31cf3a3004ef42dc18994c0db04450991da5e5754257b922aaf1a71",
+      "paragraphs": 448,
+      "words": 6744,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate(14-angela-1).docx",
+      "bytes": 15076,
+      "sha256": "c92bde42e708951c1fbf6a0140cee4fddaa3cde3cbd9663bc412f74a26b5eb70",
+      "paragraphs": 180,
+      "words": 1848,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (3-agosto).docx",
+      "bytes": 47367,
+      "sha256": "a87446c158b015945a21c1630e6b12b525b181e60b1d19b27e9c5d6a9c5c379f",
+      "paragraphs": 954,
+      "words": 14853,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-jonathan-1).docx",
+      "bytes": 15421,
+      "sha256": "be12e1cc54c2e077e89ec868158e46bbffa8d85ee193a8f513d428c60673ae86",
+      "paragraphs": 218,
+      "words": 2149,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-22).docx",
+      "bytes": 15684,
+      "sha256": "e20b966c290fee5086b0d1513ddd1e93c855d5201a7fd33d31e5d2044301a578",
+      "paragraphs": 208,
+      "words": 2174,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (31-08).docx",
+      "bytes": 106934,
+      "sha256": "42889b9fbb796c29f765f3601b5c7ea04dd0b0a728e16a0f5e9f209945d81c4f",
+      "paragraphs": 1215,
+      "words": 14811,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (jonathan-2).docx",
+      "bytes": 107073,
+      "sha256": "cab2ea53ab63e598fd5d6824c87f29594bed863b90657ef4985ebdf109175d36",
+      "paragraphs": 1217,
+      "words": 15146,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-1).docx",
+      "bytes": 15202,
+      "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+      "paragraphs": 218,
+      "words": 2077,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (29-angela-1).docx",
+      "bytes": 34798,
+      "sha256": "de7e97044e82d923e2bf3c514febfc28eb2efd1634e973d91d04925fb460c705",
+      "paragraphs": 603,
+      "words": 8210,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-jonathan-1).docx",
+      "bytes": 39411,
+      "sha256": "5a79fd2fb7bacdd7a40f3346a790fa83f523c9b3a6bd4a24ba426ea60a512418",
+      "paragraphs": 736,
+      "words": 9841,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (10-angela-1).docx",
+      "bytes": 15565,
+      "sha256": "89371676cf1f9303e4f24fdcd170a605575f6b9128aa75a6a4d854cef6d4f642",
+      "paragraphs": 283,
+      "words": 2344,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-jonathan-23).docx",
+      "bytes": 15688,
+      "sha256": "3f92feb10bcec3cec10c93ca65a4422a16e5e578065437ef3f4d252e7a35074a",
+      "paragraphs": 208,
+      "words": 2173,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (4-sept-2).docx",
+      "bytes": 30272,
+      "sha256": "726ccc55ee8d6eccb89daf1007a429ba30713c8a4f1e677b1082d22257864172",
+      "paragraphs": 491,
+      "words": 8586,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-angela-2).docx",
+      "bytes": 15274,
+      "sha256": "89bc4a32ccd793ca07f556254b7315f12cdf06830177a76df6fa006b8f4798e4",
+      "paragraphs": 283,
+      "words": 2340,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (4-sept).docx",
+      "bytes": 27388,
+      "sha256": "912b4495cabcdb2d404859c934dd61e32e47fea2ec589883fa50b60056e38de0",
+      "paragraphs": 452,
+      "words": 6812,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept-3-refined).docx",
+      "bytes": 48298,
+      "sha256": "43dfa4fcabf3680ebaadca0523184a317f63240ed24b01799ec958a2261c904d",
+      "paragraphs": 999,
+      "words": 14067,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (4-sept-2).docx",
+      "bytes": 108683,
+      "sha256": "54c26385853721a6e899ad914d9874a4b07612443b12ae960cfbfcb8accea5eb",
+      "paragraphs": 1209,
+      "words": 15341,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (2).docx",
+      "bytes": 114168,
+      "sha256": "92fe722a41bf87d9b502211e4c33f7b53d0e5df3ed378a4fd9d374fef1824228",
+      "paragraphs": 1294,
+      "words": 16550,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (4-sept).docx",
+      "bytes": 108784,
+      "sha256": "4d1864c2895b61024090d22e4985a1c373c884e1c6f95fdc95e45ed07b041dfd",
+      "paragraphs": 1211,
+      "words": 15386,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-22).docx",
+      "bytes": 36944,
+      "sha256": "f7b26b7931b9637439ade7627fe721fed382469d0f46ab7dab2cc258361706f5",
+      "paragraphs": 666,
+      "words": 8933,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (21-jonathan-1).docx",
+      "bytes": 23839,
+      "sha256": "cbb7684f0b0f064bffa12ebdee09f8eba0b29a6a2d8b95624b28d032653844a5",
+      "paragraphs": 514,
+      "words": 4899,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (28-jonathan-4).docx",
+      "bytes": 31393,
+      "sha256": "80f40030536f6c210f15d4ebb6fee39f93000d295821d09dd8d224820ecfa0bb",
+      "paragraphs": 670,
+      "words": 6996,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (23-jonathan-1).docx",
+      "bytes": 33418,
+      "sha256": "aeb5190d2e0250d1933a372377e4fb263d3e7bbf25071c1fbe3b7d62b22acfb4",
+      "paragraphs": 684,
+      "words": 7125,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (16-jonathan-1).docx",
+      "bytes": 28332,
+      "sha256": "3f4fc6e004451ec5a35232ee5c37916fc79ac73f542c91f679184e47ecb9c9f4",
+      "paragraphs": 628,
+      "words": 5789,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (28-jonathan-5).docx",
+      "bytes": 31208,
+      "sha256": "461733cc05ccfc5df39641f81daa03ac07862aa7bc110be155f45be1fa003abe",
+      "paragraphs": 670,
+      "words": 6928,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (24-jonathan-1).docx",
+      "bytes": 21665,
+      "sha256": "efd88b854f301aaacca6cad49bcf964dce49a094b84beddb84db22b3c065453c",
+      "paragraphs": 510,
+      "words": 5049,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (16-jonathan-1).docx",
+      "bytes": 17223,
+      "sha256": "1c3e58f67646a32c38302247ec501e6ef73315c43b7aedf647e698e58adaa1ce",
+      "paragraphs": 254,
+      "words": 2572,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (23-jonathan-1).docx",
+      "bytes": 21615,
+      "sha256": "59ad592e3a4985cf479d48b78d8d940e39f6ce89cf6ebe530b285fb2421bf49e",
+      "paragraphs": 510,
+      "words": 5026,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/DeForest_Submission_Original_Ingested.docx",
+      "bytes": 293675,
+      "sha256": "c5ef2a4c9dd69e8969d2a6b8d11f8515e0f78cf633bdde38ca5e2b9c64dadc3a",
+      "paragraphs": 1382,
+      "words": 8903,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (24-jonathan-1).docx",
+      "bytes": 32816,
+      "sha256": "c5d7d99f508a9cafa9dbac004ed87138eaf55217e52330bf53547dee165bd590",
+      "paragraphs": 684,
+      "words": 7052,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (28-jonathan-5).docx",
+      "bytes": 19917,
+      "sha256": "88852921af1c93ddf05cafe6987c3d8a4ce411276208ce242d7514f55642e6a4",
+      "paragraphs": 510,
+      "words": 4527,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/DeForest Labour Chambers 2027 (1).docxDeForest Labour Chambers 2027 (1).docx",
+      "bytes": 43120,
+      "sha256": "9b7823045c295e11fb68e0d14c43eddfd93934dd3ababbc932353cf56bd3a4bd",
+      "paragraphs": 233,
+      "words": 6868,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Submission_Form_Labour_&_Employment (21-jonathan-1).docx",
+      "bytes": 33856,
+      "sha256": "b250467192fd65dac993294f0c3508ba1b3072e095d2bce11e875bcfac107195",
+      "paragraphs": 682,
+      "words": 7499,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /DeForest/RankPilot_Strategic_Audit_Labour_&_Employment (28-jonathan-4).docx",
+      "bytes": 19809,
+      "sha256": "9a4d7655001cda51674d73eb17fff850343b54bc63d087a612a330f20db032d0",
+      "paragraphs": 510,
+      "words": 4504,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Submission Corporate and MA 2024.doc",
+      "bytes": 419840,
+      "sha256": "cb1feba357556c1fd22912dd58020716b1b9a2d29e15ec083d715ba1e1c9fd65",
+      "kind": "legacy_doc"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Strategic_Audit_Banking_&_Finance (7-sept-1).docx",
+      "bytes": 12645,
+      "sha256": "fa98686679c04ebb88e221472e20f75950184b3349994174589b5286668f9f64",
+      "paragraphs": 120,
+      "words": 917,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Submission_Form_CORPORATE_M&A (movida-31-8).docx",
+      "bytes": 24768,
+      "sha256": "2f328d2f674c5069668b9131a6f2ee6e7db67f463b08db5118a75347c8003f1b",
+      "paragraphs": 823,
+      "words": 5302,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Submission_Form_Banking_&_Finance (7-sept-1).docx",
+      "bytes": 21242,
+      "sha256": "94bfff7e818fc4cd267220a592ea34e4f7931345dfa0cb834b31f31cbb6401a8",
+      "paragraphs": 345,
+      "words": 2533,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Strategic_Audit_Unknown.docx",
+      "bytes": 13393,
+      "sha256": "d6912fd98bca8db47e98d6d267074c76a45b5acfebe7cf2edc11d74b45adbc96",
+      "paragraphs": 101,
+      "words": 1730,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Strategic_Audit_CORPORATE_M&A(movida-31-8).docx",
+      "bytes": 10459,
+      "sha256": "260d7116ed6f2aa4c0b6c4e9064e203a6cc625a13fd99005c3d83e5e451ccfec",
+      "paragraphs": 95,
+      "words": 410,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Submission_Form_CORPORATE_MA (31-08).docx",
+      "bytes": 36221,
+      "sha256": "cdbc3d9a18d2648c61a635b88981f1fe52434b7678f3229b7c4435b6dcf608d1",
+      "paragraphs": 815,
+      "words": 10016,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Submission Corporate and MA 2024 (31-08).doc",
+      "bytes": 419840,
+      "sha256": "cb1feba357556c1fd22912dd58020716b1b9a2d29e15ec083d715ba1e1c9fd65",
+      "kind": "legacy_doc"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/RankPilot_Strategic_Audit_CORPORATE_MA (31-08).docx",
+      "bytes": 27373,
+      "sha256": "dce7a7a6942a6026fd94016e9c190d20284b281c567335f18b9996ff22a9734c",
+      "paragraphs": 420,
+      "words": 6532,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 124728.pngCaptura de pantalla 2026-09-16 124728.png",
+      "bytes": 428984,
+      "sha256": "563c39d184afbf0e0dd5035dadca61c4250b384fdbef6e4337b66c0dbf1bc5b6",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax (25-jonathan-1).docx",
+      "bytes": 19230,
+      "sha256": "0a0326f16b1df18ee001108507d212f6d674036345d99b0a444ea136899599b0",
+      "paragraphs": 468,
+      "words": 4365,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 124604.pngCaptura de pantalla 2026-09-16 124604.png",
+      "bytes": 117453,
+      "sha256": "d5b842700fbb1ef09e13f06a13d45bd16d427d241764d321a6bc5bb4c41a8a94",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax (21-jonathan-1).docx",
+      "bytes": 19318,
+      "sha256": "d3dac465a233ace0532ee7bdaaffecc05c7af9b53a9c5454f7ec9d4f54bda86f",
+      "paragraphs": 468,
+      "words": 4222,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax.docxRankPilot_Strategic_Audit_Tax.docx",
+      "bytes": 9506,
+      "sha256": "3711ef3653873eb9046f141ddc0f084112c2ff19fc1dbabf27f7cefd1ea2ecb1",
+      "paragraphs": 13,
+      "words": 125,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (21-jonathan-1).docx",
+      "bytes": 34950,
+      "sha256": "0b5bd13a0a95472cf1d1635514695e56fdefa5abf896f08da014664082a27120",
+      "paragraphs": 858,
+      "words": 8707,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (25-jonathan-1).docx",
+      "bytes": 35017,
+      "sha256": "6fd4936e822bdfda46017629b0d25ad6879efcb74a8aad0e0418a81a6a516e67",
+      "paragraphs": 811,
+      "words": 8804,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 125208.pngCaptura de pantalla 2026-09-16 125208.png",
+      "bytes": 231733,
+      "sha256": "a012326c6d99b913ce14aa854fc6030ce0b9717ebd296215f5754ef842244370",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (28-jonathan-2).docx",
+      "bytes": 33905,
+      "sha256": "77245e7930f830d6459219246543499c0d59d797bc202b831b032a788fcce193",
+      "paragraphs": 723,
+      "words": 8186,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax (28-jonathan-3).docx",
+      "bytes": 19642,
+      "sha256": "839cdeac4dcb02df7d1f3f64a19f5d1c2d5195214bf47b297959ff782d3ed919",
+      "paragraphs": 455,
+      "words": 4246,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax (16-jonathan-1).docx",
+      "bytes": 15357,
+      "sha256": "937aadb8618222399cbcacca4c8a09bd17fadddba8be015bf05d268cc5a452bc",
+      "paragraphs": 238,
+      "words": 1966,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (28-jonathan-3).docx",
+      "bytes": 34310,
+      "sha256": "d967b9bc1e81e53c4707098c4cb0133d1300f09c6d80418c9089dd4fb28e5f52",
+      "paragraphs": 723,
+      "words": 8327,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (28-jonathan-1).docx",
+      "bytes": 34495,
+      "sha256": "6e80bee9beeea08a41c1ea6560bc824c58a59817d5c2dee6310d28fda2fa5fa5",
+      "paragraphs": 725,
+      "words": 8304,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Submission_Form_Tax (16-jonathan-1).docx",
+      "bytes": 32610,
+      "sha256": "2e896637a3f3f4664105b677b4c9d54f986bcab592115740d63c1c47fc238ec3",
+      "paragraphs": 692,
+      "words": 7802,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 124746.pngCaptura de pantalla 2026-09-16 124746.png",
+      "bytes": 432064,
+      "sha256": "0603d234390ed50048bd0c190b745a6b3678d1768798657cb7e6ad316421915a",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 124713.pngCaptura de pantalla 2026-09-16 124713.png",
+      "bytes": 439012,
+      "sha256": "0ece4bbda5575e6c63668942ac36a44eb0e0dbf0cb020afcc53086c80512d7fb",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Captura de pantalla 2026-09-16 124753.pngCaptura de pantalla 2026-09-16 124753.png",
+      "bytes": 591197,
+      "sha256": "007413e796fb1392bbb1dd4977080b053fa5f071675026e36d554fa3364a607e",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Chambers Submission Tax 2024 (2).doc",
+      "bytes": 394752,
+      "sha256": "4e88977d4bf58b41907591567e72d13e62a6cae5731813b2bd0b58387207bef7",
+      "kind": "legacy_doc"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/RankPilot_Strategic_Audit_Tax (28-jonathan-2).docx",
+      "bytes": 19570,
+      "sha256": "96dd6c3ac4fe0cf65cee4e5e8370a0054cd6b98264eda9204398f156535a27e5",
+      "paragraphs": 455,
+      "words": 4260,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Energy /Captura de pantalla 2026-09-29 143000.pngCaptura de pantalla 2026-09-29 143000.png",
+      "bytes": 572652,
+      "sha256": "ddd1bc494cd68cd99c78ef5d866b1c46dc44482836cbeb67ecf5b4b294f4e663",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Energy /Captura de pantalla 2026-09-29 143344.pngCaptura de pantalla 2026-09-29 143344.png",
+      "bytes": 162659,
+      "sha256": "8e1e023d0d8773b04ddbb10b3f519c265a6255173ae087ded687bd2009860853",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Energy /Submissions Energy  Natural Resorces- Equipo Adrian (2).docxSubmissions Energy  Natural Resorces- Equipo Adrian (2).docx",
+      "bytes": 51665,
+      "sha256": "1dada05170cfd9adbecd2e9755203063887c6b3ebc2c3938fa8d941b3c737780",
+      "paragraphs": 231,
+      "words": 2576,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Energy /Captura de pantalla 2026-09-29 142934.pngCaptura de pantalla 2026-09-29 142934.png",
+      "bytes": 261946,
+      "sha256": "1c69e2258a0aba44708af5a767c1b0713419e9af4d1bb226093b64a53931d2eb",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/10 submission /Energy /Captura de pantalla 2026-09-29 143400.pngCaptura de pantalla 2026-09-29 143400.png",
+      "bytes": 161002,
+      "sha256": "26307a5839fd0e0cf96cf76466b8b7d935dba386ed74a41bf0911d7662187928",
+      "kind": "image_feedback"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/Gonzalez Araujo/RankPilot_Strategic_Audit_Data_Protection (rev-1).docx",
+      "bytes": 20483,
+      "sha256": "5c5823a3f5b19496ad765d484a31390a712e9a473cda817539aee1c944a2f1b7",
+      "paragraphs": 218,
+      "words": 4298,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/Gonzalez Araujo/RankPilot_Submission_Form_Data_Protection(rev-1).docx",
+      "bytes": 56123,
+      "sha256": "58aff1d0a31639cd116395b266c801c097a2e8c2fe1238e176934e0336d6d781",
+      "paragraphs": 441,
+      "words": 3891,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/AraqueReyna/RankPilot_Strategic_Audit_Banking_&_Finance (rev-1).docx",
+      "bytes": 18538,
+      "sha256": "224043850c3d94d48047f2cca714803c8032e4d43af4e6152e7d6468cf918aee",
+      "paragraphs": 176,
+      "words": 3578,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/AraqueReyna/RankPilot_Submission_Form_Banking_&_Finance (rev-1).docx",
+      "bytes": 49207,
+      "sha256": "42208605fb31f02c1ff71808e88578301d83ebc9934a0153a915c0d8266cfdd0",
+      "paragraphs": 458,
+      "words": 3087,
+      "kind": "generated_output"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Labour & Employment/LABOUR & EMPLOYMENT LEGAL 500 - DEFOREST (4).docx",
+      "bytes": 792723,
+      "sha256": "e52e38452d70cfaeaab98430a9d1cdd0ef2ba888280a1238d56d153221298243",
+      "paragraphs": 1723,
+      "words": 7951,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Labour & Employment/Prompts - Labour & Employment - DeForest - Chambers.docx",
+      "bytes": 42614,
+      "sha256": "63c46eb2195b050ad0ae740df0dec3756be383cac8dc29e7da000310e184f497",
+      "paragraphs": 457,
+      "words": 7918,
+      "kind": "reference_conversation"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Labour & Employment/DeForest Labour Chambers 2027.docx",
+      "bytes": 43120,
+      "sha256": "9b7823045c295e11fb68e0d14c43eddfd93934dd3ababbc932353cf56bd3a4bd",
+      "paragraphs": 233,
+      "words": 6868,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Gonzalez_de_Araujo/Chambers_Latin_America_2026_Compliance_Gonzalez_de_Araujo_Original.docx",
+      "bytes": 100600,
+      "sha256": "3e9b300be10c798b141f0a893415b3ccbb72c8f3c3a8a3e0550c8946ff878af5",
+      "paragraphs": 944,
+      "words": 9110,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Gonzalez_de_Araujo/Optimizacion_Gonzalez_de_Araujo_Compliance_Approved.docx",
+      "bytes": 30354,
+      "sha256": "bf4f9019d009679f1878ed73439ba922d4136c77b582852e1689dd495aa7ebfc",
+      "paragraphs": 483,
+      "words": 6066,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/feedback_owner/Gonzalez_de_Araujo/Prompts_Optimizacion_Compliance_Gonzalez_de_Araujo.docx",
+      "bytes": 263499,
+      "sha256": "985c792c5d2f43ff95ab74ec391f6d21f8c8b9f4c7e55e44b78ac395fa6032e7",
+      "paragraphs": 873,
+      "words": 11541,
+      "kind": "reference_conversation"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/referencias/Ramos Castillo - Real Estate - Optimized (1).docx",
+      "bytes": 55414,
+      "sha256": "464432f493f8ea99a7ce7baa54eb845c5ad15b6a96f72254afc85c830dc85bbb",
+      "paragraphs": 591,
+      "words": 7219,
+      "kind": "source_or_reference"
+    },
+    {
+      "path": "../analizar/Submission_revision/Angela_revision/referencias/Prompts IA - Ramos Castillo - Real Estate - Optimized .docx",
+      "bytes": 223532,
+      "sha256": "3eab0558e90cf290709ea179abfd404228167144ba15b0d0ad7317f79bc0f381",
+      "paragraphs": 90,
+      "words": 1521,
+      "kind": "reference_conversation"
+    }
+  ]
+}

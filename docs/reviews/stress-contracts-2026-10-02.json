@@ -1,0 +1,652 @@
+{
+  "baseline": "af13685",
+  "meaning": "Contract failures describe current defects; snapshot replay pass means HTTP generation only, not editorial approval.",
+  "total": 50,
+  "passed": 5,
+  "failed": 45,
+  "results": [
+    {
+      "id": "audit:Labour & Employment:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Labour & Employment:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Labour & Employment:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Labour & Employment:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Real Estate:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Real Estate:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Real Estate:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Real Estate:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Tax:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Tax:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Tax:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Tax:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Banking & Finance:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Banking & Finance:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Banking & Finance:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Banking & Finance:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Corporate/M&A:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Corporate/M&A:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Corporate/M&A:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Corporate/M&A:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Energy & Natural Resources:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Energy & Natural Resources:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Energy & Natural Resources:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Energy & Natural Resources:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Data Protection:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Data Protection:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Data Protection:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Data Protection:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Intellectual Property:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Intellectual Property:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Intellectual Property:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Intellectual Property:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Competition:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Competition:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Competition:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Competition:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Dispute Resolution:0",
+      "passed": false,
+      "observed": {
+        "input_matters": 0,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Dispute Resolution:1",
+      "passed": false,
+      "observed": {
+        "input_matters": 1,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer",
+          "unsupported_positive_verdict"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Dispute Resolution:8",
+      "passed": false,
+      "observed": {
+        "input_matters": 8,
+        "defects": [
+          "score_12_certified_as_90",
+          "false_count_20",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "audit:Dispute Resolution:20",
+      "passed": false,
+      "observed": {
+        "input_matters": 20,
+        "defects": [
+          "score_12_certified_as_90",
+          "unsupported_named_lawyer"
+        ]
+      },
+      "layer": "real_docx_builder"
+    },
+    {
+      "id": "unconfirmed_confidentiality_not_public",
+      "passed": false,
+      "observed": {
+        "isConfidential": false,
+        "status": "confirmation_required"
+      },
+      "layer": "real_function"
+    },
+    {
+      "id": "ten_empty_records_are_not_sufficient",
+      "passed": false,
+      "observed": {
+        "status": "sufficient",
+        "band": "Band 1–3 Competitive Standard"
+      },
+      "layer": "real_function"
+    },
+    {
+      "id": "canonical_twenty_public_matters_preserved",
+      "passed": false,
+      "observed": {
+        "official": 13,
+        "reserve": 7
+      },
+      "layer": "real_function"
+    },
+    {
+      "id": "different_clients_same_title_preserved",
+      "passed": true,
+      "observed": {
+        "input": 2,
+        "retained": 2
+      },
+      "layer": "real_function"
+    },
+    {
+      "id": "http_extraction_preserves_unknown_confidentiality",
+      "passed": false,
+      "observed": {
+        "http": 200,
+        "persistedConfidential": false,
+        "responseKeys": [
+          "success",
+          "submissionId",
+          "mattersCount"
+        ]
+      },
+      "layer": "real_http_handler_stubbed_extractor_db_auth"
+    },
+    {
+      "id": "http_blocked_dossier_not_certified",
+      "passed": false,
+      "observed": {
+        "http": 200,
+        "certified": true
+      },
+      "layer": "real_http_handler_stubbed_db_auth"
+    },
+    {
+      "id": "snapshot_replay:LABOR & EMPLOYMENT:audit",
+      "passed": true,
+      "observed": {
+        "practice": "LABOR & EMPLOYMENT",
+        "type": "audit",
+        "http": 200,
+        "dbMatters": 32,
+        "jsonMatters": 64,
+        "releasePassed": true,
+        "words": 2331,
+        "claimsExactly20": true,
+        "certifiedScore": "91/100"
+      },
+      "layer": "real_http_handler_private_snapshot_stubbed_db_auth_not_browser"
+    },
+    {
+      "id": "snapshot_replay:LABOR & EMPLOYMENT:submission",
+      "passed": true,
+      "observed": {
+        "practice": "LABOR & EMPLOYMENT",
+        "type": "submission",
+        "http": 200,
+        "dbMatters": 32,
+        "jsonMatters": 64,
+        "releasePassed": true,
+        "words": 7841,
+        "claimsExactly20": false
+      },
+      "layer": "real_http_handler_private_snapshot_stubbed_db_auth_not_browser"
+    },
+    {
+      "id": "snapshot_replay:Real Estate:audit",
+      "passed": true,
+      "observed": {
+        "practice": "Real Estate",
+        "type": "audit",
+        "http": 200,
+        "dbMatters": 33,
+        "jsonMatters": 33,
+        "releasePassed": false,
+        "words": 1696,
+        "claimsExactly20": true,
+        "certifiedScore": "91/100"
+      },
+      "layer": "real_http_handler_private_snapshot_stubbed_db_auth_not_browser"
+    },
+    {
+      "id": "snapshot_replay:Real Estate:submission",
+      "passed": true,
+      "observed": {
+        "practice": "Real Estate",
+        "type": "submission",
+        "http": 200,
+        "dbMatters": 33,
+        "jsonMatters": 33,
+        "releasePassed": false,
+        "words": 5637,
+        "claimsExactly20": false
+      },
+      "layer": "real_http_handler_private_snapshot_stubbed_db_auth_not_browser"
+    }
+  ]
+}

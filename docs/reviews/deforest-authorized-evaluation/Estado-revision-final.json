@@ -1,0 +1,8 @@
+{
+  "approved": false,
+  "verdict_available": false,
+  "error_type": "RateLimitError",
+  "http_status": 429,
+  "error_code": "credit_balance_exhausted",
+  "production_modified": false
+}

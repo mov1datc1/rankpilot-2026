@@ -1,0 +1,16 @@
+{
+  "source_sha256": "4e88977d4bf58b41907591567e72d13e62a6cae5731813b2bd0b58387207bef7",
+  "http_status": 422,
+  "seconds": 0.1505078749905806,
+  "response": {
+    "success": false,
+    "code": "SOURCE_PREFLIGHT_FAILED",
+    "source_errors": [
+      {
+        "source": "Chambers Submission Tax 2024 (2).doc",
+        "code": "SOURCE_DUPLICATE_LABELS",
+        "message": "Hay encabezados de asuntos repetidos. Revisa su numeración para evitar mezclar o perder asuntos."
+      }
+    ]
+  }
+}

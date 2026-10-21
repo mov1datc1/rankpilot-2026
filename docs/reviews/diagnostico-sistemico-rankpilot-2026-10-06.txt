@@ -1,0 +1,197 @@
+RANKPILOT — DIAGNÓSTICO SISTÉMICO Y DECISIÓN ARQUITECTÓNICA
+Base examinada: a222474a5a6f15b7625aa93aee7ec97bad889fe0.
+Fecha de revisión: 6 de octubre de 2026. Documento privado de trabajo.
+
+La conclusión principal
+
+Los incidentes no se explican únicamente por un modelo que desobedece. La aplicación mantiene dos recorridos editoriales con contratos y contexto distintos, aplica parte de la comprobación semántica después de guardar todas las redacciones y usa una respuesta probabilística para decidir algunos estados de negocio. Las correcciones recientes mejoraron controles concretos, pero no completaron la consolidación arquitectónica propuesta en las auditorías previas.
+
+No recomiendo empezar de cero, añadir más agentes ni cambiar de modelo como primera medida. Recomiendo unificar el flujo activo de Studio alrededor de hechos con procedencia, reglas versionadas, tareas persistentes y pruebas de aceptación de los documentos reales. LangGraph, Next.js, PostgreSQL y los builders pueden conservarse.
+
+Alcance y límites
+
+Se revisaron las rutas de ingesta, optimización individual, revisión por etapas, completion, exportación, el grafo largo, contratos, RAG, persistencia, clasificación de hallazgos y pruebas. Se contrastó el resultado guardado del expediente indicado mediante lectura SQL y los informes privados anteriores. Se ejecutaron contrapruebas locales con respuestas de modelo SIMULADAS. No se reenvió el expediente a modelos, no se alteró producción y no se publicaron cambios funcionales durante esta auditoría. No es una medición de tasa de alucinación ni una prueba de penetración completa. Un dato de configuración local no demuestra el valor de una variable de entorno de producción.
+
+El estado consultado del caso seguía con 32 asuntos y 32 redacciones, selección no validada, sin artefacto aprobado. La traza del estratega registra 81,568 s; 33.587 tokens de entrada, 7.833 de salida, 41.420 totales; modelo reportado gpt-5.6-terra, política review-core-v1.4. La misma traza está en review_checkpoint y editorial_review: no sumarla dos veces. No representa todo el coste de ingesta y redacción ni una nueva ejecución del código a222474. Los timestamps históricos presentan diferencias; no se usaron para calcular duración.
+
+1. El recorrido efectivo y sus diferencias
+
+Recorrido Studio:
+  /extract → revisión humana → /optimize/b10 → /optimize/matter por asunto
+  → /review-step (estrategia, carta) → /verify-rendered-package → descarga aprobada.
+
+Recorrido largo:
+  /process o /process-async → core/graph.py → nodos editoriales, RAG,
+  reconciliación/evidencia, optimización, validación constitucional y escritura.
+
+Evidencia: src/components/SubmissionStudio.tsx (handleOptimizeAll, desde línea 533); ai-engine/main.py (/optimize, /review-step); ai-engine/core/graph.py; ai-engine/core/review_graph.py; ai-engine/agents/micro_optimizer.py.
+
+El grafo largo contiene reglas y contratos que NO se ejecutan automáticamente en Studio. El RAG por práctica se invoca desde agents/nodes.py y agents/editorial_nodes.py; no se inyecta en las funciones de estrategia/carta/juez de core/review_graph.py ni en micro_optimizer.py. Una instrucción corregida en un nodo inactivo para ese recorrido no puede controlar su resultado. Tener varios recorridos no es intrínsecamente incorrecto; mantener políticas de entrega diferentes entre ellos sí genera divergencias.
+
+Decisión: una API de dominio y un único flujo editorial efectivo para Studio. Las rutas heredadas deben convertirse en adaptadores del mismo flujo o retirarse después de comprobar su uso. No intentar conservar dos productos de revisión independientes.
+
+2. Hechos, borradores y evidencia todavía no forman un contrato integral
+
+Hay piezas valiosas en core/contracts.py: SourceSpan, EvidenceClaim, MatterRecord y CanonicalSubmission. Sin embargo, el recorrido Studio transmite paquetes de diccionarios y fuentes en prosa; no exige que cada afirmación redactada esté vinculada a una evidencia verificable. La presencia de evidence_ids en un tipo tampoco demuestra por sí sola que las referencias existan ni que apoyen la afirmación.
+
+La contraprueba systemic-probes-2026-10-06.py inyectó «won USD 90 million» frente a una fuente que decía que el recurso seguía pendiente y sin decisión. optimize_matter_micro respondió success=true y devolvió el texto. Esto prueba falta de control local en esa etapa, NO que el juez final vaya necesariamente a aprobarlo ni que el modelo real lo genere con determinada frecuencia.
+
+El texto se guarda como optimizedText cuando la respuesta es exitosa (src/app/api/optimize/matter/route.ts). Las comprobaciones locales revisan finalización, texto no vacío y aspectos de presentación; no bastan para validar el contenido material.
+
+Decisión: el escritor propone afirmaciones y párrafos, no hechos nuevos. Cada afirmación material debe declarar las evidencias utilizadas y los IDs de las entidades. El servidor resuelve referencias, comprueba cantidades/monedas/actores/estado y rechaza inconsistencias. La inferencia semántica seguirá necesitando revisión calibrada; no todo se resuelve con expresiones regulares. Solo la versión validada pasa de candidata a borrador utilizable.
+
+3. La cita literal controla procedencia, no razonamiento
+
+selection_gate verifica IDs, cobertura, límite, pertenencia del insignia y presencia literal de source_quote. Una cita verdadera puede acompañar una conclusión falsa. La contraprueba conservó «No decision has been issued» como cita y usó una victoria inventada como rationale; selection_validated fue true.
+
+La última corrección de referencias M01..Mn y campos obligatorios evita aceptar omisiones de decisiones y mantiene la identidad. Es una mejora necesaria, pero no demuestra que la selección sea editorialmente correcta ni que la cita respalde el motivo.
+
+Decisión: guardar la selección como una propuesta basada en fichas de evidencia y comprobar también la relación entre razón y fuente. Distinguir explícitamente registro completo, selección estructuralmente válida y estrategia editorialmente aceptada. Ninguna debe presentarse como la otra.
+
+4. El juez necesita un contrato de hallazgos y reglas de severidad
+
+Defect actualmente contiene severity, scope, matter_id, message y temporal_basis. No exige referencias verificables a la fuente y a la afirmación cuestionada, ni rule_id, propietario de la acción o campo que debe cambiar. reviewIssues descarta parte de la estructura y convierte mensajes en destinos mediante expresiones regulares (src/lib/audit/review-actions.ts).
+
+La contraprueba adicional demuestra un límite de la calibración temporal reciente: si el modelo etiqueta un conflicto real como missing_metadata, calibrate_verdict lo convierte en warning y puede devolver passed=true. El problema no se arregla quitando toda calibración ni bloqueando todas las fechas: hay que impedir que una clasificación sin evidencia sea autoridad suficiente para cambiar la severidad.
+
+Decisión: Issue tipado con code, rule_id, entity_id, field_path, source_evidence_ids, artifact_claim_ids, owner, action y retryability. La IA propone el hallazgo y cita evidencia; el motor de reglas aplica la severidad cuando la evidencia y el alcance lo permiten. Un desacuerdo entre etiqueta y evidencia queda como resultado indeterminado que requiere revisión, nunca aprobación silenciosa. Una fecha ausente por sí sola continúa siendo no bloqueante. Una fecha inventada sigue siendo material.
+
+5. El RAG necesita metadatos y gobierno editorial antes de conectarlo a Studio
+
+RAGRouter busca coincidencias parciales en nombres de archivos. Para Tax, «tax» coincide con «taxonomy». La ejecución local recuperó 4 chunks de Chambers_Banking_Taxonomy y 3 de Corporate_MA_Taxonomy dentro de sus 16 resultados. En Labour/Chambers entraron también chunks específicos de Legal 500, IFLR y Leaders League. El directorio aporta puntuación, pero no excluye material de otro directorio. Los chunks globales pueden ser desplazados por el límite de 16.
+
+Esto afecta al recorrido que usa ese router; no demuestra que causara directamente el error de selección de Studio, donde no se consultó ese RAG.
+
+El archivo Golden_Submissions_Approved_By_Owner se autodenomina ground truth y 10/10. Ese título no reemplaza un registro de aprobación, alcance y autoría. Las conversaciones de referencia revisadas mezclan respuestas de IA y observaciones de Ángela; requieren extracción editorial con atribución y control de cambios. El archivo editorial_rules.v1.json reconoce que no afirma una aprobación literal de la dueña: esa cautela debe mantenerse.
+
+Decisión: PracticePolicy con directorio, edición/alcance aplicable, jurisdicción, práctica, versión, source_ref, autor/aprobador, vigencia y excepciones. Separar requisitos obligatorios, criterio editorial, ejemplos y hechos del cliente. Filtros exactos por metadatos; reglas globales obligatorias fuera de la competencia de recuperación; ejemplos únicamente pertinentes y claramente identificados. No volcar el corpus actual entero en los prompts de Studio.
+
+Los criterios de Ángela deben existir en tres lugares diferentes:
+- reglas ejecutables para invariantes verificables;
+- rúbrica recuperable y versionada para juicios editoriales;
+- evaluaciones de aceptación y comparaciones documentales para comprobar el resultado.
+Un prompt explica la tarea; no sustituye ninguno de esos tres mecanismos.
+
+6. Se decide tarde y se repite trabajo innecesario
+
+Studio redacta B10 y todos los asuntos sin redacción antes de ejecutar estrategia. El ejemplo de 32 asuntos con una selección de 20 permite evitar hasta 12 reescrituras iniciales si primero se selecciona; no equivale a prometer una reducción del 37,5% del coste total. Hay que contabilizar extracción, fichas, selección, verificación y reparaciones.
+
+El B10 se redacta antes de conocer la selección/tesis nueva. La ruta consume narrative_architecture previa, si existe; el review graph no produce esa estructura del grafo largo. La coherencia estratégica depende demasiado del juez posterior.
+
+Decisión: evidencia y preguntas mínimas → selección/tesis → redacción de lo seleccionado y B10 → Audit → comprobación de los artefactos. Las reservas conservan sus fuentes; su redacción completa puede generarse cuando se promuevan o cuando se solicite. Mantener intactas las redacciones ya guardadas en la migración.
+
+7. El navegador sigue dirigiendo operaciones largas
+
+El bucle de SubmissionStudio lanza B10, lotes de cuatro asuntos y solicitudes de review-step/complete. Existen checkpoints y leases útiles en PostgreSQL, pero las etapas siguientes aún dependen del navegador. En la vía larga, /process-async usa run_in_executor en el proceso web y el grafo usa MemorySaver; eso no constituye una cola durable ante reinicios.
+
+Hay ventanas distintas: B10 30 s; asunto 90 s; revisión por etapa 250 s; proveedor configurable con valor predeterminado 300 s; completion con presupuesto HTTP propio. Un timeout de una capa no prueba que la llamada externa se haya detenido. La reanudación evita algunos duplicados, pero no acredita ejecución exactamente una vez ni coste exactamente una vez.
+
+Decisión: job persistente ejecutado por un worker de Render, con PostgreSQL como autoridad de revisión y avance. Next autentica, inicia y consulta; el navegador muestra estado. LangGraph puede conservar la secuencia, usando persistencia duradera, pero debe integrarse con el registro del job y no competir con él. No hace falta añadir Redis ni un conjunto de agentes autónomos para el primer corte si un worker y una cola transaccional en PostgreSQL cubren la carga medida.
+
+Cada etapa registra input_hash, output_hash, revision_id, policy_version, model_profile, lease/heartbeat, attempt y provider_request_id. La clave idempotente debe representar la misma revisión y tarea. Un timeout con resultado externo desconocido se registra como indeterminado; no se compra automáticamente otra respuesta. Reparación acotada al objeto fallido, con presupuesto explícito y sin repetir todo el expediente.
+
+8. Persistencia e invalidación aún necesitan una autoridad clara
+
+Los asuntos se conservan en filas Matter y en chambersData.matters. Se añadieron transacciones y controles de concurrencia que deben preservarse. Pero el JSON sigue mezclando fuentes, borradores, decisiones, revisiones, trazas y bytes base64. La duplicación hace más difícil razonar sobre modificaciones, selección y vigencia.
+
+Al cambiar una fuente, el texto anterior puede conservarse y el flujo omitir su regeneración por estar no vacío. needsB10Optimization también devuelve false si cambia la fuente confirmada y permanece un borrador diferente de ella. Conservar trabajo humano es correcto; no distinguir «conservado» de «vigente para esta fuente» deja al juez final el trabajo de detectar el desfase.
+
+Decisión: revisión inmutable de EvidenceSnapshot; propuestas y correcciones humanas como eventos atribuibles; GeneratedDraft vinculado a source_revision y origin (generado/editado/importado); StrategyDecision y ReviewIssue separados; Artifact en almacenamiento de objetos por hash; aprobación ligada a la revisión y bytes exactos. Una edición humana no se sobreescribe: se marca la dependencia modificada y se ofrece revisión del cambio.
+
+No hace falta migrar todo el JSON de una vez. Empezar por una proyección versionada con lectura compatible, validar paridad y solo después retirar la escritura duplicada. Los campos históricos no constituyen fuente nueva por existir en el JSON.
+
+9. Las pruebas no miden todavía aceptación editorial del producto
+
+Las pruebas recientes verifican muchas propiedades útiles de código y recuperación. Algunas pruebas de graph usan respuestas simuladas; varios golden evals verifican literales ya escritos dentro del test. Estos resultados no miden la capacidad del modelo en un caso nuevo ni la aceptación de los Word generados.
+
+En este checkout no aparece un directorio .github con una barrera CI de evaluación editorial. Eso no demuestra que no haya automatizaciones externas. Las publicaciones Vercel/Render exitosas demuestran construcción y arranque, no calidad de la selección ni del Audit.
+
+Decisión: corpus privado representativo que incluya los casos históricos autorizados y casos nuevos de otras prácticas; mantener separado el conjunto usado para ajustar del usado para evaluar. Convertir feedback atribuible de Ángela en reglas y pares de preferencia. Evaluar fuentes → estrategia → Submission/Audit reales, con comparación ciega y revisión humana de desacuerdos. Repetir casos seleccionados para medir variabilidad, no aprobar por una sola corrida afortunada. Las afirmaciones «calibrado para todos los casos» requieren evidencia que hoy no está establecida.
+
+Barreras de aceptación propuestas (objetivos, no resultados actuales):
+- 100% de asuntos fuente reconciliados; selección sin IDs ajenos o duplicados.
+- Cero exposición de clientes restringidos y cero afirmaciones materiales inventadas en el conjunto de liberación; inspección humana de semántica y artefactos.
+- Mismo portafolio e insignia en Studio, Audit y Word para una revisión.
+- Reanudación tras recarga/reinicio sin repetir etapas persistidas; ningún resultado de una revisión anterior se aprueba para una nueva.
+- Hallazgos accionables: propietario, dato preciso, fuente y acción; errores de generación no se presentan como tarea del usuario.
+- Coste, número de llamadas y p50/p95 por etapa medidos en el mismo corpus antes/después. No fijar una promesa de cinco minutos ni ahorro monetario sin baseline.
+
+10. Trazabilidad y controles de acceso
+
+Hay trazas de estrategia/carta/juez con tokens y duración, pero no una traza uniforme del run completo en micro_optimizer. El resultado de modelo, versión de prompt, reglas recuperadas, correcciones y artefacto rechazado deben poder reconstruirse sin depender de logs temporales. No hace falta guardar razonamiento privado del modelo: bastan decisiones observables, evidencias, entradas/salidas y métricas con retención adecuada.
+
+Hallazgo de acceso de prioridad alta, por lectura de código: FastAPI publica rutas de generación sin autenticación de servicio visible en main.py; las llamadas desde Next tampoco envían una credencial de servicio. /download acepta una ruta de archivo existente y extensión PDF/DOCX sin validación visible de propietario o directorio autorizado. No se intentó explotar el servicio ni descargar documentos ajenos. La protección efectiva de infraestructura debe confirmarse, pero el contrato de aplicación es insuficiente.
+
+Decisión: autenticación entre servicios y autorización de job/revisión, límites de concurrencia y gasto por cuenta, y descarga mediante ID de artefacto autorizado. Validar destinos de callbacks y fuentes remotas. No confiar en CORS como autenticación. Health debe exponer commit y versiones efectivas no secretas, en vez de cadenas históricas distintas (26.26/26.43).
+
+11. Arquitectura propuesta y responsabilidades
+
+Studio (captura y decisiones humanas)
+  → API autenticada (crea/reanuda revisión)
+  → EvidenceSnapshot + PracticePolicy
+  → Job persistente / worker
+      → comprobar registro y conflictos
+      → construir fichas verificadas y propuesta de selección
+      → validar propuesta y resolver preguntas necesarias
+      → escribir secciones seleccionadas con evidence IDs
+      → controles locales de hechos y revisión semántica acotada
+      → generar Submission y Audit desde la misma decisión
+      → verificar artefactos exactos
+  → Artifact aprobado por revisión / estado accionable en Studio.
+
+El código decide identidad, permisos, versiones, cobertura, sumas/monedas, transiciones y elegibilidad de reglas explícitas. La IA propone redacción, síntesis y comparación editorial dentro del alcance dado. La persona confirma hechos ambiguos, permisos y elecciones estratégicas que le corresponden. La IA no debe inventar hechos ni requisitos de bloqueo para completar un formato.
+
+Separar modalidades: borrador de trabajo, revisión interna y entrega aprobada. Guardar no es aprobar; desconocido no es falso; fallo técnico no es falta de evidencia; ausencia de ranking encontrado no es «Unranked».
+
+12. Plan de ejecución con entregas verificables
+
+Corte A — Contrato común y baseline.
+Crear esquema compartido/versionado de EvidenceSnapshot, PolicyPack, StageResult y ReviewIssue. Catalogar rutas usadas y convertir Studio en consumidor del contrato. Mantener adaptadores para expedientes existentes. Instrumentar un run completo y establecer el corpus antes de comparar calidad. Corregir filtro RAG mediante metadatos y separar reglas de ejemplos. Cerrar acceso de servicio/artefactos como tarea paralela de plataforma dentro del mismo corte.
+Salida: el mismo input resuelto tiene el mismo registro y política en todas las rutas; ausencia de mezcla Tax/taxonomy u otros directorios; diagnóstico reproducible.
+
+Corte B — Calidad temprana y orden del trabajo.
+Seleccionar desde evidencia antes de reescribir; introducir trazabilidad de afirmaciones y validación local. Hacer que severidad/acción provengan de reglas y evidencias verificadas. Conservar fuentes y redacciones anteriores con su estado de vigencia. Rúbrica de liderazgo/insignia y ejemplos parametrizados por práctica, no por nombres de clientes.
+Salida: las contrapruebas de esta auditoría se detienen en su etapa; no se espera al Word para señalar una cifra inventada; reservas no generan reescritura salvo necesidad.
+
+Corte C — Ejecución durable.
+Mover la coordinación de lotes y revisión a un worker con jobs, leases/heartbeat, idempotencia y presupuesto. Retirar la dependencia del bucle del navegador. Unificar el camino largo o impedir que publique con políticas distintas. Migración detrás de una opción controlada y posibilidad de volver a la versión anterior sin perder datos.
+Salida: pruebas de reinicio del worker, cierre de pestaña, doble clic, timeout y edición concurrente; reanudar únicamente lo pendiente y conservar respuestas confirmadas.
+
+Corte D — Aceptación y publicación gradual.
+Comparar nueva ruta contra baseline en corpus privado y casos reservados. Usar generación en paralelo para revisión interna sin sustituir automáticamente entregables aprobados. Revisar documentos reales con criterios atribuibles de Ángela; publicar solo tras satisfacer las barreras. Mantener evaluación continua por cambio de prompt, política, modelo, parser y renderer.
+Salida: matriz de aceptación con enlaces a evidencias y métricas por caso. La unidad de entrega es el expediente completo correcto y utilizable, no el número de tests ni la desaparición de un mensaje.
+
+No se estiman semanas ni porcentajes de éxito sin completar el baseline y delimitar volumen de migración. Estos cortes son dependencias de implementación y aceptación, no cuatro agentes ni cuatro nuevas llamadas obligatorias.
+
+Qué conservar de lo que ya se construyó
+
+Conservar el parser y manifiesto por fuente, IDs estables, controles de confidencialidad y resolución humana, protección transaccional, manejo de respuestas incompletas, configuración central de modelos, selección común, binding de artefacto aprobado, builders DOCX y las pruebas deterministas útiles. La migración debe reutilizar estas piezas. Retirar certificaciones y reglas heredadas que contradigan el contrato común solo después de identificar sus consumidores; no borrar código masivamente porque parezca antiguo.
+
+Mi valoración de las correcciones recientes
+
+Fueron reparaciones operativas de fallos concretos: evitar perfiles inferidos en B9, reducir texto de hallazgos, guardar correcciones puntuales, no bloquear por fecha ausente, exigir cobertura y permitir reintento. No equivalen a una evaluación de calidad general. En particular, la normalización de temporal_basis debe integrarse en la política basada en evidencia: la prueba de esta auditoría demuestra por qué no basta confiar en esa etiqueta. Debí distinguir con mayor claridad entre comportamiento técnico probado y calidad editorial comprobada con expedientes reales.
+
+Evidencia reproducible local
+
+- docs/reviews/systemic-probes-2026-10-06.py y .json: contrapruebas sin llamadas pagadas.
+- ai-engine/core/review_graph.py: invoke_role, selection_gate, calibrate_verdict.
+- ai-engine/core/selection_contract.py: protección estructural reciente de referencias.
+- ai-engine/agents/micro_optimizer.py: escritura y validación local.
+- ai-engine/utils/rag_router.py: búsqueda parcial de práctica y puntuación de directorio.
+- ai-engine/core/graph.py y main.py: segundo recorrido y ejecución en memoria/proceso web.
+- src/components/SubmissionStudio.tsx: coordinación y orden de etapas.
+- src/lib/audit/review-checkpoint.ts, optimization-state.ts y review-actions.ts: caché, vigencia y acciones.
+- src/app/actions/submissions.ts, prisma/schema.prisma: duplicación, revisiones y controles de concurrencia.
+- ai-engine/tests/test_golden_evals.py y test_review_graph.py: alcance real de las pruebas.
+- Dictamen/plan locales del 2 de octubre: antecedentes históricos; no se asumen vigentes sin contrastarlos con el código actual.
+
+Referencias externas consultadas
+
+OpenAI Structured Outputs: https://developers.openai.com/api/docs/guides/structured-outputs
+La estructura correcta no garantiza ausencia de errores semánticos; el límite aplica también al nuevo contrato de selección.
+OpenAI Evaluation best practices: https://developers.openai.com/api/docs/guides/evaluation-best-practices
+Evaluaciones específicas de tarea, feedback humano y evaluación continua; no se propone depender de una plataforma concreta de evals.
+LangGraph Persistence: https://docs.langchain.com/oss/python/langgraph/persistence
+Persistencia de checkpoints para recuperar ejecución; requiere elegir e integrar el almacenamiento.
+Render Background Workers: https://render.com/docs/background-workers
+Workers para trabajo fuera del ciclo HTTP. La elección del worker no resuelve por sí sola idempotencia, calidad o permisos.

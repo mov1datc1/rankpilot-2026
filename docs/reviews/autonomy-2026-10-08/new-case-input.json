@@ -1,0 +1,156 @@
+{
+  "id": "qa-isolated-new-case",
+  "userId": "qa",
+  "practiceArea": "Tax",
+  "targetDirectory": "Chambers",
+  "guideRegion": "Mexico",
+  "currentBand": "",
+  "updatedAt": "2026-10-08T21:39:06.083Z",
+  "status": "Draft",
+  "matters": [
+    {
+      "id": "new-0",
+      "client": "Meridian Circuits",
+      "name": "Meridian Circuits",
+      "rawNotes": "The firm represented Meridian Circuits in an administrative tax appeal in Mexico. Partner Laura Vega led the challenge to a MXN 8 million assessment concerning deductible manufacturing expenses. The administrative tribunal annulled the assessment in July 2026 for defects in the authority’s evidentiary reasoning. The source does not report a final appeal by the authority.",
+      "source_excerpt": "The firm represented Meridian Circuits in an administrative tax appeal in Mexico. Partner Laura Vega led the challenge to a MXN 8 million assessment concerning deductible manufacturing expenses. The administrative tribunal annulled the assessment in July 2026 for defects in the authority’s evidentiary reasoning. The source does not report a final appeal by the authority.",
+      "value": "MXN 8 million",
+      "leadPartner": "Laura Vega",
+      "optimizedText": "",
+      "confidentialityConfirmed": true,
+      "publish_status": "non_publishable",
+      "isConfidential": true
+    },
+    {
+      "id": "new-1",
+      "client": "Harbour Logistics",
+      "name": "Harbour Logistics",
+      "rawNotes": "The firm advises Harbour Logistics on a tax audit in Mexico concerning customs valuation and the tax treatment of freight services. Partner Laura Vega leads document review and responses to information requests. The audit began in March 2026 and remains ongoing. No assessment, settlement or recovery has been reported.",
+      "source_excerpt": "The firm advises Harbour Logistics on a tax audit in Mexico concerning customs valuation and the tax treatment of freight services. Partner Laura Vega leads document review and responses to information requests. The audit began in March 2026 and remains ongoing. No assessment, settlement or recovery has been reported.",
+      "value": "",
+      "leadPartner": "Laura Vega",
+      "optimizedText": "",
+      "confidentialityConfirmed": true,
+      "publish_status": "non_publishable",
+      "isConfidential": true
+    },
+    {
+      "id": "new-2",
+      "client": "Orion Components",
+      "name": "Orion Components",
+      "rawNotes": "The firm advised Orion Components on tax compliance procedures for a Mexican manufacturing site. Counsel Elena Soto reviewed supplier documentation and prepared an implementation checklist in September 2026. No litigation or monetary result is reported.",
+      "source_excerpt": "The firm advised Orion Components on tax compliance procedures for a Mexican manufacturing site. Counsel Elena Soto reviewed supplier documentation and prepared an implementation checklist in September 2026. No litigation or monetary result is reported.",
+      "value": "",
+      "leadPartner": "Elena Soto",
+      "optimizedText": "",
+      "confidentialityConfirmed": true,
+      "publish_status": "non_publishable",
+      "isConfidential": true
+    },
+    {
+      "id": "new-3",
+      "client": "Cedar Retail",
+      "name": "Cedar Retail",
+      "rawNotes": "The firm advised Cedar Retail on a tax dispute in Mexico. Partner Laura Vega prepared the administrative defence in February 2025. An initial source note says the challenge was dismissed; a subsequent undated note says a final decision remains pending. Both notes agree that the firm analysed the assessment and filed the defence. The sources do not establish which status is current.",
+      "source_excerpt": "The firm advised Cedar Retail on a tax dispute in Mexico. Partner Laura Vega prepared the administrative defence in February 2025. An initial source note says the challenge was dismissed; a subsequent undated note says a final decision remains pending. Both notes agree that the firm analysed the assessment and filed the defence. The sources do not establish which status is current.",
+      "value": "",
+      "leadPartner": "Laura Vega",
+      "optimizedText": "",
+      "confidentialityConfirmed": true,
+      "publish_status": "non_publishable",
+      "isConfidential": true
+    }
+  ],
+  "chambersData": {
+    "qa_synthetic": true,
+    "firm_name": "Faro Fiscal QA Fictional",
+    "guideRegion": "Latin America",
+    "matters": [
+      {
+        "id": "new-0",
+        "client": "Meridian Circuits",
+        "name": "Meridian Circuits",
+        "rawNotes": "The firm represented Meridian Circuits in an administrative tax appeal in Mexico. Partner Laura Vega led the challenge to a MXN 8 million assessment concerning deductible manufacturing expenses. The administrative tribunal annulled the assessment in July 2026 for defects in the authority’s evidentiary reasoning. The source does not report a final appeal by the authority.",
+        "source_excerpt": "The firm represented Meridian Circuits in an administrative tax appeal in Mexico. Partner Laura Vega led the challenge to a MXN 8 million assessment concerning deductible manufacturing expenses. The administrative tribunal annulled the assessment in July 2026 for defects in the authority’s evidentiary reasoning. The source does not report a final appeal by the authority.",
+        "value": "MXN 8 million",
+        "leadPartner": "Laura Vega",
+        "optimizedText": "",
+        "confidentialityConfirmed": true,
+        "publish_status": "non_publishable",
+        "isConfidential": true
+      },
+      {
+        "id": "new-1",
+        "client": "Harbour Logistics",
+        "name": "Harbour Logistics",
+        "rawNotes": "The firm advises Harbour Logistics on a tax audit in Mexico concerning customs valuation and the tax treatment of freight services. Partner Laura Vega leads document review and responses to information requests. The audit began in March 2026 and remains ongoing. No assessment, settlement or recovery has been reported.",
+        "source_excerpt": "The firm advises Harbour Logistics on a tax audit in Mexico concerning customs valuation and the tax treatment of freight services. Partner Laura Vega leads document review and responses to information requests. The audit began in March 2026 and remains ongoing. No assessment, settlement or recovery has been reported.",
+        "value": "",
+        "leadPartner": "Laura Vega",
+        "optimizedText": "",
+        "confidentialityConfirmed": true,
+        "publish_status": "non_publishable",
+        "isConfidential": true
+      },
+      {
+        "id": "new-2",
+        "client": "Orion Components",
+        "name": "Orion Components",
+        "rawNotes": "The firm advised Orion Components on tax compliance procedures for a Mexican manufacturing site. Counsel Elena Soto reviewed supplier documentation and prepared an implementation checklist in September 2026. No litigation or monetary result is reported.",
+        "source_excerpt": "The firm advised Orion Components on tax compliance procedures for a Mexican manufacturing site. Counsel Elena Soto reviewed supplier documentation and prepared an implementation checklist in September 2026. No litigation or monetary result is reported.",
+        "value": "",
+        "leadPartner": "Elena Soto",
+        "optimizedText": "",
+        "confidentialityConfirmed": true,
+        "publish_status": "non_publishable",
+        "isConfidential": true
+      },
+      {
+        "id": "new-3",
+        "client": "Cedar Retail",
+        "name": "Cedar Retail",
+        "rawNotes": "The firm advised Cedar Retail on a tax dispute in Mexico. Partner Laura Vega prepared the administrative defence in February 2025. An initial source note says the challenge was dismissed; a subsequent undated note says a final decision remains pending. Both notes agree that the firm analysed the assessment and filed the defence. The sources do not establish which status is current.",
+        "source_excerpt": "The firm advised Cedar Retail on a tax dispute in Mexico. Partner Laura Vega prepared the administrative defence in February 2025. An initial source note says the challenge was dismissed; a subsequent undated note says a final decision remains pending. Both notes agree that the firm analysed the assessment and filed the defence. The sources do not establish which status is current.",
+        "value": "",
+        "leadPartner": "Laura Vega",
+        "optimizedText": "",
+        "confidentialityConfirmed": true,
+        "publish_status": "non_publishable",
+        "isConfidential": true
+      }
+    ],
+    "original_b10": "Faro Fiscal QA Fictional is a fictional Mexican tax practice advising on administrative tax litigation, tax audits and tax compliance. The department has two partners and five other qualified lawyers. Laura Vega leads tax disputes; Elena Soto is a counsel who advises on compliance documentation.",
+    "enhanced_b7": "",
+    "original_c2": "",
+    "departmentName": "Tax",
+    "numPartners": 2,
+    "numLawyers": 5,
+    "contacts": [
+      {
+        "name": "QA Contact",
+        "email": "qa@example.test"
+      }
+    ],
+    "departmentHeads": [
+      {
+        "name": "Laura Vega"
+      }
+    ],
+    "filing_reviewed": true,
+    "lawyers": [
+      {
+        "name": "Laura Vega",
+        "role": "Partner",
+        "isPartner": true,
+        "bio": "Laura Vega is a partner in the tax practice and leads the Meridian Circuits, Harbour Logistics and Cedar Retail matters."
+      },
+      {
+        "name": "Elena Soto",
+        "role": "Counsel",
+        "isPartner": false,
+        "bio": "Elena Soto is a counsel in the tax practice. She advised Orion Components on compliance documentation."
+      }
+    ],
+    "draft_revision": 0
+  }
+}

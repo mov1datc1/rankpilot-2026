@@ -1,0 +1,162 @@
+{
+  "mode": "live",
+  "model": "gpt-5.6-terra",
+  "qa_overrides": {
+    "timeout_seconds": 60,
+    "max_output_tokens": 4096
+  },
+  "total": 4,
+  "passed": 0,
+  "failed": 4,
+  "results": [
+    {
+      "id": "live_irrelevant_recipe",
+      "passed": false,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 5.232,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Chambers Applicant Firm",
+            "practice_area": "Corporate/M&A",
+            "extracted_practice_area": "Corporate/M&A",
+            "calibrated_practice_area": "Tax",
+            "location": "Global"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [],
+          "total_matters": 0,
+          "publishable_count": 0,
+          "confidential_count": 0
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_multi_source_same_mandate",
+      "passed": false,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 4.946,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Corporate/M&A",
+            "extracted_practice_area": "Corporate/M&A",
+            "calibrated_practice_area": "Corporate/M&A",
+            "location": "Global"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [],
+          "total_matters": 0,
+          "publishable_count": 0,
+          "confidential_count": 0
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_two_distinct_ip_matters",
+      "passed": false,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 5.155,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Intellectual Property",
+            "extracted_practice_area": "Intellectual Property",
+            "calibrated_practice_area": "Intellectual Property",
+            "location": "Mexico"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [],
+          "total_matters": 0,
+          "publishable_count": 0,
+          "confidential_count": 0
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_conflicting_values",
+      "passed": false,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 8.699,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Corporate/M&A",
+            "extracted_practice_area": "Corporate/M&A",
+            "calibrated_practice_area": "Energy & Natural Resources",
+            "location": "Global"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [],
+          "total_matters": 0,
+          "publishable_count": 0,
+          "confidential_count": 0
+        },
+        "extraction_errors": []
+      }
+    }
+  ],
+  "assessment_note": "Results assessed from saved responses: invalid input must be rejected; partial file failure must identify source. No new inference during reassessment."
+}

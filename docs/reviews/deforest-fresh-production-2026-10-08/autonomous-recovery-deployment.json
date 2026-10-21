@@ -1,0 +1,21 @@
+{
+  "commit": "c64777818af5cdbc058c6dd127a7d8b8dafb4a2e",
+  "dev_ci": 37884225591,
+  "main_ci": 37884410477,
+  "ci": "success",
+  "vercel": "dpl_FwGtHPQnAwvzwYAin2VtZbDXGazA",
+  "vercel_status": "Ready",
+  "engine_deploy": "dep-db46t0qvcj2c73ctekbg",
+  "engine_live_at": "2026-10-09T04:35:36Z",
+  "worker_deploy": "dep-db46t0qvcj2c73ctekk0",
+  "worker_live_at": "2026-10-09T04:34:14Z",
+  "engine_fingerprint": "cd67afc6244e8a75e51175307ca01e0aba5b6fdaf5792a1ba75ef01f0ccd75ca",
+  "expected_job": "509d6b4b-4d7a-409b-8c16-a296fed9805f",
+  "manual_resume_invoked": false,
+  "recovery_commit": "e6179e40a3e678f4354a0eda60052af921ffa1ed",
+  "recovery_worker_deploy": "dep-db470o6q1p3s739o8ut0",
+  "recovery_worker_live_at": "2026-10-09T04:42:27Z",
+  "same_job_automatically_recovered": true,
+  "audit_recovered_tokens": 11824,
+  "artifact_started_at": "2026-10-09T04:42:43Z"
+}

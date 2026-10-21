@@ -1,0 +1,41 @@
+RAMOS CASTILLO — REAL ESTATE: FEEDBACK Y CONTRATOS DEL GRAFO
+Revisión 7 octubre 2026 México / 8 octubre UTC.
+
+REGLA ACLARADA POR JONATHAN EN ESTA CONVERSACIÓN
+Tras revisar todas las fuentes del cliente y del asunto, si no existe marca de confidencialidad, solicitar confirmación durante extracción/revisión previa al razonamiento editorial. Guardar decisión, alcance y procedencia; no inferir publicable por ausencia ni volver a preguntar sin cambio material. La confidencialidad explícita existente debe propagarse. Un conflicto requiere resolverlo, no elegir silenciosamente. Esta aclaración sustituye la ambigüedad registrada en el informe anterior; es decisión de producto, todavía no una nueva implementación verificada.
+
+ALCANCE
+Feedback completo de Ángela aportado en /Users/jonathanpalacios/.codex/attachments/3c23b4eb-7667-4a45-88f9-ed1ca0021a73/pasted-text.txt, atribuido por usuario al 1 de octubre. Inspección del código ACTUAL. No se dispone en esta revisión de los 33 originales, DOCX histórico ni trazas de aquella ejecución. No atribuir retrospectivamente al código actual la causa demostrada de aquel resultado. Araquereyna aún no aportado.
+
+HALLAZGO CENTRAL
+Una decisión puede estar formalmente trazada a una cita auténtica y ser semánticamente falsa. Según el feedback, MIDI, Familia de Anda y Rosa Dorina fueron descritos como fiscales pese a que sus problemas jurídicos versaban sobre desarrollo, propiedad y delimitación de inmuebles. El error precede a la selección y puede propagarse coherentemente a todos los documentos.
+
+MAPA DE RESPONSABILIDADES / ENTREGABLE / ESTADO OBSERVADO
+1. Extracción: representación factual por asunto con cliente, activo/proyecto, problema jurídico, trabajo, resultado/estado, stakes con tipo/moneda, atribución, fuentes y confidencialidad. El register_gate actual verifica presencia de fuente, IDs y unicidad; no exige por sí solo esta representación jurídica validada.
+2. RAG: reglas aplicables por directorio, práctica, jurisdicción y edición, con manifiesto y conflictos resueltos. Hay router por catálogo y trazas. El catálogo marca Real_Estate_RAG.txt con directory=* y jurisdiction=*, aunque el documento contiene instrucciones específicas de Chambers/México y ejemplos de Ramos Castillo.
+3. Comprensión y practice fit: concluir vínculo jurídico con el área, áreas secundarias, citas que sostengan la conclusión y contraevidencia. No basta industria, importe ni palabra amparo. En el grafo activo esto queda principalmente dentro del estratega y revisión posterior; no hay entre register y strategy una salida independiente exigida que demuestre esta comprensión antes de seleccionar.
+4. Selección: decisión para TODOS los asuntos, orden, héroe y comparaciones de fronteras. El estratega lo solicita y selection_gate exige cobertura/unicidad, máximo, héroe y citas. La validación determinista de rationale no prueba implicación jurídica de la cita.
+5. Desarrollo: propuestas B9/B10/C2 y asuntos, sin reinterpretar datos canónicos. Existe desarrollo estructurado y validación. La calidad semántica sigue requiriendo evaluación específica, no solo formato/citas.
+6. Audit: cinco secciones con mismo portfolio, categorías y razones comparativas. Existe contrato; no debe convertirse una lista de razones aisladas en prueba de curaduría marginal.
+7. Editor: contrastar fuente vs representación vs decisiones, incluyendo reservas/excluidos, y revisar integridad de prosa. Existe juez con instrucciones amplias, pero no sustituye validación temprana de las premisas jurídicas.
+8. Release: releer Submission y Audit renderizados, validar par y hashes. Existe gate final. Respuesta técnica completa no garantiza último párrafo semánticamente completo; el caso de Matter 3 debe ser regresión de contenido y de renderizado.
+
+COMPROBACIONES LOCALES REPRODUCIDAS (SIN MODELOS NI PRODUCCIÓN)
+- RAGRouter.retrieve('Real Estate', directorio, 'Mexico', task='strategist practice fit portfolio property zoning') devuelve Real_Estate_RAG.txt tanto para Chambers & Partners como para The Legal 500, además de tres referencias globales. Confirma amplitud de alcance del catálogo, no que toda regla recuperada haya sido aplicada por el modelo.
+- core.grounding.factual_issues: fuente SINTÉTICA sobre decreto urbanístico, desarrollo residencial y protección de propiedad; rationale 'Principally tax/fiscal controversy without property title or development nexus.' devuelve []. Este helper controla cifras, monedas y ciertos cambios pendiente/victoria; no detecta esa contradicción conceptual. No es ejecución integral: el juez IA posterior podría detectarla.
+- Real_Estate_RAG.txt contiene lineamientos de convertir MXN a USD, posicionamiento 'elite', ejemplo Band 4, cuotas de composición y lenguaje de resultados/precedentes. También contiene un núcleo útil de propiedad, uso del suelo y amparo inmobiliario. El router declara las referencias subordinadas a política central; aun así, conviene eliminar o acotar contradicciones en la fuente de reglas, no confiar solo en que el modelo las resuelva.
+
+CRITERIOS DE REGRESIÓN DERIVADOS, NO RESPUESTAS HARDCODEADAS
+- MIDI: debe reconocerse el vínculo con uso del suelo/desarrollo cuando la fuente así lo diga; prohibir rationale fiscal sin respaldo.
+- Familia de Anda: separar recuperación/indemnización perseguida de resultado obtenido; evaluar propiedad y vía constitucional.
+- Rosa Dorina: reconocer delimitación privada/federal aunque importe menor y trámite pendiente.
+- COMINVI: contexto de construcción no vuelve automáticamente inmobiliario un litigio de contratación pública; comparar con MIDI.
+- Grupo R y Paquetexpress: importe grande o éxito no sustituyen encaje jurídico.
+- Conciencia Ambiental: puede tener encaje mixto y quedar en reserva sin inventar ausencia de dimensión inmobiliaria.
+- Comparaciones relevantes: COMINVI/MIDI, SMB/Familia de Anda, Holcim/Rosa Dorina, sujetas a lectura de originales.
+- No fijar 12 ni 16 asuntos, nombres o héroe como regla universal; selección según hechos y aporte incremental.
+- Matter 3: toda descripción seleccionada debe llegar completa al Word, sin inventar texto para tapar truncamientos.
+
+CONCLUSIÓN
+No está demostrado que todas las responsabilidades estén suficientemente cubiertas por el solo hecho de ejecutar el grafo. Hay dos brechas concretas actuales: representación/validación semántica previa a la curaduría y alcance/contenido del RAG. Siete o veintiún nodos no son garantía; cada responsabilidad necesita entrada, salida persistida, criterio de aceptación, reparación y política de reanudación. Unificar el motor es compatible con etapas de extracción y confirmación previas al razonamiento; no crea otra herramienta.
+No hubo cambios de código, despliegues ni reprocesamiento del expediente en esta revisión. La regla aclarada de confidencialidad queda registrada para la implementación y prueba posteriores.

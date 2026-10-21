@@ -1,0 +1,55 @@
+ESTADO: NO APROBADO PARA PRESENTACIÓN. LA REVISIÓN FINAL NO EMITIÓ VEREDICTO.
+
+EVALUACIÓN AUTORIZADA CON OPENAI — COPIA PRIVADA DE DEFOREST
+Expediente 66e3467d-aa35-4004-894c-64c3fd5d96e7. Revisión 35.
+Autorización: el usuario respondió «si autorizo» al envío de asuntos, abogados y B10 a OpenAI para revisar una copia sin modificar el expediente.
+
+ALCANCE
+Nueva lectura de la cuenta confirmó la misma revisión 35. Se ejecutó B10, estrategia, control de fuentes, redacción del Audit y revisión editorial con los modelos configurados en el proyecto. Se realizó una corrección adicional de la carta para sustituir identificadores por nombres y señalar una categoría profesional incompatible. Se generaron Word locales con el constructor actual y se enviaron sus textos a revisión final. No se escribieron datos en producción, no se marcaron entregables aprobados y no se publicaron documentos privados en Git.
+
+RESULTADO REPRODUCIBLE
+- B10 generado: 276 palabras frente a 563 originales. Se omiten declaraciones de rankings sin acreditación y se mantiene una descripción factual del departamento.
+- 32 redacciones de asuntos conservadas; no se reescribieron masivamente.
+- Nueva selección: 20 core, 11 reservas, 1 excluido. Citas de las 32 decisiones aceptadas por el control de fuentes.
+- Word: 20 fichas; 1 publicable (SCOTCH), 19 confidenciales. Esto es la selección de entrega, no el registro completo de 32 asuntos.
+- Hero propuesto: Volkswagen de México y VW Financial Services. Es confidencial; la anterior exclusión de hero por confidencialidad desapareció.
+- Carta inicial: contenía numerosos UUIDs. La corrección dirigida produjo 636 palabras, cinco campos y cero UUIDs; el Word del Audit contiene 687 palabras incluyendo encabezados/estado. No se midió paginación en Microsoft Word.
+- Control editorial preliminar: no aprobó la primera carta porque proponía Associate to Watch para Javier mientras lo identificaba como socio. Avisó también de fechas/periodo pendientes y del salto «S.A. / de C.V.» en la narrativa de Brose. Se conservó este dictamen y se detuvo su segundo ciclo automático redundante; la revisión final se ejecutó separadamente sobre la carta corregida y el Word.
+
+COMPARACIÓN CON ÁNGELA
+1. B10 y calidad del texto: mejora demostrada en extensión y separación de lenguaje de candidatura. No se modificó agresivamente la redacción de los 32 asuntos.
+2. Confidencialidad: la copia usa los permisos guardados y la anonimización del renderer; la lista problemática de B9 no expone los clientes previamente detectados. Conservar las comprobaciones finales de secciones públicas: el control de fuentes por sí solo no equivale a aprobar confidencialidad del Word.
+3. Ranking individual: el Audit ya vincula Javier a Mextypsa, Bonatti, Nueva Empresa, Brose, BADAK y Bosch; Andrés no tiene atribución individual en las fichas aportadas. Una buena biografía no sustituye esa evidencia. Se detectó la incompatibilidad entre cargo de socio y propuesta Associate to Watch. Permanece la necesidad de reconciliar cargos, reconocimiento actual por práctica/edición y objetivos de candidatura.
+4. Selección estratégica: la propuesta ahora incluye Mextypsa, Bosch, BADAK y Benteler; explica algunas reservas (Securitas, Omron y REGSA). Falta una comparación explícita que explique por qué Volkswagen aporta más como insignia que Schaeffler. La preferencia del modelo es una propuesta; no se impuso el ejemplo de Ángela como resultado.
+5. Orden: las fichas core conservan el orden del registro fuente. Volkswagen aparece décimo dentro de E pese a ser insignia. La selección de IDs coincide entre carta y Word, pero la ordenación estratégica solicitada por Ángela aún no está implementada de forma suficiente.
+6. Audit ejecutivo: la corrección de copia eliminó códigos y aclaró categorías. El generador inicial todavía emitió un registro de IDs; la corrección manual dirigida no acredita que la generación estándar lo prevenga. La carta es más breve, pero todavía no detalla una línea de contribución incremental para cada seleccionado.
+7. Gramática: persiste el salto dentro de la razón social de Brose; debe corregirse en la separación de párrafos sin alterar la fuente ni el resultado del asunto.
+
+EVIDENCIA PÚBLICA ADICIONAL
+La página oficial de DeForest identifica a Javier Atzin Vallejo y Andrés Cabrera Gómez como socios, y a Raymundo Carreño del Moral como Of Counsel. El expediente marca Andrés isPartner=false: corresponde reconciliar ese dato y su periodo, no sobrescribirlo silenciosamente.
+Fuente: https://deforest.mx/en/lawyers/
+
+Chambers publica a Javier Atzin Vallejo Rodriguez, DeForest, Band 3 en General Business Law: Queretaro, México, Latin America 2027. Ese reconocimiento no acredita un ranking en Labour & Employment ni una edición histórica distinta. Una etiqueta genérica «Unranked» no representa adecuadamente ese alcance.
+Fuente: https://chambers.com/lawyer/javier-atzin-vallejo-rodriguez-latin-america-9:27134038
+
+Las consultas anteriores son evidencia adicional del dictamen. El perfil de ranking fue localizado después de iniciar la revisión final; no fue suministrado retroactivamente al modelo ni añadido al Word. La evidencia de cargos de la página de DeForest sí se incluyó en el input de revisión final como contraste, manteniendo los datos guardados originales.
+
+PROBLEMA OPERATIVO CONFIRMADO
+Estrategia: ~59s. Carta inicial: ~44s. Primer revisor: ~299s. Total hasta el primer dictamen: ~402s, sin contar B10 ni una posible reparación. La ruta /api/optimize/complete actualmente espera hasta180s para /review-package y tiene presupuesto global270s/maxDuration300. Esta corrida excede ambos límites. La confirmación de permisos o el wizard no resuelven ese corte de ejecución.
+Corrección técnica necesaria: guardar etapas y reanudar una revisión durable/asíncrona fuera de una única petición HTTP; después revisar y enlazar el artefacto exacto. Aumentar únicamente el texto de progreso o repetir toda la corrida no corrige la causa.
+
+CORRECCIONES CONCRETAS DERIVADAS
+A. Separar ejecución de revisión larga del tiempo de espera HTTP y persistir progreso/resultados parciales con control de revisión.
+B. Mantener IDs solo internamente; pedir y comprobar nombres legibles y un orden estratégico explícito que consuma también el renderer.
+C. Reconciliar cargo, directorio, práctica, edición y objetivo individual. Eliminar propuestas incompatibles del Word cuando el Audit las rechaza; no trasladar automáticamente Band 3 Querétaro a Labour & Employment.
+D. Unir correctamente la razón social de Brose al formar párrafos.
+E. Comprobar las fechas/estatus puntuales de SCOTCH y Grupo Solana antes de afirmar que pertenecen a un periodo o que están cerrados. No convertir la ausencia de periodo opcional en una falsa falta de todo el expediente.
+
+Estas son conclusiones de la evaluación autorizada. No constituyen cambios adicionales desplegados ni una modificación de la sesión.
+
+RESULTADO FINAL DE LA PRUEBA
+La llamada de revisión del Word terminó con RateLimitError, HTTP429, insufficient_quota / credit_balance_exhausted: la API usada para esta prueba informó que no quedan créditos. No se obtuvo un veredicto final. Esto no permite afirmar que el Word pasó ni que todos sus defectos hayan sido detectados. No se comprobó si el backend desplegado utiliza esa misma credencial.
+
+Se conserva un dictamen preliminar no aprobado, la evaluación local del documento y evidencia oficial adicional. Las copias Word son para inspección, no para presentar. La corrección dirigida de la carta no cambió el expediente ni desplegó cambios adicionales en el generador.
+
+Para completar la comprobación final: disponer de saldo en la API configurada y reanudar únicamente la revisión del documento existente, conservando esta copia y su contexto. La autorización del usuario para enviar el expediente a OpenAI ya fue otorgada y persiste; no volver a pedirla para este mismo alcance.

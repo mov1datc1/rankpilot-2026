@@ -1,0 +1,9 @@
+{
+  "scope": "Actual wizard; persistence mocked. No production calls.",
+  "failedSaveVisible": true,
+  "selectedPractice": "Tax",
+  "sourceWasNotPromoted": true,
+  "expectedRevision": 4,
+  "retrySucceeded": true,
+  "runtimeErrors": []
+}

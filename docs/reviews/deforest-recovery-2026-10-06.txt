@@ -1,0 +1,46 @@
+REVISIÓN PRIVADA DE LA NUEVA CORRIDA DEFOREST
+Expediente: 7f65841d-bd27-4f5b-944f-9d978aeb6616
+Fecha de investigación: 6 de octubre de 2026
+No publicar este informe ni sus fuentes en Git.
+
+Conclusión
+Se generaron y guardaron las 32 redacciones, B10 de 245 palabras y una nueva carta editorial. La selección contiene 20 asuntos core (1 público, 19 confidenciales), 12 reservas y cero excluidos. No existe entrega aprobada: el juez del Word devolvió seis defectos críticos y una observación. Un HTTP 200 confirma ejecución técnica, no aprobación editorial. La interfaz anterior mezclaba los seis defectos en un mensaje y los repetía en un aviso superpuesto.
+
+Evidencia
+Consulta SQL de solo lectura del ID indicado; snapshot privado temporal. Logs de Render, recurso srv-d97b0bcs728c73d8mckg, intervalo 2026-10-06 14:35–14:50 UTC: 1 extract, 1 optimize/b10, 32 optimize/matter, 2 review-step y 1 verify-rendered-package, sin paginación restante. En 14:40–14:50 UTC hay dos errores registrados: timeouts del scraper de Chambers. Los avisos de serialización Pydantic no impidieron recibir la carta y el veredicto. La correlación usa secuencia, contenido del expediente, alcance y duraciones; los logs no incluyen submissionId, por lo que no existe trazabilidad directa por ID en cada petición.
+
+Las dos etapas review-step tardaron 87,483 y 63,060 segundos; la revisión del Word 56,274 segundos. La consulta de ranking se repite en estrategia y carta; ambas fallaron por timeout. La repetición es una oportunidad de optimización pendiente, no una caída del motor de redacción.
+
+Consumo registrado en las tres etapas editoriales
+- Estrategia: 33.227 entrada + 5.163 salida = 38.390 tokens; 53,881 s de modelo.
+- Carta: 38.976 entrada + 1.983 salida = 40.959 tokens; 28,095 s.
+- Juez: 48.065 entrada + 3.390 salida = 51.455 tokens; 56,211 s.
+Total: 130.804 tokens, 120.268 de entrada y 10.536 de salida. cache_read=0 en las tres trazas. Excluye extracción, B10 y las 32 redacciones. No es costo total ni evidencia suficiente de ahorro monetario frente a la corrida anterior.
+
+Bloqueos y responsabilidad
+1. Rankings individuales: el renderizador imprimía Current ranking: Unranked y Ranked N aunque la consulta estuviera unavailable. Corrección del producto: no afirmar ranking sin observación individual y alcance coincidente.
+2. Javier: socio declarado con candidatura Associate to Watch. El producto omite la propuesta incompatible del Word; el usuario debe decidir la candidatura correcta o retirarla, sin inventar otra banda.
+3. José Alberto Díaz Méndez: senior associate en B9 y lead partner en SCOTCH, Grupo Solana y PSW. Confirmar cargo para el periodo con fuente/fecha y corregir coherentemente perfil, socio responsable y equipo de esos asuntos. No promoverlo automáticamente a socio.
+4. Identidades de asuntos confidenciales añadidas a B9: error del renderizador. B9 debe conservar exclusivamente el registro de abogados suministrado.
+5. Condición de socio inferida desde leadPartner: error del renderizador. Liderar un asunto no acredita sociedad.
+6. Periodo nulo y asuntos bajo la etiqueta últimos doce meses: confirmar intervalo de investigación y actividad de cada asunto core. No inventar fechas ni excluir automáticamente todo asunto sin fecha.
+Observación: faltan A4/B1/B2/B3/B7; solicitar contactos, departamento, conteos y jefatura. El juez la trató como warning.
+
+Art Human
+La carta pide aclarar USD 104.000.000,45 frente a exposición aproximada de MXN 2 millones. El importe ya tiene valueResolution confirmada, con motivo literal «si». No se debe borrar ni contradecir esa decisión silenciosamente. Falta explicar qué mide cada cifra y su fuente; la confirmación numérica no demuestra equivalencia de conceptos. Esta cuestión está en la carta, no entre los seis defectos críticos del juez final.
+
+Insignia y contraste con el material de Angela
+La estrategia eligió Private client (Enerflex) por cuantía superior a MXN 2.162 mil millones, mediación diseñada por la firma y acuerdos reportados. La redacción identifica correctamente como cliente al antiguo ejecutivo y como líder a Alejandro Salas de la Borbolla. No acredita representación de Enerflex ni liderazgo de Eduardo en ese asunto.
+El archivo de referencia «Prompts - Labour & Employment - DeForest - Chambers.docx» destaca Eduardo como primera candidatura y Javier como segunda, diferencia liderazgo de pedigree y señala expresamente la tensión entre Enerflex employee-side y la narrativa employer-side. Considera elevar Enerflex si se aclara cliente, capacidad, evolución hacia mediación y resultado. No certifica Enerflex como insignia indiscutible. El archivo mezcla conversación y respuestas de IA: no atribuir automáticamente cada frase a Angela.
+La elección actual es plausible por fuerza del asunto, pero el Audit no explica suficientemente esa tensión ni cómo la insignia apoya las candidaturas. No se cambió el héroe ni se insertaron hechos históricos adicionales en el expediente. Falta una decisión estratégica sustentada, no sustituirlo por otro nombre fijo.
+
+Cambios locales de producto
+Audit por secciones desplegables, evaluación y próximos pasos visibles; portafolio y perfiles desplegables. Pendientes separados en tarjetas, con detalle completo conservado y accesos a periodo, ranking y datos. Aviso breve en vez de texto masivo superpuesto al intentar descargar. Indicador de datos distingue presencia de aprobación.
+Wizard permite editar candidatura, perfil público, equipo y fechas/estado; acceso directo a abogados desde hallazgos. El campo de justificación del importe pide concepto y fuente. Cambios pendientes se pueden guardar parcialmente.
+Generador limita B9 al registro suministrado, no infiere sociedad desde asuntos y solo proyecta ranking individual verificado en el alcance correspondiente. Omite candidaturas de asociado para socios declarados, preservando las fuentes. La revisión final guarda defectos por separado. Una versión nueva del renderizador invalida el resultado anterior del Word y permite reutilizar estrategia/carta vigentes.
+
+Límites
+No hubo escrituras al expediente de producción ni nuevas llamadas pagadas al modelo. La comprobación local de la proyección de B9 conserva los ocho perfiles, deja ranking desconocido y omite Associate to Watch para Javier. Eso no equivale a un nuevo Word aprobado por el juez. No se aplicaron automáticamente cargos, fechas, conceptos monetarios ni una nueva insignia. Los cambios de código todavía no están publicados.
+
+Validación terminada
+264 contratos Node aprobados, TypeScript sin errores y build Next completo. Chrome con Studio y wizard reales y persistencia/router simulados: accesos a periodo y abogados, edición de candidatura, cinco secciones desplegables; viewport móvil 390 y scrollWidth 390; cero errores de ejecución. Capturas privadas en /private/tmp/rankpilot-oct6/audit-desktop.png y audit-mobile.png. No equivale a E2E autenticado ni a aprobación editorial del expediente.

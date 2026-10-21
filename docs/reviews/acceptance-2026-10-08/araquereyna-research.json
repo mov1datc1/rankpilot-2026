@@ -1,0 +1,535 @@
+{
+  "status": "verified_observation",
+  "declared_band": null,
+  "requested_edition": "current",
+  "firm_name": "ARAQUEREYNA",
+  "directory": "Chambers",
+  "practice_area": "Tax",
+  "jurisdiction": "Venezuela",
+  "observed_band": "Band 2",
+  "checked_at": "2026-10-08T17:48:51.344166+00:00",
+  "message": "Posición oficial observada para esta firma, práctica, país y edición; no había una banda declarada para comparar. Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.",
+  "evidence": {
+    "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+    "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+    "scraped_at": "2026-10-08T17:48:51Z",
+    "edition": "2027",
+    "guide": "Latin America",
+    "observed_practice": "Tax",
+    "observed_jurisdiction": "Venezuela",
+    "parser_version": "ranking-evidence-v1",
+    "profile_path": "/department/araquereyna-tax-latin-america-9:49:229:1:2254",
+    "organisation_id": 2254
+  },
+  "matched_firm": "ARAQUEREYNA",
+  "comparison_scope": "current_table_as_of_retrieval",
+  "table_scope_verified": true,
+  "market_context": {
+    "status": "table_only",
+    "source": {
+      "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+      "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+      "scraped_at": "2026-10-08T17:48:51Z",
+      "edition": "2027",
+      "guide": "Latin America",
+      "observed_practice": "Tax",
+      "observed_jurisdiction": "Venezuela",
+      "parser_version": "ranking-evidence-v1",
+      "profile_path": "/department/araquereyna-tax-latin-america-9:49:229:1:2254",
+      "organisation_id": 2254
+    },
+    "competitors": [
+      {
+        "name": "D'Empaire",
+        "band": "Band 1",
+        "profile_path": "/department/dempaire-tax-latin-america-9:49:229:1:2665"
+      },
+      {
+        "name": "Palacios, Torres & Korody",
+        "band": "Band 1",
+        "profile_path": "/department/palacios-torres-korody-tax-latin-america-9:49:229:1:345683"
+      },
+      {
+        "name": "Torres Plaz & Araujo",
+        "band": "Band 1",
+        "profile_path": "/department/torres-plaz-araujo-tax-latin-america-9:49:229:1:3335"
+      },
+      {
+        "name": "Baker McKenzie",
+        "band": "Band 2",
+        "profile_path": "/department/baker-mckenzie-sc-tax-latin-america-9:49:229:1:2692"
+      },
+      {
+        "name": "Sol, Caballero & Asociados",
+        "band": "Band 2",
+        "profile_path": "/department/sol-caballero-asociados-tax-latin-america-9:49:229:1:23371252"
+      },
+      {
+        "name": "LEĜA",
+        "band": "Band 3",
+        "profile_path": "/department/leĝa-tax-latin-america-9:49:229:1:2256"
+      },
+      {
+        "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+        "band": "Band 3",
+        "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-tax-latin-america-9:49:229:1:3333"
+      },
+      {
+        "name": "Ponte Andrade & Casanova",
+        "band": "Band 3",
+        "profile_path": "/department/ponte-andrade-casanova-tax-latin-america-9:49:229:1:22756886"
+      },
+      {
+        "name": "Tinoco, Travieso, Planchart & Núñez",
+        "band": "Band 3",
+        "profile_path": "/department/tinoco-travieso-planchart-nunez-tax-latin-america-9:49:229:1:2247"
+      },
+      {
+        "name": "Dentons",
+        "band": "Band 3",
+        "profile_path": "/department/dentons-tax-latin-america-9:49:229:1:7821"
+      },
+      {
+        "name": "Travieso Evans Arria Rengel & Paz",
+        "band": "Band 3",
+        "profile_path": "/department/travieso-evans-arria-rengel-paz-tax-latin-america-9:49:229:1:2670"
+      },
+      {
+        "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+        "band": "Band 4",
+        "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-tax-latin-america-9:49:229:1:2252"
+      },
+      {
+        "name": "Rodríguez & Mendoza",
+        "band": "Band 4",
+        "profile_path": "/department/rodriguez-mendoza-tax-latin-america-9:49:229:1:2251"
+      },
+      {
+        "name": "VICTUM Legal",
+        "band": "Band 4",
+        "profile_path": "/department/victum-legal-tax-latin-america-9:49:229:1:23596443"
+      },
+      {
+        "name": "AdvanTax Abogados S.C.",
+        "band": "Band 4",
+        "profile_path": "/department/advantax-abogados-sc-tax-latin-america-9:49:229:1:23120446"
+      },
+      {
+        "name": "ArnStein Legal",
+        "band": "Band 4",
+        "profile_path": "/department/arnstein-legal-tax-latin-america-9:49:229:1:23727670"
+      }
+    ],
+    "limitations": [
+      "Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration."
+    ]
+  },
+  "individuals": [
+    {
+      "status": "verified_mismatch",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Tax",
+      "jurisdiction": "Venezuela",
+      "observed_band": "Senior Statespeople",
+      "checked_at": "2026-10-08T17:48:51.345360+00:00",
+      "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+        "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+        "scraped_at": "2026-10-08T17:48:51Z",
+        "edition": "2027",
+        "guide": "Latin America",
+        "observed_practice": "Tax",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1",
+        "profile_path": "/lawyer/gabriel-ruan-santos-latin-america-9:177712",
+        "organisation_id": null
+      },
+      "matched_firm": "Gabriel Ruán Santos",
+      "comparison_scope": "current_table_as_of_retrieval",
+      "lawyer_name": "Gabriel Ruan Santos",
+      "subject_type": "individual"
+    },
+    {
+      "status": "verified_observation",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Tax",
+      "jurisdiction": "Venezuela",
+      "observed_band": "Band 2",
+      "checked_at": "2026-10-08T17:48:51.345864+00:00",
+      "message": "Observación individual del perfil oficial vinculado en la fuente, con identidad, firma, práctica, país y edición reconciliados.",
+      "evidence": {
+        "source_url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+        "content_sha256": "75bc30684f39bd673dd74b75efea7dbebee439f8bf49fb2cf6b9cfe657d11717",
+        "retrieved_at": "2026-10-08T17:48:53.338160+00:00",
+        "edition": 2027,
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "parser_version": "official-profile-evidence-v1",
+        "observed_name": "María Carolina Cano González"
+      },
+      "lawyer_name": "María Carolina Cano",
+      "subject_type": "individual"
+    },
+    {
+      "status": "verified_observation",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Tax",
+      "jurisdiction": "Venezuela",
+      "observed_band": "Band 4",
+      "checked_at": "2026-10-08T17:48:51.346340+00:00",
+      "message": "Observación individual del perfil oficial vinculado en la fuente, con identidad, firma, práctica, país y edición reconciliados.",
+      "evidence": {
+        "source_url": "https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668",
+        "content_sha256": "5db89a0a9646dfbfd50f4c4ec733e9fb6573aca35005048537efcd0c9e24e2ce",
+        "retrieved_at": "2026-10-08T17:48:54.193468+00:00",
+        "edition": 2027,
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "parser_version": "official-profile-evidence-v1",
+        "observed_name": "Ingrid García"
+      },
+      "lawyer_name": "Ingrid García Pacheco",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Tax",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:51.346781+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+        "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+        "scraped_at": "2026-10-08T17:48:51Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Tax",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Juan Carlos Balzán",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Tax",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:51.347285+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+        "content_sha256": "6f7e5616ce0b990e4628f9a209a43abe19903aebf2a319c83696f19ce5f1f2b2",
+        "scraped_at": "2026-10-08T17:48:51Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Tax",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "María Alejandra Garcia Nieto",
+      "subject_type": "individual"
+    }
+  ],
+  "profile_research": {
+    "version": "official-profile-evidence-v1",
+    "profiles": [
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "ARAQUEREYNA",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 2254,
+          "profile_path": "/department/araquereyna-tax-latin-america-9:49:229:1:2254",
+          "kind": "firm"
+        },
+        "source_url": "https://chambers.com/department/araquereyna-tax-latin-america-9:49:229:1:2254",
+        "content_sha256": "f74933100bf6539bff3f4174ae6a4830b276f239584d856861bbed2bfc928fb5",
+        "retrieved_at": "2026-10-08T17:48:52.067693+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "ARAQUEREYNA",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "ARAQUEREYNA's well-regarded team offers notable experience in the Venezuelan tax space. Its noted bench of strong practitioners possesses significant expertise in advising on a range of transactional, contentious and advisory tax mandates. The department's expertise spans tax planning and achieving tax efficiency for corporate transactions. The firm is also adept at handling administrative litigation as well as advising on currency exchange regulations. The team provides additional capabilities by assisting individuals with estate planning and wealth management.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "The ARAQUEREYNA team does an excellent and thorough job. Their communication and follow-through are excellent, and their recommendations are spot on.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "ARAQUEREYNA advised Mapfre in proceedings before the tax authorities, including matters relating to tax assessments and the application of VAT regulations.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Baker McKenzie",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 9043,
+          "profile_path": "/department/baker-mckenzie-sc-tax-latin-america-9:49:229:1:2692",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/baker-mckenzie-sc-tax-latin-america-9:49:229:1:2692",
+        "content_sha256": "1926d93eaa0dc53f86aa13a595a895257d5bfd84a7ef2a66758dbfee1893c1c9",
+        "retrieved_at": "2026-10-08T17:48:52.267846+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Baker McKenzie",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Baker McKenzie's strong tax practice benefits from the firm's outstanding global reach. The team is adept at handling a diverse range of tax matters, including tax planning, audits and contentious proceedings. The department also possesses strong expertise in advising on the tax aspects of acquisitions, liquidations and corporate restructurings, particularly those involving cross-border elements. The firm's client portfolio includes multinational companies operating in sectors such as pharmaceuticals, manufacturing and telecommunications.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "The Baker McKenzie tax team is committed and reliable. They handle every detail with great professionalism to achieve the best result.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "Baker McKenzie assisted Grupo Fuller with a series of tax audits and assessment procedures conducted by the National Tax Administration.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Sol, Caballero & Asociados",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 23371252,
+          "profile_path": "/department/sol-caballero-asociados-tax-latin-america-9:49:229:1:23371252",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/sol-caballero-asociados-tax-latin-america-9:49:229:1:23371252",
+        "content_sha256": "9e57204be53d72e6c88f5c487117ff75289c141b591f39ece094588bf8827393",
+        "retrieved_at": "2026-10-08T17:48:52.149382+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Sol, Caballero & Asociados",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Sol, Caballero & Asociados is a respected transactional law firm with a strong tax practice in Venezuela. The team regularly advises clients on income tax, VAT and estate planning matters, and demonstrates notable expertise in municipal taxation, transfer pricing and administrative fine appeals. Its client base includes prominent companies operating in the banking and financial services, construction and food and beverage industries.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Sol, Caballero & Asociados has a highly trained team with extensive experience in legal and tax matters, which generates trust and security. The team also offers personalised attention and continuous support.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "Sol, Caballero & Asociados represented GENVEN Genéricos Venezolanos in judicial proceedings before the National Tax Authority concerning income tax and transfer pricing matters. The firm also advised on the tax treatment of cryptocurrency transactions and M&A transactions.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "D'Empaire",
+          "band": "Band 1",
+          "rank_type": "1",
+          "edition": 2027,
+          "organisation_id": 2665,
+          "profile_path": "/department/dempaire-tax-latin-america-9:49:229:1:2665",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/dempaire-tax-latin-america-9:49:229:1:2665",
+        "content_sha256": "aaa2d9910cc02ae48990565ac5f827d52fdbaac5606728e48392b89f8645a27e",
+        "retrieved_at": "2026-10-08T17:48:53.102468+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "D'Empaire",
+        "observed_band": "Band 1",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "D'Empaire is a full-service firm that boasts a distinguished team with a strong reputation in the Venezuelan tax arena. The firm's client portfolio includes leading multinational companies from sectors such as pharmaceuticals, insurance, banking and financial services. The department demonstrates notable expertise in the tax aspects of cross-border M&A transactions and financing arrangements. Its highly regarded bench of practitioners is also well placed to advise on tax disputes, including administrative proceedings.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "The D'Empaire team has strong expertise in tax matters, and its partners have an in-depth understanding of the market. The team provides excellent service, consistently meets deadlines and is often able to anticipate challenges before they arise.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "The lawyers at D'Empaire are characterised by their strong communication, availability, responsiveness and extensive expertise. They consistently deliver an exceptional level of service.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "D'Empaire represented Columbus Networks Venezuela in two tax litigation matters concerning the treatment of unrealised exchange differences as taxable income and appeals against tax reassessments for prior fiscal years.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Gabriel Ruan Santos",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "/lawyer/gabriel-ruan-santos-latin-america-9:177712"
+        },
+        "source_url": "https://chambers.com/lawyer/gabriel-ruan-santos-latin-america-9:177712",
+        "content_sha256": "c5dc7202319259ae8095832dd945a2267db06171672adc3ce1dcdb1b891ae604",
+        "retrieved_at": "2026-10-08T17:48:53.139610+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Gabriel Ruán Santos",
+        "observed_band": "Senior Statespeople",
+        "commentary": [
+          {
+            "heading": "Individual Editorial",
+            "text": "Senior statesperson Gabriel Ruán Santos boasts longstanding experience handling contentious tax mandates.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Gabriel Ruán Santos is an extremely well-known tax lawyer. He is dedicated and highly recognised in the area.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "María Carolina Cano",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "source_url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+        "content_sha256": "75bc30684f39bd673dd74b75efea7dbebee439f8bf49fb2cf6b9cfe657d11717",
+        "retrieved_at": "2026-10-08T17:48:53.338160+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "María Carolina Cano González",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "Individual Editorial",
+            "text": "Notable partner María Carolina Cano González is well placed to assist clients with the implementation of efficient tax structures for corporate transactions. Commentators particularly praise her expertise in cross-border mandates.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "María Carolina Cano is always available, anticipates her client's needs and manages them with precision and authority.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Ingrid García Pacheco",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "source_url": "https://chambers.com/lawyer/ingrid-garcia-latin-america-9:1202668",
+        "content_sha256": "5db89a0a9646dfbfd50f4c4ec733e9fb6573aca35005048537efcd0c9e24e2ce",
+        "retrieved_at": "2026-10-08T17:48:54.193468+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Ingrid García",
+        "observed_band": "Band 4",
+        "commentary": [
+          {
+            "heading": "Individual Editorial",
+            "text": "Respected partner Ingrid García has an established presence advising high net worth individuals on estate planning matters. She is also adept at representing clients in local tax matters, including contentious proceedings.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Ingrid García is an excellent professional that is always attentive to our needs and requirements. She demonstrates a strong ability to handle complex matters and delivers an exceptional standard of client service.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      }
+    ],
+    "requested": 7,
+    "attempted": 7,
+    "limitations": [
+      "Historical band movement has not been independently retrieved."
+    ]
+  },
+  "research_scope": "0d460ed976c86397143cbcda5b059c3476ac420ae1f1ec9f6a0bf33609957e51",
+  "research_execution": "retrieved_table_and_profiles"
+}

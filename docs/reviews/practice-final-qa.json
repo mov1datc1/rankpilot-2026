@@ -1,0 +1,532 @@
+{
+  "scope": "Real model post-render review, actual DOCX text, synthetic cases. No authenticated production workflow.",
+  "results": [
+    {
+      "practice": "Labour & Employment",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-2",
+            "message": "D2 contains internal evidentiary/audit phrasing: “with documented work on 15 September 2026” and “The source reports ...; no final outcome or financial recovery is claimed.” For cleaner public prose under RP12, retain the supported pending status and role, place the value only in D3, and remove or neutrally rewrite the source/audit commentary without implying an outcome."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 26.355,
+          "usage": {
+            "input_tokens": 3284,
+            "output_tokens": 2036,
+            "total_tokens": 5320,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1918
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Corporate/M&A",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "B7 is blank even though the supplied B10 source supports identifying Sofia Vega as the practice leader. This is a completeness issue, not a factual conflict; her name can be entered while unsupported contact details remain blank."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact contains visible HTML entities such as “&apos;” in the section D and E boilerplate. Confirm the delivered document displays apostrophes correctly."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 26.364,
+          "usage": {
+            "input_tokens": 3241,
+            "output_tokens": 1922,
+            "total_tokens": 5163,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1794
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Energy & Natural Resources",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-6",
+            "message": "Public section D2 contains internal evidence/audit phrasing: “documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” Under RP12, present the supported facts directly rather than discussing the source or claim-checking process. For example, retain the firm’s role, Sofia Vega’s lead role, and the pending status; the matter value can remain in D3. Do not add an unsupported explanation of the matter’s importance."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 35.801,
+          "usage": {
+            "input_tokens": 3240,
+            "output_tokens": 2720,
+            "total_tokens": 5960,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2588
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Competition",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-7",
+            "message": "Section D2 uses internal evidence/audit phrasing: “The source reports,” “documented work,” and “No final outcome or financial recovery is claimed.” The underlying facts are supported and accurately preserve the pending status, but RP12 favors direct public-facing prose without source-validation commentary."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 37.835,
+          "usage": {
+            "input_tokens": 3229,
+            "output_tokens": 3013,
+            "total_tokens": 6242,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2918
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Data Protection",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-9",
+            "message": "Rendered section D2 contains internal evidence/audit phrasing: “with documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” Although supported and non-confidential, this is unsuitable for public submission prose under RP12. Retain the substantive advice, leadership and pending-status facts; keep the value in D3; and remove the source/claim-status commentary."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 40.947,
+          "usage": {
+            "input_tokens": 3243,
+            "output_tokens": 3161,
+            "total_tokens": 6404,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 3044
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Dispute Resolution",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": []
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 37.612,
+          "usage": {
+            "input_tokens": 3336,
+            "output_tokens": 2911,
+            "total_tokens": 6247,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2892
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "retained_previous_pass": true
+    },
+    {
+      "practice": "Tax",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-3",
+            "message": "Public section D2 contains internal evidentiary/audit phrasing: “documented work,” “The source reports,” and “no final outcome or financial recovery is claimed.” The facts are supported, but RP12 calls for public-facing prose rather than audit commentary. State directly that Sofia Vega led the mandate, the appeal remained pending as of 30 September 2026, and the matter value was MXN 1000000."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact displays literal HTML entities such as “&apos;” in template text. Correct the character rendering and perform a fresh post-render review of the corrected artifact."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 28.638,
+          "usage": {
+            "input_tokens": 3266,
+            "output_tokens": 2178,
+            "total_tokens": 5444,
+            "input_token_details": {
+              "cache_read": 3263
+            },
+            "output_token_details": {
+              "reasoning": 2070
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "writer",
+          "seconds": 7.511,
+          "usage": {
+            "input_tokens": 3225,
+            "output_tokens": 717,
+            "total_tokens": 3942,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 318
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "editor",
+          "seconds": 46.041,
+          "usage": {
+            "input_tokens": 3248,
+            "output_tokens": 3666,
+            "total_tokens": 6914,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 3491
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "letter": {
+        "executive_assessment": "The validated strategy remains appropriate: qa-3 is the sole core matter for Chambers Tax in Mexico. The submission content aligns with the supported account of a challenge to an income tax assessment before a tax tribunal. It accurately preserves that the appeal remained pending as of 30 September 2026 and does not claim a result, recovery or firm ranking.",
+        "portfolio": "qa-3 is supported as a Mexico tax controversy matter for Synthetic Client 3. Sofia Vega led the mandate, and documented work occurred on 15 September 2026, within the stated research period. The matter value is reported as MXN 1000000. Publication is explicitly authorized. The matter must continue to be described as pending; no final outcome or financial recovery is supported.",
+        "leadership": "The public B10 source supports that Partner Sofia Vega leads the Tax practice. The matter evidence independently supports that she led qa-3. These are distinct, supported roles and are consistently stated. No wider team, lawyer-ranking, or additional leadership assertions should be added.",
+        "evidence_gaps": "There is no official ranking-verification evidence. This creates no present factual defect because the submission makes no ranking claim; any such claim must be omitted unless appropriately verified. The source does not support an explanation of the matter’s importance beyond the stated tax-assessment challenge, so no importance or outcome language should be invented. Contact details and other blank template fields are not evidenced in the supplied materials.",
+        "next_steps": "Retain qa-3 as the sole and canonical matter selection. Preserve the Mexico Tax framing, Sofia Vega’s supported practice-lead and matter-lead roles, the reported MXN 1000000 value, and the explicit pending status as of 30 September 2026. Do not add a victory, recovery, ranking, wider team, geographic-footprint, or unsupported significance statement. Any later wording or selection change should be checked against these source limits."
+      }
+    },
+    {
+      "practice": "Banking & Finance",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact displays literal HTML entities (“&apos;”) in the section D and E instructions instead of apostrophes. Correct the encoding, re-render, and audit the resulting artifact. This is a rendering defect, not a matter-evidence issue."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 44.876,
+          "usage": {
+            "input_tokens": 3286,
+            "output_tokens": 3438,
+            "total_tokens": 6724,
+            "input_token_details": {
+              "cache_read": 3283
+            },
+            "output_token_details": {
+              "reasoning": 3230
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "writer",
+          "seconds": 12.181,
+          "usage": {
+            "input_tokens": 3359,
+            "output_tokens": 956,
+            "total_tokens": 4315,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 432
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "editor",
+          "seconds": 27.36,
+          "usage": {
+            "input_tokens": 3371,
+            "output_tokens": 2157,
+            "total_tokens": 5528,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 2070
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "letter": {
+        "executive_assessment": "The current Chambers Banking & Finance/Mexico content is supported by the supplied B10 source and the validated strategy. It consistently uses qa-5 as the sole core and hero matter and preserves the borrower-side role, the reported value of MXN 1000000, and the fact that signing remained pending as of 30 September 2026. No completion, recovery, success or ranking claim is made. No substantive factual correction is identified.",
+        "portfolio": "qa-5 is a relevant Banking & Finance mandate: Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower, Synthetic Client 5, in Mexico. The source documents work on 15 September 2026, within the research period. Its value is reported as MXN 1000000 and should remain expressly attributed as reported. Signing was pending as of 30 September 2026; the matter must not be described as signed, completed, closed or successful. Publication is explicitly authorized. Do not add matters or broaden the practice narrative beyond the single evidenced mandate.",
+        "leadership": "The B10 source supports that Partner Sofia Vega leads the Banking & Finance practice. The matter evidence independently supports that she led qa-5. These distinct statements are accurately reflected in the current content. No wider team size, additional leadership position, partner credential or lawyer ranking is supported. The blank B7 department-head field may be completed with Sofia Vega’s name only; email and telephone should remain blank unless sourced.",
+        "evidence_gaps": "There is no ranking-verification evidence and no source claim of a Chambers firm or lawyer ranking. B9 should therefore remain free of any ranking assertion. The evidence supports one Mexico borrower-side mandate only; it does not support a wider geographic footprint, further work types or a broader team description. The form instructions contain literal escaped entities, including “&apos;”, in the publishable and confidential-information headings and instructions. This is a rendering/encoding issue, not a matter-evidence issue.",
+        "next_steps": "Retain qa-5 as the sole selected and hero matter without changing its status or reported-value wording. Populate B7 with “Sofia Vega” if desired, without inventing contact details. Correct the literal entity encoding in the form instructions. Recheck the resulting submission text against the canonical selection: Synthetic Client 5, borrower-side syndicated credit facility, Sofia Vega’s supported practice and matter roles, MXN 1000000 as reported, and pending signing as of 30 September 2026. Any substantive content change should be supported and reassessed."
+      }
+    },
+    {
+      "practice": "Intellectual Property",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "B7 is blank even though the supplied public B10 source supports naming Sofia Vega as head of the Intellectual Property practice. Her name may be entered; email and telephone should remain blank unless sourced."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-8",
+            "message": "D2 does not address the form’s request to explain why the matter was important. No importance statement is supported by the supplied evidence, so obtain evidence before adding one rather than inferring importance from the client, value or subject matter."
+          },
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": "qa-8",
+            "message": "D2 includes audit-style language—“The source reports” and “no final outcome or financial recovery is claimed”—that should not appear in public submission prose under RP12. Keep the supported value in D3 and the pending status in D2/D8, and remove the internal evidentiary commentary."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 27.875,
+          "usage": {
+            "input_tokens": 3302,
+            "output_tokens": 2300,
+            "total_tokens": 5602,
+            "input_token_details": {
+              "cache_read": 3299
+            },
+            "output_token_details": {
+              "reasoning": 2070
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "writer",
+          "seconds": 8.135,
+          "usage": {
+            "input_tokens": 3398,
+            "output_tokens": 726,
+            "total_tokens": 4124,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 226
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "editor",
+          "seconds": 24.266,
+          "usage": {
+            "input_tokens": 3339,
+            "output_tokens": 2015,
+            "total_tokens": 5354,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1796
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "letter": {
+        "executive_assessment": "The validated strategy remains narrowly supported by one core Mexico Intellectual Property mandate: qa-8, a trademark opposition for Synthetic Client 8. The supplied submission aligns with that selection and identifies Sofia Vega consistently as the practice leader and lead partner on the matter. The opposition is correctly presented as pending as of 30 September 2026; no outcome, recovery, firm ranking or lawyer ranking is asserted. The source reports a matter value of MXN 1000000 and explicitly authorizes publication.",
+        "portfolio": "The portfolio contains one publishable matter, which is appropriate on the supplied record and should not be padded. Synthetic Aurora Legal is described as representing Synthetic Client 8 in a trademark opposition in Mexico. Sofia Vega led the mandate, with documented work on 15 September 2026. The matter remained pending as of 30 September 2026. The MXN 1000000 figure is retained as a reported matter value, not a recovery or result. The client identity, matter identity, jurisdiction, currency and pending status are consistent across the matter narrative and status fields.",
+        "leadership": "The public B10 source supports that Sofia Vega is a partner and leads the Intellectual Property practice. The matter evidence independently supports her role as lead partner for qa-8. These facts support the existing B10 and D5 references without establishing a lawyer ranking, additional leadership position, wider team composition or department size.",
+        "evidence_gaps": "Two non-critical completeness gaps remain. First, B7 is blank despite source support for Sofia Vega as the practice leader. Second, D2 does not explain why the matter was important, although the form requests this. Importance is not established by the client, matter value, or existence of a trademark opposition, so no importance claim should be inferred. No source establishes contact details for B7, a final outcome, financial recovery, cross-border element, other advisers, broader practice footprint, or any firm or lawyer ranking.",
+        "next_steps": "Enter Sofia Vega’s name in B7 if the firm wishes to use the supported practice-lead fact; leave email and telephone blank unless supported. Obtain evidence before adding any statement of the matter’s importance; otherwise retain the current role-focused D2 wording. Preserve qa-8 as the sole selected and hero matter and retain the stated pending status, Mexico jurisdiction and MXN currency. Do not add rankings, results, recoveries, unsupported team information or broader geographic claims."
+      }
+    },
+    {
+      "practice": "Real Estate",
+      "passed": true,
+      "judge": {
+        "passed": true,
+        "defects": [
+          {
+            "severity": "warning",
+            "scope": "submission",
+            "matter_id": null,
+            "message": "The rendered artifact visibly contains literal “&apos;” entities in the section D and E instructions. Replace them with apostrophes, then re-render and review the corrected artifact. This is a presentation defect, not a factual or confidentiality issue."
+          }
+        ]
+      },
+      "trace": [
+        {
+          "role": "editor",
+          "seconds": 77.042,
+          "usage": {
+            "input_tokens": 3315,
+            "output_tokens": 6434,
+            "total_tokens": 9749,
+            "input_token_details": {
+              "cache_read": 3312
+            },
+            "output_token_details": {
+              "reasoning": 6141
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "writer",
+          "seconds": 20.364,
+          "usage": {
+            "input_tokens": 3480,
+            "output_tokens": 1684,
+            "total_tokens": 5164,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 1177
+            }
+          },
+          "model": "gpt-5.6-terra",
+          "prompt_version": "review-core-v1.2"
+        },
+        {
+          "role": "editor",
+          "seconds": 52.625,
+          "usage": {
+            "input_tokens": 3345,
+            "output_tokens": 4227,
+            "total_tokens": 7572,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 4142
+            }
+          },
+          "model": "gpt-5.6-sol",
+          "prompt_version": "review-core-v1.2"
+        }
+      ],
+      "letter": {
+        "executive_assessment": "The validated strategy remains a focused Chambers Real Estate/Mexico submission built on qa-1 as the sole core and hero mandate. The evidence supports the firm’s Mexico real estate positioning, Sofia Vega’s practice leadership, and the firm’s work negotiating acquisition documents and reviewing title for a warehouse site. Closing remained pending; no result, recovery, completed transaction or ranking should be implied. No unsupported ranking statement appears in the submission text.",
+        "portfolio": "Retain qa-1 only. It is directly relevant to Real Estate: the mandate concerns acquisition documentation and title review for a warehouse site in Mexico. Sofia Vega is supported as lead partner on the matter. Work is documented on 15 September 2026, within the stated research period. The reported value is MXN 1000000 and must remain in that currency without conversion. The client and matter are expressly authorized for publication, while the status must remain “Pending as of 30 September 2026.”",
+        "leadership": "The B10 source supports stating that Partner Sofia Vega leads the Real Estate practice, and the matter record separately supports that she led qa-1. The B9 partner designation is therefore supported. No evidence supports a lawyer ranking, firm ranking, wider team size or broader geographic footprint. Sofia Vega’s name may be added to B7 as practice head; do not populate email or telephone fields unless those details are sourced.",
+        "evidence_gaps": "Do not add an importance narrative, outcome, financial recovery, cross-border character, other advisers, additional team members or ranking language: none is supported. The prior proposed B10 substitution of “the firm” for “the team” should be withdrawn, as the source describes a departmental mandate and the existing attribution is not materially inconsistent. The phrase “the transaction remained pending closing” preserves the supported pending status; any editorial harmonisation to “closing remained pending” must not alter that status. The D/E instruction text contains escaped apostrophes (“&apos;”), which should be corrected as a bounded presentation repair.",
+        "next_steps": "Keep qa-1 as the sole selected and hero matter. Preserve the named client, Sofia Vega’s mandate-lead attribution, MXN 1000000, and pending status as of 30 September 2026. Add Sofia Vega’s name to B7 only if the firm elects to complete that field. Correct the escaped apostrophes in the D/E instructions. Make no other substantive additions or changes."
+      }
+    }
+  ]
+}

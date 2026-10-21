@@ -1,0 +1,266 @@
+{
+  "mode": "live",
+  "model": "gpt-5.6-terra",
+  "qa_overrides": {
+    "timeout_seconds": 60,
+    "max_output_tokens": 4096
+  },
+  "total": 4,
+  "passed": 4,
+  "failed": 0,
+  "results": [
+    {
+      "id": "live_irrelevant_recipe",
+      "passed": true,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 422,
+        "success": false,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": "No legal matters could be identified. Add the client, legal work and outcome or upload a readable source.",
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 3.567,
+        "extracted": {
+          "success": false,
+          "code": "NO_LEGAL_MATTERS",
+          "error": "No legal matters could be identified. Add the client, legal work and outcome or upload a readable source.",
+          "source_errors": []
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_multi_source_same_mandate",
+      "passed": true,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 1,
+        "clients": [
+          "Synthetic Buyer"
+        ],
+        "confidentiality": [
+          "confirmation_required"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 5.877,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Corporate/M&A",
+            "extracted_practice_area": "Corporate/M&A",
+            "calibrated_practice_area": "Corporate/M&A",
+            "location": "Mexico"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [
+            {
+              "id": "matter-ext-1",
+              "name": "ALPHA-2026",
+              "title": "ALPHA-2026",
+              "client": "Synthetic Buyer",
+              "value": "USD 12000000",
+              "leadPartner": "Sofia Vega",
+              "lead_partner": "Sofia Vega",
+              "rawNotes": "Sofia Vega advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. Transaction closed on 10 September 2026.",
+              "summary": "Sofia Vega advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. Transaction closed on 10 September 2026.",
+              "teamMembers": null,
+              "team_members": null,
+              "crossBorder": null,
+              "otherFirms": null,
+              "completionDate": "10 September 2026",
+              "isConfidential": true,
+              "confidentialityStatus": "confirmation_required",
+              "confidentialityConfirmed": false,
+              "publish_status": "non_publishable",
+              "valueConflict": "",
+              "source_excerpt": "Synthetic Aurora Legal. Partner Sofia Vega advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. Transaction code ALPHA-2026. Price USD 12000000. Publication permission not supplied.\n\nTransaction ALPHA-2026 closed on 10 September 2026. Synthetic Buyer acquired all shares of Synthetic Target. Lead partner Sofia Vega. No other transactions in this note.",
+              "source_label": "",
+              "optimizedText": ""
+            }
+          ],
+          "total_matters": 1,
+          "source_errors": [],
+          "partial": false,
+          "publishable_count": 0,
+          "confidential_count": 1
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_two_distinct_ip_matters",
+      "passed": true,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 2,
+        "clients": [
+          "Synthetic Labs",
+          "Synthetic Foods"
+        ],
+        "confidentiality": [
+          "confidential",
+          "publishable"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 6.368,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Intellectual Property",
+            "extracted_practice_area": "Intellectual Property",
+            "calibrated_practice_area": "Intellectual Property",
+            "location": "Mexico"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [
+            {
+              "id": "matter-ext-1",
+              "name": "Patent infringement case IP-01",
+              "title": "Patent infringement case IP-01",
+              "client": "Synthetic Labs",
+              "value": null,
+              "leadPartner": "Sofia Vega",
+              "lead_partner": "Sofia Vega",
+              "rawNotes": "Synthetic Aurora Legal represented Synthetic Labs in patent infringement case IP-01 in Mexico. Interim injunction obtained; final merits pending.",
+              "summary": "Synthetic Aurora Legal represented Synthetic Labs in patent infringement case IP-01 in Mexico. Interim injunction obtained; final merits pending.",
+              "teamMembers": null,
+              "team_members": null,
+              "crossBorder": null,
+              "otherFirms": null,
+              "completionDate": "Final merits pending.",
+              "isConfidential": true,
+              "confidentialityStatus": "confidential",
+              "confidentialityConfirmed": true,
+              "publish_status": "non_publishable",
+              "valueConflict": "",
+              "source_excerpt": "Synthetic Aurora Legal represented Synthetic Labs in patent infringement case IP-01 in Mexico. Lead partner Sofia Vega. Interim injunction obtained; final merits pending. Confidential. No value stated.",
+              "source_label": "SOURCE NOTE: patent.txt",
+              "optimizedText": ""
+            },
+            {
+              "id": "matter-ext-2",
+              "name": "Trademark opposition IP-02",
+              "title": "Trademark opposition IP-02",
+              "client": "Synthetic Foods",
+              "value": null,
+              "leadPartner": "Luis Paz",
+              "lead_partner": "Luis Paz",
+              "rawNotes": "Synthetic Aurora Legal advised Synthetic Foods in trademark opposition IP-02 in Mexico. Opposition remains pending.",
+              "summary": "Synthetic Aurora Legal advised Synthetic Foods in trademark opposition IP-02 in Mexico. Opposition remains pending.",
+              "teamMembers": null,
+              "team_members": null,
+              "crossBorder": null,
+              "otherFirms": null,
+              "completionDate": "Opposition remains pending.",
+              "isConfidential": false,
+              "confidentialityStatus": "publishable",
+              "confidentialityConfirmed": true,
+              "publish_status": "publishable",
+              "valueConflict": "",
+              "source_excerpt": "Synthetic Aurora Legal advised Synthetic Foods in trademark opposition IP-02 in Mexico. Lead partner Luis Paz. Opposition remains pending. Publication explicitly authorized. No value stated.",
+              "source_label": "SOURCE NOTE: trademark.txt",
+              "optimizedText": ""
+            }
+          ],
+          "total_matters": 2,
+          "source_errors": [],
+          "partial": false,
+          "publishable_count": 1,
+          "confidential_count": 1
+        },
+        "extraction_errors": []
+      }
+    },
+    {
+      "id": "live_conflicting_values",
+      "passed": true,
+      "layer": "live_model_actual_local_extract_handler_input_rejection_or_count",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 1,
+        "clients": [
+          "Synthetic Solar"
+        ],
+        "confidentiality": [
+          "confidential"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 6.665,
+        "extracted": {
+          "success": true,
+          "metadata": {
+            "firm_name": "Synthetic Aurora Legal",
+            "practice_area": "Energy & Natural Resources",
+            "extracted_practice_area": "Energy & Natural Resources",
+            "calibrated_practice_area": "Energy & Natural Resources",
+            "location": "Mexico"
+          },
+          "department": {
+            "department_heads": []
+          },
+          "lawyers": [],
+          "original_b10": "",
+          "original_c2": "",
+          "matters": [
+            {
+              "id": "matter-ext-1",
+              "name": "Generation permit case EN-01",
+              "title": "Generation permit case EN-01",
+              "client": "Synthetic Solar",
+              "value": null,
+              "leadPartner": "Sofia Vega",
+              "lead_partner": "Sofia Vega",
+              "rawNotes": "Synthetic Aurora Legal advises Synthetic Solar on generation permit case EN-01 in Mexico. Lead Sofia Vega. Pending.",
+              "summary": "Synthetic Aurora Legal advises Synthetic Solar on generation permit case EN-01 in Mexico. Lead Sofia Vega. Pending.",
+              "teamMembers": null,
+              "team_members": null,
+              "crossBorder": null,
+              "otherFirms": null,
+              "completionDate": "Pending",
+              "isConfidential": true,
+              "confidentialityStatus": "confidential",
+              "confidentialityConfirmed": true,
+              "publish_status": "non_publishable",
+              "valueConflict": "MXN 5000000 is listed on a cover sheet in first.txt; USD 5000000 is listed on another cover sheet in second.txt. The currency is not resolved.",
+              "source_excerpt": "Synthetic Aurora Legal advises Synthetic Solar on generation permit case EN-01 in Mexico. Lead Sofia Vega. A cover sheet lists MXN 5000000. Pending. Confidential.\nSame permit case EN-01, Synthetic Solar: another cover sheet lists USD 5000000, contradicting the earlier MXN figure. Currency is not resolved. Do not choose a currency.",
+              "source_label": "",
+              "optimizedText": ""
+            }
+          ],
+          "total_matters": 1,
+          "source_errors": [],
+          "partial": false,
+          "publishable_count": 0,
+          "confidential_count": 1
+        },
+        "extraction_errors": []
+      }
+    }
+  ]
+}

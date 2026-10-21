@@ -1,0 +1,39 @@
+{
+  "baseline": "af1368558ed38309e630b647e08dac9423848e02",
+  "purpose": "Reproduce defects; exit 0 means the probe ran, not that the product passed acceptance.",
+  "defects_observed": 6,
+  "probes": [
+    {
+      "id": "foreign_firm_facts",
+      "defect_observed": true,
+      "observation": "An unrelated synthetic firm receives DeForest headcount and named lawyers."
+    },
+    {
+      "id": "inflated_score",
+      "defect_observed": true,
+      "observation": "Input score 12 becomes certified score 90/100."
+    },
+    {
+      "id": "false_portfolio_count",
+      "defect_observed": true,
+      "observation": "A one-matter portfolio is described as exactly 20 matters."
+    },
+    {
+      "id": "insufficiency_ignored",
+      "defect_observed": true,
+      "observation": "An insufficient synthetic Energy dossier receives a positive Band 4 verdict."
+    },
+    {
+      "id": "invented_lead_lawyer",
+      "defect_observed": true,
+      "observation": "A missing lead partner becomes Eduardo Garduño in an unrelated Energy matter."
+    },
+    {
+      "id": "unconditional_scrubbing",
+      "defect_observed": true,
+      "input": "Our office is in Hermosillo. We advised Volkswagen.",
+      "confidential_entities": [],
+      "output": "Our office is in a major private agricultural enterprise. We advised a leading global automotive manufacturer."
+    }
+  ]
+}

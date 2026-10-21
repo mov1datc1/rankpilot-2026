@@ -1,0 +1,37 @@
+REVISIÓN PRIVADA — DeForest / Labour & Employment
+Expediente: 66e3467d-aa35-4004-894c-64c3fd5d96e7
+Cuenta consultada: jonathan@movidatci.com
+Estado observado: revisión 35, Draft, updatedAt 2026-10-06T04:25:02.500Z.
+Método: consulta SQL de solo lectura, comparación del registro de asuntos con chambersData y reconstrucción local de DOCX. No se modificó el expediente. Las reconstrucciones no son un entregable final aprobado.
+
+RESULTADO REAL DE LA CORRIDA
+- 32/32 asuntos con redacción guardada, distinta de rawNotes; coincidencia entre los registros SQL y chambersData.
+- B10: 563 palabras, idéntico al original; no se ejecutó la optimización de esa sección.
+- Audit editorial: no generado. Solo corrió strategist. writer y editor no se ejecutaron; letter y judge son null.
+- Una cita de Mextypsa falló por terminar con punto en vez de la coma que continuaba en la fuente. Repetición local del control corregido sobre la estrategia guardada: todas las citas aceptadas. No se alteraron palabras ni cifras.
+- La aplicación guardó una propuesta de 20 core, 8 reserva y 4 excluidos como selección canónica pese a ese fallo. La selección no está aprobada; no debe presentarse como decisión final.
+- Registro: 31 confidenciales y SCOTCH publicable según decisión guardada. La propuesta excluyó SCOTCH, por lo que sus 20 core eran confidenciales. El conteo 0 públicos / 20 confidenciales no prueba que se perdieran los permisos originales.
+- No hay approved_artifact. El antiguo Audit de respaldo no equivale a una carta editorial generada en esta corrida.
+
+CRUCE CON ÁNGELA
+1. Voz del Submission: las 32 redacciones sí se guardaron; no se justifica rehacerlas indiscriminadamente. Se conservan al reintentar. La calidad final todavía exige la revisión del archivo.
+2. B10 y concordancia de tarjetas: causa corregida en código. Un enhanced_b7 importado no acredita optimización. Se registra procedencia del resultado y se actualizan B10/contador; los asuntos actualizan tarjetas conforme se confirma cada guardado. Una respuesta B10 >500 palabras ya no se corta a mitad de frase.
+3. Estado de aprobación: corregido. Guardar texto no acredita entrega. Se eliminan mensajes genéricos repetidos; durante la corrida se muestra su fase real, y al terminar se muestran hallazgos efectivos. Una estrategia rechazada no se guarda como selección canónica.
+4. Confidencialidad transversal: la reconstrucción anterior de B9 exponía abreviaturas de clientes restringidos y un cliente sin permiso acreditado en una lista mixta. La versión corregida deriva variantes de las identidades aportadas y elimina listas mixtas parcialmente anonimizadas de la biografía pública. La biografía reconstruida ya no contiene Volkswagen, GeNi, Scheaffler, SKF ni Megacable. No se cambiaron registros originales, permisos ni redacciones de los asuntos. Esto no acredita revisión universal de cualquier alias que pueda aparecer en otros documentos.
+5. Gramática de Eduardo: 'is the Partner of' pasa a 'is a partner in', evitando convertir por regla un cargo de socio en liderazgo no acreditado.
+6. Insignia: la estrategia guardada justificaba no elegirla por confidencialidad de los asuntos, criterio incorrecto. Corregida la instrucción: los asuntos confidenciales pueden ser insignia en E. No se impuso ningún cliente de ejemplo de Ángela como ganador.
+7. Selección y reservas: reforzada la comparación por aportación marginal, complejidad, resultado, atribución y redundancia. No se acredita todavía una nueva selección del modelo ni un nuevo orden ganador.
+8. Ranking individual: reforzada la instrucción de comparar a cada candidato con su antigüedad, rol acreditado, asuntos vinculados, evidencia externa, brechas y acciones. No se generan bandas ni se transfieren reconocimientos de firma a personas. Las propuestas y declaraciones del documento fuente siguen pendientes de acreditación; no se comprobó un nuevo resultado de IA para Javier, Andrés o Eduardo.
+9. Audit ejecutivo: se conserva el formato de cinco secciones; la carta debe coincidir con la misma selección. Si la revisión se interrumpe antes de escribir, UI y Word lo indican y no lo sustituyen por un informe antiguo con un portafolio supuestamente validado. La reconstrucción actual es un aviso de Audit pendiente, no una carta nueva.
+10. Ranking de firma: la consulta almacenada no encontró coincidencia exacta. Esto no acredita que esté sin ranking y tampoco confirma declaraciones históricas de Chambers/Legal500/IFLR presentes en las fuentes.
+
+LÍMITES Y SIGUIENTE PASO
+- Pruebas de código y navegador usan datos sintéticos. La comparación documental local utiliza exclusivamente la copia de lectura autorizada.
+- El control automático de permisos rechazó reenviar el expediente real al modelo externo sin autorización específica. No se intentó una vía alternativa ni hubo nueva evaluación de IA del cliente.
+- Tras publicar y recargar Studio, Revisar entrega completa B10 y reintenta la revisión conservando las 32 redacciones. Pueden aparecer hallazgos editoriales reales que antes no llegaron a evaluarse.
+- Para validar con IA el nuevo B10, la selección, la carta y el Word de este expediente se requiere autorizar el envío al proveedor OpenAI de textos, asuntos y datos de abogados. No es necesario publicar esos datos en Git.
+
+PUBLICACIÓN Y VALIDACIÓN
+Push verificado en dev y main: a458a4c1f63f2388287b1840692e0b63514862b9 (incluye corrección principal 9b8bfa3).
+240 contratos Node y 170 pruebas Python. TypeScript aprobado. Build completo de la corrección principal aprobado; protección final de alias verificada con contratos y TypeScript. QA Chrome sintético aprobado. La protección adicional evita usar palabras genéricas de nombres compuestos como supuestos alias.
+Despliegues confirmados: frontend Vercel a458a4c success; backend Render 9b8bfa3 LIVE. Esto acredita la publicación del código, no una nueva aprobación del expediente.

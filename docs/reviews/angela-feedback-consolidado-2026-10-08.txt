@@ -1,0 +1,89 @@
+VALIDACIÓN CONSOLIDADA — ÁNGELA / DEFOREST
+Fecha de revisión: 7 de octubre de 2026, México (8 de octubre UTC).
+Caso: fc882d70-a561-4315-975c-a821030c9162.
+Alcance: revisión de evidencia existente; sin modificación de producción ni nueva generación.
+
+FUENTES
+- Feedback adjunto: /Users/jonathanpalacios/.codex/attachments/8bc4c97f-672a-452e-bc45-e56b9439b52f/pasted-text.txt (677 líneas, leído completo).
+- Feedback anterior de 12 puntos pegado en esta conversación.
+- Artefactos aprobados: /private/tmp/rankpilot-newcase-final/Submission.docx y Audit.docx; sus extracciones Submission.txt y Audit.txt.
+- Snapshot de la corrida: /private/tmp/rankpilot-newcase.json; trazas en /private/tmp/rankpilot-newcase-final/review.json.
+- Implementación: ai-engine/core/review_graph.py y editorial_development.py.
+No se revisaron documentos históricos originales no adjuntos; las críticas sobre ellos se tratan como feedback histórico, no como observaciones directas de sus archivos.
+
+DICTAMEN
+Hay mejoras verificables de fidelidad y coherencia entre los dos documentos. No corresponde afirmar cumplimiento completo de las expectativas de Ángela. La aprobación automática de ocho criterios es más permisiva que los requisitos estratégicos que ella describe. Quedan brechas concretas de objetivo, categorías individuales, aprovechamiento de evidencia y completitud para presentar. Una corrida no demuestra generalización a otras firmas, prácticas o directorios.
+
+CRITERIOS CONSOLIDADOS Y CONTRASTE
+
+1. Una misma decisión debe llegar a Audit, Submission y Word — CUMPLE EN LA SELECCIÓN OBSERVADA.
+El registro estratégico contiene exactamente 32 IDs distintos, todos con motivo: 19 core, 11 reserve y 2 excluded. Ambos documentos usan el mismo núcleo y Schaeffler como héroe. El orden global del Audit se divide por confidencialidad al trasladarse a D/E: no confundir ese cambio de ubicación con un cambio de prioridad.
+
+2. Una jerarquía estratégica global, independiente de confidencialidad — CUMPLE.
+Schaeffler, Bonatti y Brose encabezan el Audit. No hay dos listas rivales de flagships públicos y confidenciales. GeNI ocupa el puesto 8: la expectativa histórica de un núcleo fuerte no autoriza fijar para siempre un podio por nombres. Sí debe justificarse su contribución relativa en cada caso.
+
+3. Curaduría comparativa y trazabilidad completa — PARCIAL.
+Mextypsa, Nueva Empresa, BADAK, Bosch y Benteler están incluidos ahora. El Audit compara REGSA/Art Human, Volkswagen/Natividad, PSW/American Axle y Bonatti/Enerflex. Los 32 asuntos tienen disposición y rationale internos. El DOCX ejecutivo no incluye el ledger completo; tampoco se ha demostrado aquí su disponibilidad como anexo o herramienta accesible al usuario. Varias comparaciones justifican un asunto fuerte contra una reserva, sin demostrar exhaustivamente por qué cada asunto de cola supera a su alternativa más próxima. No exigir exactamente 17 seleccionados: ese número pertenecía a una versión histórica.
+
+4. Conservar target explícito y separar objetivo de ranking verificado — BRECHA.
+El feedback histórico fija Band 5 como objetivo institucional. La corrida actual propone únicamente “Coverage request — Labour & Employment, Mexico”. Su snapshot tiene currentBand vacío y objetivos “First-time recognition” y “Move up multiple bands/tiers”, cuya compatibilidad no queda explicada. No se puede afirmar que el pipeline recibió Band 5 institucional y lo borró: no aparece como metadato institucional en el snapshot revisado. Sí existe una brecha de continuidad con el mandato histórico. Eduardo conserva suggestedRank=Band 5 en datos de entrada, pero el documento lo transforma en “Individual ranking candidate” sin explicar la revisión de categoría. Una búsqueda sin coincidencias no justifica borrar un objetivo: objetivo y posición actual son datos distintos.
+
+5. Estrategia individual fundada en asuntos — MEJORA IMPORTANTE, PARCIAL.
+Eduardo y Javier tienen mandatos identificados y funciones; Andrés ya no supera a Javier por una bio más persuasiva. José se trata como Associate confirmado. Sin embargo, para Eduardo/Javier/Jaime el output propone una candidatura genérica, no una categoría razonada. Javier queda como “segundo candidato individual”; no se explica si Up and Coming es apropiado o por qué se descarta. La sugerencia histórica “Associate to Watch / Up and Coming” no debe copiarse como si fueran categorías intercambiables: resolver estatus, criterios aplicables y categoría específica, con fundamento, y conservar la explicación del cambio.
+
+6. Ejecutar la estrategia en B9 — CUMPLE EN CANDIDATOS PRINCIPALES; COBERTURA BIOGRÁFICA PARCIAL.
+Javier tiene narrativa sustantiva basada en infraestructura, prevención de huelga, RRM, amparo y reducción de reclamación. Eduardo, Jaime y José también tienen perfiles desarrollados. Los perfiles breves de no candidatos no son por sí solos un error. Pero el original_b10 contiene antecedentes concretos de Raymundo (casi cuatro décadas como General Legal Director de Volkswagen) y Jaime (Legal Director regional de ManpowerGroup) que no se aprovechan en las bios finales. No deben confundirse con liderazgo actual en asuntos ni publicarse identidades restringidas sin evaluar permiso; tampoco deberían desaparecer sin evaluación. El Audit sí reconoce que la experiencia histórica de Raymundo no sustituye mandatos actuales, lo que es correcto, pero no resuelve el aprovechamiento editorial de ese antecedente.
+
+7. Matter rewriting: contexto, contribución, resultado y liderazgo — CUMPLE EN LOS EJEMPLOS FUERTES.
+Se preservan integración Schaeffler, escala de Bonatti, reducción del 80%, prevención de huelga, RRM Brose, amparo Nueva Empresa y reducción BADAK. No hay motivo para reescribir agresivamente lo que ya funciona. Mantener distinción entre resultados del equipo y actuación personalmente acreditada.
+
+8. Monedas y tipos de importe — CUMPLE EN LOS FALLOS HISTÓRICOS REVISADOS.
+Coats: E3 Approx. USD 675,000.00; E2 exposición MXN 12.5 millones.
+Cinemex: E3 USD 553,278.59; E2 exposición MXN 60.5 millones.
+Coinciden con source_excerpt y decisiones guardadas. No se observa la conversión corrupta denunciada. Son magnitudes distintas, no necesariamente datos contradictorios. El sistema debe distinguir valor del asunto, exposición, inversión del proyecto y honorarios antes de pedir confirmación. Las confirmaciones actuales existen; no demuestran que el clasificador evite toda falsa alarma en casos futuros.
+
+9. Confidencialidad por entidad y ubicación — CUMPLE EN NOMBRES/SECCIONES REVISADOS; GRANULARIDAD NO TOTALMENTE DEMOSTRADA.
+Solo SCOTCH aparece en D; los otros 18 seleccionados están en E. Los clientes confidenciales no reaparecen por nombre en B9/B10/C2, incluyendo SKF/Megacable. Se conserva evidencia mediante anonimización. Esto no prueba que cualquier combinación de cifras, sector, cargo histórico y hechos únicos sea imposible de reidentificar, ni que la política cliente/matter/campo esté validada para todas las situaciones. No se ha demostrado una fuga concreta en esos hechos anónimos; se señala el límite de validación.
+
+10. Política para ausencia de flag — REQUISITO HISTÓRICO CONTRADICTORIO QUE DEBE VERSIONARSE.
+El feedback previo de 12 puntos permite inferir publicable si no existe flag en cliente ni matter. El nuevo adjunto pide UNKNOWN y confirmación cuando está vacío o en conflicto. Ambas instrucciones no pueden ser reglas activas simultáneas. Invariante común: ninguna inferencia posterior debe anular confidencialidad explícita. La política de ausencia debe ser única, explícita y versionada; una decisión de publicación guardada debe conservar procedencia y alcance. No inferir fechas de todos los correos a partir de su orden pegado.
+
+11. Submission persuasivo, sin voz de auditor — PARCIAL.
+Desaparecieron “verified evidentiary record” y los superlativos históricos. C2 contiene una defensa sustantiva; B10 tiene 228 palabras. Persisten “is identified as Lead Partner”, “has documented responsibility” y “The confirmed matter value”; comunican procedencia de evidencia en vez de presentar directamente el trabajo. También persiste “a company operating approximately 700 employees” en Recicla. Son defectos editoriales, no corrupción de la evidencia, pero impiden cerrar totalmente este criterio.
+
+12. Audit ejecutivo, breve y reconciliado — CUMPLE ESTRUCTURA; PARCIAL EN PRECISIÓN ESTRATÉGICA.
+Cinco secciones y cinco páginas comprobadas previamente en Word. No reaparece contradicción reserve/core en los ejemplos criticados ni proclamación narrativa de “zero leaks”. La estrategia individual repite ocho campos para ocho personas; podría condensar no candidatos sin perder trazabilidad. El objetivo demasiado genérico y las categorías no resueltas siguen siendo problemas sustantivos aunque la longitud sea correcta.
+
+13. Leer los DOCX finales antes de liberar — IMPLEMENTADO Y EJECUTADO.
+El editor recibió los textos renderizados de Submission y Audit; el par aprobado se liga a hashes de entrada/artefacto y la descarga comprobada coincide. El juicio final aprobó 8/8 criterios, con warning de periodo. Ese resultado no sustituye esta revisión: aceptó “individual_strategy” pese a categorías genéricas. Mejorar discriminación de los criterios, no eliminar la relectura.
+
+14. Calidad editorial vs listo para presentar — BRECHA.
+A4, B1, B2/B3 y B7 están vacíos. No completar cifras o responsables por inferencia. El periodo, actividad dentro de la ventana y referees requieren atención; el Audit menciona algunos pero no todos los datos faltantes. La interfaz “100% datos · aprobado” no comunica con suficiente precisión esa diferencia. No todo campo vacío es obligatorio, pero debe distinguirse vacío pertinente, no aplicable y pendiente.
+
+15. Grafo, RAG y filtros — EJECUCIÓN COMPROBADA; CALIDAD DEL RAG PARCIALMENTE DEMOSTRADA.
+La arquitectura activa tiene register, strategy, selection, development, writer, editor y release. Hay eventos de ejecución y reintentos; la validación final registra editor/release completados. Se aplicó scope Chambers & Partners / Latin America — Mexico / Labour & Employment. Cada rol observado recuperó 16 fragmentos de cuatro referencias del proyecto. La procedencia indica project_reference_only; esto acredita uso de recuperación, no suficiencia ni vigencia de guías oficiales específicas. No afirmar que pasaron los 21 nodos del grafo antiguo. El sistema activo unificado debe evaluarse por sus responsabilidades y resultados, no por contar nodos.
+
+16. Evitar duplicidad y desperdicio — PARCIAL.
+El registro no duplica los 32 asuntos y el último cierre reutilizó etapas previas. La traza acumulada sí contiene development rechazados/repetidos y varios writer. No sería correcto afirmar que la recuperación completa no repitió trabajo. Medir reutilización y coste por etapa, distinguiendo reparación legítima de repetición por fallos operativos.
+
+17. UX de pendientes y reparación — NO REVALIDADA DE PUNTA A PUNTA EN ESTE CONTRASTE.
+Hay correcciones previas y el caso acabó aprobado; eso no prueba todos los recorridos pendiente→CTA→corregir→guardar→volver→contador. El mensaje técnico de cita mostrado en capturas es un fallo histórico, no evidencia de la UI posterior al cambio. No declarar resueltos todos los casos por inspección del DOCX.
+
+PRIORIDADES DERIVADAS
+P1: representar explícitamente objetivo institucional y categorías individuales; conservar cambios y razones desde entrada hasta Audit/Submission. Endurecer evaluación editorial para detectar objetivo/categoría genéricos.
+P1: separar aprobación de artefactos de completitud para filing; mostrar faltantes pertinentes con CTA contextual y retorno actualizado.
+P2: cubrir evidencia biográfica disponible sin exagerar liderazgo y separar permisos de identidad/hechos; limpieza editorial final.
+P2: hacer accesible el ledger de los 32 asuntos y reforzar comparaciones marginales del tail.
+P2: resolver política histórica de confidencialidad y validar corpus RAG por directorio, país, práctica y edición; mantener trazas de procedencia.
+P2: regresión en casos distintos, no solo DeForest: moneda/exposición, socios y associates, aliases/razón social, flags ausentes/conflictivos, datos incompletos, citas equivalentes y reanudación de jobs.
+
+NO CONVERTIR EN REGLAS DURAS
+- Siempre 17 asuntos, siempre cuatro flagships o siempre el mismo orden de clientes.
+- Band 5 como banda universal de entrada en cualquier práctica/país/edición.
+- Bio breve = fallo, aunque no haya hechos adicionales sustentados.
+- Diferentes importes/monedas = conflicto, sin identificar qué mide cada cifra.
+- Toda ausencia = bloqueo, ni toda advertencia = opcional.
+- Una afirmación anterior de “RESUELTO” enviada por Jonathan = prueba de comportamiento actual.
+
+LÍMITE DE ESTA REVISIÓN
+Se releyó íntegramente el nuevo feedback y el Audit textual; se contrastaron secciones y cifras específicas del Submission con el snapshot y trazas. La revisión visual previa cubrió las cinco páginas del Audit y muestras del Submission de 27 páginas, no todas sus páginas. No se ejecutaron nuevos tests ni nuevas llamadas de generación: no hubo cambios de código en esta revisión. No se verificaron en web rankings vigentes o reglas oficiales; se evalúa la coherencia con la evidencia proporcionada y no se afirma elegibilidad oficial actual de categorías.

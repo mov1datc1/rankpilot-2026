@@ -1,0 +1,12 @@
+{
+  "scope": "Actual React Studio in Chrome; actions, router and modal children mocked. Not authenticated end-to-end.",
+  "failedSaveVisible": true,
+  "successfulSaveVisible": true,
+  "rankingUnavailableVisible": true,
+  "rankingMismatchVisible": true,
+  "runtimeErrors": [],
+  "mobile": {
+    "viewport": 390,
+    "content": 390
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "scope": "Live official public sources. Band/Tier 2 are deliberately synthetic comparison claims, NOT Angela declarations. No absence conclusion.",
+  "results": [
+    {
+      "case": "chambers_labour",
+      "verification": {
+        "status": "not_found",
+        "declared_band": "Band 2",
+        "requested_edition": "2027",
+        "firm_name": "DeForest Abogados",
+        "directory": "Chambers",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "observed_band": null,
+        "checked_at": "2026-10-03T16:10:17.963467+00:00",
+        "message": "No se encontró una coincidencia exacta de la firma en esta tabla. Revisar identidad y alcance; no se ha acreditado que esté sin ranking.",
+        "evidence": {
+          "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+          "content_sha256": "ad9c6e1059afc755fe93e684ac4bdf7c6ce20ee1038e007373761994c5c83976",
+          "scraped_at": "2026-10-03T16:10:17Z",
+          "edition": "2027",
+          "guide": "Latin America",
+          "observed_practice": "Labour & Employment",
+          "observed_jurisdiction": "Mexico",
+          "parser_version": "ranking-evidence-v1"
+        }
+      }
+    },
+    {
+      "case": "legal500_labour",
+      "verification": {
+        "status": "edition_required",
+        "declared_band": "Tier 2",
+        "requested_edition": "2027",
+        "firm_name": "DeForest Abogados",
+        "directory": "Legal 500",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "observed_band": "Tier 5",
+        "checked_at": "2026-10-03T16:10:22.275288+00:00",
+        "message": "Se observó una posición en la tabla, pero falta acreditar la edición o indicar cuál se desea comparar.",
+        "evidence": {
+          "source_url": "https://www.legal500.com/c/mexico/labour-and-employment/",
+          "content_sha256": "0c7986b7b6a06afed4d812a2668b1c203626757fa49d27fa752746b076b6cc45",
+          "scraped_at": "2026-10-03T16:10:22Z",
+          "edition": null,
+          "guide": "",
+          "observed_practice": "Labour and employment",
+          "observed_jurisdiction": "Mexico",
+          "parser_version": "ranking-evidence-v1",
+          "profile_path": "/rankings/ranking/c-mexico/labour-and-employment/242309-deforest-abogados",
+          "organisation_id": null
+        },
+        "matched_firm": "DeForest Abogados"
+      }
+    },
+    {
+      "case": "chambers_tax",
+      "verification": {
+        "status": "verified_match",
+        "declared_band": "Band 2",
+        "requested_edition": "2027",
+        "firm_name": "ARAQUEREYNA",
+        "directory": "Chambers",
+        "practice_area": "Tax",
+        "jurisdiction": "Venezuela",
+        "observed_band": "Band 2",
+        "checked_at": "2026-10-03T16:10:27.015919+00:00",
+        "message": "La posición declarada coincide con la tabla oficial para esta edición, práctica y país.",
+        "evidence": {
+          "source_url": "https://chambers.com/legal-rankings/tax-venezuela-9:49:229:1",
+          "content_sha256": "e76dc9c86f748b02f3b34a6c2b54ef170d89bf4a6f31071c5daf63582e6c6500",
+          "scraped_at": "2026-10-03T16:10:27Z",
+          "edition": "2027",
+          "guide": "Latin America",
+          "observed_practice": "Tax",
+          "observed_jurisdiction": "Venezuela",
+          "parser_version": "ranking-evidence-v1",
+          "profile_path": "/department/araquereyna-tax-latin-america-9:49:229:1:2254",
+          "organisation_id": 2254
+        },
+        "matched_firm": "ARAQUEREYNA"
+      }
+    },
+    {
+      "case": "legal500_current_table_same_live_evidence",
+      "verification": {
+        "status": "verified_mismatch",
+        "declared_band": "Tier 2",
+        "requested_edition": "current",
+        "firm_name": "DeForest Abogados",
+        "directory": "Legal 500",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "observed_band": "Tier 5",
+        "checked_at": "2026-10-03T16:24:39.708960+00:00",
+        "message": "Discrepancia: se declaró Tier 2, pero la tabla oficial muestra Tier 5 para esta edición, práctica y país. Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.",
+        "evidence": {
+          "source_url": "https://www.legal500.com/c/mexico/labour-and-employment/",
+          "content_sha256": "0c7986b7b6a06afed4d812a2668b1c203626757fa49d27fa752746b076b6cc45",
+          "scraped_at": "2026-10-03T16:10:22Z",
+          "edition": null,
+          "guide": "",
+          "observed_practice": "Labour and employment",
+          "observed_jurisdiction": "Mexico",
+          "parser_version": "ranking-evidence-v1",
+          "profile_path": "/rankings/ranking/c-mexico/labour-and-employment/242309-deforest-abogados",
+          "organisation_id": null
+        },
+        "matched_firm": "DeForest Abogados",
+        "comparison_scope": "current_table_as_of_retrieval"
+      }
+    }
+  ]
+}

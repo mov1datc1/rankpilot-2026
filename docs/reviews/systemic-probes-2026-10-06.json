@@ -1,0 +1,64 @@
+{
+  "method": "Fault injection into real functions; all model responses mocked.",
+  "unsupported_micro_text_accepted_as_draft": true,
+  "source_quote_gate_accepts_unsupported_rationale": true,
+  "misclassified_temporal_conflict_downgraded": {
+    "passed": true,
+    "defects": [
+      {
+        "severity": "warning",
+        "scope": "submission",
+        "matter_id": "m1",
+        "temporal_basis": "missing_metadata",
+        "message": "Source says closed in 2020; artifact invents completion in 2025."
+      }
+    ]
+  },
+  "rag_routing_sample": {
+    "Labour & Employment": {
+      "chunks": 16,
+      "characters": 36116,
+      "sources": {
+        "UNIVERSAL CHAMBERS LABOUR LOGIC.txt": 6,
+        "Labour & Employment — Legal 500 Intelligence Layer.txt": 3,
+        "Labour - IFLR and Leaders League.txt": 4,
+        "EDITORIAL_CONSTITUTION.txt": 2,
+        "Global Lawyer Leadership Framework — RankPilot RAG v1.txt": 1
+      }
+    },
+    "Tax": {
+      "chunks": 16,
+      "characters": 36945,
+      "sources": {
+        "Chambers_Banking_Taxonomy_v1.txt": 4,
+        "Rankpilot Tax Guides Context Mapping - Chambers.txt": 5,
+        "Corporate_MA_Taxonomy_v1.txt": 3,
+        "Tax — IFLR Intelligence Layer.txt": 3,
+        "Tax — Leaders League Intelligence Layer.txt": 1
+      }
+    },
+    "Corporate / M&A": {
+      "chunks": 16,
+      "characters": 35913,
+      "sources": {
+        "Corporate_MA_Methodology_v1.txt": 3,
+        "Corporate_MA_Taxonomy_v1.txt": 3,
+        "🔥 RankPilot — Corporate_M&A RAG Matrix v0.txt": 4,
+        "Corporate_MA_Directory_Overlays_v1.txt": 2,
+        "Corporate_MA_Scoring_Rubric_v1.txt": 2,
+        "Corporate_MA_Rewrite_Examples_v1.txt": 2
+      }
+    },
+    "Unknown Practice": {
+      "chunks": 16,
+      "characters": 38460,
+      "sources": {
+        "EDITORIAL_CONSTITUTION.txt": 3,
+        "Global Lawyer Leadership Framework — RankPilot RAG v1.txt": 3,
+        "VOLUME_0_FIRST_PRINCIPLES.txt": 3,
+        "Golden_Submissions_Approved_By_Owner.txt": 6,
+        "¿Cómo rankeamos abogado_as__.txt": 1
+      }
+    }
+  }
+}

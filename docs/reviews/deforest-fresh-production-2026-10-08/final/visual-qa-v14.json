@@ -1,0 +1,49 @@
+{
+  "pdf": {
+    "Submission": {
+      "pages": 27,
+      "words_per_page": [
+        127,
+        87,
+        420,
+        475,
+        68,
+        203,
+        118,
+        188,
+        313,
+        248,
+        253,
+        299,
+        246,
+        236,
+        241,
+        244,
+        237,
+        207,
+        221,
+        244,
+        223,
+        256,
+        208,
+        208,
+        232,
+        241,
+        222
+      ]
+    },
+    "Audit": {
+      "pages": 4,
+      "words_per_page": [
+        493,
+        560,
+        607,
+        151
+      ]
+    }
+  },
+  "ui_download_matches": {
+    "sha256": "/Users/jonathanpalacios/Downloads/RankPilot_Submission_Form_Labour_&_Employment (5).docx",
+    "audit_sha256": "/Users/jonathanpalacios/Downloads/Strategic_Audit (6).docx"
+  }
+}

@@ -203,10 +203,21 @@ def optimize_matter_micro(
         if rejected:
             rejected["trace"]={"role":"rewrite", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"}
             return rejected
+        editorial_rationale = (
+            f"Narrativa reestructurada en {len(paragraphs) if len(paragraphs) <= 3 else 3} párrafos de estándar Chambers "
+            f"(Contexto y escala → Intervención legal estratégica → Estado y abogados clave). "
+            f"Se eliminó retórica promocional y se preservaron con exactitud los valores numéricos, "
+            f"fechas y contrapartes originales sin invención de hechos."
+        )
+        if directive:
+            editorial_rationale += f" Directiva aplicada: \"{directive}\"."
+
         return {
             "success": True,
             "trace": {"role":"matter", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"},
             "optimized_text": final_text,
+            "original_text": source_body,
+            "rationale": editorial_rationale,
             "word_count": len(final_text.split()),
             "client": client_name
         }

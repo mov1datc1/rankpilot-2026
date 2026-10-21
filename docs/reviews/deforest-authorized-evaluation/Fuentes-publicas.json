@@ -1,0 +1,25 @@
+{
+  "scope": "Evidencia externa consultada para el dictamen; no añadida retroactivamente al input de la corrida original ni al Word.",
+  "sources": [
+    {
+      "url": "https://deforest.mx/en/lawyers/",
+      "findings": {
+        "Javier Atzin Vallejo": "Socio",
+        "Andrés Cabrera Gómez": "Socio",
+        "Raymundo Carreño del Moral": "Of Counsel"
+      }
+    },
+    {
+      "url": "https://chambers.com/lawyer/javier-atzin-vallejo-rodriguez-latin-america-9:27134038",
+      "findings": {
+        "profile_name": "Javier Atzin Vallejo Rodriguez",
+        "firm": "DeForest Abogados",
+        "guide": "Latin America 2027",
+        "practice": "General Business Law: Queretaro",
+        "country": "Mexico",
+        "band": "3"
+      },
+      "limit": "Este reconocimiento no acredita ranking individual en Labour & Employment ni una edición histórica distinta."
+    }
+  ]
+}

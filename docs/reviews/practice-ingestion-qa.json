@@ -1,0 +1,1087 @@
+{
+  "scope": "10 practices: real DOCX extraction A and live model narrative ingestion B. Not full pipeline or browser end-to-end.",
+  "total": 20,
+  "passed": 20,
+  "results": [
+    {
+      "practice": "Real Estate",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.106,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Real Estate",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Real Estate",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 100",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal negotiated the acquisition of a warehouse site. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal negotiated the acquisition of a warehouse site. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 100\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal negotiated the acquisition of a warehouse site. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Real Estate",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 8.52,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Real Estate",
+          "extracted_practice_area": "Real Estate",
+          "calibrated_practice_area": "Real Estate",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-100",
+            "title": "Matter QA-100",
+            "client": "Synthetic Client 100",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega negotiated the acquisition of a warehouse site for Synthetic Client 100. The matter remains pending. No outcome or award has been obtained.",
+            "summary": "Sofia Vega negotiated the acquisition of a warehouse site for Synthetic Client 100. The matter remains pending. No outcome or award has been obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-100: partner Sofia Vega negotiated the acquisition of a warehouse site for Synthetic Client 100. Matter value MXN 1000000. Publication permission explicitly granted.\nUpdate for the same matter QA-100 and client Synthetic Client 100: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Labour & Employment",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.006,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Labour & Employment",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Labour & Employment",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 101",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal represented the employer in collective bargaining. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal represented the employer in collective bargaining. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 101\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal represented the employer in collective bargaining. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Labour & Employment",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 8.541,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Labour & Employment",
+          "extracted_practice_area": "Labour & Employment",
+          "calibrated_practice_area": "Labour & Employment",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-101",
+            "title": "Matter QA-101",
+            "client": "Synthetic Client 101",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega represented the employer in collective bargaining. The matter remains pending; no outcome or award has been obtained.",
+            "summary": "Sofia Vega represented the employer in collective bargaining. The matter remains pending; no outcome or award has been obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-101: partner Sofia Vega represented the employer in collective bargaining for Synthetic Client 101. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-101 and client Synthetic Client 101: the matter remains pending. No outcome or award has been obtained.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Tax",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Tax",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Tax",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 102",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 102\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal challenged an income tax assessment before a tax tribunal. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Tax",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 5.309,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Tax",
+          "extracted_practice_area": "Tax",
+          "calibrated_practice_area": "Tax",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "QA-102",
+            "title": "QA-102",
+            "client": "Synthetic Client 102",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega challenged an income tax assessment before a tax tribunal. The matter remains pending; no outcome or award has been obtained.",
+            "summary": "Sofia Vega challenged an income tax assessment before a tax tribunal. The matter remains pending; no outcome or award has been obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-102: partner Sofia Vega challenged an income tax assessment before a tax tribunal for Synthetic Client 102. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-102 and client Synthetic Client 102: the matter remains pending. No outcome or award has been obtained.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Corporate/M&A",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Corporate/M&A",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Corporate/M&A",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 103",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 103\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal advised the buyer on acquisition of all shares in a target company. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Corporate/M&A",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 5.228,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Corporate/M&A",
+          "extracted_practice_area": "Corporate/M&A",
+          "calibrated_practice_area": "Corporate/M&A",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-103",
+            "title": "Matter QA-103",
+            "client": "Synthetic Client 103",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega advised the buyer on the acquisition of all shares in a target company.",
+            "summary": "Sofia Vega advised the buyer on the acquisition of all shares in a target company.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-103: partner Sofia Vega advised the buyer on acquisition of all shares in a target company for Synthetic Client 103. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-103 and client Synthetic Client 103: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Banking & Finance",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Banking & Finance",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Banking & Finance",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 104",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 104\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal negotiated a syndicated credit facility for the borrower. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Banking & Finance",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 5.423,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Banking & Finance",
+          "extracted_practice_area": "Banking & Finance",
+          "calibrated_practice_area": "Banking & Finance",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-104",
+            "title": "Matter QA-104",
+            "client": "Synthetic Client 104",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega negotiated a syndicated credit facility for Synthetic Client 104 as borrower.",
+            "summary": "Sofia Vega negotiated a syndicated credit facility for Synthetic Client 104 as borrower.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-104: partner Sofia Vega negotiated a syndicated credit facility for the borrower for Synthetic Client 104. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-104 and client Synthetic Client 104: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Energy & Natural Resources",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Energy & Natural Resources",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Energy & Natural Resources",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 105",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal advised on an electricity generation permit. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal advised on an electricity generation permit. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 105\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal advised on an electricity generation permit. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Energy & Natural Resources",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 7.33,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Energy & Natural Resources",
+          "extracted_practice_area": "Energy & Natural Resources",
+          "calibrated_practice_area": "Energy & Natural Resources",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-105",
+            "title": "Matter QA-105",
+            "client": "Synthetic Client 105",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega advised Synthetic Client 105 on an electricity generation permit. The matter remains pending.",
+            "summary": "Sofia Vega advised Synthetic Client 105 on an electricity generation permit. The matter remains pending.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-105: partner Sofia Vega advised on an electricity generation permit for Synthetic Client 105. Matter value MXN 1000000. Publication permission explicitly granted.\nUpdate for the same matter QA-105 and client Synthetic Client 105: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Competition",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.01,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Competition",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Competition",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 106",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal represented the client in a merger clearance proceeding. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal represented the client in a merger clearance proceeding. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 106\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal represented the client in a merger clearance proceeding. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Competition",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 5.695,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Competition",
+          "extracted_practice_area": "Competition",
+          "calibrated_practice_area": "Competition",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-106",
+            "title": "Matter QA-106",
+            "client": "Synthetic Client 106",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega represented Synthetic Client 106 in a merger clearance proceeding. The matter remains pending, and no outcome or award has been obtained.",
+            "summary": "Sofia Vega represented Synthetic Client 106 in a merger clearance proceeding. The matter remains pending, and no outcome or award has been obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-106: partner Sofia Vega represented the client in a merger clearance proceeding for Synthetic Client 106. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-106 and client Synthetic Client 106: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Intellectual Property",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.008,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Intellectual Property",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Intellectual Property",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 107",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal represented the client in a trademark opposition. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal represented the client in a trademark opposition. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 107\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal represented the client in a trademark opposition. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Intellectual Property",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 7.418,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Intellectual Property",
+          "extracted_practice_area": "Intellectual Property",
+          "calibrated_practice_area": "Intellectual Property",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-107",
+            "title": "Matter QA-107",
+            "client": "Synthetic Client 107",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega represented Synthetic Client 107 in a trademark opposition. The matter remains pending, with no outcome or award obtained.",
+            "summary": "Sofia Vega represented Synthetic Client 107 in a trademark opposition. The matter remains pending, with no outcome or award obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-107: partner Sofia Vega represented the client in a trademark opposition for Synthetic Client 107. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-107 and client Synthetic Client 107: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Data Protection",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Data Protection",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Data Protection",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 108",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal advised on response to a personal data breach. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal advised on response to a personal data breach. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 108\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal advised on response to a personal data breach. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Data Protection",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 5.069,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Data Protection",
+          "extracted_practice_area": "Data Protection",
+          "calibrated_practice_area": "Data Protection",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Matter QA-108",
+            "title": "Matter QA-108",
+            "client": "Synthetic Client 108",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega advised on response to a personal data breach. The matter remains pending. No outcome or award has been obtained.",
+            "summary": "Sofia Vega advised on response to a personal data breach. The matter remains pending. No outcome or award has been obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-108: partner Sofia Vega advised on response to a personal data breach for Synthetic Client 108. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-108 and client Synthetic Client 108: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Dispute Resolution",
+      "mode": "A",
+      "passed": true,
+      "status": 200,
+      "seconds": 0.009,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Dispute Resolution",
+          "extracted_practice_area": "",
+          "calibrated_practice_area": "Dispute Resolution",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "Publishable Matter 1",
+            "title": "Publishable Matter 1",
+            "client": "Synthetic Client 109",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Synthetic Aurora Legal represented the claimant in a commercial arbitration. The matter remains pending.",
+            "summary": "Synthetic Aurora Legal represented the claimant in a commercial arbitration. The matter remains pending.",
+            "teamMembers": "Luis Paz",
+            "team_members": "Luis Paz",
+            "crossBorder": "No",
+            "otherFirms": "None",
+            "completionDate": "Ongoing",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "D1 Name of client\nSynthetic Client 109\nD2 Summary of matter and your department's role\nSynthetic Aurora Legal represented the claimant in a commercial arbitration. The matter remains pending.\nD3 Matter value\nMXN 1000000\nD4 Cross-border elements\nNo\nD5 Lead partner\nSofia Vega\nD6 Other team members\nLuis Paz\nD7 Other firms advising\nNone\nD8 Date of completion\nOngoing\nD9 Other information\nNone",
+            "source_label": "Publishable Matter 1",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    },
+    {
+      "practice": "Dispute Resolution",
+      "mode": "B",
+      "passed": true,
+      "status": 200,
+      "seconds": 6.14,
+      "response": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Aurora Legal",
+          "practice_area": "Dispute Resolution",
+          "extracted_practice_area": "Dispute Resolution",
+          "calibrated_practice_area": "Dispute Resolution",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [
+          {
+            "id": "matter-ext-1",
+            "name": "QA-109",
+            "title": "QA-109",
+            "client": "Synthetic Client 109",
+            "value": "MXN 1000000",
+            "leadPartner": "Sofia Vega",
+            "lead_partner": "Sofia Vega",
+            "rawNotes": "Sofia Vega represented the claimant in a commercial arbitration. The matter remains pending, with no outcome or award obtained.",
+            "summary": "Sofia Vega represented the claimant in a commercial arbitration. The matter remains pending, with no outcome or award obtained.",
+            "teamMembers": null,
+            "team_members": null,
+            "crossBorder": null,
+            "otherFirms": null,
+            "completionDate": "Pending",
+            "isConfidential": false,
+            "confidentialityStatus": "publishable",
+            "confidentialityConfirmed": true,
+            "publish_status": "publishable",
+            "valueConflict": "",
+            "source_excerpt": "Synthetic Aurora Legal, Mexico. Matter QA-109: partner Sofia Vega represented the claimant in a commercial arbitration for Synthetic Client 109. Matter value MXN 1000000. Publication permission explicitly granted.\n\nUpdate for the same matter QA-109 and client Synthetic Client 109: the matter remains pending. No outcome or award has been obtained. No other mandate is described.",
+            "source_label": "",
+            "optimizedText": ""
+          }
+        ],
+        "total_matters": 1,
+        "source_errors": [],
+        "partial": false,
+        "publishable_count": 1,
+        "confidential_count": 0
+      }
+    }
+  ]
+}

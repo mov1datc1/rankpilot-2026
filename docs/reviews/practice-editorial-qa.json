@@ -1,0 +1,1672 @@
+{
+  "scope": "Synthetic real micro optimization + model graph across 10 practices. Not authenticated end-to-end or population accuracy estimate.",
+  "results": [
+    {
+      "practice": "Labour & Employment",
+      "completed": true,
+      "approved": true,
+      "seconds": 28.2,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Labour & Employment in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the employer in collective bargaining; negotiations remain pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on labour and employment matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the firm represented an employer in collective bargaining negotiations, which remain pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-2",
+            "client": "Synthetic Client 2",
+            "name": "Labour & Employment mandate",
+            "summary": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 2, as employer, in collective bargaining negotiations in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe negotiations remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Labour & Employment",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Labour & Employment in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the employer in collective bargaining; negotiations remain pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on labour and employment matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the firm represented an employer in collective bargaining negotiations, which remain pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-2",
+              "client": "Synthetic Client 2",
+              "name": "Labour & Employment mandate",
+              "summary": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 2, as employer, in collective bargaining negotiations in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe negotiations remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-2",
+              "disposition": "core",
+              "rationale": "Core: the mandate is directly relevant to Labour & Employment in Mexico, identifies the firm’s role in collective bargaining, remains within the stated research period, and has explicit publication authorization. Its pending status and absence of a claimed outcome should be preserved.",
+              "source_quote": "Synthetic Aurora Legal represented the employer in collective bargaining; negotiations remain pending for Synthetic Client 2. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-2",
+          "pending_questions": [],
+          "thesis": "Synthetic Aurora Legal’s evidenced Labour & Employment submission for Mexico is a pending 2026 collective-bargaining mandate in which it represented the employer; Sofia Vega is identified as the lead partner. No ranking, outcome, recovery, or broader practice claims should be added."
+        },
+        "letter": {
+          "executive_assessment": "No critical defect is identified. The validated strategy selects qa-2 as the sole core and hero matter, and the available B10 and matter text support a focused Labour & Employment submission for Mexico. The mandate is expressly pending; neither a result nor a recovery should be implied. The matter has explicit publication authorization, while the B10 supports the firm and practice-lead statements used in the draft.",
+          "portfolio": "Retain qa-2 as the canonical selected and hero matter. It is directly relevant because the firm represented the employer in collective-bargaining negotiations in Mexico. The documented work date, 15 September 2026, falls within the stated research period. The rendered matter text accurately preserves the reported value of MXN 1000000 as a source-reported matter value and states that no final outcome or financial recovery is claimed. No additional matter is needed to meet any quota.",
+          "leadership": "The B10 identifies Sofia Vega as a partner who leads the Labour & Employment practice. The matter source separately identifies her as the mandate lead. These are supported leadership and responsibility statements. Do not add claims about lawyer rankings, wider team size, or any role beyond those stated.",
+          "evidence_gaps": "The record does not support a market ranking, a firm or lawyer band, a wider geographic footprint, a wider team, or a completed outcome. These are not defects in the current narrow submission because none is claimed. The negotiation remains pending as of 30 September 2026 and must continue to be described as pending. If any ranking statement is proposed, official ranking-verification evidence scoped to the relevant directory, edition, subject, and position is required; otherwise, remove the statement.",
+          "next_steps": "Proceed with the existing B10 draft and qa-2 matter wording without substantive expansion. Maintain one canonical selection and hero decision across all submission materials. On any later update, confirm whether negotiations have concluded before changing status or adding an outcome. Do not alter the currency, reported value, client/firm roles, date, pending status, or attribution without new supporting evidence."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 2.762,
+            "usage": {
+              "input_tokens": 1384,
+              "output_tokens": 218,
+              "total_tokens": 1602,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 0
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 9.771,
+            "usage": {
+              "input_tokens": 1517,
+              "output_tokens": 778,
+              "total_tokens": 2295,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 349
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 10.832,
+            "usage": {
+              "input_tokens": 2122,
+              "output_tokens": 786,
+              "total_tokens": 2908,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 767
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Tax",
+      "completed": true,
+      "approved": true,
+      "seconds": 28.68,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Tax",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Tax in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it challenged an income tax assessment before a tax tribunal; the appeal remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on tax matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team challenged an income tax assessment before a tax tribunal; the appeal remains pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-3",
+            "client": "Synthetic Client 3",
+            "name": "Tax mandate",
+            "summary": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 3 in challenging an income tax assessment before a tax tribunal in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026.\n\nThe appeal remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Tax",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Tax in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it challenged an income tax assessment before a tax tribunal; the appeal remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on tax matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team challenged an income tax assessment before a tax tribunal; the appeal remains pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-3",
+              "client": "Synthetic Client 3",
+              "name": "Tax mandate",
+              "summary": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 3 in challenging an income tax assessment before a tax tribunal in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026.\n\nThe appeal remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-3",
+              "disposition": "core",
+              "rationale": "Relevant, evidenced Mexico tax controversy within the stated research period. The mandate is explicitly authorized for publication and its pending status is clear; it should be the sole core matter and canonical hero selection.",
+              "source_quote": "Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal; the appeal remains pending for Synthetic Client 3. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-3",
+          "pending_questions": [],
+          "thesis": "Submit the single explicitly authorized Mexico tax-dispute mandate, accurately describing the challenge to the income tax assessment and preserving that the appeal remained pending; do not state or imply any outcome, recovery, or ranking."
+        },
+        "letter": {
+          "executive_assessment": "The validated strategy is sound: submit qa-3 as the sole core and canonical hero matter for Chambers Tax in Mexico. The supplied B10 draft is supported by the B10 source and accurately preserves the matter’s pending status. No ranking, recovery, final outcome, wider team size or geographic footprint is claimed. No factual correction is identified in the supplied text.",
+          "portfolio": "qa-3 is relevant to the stated Tax practice and Mexico jurisdiction. The source supports that Synthetic Aurora Legal challenged an income tax assessment before a tax tribunal for Synthetic Client 3, with Sofia Vega leading the mandate. Work is documented on 15 September 2026, within the stated research period. Publication is explicitly authorized. The appeal remained pending as of 30 September 2026; it must continue to be described as pending and not as a result or recovery. The reported value is MXN 1000000, with no final outcome or financial recovery claimed.",
+          "leadership": "The public B10 source states that Partner Sofia Vega leads the Tax practice. The matter source separately supports that Sofia Vega led qa-3. These statements are aligned and may be retained. Do not add wider team information, lawyer rankings or other leadership assertions not present in the supplied sources.",
+          "evidence_gaps": "There is no official ranking-verification evidence, but neither the B10 draft nor the strategy makes a ranking claim; no ranking statement should be added. The actual final rendered submission artifact has not been supplied for review. Accordingly, factual content is supported in the materials reviewed, but delivery approval remains conditional on confirming that the rendered submission uses qa-3 as the sole selected and hero matter and contains no altered wording or unsupported additions.",
+          "next_steps": "Make no substantive changes to the supported B10 and matter narrative. Before delivery, provide the final rendered submission for a bounded check against the canonical strategy: qa-3 only; Sofia Vega’s supported roles only; Mexico Tax framing; explicit pending status; and no implication of victory, recovery or ranking."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 3.966,
+            "usage": {
+              "input_tokens": 1396,
+              "output_tokens": 317,
+              "total_tokens": 1713,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 116
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 9.775,
+            "usage": {
+              "input_tokens": 1510,
+              "output_tokens": 764,
+              "total_tokens": 2274,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 347
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 9.293,
+            "usage": {
+              "input_tokens": 2103,
+              "output_tokens": 621,
+              "total_tokens": 2724,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 602
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Corporate/M&A",
+      "completed": true,
+      "approved": true,
+      "seconds": 21.04,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Corporate/M&A in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised the buyer on acquisition of all shares in a target company; closing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on Corporate/M&A matters in Mexico. The practice is led by partner Sofia Vega. In 2026, the team advised a buyer on the acquisition of all shares in a target company; the transaction remains pending closing.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-4",
+            "client": "Synthetic Client 4",
+            "name": "Corporate/M&A mandate",
+            "summary": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal advised the buyer, Synthetic Client 4, on the acquisition of all shares in a target company in Mexico.\n\nThe source reports a matter value of MXN 1000000.\n\nClosing remained pending as of 30 September 2026. Sofia Vega led the mandate, with documented work on 15 September 2026."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Corporate/M&A",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Corporate/M&A in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised the buyer on acquisition of all shares in a target company; closing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on Corporate/M&A matters in Mexico. The practice is led by partner Sofia Vega. In 2026, the team advised a buyer on the acquisition of all shares in a target company; the transaction remains pending closing.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-4",
+              "client": "Synthetic Client 4",
+              "name": "Corporate/M&A mandate",
+              "summary": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal advised the buyer, Synthetic Client 4, on the acquisition of all shares in a target company in Mexico.\n\nThe source reports a matter value of MXN 1000000.\n\nClosing remained pending as of 30 September 2026. Sofia Vega led the mandate, with documented work on 15 September 2026."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-4",
+              "disposition": "core",
+              "rationale": "This is a documented Corporate/M&A acquisition mandate in Mexico, within the stated research period, with explicit publication authorization. The matter remains pending and should be described without implying completion or outcome.",
+              "source_quote": "Synthetic Aurora Legal advised the buyer on acquisition of all shares in a target company; closing remains pending for Synthetic Client 4. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-4",
+          "pending_questions": [],
+          "thesis": "Synthetic Aurora Legal’s supported Corporate/M&A submission for Mexico is a single publishable 2026 mandate advising a buyer on the acquisition of all shares in a target company. The transaction was pending closing as of 30 September 2026; no completed outcome should be claimed."
+        },
+        "letter": {
+          "executive_assessment": "The submission is supportable on the supplied record for Chambers Corporate/M&A, Mexico. It presents one authorised, practice-relevant 2026 mandate and does not make a ranking, completed-deal, recovery or other outcome claim. No critical defect is identified in the supplied B10 draft or matter text.",
+          "portfolio": "Canonical selection and hero decision are aligned: qa-4 is the sole core and hero matter. The evidence supports that Synthetic Aurora Legal advised Synthetic Client 4, as buyer, on the acquisition of all shares in a target company in Mexico. The source reports a matter value of MXN 1000000 and identifies Sofia Vega as mandate lead. Closing remained pending as of 30 September 2026; this must remain a pending transaction, not a completed result.",
+          "leadership": "The B10 source supports that Sofia Vega is a partner and leads the Corporate/M&A practice. The matter source separately supports that she led qa-4. The B10 draft accurately states that the practice is led by partner Sofia Vega and does not make unsupported claims about wider team size, footprint or market standing.",
+          "evidence_gaps": "There is no evidence of a final closing or other outcome, and none should be added. The record supports only one mandate; this is a portfolio limitation, not a defect requiring padding. No firm or lawyer ranking is evidenced or claimed. Publication is explicitly authorised for qa-4.",
+          "next_steps": "Submit without substantive changes. Retain the pending-closing language in all rendered submission materials, preserve the stated MXN currency and amount as a source-reported value, and confirm the final rendered B10 and matter entry remain confined to qa-4 and contain no added outcome or ranking language."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 2.892,
+            "usage": {
+              "input_tokens": 1411,
+              "output_tokens": 214,
+              "total_tokens": 1625,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 0
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 8.657,
+            "usage": {
+              "input_tokens": 1540,
+              "output_tokens": 698,
+              "total_tokens": 2238,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 339
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 5.939,
+            "usage": {
+              "input_tokens": 2075,
+              "output_tokens": 439,
+              "total_tokens": 2514,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 420
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Banking & Finance",
+      "completed": true,
+      "approved": true,
+      "seconds": 25.39,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Banking & Finance",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Banking & Finance in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it negotiated a syndicated credit facility for the borrower; signing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on banking and finance matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team negotiated a syndicated credit facility on behalf of the borrower; signing remained pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-5",
+            "client": "Synthetic Client 5",
+            "name": "Banking & Finance mandate",
+            "summary": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower, Synthetic Client 5, in Mexico. The reported matter value is MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nSigning remained pending as of 30 September 2026; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Banking & Finance",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Banking & Finance in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it negotiated a syndicated credit facility for the borrower; signing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on banking and finance matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team negotiated a syndicated credit facility on behalf of the borrower; signing remained pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-5",
+              "client": "Synthetic Client 5",
+              "name": "Banking & Finance mandate",
+              "summary": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower, Synthetic Client 5, in Mexico. The reported matter value is MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nSigning remained pending as of 30 September 2026; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-5",
+              "disposition": "core",
+              "rationale": "Relevant Banking & Finance mandate with a defined borrower-side role, documented activity within the research period, explicit publication authorization, and no unsupported outcome claim. The mandate remains appropriately qualified as pending.",
+              "source_quote": "Synthetic Aurora Legal negotiated a syndicated credit facility for the borrower; signing remains pending for Synthetic Client 5. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-5",
+          "pending_questions": [],
+          "thesis": "Use the single evidenced and publishable borrower-side syndicated credit facility as the core and hero matter. Preserve that signing remained pending as of 30 September 2026 and do not imply completion, recovery, or a final outcome."
+        },
+        "letter": {
+          "executive_assessment": "The supplied materials support a single, coherent Chambers Banking & Finance/Mexico submission centred on matter qa-5. The validated strategy, core selection and hero selection are aligned. No unsupported result, recovery, completion or ranking statement appears in the supplied B10 or matter text. On the evidence provided, no content correction is required; final approval remains conditional on reviewing the rendered submission artifact.",
+          "portfolio": "qa-5 is relevant because the firm’s stated legal contribution was negotiating a syndicated credit facility for the borrower in Mexico. Sofia Vega is identified as lead on the mandate. The reported matter value is MXN 1000000 and should remain attributed as reported. The matter was active within the research period through documented work on 15 September 2026. Signing remained pending as of 30 September 2026; it must not be described as signed, completed, closed, successful, or producing a financial recovery. Publication is explicitly authorized.",
+          "leadership": "The B10 source supports that Partner Sofia Vega leads the Banking & Finance practice. The matter source separately supports that she led qa-5. These are appropriately distinct and supported leadership statements. No wider team size, additional leadership roles, lawyer ranking or other individual credential should be added.",
+          "evidence_gaps": "There is no official ranking-verification evidence, and the supplied sources make no market-ranking claim. Accordingly, the submission must not state or imply a Chambers firm or lawyer ranking. The record supports only one mandate and does not support a wider geographic footprint or wider team description. The supplied materials include draft text, but not a final rendered combined submission; this is a release-control gap rather than a factual defect in the current copy.",
+          "next_steps": "Retain qa-5 as the sole core and hero matter and preserve its pending status, MXN currency and reported-value attribution. Do not pad the portfolio. Before delivery, review the final rendered B10 and matter entry against the canonical selection to confirm that the client identifier, borrower-side role, Sofia Vega’s supported roles, and the pending status are unchanged. If no changes are introduced, no substantive correction is needed."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 2.99,
+            "usage": {
+              "input_tokens": 1393,
+              "output_tokens": 291,
+              "total_tokens": 1684,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 89
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 12.439,
+            "usage": {
+              "input_tokens": 1508,
+              "output_tokens": 1090,
+              "total_tokens": 2598,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 651
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 6.678,
+            "usage": {
+              "input_tokens": 2123,
+              "output_tokens": 466,
+              "total_tokens": 2589,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 447
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Real Estate",
+      "completed": true,
+      "approved": true,
+      "seconds": 55.11,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Real Estate",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Real Estate in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on real estate matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team negotiated acquisition documents and conducted title review for a warehouse site; the transaction remained pending closing.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-1",
+            "client": "Synthetic Client 1",
+            "name": "Real Estate mandate",
+            "summary": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site in Mexico for Synthetic Client 1.\n\nThe matter has a reported value of MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026. Closing remained pending as of 30 September 2026."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Real Estate",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Real Estate in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on real estate matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team negotiated acquisition documents and conducted title review for a warehouse site; the transaction remained pending closing.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-1",
+              "client": "Synthetic Client 1",
+              "name": "Real Estate mandate",
+              "summary": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site in Mexico for Synthetic Client 1.\n\nThe matter has a reported value of MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026. Closing remained pending as of 30 September 2026."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-1",
+              "disposition": "core",
+              "rationale": "Core: the documented mandate is a Mexico real estate acquisition matter, including acquisition-document negotiation and title review for a warehouse site. It falls within the stated research period, has explicit publication authorization, and its pending closing status can be preserved in submission copy.",
+              "source_quote": "Synthetic Aurora Legal negotiated acquisition documents and reviewed title for a warehouse site; closing remains pending for Synthetic Client 1. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-1",
+          "pending_questions": [],
+          "thesis": "A focused Mexico real estate submission supported by one publishable 2026 warehouse-acquisition mandate, with closing expressly described as pending."
+        },
+        "letter": {
+          "executive_assessment": "The validated strategy is coherent: qa-1 is the sole core and hero matter for a focused Chambers Real Estate/Mexico submission. The record supports the firm’s Mexico real estate positioning, Sofia Vega’s practice leadership, and a single publishable 2026 warehouse-acquisition mandate. Closing is expressly pending; the submission must not imply completion, a successful outcome, recovery or value conversion. No market ranking is claimed or supported.",
+          "portfolio": "Retain only qa-1. The documented work—negotiating acquisition documents and conducting title review for a warehouse site in Mexico—is directly relevant to Real Estate. Sofia Vega is identified as lead partner for the mandate. Work is documented on 15 September 2026, within the stated research period. The matter’s value is source-reported as MXN 1000000 and may be retained in that currency if included. Publication is explicitly authorized, and the matter is marked publishable. The canonical selection and hero decision align with the strategy.",
+          "leadership": "The B10 source supports the statement that Partner Sofia Vega leads the Real Estate practice. The matter source separately supports that she led qa-1. Neither source supports a wider team size, wider geographic footprint, lawyer ranking or firm ranking. Leadership copy should remain limited to the supported practice-lead and mandate-lead statements.",
+          "evidence_gaps": "The B10 draft should be corrected narrowly to match the supported attribution and pending status: replace “the team negotiated acquisition documents and conducted title review” with “the firm negotiated acquisition documents and conducted title review,” and replace “the transaction remained pending closing” with “closing remained pending.” No ranking statement should be added without appropriately scoped official verification. A rendered final submission artifact has not been supplied for review, so formal delivery approval cannot be completed until the corrected copy is rendered and checked.",
+          "next_steps": "Apply only the two B10 wording corrections above; retain qa-1 as the sole hero matter and preserve its pending status. Do not add outcomes, ranking language, team-size claims or additional matters. Produce the final rendered B10 and matter entry, then confirm that the rendered text uses the same sole-matter selection and hero decision, preserves MXN 1000000 without conversion, and states that closing remained pending as of 30 September 2026."
+        },
+        "judge": {
+          "passed": true,
+          "defects": [
+            {
+              "severity": "warning",
+              "scope": "letter",
+              "matter_id": null,
+              "message": "The letter misclassifies optional B10 wording refinements as evidence gaps. “The team” is supported by the B10 source’s reference to the department as the actor, and “the transaction remained pending closing” preserves the sourced pending status, although it is stylistically awkward. The letter should present these as editorial improvements rather than factual corrections. Likewise, the expected absence of a rendered artifact at this pre-render stage is not itself an evidence gap, though a separate post-render review remains required before delivery."
+            }
+          ]
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 4.1,
+            "usage": {
+              "input_tokens": 1393,
+              "output_tokens": 348,
+              "total_tokens": 1741,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 150
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 14.658,
+            "usage": {
+              "input_tokens": 1504,
+              "output_tokens": 1203,
+              "total_tokens": 2707,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 726
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 30.019,
+            "usage": {
+              "input_tokens": 2157,
+              "output_tokens": 2373,
+              "total_tokens": 4530,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 2236
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Energy & Natural Resources",
+      "completed": true,
+      "approved": true,
+      "seconds": 25.88,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Energy & Natural Resources",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Energy & Natural Resources in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised on an electricity generation permit; the application remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on energy and natural resources matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team advised on an electricity generation permit application, which remains pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-6",
+            "client": "Synthetic Client 6",
+            "name": "Energy & Natural Resources mandate",
+            "summary": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal advised Synthetic Client 6 on an electricity generation permit application in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026.\n\nThe application remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Energy & Natural Resources",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Energy & Natural Resources in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised on an electricity generation permit; the application remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on energy and natural resources matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team advised on an electricity generation permit application, which remains pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-6",
+              "client": "Synthetic Client 6",
+              "name": "Energy & Natural Resources mandate",
+              "summary": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal advised Synthetic Client 6 on an electricity generation permit application in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work undertaken on 15 September 2026.\n\nThe application remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-6",
+              "disposition": "core",
+              "rationale": "Directly relevant, publishable Energy & Natural Resources mandate in Mexico. The firm’s role, pending status, lead partner, date within the stated research period, and value currency are supported without claiming an outcome.",
+              "source_quote": "Synthetic Aurora Legal advised on an electricity generation permit; the application remains pending for Synthetic Client 6. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-6",
+          "pending_questions": [],
+          "thesis": "Use the single evidenced and explicitly authorized mandate to demonstrate the firm’s Mexico electricity-permitting capability, accurately preserving that the application remained pending and avoiding any claim of a final outcome or market ranking."
+        },
+        "letter": {
+          "executive_assessment": "The validated strategy is supported. The package presents one explicitly authorized, directly relevant Mexico electricity-permitting mandate and accurately frames it as pending rather than as a completed result. No market-ranking claim, outcome, financial recovery or wider team/geographic claim is made. No critical factual, confidentiality, selection or ranking defect is identified in the supplied materials.",
+          "portfolio": "Retain qa-6 as the sole core and hero matter. The source supports that Synthetic Aurora Legal advised Synthetic Client 6 on an electricity generation permit application in Mexico; Sofia Vega led the mandate; documented work occurred on 15 September 2026; and the application remained pending as of 30 September 2026. The reported value is MXN 1000000. Publication is explicitly authorized. The optimized text preserves the pending status and expressly avoids claiming a final outcome or recovery.",
+          "leadership": "The B10 source supports that Partner Sofia Vega leads the Energy & Natural Resources practice in Mexico. The matter source separately supports that she led qa-6. The submission should retain these scoped statements only; it should not add assertions about wider team size, other leadership roles or any individual ranking.",
+          "evidence_gaps": "There is no official ranking-verification evidence, but the package does not make a firm or lawyer ranking claim, so this is not a release blocker. The evidence supports one 2026 mandate only. It does not support claims of additional matters, broader geographic coverage, department size, a permit approval, or another final result. The B10 draft and matter text are aligned with the single-matter strategy.",
+          "next_steps": "No textual correction is required on the supplied evidence. Submit the B10 and qa-6 using the validated single-matter strategy and pending-status wording. Before release, review the final rendered Chambers artifact to ensure it retains the same canonical matter selection and does not introduce an unsupported ranking, outcome, broader capability, team-size or geographic claim."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 3.763,
+            "usage": {
+              "input_tokens": 1389,
+              "output_tokens": 311,
+              "total_tokens": 1700,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 112
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 10.65,
+            "usage": {
+              "input_tokens": 1501,
+              "output_tokens": 917,
+              "total_tokens": 2418,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 516
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 8.471,
+            "usage": {
+              "input_tokens": 2078,
+              "output_tokens": 535,
+              "total_tokens": 2613,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 516
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Intellectual Property",
+      "completed": true,
+      "approved": true,
+      "seconds": 23.93,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Intellectual Property",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Intellectual Property in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the client in a trademark opposition; the opposition remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on intellectual property matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a client in a trademark opposition, which remains pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-8",
+            "client": "Synthetic Client 8",
+            "name": "Intellectual Property mandate",
+            "summary": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 8 in a trademark opposition in Mexico. The opposition remained pending as of 30 September 2026.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Intellectual Property",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Intellectual Property in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the client in a trademark opposition; the opposition remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on intellectual property matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a client in a trademark opposition, which remains pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-8",
+              "client": "Synthetic Client 8",
+              "name": "Intellectual Property mandate",
+              "summary": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 8 in a trademark opposition in Mexico. The opposition remained pending as of 30 September 2026.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-8",
+              "disposition": "core",
+              "rationale": "Relevant Intellectual Property mandate in Mexico: the firm’s role, pending status, value currency and publication authorization are expressly supported. It is the only supplied matter and fits the stated practice without implying an outcome.",
+              "source_quote": "Synthetic Aurora Legal represented the client in a trademark opposition; the opposition remains pending for Synthetic Client 8. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-8",
+          "pending_questions": [],
+          "thesis": "Synthetic Aurora Legal’s supplied Chambers Intellectual Property submission is supported by one explicitly authorized Mexico trademark-opposition mandate led by Sofia Vega. The matter should be presented as pending, with no outcome or recovery asserted; no firm or lawyer ranking claim should be made."
+        },
+        "letter": {
+          "executive_assessment": "The validated strategy is narrowly supported: submit one Mexico Intellectual Property matter, qa-8, as the hero/core mandate. The firm’s role, Sofia Vega’s lead responsibility, the matter value in MXN, and the pending status are expressly sourced. No firm or lawyer ranking claim, outcome, recovery, wider team size, or broader footprint should be stated. Content is suitable in principle, subject to review of the final rendered Chambers artifact before release.",
+          "portfolio": "The sole selected matter is Synthetic Client 8’s trademark opposition in Mexico. Synthetic Aurora Legal represented the client; Sofia Vega led the mandate. The opposition remained pending as of 30 September 2026, and no final outcome or financial recovery is claimed. The source reports a matter value of MXN 1,000,000. Publication is explicitly authorized. This is a legally relevant IP mandate and falls within the stated research period, based on documented work dated 15 September 2026.",
+          "leadership": "The public B10 source identifies Sofia Vega as a partner and leader of the Intellectual Property practice. The matter source separately identifies her as lead on qa-8. These support the corresponding leadership statements without implying a lawyer ranking, additional leadership roles, or the size or composition of the wider team.",
+          "evidence_gaps": "No final rendered Chambers submission has been supplied for artifact-level review. Accordingly, release approval cannot yet be confirmed under the rendered-artifact requirement. The final version must retain the client/matter identity, Mexico jurisdiction, pending status, and MXN currency; it must not convert the pending opposition into a result or add unverified ranking language. The B10 draft’s reference to “the team” should be aligned to the supported firm-level formulation, “Synthetic Aurora Legal represented a client,” unless the final artifact otherwise identifies the relevant team without expanding the claim.",
+          "next_steps": "Prepare and review the final rendered submission using qa-8 as the sole hero/core matter. Make only the bounded wording alignment above if needed. Confirm that the B10 and matter narrative state that the opposition remains pending and omit rankings, outcomes, recoveries, and unsupported team or footprint claims. Once the rendered artifact is available and matches the validated selection and wording, complete final release review."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 2.673,
+            "usage": {
+              "input_tokens": 1384,
+              "output_tokens": 208,
+              "total_tokens": 1592,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 0
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 9.73,
+            "usage": {
+              "input_tokens": 1507,
+              "output_tokens": 794,
+              "total_tokens": 2301,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 331
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 8.548,
+            "usage": {
+              "input_tokens": 2146,
+              "output_tokens": 671,
+              "total_tokens": 2817,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 652
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Competition",
+      "completed": true,
+      "approved": true,
+      "seconds": 39.3,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Competition",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Competition in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the client in a merger clearance proceeding; regulatory clearance remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on competition matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a client in a merger clearance proceeding, with regulatory clearance pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-7",
+            "client": "Synthetic Client 7",
+            "name": "Competition mandate",
+            "summary": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 7 in a merger clearance proceeding in Mexico. The source reports a matter value of MXN 1000000.\n\nRegulatory clearance remained pending as of 30 September 2026.\n\nSofia Vega led the mandate, with documented work on 15 September 2026. No final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Competition",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Competition in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the client in a merger clearance proceeding; regulatory clearance remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on competition matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a client in a merger clearance proceeding, with regulatory clearance pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-7",
+              "client": "Synthetic Client 7",
+              "name": "Competition mandate",
+              "summary": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 7 in a merger clearance proceeding in Mexico. The source reports a matter value of MXN 1000000.\n\nRegulatory clearance remained pending as of 30 September 2026.\n\nSofia Vega led the mandate, with documented work on 15 September 2026. No final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-7",
+              "disposition": "core",
+              "rationale": "A publishable, Mexico-based merger-clearance mandate with documented work during the research period. The matter is directly relevant to Competition, identifies the firm’s role and Sofia Vega’s lead role, and preserves the pending regulatory status without claiming an outcome.",
+              "source_quote": "Synthetic Aurora Legal represented the client in a merger clearance proceeding; regulatory clearance remains pending for Synthetic Client 7. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-7",
+          "pending_questions": [],
+          "thesis": "Use qa-7 as the sole core and hero matter: it evidences the firm’s Competition work in Mexico through representation in a merger-clearance proceeding, while accurately stating that regulatory clearance remained pending."
+        },
+        "letter": {
+          "executive_assessment": "The submission is supportable on the supplied record for Chambers Competition in Mexico. The validated strategy selects qa-7 as the sole core and hero matter, and the B10 draft and matter text align with that selection. No ranking, outcome, recovery, team-size or geographic-footprint claim is made. The matter is expressly authorized for publication and is not marked confidential.",
+          "portfolio": "qa-7 is directly relevant Competition evidence: Synthetic Aurora Legal represented Synthetic Client 7 in a merger-clearance proceeding in Mexico. Documented work occurred on 15 September 2026, within the stated research period. The source-reported matter value is MXN 1000000. The rendered text correctly preserves that regulatory clearance remained pending as of 30 September 2026; it does not present the proceeding as completed or successful.",
+          "leadership": "The public B10 source states that Partner Sofia Vega leads the Competition practice. The matter source separately supports that Sofia Vega led qa-7. These statements are appropriately limited to practice and matter leadership; they do not assert a wider team, lawyer ranking or other unprovided credential.",
+          "evidence_gaps": "The record evidences one mandate only and provides no final regulatory result, financial recovery, market ranking, wider team size or broader geographic footprint. These are limitations of the available evidence, not defects in the current submission. Any later addition of a result must be supported by updated source material and must clearly distinguish the then-current status from the pending status recorded here.",
+          "next_steps": "Proceed with the supplied B10 draft and qa-7 matter text without expanding the narrative. Retain the pending-clearance wording and the MXN currency if the matter value is included. Before release, conduct the required rendered-artifact check to confirm that the published version remains limited to the approved sole-matter strategy and contains no unsupported ranking or outcome language."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 6.951,
+            "usage": {
+              "input_tokens": 1386,
+              "output_tokens": 608,
+              "total_tokens": 1994,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 398
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 6.737,
+            "usage": {
+              "input_tokens": 1509,
+              "output_tokens": 573,
+              "total_tokens": 2082,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 186
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 22.329,
+            "usage": {
+              "input_tokens": 2072,
+              "output_tokens": 1673,
+              "total_tokens": 3745,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 1654
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Data Protection",
+      "completed": true,
+      "approved": true,
+      "seconds": 19.68,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Data Protection",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Data Protection in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised on response to a personal data breach; the regulatory investigation remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on data protection matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team advised on the response to a personal data breach; the related regulatory investigation remains pending.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-9",
+            "client": "Synthetic Client 9",
+            "name": "Data Protection mandate",
+            "summary": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal advised Synthetic Client 9 on responding to a personal data breach in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe regulatory investigation remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Data Protection",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Data Protection in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it advised on response to a personal data breach; the regulatory investigation remains pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on data protection matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team advised on the response to a personal data breach; the related regulatory investigation remains pending.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-9",
+              "client": "Synthetic Client 9",
+              "name": "Data Protection mandate",
+              "summary": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal advised Synthetic Client 9 on responding to a personal data breach in Mexico.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nThe regulatory investigation remained pending as of 30 September 2026. The source reports a matter value of MXN 1000000; no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-9",
+              "disposition": "core",
+              "rationale": "Directly relevant Mexico data-protection mandate within the research period, with the firm’s role, lead partner, pending regulatory status and explicit publication authorization documented. The matter should be presented without implying a final outcome or recovery.",
+              "source_quote": "Synthetic Aurora Legal advised on response to a personal data breach; the regulatory investigation remains pending for Synthetic Client 9. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-9",
+          "pending_questions": [],
+          "thesis": "Synthetic Aurora Legal’s evidenced Data Protection submission for Mexico centres on its 2026 advice responding to a personal data breach, led by Sofia Vega, while the related regulatory investigation remained pending as of 30 September 2026."
+        },
+        "letter": {
+          "executive_assessment": "The Chambers Data Protection—Mexico submission is supported by one publishable, directly relevant 2026 mandate. The validated strategy, B10 source and B10 draft align on the firm’s Mexico data-protection practice, Sofia Vega’s practice leadership, and the breach-response mandate. No ranking, outcome or recovery is claimed or implied.",
+          "portfolio": "Use matter qa-9 as the sole core and hero matter. Synthetic Aurora Legal advised Synthetic Client 9 on responding to a personal data breach in Mexico. Sofia Vega led the mandate. Work is documented on 15 September 2026, within the stated research period. The related regulatory investigation remained pending as of 30 September 2026; this is pending work, not a completed result. The reported matter value is MXN 1000000, with no final outcome or financial recovery claimed.",
+          "leadership": "The B10 source identifies Sofia Vega as a partner and leader of the Data Protection practice. The matter source separately supports that she led qa-9. These are appropriately reflected in the draft and strategy. No wider team size, additional leadership roles or lawyer ranking should be added.",
+          "evidence_gaps": "There is no official ranking-verification evidence, but the materials make no firm or lawyer ranking claim. The source does not support claims about a wider team, wider geographic footprint, further mandates, a regulatory outcome or financial recovery. These omissions are not defects in the current single-matter submission and should remain unfilled.",
+          "next_steps": "Retain the current B10 draft and canonical selection of qa-9 as the sole hero matter. Preserve the wording that the regulatory investigation remains pending and avoid language suggesting resolution, success or recovery. No corrective edits are required on the supplied record; confirm the final rendered submission continues to match this approved selection and pending-status wording before release."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 3.649,
+            "usage": {
+              "input_tokens": 1399,
+              "output_tokens": 303,
+              "total_tokens": 1702,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 92
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 8.042,
+            "usage": {
+              "input_tokens": 1523,
+              "output_tokens": 670,
+              "total_tokens": 2193,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 290
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 4.753,
+            "usage": {
+              "input_tokens": 2079,
+              "output_tokens": 333,
+              "total_tokens": 2412,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 314
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    },
+    {
+      "practice": "Dispute Resolution",
+      "completed": true,
+      "approved": true,
+      "seconds": 22.22,
+      "package": {
+        "directory": "Chambers",
+        "practice_area": "Dispute Resolution",
+        "jurisdiction": "Mexico",
+        "research_period": {
+          "from": "2025-10-01",
+          "to": "2026-09-30",
+          "source": "Synthetic authorized submission instructions"
+        },
+        "firm_name": "Synthetic Aurora Legal",
+        "b10_source": "Synthetic Aurora Legal advises on Dispute Resolution in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+        "b10_draft": "Synthetic Aurora Legal advises on dispute resolution matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a claimant in a commercial arbitration that remains pending, with no award issued.",
+        "lawyers": [
+          {
+            "name": "Sofia Vega",
+            "is_partner": true,
+            "isPartner": true
+          }
+        ],
+        "matters": [
+          {
+            "id": "qa-10",
+            "client": "Synthetic Client 10",
+            "name": "Dispute Resolution mandate",
+            "summary": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "rawNotes": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "source_excerpt": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+            "leadPartner": "Sofia Vega",
+            "value": "MXN 1000000",
+            "publish_status": "publishable",
+            "confidentialityConfirmed": true,
+            "isConfidential": false,
+            "completionDate": "Pending as of 30 September 2026",
+            "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 10 as claimant in a commercial arbitration in Mexico. The source reports a matter value of MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nNo award has been issued; the proceedings remained pending as of 30 September 2026, and no final outcome or financial recovery is claimed."
+          }
+        ]
+      },
+      "review": {
+        "package": {
+          "directory": "Chambers",
+          "practice_area": "Dispute Resolution",
+          "jurisdiction": "Mexico",
+          "research_period": {
+            "from": "2025-10-01",
+            "to": "2026-09-30",
+            "source": "Synthetic authorized submission instructions"
+          },
+          "firm_name": "Synthetic Aurora Legal",
+          "b10_source": "Synthetic Aurora Legal advises on Dispute Resolution in Mexico. Partner Sofia Vega leads this practice. The department describes one mandate in 2026: it represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending. No market ranking, wider team size or wider geographic footprint is claimed.",
+          "b10_draft": "Synthetic Aurora Legal advises on dispute resolution matters in Mexico. Partner Sofia Vega leads the practice. In 2026, the team represented a claimant in a commercial arbitration that remains pending, with no award issued.",
+          "lawyers": [
+            {
+              "name": "Sofia Vega",
+              "is_partner": true,
+              "isPartner": true
+            }
+          ],
+          "matters": [
+            {
+              "id": "qa-10",
+              "client": "Synthetic Client 10",
+              "name": "Dispute Resolution mandate",
+              "summary": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "rawNotes": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "source_excerpt": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized.",
+              "leadPartner": "Sofia Vega",
+              "value": "MXN 1000000",
+              "publish_status": "publishable",
+              "confidentialityConfirmed": true,
+              "isConfidential": false,
+              "completionDate": "Pending as of 30 September 2026",
+              "optimizedText": "Synthetic Aurora Legal represented Synthetic Client 10 as claimant in a commercial arbitration in Mexico. The source reports a matter value of MXN 1000000.\n\nPartner Sofia Vega led the mandate, with documented work on 15 September 2026.\n\nNo award has been issued; the proceedings remained pending as of 30 September 2026, and no final outcome or financial recovery is claimed."
+            }
+          ]
+        },
+        "strategy": {
+          "matters": [
+            {
+              "matter_id": "qa-10",
+              "disposition": "core",
+              "rationale": "Relevant, evidenced commercial-arbitration mandate in Mexico within the research period. The firm’s role, claimant position, pending status, lack of award/outcome, value currency and express publication authorization are all stated. It is the sole 2026 mandate described in the supplied B10 source.",
+              "source_quote": "Synthetic Aurora Legal represented the claimant in a commercial arbitration; no award has been issued and the proceedings remain pending for Synthetic Client 10. Partner Sofia Vega led this mandate in Mexico, with documented work on 15 September 2026. The source reports a matter value of MXN 1000000. No final outcome or financial recovery is claimed. Publication is explicitly authorized."
+            }
+          ],
+          "hero_matter_id": "qa-10",
+          "pending_questions": [],
+          "thesis": "Synthetic Aurora Legal’s supported Dispute Resolution submission is a single publishable Mexico commercial-arbitration mandate led by Sofia Vega for the claimant, with proceedings pending as of 30 September 2026 and no award, final outcome or financial recovery claimed."
+        },
+        "letter": {
+          "executive_assessment": "The supplied Chambers Dispute Resolution/Mexico package is supported by a single canonical, publishable matter: qa-10. The B10 draft accurately reflects the authorized B10 source: the firm advises on Dispute Resolution in Mexico, Sofia Vega is a partner and practice leader, and the 2026 commercial arbitration remains pending with no award. No ranking, team-size, geographic-footprint, outcome or recovery claim is made. No critical defect is identified in the supplied materials.",
+          "portfolio": "qa-10 is correctly selected as the sole core and hero matter. It concerns the firm’s representation of Synthetic Client 10 as claimant in a commercial arbitration in Mexico. The matter record supports Sofia Vega’s mandate lead role, documented work on 15 September 2026, and a reported matter value of MXN 1,000,000. Publication is explicitly authorized. The matter must continue to be described as pending as of 30 September 2026; no award, final outcome or financial recovery should be asserted.",
+          "leadership": "Sofia Vega’s practice-lead role and partner status are supported by the public B10 source. Her role as lead on qa-10 is separately supported by the matter source. The supplied wording properly distinguishes these two supported propositions and does not claim any lawyer ranking or wider leadership structure.",
+          "evidence_gaps": "There are no unresolved evidence conflicts or publication-permission gaps for qa-10. The evidence supports only one 2026 mandate and does not support additional matters, a wider team, wider geographic coverage, a result, recovery or market ranking. These are scope limits, not defects; they should not be filled with inference or padding.",
+          "next_steps": "Retain qa-10 as the sole selected and hero matter across the submission and associated internal materials. Preserve the stated currency as MXN and the pending/no-award/no-outcome qualifiers verbatim in substance. Before delivery, confirm that the final rendered submission contains only the reviewed B10 and matter claims; any subsequent change requires a renewed review."
+        },
+        "judge": {
+          "passed": true,
+          "defects": []
+        },
+        "errors": [],
+        "trace": [
+          {
+            "role": "strategist",
+            "seconds": 4.34,
+            "usage": {
+              "input_tokens": 1422,
+              "output_tokens": 347,
+              "total_tokens": 1769,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 113
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "writer",
+            "seconds": 7.502,
+            "usage": {
+              "input_tokens": 1569,
+              "output_tokens": 671,
+              "total_tokens": 2240,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 249
+              }
+            },
+            "model": "gpt-5.6-terra",
+            "prompt_version": "review-core-v1.2"
+          },
+          {
+            "role": "editor",
+            "seconds": 7.239,
+            "usage": {
+              "input_tokens": 2167,
+              "output_tokens": 479,
+              "total_tokens": 2646,
+              "input_token_details": {
+                "cache_read": 0
+              },
+              "output_token_details": {
+                "reasoning": 460
+              }
+            },
+            "model": "gpt-5.6-sol",
+            "prompt_version": "review-core-v1.2"
+          }
+        ],
+        "writer_attempts": 1,
+        "release_verdict": {
+          "passed": true,
+          "status": "passed",
+          "errors": []
+        }
+      }
+    }
+  ]
+}

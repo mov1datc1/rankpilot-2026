@@ -1,0 +1,9 @@
+{
+  "scope": "Synthetic local reproduction, not attribution of the historic DeForest mutation",
+  "input": 1,
+  "output": 2,
+  "uniqueIds": 1,
+  "official": 1,
+  "reserve": 1,
+  "passed": false
+}

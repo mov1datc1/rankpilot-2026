@@ -1,0 +1,62 @@
+[
+  {
+    "document": "deforest-Submission",
+    "pages": 28,
+    "docx_sha256": "08dbd017414ac6f954aa9c51a720b32107afb14879f0b3c6a25d17a88ab9247e",
+    "pdf": "deforest-Submission-visual.pdf",
+    "pdf_sha256": "ce346fecf7cff0dd0f022291c21c292e6859d8b6c1c2456f6bb2071465cc5db0",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": ""
+  },
+  {
+    "document": "deforest-Audit",
+    "pages": 3,
+    "docx_sha256": "eaacdc6801059780ad3978b70f8530708cdb53ca767dbc1232a718e244e12bcc",
+    "pdf": "deforest-Audit-visual.pdf",
+    "pdf_sha256": "6a7cdafdd2f274d377eb21b0e3d3ca2837fabf3e8110c286647da9993b69f4cb",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": ""
+  },
+  {
+    "document": "ramos-Submission",
+    "pages": 18,
+    "docx_sha256": "f9d111e0373249f290c90f9441bc5877715855d182dcd24fbcd2e41c889df422",
+    "pdf": "ramos-Submission-visual.pdf",
+    "pdf_sha256": "5970008c6b2a8580b23d22d7bfd409715dabd98387b77348b297ec45b1bb2f19",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": ""
+  },
+  {
+    "document": "ramos-Audit",
+    "pages": 4,
+    "docx_sha256": "d787b4725c73d19ea45898ff4a0fc1d1458fc74083e3ea907f7ca241c4415767",
+    "pdf": "ramos-Audit-visual.pdf",
+    "pdf_sha256": "c98c2e37512fa8310b4cfee6a7768643e031e253eee97c256f441a5bb166726d",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": "Ramos Audit ends with one final action on page 4; within agreed 3–5 page range."
+  },
+  {
+    "document": "araquereyna-Submission",
+    "pages": 22,
+    "docx_sha256": "b2dfd9a15e52456f640f9559e3947004b2286cddeb6d19259ee631f51c3a149b",
+    "pdf": "araquereyna-Submission-reloaded-visual.pdf",
+    "pdf_sha256": "dd6cde378a89e6d2affa8c9b2a8319bea36e6cfd55f51b4d439af6761d7e8ab6",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": ""
+  },
+  {
+    "document": "araquereyna-Audit",
+    "pages": 4,
+    "docx_sha256": "1b5afa0e640005af8d0598721b5c0e8c72b01692628bd3a6d99734a096ebc36c",
+    "pdf": "araquereyna-Audit-final-visual.pdf",
+    "pdf_sha256": "109dad8167d3af8ebe3dfa54703798defd63d1582d50f0d41548d7bbe02af630",
+    "renderer": "Microsoft Word native print to PDF; explicit user-authorized alternative",
+    "visual_inspection": "All pages inspected; no clipping, overlap, missing glyphs or truncated tables observed. Standard template page breaks retained.",
+    "notes": ""
+  }
+]

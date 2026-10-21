@@ -1,0 +1,2729 @@
+{
+  "passed": true,
+  "source_facts_unchanged": true,
+  "source_order_changed": true,
+  "shared_revision": "d425922b4416d06a46a0a5282be7a5c6ec4eb05f6ccd2b0adc67758f15397b73",
+  "sha256": "d713b774622386daba9d4d39e834354a6fabe2a8c0bf69c590e69aaa6d330644",
+  "audit_sha256": "f118d6f8bb2cba6e1792c87578a4775fca271a4accc0348551d58e8893aacd30",
+  "core": 19,
+  "output": "docs/reviews/deforest-fresh-production-2026-10-08/final",
+  "job": {
+    "id": "88296fda-d5bb-4ff2-859f-ccd307896169",
+    "status": "completed",
+    "ledger": [
+      {
+        "issue": null,
+        "stage": "selection",
+        "trace": null,
+        "cursor": 0,
+        "status": "queued",
+        "started_at": "2026-10-09T05:59:19.391Z",
+        "duration_ms": 1234,
+        "output_hash": "1e25cb479bf7bd6ce16a1d41a544816afc335da7e47b973a4f59111c5f9f106a",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "development",
+        "trace": null,
+        "cursor": 1,
+        "status": "queued",
+        "started_at": "2026-10-09T05:59:20.912Z",
+        "duration_ms": 753,
+        "output_hash": "8da984aee6d6adf4177498ecafc59a614c87d371fb0c640110571f379385b6f3",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "audit",
+        "trace": null,
+        "cursor": 2,
+        "status": "queued",
+        "started_at": "2026-10-09T05:59:21.918Z",
+        "duration_ms": 862,
+        "output_hash": "82c69fd416fc3fd75fde0b8852e557231b576ace33de073e57f362edd2dc69d8",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": {
+          "code": "AI_OUTPUT_LIMIT",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "artifact",
+        "trace": {
+          "role": "editor",
+          "model": "gpt-5.6-sol",
+          "usage": {
+            "input_tokens": 73959,
+            "total_tokens": 82151,
+            "output_tokens": 8192,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 4639
+            }
+          },
+          "seconds": 89.406,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 28,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 23,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 19,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 16,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 26,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 19,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 19,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 17,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 14,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 11,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 10,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-fa8e26ded412",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_0d27f4ce5e8b2917006ac882bf6b2c87d08680f4c1f6012f14"
+        },
+        "cursor": 3,
+        "status": "queued",
+        "retry_at": "2026-10-09T06:01:26.749Z",
+        "started_at": "2026-10-09T05:59:23.058Z",
+        "duration_ms": 93691,
+        "output_hash": "6fd4bd69526aeacb6421a5a085cd423f3c74f3e67f56d90984922787ef3c4c50",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "artifact",
+        "trace": {
+          "role": "selection_with_review",
+          "calls": [
+            {
+              "role": "editor",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 73959,
+                "total_tokens": 84559,
+                "output_tokens": 10600,
+                "input_token_details": {
+                  "cache_read": 73956
+                },
+                "output_token_details": {
+                  "reasoning": 4507
+                }
+              },
+              "seconds": 109.861,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 28,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 23,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 16,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 26,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 19,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 17,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 11,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 9,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-e495f710f8d4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 6,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_071974f923fd84dd006ac8833b2b6087d0a9a0bc4303540595"
+            },
+            {
+              "role": "portfolio_reviewer",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 12742,
+                "total_tokens": 13532,
+                "output_tokens": 790,
+                "input_token_details": {
+                  "cache_read": 12739
+                },
+                "output_token_details": {
+                  "reasoning": 598
+                }
+              },
+              "seconds": 13.32,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 5,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_036ed730c72cd3e0006ac883a8fba887d0ba6e33fc75f1b80f"
+            }
+          ],
+          "usage": {
+            "input_tokens": 86701,
+            "total_tokens": 98091,
+            "output_tokens": 11390
+          },
+          "seconds": 123.18100000000001
+        },
+        "cursor": 3,
+        "status": "queued",
+        "started_at": "2026-10-09T06:01:27.947Z",
+        "duration_ms": 130683,
+        "output_hash": "c21a30793d8f458ff472f38606be612e94f3f15c226e64a889b764c338e70c10",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": "e178ac0c98539ec613dad507b670ef4b96568bdc7692e32fc0351ef1fb4ac4b7"
+      },
+      {
+        "issue": {
+          "code": "DEVELOPMENT_REJECTED",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "development",
+        "trace": {
+          "role": "repair",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "input_tokens": 57007,
+            "total_tokens": 58429,
+            "output_tokens": 1422,
+            "input_token_details": {
+              "cache_read": 10982
+            },
+            "output_token_details": {
+              "reasoning": 820
+            }
+          },
+          "seconds": 16.211,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 7,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 7,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 8,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 6,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 4,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 2,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 2,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-eb743bda16d2",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_0b12874005d1e3d7006ac883bc2a7c87d0ac9f71ed60cc0c1e"
+        },
+        "cursor": 4,
+        "status": "queued",
+        "retry_at": "2026-10-09T06:04:27.080Z",
+        "started_at": "2026-10-09T06:03:38.999Z",
+        "duration_ms": 18081,
+        "output_hash": "6cd258ef1c87257e47c32f36b1b922e90fe0696d181853bc880a8d0d4ec19e90",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": {
+          "code": "DEVELOPMENT_REJECTED",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "development",
+        "trace": {
+          "role": "repair",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "input_tokens": 57007,
+            "total_tokens": 58655,
+            "output_tokens": 1648,
+            "input_token_details": {
+              "cache_read": 57004
+            },
+            "output_token_details": {
+              "reasoning": 1034
+            }
+          },
+          "seconds": 19.201,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 7,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 7,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 8,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 6,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 4,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 2,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 2,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-eb743bda16d2",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_02b0bdae0dabe848006ac883ee037487d09b3cc7ce3e77dbda"
+        },
+        "cursor": 4,
+        "status": "queued",
+        "retry_at": "2026-10-09T06:05:49.811Z",
+        "started_at": "2026-10-09T06:04:28.273Z",
+        "duration_ms": 21538,
+        "output_hash": "3bcaa4e57217a19866eaac17256501a7c9e45a18c1be9deec7cadcdc71d952d1",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": {
+          "code": "DEVELOPMENT_REJECTED",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "development",
+        "trace": {
+          "role": "repair",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "input_tokens": 57007,
+            "total_tokens": 58736,
+            "output_tokens": 1729,
+            "input_token_details": {
+              "cache_read": 57004
+            },
+            "output_token_details": {
+              "reasoning": 1161
+            }
+          },
+          "seconds": 19.232,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 7,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 7,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 8,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 6,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 4,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 4,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 3,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 2,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 2,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-eb743bda16d2",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_02a9e066138556a6006ac88440dee487d094d68430bcbbc0c7"
+        },
+        "cursor": 4,
+        "status": "failed",
+        "started_at": "2026-10-09T06:05:51.152Z",
+        "duration_ms": 21537,
+        "output_hash": "36372c690b0788bdcfd72d2160842aa4a5d4a8b57d3b7e412a83f11255ca6221",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "1ae93ba040659b2b805d8015d69b51c10649f104",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "development",
+        "trace": {
+          "role": "repair",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "input_tokens": 50980,
+            "total_tokens": 52075,
+            "output_tokens": 1095,
+            "input_token_details": {
+              "cache_read": 0
+            },
+            "output_token_details": {
+              "reasoning": 516
+            }
+          },
+          "seconds": 12.108,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 29,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 25,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 17,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 16,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 26,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 18,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 15,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 15,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 14,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 13,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 12,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 8,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 6,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-fa8e26ded412",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 6,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_02067f0927eb685b006ac885dd3a1887d0b91f4124b6690420"
+        },
+        "cursor": 4,
+        "status": "queued",
+        "started_at": "2026-10-09T06:12:42.370Z",
+        "duration_ms": 15259,
+        "output_hash": "1e23c43706126832d6a539b873a3247a54554ff1549c1f2fd9398518c276e46f",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "f542ae83765d8b18453f82870be61a5bb184cd32",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "audit",
+        "trace": {
+          "role": "selection_with_review",
+          "calls": [
+            {
+              "role": "writer",
+              "model": "gpt-5.6-terra",
+              "usage": {
+                "input_tokens": 64660,
+                "total_tokens": 66468,
+                "output_tokens": 1808,
+                "input_token_details": {
+                  "cache_read": 11191
+                },
+                "output_token_details": {
+                  "reasoning": 96
+                }
+              },
+              "seconds": 14.808,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 19,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 15,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 7,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 18,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 15,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 9,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 4,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-e495f710f8d4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 3,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_00c07d3a8a2e1d2b006ac885eaf9d487d08eb2b994905103e7"
+            },
+            {
+              "role": "portfolio_reviewer",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 12737,
+                "total_tokens": 13279,
+                "output_tokens": 542,
+                "input_token_details": {
+                  "cache_read": 10624
+                },
+                "output_token_details": {
+                  "reasoning": 358
+                }
+              },
+              "seconds": 8.965,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 5,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_097ab56482be6850006ac885f9d02087d0a9d051bb389ce4f3"
+            }
+          ],
+          "usage": {
+            "input_tokens": 77397,
+            "total_tokens": 79747,
+            "output_tokens": 2350
+          },
+          "seconds": 23.773
+        },
+        "cursor": 5,
+        "status": "queued",
+        "started_at": "2026-10-09T06:12:57.870Z",
+        "duration_ms": 26266,
+        "output_hash": "3efaac716b5b0c8a52e18cc7bc30b6b5ed19e18d3727da7ddda0aca3edbf7e6c",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "f542ae83765d8b18453f82870be61a5bb184cd32",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "artifact",
+        "trace": {
+          "role": "selection_with_review",
+          "calls": [
+            {
+              "role": "editor",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 74002,
+                "total_tokens": 80909,
+                "output_tokens": 6907,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 3521
+                }
+              },
+              "seconds": 80.851,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 28,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 23,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 16,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 26,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 19,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 17,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 11,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 9,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-e495f710f8d4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 6,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_0c8af3ede0dbc767006ac88606f56087d0a4bf9c649d74c3aa"
+            },
+            {
+              "role": "portfolio_reviewer",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 12737,
+                "total_tokens": 13238,
+                "output_tokens": 501,
+                "input_token_details": {
+                  "cache_read": 12734
+                },
+                "output_token_details": {
+                  "reasoning": 296
+                }
+              },
+              "seconds": 7.153,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 5,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_0fd6a3319f061833006ac88657e1e487d08eadd12a81c9fdbf"
+            }
+          ],
+          "usage": {
+            "input_tokens": 86739,
+            "total_tokens": 94147,
+            "output_tokens": 7408
+          },
+          "seconds": 88.004
+        },
+        "cursor": 6,
+        "status": "needs_review",
+        "started_at": "2026-10-09T06:13:24.449Z",
+        "duration_ms": 94389,
+        "output_hash": "ca558ef42cd66226349eb86daad17aa92450f46052f4836704dbb4acecdcecb4",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "f542ae83765d8b18453f82870be61a5bb184cd32",
+        "generated_content_hash": "efc544b0c0c84940300ee07d8226efb8fb7904654f1b2bad018b5599f958465e"
+      },
+      {
+        "issue": {
+          "code": "AI_REVIEW_INVALID",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot debe comprobar una decisión interna del revisor.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "artifact",
+        "cursor": 6,
+        "status": "queued",
+        "worker_commit": "aebaca7e7c71324a7c95a6b0847d463c6146901f",
+        "diagnostic_recovery": true
+      },
+      {
+        "issue": null,
+        "stage": "artifact",
+        "trace": {
+          "role": "selection_with_review",
+          "calls": [
+            {
+              "role": "editor",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 74130,
+                "total_tokens": 80231,
+                "output_tokens": 6101,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 2882
+                }
+              },
+              "seconds": 70.214,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 28,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 23,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 16,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 26,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 19,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 17,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 11,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 9,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-e495f710f8d4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 6,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_03bc5867e7ab84b4006ac889dd9c4887d09df6444849a19342"
+            },
+            {
+              "role": "portfolio_reviewer",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 12836,
+                "total_tokens": 13530,
+                "output_tokens": 694,
+                "input_token_details": {
+                  "cache_read": 0
+                },
+                "output_token_details": {
+                  "reasoning": 496
+                }
+              },
+              "seconds": 10.39,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 5,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_04e6b6c238862ae7006ac88a23217087d0a57e97f491d77741"
+            }
+          ],
+          "usage": {
+            "input_tokens": 86966,
+            "total_tokens": 93761,
+            "output_tokens": 6795
+          },
+          "seconds": 80.604
+        },
+        "cursor": 6,
+        "status": "needs_review",
+        "started_at": "2026-10-09T06:29:46.119Z",
+        "duration_ms": 87188,
+        "output_hash": "d394938832ead4f4b365becfcb211171ed1b408ea18327f866e7e27e65262fcd",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "aebaca7e7c71324a7c95a6b0847d463c6146901f",
+        "generated_content_hash": "efc544b0c0c84940300ee07d8226efb8fb7904654f1b2bad018b5599f958465e"
+      },
+      {
+        "issue": {
+          "code": "AI_REVIEW_INVALID",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot debe comprobar una decisión interna del revisor.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "artifact",
+        "cursor": 6,
+        "status": "queued",
+        "worker_commit": "fc6fe7394af14791191403e6325be0a947a609a3",
+        "diagnostic_recovery": true
+      },
+      {
+        "issue": {
+          "code": "AI_REVIEW_INVALID",
+          "owner": "rankpilot",
+          "action": "retry",
+          "message": "RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.",
+          "rule_id": "RP13",
+          "entity_id": null,
+          "retryable": true,
+          "field_path": null,
+          "artifact_claim_ids": [],
+          "source_evidence_ids": []
+        },
+        "stage": "artifact",
+        "trace": {
+          "role": "editor",
+          "model": "gpt-5.6-sol",
+          "usage": {
+            "input_tokens": 74130,
+            "total_tokens": 80147,
+            "output_tokens": 6017,
+            "input_token_details": {
+              "cache_read": 74127
+            },
+            "output_token_details": {
+              "reasoning": 2588
+            }
+          },
+          "seconds": 70.898,
+          "prompt_version": "review-core-v3.2",
+          "retrieved_rules": [
+            {
+              "tier": "methodology",
+              "score": 28,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-5fd063e2eab5",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 23,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a20798d98956",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 19,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a1935816db29",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 16,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-8b4c083295b4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 26,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-4d5b5fee913d",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 19,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2f0515eea113",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 19,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-aecbd86b9efd",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 17,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-15e8447cf657",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 14,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-0e14054bcbd1",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 12,
+              "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-29298c9b729c",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 11,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-2591427b0a2e",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-25ebcea69a9a",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 11,
+              "source": "EDITORIAL_CONSTITUTION.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-a732677e3123",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 10,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-fa8e26ded412",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "methodology",
+              "score": 9,
+              "source": "¿Cómo rankeamos abogado_as__.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-e495f710f8d4",
+              "policy_version": "practice-policy-v4"
+            },
+            {
+              "tier": "reference",
+              "score": 6,
+              "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+              "approval": "project_reference_only",
+              "chunk_id": "rag-bc43c86417a8",
+              "policy_version": "practice-policy-v4"
+            }
+          ],
+          "provider_request_id": "resp_0944d52364942b39006ac88ba8703c87d0a82041780290f89f"
+        },
+        "cursor": 6,
+        "status": "queued",
+        "retry_at": "2026-10-09T06:39:39.306Z",
+        "started_at": "2026-10-09T06:37:24.964Z",
+        "duration_ms": 74342,
+        "output_hash": "669e9b42fd119742da98f29a6039fbf62267f13d89632c25914f46c3971dad98",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "fc6fe7394af14791191403e6325be0a947a609a3",
+        "generated_content_hash": null
+      },
+      {
+        "issue": null,
+        "stage": "artifact",
+        "trace": {
+          "role": "selection_with_review",
+          "calls": [
+            {
+              "role": "editor",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 74130,
+                "total_tokens": 80367,
+                "output_tokens": 6237,
+                "input_token_details": {
+                  "cache_read": 74127
+                },
+                "output_token_details": {
+                  "reasoning": 3371
+                }
+              },
+              "seconds": 72.503,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 28,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 23,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 16,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 26,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 19,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 19,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 17,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 11,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 11,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 10,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 9,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-e495f710f8d4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 6,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_0c466caa18d3e0d3006ac88c2f8d2c87d0a327c8d397ec18eb"
+            },
+            {
+              "role": "portfolio_reviewer",
+              "model": "gpt-5.6-sol",
+              "usage": {
+                "input_tokens": 12836,
+                "total_tokens": 13358,
+                "output_tokens": 522,
+                "input_token_details": {
+                  "cache_read": 12833
+                },
+                "output_token_details": {
+                  "reasoning": 333
+                }
+              },
+              "seconds": 12.373,
+              "prompt_version": "review-core-v3.2",
+              "retrieved_rules": [
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-5fd063e2eab5",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 14,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a1935816db29",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 13,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a20798d98956",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-8b4c083295b4",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 15,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-4d5b5fee913d",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 13,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2f0515eea113",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-aecbd86b9efd",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 12,
+                  "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-29298c9b729c",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 10,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-15e8447cf657",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-0e14054bcbd1",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 7,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-2591427b0a2e",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "reference",
+                  "score": 5,
+                  "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-bc43c86417a8",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 5,
+                  "source": "EDITORIAL_CONSTITUTION.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-a732677e3123",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-fa8e26ded412",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 4,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-25ebcea69a9a",
+                  "policy_version": "practice-policy-v4"
+                },
+                {
+                  "tier": "methodology",
+                  "score": 2,
+                  "source": "¿Cómo rankeamos abogado_as__.txt",
+                  "approval": "project_reference_only",
+                  "chunk_id": "rag-eb743bda16d2",
+                  "policy_version": "practice-policy-v4"
+                }
+              ],
+              "provider_request_id": "resp_08677d1a51c034e0006ac88c78059487d09b4d883bb6956ba9"
+            }
+          ],
+          "usage": {
+            "input_tokens": 86966,
+            "total_tokens": 93725,
+            "output_tokens": 6759
+          },
+          "seconds": 84.876
+        },
+        "cursor": 6,
+        "status": "completed",
+        "started_at": "2026-10-09T06:39:40.917Z",
+        "duration_ms": 91474,
+        "output_hash": "49e0db1aa2bf72a68946c326bdfdbec9ff68141656dd41c072bd70f40bb23775",
+        "source_hash": "7e6cec4854e5c4c60a85268fa2b7cba6f9be15a217401b7b7872e0c3187907ba",
+        "worker_commit": "fc6fe7394af14791191403e6325be0a947a609a3",
+        "generated_content_hash": "efc544b0c0c84940300ee07d8226efb8fb7904654f1b2bad018b5599f958465e"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "code": "MISSING_TEMPORAL_METADATA",
+      "owner": "rankpilot",
+      "scope": "submission",
+      "action": "retry",
+      "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+      "rule_id": "RP16",
+      "severity": "warning",
+      "entity_id": null,
+      "matter_id": null,
+      "retryable": true,
+      "field_path": "research_period",
+      "source_quote": "",
+      "artifact_quote": "Confidential Work Highlights in last 12 months",
+      "conflict_basis": null,
+      "temporal_basis": "missing_metadata",
+      "artifact_claim_kind": "template_label",
+      "conflict_resolution": null,
+      "conflicting_artifact_term": null
+    }
+  ]
+}

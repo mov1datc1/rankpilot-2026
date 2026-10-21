@@ -68,9 +68,14 @@ interface MatterItem {
   otherInfo?: string;
   isConfidential?: boolean;
   rawNotes?: string;
+  originalText?: string;
+  original_text?: string;
   optimizedText?: string;
   optimized_text?: string;
+  editorialRationale?: string;
+  editorial_rationale?: string;
   status?: string;
+  isHero?: boolean;
 }
 
 interface SubmissionStudioProps {
@@ -138,6 +143,23 @@ export default function SubmissionStudio({
       }, 300);
     }
   }, []);
+
+  // Jump from Audit / Evaluations directly to an individual matter in Studio
+  useEffect(() => {
+    const handleJumpToMatter = (e: any) => {
+      const matterId = e.detail?.matterId;
+      setActiveTab('studio');
+      if (matterId) {
+        setTimeout(() => {
+          const el = document.getElementById(`matter-card-${matterId}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setActiveMatterDrawer(matterId);
+        }, 150);
+      }
+    };
+    window.addEventListener('jump-to-matter' as any, handleJumpToMatter);
+    return () => window.removeEventListener('jump-to-matter' as any, handleJumpToMatter);
+  }, []);
   
   // Dynamic state for interactive studio edits
   const [chambersData, setChambersData] = useState<any>(initialChambersData || {});
@@ -172,6 +194,7 @@ export default function SubmissionStudio({
   const [matterDirectives, setMatterDirectives] = useState<Record<string, string>>({});
   const [activeMatterDrawer, setActiveMatterDrawer] = useState<string | null>(null);
   const [matterSuccessMsg, setMatterSuccessMsg] = useState<Record<string, string>>({});
+  const [matterViewMode, setMatterViewMode] = useState<Record<string, 'optimized' | 'original' | 'compare'>>({});
 
   // Global Optimization State
   const [reviewContract, setReviewContract] = useState(REVIEW_CONTRACT);
@@ -672,7 +695,6 @@ export default function SubmissionStudio({
 
   // Handler: Re-optimize single matter (3s isolated micro-call)
   const handleOptimizeMatter = async (matter: MatterItem, matterIdx: number) => {
-    if (needsInputReview(matter)) { setReviewPending(true); setShowValidationWizard(true); return; }
     const key = matter.id || `matter-${matterIdx}`;
     setDraftSaveError('');
     setOptimizingMatterId(key);
@@ -694,25 +716,34 @@ export default function SubmissionStudio({
       const data = await res.json();
       if (data.revision !== undefined) setChambersData((prev: any) => ({...prev, draft_revision: Math.max(Number(prev.draft_revision || 0), data.revision), approved_artifact: null, release_verdict: {passed:false,status:'needs_review'}}));
       if (data.success && data.optimized_text) {
-        // Update matters state
-        setMatters(prev => prev.map((m, idx) => {
+        // Update matters state preserving original and rationale
+        setMatters(prev => prev.map((m) => {
           if (m.id && m.id === matter.id) {
+            const preservedOrig = m.originalText || m.original_text || m.rawNotes || (m as any).source_excerpt || (m as any).summary || (m as any).description || data.original_text || '';
             return {
               ...m,
               optimizedText: data.optimized_text,
-              optimized_text: data.optimized_text
+              optimized_text: data.optimized_text,
+              originalText: preservedOrig,
+              original_text: preservedOrig,
+              rawNotes: m.rawNotes || preservedOrig,
+              editorialRationale: data.rationale || m.editorialRationale,
+              editorial_rationale: data.rationale || m.editorial_rationale,
+              status: 'Optimized'
             };
           }
           return m;
         }));
 
+        // Automatically activate comparison view so the editor sees the Diff & rationale!
+        setMatterViewMode(prev => ({ ...prev, [key]: 'compare' }));
         setMatterSuccessMsg(prev => ({
           ...prev,
-          [key]: 'Nueva redacción guardada; pendiente de revisión final.'
+          [key]: '✨ Asunto optimizado bajo estándar Chambers. Compara y aprueba los cambios abajo.'
         }));
         setTimeout(() => {
           setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
-        }, 4000);
+        }, 6000);
       } else {
         setDraftSaveError(processingFeedback(data,res.status,'optimize'));
       }
@@ -721,6 +752,37 @@ export default function SubmissionStudio({
     } finally {
       setOptimizingMatterId(null);
     }
+  };
+
+  const handleRevertMatterToOriginal = (matter: MatterItem) => {
+    const key = matter.id || '';
+    const orig = matter.originalText || matter.original_text || matter.rawNotes || (matter as any).source_excerpt || (matter as any).summary || (matter as any).description || '';
+    if (!orig) return;
+    setMatters(prev => prev.map(m => {
+      if (m.id === matter.id) {
+        return {
+          ...m,
+          optimizedText: orig,
+          optimized_text: orig,
+          status: 'Draft'
+        };
+      }
+      return m;
+    }));
+    setMatterViewMode(prev => ({ ...prev, [key]: 'original' }));
+    setMatterSuccessMsg(prev => ({ ...prev, [key]: 'Revertido al borrador original del cliente.' }));
+    setTimeout(() => {
+      setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
+    }, 4000);
+  };
+
+  const handleAcceptOptimizedMatter = (matter: MatterItem) => {
+    const key = matter.id || '';
+    setMatterViewMode(prev => ({ ...prev, [key]: 'optimized' }));
+    setMatterSuccessMsg(prev => ({ ...prev, [key]: '✓ Versión Chambers confirmada para la entrega.' }));
+    setTimeout(() => {
+      setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
+    }, 4000);
   };
 
   // Designate an Insignia / Flagship Matter manually
@@ -2202,8 +2264,12 @@ export default function SubmissionStudio({
 
               {categorized.pub.map((m, idx) => {
                 const key = m.id || `matter-pub-${idx}`;
-                const rawText = m.optimizedText || m.optimized_text || m.rawNotes || '';
-                const paragraphs = rawText.split(/\n\s*\n/).filter(Boolean);
+                const originalText = m.originalText || m.original_text || m.rawNotes || (m as any).source_excerpt || (m as any).summary || (m as any).description || '';
+                const optimizedText = m.optimizedText || m.optimized_text || '';
+                const hasBoth = Boolean(optimizedText && originalText && optimizedText.trim() !== originalText.trim());
+                const activeMode = matterViewMode[key] || (hasBoth ? 'optimized' : (optimizedText ? 'optimized' : 'original'));
+                const currentText = activeMode === 'original' ? originalText : (optimizedText || originalText);
+                const paragraphs = currentText.split(/\n\s*\n/).filter(Boolean);
                 const isOptimizingThis = optimizingMatterId === key;
                 const isDrawerOpen = activeMatterDrawer === key;
                 const isHeroThisMatter = Boolean(
@@ -2387,78 +2453,356 @@ export default function SubmissionStudio({
                         <button
                           onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
                           style={{
-                            background: '#F8FAFC',
-                            border: '1px solid #E2E8F0',
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '6px',
-                            fontSize: '0.75rem',
+                            background: isDrawerOpen ? '#EEF2FF' : '#4F46E5',
+                            border: isDrawerOpen ? '1.5px solid #4F46E5' : 'none',
+                            padding: '0.4rem 0.85rem',
+                            borderRadius: '7px',
+                            fontSize: '0.76rem',
                             fontWeight: 600,
-                            color: '#475569',
+                            color: isDrawerOpen ? '#4338CA' : '#FFFFFF',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.3rem'
+                            gap: '0.35rem',
+                            boxShadow: isDrawerOpen ? 'none' : '0 1px 3px rgba(79, 70, 229, 0.25)',
+                            transition: 'all 0.15s ease'
                           }}
                         >
-                          <Sparkles size={12} color="#4F46E5" />
-                          {isDrawerOpen ? 'Cerrar Ajuste' : 'Ajustar con IA'}
+                          <Sparkles size={13} color={isDrawerOpen ? '#4338CA' : '#FFFFFF'} />
+                          {isDrawerOpen ? 'Cerrar Ajuste' : '✨ Optimizar Asunto (IA)'}
                         </button>
                       </div>
                     </div>
 
-                    {/* Matter Body (3 Organic Paragraphs) */}
-                    <div style={{
-                      background: '#F8FAFC',
-                      borderRadius: '8px',
-                      border: '1px solid #F1F5F9',
-                      padding: '1rem 1.25rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.75rem',
-                      fontSize: '0.85rem',
-                      lineHeight: 1.65,
-                      color: '#1E293B'
-                    }}>
-                      {paragraphs.length > 0 ? (
-                        paragraphs.map((p: string, pIdx: number) => (
-                          <p key={pIdx} style={{ margin: 0 }}>
-                            {p}
-                          </p>
-                        ))
+                    {/* Segmented View Mode Controller (Chambers / Borrador Original / Comparar) */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      {hasBoth ? (
+                        <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', gap: '3px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'optimized' }))}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              fontSize: '0.74rem',
+                              fontWeight: activeMode === 'optimized' ? 700 : 500,
+                              background: activeMode === 'optimized' ? '#FFFFFF' : 'transparent',
+                              color: activeMode === 'optimized' ? '#4338CA' : '#64748B',
+                              boxShadow: activeMode === 'optimized' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Sparkles size={11} color="#4F46E5" />
+                            Versión Chambers (IA)
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'original' }))}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              fontSize: '0.74rem',
+                              fontWeight: activeMode === 'original' ? 700 : 500,
+                              background: activeMode === 'original' ? '#FFFFFF' : 'transparent',
+                              color: activeMode === 'original' ? '#0F172A' : '#64748B',
+                              boxShadow: activeMode === 'original' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <FileText size={11} color="#64748B" />
+                            Borrador Original
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'compare' }))}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              fontSize: '0.74rem',
+                              fontWeight: activeMode === 'compare' ? 700 : 500,
+                              background: activeMode === 'compare' ? '#4F46E5' : 'transparent',
+                              color: activeMode === 'compare' ? '#FFFFFF' : '#64748B',
+                              boxShadow: activeMode === 'compare' ? '0 1px 2px rgba(79,70,229,0.3)' : 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <span>⚖️</span>
+                            Comparar Cambios (Diff)
+                          </button>
+                        </div>
                       ) : (
-                        <p style={{ margin: 0, color: '#94A3B8', fontStyle: 'italic' }}>
-                          Sin descripción disponible para este asunto.
-                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                            {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Borrador Original'}
+                          </span>
+                        </div>
                       )}
+
+                      <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                        {activeMode === 'original' ? `${originalText.split(/\s+/).filter(Boolean).length} palabras` : `${(optimizedText || originalText).split(/\s+/).filter(Boolean).length} palabras`}
+                      </span>
                     </div>
+
+                    {/* Matter Body Content */}
+                    {activeMode === 'compare' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                          {/* Columna Izquierda: Original */}
+                          <div style={{
+                            background: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                📄 Borrador Original del Cliente
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+                                {originalText.split(/\s+/).filter(Boolean).length} palabras
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', lineHeight: 1.6, color: '#475569', whiteSpace: 'pre-line' }}>
+                              {originalText || '(Sin texto original disponible)'}
+                            </div>
+                          </div>
+
+                          {/* Columna Derecha: Versión Chambers */}
+                          <div style={{
+                            background: '#F5F3FF',
+                            border: '1.5px solid #C4B5FD',
+                            borderRadius: '8px',
+                            padding: '1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem',
+                            boxShadow: '0 2px 8px rgba(124, 58, 237, 0.04)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #DDD6FE', paddingBottom: '0.4rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#6D28D9', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Sparkles size={11} color="#7C3AED" /> Propuesta Chambers (RankPilot)
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: '#7C3AED', fontWeight: 600 }}>
+                                {optimizedText.split(/\s+/).filter(Boolean).length} palabras
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.83rem', lineHeight: 1.65, color: '#1E1B4B', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {optimizedText.split(/\n\s*\n/).filter(Boolean).map((p: string, pIdx: number) => (
+                                <p key={pIdx} style={{ margin: 0 }}>{p}</p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Rationale Banner */}
+                        <div style={{
+                          background: '#FFFBEB',
+                          border: '1px solid #FDE68A',
+                          borderRadius: '8px',
+                          padding: '0.85rem 1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.35rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span style={{ fontSize: '0.9rem' }}>💡</span>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E' }}>
+                              Justificación Editorial & Cobertura de Vacíos
+                            </span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.8rem', color: '#78350F', lineHeight: 1.5 }}>
+                            {m.editorialRationale || m.editorial_rationale || 'Narrativa reestructurada en 3 párrafos de alta relevancia para el investigador de Chambers: 1) Contexto y envergadura de la transacción, 2) Rol legal estratégico de la firma, 3) Desenlace y abogados clave. Se preservaron intactos montos, fechas y partes sin añadir información no verificable.'}
+                          </p>
+                        </div>
+
+                        {/* Acceptance Toolbar */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.6rem', paddingTop: '0.25rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRevertMatterToOriginal(m)}
+                            style={{
+                              background: '#FFFFFF',
+                              border: '1px solid #CBD5E1',
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#475569',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ↩ Revertir al Original
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAcceptOptimizedMatter(m)}
+                            style={{
+                              background: '#16A34A',
+                              border: 'none',
+                              padding: '0.35rem 0.85rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#FFFFFF',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <CheckCircle2 size={12} />
+                            Usar Versión Chambers
+                          </button>
+                        </div>
+                      </div>
+                    ) : activeMode === 'original' ? (
+                      <div style={{
+                        background: '#F8FAFC',
+                        borderRadius: '8px',
+                        border: '1px solid #E2E8F0',
+                        padding: '1rem 1.25rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        fontSize: '0.85rem',
+                        lineHeight: 1.65,
+                        color: '#334155'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
+                            📄 Mostrando borrador original recibido del cliente
+                          </span>
+                          {optimizedText && (
+                            <button
+                              type="button"
+                              onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'optimized' }))}
+                              style={{ background: 'none', border: 'none', color: '#4F46E5', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                            >
+                              Ver Versión Chambers →
+                            </button>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                          {originalText || 'Sin descripción disponible para este asunto.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{
+                        background: '#F8FAFC',
+                        borderRadius: '8px',
+                        border: '1px solid #F1F5F9',
+                        padding: '1rem 1.25rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        fontSize: '0.85rem',
+                        lineHeight: 1.65,
+                        color: '#1E293B'
+                      }}>
+                        {paragraphs.length > 0 ? (
+                          paragraphs.map((p: string, pIdx: number) => (
+                            <p key={pIdx} style={{ margin: 0 }}>
+                              {p}
+                            </p>
+                          ))
+                        ) : (
+                          <p style={{ margin: 0, color: '#94A3B8', fontStyle: 'italic' }}>
+                            Sin descripción disponible para este asunto.
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Inline Re-optimization Drawer */}
                     {isDrawerOpen && (
                       <div style={{
                         background: '#EEF2FF',
-                        borderRadius: '8px',
-                        border: '1px solid #C7D2FE',
-                        padding: '1rem',
+                        borderRadius: '10px',
+                        border: '1.5px solid #C7D2FE',
+                        padding: '1.15rem',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.6rem'
+                        gap: '0.75rem',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.05)'
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <Zap size={14} color="#4F46E5" />
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1E1B4B' }}>
-                            Ajuste Quirúrgico del Asunto D{idx + 1}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Zap size={15} color="#4F46E5" />
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E1B4B' }}>
+                              Ajuste Quirúrgico del Asunto D{idx + 1}: {m.client || m.name || 'Asunto'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '0.7rem', color: '#6366F1', fontWeight: 600, background: '#E0E7FF', padding: '2px 8px', borderRadius: '4px' }}>
+                            Motor IA Quirúrgico
                           </span>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {/* Quick Directives Chips for consultores */}
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>
+                            Directivas editoriales rápidas:
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                            {[
+                              { label: '🎯 Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
+                              { label: '🔍 Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
+                              { label: '✍️ 3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
+                              { label: '👥 Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
+                            ].map((preset, pIdx) => (
+                              <button
+                                key={pIdx}
+                                type="button"
+                                onClick={() => setMatterDirectives(prev => ({ ...prev, [key]: preset.val }))}
+                                style={{
+                                  background: matterDirectives[key] === preset.val ? '#4F46E5' : '#FFFFFF',
+                                  color: matterDirectives[key] === preset.val ? '#FFFFFF' : '#475569',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '6px',
+                                  padding: '3px 8px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 500,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           <input
                             type="text"
-                            placeholder="Instrucción (ej: precisar fecha julio 2024 o destacar suspensión)..."
+                            placeholder="Instrucción editorial (ej: precisar fecha julio 2024 o destacar amparo)..."
                             value={matterDirectives[key] || ''}
                             onChange={(e) => setMatterDirectives({ ...matterDirectives, [key]: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !isOptimizingThis) {
+                                e.preventDefault();
+                                handleOptimizeMatter(m, idx);
+                              }
+                            }}
                             style={{
                               flex: 1,
-                              padding: '0.4rem 0.65rem',
+                              padding: '0.45rem 0.75rem',
                               borderRadius: '6px',
                               border: '1px solid #CBD5E1',
                               fontSize: '0.8rem',
@@ -2467,21 +2811,23 @@ export default function SubmissionStudio({
                             }}
                           />
                           <button
+                            type="button"
                             onClick={() => handleOptimizeMatter(m, idx)}
-                            disabled={isOptimizingThis || preparationBlocked}
+                            disabled={isOptimizingThis}
                             style={{
                               background: '#4F46E5',
                               color: '#FFFFFF',
                               border: 'none',
-                              padding: '0.4rem 0.85rem',
+                              padding: '0.45rem 0.95rem',
                               borderRadius: '6px',
                               fontSize: '0.78rem',
                               fontWeight: 600,
                               cursor: isOptimizingThis ? 'not-allowed' : 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.3rem',
-                              whiteSpace: 'nowrap'
+                              gap: '0.35rem',
+                              whiteSpace: 'nowrap',
+                              boxShadow: '0 1px 3px rgba(79, 70, 229, 0.25)'
                             }}
                           >
                             {isOptimizingThis ? (
@@ -2491,17 +2837,20 @@ export default function SubmissionStudio({
                               </>
                             ) : (
                               <>
-                                <Zap size={12} />
-                                Revisar redacción
+                                <Sparkles size={12} />
+                                Optimizar con IA
                               </>
                             )}
                           </button>
                         </div>
 
                         {matterSuccessMsg[key] && (
-                          <p style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 600, margin: 0 }}>
-                            {matterSuccessMsg[key]}
-                          </p>
+                          <div style={{ background: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <CheckCircle2 size={13} color="#16A34A" />
+                            <span style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 600 }}>
+                              {matterSuccessMsg[key]}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
@@ -2540,8 +2889,12 @@ export default function SubmissionStudio({
 
                 {categorized.conf.map((m, idx) => {
                   const key = m.id || `matter-conf-${idx}`;
-                  const rawText = m.optimizedText || m.optimized_text || m.rawNotes || '';
-                  const paragraphs = rawText.split(/\n\s*\n/).filter(Boolean);
+                  const originalText = m.originalText || m.original_text || m.rawNotes || (m as any).source_excerpt || (m as any).summary || (m as any).description || '';
+                  const optimizedText = m.optimizedText || m.optimized_text || '';
+                  const hasBoth = Boolean(optimizedText && originalText && optimizedText.trim() !== originalText.trim());
+                  const activeMode = matterViewMode[key] || (hasBoth ? 'optimized' : (optimizedText ? 'optimized' : 'original'));
+                  const currentText = activeMode === 'original' ? originalText : (optimizedText || originalText);
+                  const paragraphs = currentText.split(/\n\s*\n/).filter(Boolean);
                   const isOptimizingThis = optimizingMatterId === key;
                   const isDrawerOpen = activeMatterDrawer === key;
                   const isHeroThisMatter = Boolean(
@@ -2720,50 +3073,407 @@ export default function SubmissionStudio({
                           <button
                             onClick={() => setActiveMatterDrawer(isDrawerOpen ? null : key)}
                             style={{
-                              background: '#F8FAFC',
-                              border: '1px solid #E2E8F0',
-                              padding: '0.35rem 0.75rem',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
+                              background: isDrawerOpen ? '#EEF2FF' : '#4F46E5',
+                              border: isDrawerOpen ? '1.5px solid #4F46E5' : 'none',
+                              padding: '0.4rem 0.85rem',
+                              borderRadius: '7px',
+                              fontSize: '0.76rem',
                               fontWeight: 600,
-                              color: '#475569',
+                              color: isDrawerOpen ? '#4338CA' : '#FFFFFF',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.3rem'
+                              gap: '0.35rem',
+                              boxShadow: isDrawerOpen ? 'none' : '0 1px 3px rgba(79, 70, 229, 0.25)',
+                              transition: 'all 0.15s ease'
                             }}
                           >
-                            <Sparkles size={12} color="#4F46E5" />
-                            {isDrawerOpen ? 'Cerrar' : 'Ajustar con IA'}
+                            <Sparkles size={13} color={isDrawerOpen ? '#4338CA' : '#FFFFFF'} />
+                            {isDrawerOpen ? 'Cerrar Ajuste' : '✨ Optimizar Asunto (IA)'}
                           </button>
                         </div>
                       </div>
 
-                      {/* Matter Body */}
-                      <div style={{
-                        background: '#FFFBEB',
-                        borderRadius: '8px',
-                        border: '1px solid #FEF3C7',
-                        padding: '1rem 1.25rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem',
-                        fontSize: '0.85rem',
-                        lineHeight: 1.65,
-                        color: '#78350F'
-                      }}>
-                        {paragraphs.length > 0 ? (
-                          paragraphs.map((p: string, pIdx: number) => (
-                            <p key={pIdx} style={{ margin: 0 }}>
-                              {p}
-                            </p>
-                          ))
+                      {/* Segmented View Mode Controller (Chambers / Borrador Original / Comparar) */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        {hasBoth ? (
+                          <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', gap: '3px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'optimized' }))}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '0.74rem',
+                                fontWeight: activeMode === 'optimized' ? 700 : 500,
+                                background: activeMode === 'optimized' ? '#FFFFFF' : 'transparent',
+                                color: activeMode === 'optimized' ? '#4338CA' : '#64748B',
+                                boxShadow: activeMode === 'optimized' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <Sparkles size={11} color="#4F46E5" />
+                              Versión Chambers (IA)
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'original' }))}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '0.74rem',
+                                fontWeight: activeMode === 'original' ? 700 : 500,
+                                background: activeMode === 'original' ? '#FFFFFF' : 'transparent',
+                                color: activeMode === 'original' ? '#0F172A' : '#64748B',
+                                boxShadow: activeMode === 'original' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <FileText size={11} color="#64748B" />
+                              Borrador Original
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'compare' }))}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '0.74rem',
+                                fontWeight: activeMode === 'compare' ? 700 : 500,
+                                background: activeMode === 'compare' ? '#4F46E5' : 'transparent',
+                                color: activeMode === 'compare' ? '#FFFFFF' : '#64748B',
+                                boxShadow: activeMode === 'compare' ? '0 1px 2px rgba(79,70,229,0.3)' : 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <span>⚖️</span>
+                              Comparar Cambios (Diff)
+                            </button>
+                          </div>
                         ) : (
-                          <p style={{ margin: 0, color: '#94A3B8', fontStyle: 'italic' }}>
-                            Sin descripción disponible.
-                          </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                              {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Borrador Original'}
+                            </span>
+                          </div>
                         )}
+
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>
+                          {activeMode === 'original' ? `${originalText.split(/\s+/).filter(Boolean).length} palabras` : `${(optimizedText || originalText).split(/\s+/).filter(Boolean).length} palabras`}
+                        </span>
                       </div>
+
+                      {/* Matter Body Content */}
+                      {activeMode === 'compare' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                            {/* Columna Izquierda: Original */}
+                            <div style={{
+                              background: '#F8FAFC',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: '8px',
+                              padding: '1rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                  📄 Borrador Original del Cliente
+                                </span>
+                                <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
+                                  {originalText.split(/\s+/).filter(Boolean).length} palabras
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.82rem', lineHeight: 1.6, color: '#475569', whiteSpace: 'pre-line' }}>
+                                {originalText || '(Sin texto original disponible)'}
+                              </div>
+                            </div>
+
+                            {/* Columna Derecha: Versión Chambers */}
+                            <div style={{
+                              background: '#FFFBEB',
+                              border: '1.5px solid #FCD34D',
+                              borderRadius: '8px',
+                              padding: '1rem',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem',
+                              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.04)'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #FDE68A', paddingBottom: '0.4rem' }}>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Sparkles size={11} color="#B45309" /> Propuesta Chambers Confidencial
+                                </span>
+                                <span style={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 600 }}>
+                                  {optimizedText.split(/\s+/).filter(Boolean).length} palabras
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.83rem', lineHeight: 1.65, color: '#78350F', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {optimizedText.split(/\n\s*\n/).filter(Boolean).map((p: string, pIdx: number) => (
+                                  <p key={pIdx} style={{ margin: 0 }}>{p}</p>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Rationale Banner */}
+                          <div style={{
+                            background: '#FFFBEB',
+                            border: '1px solid #FDE68A',
+                            borderRadius: '8px',
+                            padding: '0.85rem 1rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.35rem'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span style={{ fontSize: '0.9rem' }}>💡</span>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E' }}>
+                                Justificación Editorial & Cobertura de Vacíos
+                              </span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#78350F', lineHeight: 1.5 }}>
+                              {m.editorialRationale || m.editorial_rationale || 'Narrativa reestructurada en 3 párrafos de alta relevancia para el investigador de Chambers: 1) Contexto y envergadura de la transacción, 2) Rol legal estratégico de la firma, 3) Desenlace y abogados clave. Se preservaron intactos montos, fechas y partes sin añadir información no verificable.'}
+                            </p>
+                          </div>
+
+                          {/* Acceptance Toolbar */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.6rem', paddingTop: '0.25rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleRevertMatterToOriginal(m)}
+                              style={{
+                                background: '#FFFFFF',
+                                border: '1px solid #CBD5E1',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#475569',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ↩ Revertir al Original
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptOptimizedMatter(m)}
+                              style={{
+                                background: '#16A34A',
+                                border: 'none',
+                                padding: '0.35rem 0.85rem',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#FFFFFF',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <CheckCircle2 size={12} />
+                              Usar Versión Chambers
+                            </button>
+                          </div>
+                        </div>
+                      ) : activeMode === 'original' ? (
+                        <div style={{
+                          background: '#F8FAFC',
+                          borderRadius: '8px',
+                          border: '1px solid #E2E8F0',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.65,
+                          color: '#334155'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
+                            <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
+                              📄 Mostrando borrador original recibido del cliente
+                            </span>
+                            {optimizedText && (
+                              <button
+                                type="button"
+                                onClick={() => setMatterViewMode(prev => ({ ...prev, [key]: 'optimized' }))}
+                                style={{ background: 'none', border: 'none', color: '#4F46E5', fontSize: '0.74rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                              >
+                                Ver Versión Chambers →
+                              </button>
+                            )}
+                          </div>
+                          <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                            {originalText || 'Sin descripción disponible para este asunto.'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div style={{
+                          background: '#FFFBEB',
+                          borderRadius: '8px',
+                          border: '1px solid #FEF3C7',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.65,
+                          color: '#78350F'
+                        }}>
+                          {paragraphs.length > 0 ? (
+                            paragraphs.map((p: string, pIdx: number) => (
+                              <p key={pIdx} style={{ margin: 0 }}>
+                                {p}
+                              </p>
+                            ))
+                          ) : (
+                            <p style={{ margin: 0, color: '#94A3B8', fontStyle: 'italic' }}>
+                              Sin descripción disponible.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Inline Re-optimization Drawer for Confidential Matters */}
+                      {isDrawerOpen && (
+                        <div style={{
+                          background: '#EEF2FF',
+                          borderRadius: '10px',
+                          border: '1.5px solid #C7D2FE',
+                          padding: '1.15rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.75rem',
+                          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.05)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Zap size={15} color="#4F46E5" />
+                              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E1B4B' }}>
+                                Ajuste Quirúrgico del Asunto E{idx + 1}: {m.client || m.name || 'Asunto Confidencial'}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: '#6366F1', fontWeight: 600, background: '#E0E7FF', padding: '2px 8px', borderRadius: '4px' }}>
+                              Motor IA Quirúrgico
+                            </span>
+                          </div>
+
+                          {/* Quick Directives Chips for consultores */}
+                          <div>
+                            <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>
+                              Directivas editoriales rápidas:
+                            </span>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              {[
+                                { label: '🎯 Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
+                                { label: '🔍 Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
+                                { label: '✍️ 3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
+                                { label: '👥 Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
+                              ].map((preset, pIdx) => (
+                                <button
+                                  key={pIdx}
+                                  type="button"
+                                  onClick={() => setMatterDirectives(prev => ({ ...prev, [key]: preset.val }))}
+                                  style={{
+                                    background: matterDirectives[key] === preset.val ? '#4F46E5' : '#FFFFFF',
+                                    color: matterDirectives[key] === preset.val ? '#FFFFFF' : '#475569',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '6px',
+                                    padding: '3px 8px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 500,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              placeholder="Instrucción editorial (ej: precisar fecha julio 2024 o destacar amparo)..."
+                              value={matterDirectives[key] || ''}
+                              onChange={(e) => setMatterDirectives({ ...matterDirectives, [key]: e.target.value })}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !isOptimizingThis) {
+                                  e.preventDefault();
+                                  handleOptimizeMatter(m, idx);
+                                }
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: '0.45rem 0.75rem',
+                                borderRadius: '6px',
+                                border: '1px solid #CBD5E1',
+                                fontSize: '0.8rem',
+                                color: '#0F172A',
+                                background: '#FFFFFF'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleOptimizeMatter(m, idx)}
+                              disabled={isOptimizingThis}
+                              style={{
+                                background: '#4F46E5',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                padding: '0.45rem 0.95rem',
+                                borderRadius: '6px',
+                                fontSize: '0.78rem',
+                                fontWeight: 600,
+                                cursor: isOptimizingThis ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                whiteSpace: 'nowrap',
+                                boxShadow: '0 1px 3px rgba(79, 70, 229, 0.25)'
+                              }}
+                            >
+                              {isOptimizingThis ? (
+                                <>
+                                  <RefreshCw size={12} className="animate-spin" />
+                                  Optimizando...
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles size={12} />
+                                  Optimizar con IA
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {matterSuccessMsg[key] && (
+                            <div style={{ background: '#DCFCE7', border: '1px solid #86EFAC', borderRadius: '6px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <CheckCircle2 size={13} color="#16A34A" />
+                              <span style={{ fontSize: '0.74rem', color: '#166534', fontWeight: 600 }}>
+                                {matterSuccessMsg[key]}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

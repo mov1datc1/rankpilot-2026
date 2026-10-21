@@ -1,0 +1,71 @@
+{
+  "experiment": "Same Corporate/M&A synthetic facts; manifest says count unavailable instead of zero. Diagnostic only, not a deployed fix.",
+  "model": "gpt-5.6-terra",
+  "seconds": 13.17,
+  "matters_count": 1,
+  "extracted": {
+    "metadata": {
+      "firm_name": "Synthetic Aurora Legal",
+      "practice_area": "",
+      "location": "",
+      "narrative_overview": "Partner Sofia Vega advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. Transaction code ALPHA-2026. Price USD 12000000. Publication permission not supplied. Transaction ALPHA-2026 closed on 10 September 2026."
+    },
+    "department": {
+      "department_name": null,
+      "num_partners": null,
+      "num_lawyers": null,
+      "department_heads": [],
+      "hires_departures": [],
+      "department_description": null
+    },
+    "lawyers": [
+      {
+        "name": "Sofia Vega",
+        "url": null,
+        "current_ranking": null,
+        "suggested_ranking": null,
+        "key_focus": null,
+        "bio": null,
+        "standout_work": null,
+        "is_partner": true,
+        "is_ranked": false
+      }
+    ],
+    "contacts": [],
+    "matters": [
+      {
+        "title": "Transaction ALPHA-2026",
+        "client": "Synthetic Buyer",
+        "summary": "Advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. The transaction closed on 10 September 2026.",
+        "significance": "",
+        "lead_partner": "Sofia Vega",
+        "is_cross_border": false,
+        "cross_border_jurisdictions": null,
+        "team_members": null,
+        "other_firms": null,
+        "matter_value": "USD 12000000",
+        "completion_date": "10 September 2026",
+        "is_confidential": true,
+        "is_new_client": false,
+        "publish_status": "confidential",
+        "source_label": null,
+        "source_excerpt": "Synthetic Aurora Legal. Partner Sofia Vega advised Synthetic Buyer on acquiring all shares of Synthetic Target in Mexico. Transaction code ALPHA-2026. Price USD 12000000. Publication permission not supplied.\nTransaction ALPHA-2026 closed on 10 September 2026. Synthetic Buyer acquired all shares of Synthetic Target. Lead partner Sofia Vega. No other transactions in this note.",
+        "client_role": "buyer",
+        "counterparty": "Synthetic Target"
+      }
+    ]
+  },
+  "usage": {
+    "gpt-5.6-terra": {
+      "input_tokens": 2736,
+      "output_tokens": 770,
+      "total_tokens": 3506,
+      "input_token_details": {
+        "cache_read": 2627
+      },
+      "output_token_details": {
+        "reasoning": 381
+      }
+    }
+  }
+}

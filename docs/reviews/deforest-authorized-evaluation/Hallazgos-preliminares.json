@@ -1,0 +1,23 @@
+{
+  "passed": false,
+  "defects": [
+    {
+      "severity": "critical",
+      "scope": "letter",
+      "matter_id": null,
+      "message": "El apartado de liderazgo mantiene una candidatura internamente incompatible: afirma “Javier Atzin Vallejo is a partner” —coincidente con is_partner=true— y después trata “Associate to Watch” como una propuesta que solo requeriría más pruebas. Debe resolverse el cargo y retirarse esa categoría o sustituirse por una compatible antes de avanzar. Las referencias no corrigen una selección de categoría incompatible; cualquier objetivo alternativo debe seguir identificado como no verificado."
+    },
+    {
+      "severity": "warning",
+      "scope": "strategy",
+      "matter_id": null,
+      "message": "research_period sigue en null y, entre los asuntos core, SCOTCH (275dc79b-63a3-4b52-bf1a-9aae14028307) y Grupo Solana (2e2834a3-11ff-4c9b-b072-00a0b0f7e511) carecen de fecha y estado, mientras sus narrativas usan principalmente el pasado. La pregunta pendiente es correcta, pero “validated strategy” y “Retain the canonical core/reserve/excluded selection and hero above” presentan la selección con excesiva definitividad. Debe mantenerse provisional hasta confirmar periodo, fecha y estado, sin inferir que los asuntos están cerrados u ongoing; si no se confirman, deben excluirse de la selección temporal aplicable."
+    },
+    {
+      "severity": "warning",
+      "scope": "submission",
+      "matter_id": "f4724b62-f62b-48c7-977e-c7e2de746518",
+      "message": "El optimizedText divide la razón social dentro del nombre: “Brose México, S.A.\\n\\nde C.V.”. Debe unirse como “Brose México, S.A. de C.V.” antes del render para preservar correctamente la identidad del cliente y evitar una oración rota."
+    }
+  ]
+}

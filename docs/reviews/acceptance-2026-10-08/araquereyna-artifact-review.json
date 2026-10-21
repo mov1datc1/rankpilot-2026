@@ -1,0 +1,235 @@
+{
+  "engine_fingerprint": "d3b1299ca5281152e74292d5eeea1ce0b8b6c1d5a8393334a2039e93c3efbf70",
+  "artifacts": [
+    {
+      "kind": "Submission",
+      "bytes": 25265,
+      "sha256": "b2dfd9a15e52456f640f9559e3947004b2286cddeb6d19259ee631f51c3a149b",
+      "words": 5060
+    },
+    {
+      "kind": "Audit",
+      "bytes": 13890,
+      "sha256": "1b5afa0e640005af8d0598721b5c0e8c72b01692628bd3a6d99734a096ebc36c",
+      "words": 1795
+    }
+  ],
+  "result": {
+    "judge": {
+      "passed": true,
+      "defects": [
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "",
+          "artifact_quote": "Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.",
+          "artifact_claim_kind": "request_for_information",
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        }
+      ],
+      "acceptance": [
+        {
+          "criterion": "source_fidelity",
+          "status": "met",
+          "evidence": "El documento renderizado conserva identidades, autoridades, impuestos, ejercicios fiscales, jurisdicciones, roles y estados relevantes. Por ejemplo, PEPSICO mantiene las auditorías de SENIAT sobre ISLR e IVA de 2019 y 2020, las ganancias y pérdidas cambiarias y los elementos de precios de transferencia con Uruguay e Irlanda. Turkish Airlines conserva el resultado limitado de la resolución —1% del total de la liquidación, con multa e intereses— sin convertirlo en ahorro o victoria. Los mandatos en curso siguen descritos como tales."
+        },
+        {
+          "criterion": "decisive_evidence",
+          "status": "met",
+          "evidence": "Los quince asuntos centrales conservan su contribución decisiva. Gruppo Montenegro incluye la adquisición de Pampero, el cierre de 17 de julio de 2024, la fase local todavía activa y el análisis de imposición directa e indirecta, IVA, alcoholes, aduanas y tributación municipal. Kyndryl conserva reorganización, objeciones y auditorías de SENIAT de 2020 y 2021; Sucesión Zuloaga conserva la verificación de declaraciones sucesorales; Grupo Ceballos mantiene la reducción de exposición fiscal como objetivo y no como resultado. La referencia confidencial al valor de siete cifras de Turkish Airlines se omite correctamente de la prosa pública."
+        },
+        {
+          "criterion": "confidentiality",
+          "status": "met",
+          "evidence": "Los doce asuntos publicables cuentan con confidentialityConfirmed=true y publish_status=publishable; los asuntos seleccionados restringidos aparecen únicamente en la sección E y en el Audit interno. En B9 y B10, Kyndryl y los demás clientes restringidos se anonimizan como, por ejemplo, “a multinational IT infrastructure services provider” o mediante descripciones genéricas. No se publica el rango económico confidencial de Turkish Airlines; D3 se limita a “Confidential”. Las identidades confidenciales que aparecen en E están permitidas por la estructura del formulario."
+        },
+        {
+          "criterion": "individual_strategy",
+          "status": "met",
+          "evidence": "El Audit distingue posición oficial y objetivo para cada persona: Gabriel Ruán Santos, Senior Statespeople y mantenimiento; María Carolina Cano, Band 2 con objetivo solicitado de Band 1; Ingrid García Pacheco, Band 4 con objetivo solicitado de Band 2; Juan Carlos Balzán, categoría pendiente; y María Alejandra Garcia Nieto, objetivo solicitado de Associate to Watch. Para cada uno identifica asuntos, rol personal disponible, evidencia externa, limitaciones y acción. También aclara correctamente que un resultado not_found no prueba ausencia global de ranking."
+        },
+        {
+          "criterion": "b9_development",
+          "status": "met",
+          "evidence": "B9 desarrolla casos personales y no se limita a especialidades genéricas. María Carolina Cano se vincula con Gruppo Montenegro, PEPSICO, Turkish Airlines y trabajo de estructuración; Ingrid García Pacheco con tratados, planificación patrimonial, tributación municipal y auditorías; Gabriel Ruán Santos con MAPFRE, PEPSICO y Centro Médico; María Alejandra Garcia Nieto con auditorías, sucesiones y planificación. Las categorías publicadas concuerdan con la verificación oficial o están expresamente presentadas como objetivos solicitados."
+        },
+        {
+          "criterion": "c2_argument",
+          "status": "met",
+          "evidence": "C2 contiene el argumento de cobertura suministrado por editorial_development: combina fiscalidad transaccional, auditorías y controversia, asesoría operativa y planificación patrimonial; cita Gruppo Montenegro, PEPSICO, Turkish Airlines y MAPFRE; y conecta esa evidencia con la continuidad de cobertura. No afirma superioridad de mercado ni garantiza un movimiento de banda."
+        },
+        {
+          "criterion": "portfolio_comparison",
+          "status": "met",
+          "evidence": "Submission, estrategia y Audit comparten el mismo hero —matter-ext-1, Gruppo Montenegro— y la misma cartera central de quince asuntos: nueve publicables y seis confidenciales. El Audit ofrece comparaciones concretas entre Pizzolante e Inversiones AEFEVE, Tecnipiscinas y Gustavo Gimenez Pocaterra, y Sucesión Juan Otaola Pavan y el mandato de Naciones Unidas. También explica las reservas de SUMMUS, SKU Logistics, Universal Music y VENELIN sin rellenar una cuota."
+        },
+        {
+          "criterion": "executive_audit",
+          "status": "met",
+          "evidence": "El Audit contiene un veredicto de mantenimiento en Band 2 con límites expresos, justificación comparativa del hero frente a PEPSICO, contraste externo acotado con D’Empaire, Baker McKenzie y Sol, Caballero & Asociados, cartera ordenada, comparaciones de asuntos fronterizos, estrategia individual completa y acciones previas al filing. Reconoce que la investigación no constituye calibración completa y que varios resultados permanecen pendientes. El Audit y el documento público coinciden en selección, hero, liderazgo y hechos fuente."
+        }
+      ]
+    },
+    "trace": [
+      {
+        "role": "editor",
+        "seconds": 52.113,
+        "usage": {
+          "input_tokens": 59997,
+          "output_tokens": 3930,
+          "total_tokens": 63927,
+          "input_token_details": {
+            "cache_read": 8904
+          },
+          "output_token_details": {
+            "reasoning": 2748
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 57,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 26,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 20,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 17,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 3,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "msg_0d7fca5d78a67b39006ac7ee0d30a887d18b814997ddfdc411"
+      }
+    ],
+    "letter": {
+      "executive_assessment": "La recomendación es mantener la candidatura de ARAQUEREYNA en Tax Venezuela y presentar estrategias individuales diferenciadas. Chambers Latin America 2027 sitúa a la firma en Band 2; mantener ese objetivo no predice movimiento. Su perfil oficial reconoce mandatos transaccionales, contenciosos y de asesoría, planificación fiscal, litigios administrativos y planificación patrimonial.\n\nLa cartera acredita adquisición transfronteriza, auditorías de SENIAT sobre ISLR e IVA, tributación nacional y municipal, precios de transferencia, anticipos, reorganizaciones y sucesiones. Su vulnerabilidad es que muchos mandatos continúan y no documentan decisiones ni efectos fiscales cuantificados: no deben presentarse como éxitos concluidos. Turkish Airlines es publicable, pero su valor permanece confidencial.\n\nEl contraste oficial es delimitado. D’Empaire destaca en fiscalidad de M&A transfronterizo, financiación y controversias administrativas; Gruppo Montenegro acredita la dimensión transaccional de ARAQUEREYNA, sin demostrar igual profundidad en financiación. Baker McKenzie combina adquisiciones, reorganizaciones, auditorías y controversias: Montenegro, Kyndryl y PEPSICO permiten comparar capacidades, pero varios resultados siguen pendientes. Sol, Caballero & Asociados destaca en tributación municipal, precios de transferencia y planificación patrimonial, ámbitos presentes en BRANZA 1800, PEPSICO y los mandatos sucesorales. Estos perfiles contextualizan la cartera; no acreditan superioridad, calibración completa del mercado ni una brecha demostrada para ascender.\n\nGruppo Montenegro debe ser el hero. Frente a PEPSICO —auditoría y precios de transferencia definidos, todavía sin resultado—, combina el cierre verificable de una adquisición transfronteriza con trabajo en imposición directa e indirecta, IVA, alcoholes, aduanas y tributación municipal. Conserva la protección de la Denominación de Origen Controlada «Ron de Venezuela» para Pampero y distingue la implementación local aún activa del cierre ya logrado.",
+      "portfolio": "Cartera central recomendada, en orden estratégico:\n\n1. Gruppo Montenegro — HERO. María Carolina Cano codirigió el asesoramiento fiscal y corporativo en la adquisición de Pampero a Diageo; el cierre ocurrió el 17 de julio de 2024. La marca disfruta de los atributos y protección de la Denominación de Origen Controlada «Ron de Venezuela», y el trabajo abarcó imposición directa e indirecta, IVA, alcoholes, aduanas y tributación municipal, con elementos de Venezuela, Italia y Reino Unido.\n\n2. PEPSICO & Empresas Filiales — Auditorías de SENIAT sobre ISLR e IVA de los ejercicios 2019 y 2020, incluidas ganancias y pérdidas cambiarias, junto con precios de transferencia respecto de entidades vinculadas en Uruguay e Irlanda; el mandato continúa.\n\n3. Kyndryl de Venezuela — Mandato confidencial de reorganización corporativa y análisis de obligaciones nacionales y municipales, objeciones tributarias y auditorías de SENIAT de ISLR e IVA de 2020 y 2021; continúa en curso.\n\n4. Turkish Airlines Sucursal Venezuela — Asistencia en una auditoría del Ministerio de Turismo sobre el impuesto turístico especial; el procedimiento cerró mediante resolución que determinó un importe equivalente al 1% del total de la liquidación, incluyendo multa e intereses. El valor permanece confidencial.\n\n5. Editores Orientales — Mandato confidencial de consolidación de una estructura de planificación patrimonial con holding en España, entidad operativa venezolana y planificación para la disposición de inmuebles en Venezuela; continúa en curso.\n\n6. Sucesión Zuloaga — Mandato confidencial de asistencia a herederos sobre la situación corporativa y fiscal del patrimonio heredado y la verificación de declaraciones de impuesto sucesoral por SENIAT; continúa en curso.\n\n7. Grupo Ceballos — Mandato confidencial de reestructuración de sociedades tenedoras de inmuebles y desarrollo de una estructura patrimonial destinada a reducir la exposición fiscal familiar; el objetivo de reducción no debe describirse como resultado obtenido.\n\n8. BRANZA 1800 — Estrategia de tributación municipal, aspectos fiscales de la importación de materias primas, regímenes de recuperación fiscal por actividades exentas y asesoramiento sobre la Ley de Protección de las Pensiones de 2024.\n\n9. MAPFRE — Asesoramiento continuo sobre ISLR y anticipos de ISLR e IVA, incluyendo solicitudes, consultas y opiniones legales para cuestiones fiscales nacionales.\n\n10. BDO Colombia — Entrada y operación en Venezuela, con identificación de obligaciones fiscales y parafiscales de dos entidades locales y diseño aún no implementado de una base para un esquema de joint venture no exclusivo.\n\n11. Pizzolante Comunicación Estratégica — Mandato confidencial de asesoramiento fiscal y corporativo sobre la reorganización del grupo, con conexiones declaradas con Estados Unidos, República Dominicana, Panamá, Barbados y Venezuela.\n\n12. Centro Médico de Caracas — Asesoramiento continuo sobre ISLR e impuesto al patrimonio, opiniones legales y validación de estrategias fiscales; incorpora cuestiones de precios de transferencia derivadas de transacciones con una relacionada en Barbados.\n\n13. Tecnipiscinas — Ingrid García Pacheco lidera el diseño y gestión de una estructura corporativa orientada a acceder a beneficios de tratados aplicables de doble tributación y protección de inversiones; los beneficios son un objetivo, no un resultado acreditado.\n\n14. Distribuidora Bolívar Films / Escuela Nacional de Cine — Asesoramiento sobre beneficios fiscales, seguimiento de auditorías de ISLR, análisis de riesgo, escritos y planificación fiscal para entidades comerciales y sin fines de lucro vinculadas.\n\n15. Sucesión Juan Otaola Pavan — Mandato confidencial sobre regularización y gestión fiscal de sociedades integrantes de activos hereditarios y documentación e implicaciones fiscales de la partición sucesoral.\n\nLa cartera debe mantener sus secciones publicables y confidenciales conforme a las decisiones de confidencialidad ya guardadas.",
+      "leadership": "La limitación común es precisa: las observaciones oficiales verificadas acreditan reconocimiento individual únicamente en Chambers Latin America 2027, Tax, Venezuela, para la persona correspondiente. Las declaraciones históricas de «Ranked» no sustituyen esa verificación, y el resultado «not found» para una tabla acotada no prueba falta de reconocimiento global en otras prácticas o ediciones.\n\nGabriel Ruán Santos — Presentar para mantenimiento como Senior Statespeople, categoría oficialmente observada. Es socio y su perfil oficial lo describe con experiencia prolongada en mandatos fiscales contenciosos. En la cartera codirige el asesoramiento a MAPFRE sobre ISLR y anticipos de IVA e ISLR; figura entre los socios líderes de PEPSICO y como integrante del equipo de Centro Médico de Caracas. La combinación es consistente con controversia y asesoría tributaria nacional, pero las fuentes no individualizan su estrategia, escritos o dirección de las auditorías. La presentación debe preservar su categoría actual y evitar proponer un movimiento. La acción probatoria útil es incorporar su contribución personal en al menos dos controversias recientes.\n\nMaría Carolina Cano — Presentar con el objetivo solicitado de Band 1, dejando claro que la posición oficial observada es Band 2 y que el objetivo no es un resultado previsto. Es socia senior y líder reiterada del portfolio: Gruppo Montenegro, PEPSICO, Turkish Airlines, BDO Colombia, Kyndryl, Sucesión Zuloaga y otros mandatos de reorganización y patrimonio. Su perfil oficial destaca estructuras fiscales eficientes para transacciones corporativas y experiencia transfronteriza, consistente con la adquisición de Pampero y el trabajo de estructuración. El objetivo se apoya en liderazgo recurrente a través de transacciones, auditorías, controversia y planificación; no obstante, faltan trayectoria histórica verificada, resultados personales de controversias y evidencia comparativa integral que sostenga un ascenso como expectativa. Deben priorizarse referencias que puedan describir su liderazgo, juicio técnico y gestión de mandatos complejos.\n\nIngrid García Pacheco — Presentar con el objetivo solicitado de Band 2, manteniendo que la posición oficial observada es Band 4 y sin presentar el objetivo como ascenso asegurado. Es socia senior y lidera directamente Tecnipiscinas; además, colidera Grupo Ceballos, Editores Orientales, BRANZA 1800, Distribuidora Bolívar Films y mandatos sucesorales. El perfil oficial la vincula con planificación sucesoral para personas de alto patrimonio, fiscalidad local y asuntos contenciosos, lo que coincide con los asuntos seleccionados. La candidatura tiene una narrativa diferenciada en patrimonio, sucesiones, estructuras internacionales, tributación municipal e importaciones. Para sostener mejor el objetivo debe documentarse su actuación personal en diseño de estructuras, estrategia y escritos o resultados en procedimientos, junto con referencias de clientes directamente vinculadas a esas funciones.\n\nJuan Carlos Balzán — Desarrollar, sin candidatura individual formal en esta edición. Es socio y co-líder del mandato confidencial de Kyndryl, que combina reorganización, obligaciones nacionales y municipales, objeciones y auditorías de SENIAT. Esa es una base relevante, pero aislada: no hay otros mandatos fiscales personalmente atribuidos, perfil sustantivo ni descripción de contribución individual. El criterio pendiente para definir una categoría concreta es contar con al menos dos mandatos fiscales recientes adicionales con liderazgo personal verificable y evidencia de especialización tributaria. La falta de coincidencia exacta en la tabla consultada no debe convertirse en una afirmación de que no está rankeado.\n\nMaría Alejandra Garcia Nieto — Desarrollar la candidatura solicitada de Associate to Watch, pero no presentarla todavía como candidatura formal. La categoría es compatible con su condición de Senior Associate. Tiene recurrencia documentada en PEPSICO, Turkish Airlines, Kyndryl, Sucesión Zuloaga, Grupo Ceballos, BRANZA 1800 y otros asuntos de auditoría, controversia, sucesiones y planificación. Esa continuidad refuerza la visibilidad de segunda línea del equipo, pero su fuente la identifica principalmente como integrante del equipo; no explica qué análisis, escritos, estrategia, coordinación o interlocución realizó personalmente. El criterio pendiente es obtener atribución concreta en al menos dos asuntos y referencias que acrediten responsabilidad sustantiva.",
+      "evidence_gaps": "Reservas y exclusiones comparativas:\n\n• Pizzolante Comunicación Estratégica se mantiene en la cartera central frente a Inversiones AEFEVE. Ambos aportan reorganización y planificación patrimonial transfronteriza, pero Pizzolante identifica una reorganización de grupo y una huella jurisdiccional más amplia. Inversiones AEFEVE no concreta estructura, cuestión fiscal ni resultado y queda en reserva.\n\n• Tecnipiscinas se selecciona frente a Gustavo Gimenez Pocaterra. Tecnipiscinas aporta liderazgo directo de Ingrid García Pacheco y una cuestión jurídica definida —estructura orientada a beneficios de tratados de doble tributación y protección de inversiones—. El asunto Gimenez describe planificación de manera general y conserva una identidad de co-líder pendiente de confirmar como «Mauel Reyna Pares»; queda en reserva sin normalizar ese nombre.\n\n• Sucesión Juan Otaola Pavan se selecciona frente al mandato relativo a programas, organizaciones y fondos de Naciones Unidas. El primero identifica sociedades integradas en activos hereditarios y procedimientos de partición sucesoral; el segundo se limita a la aplicabilidad de beneficios fiscales sin identificar régimen, entidad, autoridad, producto jurídico ni resultado.\n\n• SUMMUS, SKU Logistics y Universal Music Venezuela permanecen en reserva porque, aunque contienen elementos fiscales y transfronterizos, no particularizan suficientemente la cuestión fiscal, el producto de trabajo o un resultado frente a los mandatos centrales. VENELIN permanece en reserva por una contradicción no resuelta entre la narración de asistencia en inspecciones en curso y la referencia separada a «May, 2024, approximately».",
+      "next_steps": "1. Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.\n2. Completar, si están disponibles para el formulario, el nombre del departamento y el número de socios y abogados de ARAQUEREYNA; estos datos administrativos siguen sin informarse.\n3. Identificar referencias para María Carolina Cano, Ingrid García Pacheco y María Alejandra Garcia Nieto que puedan describir su contribución personal, sin afirmar contacto ni respaldo hasta que exista.",
+      "next_actions": [
+        {
+          "message": "Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.",
+          "kind": "period"
+        },
+        {
+          "message": "Completar, si están disponibles para el formulario, el nombre del departamento y el número de socios y abogados de ARAQUEREYNA; estos datos administrativos siguen sin informarse.",
+          "kind": "filing"
+        },
+        {
+          "message": "Identificar referencias para María Carolina Cano, Ingrid García Pacheco y María Alejandra Garcia Nieto que puedan describir su contribución personal, sin afirmar contacto ni respaldo hasta que exista.",
+          "kind": "references"
+        }
+      ]
+    },
+    "node_events": [
+      {
+        "node": "editor",
+        "seconds": 52.115,
+        "status": "completed"
+      },
+      {
+        "node": "release",
+        "seconds": 0.002,
+        "status": "completed"
+      }
+    ]
+  }
+}

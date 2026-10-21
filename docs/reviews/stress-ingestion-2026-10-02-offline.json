@@ -1,0 +1,160 @@
+{
+  "mode": "offline",
+  "model": "gpt-5.6-terra",
+  "qa_overrides": {
+    "timeout_seconds": 60,
+    "max_output_tokens": 4096
+  },
+  "total": 8,
+  "passed": 4,
+  "failed": 4,
+  "results": [
+    {
+      "id": "A_numbered_plaintext",
+      "passed": true,
+      "layer": "real_parser",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 1,
+        "clients": [
+          "Synthetic Alpha"
+        ],
+        "confidentiality": [
+          "confirmation_required"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.128
+      }
+    },
+    {
+      "id": "A_confidential_plaintext",
+      "passed": true,
+      "layer": "real_parser",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 1,
+        "clients": [
+          "Synthetic Secret"
+        ],
+        "confidentiality": [
+          "confidential"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.001
+      }
+    },
+    {
+      "id": "B_sources_only",
+      "passed": false,
+      "layer": "real_handler",
+      "observed": {
+        "status": 400,
+        "success": null,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": "Missing user_input (URL, file path, or text)",
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.0
+      }
+    },
+    {
+      "id": "B_two_docs_repeated_number",
+      "passed": true,
+      "layer": "real_parser",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 2,
+        "clients": [
+          "Synthetic Alpha",
+          "Synthetic Beta"
+        ],
+        "confidentiality": [
+          "confirmation_required",
+          "confirmation_required"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.001
+      }
+    },
+    {
+      "id": "extractor_failure_is_not_success",
+      "passed": false,
+      "layer": "fault_injected_at_model_factory",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": true,
+        "empty_optimized_text": true,
+        "seconds": 0.001
+      }
+    },
+    {
+      "id": "irrelevant_recipe_does_not_build",
+      "passed": false,
+      "layer": "fault_injected_at_model_factory_not_semantic_eval",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": null,
+        "model_error_caught": true,
+        "empty_optimized_text": true,
+        "seconds": 0.0
+      }
+    },
+    {
+      "id": "A_real_docx",
+      "passed": true,
+      "layer": "real_docx_parser",
+      "observed": {
+        "status": 200,
+        "success": true,
+        "matters": 1,
+        "clients": [
+          "Synthetic DOCX"
+        ],
+        "confidentiality": [
+          "confirmation_required"
+        ],
+        "error": null,
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.005
+      }
+    },
+    {
+      "id": "B_partial_source_failure",
+      "passed": false,
+      "layer": "real_docx_parser_missing_file",
+      "observed": {
+        "status": 500,
+        "success": false,
+        "matters": 0,
+        "clients": [],
+        "confidentiality": [],
+        "error": "name 'logger' is not defined",
+        "model_error_caught": false,
+        "empty_optimized_text": true,
+        "seconds": 0.016
+      }
+    }
+  ],
+  "assessment_note": "Results assessed from saved responses: invalid input must be rejected; partial file failure must identify source. No new inference during reassessment."
+}

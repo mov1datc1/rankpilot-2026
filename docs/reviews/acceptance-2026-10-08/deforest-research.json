@@ -1,0 +1,485 @@
+{
+  "status": "not_found",
+  "declared_band": null,
+  "requested_edition": "current",
+  "firm_name": "DeForest Abogados",
+  "directory": "Chambers & Partners",
+  "practice_area": "Labour & Employment",
+  "jurisdiction": "Mexico",
+  "observed_band": null,
+  "checked_at": "2026-10-08T17:48:59.335707+00:00",
+  "message": "No se encontró una coincidencia exacta de la firma en esta tabla. Revisar identidad y alcance; no se ha acreditado que esté sin ranking.",
+  "evidence": {
+    "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+    "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+    "scraped_at": "2026-10-08T17:48:59Z",
+    "edition": "2027",
+    "guide": "Latin America",
+    "observed_practice": "Labour & Employment",
+    "observed_jurisdiction": "Mexico",
+    "parser_version": "ranking-evidence-v1"
+  },
+  "table_scope_verified": true,
+  "market_context": {
+    "status": "table_only",
+    "source": {
+      "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+      "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+      "scraped_at": "2026-10-08T17:48:59Z",
+      "edition": "2027",
+      "guide": "Latin America",
+      "observed_practice": "Labour & Employment",
+      "observed_jurisdiction": "Mexico",
+      "parser_version": "ranking-evidence-v1"
+    },
+    "competitors": [
+      {
+        "name": "Basham, Ringe y Correa S.C.",
+        "band": "Band 1",
+        "profile_path": "/department/basham-ringe-y-correa-sc-labour-employment-latin-america-9:1596:144:1:3314"
+      },
+      {
+        "name": "De la Vega & Martínez Rojas S.C.",
+        "band": "Band 1",
+        "profile_path": "/department/de-la-vega-martinez-rojas-sc-labour-employment-latin-america-9:1596:144:1:22913710"
+      },
+      {
+        "name": "Santamarina y Steta SC",
+        "band": "Band 1",
+        "profile_path": "/department/santamarina-y-steta-sc-labour-employment-latin-america-9:1596:144:1:3327"
+      },
+      {
+        "name": "Baker McKenzie",
+        "band": "Band 2",
+        "profile_path": "/department/baker-mckenzie-labour-employment-latin-america-9:1596:144:1:2692"
+      },
+      {
+        "name": "Hogan Lovells Cadwalader",
+        "band": "Band 2",
+        "profile_path": "/department/hogan-lovells-cadwalader-labour-employment-latin-america-9:1596:144:1:257"
+      },
+      {
+        "name": "Marván, González Graf y González Larrazolo",
+        "band": "Band 2",
+        "profile_path": "/department/marvan-gonzalez-graf-y-gonzalez-larrazolo-labour-employment-latin-america-9:1596:144:1:22790718"
+      },
+      {
+        "name": "Creel, García-Cuéllar, Aiza y Enríquez, S.C.",
+        "band": "Band 3",
+        "profile_path": "/department/creel-garcia-cuellar-aiza-y-enriquez-sc-labour-employment-latin-america-9:1596:144:1:2669"
+      },
+      {
+        "name": "Garrigues",
+        "band": "Band 3",
+        "profile_path": "/department/garrigues-labour-employment-latin-america-9:1596:144:1:3983"
+      },
+      {
+        "name": "Pizá Abogados",
+        "band": "Band 3",
+        "profile_path": "/department/piza-abogados-labour-employment-latin-america-9:1596:144:1:22850463"
+      },
+      {
+        "name": "Von Wobeser y Sierra, SC",
+        "band": "Band 3",
+        "profile_path": "/department/von-wobeser-y-sierra-sc-labour-employment-latin-america-9:1596:144:1:2429"
+      },
+      {
+        "name": "EC Rubio",
+        "band": "Band 4",
+        "profile_path": "/department/ec-rubio-labour-employment-latin-america-9:1596:144:1:115434"
+      },
+      {
+        "name": "Ferran Martínez Abogados",
+        "band": "Band 4",
+        "profile_path": "/department/ferran-martinez-abogados-labour-employment-latin-america-9:1596:144:1:23200875"
+      },
+      {
+        "name": "Fisher Phillips",
+        "band": "Band 4",
+        "profile_path": "/department/fisher-phillips-labour-employment-latin-america-9:1596:144:1:65335"
+      },
+      {
+        "name": "Littler Mendelson, PC",
+        "band": "Band 4",
+        "profile_path": "/department/littler-mexico-labour-employment-latin-america-9:1596:144:1:2816"
+      },
+      {
+        "name": "Mijares, Angoitia, Cortés y Fuentes, S.C.",
+        "band": "Band 4",
+        "profile_path": "/department/mijares-angoitia-cortes-y-fuentes-sc-labour-employment-latin-america-9:1596:144:1:2549"
+      },
+      {
+        "name": "Monsalvo Duclaud",
+        "band": "Band 4",
+        "profile_path": "/department/monsalvo-duclaud-labour-employment-latin-america-9:1596:144:1:23472963"
+      },
+      {
+        "name": "Cacheaux, Cavazos & Newton",
+        "band": "Band 5",
+        "profile_path": "/department/cacheaux-cavazos-newton-labour-employment-latin-america-9:1596:144:1:184985"
+      },
+      {
+        "name": "CHEVEZ",
+        "band": "Band 5",
+        "profile_path": "/department/chevez-labour-employment-latin-america-9:1596:144:1:102185"
+      },
+      {
+        "name": "Cuesta Campos y Asociados S.C.",
+        "band": "Band 5",
+        "profile_path": "/department/cuesta-campos-y-asociados-sc-labour-employment-latin-america-9:1596:144:1:181030"
+      },
+      {
+        "name": "Goodrich Riquelme y Asociados",
+        "band": "Band 5",
+        "profile_path": "/department/goodrich-riquelme-y-asociados-labour-employment-latin-america-9:1596:144:1:3318"
+      },
+      {
+        "name": "Greenberg Traurig, LLP",
+        "band": "Band 5",
+        "profile_path": "/department/greenberg-traurig-sc-labour-employment-latin-america-9:1596:144:1:3579"
+      },
+      {
+        "name": "Pérez-Llorca",
+        "band": "Band 5",
+        "profile_path": "/department/perez-llorca-labour-employment-latin-america-9:1596:144:1:3998"
+      },
+      {
+        "name": "Vega, Guerrero & Asociados",
+        "band": "Band 5",
+        "profile_path": "/department/vega-guerrero-asociados-labour-employment-latin-america-9:1596:144:1:23045086"
+      },
+      {
+        "name": "EY Mexico",
+        "band": "Band 5",
+        "profile_path": "/department/ey-mexico-labour-employment-latin-america-9:1596:144:1:102496"
+      }
+    ],
+    "limitations": [
+      "Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration."
+    ]
+  },
+  "individuals": [
+    {
+      "status": "not_found",
+      "declared_band": null,
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.336605+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Eduardo Garduño",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.336972+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Javier Atzin Vallejo",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.337303+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Jaime Bustamante",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.337721+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "José Alberto Díaz Méndez",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.338043+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Erick Pérez",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.338377+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Andrés Cabrera",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.338727+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Raymundo Carreño",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Unranked",
+      "requested_edition": "current",
+      "firm_name": "DeForest Abogados",
+      "directory": "Chambers & Partners",
+      "practice_area": "Labour & Employment",
+      "jurisdiction": "Mexico",
+      "observed_band": null,
+      "checked_at": "2026-10-08T17:48:59.339039+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/labour-employment-mexico-9:1596:144:1",
+        "content_sha256": "279b0fb4f4b7e97bdace23ac10f0f0d66c0e8a4359c8570cb317d440acbd713c",
+        "scraped_at": "2026-10-08T17:48:59Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Labour & Employment",
+        "observed_jurisdiction": "Mexico",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Edgar Barreto",
+      "subject_type": "individual"
+    }
+  ],
+  "profile_research": {
+    "version": "official-profile-evidence-v1",
+    "profiles": [
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Cacheaux, Cavazos & Newton",
+          "band": "Band 5",
+          "rank_type": "5",
+          "edition": 2027,
+          "organisation_id": 184985,
+          "profile_path": "/department/cacheaux-cavazos-newton-labour-employment-latin-america-9:1596:144:1:184985",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/cacheaux-cavazos-newton-labour-employment-latin-america-9:1596:144:1:184985",
+        "content_sha256": "c07ecf08c9a49a1741b90782cf78096c32fb6938d0c7811cd0020431bba01d40",
+        "retrieved_at": "2026-10-08T17:49:00.280018+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "edition": 2027,
+        "observed_name": "Cacheaux, Cavazos & Newton",
+        "observed_band": "Band 5",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Cacheaux, Cavazos & Newton boasts an active presence in Mexico's labour and employment arena. The team is well-versed in both contentious and non-contentious matters, frequently advising clients on collective bargaining agreements, employee terminations, and individual and collective disputes. The department is regularly sought out by clients from the retail, manufacturing and automotive sectors.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Cacheaux, Cavazos & Newton’s responsiveness is very good, and I am able to reach them easily and quickly. There has not been an issue they are unable to handle.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "CHEVEZ",
+          "band": "Band 5",
+          "rank_type": "5",
+          "edition": 2027,
+          "organisation_id": 102185,
+          "profile_path": "/department/chevez-labour-employment-latin-america-9:1596:144:1:102185",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/chevez-labour-employment-latin-america-9:1596:144:1:102185",
+        "content_sha256": "c94b30c0336969362a9ce0bab13575d8e904ab5d32eac13f90fa3b4c0ff18614",
+        "retrieved_at": "2026-10-08T17:49:00.091828+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "edition": 2027,
+        "observed_name": "CHEVEZ",
+        "observed_band": "Band 5",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "CHEVEZ lays claim to a solid Mexican labour and employment practice. The team is often enlisted by clients to assist with sector-related advisory work, including union negotiations, employment regulations and labour reform mandates. The department is also well-placed to represent clients in individual litigation proceedings. CHEVEZ boasts a client roster that includes several high-profile names across the technology, telecommunications and food and beverage sectors.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "CHEVEZ provide personalised attention, quick responses and a high level of knowledge of labour issues. Their diverse team brings individual strengths, along with extensive knowledge and experience.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "CHEVEZ advised Nokia Operations de México on a benefits standardisation project following their acquisition of Alcatel-Lucent.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Cuesta Campos y Asociados S.C.",
+          "band": "Band 5",
+          "rank_type": "5",
+          "edition": 2027,
+          "organisation_id": 169808,
+          "profile_path": "/department/cuesta-campos-y-asociados-sc-labour-employment-latin-america-9:1596:144:1:181030",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/cuesta-campos-y-asociados-sc-labour-employment-latin-america-9:1596:144:1:181030",
+        "content_sha256": "0772d7bfb64a0662dd64b0de9363456c93224476275f47ea29d9cce5bde4af63",
+        "retrieved_at": "2026-10-08T17:49:00.100956+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Labour & Employment",
+        "jurisdiction": "Mexico",
+        "edition": 2027,
+        "observed_name": "Cuesta Campos y Asociados S.C.",
+        "observed_band": "Band 5",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Cuesta Campos y Asociados boasts a strong labour and employment practice in Mexico. It is routinely called upon by Mexican and international clients to advise on a diverse range of labour and employment mandates, including union negotiations and collective bargaining, individual litigation and social security counselling. The department attracts clients from an array of industries, such as technology, automotive and manufacturing.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Cuesta Campos y Asociados have a strong team with deep expertise in labour and employment, and we are very pleased with the quality of their services. Their responsiveness stands out, as they consistently get back to us promptly.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "Cuesta Campos y Asociados advised Jabil Circuit de México on the preparation and execution of for-cause terminations involving eleven employees and related to multiple code of conduct breaches.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      }
+    ],
+    "requested": 3,
+    "attempted": 3,
+    "limitations": [
+      "Historical band movement has not been independently retrieved."
+    ]
+  },
+  "research_scope": "aee578e6dde5f0b64dd1cab72a50546f0761b1bda3209b8a9e40c2551c65e414",
+  "research_execution": "retrieved_table_and_profiles"
+}

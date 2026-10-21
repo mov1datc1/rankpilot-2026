@@ -1,0 +1,21 @@
+{
+  "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /DeForest/DeForest_Submission_Original_Ingested.docx",
+  "sha256": "c5ef2a4c9dd69e8969d2a6b8d11f8515e0f78cf633bdde38ca5e2b9c64dadc3a",
+  "preflight": {
+    "source": "DeForest_Submission_Original_Ingested.docx",
+    "detected_format": "docx",
+    "sha256": "c5ef2a4c9dd69e8969d2a6b8d11f8515e0f78cf633bdde38ca5e2b9c64dadc3a",
+    "byte_count": 293675,
+    "character_count": 68699,
+    "method": "ooxml",
+    "parts_read": [
+      "word/document.xml",
+      "word/footer1.xml",
+      "word/footer2.xml",
+      "word/header1.xml",
+      "word/header2.xml"
+    ],
+    "table_count": 249
+  },
+  "numbered_matters": 32
+}

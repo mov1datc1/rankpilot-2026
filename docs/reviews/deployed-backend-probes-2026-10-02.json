@@ -1,0 +1,49 @@
+{
+  "backend": "https://rankpilot-2026.onrender.com",
+  "observations": [
+    {
+      "case": "health",
+      "http": 200,
+      "seconds": 0.832,
+      "body": {
+        "status": "online",
+        "message": "RankPilot Core is online",
+        "version": "26.43",
+        "environment": "Ubuntu/Docker"
+      }
+    },
+    {
+      "case": "B_sources_only",
+      "http": 400,
+      "seconds": 0.421,
+      "body": {
+        "error": "Missing user_input (URL, file path, or text)"
+      }
+    },
+    {
+      "case": "B_valid_unstructured",
+      "http": 200,
+      "seconds": 7.676,
+      "body": {
+        "success": true,
+        "metadata": {
+          "firm_name": "Synthetic Legal",
+          "practice_area": "Tax",
+          "extracted_practice_area": "Tax",
+          "calibrated_practice_area": "Tax",
+          "location": "Mexico"
+        },
+        "department": {
+          "department_heads": []
+        },
+        "lawyers": [],
+        "original_b10": "",
+        "original_c2": "",
+        "matters": [],
+        "total_matters": 0,
+        "publishable_count": 0,
+        "confidential_count": 0
+      }
+    }
+  ]
+}

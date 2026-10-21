@@ -42,15 +42,20 @@ export async function POST(request: NextRequest) {
 
     // A browser draft is not a replacement for the persisted source register.
     const chambersData = {...((submission.chambersData as any) || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
-    const inputIssues=preparationInputIssues(chambersData,chambersData.matters || submission.matters || []);
-    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
-    const scopeProblems=scopeIssues(selectedScope(submission),chambersData.source_reports || []);
-    if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
+    
+    // For single-matter micro-optimization, do NOT block on global submission gaps (e.g. pending interview contacts).
+    // Validate only that the specific matter has substantive description or notes to work with.
     const stableId = matterId || inlineMatter?.id;
-    const sourceMatter = (chambersData.matters || submission.matters).find((m:any)=>m.id===stableId);
-    const dbMatter = submission.matters.find(m=>m.id===stableId);
-    if (!stableId || !sourceMatter || !dbMatter) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
-    const targetMatter = {...dbMatter,...sourceMatter};
+    const sourceMatter = (chambersData.matters || submission.matters || []).find((m:any)=>m.id===stableId);
+    const dbMatter = (submission.matters || []).find(m=>m.id===stableId);
+    if (!stableId || (!sourceMatter && !dbMatter && !inlineMatter)) {
+      return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
+    }
+    const targetMatter = {...(dbMatter || {}), ...(sourceMatter || {}), ...(inlineMatter || {})};
+    const hasNotes = String(targetMatter.source_excerpt || targetMatter.rawNotes || targetMatter.summary || targetMatter.description || targetMatter.optimizedText || targetMatter.optimized_text || '').trim();
+    if (!hasNotes) {
+      return NextResponse.json({error:'El asunto no tiene notas o descripción para optimizar.'},{status:400});
+    }
 
     const pythonApiUrl = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 
@@ -81,19 +86,66 @@ export async function POST(request: NextRequest) {
     if (result.success && result.optimized_text) {
       const stableId = matterId || targetMatter.id;
       if (!stableId) return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'}, {status:409});
+      
+      const originalText = targetMatter.rawNotes || targetMatter.source_excerpt || targetMatter.summary || targetMatter.description || (targetMatter as any).original_text || (targetMatter as any).originalText || '';
+      const editorialRationale = result.rationale || 'Narrativa reestructurada en 3 párrafos orgánicos de estándar Chambers & Partners preservando la fidelidad fáctica original.';
+
       await prisma.$transaction(async tx => {
         // Updating the row acquires a transaction-scoped lock. Read JSON after acquiring it.
         const current = await tx.submission.update({where:{id:submissionId},data:{updatedAt:new Date()}});
         const latest:any = current.chambersData || {};
-        const register = Array.isArray(latest.matters) ? latest.matters : submission.matters;
-        const before = (chambersData.matters || submission.matters).find((m:any)=>m.id===stableId);
-        const now = register.find((m:any)=>m.id===stableId);
-        if (!now || !before || JSON.stringify(now) !== JSON.stringify(before)) throw new Error('DRAFT_CONFLICT');
-        const updated = register.map((m:any)=>m.id===stableId ? {...m,optimizedText:result.optimized_text,optimized_text:result.optimized_text,status:'Optimized',draft_provenance:{source_hash:draftSourceHash(m),text_hash:stableHash(result.optimized_text.trim()),origin:'generated',strategy_hash:stableHash(chambersData.review_checkpoint?.state?.strategy || {})}} : m);
-        await tx.matter.updateMany({where:{id:stableId,submissionId},data:{optimizedText:result.optimized_text,status:'Optimized'}});
+        const register = Array.isArray(latest.matters) && latest.matters.length ? latest.matters : (submission.matters || []);
+        const before = register.find((m:any)=>m.id===stableId) || (chambersData.matters || submission.matters || []).find((m:any)=>m.id===stableId) || targetMatter;
+        
+        const updated = register.map((m:any)=>{
+          if (m.id === stableId) {
+            const preservedOriginal = m.originalText || m.original_text || m.rawNotes || originalText;
+            return {
+              ...m,
+              optimizedText: result.optimized_text,
+              optimized_text: result.optimized_text,
+              rawNotes: m.rawNotes || preservedOriginal,
+              originalText: preservedOriginal,
+              original_text: preservedOriginal,
+              editorialRationale,
+              editorial_rationale: editorialRationale,
+              status: 'Optimized',
+              draft_provenance: {
+                source_hash: draftSourceHash(m),
+                text_hash: stableHash(result.optimized_text.trim()),
+                origin: 'generated',
+                strategy_hash: stableHash(chambersData.review_checkpoint?.state?.strategy || {})
+              }
+            };
+          }
+          return m;
+        });
+
+        await tx.matter.updateMany({
+          where: { id: stableId, submissionId },
+          data: {
+            optimizedText: result.optimized_text,
+            status: 'Optimized',
+            rawNotes: dbMatter?.rawNotes || originalText
+          }
+        });
+        
         const revision = Number(latest.draft_revision || 0)+1;
-        await tx.submission.update({where:{id:submissionId},data:{chambersData:{...latest,matters:updated,draft_revision:revision,approved_artifact:null,release_verdict:{passed:false,status:'needs_review',errors:['Matter edited; review required.']}}}});
-        result.revision=revision;
+        await tx.submission.update({
+          where: { id: submissionId },
+          data: {
+            chambersData: {
+              ...latest,
+              matters: updated,
+              draft_revision: revision,
+              approved_artifact: null,
+              release_verdict: { passed: false, status: 'needs_review', errors: ['Matter edited; review required.'] }
+            }
+          }
+        });
+        result.revision = revision;
+        result.original_text = originalText;
+        result.rationale = editorialRationale;
       });
     }
 

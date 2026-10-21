@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-03",
+  "scope": "Local implementation; no deployment or customer-record writes",
+  "python_tests": {
+    "passed": 132,
+    "failed": 0
+  },
+  "node_tests": {
+    "passed": 200,
+    "failed": 0
+  },
+  "build": "passed",
+  "typescript": "passed",
+  "diff_check": "passed",
+  "live_practice_drafts": {
+    "total": 10,
+    "approved": 10
+  },
+  "live_practice_rendered_artifacts": {
+    "total": 10,
+    "approved_after_targeted_corrections": 10,
+    "first_round_approved": 6,
+    "not_first_attempt_success_rate": true
+  },
+  "browser": {
+    "builder": {
+      "scope": "Real Builder page, mocked services; no production calls",
+      "notesPreserved": true,
+      "createCount": 1,
+      "declaredBand": "",
+      "navigated": "/reports/qa-draft?validate=true",
+      "runtimeErrors": []
+    },
+    "studio": {
+      "scope": "Actual React Studio in Chrome; actions, router and modal children mocked. Not authenticated end-to-end.",
+      "failedSaveVisible": true,
+      "successfulSaveVisible": true,
+      "rankingUnavailableVisible": true,
+      "rankingMismatchVisible": true,
+      "runtimeErrors": [],
+      "mobile": {
+        "viewport": 390,
+        "content": 390
+      }
+    },
+    "wizard": {
+      "scope": "Actual wizard; persistence mocked. No production calls.",
+      "failedSaveVisible": true,
+      "selectedPractice": "Tax",
+      "sourceWasNotPromoted": true,
+      "expectedRevision": 4,
+      "retrySucceeded": true,
+      "runtimeErrors": []
+    }
+  },
+  "limitations": [
+    "No authenticated staging/production end-to-end",
+    "No durable worker/checkpoint recovery yet",
+    "Chambers editorial policy only; Legal 500 ranking lookup is separate",
+    "Synthetic single-matter practice cases, not real portfolio load/owner acceptance"
+  ]
+}

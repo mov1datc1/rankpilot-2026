@@ -1,0 +1,467 @@
+{
+  "purpose": "Evidence inventory, not delivery approval",
+  "criteria_version": "angela-acceptance-2026-10-08-v1",
+  "cases": [
+    {
+      "case": "araquereyna",
+      "source_matter_count": 22,
+      "source_lawyer_count": 5,
+      "stage_validation": {
+        "selection_validated": true,
+        "selection_review_validated": true,
+        "development_validated": true,
+        "writer_validated": true
+      },
+      "artifacts": [
+        {
+          "kind": "Submission",
+          "sha256": "b2dfd9a15e52456f640f9559e3947004b2286cddeb6d19259ee631f51c3a149b",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        },
+        {
+          "kind": "Audit",
+          "sha256": "1b5afa0e640005af8d0598721b5c0e8c72b01692628bd3a6d99734a096ebc36c",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        }
+      ],
+      "current_word_pair_review_passed": true,
+      "checkpoint_matches_rendered": true,
+      "review_error": null,
+      "defects": [
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "",
+          "artifact_quote": "Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.",
+          "artifact_claim_kind": "request_for_information",
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        }
+      ],
+      "trace_roles_in_checkpoint": [
+        "selection_reviewer",
+        "strategist",
+        "selection_reviewer",
+        "development",
+        "repair",
+        "writer",
+        "repair",
+        "repair",
+        "writer",
+        "repair",
+        "writer"
+      ],
+      "rag_sources_in_checkpoint": [
+        "EDITORIAL_CONSTITUTION.txt",
+        "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+        "Tax_Editorial_Methodology.txt",
+        "¿Cómo rankeamos abogado_as__.txt"
+      ],
+      "node_events": [
+        {
+          "node": "register",
+          "seconds": 0.0,
+          "status": "completed"
+        },
+        {
+          "node": "strategy",
+          "seconds": 0.012,
+          "status": "completed"
+        },
+        {
+          "node": "selection",
+          "seconds": 0.008,
+          "status": "completed"
+        },
+        {
+          "node": "selection_review",
+          "seconds": 41.862,
+          "status": "rejected"
+        },
+        {
+          "node": "strategy",
+          "seconds": 56.188,
+          "status": "completed"
+        },
+        {
+          "node": "selection",
+          "seconds": 0.01,
+          "status": "completed"
+        },
+        {
+          "node": "selection_review",
+          "seconds": 21.936,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 122.964,
+          "status": "rejected"
+        },
+        {
+          "node": "release",
+          "seconds": 0.002,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 21.608,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 53.763,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 8.87,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 7.19,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 16.549,
+          "status": "completed"
+        }
+      ],
+      "repairs": {
+        "selection_repair_report": null,
+        "repair_report": {
+          "corrected_paths": [
+            "matters/3/text",
+            "matters/0/text"
+          ],
+          "unresolved": []
+        },
+        "letter_repair_report": {
+          "corrected_fields": [
+            "portfolio",
+            "executive_assessment"
+          ],
+          "unresolved": []
+        }
+      },
+      "acceptance_status": "incomplete",
+      "remaining_manual_gates": [
+        "Reconcile original sources and saved human confirmations",
+        "Inspect every rendered Word page and executive Audit length",
+        "Assess all frozen criteria and adversarial controls",
+        "Verify deployed web workflow and execution/reuse ledger"
+      ]
+    },
+    {
+      "case": "deforest",
+      "source_matter_count": 32,
+      "source_lawyer_count": 8,
+      "stage_validation": {
+        "selection_validated": true,
+        "selection_review_validated": true,
+        "development_validated": true,
+        "writer_validated": true
+      },
+      "artifacts": [
+        {
+          "kind": "Submission",
+          "sha256": "08dbd017414ac6f954aa9c51a720b32107afb14879f0b3c6a25d17a88ab9247e",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        },
+        {
+          "kind": "Audit",
+          "sha256": "eaacdc6801059780ad3978b70f8530708cdb53ca767dbc1232a718e244e12bcc",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        }
+      ],
+      "current_word_pair_review_passed": true,
+      "checkpoint_matches_rendered": true,
+      "review_error": null,
+      "defects": [
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "\"research_period\":null",
+          "artifact_quote": "Confirmar la ventana de investigación aplicable o la actividad relevante de los mandatos continuos seleccionados durante ese periodo.",
+          "artifact_claim_kind": "request_for_information",
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        }
+      ],
+      "trace_roles_in_checkpoint": [
+        "selection_reviewer",
+        "development",
+        "repair",
+        "writer",
+        "writer",
+        "writer",
+        "repair",
+        "repair",
+        "writer"
+      ],
+      "rag_sources_in_checkpoint": [
+        "EDITORIAL_CONSTITUTION.txt",
+        "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+        "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+        "¿Cómo rankeamos abogado_as__.txt"
+      ],
+      "node_events": [
+        {
+          "node": "register",
+          "seconds": 0.0,
+          "status": "completed"
+        },
+        {
+          "node": "strategy",
+          "seconds": 0.04,
+          "status": "completed"
+        },
+        {
+          "node": "selection",
+          "seconds": 0.033,
+          "status": "completed"
+        },
+        {
+          "node": "selection_review",
+          "seconds": 28.081,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 143.05,
+          "status": "rejected"
+        },
+        {
+          "node": "release",
+          "seconds": 0.003,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 18.624,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 90.43,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 8.474,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 9.073,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 5.965,
+          "status": "completed"
+        }
+      ],
+      "repairs": {
+        "selection_repair_report": null,
+        "repair_report": {
+          "corrected_paths": [
+            "matters/2/text"
+          ],
+          "unresolved": []
+        },
+        "letter_repair_report": {
+          "corrected_fields": [],
+          "unresolved": []
+        }
+      },
+      "acceptance_status": "incomplete",
+      "remaining_manual_gates": [
+        "Reconcile original sources and saved human confirmations",
+        "Inspect every rendered Word page and executive Audit length",
+        "Assess all frozen criteria and adversarial controls",
+        "Verify deployed web workflow and execution/reuse ledger"
+      ]
+    },
+    {
+      "case": "ramos",
+      "source_matter_count": 33,
+      "source_lawyer_count": 1,
+      "stage_validation": {
+        "selection_validated": true,
+        "selection_review_validated": true,
+        "development_validated": true,
+        "writer_validated": true
+      },
+      "artifacts": [
+        {
+          "kind": "Submission",
+          "sha256": "f9d111e0373249f290c90f9441bc5877715855d182dcd24fbcd2e41c889df422",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        },
+        {
+          "kind": "Audit",
+          "sha256": "d787b4725c73d19ea45898ff4a0fc1d1458fc74083e3ea907f7ca241c4415767",
+          "matches_rendered": true,
+          "matches_reviewed": true
+        }
+      ],
+      "current_word_pair_review_passed": true,
+      "checkpoint_matches_rendered": true,
+      "review_error": null,
+      "defects": [
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "",
+          "artifact_quote": "Confirme la ventana de investigación aplicable o la actividad material de los asuntos seleccionados dentro de ella.",
+          "artifact_claim_kind": "request_for_information",
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        }
+      ],
+      "trace_roles_in_checkpoint": [
+        "strategist",
+        "selection_reviewer",
+        "strategist",
+        "selection_reviewer",
+        "development",
+        "repair",
+        "writer",
+        "repair",
+        "writer"
+      ],
+      "rag_sources_in_checkpoint": [
+        "EDITORIAL_CONSTITUTION.txt",
+        "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+        "Real_Estate_Editorial_Methodology.txt",
+        "¿Cómo rankeamos abogado_as__.txt"
+      ],
+      "node_events": [
+        {
+          "node": "register",
+          "seconds": 0.0,
+          "status": "completed"
+        },
+        {
+          "node": "strategy",
+          "seconds": 11.648,
+          "status": "completed"
+        },
+        {
+          "node": "selection",
+          "seconds": 0.064,
+          "status": "completed"
+        },
+        {
+          "node": "selection_review",
+          "seconds": 30.468,
+          "status": "rejected"
+        },
+        {
+          "node": "strategy",
+          "seconds": 7.442,
+          "status": "completed"
+        },
+        {
+          "node": "selection",
+          "seconds": 0.061,
+          "status": "completed"
+        },
+        {
+          "node": "selection_review",
+          "seconds": 22.305,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 116.422,
+          "status": "rejected"
+        },
+        {
+          "node": "release",
+          "seconds": 0.003,
+          "status": "completed"
+        },
+        {
+          "node": "development",
+          "seconds": 4.152,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 46.381,
+          "status": "completed"
+        },
+        {
+          "node": "writer",
+          "seconds": 5.727,
+          "status": "completed"
+        }
+      ],
+      "repairs": {
+        "selection_repair_report": {
+          "corrected_matter_ids": [
+            "matter-ext-4"
+          ],
+          "unaffected_decisions_preserved": true,
+          "source_uncertainties": [
+            "The source says the firm applied arguments “to stop the effects and consequences” of the suspension, while also stating that the team is currently defending the client’s rights so it can continue developing the project. It does not confirm whether the suspension was lifted or otherwise modified, nor the final outcome of the amparo."
+          ]
+        },
+        "repair_report": {
+          "corrected_paths": [
+            "matters/10/completion_status"
+          ],
+          "unresolved": []
+        },
+        "letter_repair_report": {
+          "corrected_fields": [],
+          "unresolved": []
+        }
+      },
+      "acceptance_status": "incomplete",
+      "remaining_manual_gates": [
+        "Reconcile original sources and saved human confirmations",
+        "Inspect every rendered Word page and executive Audit length",
+        "Assess all frozen criteria and adversarial controls",
+        "Verify deployed web workflow and execution/reuse ledger"
+      ]
+    }
+  ],
+  "acceptance_status": "incomplete"
+}

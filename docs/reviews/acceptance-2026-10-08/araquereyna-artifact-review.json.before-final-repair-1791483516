@@ -1,0 +1,1018 @@
+{
+  "engine_fingerprint": "c51a7bd7938d61bef96a2d91b513ac359d197d0882b5c62ee3da41519d450476",
+  "artifacts": [
+    {
+      "kind": "Submission",
+      "bytes": 25260,
+      "sha256": "956ce1cd8df11e07b75363e92f2277c84aa0859194f7643062132f469041f799",
+      "words": 5056
+    },
+    {
+      "kind": "Audit",
+      "bytes": 13920,
+      "sha256": "88f3bf82d85114e4cf2629fd5b23a5f955884846b559a0dd276ae930608597d6",
+      "words": 1833
+    }
+  ],
+  "result": {
+    "judge": {
+      "passed": false,
+      "defects": [
+        {
+          "code": "UNSUPPORTED_CLAIM",
+          "severity": "critical",
+          "scope": "submission",
+          "matter_id": "matter-ext-5",
+          "message": "Corregir el matter de Turkish Airlines en la sección D. La decisión guardada confirma que el asunto es publicable; únicamente el valor está marcado como confidencial. El texto renderizado afirma erróneamente que todo el asunto es confidencial. Sustituirlo, por ejemplo, por una formulación que indique solamente que el valor es confidencial y de siete cifras. El Audit detecta correctamente el problema, pero la versión pública todavía no incorpora la reparación.",
+          "conflict_basis": "source_vs_artifact",
+          "source_quote": "\"isConfidential\":false,\"confidentialityStatus\":\"publishable\",\"confidentialityConfirmed\":true,\"publish_status\":\"publishable\"",
+          "artifact_quote": "The matter is confidential and valued at a seven-figure amount.",
+          "artifact_claim_kind": "factual_assertion",
+          "field_path": null,
+          "temporal_basis": null,
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": "matter-ext-5",
+          "rule_id": "RP01"
+        },
+        {
+          "code": "MISSING_TEMPORAL_METADATA",
+          "severity": "warning",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "Falta el periodo o una fecha opcional. Puedes completar este dato; su ausencia no impide construir ni entregar el documento.",
+          "conflict_basis": null,
+          "source_quote": "",
+          "artifact_quote": "Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.",
+          "artifact_claim_kind": "request_for_information",
+          "field_path": "research_period",
+          "temporal_basis": "missing_metadata",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP16"
+        },
+        {
+          "code": "EDITORIAL_OMISSION",
+          "severity": "critical",
+          "scope": "submission",
+          "matter_id": null,
+          "message": "La aceptación editorial no está completa: confidentiality, source_fidelity",
+          "source_quote": "",
+          "artifact_quote": "",
+          "owner": "rankpilot",
+          "action": "retry",
+          "retryable": true,
+          "entity_id": null,
+          "rule_id": "RP01"
+        }
+      ],
+      "acceptance": [
+        {
+          "criterion": "source_fidelity",
+          "status": "failed",
+          "evidence": "Las identidades, autoridades, jurisdicciones, roles, estados y resultados de los 15 matters seleccionados coinciden en general con las fuentes. Sin embargo, el D2 de Turkish Airlines convierte en confidencial el asunto completo pese a la decisión guardada publishable; es una contradicción material aún presente en el documento renderizado."
+        },
+        {
+          "criterion": "decisive_evidence",
+          "status": "met",
+          "evidence": "Los matters finales conservan evidencia decisiva disponible: Gruppo Montenegro incluye cierre de 17 de julio de 2024, jurisdicciones, liderazgo y los distintos impuestos; PEPSICO conserva ejercicios 2019/2020, SENIAT, ISLR, IVA, divisas y precios de transferencia; Turkish Airlines conserva la resolución del 1% y la escala de siete cifras; los asuntos en curso permanecen descritos como tales. No se detectó pérdida crítica de resultado, escala, contribución o rol personalmente atribuido."
+        },
+        {
+          "criterion": "confidentiality",
+          "status": "failed",
+          "evidence": "Los clientes no publicables aparecen únicamente en la sección E, y B9/B10/C2 anonimizan sus referencias sustantivas. No obstante, el matter-ext-5 aparece en D con la afirmación pública “The matter is confidential”, incompatible con su decisión confirmada de publicación. El Audit reconoce esta divergencia, pero el Submission no está reparado."
+        },
+        {
+          "criterion": "individual_strategy",
+          "status": "met",
+          "evidence": "El Audit separa posiciones oficiales y objetivos: Gabriel Ruán Santos como Senior Statespeople; María Carolina Cano actualmente Band 2 con objetivo solicitado Band 1; Ingrid García Pacheco actualmente Band 4 con objetivo solicitado Band 2; María Alejandra Garcia Nieto con objetivo Associate to Watch en desarrollo; y Juan Carlos Balzán con categoría pendiente. Para cada persona identifica matters, rol, evidencia externa, carencias y acción, sin convertir “not found” en ausencia global de ranking."
+        },
+        {
+          "criterion": "b9_development",
+          "status": "met",
+          "evidence": "B9 desarrolla casos personales y no simples especialidades: María Carolina Cano se vincula con Gruppo Montenegro, PEPSICO, Turkish Airlines y estructuración; Ingrid García Pacheco con tratados, patrimonio, tributación municipal y auditorías; Gabriel Ruán Santos con MAPFRE, PEPSICO y Centro Médico; y María Alejandra Garcia Nieto con auditorías, sucesiones y planificación. La referencia confidencial de Juan Carlos Balzán está anonimizada como “a multinational IT infrastructure services provider”."
+        },
+        {
+          "criterion": "c2_argument",
+          "status": "met",
+          "evidence": "C2 contiene el argumento de cobertura desarrollado: adquisición de Pampero, auditorías de PEPSICO, resolución de Turkish Airlines, regímenes de anticipos de MAPFRE, reorganizaciones, tributación municipal, importaciones, sucesiones y planificación patrimonial. Solicita continued recognition y no afirma una banda no verificada ni garantiza movimiento."
+        },
+        {
+          "criterion": "portfolio_comparison",
+          "status": "met",
+          "evidence": "Submission, Strategy y Audit comparten el mismo hero, Gruppo Montenegro, y la misma selección de 15 matters: nueve publicables y seis confidenciales. El Audit justifica comparativamente el hero frente a PEPSICO y ofrece comparaciones concretas entre Pizzolante/Inversiones AEFEVE, Tecnipiscinas/Gustavo Gimenez Pocaterra y Sucesión Juan Otaola/mandato de Naciones Unidas, además de explicar las reservas SUMMUS, SKU, Universal Music y VENELIN."
+        },
+        {
+          "criterion": "executive_audit",
+          "status": "met",
+          "evidence": "El Audit entrega un veredicto ejecutivo bloqueante y una reparación delimitada, recomienda mantenimiento de Band 2 con las limitaciones de la investigación externa, explica comparativamente el hero, ordena la cartera, desarrolla las cinco estrategias individuales y enumera reservas y acciones. También preserva correctamente que la investigación de pares no constituye calibración completa del mercado."
+        }
+      ]
+    },
+    "trace": [
+      {
+        "role": "selection_reviewer",
+        "seconds": 41.858,
+        "usage": {
+          "input_tokens": 30875,
+          "output_tokens": 2750,
+          "total_tokens": 33625,
+          "input_token_details": {
+            "cache_read": 8097
+          },
+          "output_token_details": {
+            "reasoning": 1805
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 29,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 4,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_044e3217bca7ce7b006ac7d8e9c4cc87d1945f85fa363b9ab8"
+      },
+      {
+        "role": "strategist",
+        "seconds": 56.186,
+        "usage": {
+          "input_tokens": 37419,
+          "output_tokens": 6404,
+          "total_tokens": 43823,
+          "input_token_details": {
+            "cache_read": 8366
+          },
+          "output_token_details": {
+            "reasoning": 1552
+          }
+        },
+        "model": "gpt-5.6-terra",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 36,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 22,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 17,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 17,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 16,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 6,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 6,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_045c8a210b9bbc0c006ac7d913242887d1b17d338f5087b894"
+      },
+      {
+        "role": "selection_reviewer",
+        "seconds": 21.934,
+        "usage": {
+          "input_tokens": 30719,
+          "output_tokens": 1456,
+          "total_tokens": 32175,
+          "input_token_details": {
+            "cache_read": 8097
+          },
+          "output_token_details": {
+            "reasoning": 659
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 29,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 4,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_0efd758508300ffd006ac7d94ba51c87d18f7e2e6599214542"
+      },
+      {
+        "role": "development",
+        "seconds": 122.94,
+        "usage": {
+          "input_tokens": 38573,
+          "output_tokens": 11130,
+          "total_tokens": 49703,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 2511
+          }
+        },
+        "model": "gpt-5.6-terra",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 67,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 39,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 33,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 29,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 35,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 30,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 23,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 7,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_0d372186ea8fba1b006ac7d9614d8487d1be6c50f08939ec98"
+      },
+      {
+        "role": "repair",
+        "seconds": 21.526,
+        "usage": {
+          "input_tokens": 20001,
+          "output_tokens": 2127,
+          "total_tokens": 22128,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 708
+          }
+        },
+        "model": "gpt-5.6-terra",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 45,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 14,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 22,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 12,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 5,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 4,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 4,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_05a240f81acbdddb006ac7dabed5d487d19baf9d3f75c9e5ad"
+      },
+      {
+        "role": "writer",
+        "seconds": 53.757,
+        "usage": {
+          "input_tokens": 46636,
+          "output_tokens": 3942,
+          "total_tokens": 50578,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 963
+          }
+        },
+        "model": "gpt-5.6-terra",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 62,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 32,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 23,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 23,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 16,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 13,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 13,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 7,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_0dfc329232b11ffc006ac7dad3c07487d18d0078fcb082e821"
+      },
+      {
+        "role": "editor",
+        "seconds": 42.994,
+        "usage": {
+          "input_tokens": 59945,
+          "output_tokens": 3383,
+          "total_tokens": 63328,
+          "input_token_details": {
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "reasoning": 2197
+          }
+        },
+        "model": "gpt-5.6-sol",
+        "prompt_version": "review-core-v3.2",
+        "retrieved_rules": [
+          {
+            "chunk_id": "rag-642bd39c1a7e",
+            "source": "Tax_Editorial_Methodology.txt",
+            "tier": "reference",
+            "score": 57,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-4d5b5fee913d",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 26,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a20798d98956",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 20,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-8b4c083295b4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 15,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-5fd063e2eab5",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 25,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-aecbd86b9efd",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 17,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-29298c9b729c",
+            "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+            "tier": "methodology",
+            "score": 11,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-fa8e26ded412",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-25ebcea69a9a",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-a732677e3123",
+            "source": "EDITORIAL_CONSTITUTION.txt",
+            "tier": "methodology",
+            "score": 10,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-e495f710f8d4",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 9,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          },
+          {
+            "chunk_id": "rag-eb743bda16d2",
+            "source": "¿Cómo rankeamos abogado_as__.txt",
+            "tier": "methodology",
+            "score": 3,
+            "policy_version": "practice-policy-v4",
+            "approval": "project_reference_only"
+          }
+        ],
+        "provider_request_id": "resp_0d288bd68c468676006ac7dba2355c87d1891e74b19460efbc"
+      }
+    ],
+    "letter": {
+      "executive_assessment": "Veredicto: no recomendar la presentación de la versión actual hasta corregir una afirmación material en el texto del mandato de Turkish Airlines. Aunque el asunto tiene estatus publicado y confirmado como publicable, el texto actual dice que «the matter is confidential»; la fuente únicamente mantiene confidencial el valor. Debe conservarse, si se desea, que el valor es confidencial y que se trata de un importe de siete cifras, sin reclasificar el mandato ni al cliente como confidenciales.\n\nUna vez efectuada esa corrección delimitada, la recomendación es presentar una candidatura de mantenimiento para ARAQUEREYNA en Tax Venezuela y candidaturas individuales diferenciadas. La observación oficial verificada sitúa a la firma en Band 2 de Chambers Latin America 2027, Tax, Venezuela; el objetivo de mantenimiento no predice movimiento. El perfil oficial de la firma reconoce experiencia en mandatos transaccionales, contenciosos y de asesoría, incluyendo planificación fiscal, litigios administrativos y planificación patrimonial. La investigación externa recuperada ofrece contexto de algunos pares de Band 1 y Band 2, pero no una calibración completa del mercado ni prueba una brecha comparativa para aspirar a un ascenso.\n\nLa principal fortaleza de la propuesta es una cartera jurídicamente diversa y coherente: adquisición transfronteriza, auditorías de SENIAT sobre ISLR e IVA, tributación nacional y municipal, precios de transferencia, regímenes de anticipos, reorganizaciones y planificación patrimonial y sucesoral. La vulnerabilidad es que gran parte de los mandatos siguen en curso y varios no documentan una decisión de autoridad, resultado procesal o efecto fiscal cuantificado; no deben transformarse en éxitos concluidos.\n\nGruppo Montenegro debe ser el hero. Frente a PEPSICO —auditoría de SENIAT y precios de transferencia técnicamente definidos, pero aún en curso y sin resultado—, Gruppo Montenegro combina un cierre verificable de adquisición transfronteriza con una contribución fiscal concreta en imposición directa e indirecta, IVA, impuesto sobre alcoholes y especies alcohólicas, aduanas y tributación municipal, además de una fase local de implementación aún activa.",
+      "portfolio": "Cartera central recomendada, en orden estratégico:\n\n1. Gruppo Montenegro — HERO. María Carolina Cano codirigió el asesoramiento fiscal y corporativo en la adquisición de Pampero a Diageo; el cierre ocurrió el 17 de julio de 2024 y el trabajo abarcó imposición directa e indirecta, IVA, alcoholes, aduanas y tributación municipal, con elementos de Venezuela, Italia y Reino Unido.\n\n2. PEPSICO & Empresas Filiales — Auditorías de SENIAT sobre ISLR e IVA de los ejercicios 2019 y 2020, incluidas ganancias y pérdidas cambiarias, junto con precios de transferencia respecto de entidades vinculadas en Uruguay e Irlanda; el mandato continúa.\n\n3. Kyndryl de Venezuela — Mandato confidencial de reorganización corporativa y análisis de obligaciones nacionales y municipales, objeciones tributarias y auditorías de SENIAT de ISLR e IVA de 2020 y 2021; continúa en curso.\n\n4. Turkish Airlines Sucursal Venezuela — Asistencia en una auditoría del Ministerio de Turismo sobre el impuesto turístico especial; el procedimiento cerró mediante resolución que determinó un importe equivalente al 1% del total de la liquidación, incluyendo multa e intereses. El valor permanece confidencial.\n\n5. Editores Orientales — Mandato confidencial de consolidación de una estructura de planificación patrimonial con holding en España, entidad operativa venezolana y planificación para la disposición de inmuebles en Venezuela; continúa en curso.\n\n6. Sucesión Zuloaga — Mandato confidencial de asistencia a herederos sobre la situación corporativa y fiscal del patrimonio heredado y la verificación de declaraciones de impuesto sucesoral por SENIAT; continúa en curso.\n\n7. Grupo Ceballos — Mandato confidencial de reestructuración de sociedades tenedoras de inmuebles y desarrollo de una estructura patrimonial destinada a reducir la exposición fiscal familiar; el objetivo de reducción no debe describirse como resultado obtenido.\n\n8. BRANZA 1800 — Estrategia de tributación municipal, aspectos fiscales de la importación de materias primas, regímenes de recuperación fiscal por actividades exentas y asesoramiento sobre la Ley de Protección de las Pensiones de 2024.\n\n9. MAPFRE — Asesoramiento continuo sobre ISLR y anticipos de ISLR e IVA, incluyendo solicitudes, consultas y opiniones legales para cuestiones fiscales nacionales.\n\n10. BDO Colombia — Entrada y operación en Venezuela, con identificación de obligaciones fiscales y parafiscales de dos entidades locales y diseño aún no implementado de una base para un esquema de joint venture no exclusivo.\n\n11. Pizzolante Comunicación Estratégica — Mandato confidencial de asesoramiento fiscal y corporativo sobre la reorganización del grupo, con conexiones declaradas con Estados Unidos, República Dominicana, Panamá, Barbados y Venezuela.\n\n12. Centro Médico de Caracas — Asesoramiento continuo sobre ISLR e impuesto al patrimonio, opiniones legales y validación de estrategias fiscales; incorpora cuestiones de precios de transferencia derivadas de transacciones con una relacionada en Barbados.\n\n13. Tecnipiscinas — Ingrid García Pacheco lidera el diseño y gestión de una estructura corporativa orientada a acceder a beneficios de tratados aplicables de doble tributación y protección de inversiones; los beneficios son un objetivo, no un resultado acreditado.\n\n14. Distribuidora Bolívar Films / Escuela Nacional de Cine — Asesoramiento sobre beneficios fiscales, seguimiento de auditorías de ISLR, análisis de riesgo, escritos y planificación fiscal para entidades comerciales y sin fines de lucro vinculadas.\n\n15. Sucesión Juan Otaola Pavan — Mandato confidencial sobre regularización y gestión fiscal de sociedades integrantes de activos hereditarios y documentación e implicaciones fiscales de la partición sucesoral.\n\nLa cartera debe mantener sus secciones publicables y confidenciales conforme a las decisiones de confidencialidad ya guardadas.",
+      "leadership": "La limitación común es precisa: las observaciones oficiales verificadas acreditan reconocimiento individual únicamente en Chambers Latin America 2027, Tax, Venezuela, para la persona correspondiente. Las declaraciones históricas de «Ranked» no sustituyen esa verificación, y el resultado «not found» para una tabla acotada no prueba falta de reconocimiento global en otras prácticas o ediciones.\n\nGabriel Ruán Santos — Presentar para mantenimiento como Senior Statespeople, categoría oficialmente observada. Es socio y su perfil oficial lo describe con experiencia prolongada en mandatos fiscales contenciosos. En la cartera codirige el asesoramiento a MAPFRE sobre ISLR y anticipos de IVA e ISLR; figura entre los socios líderes de PEPSICO y como integrante del equipo de Centro Médico de Caracas. La combinación es consistente con controversia y asesoría tributaria nacional, pero las fuentes no individualizan su estrategia, escritos o dirección de las auditorías. La presentación debe preservar su categoría actual y evitar proponer un movimiento. La acción probatoria útil es incorporar su contribución personal en al menos dos controversias recientes.\n\nMaría Carolina Cano — Presentar con el objetivo solicitado de Band 1, dejando claro que la posición oficial observada es Band 2 y que el objetivo no es un resultado previsto. Es socia senior y líder reiterada del portfolio: Gruppo Montenegro, PEPSICO, Turkish Airlines, BDO Colombia, Kyndryl, Sucesión Zuloaga y otros mandatos de reorganización y patrimonio. Su perfil oficial destaca estructuras fiscales eficientes para transacciones corporativas y experiencia transfronteriza, consistente con la adquisición de Pampero y el trabajo de estructuración. El objetivo se apoya en liderazgo recurrente a través de transacciones, auditorías, controversia y planificación; no obstante, faltan trayectoria histórica verificada, resultados personales de controversias y evidencia comparativa integral que sostenga un ascenso como expectativa. Deben priorizarse referencias que puedan describir su liderazgo, juicio técnico y gestión de mandatos complejos.\n\nIngrid García Pacheco — Presentar con el objetivo solicitado de Band 2, manteniendo que la posición oficial observada es Band 4 y sin presentar el objetivo como ascenso asegurado. Es socia senior y lidera directamente Tecnipiscinas; además, colidera Grupo Ceballos, Editores Orientales, BRANZA 1800, Distribuidora Bolívar Films y mandatos sucesorales. El perfil oficial la vincula con planificación sucesoral para personas de alto patrimonio, fiscalidad local y asuntos contenciosos, lo que coincide con los asuntos seleccionados. La candidatura tiene una narrativa diferenciada en patrimonio, sucesiones, estructuras internacionales, tributación municipal e importaciones. Para sostener mejor el objetivo debe documentarse su actuación personal en diseño de estructuras, estrategia y escritos o resultados en procedimientos, junto con referencias de clientes directamente vinculadas a esas funciones.\n\nJuan Carlos Balzán — Desarrollar, sin candidatura individual formal en esta edición. Es socio y co-líder del mandato confidencial de Kyndryl, que combina reorganización, obligaciones nacionales y municipales, objeciones y auditorías de SENIAT. Esa es una base relevante, pero aislada: no hay otros mandatos fiscales personalmente atribuidos, perfil sustantivo ni descripción de contribución individual. El criterio pendiente para definir una categoría concreta es contar con al menos dos mandatos fiscales recientes adicionales con liderazgo personal verificable y evidencia de especialización tributaria. La falta de coincidencia exacta en la tabla consultada no debe convertirse en una afirmación de que no está rankeado.\n\nMaría Alejandra Garcia Nieto — Desarrollar la candidatura solicitada de Associate to Watch, pero no presentarla todavía como candidatura formal. La categoría es compatible con su condición de Senior Associate. Tiene recurrencia documentada en PEPSICO, Turkish Airlines, Kyndryl, Sucesión Zuloaga, Grupo Ceballos, BRANZA 1800 y otros asuntos de auditoría, controversia, sucesiones y planificación. Esa continuidad refuerza la visibilidad de segunda línea del equipo, pero su fuente la identifica principalmente como integrante del equipo; no explica qué análisis, escritos, estrategia, coordinación o interlocución realizó personalmente. El criterio pendiente es obtener atribución concreta en al menos dos asuntos y referencias que acrediten responsabilidad sustantiva.",
+      "evidence_gaps": "Reservas y exclusiones comparativas:\n\n• Pizzolante Comunicación Estratégica se mantiene en la cartera central frente a Inversiones AEFEVE. Ambos aportan reorganización y planificación patrimonial transfronteriza, pero Pizzolante identifica una reorganización de grupo y una huella jurisdiccional más amplia. Inversiones AEFEVE no concreta estructura, cuestión fiscal ni resultado y queda en reserva.\n\n• Tecnipiscinas se selecciona frente a Gustavo Gimenez Pocaterra. Tecnipiscinas aporta liderazgo directo de Ingrid García Pacheco y una cuestión jurídica definida —estructura orientada a beneficios de tratados de doble tributación y protección de inversiones—. El asunto Gimenez describe planificación de manera general y conserva una identidad de co-líder pendiente de confirmar como «Mauel Reyna Pares»; queda en reserva sin normalizar ese nombre.\n\n• Sucesión Juan Otaola Pavan se selecciona frente al mandato relativo a programas, organizaciones y fondos de Naciones Unidas. El primero identifica sociedades integradas en activos hereditarios y procedimientos de partición sucesoral; el segundo se limita a la aplicabilidad de beneficios fiscales sin identificar régimen, entidad, autoridad, producto jurídico ni resultado.\n\n• SUMMUS, SKU Logistics y Universal Music Venezuela permanecen en reserva porque, aunque contienen elementos fiscales y transfronterizos, no particularizan suficientemente la cuestión fiscal, el producto de trabajo o un resultado frente a los mandatos centrales. VENELIN permanece en reserva por una contradicción no resuelta entre la narración de asistencia en inspecciones en curso y la referencia separada a «May, 2024, approximately».",
+      "next_steps": "1. Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.\n2. Completar, si están disponibles para el formulario, el nombre del departamento y el número de socios y abogados de ARAQUEREYNA; estos datos administrativos siguen sin informarse.\n3. Identificar referencias para María Carolina Cano, Ingrid García Pacheco y María Alejandra Garcia Nieto que puedan describir su contribución personal, sin afirmar contacto ni respaldo hasta que exista.",
+      "next_actions": [
+        {
+          "message": "Confirmar la ventana de investigación de Chambers o que los mandatos continuados seleccionados estuvieron activos durante ella; no se requieren fechas exactas para cada asunto.",
+          "kind": "period"
+        },
+        {
+          "message": "Completar, si están disponibles para el formulario, el nombre del departamento y el número de socios y abogados de ARAQUEREYNA; estos datos administrativos siguen sin informarse.",
+          "kind": "filing"
+        },
+        {
+          "message": "Identificar referencias para María Carolina Cano, Ingrid García Pacheco y María Alejandra Garcia Nieto que puedan describir su contribución personal, sin afirmar contacto ni respaldo hasta que exista.",
+          "kind": "references"
+        }
+      ]
+    },
+    "node_events": [
+      {
+        "node": "register",
+        "seconds": 0,
+        "status": "completed"
+      },
+      {
+        "node": "strategy",
+        "seconds": 0.012,
+        "status": "completed"
+      },
+      {
+        "node": "selection",
+        "seconds": 0.008,
+        "status": "completed"
+      },
+      {
+        "node": "selection_review",
+        "seconds": 41.862,
+        "status": "rejected"
+      },
+      {
+        "node": "strategy",
+        "seconds": 56.188,
+        "status": "completed"
+      },
+      {
+        "node": "selection",
+        "seconds": 0.01,
+        "status": "completed"
+      },
+      {
+        "node": "selection_review",
+        "seconds": 21.936,
+        "status": "completed"
+      },
+      {
+        "node": "development",
+        "seconds": 122.964,
+        "status": "rejected"
+      },
+      {
+        "node": "release",
+        "seconds": 0.002,
+        "status": "completed"
+      },
+      {
+        "node": "development",
+        "seconds": 21.608,
+        "status": "completed"
+      },
+      {
+        "node": "writer",
+        "seconds": 53.763,
+        "status": "completed"
+      },
+      {
+        "node": "editor",
+        "seconds": 42.996,
+        "status": "completed"
+      },
+      {
+        "node": "release",
+        "seconds": 0.002,
+        "status": "completed"
+      }
+    ]
+  }
+}

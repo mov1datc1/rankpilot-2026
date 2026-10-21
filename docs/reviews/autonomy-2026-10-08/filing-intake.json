@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "checks": {
+    "docx": {
+      "departmentName": "Tax disputes",
+      "numPartners": 5,
+      "numLawyers": 17
+    },
+    "pdf": {
+      "departmentName": "Tax disputes",
+      "numPartners": 7,
+      "numLawyers": 17
+    },
+    "conflict": {
+      "departmentName": "found",
+      "numPartners": "conflicting",
+      "numLawyers": "found",
+      "contacts": "not_found",
+      "departmentHeads": "not_found"
+    },
+    "real_source": {
+      "fields": {
+        "numPartners": 4,
+        "numLawyers": 23
+      },
+      "matters": 32
+    },
+    "unstructured": {
+      "departmentName": "Tax disputes",
+      "numPartners": 5,
+      "numLawyers": 17,
+      "contacts": [
+        {
+          "name": "Alex River",
+          "email": "alex@example.test",
+          "phone": null
+        }
+      ],
+      "departmentHeads": [
+        {
+          "name": "Casey Hill",
+          "email": null,
+          "phone": null
+        }
+      ]
+    }
+  }
+}

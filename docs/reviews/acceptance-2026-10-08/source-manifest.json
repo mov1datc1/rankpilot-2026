@@ -1,0 +1,1421 @@
+[
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (7-sept).docx",
+    "sha256": "386dbf0b3bbd0c8e40def6d910d47bf09db9f3f9c1f6af6f47ca08557c125beb",
+    "characters": 17824,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (7-sept).docx",
+      "detected_format": "docx",
+      "sha256": "386dbf0b3bbd0c8e40def6d910d47bf09db9f3f9c1f6af6f47ca08557c125beb",
+      "byte_count": 15721,
+      "character_count": 17824,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-0.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-3).docx",
+    "sha256": "0c6d6150583a62a44067bfa27a93912f728b53ee81707882a63db560eb5d908b",
+    "characters": 17523,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-3).docx",
+      "detected_format": "docx",
+      "sha256": "0c6d6150583a62a44067bfa27a93912f728b53ee81707882a63db560eb5d908b",
+      "byte_count": 15181,
+      "character_count": 17523,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-1.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-jonathan-23).docx",
+    "sha256": "ae4dc53c68cdc653752277b9693cb596eb365fe94ac63b6dd47c814fd597814e",
+    "characters": 62058,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (11-jonathan-23).docx",
+      "detected_format": "docx",
+      "sha256": "ae4dc53c68cdc653752277b9693cb596eb365fe94ac63b6dd47c814fd597814e",
+      "byte_count": 36914,
+      "character_count": 62058,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 32
+    },
+    "text_file": "source-2.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-angela-2).docx",
+    "sha256": "cf01ebdd9ff358226c3e4e73b191f6b97dee8a9befda6745657152cdd75bf9d6",
+    "characters": 64337,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (9-sept-angela-2).docx",
+      "detected_format": "docx",
+      "sha256": "cf01ebdd9ff358226c3e4e73b191f6b97dee8a9befda6745657152cdd75bf9d6",
+      "byte_count": 38017,
+      "character_count": 64337,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-3.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-angela-2).docx",
+    "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+    "characters": 66934,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (10-angela-2).docx",
+      "detected_format": "docx",
+      "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+      "byte_count": 38649,
+      "character_count": 66934,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-4.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (2).docx",
+    "sha256": "f077e3eb2761f689a7ae22ddf5c3dadb7cb8b8efb5f21f1405ba70c989d51086",
+    "characters": 61313,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (2).docx",
+      "detected_format": "docx",
+      "sha256": "f077e3eb2761f689a7ae22ddf5c3dadb7cb8b8efb5f21f1405ba70c989d51086",
+      "byte_count": 29771,
+      "character_count": 61313,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 3
+    },
+    "text_file": "source-5.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept).docx",
+    "sha256": "8a8df9893d94bf4b15c4fd545e157aad5d14947094c5d46f2f7ae04064797d20",
+    "characters": 94813,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (7-sept).docx",
+      "detected_format": "docx",
+      "sha256": "8a8df9893d94bf4b15c4fd545e157aad5d14947094c5d46f2f7ae04064797d20",
+      "byte_count": 49677,
+      "character_count": 94813,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 47
+    },
+    "text_file": "source-6.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-1).docx",
+    "sha256": "9dc405cdcb33c134224bdfc6b906a158c737dcf9373339ceafc29e629c82f23d",
+    "characters": 17989,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "9dc405cdcb33c134224bdfc6b906a158c737dcf9373339ceafc29e629c82f23d",
+      "byte_count": 15273,
+      "character_count": 17989,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-7.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (14-angela-1).docx",
+    "sha256": "0fafcf067f35aeabe80fa7abfcd13596c6ce9b4abc1d26c0a6183eade20b0d79",
+    "characters": 51775,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (14-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "0fafcf067f35aeabe80fa7abfcd13596c6ce9b4abc1d26c0a6183eade20b0d79",
+      "byte_count": 32803,
+      "character_count": 51775,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 28
+    },
+    "text_file": "source-8.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-5).docx",
+    "sha256": "431f0ab3ad7741c76853714b9ee9f9db04dea24dd52ca6aca121cef2b039a73c",
+    "characters": 17788,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (9-sept-jonathan-5).docx",
+      "detected_format": "docx",
+      "sha256": "431f0ab3ad7741c76853714b9ee9f9db04dea24dd52ca6aca121cef2b039a73c",
+      "byte_count": 15082,
+      "character_count": 17788,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-9.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (15-angela-1).docx",
+    "sha256": "3c3cd0c4483c0559ce2140e43e83dfbaaa7c34ab68653fba623fcc420924aad7",
+    "characters": 57194,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (15-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "3c3cd0c4483c0559ce2140e43e83dfbaaa7c34ab68653fba623fcc420924aad7",
+      "byte_count": 34957,
+      "character_count": 57194,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 30
+    },
+    "text_file": "source-10.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (29-angela-1).docx",
+    "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+    "characters": 94889,
+    "report": {
+      "source": "Ramos Castillo - Real Estate (29-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "byte_count": 123047,
+      "character_count": 94889,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 50
+    },
+    "text_file": "source-11.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept-2).docx",
+    "sha256": "480b245437e4eb7264e48589ccba147786731860a54e8d60b4710e84669a457b",
+    "characters": 97698,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (7-sept-2).docx",
+      "detected_format": "docx",
+      "sha256": "480b245437e4eb7264e48589ccba147786731860a54e8d60b4710e84669a457b",
+      "byte_count": 50663,
+      "character_count": 97698,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 47
+    },
+    "text_file": "source-12.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (7-sept-2).docx",
+    "sha256": "6b9aea53ea6eb6d30d6b425912cbe9a37e68404e00ffbe561ec40f2f7a2b3041",
+    "characters": 17824,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (7-sept-2).docx",
+      "detected_format": "docx",
+      "sha256": "6b9aea53ea6eb6d30d6b425912cbe9a37e68404e00ffbe561ec40f2f7a2b3041",
+      "byte_count": 15721,
+      "character_count": 17824,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-13.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-2).docx",
+    "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+    "characters": 67835,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (11-angela-2).docx",
+      "detected_format": "docx",
+      "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+      "byte_count": 39243,
+      "character_count": 67835,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-14.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (2).docx",
+    "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+    "characters": 94889,
+    "report": {
+      "source": "Ramos Castillo - Real Estate (2).docx",
+      "detected_format": "docx",
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "byte_count": 123047,
+      "character_count": 94889,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 50
+    },
+    "text_file": "source-15.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-angela-1).docx",
+    "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+    "characters": 66934,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (10-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "5790aa18d2ae2bbf3812bfa2f92b74fdd2dc7dc2a5731cf5f2408361e3201f16",
+      "byte_count": 38649,
+      "character_count": 66934,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-16.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-3).docx",
+    "sha256": "be5c0687bd62ef212e4c8c129bf406af548e6958778a36077c52376def9d8823",
+    "characters": 59915,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-3).docx",
+      "detected_format": "docx",
+      "sha256": "be5c0687bd62ef212e4c8c129bf406af548e6958778a36077c52376def9d8823",
+      "byte_count": 38128,
+      "character_count": 59915,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 32
+    },
+    "text_file": "source-17.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-1).docx",
+    "sha256": "892277ffcebd35143174cf408633c299daa8825655dde56e5cec18200d55445c",
+    "characters": 64337,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "892277ffcebd35143174cf408633c299daa8825655dde56e5cec18200d55445c",
+      "byte_count": 38016,
+      "character_count": 64337,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-18.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (29-jonathan-1).docx",
+    "sha256": "cbd47bb5f16cb84c87efe50f0a17b6c454b9dabfbea4d2851cc4048f24a62bfb",
+    "characters": 28639,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (29-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "cbd47bb5f16cb84c87efe50f0a17b6c454b9dabfbea4d2851cc4048f24a62bfb",
+      "byte_count": 19352,
+      "character_count": 28639,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 6
+    },
+    "text_file": "source-19.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-setp-angela).docx",
+    "sha256": "8d857e22d7ea4c1874840eff9219455f106d8acfe0241278abc79928fa1e9d9d",
+    "characters": 17655,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (9-setp-angela).docx",
+      "detected_format": "docx",
+      "sha256": "8d857e22d7ea4c1874840eff9219455f106d8acfe0241278abc79928fa1e9d9d",
+      "byte_count": 15539,
+      "character_count": 17655,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-20.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-5).docx",
+    "sha256": "bdcb60605b4ee35dab4f3eb7baf007779ff31164b1c54b4a9711ad7c5af04d2f",
+    "characters": 54636,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (9-sept-jonathan-5).docx",
+      "detected_format": "docx",
+      "sha256": "bdcb60605b4ee35dab4f3eb7baf007779ff31164b1c54b4a9711ad7c5af04d2f",
+      "byte_count": 33954,
+      "character_count": 54636,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 29
+    },
+    "text_file": "source-21.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (8-sept-jonathan).docx",
+    "sha256": "61df496e8f855bcc54d7c361d4dac84df3e9252b12bb19cc7b593168b3e0ef78",
+    "characters": 17695,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (8-sept-jonathan).docx",
+      "detected_format": "docx",
+      "sha256": "61df496e8f855bcc54d7c361d4dac84df3e9252b12bb19cc7b593168b3e0ef78",
+      "byte_count": 15552,
+      "character_count": 17695,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-22.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (29-angela-1).docx",
+    "sha256": "86119f330d87f2f8c4f29609cde74360dba8ea0d5acf44f23bffb49887e36033",
+    "characters": 44012,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (29-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "86119f330d87f2f8c4f29609cde74360dba8ea0d5acf44f23bffb49887e36033",
+      "byte_count": 22515,
+      "character_count": 44012,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 5
+    },
+    "text_file": "source-23.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (9-setp-angela).docx",
+    "sha256": "11a63fd52c2340d80ff0dbc9a3743beeb07d5f5b3039d49ccc7e67465a37d283",
+    "characters": 65501,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (9-setp-angela).docx",
+      "detected_format": "docx",
+      "sha256": "11a63fd52c2340d80ff0dbc9a3743beeb07d5f5b3039d49ccc7e67465a37d283",
+      "byte_count": 38355,
+      "character_count": 65501,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-24.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-1).docx",
+    "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+    "characters": 67835,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (11-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "178d86563b13f1144388bec0f3257d39a9621bfbd57381eea43bd42430054c74",
+      "byte_count": 39243,
+      "character_count": 67835,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-25.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (29-jonathan-1).docx",
+    "sha256": "7b82aa4419023188ae6f0f811e204209507b89c49c6f31ace2d0d8cf9601a050",
+    "characters": 35579,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (29-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "7b82aa4419023188ae6f0f811e204209507b89c49c6f31ace2d0d8cf9601a050",
+      "byte_count": 27061,
+      "character_count": 35579,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 24
+    },
+    "text_file": "source-26.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (8-sept-jonathan).docx",
+    "sha256": "90bd95a241f9e4a84b99153e7bedf3eede5756f08a38649b3029e54f2e577b12",
+    "characters": 64557,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (8-sept-jonathan).docx",
+      "detected_format": "docx",
+      "sha256": "90bd95a241f9e4a84b99153e7bedf3eede5756f08a38649b3029e54f2e577b12",
+      "byte_count": 37852,
+      "character_count": 64557,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-27.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (8-sept-angela).docx",
+    "sha256": "69358915775ca4f80591f259a0e1ccb7dfaa3fc0a44f306475716e5f9bb53e8d",
+    "characters": 17892,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (8-sept-angela).docx",
+      "detected_format": "docx",
+      "sha256": "69358915775ca4f80591f259a0e1ccb7dfaa3fc0a44f306475716e5f9bb53e8d",
+      "byte_count": 15577,
+      "character_count": 17892,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-28.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (15-angela-1).docx",
+    "sha256": "8469d084e1a1d247f7c4a26288df5e3aeba8675def24feec87fbb2612b87e592",
+    "characters": 15941,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (15-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "8469d084e1a1d247f7c4a26288df5e3aeba8675def24feec87fbb2612b87e592",
+      "byte_count": 15638,
+      "character_count": 15941,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-29.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (10-jonathan-1).docx",
+    "sha256": "5deeae02e9df2fbae4bdbcd6c474f969e0bafddf770f27216a3aeb7cff775732",
+    "characters": 17690,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (10-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "5deeae02e9df2fbae4bdbcd6c474f969e0bafddf770f27216a3aeb7cff775732",
+      "byte_count": 15063,
+      "character_count": 17690,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-30.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-2).docx",
+    "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+    "characters": 15627,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (11-angela-2).docx",
+      "detected_format": "docx",
+      "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+      "byte_count": 15202,
+      "character_count": 15627,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-31.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (10-jonathan-1).docx",
+    "sha256": "6a99a4a44205451df60f7fb3a5cf2c0b5e3f5375924b6524d638726c01889add",
+    "characters": 67745,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (10-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "6a99a4a44205451df60f7fb3a5cf2c0b5e3f5375924b6524d638726c01889add",
+      "byte_count": 39056,
+      "character_count": 67745,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-32.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/Ramos Castillo - Real Estate (2) (1).docx",
+    "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+    "characters": 94889,
+    "report": {
+      "source": "Ramos Castillo - Real Estate (2) (1).docx",
+      "detected_format": "docx",
+      "sha256": "6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc",
+      "byte_count": 123047,
+      "character_count": 94889,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 50
+    },
+    "text_file": "source-33.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (jonathan).docx",
+    "sha256": "0410ac408994c3ca819ecd1c146437b413e09b62a4dae9684cebd251b48e2d0c",
+    "characters": 118133,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (jonathan).docx",
+      "detected_format": "docx",
+      "sha256": "0410ac408994c3ca819ecd1c146437b413e09b62a4dae9684cebd251b48e2d0c",
+      "byte_count": 115973,
+      "character_count": 118133,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 57
+    },
+    "text_file": "source-34.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (8-sept-angela).docx",
+    "sha256": "69df2182aad91e96e4cea4320f61f3dbdc713f1f67d35ce6ed074989345b9cbe",
+    "characters": 95994,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (8-sept-angela).docx",
+      "detected_format": "docx",
+      "sha256": "69df2182aad91e96e4cea4320f61f3dbdc713f1f67d35ce6ed074989345b9cbe",
+      "byte_count": 48696,
+      "character_count": 95994,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 47
+    },
+    "text_file": "source-35.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (31-08).docx",
+    "sha256": "daaf8bd9cfeb7f879a10f7ca2fd37c6c3d222e8587bb10f640d6763b0161492e",
+    "characters": 57987,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (31-08).docx",
+      "detected_format": "docx",
+      "sha256": "daaf8bd9cfeb7f879a10f7ca2fd37c6c3d222e8587bb10f640d6763b0161492e",
+      "byte_count": 28619,
+      "character_count": 57987,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 3
+    },
+    "text_file": "source-36.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (3-agosto).docx",
+    "sha256": "cab08305a31cf3a3004ef42dc18994c0db04450991da5e5754257b922aaf1a71",
+    "characters": 50592,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (3-agosto).docx",
+      "detected_format": "docx",
+      "sha256": "cab08305a31cf3a3004ef42dc18994c0db04450991da5e5754257b922aaf1a71",
+      "byte_count": 26118,
+      "character_count": 50592,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 4
+    },
+    "text_file": "source-37.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate(14-angela-1).docx",
+    "sha256": "c92bde42e708951c1fbf6a0140cee4fddaa3cde3cbd9663bc412f74a26b5eb70",
+    "characters": 13760,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate(14-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "c92bde42e708951c1fbf6a0140cee4fddaa3cde3cbd9663bc412f74a26b5eb70",
+      "byte_count": 15076,
+      "character_count": 13760,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-38.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (3-agosto).docx",
+    "sha256": "a87446c158b015945a21c1630e6b12b525b181e60b1d19b27e9c5d6a9c5c379f",
+    "characters": 95721,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (3-agosto).docx",
+      "detected_format": "docx",
+      "sha256": "a87446c158b015945a21c1630e6b12b525b181e60b1d19b27e9c5d6a9c5c379f",
+      "byte_count": 47367,
+      "character_count": 95721,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 47
+    },
+    "text_file": "source-39.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-jonathan-1).docx",
+    "sha256": "be12e1cc54c2e077e89ec868158e46bbffa8d85ee193a8f513d428c60673ae86",
+    "characters": 16086,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (11-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "be12e1cc54c2e077e89ec868158e46bbffa8d85ee193a8f513d428c60673ae86",
+      "byte_count": 15421,
+      "character_count": 16086,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-40.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-22).docx",
+    "sha256": "e20b966c290fee5086b0d1513ddd1e93c855d5201a7fd33d31e5d2044301a578",
+    "characters": 16306,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (11-angela-22).docx",
+      "detected_format": "docx",
+      "sha256": "e20b966c290fee5086b0d1513ddd1e93c855d5201a7fd33d31e5d2044301a578",
+      "byte_count": 15684,
+      "character_count": 16306,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-41.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (31-08).docx",
+    "sha256": "42889b9fbb796c29f765f3601b5c7ea04dd0b0a728e16a0f5e9f209945d81c4f",
+    "characters": 101725,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (31-08).docx",
+      "detected_format": "docx",
+      "sha256": "42889b9fbb796c29f765f3601b5c7ea04dd0b0a728e16a0f5e9f209945d81c4f",
+      "byte_count": 106934,
+      "character_count": 101725,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 51
+    },
+    "text_file": "source-42.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (jonathan-2).docx",
+    "sha256": "cab2ea53ab63e598fd5d6824c87f29594bed863b90657ef4985ebdf109175d36",
+    "characters": 102808,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (jonathan-2).docx",
+      "detected_format": "docx",
+      "sha256": "cab2ea53ab63e598fd5d6824c87f29594bed863b90657ef4985ebdf109175d36",
+      "byte_count": 107073,
+      "character_count": 102808,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 51
+    },
+    "text_file": "source-43.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-angela-1).docx",
+    "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+    "characters": 15627,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (11-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "8483bc76227a9a009329fdfafe34eaed3da72a3fc2dcf3955ec33ed26928308d",
+      "byte_count": 15202,
+      "character_count": 15627,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-44.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (29-angela-1).docx",
+    "sha256": "de7e97044e82d923e2bf3c514febfc28eb2efd1634e973d91d04925fb460c705",
+    "characters": 56647,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (29-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "de7e97044e82d923e2bf3c514febfc28eb2efd1634e973d91d04925fb460c705",
+      "byte_count": 34798,
+      "character_count": 56647,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 30
+    },
+    "text_file": "source-45.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-jonathan-1).docx",
+    "sha256": "5a79fd2fb7bacdd7a40f3346a790fa83f523c9b3a6bd4a24ba426ea60a512418",
+    "characters": 68336,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (11-jonathan-1).docx",
+      "detected_format": "docx",
+      "sha256": "5a79fd2fb7bacdd7a40f3346a790fa83f523c9b3a6bd4a24ba426ea60a512418",
+      "byte_count": 39411,
+      "character_count": 68336,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 34
+    },
+    "text_file": "source-46.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (10-angela-1).docx",
+    "sha256": "89371676cf1f9303e4f24fdcd170a605575f6b9128aa75a6a4d854cef6d4f642",
+    "characters": 17721,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (10-angela-1).docx",
+      "detected_format": "docx",
+      "sha256": "89371676cf1f9303e4f24fdcd170a605575f6b9128aa75a6a4d854cef6d4f642",
+      "byte_count": 15565,
+      "character_count": 17721,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-47.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (11-jonathan-23).docx",
+    "sha256": "3f92feb10bcec3cec10c93ca65a4422a16e5e578065437ef3f4d252e7a35074a",
+    "characters": 16299,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (11-jonathan-23).docx",
+      "detected_format": "docx",
+      "sha256": "3f92feb10bcec3cec10c93ca65a4422a16e5e578065437ef3f4d252e7a35074a",
+      "byte_count": 15688,
+      "character_count": 16299,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-48.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (4-sept-2).docx",
+    "sha256": "726ccc55ee8d6eccb89daf1007a429ba30713c8a4f1e677b1082d22257864172",
+    "characters": 64761,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (4-sept-2).docx",
+      "detected_format": "docx",
+      "sha256": "726ccc55ee8d6eccb89daf1007a429ba30713c8a4f1e677b1082d22257864172",
+      "byte_count": 30272,
+      "character_count": 64761,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 4
+    },
+    "text_file": "source-49.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (9-sept-angela-2).docx",
+    "sha256": "89bc4a32ccd793ca07f556254b7315f12cdf06830177a76df6fa006b8f4798e4",
+    "characters": 17989,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (9-sept-angela-2).docx",
+      "detected_format": "docx",
+      "sha256": "89bc4a32ccd793ca07f556254b7315f12cdf06830177a76df6fa006b8f4798e4",
+      "byte_count": 15274,
+      "character_count": 17989,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 2
+    },
+    "text_file": "source-50.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Strategic_Audit_Real_Estate (4-sept).docx",
+    "sha256": "912b4495cabcdb2d404859c934dd61e32e47fea2ec589883fa50b60056e38de0",
+    "characters": 51303,
+    "report": {
+      "source": "RankPilot_Strategic_Audit_Real_Estate (4-sept).docx",
+      "detected_format": "docx",
+      "sha256": "912b4495cabcdb2d404859c934dd61e32e47fea2ec589883fa50b60056e38de0",
+      "byte_count": 27388,
+      "character_count": 51303,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footnotes.xml"
+      ],
+      "table_count": 4
+    },
+    "text_file": "source-51.txt",
+    "matter_labels": []
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (7-sept-3-refined).docx",
+    "sha256": "43dfa4fcabf3680ebaadca0523184a317f63240ed24b01799ec958a2261c904d",
+    "characters": 92828,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (7-sept-3-refined).docx",
+      "detected_format": "docx",
+      "sha256": "43dfa4fcabf3680ebaadca0523184a317f63240ed24b01799ec958a2261c904d",
+      "byte_count": 48298,
+      "character_count": 92828,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 47
+    },
+    "text_file": "source-52.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (4-sept-2).docx",
+    "sha256": "54c26385853721a6e899ad914d9874a4b07612443b12ae960cfbfcb8accea5eb",
+    "characters": 100818,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (4-sept-2).docx",
+      "detected_format": "docx",
+      "sha256": "54c26385853721a6e899ad914d9874a4b07612443b12ae960cfbfcb8accea5eb",
+      "byte_count": 108683,
+      "character_count": 100818,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 50
+    },
+    "text_file": "source-53.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (2).docx",
+    "sha256": "92fe722a41bf87d9b502211e4c33f7b53d0e5df3ed378a4fd9d374fef1824228",
+    "characters": 113179,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (2).docx",
+      "detected_format": "docx",
+      "sha256": "92fe722a41bf87d9b502211e4c33f7b53d0e5df3ed378a4fd9d374fef1824228",
+      "byte_count": 114168,
+      "character_count": 113179,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 55
+    },
+    "text_file": "source-54.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (4-sept).docx",
+    "sha256": "4d1864c2895b61024090d22e4985a1c373c884e1c6f95fdc95e45ed07b041dfd",
+    "characters": 101155,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (4-sept).docx",
+      "detected_format": "docx",
+      "sha256": "4d1864c2895b61024090d22e4985a1c373c884e1c6f95fdc95e45ed07b041dfd",
+      "byte_count": 108784,
+      "character_count": 101155,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml",
+        "word/header2.xml",
+        "word/header3.xml"
+      ],
+      "table_count": 50
+    },
+    "text_file": "source-55.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Ramos Castillo/RankPilot_Submission_Form_Real_Estate (11-angela-22).docx",
+    "sha256": "f7b26b7931b9637439ade7627fe721fed382469d0f46ab7dab2cc258361706f5",
+    "characters": 62210,
+    "report": {
+      "source": "RankPilot_Submission_Form_Real_Estate (11-angela-22).docx",
+      "detected_format": "docx",
+      "sha256": "f7b26b7931b9637439ade7627fe721fed382469d0f46ab7dab2cc258361706f5",
+      "byte_count": 36944,
+      "character_count": 62210,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/endnotes.xml",
+        "word/footer1.xml",
+        "word/footnotes.xml",
+        "word/header1.xml"
+      ],
+      "table_count": 32
+    },
+    "text_file": "source-56.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Araquereyna - tax/Chambers Submission Tax 2024 (2).doc",
+    "sha256": "4e88977d4bf58b41907591567e72d13e62a6cae5731813b2bd0b58387207bef7",
+    "characters": 44575,
+    "report": {
+      "source": "Chambers Submission Tax 2024 (2).doc",
+      "detected_format": "doc",
+      "sha256": "4e88977d4bf58b41907591567e72d13e62a6cae5731813b2bd0b58387207bef7",
+      "byte_count": 394752,
+      "character_count": 44575,
+      "method": "legacy_converter",
+      "warnings": [
+        "Word antiguo convertido: revisa especialmente la separación de tablas y asuntos."
+      ]
+    },
+    "text_file": "source-57.txt",
+    "matter_labels": [
+      "D0 – PUBLISHABLE CLIENTS – List of this department's PUBLISHABLE clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank.",
+      "E0 – CONFIDENTIAL CLIENTS – List of this department's CONFIDENTIAL clients. Please indicate whether a client is a new client (within the last 12 months). If this information is not known, leave the field blank."
+    ]
+  },
+  {
+    "path": "/Users/jonathanpalacios/Downloads/Rankpilot-2026/analizar/Submission_revision/Angela_revision/10 submission /DeForest/DeForest_Submission_Original_Ingested.docx",
+    "sha256": "c5ef2a4c9dd69e8969d2a6b8d11f8515e0f78cf633bdde38ca5e2b9c64dadc3a",
+    "characters": 68699,
+    "report": {
+      "source": "DeForest_Submission_Original_Ingested.docx",
+      "detected_format": "docx",
+      "sha256": "c5ef2a4c9dd69e8969d2a6b8d11f8515e0f78cf633bdde38ca5e2b9c64dadc3a",
+      "byte_count": 293675,
+      "character_count": 68699,
+      "method": "ooxml",
+      "parts_read": [
+        "word/document.xml",
+        "word/footer1.xml",
+        "word/footer2.xml",
+        "word/header1.xml",
+        "word/header2.xml"
+      ],
+      "table_count": 249
+    },
+    "text_file": "source-58.txt",
+    "matter_labels": []
+  }
+]

@@ -1,0 +1,44 @@
+{
+  "status": "published_and_deforest_live_validated",
+  "published": true,
+  "criteria": "tests/acceptance/criteria.json",
+  "local_checks": {
+    "node": {
+      "passed": 357,
+      "failed": 0
+    },
+    "python": {
+      "passed": 282,
+      "failed": 0
+    },
+    "typescript": "passed",
+    "build": "passed"
+  },
+  "remaining": [],
+  "authorization_block": {
+    "action": "Send private sources and generated Word text to OpenAI API for three-case validation/repair",
+    "destination": "api.openai.com",
+    "decision": "User explicitly authorized in resumed conversation on 2026-10-08",
+    "do_not_retry_without_authorization": false
+  },
+  "reproduction": "python scripts/acceptance/evidence-report.py PRIVATE_EVIDENCE_DIRECTORY",
+  "artifact_approval": "Three private candidate pairs reviewed. Current production DeForest revision 16 additionally passed exact-Word judge, source immutability, visual review and browser download hashes.",
+  "visual_alternative_authorized": true,
+  "published_commit": "c41f026f60926aac6eb5d2239721e9bc0b2651c6",
+  "pending_commit": null,
+  "deployment": {
+    "ci_dev": 37839501905,
+    "ci_main": 37839678408,
+    "ci": "success",
+    "vercel": "READY",
+    "render_engine": "LIVE",
+    "render_worker": "LIVE"
+  },
+  "live_job": "101e74fd-5dd2-4ac2-b92a-60d84e664a90",
+  "live_final_verification": "live-final/verification.json",
+  "limitations": [
+    "Ramos and ARAQUEREYNA validation covers private candidates; no production workflow run claimed.",
+    "DeForest needs five filing fields and research-window confirmation before external filing.",
+    "SEBNMX reserve wording required a bounded human correction after automated judge missed it."
+  ]
+}

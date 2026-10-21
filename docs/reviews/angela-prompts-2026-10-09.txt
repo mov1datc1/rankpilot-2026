@@ -1,0 +1,423 @@
+Optimizar submissions - DeForest - Labour Mi chatyi, aquí vamos a matar dos pájaros de una pedrada... Vamos a continuar el ejercicio de "optimizar" el submission de Labour & Employment de DeForest, firma con la que el lunes tenemos la reunión de kick off... Quiero que este submission sirva 1. como entrenamiento del motor de RankPilot, y 2. como la tarea hecha para Sandra, para mostrarle lo que estamos logrando con RankPilot y para tener definida ya la lista de asuntos que SÍ merecen figurar, el orden de los casos, las personas que merecen estar de acuerdo con la categoría que queremos impulsar. Quiero que en la optimización tomes en cuenta este documento que armamos, por favor, así como todas las sugerencias planteadas para el apartado de Labour... Te adjunto el submission que presentamos el 28 de julio a Legal 500. Ahora toca presentarlo a Chambers... Tiene que cambiar el enfoque. Vamos con las descripciones individuales. Comencemos con recomendar QUIÉN tiene verdaderamente oportunidad de entrar, el mejor caso para entrar...
+Sí. Y aquí hay una distinción importantísima que creo que debemos introducir desde el minuto uno del ejercicio de Chambers:
+no debemos preguntarnos “¿quiénes son los mejores abogados de Labour de DeForest?” sino “¿qué candidatura individual podemos probar ante Chambers con evidencia acumulativa?”
+Con ese criterio, mi ranking hoy sería:
+1. Eduardo Garduño — candidatura principal, claramente. 2. Javier Atzin Vallejo — segunda candidatura, pero con una lógica distinta y bastante interesante. 3. Jaime Bustamante — perfil excelente, pero hoy más débil como candidatura Chambers porque la evidencia del submission no acompaña suficientemente el pedigree. No impulsaría todavía a Andrés Cabrera, Raymundo Carreño, Edgar Barreto ni al resto como candidatos individuales.
+Y haría algo incluso más disciplinado: para Chambers 2027 construiría deliberadamente el submission alrededor de Eduardo como el abogado que queremos meter. Javier sería la segunda narrativa que queremos empezar a convertir en ranking.
+Eduardo Garduño: el caballo que hay que montar
+La presentación que armamos ya había encontrado el dato decisivo: Eduardo aparece como lead en 16 de los 31 asuntos, frente a 7 de Jaime y 4 de Javier. Además, la evidencia de Eduardo no está concentrada en una sola clase de trabajo: aparece en gobierno laboral industrial, colectivo/sindical, integración post-M&A y portafolios nacionales.
+Eso es precisamente lo que Chambers necesita para una candidatura individual: actividad + sofisticación + recurrencia + responsabilidad personal.
+Y hay algo mejor: Eduardo ya tiene validation residue dentro de Chambers. En el research anterior, los clientes dijeron que domina los asuntos, tiene buen client care y calificaron como very strong su sofisticación, visión comercial y servicio. Es decir: no estamos intentando fabricar una reputación desde cero.
+Chambers, además, dijo explícitamente que DeForest debía seguir mostrando de manera consistente el trabajo de Atzin, Eduardo y Jaime para poder identificar candidatos individuales, y diagnosticó que el problema era que ninguno había alcanzado todavía suficiente reconocimiento.
+Por tanto, Eduardo no necesita demostrar que es buen abogado. Necesita que le construyamos un expediente Chambers inequívoco.
+Y eso cambia radicalmente cómo debemos escribir los matters.
+¿Cuál es EL caso para meter a Eduardo?
+Para mí, Schaeffler/Vitesco.
+No tengo demasiadas dudas.
+Es probablemente el asunto que mejor cumple simultáneamente las dos funciones que necesitamos:
+rankear la práctica + rankear a Eduardo.
+La operación requirió la integración laboral posterior a la adquisición de Vitesco por Schaeffler en múltiples instalaciones mexicanas. DeForest armonizó contratos laborales, CCT, comisiones mixtas y cumplimiento de la reforma laboral para una fuerza de más de 5.000 empleados, mientras paralelamente gestionaba 35 litigios laborales activos derivados en parte de legacy issues. El mandato se ha extendido además a plantas en Puebla, Cuautitlán, Irapuato, Silao y posteriormente Santa Anita, Jalisco. Lead: Eduardo Garduño.
+Esto es oro para Chambers porque permite decir muchas cosas con un solo matter:
+M&A integration → multi-plant → 5,000+ employees → collective labour → employment documentation → labour reform → litigation → national footprint → operational continuity → Eduardo.
+Y, sobre todo, corrige directamente el problema que Chambers había identificado anteriormente: que parte del submission demostraba trabajo relevante pero relativamente cotidiano.
+Schaeffler no parece day-to-day employment advice. Parece board-level workforce integration following a major corporate transaction.
+Ese sería mi Matter #1.
+Pero Eduardo necesita un segundo asunto completamente distinto
+Aquí pondría GeNI muy arriba.
+Porque no quiero que Chambers termine pensando:
+Garduño = sophisticated employment compliance guy.
+Quiero que piense:
+Garduño = senior employment strategist trusted when workforce risk threatens the operation.
+GeNI introduce precisamente la dimensión que Schaeffler no tiene: collective labour / union negotiations / strike prevention / business continuity. El matter describe una negociación estratégica dirigida por Eduardo que evitó una posible huelga y protegió cadenas de producción vinculadas con fabricantes automotrices.
+Entonces ya tenemos:
+Schaeffler → transformative workforce integration GeNI → high-stakes collective labour / strike prevention
+Eso empieza a parecer una persona rankeable.
+Después añadiría probablemente Volkswagen/VW Financial Services como prueba de escala, recurrencia y confianza institucional: DeForest gestiona exposición laboral cercana a MXN280m, combinando litigios con employment agreements, internal regulations, disciplinary mechanisms y preventive governance; nuevamente, Eduardo aparece como lead.
+Y después elegiríamos quirúrgicamente uno entre Cinemex / Benteler / Coats, dependiendo de qué dimensión individual nos falte probar.
+Ahí ya tenemos una arquitectura.
+Javier es más interesante de lo que parecía
+Aquí modificaría ligeramente la conclusión de nuestra presentación.
+Nuestra presentación decía: Eduardo primero; Jaime o Javier segundo dependiendo de continuidad, matters y referees.
+Después de cruzar el Legal 500 submission con el histórico de Chambers, yo pondría a Javier claramente por delante de Jaime para Chambers.
+¿Por qué?
+Porque Javier posee algo que Jaime no tiene todavía con la misma intensidad:
+market recognition externo ya detectable por Chambers.
+Un market commentator dijo literalmente que consideraba que Javier Atzin Vallejo podría ser considerado para los rankings. Otro cliente lo identifica específicamente como the contact for labour matters.
+Además, Chambers recogió feedback que califica su client service, sophistication y commercial vision como very strong y destaca su experiencia.
+Eso es importantísimo.
+No es todavía un ranking. Pero hay market signal.
+Y ahora tenemos que poner debajo del market signal una pila de asuntos.
+Su mejor caso: Brose
+Este me gusta muchísimo para Javier.
+Tres plantas en Querétaro. Aproximadamente 400 trabajadores sindicalizados. Disputa por la titularidad del CCT. Un sindicato externo intentando desplazar al existente. Contexto regional de procedimientos de representatividad. Amenaza de activación del USMCA Rapid Response Mechanism. DeForest está gestionando negociación y diálogo para evitar paros y escalamiento internacional. Lead: Javier Atzin Vallejo.
+Eso es un Chambers matter de manual.
+Y además diferencia a Javier de Eduardo.
+No queremos Eduardo II.
+Queremos:
+Eduardo Garduño National workforce governance / complex employer strategy / post-M&A / high-stakes collective matters.
+Javier Atzin Vallejo Industrial labour / collective representation / social security / infrastructure / Bajío / USMCA-sensitive matters.
+Eso construye bench strength, no competencia interna.
+Y Javier además tiene Bonatti —un mandato asociado al proyecto de expansión del gasoducto Energía Mayakan, de más de USD2bn, junto con un collective dismissal claim— como otro posible anchor matter.
+Ahí empieza a haber candidatura.
+¿Y Jaime?
+No lo descartaría. Pero no gastaría capital narrativo intentando rankearlo este año si no aparecen mejores matters/referees en el kickoff.
+Su biografía es formidable: ex Legal Director para México, Centro y Sudamérica de ManpowerGroup y vicepresidente de la comisión laboral/social security/HR de CONCAMIN.
+Eso es credential strength.
+Pero Chambers no rankea CVs.
+Necesitamos matter strength + activity + market recognition + client validation.
+Y el feedback histórico de Jaime que encontramos es positivo pero genérico: un cliente dice que tuvo una excelente experiencia trabajando con él y Alejandro Salas. No se acerca todavía a la fuerza probatoria de lo que tenemos para Eduardo, ni siquiera al pequeño pero muy útil market signal que tenemos para Javier.
+Por eso el lunes yo le preguntaría a Sandra específicamente:
+“¿Cuáles son los tres asuntos más sofisticados que Jaime ha liderado personalmente durante los últimos 12 meses y qué clientes pueden hablar específicamente de él?”
+Esa respuesta puede cambiar nuestra decisión.
+Así construiría la candidatura individual
+Prioridad
+Abogado
+Objetivo 2027
+Anchor matter
+Qué queremos probar
+1
+Eduardo Garduño
+Entrada individual
+Schaeffler/Vitesco
+sofisticación + escala + liderazgo
+Eduardo
+soporte
+GeNI
+colectivo + strike prevention
+Eduardo
+soporte
+Volkswagen/VWFS
+escala + recurrencia + confianza
+Eduardo
+soporte
+Cinemex/Benteler/Coats
+litigio o colectivo
+2
+Javier Atzin Vallejo
+construir segunda candidatura / posible entrada
+Brose
+sindicato + CCT + RRM/USMCA
+Javier
+soporte
+Bonatti
+infraestructura + high stakes
+Javier
+soporte
+Bosch / otro
+technical breadth
+3
+Jaime Bustamante
+mantener visible / comprobar evidencia
+por determinar
+necesitamos mejores lead matters + referees
+Y esto me lleva a una conclusión importante para el trabajo que vamos a hacer ahora:
+no debemos optimizar los 31 matters como si todos tuvieran el mismo propósito.
+Cada matter debe ganarse el derecho a entrar porque hace al menos una de tres cosas:
+(a) demuestra que DeForest merece Banda 5; (b) construye la candidatura de Eduardo; o (c) demuestra bench strength real mediante Javier/Jaime/segunda línea.
+Si no hace ninguna, afuera, aunque sea un cliente precioso.
+Eso es precisamente la diferencia entre “mejorar el wording del submission de Legal 500” y reconstruir un submission para Chambers.
+Y empezaría por Schaeffler/Vitesco, porque creo que allí podemos producir el primer hero matter de Eduardo y, a partir de ese estándar, medir todos los demás.
+estupendo. Vamos con la presentación de la firma... Necesitamos CONVENCER a Chambers de que el team de Labour de DeForest es merecedor de una banda 5, en comparación con otros jugadores de ese nivel. Esto es lo que dice Legal 500 de DeForest... Aquí va lo que dice Chambers y sus evaluaciones de labour: Labour & Employment, Mexico, Latin America | Chambers Rankings
+Sí. Aquí es donde tenemos que ser despiadados con la selección. Chambers permite hasta 20 matters, pero no tenemos ninguna obligación de llenar 20 espacios. El submission de Legal 500 contiene asuntos muy buenos y otros que, aunque sean trabajo perfectamente digno, diluyen la tesis de Banda 5.
+Después de revisar el documento completo, empezaría con este orden provisional:
+#
+Matter
+Por qué entra
+1
+Schaeffler / Vitesco
+Hero matter: post-M&A + 5,000 empleados + multi-plant + collective + litigation
+2
+Brose México
+CBA ownership + 400 sindicalizados + RRM/USMCA + continuidad operacional
+3
+Bonatti / Mayakan
+USD2bn+ infrastructure + 5 estados + employment lifecycle + strike prevention
+4
+GeNI México
+CBA + amenaza real de huelga + OEM supply chain + negociación
+5
+Cinemex
+11,000+ empleados + 190–200 litigios nacionales + MXN60.5m+
+6
+Volkswagen / VWFS
+Marca + MXN280m exposure + contentious/preventive governance
+7
+Mextypsa
+Guadalajara Metro USD552m + workforce lifecycle + amparo + infrastructure
+8
+Nueva Empresa
+amparo exitoso + due process + cuestión jurídica novedosa sobre identidad
+9
+Bosch
+17,000 empleados + multi-plant governance + unions + social security
+10
+Megacable
+120+ matters + multi-state + governance
+11
+Benteler
+collective labour / greenfield labour structure
+12
+Securitas
+50+ lawsuits + expansión territorial
+13–?
+Por decidir
+Sólo si aportan una dimensión que los 12 anteriores no prueban
+El propio Legal 500 submission confirma la combinación que queremos construir: el Schaeffler mandate afecta a más de 5,000 trabajadores y 35 claims; Brose implica tres plantas, unos 400 sindicalizados y riesgo de RRM; Bonatti incluye Mayakan por más de USD2bn y prevención de huelga; y Cinemex representa un portfolio nacional de aproximadamente 200 litigios.
+Y arrancaría así con el Matter #1, porque este debe establecer el estándar narrativo para todos los demás.
+1. Schaeffler / Vitesco — Eduardo Garduño
+La versión Legal 500 ya tiene todos los ingredientes, pero está demasiado escrita como “this is what we did”. Para Chambers necesitamos context → challenge → DeForest's role → scale → significance/result → lawyer. El source confirma integración en múltiples estados, más de 5,000 empleados, armonización de contratos/CBA/regulaciones/comisiones y 35 active labour claims.
+Matter description
+DeForest advises Schaeffler, a major German automotive and industrial-components group, on the labour integration of Vitesco Technologies’ Mexican operations following Schaeffler’s acquisition of the company. The transaction created a significant post-acquisition workforce integration exercise spanning manufacturing facilities across Puebla, the State of Mexico, Guanajuato and Jalisco and affecting more than 5,000 employees.
+Led by Eduardo Garduño, DeForest assumed responsibility for harmonising the employment structures inherited from the two businesses into a coherent labour framework. The team has standardised individual employment agreements and internal work regulations, aligned collective bargaining arrangements, unified mandatory mixed commissions and company-wide employment policies, and ensured consistent implementation of Mexico’s labour-reform requirements across the combined operation.
+The mandate is particularly significant because the integration extends beyond documentation and compliance into the management of legacy employment risk. In parallel with the harmonisation process, DeForest manages 35 active labour claims involving former employees and suppliers, ensuring that the litigation strategy is consistent with the newly integrated corporate and workforce structure.
+The project has progressively expanded to additional Mexican facilities, including the Santa Anita plant in Jalisco, making DeForest a continuing labour adviser to the combined operation rather than counsel solely for the transaction itself. The mandate demonstrates the team’s ability to manage the employment consequences of a major corporate acquisition across multiple industrial sites while maintaining workforce and operational continuity.
+Lead partner: Eduardo Garduño — Puebla Other key team member: Ana Ruiz — Puebla Status: Ongoing Confidential / non-publishable: Yes, según el submission de Legal 500.
+Qué acabamos de hacer aquí
+Hay una mejora importante respecto de Legal 500: la adquisición aparece en la primera oración. El researcher sabe inmediatamente por qué está leyendo esto.
+Después:
+major acquisition → 5,000+ workforce → multiple manufacturing sites → individual + collective employment architecture → 35 legacy claims → ongoing expansion → Eduardo Garduño
+Eso construye simultáneamente practice ranking + individual ranking + national capability.
+Y deliberadamente eliminé frases bonitas pero poco probatorias como “technical precision and sensitivity to organisational dynamics”, “corporate labour identity” y “safeguarding operational continuity across its Mexican footprint”. La evidencia ya demuestra esas cosas; no hace falta decirle al researcher cómo debe sentirse respecto del asunto.
+Una observación importante antes de pasar al #2: el documento tiene una pequeña inconsistencia que debemos aclarar el lunes. Primero habla de operaciones en Puebla, State of Mexico, Guanajuato, Jalisco, Morelos and Chihuahua, pero posteriormente concreta la harmonisation en “five plants” y enumera three in Puebla plus Cuautitlán, Irapuato and Silao, que matemáticamente ya serían seis, y luego añade Santa Anita. Yo por eso he usado prudentemente “facilities across Puebla, the State of Mexico, Guanajuato and Jalisco” sin dar número de plantas. Es una excelente pregunta para Sandra.
+Y sí: éste es Matter #1 sin discusión. El siguiente que escribiría es Brose, porque después de demostrar post-M&A no quiero otro portfolio de litigation: quiero golpear inmediatamente con collective labour + union representation + RRM/USMCA + 400 unionised employees. Esa alternancia es la que hará que el submission tenga cadencia y no parezca una sucesión de pleitos.
+Sí. Viendo ya el submission completo, yo no cortaría en 12 ni de broma. Hay bastante más material defendible. Mi propuesta de orden Chambers —todavía susceptible de moverse conforme optimicemos cada descripción y despejemos preguntas con Sandra— sería esta:
+#
+Matter
+Qué aporta a la candidatura
+1
+Schaeffler / Vitesco
+Hero. Post-M&A labour integration, 5,000+ empleados, múltiples plantas/estados, CBA + compliance + 35 claims. Eduardo.
+2
+Brose México
+Hero. Tres plantas, 400 sindicalizados, disputa por titularidad del CBA, amenaza RRM/USMCA, business continuity. Javier.
+3
+Bonatti / Energía Mayakan + energy projects
+Hero. Mayakan USD2bn+, cinco estados, lifecycle laboral completo, 20+ matters, 18 conciliados, strike prevention; además Cuxtal II USD2.5bn. Javier.
+4
+GeNI México
+Hero. Huelga inminente, negociación CBA, supplier crítico de VW/Audi/Ford/GM, continuidad de supply chain y eficiencias operativas. Eduardo.
+5
+Cinemex
+Hero de escala nacional. 11,000+ empleados; 90–100 lawsuits en CDMX + 100+ nacionales; MXN60.5m+ exposure; estrategia nacional unificada.
+6
+Volkswagen de México / VW Financial Services
+Hero institucional. MXN280m exposure + local/federal litigation + contratos + RIT + disciplinary mechanisms + preventive governance. Eduardo.
+7
+Mextypsa / Guadalajara Metro Line 4 + Wind Farm
+Muy fuerte. Proyecto Metro USD552m + workforce lifecycle; successful amparo en Coahuila; 20+ disputes/MXN21.5m portfolio. Javier.
+8
+Nueva Empresa
+Hero jurídico. Successful amparo ante Collegiate Court; due process + identidad legal de mujer que utiliza maiden/married names; MXN3m exposure. Javier.
+9
+Bosch México
+Escala + governance. 17,000 empleados, multi-plant labour structures, disciplinary processes, HR training, unions, social security/Bosch Rexroth. Javier + José Alberto.
+10
+Coats de México
+Collective + restructuring. Workforce adjustment en Puebla/Veracruz/Tlaxcala; CBA liquidation; union exposure MXN12.5m+; salary negotiations. Eduardo.
+11
+Megacable
+National portfolio. 120+ labour matters en Puebla/Querétaro + RIT, policies y joint commissions. Excelente prueba de capacidad de ejecución.
+12
+Benteler
+Greenfield/collective. Construcción desde cero de labour structure: contracts + policies + collective agreements + collective rights/union dimension. Eduardo/José Alberto.
+13
+Securitas México
+Geographic reach. 50+ lawsuits / MXN10m + Puebla, CDMX, Torreón y Veracruz + advisory. Eduardo.
+14
+American Axle & Manufacturing
+New client win + cross-border. US automotive manufacturer; DeForest nombrado full-scope Mexican labour counsel en enero 2026; RIT + contracts + protocols + due diligence. Muy importante para Jaime.
+15
+Suburbia
+Retail + scale/prevention. 30+ lawsuits / MXN12m exposure + ocho entidades + HR/supervisor training + preventive governance.
+16
+REGSA
+Collective/union depth. Labour structure construida desde cero + union representativeness disputes. Eduardo.
+17
+Private Client / Enerflex–Pemex
+Extraordinary contentious matter. Judgment de MXN2.162bn, confidential mediation, Pemex joint-and-several exposure y parallel claims. Es un animal por cuantía y complejidad, aunque hay que estudiar cuidadosamente cómo encaja al actuar DeForest para el exempleado/como mediator.
+18
+Omron
+Remote work + IMSS + labour reform + workforce documentation + HR training. Buen regulatory/preventive matter.
+19
+Badak
+Outcome. Claim de ~MXN1.06m reducido a MXN20,000 (98%) mediante amparo/negociación; además otros claims por MXN1.5m+.
+20
+Art Human
+Full labour portfolio + 7 lawsuits + audits + STPS/IMSS inspections con ~MXN2m exposure resueltas sin multas.
+21
+Grupo DOS
+Technology; labour dispute de aproximadamente MXN5m. Puede servir para sector breadth y para Jaime, pero necesito ver mejor el outcome antes de decidir cuánto pesa.
+22–25
+Por determinar entre los restantes matters del submission
+Aquí no rellenaría todavía. Primero quiero comparar B-LIFE, SKF, Grupo Radio Centro, Ramsa, Penske y cualquier otro restante con los 21 anteriores y ver cuáles aportan evidencia incremental real.
+Mi lectura cambia bastante a partir del #13
+No diría ya “los primeros 12 son los casos y después vienen los accesorios”. Hay candidatos genuinos hasta bastante abajo.
+Por ejemplo, American Axle en #14 no es menos estratégico que algunos de arriba: quizá el matter en sí todavía no tiene el drama de Brose, pero demuestra new client win + cross-border instruction + full-scope appointment y, crucialmente, nos ayuda a probar a Jaime. Eso es valuable evidence para el submission.
+Y Enerflex/Pemex (#17) podría incluso subir violentamente. Un dispute con una sentencia de MXN2.162 billion es objetivamente extraordinario. Mi reserva no es sobre su importancia, sino sobre qué historia cuenta sobre la práctica employer-side de DeForest. Si Sandra nos explica bien el rol y podemos presentarlo como una sofisticada mediación laboral de altísimo riesgo sin generar una incoherencia con la candidatura general, puede acabar fácilmente en Top 10.
+La arquitectura que estamos consiguiendo
+Esto es lo que más me gusta. No tenemos 20 variantes de “we defended an unfair dismissal claim”. Tenemos:
+Post-M&A: Schaeffler. RRM/union representation: Brose. Energy/infrastructure: Bonatti. Strike/CBA: GeNI. National mass litigation: Cinemex. High-exposure institutional client: Volkswagen. Infrastructure + amparo: Mextypsa. Novel constitutional litigation: Nueva Empresa. 17,000-person workforce governance: Bosch. Restructuring/CBA: Coats. 120+ portfolio: Megacable. Greenfield labour architecture: Benteler. Multi-city litigation: Securitas. Cross-border/new-client/full-scope: American Axle. Retail/prevention: Suburbia. Representativeness: REGSA. Billion-peso dispute/mediation: Enerflex. Regulatory/remote work: Omron. 98% exposure reduction: Badak. Inspections/zero fines: Art Human.
+Eso sí parece una práctica nacional completa.
+Y además el propio submission nos da la infraestructura humana que hace creíble semejante volumen: 4 partners + 23 non-partners, más de 20 jurisdicciones.
+Por tanto, mi objetivo ahora sería intentar llegar a 25, no intentar reducir a 20. Pero los últimos cuatro tienen que ganarse el puesto.
+Y voy acumulando las preguntas para Sandra. Además de la inconsistencia geográfica/plants de Schaeffler, ya tengo marcado Enerflex/Pemex: precisar exactamente la capacidad en la que actúa DeForest, quién es formalmente el cliente, cómo evolucionó su papel hacia mediator y cuál es el estado/outcome actual, porque ese asunto puede ser demasiado bueno para dejarlo en #17.
+Sí. Ya los cerraría. Y haría una pequeña corrección respecto de mi shortlist anterior: Ramsa tiene más valor estratégico de lo que parecía, porque fortalece simultáneamente gobierno laboral y la candidatura de Jaime. El propio diagnóstico de RankPilot ya la había identificado dentro del pilar de labour governance, junto con Bosch, Omron y SKF.
+Por tanto, mis 22–25 definitivos serían:
+#
+Matter
+Razón de inclusión
+22
+Ramsa / FEMSA Group
+Labour governance + audits + sensitive terminations + due diligence + contractor/subcontractor structures + compliance. Jaime.
+23
+Grupo Radio Centro
+Sensitive internal investigation + senior executive + reputational risk + litigation avoided. Jaime.
+24
+SKF México
+Governance/compliance + industrial client; aporta otra relación institucional y sectorial. Necesitamos elevar los hechos el lunes.
+25
+Penske Logística
+Logistics/supply chain + multinacional + diversificación sectorial. Entra provisionalmente sujeto a confirmar la sustancia exacta del mandate.
+22. Ramsa — éste sí lo metería con convicción
+Es una compañía interna del FEMSA Group, y el trabajo no es un pleito pequeño: DeForest fue contratado para rediseñar sus labour controls, realizó auditorías, reestructuró procesos internos, apoyó terminaciones sensibles y dio formación. Ahora el mandato se ha ampliado a comprehensive labour due diligence + ongoing compliance review, incluyendo exposición regulatoria, estructuras de contractors/subcontractors, políticas internas y escenarios de inspección y litigio. Lead: Jaime Bustamante.
+Me gusta especialmente porque después de tantos asuntos contentious podemos decir:
+“No sólo apagamos incendios. Diseñamos el sistema para que no ocurran.”
+Y Jaime necesita esto.
+23. Grupo Radio Centro
+También lo conservaría. Es distinto a casi todo lo anterior: internal investigation / sensitive allegations / senior executive / reputational exposure.
+DeForest dirigió el evidence-gathering y la intervención evitó litigio por aproximadamente MXN750,000, además de proteger a la organización frente al riesgo reputacional. Nuevamente, Jaime Bustamante es lead.
+La cuantía es pequeña. No me importa demasiado. Su valor no es financiero; es que demuestra una capability diferente y trusted adviser status en una situación sensible.
+Además, nos ayuda muchísimo a evitar que Jaime aparezca como un señor con un CV extraordinario pero sin asuntos.
+24. SKF México
+Lo metería condicionado a una pregunta para Sandra.
+El submission confirma que SKF es cliente activo y nuestro diagnóstico previo lo coloca específicamente dentro de los mandates de labour governance, junto con Ramsa, Bosch, Omron, SEBNMX y AUNDE.
+Pero el material recuperado no me da todavía suficiente detalle del matter como para defender su posición #24 frente a Chambers.
+Así que queda marcado:
+PREGUNTA SANDRA — SKF: ¿Cuál fue concretamente el trabajo realizado durante los últimos 12 meses? Necesitamos escala de workforce/plantas, naturaleza de la intervención, regulatory/compliance issue, resultado y lead lawyer.
+Si la respuesta es potente, entra. Si resulta ser day-to-day advice, sale.
+25. Penske Logística
+Lo prefiero provisionalmente sobre B-LIFE porque logistics/supply chain amplía de verdad el mapa sectorial de una candidatura muy cargada hacia automotive/manufacturing.
+El submission identifica a Penske como nuevo cliente y como un global supply-chain and logistics player headquartered in Reading, Pennsylvania. Eso nos da además otro ingrediente interesante: new client + multinational + cross-border corporate context + logistics.
+Pero aquí aplico exactamente la misma reserva que con SKF: el documento recuperado identifica al cliente, no me da todavía suficiente sustancia del matter.
+Por tanto:
+PREGUNTA SANDRA — PENSKE: ¿qué mandato concreto originó la contratación de DeForest? ¿Es contentious, governance, restructuring, workforce, compliance, collective? ¿Cuántos empleados/sites están afectados? ¿Quién lidera? ¿Es una relación nueva que se está ampliando?
+Si hay carne, entra #25. Si no, no vamos a convertir brand prestige en sustituto de matter sophistication.
+¿Quiénes se quedan fuera?
+B-LIFE, por ahora. Sólo tenemos evidencia de que es un nuevo cliente italiano de agro-products; no suficiente evidencia del asunto.
+Y aquí sí sería disciplinada: tener 25 ayuda sólo si #25 sigue siendo evidencia. No quiero que después de Schaeffler, Brose, Bonatti, VW, Cinemex, Bosch, etc., Chambers llegue al final y piense “ah, aquí empezaron a rellenar casillas”.
+Con esto tenemos 23 asuntos que yo defendería hoy y dos plazas condicionadas a SKF y Penske. Si Sandra no nos da suficiente sustancia, buscamos sustitutos entre B-LIFE y los demás matters disponibles.
+Y hay algo que me gusta muchísimo de esta lista final: Ramsa + Radio Centro en #22–23 no están ahí para llegar a 25; están ahí para Jaime. Junto con American Axle y Grupo DOS, empiezan a construir una pequeña constelación propia alrededor de su candidatura.
+Así que cerramos provisionalmente los 25 y avanzaría ya con la redacción #2 Brose, manteniendo en paralelo nuestro banco de preguntas para Sandra.
+Plomo. Los voy a redactar en orden estratégico Chambers, no en el orden en que aparecen en Legal 500. Y mantendré la regla que acabamos de fijar: cada matter debe hacer visible cliente/sector → problema → escala/riesgo → intervención de DeForest → resultado/significance → abogado. Nada de adjetivos que la evidencia pueda demostrar sola.
+Ya tenemos #1 Schaeffler/Vitesco. Continúo con los siguientes.
+2. Brose México — Javier Atzin Vallejo
+DeForest advises Brose México, part of the international automotive supplier Brose Group, in a sensitive collective labour dispute affecting one of the company’s three manufacturing plants in Querétaro and approximately 400 unionised employees. The dispute arose from a challenge by an external union to the ownership of the plant’s existing collective bargaining agreement.
+The matter is particularly significant in the context of increased union-representation activity across Mexico’s Bajío industrial corridor. The challenge forms part of a broader series of representativeness proceedings associated with Transformación Sindical and has included threats to trigger the USMCA Rapid Response Mechanism, creating potential consequences extending beyond the domestic collective labour proceedings.
+Led by Javier Atzin Vallejo, DeForest has managed the dispute through strategic negotiation and dialogue while protecting the continuity of Brose’s manufacturing operations. The team has so far avoided work stoppages and prevented escalation to international mechanisms while the underlying proceeding remains ongoing.
+The mandate is primarily defined by operational rather than monetary exposure: an adverse development could affect a unionised workforce within a three-plant automotive operation and potentially expose the client to international scrutiny under the USMCA labour framework.
+Lead partner: Javier Atzin Vallejo — Querétaro Status: Ongoing Deal value: N/A Non-publishable
+Me gusta muchísimo como #2 porque cambia completamente de registro respecto de Schaeffler: M&A integration → collective labour/RRM.
+Pregunta Sandra — Brose: confirmar si el riesgo RRM continúa vigente y si desde julio ha habido algún nuevo procedural milestone, negociación, resolución o outcome. Si podemos demostrar que DeForest neutralised el riesgo en vez de simplemente decir que hasta ahora no se materializó, el matter sube todavía más.
+3. Bonatti / Energía Mayakan — Javier Atzin Vallejo
+Aquí Legal 500 tenía demasiada información buena amontonada. Para Chambers hay que jerarquizarla. Mayakan es el ancla; después usamos los demás proyectos para demostrar que no fue una intervención aislada.
+DeForest acts as Mexican labour counsel to Bonatti, an international engineering and construction contractor specialising in oil, gas and energy infrastructure, across a portfolio of major pipeline and energy projects in Mexico. The mandate includes the Energía Mayakan Pipeline Expansion, a project valued at more than USD2 billion and spanning five Mexican states, for which DeForest managed the employment lifecycle of the project workforce from contracting through construction and demobilisation.
+For Mayakan, the team designed project-based employment documentation and the termination strategy intended to minimise post-project liabilities. More than 20 labour matters arose during execution, 18 of which were resolved through conciliation. Across the wider portfolio, only three matters proceeded to litigation and have since been closed, with DeForest estimating that its strategy reduced the client’s potential labour costs by approximately 80%.
+The relationship also extends to other strategically important energy infrastructure, including the Energía Costa Azul LNG project and the Las Dunas/Algodones compression stations, where DeForest managed disputes carrying approximately MXN6 million in exposure and achieved an estimated 80% reduction in potential liability through early procedural intervention and negotiated resolution.
+In Tabasco, DeForest also intervened in a project involving operation and maintenance services for ENI México, preventing an imminent strike that would have halted operations under a project connected to a strategic CFE energy-supply tender and exposed Bonatti to significant contractual and reputational consequences. The wider mandate also encompasses the USD2.5 billion Cuxtal II expansion of the Mayakan system.
+Led by Javier Atzin Vallejo, the portfolio demonstrates DeForest’s ability to combine project-based workforce planning, multi-jurisdictional dispute management and strike prevention in large-scale energy infrastructure where labour disruption can directly affect project execution.
+Lead partner: Javier Atzin Vallejo — Querétaro Key team member: Yrelia Barrón — Querétaro Status: Ongoing Relevant values: Mayakan >USD2bn; Cuxtal II USD2.5bn; labour litigation approx. USD252,000 Non-publishable
+Este es muchísimo mejor ahora. El researcher no tiene que saber quién demonios es Bonatti: inmediatamente entiende international energy-infrastructure contractor + USD2bn project + five states.
+Preguntas Sandra — Bonatti: confirmar si Mayakan y Cuxtal II son parte del mismo continuing instruction o proyectos diferenciados; confirmar si podemos seguir afirmando el 80% estimated cost saving; y preguntar si la amenaza de huelga de Tabasco fue formal —emplazamiento/aviso— o una amenaza de negociación. No quiero inflar jurídicamente “strike” si lo correcto es threatened industrial action.
+4. GeNI de México — Eduardo Garduño
+DeForest acts as full-service labour counsel to GeNI de México, a German automotive manufacturer supplying components to major OEMs including Volkswagen, Audi, Ford and General Motors. The firm was called upon when severely deteriorated relations between the company and its union escalated during the mandatory biennial review of the collective bargaining agreement and culminated in a formal announcement of an intended strike.
+Led by Eduardo Garduño, DeForest designed and led the collective bargaining strategy, restructuring the negotiation around both workforce expectations and the company’s operational requirements. The resulting agreement prevented the threatened shutdown and established revised terms intended to provide greater stability to the labour relationship.
+The commercial significance extended beyond GeNI itself. A stoppage could have interrupted the supply of components into the production chains of several major automotive manufacturers. DeForest’s intervention therefore protected not only the client’s plant operations but continuity within a wider automotive supply chain.
+The revised agreement also introduced operational efficiencies, particularly within tooling and die-making activities, through process optimisation, methodological changes and the deployment of technology. Although the resulting savings have not been precisely quantified, the client reports substantial operational value from the revised arrangements.
+Lead partner: Eduardo Garduño — Puebla Other lawyer identified: Carlos Rivera Status: Ongoing Non-publishable
+Éste hace una cosa preciosa para Eduardo: Schaeffler dice “I can integrate”; GeNI dice “I can negotiate when the factory may stop tomorrow.”
+Pregunta Sandra — GeNI: ¿cuántos empleados/sindicalizados estaban cubiertos por el CBA? Ese número nos falta y podría convertir este asunto en un animal todavía mayor.
+5. Cinemex — Eduardo Garduño
+DeForest manages a major nationwide employment litigation portfolio for Cinemex, one of Mexico’s principal cinema exhibition businesses, which employs more than 11,000 people nationwide. The portfolio developed against the backdrop of pandemic-era cinema closures and the subsequent increase in employment claims, requiring the client to manage significant litigation simultaneously across jurisdictions operating under differing post-reform judicial criteria.
+DeForest currently oversees approximately 90–100 active lawsuits in Mexico City and more than 100 additional claims elsewhere in Mexico, with aggregate exposure exceeding MXN60.5 million. The firm has established a unified national defence strategy designed to maintain consistency across proceedings, reduce the risk of contradictory positions and provide the client with centralised oversight of its employment exposure.
+The mandate extends beyond litigation. DeForest conducts conciliation hearings, advises on employee terminations and reviews employment documentation to address recurring sources of claims, using the litigation portfolio to inform preventive workforce measures.
+The engagement demonstrates the team’s ability to manage employment risk at institutional scale: close to 200 active proceedings affecting an employer with more than 11,000 employees, while maintaining a consistent strategy across Mexico’s evolving labour-court system.
+Lead partner: Eduardo Garduño — the source continues onto the following page, so I would preserve the existing team fields from the submission rather than infer them here. Exposure: >MXN60.5m Status: Ongoing Non-publishable
+Aquí deliberadamente no pido disculpas por el volumen. Al contrario. Después de cuatro sophisticated mandates, Cinemex dice:
+“And yes, this 27-lawyer team can actually absorb scale.”
+Pregunta Sandra — Cinemex: número actualizado de proceedings a septiembre y, sobre todo, outcomes: ¿cuántos ganados, conciliados/cerrados, reducción de exposure o success rate específico del portfolio? El matter tiene scale; ahora quiero performance.
+6. Volkswagen de México / Volkswagen Financial Services — Eduardo Garduño
+DeForest advises Volkswagen de México and Volkswagen Financial Services, part of the Volkswagen Group, on a significant portfolio of contentious and preventive employment matters in Mexico. Volkswagen has one of the country’s most established automotive manufacturing operations, including its major production presence in Puebla, making consistency of labour governance and dispute management particularly important to its operations.
+DeForest manages active labour matters carrying aggregate exposure of approximately MXN280 million across local and federal jurisdictions. The team coordinates the litigation strategy while also advising on the employment structures and internal mechanisms from which future labour exposure may arise.
+The mandate includes the review of employment agreements, powers of attorney, internal work regulations and disciplinary mechanisms connected with the Puebla operations. By combining active dispute management with preventive review, DeForest is able to identify recurring risks within the litigation portfolio and translate them into changes in workforce documentation and internal procedures.
+The relationship demonstrates DeForest’s ability to act as continuing employment counsel to a major multinational industrial group across both high-value contentious work and day-to-day labour governance, rather than treating litigation and preventive advice as separate mandates.
+Exposure: approx. MXN280m Status: Ongoing Non-publishable
+Pregunta Sandra — Volkswagen: necesitamos el número de active matters detrás de esos MXN280m. MXN280m es formidable, pero “X proceedings / MXN280m exposure” sería mucho más probatorio. También confirmaría si Eduardo es efectivamente lead del portfolio completo y qué parte corresponde a VW México versus VWFS.
+7. Mextypsa — Javier Atzin Vallejo
+Éste también merece bastante centimetraje porque en realidad contiene tres pruebas diferentes de capability.
+DeForest acts as labour counsel to Mextypsa, an engineering and infrastructure company whose Mexican projects require the rapid assembly, management and demobilisation of project-based workforces. The relationship combines workforce structuring for major infrastructure developments with contentious employment work arising from project execution.
+A key mandate concerned Line 4 of the Guadalajara Metro, a USD552 million infrastructure project. DeForest designed the employment documentation and compliance framework for the project workforce and advised throughout the demobilisation process, structuring terminations to reduce the risk of claims following completion of the relevant works.
+Separately, in litigation arising from the Coahuila Wind Farm Project, DeForest challenged an adverse judgment in a wrongful dismissal claim valued at more than MXN5.5 million. The team obtained constitutional relief through amparo proceedings, reversing procedural defects and restoring the client’s right to defend the claim.
+DeForest additionally manages more than 20 employment disputes for Mextypsa with aggregate exposure of approximately MXN21.5 million. The team has used negotiated resolution where commercially appropriate, including settling an MXN886,000 claim for MXN90,000.
+Led by Javier Atzin Vallejo, the portfolio demonstrates the practice’s ability to follow labour risk throughout the lifecycle of major infrastructure projects — from workforce creation and compliance through demobilisation, litigation and constitutional proceedings.
+Lead partner: Javier Atzin Vallejo — Querétaro Key team: Yrelia Barrón; Roberto López Hernández — Querétaro Status: Ongoing Matter value stated: USD1,144,523; Line 4 project USD552m Non-publishable
+Y fíjate en la secuencia completa que ya tenemos:
+1 Schaeffler — post-M&A / 5,000+. 2 Brose — union representation / RRM. 3 Bonatti — USD2bn infrastructure / strike / five states. 4 GeNI — CBA / strike / automotive supply chain. 5 Cinemex — 11,000 employees / ~200 claims / national execution. 6 Volkswagen — MXN280m / institutional relationship / governance. 7 Mextypsa — USD552m infrastructure / workforce lifecycle / successful amparo.
+Esto ya empieza a hacer exactamente lo que queríamos: ningún asunto está solo. Cada uno añade una pieza distinta a la proposición “DeForest is a Band 5 practice”.
+Y las preguntas para Sandra quedan acumuladas; no las perderé. El siguiente bloque natural sería #8 Nueva Empresa → #9 Bosch → #10 Coats → #11 Megacable → #12 Benteler, porque ahí terminamos de probar constitutional litigation + enormous workforce governance + collective restructuring + national portfolio + greenfield labour architecture.
+adelante, continúa...
+Seguimos. Y aquí empieza a verse algo muy bueno: después de los siete primeros, no cae abruptamente la calidad. Los asuntos #8–#12 añaden capacidades que todavía necesitamos probar: amparo, social security, restructuring colectivo, volumen multiestado y greenfield labour architecture.
+8. Nueva Empresa — Javier Atzin Vallejo
+Este asunto me gusta más cuanto más lo miro porque no es “otro wrongful dismissal”. El despido es sólo el vehículo; el asunto real es constitucional/procesal.
+DeForest represents Nueva Empresa, a Mexican private-education company, in two wrongful termination proceedings brought by long-tenured former employees, with aggregate exposure of approximately MXN3 million. The disputes developed into an unusual constitutional issue concerning the legal identity of the company’s female attorney-in-fact and the use of her maiden and married names at different stages of her life.
+Although DeForest had duly responded to both claims and submitted notarial evidence recognising the attorney-in-fact under multiple legally valid names, the labour court refused to recognise her standing, treated the claims as unanswered and issued an adverse ruling ordering payment of statutory employment benefits.
+Led by Javier Atzin Vallejo, DeForest challenged the decision through amparo proceedings, arguing that the court’s treatment of the attorney-in-fact’s identity violated due process and fundamental rights. The Collegiate Court granted constitutional relief, ordered the labour court to recognise her legal standing and admitted the company’s defences.
+Beyond reversing a decision carrying approximately MXN3 million in exposure, the matter is significant because it addresses the legal consequences arising where a woman has been formally identified under different legally recognised names over the course of her life, bringing questions of identity and fundamental rights into employment proceedings.
+Lead partner: Javier Atzin Vallejo — Querétaro Key team: Yrelia Barrón — Querétaro Value: approx. USD171,494 / MXN3m Status: Ongoing Non-publishable
+Una precisión: yo eliminaría “establishing a precedent”, que aparecía en Legal 500. La fuente prueba que obtuvieron constitutional relief y explica la significación jurídica, pero no nos da elementos suficientes para afirmar que formalmente haya creado un precedente vinculante. Mejor no regalarle a Chambers una afirmación cuestionable.
+Pregunta Sandra — Nueva Empresa: ¿qué ocurrió después de que el Collegiate Court concediera el amparo? ¿Los dos proceedings continúan? ¿Hubo finalmente absolución, settlement o reducción de exposure? Y, muy importante, ¿existe algún identificador/resolución que permita sustentar que el criterio tiene relevancia más allá del caso concreto?
+9. Robert Bosch de México — Javier Atzin Vallejo / José Alberto Díaz
+Aquí no tenemos “drama”. Tenemos escala institucional, y eso es exactamente lo que debe vender.
+DeForest advises Robert Bosch de México, part of the global Bosch technology and industrial group, on labour governance across a Mexican operation comprising approximately 17,000 employees. The scale and diversity of the workforce require the team to coordinate employment structures across different plants and service lines while maintaining consistent internal standards.
+The firm designs and reviews employment documentation, manages disciplinary processes, trains HR teams and supports the company in union-related matters. The mandate therefore extends from preventive employment governance into the implementation of labour policies at operational level across a large industrial workforce.
+DeForest also advised on employer registration for Bosch Rexroth and the alignment of social security structures across the business, adding an IMSS and regulatory dimension to the wider employment mandate.
+Led by Javier Atzin Vallejo and José Alberto Díaz, the relationship demonstrates DeForest’s ability to provide continuing labour and social-security support to a sophisticated multinational employer whose Mexican workforce alone comprises approximately 17,000 people.
+Lead lawyers: Javier Atzin Vallejo — Querétaro; José Alberto Díaz — Puebla Deal value stated in Legal 500: USD9,579,844 Status: Ongoing Non-publishable
+Este es un asunto donde no intentaría fabricar sofisticación mediante prosa. “17,000 employees + multinational industrial group + plants + unions + social security” ya habla solo.
+Preguntas Sandra — Bosch: ¿qué representa exactamente el deal value de USD9.58m? No lo utilizaría hasta entenderlo. Y preguntaría cuántas plantas/locations mexicanas cubre el mandate. Si nos dice 10, 15, etc., esa cifra entra inmediatamente.
+10. Coats de México — Eduardo Garduño
+Aquí sí tenemos un asunto mucho más Chambers-friendly de lo que sugería la versión original: multi-site workforce adjustment + collective labour architecture + CBA liquidation + union negotiations.
+DeForest advises Coats de México, part of an international manufacturing group producing threads, yarns and performance materials, on a significant workforce adjustment affecting operations in Puebla, Orizaba in Veracruz and two plants in Tlaxcala.
+Led by Eduardo Garduño, the team was engaged to build and restructure the client’s labour framework, including individual employment agreements, internal policies and collective arrangements required to support the company’s operations across the affected sites.
+The mandate has included the liquidation of a collective bargaining agreement and management of union-related exposure exceeding MXN12.5 million. DeForest negotiated the relevant arrangements while seeking to preserve operational continuity during the workforce adjustment.
+The team also conducts negotiations with the union concerning the salary terms of the collective bargaining agreement, making the relationship an ongoing collective labour mandate rather than a one-off restructuring exercise. The work demonstrates DeForest’s ability to combine workforce restructuring, collective bargaining and multi-site implementation within an industrial environment.
+Lead partner: Eduardo Garduño — Puebla Key team: José Alberto Díaz; Maximiliano Hernández — Puebla Value: approx. USD675,000 / union exposure >MXN12.5m Status: [confirm] Non-publishable
+Y aquí tengo una pregunta importante para Sandra, porque la redacción original es ambigua:
+Coats: cuando dice “build its labour structure from the ground up”, ¿se refiere realmente a crear una estructura nueva, o a restructurar/harmonizar la existente como consecuencia del workforce adjustment? Necesitamos precisión. También: ¿cuántos empleados estaban afectados por el adjustment? Ese número puede hacer subir bastante el matter.
+11. Megacable — Eduardo Garduño
+Éste es otro asunto donde volume = strength, porque demuestra que el national platform del firm overview existe en la práctica.
+DeForest advises Megacable, one of Mexico’s major telecommunications operators, on a substantial multi-state employment portfolio combining litigation management with preventive workforce governance.
+The firm currently handles more than 120 labour matters for the company in Puebla and Querétaro. Managing the portfolio requires coordination across jurisdictions with different labour-market dynamics and judicial tendencies while maintaining a consistent defence strategy for the client.
+DeForest’s role extends beyond the active disputes. The team is restructuring internal work regulations, employment policies and mandatory joint commissions in order to address recurring sources of exposure and create more uniform standards for employment relations across the relevant operations.
+The mandate illustrates the practice’s ability to use information generated by a large litigation portfolio as a preventive tool: active disputes are managed within a coordinated framework while recurring risks are translated into changes to the client’s internal labour architecture.
+El submission confirma más de 120 matters en Puebla y Querétaro y la intervención paralela sobre regulations, policies y joint commissions.
+Lead partner: aquí quiero mantener lo que diga la ficha completa antes de asignarlo en la versión final; sabemos que Eduardo incluye Megacable entre sus representative mandates, pero prefiero no convertir eso automáticamente en “lead partner” sin verificar el campo específico. El submission sí presenta Megacable como parte del portfolio de liderazgo de Eduardo.
+Preguntas Sandra — Megacable: exposure agregado; outcome/success rate de esos 120+ matters; número de empleados/operations afectados; y confirmar lead team. Si nos da 120+ cases + MXN X exposure + X% resolved/favourable, éste podría subir del #11.
+12. Benteler — Eduardo Garduño / José Alberto Díaz
+Éste cierra muy bien el bloque porque vuelve a collective/industrial, pero desde otra puerta: creación de estructura laboral.
+DeForest advises Benteler, an international metal-processing and automotive-supply group with significant industrial operations in Mexico, on the development of the labour framework supporting its Mexican operations.
+The team has been engaged to build the relevant employment structure from the ground up, including individual employment agreements, internal policies and collective bargaining arrangements. The mandate requires DeForest to align the client’s employment documentation and workforce governance with the requirements of an industrial operation exposed to collective labour considerations.
+The work also encompasses collective rights and union-related issues, giving DeForest responsibility for both the individual and collective components of the client’s labour architecture rather than discrete employment documentation alone.
+Led by Eduardo Garduño with José Alberto Díaz, the mandate provides a further example of DeForest’s ability to design preventive labour structures for industrial employers and complements the practice’s contentious and collective bargaining work elsewhere in the automotive supply chain.
+Lead: Eduardo Garduño — Puebla Key lawyer: José Alberto Díaz — Puebla Status: Ongoing / confirm Non-publishable. Benteler is identified in the submission as a metal-processing supplier to Mexico's automotive industry and as a non-publishable client.
+Pero éste necesita alimento el lunes. La documentación que tenemos dice que construyeron contracts, policies y collective agreements, pero no proporciona workforce size, número de sites, razón por la que hubo que construir la estructura, ni un outcome cuantificable.
+Preguntas Sandra — Benteler: ¿qué originó el mandato? ¿Nueva planta, nueva entidad, restructuring, acquisition, cambio sindical? ¿Cuántas plantas y empleados comprende? ¿Qué collective/union issue concreto estaba en juego? ¿Hubo CBA nuevo/legitimation/representativeness negotiation? Con esas respuestas sabremos si #12 está bien colocado o baja.
+Y aquí haría un pequeño checkpoint estratégico, porque después de doce asuntos la candidatura ya ha probado:
+M&A integration — Schaeffler. RRM/representativeness — Brose. mega-infrastructure — Bonatti. strike prevention/CBA — GeNI. national mass litigation — Cinemex. high-value institutional portfolio — Volkswagen. project employment + amparo — Mextypsa. constitutional litigation — Nueva Empresa. 17,000-employee governance/social security — Bosch. multi-site restructuring/CBA — Coats. 120+ dispute portfolio — Megacable. greenfield labour architecture — Benteler.
+Eso es muy importante para cómo redactemos #13–25: a partir de ahora cada matter tiene que profundizar escala, ampliar sectores/geografía o fortalecer personas, no volver a probar mediocremente algo que ya probamos mejor.
+Y las preguntas para Sandra quedan acumuladas: llevamos Schaeffler, Brose, Bonatti, GeNI, Cinemex, Volkswagen, Nueva Empresa, Bosch, Coats, Megacable y Benteler. Al final te las devuelvo como kick-off questionnaire quirúrgico, no mezcladas con la redacción.
+porfa, continúa con los casos del 13 al 25 y colócame todo, descripción de abogados, presentación de firma, qué opinamos de los rankings (defensa de inclusión) + casos en un solo documento, plis para entregárselo a Jonathan...
+Listo, mi chatyi. Te lo dejé todo consolidado en un solo documento de trabajo para Jonathan, ya ordenado con lógica Chambers y revisado visualmente página por página.
+Incluye la defensa estratégica de Band 5, la presentación completa de la firma, los extractos individuales de Eduardo → Javier → Jaime, los 25 asuntos en el orden estratégico acordado, y al final un bloque consolidado de preguntas para Sandra para el kick-off. La arquitectura se apoya en la evidencia de los 27 abogados, cobertura en más de 20 jurisdicciones y las cuatro capacidades que identificamos —post-M&A, sindicatos/RRM, litigio e investigaciones y gobierno laboral—.
+También dejé SKF (#24) y Penske (#25) expresamente como provisionales, porque las fuentes confirman que son clientes activos/nuevos pero todavía no contienen hechos suficientes para fabricar responsablemente un Chambers matter. Y marqué la cautela estratégica sobre Enerflex (#17): es un asunto extraordinario por cuantía, pero debemos decidir con Sandra si su carácter employee-side fortalece más de lo que tensiona la narrativa patronal.
+Descargar — DeForest Labour & Employment | Chambers 2027 | Working Draft para Jonathan
+DeForest_Labour_Chambers_2027_Working_Draft_for_Jonathan.docxDocumentoAbrir archivo

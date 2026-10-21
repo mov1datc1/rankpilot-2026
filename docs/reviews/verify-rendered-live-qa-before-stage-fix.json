@@ -1,0 +1,7 @@
+{
+  "status": 502,
+  "result": {
+    "success": false,
+    "error": "Final artifact review unavailable; delivery remains blocked."
+  }
+}

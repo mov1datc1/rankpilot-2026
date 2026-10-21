@@ -1,0 +1,18 @@
+{
+  "artifacts": [
+    {
+      "kind": "Submission",
+      "bytes": 28050,
+      "sha256": "08dbd017414ac6f954aa9c51a720b32107afb14879f0b3c6a25d17a88ab9247e",
+      "words": 5359
+    },
+    {
+      "kind": "Audit",
+      "bytes": 13720,
+      "sha256": "eaacdc6801059780ad3978b70f8530708cdb53ca767dbc1232a718e244e12bcc",
+      "words": 1648
+    }
+  ],
+  "exception": "APIConnectionError",
+  "message": "Connection error."
+}

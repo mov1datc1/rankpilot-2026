@@ -1,0 +1,660 @@
+{
+  "status": "verified_observation",
+  "declared_band": null,
+  "requested_edition": "current",
+  "firm_name": "ARAQUEREYNA",
+  "directory": "Chambers",
+  "practice_area": "Corporate/M&A",
+  "jurisdiction": "Venezuela",
+  "observed_band": "Band 2",
+  "checked_at": "2026-10-08T18:27:44.721047+00:00",
+  "message": "Posición oficial observada para esta firma, práctica, país y edición; no había una banda declarada para comparar. Comparación limitada a la tabla pública consultada en la fecha indicada; no acredita una edición histórica.",
+  "evidence": {
+    "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+    "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+    "scraped_at": "2026-10-08T18:27:44Z",
+    "edition": "2027",
+    "guide": "Latin America",
+    "observed_practice": "Corporate/M&A",
+    "observed_jurisdiction": "Venezuela",
+    "parser_version": "ranking-evidence-v1",
+    "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+    "organisation_id": 2254
+  },
+  "matched_firm": "ARAQUEREYNA",
+  "comparison_scope": "current_table_as_of_retrieval",
+  "table_scope_verified": true,
+  "market_context": {
+    "status": "table_only",
+    "source": {
+      "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+      "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+      "scraped_at": "2026-10-08T18:27:44Z",
+      "edition": "2027",
+      "guide": "Latin America",
+      "observed_practice": "Corporate/M&A",
+      "observed_jurisdiction": "Venezuela",
+      "parser_version": "ranking-evidence-v1",
+      "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+      "organisation_id": 2254
+    },
+    "competitors": [
+      {
+        "name": "D'Empaire",
+        "band": "Band 1",
+        "profile_path": "/department/dempaire-corporate-ma-latin-america-9:354:229:1:2665"
+      },
+      {
+        "name": "MENPA - Mendoza, Palacios, Acedo, Borjas, Páez Pumar & Cía.",
+        "band": "Band 1",
+        "profile_path": "/department/menpa-mendoza-palacios-acedo-borjas-paez-pumar-cia-corporate-ma-latin-america-9:354:229:1:3333"
+      },
+      {
+        "name": "LEĜA",
+        "band": "Band 2",
+        "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256"
+      },
+      {
+        "name": "InterJuris Abogados, S.C.",
+        "band": "Band 2",
+        "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408"
+      },
+      {
+        "name": "Travieso Evans Arria Rengel & Paz",
+        "band": "Band 2",
+        "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670"
+      },
+      {
+        "name": "Baker McKenzie",
+        "band": "Band 3",
+        "profile_path": "/department/baker-mckenzie-sc-corporate-ma-latin-america-9:354:229:1:2692"
+      },
+      {
+        "name": "Ponte Andrade & Casanova",
+        "band": "Band 3",
+        "profile_path": "/department/ponte-andrade-casanova-corporate-ma-latin-america-9:354:229:1:22756886"
+      },
+      {
+        "name": "SLV Consultores",
+        "band": "Band 3",
+        "profile_path": "/department/slv-consultores-corporate-ma-latin-america-9:354:229:1:23493985"
+      },
+      {
+        "name": "Tinoco, Travieso, Planchart & Núñez",
+        "band": "Band 3",
+        "profile_path": "/department/tinoco-travieso-planchart-nunez-corporate-ma-latin-america-9:354:229:1:2247"
+      },
+      {
+        "name": "Dentons",
+        "band": "Band 3",
+        "profile_path": "/department/dentons-corporate-ma-latin-america-9:354:229:1:7821"
+      },
+      {
+        "name": "Ágora Abogados",
+        "band": "Band 4",
+        "profile_path": "/department/agora-abogados-corporate-ma-latin-america-9:354:229:1:23719512"
+      },
+      {
+        "name": "LANDAEZ Abogados – Consultores",
+        "band": "Band 4",
+        "profile_path": "/department/landaez-abogados-consultores-corporate-ma-latin-america-9:354:229:1:23167606"
+      },
+      {
+        "name": "Lapadula Esteban Cadenas - LEC Abogados",
+        "band": "Band 4",
+        "profile_path": "/department/lapadula-esteban-cadenas-lec-abogados-corporate-ma-latin-america-9:354:229:1:22817510"
+      },
+      {
+        "name": "Raffalli de Lemos Halvorssen Ortega y Oliveira",
+        "band": "Band 4",
+        "profile_path": "/department/raffalli-de-lemos-halvorssen-ortega-y-oliveira-corporate-ma-latin-america-9:354:229:1:2252"
+      },
+      {
+        "name": "Torres Plaz & Araujo",
+        "band": "Band 4",
+        "profile_path": "/department/torres-plaz-araujo-corporate-ma-latin-america-9:354:229:1:3335"
+      },
+      {
+        "name": "WDA legal, S.C.",
+        "band": "Band 4",
+        "profile_path": "/department/wda-legal-sc-corporate-ma-latin-america-9:354:229:1:9500"
+      }
+    ],
+    "limitations": [
+      "Table positions only; profile commentary, historical trajectory and evidence-based competitor gap analysis have not been retrieved. Do not claim full market calibration."
+    ]
+  },
+  "individuals": [
+    {
+      "status": "not_found",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.721833+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Pedro I Sosa Mendoza",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.722053+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Maripi Viso",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.722298+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "María Carolina Cano",
+      "subject_type": "individual"
+    },
+    {
+      "status": "verified_mismatch",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": "Band 3",
+      "checked_at": "2026-10-08T18:27:44.722508+00:00",
+      "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": "2027",
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1",
+        "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057",
+        "organisation_id": null
+      },
+      "matched_firm": "Manuel Reyna",
+      "comparison_scope": "current_table_as_of_retrieval",
+      "lawyer_name": "Manuel Reyna",
+      "subject_type": "individual"
+    },
+    {
+      "status": "verified_mismatch",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": "Senior Statespeople",
+      "checked_at": "2026-10-08T18:27:44.722751+00:00",
+      "message": "Observación individual limitada a la persona, firma, práctica, país y edición indicados. No acredita una banda del departamento ni de otra práctica.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": "2027",
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1",
+        "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589",
+        "organisation_id": null
+      },
+      "matched_firm": "Gustavo J Reyna",
+      "comparison_scope": "current_table_as_of_retrieval",
+      "lawyer_name": "Gustavo J Reyna",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.722998+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Pedro Luis Planchart",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.723231+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Juan José Figueroa",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.723431+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Federica Mena",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.723629+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Loriane Damian",
+      "subject_type": "individual"
+    },
+    {
+      "status": "not_found",
+      "declared_band": "Not Ranked",
+      "requested_edition": "current",
+      "firm_name": "ARAQUEREYNA",
+      "directory": "Chambers",
+      "practice_area": "Corporate/M&A",
+      "jurisdiction": "Venezuela",
+      "observed_band": null,
+      "checked_at": "2026-10-08T18:27:44.723847+00:00",
+      "message": "No se verificó una coincidencia exacta de persona y firma en esta tabla. No acredita ausencia de ranking en otras prácticas o ediciones.",
+      "evidence": {
+        "source_url": "https://chambers.com/legal-rankings/corporate-ma-venezuela-9:354:229:1",
+        "content_sha256": "9fefcda37a22770a0e6aaedad1bb9c0e11cfc0594a2847d717823ce0447024cf",
+        "scraped_at": "2026-10-08T18:27:44Z",
+        "edition": null,
+        "guide": "Latin America",
+        "observed_practice": "Corporate/M&A",
+        "observed_jurisdiction": "Venezuela",
+        "parser_version": "ranking-evidence-v1"
+      },
+      "lawyer_name": "Estefanía Lizardo",
+      "subject_type": "individual"
+    }
+  ],
+  "profile_research": {
+    "version": "official-profile-evidence-v1",
+    "profiles": [
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "ARAQUEREYNA",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 2254,
+          "profile_path": "/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+          "kind": "firm"
+        },
+        "source_url": "https://chambers.com/department/araquereyna-corporate-ma-latin-america-9:354:229:1:2254",
+        "content_sha256": "69bc7ddeeb9915b5e943fa92c5a61d233901581983c7723dc6f2bf66a9c61d7f",
+        "retrieved_at": "2026-10-08T18:27:45.570333+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "ARAQUEREYNA",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "ARAQUEREYNA has a notable corporate department within a well-established full-service firm, experienced in advising clients drawn from sectors including telecommunications, oil and gas, and real estate. The team's expertise encompasses corporate restructuring, liquidation and due diligence for joint ventures. The department also advises on day-to-day operations, including corporate governance mandates, and both shareholder and commercial agreements.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "The ARAQUEREYNA team enjoys a great deal of credibility and prestige in the local market. Their legal excellence is backed by top-notch management and lawyers who are always available and willing to assist clients promptly.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "ARAQUEREYNA advised Alpina Venezuela on the design and implementation of a corporate restructuring programme aimed at optimising the company's ownership structure.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "LEĜA",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 2256,
+          "profile_path": "/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/leĝa-corporate-ma-latin-america-9:354:229:1:2256",
+        "content_sha256": "6d39d77390b66acf26c79b52e130826b3f55ea05122425e38381681ff1b1e557",
+        "retrieved_at": "2026-10-08T18:27:46.132324+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "LEĜA",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Multidisciplinary law firm LEĜA possesses a respected team acting across a range of corporate mandates. The team regularly advises on negotiating service agreements, as well as exchange control issues. The department is well placed to assist with share purchase agreements for M&A, including spin-off processes. The firm's client roster spans sectors such as food and beverages, technology and pharmaceuticals. The law firm is also regularly retained by startups.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "LEĜA stands out for its knowledge of the Venezuelan legal and regulatory framework. It has a specialised team who provide timely and accurate advice.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "LEĜA advised Guy Carpenter on its strategic expansion into Venezuela, assisting with the establishment of a new local branch.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "InterJuris Abogados, S.C.",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 236408,
+          "profile_path": "/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/interjuris-abogados-sc-corporate-ma-latin-america-9:354:229:1:236408",
+        "content_sha256": "fb52967dc55c9aa9f6a67c62e8d226d3aa9b35daa6d0ae8c4ac2ea52b1a72a37",
+        "retrieved_at": "2026-10-08T18:27:45.635126+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "InterJuris Abogados, S.C.",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Full-service law firm InterJuris Abogados possesses a solid corporate practice, advising a broad spectrum of clients from sectors such as technology, construction and banking. The team's experience encompasses corporate restructuring, share purchase agreements and the termination of distribution agreements. The department also provides advice on due diligence matters as well as corporate compliance.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "InterJuris Abogados is characterised by the lawyers' understanding of their clients' businesses, their ability to develop multiple scenarios and their capacity to provide solutions for complex and sophisticated operations across multiple jurisdictions.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "InterJuris Abogados advised Vinccler on the financing and corporate restructuring of the Petrodelta Project.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Travieso Evans Arria Rengel & Paz",
+          "band": "Band 2",
+          "rank_type": "2",
+          "edition": 2027,
+          "organisation_id": 2670,
+          "profile_path": "/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+          "kind": "competitor"
+        },
+        "source_url": "https://chambers.com/department/travieso-evans-arria-rengel-paz-corporate-ma-latin-america-9:354:229:1:2670",
+        "content_sha256": "c75105899071649feeeb9e103542dcc1ac1007474b452a4f6b711700195f5ffc",
+        "retrieved_at": "2026-10-08T18:27:46.556590+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Travieso Evans Arria Rengel & Paz",
+        "observed_band": "Band 2",
+        "commentary": [
+          {
+            "heading": "What the Team is Known For",
+            "text": "Full-service law firm Travieso Evans Arria Rengel & Paz benefits from an experienced team skilled in handling a wide range of corporate matters. The department offers expertise spanning corporate disposals and acquisitions, restructuring and liquidation procedures, as well as the execution of distribution agreements. It advises domestic and international clients from sectors including pharmaceuticals, manufacturing and telecommunications.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Travieso Evans Arria Rengel & Paz has an excellent ability to handle complex issues, demonstrating great skill in difficult legal situations.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Work Highlights",
+            "text": "Travieso Evans Arria Rengel & Paz advised Unilever Andina Venezuela on the Venezuelan law aspects of a business transition and corporate restructuring affecting its local operations.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Manuel Reyna",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "/lawyer/manuel-reyna-latin-america-9:210057"
+        },
+        "source_url": "https://chambers.com/lawyer/manuel-reyna-latin-america-9:210057",
+        "content_sha256": "59a97f610d0093e2be40ce5b5b32eb4c868e018f1d7d73a24a8c56b536f97f6a",
+        "retrieved_at": "2026-10-08T18:27:46.669158+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Manuel Reyna",
+        "observed_band": "Band 3",
+        "commentary": [
+          {
+            "heading": "Individual Editorial",
+            "text": "Founding partner Manuel Reyna advises domestic and multinational clients on corporate reorganisations and the liquidation of local subsidiaries. He is also frequently sought out by clients to advise on the drafting of commercial agreements.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "retrieved",
+        "subject": {
+          "name": "Gustavo J Reyna",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "/lawyer/gustavo-j-reyna-latin-america-9:31589"
+        },
+        "source_url": "https://chambers.com/lawyer/gustavo-j-reyna-latin-america-9:31589",
+        "content_sha256": "e86b36cd9cc5c8ac07aa7d05c7d8ccfef68df6f9743f25a96aee3f4bb59e529a",
+        "retrieved_at": "2026-10-08T18:27:47.025763+00:00",
+        "parser_version": "official-profile-evidence-v1",
+        "practice_area": "Corporate/M&A",
+        "jurisdiction": "Venezuela",
+        "edition": 2027,
+        "observed_name": "Gustavo J Reyna",
+        "observed_band": "Senior Statespeople",
+        "commentary": [
+          {
+            "heading": "Individual Editorial",
+            "text": "Seasoned practitioner Gustavo Reyna boasts a longstanding presence in the corporate sphere. He offers extensive experience advising on a range of mandates, including M&A transactions.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          },
+          {
+            "heading": "Strengths",
+            "text": "Gustavo Reyna provides an excellent service and very good corporate advice.",
+            "attribution": "Chambers editorial / attributed interview commentary"
+          }
+        ],
+        "limitations": [
+          "Profile observations are external context, not evidence of work in the uploaded submission. Years ranked do not establish historical band movement. Firm-provided biographies are excluded."
+        ]
+      },
+      {
+        "status": "scope_or_identity_unresolved",
+        "subject": {
+          "name": "Pedro I Sosa Mendoza",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "source_url": "https://chambers.com/lawyer/pedro-ignacio-sosa-mendoza-latin-america-9:137116"
+      },
+      {
+        "status": "unavailable",
+        "subject": {
+          "name": "Maripi Viso",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/maria-del-pilar-aneas-de-viso-latin-america-9:425164",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "limitations": [
+          "Official profile could not be retrieved or verified. Do not infer absence of ranking or reputation."
+        ]
+      },
+      {
+        "status": "scope_or_identity_unresolved",
+        "subject": {
+          "name": "María Carolina Cano",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "source_url": "https://chambers.com/lawyer/maria-carolina-cano-gonzalez-latin-america-9:510375"
+      },
+      {
+        "status": "scope_or_identity_unresolved",
+        "subject": {
+          "name": "Pedro Luis Planchart",
+          "firm": "ARAQUEREYNA",
+          "kind": "individual",
+          "profile_path": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298",
+          "identity_basis": "source_supplied_official_profile"
+        },
+        "source_url": "https://chambers.com/lawyer/pedro-luis-planchart-pocaterra-latin-america-9:266298"
+      }
+    ],
+    "requested": 10,
+    "attempted": 10,
+    "limitations": [
+      "Historical band movement has not been independently retrieved."
+    ]
+  },
+  "research_scope": "36c1d4be8019d4e8b4f96b477d3f5f7977d18910264a6a10187f6629dbbb42ed",
+  "research_execution": "retrieved_table_and_profiles"
+}

@@ -1,0 +1,13 @@
+{
+  "input": "../analizar/Submission_revision/Angela_revision/10 submission /Araquereyna_10/Submission Corporate and MA 2024.doc",
+  "practice": "Corporate/M&A",
+  "jurisdiction": "Venezuela",
+  "directory": "Chambers",
+  "source_matters": 25,
+  "publication_status": {
+    "publishable": 10,
+    "confidential": 15
+  },
+  "b9_lawyers": 10,
+  "processing": "local parser only; external model review not authorized yet"
+}
