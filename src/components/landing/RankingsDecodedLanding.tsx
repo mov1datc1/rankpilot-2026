@@ -35,6 +35,7 @@ export default function RankingsDecodedLanding() {
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [laurelModalOpen, setLaurelModalOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [expandedWhenWeHelp, setExpandedWhenWeHelp] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,8 +70,8 @@ export default function RankingsDecodedLanding() {
         body: JSON.stringify(formState)
       });
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to send enquiry. Please try again.');
+      if (!res.ok || !data?.success || !data?.id) {
+        throw new Error(data?.error || 'Unable to register your enquiry. Please check your connection or contact us directly.');
       }
       setSubmitSuccess(true);
       setFormState({
@@ -227,15 +228,35 @@ export default function RankingsDecodedLanding() {
             </button>
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#0F172A' }}
-            className="mobile-toggle"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Quick Action & Hamburger */}
+          <div className="mobile-actions-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <button
+              onClick={() => scrollToSection('contact')}
+              className="mobile-quick-cta"
+              style={{
+                background: 'linear-gradient(135deg, #1B44ED 0%, #000073 100%)',
+                color: '#FFFFFF',
+                padding: '0.42rem 0.85rem',
+                borderRadius: '7px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0, 0, 115, 0.25)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Discuss Priorities
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{ display: 'flex', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#0F172A' }}
+              className="mobile-toggle"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Dropdown */}
@@ -298,16 +319,31 @@ export default function RankingsDecodedLanding() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Subtle Dual Radial Glow: Cobalt Blue & Coral Sunset */}
+        {/* Subtle Brand Radial Glow: Royal Cobalt & Baby Blue Ice (#87BFFF) */}
         <div style={{
           position: 'absolute',
           top: '-20%',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '85vw',
-          height: '45vw',
-          background: 'radial-gradient(ellipse at 50% 0%, rgba(27, 68, 237, 0.28) 0%, rgba(255, 94, 54, 0.10) 45%, rgba(9, 14, 23, 0) 75%)',
+          width: '90vw',
+          height: '50vw',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(27, 68, 237, 0.26) 0%, rgba(135, 191, 255, 0.12) 35%, rgba(0, 0, 115, 0.08) 60%, rgba(9, 14, 23, 0) 80%)',
           pointerEvents: 'none'
+        }} />
+
+        {/* Strategic Brandmark Insignia Watermark in Hero Background */}
+        <div style={{
+          position: 'absolute',
+          top: '5%',
+          right: '-4%',
+          width: '420px',
+          height: '420px',
+          opacity: 0.045,
+          pointerEvents: 'none',
+          backgroundImage: 'url(/brand/rankings_decoded_logomark_white.png)',
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          transform: 'rotate(12deg)'
         }} />
 
         <div style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 10 }}>
@@ -339,13 +375,13 @@ export default function RankingsDecodedLanding() {
             margin: '0 0 1.75rem',
             color: '#F8FAFC'
           }}>
-            A clearer view of your firm.<br />
+            A clearer view of your firm<br />
             <span style={{
               background: 'linear-gradient(135deg, #CBD5E1 0%, #FFFFFF 50%, #94A3B8 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
-              A stronger competitive position.
+              A stronger competitive position
             </span>
           </h1>
 
@@ -382,18 +418,18 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
+                background: 'linear-gradient(135deg, #1B44ED 0%, #000073 100%)',
                 color: '#FFFFFF',
                 padding: '0.95rem 2.25rem',
                 borderRadius: '9px',
                 fontSize: '0.98rem',
                 fontWeight: 700,
-                border: 'none',
+                border: '1px solid rgba(135, 191, 255, 0.3)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.65rem',
-                boxShadow: '0 6px 25px rgba(255, 94, 54, 0.38)',
+                boxShadow: '0 6px 25px rgba(0, 0, 115, 0.38), 0 2px 10px rgba(27, 68, 237, 0.35)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -459,7 +495,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ maxWidth: '820px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Strategic Perspective</span>
             <h2 style={sectionH2Style}>
-              Your next move starts with an honest assessment.
+              Your next move starts with an honest assessment
             </h2>
             <p style={{ fontSize: '1.15rem', color: '#475569', lineHeight: 1.7, margin: '1rem 0 0.85rem' }}>
               Your ambitions, your reputation, and the work you actually do may tell different stories.
@@ -547,13 +583,13 @@ export default function RankingsDecodedLanding() {
             >
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FF5E36', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#87BFFF', letterSpacing: '0.06em' }}>
                     THE STRATEGIC RESULT
                   </span>
-                  <Sparkles size={18} color="#FF5E36" />
+                  <Sparkles size={18} color="#87BFFF" />
                 </div>
                 <h3 style={{ fontSize: '1.18rem', fontWeight: 700, color: '#F8FAFC', lineHeight: 1.4, margin: '0 0 0.75rem' }}>
-                  A clearer view of what to put forward, what to strengthen, and where to change direction.
+                  A clearer view of what to put forward, what to strengthen, and where to change direction
                 </h3>
               </div>
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.12)', paddingTop: '0.85rem' }}>
@@ -591,7 +627,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ maxWidth: '820px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>When We Can Help</span>
             <h2 style={sectionH2Style}>
-              Different challenges. One starting point: clarity.
+              Different challenges. One starting point: clarity
             </h2>
             <p style={{ fontSize: '1.1rem', color: '#64748B', lineHeight: 1.7, margin: '1rem 0 0' }}>
               We work with law firms facing a range of strategic and operational challenges.
@@ -645,7 +681,7 @@ export default function RankingsDecodedLanding() {
             ].map((card, idx) => (
               <div
                 key={idx}
-                className="when-we-help-card"
+                className={`when-we-help-card ${idx >= 3 ? (!expandedWhenWeHelp ? 'when-we-help-card-extra' : '') : ''}`}
                 style={{
                   backgroundColor: '#FFFFFF',
                   borderRadius: '14px',
@@ -713,6 +749,34 @@ export default function RankingsDecodedLanding() {
               </div>
             ))}
           </div>
+
+          {/* Mobile Collapsible Toggle to reduce vertical scrolling */}
+          <div className="mobile-when-help-toggle" style={{ textAlign: 'center', marginTop: '2rem' }}>
+            <button
+              type="button"
+              onClick={() => setExpandedWhenWeHelp(!expandedWhenWeHelp)}
+              style={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                color: '#000073',
+                padding: '0.75rem 1.6rem',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)'
+              }}
+            >
+              {expandedWhenWeHelp ? (
+                <>Show fewer challenges <ChevronUp size={16} /></>
+              ) : (
+                <>View all 6 challenges <ChevronDown size={16} /></>
+              )}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -724,7 +788,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ maxWidth: '840px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Our Services</span>
             <h2 style={sectionH2Style}>
-              Better intelligence. Sharper positioning. Smarter decisions.
+              Better intelligence. Sharper positioning. Smarter decisions
             </h2>
             <div style={{ fontSize: '1.05rem', color: '#475569', lineHeight: 1.75, margin: '1.25rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <p style={{ margin: 0 }}>
@@ -845,7 +909,7 @@ export default function RankingsDecodedLanding() {
           }}>
             <div style={{ maxWidth: '640px' }}>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#F8FAFC' }}>
-                Every engagement begins with a question worth answering.
+                Every engagement begins with a question worth answering
               </h3>
               <p style={{ fontSize: '0.98rem', color: '#94A3B8', margin: 0, lineHeight: 1.6 }}>
                 Whether your firm needs a single submission, a competitive assessment, or a broader strategy, we define the scope around the decisions you need to make.
@@ -854,18 +918,18 @@ export default function RankingsDecodedLanding() {
             <button
               onClick={() => scrollToSection('contact')}
               style={{
-                background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
+                background: 'linear-gradient(135deg, #1B44ED 0%, #000073 100%)',
                 color: '#FFFFFF',
                 padding: '0.9rem 2rem',
                 borderRadius: '8px',
                 fontSize: '0.94rem',
                 fontWeight: 700,
-                border: 'none',
+                border: '1px solid rgba(135, 191, 255, 0.3)',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.55rem',
-                boxShadow: '0 4px 20px rgba(255, 94, 54, 0.35)',
+                boxShadow: '0 4px 20px rgba(0, 0, 115, 0.35)',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -883,7 +947,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ maxWidth: '780px', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Our Approach</span>
             <h2 style={sectionH2Style}>
-              Direct advice. Close collaboration. Clear responsibilities.
+              Direct advice. Close collaboration. Clear responsibilities
             </h2>
           </div>
 
@@ -1019,7 +1083,7 @@ export default function RankingsDecodedLanding() {
                 margin: '0 0 1.5rem',
                 letterSpacing: '-0.02em'
               }}>
-                Expert-led advice, supported by technology.
+                Expert-led advice, supported by technology
               </h2>
               <div style={{ fontSize: '1.02rem', color: '#94A3B8', lineHeight: 1.75, display: 'flex', flexDirection: 'column', gap: '1.1rem', marginBottom: '2rem' }}>
                 <p style={{ margin: 0 }}>
@@ -1073,7 +1137,7 @@ export default function RankingsDecodedLanding() {
               boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #334155', paddingBottom: '1.25rem' }}>
-                <Sparkles size={20} color="#818CF8" />
+                <RankingsDecodedMark size={24} variant="light" />
                 <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#F8FAFC' }}>
                   The Rankings Decoded Difference
                 </span>
@@ -1254,7 +1318,7 @@ export default function RankingsDecodedLanding() {
             <div>
               <span style={sectionEyebrowStyle}>About</span>
               <h2 style={{ ...sectionH2Style, margin: '0 0 1.5rem' }}>
-                Led by Ángela Castillo.
+                Led by Ángela Castillo
               </h2>
               <div style={{ fontSize: '1.02rem', color: '#475569', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
                 <p style={{ margin: 0 }}>
@@ -1404,25 +1468,27 @@ export default function RankingsDecodedLanding() {
           </p>
 
           <div>
-            <button
-              onClick={() => setLaurelModalOpen(true)}
+            <a
+              href={process.env.NEXT_PUBLIC_LAUREL_AND_HELL_URL || 'https://laurelandhell.substack.com'}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 backgroundColor: '#FCD34D',
                 color: '#1C1917',
-                padding: '0.9rem 2.2rem',
+                padding: '0.95rem 2.25rem',
                 borderRadius: '8px',
                 fontSize: '0.95rem',
                 fontWeight: 700,
-                border: 'none',
-                cursor: 'pointer',
+                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 20px rgba(252, 211, 77, 0.25)'
+                gap: '0.55rem',
+                boxShadow: '0 4px 20px rgba(252, 211, 77, 0.25)',
+                transition: 'all 0.2s ease'
               }}
             >
-              Read Laurel & Hell <ExternalLink size={16} />
-            </button>
+              Read & Subscribe to Laurel & Hell <ExternalLink size={16} />
+            </a>
           </div>
         </div>
       </section>
@@ -1435,7 +1501,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <span style={sectionEyebrowStyle}>Frequently Asked Questions</span>
             <h2 style={sectionH2Style}>
-              Clear answers to common questions.
+              Clear answers to common questions
             </h2>
           </div>
 
@@ -1509,7 +1575,7 @@ export default function RankingsDecodedLanding() {
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <span style={sectionEyebrowStyle}>Get in Touch</span>
             <h2 style={{ ...sectionH2Style, margin: '0 0 1rem' }}>
-              Let’s bring clarity to your next move.
+              Let’s bring clarity to your next move
             </h2>
             <p style={{ fontSize: '1.15rem', color: '#0F172A', fontWeight: 600, lineHeight: 1.6, margin: '0 auto 0.75rem', maxWidth: '680px' }}>
               What does your firm want to achieve—and what is making the process difficult?
@@ -1547,7 +1613,7 @@ export default function RankingsDecodedLanding() {
                   <CheckCircle2 size={32} />
                 </div>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.75rem' }}>
-                  Thank you for getting in touch.
+                  Thank you for getting in touch
                 </h3>
                 <p style={{ fontSize: '1.05rem', color: '#475569', lineHeight: 1.6, maxWidth: '500px', margin: '0 auto 1.75rem' }}>
                   We have received your enquiry and will contact you about the next step.
@@ -1572,14 +1638,25 @@ export default function RankingsDecodedLanding() {
               <form onSubmit={handleFormSubmit} style={{ display: 'grid', gap: '1.4rem' }}>
                 {submitError && (
                   <div style={{
-                    padding: '0.9rem 1.25rem',
+                    padding: '1rem 1.25rem',
                     borderRadius: '8px',
                     backgroundColor: '#FEF2F2',
                     border: '1px solid #FCA5A5',
                     color: '#991B1B',
-                    fontSize: '0.9rem'
+                    fontSize: '0.92rem',
+                    lineHeight: 1.5
                   }}>
-                    {submitError}
+                    <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Unable to send enquiry</div>
+                    <div>{submitError}</div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                      You may also email us directly at{' '}
+                      <a
+                        href="mailto:angela.castillo@lexlatin.com?subject=Rankings%20Decoded%20Enquiry"
+                        style={{ color: '#991B1B', fontWeight: 700, textDecoration: 'underline' }}
+                      >
+                        angela.castillo@lexlatin.com
+                      </a>
+                    </div>
                   </div>
                 )}
 
@@ -1678,19 +1755,19 @@ export default function RankingsDecodedLanding() {
                   type="submit"
                   disabled={isSubmitting}
                   style={{
-                    background: 'linear-gradient(135deg, #FF5E36 0%, #FF7A59 100%)',
+                    background: 'linear-gradient(135deg, #1B44ED 0%, #000073 100%)',
                     color: '#FFFFFF',
                     padding: '1rem 2rem',
                     borderRadius: '8px',
                     fontSize: '1rem',
                     fontWeight: 700,
-                    border: 'none',
+                    border: '1px solid rgba(135, 191, 255, 0.35)',
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.65rem',
-                    boxShadow: '0 6px 20px rgba(255, 94, 54, 0.35)',
+                    boxShadow: '0 6px 20px rgba(0, 0, 115, 0.35)',
                     transition: 'all 0.2s ease',
                     marginTop: '0.5rem'
                   }}
@@ -1923,7 +2000,7 @@ export default function RankingsDecodedLanding() {
               <button onClick={() => setLaurelModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#CBD5E1' }}><X size={20} /></button>
             </div>
             <h3 style={{ fontSize: '1.6rem', fontWeight: 700, margin: '0 0 1rem', color: '#FFFDF9' }}>
-              Behind every submission, there’s a story.
+              Behind every submission, there’s a story
             </h3>
             <p style={{ fontSize: '1rem', color: '#D4CEBA', lineHeight: 1.7, fontStyle: 'italic', marginBottom: '1.25rem' }}>
               “Ambitious partners. Undocumented matters. Deadlines approaching faster than the information.”
@@ -1932,23 +2009,24 @@ export default function RankingsDecodedLanding() {
               Laurel & Hell is an independent editorial publication exploring the language, contradictions, ambitions, and realities of recognition in the legal industry. Sharp observations, critical perspectives, and informed commentary on the business of being recognised.
             </p>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => {
-                  setLaurelModalOpen(false);
-                  scrollToSection('contact');
-                }}
+              <a
+                href={process.env.NEXT_PUBLIC_LAUREL_AND_HELL_URL || 'https://laurelandhell.substack.com'}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{
                   backgroundColor: '#FCD34D',
                   color: '#1C1917',
-                  border: 'none',
                   borderRadius: '8px',
                   padding: '0.75rem 1.5rem',
                   fontWeight: 700,
-                  cursor: 'pointer'
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
                 }}
               >
-                Inquire / Subscribe to Laurel & Hell
-              </button>
+                Subscribe to Laurel & Hell <ExternalLink size={15} />
+              </a>
               <button
                 onClick={() => setLaurelModalOpen(false)}
                 style={{
@@ -1968,15 +2046,15 @@ export default function RankingsDecodedLanding() {
         </div>
       )}
 
-      {/* Back to Top Floating Button */}
-      {showBackToTop && (
+      {/* Back to Top Floating Button (Unobtrusive & Safe) */}
+      {showBackToTop && !mobileMenuOpen && !privacyModalOpen && !termsModalOpen && !laurelModalOpen && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="back-to-top-btn"
           aria-label="Volver arriba"
           title="Volver arriba"
         >
-          <ChevronUp size={22} color="#FFFFFF" />
+          <ChevronUp size={20} color="#FFFFFF" />
         </button>
       )}
 
@@ -2037,30 +2115,48 @@ export default function RankingsDecodedLanding() {
           }
         }
 
-        /* Back to Top Floating Button */
+        /* Back to Top Floating Button (Polished & Non-interfering) */
         .back-to-top-btn {
           position: fixed;
           bottom: 2rem;
           right: 2rem;
-          width: 48px;
-          height: 48px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #090E17 0%, #1B44ED 100%);
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          background: #000073;
+          border: 1px solid rgba(135, 191, 255, 0.4);
           color: #FFFFFF;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 8px 24px rgba(9, 14, 23, 0.35), 0 2px 8px rgba(27, 68, 237, 0.25);
-          z-index: 49;
+          box-shadow: 0 4px 16px rgba(0, 0, 115, 0.35);
+          z-index: 35;
+          opacity: 0.85;
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .back-to-top-btn:hover {
-          transform: translateY(-3px) scale(1.06);
+          opacity: 1;
+          transform: translateY(-2px) scale(1.05);
           background: #1B44ED !important;
-          border-color: rgba(255, 255, 255, 0.45);
-          box-shadow: 0 12px 30px rgba(27, 68, 237, 0.45);
+          border-color: #87BFFF;
+          box-shadow: 0 8px 24px rgba(27, 68, 237, 0.45);
+        }
+
+        @media (min-width: 768px) {
+          .mobile-when-help-toggle {
+            display: none !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .when-we-help-card-extra {
+            display: none !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          .mobile-actions-wrapper {
+            display: none !important;
+          }
         }
 
         /* Card Paddings & Layout */
@@ -2133,10 +2229,11 @@ export default function RankingsDecodedLanding() {
             justify-content: center !important;
           }
           .back-to-top-btn {
-            bottom: 1.25rem !important;
-            right: 1.25rem !important;
-            width: 44px !important;
-            height: 44px !important;
+            bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+            right: 1rem !important;
+            width: 38px !important;
+            height: 38px !important;
+            opacity: 0.75;
           }
           input, textarea {
             font-size: 16px !important;

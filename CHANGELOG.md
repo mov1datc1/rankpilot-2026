@@ -1,3 +1,21 @@
+## 2026-10-23 — Identidad de marca Rankings Decoded (Oleh Figma), suite de favicon isotipo, optimizaciones mobile y gestión de leads
+
+- **Identidad gráfica oficial de Oleh (Figma 2026)**:
+  - Integración del isotipo dinámico de vórtice de 3 aspas en Azul Marino Profundo (`#000073`) y Azul Celeste Hielo (`#87BFFF`) en fondos transparentes y blancos (`public/brand/`).
+  - Suite integral de favicons aislada estrictamente con el símbolo del vórtice (sin texto de marca) para nitidez absoluta en pestañas: `favicon.ico` (multi-res 16/32/48), `favicon.svg`, `icon.png`, `apple-icon.png` (180x180), `site.webmanifest` e iconos PWA de 192px y 512px.
+  - Componente de marca [`RankingsDecodedLogo.tsx`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/components/landing/RankingsDecodedLogo.tsx) actualizado con la tipografía y proporciones oficiales de Oleh.
+- **Optimizaciones UX para móviles en la landing page (`RankingsDecodedLanding.tsx`)**:
+  - Reducción drástica del scroll vertical en la sección *When We Can Help*: vista colapsable en pantallas móviles (`< 768px`) mostrando 3 tarjetas con interruptor interactivo (*«View all 6 challenges»* / *«Show fewer challenges»*).
+  - Acceso inmediato al formulario de contacto desde la barra superior móvil con el botón rápido *«Discuss Priorities»* anclado junto al menú de navegación.
+  - Botón flotante *Back to Top* refinado (38px en móvil), respetando `env(safe-area-inset-bottom)` y con supresión automática cuando el menú móvil o algún modal está activo.
+- **Detalles editoriales y enlaces directos**:
+  - Remoción de puntos finales en los 25 títulos independientes de tarjetas y secciones para una lectura ágil y estándar tipográfico de landing pages modernas.
+  - El botón de *Laurel & Hell* ahora enlaza directamente a la publicación y plataforma de suscripción externa (`target="_blank" rel="noopener noreferrer"`).
+- **Canal de ingestión de leads y panel administrativo**:
+  - Pipeline robusto en `/api/contact` con persistencia obligatoria en base de datos PostgreSQL (`LeadInquiry`) previo a la confirmación de éxito (cero falsos positivos).
+  - Notificaciones por correo vía Resend a la socia consultora y equipo (`angela.castillo@lexlatin.com`), junto con acuse de recibo de cortesía para el remitente.
+  - Nuevo panel de administración de prospectos en `/dashboard/admin/leads` con pestaña en `AdminTabs.tsx` y Server Actions en `src/app/actions/leads.ts`.
+
 ## 2026-10-21 — Optimización quirúrgica de asuntos, comparador visual (Diff), banner de borrador y calibraciones editoriales
 
 - **Optimización quirúrgica y granular de asuntos (`SubmissionStudio.tsx`, `/api/optimize/matter/route.ts`, `micro_optimizer.py`)**:

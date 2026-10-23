@@ -13,15 +13,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RankPilot — Legal Rankings, Simplified",
-  description: "AI-powered strategic audit platform for legal directory submissions. Chambers, Legal 500, IFLR 1000.",
+  title: "Rankings Decoded — Legal Market Intelligence, Strategy & Advisory",
+  description: "Independent advice for stronger competitive positioning and smarter business decisions. Specialist advice, competitive benchmarking, and submission support led by Ángela Castillo.",
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
   },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
