@@ -44,10 +44,10 @@ export async function testResendConnection(toEmail: string, fromEmail: string) {
     const resend = new Resend(apiKey);
     
     const { error } = await resend.emails.send({
-      from: fromEmail,
+      from: fromEmail || 'Rankings Decoded <info@rankingsdecoded.com>',
       to: toEmail,
-      subject: '[RankPilot] Correo de Prueba — Conexión Exitosa',
-      html: '<h1>¡Conexión Exitosa!</h1><p>Este es un correo de prueba desde el panel de administración de RankPilot.</p><p>Tu configuración de Resend está funcionando correctamente.</p>',
+      subject: '[Rankings Decoded] Correo de Prueba — Conexión Exitosa',
+      html: '<h1>¡Conexión Exitosa!</h1><p>Este es un correo de prueba desde el panel de administración de Rankings Decoded.</p><p>Tu configuración de Resend está funcionando correctamente con el dominio rankingsdecoded.com.</p>',
     });
 
     if (error) {

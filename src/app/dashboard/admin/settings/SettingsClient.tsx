@@ -11,7 +11,7 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ initialApiKey, initialFromEmail }: SettingsClientProps) {
   const [apiKey, setApiKey] = useState(initialApiKey);
-  const [fromEmail, setFromEmail] = useState(initialFromEmail || 'noreply@rankpilot.io');
+  const [fromEmail, setFromEmail] = useState(initialFromEmail || 'Rankings Decoded <info@rankingsdecoded.com>');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -90,10 +90,10 @@ export default function SettingsClient({ initialApiKey, initialFromEmail }: Sett
             <div style={{ marginBottom: '1.25rem' }}>
               <label style={labelStyle}>Correo Remitente (From)</label>
               <input
-                type="email"
+                type="text"
                 value={fromEmail}
                 onChange={(e) => setFromEmail(e.target.value)}
-                placeholder="noreply@rankpilot.io"
+                placeholder="Rankings Decoded <info@rankingsdecoded.com>"
                 style={fieldInputStyle}
                 onFocus={(e) => e.target.style.borderColor = '#38bdf8'}
                 onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}

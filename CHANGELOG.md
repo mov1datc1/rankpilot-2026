@@ -1,3 +1,15 @@
+## 2026-10-26 — Configuración de dominio oficial rankingsdecoded.com y canal de correo info@rankingsdecoded.com
+
+- **Dominio de producción oficial (`https://rankingsdecoded.com`)**:
+  - Configuración de `metadataBase`, URL canónica, tarjetas OpenGraph y Twitter en `src/app/layout.tsx` apuntando a `https://rankingsdecoded.com`.
+  - Actualización de endpoints de redirección de Stripe Checkout (`success_url`, `cancel_url`), webhooks y enlaces de acceso en correos de bienvenida al nuevo dominio oficial.
+- **Canal de correo institucional (`info@rankingsdecoded.com`)**:
+  - Recepción de prospectos del formulario de contacto: configurado como destinatario predeterminado (`adminRecipients`) y en `replyTo` en `src/app/api/contact/route.ts`.
+  - Remitente oficial (`fromEmail`): actualizado con fallback a `Rankings Decoded <info@rankingsdecoded.com>`.
+  - Enlaces de contacto directo: agregados en el pie de página (`footer`) y en el banner de soporte del formulario de contacto en `RankingsDecodedLanding.tsx`.
+  - Respuestas predefinidas en el panel administrativo de prospectos (`LeadsClient.tsx`): plantilla de correo en inglés internacional preconfigurada con acuse de recepción para el despacho consultante.
+  - Ajuste de remitente y asuntos en configuración SMTP/Resend (`SettingsClient.tsx`, `smtp.ts` y `admin.ts`).
+
 ## 2026-10-23 — Identidad de marca Rankings Decoded (Oleh Figma), suite de favicon isotipo, optimizaciones mobile y gestión de leads
 
 - **Identidad gráfica oficial de Oleh (Figma 2026)**:

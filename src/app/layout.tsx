@@ -13,8 +13,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://rankingsdecoded.com'),
   title: "Rankings Decoded — Legal Market Intelligence, Strategy & Advisory",
   description: "Independent advice for stronger competitive positioning and smarter business decisions. Specialist advice, competitive benchmarking, and submission support led by Ángela Castillo.",
+  alternates: {
+    canonical: 'https://rankingsdecoded.com',
+  },
+  openGraph: {
+    title: "Rankings Decoded — Legal Market Intelligence, Strategy & Advisory",
+    description: "Independent advice for stronger competitive positioning and smarter business decisions. Specialist advice, competitive benchmarking, and submission support led by Ángela Castillo.",
+    url: 'https://rankingsdecoded.com',
+    siteName: 'Rankings Decoded',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Rankings Decoded — Legal Market Intelligence, Strategy & Advisory",
+    description: "Independent advice for stronger competitive positioning and smarter business decisions. Specialist advice, competitive benchmarking, and submission support led by Ángela Castillo.",
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

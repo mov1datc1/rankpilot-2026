@@ -23,7 +23,8 @@ import {
   TrendingUp,
   Target,
   Search,
-  Briefcase
+  Briefcase,
+  Mail
 } from 'lucide-react';
 
 import RankingsDecodedLogo, { RankingsDecodedMark } from './RankingsDecodedLogo';
@@ -1651,10 +1652,10 @@ export default function RankingsDecodedLanding() {
                     <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
                       You may also email us directly at{' '}
                       <a
-                        href="mailto:angela.castillo@lexlatin.com?subject=Rankings%20Decoded%20Enquiry"
+                        href="mailto:info@rankingsdecoded.com?subject=Rankings%20Decoded%20Enquiry"
                         style={{ color: '#991B1B', fontWeight: 700, textDecoration: 'underline' }}
                       >
-                        angela.castillo@lexlatin.com
+                        info@rankingsdecoded.com
                       </a>
                     </div>
                   </div>
@@ -1813,6 +1814,25 @@ export default function RankingsDecodedLanding() {
               <p style={{ fontSize: '0.92rem', color: '#64748B', maxWidth: '420px', margin: 0, lineHeight: 1.6 }}>
                 Independent advice for stronger competitive positioning and smarter business decisions.
               </p>
+              <div style={{ marginTop: '0.85rem' }}>
+                <a
+                  href="mailto:info@rankingsdecoded.com"
+                  style={{
+                    color: '#87BFFF',
+                    fontSize: '0.86rem',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    transition: 'color 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#FFFFFF')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = '#87BFFF')}
+                >
+                  <Mail size={14} /> info@rankingsdecoded.com
+                </a>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap', fontSize: '0.9rem', color: '#CBD5E1' }}>

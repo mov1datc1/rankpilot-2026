@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Unable to register your enquiry at this moment. Please try again or contact us directly at angela.castillo@lexlatin.com.'
+          error: 'Unable to register your enquiry at this moment. Please try again or contact us directly at info@rankingsdecoded.com.'
         },
         { status: 500 }
       );
@@ -85,12 +85,12 @@ export async function POST(req: NextRequest) {
         const fromEmail =
           process.env.RESEND_FROM_EMAIL ||
           config?.resendFromEmail ||
-          'Rankings Decoded <onboarding@resend.dev>';
+          'Rankings Decoded <info@rankingsdecoded.com>';
 
         const adminRecipients = (
           process.env.CONTACT_NOTIFICATION_EMAILS ||
           process.env.CONTACT_NOTIFICATION_EMAIL ||
-          'angela.castillo@lexlatin.com'
+          'info@rankingsdecoded.com'
         )
           .split(',')
           .map((e) => e.trim())
@@ -179,12 +179,17 @@ export async function POST(req: NextRequest) {
             </div>
 
             <p style="font-size: 14px; color: #334155; margin: 0 0 24px;">
-              In the meantime, if you have additional background or documentation to share, feel free to reply directly to this email.
+              In the meantime, if you have additional background or documentation to share, feel free to reply directly to this email or write to <a href="mailto:info@rankingsdecoded.com" style="color: #1b44ed; text-decoration: none; font-weight: 600;">info@rankingsdecoded.com</a>.
             </p>
 
             <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 24px;">
               <p style="font-size: 14px; font-weight: 700; color: #000073; margin: 0;">Ángela Castillo</p>
               <p style="font-size: 12px; color: #64748b; margin: 2px 0 0;">Founder & Principal Strategist · Rankings Decoded</p>
+              <p style="font-size: 12px; margin: 4px 0 0;">
+                <a href="mailto:info@rankingsdecoded.com" style="color: #1b44ed; text-decoration: none;">info@rankingsdecoded.com</a>
+                <span style="color: #cbd5e1; margin: 0 6px;">·</span>
+                <a href="https://rankingsdecoded.com" style="color: #64748b; text-decoration: none;">rankingsdecoded.com</a>
+              </p>
               <p style="font-size: 12px; color: #94a3b8; margin: 12px 0 0;">Independent advice for stronger competitive positioning and smarter business decisions.</p>
             </div>
           </div>
@@ -193,6 +198,7 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: fromEmail,
           to: [cleanEmail],
+          replyTo: 'info@rankingsdecoded.com',
           subject: `Enquiry received: Rankings Decoded — ${cleanFirm}`,
           html: clientReceiptHtml,
         });
@@ -220,7 +226,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Unable to process your enquiry at this moment. Please try again later or email angela.castillo@lexlatin.com directly.'
+        error: 'Unable to process your enquiry at this moment. Please try again later or email info@rankingsdecoded.com directly.'
       },
       { status: 500 }
     );

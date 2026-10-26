@@ -248,7 +248,7 @@ export default function LeadsClient({ initialLeads, currentUserRole }: LeadsClie
 
                     {/* Actions: Direct reply & Delete */}
                     <a
-                      href={`mailto:${lead.email}?subject=Rankings%20Decoded%20%E2%80%94%20${encodeURIComponent(lead.firmName)}&body=Estimado%20${encodeURIComponent(lead.name)},%0A%0AGracias%20por%20contactar%20a%20Rankings%20Decoded...`}
+                      href={`mailto:${lead.email}?subject=Rankings%20Decoded%20%E2%80%94%20${encodeURIComponent(lead.firmName)}&body=Dear%20${encodeURIComponent(lead.name)},%0A%0AThank%20you%20for%20contacting%20Rankings%20Decoded.%20We%20have%20reviewed%20your%20priorities%20regarding%20${encodeURIComponent(lead.firmName)}...`}
                       style={{
                         backgroundColor: '#1b44ed',
                         color: '#ffffff',

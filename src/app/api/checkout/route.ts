@@ -27,8 +27,8 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app'}/`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankingsdecoded.com'}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankingsdecoded.com'}/`,
       metadata: {
         source: 'landing_page',
       },

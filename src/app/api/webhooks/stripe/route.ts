@@ -90,17 +90,17 @@ export async function POST(request: Request) {
 
             // Try to get custom template
             const template = await prisma.emailTemplate.findUnique({ where: { type: 'WELCOME' } });
-            const dashboardUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app';
+            const dashboardUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankingsdecoded.com';
             
-            let emailSubject = template?.subject || '¡Bienvenido a RankPilot!';
-            let emailHtml = template?.htmlBody || `<h1>Bienvenido a RankPilot</h1><p>Tu suscripción ha sido activada.</p><p><a href="${dashboardUrl}/login">Iniciar Sesión</a></p>`;
+            let emailSubject = template?.subject || '¡Bienvenido a Rankings Decoded!';
+            let emailHtml = template?.htmlBody || `<h1>Bienvenido a Rankings Decoded</h1><p>Tu suscripción ha sido activada.</p><p><a href="${dashboardUrl}/login">Iniciar Sesión</a></p>`;
 
             // Replace variables
             emailHtml = emailHtml.replace(/\{\{userName\}\}/g, dbUser.name || email.split('@')[0]);
             emailHtml = emailHtml.replace(/\{\{dashboardUrl\}\}/g, dashboardUrl);
 
             await resend.emails.send({
-              from: config?.resendFromEmail || 'RankPilot <noreply@rankpilot.io>',
+              from: config?.resendFromEmail || 'Rankings Decoded <info@rankingsdecoded.com>',
               to: email,
               subject: emailSubject,
               html: emailHtml,
@@ -127,15 +127,15 @@ export async function POST(request: Request) {
               const resend = new Resend(apiKey);
               const template = await prisma.emailTemplate.findUnique({ where: { type: 'DUNNING' } });
 
-              const dashboardUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app';
-              let emailSubject = template?.subject || 'Problema con tu pago — RankPilot';
+              const dashboardUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rankingsdecoded.com';
+              let emailSubject = template?.subject || 'Problema con tu pago — Rankings Decoded';
               let emailHtml = template?.htmlBody || `<h1>Problema con tu pago</h1><p>No pudimos procesar tu último cargo.</p>`;
 
               emailHtml = emailHtml.replace(/\{\{userName\}\}/g, customerEmail.split('@')[0]);
               emailHtml = emailHtml.replace(/\{\{dashboardUrl\}\}/g, dashboardUrl);
 
               await resend.emails.send({
-                from: config?.resendFromEmail || 'RankPilot <noreply@rankpilot.io>',
+                from: config?.resendFromEmail || 'Rankings Decoded <info@rankingsdecoded.com>',
                 to: customerEmail,
                 subject: emailSubject,
                 html: emailHtml,

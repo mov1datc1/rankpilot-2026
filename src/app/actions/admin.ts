@@ -74,10 +74,10 @@ export async function createUser(data: {
         const { Resend } = await import('resend');
         const resend = new Resend(config.resendApiKey);
         await resend.emails.send({
-          from: config.resendFromEmail || 'RankPilot <noreply@rankpilot.io>',
+          from: config.resendFromEmail || 'Rankings Decoded <info@rankingsdecoded.com>',
           to: email,
-          subject: '¡Bienvenido a RankPilot!',
-          html: `<h1>Bienvenido a RankPilot</h1><p>Hola ${name || email},</p><p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder a la plataforma.</p><p>Contraseña temporal: ${password || 'RankPilot2026!'}</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankpilot-2026.vercel.app'}/login">Iniciar Sesión</a></p>`
+          subject: '¡Bienvenido a Rankings Decoded!',
+          html: `<h1>Bienvenido a Rankings Decoded</h1><p>Hola ${name || email},</p><p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder a la plataforma.</p><p>Contraseña temporal: ${password || 'RankingsDecoded2026!'}</p><p><a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://rankingsdecoded.com'}/login">Iniciar Sesión</a></p>`
         });
       }
     } catch (emailErr) {
