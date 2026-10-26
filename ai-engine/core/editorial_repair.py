@@ -69,8 +69,8 @@ def repair_targets(package, strategy, proposal):
             if not str(candidate.get(field,'')).strip() or field=='suggested_ranking' and any(e in (f"Categoría incompatible con cargo confirmado: {candidate.get('name')}", f"Falta una categoría razonada o una brecha explícita: {candidate.get('name')}") for e in errors):
                 add(f'candidates/{i}/{field}',candidate.get(field,''),'Specify a reasoned directory category, or Category pending with the precise missing criterion; explain changes to input objectives. Never invent eligibility or ranking.',{'person':person,'support':candidate.get('supporting_matters',[]),'matters':[register.get(s.get('matter_id'),{}) for s in candidate.get('supporting_matters',[])]})
     for field in ('filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
-        if not str(proposal.get(field,'')).strip() or field=='b10' and len(proposal.get(field,'').split())>500:
-            add(field,proposal.get(field,''),'Missing editorial field; B10 must not exceed 500 words.',{'package':package,'strategy':strategy})
+        if not str(proposal.get(field,'')).strip() or field=='b10' and len(proposal.get(field,'').split())>1000:
+            add(field,proposal.get(field,''),'Missing editorial field; B10 must not exceed 1,000 words.',{'package':package,'strategy':strategy})
     for i,comparison in enumerate(proposal.get('comparisons',[])):
         for field in ('incremental_contribution','tradeoff'):
             if not comparison.get(field):add(f'comparisons/{i}/{field}','','Explain the specific incremental contribution and tradeoff.',{'selected':register.get(comparison.get('selected_id')),'reserve':register.get(comparison.get('alternative_id'))})

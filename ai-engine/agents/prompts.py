@@ -1344,8 +1344,10 @@ Rules:
    establishes X as buyer and Z as seller.
 5. Do not import facts or client names from another matter, RAG, the thesis,
    directory methodology or general legal knowledge.
-6. Length follows evidence. There is no minimum, expansion ratio or required
-   narrative step. A short source may produce a short output.
+6. Depth, Richness, and Completeness:
+   Narratives must be fully developed into rich, multi-paragraph accounts (target: 200–350 words across the three paragraphs; minimum ~180 words when source facts exist). Do not artificially compress or summarize available facts into a brief 100-word summary.
+   Thoroughly extract and develop every available source detail: the client's commercial operations, sector profile, workforce or facility scale, the specific regulatory, union, or counterparty challenge, the exact legal mechanisms deployed by the firm (e.g. amparos, strike prevention protocols, collective bargaining legitimation, USMCA Rapid Response compliance, administrative conciliation, litigation defense), and the tangible operational or business outcome.
+   While you must never invent non-existent facts or deal amounts, you MUST exhaustively articulate the complexity and the lawyers' strategic intervention from the available record.
 7. Use factual submission voice. Never mention the model, prompt, engine,
    guards, validation, missing data or ranking-evidence mechanics.
 8. Return one literal source quote for every material factual sentence. Each

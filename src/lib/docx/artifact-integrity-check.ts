@@ -70,7 +70,13 @@ const FORBIDDEN_TEMPLATE_INSTRUCTIONS = [
   /Summary of matter and your department's role:?/gi,
   /Is this a cross-border matter\??/gi,
   /(?:on\s+)?matter was important\.?/gi,
-  /(?:why\s+this\s+)?matter was important\.?/gi
+  /(?:why\s+this\s+)?matter was important\.?/gi,
+  /\bFirm[’']s\s+Name\b:?/gi,
+  /\bFirm[’']s\s+Information\b:?/gi,
+  /\bName of the Managing Partner\b:?/gi,
+  /\bName of the person\(s\) in charge\b:?/gi,
+  /\bComposition of the firm:?/gi,
+  /\bNumber of Partners\s*\|\s*Number of Counsels\/Associates\b:?/gi
 ];
 
 export const AUDITOR_COMMENTARY_PATTERNS = [
@@ -115,6 +121,11 @@ export function sanitizeTemplateBoilerplate(text: string): { cleaned: string; fo
     }
   }
 
+  // Transversal grammar fragment repairs (Angela Castillo Directive)
+  cleaned = cleaned.replace(/\bthe mandate as ongoing\b/gi, 'the mandate remains ongoing');
+  cleaned = cleaned.replace(/\bthat the structured process prevented litigation\b/gi, 'The structured process prevented litigation');
+  cleaned = cleaned.replace(/^[Tt]hat\s+(the\s+structured\s+process\s+prevented\s+litigation)/gi, 'The structured process prevented litigation');
+
   // Clean double spaces and lingering orphan punctuation
   cleaned = cleaned.replace(/the\s+team\s+is\s+advancing\s+the\s+strategy\s+to\s+secure\s*\./gi, 'the team is advancing the defense strategy to secure the definitive revocation of the municipal suspension and preserve the client\'s development rights.');
   cleaned = cleaned.replace(/\b(?:to\s+secure|to\s+obtain|to\s+achieve|to\s+protect)\s*\./gi, 'to secure definitive judicial protection.');
@@ -126,14 +137,38 @@ export function sanitizeTemplateBoilerplate(text: string): { cleaned: string; fo
 }
 
 /**
- * Validates and sanitizes monetary values against facial arithmetic anomalies.
+ * Validates and sanitizes monetary values against unconfirmed naked numbers and facial anomalies.
  */
 export function validateAndSanitizeValue(
   rawValue: string,
-  clientName: string,
-  matterSummary: string
+  clientName: string = '',
+  matterSummary: string = ''
 ): { sanitizedValue: string; issue?: IntegrityIssue } {
-  return { sanitizedValue: String(rawValue || '').trim() };
+  let val = String(rawValue || '').trim();
+  if (!val || /^(?:n\/?a|none|not applicable|unknown|-)$/i.test(val)) {
+    return { sanitizedValue: 'N/A' };
+  }
+
+  // Strip pipe delimiters and template instructions
+  val = val.replace(/^[|\s\r\n]+|[|\s\r\n]+$/g, '').trim();
+
+  // Check if value already has explicit currency
+  const hasCurrency = /\b(?:MXN|USD|US\$|EUR|GBP|CAD|Bs\.?|pesos|d[oó]lares)\b/i.test(val);
+  const isNakedNumber = /^(?:approx\.?\s*)?(?:\$)?[\d,.]+(?:\s*(?:million|m|k|billion|b))?$/i.test(val);
+
+  if (isNakedNumber && !hasCurrency) {
+    // Scan narrative to confirm currency if available
+    const summaryText = String(matterSummary || '');
+    if (/\b(?:MXN|pesos)\b/i.test(summaryText)) {
+      val = `MXN ${val} (disputed exposure / mandate value)`;
+    } else if (/\b(?:USD|US\$|d[oó]lares)\b/i.test(summaryText)) {
+      val = `USD ${val}`;
+    } else {
+      val = `${val} [CONFIRM CURRENCY & NATURE: e.g. MXN / USD litigation exposure]`;
+    }
+  }
+
+  return { sanitizedValue: val };
 }
 
 /** Preserve source status; contradictions are review findings, not silent rewrites. */

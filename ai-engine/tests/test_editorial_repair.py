@@ -60,7 +60,7 @@ class TargetedRepairTests(unittest.TestCase):
             result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':self.broken(),'development_reusable':True})
         model.assert_called_once();self.assertFalse(result['development_validated'])
     def test_length_and_missing_public_sections_are_repair_targets(self):
-        proposal=copy.deepcopy(DEV);proposal['b10']='word '*501;proposal['c2']=''
+        proposal=copy.deepcopy(DEV);proposal['b10']='word '*1001;proposal['c2']=''
         targets=repair_targets(PACKAGE,STRATEGY,proposal)
         self.assertEqual(set(targets),{'b10','c2'})
 

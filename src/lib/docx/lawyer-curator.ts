@@ -147,6 +147,73 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
 /**
  * Deduplicates and curates lawyer candidates with evidentiary depth and strategic rankings
  */
+/**
+ * Synthesizes concrete standout recent work highlights for a lawyer from their attributed core matters.
+ * Prevents redundant repetition of biographical text in Section B9 while ensuring Chambers researchers
+ * receive substantive, recent matter leadership highlights.
+ */
+export function buildLawyerStandoutWork(
+  lawyerName: string,
+  allMattersPool: any[],
+  confClientNames: string[] = [],
+  existingStandoutWork: string = '',
+  bioOrComments: string = ''
+): string {
+  const cleanExisting = String(existingStandoutWork || '').trim();
+  const cleanBio = String(bioOrComments || '').trim();
+
+  // If existing standout work is distinct from bio/comments and substantive, use it
+  if (cleanExisting && cleanExisting.length > 25) {
+    const existingTokens = getNameTokens(cleanExisting);
+    const bioTokens = getNameTokens(cleanBio);
+    let overlap = 0;
+    for (const t of existingTokens) {
+      if (bioTokens.has(t)) overlap++;
+    }
+    const overlapRatio = existingTokens.size > 0 ? overlap / existingTokens.size : 0;
+    if (overlapRatio < 0.45) {
+      return anonymizeConfidentialClients(cleanExisting, confClientNames);
+    }
+  }
+
+  // Otherwise, dynamically construct standout recent work from the lawyer's attributed matters
+  const attributedMatters = (allMattersPool || []).filter(m => {
+    const lead = String(m.leadPartner || m.lead_partner || (Array.isArray(m.leadPartners) ? m.leadPartners.join(' ') : ''));
+    const team = String(m.teamMembers || m.team_members || (Array.isArray(m.otherLawyers) ? m.otherLawyers.join(' ') : ''));
+    return isSameLawyer(lawyerName, lead) || isSameLawyer(lawyerName, team);
+  });
+
+  if (!attributedMatters.length) {
+    return '';
+  }
+
+  // Build clean, high-impact bulleted matters (up to 3 top mandates)
+  const highlights: string[] = [];
+  for (const m of attributedMatters.slice(0, 3)) {
+    const rawClient = m.client || m.clientName || m.name || m.title || 'Confidential Mandate';
+    const isConf = m.isConfidential || m.confidential || m.confidentialityConfirmed === false || ['non_publishable', 'confidential', 'confirmation_required'].includes(m.publish_status);
+    const clientDesc = isConf ? `[CONFIDENTIAL] ${rawClient}` : rawClient;
+
+    const text = String(m.summary || m.rawNotes || m.optimizedText || m.description || '').trim();
+    let snippet = '';
+    if (text) {
+      const sentences = text.split(/(?<=[.!?])\s+/);
+      snippet = sentences.slice(0, 2).join(' ').replace(/^\[.*?\]\s*/, '').trim();
+    }
+
+    const isLead = isSameLawyer(lawyerName, String(m.leadPartner || m.lead_partner || ''));
+    const rolePrefix = isLead ? 'Lead partner' : 'Key practitioner';
+
+    if (snippet) {
+      highlights.push(`• ${clientDesc}: ${rolePrefix} — ${snippet}`);
+    } else {
+      highlights.push(`• ${clientDesc}: ${rolePrefix} advising on strategic mandate.`);
+    }
+  }
+
+  return anonymizeConfidentialClients(highlights.join('\n\n'), confClientNames);
+}
+
 /** Factual roster projection. No rankings, bios or roles are inferred from a name. */
 export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName: string, practiceArea: string, guideRegion: string, chambersData?: any): CuratedLawyer[] {
   const roster = new Map<string, any>();
@@ -180,7 +247,8 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     const suggestedRank=isPartner === true && /associate/i.test(proposed) ? '' : proposed;
     const sourceBio=String(candidacy?.submission_bio || person.comments || person.bio || '');
     const bio=anonymizeConfidentialClients(sourceBio,confNames);
-    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:cleanLawyerUrl(person.url || ''),comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork:anonymizeConfidentialClients(person.standoutWork || person.standout_work || '',confNames)};
+    const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio);
+    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:cleanLawyerUrl(person.url || ''),comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork};
   });
 }
 

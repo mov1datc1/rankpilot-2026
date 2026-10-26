@@ -3747,7 +3747,7 @@ def optimization_node(state: AgentState) -> Dict:
             )
         budgeted_original_b10 = compress_oversized_source_b10(
             objective_aligned_b10,
-            max_words=500,
+            max_words=1000,
         )
         if budgeted_original_b10 != objective_aligned_b10:
             print(
@@ -3801,7 +3801,7 @@ def optimization_node(state: AgentState) -> Dict:
                 budgeted_original_b10,
                 strategic_insert,
                 required_b7_sentences,
-                max_words=500,
+                max_words=1000,
             )
         print(
             f"[B10 EVIDENCE MODE] Budgeted {len(budgeted_original_b10.split())} "
@@ -3838,7 +3838,7 @@ def optimization_node(state: AgentState) -> Dict:
             enhanced_b7 = sanitize_submission_voice(enhanced_b7)
         except Exception as lg_err:
             print(f"[B10] Warning: sanitize_submission_voice error: {lg_err}")
-        if len(enhanced_b7.split()) > 500 and original_b10:
+        if len(enhanced_b7.split()) > 1000 and original_b10:
             from utils.objective_alignment import (
                 compress_oversized_source_b10,
                 compose_b10_with_budget,
@@ -3852,7 +3852,7 @@ def optimization_node(state: AgentState) -> Dict:
             )
             cleaned_original = compress_oversized_source_b10(
                 cleaned_original,
-                max_words=500,
+                max_words=1000,
             )
             try:
                 cleaned_original = sanitize_submission_voice(cleaned_original)
@@ -3862,7 +3862,7 @@ def optimization_node(state: AgentState) -> Dict:
                 cleaned_original,
                 strip_fillers(strategic_insert),
                 required_b7_sentences,
-                max_words=500,
+                max_words=1000,
             )
     
     if enhanced_b7:

@@ -300,10 +300,10 @@ def select_objective_aligned_b10_source(
     return " ".join(selected) if len(selected) >= 2 else source
 
 
-def compress_oversized_source_b10(original_text: str, max_words: int = 500) -> str:
+def compress_oversized_source_b10(original_text: str, max_words: int = 1000) -> str:
     """Remove only high-confidence marketing boilerplate from an oversized B10.
 
-    Chambers caps B10 at 500 words. Source preservation must not turn that cap
+    B10 is budgeted for up to 1,000 words. Source preservation must not turn that cap
     into an impossible final gate, but factual sentences cannot be truncated.
     These narrowly defined, non-evidentiary phrases contain no client, lawyer,
     mandate, result, number or legal proposition. They are removed only when the
@@ -341,9 +341,9 @@ def compose_b10_with_budget(
     original_text: str,
     strategic_text: str = "",
     required_sentences: Sequence[str] = (),
-    max_words: int = 500,
+    max_words: int = 1000,
 ) -> str:
-    """Add complete source-backed sentences without exceeding the B10 limit.
+    """Add complete source-backed sentences without exceeding the B10 limit (budgeted up to 1,000 words).
 
     The original answer is never truncated. The first strategic sentence and
     required accountability sentences receive priority; lower-priority
