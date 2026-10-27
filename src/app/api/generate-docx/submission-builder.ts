@@ -440,7 +440,7 @@ export function generateDynamicC2(
       c2Candidate.startsWith(b10Ref.substring(0, 150))
     );
     if (!isB10Duplicate) {
-      return c2Candidate;
+      return sanitizeTemplateBoilerplate(c2Candidate).cleaned;
     }
   }
 

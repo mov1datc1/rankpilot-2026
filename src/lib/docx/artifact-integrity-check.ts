@@ -96,7 +96,18 @@ export const AUDITOR_COMMENTARY_PATTERNS = [
   /\[Confirm:[^\]]+\]/gi,
   /\[Pending:[^\]]+\]/gi,
   /\[Dilution Risk[^\]]*\]/gi,
-  /\[Off-Category[^\]]*\]/gi
+  /\[Off-Category[^\]]*\]/gi,
+  // v29.6: Internal audit disclaimer & ranking prediction leakage prevention (Angela Castillo Directive)
+  /(?:The\s+)?comparison\s+is\s+limited\s+to\s+the\s+available\s+official\s+profile\s+commentary\s+and\s+is\s+not\s+presented\s+as\s+a\s+prediction\s+of\s+ranking\s+outcome\.?/gi,
+  /(?:The\s+)?comparison\s+is\s+limited\s+to\s+available\s+official\s+profile\s+commentary[^.!?]*[.!?]?/gi,
+  /(?:is\s+)?not\s+(?:presented\s+as\s+)?a\s+prediction\s+of\s+(?:ranking\s+)?outcome\.?/gi,
+  /(?:This|The)\s+score\s+is\s+not\s+a\s+(?:prediction\s+of\s+)?ranking\s+(?:prediction|outcome)\.?/gi,
+  /It\s+is\s+an\s+internal\s+diagnostic\s+tool[^.!?]*[.!?]?/gi,
+  /(?:without\s+asserting|not\s+asserting)\s+a\s+ranking[^.!?]*[.!?]?/gi,
+  /(?:distinguish(?:ing)?\s+a\s+target\s+from\s+a\s+prediction|target\s+is\s+not\s+a\s+prediction)[^.!?]*[.!?]?/gi,
+  /[Nn]o\s+est[áa]\s+prediciendo\s+un\s+resultado[^.!?]*[.!?]?/gi,
+  /[Nn]o\s+constituye\s+una\s+predicci[oó]n[^.!?]*[.!?]?/gi,
+  /[Pp]redicci[oó]n\s+de\s+ranking[^.!?]*[.!?]?/gi
 ];
 
 /**

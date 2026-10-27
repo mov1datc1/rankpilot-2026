@@ -1809,7 +1809,7 @@ export default function SubmissionStudio({
                     color: hasRunOptimization ? '#4338CA' : '#B45309',
                     border: `1px solid ${hasRunOptimization ? '#C7D2FE' : '#FDE68A'}`
                   }}>
-                    {hasRunOptimization ? '✓ Selección evaluada' : '⏳ Por evaluar'}
+                    {hasRunOptimization ? '✓ Selección calibrada' : '⏳ Portafolio preliminar'}
                   </span>
                 </div>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
@@ -1822,7 +1822,7 @@ export default function SubmissionStudio({
                 </h2>
                 <p style={{ fontSize: '0.8rem', color: '#64748B', margin: 0, maxWidth: '640px', lineHeight: 1.45 }}>
                   {!hasRunOptimization
-                    ? `El registro conserva ${matters.length} asuntos. La revisión editorial comparará su evidencia y aportación al portafolio antes de confirmar la selección y las reservas.`
+                    ? `El registro conserva los ${matters.length} asuntos originales. Al generar la entrega oficial, el motor editorial jerarquiza automáticamente el portafolio (hasta 20 principales) y deriva excedentes a reserva sin requerir configuración manual previa.`
                     : (paLowerSS.includes('real estate') || paLowerSS.includes('inmobiliario') || paLowerSS.includes('dispute') || paLowerSS.includes('litig')
                       ? `RankPilot ha priorizado un núcleo curado de ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales) para concentrar el impacto evaluativo y evitar dilución con materias ajenas.`
                       : `RankPilot seleccionó ${coreCount} asuntos (${curation.officialPubMatters.length} públicos y ${curation.officialConfMatters.length} confidenciales). Consulta en el Audit la justificación de la selección y las reservas.`
@@ -1872,16 +1872,16 @@ export default function SubmissionStudio({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  background: '#FEF3C7',
-                  border: '1px solid #FDE68A',
+                  background: '#EEF2FF',
+                  border: '1px solid #C7D2FE',
                   borderRadius: '8px',
                   padding: '0.5rem 0.85rem',
-                  color: '#92400E',
+                  color: '#4338CA',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   whiteSpace: 'nowrap'
-                }}>
-                  <span>⚡ Calibración pendiente al Optimizar con IA</span>
+                }} title="Al generar la entrega oficial, RankPilot calibra, jerarquiza y selecciona automáticamente los mejores 20 asuntos">
+                  <span>✨ Calibración automática activa al generar</span>
                 </div>
               )}
             </div>

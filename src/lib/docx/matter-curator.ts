@@ -78,6 +78,17 @@ export function getDirectoryPracticeAllowance(directory: string = '', practiceAr
   return { maxTotal: 20, maxPub: 20, maxConf: 20 };
 }
 
+function isAdverseEmployeeMatter(m: any): boolean {
+  const text = `${m.client || ''} ${m.rawNotes || ''} ${m.description || ''} ${m.summary || ''}`.toLowerCase();
+  return (
+    text.includes('the employee retained') ||
+    text.includes('el empleado contrató') ||
+    text.includes('representing the employee') ||
+    text.includes('representación del empleado') ||
+    text.includes('private client (enerflex)')
+  );
+}
+
 /** Projection of the canonical selection, never a second strategy engine. */
 export function curateMatters(allMatters: any[], practiceArea: string = '', chambersData: any = {}, options: {maxTotal?: number; maxPub?: number; maxConf?: number} = {}): CuratedMattersResult {
   const limits = getDirectoryPracticeAllowance(chambersData.directory, practiceArea);
@@ -95,7 +106,15 @@ export function curateMatters(allMatters: any[], practiceArea: string = '', cham
   const byId = new Map(matters.map(m => [String(m.id), m]));
   const candidates = hasSelection
     ? [...new Set<string>(selection.core_matter_ids.map(String))].map(id => byId.get(id)).filter(Boolean)
-    : matters.filter(m => !m.isExcluded && !['Excluded', 'Pruned'].includes(m.status));
+    : matters.filter(m => !m.isExcluded && !['Excluded', 'Pruned'].includes(m.status)).sort((a, b) => {
+        if (/labou?r/i.test(practiceArea)) {
+          const aAdv = isAdverseEmployeeMatter(a);
+          const bAdv = isAdverseEmployeeMatter(b);
+          if (aAdv && !bAdv) return 1;
+          if (!aAdv && bAdv) return -1;
+        }
+        return 0;
+      });
   const restricted = (m: any) => m.isConfidential === true || m.confidential === true || m.is_confidential === true || m.confidentialityConfirmed === false || ['confirmation_required', 'non_publishable', 'confidential'].includes(m.publish_status || m.confidentialityStatus || m.publishStatus);
   const officialPubMatters: any[] = [], officialConfMatters: any[] = [];
   const selected = new Set<any>();
