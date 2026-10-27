@@ -5,6 +5,19 @@
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
 > Last updated: **2026-10-11** (selection freeze elimination, Legal 500 support & production verification)
 
+## 2026-10-27 — Angela Castillo Real Estate Validation & Unified Matter Narrative Arc
+
+- **Unified Matter Narrative Synthesis (`editorial_development.py:TASK`, `micro_optimizer.py`)**:
+  - Integrated full multi-field matter context (`rawNotes`, `summary`, `description`, `otherInfo`, `updates`, `completionDate`, `status`, and lawyer leadership) into a single chronological narrative arc: (1) client commercial objective & stakes, (2) legal obstacle & defense strategy, (3) procedural proceedings, and (4) subsequent procedural progress, current status, and decisive favorable outcome.
+  - Resolved contradictions between an initial "pending" status and subsequent favorable rulings/injunctions/resolutions into the consolidated current factual reality of the matter.
+  - Added `otherInfo`, `other_info`, and `description` to `matter_details` and grounding evidence in `micro_optimizer.py`.
+- **B10 Word Limit Standard Expansion (up to 1,000w)**:
+  - Updated `SubmissionStudio.tsx`, `judge-sol-evaluator.ts`, and ingestion wizards to support the 4-pillar expanded budget up to 1,000 words without false warnings or truncation.
+- **B9 Roster Ranking Neutralization**:
+  - Unverified lawyer rankings in `submission-builder.ts` evaluate to `''` (blank) instead of `'N'`, preventing false unverified "Unranked" assertions under Chambers evaluation criteria.
+- **Angela Castillo Official Evaluation Recorded**:
+  - Formal review document created in `docs/reviews/angela-feedback-ramos-castillo-2026-10-27.txt` documenting 4/5 pillars rated "Excelente" / "Muy buena" (Strategic Audit, Lawyers Presentation & Confidentiality, Institutional B10, and Selection) and roadmap for matter narrative depth.
+
 ## 2026-10-11 — Selection freeze resolution, Legal 500 directory policy & extraction hardening
 
 - **Extraction & Parser (`doc_parser.py`, `filing_extraction.py`)**:

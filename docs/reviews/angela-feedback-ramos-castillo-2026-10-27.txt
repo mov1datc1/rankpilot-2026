@@ -1,0 +1,155 @@
+# RANKPILOT — VALIDACIÓN EDITORIAL Y FEEDBACK OFICIAL (ÁNGELA CASTILLO)
+# Expediente: Ramos Castillo Abogados · Real Estate (Guadalajara, Jalisco)
+# Fecha: 27 de octubre de 2026
+# Evaluadora: Ángela Castillo (Co-fundadora de LexLatin / Directora Editorial)
+
+================================================================================
+1. RESUMEN EJECUTIVO Y CALIFICACIÓN GLOBAL
+================================================================================
+Ángela Castillo completó la evaluación integral del submission de Ramos Castillo
+en la práctica de Real Estate (México), revisando tanto la Strategic Audit Letter
+como el borrador de Submission oficial (.docx) y el comportamiento del motor.
+
+El balance general es altamente positivo y representa una validación decisiva de
+la inteligencia de RankPilot: 4 de las 5 dimensiones clave fueron evaluadas como
+"Excelente" o "Muy buena", destacando la emergencia de criterio estratégico
+propio en la auditoría y la resolución impecable del binomio confidencialidad-atribución.
+
+Pilar por Pilar:
+1. Strategic Audit Letter: EXCELENTE ("fantástico; aporta criterio estratégico propio")
+2. Presentación de Abogados: MUY BUENA ("respetó confidencialidad y atribuyó méritos")
+3. Presentación Institucional (B10): EXCELENTE ("sólida, convincente y bien fundamentada")
+4. Selección de Asuntos: MUY BUENA ("sólida cartera central")
+5. Descripción de Asuntos: ÁREA CLAVE DE MEJORA ("reconstrucción integral con updates")
+
+
+================================================================================
+2. ANÁLISIS DETALLADO DE LOS HALLAZGOS Y RESPUESTA ARQUITECTÓNICA
+================================================================================
+
+--------------------------------------------------------------------------------
+PILAR 1: STRATEGIC AUDIT LETTER — EXCELENTE
+--------------------------------------------------------------------------------
+* Feedback de Ángela:
+  "El diagnóstico me pareció fantástico. La selección y jerarquización de asuntos
+  es muy buena y, sobre todo, el sistema está comenzando a cuestionar decisiones
+  que yo misma no había considerado. Por ejemplo, nunca me había planteado excluir
+  Holcim de la selección principal. La valoración del asunto de la familia Leaño
+  es discutible, pero precisamente eso es lo interesante: RankPilot está aportando
+  criterio estratégico propio."
+
+* Análisis Técnico / Metodológico:
+  - Exclusión de Holcim: El motor razonó que, aunque Holcim es un cliente multinacional
+    de gran envergadura económica, la controversia versaba sobre licencias industriales
+    de plantas y continuidad operativa general, no sobre derechos reales de propiedad,
+    desarrollo urbano o zonificación estricta. Incluirlo habría diluido la densidad
+    inmobiliaria frente a litigios de afectación directa de suelo (como EL CIELO COUNTRY CLUB).
+  - Familia Leaño: El sistema lo situó en Reserva Condicional (#2 de reservas) detrás
+    de DURANPARK y La Primavera porque en el expediente original no constaba medida
+    cautelar concedida ni resolución ejecutada. La Audit Letter sugiere expresamente
+    reincorporarlo si la firma aporta una actualización sobre la admisión o suspensión.
+
+--------------------------------------------------------------------------------
+PILAR 2: PRESENTACIÓN DE ABOGADOS — MUY BUENA
+--------------------------------------------------------------------------------
+* Feedback de Ángela:
+  "El sistema hizo algo especialmente valioso: respetó la confidencialidad de los
+  asuntos y, al mismo tiempo, consiguió atribuir adecuadamente los méritos
+  profesionales a los abogados y a la firma. Este es un avance importantísimo."
+
+* Análisis Técnico:
+  - En versiones anteriores, existía el riesgo de revelar clientes confidenciales
+    al redactar los méritos individuales de los socios en B9, o por el contrario,
+    borrar la experiencia para no violar la reserva.
+  - La arquitectura actual de curaduría (`lawyer-curator.ts`) y sanitización
+    reemplaza los nombres de clientes reservados por descripciones sectoriales
+    precisas ("a major residential development", "a sovereign state expropriation dispute"),
+    preservando el volumen, la complejidad técnica y el rol de liderazgo del socio
+    (José Pablo Ramos Castillo) sin vulnerar el secreto profesional.
+
+--------------------------------------------------------------------------------
+PILAR 3: PRESENTACIÓN INSTITUCIONAL (B10) — EXCELENTE
+--------------------------------------------------------------------------------
+* Feedback de Ángela:
+  "La narrativa es sólida, comercialmente convincente y está bien fundamentada.
+  Destaca las capacidades del equipo, utiliza los asuntos como evidencia y termina
+  con una conclusión persuasiva. Me gustó muchísimo."
+
+* Calibración Operativa:
+  - El texto de B10 de Ramos Castillo cuenta con 573 palabras estructuradas en los
+    4 Pilares Institucionales.
+  - Se eliminó la advertencia heredada de 500w en el Submission Studio y en el
+    evaluador del Judge, alineando todo el frontend al presupuesto ampliado de
+    hasta 1.000 palabras para mantener esta riqueza narrativa sin truncamientos.
+
+--------------------------------------------------------------------------------
+PILAR 4: SELECCIÓN DE ASUNTOS Y EL CASO "FAMILIA DE ANDA"
+--------------------------------------------------------------------------------
+* Feedback de Ángela:
+  "La cartera seleccionada me parece sólida. Creo que quedó fuera el asunto de la
+  familia De Anda, aunque quisiera revisar el razonamiento específico de esa exclusión."
+
+* Aclaración Factual Crucial (Trazabilidad en Base de Datos):
+  - El asunto de la **Familia De Anda NO quedó fuera**.
+  - Figura expresamente como el **Asunto #9 de la cartera central recomendada**
+    en la Strategic Audit Letter:
+    "9. Familia De Anda. Nuevo amparo en curso para procurar recuperación o
+    indemnización por la alegada apropiación estatal de un inmueble; la contribución
+    distintiva es el análisis del régimen matrimonial para articular la defensa."
+  - **¿Por qué pareció quedar fuera a simple vista?**
+    En la fuente original, Familia De Anda tiene el atributo `isConfidential: true`.
+    En la estructura oficial de Chambers:
+    - 9 asuntos son públicos (Sección D).
+    - 3 asuntos son confidenciales (Sección E).
+    Familia De Anda fue exportado en la Sección E como **"Confidential Matter 3"**
+    para salvaguardar la identidad del cliente, en estricto cumplimiento de la
+    política de confidencialidad celebrada por Ángela en el Punto 2.
+
+--------------------------------------------------------------------------------
+PILAR 5: DESCRIPCIÓN DE ASUNTOS — PRINCIPAL DIRECTRIZ DE MEJORA
+--------------------------------------------------------------------------------
+* Feedback de Ángela:
+  "Aunque los textos originales tenían importantes deficiencias, creo que el sistema
+  todavía puede conseguir narrativas más completas y sofisticadas.
+  Pero identifiqué un problema más importante: parece estar reescribiendo únicamente
+  la descripción principal de cada asunto, sin integrar sistemáticamente las
+  actualizaciones incluidas en otros campos del documento.
+  Esto puede cambiar sustancialmente la narrativa.
+  Por ejemplo, un asunto puede describirse inicialmente como pendiente y contener,
+  en el apartado de updates, una sentencia favorable posterior. La versión final
+  debería incorporar ese resultado dentro de una única historia coherente, no
+  conservar ambas versiones desconectadas.
+  Creo que necesitamos que RankPilot reconstruya cada asunto considerando toda la
+  información disponible: descripción, actualizaciones, estado procesal, resultados,
+  complejidad, intervención de la firma y participación de los abogados."
+
+* Diagnóstico de Causa Raíz en Código:
+  1. En `editorial_development.py`, la directiva de desarrollo instruía al redactor
+     a enfocarse en el problema jurídico y resultado, pero no ordenaba explícitamente
+     la fusión cronológica unificada de los campos dispersos (`rawNotes`, `otherInfo`,
+     `completionDate`, actualizaciones procesales).
+  2. En `micro_optimizer.py`, el extractor del micro-servicio de asuntos tomaba
+     únicamente `source_excerpt` o `rawNotes`, omitiendo `otherInfo` y notas
+     adicionales donde residen los fallos favorables posteriores.
+
+* Solución Implementada:
+  1. **Directiva de Reconstrucción Integral Cronológica (Unified Narrative Arc)**:
+     Instrucción explícita al redactor para sintetizar todos los campos en un solo
+     relato de 3 tiempos:
+     a) Mandato, perfil del cliente y dimensión económica/operativa en riesgo.
+     b) Obstáculo jurídico y despliegue técnico de la firma (amparo, suspensión, etc.).
+     c) Avance procesal posterior, estado actual y resolución favorable / ejecutada.
+  2. **Resolución de Contradicciones Pendiente vs. Sentencia**:
+     Regla estricta: Si la descripción inicial dice "pendiente", pero en las
+     actualizaciones o estado posterior se acredita sentencia favorable o suspensión
+     definitiva, la narrativa final debe reflejar la realidad jurídica actual consolidada.
+  3. **Inclusión de `otherInfo` y `updates` en el payload de optimización**:
+     Se incorporan sistemáticamente en el contexto y en las comprobaciones de
+     anclaje factual (`grounding_result`).
+
+================================================================================
+3. COMPROMISOS Y REGLA DE NO-REGRESIÓN
+================================================================================
+- Cero regresión: Se preserva al 100% la selección estratégica, el blindaje de
+  confidencialidad, el B10 de 1.000 palabras y la Audit Letter que Ángela aprobó.
+- Todos los cambios se respaldan con pruebas de contrato automatizadas.
