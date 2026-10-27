@@ -148,7 +148,7 @@ export default function ReportsPage() {
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            RankPilot: <span style={{ color: '#2563eb' }}>Deliverables</span>
+            Rankings Decoded: <span style={{ color: '#2563eb' }}>Deliverables</span>
           </h1>
           <p style={{ fontSize: '1.1rem', color: '#64748b', marginTop: '0.25rem' }}>
             Manage and download your final directory submissions.

@@ -61,7 +61,7 @@ export default function DashboardAnalyticsPage() {
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RankPilot: <span style={{ color: '#2563eb' }}>Dashboard</span>
+          Rankings Decoded: <span style={{ color: '#2563eb' }}>Dashboard</span>
         </h1>
         <p style={{ fontSize: '1.1rem', color: '#64748b', marginTop: '0.25rem' }}>
           Overview of your submission pipeline and AI optimization performance.

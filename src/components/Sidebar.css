@@ -15,9 +15,9 @@
 .app-sidebar[data-collapsed='true'] { width: 64px; }
 .app-sidebar-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 20px 14px; min-height: 88px; }
 .app-sidebar-brand { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-.app-sidebar-brand img { width: 132px; height: auto; }
-.app-sidebar-mark { display: grid; place-items: center; position: relative; width: 34px; height: 34px; border-radius: 10px; background: #eef2ff; color: #3730a3; font: 800 21px/1 system-ui; }
-.app-sidebar-mark > span { position: absolute; top: 2px; right: 2px; font-size: 13px; }
+.app-sidebar-brand .app-sidebar-logo, .app-sidebar-brand > img { width: 152px; height: auto; max-height: 48px; object-fit: contain; }
+.app-sidebar-mark { display: grid; place-items: center; position: relative; width: 36px; height: 36px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.app-sidebar-mark img { width: 24px; height: 24px; object-fit: contain; display: block; }
 .app-sidebar-toggle { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; color: #64748b; cursor: pointer; }
 .app-sidebar[data-collapsed='true'] .app-sidebar-header { flex-direction: column; padding: 20px 8px 12px; gap: 14px; }
 .app-sidebar-navigation { display: flex; flex-direction: column; min-height: calc(100% - 88px); }

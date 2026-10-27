@@ -64,8 +64,14 @@ export default function Sidebar({ userRole }: { userRole?: string }) {
   return (
     <aside className="app-sidebar" data-collapsed={collapsed} aria-label="Menú principal" onScroll={() => setTooltip(null)}>
       <div className="app-sidebar-header">
-        <Link href="/builder" className="app-sidebar-brand" aria-label="RankPilot · Inicio" {...labelEvents('RankPilot · Inicio')}>
-          {collapsed ? <span className="app-sidebar-mark" aria-hidden="true">R<span>↗</span></span> : <img src="/logo-rankpilot.png" alt="RankPilot" />}
+        <Link href="/builder" className="app-sidebar-brand" aria-label="Rankings Decoded · Inicio" {...labelEvents('Rankings Decoded · Inicio')}>
+          {collapsed ? (
+            <span className="app-sidebar-mark" aria-hidden="true" title="Rankings Decoded">
+              <img src="/brand/rankings_decoded_logomark.png" alt="Rankings Decoded" />
+            </span>
+          ) : (
+            <img src="/brand/rankings_decoded_logo_transparent.png" alt="Rankings Decoded" className="app-sidebar-logo" />
+          )}
         </Link>
         <button type="button" className="app-sidebar-toggle" onClick={toggle} aria-label={toggleLabel} aria-expanded={!collapsed} aria-controls="app-sidebar-navigation" title={toggleLabel}>
           {collapsed ? <PanelLeftOpen size={17} aria-hidden="true" /> : <PanelLeftClose size={17} aria-hidden="true" />}

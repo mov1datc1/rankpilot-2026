@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Eye, EyeOff, Check, BarChart2 } from 'lucide-react';
+import { Eye, EyeOff, Check } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 
@@ -91,14 +91,12 @@ export default function LoginPage() {
           position: 'relative'
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
-            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '8px' }}>
-              <BarChart2 size={24} color="#ffffff" />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0, lineHeight: 1 }}>RankPilot</h2>
-              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)' }}>Legal Rankings. Simplified</span>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '3rem' }}>
+            <img 
+              src="/brand/rankings_decoded_logo_white_transparent.png" 
+              alt="Rankings Decoded" 
+              style={{ height: '44px', width: 'auto', objectFit: 'contain' }} 
+            />
           </div>
 
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.1, marginBottom: '1rem' }}>
@@ -166,7 +164,7 @@ export default function LoginPage() {
           justifyContent: 'center'
         }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 600, marginBottom: '0.5rem', color: '#111827' }}>Login</h2>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '2.5rem' }}>Enter your credentials to access RankPilot.</p>
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '2.5rem' }}>Enter your credentials to access Rankings Decoded.</p>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
@@ -281,7 +279,7 @@ export default function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', fontSize: '0.75rem', color: '#9ca3af', marginTop: '2rem' }}>
-            © RankPilot 2026
+            © Rankings Decoded 2026
           </p>
         </div>
         

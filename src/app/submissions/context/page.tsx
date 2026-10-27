@@ -12,7 +12,7 @@ export default function ContextPage() {
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RankPilot: <span style={{ color: '#2563eb' }}>Legal Directory Portal</span>
+          Rankings Decoded: <span style={{ color: '#2563eb' }}>Legal Directory Portal</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: '#64748b', marginTop: '0.25rem' }}>Setup Wizard</p>
       </div>
@@ -34,7 +34,7 @@ export default function ContextPage() {
 
       {/* Main Content */}
       <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.5rem' }}>RankPilot: Initial context</h2>
+        <h2 style={{ fontSize: '1.75rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.5rem' }}>Rankings Decoded: Initial context</h2>
         <p style={{ fontSize: '1.1rem', color: '#475569' }}>Before starting the Audit Room, this is what I understood from your draft.</p>
       </div>
 

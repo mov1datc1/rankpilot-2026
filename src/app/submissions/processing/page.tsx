@@ -261,7 +261,7 @@ function ProcessingContent() {
       {/* Header */}
       <div style={{ marginBottom: '3rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 600, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          RankPilot: <span style={{ color: '#2563eb' }}>Legal Directory Portal</span>
+          Rankings Decoded: <span style={{ color: '#2563eb' }}>Legal Directory Portal</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: '#64748b', marginTop: '0.25rem' }}>Setup Wizard — processing your document</p>
       </div>
