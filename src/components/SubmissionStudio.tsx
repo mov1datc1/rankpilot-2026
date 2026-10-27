@@ -2050,7 +2050,7 @@ export default function SubmissionStudio({
                       B10: Posicionamiento Institucional del Departamento
                     </h3>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
-                      ¿Por qué destaca este departamento? — What is this department best known for? (Límite estricto de 500 palabras)
+                      ¿Por qué destaca este departamento? — What is this department best known for? (Presupuesto editorial ampliado hasta 1.000 palabras)
                     </p>
                   </div>
                 </div>
@@ -2062,11 +2062,11 @@ export default function SubmissionStudio({
                     fontWeight: 700,
                     padding: '0.3rem 0.75rem',
                     borderRadius: '9999px',
-                    background: b10WordCount <= 500 ? '#EEF2FF' : '#FEF2F2',
-                    color: b10WordCount <= 500 ? '#4F46E5' : '#DC2626',
-                    border: `1px solid ${b10WordCount <= 500 ? '#C7D2FE' : '#FECACA'}`
+                    background: b10WordCount <= 1000 ? '#EEF2FF' : '#FEF2F2',
+                    color: b10WordCount <= 1000 ? '#4F46E5' : '#DC2626',
+                    border: `1px solid ${b10WordCount <= 1000 ? '#C7D2FE' : '#FECACA'}`
                   }}>
-                    {b10WordCount} / 500 palabras
+                    {b10WordCount} / 1.000 palabras (estándar ampliado)
                   </span>
                 </div>
               </div>
@@ -3618,9 +3618,9 @@ export default function SubmissionStudio({
                     <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                       {b10WordCount === 0
                         ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Haz clic en Optimizar Todo para estructurar los 4 Pilares Institucionales.`
-                        : b10WordCount > 500
-                          ? `⚠️ Excede el límite estricto de 500 palabras (${b10WordCount}/500w). Reduce la extensión para cumplir el criterio de evaluación de ${selectedDirectory}.`
-                          : `${b10WordCount}/500 palabras. ${needsB10Optimization(chambersData,b10Text) ? 'Conserva el texto de origen; pendiente de optimizar.' : 'Versión actual dentro del límite de extensión.'}`}
+                        : b10WordCount > 1000
+                          ? `⚠️ Excede el presupuesto editorial de 1.000 palabras (${b10WordCount}/1000w). Calibra la extensión para mantener la densidad analítica en ${selectedDirectory}.`
+                          : `${b10WordCount} palabras (estándar editorial de hasta 1.000w). ${needsB10Optimization(chambersData,b10Text) ? 'Conserva el texto de origen; pendiente de optimizar.' : 'Posicionamiento institucional verificado.'}`}
                     </p>
                     {b10Text.trim() && <p aria-label="Vista previa del B10 actual" style={{fontSize:'0.72rem',color:'#475569',lineHeight:1.45}}>{b10Text.trim().slice(0,180)}{b10Text.trim().length > 180 ? '…' : ''}</p>}
                     <button

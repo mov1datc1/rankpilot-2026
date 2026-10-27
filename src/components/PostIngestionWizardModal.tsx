@@ -652,7 +652,7 @@ export default function PostIngestionWizardModal({
                     Narrativa Institucional B10 (Borrador Literal)
                   </h4>
                   <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#166534' }}>
-                    Este es el texto base de &quot;What is this department best known for&quot; extraído directamente. Durante la optimización maestra se calibrará en los 4 Pilares (&lt;500 palabras).
+                    Este es el texto base de &quot;What is this department best known for&quot; extraído directamente. Durante la optimización maestra se calibrará en los 4 Pilares (presupuesto editorial ampliado hasta 1.000 palabras).
                   </p>
                 </div>
               </div>

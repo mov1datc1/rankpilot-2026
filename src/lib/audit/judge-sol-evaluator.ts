@@ -753,13 +753,13 @@ export function autoPolishAndHealDeliverables(params: PolishDeliverablesParams):
       }
     }
 
-    // Enforce 500-word limit strictly
+    // Enforce 1000-word limit for expanded 4-pillar narrative
     const b10Words = polishedB10.split(/\s+/).filter(Boolean);
-    if (b10Words.length > 500) {
-      const trimmedWords = b10Words.slice(0, 485).join(' ');
+    if (b10Words.length > 1000) {
+      const trimmedWords = b10Words.slice(0, 985).join(' ');
       const lastPeriod = trimmedWords.lastIndexOf('.');
-      polishedB10 = lastPeriod > 300 ? trimmedWords.slice(0, lastPeriod + 1) : trimmedWords + '.';
-      repairsLog.push(`[B10 Narrativa] Longitud ajustada de ${b10Words.length} a ${polishedB10.split(/\s+/).length} palabras (cumpliendo el límite de 500 de Chambers).`);
+      polishedB10 = lastPeriod > 600 ? trimmedWords.slice(0, lastPeriod + 1) : trimmedWords + '.';
+      repairsLog.push(`[B10 Narrativa] Longitud ajustada de ${b10Words.length} a ${polishedB10.split(/\s+/).length} palabras (cumpliendo el presupuesto editorial ampliado de hasta 1.000 palabras).`);
       repairsCount++;
     }
   }

@@ -712,7 +712,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
           yellowCell([para(l.name || '', { size: 20 })], { width: b6ColWidths[0] }),
           yellowCell(bioParts, { width: b6ColWidths[1] }),
           yellowCell([para(l.isPartner === null ? '' : l.isPartner ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[2] }),
-          yellowCell([para(l.isRanked === true ? 'Y' : 'N', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
+          yellowCell([para(l.isRanked === true ? 'Y' : l.isRanked === false ? 'N' : '', { size: 20, alignment: AlignmentType.CENTER })], { width: b6ColWidths[3] }),
           yellowCell([para(l.leave || '', { size: 20 })], { width: b6ColWidths[4] }),
         ],
       }));

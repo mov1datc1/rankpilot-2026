@@ -8,6 +8,8 @@ const project=(people,matters=[],data={})=>curateLawyers(people,matters,'Synthet
 test('unavailable individual evidence cannot become Unranked or Ranked N in B9',()=>{
   const input=structuredClone(person);const [result]=project([input]);
   assert.equal(result.currentRank,'');assert.equal(result.isRanked,null);assert.equal(result.suggestedRank,'');assert.deepEqual(input,person);
+  const rankedValue = result.isRanked === true ? 'Y' : result.isRanked === false ? 'N' : '';
+  assert.equal(rankedValue, '');
 });
 test('confidential and public matter mentions cannot manufacture a B9 identity or partner',()=>{
   const mentions=[{leadPartner:'Private Lawyer',teamMembers:'Other Lawyer',isConfidential:true},{leadPartner:'Public Mention',isConfidential:false}];
