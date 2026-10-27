@@ -43,6 +43,8 @@
 
 html, body {
   height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   color: var(--text-primary);

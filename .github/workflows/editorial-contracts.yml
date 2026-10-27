@@ -23,7 +23,7 @@ jobs:
           cache-dependency-path: ai-engine/requirements.txt
       - run: npm ci
       - run: npx tsc --noEmit
-      - run: node --test tests/contracts/editorial-development.test.cjs tests/contracts/lawyer-role.test.cjs tests/contracts/delivery-recovery.test.cjs tests/contracts/filing-details.test.cjs tests/contracts/client-legal-name.test.cjs tests/contracts/editorial-recovery.test.cjs tests/contracts/editorial-recovery-postgres.test.cjs tests/contracts/editorial-repair-queue.test.cjs tests/contracts/editorial-runner.test.cjs tests/contracts/editorial-supervisor.test.cjs tests/contracts/analysis-scope.test.cjs tests/contracts/audit-next-actions.test.cjs tests/contracts/letter-sections.test.cjs tests/contracts/repair-progress.test.cjs tests/contracts/source-review-wizard.test.cjs tests/contracts/studio-draft.test.cjs
+      - run: node --test tests/contracts/editorial-development.test.cjs tests/contracts/lawyer-role.test.cjs tests/contracts/delivery-recovery.test.cjs tests/contracts/filing-details.test.cjs tests/contracts/client-legal-name.test.cjs tests/contracts/editorial-recovery.test.cjs tests/contracts/editorial-recovery-postgres.test.cjs tests/contracts/editorial-repair-queue.test.cjs tests/contracts/editorial-runner.test.cjs tests/contracts/editorial-supervisor.test.cjs tests/contracts/analysis-scope.test.cjs tests/contracts/audit-next-actions.test.cjs tests/contracts/letter-sections.test.cjs tests/contracts/repair-progress.test.cjs tests/contracts/source-review-wizard.test.cjs tests/contracts/studio-draft.test.cjs tests/contracts/contact-api.test.cjs
       - run: pip install -r ai-engine/requirements.txt
       - run: python -m unittest discover -s tests -p "test_editorial*.py"
         working-directory: ai-engine

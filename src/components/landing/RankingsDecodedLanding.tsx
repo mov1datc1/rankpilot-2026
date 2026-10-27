@@ -75,6 +75,12 @@ export default function RankingsDecodedLanding() {
         throw new Error(data?.error || 'Unable to register your enquiry. Please check your connection or contact us directly.');
       }
       setSubmitSuccess(true);
+      if (typeof window !== 'undefined') {
+        const box = document.querySelector('.contact-card-box');
+        if (box) {
+          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
       setFormState({
         name: '',
         email: '',
@@ -640,44 +646,44 @@ export default function RankingsDecodedLanding() {
               {
                 tag: 'COMPETITIVE ASSESSMENT',
                 icon: <Search size={22} color="#4338CA" />,
-                title: 'Your firm is pursuing recognition without a clear competitive assessment.',
-                desc: 'You need to understand whether your track record supports your ambitions and how your practice compares with established competitors.',
-                focus: 'Validating band viability and evidentiary support against the competitive landscape.'
+                title: 'Your firm is pursuing recognition without a clear competitive assessment',
+                desc: 'Understand whether your track record supports your ambitions and where your practice genuinely stands against ranked peers.',
+                focus: 'Validating tier viability, evidentiary strength, and market opportunities.'
               },
               {
                 tag: 'SUBMISSIONS & EVIDENCE',
                 icon: <FileText size={22} color="#4338CA" />,
-                title: 'Your submissions are not communicating your strongest work.',
-                desc: 'You have the experience and matters, but the evidence, selection, or presentation may not adequately reflect the practice’s capabilities.',
-                focus: 'Surfacing technical complexity, commercial significance, and team contribution.'
+                title: 'Your submissions are not communicating your strongest work',
+                desc: 'You have the track record, but the selection, factual narrative, or presentation undersells the practice’s actual calibre.',
+                focus: 'Surfacing legal complexity, commercial significance, and team leadership.'
               },
               {
                 tag: 'MARKET POSITIONING',
                 icon: <Target size={22} color="#4338CA" />,
-                title: 'Your market positioning lacks differentiation.',
-                desc: 'Your practice descriptions, professional profiles, and communications may not clearly explain what sets your firm apart.',
-                focus: 'Developing clear, credible messaging supported by genuine capabilities.'
+                title: 'Your market positioning lacks differentiation',
+                desc: 'Practice descriptions and partner profiles blur together without articulating your distinctive strengths.',
+                focus: 'Developing clear, credible messaging grounded in demonstrable track record.'
               },
               {
                 tag: 'BUDGET & INVESTMENTS',
                 icon: <Briefcase size={22} color="#4338CA" />,
-                title: 'You are unsure where to allocate your budget.',
-                desc: 'You need independent guidance on directory participation, advertising, publisher products, and other visibility-related investments.',
-                focus: 'Evaluating publisher products, commercial terms, and budget priorities.'
+                title: 'You are unsure where to allocate your budget',
+                desc: 'Independent evaluation of directory packages, profiles, publisher products, and promotional investments.',
+                focus: 'Scrutinising commercial relevance, ROI, and contract terms before committing.'
               },
               {
                 tag: 'STRATEGIC REALIGNMENT',
                 icon: <Globe size={22} color="#4338CA" />,
-                title: 'Your business development priorities are changing.',
-                desc: 'You are entering a new market, developing a practice, repositioning a team, or reconsidering where recognition efforts should be focused.',
-                focus: 'Aligning recognition strategy with emerging practices and market expansion.'
+                title: 'Your business development priorities are changing',
+                desc: 'Entering a new market, launching a practice, repositioning a team, or refocusing directory targets.',
+                focus: 'Aligning recognition strategy with commercial growth and market expansion.'
               },
               {
                 tag: 'SPECIALIST EXECUTION',
                 icon: <Users size={22} color="#4338CA" />,
-                title: 'Your team needs specialist guidance or execution support.',
-                desc: 'You need experienced assistance with research cycles, submissions, competitive analysis, or the coordination of a broader positioning strategy.',
-                focus: 'Collaborative partnership providing senior direction and milestone delivery.'
+                title: 'Your team needs specialist guidance or execution support',
+                desc: 'Experienced senior support through demanding research cycles, complex drafting, or broader positioning programmes.',
+                focus: 'Hands-on partnership providing senior direction and timely delivery.'
               }
             ].map((card, idx) => (
               <div
@@ -809,36 +815,36 @@ export default function RankingsDecodedLanding() {
               {
                 num: '01',
                 title: 'Competitive Intelligence & Market Positioning',
-                subtitle: 'Know where you stand before deciding where to compete.',
-                desc: 'We conduct rigorous assessments of law firms’ competitive positions within selected practice areas, jurisdictions, and legal market segments. Our analysis examines the firm’s track record, client portfolio, matter complexity, sector strengths, and available evidence against the competitive landscape. We identify material gaps, test the credibility of ranking ambitions, and assess where the firm has a defensible opportunity to compete—and where its resources may be better directed elsewhere.',
+                subtitle: 'Know where you stand before deciding where to compete',
+                desc: 'Rigorous assessments of your firm’s market standing within selected practice areas and jurisdictions. We analyse matter complexity, client rosters, and track record against established peers to identify material gaps, test ranking ambitions, and determine where your firm has a defensible opportunity to compete—or where resources are better redirected.',
                 deliverables: 'Competitive benchmarking, practice assessments, gap analyses, positioning diagnostics, and prioritised strategic recommendations.'
               },
               {
                 num: '02',
                 title: 'Strategic Positioning & Communications',
-                subtitle: 'Build a narrative your evidence can support.',
-                desc: 'Strong legal work does not automatically translate into a clear or differentiated market position. We assess how a firm communicates its capabilities across practice areas, identify inconsistencies or missed opportunities, and help develop narratives that reflect its genuine strengths and commercial priorities. Our work may include reviewing practice descriptions, identifying differentiating messages, and advising on how the firm’s positioning should evolve across directories, professional profiles, and other business development communications.',
+                subtitle: 'Build a narrative your evidence can support',
+                desc: 'Strong legal work does not automatically translate into market differentiation. We audit how your capabilities are communicated across directories, website profiles, and business development materials—eliminating generic claims to build credible, distinctive narratives grounded in genuine experience and commercial focus.',
                 deliverables: 'Narrative assessments, practice positioning recommendations, key messaging frameworks, and communications improvement plans.'
               },
               {
                 num: '03',
                 title: 'Legal Rankings & Recognition Advisory',
-                subtitle: 'Make every submission a stronger reflection of your work.',
-                desc: 'We advise on the full legal recognition process, from selecting the right categories and evaluating available evidence to developing submissions and preparing for research cycles. Our services include matter selection, evidence review, submission drafting and editing, referee strategy, research coordination, and post-cycle assessments. We work across legal directories, specialist rankings, individual lawyer nominations, industry awards, diversity and inclusion submissions, pro bono recognition, and other professional recognition programmes worldwide.',
+                subtitle: 'Make every submission a stronger reflection of your work',
+                desc: 'End-to-end guidance across legal directories and recognition programmes worldwide (Chambers, Legal 500, IFLR1000, Leaders League, and specialist awards). From category selection and curated matter evidence to drafting, referee strategy, researcher interviews, and post-cycle debriefs, we ensure your submissions reflect your highest-calibre work.',
                 deliverables: 'Submission strategies, prioritised matter selections, completed or reviewed submissions, referee recommendations, and research cycle action plans.'
               },
               {
                 num: '04',
                 title: 'Investment & Publisher Advisory',
-                subtitle: 'Invest with purpose, not out of habit.',
-                desc: 'Legal publishers offer an extensive range of advertising, enhanced profiles, market intelligence products, research services, and commercial partnerships. We help firms assess which opportunities are relevant to their objectives, how to allocate budgets, and whether proposed investments are commercially justified. Our support may include evaluating publisher proposals, comparing products, reviewing fees and commercial conditions, and advising on negotiations concerning pricing, payment terms, and contractual arrangements.',
+                subtitle: 'Invest with purpose, not out of habit',
+                desc: 'Independent evaluation of directory advertising, profile upgrades, market intelligence packages, and publisher partnerships. We scrutinise commercial proposals against your firm’s genuine priorities, helping you avoid habit-driven spending and providing expert support in negotiating pricing, deliverables, and contractual terms.',
                 deliverables: 'Investment assessments, budget allocation recommendations, publisher product evaluations, commercial proposal reviews, and negotiation support.'
               },
               {
                 num: '05',
                 title: 'Integrated Legal Market Strategy',
-                subtitle: 'Connect recognition, reputation, and investment to business goals.',
-                desc: 'A ranking, an advertising investment, or a communications initiative should not be an end in itself. We help firms build coordinated strategies that connect their competitive position, practice priorities, recognition ambitions, communications, and commercial investments. Our approach begins with the firm’s business objectives and works backwards to identify the initiatives, resources, and evidence needed to support them.',
+                subtitle: 'Connect recognition, reputation, and investment to business goals',
+                desc: 'Coordinated strategies connecting competitive positioning, practice growth, recognition targets, and commercial investments to your firm’s business goals. We work backwards from your commercial priorities to align resources, evidentiary development, and milestone roadmaps across the firm.',
                 deliverables: 'Integrated positioning strategies, investment priorities, cross-practice action plans, and strategic roadmaps with defined objectives and review points.'
               }
             ].map((srv) => (
@@ -1019,16 +1025,19 @@ export default function RankingsDecodedLanding() {
           </div>
 
           {/* Flexible Engagement Model Callout */}
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '12px',
-            border: '1px solid #E2E8F0',
-            padding: '2.25rem',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
-            alignItems: 'start'
-          }}>
+          <div
+            className="approach-callout-card"
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '12px',
+              border: '1px solid #E2E8F0',
+              padding: '2.25rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '2.5rem',
+              alignItems: 'start'
+            }}
+          >
             <div>
               <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
                 A flexible engagement model
@@ -1037,6 +1046,7 @@ export default function RankingsDecodedLanding() {
                 These stages provide a framework, not a mandatory sequence. Engagements may cover a single submission, a competitive assessment, a specific commercial decision, or a broader programme of strategic support.
               </p>
             </div>
+            <div className="approach-callout-divider" />
             <div>
               <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.5rem' }}>
                 Clear commercial terms upfront
@@ -1599,25 +1609,51 @@ export default function RankingsDecodedLanding() {
             }}
           >
             {submitSuccess ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <div style={{ textAlign: 'center', padding: '2.5rem 1.25rem' }}>
                 <div style={{
-                  width: 56,
-                  height: 56,
+                  width: 60,
+                  height: 60,
                   borderRadius: '50%',
                   backgroundColor: '#DCFCE7',
                   color: '#15803D',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 1.5rem'
+                  margin: '0 auto 1.25rem'
                 }}>
-                  <CheckCircle2 size={32} />
+                  <CheckCircle2 size={34} />
                 </div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.75rem' }}>
+                <h3 style={{ fontSize: '1.6rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.65rem' }}>
                   Thank you for getting in touch
                 </h3>
-                <p style={{ fontSize: '1.05rem', color: '#475569', lineHeight: 1.6, maxWidth: '500px', margin: '0 auto 1.75rem' }}>
-                  We have received your enquiry and will contact you about the next step.
+                <p style={{ fontSize: '1.05rem', color: '#334155', lineHeight: 1.6, maxWidth: '540px', margin: '0 auto 1.25rem' }}>
+                  We have received your enquiry and will contact you shortly about the next step.
+                </p>
+                <div style={{
+                  backgroundColor: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '10px',
+                  padding: '1.1rem 1.35rem',
+                  maxWidth: '540px',
+                  margin: '0 auto 1.5rem',
+                  fontSize: '0.9rem',
+                  color: '#475569',
+                  lineHeight: 1.65,
+                  textAlign: 'left'
+                }}>
+                  <strong style={{ color: '#0F172A', display: 'block', marginBottom: '0.25rem' }}>
+                    Personal review by Ángela Castillo
+                  </strong>
+                  Your objectives have been securely registered. A confirmation summary has also been sent to your email address, and we will follow up with you directly.
+                </div>
+                <p style={{ fontSize: '0.92rem', color: '#64748B', margin: '0 auto 1.75rem', maxWidth: '540px' }}>
+                  Prefer to follow up directly? Email us at{' '}
+                  <a
+                    href="mailto:info@rankingsdecoded.com"
+                    style={{ color: '#1B44ED', fontWeight: 600, textDecoration: 'underline' }}
+                  >
+                    info@rankingsdecoded.com
+                  </a>
                 </p>
                 <button
                   type="button"
@@ -1627,12 +1663,13 @@ export default function RankingsDecodedLanding() {
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
+                    padding: '0.75rem 1.65rem',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    fontSize: '0.92rem'
                   }}
                 >
-                  Send another message
+                  Send another enquiry
                 </button>
               </div>
             ) : (
@@ -1783,6 +1820,24 @@ export default function RankingsDecodedLanding() {
                     </>
                   )}
                 </button>
+
+                <div style={{
+                  marginTop: '0.75rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid #F1F5F9',
+                  textAlign: 'center',
+                  fontSize: '0.92rem',
+                  color: '#64748B',
+                  lineHeight: 1.5
+                }}>
+                  Prefer to contact us directly? Email us at{' '}
+                  <a
+                    href="mailto:info@rankingsdecoded.com"
+                    style={{ color: '#1B44ED', fontWeight: 600, textDecoration: 'underline' }}
+                  >
+                    info@rankingsdecoded.com
+                  </a>
+                </div>
               </form>
             )}
           </div>
@@ -2223,6 +2278,13 @@ export default function RankingsDecodedLanding() {
           }
         }
 
+        .approach-callout-card {
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .approach-callout-divider {
+          display: none;
+        }
+
         /* Tablet & Mobile Specific Tweaks */
         @media (max-width: 1023px) {
           .about-left-sticky {
@@ -2231,6 +2293,19 @@ export default function RankingsDecodedLanding() {
         }
 
         @media (max-width: 768px) {
+          .approach-callout-card {
+            padding: 1.35rem 1.25rem !important;
+            gap: 1.15rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .approach-callout-divider {
+            display: block !important;
+            width: 100% !important;
+            height: 1px !important;
+            background-color: #F1F5F9 !important;
+            margin: 0.15rem 0 !important;
+          }
           .service-card-item {
             padding: 1.65rem 1.25rem !important;
             gap: 1.5rem !important;
