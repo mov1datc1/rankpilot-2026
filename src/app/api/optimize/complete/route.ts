@@ -162,17 +162,19 @@ export async function POST(request: NextRequest) {
     // The paid review and exact DOCX bytes stay outside the transaction. Retry
     // only a known rollback, using the same in-memory result and version guard.
     savingArtifact=true;
+    await prisma.$queryRaw`SELECT 1`.catch(()=>{});
     const save=()=>prisma.$transaction(async tx=>{
       const lock=await tx.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date()}});
       if(lock.count!==1) throw new Error('DRAFT_CONFLICT');
       for(const m of matters) await tx.matter.updateMany({where:{id:m.id,submissionId:submission.id},data:{optimizedText:m.optimizedText,status:'Optimized'}});
       return tx.submission.update({where:{id:submission.id},data:{status:data.release_verdict.passed?'Optimized':'Draft',chambersData:data},include:{matters:true}});
-    },{timeout:30000,maxWait:5000});
+    },{timeout:120000,maxWait:20000});
     let updated;
     try { updated=await save(); }
     catch(error:any) {
-      const expired=error.code==='P2028' && /expired transaction/i.test(String(error.message));
-      if(!expired && error.code!=='P2034') throw error;
+      const transient=error.code==='P2028' || error.code==='P2034' || /Connection terminated|Unable to start a transaction/i.test(String(error.message));
+      if(!transient) throw error;
+      await prisma.$queryRaw`SELECT 1`.catch(()=>{});
       updated=await save();
     }
     return NextResponse.json({success:true,status:updated.status,submission:updated,chambersData:data,matters,b10,c2:data.enhanced_c2 || '',judgeScore:null,judgeFeedback:data.judgeFeedback,repairsCount:0,repairsLog:[],release:data.release_verdict});
