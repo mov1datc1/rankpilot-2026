@@ -196,6 +196,8 @@ def review_batch(batch):
 def apply_unit(unit, review):
     lines = unit['text'].splitlines()
     existing = {m['id']: m for m in unit['existing']}
+    if unit['id'] == 'source-prefix':
+        review.matters = []
     returned = [m.existing_id for m in review.matters if m.existing_id] + review.empty_ids
     if len(returned) != len(set(returned)) or set(returned) != set(existing):
         raise ValueError('Incomplete or duplicate matter inventory')

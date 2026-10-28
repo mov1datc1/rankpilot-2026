@@ -44,15 +44,29 @@ export function sanitizeClientName(rawClient: string): CleanedClientResult {
   // Strip leading headers like "Publishable Matter 1 -" or "Confidential Matter 2:"
   s = s.replace(/^(?:publishable|confidential)\s+matter\s+\d+\s*[-—:]\s*/gi, '').trim();
 
-  // Pattern A: Period, dash, or comma followed by typical corporate descriptors
-  const descPattern = /(?:\.|\s+[-–—]\s+|,\s*)(?:\s*(?:is an?|it is an?|it is dedicated to|is dedicated to|a first class|company dedicated to|company engaged in|company specializing in|located in|established in|founded in|based in|headquartered in|operating in|world leader in|specializing in|with more than \d+|leader in the|individual private owner|wealthy family|empresa dedicada|sociedad dedicada|dedicada a|constituida en|fundada en|con sede en|con más de \d+|propietario individual|reconocida regionalmente)\b|\s*\((?:wealthy family|private owner|empresa|familia|promoter)[^\)]*\))/i;
+  // Extract inline URLs like "(https://...)" so they don't pollute the entity name
+  const urlMatches = s.match(/\s*\(?https?:\/\/[^\s)]+\)?/gi);
+  let extractedUrls = '';
+  if (urlMatches) {
+    extractedUrls = urlMatches.map(u => u.trim()).join(' ');
+    s = s.replace(/\s*\(?https?:\/\/[^\s)]+\)?/gi, '').replace(/\s{2,}/g, ' ').trim();
+  }
+
+  // Pattern A: Period, dash, comma, or direct copula followed by typical corporate descriptors
+  const descPattern = /(?:(?:\.|\s+[-–—]\s+|,\s*)\s*(?:is an?|it is an?|it is dedicated to|is dedicated to|a first class|a world leader|a global leader|a leading|mexican\s+\w+\s+company|real estate development company|company dedicated to|company engaged in|company specializing in|company created in|located in|established in|founded in|based in|headquartered in|operating in|world leader in|specializing in|with more than \d+|leader in the|individual private owner|wealthy family|grupo\s+\w+|[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+){0,2}\s+(?:is an?|is a company|began its operations|started operations|created in)\b|empresa dedicada|sociedad dedicada|dedicada a|constituida en|fundada en|con sede en|con más de \d+|propietario individual|reconocida regionalmente)\b|\s+\b(?:is a company engaged in|is an? [\w\s]+ company)\b|\s*\((?:wealthy family|private owner|empresa|familia|promoter)[^\)]*\))/i;
 
   const match = s.match(descPattern);
   if (match && match.index !== undefined && match.index > 2) {
     const nameEnd = match.index + (s[match.index] === '.' && /(?:\b[A-Z]\.[A-Z]|\bInc|\bLtd|\bCorp)$/i.test(s.substring(0, match.index)) ? 1 : 0);
-    const cleanClient = s.substring(0, nameEnd).replace(/[,\s]+$/, '').trim();
-    const clientDescription = s.substring(match.index).replace(/^[,.\s\-–—]+/, '').trim();
+    const cleanClient = s.substring(0, nameEnd).replace(/[.,\s]+$/, '').trim();
+    const restDesc = s.substring(match.index).replace(/^[,.\s\-–—]+/, '').trim();
+    const clientDescription = [extractedUrls, restDesc].filter(Boolean).join(' ').trim();
     return { cleanClient, cleanName: cleanClient, clientDescription, wasModified: true };
+  }
+
+  if (extractedUrls) {
+    const cleanClient = s.replace(/[.,\s]+$/, '').trim();
+    return { cleanClient, cleanName: cleanClient, clientDescription: extractedUrls, wasModified: true };
   }
 
   // A period alone is not evidence of a description: legal suffixes and
