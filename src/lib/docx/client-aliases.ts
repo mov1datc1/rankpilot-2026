@@ -20,7 +20,7 @@ export function clientAliases(names: string[]): string[] {
       const trimmedEntity = entity.trim();
       if (trimmedEntity.length >= 2 && !generic.test(trimmedEntity)) aliases.add(trimmedEntity);
       const first = trimmedEntity.match(/^[\p{L}\p{N}]+/u)?.[0];
-      const tail = first ? trimmedEntity.slice(first.length).trim() : '';
+      const tail = first ? trimmedEntity.slice(first.length).replace(/^[\s,.;:-]+/, '').trim() : '';
       const companyQualifier = /^(?:de\b|m[eé]xico\b|industrial\b|manufacturing\b|international\b|services\b|s\.?a\b|s\.?p\.?a\b)/i.test(tail);
       const acronym = Boolean(first && first.length >= 3 && /[A-Z].*[A-Z]/.test(first));
       if (first && !generic.test(first) && (acronym || (first.length >= 5 && companyQualifier))) aliases.add(first);

@@ -195,7 +195,7 @@ export function buildLawyerStandoutWork(
     const isConf = m.isConfidential || m.confidential || m.confidentialityConfirmed === false || ['non_publishable', 'confidential', 'confirmation_required'].includes(m.publish_status);
     const clientDesc = isConf ? '[CONFIDENTIAL] Confidential Client' : rawClient;
 
-    const text = String(m.summary || m.rawNotes || m.optimizedText || m.description || '').trim();
+    const text = String(m.optimizedText || m.optimized_text || m.summary || m.rawNotes || m.description || '').trim();
     let snippet = '';
     if (text) {
       const sentences = text.split(/(?<=[.!?])\s+/);
