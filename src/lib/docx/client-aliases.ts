@@ -24,7 +24,9 @@ export function clientAliases(names: string[]): string[] {
       const companyQualifier = /^(?:de\b|m[eé]xico\b|industrial\b|manufacturing\b|international\b|services\b|s\.?a\b|s\.?p\.?a\b)/i.test(tail);
       const acronym = Boolean(first && first.length >= 3 && /[A-Z].*[A-Z]/.test(first));
       if (first && !generic.test(first) && (acronym || (first.length >= 5 && companyQualifier))) aliases.add(first);
+      const prefixedBrand = trimmedEntity.match(/^(?:empresa|grupo|corporativo|compañ[ií]a)\s+([\p{L}\p{N}]{4,})$/iu)?.[1];
+      if (prefixedBrand && !generic.test(prefixedBrand)) aliases.add(prefixedBrand);
     }
   }
-  return [...aliases].sort((a,b)=>b.length-a.length);
+  return [...aliases].sort((a, b) => b.length - a.length);
 }

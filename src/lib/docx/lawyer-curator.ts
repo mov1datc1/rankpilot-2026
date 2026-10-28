@@ -203,7 +203,7 @@ export function buildLawyerStandoutWork(
     }
 
     const isLead = isSameLawyer(lawyerName, String(m.leadPartner || m.lead_partner || ''));
-    const rolePrefix = isLead ? 'Lead partner' : 'Key practitioner';
+    const rolePrefix = isLead ? 'Lead lawyer' : 'Team member';
 
     if (snippet) {
       highlights.push(`• ${clientDesc}: ${rolePrefix} — ${snippet}`);
@@ -220,45 +220,45 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
   const roster = new Map<string, any>();
   for (const rawPerson of rawLawyers || []) {
     const person = projectConfirmedLawyerRole(rawPerson);
-    const name=cleanLawyerNames(person.name || person.fullName || '');
-    if(name && !roster.has(normalizeName(name))) roster.set(normalizeName(name), {...person,name});
+    const name = cleanLawyerNames(person.name || person.fullName || '');
+    if (name && !roster.has(normalizeName(name))) roster.set(normalizeName(name), { ...person, name });
   }
   // B9 is the supplied public roster. A matter mention neither authorizes a
   // public biography nor establishes partnership, even for a lead lawyer.
-  const confNames=allMattersPool.filter(m=>m.isConfidential || m.confidential || m.confidentialityConfirmed===false || ['non_publishable','confidential','confirmation_required'].includes(m.publish_status)).map(m=>m.client).filter(Boolean);
-  const booleanOrUnknown=(...values:any[]): boolean|null => {const v=values.find(v=>typeof v==='boolean');return typeof v==='boolean'?v:null;};
-  return [...roster.values()].map(person=>{
-    const verified = chambersData?.ranking_verification?.individuals?.find((item:any) =>
+  const confNames = allMattersPool.filter(m => m.isConfidential || m.confidential || m.confidentialityConfirmed === false || ['non_publishable', 'confidential', 'confirmation_required'].includes(m.publish_status)).map(m => m.client).filter(Boolean);
+  const booleanOrUnknown = (...values: any[]): boolean | null => { const v = values.find(v => typeof v === 'boolean'); return typeof v === 'boolean' ? v : null; };
+  return [...roster.values()].map(person => {
+    const verified = chambersData?.ranking_verification?.individuals?.find((item: any) =>
       normalizeName(item.lawyer_name || '') === normalizeName(person.name) &&
       normalizeName(item.firm_name || '') === normalizeName(firmName) &&
       normalizeName(item.practice_area || '') === normalizeName(practiceArea) &&
       normalizeName(item.jurisdiction || '') === normalizeName(chambersData?.ranking_jurisdiction || guideRegion?.split('—').pop()?.trim() || '') &&
       item.requested_edition === (chambersData?.ranking_edition || 'current') &&
-      ['verified_match','verified_observation','verified_mismatch'].includes(item.status) &&
+      ['verified_match', 'verified_observation', 'verified_mismatch'].includes(item.status) &&
       item.subject_type === 'individual' && item.observed_band && item.evidence?.source_url);
-    const isPartner=booleanOrUnknown(person.isPartner,person.is_partner);
-    const candidacy=chambersData?.editorial_development?.candidates?.find((c:any)=>normalizeName(c.name)===normalizeName(person.name));
+    const isPartner = booleanOrUnknown(person.isPartner, person.is_partner);
+    const candidacy = chambersData?.editorial_development?.candidates?.find((c: any) => normalizeName(c.name) === normalizeName(person.name));
     const isTaxOrOffPractice = practiceArea.toLowerCase().includes('corporate') && (
       normalizeName(person.name).includes('maria carolina cano') ||
       (/tax|tributari/i.test(person.focus || person.key_focus || person.bio || candidacy?.category_rationale || '') && !/m&a|mergers/i.test(person.focus || person.key_focus || ''))
     );
-    const proposed=(candidacy?.recommendation==='present' && !isTaxOrOffPractice) ? candidacy.suggested_ranking : (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
+    const proposed = (candidacy?.recommendation === 'present' && !isTaxOrOffPractice) ? candidacy.suggested_ranking : (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
-    const suggestedRank=isPartner === true && /associate/i.test(proposed) ? '' : proposed;
-    const sourceBio=String(candidacy?.submission_bio || person.comments || person.bio || '');
-    const bio=anonymizeConfidentialClients(sourceBio,confNames);
+    const suggestedRank = isPartner === true && /associate/i.test(proposed) ? '' : proposed;
+    const sourceBio = String(candidacy?.submission_bio || person.comments || person.bio || '');
+    const bio = anonymizeConfidentialClients(sourceBio, confNames);
     const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio);
-    return {name:person.name,isPartner,isRanked:verified ? true : null,currentRank:verified?.observed_band || '',suggestedRank,targetRank:person.targetRank || '',url:cleanLawyerUrl(person.url || ''),comments:bio,bio,supportingMatters:person.supportingMatters || '',strategicRationale:'',marketEvidence:'',evidenceGaps:'',recommendedAction:'',leave:person.leave || '',focus:person.focus || person.key_focus || '',standoutWork};
+    return { name: person.name, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });
 }
 
 /** Respect known non-partner status without changing the historical source field. */
-export function projectMatterLeadership(rawLead:string, rawTeam:string, lawyers:any[]) {
-  const parts=String(rawLead || '').split(/\s*(?:[,;\n]|\band\b|\by\b|&)\s*/i).filter(Boolean);
-  const nonPartners=parts.filter(name=>lawyers.some(person=>person.isPartner===false && normalizeName(name)===normalizeName(person.name)));
-  if(!nonPartners.length) return {lead:rawLead,team:rawTeam};
-  const lead=parts.filter(name=>!nonPartners.includes(name)).join(', ');
-  const team=[/^(?:n\/?a|none|not applicable|-)\.?$/i.test(String(rawTeam || '').trim())?'':rawTeam,...nonPartners.map(name=>`${name.replace(/\.$/,'')} — lead lawyer`)].filter(Boolean).join('; ');
-  return {lead,team};
+export function projectMatterLeadership(rawLead: string, rawTeam: string, lawyers: any[]) {
+  const parts = String(rawLead || '').split(/\s*(?:[,;\n]|\band\b|\by\b|&)\s*/i).filter(Boolean);
+  const nonPartners = parts.filter(name => lawyers.some(person => person.isPartner === false && normalizeName(name) === normalizeName(person.name)));
+  if (!nonPartners.length) return { lead: rawLead, team: rawTeam };
+  const lead = parts.filter(name => !nonPartners.includes(name)).join(', ');
+  const team = [/^(?:n\/?a|none|not applicable|-)\.?$/i.test(String(rawTeam || '').trim()) ? '' : rawTeam, ...nonPartners.map(name => `${name.replace(/\.$/, '')} — lead lawyer`)].filter(Boolean).join('; ');
+  return { lead, team };
 }
