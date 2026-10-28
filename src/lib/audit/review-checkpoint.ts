@@ -77,8 +77,8 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   delete source.editorial_development;
   // References inform the internal Audit, not portfolio selection or public prose.
   if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
-  return reviewInputHash({policy:'role-deliverables-v4-acceptance-research',stage,source,
-    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v5-consistency'}:{}),
+  return reviewInputHash({policy:'role-deliverables-v5-unified-chronological',stage,source,
+    ...(stage==='writer'?{letter_contract:'executive-current-proposal-v6-consistency'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),

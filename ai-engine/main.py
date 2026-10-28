@@ -108,7 +108,7 @@ def read_root():
     return {
         "status": "online",
         "service": "RankPilot Core Engine",
-        "version": "rankpilot-pipeline-v3.2",
+        "version": "rankpilot-pipeline-v3.3",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "engine_fingerprint": engine_fingerprint(),
         "environment": "Ubuntu/Docker"
@@ -122,7 +122,7 @@ async def health_check():
     return {
         "status": "online",
         "message": "RankPilot Core is online",
-        "version": "rankpilot-pipeline-v3.2",
+        "version": "rankpilot-pipeline-v3.3",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "local"),
         "engine_fingerprint": engine_fingerprint(),
         "environment": "Ubuntu/Docker"

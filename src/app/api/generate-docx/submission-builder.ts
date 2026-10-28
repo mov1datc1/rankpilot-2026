@@ -400,8 +400,10 @@ export function generateDynamicB10(
   const cleanFirm = (firmName || '').replace(/^Firm[’']s\s+Name[:\s\r\n]*/i, '').trim() || 'The firm';
   const targetPractice = practiceArea || 'Labour & Employment';
   const targetRegion = countryJurisdiction || 'Mexico';
+  const isDeForest = /deforest/i.test(cleanFirm) || pubMatters.some((m: any) => /schaeffler|vitesco|bonatti|cinemex|volkswagen/i.test(`${m?.client || ''} ${m?.name || ''}`));
+  const isRamosCastillo = /ramos\s*castillo/i.test(cleanFirm) || pubMatters.some((m: any) => /el\s*cielo|duranpark/i.test(`${m?.client || ''} ${m?.name || ''}`));
 
-  if (/labou?r/i.test(targetPractice)) {
+  if (/labou?r/i.test(targetPractice) && isDeForest) {
     return `${cleanFirm} delivers comprehensive employer-side labour and employment counsel across Mexico, combining national contentious defense with strategic workforce governance for multinational corporations, industrial conglomerates, and domestic market leaders. Operating across five strategic regional offices (Mexico City, Puebla, Guadalajara, Querétaro, and Monterrey) with a dedicated team of 27 specialized labor lawyers, the department advises corporate employers whose collective operations exceed 1,000,000 active employees throughout Mexico.\n\n` +
       `The practice's core strength lies in its ability to navigate Mexico's transformed labour regulatory landscape—including the 2019 Federal Labour Law reform, the establishment of the Federal Center for Conciliation and Labour Registration (CFCRL), and international scrutiny under the USMCA Rapid Response Labour Mechanism (MMLRR). The team routinely handles high-friction collective bargaining negotiations, mandatory collective bargaining agreement (CBA) legitimations, union representation disputes, and strike prevention across critical manufacturing, automotive, and energy supply chains.\n\n` +
       `Representative institutional mandates illustrate the depth and operational scale of the practice. Following a multi-billion-dollar global automotive corporate acquisition (Schaeffler / Vitesco), the department designed and executed the comprehensive post-merger labour harmonization across six Mexican states, integrating over 5,000 unionized and non-unionized workers into uniform collective agreements without production stoppage. In the automotive component manufacturing sector, the firm structured tactical negotiation protocols and conciliation defenses for Tier-1 suppliers including Brose and GeNI, resolving inter-union ownership conflicts and neutralising risk of USMCA Rapid Response complaints. In energy infrastructure, the team oversaw labour governance and compliance for Bonatti on major national pipeline projects with an aggregate asset value exceeding USD 2.5 billion, coordinating contractor workforces exceeding 17,000 personnel in high-risk operating environments.\n\n` +
@@ -409,7 +411,7 @@ export function generateDynamicB10(
       `The department is anchored by partners Eduardo Garduño, Javier Atzin Vallejo, and Jaime Bustamante, supported by senior counsel Raymundo Carreño (former General Legal Director of Volkswagen de México with 38 years of automotive labor leadership), and an agile bench of senior associates and labour specialists. This structure unites high-level strategic counsel with nationwide operational execution, ensuring immediate responsiveness in union contingencies and sustainable compliance for employer workforces across Mexico.`;
   }
 
-  if (/real estate/i.test(targetPractice)) {
+  if (/real estate/i.test(targetPractice) && isRamosCastillo) {
     return `${cleanFirm} is a premier Mexican real estate and land-use disputes boutique that protects the commercial viability, development rights, and asset value of large-scale properties when regulatory intervention, zoning decrees, environmental restrictions, or state takings threaten multi-million dollar investments.\n\n` +
       `Led by founding partner José Pablo Ramos Castillo, the firm has repeatedly established landmark constitutional amparo precedents that convert abstract property protections into concrete commercial remedies. In the landmark El Cielo Country Club litigation, the firm successfully protected a residential and ecological development valued at MXN 3 billion against successive municipal and state environmental decrees, obtaining definitive judgments that confirmed acquired development rights and enforced judicial compliance in July 2024. In the industrial sector, the firm secured definitive amparo suspensions shielding approximately 207.5 hectares of strategic logistics land within the Durango Logistics and Industrial Center (Duranpark) valued at MXN 698.4 million against municipal expropriation.\n\n` +
       `The practice spans Mexico's central and northern industrial corridors, representing major institutional developers, industrial park operators, and corporate investors across Jalisco, Durango, Guanajuato, and Mexico City. Supported by senior associates Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso, the department provides an integrated public-law and contentious real estate capability that secures development permits, defeats unlawful expropriation, and protects long-term capital investments across Mexico.`;
@@ -448,8 +450,11 @@ export function generateDynamicC2(
   const cleanFirm = (firmName || '').replace(/^Firm[’']s\s+Name[:\s\r\n]*/i, '').trim() || 'The firm';
   const targetPractice = practiceArea || 'Labour & Employment';
   const targetRegion = countryJurisdiction || 'Mexico';
+  const allMatters = [...(pubMatters || []), ...(confMatters || [])];
+  const isDeForest = /deforest/i.test(cleanFirm) || allMatters.some((m: any) => /schaeffler|vitesco|bonatti|cinemex|volkswagen/i.test(`${m?.client || ''} ${m?.name || ''}`));
+  const isRamosCastillo = /ramos\s*castillo/i.test(cleanFirm) || allMatters.some((m: any) => /el\s*cielo|duranpark/i.test(`${m?.client || ''} ${m?.name || ''}`));
 
-  if (/labou?r/i.test(targetPractice)) {
+  if (/labou?r/i.test(targetPractice) && isDeForest) {
     return `${cleanFirm} respectfully submits its application for first-time inclusion in Chambers Latin America — ${targetRegion}: Labour & Employment (Band 5 / Entry Candidate). Rather than a commoditized or reactive labor practice, the firm provides an integrated employer-side platform operating at national tier scale, advising multinational and domestic employers whose workforce stability is fundamental to business continuity.\n\n` +
       `Scale & National Volume (Pillar 1): The practice represents employers with a combined workforce exceeding one million employees throughout Mexico. Its contentious portfolio encompasses nationwide litigation management involving more than 700 simultaneous proceedings across key industrial corridors (Puebla, Mexico City, Bajío, Guadalajara, and Monterrey), including large-scale litigation platforms for consumer-facing and industrial employers such as Cinemex (~200 proceedings) and Volkswagen de México (>MXN 280 million exposure).\n\n` +
       `High-Stakes & Regulatory Complexity (Pillar 2): The department’s recent mandates substantiate high-stakes strategic capabilities that directly affect operational continuity. Representative work includes directing the post-acquisition labor integration following a major global automotive transaction (Schaeffler / Vitesco) across six Mexican states for over 5,000 employees; managing high-friction collective bargaining negotiations that prevented imminent strikes across critical automotive supply chains (GeNI, Benteler); defending employers in union-representation crises to prevent escalation under the USMCA Rapid Response Labor Mechanism (Brose); and executing labor governance for multi-billion-dollar energy infrastructure projects (Bonatti USD 2.5 billion pipeline / 17,000 workers).\n\n` +
@@ -457,7 +462,7 @@ export function generateDynamicC2(
       `Bench Depth & Leadership (Pillar 4): The practice boasts a dedicated bench of 27 specialized labor lawyers across five Mexican offices, led by seasoned partners Eduardo Garduño, Javier Atzin Vallejo, and Jaime Bustamante, reinforced by institutional icons such as Raymundo Carreño (who served nearly four decades as General Legal Director of Volkswagen de México). We respectfully invite the Chambers research team to contact our client referees across automotive, energy, and industrial sectors to verify this record of strategic delivery.`;
   }
 
-  if (/real estate/i.test(targetPractice)) {
+  if (/real estate/i.test(targetPractice) && isRamosCastillo) {
     return `${cleanFirm} respectfully seeks targeted recognition in Chambers Latin America — ${targetRegion}: Real Estate. The firm provides specialized legal capabilities in high-stakes administrative, constitutional, and regulatory defense of real estate assets, developments, and land rights against government intervention.\n\n` +
       `The firm's track record demonstrates representation in commercially critical real estate disputes, including preserving the MXN 3 billion El Cielo residential development against municipal and state environmental reclassifications, halting expropriation decrees affecting 207.5 hectares of strategic industrial logistics land in Durango, and lifting project suspensions for major developers.\n\n` +
       `This contentious public-law capability in real estate provides vital legal certainty for major development investments in Mexico, securing the operational continuity and value of strategic property assets.`;
@@ -1110,20 +1115,24 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // Department heads
   const rawHeads = (dept.heads && dept.heads.length > 0)
     ? dept.heads
-    : (chambersData.departmentHeads || chambersData.filing_details?.heads || [
-        { name: 'Eduardo Garduño', email: 'egarduno@deforest.law', phone: '' },
-        { name: 'Jaime Bustamante', email: 'jbustamante@deforest.law', phone: '' },
-        { name: 'Javier Atzin Vallejo', email: 'jvallejo@deforest.law', phone: '' },
-        { name: 'Raymundo Carreño', email: 'rcarreno@deforest.law', phone: '' },
-        { name: 'Edgar Barreto', email: 'ebarreto@deforest.law', phone: '' },
-        { name: 'Andrés Cabrera Gómez', email: 'acabrera@deforest.law', phone: '' },
-        { name: 'Erick Pérez', email: 'eperez@deforest.law', phone: '' }
-      ]);
-  const headRows = rawHeads.map((h: any) => [
-    (h.name || '').replace(/Garruño/g, 'Garduño'),
-    h.email || '',
-    h.phone || ''
-  ]);
+    : (chambersData.departmentHeads || chambersData.filing_details?.heads || (
+        /deforest/i.test(firmName) ? [
+          { name: 'Eduardo Garduño', email: 'egarduno@deforest.law', phone: '' },
+          { name: 'Jaime Bustamante', email: 'jbustamante@deforest.law', phone: '' },
+          { name: 'Javier Atzin Vallejo', email: 'jvallejo@deforest.law', phone: '' },
+          { name: 'Raymundo Carreño', email: 'rcarreno@deforest.law', phone: '' },
+          { name: 'Edgar Barreto', email: 'ebarreto@deforest.law', phone: '' },
+          { name: 'Andrés Cabrera Gómez', email: 'acabrera@deforest.law', phone: '' },
+          { name: 'Erick Pérez', email: 'eperez@deforest.law', phone: '' }
+        ] : []
+      ));
+  const headRows = rawHeads.length > 0
+    ? rawHeads.map((h: any) => [
+        (h.name || '').replace(/Garruño/g, 'Garduño'),
+        h.email || '',
+        h.phone || ''
+      ])
+    : [['', '', '']];
   elements.push(dataTable('Department Head(s) / Key Partners', ['Name', 'Email', 'Phone'], headRows));
   elements.push(para('', { spacing: { after: 120 } }));
 
@@ -1145,7 +1154,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     b7Val = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers);
   }
   b7Val = sanitizeBannedSuperlatives(String(b7Val));
-  if (!String(b7Val).includes('98%') && (firmName.toLowerCase().includes('deforest') || practiceArea.toLowerCase().includes('labour'))) {
+  if (!String(b7Val).includes('98%') && /deforest/i.test(firmName)) {
     b7Val = `${b7Val}\n\nDeForest operates as a national labour governance platform across more than 20 jurisdictions, impacting over one million employees throughout Mexico and maintaining a reported 98% success rate in the conciliation stage.`;
   }
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));

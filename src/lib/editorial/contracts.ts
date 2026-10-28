@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { reviewPackage, REVIEW_POLICY_VERSION } from '@/lib/audit/review-checkpoint';
 
-export const EDITORIAL_VERSION = 'rankpilot-pipeline-v3.2';
+export const EDITORIAL_VERSION = 'rankpilot-pipeline-v3.3';
 /** A rolling deployment must not mix old renderers with a new engine. */
 export function engineMatchesWorker(health:any, expectedFingerprint:string) {
   return health?.version===EDITORIAL_VERSION && /^[a-f0-9]{64}$/.test(expectedFingerprint) && health.engine_fingerprint===expectedFingerprint;
