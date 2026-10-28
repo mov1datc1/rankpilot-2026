@@ -6,6 +6,7 @@ const connectionString = `${process.env.DATABASE_URL}`
 
 const pool = new Pool({
   connectionString,
+  max: 3,
   idleTimeoutMillis: 20000,
   keepAlive: true,
 })
