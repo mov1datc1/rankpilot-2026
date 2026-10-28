@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         } else {
           const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
             method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
+            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:true,output_recovery:body.outputRecovery===true})
           });
           finalReview=await finalResponse.json();
           receivedTrace=finalReview.trace || null;
@@ -162,19 +162,19 @@ export async function POST(request: NextRequest) {
     // The paid review and exact DOCX bytes stay outside the transaction. Retry
     // only a known rollback, using the same in-memory result and version guard.
     savingArtifact=true;
-    await prisma.$queryRaw`SELECT 1`.catch(()=>{});
+    if(typeof (prisma as any).$queryRaw==='function') await (prisma as any).$queryRaw`SELECT 1`.catch(()=>{});
     const save=()=>prisma.$transaction(async tx=>{
       const lock=await tx.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date()}});
       if(lock.count!==1) throw new Error('DRAFT_CONFLICT');
       for(const m of matters) await tx.matter.updateMany({where:{id:m.id,submissionId:submission.id},data:{optimizedText:m.optimizedText,status:'Optimized'}});
       return tx.submission.update({where:{id:submission.id},data:{status:data.release_verdict.passed?'Optimized':'Draft',chambersData:data},include:{matters:true}});
-    },{timeout:120000,maxWait:20000});
+    },{timeout:30000,maxWait:5000});
     let updated;
     try { updated=await save(); }
     catch(error:any) {
       const transient=error.code==='P2028' || error.code==='P2034' || /Connection terminated|Unable to start a transaction/i.test(String(error.message));
       if(!transient) throw error;
-      await prisma.$queryRaw`SELECT 1`.catch(()=>{});
+      if(typeof (prisma as any).$queryRaw==='function') await (prisma as any).$queryRaw`SELECT 1`.catch(()=>{});
       updated=await save();
     }
     return NextResponse.json({success:true,status:updated.status,submission:updated,chambersData:data,matters,b10,c2:data.enhanced_c2 || '',judgeScore:null,judgeFeedback:data.judgeFeedback,repairsCount:0,repairsLog:[],release:data.release_verdict});
