@@ -112,10 +112,11 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
     if (confName && confName.trim().length >= 2) {
       const cleanConf = confName.trim();
       const esc = cleanConf.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const reg = new RegExp(`\\b${esc}\\b`, 'gi');
+      const trail = /\w$/.test(cleanConf) ? '\\b' : '(?=\\s|[,:;!?)\\]]|$)';
+      const reg = new RegExp(`\\b${esc}${trail}`, 'gi');
       // An employer mentioned in a career history is not a client mandate.
       // Keep the supplied role while anonymizing the entity without inventing a relationship.
-      const employment = new RegExp(`((?:general legal director|legal director|general counsel|chief legal officer|in-house counsel)\\s+(?:of|at|for)\\s+)${esc}\\b`, 'gi');
+      const employment = new RegExp(`((?:general legal director|legal director|general counsel|chief legal officer|in-house counsel)\\s+(?:of|at|for)\\s+)${esc}${trail}`, 'gi');
       res = res.replace(employment, '$1a company');
       res = res.replace(reg, 'a confidential client');
     }
@@ -192,7 +193,7 @@ export function buildLawyerStandoutWork(
   for (const m of attributedMatters.slice(0, 3)) {
     const rawClient = m.client || m.clientName || m.name || m.title || 'Confidential Mandate';
     const isConf = m.isConfidential || m.confidential || m.confidentialityConfirmed === false || ['non_publishable', 'confidential', 'confirmation_required'].includes(m.publish_status);
-    const clientDesc = isConf ? `[CONFIDENTIAL] ${rawClient}` : rawClient;
+    const clientDesc = isConf ? '[CONFIDENTIAL] Confidential Client' : rawClient;
 
     const text = String(m.summary || m.rawNotes || m.optimizedText || m.description || '').trim();
     let snippet = '';

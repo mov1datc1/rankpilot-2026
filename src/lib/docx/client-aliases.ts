@@ -3,7 +3,7 @@ import { sanitizeClientName } from '../audit/extraction-auditor';
 /** Conservative name variants derived from supplied identities, never an external client dictionary. */
 export function clientAliases(names: string[]): string[] {
   const aliases = new Set<string>();
-  const generic = /^(grupo|group|private|confidential|client|cliente|empresa|company|corporation|new|nueva|the|manufacturing|manufactura|services|servicios|industries|industria|logistics|logística|instituto|institute|sociedad|asociación|asociacion|fundación|fundacion|banco|bank|fondo|asociados|associates)$/i;
+  const generic = /^(grupo|group|private|confidential|client|cliente|empresa|company|corporation|new|nueva|the|manufacturing|manufactura|services|servicios|industries|industria|logistics|logística|instituto|institute|sociedad|asociación|asociacion|fundación|fundacion|banco|bank|fondo|asociados|associates|transportes|semillas|familia|villas|jalisco|guadalajara|zapopan|tlajomulco|durango|m[eé]xico)$/i;
   for (const value of names) {
     const raw = String(value || '').trim();
     // Client fields can contain an entire company profile. Descriptive prose
