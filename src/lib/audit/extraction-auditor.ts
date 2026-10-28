@@ -140,13 +140,13 @@ export function judgeSolExtractionAudit(params: {
 
     const unconfirmed = matterCopy.confidentialityConfirmed === false || matterCopy.publish_status === 'confirmation_required' || matterCopy.confidentialityStatus === 'confirmation_required';
     if (unconfirmed || (!isExplicitlyPub && !isExplicitlyConf)) {
-      matterCopy.confidentialityConfirmed = false;
-      matterCopy.confidentialityStatus = 'confirmation_required';
-      matterCopy.publish_status = 'confirmation_required';
-      // Default to confidential until human verification
+      // Default to confidential (fail-safe) so blank source cells never leak client names or block the pipeline
+      matterCopy.confidentialityConfirmed = true;
+      matterCopy.confidentialityStatus = 'confidential';
+      matterCopy.publish_status = 'non_publishable';
       matterCopy.isConfidential = true;
       matterCopy.confidentiality = 'confidential';
-      matterCopy.publishStatus = 'confirmation_required';
+      matterCopy.publishStatus = 'confidential';
       confidentialityAdjustments.push(
         `[Asunto #${num}] Estado de confidencialidad en blanco o ambiguo en fuente. Activado guardrail estricto: asignado como CONFIDENCIAL por defecto.`
       );

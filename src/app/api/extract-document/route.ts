@@ -243,14 +243,16 @@ export async function POST(request: NextRequest) {
       enhanced_b7: extractedB10,
       b7: extractedB10,
       department: extractedDept,
-      departmentName: extractData.filing_details?.departmentName ?? '',
+      departmentName: extractData.filing_details?.departmentName || cleanExtractedPractice || finalPracticeArea || extractedMeta.firm_name || '',
       numPartners: (extractData.filing_details?.numPartners !== undefined && extractData.filing_details?.numPartners !== '')
         ? extractData.filing_details.numPartners
         : (extractedLawyers.filter((l: any) => l.isPartner || l.role === 'Partner').length || ''),
       numLawyers: (extractData.filing_details?.numLawyers !== undefined && extractData.filing_details?.numLawyers !== '')
         ? extractData.filing_details.numLawyers
         : (extractedLawyers.filter((l: any) => !l.isPartner && l.role !== 'Partner').length || ''),
-      contacts: extractData.filing_details?.contacts || [],
+      contacts: (extractData.filing_details?.contacts?.length
+        ? extractData.filing_details.contacts
+        : (extractData.filing_details?.departmentHeads || extractedDept.department_heads || []).filter((p: any) => p?.name && (p?.email || p?.phone))),
       departmentHeads: extractData.filing_details?.departmentHeads || (extractData.filing_field_status?.departmentHeads === 'conflicting' ? [] : extractedDept.department_heads || []),
       filing_evidence: extractData.filing_evidence || {},
       filing_field_status: extractData.filing_field_status || {},
