@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         const adminRecipients = (
           process.env.CONTACT_NOTIFICATION_EMAILS ||
           process.env.CONTACT_NOTIFICATION_EMAIL ||
-          'info@rankingsdecoded.com'
+          'angela.castillo@rankingsdecoded.com, info@rankingsdecoded.com'
         )
           .split(',')
           .map((e) => e.trim())
