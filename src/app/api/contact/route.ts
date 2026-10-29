@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -10,28 +23,28 @@ export async function POST(req: NextRequest) {
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json(
         { success: false, error: 'Full name is required.' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!email || typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email.trim())) {
       return NextResponse.json(
         { success: false, error: 'A valid work email is required.' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!firmName || typeof firmName !== 'string' || !firmName.trim()) {
       return NextResponse.json(
         { success: false, error: 'Firm name is required.' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!message || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json(
         { success: false, error: 'Please describe your firm’s priorities or goals.' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -145,14 +158,6 @@ export async function POST(req: NextRequest) {
           </div>
         `;
 
-        await resend.emails.send({
-          from: fromEmail,
-          to: adminRecipients,
-          replyTo: cleanEmail,
-          subject: `[Rankings Decoded] New Enquiry: ${cleanFirm} — ${cleanName}`,
-          html: adminEmailHtml,
-        });
-
         // B. Confirmation Receipt Email to the Client / Inquirer
         const clientReceiptHtml = `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; color: #0f172a; line-height: 1.65; background-color: #ffffff;">
@@ -195,16 +200,36 @@ export async function POST(req: NextRequest) {
           </div>
         `;
 
-        await resend.emails.send({
-          from: fromEmail,
-          to: [cleanEmail],
-          replyTo: 'info@rankingsdecoded.com',
-          subject: `Enquiry received: Rankings Decoded — ${cleanFirm}`,
-          html: clientReceiptHtml,
-        });
+        // Send both internal notification and client confirmation in parallel
+        const [adminResult, clientResult] = await Promise.allSettled([
+          resend.emails.send({
+            from: fromEmail,
+            to: adminRecipients,
+            replyTo: cleanEmail,
+            subject: `[Rankings Decoded] New Enquiry: ${cleanFirm} — ${cleanName}`,
+            html: adminEmailHtml,
+          }),
+          resend.emails.send({
+            from: fromEmail,
+            to: [cleanEmail],
+            replyTo: 'info@rankingsdecoded.com',
+            subject: `Enquiry received: Rankings Decoded — ${cleanFirm}`,
+            html: clientReceiptHtml,
+          }),
+        ]);
 
-        emailSent = true;
-        console.log('[LEAD] Successfully sent lead notification and client receipt emails via Resend.');
+        if (adminResult.status === 'fulfilled' && !adminResult.value.error) {
+          emailSent = true;
+          console.log('[LEAD] Successfully sent admin lead notification via Resend.');
+        } else {
+          console.error('[LEAD] Admin notification email failed:', adminResult);
+        }
+
+        if (clientResult.status === 'fulfilled' && !clientResult.value.error) {
+          console.log('[LEAD] Successfully sent client receipt email via Resend.');
+        } else {
+          console.error('[LEAD] Client receipt email failed:', clientResult);
+        }
       } else {
         console.warn('[LEAD] Resend API key is not configured in SystemConfig or process.env.RESEND_API_KEY. Inquiry was saved to database, but notification email was skipped.');
       }
@@ -213,14 +238,17 @@ export async function POST(req: NextRequest) {
       emailError = mailErr?.message || 'Email delivery failed';
     }
 
-    // Success response with saved inquiry ID
-    return NextResponse.json({
-      success: true,
-      message: 'Thank you for getting in touch. We have received your enquiry and will contact you about the next step.',
-      id: inquiry.id,
-      emailSent,
-      ...(emailError ? { emailWarning: 'Saved to database, notification email pending configuration.' } : {}),
-    });
+    // Success response with saved inquiry ID and CORS headers
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Thank you for getting in touch. We have received your enquiry and will contact you about the next step.',
+        id: inquiry.id,
+        emailSent,
+        ...(emailError ? { emailWarning: 'Saved to database, notification email pending configuration.' } : {}),
+      },
+      { headers: corsHeaders }
+    );
   } catch (error: any) {
     console.error('[LEAD] Unexpected error in contact route:', error);
     return NextResponse.json(
@@ -228,7 +256,7 @@ export async function POST(req: NextRequest) {
         success: false,
         error: 'Unable to process your enquiry at this moment. Please try again later or email info@rankingsdecoded.com directly.'
       },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

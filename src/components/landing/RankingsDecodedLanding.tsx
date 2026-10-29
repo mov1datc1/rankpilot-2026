@@ -65,7 +65,12 @@ export default function RankingsDecodedLanding() {
     setSubmitError('');
 
     try {
-      const res = await fetch('/api/contact', {
+      const targetUrl =
+        typeof window !== 'undefined' && window.location.hostname === 'rankingsdecoded.com'
+          ? 'https://www.rankingsdecoded.com/api/contact'
+          : '/api/contact';
+
+      const res = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formState)
