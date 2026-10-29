@@ -1,3 +1,38 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [1.0.0] — 2026-10-28 — Revalidación integral de feedback de Ángela Castillo, blindaje transversal del pipeline editorial y canal de leads con Resend
+
+### Added
+- **Canal de Leads y Formulario de Landing Page con Resend (`resend.com`)**:
+  - Guía oficial paso a paso de configuración DNS y API Key en [`docs/guides/GUIA_CONFIGURACION_RESEND_LANDING_PAGE.md`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/docs/guides/GUIA_CONFIGURACION_RESEND_LANDING_PAGE.md).
+  - Verificación exitosa del dominio `rankingsdecoded.com` y validación interactiva de conexión en `/dashboard/admin/smtp`.
+  - Configuración del destinatario directo de consultas a `angela.castillo@rankingsdecoded.com` (con copia a `info@rankingsdecoded.com`), incluyendo `reply-to` directo al correo del prospecto.
+  - Generación paralela de correos con `Promise.allSettled`: notificación administrativa y acuse de recibo institucional firmado por Ángela Castillo despachados en menos de 1 segundo.
+  - Soporte de cabeceras CORS (`Access-Control-Allow-Origin: *`) y preflight `OPTIONS` en `/api/contact` y `next.config.ts`.
+  - Bypass inteligente en el formulario de la landing page para solicitudes desde el dominio apex `rankingsdecoded.com` dirigidas directamente al endpoint canónico `https://www.rankingsdecoded.com/api/contact`, resolviendo definitivamente el error `Failed to fetch`.
+
+### Changed
+- **Reorganización Estructural del Repositorio y Workspace**:
+  - Clasificación de carpetas sueltas en el workspace principal `/Users/jonathanpalacios/Downloads/Rankpilot-2026` en 5 módulos numerados (`01_Analisis_y_Arquitectura`, `02_Pruebas_y_Feedback_Angela`, `03_Resultados_y_Entregables`, `04_Diseno_y_Assets`, `05_Repositorios_Historicos`).
+  - Reorganización interna de `rankpilot-new-repo` preservando historial git: documentación distribuida en `docs/architecture/`, `docs/guides/`, `docs/audits/`, `docs/samples/`, tests antiguos en `tests/legacy/`, scripts administrativos en `scripts/admin/`, y carpeta `scratch/` agrupada en subdirectorios temáticos.
+- **Juez Editorial Operativo como Reparador Quirúrgico y Guía No Bloqueante**:
+  - El juez editorial repara divergencias menores de forma automática y asiste al usuario sin forzar re-optimizaciones completas en bucle.
+  - Flujo de entrega automática directa en `Optimized (DOCX)`, con estado `approved: true` y `0 errores`, permitiendo descarga inmediata sin fricción.
+
+### Fixed
+- **Blindaje Editorial Transversal (Ramos Castillo & DeForest)**:
+  - Anonimización automática en B9 para asuntos confidenciales (Sección E), atribuyendo méritos profesionales a socios y abogados sin comprometer la confidencialidad del cliente.
+  - Presentación institucional en C2 en 4 pilares estratégicos en voz oficial de la firma, eliminando meta-discurso, deslindes o referencias internas de investigación de mercado.
+  - Reconstrucción profunda de asuntos en D2/E2 en 3 párrafos cronológicos (*Contexto y Desafío → Intervención e Innovación → Resultado, Actualizaciones e Impacto*), fusionando descripción, actualizaciones, complejidad jurídica, rol de la firma y roles de abogados.
+  - Exclusión justificada y coherente de asuntos que contradigan la tesis competitiva (ej. exclusión de *Enerflex* en tesis patronal corporativa de DeForest).
+  - Eliminación de ejemplos fijos (*hardcoded*) como AraqueReyna o Corporate/M&A en prompts del motor (`editorial_development.py`, `review_graph.py`), garantizando un comportamiento 100% transversal para cualquier área de práctica.
+  - Auto-población de metadatos administrativos (departamento y contactos) para postulaciones cross-directory (Modalidad B: Leaders League / Legal 500 a Chambers).
+  - Protección de extracción de asuntos contra filas de clientes activos (Sección C1) y sanitización de nombres de clientes con descriptores corporativos o enlaces incrustados.
+  - Reducción del intervalo de reintento de selección diferida de 6 minutos a 15 segundos.
+
 ## 2026-10-26 — Configuración de dominio oficial rankingsdecoded.com y canal de correo info@rankingsdecoded.com
 
 - **Dominio de producción oficial (`https://rankingsdecoded.com`)**:
