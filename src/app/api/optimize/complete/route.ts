@@ -111,11 +111,13 @@ export async function POST(request: NextRequest) {
     const readiness=getDeliveryState(review.render_gate ? {...data,release_verdict:review.render_gate} : data,matters);
     data.release_verdict={passed:false,status:'needs_review',errors:readiness.errors};
     if (readiness.approved) {
+      let buffer: Buffer | null = null;
+      let auditBuffer: Buffer | null = null;
       try {
         const doc=buildSubmissionDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data,{...submission,chambersData:data,matters},'optimized');
-        const buffer=await Packer.toBuffer(doc);
+        buffer=await Packer.toBuffer(doc);
         const auditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},review.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
-        const auditBuffer=await Packer.toBuffer(auditDoc);
+        auditBuffer=await Packer.toBuffer(auditDoc);
         const auditArchive=await JSZip.loadAsync(auditBuffer);
         const renderedAudit=(await auditArchive.file('word/document.xml')!.async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
         const archive=await JSZip.loadAsync(buffer);
@@ -153,10 +155,29 @@ export async function POST(request: NextRequest) {
         if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
         data.release_verdict={passed:true,status:'passed',errors:[]};
         data.judgeVerdict=finalReview.judge;
-        if(finalReview.letter) {data.editorial_review={...review,letter:finalReview.letter};data.analysis.summary=finalReview.letter.executive_assessment || '';}
-        data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
+        if(finalReview.letter) {
+          data.editorial_review={...review,letter:finalReview.letter};
+          data.analysis.summary=finalReview.letter.executive_assessment || '';
+          // Re-render auditDoc with the repaired letter so the downloaded audit docx contains the repaired letter
+          const repairedAuditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},finalReview.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
+          const repairedAuditBuffer=await Packer.toBuffer(repairedAuditDoc);
+          data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:repairedAuditBuffer.toString('base64'),audit_sha256:artifactHash(repairedAuditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
+        } else {
+          data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
+        }
       } catch (error:any) {
         data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
+        // Always provide the working draft so the user can inspect progress and is not blocked from reviewing their draft
+        if (buffer && auditBuffer) {
+          data.draft_artifact = {
+            base64: buffer.toString('base64'),
+            sha256: artifactHash(buffer),
+            audit_base64: auditBuffer.toString('base64'),
+            audit_sha256: artifactHash(auditBuffer),
+            revision_id: inputHash,
+            directory: submission.targetDirectory,
+          };
+        }
       }
     }
     // The paid review and exact DOCX bytes stay outside the transaction. Retry

@@ -58,14 +58,18 @@ export function sanitizeClientName(rawClient: string): CleanedClientResult {
   const match = s.match(descPattern);
   if (match && match.index !== undefined && match.index > 2) {
     const nameEnd = match.index + (s[match.index] === '.' && /(?:\b[A-Z]\.[A-Z]|\bInc|\bLtd|\bCorp)$/i.test(s.substring(0, match.index)) ? 1 : 0);
-    const cleanClient = s.substring(0, nameEnd).replace(/[.,\s]+$/, '').trim();
+    const sub = s.substring(0, nameEnd).trim();
+    const hasLegalDot = /(?:[A-Za-z]\.[A-Za-z]\.|Inc\.|Ltd\.|Corp\.)$/i.test(sub);
+    const cleanClient = hasLegalDot ? sub.replace(/[\s,]+$/, '').trim() : sub.replace(/[.,\s]+$/, '').trim();
     const restDesc = s.substring(match.index).replace(/^[,.\s\-–—]+/, '').trim();
     const clientDescription = [extractedUrls, restDesc].filter(Boolean).join(' ').trim();
     return { cleanClient, cleanName: cleanClient, clientDescription, wasModified: true };
   }
 
   if (extractedUrls) {
-    const cleanClient = s.replace(/[.,\s]+$/, '').trim();
+    const sub = s.trim();
+    const hasLegalDot = /(?:[A-Za-z]\.[A-Za-z]\.|Inc\.|Ltd\.|Corp\.)$/i.test(sub);
+    const cleanClient = hasLegalDot ? sub.replace(/[\s,]+$/, '').trim() : sub.replace(/[.,\s]+$/, '').trim();
     return { cleanClient, cleanName: cleanClient, clientDescription: extractedUrls, wasModified: true };
   }
 

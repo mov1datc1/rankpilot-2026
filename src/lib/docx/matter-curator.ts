@@ -104,17 +104,15 @@ export function curateMatters(allMatters: any[], practiceArea: string = '', cham
   const selection = chambersData.canonical_matter_selection;
   const hasSelection = Array.isArray(selection?.core_matter_ids);
   const byId = new Map(matters.map(m => [String(m.id), m]));
+  const isLabour = /labou?r/i.test(practiceArea);
   const candidates = hasSelection
-    ? [...new Set<string>(selection.core_matter_ids.map(String))].map(id => byId.get(id)).filter(Boolean)
-    : matters.filter(m => !m.isExcluded && !['Excluded', 'Pruned'].includes(m.status)).sort((a, b) => {
-        if (/labou?r/i.test(practiceArea)) {
-          const aAdv = isAdverseEmployeeMatter(a);
-          const bAdv = isAdverseEmployeeMatter(b);
-          if (aAdv && !bAdv) return 1;
-          if (!aAdv && bAdv) return -1;
-        }
-        return 0;
-      });
+    ? [...new Set<string>(selection.core_matter_ids.map(String))]
+        .map(id => byId.get(id))
+        .filter(Boolean)
+        .filter(m => !(isLabour && isAdverseEmployeeMatter(m)))
+    : matters
+        .filter(m => !m.isExcluded && !['Excluded', 'Pruned'].includes(m.status))
+        .filter(m => !(isLabour && isAdverseEmployeeMatter(m)));
   const restricted = (m: any) => m.isConfidential === true || m.confidential === true || m.is_confidential === true || m.confidentialityConfirmed === false || ['confirmation_required', 'non_publishable', 'confidential'].includes(m.publish_status || m.confidentialityStatus || m.publishStatus);
   const officialPubMatters: any[] = [], officialConfMatters: any[] = [];
   const selected = new Set<any>();

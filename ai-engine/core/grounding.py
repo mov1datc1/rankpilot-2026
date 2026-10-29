@@ -108,8 +108,8 @@ def factual_issues(source, draft, entity_id=None):
     if currency_codes(draft)-currency_codes(source):
         add('UNSUPPORTED_CURRENCY','La redacción añadió una moneda no acreditada por la fuente. RankPilot debe corregirla.')
     pending=r'\b(pending|pendiente|no decision|sin resoluci[oó]n|no judgment)\b'
-    victory=r'\b(won|victory|victoria|awarded|recovered|gan[oó]|obtuvo sentencia favorable)\b'
-    negated_victory = r'\b(?:rather\s+than\s+(?:as\s+)?(?:a\s+)?|not\s+(?:a\s+)?|without\s+(?:claiming\s+)?|no\s+(?:como\s+)?|sin\s+(?:afirmar\s+)?)(?:won|victory|victoria|awarded|recovered|gan[oó]|obtuvo\s+sentencia\s+favorable)\b'
+    victory=r'\b(won|victory|victoria|awarded|recovered|gan[oó]|obtuvo sentencia favorable|sentencia favorable|resoluci[oó]n favorable|amparo concedido|amparo definitivo|suspensi[oó]n definitiva|favourable ruling|favorable ruling|favourable judgment|favorable judgment|judgment in favou?r|ruling in favou?r|settled favou?rably|conciliaci[oó]n favorable|convenio favorable)\b'
+    negated_victory = r'\b(?:rather\s+than\s+(?:as\s+)?(?:a\s+)?|not\s+(?:a\s+)?|without\s+(?:claiming\s+)?|no\s+(?:como\s+)?|sin\s+(?:afirmar\s+)?)(?:won|victory|victoria|awarded|recovered|gan[oó]|obtuvo\s+sentencia\s+favorable|sentencia\s+favorable|favourable\s+ruling|favorable\s+ruling)\b'
     draft_no_neg = re.sub(negated_victory, '', normalized(draft), flags=re.I)
     if re.search(pending,normalized(source)) and not re.search(victory,normalized(source)) and re.search(victory,draft_no_neg):
         add('PENDING_AS_VICTORY','La fuente describe un procedimiento pendiente y la redacción afirma un resultado favorable no acreditado. RankPilot debe corregir el resultado.')

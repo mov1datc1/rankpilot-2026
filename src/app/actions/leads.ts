@@ -2,9 +2,11 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth-guards';
 
 export async function getLeadInquiries() {
   try {
+    await requireAdmin();
     const leads = await (prisma as any).leadInquiry.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -17,6 +19,7 @@ export async function getLeadInquiries() {
 
 export async function updateLeadStatus(id: string, status: string) {
   try {
+    await requireAdmin();
     const updated = await (prisma as any).leadInquiry.update({
       where: { id },
       data: { status },
@@ -31,6 +34,7 @@ export async function updateLeadStatus(id: string, status: string) {
 
 export async function deleteLeadInquiry(id: string) {
   try {
+    await requireAdmin();
     await (prisma as any).leadInquiry.delete({
       where: { id },
     });

@@ -2,9 +2,11 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth-guards';
 
 export async function getSystemConfig() {
   try {
+    await requireAdmin();
     let config = await prisma.systemConfig.findUnique({ where: { id: 'global' } });
     
     if (!config) {
@@ -36,6 +38,7 @@ export async function saveSystemConfig(data: {
   resendFromEmail?: string;
 }) {
   try {
+    await requireAdmin();
     const config = await prisma.systemConfig.upsert({
       where: { id: 'global' },
       update: data,
@@ -51,9 +54,10 @@ export async function saveSystemConfig(data: {
 
 export async function saveGTMConfig(formData: FormData) {
   'use server';
-  const gtmContainerId = formData.get('gtm-id') as string;
-  
   try {
+    await requireAdmin();
+    const gtmContainerId = formData.get('gtm-id') as string;
+  
     await prisma.systemConfig.upsert({
       where: { id: 'global' },
       update: { gtmContainerId },
@@ -67,9 +71,10 @@ export async function saveGTMConfig(formData: FormData) {
 
 export async function saveGAConfig(formData: FormData) {
   'use server';
-  const gaMeasurementId = formData.get('ga-id') as string;
-  
   try {
+    await requireAdmin();
+    const gaMeasurementId = formData.get('ga-id') as string;
+  
     await prisma.systemConfig.upsert({
       where: { id: 'global' },
       update: { gaMeasurementId },

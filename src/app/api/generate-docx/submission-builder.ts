@@ -400,24 +400,15 @@ export function generateDynamicB10(
   const cleanFirm = (firmName || '').replace(/^Firm[’']s\s+Name[:\s\r\n]*/i, '').trim() || 'The firm';
   const targetPractice = practiceArea || 'Labour & Employment';
   const targetRegion = countryJurisdiction || 'Mexico';
-  const isDeForest = /deforest/i.test(cleanFirm) || pubMatters.some((m: any) => /schaeffler|vitesco|bonatti|cinemex|volkswagen/i.test(`${m?.client || ''} ${m?.name || ''}`));
-  const isRamosCastillo = /ramos\s*castillo/i.test(cleanFirm) || pubMatters.some((m: any) => /el\s*cielo|duranpark/i.test(`${m?.client || ''} ${m?.name || ''}`));
 
-  if (/labou?r/i.test(targetPractice) && isDeForest) {
-    return `${cleanFirm} delivers comprehensive employer-side labour and employment counsel across Mexico, combining national contentious defense with strategic workforce governance for multinational corporations, industrial conglomerates, and domestic market leaders. Operating across five strategic regional offices (Mexico City, Puebla, Guadalajara, Querétaro, and Monterrey) with a dedicated team of 27 specialized labor lawyers, the department advises corporate employers whose collective operations exceed 1,000,000 active employees throughout Mexico.\n\n` +
-      `The practice's core strength lies in its ability to navigate Mexico's transformed labour regulatory landscape—including the 2019 Federal Labour Law reform, the establishment of the Federal Center for Conciliation and Labour Registration (CFCRL), and international scrutiny under the USMCA Rapid Response Labour Mechanism (MMLRR). The team routinely handles high-friction collective bargaining negotiations, mandatory collective bargaining agreement (CBA) legitimations, union representation disputes, and strike prevention across critical manufacturing, automotive, and energy supply chains.\n\n` +
-      `Representative institutional mandates illustrate the depth and operational scale of the practice. Following a multi-billion-dollar global automotive corporate acquisition (Schaeffler / Vitesco), the department designed and executed the comprehensive post-merger labour harmonization across six Mexican states, integrating over 5,000 unionized and non-unionized workers into uniform collective agreements without production stoppage. In the automotive component manufacturing sector, the firm structured tactical negotiation protocols and conciliation defenses for Tier-1 suppliers including Brose and GeNI, resolving inter-union ownership conflicts and neutralising risk of USMCA Rapid Response complaints. In energy infrastructure, the team oversaw labour governance and compliance for Bonatti on major national pipeline projects with an aggregate asset value exceeding USD 2.5 billion, coordinating contractor workforces exceeding 17,000 personnel in high-risk operating environments.\n\n` +
-      `On the contentious front, the department manages a permanent docket of more than 700 active individual and collective labour proceedings nationwide before both traditional Conciliation and Arbitration Boards (JCA) and newly instituted Labour Courts. The firm acts as national labor defense counsel for high-volume retail, entertainment, and industrial employers, including Cinemex (handling ~200 ongoing proceedings) and automotive OEMs including Volkswagen de México (managing dispute exposure exceeding MXN 280 million). The team's litigation strategy prioritizes early conciliation, rigorous procedural defenses, and amparo remedies to protect employers against extortionate union claims and procedural overreach.\n\n` +
-      `The department is anchored by partners Eduardo Garduño, Javier Atzin Vallejo, and Jaime Bustamante, supported by senior counsel Raymundo Carreño (former General Legal Director of Volkswagen de México with 38 years of automotive labor leadership), and an agile bench of senior associates and labour specialists. This structure unites high-level strategic counsel with nationwide operational execution, ensuring immediate responsiveness in union contingencies and sustainable compliance for employer workforces across Mexico.`;
-  }
+  // Synthesize a clean, source-grounded narrative from actual matters & lawyers
+  const distinctClients = [...new Set((pubMatters || []).map(m => (m.client || '').trim()).filter(Boolean))].slice(0, 4);
+  const leadPartners = (lawyers || []).filter((l: any) => /partner|socio/i.test(l.role || l.title || '')).map((l: any) => l.name).filter(Boolean);
+  
+  const clientClause = distinctClients.length > 0 ? `, representing institutional clients including ${distinctClients.join(', ')}` : '';
+  const leadershipClause = leadPartners.length > 0 ? ` The department is led by ${leadPartners.slice(0, 3).join(', ')}, supported by a dedicated team of specialist practitioners.` : '';
 
-  if (/real estate/i.test(targetPractice) && isRamosCastillo) {
-    return `${cleanFirm} is a premier Mexican real estate and land-use disputes boutique that protects the commercial viability, development rights, and asset value of large-scale properties when regulatory intervention, zoning decrees, environmental restrictions, or state takings threaten multi-million dollar investments.\n\n` +
-      `Led by founding partner José Pablo Ramos Castillo, the firm has repeatedly established landmark constitutional amparo precedents that convert abstract property protections into concrete commercial remedies. In the landmark El Cielo Country Club litigation, the firm successfully protected a residential and ecological development valued at MXN 3 billion against successive municipal and state environmental decrees, obtaining definitive judgments that confirmed acquired development rights and enforced judicial compliance in July 2024. In the industrial sector, the firm secured definitive amparo suspensions shielding approximately 207.5 hectares of strategic logistics land within the Durango Logistics and Industrial Center (Duranpark) valued at MXN 698.4 million against municipal expropriation.\n\n` +
-      `The practice spans Mexico's central and northern industrial corridors, representing major institutional developers, industrial park operators, and corporate investors across Jalisco, Durango, Guanajuato, and Mexico City. Supported by senior associates Edgar Adrián Moro López and Mónica Dariane Cárdenas Fregoso, the department provides an integrated public-law and contentious real estate capability that secures development permits, defeats unlawful expropriation, and protects long-term capital investments across Mexico.`;
-  }
-
-  return existing || `${cleanFirm} maintains an established ${targetPractice} practice in ${targetRegion}, advising institutional corporations and developers on complex contentious matters, regulatory compliance, and high-value transactions.`;
+  return existing || `${cleanFirm} maintains an established ${targetPractice} practice in ${targetRegion}${clientClause}, advising domestic and international corporations on complex contentious proceedings, regulatory compliance, and strategic mandates.${leadershipClause}`;
 }
 
 /** Preserve an actual source or reviewed answer; never invent competitive positioning. */
@@ -446,31 +437,18 @@ export function generateDynamicC2(
     }
   }
 
-  // Otherwise, construct a dedicated 4-pillar Chambers Entry Petition (Angela Castillo Directive)
+  // Otherwise, construct a dedicated 4-pillar Chambers Entry Petition grounded in source evidence
   const cleanFirm = (firmName || '').replace(/^Firm[’']s\s+Name[:\s\r\n]*/i, '').trim() || 'The firm';
   const targetPractice = practiceArea || 'Labour & Employment';
   const targetRegion = countryJurisdiction || 'Mexico';
   const allMatters = [...(pubMatters || []), ...(confMatters || [])];
-  const isDeForest = /deforest/i.test(cleanFirm) || allMatters.some((m: any) => /schaeffler|vitesco|bonatti|cinemex|volkswagen/i.test(`${m?.client || ''} ${m?.name || ''}`));
-  const isRamosCastillo = /ramos\s*castillo/i.test(cleanFirm) || allMatters.some((m: any) => /el\s*cielo|duranpark/i.test(`${m?.client || ''} ${m?.name || ''}`));
 
-  if (/labou?r/i.test(targetPractice) && isDeForest) {
-    return `${cleanFirm} respectfully submits its application for first-time inclusion in Chambers Latin America — ${targetRegion}: Labour & Employment (Band 5 / Entry Candidate). Rather than a commoditized or reactive labor practice, the firm provides an integrated employer-side platform operating at national tier scale, advising multinational and domestic employers whose workforce stability is fundamental to business continuity.\n\n` +
-      `Scale & National Volume (Pillar 1): The practice represents employers with a combined workforce exceeding one million employees throughout Mexico. Its contentious portfolio encompasses nationwide litigation management involving more than 700 simultaneous proceedings across key industrial corridors (Puebla, Mexico City, Bajío, Guadalajara, and Monterrey), including large-scale litigation platforms for consumer-facing and industrial employers such as Cinemex (~200 proceedings) and Volkswagen de México (>MXN 280 million exposure).\n\n` +
-      `High-Stakes & Regulatory Complexity (Pillar 2): The department’s recent mandates substantiate high-stakes strategic capabilities that directly affect operational continuity. Representative work includes directing the post-acquisition labor integration following a major global automotive transaction (Schaeffler / Vitesco) across six Mexican states for over 5,000 employees; managing high-friction collective bargaining negotiations that prevented imminent strikes across critical automotive supply chains (GeNI, Benteler); defending employers in union-representation crises to prevent escalation under the USMCA Rapid Response Labor Mechanism (Brose); and executing labor governance for multi-billion-dollar energy infrastructure projects (Bonatti USD 2.5 billion pipeline / 17,000 workers).\n\n` +
-      `Market Standing & Peer Benchmarking (Pillar 3): The firm operates at the same level of complexity and sophistication as currently ranked Band 4 and Band 5 departments. This standing is recognized directly within the legal market, where premier specialist firms (such as Natividad Abogados) appoint DeForest as regional correspondent litigation counsel, and global Fortune 500 corporations in automotive, advanced manufacturing, energy, and retail rely on the team for sensitive workforce governance.\n\n` +
-      `Bench Depth & Leadership (Pillar 4): The practice boasts a dedicated bench of 27 specialized labor lawyers across five Mexican offices, led by seasoned partners Eduardo Garduño, Javier Atzin Vallejo, and Jaime Bustamante, reinforced by institutional icons such as Raymundo Carreño (who served nearly four decades as General Legal Director of Volkswagen de México). We respectfully invite the Chambers research team to contact our client referees across automotive, energy, and industrial sectors to verify this record of strategic delivery.`;
-  }
+  const distinctClients = [...new Set(allMatters.map(m => (m.client || '').trim()).filter(Boolean))].slice(0, 4);
+  const clientHighlight = distinctClients.length > 0 ? ` across representative mandates for clients such as ${distinctClients.join(', ')}` : '';
 
-  if (/real estate/i.test(targetPractice) && isRamosCastillo) {
-    return `${cleanFirm} respectfully seeks targeted recognition in Chambers Latin America — ${targetRegion}: Real Estate. The firm provides specialized legal capabilities in high-stakes administrative, constitutional, and regulatory defense of real estate assets, developments, and land rights against government intervention.\n\n` +
-      `The firm's track record demonstrates representation in commercially critical real estate disputes, including preserving the MXN 3 billion El Cielo residential development against municipal and state environmental reclassifications, halting expropriation decrees affecting 207.5 hectares of strategic industrial logistics land in Durango, and lifting project suspensions for major developers.\n\n` +
-      `This contentious public-law capability in real estate provides vital legal certainty for major development investments in Mexico, securing the operational continuity and value of strategic property assets.`;
-  }
-
-  // General practice area 4-pillar petition
+  // General practice area 4-pillar petition grounded in actual casework
   return `${cleanFirm} respectfully submits its application for recognition in Chambers Latin America — ${targetRegion}: ${targetPractice}. The department offers specialized, partner-led capabilities designed to resolve complex legal obstacles and secure operational continuity for domestic and international clients.\n\n` +
-    `Our representative casework reflects high-value transactions, complex regulatory interfaces, and contested proceedings where strategic legal intervention was decisive in achieving measurable commercial outcomes.\n\n` +
+    `Our representative casework reflects high-value transactions, complex regulatory interfaces, and contested proceedings${clientHighlight} where strategic legal intervention was decisive in achieving measurable commercial outcomes.\n\n` +
     `With an experienced bench combining seasoned senior leadership with dedicated specialist practitioners, the practice handles mandates of comparable scale and sophistication to ranked market peers. We welcome the opportunity to discuss our active practice and invite the Chambers research team to consult our client references.`;
 }
 
@@ -1146,6 +1124,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // ═══ WHAT SETS YOUR PRACTICE APART ═══
   elements.push(pageStart());
   const lawyers = chambersData.lawyers || [];
+  const confClientNames = [...new Set((confMatters || []).map((m: any) => m.client).filter(Boolean))];
+
   let b7Val = exportMode === 'original'
     ? (chambersData.original_b10 || chambersData.departmentDesc || chambersData.b7 || '')
     : (chambersData.enhanced_b7 || chambersData.enhanced_b10 || chambersData.departmentDesc || chambersData.b7 || chambersData.departmentDescription || '');
@@ -1153,14 +1133,12 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   if (exportMode !== 'original' && (!b7Val || String(b7Val).trim().length < 150 || String(b7Val).includes('principal base is Guadalajara') || String(b7Val).includes('throughout the State of Jalisco, where most of our clients operate'))) {
     b7Val = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers);
   }
-  b7Val = sanitizeBannedSuperlatives(String(b7Val));
-  if (!String(b7Val).includes('98%') && /deforest/i.test(firmName)) {
-    b7Val = `${b7Val}\n\nDeForest operates as a national labour governance platform across more than 20 jurisdictions, impacting over one million employees throughout Mexico and maintaining a reported 98% success rate in the conciliation stage.`;
-  }
+  b7Val = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(String(b7Val))).cleaned, confClientNames);
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
   let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
   if (c2Val) {
+    c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confClientNames);
     elements.push(para('', { spacing: { after: 120 } }));
     elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
   }
@@ -1168,7 +1146,6 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   // Helper to fallback lawyer focus and standout work to editorial candidates
   const normLawyer = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const findCandidate = (name: string) => (chambersData?.editorial_development?.candidates || chambersData?.review_checkpoint?.state?.development?.candidates || []).find((c: any) => normLawyer(c.name) === normLawyer(name));
-  const confClientNames = [...new Set(confMatters.map((m: any) => m.client).filter(Boolean))];
 
   const cleanRanking = (rank: string) => {
     if (!rank) return '';

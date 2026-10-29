@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin, requireSuperAdmin } from '@/lib/auth-guards';
 
 // Supabase Admin client (for user creation in Auth)
 const supabaseAdmin = createClient(
@@ -27,6 +28,7 @@ export async function createUser(data: {
   accountType?: string;
 }) {
   try {
+    await requireAdmin();
     const { email, password, role, name, accountType } = data;
 
     // Check if user already exists
@@ -98,6 +100,7 @@ export async function createUser(data: {
 // =====================================================
 export async function toggleUserStatus(userId: string) {
   try {
+    await requireAdmin();
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return { success: false, error: 'Usuario no encontrado.' };
 
@@ -121,6 +124,7 @@ export async function toggleUserStatus(userId: string) {
 // =====================================================
 export async function deleteUser(userId: string) {
   try {
+    await requireAdmin();
     // Delete from Supabase Auth if possible
     if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
       try {
@@ -145,6 +149,7 @@ export async function deleteUser(userId: string) {
 // =====================================================
 export async function getAdminDashboardMetrics() {
   try {
+    await requireAdmin();
     const [totalUsers, activeUsers, allUsers] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { status: 'ACTIVE' } }),

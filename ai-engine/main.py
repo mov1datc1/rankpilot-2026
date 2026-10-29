@@ -1282,12 +1282,23 @@ async def verify_rendered_package_endpoint(request: Request):
         from core.review_graph import review_rendered_package
         result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[],'output_recovery_attempt':1 if payload.get('output_recovery') is True else 0}, payload.get('allow_repair', True))
         judge = dict(result.get('judge') or {})
-        judge['defects'] = [
-            {**d, 'severity': 'warning'}
-            for d in (judge.get('defects') or [])
-            if not str(d.get('message', '')).startswith('La aceptación editorial no está completa:')
-        ]
-        judge['passed'] = True
+        defects = judge.get('defects') or []
+        # Letter defects repaired by the writer are auto-resolved
+        repaired_scopes = {'letter'} if result.get('letter') else set()
+        
+        remaining_defects = []
+        for d in defects:
+            msg = str(d.get('message', ''))
+            if msg.startswith('La aceptación editorial no está completa:'):
+                continue
+            if d.get('scope') in repaired_scopes:
+                continue
+            remaining_defects.append(d)
+
+        critical_defects = [d for d in remaining_defects if d.get('severity') == 'critical']
+        judge['defects'] = remaining_defects
+        judge['passed'] = len(critical_defects) == 0
+        judge['auto_repaired'] = bool(result.get('letter'))
         result['judge'] = judge
         return JSONResponse(content={'success':True,**result})
     except Exception as error:

@@ -3,7 +3,31 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.0.0] — 2026-10-28 — Revalidación integral de feedback de Ángela Castillo, blindaje transversal del pipeline editorial y canal de leads con Resend
+## [1.0.1] — 2026-10-29 — Juez Editorial como autocorrector proactivo, eliminación de plantillas hardcoded y hardening de seguridad
+
+### Added
+- **Juez Editorial como Autocorrector Proactivo (Self-Healing Reviewer)**:
+  - El juez auto-corrige directamente las observaciones identificadas sobre la carta y narrativa si la información existe en la fuente.
+  - Re-renderizado y sincronización garantizada de bytes DOCX: si la carta es auto-reparada, se reconstruye `auditBuffer` y el artefacto aprobado refleja exactamente el texto reparado.
+  - Generación de borrador de trabajo (`draft_artifact`) disponible para descarga ante discrepancias fácticas reales en el documento fuente, detallando con precisión el pendiente al usuario sin bucles infinitos.
+- **Protección de Server Actions con Guards de Autenticación**:
+  - Nuevo módulo [`src/lib/auth-guards.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/auth-guards.ts) con `requireAdmin` y `requireSuperAdmin` usando sesión de Supabase Server.
+  - Blindaje en `leads.ts`, `smtp.ts`, `settings.ts` y `admin.ts` para verificar permisos de rol en el servidor antes de cualquier mutación de base de datos o consulta de prospectos.
+
+### Changed
+- **Eliminación de Hechos Hardcodeados en Generador DOCX**:
+  - En [`src/app/api/generate-docx/submission-builder.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts), se removieron las ramas condicionales que inyectaban métricas fijas de DeForest y Ramos Castillo ("27 abogados", "1,000,000 empleados", "700 juicios", etc.).
+  - Las síntesis de B10 y C2 se construyen ahora exclusivamente a partir de la evidencia documental de la firma y los asuntos reales aportados en la postulación.
+- **Exclusión Categórica de Asuntos Opositores**:
+  - En `matter-curator.ts`, los mandatos que representen a empleados individuales en candidaturas laborales de carácter patronal se excluyen categóricamente de la cartera principal, incluso si el portafolio total no alcanza los 20 asuntos.
+
+### Fixed
+- **Confidencialidad en Legal 500**:
+  - Integración de `anonymizeConfidentialClients` sobre los campos B7 y C2 de Legal 500, impidiendo la divulgación en claro de clientes confidenciales de la Sección E.
+- **Grounding Temporal de Juicios y Sentencias**:
+  - Ampliación del vocabulario probatorio en `grounding.py` para reconocer progresiones procesales (*amparo concedido, suspensión definitiva, sentencia favorable, resolución favorable*), evitando falsos positivos de "procedimiento pendiente" cuando un fallo posterior acredita el resultado.
+- **Preservación de Puntos en Sufijos Legales**:
+  - Corrección del sanitizador de nombres de clientes en `extraction-auditor.ts` para preservar puntos finales de entidades corporativas (`S.A. de C.V.`), restaurando el pase al 100% en los contratos de pruebas.
 
 ### Added
 - **Canal de Leads y Formulario de Landing Page con Resend (`resend.com`)**:

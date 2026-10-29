@@ -2,9 +2,11 @@
 
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/auth-guards';
 
 export async function getEmailTemplates() {
   try {
+    await requireAdmin();
     const templates = await prisma.emailTemplate.findMany({
       orderBy: { type: 'asc' }
     });
@@ -17,6 +19,7 @@ export async function getEmailTemplates() {
 
 export async function saveEmailTemplate(type: string, subject: string, htmlBody: string) {
   try {
+    await requireAdmin();
     await prisma.emailTemplate.upsert({
       where: { type },
       update: { subject, htmlBody },
@@ -32,6 +35,7 @@ export async function saveEmailTemplate(type: string, subject: string, htmlBody:
 
 export async function testResendConnection(toEmail: string, fromEmail: string) {
   try {
+    await requireAdmin();
     // Try to get API key from SystemConfig first, then fall back to env
     const config = await prisma.systemConfig.findUnique({ where: { id: 'global' } });
     const apiKey = config?.resendApiKey || process.env.RESEND_API_KEY;
@@ -62,6 +66,7 @@ export async function testResendConnection(toEmail: string, fromEmail: string) {
 
 export async function saveResendConfig(apiKey: string, fromEmail: string) {
   try {
+    await requireAdmin();
     await prisma.systemConfig.upsert({
       where: { id: 'global' },
       update: { resendApiKey: apiKey, resendFromEmail: fromEmail },
