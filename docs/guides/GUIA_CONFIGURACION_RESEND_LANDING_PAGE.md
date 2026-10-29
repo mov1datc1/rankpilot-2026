@@ -115,3 +115,4 @@ Rankings Decoded cuenta con una herramienta de prueba integrada:
    - En tu bandeja: Correo de confirmación firmado por Ángela Castillo.
    - En la bandeja de `info@rankingsdecoded.com`: Notificación con todos los detalles del lead.
    - En el panel admin (`/dashboard/admin/leads`): El nuevo prospecto aparecerá listado como `NEW`.
+
