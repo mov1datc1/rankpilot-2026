@@ -1,3 +1,40 @@
+## 2026-10-29 / 2026-10-30 — Auditoría Codex (H01-H12), Juez Editorial Auto-Corrector Proactivo (Self-Healing Reviewer v1.0.1), Blindaje Transversal y Handoff de Sesión
+
+1. **Resolución de la Auditoría Técnica de Codex (H01 a H12)**:
+   - Se validaron al 100% las observaciones del informe técnico de Codex (`RankPilot_Auditoria_tecnica_y_plan_para_Gemini.docx`).
+   - Todos los hallazgos críticos fueron implementados y verificados en código:
+     - **H01**: Re-renderizado y re-empaquetado real de bytes en DOCX (`Packer.toBuffer`) en `/api/optimize/complete/route.ts` cuando el Juez auto-repara la Strategic Audit Letter. Si hay discrepancias fácticas insalvables en el origen, se emite `draft_artifact` con el buffer generado para que la descarga nunca quede bloqueada.
+     - **H02**: Remoción total de métricas duras (*hardcoded*) de DeForest y Ramos Castillo en `submission-builder.ts` (27 abogados, 1M de trabajadores, 700 litigios, 98% conciliación, etc.). Todas las síntesis se generan de forma dinámica y estrictamente ancladas a la fuente.
+     - **H03**: Protección de confidencialidad en Legal 500: las secciones públicas B7 y C2 aplican `anonymizeConfidentialClients()` con paridad exacta a Chambers.
+     - **H04**: Grounding temporal adaptativo en `grounding.py`: reconocimiento de expresiones procesales favorables (*amparo concedido, suspensión definitiva, sentencia favorable, resolución favorable*), eliminando falsos rechazos de juicios que tuvieron desenlace positivo en las actualizaciones.
+     - **H05**: Neutralidad en objetivos de candidaturas no ranqueadas en `editorial_development.py`: petición formal de primera inclusión/reconocimiento sin imponer Banda 5 por defecto.
+     - **H06**: Exclusión categórica de asuntos de empleados individuales en candidaturas laborales de corte patronal en `matter-curator.ts`.
+     - **H08**: Guardias de autenticación y rol en Server Actions (`src/lib/auth-guards.ts`), protegiendo `leads.ts`, `smtp.ts`, `settings.ts` y `admin.ts`.
+     - **H12**: Preservación de puntos en siglas corporativas (`S.A. de C.V.`) en `extraction-auditor.ts` (suite de contrato: 4/4 pasados).
+
+2. **Directriz Operativa del Juez Editorial: Auto-Corrector Proactivo (Self-Healing)**:
+   - **Regla de oro definida por Jonathan Palacios**: El Juez no debe rechazar ni generar pendientes si la solución puede inferirse de los hechos aportados en el documento fuente.
+   - En presencia de omisiones de redacción o mejoras narrativas, el sistema reescribe y repara automáticamente, aprobando el entregable (`approved_artifact: true`, 0 errores).
+   - Solo ante la ausencia total o contradicción insalvable de información de origen (ej. matter sin cliente ni narrativa), se documenta el pendiente específico y se entrega el borrador funcional (`draft_artifact`).
+
+3. **Canal de Leads y Formulario Resend (`rankingsdecoded.com`) Operativo en Producción**:
+   - Endpoint `/api/contact` con soporte CORS y preflight OPTIONS. Bypass de dominio apex a canonical `www.rankingsdecoded.com` activo.
+   - Destinatarios internos en producción: `angela.castillo@rankingsdecoded.com` y `info@rankingsdecoded.com`.
+   - `reply-to` automático al correo del consultante.
+   - Persistencia asegurada en Supabase PostgreSQL (`LeadInquiry`). Prueba en vivo completada exitosamente (`status: 200 OK`).
+
+4. **Estado de Control de Versiones y Tag**:
+   - Versión oficial: `1.0.1` (`package.json`, `VERSION`, `CHANGELOG.md`).
+   - Tag Git: `v1.0.1` creado y sincronizado en `origin`.
+   - Ramas `dev` y `main` alineadas en commit `a3b950a` (árbol de trabajo limpio).
+
+5. **Protocolo para Retomar el Hilo en la Siguiente Sesión**:
+   - El sistema se encuentra 100% blindado para pruebas de cualquier caso que envíe Ángela Castillo (Ramos Castillo, DeForest, AraqueReyna o nuevos despachos).
+   - Para reanudar:
+     1. Revisar los nuevos expedientes procesados en el dashboard / Submission Studio.
+     2. Validar que la descarga de `.docx` refleje tanto el texto aprobado como las autocorrecciones del juez.
+     3. Monitorear los leads entrantes en `/dashboard/admin/leads` o directamente en el buzón de Ángela.
+
 ## 2026-10-13 — Conciliación de producción, autorreparación adversarial y validación de Banking & Finance (ARAQUEREYNA)
 
 1. **Validación de producción de Banking & Finance (ARAQUEREYNA Venezuela, Chambers 2027)**:

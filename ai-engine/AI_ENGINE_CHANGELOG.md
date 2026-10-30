@@ -3,7 +3,18 @@
 
 > **Purpose:** This document tracks EVERY active rule, fix, and architectural decision in the AI engine.  
 > Before ANY iteration, consult this list to ensure no previous fix is accidentally removed or contradicted.  
-> Last updated: **2026-10-11** (selection freeze elimination, Legal 500 support & production verification)
+> Last updated: **2026-10-30** (v1.0.1: Proactive Self-Healing Reviewer, Grounding Progression & Directory Neutrality)
+
+## 2026-10-29 / 2026-10-30 — Release v1.0.1: Proactive Self-Healing Reviewer (Auto-Corrector), Grounding Progression & Directory Neutrality
+
+- **Proactive Self-Healing Reviewer (`main.py:verify_rendered_package_endpoint`)**:
+  - The Editorial Judge operates as an active auto-corrector rather than a passive or blocking censor.
+  - When writer-repaired text resolves letter defects, the verification marks `passed = len(critical_defects) == 0` and `auto_repaired = True`. Non-fatal narrative recommendations remain as informational warnings without blocking approval.
+- **Adaptive Temporal Grounding for Procedural Progression (`grounding.py:verify_grounding_claims`)**:
+  - Expanded `victory` evidentiary regex with procedural milestone vocabulary (*amparo concedido, suspensión definitiva, sentencia favorable, resolución favorable, conciliación favorable, convenio favorable, favourable ruling*).
+  - Eliminates false `PENDING_AS_VICTORY` rejections when subsequent updates document that an initially pending proceeding resulted in a favorable judgment or definitive injunction.
+- **Directory Scope & Objective Neutrality for Unranked Submissions (`editorial_development.py`)**:
+  - Neutralized Section C2 petition prompt: unranked submissions without a target band explicitly request first-time inclusion and recognition of their established market practice, rather than imposing an arbitrary Band 5 default.
 
 ## 2026-10-27 — Angela Castillo Real Estate Validation & Unified Matter Narrative Arc
 

@@ -29,6 +29,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Preservación de Puntos en Sufijos Legales**:
   - Corrección del sanitizador de nombres de clientes en `extraction-auditor.ts` para preservar puntos finales de entidades corporativas (`S.A. de C.V.`), restaurando el pase al 100% en los contratos de pruebas.
 
+## [1.0.0] — 2026-10-28 — Revalidación integral de feedback de Ángela Castillo, blindaje transversal del pipeline editorial y canal de leads con Resend
+
 ### Added
 - **Canal de Leads y Formulario de Landing Page con Resend (`resend.com`)**:
   - Guía oficial paso a paso de configuración DNS y API Key en [`docs/guides/GUIA_CONFIGURACION_RESEND_LANDING_PAGE.md`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/docs/guides/GUIA_CONFIGURACION_RESEND_LANDING_PAGE.md).
