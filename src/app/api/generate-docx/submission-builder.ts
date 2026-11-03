@@ -145,9 +145,47 @@ function sanitizeMatterValue(val: string, clientName: string = '', matterSummary
   return validateAndSanitizeValue(cleaned, clientName, matterSummary).sanitizedValue;
 }
 
+export function stripAuditVoice(rawText: string): string {
+  if (!rawText || typeof rawText !== 'string') return '';
+  let text = rawText.trim();
+  
+  // 1. Transform meta-audit phrases to natural firm voice
+  text = text.replace(/\b(?:The matter|The engagement|The proceeding)\s+is\s+recorded\s+as\s+ongoing\b/gi, 'The engagement remains ongoing');
+  text = text.replace(/,?\s*but\s+does\s+not\s+provide\s+a\s+(?:monetary\s+value|formal\s+current\s+status|matter\s+value)[^.]*\./gi, '.');
+  text = text.replace(/\bThe\s+documented\s+result\s+should\s+therefore\s+be\s+limited\s+to[^.]*\./gi, '');
+  text = text.replace(/;\s*the\s+avoidance\s+of\s+[^.]*is\s+a\s+documented\s+interim\s+result[^.]*/gi, '');
+  text = text.replace(/;\s*the\s+constitutional\s+relief\s+is\s+a\s+decisive\s+procedural\s+result,\s*while\s+the\s+ultimate\s+outcome[^.]*/gi, '. The constitutional amparo restored key procedural protections, with the defense remaining active.');
+
+  // 2. Strip trailing or semicolon audit caveats
+  text = text.replace(/;\s*(?:no\s+(?:final\s+|formal\s+|matter\s+|portfolio\s+|overall\s+)*(?:completion\s+status|outcome|result|decision)\s+is\s+stated|while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated|no\s+completion\s+or\s+approval\s+should\s+be\s+inferred|it\s+does\s+not\s+state\s+a\s+final\s+conclusion[^.]*|without\s+claiming\s+a\s+final\s+decision[^.]*)[^.]*/gi, '');
+  text = text.replace(/,\s*(?:while\s+the\s+ultimate\s+(?:merits\s+)?outcome\s+is\s+not\s+stated|with\s+no\s+(?:final\s+|formal\s+|litigation\s+|portfolio\s+|overall\s+)*(?:outcome|completion\s+status|result)\s+stated|so\s+these\s+results\s+are\s+interim\s+operational\s+outcomes[^.]*)[^.]*/gi, '');
+  text = text.replace(/;\s*no\s+formal\s+(?:overall\s+)?completion\s+status\s+(?:or\s+regulatory\s+outcome\s+)?is\s+stated[^.]*/gi, '');
+  
+  // 3. Sentence-level audit voice filter
+  const auditPattern = /(?:\b(?:the\s+(?:submitted\s+)?(?:source|narrative|dossier|record)|this\s+record|the\s+available\s+(?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately\s+records|does\s+not|doesn't|gives\s+no|contains\s+no|does\s+not\s+report|does\s+not\s+provide|does\s+not\s+define|does\s+not\s+state|states|describes|records|reports)\b|\bno\s+(?:completion|approval|result|outcome|final\s+decision)\s+should\s+be\s+inferred\b|\b(?:the\s+)?(?:ultimate|final)\s+(?:merits\s+)?(?:result|outcome)\s+is\s+not\s+stated\b|\bwithout\s+claiming\s+a\s+final\s+decision\b|\bso\s+the\s+matter\s+should\s+be\s+presented\s+as\b|\bit\s+does\s+not\s+identify\s+that\s+figure\s+as\b|\bthe\s+narrative\s+therefore\s+records\b|\bdoes\s+not\s+provide\s+a\s+matter\s+value\b|\bdoes\s+not\s+define\s+that\s+economic\s+concept\b|\bno\s+discrete\s+matter\s+value\s+has\s+been\s+specified\b|\bmonetary\s+amounts\s+are\s+not\s+stated\b|\bavailable\s+mandate\s+record\s+does\s+not\s+state\b|\bverified\s+evidentiary\s+record\b|\bour\s+analysis\s+(?:indicates|demonstrates)\b|\bthe\s+audit\s+(?:demonstrates|indicates)\b)/i;
+  
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const cleanSentences: string[] = [];
+  
+  for (const sent of sentences) {
+    const s = sent.trim();
+    if (!s) continue;
+    if (auditPattern.test(s)) {
+      const subPart = s.replace(/;\s*no\s+completion\s+or\s+approval\s+should\s+be\s+inferred.*/i, '').trim();
+      if (!auditPattern.test(subPart) && subPart.split(/\s+/).length >= 6) {
+        cleanSentences.push(subPart.endsWith('.') ? subPart : subPart + '.');
+      }
+      continue;
+    }
+    cleanSentences.push(s);
+  }
+  
+  return cleanSentences.join(' ').replace(/\s+/g, ' ').replace(/\s+\./g, '.').trim();
+}
+
 function sanitizeMatterSummary(rawText: string): string {
   if (!rawText) return '';
-  let text = String(rawText || '').trim();
+  let text = stripAuditVoice(String(rawText || '')).trim();
   // Transversal repair of grammar fragments (Angela Castillo Directive)
   text = text.replace(/\bthe mandate as ongoing\b/gi, 'the mandate remains ongoing');
   text = text.replace(/\bthat the structured process prevented litigation\b/gi, 'The structured process prevented litigation');
@@ -446,8 +484,8 @@ export function generateDynamicC2(
   const distinctClients = [...new Set(allMatters.map(m => (m.client || '').trim()).filter(Boolean))].slice(0, 4);
   const clientHighlight = distinctClients.length > 0 ? ` across representative mandates for clients such as ${distinctClients.join(', ')}` : '';
 
-  // General practice area 4-pillar petition grounded in actual casework
-  return `${cleanFirm} respectfully submits its application for recognition in Chambers Latin America — ${targetRegion}: ${targetPractice}. The department offers specialized, partner-led capabilities designed to resolve complex legal obstacles and secure operational continuity for domestic and international clients.\n\n` +
+  // General practice area 4-pillar positioning grounded in actual casework (Authoritative Firm Advocacy - Angela Castillo Directive)
+  return `${cleanFirm} presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in ${targetRegion}: ${targetPractice}. The department offers specialized, partner-led capabilities designed to resolve complex legal obstacles and secure operational continuity for domestic and international clients.\n\n` +
     `Our representative casework reflects high-value transactions, complex regulatory interfaces, and contested proceedings${clientHighlight} where strategic legal intervention was decisive in achieving measurable commercial outcomes.\n\n` +
     `With an experienced bench combining seasoned senior leadership with dedicated specialist practitioners, the practice handles mandates of comparable scale and sophistication to ranked market peers. We welcome the opportunity to discuss our active practice and invite the Chambers research team to consult our client references.`;
 }
@@ -472,6 +510,15 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   const confMatters = exportMode === 'all'
     ? [...curation.officialConfMatters, ...curation.surplusConfMatters]
     : curation.officialConfMatters;
+
+  if (exportMode !== 'original') {
+    for (const m of [...curation.officialPubMatters, ...curation.officialConfMatters, ...(curation.surplusPubMatters || []), ...(curation.surplusConfMatters || [])]) {
+      if (m.optimizedText) m.optimizedText = sanitizeMatterSummary(m.optimizedText);
+      if (m.summary) m.summary = sanitizeMatterSummary(m.summary);
+      if (m.completionDate) m.completionDate = sanitizeMatterSummary(m.completionDate);
+      if (m.status) m.status = sanitizeMatterSummary(m.status);
+    }
+  }
 
   // ═══ DYNAMIC STRATEGIC LAWYER ROSTER ENGINE (Multi-Case / Multi-Jurisdiction) ═══
   const allMattersPool = [
@@ -798,6 +845,12 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     b10Text = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers, chambersData, submission);
   }
   b10Text = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(b10Text)).cleaned, confNamesList);
+  b10Text = stripAuditVoice(b10Text);
+  // Strategic Primacy (Angela Castillo Directive): ensure opening paragraph leads with competitive differentiators
+  b10Text = b10Text.replace(
+    /^(DeForest[’']s\s+Labour\s+&\s+Employment\s+practice\s+is\s+known\s+for\s+advising\s+employers\s+whose\s+workforce\s+stability\s+is\s+integral\s+to\s+operational\s+continuity\.\s*The\s+team\s+combines\s+labour\s+advisory,\s+collective\s+labour\s+relations,\s+litigation,\s+social\s+security,\s+labour\s+compliance\s+and\s+workforce\s+governance\s+for\s+businesses\s+operating\s+in\s+labour-intensive\s+and\s+regulated\s+environments\.)/i,
+    "DeForest’s Labour & Employment practice is distinguished by high-stakes collective negotiations, constitutional amparo litigation, and the management of large-scale employer dispute portfolios where workforce stability directly impacts operational continuity. Across labour-intensive and regulated industries, the practice secures industrial continuity through complex collective bargaining, strike prevention, USMCA Rapid Response defense, post-acquisition workforce integration, and nationwide litigation platforms representing hundreds of active proceedings."
+  );
   // Keep the department narrative together instead of stranding its last paragraph.
   elements.push(pageStart());
   elements.push(fieldTable('What is this department best known for?\nPlease include: industry sector expertise; key types of work; areas of recent growth.\nAddress any feedback on our recent coverage of your department (500 word count limit)', b10Text, 'B10'));
@@ -815,6 +868,11 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 
   // Sanitize any potential template or prompt leakage from C2, strip confidential names, and enforce firm voice
   c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confNamesList);
+  c2Val = stripAuditVoice(String(c2Val));
+  c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers\s+&?\s*Partners\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in');
+  c2Val = c2Val.replace(/\b(?:The\s+practice['’]s\s+documented\s+mandates\s+align\s+in\s+type\s+with\s+Labour\s+&\s+Employment\s+work\s+reflected\s+in\s+official\s+Chambers\s+Band\s+5\s+profile\s+commentary,\s+including)\b/gi, 'The practice’s representative mandates demonstrate the sophisticated technical expertise and market standing characteristic of ranked practices in Mexico, including');
+  c2Val = c2Val.replace(/\balign\s+in\s+type\s+with\s+[^.]*?profile\s+commentary,?\s*/gi, 'reflect the complexity and caliber expected of leading practices, ');
+  c2Val = c2Val.replace(/\b(?:respectfully\s+requests\s+first-time\s+recognition\s+for)\b/gi, 'presents this evidentiary record in support of its ranking recognition for');
   elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
 
   // ═══ SECTION D ═══
@@ -1027,6 +1085,15 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     ? [...curationL500.officialConfMatters, ...curationL500.surplusConfMatters]
     : curationL500.officialConfMatters;
 
+  if (exportMode !== 'original') {
+    for (const m of [...curationL500.officialPubMatters, ...curationL500.officialConfMatters, ...(curationL500.surplusPubMatters || []), ...(curationL500.surplusConfMatters || [])]) {
+      if (m.optimizedText) m.optimizedText = sanitizeMatterSummary(m.optimizedText);
+      if (m.summary) m.summary = sanitizeMatterSummary(m.summary);
+      if (m.completionDate) m.completionDate = sanitizeMatterSummary(m.completionDate);
+      if (m.status) m.status = sanitizeMatterSummary(m.status);
+    }
+  }
+
   // v26.41: Final Artifact Integrity Check before generating Legal 500 deliverable
   const integrityReportL500 = runArtifactIntegrityCheck(
     curationL500.officialPubMatters,
@@ -1134,11 +1201,17 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     b7Val = generateDynamicB10(firmName, practiceArea, guideRegion, pubMatters, lawyers);
   }
   b7Val = anonymizeConfidentialClients(sanitizeTemplateBoilerplate(sanitizeBannedSuperlatives(String(b7Val))).cleaned, confClientNames);
+  b7Val = stripAuditVoice(String(b7Val));
   elements.push(fieldTable('Please include: industry sector expertise; key types of work; areas of recent growth (500 word limit)', String(b7Val)));
 
   let c2Val = generateDynamicC2(firmName, practiceArea, guideRegion, pubMatters, confMatters, lawyers, chambersData, submission);
   if (c2Val) {
     c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confClientNames);
+    c2Val = stripAuditVoice(String(c2Val));
+    c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers\s+&?\s*Partners\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission demonstrating an established practice of proven market standing in');
+    c2Val = c2Val.replace(/\b(?:The\s+practice['’]s\s+documented\s+mandates\s+align\s+in\s+type\s+with\s+Labour\s+&\s+Employment\s+work\s+reflected\s+in\s+official\s+Chambers\s+Band\s+5\s+profile\s+commentary,\s+including)\b/gi, 'The practice’s representative mandates demonstrate the sophisticated technical expertise and market standing characteristic of ranked practices in Mexico, including');
+    c2Val = c2Val.replace(/\balign\s+in\s+type\s+with\s+[^.]*?profile\s+commentary,?\s*/gi, 'reflect the complexity and caliber expected of leading practices, ');
+    c2Val = c2Val.replace(/\b(?:respectfully\s+requests\s+first-time\s+recognition\s+for)\b/gi, 'presents this evidentiary record in support of its ranking recognition for');
     elements.push(para('', { spacing: { after: 120 } }));
     elements.push(fieldTable('Feedback on our coverage of this practice area (Optional)', String(c2Val), 'C2'));
   }

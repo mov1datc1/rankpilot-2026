@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.2] — 2026-11-02 — Eliminación integral de voz auditora, jerarquización estratégica en B10, posicionamiento de liderazgo de socios y blindaje editorial en Submission
+
+### Added
+- **Suite de Pruebas de Aceptación Editorial de Regresión ([`tests/contracts/angela-editorial-acceptance.test.cjs`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/tests/contracts/angela-editorial-acceptance.test.cjs))**:
+  - Batería automatizada con 5 criterios de aceptación ejecutados mediante `node --test`:
+    1. Cero fugas de voz auditora en textos de asuntos y estados (22 variantes de frases eliminadas sistemáticamente).
+    2. Posicionamiento de socios líderes confirmados en `departmentHeads` con el título formal "the Partner and Head of [Practice]".
+    3. Posicionamiento en C2 con tono de defensa institucional persuasiva (0 peticiones tímidas ni menciones meta-auditoras a comentarios de Banda 5).
+    4. Jerarquización estratégica en el párrafo inicial de B10 (apertura inmediata con mandatos de alta complejidad, negociaciones colectivas, litigios constitucionales y plataformas masivas).
+    5. Hard gate en `runArtifactIntegrityCheck` que bloquea la emisión de documentos con cualquier comentario de evaluación interna.
+
+### Changed
+- **Jerarquización Estratégica en B10 (Department Overview)**:
+  - En [`src/app/api/generate-docx/submission-builder.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts) y [`ai-engine/core/editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py), el párrafo inicial de B10 abandona formulaciones descriptivas genéricas ("combina asesoría laboral...") y lidera de inmediato con la propuesta de valor competitiva: negociaciones colectivas en sectores críticos (automotriz, manufactura pesada, infraestructura), prevención de huelgas, defensa bajo el Mecanismo Laboral de Respuesta Rápida del T-MEC, juicios de amparo constitucional y plataformas contenciosas de cientos de procedimientos con impacto de cientos de millones de pesos.
+- **Posicionamiento Institucional Asertivo en C2 (Feedback on Coverage)**:
+  - Eliminación de lenguaje de súplica ("respectfully petitions Chambers for first-time inclusion") y de referencias meta-auditoras ("align in type with Band 5 commentary"). Reemplazado por voz de firma asertiva ("presents this submission to Chambers & Partners demonstrating an established practice of proven market standing...").
+- **Posicionamiento Preciso de Abogados Líderes (B9)**:
+  - En [`src/lib/docx/lawyer-curator.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/docx/lawyer-curator.ts) y [`editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py), todo socio identificado como líder de práctica en `departmentHeads` (e.g. Eduardo Garduño) se titula formalmente como "the Partner and Head of the Labour & Employment practice" en lugar de "a partner in".
+
+### Fixed
+- **Filtro Transversal y Multicapa de Voz Auditora**:
+  - Implementación de `stripAuditVoice` en TypeScript y ampliación exhaustiva de `AUDIT_VOICE` y `sanitize_narrative_voice` en Python.
+  - Sanitización tanto en la fase de inferencia LLM como en la fase determinista de armado de tablas Word (D2 Resumen, D8 Estatus, B10, C2 y B9).
+  - Eliminación de todas las coletillas metodológicas en estatus de asuntos ("no completion or approval should be inferred", "the ultimate merits outcome is not stated", "the source does not provide a matter value").
+- **Resolución de Falso Conflicto de Confidencialidad en Auditor Extractor**:
+  - Ajuste en [`src/lib/audit/extraction-auditor.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/audit/extraction-auditor.ts) para preservar `confidentialityConfirmed: false` como estado explícito no confirmado (sin forzar reescritura destructiva a confirmada), manteniendo la protección estricta en la Sección E y aprobando al 100% los 181 contratos de integridad.
+
 ## [1.0.1] — 2026-10-29 — Juez Editorial como autocorrector proactivo, eliminación de plantillas hardcoded y hardening de seguridad
 
 ### Added

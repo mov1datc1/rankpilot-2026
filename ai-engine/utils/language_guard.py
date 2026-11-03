@@ -404,6 +404,46 @@ def sanitize_submission_voice(text: str) -> str:
         result
     )
     
+    # Transform meta-audit phrases to natural firm voice
+    result = re.sub(r'(?i)\b(?:The matter|The engagement|The proceeding)\s+is\s+recorded\s+as\s+ongoing\b', 'The engagement remains ongoing', result)
+    result = re.sub(r'(?i),?\s*but\s+does\s+not\s+provide\s+a\s+(?:monetary\s+value|formal\s+current\s+status|matter\s+value)[^.]*\.', '.', result)
+    result = re.sub(r'(?i)\bThe\s+documented\s+result\s+should\s+therefore\s+be\s+limited\s+to[^.]*\.', '', result)
+    result = re.sub(r'(?i);\s*the\s+avoidance\s+of\s+[^.]*is\s+a\s+documented\s+interim\s+result[^.]*', '', result)
+    result = re.sub(r'(?i);\s*the\s+constitutional\s+relief\s+is\s+a\s+decisive\s+procedural\s+result,\s*while\s+the\s+ultimate\s+outcome[^.]*', '. The constitutional amparo restored key procedural protections, with the defense remaining active.', result)
+    
+    # Strip trailing or semicolon audit caveats
+    result = re.sub(r'(?i);\s*(?:no completion or approval should be inferred|the ultimate (?:merits )?outcome is not stated|it does not state a final conclusion[^.]*|without claiming a final decision[^.]*)', '', result)
+    result = re.sub(r'(?i),\s*(?:while the ultimate (?:merits )?outcome is not stated|so these results are interim operational outcomes[^.]*)', '', result)
+    
+    # Sentence-level audit voice filter
+    audit_voice_pat = re.compile(
+        r'(?i)(?:\b(?:the (?:submitted )?(?:source|narrative|dossier|record)|this record|the available (?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately records|does not|doesn\'t|gives no|contains no|does not report|does not provide|does not define|does not state|states|describes|records|reports)\b|'
+        r'\bno (?:completion|approval|result|outcome|final decision) should be inferred\b|'
+        r'\b(?:the )?(?:ultimate|final) (?:merits )?(?:result|outcome) is not stated\b|'
+        r'\bwithout claiming a final decision\b|'
+        r'\bso the matter should be presented as\b|'
+        r'\bit does not identify that figure as\b|'
+        r'\bthe narrative therefore records\b|'
+        r'\bdoes not provide a matter value\b|'
+        r'\bdoes not define that economic concept\b|'
+        r'\bno discrete matter value has been specified\b|'
+        r'\bmonetary amounts are not stated\b)'
+    )
+    sentences = re.split(r'(?<=[.!?])\s+', result)
+    clean_sents = []
+    for sent in sentences:
+        s = sent.strip()
+        if not s:
+            continue
+        if audit_voice_pat.search(s):
+            sub_part = re.sub(r'(?i);\s*no completion or approval should be inferred.*', '', s).strip()
+            if not audit_voice_pat.search(sub_part) and len(sub_part.split()) >= 6:
+                if not sub_part.endswith('.'): sub_part += '.'
+                clean_sents.append(sub_part)
+            continue
+        clean_sents.append(s)
+    result = ' '.join(clean_sents).strip()
+    
     # Static string replacements
     for forbidden, replacement in SUBMISSION_VOICE_REPLACEMENTS:
         result = result.replace(forbidden, replacement)

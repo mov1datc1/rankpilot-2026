@@ -246,8 +246,14 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
     const suggestedRank = isPartner === true && /associate/i.test(proposed) ? '' : proposed;
+    const deptHeads = chambersData?.departmentHeads || chambersData?.department?.department_heads || chambersData?.filing_details?.heads || [];
+    const isDeptHead = deptHeads.some((h: any) => isSameLawyer(person.name, h.name || h));
     const sourceBio = String(candidacy?.submission_bio || person.comments || person.bio || '');
-    const bio = anonymizeConfidentialClients(sourceBio, confNames);
+    let bio = anonymizeConfidentialClients(sourceBio, confNames);
+    if (isDeptHead && bio) {
+      const nameEsc = person.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      bio = bio.replace(new RegExp(`^(${nameEsc}\\s+is\\s+)(?:a\\s+partner|a\\s+Partner|Partner)\\s+in\\s+`, 'i'), '$1the Partner and Head of ');
+    }
     const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio);
     return { name: person.name, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });

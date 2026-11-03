@@ -694,7 +694,7 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
         # Concrete dates/outcomes mentioned as a conflict cannot be explained
         # solely by the absence of a field, even if the model omits its quotes.
         concrete = not (metadata_request or (heading_in_artifact and defect.get('artifact_claim_kind') == 'template_label' and not source_quote)) and bool(re.search(r'\b(?:19|20)\d{2}\b|\b(?:won|victory|ended|inventad)', defect.get('message',''), re.I))
-        if package is not None and missing:
+        if package is not None and missing and not disputed and not concrete:
             defect['severity'] = 'warning'
             defect['owner'] = 'rankpilot'
             defect['action'] = 'review'
