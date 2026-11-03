@@ -6,6 +6,39 @@ from core.editorial_development import develop
 from core.editorial_repair import repair_targets, apply_corrections
 
 class TargetedRepairTests(unittest.TestCase):
+    def test_saved_delta_repairs_only_local_residual_without_replaying_old_feedback(self):
+        proposal=copy.deepcopy(DEV)
+        proposal['c2']='Corrected public positioning.'
+        proposal['matters'][0]['completion_status']='The source does not state a final outcome.'
+        feedback=[{'code':'UNSUPPORTED_CLAIM','severity':'critical','owner':'rankpilot',
+                   'scope':'submission','field_path':'c2','artifact_quote':'Old public claim.',
+                   'message':'Correct the old public claim.'}]
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True,
+               'repair_feedback':feedback,'repair_report':{'corrected_paths':['c2','matters/0/completion_status']}}
+        fix={'corrections':[{'path':'matters/0/completion_status','value':'The matter remains ongoing.',
+                            'reason':'State the supported status directly.'}],'unresolved':[]}
+        with patch('core.review_graph.invoke_role',return_value=(fix,[])) as model:
+            result=develop(state)
+        self.assertTrue(result['development_validated']);model.assert_called_once()
+        self.assertEqual(set(model.call_args.args[4]['repair_targets']),{'matters/0/completion_status'})
+        self.assertEqual(result['development']['c2'],proposal['c2'])
+        self.assertEqual(state['repair_feedback'],feedback)
+        self.assertNotIn('approved_artifact',result)
+
+    def test_development_delta_schema_binds_each_path_to_its_value_type(self):
+        from core.editorial_repair import repair_development
+        from pydantic import ValidationError
+        targets={p:{'current_value':v,'source_evidence':{}} for p,v in
+                 [('b10',DEV['b10']),('candidates/0',DEV['candidates'][0])]}
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':['Fixture']},[])) as model:
+            repair_development({'package':PACKAGE,'strategy':STRATEGY},DEV,targets)
+        schema=model.call_args.args[2]
+        for path,value in [('b10',DEV['candidates'][0]),('candidates/0','Wrong shape')]:
+            with self.subTest(path=path),self.assertRaises(ValidationError):
+                schema.model_validate({'corrections':[{'path':path,'value':value,'reason':'Correction'}],'unresolved':[]})
+        schema.model_validate({'corrections':[{'path':'b10','value':'Supported prose.','reason':'Correction'},
+            {'path':'candidates/0','value':DEV['candidates'][0],'reason':'Correction'}],'unresolved':[]})
+
     def test_renderer_value_restriction_does_not_buy_a_prose_locator(self):
         package=copy.deepcopy(PACKAGE)
         package['matters'][0].update(value='A six-figure amount.\nConfidential.',publish_status='publishable')

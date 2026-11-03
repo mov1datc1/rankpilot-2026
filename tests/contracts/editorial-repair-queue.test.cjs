@@ -1,7 +1,7 @@
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test');const assert=require('node:assert/strict');const Module=require('node:module');
 let submission,last,inserts=0;
-const tx={submission:{findUnique:async()=>submission,update:async({data})=>{submission={...submission,...data};return submission;}},$queryRaw:async(strings,...values)=>{const q=strings.join('?');if(q.startsWith('INSERT')){inserts++;return [{id:values[0],tasks:JSON.parse(values[5]),stage:values[6],ledger:JSON.parse(values[7])}];}if(q.includes('SELECT * FROM "EditorialJob"'))return [last];return [{id:'s'}];}};
+const tx={submission:{findUnique:async()=>submission,update:async({data})=>{submission={...submission,...data};return submission;}},$queryRaw:async(strings,...values)=>{const q=strings.join('?');if(q.startsWith('UPDATE')){last={...last,status:'queued'};return [last];}if(q.startsWith('INSERT')){inserts++;return [{id:values[0],tasks:JSON.parse(values[5]),stage:values[6],ledger:JSON.parse(values[7])}];}if(q.includes('SELECT * FROM "EditorialJob"'))return [last];return [{id:'s'}];}};
 const original=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return {__esModule:true,default:{$transaction:async f=>f(tx)}};return original.call(this,name,...args)};
 const {enqueue}=require('../../src/lib/editorial/jobs.ts');const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts');const {deliveryInputHash}=require('../../src/lib/audit/artifact-binding.ts');
 function reset(){inserts=0;const source='The case remains pending.',text='The team won.';submission={id:'s',userId:'u',chambersData:{completed_review_input_hash:'old',review_checkpoint:{state:{},step_keys:{}},matters:[{id:'m',rawNotes:source,optimizedText:text,draft_provenance:{text_hash:stableHash(text)}}],final_artifact_review:{judge:{defects:[{severity:'critical',owner:'rankpilot',code:'UNSUPPORTED_CLAIM',scope:'submission',matter_id:'m',source_quote:source,artifact_quote:text}]}}}};last={status:'needs_review',sourceHash:stableHash(sourceSnapshot(submission)),resultHash:deliveryInputHash(submission)};}
@@ -29,4 +29,17 @@ test('Audit-only defect preserves Submission development and prior letter for a 
  assert.deepEqual(job.tasks,['audit','artifact']);assert.deepEqual(submission.chambersData.review_checkpoint.state.letter,letter);
  assert.equal(submission.chambersData.review_checkpoint.state.development_validated,true);
  assert.equal(submission.chambersData.review_checkpoint.state.letter_repair_requested,true);
+});
+
+test('stopped generated repair resumes only after code change, preserving cursor, ledger and budget',async()=>{
+ reset();last.id='repair-job';last.status='failed';last.tasks=['development','audit','artifact','development','audit','artifact'];last.cursor=3;last.stage='development';last.issue={code:'DEVELOPMENT_REJECTED',owner:'rankpilot',retryable:true};
+ last.ledger=[{status:'repair_requested'},{stage:'development',cursor:3,worker_commit:'prior-build',issue:last.issue,trace:{usage:{total_tokens:100}}}];
+ const originalBuild=process.env.VERCEL_GIT_COMMIT_SHA;process.env.VERCEL_GIT_COMMIT_SHA='prior-build';
+ try {
+  const ledger=last.ledger;assert.equal(await enqueue(submission,true,true),last);assert.equal(last.status,'failed');assert.equal(inserts,0);
+  process.env.VERCEL_GIT_COMMIT_SHA='fixed-build';const job=await enqueue(submission,true,true);
+  assert.equal(job.id,'repair-job');assert.equal(job.status,'queued');assert.equal(job.cursor,3);assert.equal(job.ledger,ledger);assert.equal(inserts,0);
+  last.status='failed';last.ledger.at(-1).trace.usage.total_tokens=1200000;
+  assert.equal(await enqueue(submission,true,true),last);assert.equal(last.status,'failed');assert.equal(inserts,0);
+ }finally{if(originalBuild===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=originalBuild;}
 });

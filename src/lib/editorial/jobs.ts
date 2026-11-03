@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { stableHash, sourceSnapshot, draftDisposition, ReviewIssue, EDITORIAL_VERSION } from './contracts';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
 import { bindGeneratedFindings } from './artifact-findings';
+import { recoveryPlan } from './recovery';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -47,6 +48,16 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(last && ['running','queued'].includes(last.status)) return last;
     const snapshot=sourceSnapshot(current),sourceHash=stableHash(snapshot);
     const resultHash=deliveryInputHash(current,current.chambersData || {});
+    const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
+    // Resume a stopped repair after a code fix at its exact cursor. Keep the
+    // complete ledger and budget; never restart extraction or selection.
+    if(last?.status==='failed' && last.sourceHash===sourceHash && last.ledger?.some((e:any)=>e.status==='repair_requested')) {
+      if(retry && last.issue?.code==='DEVELOPMENT_REJECTED' && last.ledger.at(-1)?.worker_commit!==build && recoveryPlan(last,last.issue.code,build)) {
+        const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"leaseToken"=NULL,"leaseUntil"=now(),"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+        return resumed[0] || last;
+      }
+      return last;
+    }
     const repair=requestRepair && last?.status==='needs_review' && last.resultHash===resultHash ? targetedRepair(current.chambersData) : null;
     if(requestRepair && last?.status==='needs_review' && last.resultHash===resultHash && !repair) throw new Error('AUTO_REPAIR_UNAVAILABLE');
     if(!repair && last?.resultHash===resultHash && last?.sourceHash===sourceHash && ['completed','needs_review'].includes(last.status)) return last;

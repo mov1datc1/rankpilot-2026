@@ -121,7 +121,15 @@ def apply_corrections(proposal, targets, repair):
 def repair_development(state, proposal, targets):
     from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
-    correction=create_model('AllowedEditorialCorrection',__base__=Correction,path=(Literal[tuple(targets)],...))
+    # Bind shape to path, so a prose target cannot receive a Candidate object.
+    shapes=[]
+    for kind,paths in (
+        (str,[p for p,t in targets.items() if isinstance(t['current_value'],str)]),
+        (Candidate,[p for p,t in targets.items() if isinstance(t['current_value'],dict)])):
+        if paths:
+            shapes.append(create_model('EditorialTextCorrection' if kind is str else 'EditorialCandidateCorrection',
+                path=(Literal[tuple(paths)],...),value=(kind,...),reason=(str,...)))
+    correction=Union[tuple(shapes)] if len(shapes)>1 else shapes[0]
     schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
     # Semantic targets share the same complete evidence. Send it once, not once
     # per generated path; distinct target-specific evidence remains untouched.

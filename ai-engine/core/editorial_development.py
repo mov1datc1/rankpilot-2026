@@ -321,6 +321,15 @@ def develop(state):
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
+        # A successfully applied delta is persisted even if local validation
+        # rejects one residual field. Repair that residual before reusing the
+        # old artifact feedback: its other claims may already have changed.
+        # The original final verdict remains rejected until fresh Word review.
+        if errors and state.get('repair_report',{}).get('corrected_paths'):
+            from core.editorial_repair import repair_targets, repair_development
+            targets=repair_targets(state['package'],state['strategy'],bound)
+            if targets:
+                return repair_development(state,bound,targets)
         from core.review_graph import calibrate_verdict
         feedback=[calibrate_verdict({'defects':[d]},state['package'],state['strategy'],
                   draft_context={'letter':state.get('letter',{}),'development':bound})['defects'][0]
