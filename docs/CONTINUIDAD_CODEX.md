@@ -1,4 +1,16 @@
-## 2026-11-03 — Cierre comprobado de ambas pruebas nuevas
+## 2026-11-03 — v1.0.8 preparada para prueba autónoma, todavía sin pase E2E
+
+Prevención antes de Word: combinaciones de métricas de asuntos confidenciales en B9/B10/C2 se detectan y reúnen para reparación source-bound; E y fuentes intactas, juez independiente obligatorio. Un snapshot real anterior de DeForest ahora señala conjuntamente b10, c2 y candidates/2/submission_bio sin OpenAI. Se eliminan ejemplos/categorías de práctica que presuponían hechos, fallback de reparación por nombres específicos, etiqueta copiada en nombre de firma y confirmación falsa de consulta de ranking sin resultado. Revisión compatible batch-public-privacy-v1; contrato de aprobación exacta permanece.
+
+Validación local: Python 399 correctas; Node 445 correctas/1 omitida; TypeScript limpio. Evidencia privada en scratch/autonomia-2026-11-03; no publicar. Falta publicación y comprobación de despliegues de esta versión. NO iniciar nueva extracción o generación mientras siga pendiente la autorización específica solicitada para dos nuevas ejecuciones privadas/OpenAI; no reutilizar saldo de la revisión adicional anterior. Recuperación durable Responses ID sigue sin integrar. No declarar cierre autónomo.
+
+## 2026-11-03 — Criterio exigido por Jonathan funcionamiento autónomo
+
+Jonathan aclaró que no acepta documentos aprobados gracias a correcciones técnicas en tiempo real: Ángela debe poder ejecutar todo sin esa ayuda. La prueba DeForest anterior fue ASISTIDA (cambios de código durante la ejecución y ampliación manual), aunque sus archivos finales tengan aprobación válida. No presentarla como cierre de autonomía. Se corrigió el alcance del informe y su mensaje propuesto para Ángela. No prometer 100% universal ni confundir QA de documentos con éxito autónomo del producto.
+
+Siguiente prueba: fijar SHA y huella de producción, usar originales en expedientes nuevos y límites normales; iniciar una vez desde la sesión de Ángela; observar sin cambiar código, documentos, fuentes, permisos o veredictos ni ampliar presupuesto/reanudar manualmente. Las reparaciones internas normales cuentan como autonomía; una intervención técnica invalida la prueba. Descargar y verificar los finales si el sistema aprueba. Si falla, registrar la causa y corregir fuera de esa ejecución; nunca presentar su rescate como un pase limpio. Se solicitó autorización específica para dos nuevas ejecuciones privadas/OpenAI porque la última ampliación solo cubría una revisión del trabajo terminado; no reutilizar el margen sobrante.
+
+## 2026-11-03 — Aprobación comprobada de archivos de ambas pruebas anteriores
 
 Código final 54c7e0ce82866eefc7bf76aa12a6aa9a3de77c0f publicado dev/main, CI 41725995569 correcto, Vercel producción y ambos Render LIVE; huella 74273bff8b0a4eec764a1a2ceebdd88768c1bc3979b72c96176788fabf004606. 392 pruebas Python correctas; Node 446 total, 445 correctas y una omitida; TypeScript limpio.
 

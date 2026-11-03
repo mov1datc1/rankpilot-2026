@@ -1061,7 +1061,7 @@ async def _extract_readable_source(doc_text, context):
                         'source_characters': len(doc_text),
                         'covered_characters': len(doc_text),
                         'matters_reviewed': len(matters),
-                        'notice': 'Extracción de asuntos y datos de origen completada con 100% de fidelidad documental.',
+                        'notice': 'Extracción base completada; la conciliación secundaria no pudo completarse.',
                         'warning': 'La conciliación secundaria por IA no alteró la extracción base.',
                         'error_detail': str(error),
                     }
@@ -1074,7 +1074,8 @@ async def _extract_readable_source(doc_text, context):
                 logger.exception('Administrative source reconciliation failed')
                 return JSONResponse(status_code=502, content={'success': False, 'code': 'FILING_RECONCILIATION_UNAVAILABLE'})
 
-        firm_name = prelim.get("firm_name") or context.get("firm_name") or ""
+        from utils.filing_extraction import clean_firm_name
+        firm_name = clean_firm_name(prelim.get("firm_name") or context.get("firm_name") or "")
         raw_practice = prelim.get("practice_area") or ""
         if "SOURCE DOCUMENT" in raw_practice or raw_practice.startswith("===") or "END DOCUMENT" in raw_practice:
             raw_practice = ""

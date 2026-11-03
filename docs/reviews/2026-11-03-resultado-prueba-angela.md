@@ -1,4 +1,8 @@
-# Resultado de la prueba desde cero en la sesión de Ángela
+# Resultado de la prueba asistida en la sesión de Ángela
+
+## Alcance corregido tras la observación de Jonathan
+
+Este registro acredita aprobación de archivos y reparación asistida del sistema. NO acredita que DeForest pueda completarse de principio a fin sin intervención técnica: hubo publicaciones de código durante su ejecución y una ampliación manual de presupuesto. No usar este resultado como certificación de funcionamiento autónomo para Ángela. Falta una prueba nueva con versión fija y límites normales, sin editar código o datos, ampliar presupuesto ni reanudar manualmente mientras corre. Cualquier intervención técnica invalida esa prueba como demostración de autonomía, aunque después los archivos aprueben.
 
 ## Resultado comprobado
 
@@ -36,6 +40,6 @@ La recuperación durable de llamadas OpenAI largas mediante Responses ID sigue s
 
 Texto propuesto, sin envío realizado:
 
-> Ángela, terminamos la prueba desde cero de DeForest y Ramos en tu sesión. Ambos expedientes tienen Submission y Audit aprobados por la revisión editorial, y comprobamos que las descargas son exactamente esos archivos. Corregimos las causas del bloqueo por variantes del mismo nombre, las combinaciones identificables en texto público y el bucle de reparación. Las fuentes permanecieron intactas. Los Audit conservan las acciones concretas antes de presentar, incluido el periodo de investigación y las aclaraciones de origen correspondientes. Te compartimos los cuatro Word finales y el registro de validación.
+> Ángela, tenemos los cuatro Word finales aprobados y sus descargas verificadas. Durante la prueba asistida detectamos y corregimos fallos del proceso; todavía falta comprobar con una versión fija que ambos casos terminen sin intervención técnica y dentro de sus límites normales. Los Audit conservan las acciones concretas antes de presentar. Compartiremos por separado el resultado de esa prueba autónoma.
 
 La evidencia privada, capturas, recibos y fuentes permanecen ignorados en `scratch/e2e-angela-2026-11-03`. Los cuatro entregables finales están en la carpeta local `Auditoria-RankPilot-2026-11-03/Prueba-desde-cero`. No publicar fuentes, borradores o Word confidenciales en Git.

@@ -46,7 +46,9 @@ def compare_claim(firm, directory, practice, jurisdiction, claimed_band, edition
         # A search/cache miss is not exhaustive evidence of an unranked status.
         result.update(
             status='not_found',
-            message=f"Declaraste posición ({claimed_band}), pero la revisión oficial en {dir_label} no encontró a la firma en las bandas de {practice} ({jurisdiction}). Revisa la identidad de la firma o el alcance consultado."
+            message=(f"No se encontró una coincidencia exacta de la firma en la tabla consultada de {practice} ({jurisdiction}) en {dir_label}. "
+                     'Esto no acredita ausencia de reconocimiento en otras prácticas o ediciones.' if is_unranked else
+                     f"Declaraste posición ({claimed_band}), pero no se encontró una coincidencia exacta en la tabla consultada de {practice} ({jurisdiction}) en {dir_label}. Revisa la identidad o el alcance consultado.")
         )
         return result
     if len(matches) != 1:

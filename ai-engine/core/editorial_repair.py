@@ -40,7 +40,7 @@ def public_privacy_paths(defect, proposal):
 def repair_targets(package, strategy, proposal):
     from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors, submission_voice_paths
     errors=development_errors(package,strategy,proposal)
-    source_keys=set(SOURCE_FIELDS) | {'id','client','name','title','source_label','source_heading','publish_status','confidentialityConfirmed','isConfidential','confidentialityEvidence','valueResolution','valueConflict'}
+    source_keys=set(SOURCE_FIELDS) | {'id','client','name','title','source_label','source_heading','publish_status','resolved_publication_status','publication_route','confidentialityConfirmed','isConfidential','confidentialityEvidence','valueResolution','valueConflict'}
     register={m['id']:{k:v for k,v in m.items() if k in source_keys} for m in package.get('matters',[])}
     roster={_norm(l.get('name') or l.get('fullName')):l for l in package.get('lawyers',[])}
     core={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='core'}
@@ -100,6 +100,19 @@ def repair_targets(package, strategy, proposal):
         else:
             evidence={'package':package,'strategy':strategy};value=proposal[path]
         add(path,value,'Remove auditor commentary about sources from this Submission field. Present supported work directly; preserve numbers, outcomes, attribution and uncertainty. Do not invent a completed outcome or delete substantive legal evidence/audit work.',evidence)
+    from core.public_privacy import public_privacy_findings
+    for finding in public_privacy_findings(package,strategy,proposal):
+        path=finding['path'];parts=path.split('/')
+        value=proposal[path] if len(parts)==1 else proposal['candidates'][int(parts[1])]['submission_bio']
+        existing=targets.get(path)
+        evidence=(existing or {}).get('source_evidence',{'affected_confidential_matters':[]})
+        if 'affected_confidential_matters' in evidence:
+            matter=register[finding['matter_id']]
+            if matter not in evidence['affected_confidential_matters']:evidence['affected_confidential_matters'].append(matter)
+        problem=((existing or {}).get('problem','')+' Generalize the case-specific combination of confidential metrics in this PUBLIC field. '
+                 'Keep the legal work and personal attribution; retain exact metrics and all decisive facts in E. '
+                 'Preserve unrelated public text and confirmed department-wide facts. Never edit the confidential narrative or ask the user for an editorial correction.')
+        add(path,value,problem,evidence)
     return targets
 
 def apply_corrections(proposal, targets, repair):
@@ -235,8 +248,9 @@ def repair_rejected_development(state, proposal, defects):
     # Include all deterministic faults already visible in this proposal in the
     # same paid repair, rather than discovering another field after each call.
     from core.editorial_development import submission_voice_paths
-    voice_paths=set(submission_voice_paths(proposal))
-    targets={path:target for path,target in repair_targets(state['package'],state['strategy'],proposal).items() if path in voice_paths};remaining=[]
+    from core.public_privacy import public_privacy_findings
+    local_paths=set(submission_voice_paths(proposal)) | {f['path'] for f in public_privacy_findings(state['package'],state['strategy'],proposal)}
+    targets={p:t for p,t in repair_targets(state['package'],state['strategy'],proposal).items() if p in local_paths};remaining=[]
     for defect in defects:
         quote=norm(defect.get('artifact_quote'))
         candidates=list(allowed)
@@ -269,12 +283,6 @@ def repair_rejected_development(state, proposal, defects):
                 exact.append(public_path)
         exact=list(dict.fromkeys(exact+privacy_paths))
         exact=[p for p in exact if p not in state.get('residual_repaired_public_paths',[])]
-        if not exact and any(k in str(defect.get('message','')).lower() for k in ('b9','confidencial','confidential')):
-            leak_paths=[p for p in allowed if (p.startswith('candidates/') and p.endswith('/submission_bio')) or p in ('b10','c2')]
-            for p in leak_paths:
-                val=allowed.get(p)
-                if isinstance(val,str) and any(term in val.lower() for term in ('bekaert','80%','ideal s.l.')):
-                    exact.append(p)
         if not exact:
             if defect.get('field_path') in ('research_period', 'period', 'metadata', 'dates') or defect.get('temporal_basis') or defect.get('severity') == 'warning':
                 continue
@@ -288,7 +296,10 @@ def repair_rejected_development(state, proposal, defects):
                 matter=next((m for m in source_package.get('matters',[]) if m['id']==defect['matter_id']),None)
                 if matter is not None:
                     evidence={'matter':matter,'privacy_only':True,'instruction':'Generalize this matter’s identifying combination only; preserve every other claim verbatim.'}
-            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':evidence}
+            if path in targets:
+                targets[path]['problem']+=' '+defect.get('message','Repair the rejected generated claim.')
+            else:
+                targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':evidence}
     if not remaining:
         return repair_development({**state,'repair_feedback':defects},proposal,targets)
     all_feedback=defects;defects=remaining

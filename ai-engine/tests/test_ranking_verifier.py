@@ -5,6 +5,11 @@ from utils.benchmark_scraper import Legal500Scraper, ChambersScraper
 import json
 
 class RankingVerificationTests(unittest.TestCase):
+    def test_declared_unranked_with_no_match_is_not_described_as_a_contradiction(self):
+        result=compare_claim('Synthetic Legal','Chambers','Tax','Mexico','Unranked','current',self.evidence(firms=[]))
+        self.assertEqual(result['status'],'not_found');self.assertIsNone(result['observed_band'])
+        self.assertNotIn('pero',result['message']);self.assertNotIn('Revisa la identidad',result['message'])
+        self.assertIn('coincidencia exacta',result['message'])
     def test_individual_observation_uses_own_edition_and_exact_person_and_firm(self):
         benchmark = self.evidence(edition='2027', individuals=[{'name':'Sofia Vega','firm':'Synthetic Legal','band':'Band 2','edition':'2026'}])
         lawyer = {'name':'Sofia Vega','current_ranking':'Band 2'}

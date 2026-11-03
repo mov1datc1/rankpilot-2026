@@ -1724,19 +1724,19 @@ export default function SubmissionStudio({
                   borderRadius: 10,
                   marginTop: 6,
                   marginBottom: 12,
-                  background: chambersData.ranking_verification.status === 'verified_mismatch' ? '#FFFBEB' : '#F0FDF4',
-                  border: `1px solid ${chambersData.ranking_verification.status === 'verified_mismatch' ? '#FCD34D' : '#86EFAC'}`,
-                  color: chambersData.ranking_verification.status === 'verified_mismatch' ? '#92400E' : '#166534',
+                  background: ['verified_match', 'verified_observation', 'verified_unranked'].includes(chambersData.ranking_verification.status) ? '#F0FDF4' : '#FFFBEB',
+                  border: `1px solid ${['verified_match', 'verified_observation', 'verified_unranked'].includes(chambersData.ranking_verification.status) ? '#86EFAC' : '#FCD34D'}`,
+                  color: ['verified_match', 'verified_observation', 'verified_unranked'].includes(chambersData.ranking_verification.status) ? '#166534' : '#92400E',
                   fontSize: 13,
                   lineHeight: 1.6
                 }}>
                   <div style={{display:'flex',alignItems:'center',gap:6,fontWeight:700,fontSize:14,marginBottom:4}}>
-                    <span>{chambersData.ranking_verification.status === 'verified_mismatch' ? '⚠ Discrepancia detectada en la fuente oficial' : '✓ Verificación oficial en Chambers: Confirmada'}</span>
+                    <span>{chambersData.ranking_verification.status === 'verified_mismatch' ? '⚠ Discrepancia detectada en la fuente oficial' : ['verified_match', 'verified_observation', 'verified_unranked'].includes(chambersData.ranking_verification.status) ? '✓ Verificación oficial en Chambers: Confirmada' : 'Consulta oficial: sin confirmación suficiente'}</span>
                   </div>
                   <p style={{margin:0}}>{chambersData.ranking_verification.message}</p>
                   <div style={{marginTop:8,fontSize:12,fontWeight:600,opacity:0.9,display:'flex',gap:16,flexWrap:'wrap'}}>
-                    <span>Posición observada: <strong>{chambersData.ranking_verification.observed_band || 'Unranked'}</strong></span>
-                    <span>Edición consultada: <strong>{chambersData.ranking_verification.evidence?.edition || '2027 (Tabla actual)'}</strong></span>
+                    <span>Posición observada: <strong>{chambersData.ranking_verification.observed_band || 'Sin posición acreditada'}</strong></span>
+                    <span>Edición consultada: <strong>{chambersData.ranking_verification.evidence?.edition || 'No acreditada'}</strong></span>
                   </div>
                 </div>
               ) : (

@@ -1547,7 +1547,8 @@ class DocumentParser:
                 
                 # Firm name — usually T0 R0 (single-row table)
                 if len(doc.tables[0].rows) == 1:
-                    result["detected_firm_name"] = doc.tables[0].rows[0].cells[0].text.strip()
+                    from utils.filing_extraction import clean_firm_name
+                    result["detected_firm_name"] = clean_firm_name(doc.tables[0].rows[0].cells[0].text)
                 
                 # Practice area — try to find in file name or in known tables
                 # Legal 500 doesn't have a clean "A2 Practice Area" — scan for it

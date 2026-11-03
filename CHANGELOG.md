@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.8] — 2026-11-03 — Preventive validation before the autonomous acceptance test
+
+- Detect shared combinations of explicit confidential metrics across all public B9/B10/C2 fields before Word generation, and batch their source-bound repair targets. Preserve source records and confidential E narratives; this conservative preflight never grants approval or replaces the independent semantic and exact-document review.
+- Preserve every locally detected privacy target when a later semantic finding names only one field. Remove case-specific repair fallback names; use bound fields, quoted output and source evidence.
+- Replace practice-label assumptions and named prompt examples with source-grounded opening, leadership, advocacy and confidentiality instructions. Align the unsupported-candidacy target with its nonempty schema.
+- Remove copied form labels from extracted firm names without inferring their identity. Describe secondary extraction reconciliation failure honestly rather than claiming complete fidelity.
+- Do not describe an unsuccessful ranking lookup as a contradiction of declared Unranked. Show unconfirmed lookups as such, without fabricating an observed band or edition.
+- Reclassify the previous DeForest run as assisted: its approved files do not demonstrate autonomous completion. Require a fixed-version fresh acceptance run with normal limits and no live technical intervention.
+- Local validation: 399 Python tests passed; Node 445 passed and one skipped; TypeScript clean. An offline historical DeForest snapshot now identifies all three affected public paths in one batch without changing source/proposal or calling OpenAI. These checks are not an end-to-end autonomy pass.
+
 ## [1.0.7] — 2026-11-03 — Same-party spelling and confidential public prose
 
 - Bind public biography privacy corrections to their public paths even when the confidential E narrative has the same literal text; retain E and use only the affected matter source for that delta.

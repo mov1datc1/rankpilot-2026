@@ -2,6 +2,12 @@ import unittest
 from utils.filing_extraction import extract_filing_fields, resolve_filing_fields
 
 class FilingExtractionTests(unittest.TestCase):
+    def test_firm_name_label_is_not_part_of_its_answer(self):
+        from utils.filing_extraction import clean_firm_name
+        for value in ["Firm’s Name\nSynthetic Legal", "Firm's Name: Synthetic Legal", 'A1 Firm name | Synthetic Legal', 'Nombre de la firma:\nSynthetic Legal']:
+            self.assertEqual(clean_firm_name(value),'Synthetic Legal')
+        for value in ['Firm Name Partners LLP', 'Synthetic Legal', 'Firm Name', "Firm’s Name\n"]:
+            self.assertEqual(clean_firm_name(value),value.strip())
     def test_department_totals_survive_without_using_firm_totals(self):
         text='Composition of the firm:\nNumber of Partners | Number of Counsels/Associates\n29 | 120\n\nComposition of the department:\nNumber of Male Partners | Number of Female Partners | Number of Counsels/Associates\n3 | 2 | 17\n'
         result=extract_filing_fields(text)

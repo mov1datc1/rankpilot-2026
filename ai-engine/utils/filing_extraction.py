@@ -7,6 +7,13 @@ import json
 
 FIELDS = ('departmentName', 'numPartners', 'numLawyers', 'contacts', 'departmentHeads')
 
+def clean_firm_name(value):
+    """Remove a field label copied into its answer; never infer a firm name."""
+    text=str(value or '').strip()
+    label=r"(?:(?:A1\s+)?Firm(?:['’]s)?\s+name|Name\s+of\s+(?:the\s+)?(?:law\s+)?firm|Nombre\s+de\s+la\s+firma)"
+    match=re.match(r'^'+label+r'[ \t]*(?:[:|][ \t\n]*|\n+)(.+)$',text,re.I|re.S)
+    return match.group(1).strip() if match and match.group(1).strip() else text
+
 
 NUMBER_WORDS = {
     'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
