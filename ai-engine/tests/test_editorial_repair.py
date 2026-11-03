@@ -6,6 +6,33 @@ from core.editorial_development import develop
 from core.editorial_repair import repair_targets, apply_corrections
 
 class TargetedRepairTests(unittest.TestCase):
+    def test_privacy_repair_covers_all_flagged_overviews_with_only_affected_source(self):
+        from core.editorial_repair import repair_rejected_development
+        proposal=copy.deepcopy(DEV)
+        defect={'code':'UNSUPPORTED_CLAIM','severity':'critical','owner':'rankpilot','scope':'submission',
+            'matter_id':'m1','field_path':'c2','artifact_quote':proposal['c2'],
+            'message':'B10/C2 reproduce identifying confidential metrics. Generalize both public fields.'}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair:
+            repair_rejected_development({'package':PACKAGE,'strategy':STRATEGY},proposal,[defect])
+        targets=repair.call_args.args[2]
+        self.assertEqual(set(targets),{'b10','c2'})
+        for target in targets.values():
+            self.assertEqual(target['source_evidence']['matter']['id'],'m1')
+            self.assertNotIn('package',target['source_evidence'])
+
+    def test_residual_keeps_applied_public_fix_and_repairs_other_flagged_field(self):
+        proposal=copy.deepcopy(DEV);proposal['c2']='Corrected public position.'
+        proposal['matters'][0]['completion_status']='The source does not state an outcome.'
+        defect={'code':'UNSUPPORTED_CLAIM','severity':'critical','owner':'rankpilot','scope':'submission',
+            'matter_id':'m1','field_path':'c2','artifact_quote':'Old public claim.',
+            'message':'Generalize confidential metrics in B10/C2.'}
+        state={'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True,
+            'repair_report':{'corrected_paths':['c2','matters/0/completion_status']},'repair_feedback':[defect]}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair:
+            develop(state)
+        self.assertEqual(set(repair.call_args.args[2]),{'b10','matters/0/completion_status'})
+        self.assertEqual(state['development']['c2'],'Corrected public position.')
+
     def test_saved_delta_repairs_only_local_residual_without_replaying_old_feedback(self):
         proposal=copy.deepcopy(DEV)
         proposal['c2']='Corrected public positioning.'

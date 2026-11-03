@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Live follow-up: finish a persisted semantic correction's local validation before replaying old artifact findings. Prevent an already corrected field from being sent back as an unchanged repair target; keep the independent Word review mandatory.
 - Bind each development repair path to its actual text or candidate value schema. Resume a stopped generated repair only after a code change, at the same job/cursor and with its existing ledger, failure limits and token budget; do not restart selection or reset consumption.
+- Cover every public overview field explicitly flagged in a confidentiality finding, even when its literal quote comes from only one field. Preserve already applied public fixes during residual validation; send only the affected matter source for these privacy deltas.
 - Treat corroborated orthographic name variants within the same original matter as an internal alias editing task, including selected matters. Preserve both literal source variants; never infer a different corporate identity or grant approval from a similarity check.
 - Require the reviewer’s explicit same-party assessment, exact same-record names and bounded spelling corroboration. Different legal entities, geographic qualifiers, roles, values and fabricated output quotes retain their existing gates.
 - Reinforce generation and repair instructions against combining confidential transaction, location and case-specific metrics in public B9/B10/C2. Keep exact facts in E.

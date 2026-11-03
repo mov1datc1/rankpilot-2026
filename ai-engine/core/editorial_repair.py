@@ -5,6 +5,7 @@ sources, selection, permissions, user answers, or approval state. Its result is
 still a proposal and must pass the original validators and final document judge.
 """
 import copy
+import re
 from typing import Literal, Union
 from pydantic import BaseModel, create_model
 from core.editorial_development import Candidate
@@ -27,6 +28,14 @@ TASK+=''' For a defect explicitly marked conflict_resolution=omit_nonessential_d
 TASK+=''' When a confidentiality defect identifies a revealing combination in public B9/B10/C2, generalize ONLY that combination in the permitted public fields. Keep the legal work, personal attribution and supported scale in non-identifying terms. Preserve every exact source fact and metric in confidential section E; never weaken the confidential matter narrative merely to anonymize a public profile. This is an allowed privacy transformation, not invented evidence or a source edit.'''
 
 TASK += " A same-party spelling variant is an editorial alias, not a genuine unanswered identity question. Preserve original source fields and add both attested variants once in the internal Audit when relevant; do not invent a corporate identity or ask the user to select spelling. For public privacy repairs, remove the identifying combination across ALL flagged B9/B10/C2 fields while retaining meaningful legal work and attribution. Retain exact private figures in E only."
+
+def public_privacy_paths(defect, proposal):
+    """Respect every public overview field explicitly flagged by the reviewer."""
+    message=str(defect.get('message',''))
+    if defect.get('scope')!='submission' or not re.search(r'confidencial|confidential',message,re.I):
+        return []
+    return [p for p in ('b10','c2') if isinstance(proposal.get(p),str)
+            and re.search(r'\b'+p+r'\b',message,re.I)]
 
 def repair_targets(package, strategy, proposal):
     from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors, submission_voice_paths
@@ -246,6 +255,11 @@ def repair_rejected_development(state, proposal, defects):
             if len(shared)==1:exact=shared
         if not exact and str(defect.get('field_path','')).lower() in allowed:
             exact=[str(defect['field_path']).lower()]
+        privacy_paths=public_privacy_paths(defect,proposal)
+        if privacy_paths:
+            exact=[p for p in exact if p in ('b10','c2') or (p.startswith('candidates/') and p.endswith('/submission_bio'))]
+        exact=list(dict.fromkeys(exact+privacy_paths))
+        exact=[p for p in exact if p not in state.get('residual_repaired_public_paths',[])]
         if not exact and any(k in str(defect.get('message','')).lower() for k in ('b9','confidencial','confidential')):
             leak_paths=[p for p in allowed if (p.startswith('candidates/') and p.endswith('/submission_bio')) or p in ('b10','c2')]
             for p in leak_paths:
@@ -260,7 +274,12 @@ def repair_rejected_development(state, proposal, defects):
             term=norm(defect.get('conflicting_artifact_term')).casefold()
             if term:exact=list(dict.fromkeys(exact+[path for path in candidates if isinstance(allowed[path],str) and term in norm(allowed[path]).casefold()]))
         for path in exact:
-            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':source_for(path)}
+            evidence=source_for(path)
+            if path in public_privacy_paths(defect,proposal) and defect.get('matter_id'):
+                matter=next((m for m in source_package.get('matters',[]) if m['id']==defect['matter_id']),None)
+                if matter is not None:
+                    evidence={'matter':matter,'privacy_only':True,'instruction':'Generalize this matter’s identifying combination only; preserve every other claim verbatim.'}
+            targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':evidence}
     if not remaining:
         return repair_development({**state,'repair_feedback':defects},proposal,targets)
     all_feedback=defects;defects=remaining

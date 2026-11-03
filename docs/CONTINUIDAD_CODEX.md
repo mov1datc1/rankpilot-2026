@@ -4,6 +4,8 @@
 
 Corrección en curso: cuando una delta aplicada deja errores locales, reparar solo esos errores antes de reaplicar feedback anterior; schema de corrección ligado al tipo de cada ruta; reanudar el MISMO trabajo fallido después de cambio de código, sin nueva selección ni extracción, conservando límites. Debe publicarse y probarse; no afirmar todavía cierre DeForest. Ramos final tiene QA visual completo 18+3 páginas y fuente intacta (hash 546650cbe8b66248bc74506cd4fc24af68e0c2dd46df0b127459f878352cc524). Su advertencia final es periodo de investigación no informado; acciones de presentación permanecen en el Audit.
 
+bf7ede5 publicado solo dev, CI 41723650438 correcto. Seguimiento previo a main: el hallazgo anterior decía B10/C2 pero solo citaba C2; B10 seguía con las métricas. Enrutar todos los campos públicos explícitos de ese mismo hallazgo y mantener los ya corregidos. Comprobación local sin OpenAI del checkpoint real: ahora solo matters/7/completion_status y b10, 15.599 bytes de targets/fuentes de los dos asuntos afectados. No retransmitir el expediente completo ni rehacer C2. El trabajo sigue detenido hasta publicar esta corrección completa.
+
 ## 2026-11-03 — Prueba nueva desde la sesión de Ángela y seguimiento v1.0.7
 
 El usuario autorizó explícitamente ambas ejecuciones desde cero, con nueva extracción y llamadas normales de generación/reparación/revisión OpenAI, sin reinicios duplicados. Esto sucede después del bloqueo de auto-review por la prohibición previa de reextracción. No volver a pedir esa autorización. Las acciones de la prueba se hicieron desde Chrome, en la sesión de Ángela; las lecturas SQL son observación, no reparación de expedientes.

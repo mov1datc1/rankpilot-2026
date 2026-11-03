@@ -326,7 +326,15 @@ def develop(state):
         # old artifact feedback: its other claims may already have changed.
         # The original final verdict remains rejected until fresh Word review.
         if errors and state.get('repair_report',{}).get('corrected_paths'):
-            from core.editorial_repair import repair_targets, repair_development
+            from core.editorial_repair import repair_targets, repair_development, public_privacy_paths, repair_rejected_development
+            applied=set(state['repair_report']['corrected_paths'])
+            pending=[]
+            for defect in state.get('repair_feedback',[]):
+                for path in public_privacy_paths(defect,bound):
+                    if path not in applied:
+                        pending.append({**defect,'field_path':path,'artifact_quote':bound[path]})
+            if pending:
+                return repair_rejected_development({**state,'residual_repaired_public_paths':list(applied & {'b10','c2'})},bound,pending)
             targets=repair_targets(state['package'],state['strategy'],bound)
             if targets:
                 return repair_development(state,bound,targets)
