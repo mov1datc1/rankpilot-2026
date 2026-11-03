@@ -5,7 +5,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 // Load modules under test
-const { anonymizeConfidentialClients, curateLawyers } = require('../../src/lib/docx/lawyer-curator.ts');
+const { anonymizeConfidentialClients, curateLawyers, buildLawyerStandoutWork } = require('../../src/lib/docx/lawyer-curator.ts');
 const { stripAuditVoice, generateDynamicC2, generateDynamicB10 } = require('../../src/app/api/generate-docx/submission-builder.ts');
 const { runArtifactIntegrityCheck } = require('../../src/lib/docx/artifact-integrity-check.ts');
 
@@ -135,5 +135,54 @@ DeForest respectfully requests first-time recognition for its demonstrated abili
       result.criticalErrors.some(e => e.field.includes('Auditor Commentary Hard Gate')),
       'Must flag Auditor Commentary Hard Gate error'
     );
+  });
+
+  await t.test('6. Ramos Castillo & Transversal Advocacy: Strip Observer Voice & Reconstructed Docket Logs', () => {
+    const docketText = "The 2024 update reports that the Sixth Collegiate Court confirmed jurisdiction. It further reports a favourable ruling that suspended administrative sanctions. The reported 2024 developments include final dismissal. In confidential matters, the practice has secured decisive injunctive relief.";
+    const advocacyText = stripAuditVoice(docketText);
+
+    assert.doesNotMatch(advocacyText, /The (?:2024\s+)?update reports that/i);
+    assert.doesNotMatch(advocacyText, /It further reports/i);
+    assert.doesNotMatch(advocacyText, /The reported (?:2024\s+)?developments include/i);
+    assert.doesNotMatch(advocacyText, /In confidential matters,/i);
+    assert.match(advocacyText, /In decisive procedural proceedings,/);
+    assert.match(advocacyText, /The team secured a decisive favorable ruling/);
+    assert.match(advocacyText, /In representative contentious mandates,/);
+
+    const b10Lead = "Ramos Castillo Abogados presents a Real Estate practice centred on high-stakes urban development.";
+    const b10Clean = stripAuditVoice(b10Lead);
+    assert.match(b10Clean, /Ramos Castillo Abogados maintains an established Real Estate practice centred on/i);
+  });
+
+  await t.test('7. Transversal Practice Isolation: Filter Off-Category Outsized Claims from Lawyer Standout Work', () => {
+    const offCategoryWork = "Mr. Ramos has advised energy, infrastructure and water projects with a combined value in excess of US$ 2 billion dollars, including power plants, wastewater treatment plants, among others.";
+    const realEstateMatters = [
+      {
+        title: 'EL CIELO COUNTRY CLUB',
+        client: 'EL CIELO COUNTRY CLUB',
+        summary: 'Lead lawyer in urban administrative and environmental litigation safeguarding real estate master plan.',
+        leadPartner: 'José Pablo Ramos Castillo'
+      },
+      {
+        title: 'IDEX Brasilia',
+        client: 'IDEX',
+        summary: 'Lead lawyer defending vertical housing project against contentious zoning actions.',
+        leadPartner: 'José Pablo Ramos Castillo'
+      }
+    ];
+
+    const standout = buildLawyerStandoutWork(
+      'José Pablo Ramos Castillo',
+      realEstateMatters,
+      [],
+      offCategoryWork,
+      'Bio text',
+      'Real Estate'
+    );
+
+    // Standout work for Real Estate must reject the off-category energy US$ 2 billion claims
+    assert.doesNotMatch(standout, /billion dollars/i);
+    assert.doesNotMatch(standout, /power plants/i);
+    assert.match(standout, /EL CIELO COUNTRY CLUB/i);
   });
 });

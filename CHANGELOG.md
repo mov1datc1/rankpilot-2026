@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.3] — 2026-11-02 — Voz de Defensa Institucional Transversal, Eliminación de Narración de Bitácora Procesal y Aislamiento de Práctica en Perfiles
+
+### Added
+- **Suite de Regresión Transversal Ampliada ([`tests/contracts/angela-editorial-acceptance.test.cjs`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/tests/contracts/angela-editorial-acceptance.test.cjs))**:
+  - Test 6: Verificación de eliminación de voz de observador externo y bitácora procesal reconstruida (`"The 2024 update reports that..."`, `"It further reports..."`, `"The reported developments include..."`, `"In confidential matters..."`, `"Ramos Castillo Abogados presents a Real Estate practice..."`).
+  - Test 7: Aislamiento transversal de práctica en `buildLawyerStandoutWork`: exclusión automática de claims energéticos desproporcionados (e.g. "US$ 2 billion" en plantas eléctricas) cuando la práctica objetivo es Real Estate u otra no energética.
+
+### Changed
+- **Transformación de Voz de Observador Externo a Defensa Institucional Directa ([`src/app/api/generate-docx/submission-builder.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts), [`src/lib/docx/lawyer-curator.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/docx/lawyer-curator.ts), [`ai-engine/core/editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py))**:
+  - Sustitución determinista de fórmulas de observador / cronista judicial por afirmaciones directas de éxito y gestión legal:
+    - `"The [2024] update reports that..."` ➔ `"In decisive procedural proceedings,"`
+    - `"It further reports a favourable ruling..."` ➔ `"The team secured a decisive favorable ruling"`
+    - `"It further reports that..."` ➔ `"Additionally,"`
+    - `"The reported [2024] developments include..."` ➔ `"Key developments include"`
+    - `"where the reported 2024 developments include..."` ➔ `"where key developments include"`
+    - `"The reported outcome was..."` ➔ `"The strategic outcome achieved was"`
+    - `"with the source recording that the client obtained standing"` ➔ `"securing the client's standing"`
+    - `"the source records that..."` ➔ `"the representation achieved that"`
+    - `"In confidential matters, the practice has..."` ➔ `"In representative contentious mandates, the practice has..."`
+    - `"[Firm] presents a [Practice] practice centred on..."` ➔ `"[Firm] maintains an established [Practice] practice centred on..."`
+    - `"The firm reports [advising]..."` ➔ `"The firm [advised]..."`
+- **Aislamiento Temático y Trazabilidad de Cifras Económicas ([`src/lib/docx/lawyer-curator.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/docx/lawyer-curator.ts))**:
+  - Se confirmó mediante auditoría del dossier fuente (`ramos-original.txt:69`) que la cifra de "US$ 2 billion" fue provista **literal y textualmente por la propia firma Ramos Castillo** en su biografía original en inglés (*"Mr. Ramos has advised energy, infrastructure and water projects with a combined value in excess of US$ 2 billion dollars, including power plants..."*); el motor **no inventó ni convirtió monedas**.
+  - No obstante, para mantener coherencia editorial con la postulación en Real Estate, se implementó un filtro de aislamiento transversal en `buildLawyerStandoutWork`: cuando la postulación es de Real Estate, se excluyen claims de energía, plantas eléctricas y alumbrado público, sintetizando los asuntos líderes directamente inmobiliarios (*El Cielo Country Club*, *IDEX Brasilia*, *Duranpark*).
+
+### Fixed
+- Sanitización de voz de observador en las biografías y comentarios de abogados (sección B9) mediante aplicación sistemática de `stripAuditVoice` en los bloques de renderizado de `b6DataRows`.
+
 ## [1.0.2] — 2026-11-02 — Eliminación integral de voz auditora, jerarquización estratégica en B10, posicionamiento de liderazgo de socios y blindaje editorial en Submission
 
 ### Added

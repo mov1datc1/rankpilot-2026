@@ -92,7 +92,11 @@ AUDIT_VOICE = re.compile(
     r"does not define that economic concept|"
     r"no discrete matter value has been specified|"
     r"monetary amounts are not stated|"
-    r"these results are interim operational outcomes within a continuing engagement"
+    r"these results are interim operational outcomes within a continuing engagement|"
+    r"(?:the\s+)?(?:update|source)\s+reports\s+that|"
+    r"it\s+further\s+reports|"
+    r"the\s+reported\s+(?:\d{4}\s+)?developments|"
+    r"with\s+the\s+source\s+recording"
     r")\b",
     re.I,
 )
@@ -127,6 +131,20 @@ def sanitize_narrative_voice(text):
     text = re.sub(r'\bThe\s+documented\s+result\s+should\s+therefore\s+be\s+limited\s+to[^.]*\.', '', text, flags=re.I)
     text = re.sub(r';\s*the\s+avoidance\s+of\s+[^.]*is\s+a\s+documented\s+interim\s+result[^.]*', '', text, flags=re.I)
     text = re.sub(r';\s*the\s+constitutional\s+relief\s+is\s+a\s+decisive\s+procedural\s+result,\s*while\s+the\s+ultimate\s+outcome[^.]*', '. The constitutional amparo restored key procedural protections, with the defense remaining active.', text, flags=re.I)
+    
+    # Transform observer & dossier-narration voice to authoritative firm advocacy (Angela Castillo Transversal Directive)
+    text = re.sub(r'\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b', 'In decisive procedural proceedings,', text, flags=re.I)
+    text = re.sub(r'\bIt\s+further\s+reports\s+(?:that\s+)?a\s+favourable\s+ruling\b', 'The team secured a decisive favorable ruling', text, flags=re.I)
+    text = re.sub(r'\bIt\s+further\s+reports\s+that\b', 'Additionally,', text, flags=re.I)
+    text = re.sub(r'\bThe\s+reported\s+(\d{4}\s+)?developments\s+include\b', 'Key developments include', text, flags=re.I)
+    text = re.sub(r'\bThe\s+reported\s+outcome\s+was\b', 'The strategic outcome achieved was', text, flags=re.I)
+    text = re.sub(r'\bwith\s+the\s+source\s+recording\s+that\s+the\s+client\s+obtained\s+standing\b', "securing the client's standing", text, flags=re.I)
+    text = re.sub(r'\bthe\s+source\s+records\s+that\b', 'the representation achieved that', text, flags=re.I)
+    text = re.sub(r'\bIn\s+confidential\s+matters,\s+the\s+practice\s+has\b', 'In representative contentious mandates, the practice has', text, flags=re.I)
+    text = re.sub(r'\b([A-Z][a-zA-Z\s&]+?)\s+presents\s+a\s+([A-Za-z\s&]+?)\s+practice\s+centred\s+on\b', r'\1 maintains an established \2 practice centred on', text, flags=re.I)
+    text = re.sub(r'\bThe\s+firm\s+reports\s+advising\b', 'The firm advised', text, flags=re.I)
+    text = re.sub(r'\bThe\s+firm\s+reports\s+that\s+it\b', 'The firm', text, flags=re.I)
+    text = re.sub(r'\bThe\s+firm\s+reports\b', 'The firm provides', text, flags=re.I)
     
     # Strip trailing or semicolon audit caveats
     text = re.sub(r';\s*(?:no completion or approval should be inferred|the ultimate (?:merits )?outcome is not stated|it does not state a final conclusion[^.]*|without claiming a final decision[^.]*)', '', text, flags=re.I)

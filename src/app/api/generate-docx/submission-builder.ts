@@ -156,6 +156,20 @@ export function stripAuditVoice(rawText: string): string {
   text = text.replace(/;\s*the\s+avoidance\s+of\s+[^.]*is\s+a\s+documented\s+interim\s+result[^.]*/gi, '');
   text = text.replace(/;\s*the\s+constitutional\s+relief\s+is\s+a\s+decisive\s+procedural\s+result,\s*while\s+the\s+ultimate\s+outcome[^.]*/gi, '. The constitutional amparo restored key procedural protections, with the defense remaining active.');
 
+  // 1b. Transform observer & dossier-narration voice to authoritative firm advocacy (Angela Castillo Transversal Directive)
+  text = text.replace(/\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b/gi, 'In decisive procedural proceedings,');
+  text = text.replace(/\bIt\s+further\s+reports\s+(?:that\s+)?a\s+favourable\s+ruling\b/gi, 'The team secured a decisive favorable ruling');
+  text = text.replace(/\bIt\s+further\s+reports\s+that\b/gi, 'Additionally,');
+  text = text.replace(/\bThe\s+reported\s+(\d{4}\s+)?developments\s+include\b/gi, 'Key developments include');
+  text = text.replace(/\bThe\s+reported\s+outcome\s+was\b/gi, 'The strategic outcome achieved was');
+  text = text.replace(/\bwith\s+the\s+source\s+recording\s+that\s+the\s+client\s+obtained\s+standing\b/gi, "securing the client's standing");
+  text = text.replace(/\bthe\s+source\s+records\s+that\b/gi, 'the representation achieved that');
+  text = text.replace(/\bIn\s+confidential\s+matters,\s+the\s+practice\s+has\b/gi, 'In representative contentious mandates, the practice has');
+  text = text.replace(/\b([A-Z][a-zA-Z\s&]+?)\s+presents\s+a\s+([A-Za-z\s&]+?)\s+practice\s+centred\s+on\b/gi, '$1 maintains an established $2 practice centred on');
+  text = text.replace(/\bThe\s+firm\s+reports\s+advising\b/gi, 'The firm advised');
+  text = text.replace(/\bThe\s+firm\s+reports\s+that\s+it\b/gi, 'The firm');
+  text = text.replace(/\bThe\s+firm\s+reports\b/gi, 'The firm provides');
+
   // 2. Strip trailing or semicolon audit caveats
   text = text.replace(/;\s*(?:no\s+(?:final\s+|formal\s+|matter\s+|portfolio\s+|overall\s+)*(?:completion\s+status|outcome|result|decision)\s+is\s+stated|while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated|no\s+completion\s+or\s+approval\s+should\s+be\s+inferred|it\s+does\s+not\s+state\s+a\s+final\s+conclusion[^.]*|without\s+claiming\s+a\s+final\s+decision[^.]*)[^.]*/gi, '');
   text = text.replace(/,\s*(?:while\s+the\s+ultimate\s+(?:merits\s+)?outcome\s+is\s+not\s+stated|with\s+no\s+(?:final\s+|formal\s+|litigation\s+|portfolio\s+|overall\s+)*(?:outcome|completion\s+status|result)\s+stated|so\s+these\s+results\s+are\s+interim\s+operational\s+outcomes[^.]*)[^.]*/gi, '');
@@ -703,14 +717,14 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
       const existingBio = (l.comments || l.bio || '').trim();
       if (l.comments) {
-        const cleanComments = anonymizeConfidentialClients(l.comments, confNamesList);
+        const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList));
         bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
       } else if (l.bio) {
-        const cleanBio = anonymizeConfidentialClients(l.bio, confNamesList);
+        const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList));
         bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
       }
       if (l.standoutWork) {
-        const cleanWork = anonymizeConfidentialClients(String(l.standoutWork), confNamesList).trim();
+        const cleanWork = stripAuditVoice(anonymizeConfidentialClients(String(l.standoutWork), confNamesList)).trim();
         const isRedundant = existingBio && (
           cleanWork === existingBio ||
           existingBio.includes(cleanWork) ||

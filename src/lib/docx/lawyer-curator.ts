@@ -129,6 +129,15 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
   res = res.replace(/\bLabor & Employment\b/g, 'Labour & Employment');
 
   // Strip residual audit voice from submission texts
+  res = res.replace(/\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b/gi, 'In decisive procedural proceedings,');
+  res = res.replace(/\bIt\s+further\s+reports\s+(?:that\s+)?a\s+favourable\s+ruling\b/gi, 'The team secured a decisive favorable ruling');
+  res = res.replace(/\bIt\s+further\s+reports\s+that\b/gi, 'Additionally,');
+  res = res.replace(/\bwhere\s+the\s+reported\s+(\d{4}\s+)?developments\s+include\b/gi, 'where key developments include');
+  res = res.replace(/\bThe\s+reported\s+(\d{4}\s+)?developments\s+include\b/gi, 'Key developments include');
+  res = res.replace(/\bThe\s+reported\s+outcome\s+was\b/gi, 'The strategic outcome achieved was');
+  res = res.replace(/\bwith\s+the\s+source\s+recording\s+that\s+the\s+client\s+obtained\s+standing\b/gi, "securing the client's standing");
+  res = res.replace(/\bthe\s+source\s+records\s+that\b/gi, 'the representation achieved that');
+  res = res.replace(/\bIn\s+confidential\s+matters,\s+the\s+practice\s+has\b/gi, 'In representative contentious mandates, the practice has');
   res = res.replace(/\bthe verified evidentiary record demonstrates\b/gi, 'our active practice record demonstrates');
   res = res.replace(/\bthe verified evidentiary record\b/gi, 'our representative practice record');
   res = res.replace(/\bverified evidentiary record\b/gi, 'active practice record');
@@ -158,13 +167,21 @@ export function buildLawyerStandoutWork(
   allMattersPool: any[],
   confClientNames: string[] = [],
   existingStandoutWork: string = '',
-  bioOrComments: string = ''
+  bioOrComments: string = '',
+  practiceArea: string = ''
 ): string {
   const cleanExisting = String(existingStandoutWork || '').trim();
   const cleanBio = String(bioOrComments || '').trim();
 
+  // If existing standout work contains off-category energy/infrastructure claims in a non-energy practice, reject it
+  const isOffCategoryEnergy = Boolean(
+    practiceArea &&
+    !/energy|energía|infrastructure|infraestructura/i.test(practiceArea) &&
+    /power plants|clean-energy|public lighting|fuel service|national electric system|wastewater treatment|billion dollars/i.test(cleanExisting)
+  );
+
   // If existing standout work is distinct from bio/comments and substantive, use it
-  if (cleanExisting && cleanExisting.length > 25) {
+  if (!isOffCategoryEnergy && cleanExisting && cleanExisting.length > 25) {
     const existingTokens = getNameTokens(cleanExisting);
     const bioTokens = getNameTokens(cleanBio);
     let overlap = 0;
@@ -178,10 +195,19 @@ export function buildLawyerStandoutWork(
   }
 
   // Otherwise, dynamically construct standout recent work from the lawyer's attributed matters
+  const isRealEstate = practiceArea && /real\s*estate|inmobiliari/i.test(practiceArea);
   const attributedMatters = (allMattersPool || []).filter(m => {
     const lead = String(m.leadPartner || m.lead_partner || (Array.isArray(m.leadPartners) ? m.leadPartners.join(' ') : ''));
     const team = String(m.teamMembers || m.team_members || (Array.isArray(m.otherLawyers) ? m.otherLawyers.join(' ') : ''));
-    return isSameLawyer(lawyerName, lead) || isSameLawyer(lawyerName, team);
+    const matchesLawyer = isSameLawyer(lawyerName, lead) || isSameLawyer(lawyerName, team);
+    if (!matchesLawyer) return false;
+    if (isRealEstate) {
+      const txt = [m.title, m.name, m.client, m.summary, m.rawNotes].filter(Boolean).join(' ').toLowerCase();
+      if (txt.includes('public lighting') || txt.includes('alumbrado público') || txt.includes('clean-energy') || txt.includes('power plant')) {
+        return false;
+      }
+    }
+    return true;
   });
 
   if (!attributedMatters.length) {
@@ -254,7 +280,7 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
       const nameEsc = person.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       bio = bio.replace(new RegExp(`^(${nameEsc}\\s+is\\s+)(?:a\\s+partner|a\\s+Partner|Partner)\\s+in\\s+`, 'i'), '$1the Partner and Head of ');
     }
-    const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio);
+    const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio, practiceArea);
     return { name: person.name, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });
 }
