@@ -1,5 +1,6 @@
 import {preparationInputIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
+import { bindGeneratedFindings, renderedSubmissionFindings } from '@/lib/editorial/artifact-findings';
 import { supportedDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { normalizeLetterSections } from '@/lib/audit/letter-sections';
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
     const decisions = review.strategy?.matters || [];
     const selectionValidated = review.selection_validated === true;
     const data:any = {
-      ...previous,completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:originalReviewHash,
+      ...previous,restricted_delivery_policy:'restricted-unconfirmed-v1',completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:originalReviewHash,
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
       cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,final_review_stale:false,review_responses:[],
       draft_revision:Number(previous.draft_revision || 0)+1,
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
         const parts=Object.keys(archive.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${(await archive.files[name].async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')}`))).join('\n');
         const priorFindings=previous.completed_review_input_hash===inputHash && !previous.final_review_stale ? previous.final_artifact_review?.judge?.defects || [] : [];
-        const unrepaired=unrepairedGeneratedClaims([...(review.repair_feedback || []),...priorFindings],rendered,renderedAudit);
+        const unrepaired=[...renderedSubmissionFindings(rendered,data.editorial_development,matters),...unrepairedGeneratedClaims([...(review.repair_feedback || []),...priorFindings],rendered,renderedAudit)];
         let finalReview:any;
         if(unrepaired.length) {
           // Deterministic preflight of prior findings, not a new model verdict.
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
         } else {
           const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
             method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:true,output_recovery:body.outputRecovery===true})
+            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
           });
           finalReview=await finalResponse.json();
           receivedTrace=finalReview.trace || null;
@@ -151,20 +152,14 @@ export async function POST(request: NextRequest) {
           }
           if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
         }
+        if(finalReview.judge) finalReview.judge.defects=bindGeneratedFindings(finalReview.judge.defects || [],data.editorial_development);
         data.final_artifact_review=finalReview;
         if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
         data.release_verdict={passed:true,status:'passed',errors:[]};
         data.judgeVerdict=finalReview.judge;
-        if(finalReview.letter) {
-          data.editorial_review={...review,letter:finalReview.letter};
-          data.analysis.summary=finalReview.letter.executive_assessment || '';
-          // Re-render auditDoc with the repaired letter so the downloaded audit docx contains the repaired letter
-          const repairedAuditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},finalReview.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
-          const repairedAuditBuffer=await Packer.toBuffer(repairedAuditDoc);
-          data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:repairedAuditBuffer.toString('base64'),audit_sha256:artifactHash(repairedAuditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
-        } else {
-          data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
-        }
+        // Persist only the pair whose exact text was independently reviewed.
+        // Repairs run through the durable worker, re-render and return here.
+        data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {
         data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
         // Always provide the working draft so the user can inspect progress and is not blocked from reviewing their draft

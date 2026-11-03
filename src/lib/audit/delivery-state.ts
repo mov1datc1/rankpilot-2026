@@ -21,9 +21,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (data?.filing_reviewed !== true && Object.values(data?.filing_field_status || {}).includes('conflicting')) {
     errors.push('Confirma las discrepancias contradictorias de los datos del departamento antes de la entrega final.');
   }
-  if (verdict.passed !== true || (verdict.status && !['passed', 'approved'].includes(verdict.status))) {
-    if (!verdict.errors?.length) errors.push(data?.editorial_review ? 'Reintenta la revisión editorial para evaluar el borrador actual.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
-  }
+  const reviewRejected = verdict.passed !== true || (verdict.status && !['passed', 'approved'].includes(verdict.status));
   const isUnrankedClaim = (claim?: string | null) => !claim || /^(?:unranked|not ranked|sin ranking|none|n\/?a|primera inclusi[oó]n|first-time candidate)$/i.test(String(claim).trim());
   if (Array.isArray(verdict.errors) && verdict.errors.length) {
     const details = verdict.errors.map(String).filter((message:string)=>{
@@ -34,6 +32,8 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
     });
     if (details.length) errors.push(...details);
   }
+  // Hiding a technical summary must never turn a rejection into approval.
+  if (reviewRejected && !errors.length) errors.push(data?.editorial_review ? 'La revisión editorial del borrador actual sigue pendiente.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
   if (requireArtifact && data?.ranking_claim && !isUnrankedClaim(data.ranking_claim) && !['verified_match','verified_unranked'].includes(data?.ranking_verification?.status)) {
     errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
   }
@@ -47,13 +47,14 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   if (!matters.length) errors.push('No hay asuntos disponibles.');
   const ids = matters.map(m => m.id).filter(Boolean);
   if (new Set(ids).size !== ids.length) errors.push('Hay asuntos duplicados en el expediente.');
-  if (matters.some(m => publicationStatus(m) === 'confirmation_required')) {
+  if (data?.restricted_delivery_policy !== 'restricted-unconfirmed-v1' && matters.some(m => publicationStatus(m) === 'confirmation_required')) {
     errors.push('Confirma los permisos de publicación de los asuntos pendientes.');
   }
   if (matters.some(m => valueConflict(m) || (m.valueResolution && !validValueResolution(m)))) errors.push('Resuelve los importes o monedas contradictorios antes de la entrega final.');
   if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
   if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== expectedContract.policy || data.completed_renderer_version !== expectedContract.renderer || data.completed_artifact_review_version !== expectedContract.artifact)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
   const warnings: string[] = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
+  if(data?.restricted_delivery_policy === 'restricted-unconfirmed-v1' && matters.some(m=>publicationStatus(m)==='confirmation_required')) warnings.push('Los asuntos sin permiso confirmado se entregan únicamente como confidenciales; su publicación sigue pendiente.');
   const dirLabel = /500/i.test(data?.targetDirectory || data?.directory || '') ? 'The Legal 500' : 'Chambers';
   if (isUnrankedClaim(data?.ranking_claim || data?.current_band)) {
     if (data?.ranking_verification?.status === 'verified_unranked' || data?.ranking_verification?.message) {

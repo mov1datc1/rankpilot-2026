@@ -21,6 +21,7 @@ class Repair(BaseModel):
 TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct incompatible ranking categories using the confirmed seniority; do not invent a current rank. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
 TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and selected matters. If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
+TASK+=''' Write natural public prose, including confidential-section narratives: never explain that a source, record or supplied field states or omits something. Express an actual pending state as ongoing without inventing a final judicial decision. Keep material uncertainty but put source-completeness assessments in internal fields. The form label Lead Partner(s) alone is not evidence of partner seniority: use lead lawyer unless the person's actual partner status is supported by the roster or explicit substantive source text. Fix capitalization after legal suffixes without turning a true new sentence into a lowercase fragment. Do not leave joined sentences or malformed English.'''
 TASK+=''' For a defect explicitly marked conflict_resolution=omit_nonessential_descriptor and field_path=client_sector, withdraw ONLY the disputed optional industry descriptor from generated prose, choosing neither source version. Keep all supported mandate facts, scale, outcomes, roles and the canonical selection. This editorial containment is resolvable without confirming or changing the source sector. Retain the original source discrepancy; never extend this exception to material identity, amount, date, outcome, attribution or permission conflicts.'''
 
 TASK+=''' When a confidentiality defect identifies a revealing combination in public B9/B10/C2, generalize ONLY that combination in the permitted public fields. Keep the legal work, personal attribution and supported scale in non-identifying terms. Preserve every exact source fact and metric in confidential section E; never weaken the confidential matter narrative merely to anonymize a public profile. This is an allowed privacy transformation, not invented evidence or a source edit.'''
@@ -116,7 +117,7 @@ def apply_corrections(proposal, targets, repair):
     return result
 
 def repair_development(state, proposal, targets):
-    from core.review_graph import invoke_role
+    from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
     correction=create_model('AllowedEditorialCorrection',__base__=Correction,path=(Literal[tuple(targets)],...))
     schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
@@ -125,10 +126,20 @@ def repair_development(state, proposal, targets):
     shared=None;payload_targets=copy.deepcopy(targets)
     for target in payload_targets.values():
         evidence=target.get('source_evidence')
+        if isinstance(evidence,dict) and set(evidence)=={'package','strategy'} and isinstance(evidence['package'].get('matters'),list):
+            # Public prose is grounded in the selected portfolio. Reserve
+            # sources and old generated proposals are not evidence for it.
+            selected={d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
+            package=role_payload({'package':evidence['package']},'development')['package']
+            package['matters']=[m for m in package.get('matters',[]) if m.get('id') in selected]
+            strategy={**evidence['strategy'],'matters':[d for d in evidence['strategy'].get('matters',[]) if d.get('matter_id') in selected]}
+            evidence={'package':package,'strategy':strategy}
+            target['source_evidence']=evidence
         if isinstance(evidence,dict) and set(evidence)=={'package','strategy'}:
             if shared is None:shared=evidence
             if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
-    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'shared_source_evidence':shared,'feedback':state.get('repair_feedback',[]),'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
+    feedback=[{k:v for k,v in d.items() if k!='artifact_quote'} for d in state.get('repair_feedback',[])]
+    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
     try:
         fixed=apply_corrections(proposal,targets,repair)
     except ValueError as error:
@@ -202,7 +213,11 @@ def repair_rejected_development(state, proposal, defects):
             return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
                     'candidate':cand,'source_person':person,'package':source_package,'strategy':state['strategy']}
         return {'package':source_package,'strategy':state['strategy']}
-    targets={};remaining=[]
+    # Include all deterministic faults already visible in this proposal in the
+    # same paid repair, rather than discovering another field after each call.
+    from core.editorial_development import submission_voice_paths
+    voice_paths=set(submission_voice_paths(proposal))
+    targets={path:target for path,target in repair_targets(state['package'],state['strategy'],proposal).items() if path in voice_paths};remaining=[]
     for defect in defects:
         quote=norm(defect.get('artifact_quote'))
         candidates=list(allowed)

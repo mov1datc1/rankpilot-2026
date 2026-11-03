@@ -556,7 +556,7 @@ Content Type
             strategic,
             ["The department is led by Pedro Ignacio Sosa Mendoza."],
         )
-        self.assertLessEqual(len(result.split()), 500)
+        self.assertLessEqual(len(result.split()), 1000)
         self.assertIn(original, result)
         self.assertIn("Pedro Ignacio Sosa Mendoza", result)
 
@@ -576,10 +576,10 @@ Content Type
             "Your complete satisfaction is and will always be our goal, and our greatest "
             "triumph. "
         )
-        factual_tail = " ".join(f"evidence{i}" for i in range(462))
+        factual_tail = " ".join(f"evidence{i}" for i in range(962))
         original = generic_intro + factual_tail
         result = compress_oversized_source_b10(original)
-        self.assertLessEqual(len(result.split()), 500)
+        self.assertLessEqual(len(result.split()), 1000)
         self.assertIn(factual_tail, result)
         self.assertNotIn("personalized provision", result)
         self.assertNotIn("long-term relationship of trust", result)

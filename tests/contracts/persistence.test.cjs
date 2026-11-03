@@ -29,7 +29,7 @@ function approve(){
  Object.assign(state.submission.chambersData,require('./filing-fixture.cjs').completeFiling());
  const v=require('../../src/lib/audit/review-versions.ts');
  Object.assign(state.submission.chambersData,{completed_review_policy_version:v.REVIEW_POLICY_VERSION,completed_renderer_version:v.RENDERER_VERSION,completed_artifact_review_version:v.ARTIFACT_REVIEW_VERSION});
- state.submission.chambersData.matters=[{id:'old',client:'Original',isConfidential:false,publish_status:'publishable'}];
+ state.submission.chambersData.matters=[{id:'old',client:'Original',rawNotes:'The firm advises the client on a pending tax appeal.',isConfidential:false,publish_status:'publishable',confidentialityConfirmed:true}];
  const bytes=Buffer.from('opaque QA artifact');
  state.submission.chambersData.approved_artifact={base64:bytes.toString('base64'),sha256:artifactHash(bytes),input_hash:deliveryInputHash(state.submission)};
  return bytes;

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
 import { stableHash, sourceSnapshot, draftDisposition, ReviewIssue, EDITORIAL_VERSION } from './contracts';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { bindGeneratedFindings } from './artifact-findings';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -73,7 +74,7 @@ export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const containedConflict=(d:any)=>d.code==='SOURCE_CONFLICT' && (
     (d.conflict_resolution==='omit_nonessential_descriptor' && d.field_path==='client_sector' && d.conflicting_artifact_term && String(d.artifact_quote || '').toLowerCase().includes(String(d.conflicting_artifact_term).toLowerCase())) ||
     (d.conflict_resolution==='preserve_source_aliases' && d.field_path==='client' && d.scope==='letter'));
-  const defects=(data.final_artifact_review?.judge?.defects || []).filter((d:any)=>
+  const defects=bindGeneratedFindings(data.final_artifact_review?.judge?.defects || [],data.editorial_development).filter((d:any)=>
     d.severity==='critical' || (d.owner==='rankpilot' && d.artifact_quote &&
       ((d.code==='EDITORIAL_STYLE' && d.field_path) || containedConflict(d))));
   if(!defects.length) return null;

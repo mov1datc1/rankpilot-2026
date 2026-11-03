@@ -3,6 +3,7 @@ import { projectConfirmedLawyerRole } from './lawyer-role';
 import { createHash } from 'node:crypto';
 
 import { REVIEW_POLICY_VERSION } from './review-versions';
+import { resolvePublication } from './publication-policy';
 export { REVIEW_POLICY_VERSION } from './review-versions';
 
 export const reviewSteps = ['strategy', 'development', 'writer', 'done'] as const;
@@ -17,6 +18,7 @@ export const reviewStepLabels = {
 export function reviewPackage(submission: any, data: any, matters: any[]) {
   return {
     directory: submission.targetDirectory, practice_area: submission.practiceArea,
+    delivery_policy: 'restricted-unconfirmed-v1',
     guide_region: data.guideRegion || data.analysis_scope?.guide_region || '',
     jurisdiction: submission.guideRegion, firm_name: data.firm_name || data.firmName || '',
     research_period: data.research_period || null, current_band: submission.currentBand,
@@ -33,14 +35,13 @@ export function reviewPackage(submission: any, data: any, matters: any[]) {
     editorial_development: data.editorial_development || null,
     lawyers: (data.lawyers || []).map(projectConfirmedLawyerRole),
     matters: matters.map(m => {
-      const isPublic = m.publish_status === 'publishable' && m.confidentialityConfirmed !== false;
+      const permission = resolvePublication(m);
       return {
         ...m,
         client: recoverClientLegalName(m) || m.client,
-        publish_status: isPublic ? 'publishable' : 'confidential',
-        isConfidential: !isPublic,
-        confidential: !isPublic,
-        confidentialityConfirmed: true
+        // A restricted rendering destination is not the user's publication consent.
+        publication_route: permission === 'publishable' ? 'D' : 'E',
+        resolved_publication_status: permission,
       };
     }),
   };
@@ -65,6 +66,9 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
     delete source.b10_draft;
     delete source.c2_draft;
     for (const matter of source.matters || []) {
+      const permission=resolvePublication(matter);
+      matter.publication_route=permission==='publishable'?'D':'E';
+      matter.resolved_publication_status=permission;
       delete matter.optimizedText;
       delete matter.optimized_text;
       delete matter.editorial_completion_status;

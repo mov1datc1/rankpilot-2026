@@ -51,8 +51,10 @@ export async function POST(request: NextRequest) {
     if (!stableId || (!sourceMatter && !dbMatter && !inlineMatter)) {
       return NextResponse.json({error:'Guarda el asunto antes de optimizarlo.'},{status:409});
     }
-    const targetMatter = {...(dbMatter || {}), ...(sourceMatter || {}), ...(inlineMatter || {})};
-    const hasNotes = String(targetMatter.source_excerpt || targetMatter.rawNotes || targetMatter.summary || targetMatter.description || targetMatter.optimizedText || targetMatter.optimized_text || '').trim();
+    const targetMatter = {...(sourceMatter || dbMatter || {})};
+    const inputIssues=preparationInputIssues(chambersData,[targetMatter]);
+    if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:inputIssues.join(' '),issues:inputIssues},{status:422});
+    const hasNotes = String(targetMatter.source_excerpt || targetMatter.rawNotes || targetMatter.summary || targetMatter.description || '').trim();
     if (!hasNotes) {
       return NextResponse.json({error:'El asunto no tiene notas o descripción para optimizar.'},{status:400});
     }
@@ -96,6 +98,7 @@ export async function POST(request: NextRequest) {
         const latest:any = current.chambersData || {};
         const register = Array.isArray(latest.matters) && latest.matters.length ? latest.matters : (submission.matters || []);
         const before = register.find((m:any)=>m.id===stableId) || (chambersData.matters || submission.matters || []).find((m:any)=>m.id===stableId) || targetMatter;
+        if(draftSourceHash(before)!==draftSourceHash(targetMatter)) throw new Error('DRAFT_CONFLICT');
         
         const updated = register.map((m:any)=>{
           if (m.id === stableId) {
@@ -104,9 +107,6 @@ export async function POST(request: NextRequest) {
               ...m,
               optimizedText: result.optimized_text,
               optimized_text: result.optimized_text,
-              rawNotes: m.rawNotes || preservedOriginal,
-              originalText: preservedOriginal,
-              original_text: preservedOriginal,
               editorialRationale,
               editorial_rationale: editorialRationale,
               status: 'Optimized',
@@ -125,8 +125,7 @@ export async function POST(request: NextRequest) {
           where: { id: stableId, submissionId },
           data: {
             optimizedText: result.optimized_text,
-            status: 'Optimized',
-            rawNotes: dbMatter?.rawNotes || originalText
+            status: 'Optimized'
           }
         });
         

@@ -1,12 +1,12 @@
 """Bind the final review's register/narrative comparison to original evidence."""
 import re
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
 from typing import Literal
 
 class RegisterClaim(BaseModel):
     scope: Literal['submission','letter']
     artifact_quote: str
-    conflicting_artifact_term: str
+    conflicting_artifact_term: str = Field(description='The exact disputed industry descriptor in the output, NEVER the client name. A client name or legally relevant work alone is not an assertion of industry.')
 
 class RegisterCheck(BaseModel):
     matter_id: str
@@ -19,6 +19,26 @@ class RegisterCheck(BaseModel):
 
 def register_rows(package):
     return {m['id']:m for m in package.get('matters',[]) if any(r.get('quote') for r in (m.get('confidentialityEvidence') or {}).get('client_register',[]))}
+
+def register_verdict_contract(package, base):
+    """Require every original row in the provider schema, not just the prompt.
+
+    A keyed object cannot silently omit a row or repeat one at another row's
+    expense. All entries share one schema definition to keep the prompt small.
+    The public result is normalized back to the existing list contract.
+    """
+    rows = register_rows(package) if package.get('rendered_artifact') else {}
+    if not rows:
+        return base
+    comparison = create_model('RegisterComparison', **{
+        name: (field.annotation, field)
+        for name, field in RegisterCheck.model_fields.items() if name != 'matter_id'
+    })
+    checks = create_model('RequiredRegisterComparisons', **{
+        matter_id: (comparison, ...) for matter_id in rows
+    })
+    return create_model('ArtifactVerdict', __base__=base,
+                        register_checks=(checks, ...))
 
 def register_defects(package, checks):
     expected=register_rows(package)
@@ -42,6 +62,13 @@ def register_defects(package, checks):
             rendered=norm(package.get('rendered_artifact' if claim['scope']=='submission' else 'rendered_audit'))
             if not quote or quote not in rendered or not term or not re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',quote):
                 raise ValueError('review diagnostic not grounded: sector claim is absent from artifact')
+            client=norm(matter.get('client') or matter.get('clientName'))
+            brand=re.split(r'[,–—]|\s+(?:s\.a\.|s\.c\.|ltd\b|llc\b)',client,maxsplit=1)[0].strip()
+            if term in {client,brand}:
+                # The output has already omitted the optional descriptor.
+                # Its source-bound client identity must never be deleted as
+                # though it were the disputed industry classification.
+                continue
             defects.append({'code':'SOURCE_CONFLICT','severity':'critical','scope':claim['scope'],'matter_id':matter['id'],
                 'field_path':'client_sector','conflict_basis':'source_vs_source',
                 'conflict_resolution':'omit_nonessential_descriptor' if check.get('nonessential_sector') else 'confirm_source',

@@ -249,7 +249,7 @@ export async function updateSubmissionValidatedData(submissionId: string, data: 
       ...chambers,
       ...(filingDetails || {}),
       ...(data.sourceFactReview ? {source_fact_review:preserveExtractionReview(data.sourceFactReview,chambers.source_fact_review),original_c2:String(data.sourceFactReview.original_c2 || chambers.original_c2 || '')} : {}),
-      ...(filingDetails ? {filing_reviewed: Boolean(data.filingReviewed)} : {}),
+      ...(filingDetails ? {filing_reviewed: Boolean(data.filingReviewed) && filingDetailsGaps({...chambers,...filingDetails}).length===0} : {}),
       draft_revision: nextRevision,
       previous_approved_artifact: previousApprovedArtifact(existing,chambers),
       ...(data.refereeNotes !== undefined ? {audit_referee_notes:normalizeRefereeNotes(data.refereeNotes)} : {}),

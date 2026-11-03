@@ -11,7 +11,7 @@ from typing import Dict, Literal
 from langchain_openai import ChatOpenAI
 
 
-ModelPurpose = Literal["extraction", "standard", "editorial", "judge", "rewrite", "letter", "development"]
+ModelPurpose = Literal["extraction", "standard", "editorial", "judge", "rewrite", "letter", "development", "repair"]
 
 DEFAULT_MODEL = "gpt-5.6-terra"
 DEFAULT_REASONING: Dict[ModelPurpose, str] = {
@@ -22,6 +22,7 @@ DEFAULT_REASONING: Dict[ModelPurpose, str] = {
     "rewrite": "low",
     "letter": "medium",
     "development": "high",
+    "repair": "medium",
 }
 
 # Extraction needs room for the entire source register. Short rewriting and
@@ -29,6 +30,7 @@ DEFAULT_REASONING: Dict[ModelPurpose, str] = {
 DEFAULT_OUTPUT_TOKENS = {
     "extraction": 32768, "standard": 8192, "editorial": 12288,
     "judge": 8192, "rewrite": 4096, "letter": 16384, "development": 24576,
+    "repair": 16384,
 }
 
 
@@ -47,6 +49,7 @@ def get_model_settings(purpose: ModelPurpose = "standard", model_override: str =
         "rewrite": "REASONING_EFFORT_REWRITE",
         "letter": "REASONING_EFFORT_LETTER",
         "development": "REASONING_EFFORT_DEVELOPMENT",
+        "repair": "REASONING_EFFORT_REPAIR",
     }[purpose]
     reasoning = os.environ.get(env_name, DEFAULT_REASONING[purpose])
     allowed_reasoning = {"none", "low", "medium", "high", "xhigh", "max"}

@@ -20,7 +20,11 @@ export function projectDevelopment(data:any, state:any) {
   const matters=(data.matters || []).map((m:any)=>{
     const proposal=drafts.get(m.id);if(!proposal)return m;
     const old=String(m.optimizedText || m.optimized_text || '').trim();
-    if(m.draft_provenance?.text_hash && m.draft_provenance.text_hash!==hash(old))return m;
+    const rejectedCurrentProse=(state.repair_feedback || []).some((d:any)=>
+      d.owner==='rankpilot' && d.severity==='critical' && ['submission','facts'].includes(d.scope)
+      && d.matter_id===m.id && typeof d.artifact_quote==='string' && d.artifact_quote.trim()
+      && old.replace(/\s+/g,' ').includes(d.artifact_quote.replace(/\s+/g,' ').trim()));
+    if(m.draft_provenance?.text_hash && m.draft_provenance.text_hash!==hash(old) && !rejectedCurrentProse)return m;
     if(old && old!==proposal.text)previous.push({matter_id:m.id,text:old,provenance:m.draft_provenance || null});
     return {...m,optimizedText:proposal.text,optimized_text:proposal.text,editorial_completion_status:proposal.completion_status || '',status:'Optimized',draft_provenance:{origin:'generated',source_hash:draftSourceHash(m),text_hash:stableHash(proposal.text.trim()),strategy_hash:stableHash(state.strategy),development_version:development.version}};
   });

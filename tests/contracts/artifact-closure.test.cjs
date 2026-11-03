@@ -1,0 +1,87 @@
+require('../../docs/reviews/review-loader.cjs');
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {Packer}=require('docx'),JSZip=require('jszip');
+const {buildSubmissionDoc,stripAuditVoice,generateDynamicC2}=require('../../src/app/api/generate-docx/submission-builder.ts');
+const {resolvePublication}=require('../../src/lib/audit/publication-policy.ts');
+const {reviewPackage}=require('../../src/lib/audit/review-checkpoint.ts');
+const {bindGeneratedFindings,renderedSubmissionFindings}=require('../../src/lib/editorial/artifact-findings.ts');
+const {targetedRepair}=require('../../src/lib/editorial/jobs.ts');
+const {anonymizeConfidentialClients}=require('../../src/lib/docx/lawyer-curator.ts');
+
+for(const directory of ['Chambers','Legal 500']) for(const permissions of [{},{isConfidential:false,confidentialityConfirmed:false},{isConfidential:false,confidentialityStatus:'confirmation_required'}]) {
+ test(`${directory}: uncertain permission stays restricted in actual DOCX public sections (${JSON.stringify(permissions)})`,async()=>{
+  const m={id:'m',client:'ZEPHYRTEST INDUSTRIAL',name:'Permit appeal',summary:'The team represented ZEPHYRTEST INDUSTRIAL in a development permit appeal. The proceeding remains ongoing.',...permissions};
+  const overview='Synthetic Firm represented ZEPHYRTEST INDUSTRIAL in a development permit appeal concerning a development site. The team challenged the decision and continues to advise on the pending proceeding. The mandate concerns the interaction between development permissions and property rights.';
+  const d={firmName:'Synthetic Firm',practiceArea:'Real Estate',jurisdiction:'Mexico',enhanced_b10:overview,enhanced_b7:overview,enhanced_c2:overview+' The team supports property owners.',matters:[m]};
+  const zip=await JSZip.loadAsync(await Packer.toBuffer(buildSubmissionDoc('Synthetic Firm','Real Estate',d,{targetDirectory:directory,practiceArea:'Real Estate',matters:[m]},'optimized')));
+  const text=(await zip.file('word/document.xml').async('string')).replace(/<[^>]+>/g,'');
+  const publicText=directory==='Chambers'?text.split('E. CONFIDENTIAL INFORMATION')[0]:text.split('DETAILED (NON-PUBLISHABLE) WORK HIGHLIGHTS')[0];
+  assert.doesNotMatch(publicText,/ZEPHYRTEST/i);
+  assert.match(text,/ZEPHYRTEST INDUSTRIAL/,'Identity must remain available in confidential work highlights');
+ });
+}
+test('review input preserves permission conflicts and never fabricates confirmation',()=>{
+ const m={id:'m',client:'Private',publish_status:'confidential',publishStatus:'confirmation_required',confidentialityConfirmed:false,isConfidential:true};
+ const before=structuredClone(m),p=reviewPackage({targetDirectory:'Chambers'}, {},[m]).matters[0];
+ assert.deepEqual(m,before);for(const k of Object.keys(m))assert.equal(p[k],m[k]);
+ assert.equal(p.publication_route,'E');assert.equal(p.resolved_publication_status,'confirmation_required');
+});
+test('status aliases cannot hide restrictions behind casing or separators',()=>{
+ for(const status of ['CONFIDENTIAL','non-publishable','unknown'])assert.notEqual(resolvePublication({isConfidential:false,confidentialityConfirmed:true,publish_status:status}),'publishable');
+});
+test('filtering an acceptance summary cannot turn a rejected verdict into approval',()=>{
+ const {getDeliveryState}=require('../../src/lib/audit/delivery-state.ts');
+ const matters=[{id:'m',client:'Synthetic Client',rawNotes:'The department represents the client in a pending tax appeal.',publish_status:'publishable',confidentialityConfirmed:true}];
+ const data={firm_name:'Synthetic Firm',practice_area:'Tax',editorial_review:{},original_b10:'The department advises on tax appeals.',release_verdict:{passed:true,status:'passed',errors:[]}};
+ assert.equal(getDeliveryState(data,matters).approved,true);
+ data.release_verdict={passed:false,status:'needs_review',errors:['La aceptación editorial no está completa: executive_audit']};
+ const result=getDeliveryState(data,matters);
+ assert.equal(result.approved,false);
+ assert.ok(result.errors.length);
+ assert.ok(result.errors.some(message=>message.includes('sigue pendiente')));
+});
+test('formatting and anonymization cannot create judicial outcomes, ranks or missing facts',()=>{
+ for(const text of ['Ana Pérez is identified as lead lawyer.','José Alberto Díaz Méndez is identified as lead partner.','The supplied status is ongoing and does not establish a final merits result.','The firm revoked the four suspensions.','ACME, S.A. DE C.V. In 2025, proceedings resumed.'])assert.equal(stripAuditVoice(text),text);
+ const text='Ana Pérez is identified as lead lawyer and advises Bekaert Ideal S.L. on the acquisition of 80%.';
+ assert.equal(anonymizeConfidentialClients(text,[]),text);
+});
+test('facts-scoped output defects route directly to bounded development repair',()=>{
+ const claim='The firm obtained registration.',dev={version:'editorial-development-v2',matters:[{matter_id:'m',text:claim}]};
+ const defect={code:'UNSUPPORTED_CLAIM',severity:'critical',owner:'rankpilot',scope:'facts',matter_id:'m',field_path:'rawNotes',source_quote:'Registration was refused.',artifact_quote:claim};
+ const bound=bindGeneratedFindings([defect],dev)[0];assert.equal(bound.scope,'submission');assert.equal(bound.field_path,'matters/0/text');assert.equal(defect.field_path,'rawNotes');
+ assert.deepEqual(targetedRepair({editorial_development:dev,final_artifact_review:{judge:{defects:[defect]}}}).tasks,['development','audit','artifact']);
+ assert.equal(bindGeneratedFindings([{...defect,owner:'user'}],dev)[0].scope,'facts');
+});
+test('exact-text preflight finds known styles cheaply without deleting source-backed content',()=>{
+ const text='The record separately lists a header amount. The mandate is ongoing and no final outcome is stated.';
+ const dev={matters:[{matter_id:'m',text}]};const faults=renderedSubmissionFindings(text,dev);
+ assert.equal(faults.length,1);assert.equal(faults[0].field_path,'matters/0/text');assert.equal(faults[0].artifact_quote,text);
+ assert.equal(renderedSubmissionFindings('A different document.',dev).length,0);
+ assert.equal(renderedSubmissionFindings('The team audited payroll and presented evidence to the court.',{matters:[{matter_id:'m',text:'The team audited payroll and presented evidence to the court.'}]}).length,0);
+});
+test('C2 fallback does not invent peer standing, partner leadership or invite referees',()=>{
+ const c2=generateDynamicC2('Synthetic Firm','Tax','Mexico',[],[],[],{},{});
+ assert.doesNotMatch(c2,/partner-led|measurable commercial outcomes|ranked market peers|invite|welcome|seasoned/i);
+});
+test('confidential source snippets cannot reidentify projects in a public lawyer profile',()=>{
+ const {buildLawyerStandoutWork}=require('../../src/lib/docx/lawyer-curator.ts');
+ const result=buildLawyerStandoutWork('Sofia Vega',[{id:'m',client:'Private Client',isConfidential:true,leadPartner:'Sofia Vega',optimizedText:'The Energía Mayakan project and Cuxtal II expansion involved USD2 billion across six named states.'}],['Private Client'],'','Sofia Vega advises employers on multi-site integrations.','Labour & Employment');
+ assert.equal(result,'');
+});
+test('a reviewed candidacy bio is not supplemented with unreviewed source snippets',()=>{
+ const {curateLawyers}=require('../../src/lib/docx/lawyer-curator.ts');
+ const [lawyer]=curateLawyers([{name:'Sofia Vega',bio:'Old biography.'}],
+  [{id:'m',client:'Public Client',publish_status:'publishable',confidentialityConfirmed:true,leadPartner:'Sofia Vega',optimizedText:'A separate source narrative.'}],
+  'Synthetic Firm','Tax','Mexico',{editorial_development:{candidates:[{name:'Sofia Vega',submission_bio:'Sofia Vega leads the documented tax appeal.',recommendation:'present'}]}});
+ assert.equal(lawyer.bio,'Sofia Vega leads the documented tax appeal.');
+ assert.equal(lawyer.standoutWork,'');
+});
+test('a rejected current claim can be repaired without overwriting unaffected human edits or source fields',()=>{
+ const {projectDevelopment}=require('../../src/lib/editorial/development.ts');
+ const data={matters:[{id:'m',rawNotes:'The appeal is pending.',optimizedText:'The team won.',draft_provenance:{text_hash:'older-hash'}}]};
+ const state={development_validated:true,strategy:{matters:[{matter_id:'m',disposition:'core'}]},development:{version:'editorial-development-v2',matters:[{matter_id:'m',text:'The team represents the client in a pending appeal.'}]}};
+ assert.equal(projectDevelopment(data,state).matters[0].optimizedText,'The team won.');
+ const fixed=projectDevelopment(data,{...state,repair_feedback:[{owner:'rankpilot',severity:'critical',scope:'facts',matter_id:'m',artifact_quote:'The team won.'}]});
+ assert.equal(fixed.matters[0].optimizedText,state.development.matters[0].text);assert.equal(fixed.matters[0].rawNotes,data.matters[0].rawNotes);
+ assert.equal(data.matters[0].optimizedText,'The team won.');
+});

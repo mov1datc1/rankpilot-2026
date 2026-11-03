@@ -193,7 +193,7 @@ class TemporalReviewTests(unittest.TestCase):
             self.assertIn('Unknown dates alone never justify exclusion.', messages[0][1])
             self.assertIn('Work Highlights in last 12 months', messages[0][1])
             self.assertIn('"research_period":null', messages[1][1])
-        self.assertEqual(result['trace'][0]['prompt_version'], 'review-core-v3.2')
+        self.assertEqual(result['trace'][0]['prompt_version'], __import__('utils.review_policy', fromlist=['REVIEW_POLICY_VERSION']).REVIEW_POLICY_VERSION)
         self.assertTrue(result['judge']['passed'])
 
     def test_decorative_quotes_do_not_turn_an_optional_audit_request_into_a_blocker(self):

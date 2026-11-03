@@ -1249,8 +1249,8 @@ export default function SubmissionStudio({
                 {/* Official Master DOCX */}
                 <a
                   href={isLegal500
-                    ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=optimized`
-                    : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=optimized`}
+                    ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=${deliveryState.approved ? 'optimized' : 'draft'}`
+                    : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=${deliveryState.approved ? 'optimized' : 'draft'}`}
                   onClick={() => setShowDownloadMenu(false)}
                   title={deliveryState.approved ? 'Descargar Submission aprobado para entrega oficial' : 'Descargar borrador de trabajo en Word'}
                   style={{
@@ -1279,7 +1279,7 @@ export default function SubmissionStudio({
 
                 {/* Audit Estratégico DOCX */}
                 <a
-                  href={`/api/generate-docx?id=${submission.id}&type=audit`}
+                  href={`/api/generate-docx?id=${submission.id}&type=audit&mode=${deliveryState.approved ? 'optimized' : 'draft'}`}
                   onClick={() => setShowDownloadMenu(false)}
                   style={{
                     display: 'flex',
@@ -1296,7 +1296,7 @@ export default function SubmissionStudio({
                   <FileText size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>
-                      Audit Estratégico DOCX
+                      {deliveryState.approved ? 'Audit Estratégico DOCX' : 'Audit Estratégico — Borrador'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
                       Carta ejecutiva para socios con conciliación 1:1

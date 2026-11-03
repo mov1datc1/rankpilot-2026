@@ -1,3 +1,17 @@
+## 2026-11-03 — v1.0.6 y recuperación de expedientes en curso
+
+Jonathan autorizó corregir código, revisar sesiones, fuentes y descargas. Confirmó workspace Render `tea-cvqs3da4d50c73esalu0`. Autorizó dos reparaciones y dos revisiones OpenAI por caso, sin reextracción, y después UNA revisión final adicional por caso. Ese alcance quedó consumido. No crear otras generaciones sin nueva autorización. Hay timeouts con consumo desconocido; no afirmar consumo cero. La recuperación local por Responses ID no equivale a haber integrado background polling en el worker de producción.
+
+Base: 1f16368. Expedientes actuales: DeForest e3c2b98e-0204-440d-b4bf-31ab43fa1258; Ramos 88309eb9-917f-4faa-a0aa-3a2514904409. Fuentes descargadas y snapshots privados ignorados en scratch/closure-2026-11-03; no incorporarlos al commit. Fuente DeForest SHA256 8883fd689e5666be21d6cfeb3e1300d0c5b92c5b11012c9b6571920f5463c901; Ramos 6256a5f9c571ecb146f9220ecd9aee629abdb0acc2432e377d7597e545998cdc. Se verificaron 81/81 y 60/60 anclas literales contra esos originales.
+
+Cambios estructurales en CHANGELOG v1.0.6: no descartar defectos finales, no aprobar nuevos bytes con veredictos anteriores, no cambiar hechos mediante regex, vincular reparaciones con el campo generado exacto y preservar otros cambios humanos. El esquema final exige una comparación por cada fila original de registro. Un rechazo mantiene el bloqueo aunque la UI oculte su resumen técnico. Los permisos originales pendientes siguen pendientes: solo se permite destino confidencial E bajo la política explícita restringida.
+
+Las revisiones adicionales devolvieron rechazo válido de ambos pares. DeForest: combinación pública identificable y cross-border sin fuente. Ramos: omisión de escala/ubicación de Familia De Anda, resultado interino diluido en Edificaciones y contradicción sobre Conciencia Ambiental en excluidos. Se hicieron correcciones LOCALES posteriores en texto generado, conservando fuentes; los nuevos pares NO tienen aprobación independiente. Nunca reutilizar el resultado3 rechazado como aprobación de los archivos modificados. Los recibos y pares anteriores quedan en scratch. Primera revisión local omitió ranking_verification: fue una omisión del script local, no de la DB.
+
+Verificación local: 382 pruebas Python correctas. Node: 442 total, 441 correctas y una omitida. TypeScript sin errores. Revisar el informe final local para resultado de compilación, commit, despliegues y persistencia: este archivo se registra antes de publicarlos. No declarar producción actualizada solo por este commit. Los registros históricos aprobados c02f2e65-900c-45c5-91a4-ebba2594041c y 3c466174-51f6-4ce9-b0a7-1b8778cc7bf3 se mantienen intactos. No se enviaron mensajes a Ángela.
+
+Siguiente cierre obligatorio: revisión independiente de los pares modificados, aprobación ligada a sus bytes exactos y descarga autenticada comprobada. Sin ello, mantener estado Draft y no anunciar cierre editorial ni autocorrección infalible. La publicación de salvaguardas de código no equivale a aprobar esos expedientes.
+
 ## 2026-10-29 / 2026-10-30 — Auditoría Codex (H01-H12), Juez Editorial Auto-Corrector Proactivo (Self-Healing Reviewer v1.0.1), Blindaje Transversal y Handoff de Sesión
 
 1. **Resolución de la Auditoría Técnica de Codex (H01 a H12)**:

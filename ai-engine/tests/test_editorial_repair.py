@@ -250,7 +250,8 @@ class AuditResponsibilityTests(unittest.TestCase):
         with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':['Fixture has no repair']},[])) as model:
             repair_development({'package':PACKAGE,'strategy':STRATEGY},DEV,targets)
         payload=model.call_args.args[4]
-        self.assertEqual(payload['shared_source_evidence'],shared)
+        self.assertEqual([m['id'] for m in payload['shared_source_evidence']['package']['matters']], ['m1'])
+        self.assertEqual(shared, before['b10']['source_evidence'])
         for key in ('b10','c2'):self.assertEqual(payload['repair_targets'][key]['source_evidence'],{'reference':'shared_source_evidence'})
         self.assertEqual(payload['repair_targets']['matters/0/text'],before['matters/0/text'])
         self.assertEqual(targets,before)

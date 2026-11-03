@@ -100,7 +100,7 @@ class ReviewGraphTests(unittest.TestCase):
         defect={'passed':False,'defects':[{'severity':'critical','scope':'letter','matter_id':None,'message':'Stale letter'}]}
         with patch('core.review_graph.editor',return_value={'judge':defect,'trace':[]}) as judge, patch('core.review_graph.writer',return_value={'letter':LETTER,'writer_attempts':1,'trace':[]}) as writer:
             result=review_rendered_package(state)
-        self.assertEqual(judge.call_count,2);self.assertEqual(writer.call_count,1);self.assertFalse(result['judge']['passed']);self.assertEqual(state['package']['rendered_artifact'],'EXACT DOCX TEXT')
+        self.assertEqual(judge.call_count,1);writer.assert_not_called();self.assertFalse(result['judge']['passed']);self.assertEqual(state['package']['rendered_artifact'],'EXACT DOCX TEXT')
 
     def test_post_render_matter_defect_cannot_be_repaired_by_letter_writer(self):
         from core.review_graph import review_rendered_package

@@ -1,5 +1,5 @@
 import {filingDetailsGaps} from './filing-details';
-import {needsInputReview,sourceReviewPending} from './input-review';
+import {valueConflict,validValueResolution,pendingExtractionIssues} from './input-review';
 
 /**
  * Validates requirements for strategic AI optimization and audit generation.
@@ -13,9 +13,11 @@ export function preparationInputIssues(data:any,matters:any[]=data?.matters || [
   if (!firm || !String(firm).trim()) issues.push('Indica el nombre de la firma.');
   if (!practice || !String(practice).trim()) issues.push('Indica el área de práctica.');
   if (!matters.length) issues.push('No hay asuntos cargados en el expediente.');
-  if (matters.length && matters.every(m => !String(m.source_excerpt || m.rawNotes || m.summary || m.notes || m.title || m.name || m.description || m.client || m.id || '').trim())) {
+  if (matters.length && matters.every(m => !String(m.source_excerpt || m.rawNotes || m.summary || m.notes || m.description || '').trim())) {
     issues.push('Falta describir el trabajo realizado en los asuntos cargados.');
   }
+  if(matters.some(m=>valueConflict(m) && !validValueResolution(m))) issues.push('Resuelve los importes o monedas contradictorios antes de preparar los documentos.');
+  if(matters.some(m=>pendingExtractionIssues(m).length)) issues.push('Revisa las discrepancias de extracción de los asuntos antes de preparar los documentos.');
   return issues;
 }
 

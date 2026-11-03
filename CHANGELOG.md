@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.6] — 2026-11-03 — Source-bound repair and exact-document release
+
+- Preserve every critical finding from the final reviewer. A returned letter no longer suppresses defects or creates an approval.
+- Repair through the durable worker, then re-render and independently review the exact Submission/Audit pair. Never approve newly rendered bytes using a verdict on an older pair.
+- Bind facts-scoped generated claims to their actual editable output fields. Batch deterministic style faults into bounded repairs, keep source evidence immutable, and permit targeted correction of rejected prose while preserving unrelated human edits.
+- Share publication resolution with public-section anonymization. Pending consent remains pending; the explicit restricted-delivery policy routes it only to confidential sections and does not authorize publication.
+- Stop copying confidential source narratives into public B9 work snippets. Keep public candidacy arguments source-bound and anonymous.
+- Remove renderer substitutions that changed legal outcomes, seniority or meaning. Add an exact-text preflight and a dedicated bounded repair model profile with deduplicated selected-source context.
+- Separate explicit draft downloads from reviewed final downloads. Audit and Submission both require the current approval contract and immutable matching bytes for final delivery.
+- Preserve persisted micro-optimizer sources, reject concurrent source changes and never allow inline browser text to replace them. Administrative filing gaps remain distinct from substantive source issues.
+- Require every source-register row in the final structured-response schema; do not rely only on a requested list length. Skip paid auxiliary clause interpretation when a concrete critical finding already rejects the pair.
+- Preserve rejection when technical error summaries are hidden in the UI. Reviewed candidacy biographies are no longer supplemented with unreviewed source snippets.
+- Run the full Node and Python contract suites in CI. Update security fixtures with explicit publication consent and align editorial tests with preservation of facts rather than copied regex replacements.
+
 ## [1.0.5] — 2026-11-03 — Política Centralizada de Publicación, Fidelidad de Rol de Abogados, Erradicación Integral de Voz Auditora y Flexibilidad Narrativa
 
 ### Added

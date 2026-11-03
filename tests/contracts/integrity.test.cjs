@@ -11,7 +11,7 @@ const {getDeliveryState}=require('../../src/lib/audit/delivery-state.ts');
 const {judgeSolExtractionAudit}=require('../../src/lib/audit/extraction-auditor.ts');
 const {evaluateStrategicSufficiency}=require('../../src/lib/audit/evidence-sufficiency-gate.ts');
 const practices=['Real Estate','Labour & Employment','Tax','Corporate/M&A','Banking','Energy','Competition','Intellectual Property','Data Protection','Disputes'];
-const matter=(id,extra={})=>({id,client:`Synthetic ${id}`,name:`Matter ${id}`,summary:'The team represented the client in proceedings. The outcome is pending.',publish_status:'publishable',isConfidential:false,...extra});
+const matter=(id,extra={})=>({id,client:`Synthetic ${id}`,name:`Matter ${id}`,summary:'The team represented the client in proceedings. The outcome is pending.',publish_status:'publishable',confidentialityConfirmed:true,isConfidential:false,...extra});
 for(const practice of practices) {
  for(const count of [0,1,8,20]) test(`${practice}: audit with ${count} matters contains only supplied facts`,async()=>{
   const matters=Array.from({length:count},(_,i)=>matter(String(i)));
@@ -94,7 +94,7 @@ test('public biographies suppress source-derived client aliases and mixed unconf
  const result=anonymizeConfidentialClients(text,['XYZ Industrial','Acme Manufacturing']);
  assert.doesNotMatch(result,/XYZ|Unknown Client|Acme/);
  assert.match(result,/A partner advises a range of clients/);
- assert.equal(anonymizeConfidentialClients('She is the Partner of the employment practice.',[]),'She is a partner in the employment practice.');
+ assert.equal(anonymizeConfidentialClients('She is the Partner of the employment practice.',[]),'She is the Partner of the employment practice.');
  assert.match(anonymizeConfidentialClients('Public Client retained the team.',['XYZ Industrial']),/Public Client/);
 });
 

@@ -43,13 +43,7 @@ def compare_claim(firm, directory, practice, jurisdiction, claimed_band, edition
     is_unranked = not claimed_band or bool(re.search(r'^(?:unranked|not ranked|sin ranking|none|n/?a|primera inclusi[oó]n|first-time candidate)$', str(claimed_band).strip(), re.I))
     dir_label = 'Chambers' if 'chambers' in directory.lower() else 'The Legal 500' if '500' in directory.lower() else directory
     if not matches:
-        if is_unranked:
-            result.update(
-                status='verified_unranked',
-                observed_band='Unranked',
-                message=f"Colocaste la firma como unranked, y la revisión oficial en {dir_label} confirma que no figura en ninguna de las bandas correspondientes de {practice} ({jurisdiction}), ratificando la postulación de primera inclusión."
-            )
-            return result
+        # A search/cache miss is not exhaustive evidence of an unranked status.
         result.update(
             status='not_found',
             message=f"Declaraste posición ({claimed_band}), pero la revisión oficial en {dir_label} no encontró a la firma en las bandas de {practice} ({jurisdiction}). Revisa la identidad de la firma o el alcance consultado."

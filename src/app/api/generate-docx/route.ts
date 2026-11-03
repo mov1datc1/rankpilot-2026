@@ -99,17 +99,17 @@ export async function GET(request: NextRequest) {
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
     }
     const pair=chambersData.approved_artifact;
-    if(docType==='audit' && chambersData.release_verdict?.passed && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
+    const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
+    if(docType==='audit' && exportMode!=='draft' && isApproved && pair?.audit_base64 && pair?.input_hash===deliveryInputHash(submission,chambersData)) {
       const bytes=Buffer.from(pair.audit_base64,'base64');
       if(artifactHash(bytes)!==pair.audit_sha256) return NextResponse.json({error:'El Audit guardado no coincide con la revisión aprobada.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':'attachment; filename="Strategic_Audit.docx"'}});
     }
-    const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
     const isSubmission = docType === 'submission';
     const isOriginalSubmissionExport = isSubmission && exportMode === 'original';
     if (isSubmission && !isOriginalSubmissionExport) {
       const artifact = chambersData.approved_artifact;
-      if (isApproved && artifact && artifact.input_hash === deliveryInputHash(submission, chambersData)) {
+      if (exportMode!=='draft' && isApproved && artifact && artifact.input_hash === deliveryInputHash(submission, chambersData)) {
         const requestedFormat = searchParams.get('template') || searchParams.get('format') || '';
         const wantsLegal500 = /legal.?500/.test(requestedFormat);
         if (requestedFormat && wantsLegal500 !== /legal.?500/i.test(submission.targetDirectory || '')) {
@@ -123,8 +123,8 @@ export async function GET(request: NextRequest) {
           'X-Artifact-SHA256':artifact.sha256, 'Cache-Control':'private, no-store'
         }});
       }
-      // If not yet approved as an immutable release artifact, proceed to dynamically generate the editable working draft below!
     }
+    if(!isOriginalSubmissionExport && exportMode!=='draft') return NextResponse.json({code:'ARTIFACT_REVIEW_REQUIRED',error:'El documento actual aún no tiene una revisión final válida. La preparación debe corregirlo; puedes consultar el borrador identificado como tal.'},{status:409});
     let analysis = chambersData.analysis || {};
     const context = chambersData.strategicContext || {};
     
@@ -249,12 +249,13 @@ export async function GET(request: NextRequest) {
     const uint8 = new Uint8Array(buffer);
 
     const prefix = docType === 'submission'
-      ? (isOriginalSubmissionExport ? 'Submission_Original' : isApproved ? 'Submission_Form' : 'Submission_Borrador_Preliminar')
-      : (isApproved ? 'Strategic_Audit' : 'Strategic_Audit_Preliminar');
+      ? (isOriginalSubmissionExport ? 'Submission_Original' : 'Submission_BORRADOR')
+      : 'Strategic_Audit_BORRADOR';
     return new NextResponse(uint8, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': buildSafeContentDisposition(prefix, practiceArea, 'docx'),
+        'X-Artifact-State': isOriginalSubmissionExport ? 'original' : 'draft',
         'X-Artifact-SHA256': createHash('sha256').update(buffer).digest('hex'),
         'Cache-Control': 'private, no-store',
       },

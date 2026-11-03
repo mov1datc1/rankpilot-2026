@@ -74,7 +74,8 @@ test('artifact repair is targeted, carries evidence, and stops after one attempt
  reset();repairMode=true;
  for(let guard=0;guard<15;guard++){await stage();if(job.status!=='queued')break;}
  assert.equal(job.status,'needs_review',JSON.stringify(job));
- assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,2);
+ assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,1);
+ assert.equal(submission.chambersData.final_artifact_review.verification_gate,'unapplied_editorial_correction');
  const developments=calls.filter(c=>c.payload.stage==='development');
  assert.equal(developments.length,2);
  const repair=developments[1].payload.state;

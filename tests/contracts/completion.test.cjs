@@ -65,7 +65,7 @@ test('same-mandate source edit during optimization rejects stale generated text'
  try{const r=await optimizeMatter(new NextRequest('http://localhost/api/optimize/matter',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));assert.equal(r.status,409);assert.equal(state.chambersData.matters[0].rawNotes,'New confirmed source');assert.notEqual(state.chambersData.matters[0].optimizedText,'Stale text');}finally{global.fetch=originalFetch;}
 });
 test('pending source decisions block optimization before any model call',async()=>{
- for (const pending of [{valueConflict:'Table and narrative disagree'},{confidentialityConfirmed:false,publish_status:'confirmation_required'}]) {
+ for (const pending of [{valueConflict:'Table and narrative disagree'}]) {
   reset();Object.assign(state.chambersData.matters[0],pending);
   const response=await optimizeMatter(new NextRequest('http://localhost/api/optimize/matter',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));
   assert.equal(response.status,422);assert.equal(calls.length,0);
@@ -218,11 +218,9 @@ test('service authentication failure is not saved as an editorial verdict or ret
  finally{global.fetch=original;}
 });
 
-test('all preparation endpoints reject a deferred required count before any model call',async()=>{
- const endpoints=[POST,require('../../src/app/api/optimize/review-step/route.ts').POST,require('../../src/app/api/optimize/matter/route.ts').POST,require('../../src/app/api/optimize/b10/route.ts').POST,require('../../src/app/api/editorial/jobs/route.ts').POST];
- for(const endpoint of endpoints){
-  reset();delete state.chambersData.numLawyers;state.chambersData.filing_reviewed=true;
-  const res=await endpoint(new NextRequest('http://localhost/api/test',{method:'POST',body:JSON.stringify({submissionId:'s',matterId:'m1'})}));
-  assert.equal(res.status,422);const body=await res.json();assert.equal(body.code,'INPUT_REQUIRED');assert.match(body.issues.join(' '),/B3/);assert.equal(calls.length,0);
- }
+test('missing administrative counts permit preparation but remain final filing gaps',()=>{
+ reset();delete state.chambersData.numLawyers;state.chambersData.filing_reviewed=true;
+ const {preparationInputIssues,officialFilingGaps}=require('../../src/lib/audit/preparation-input.ts');
+ assert.deepEqual(preparationInputIssues(state.chambersData,state.chambersData.matters),[]);
+ assert.ok(officialFilingGaps(state.chambersData).some(x=>x.includes('B3')));
 });

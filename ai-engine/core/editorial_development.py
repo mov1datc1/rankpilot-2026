@@ -111,144 +111,26 @@ AUDIT_VOICE = re.compile(
 )
 
 def sanitize_completion_status(status):
-    text = str(status or '').strip()
-    text = re.sub(
-        r'^(?:the (?:formal )?status field (?:states|records|indicates)|the source (?:states|describes))\s*[:,-]?\s*',
-        '',
-        text,
-        flags=re.I
-    ).strip()
-    text = re.sub(r';\s*(?:no\s+(?:final\s+|formal\s+|matter\s+|portfolio\s+|overall\s+)*(?:completion\s+status|outcome|result|decision)\s+is\s+stated|while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated|no\s+completion\s+or\s+approval\s+should\s+be\s+inferred)[^.]*', '', text, flags=re.I)
-    text = re.sub(r',\s*with\s+no\s+(?:final\s+|formal\s+|litigation\s+|portfolio\s+|overall\s+)*(?:outcome|completion\s+status|result)\s+stated[^.]*', '', text, flags=re.I)
-    text = re.sub(r',\s*while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated[^.]*', '', text, flags=re.I)
-    text = re.sub(r';\s*no\s+formal\s+(?:overall\s+)?completion\s+status\s+(?:or\s+regulatory\s+outcome\s+)?is\s+stated[^.]*', '', text, flags=re.I)
-    return text.strip()
+    return sanitize_narrative_voice(str(status or ''))
+
 
 def sanitize_narrative_voice(text):
-    text = str(text or '').strip()
-    text = re.sub(r'^(?:Reparaci[oó]n pendiente|Repair pending|Finding|Problem|Defect)[:\s][^\n]*\n?', '', text, flags=re.I).strip()
-    # Repair grammatical fragments before stripping (Angela Castillo Directive)
-    text = re.sub(r'\b(?:the\s+(?:submitted\s+)?source\s+(?:reports|describes|states|records)\s+(?:that\s+)?the\s+mandate\s+as\s+ongoing)\b', 'the mandate remains ongoing', text, flags=re.I)
-    text = re.sub(r'\bthe\s+mandate\s+as\s+ongoing\b', 'the mandate remains ongoing', text, flags=re.I)
-    text = re.sub(r'\b(?:the\s+(?:submitted\s+)?source\s+(?:reports|describes|states|records)\s+that\s+the\s+structured\s+process\s+prevented\s+litigation)\b', 'The structured process prevented litigation', text, flags=re.I)
-    text = re.sub(r'\bthat\s+the\s+structured\s+process\s+prevented\s+litigation\b', 'The structured process prevented litigation', text, flags=re.I)
-    text = re.sub(r'^[Tt]hat\s+(the\s+structured\s+process\s+prevented\s+litigation)', r'The structured process prevented litigation', text, flags=re.I)
-    
-    # Transform meta-audit phrases to natural firm voice
-    text = re.sub(r'\b(?:The matter|The engagement|The proceeding)\s+is\s+recorded\s+as\s+ongoing\b', 'The engagement remains ongoing', text, flags=re.I)
-    text = re.sub(r',?\s*but\s+does\s+not\s+provide\s+a\s+(?:monetary\s+value|formal\s+current\s+status|matter\s+value)[^.]*\.', '.', text, flags=re.I)
-    text = re.sub(r'\bThe\s+documented\s+result\s+should\s+therefore\s+be\s+limited\s+to[^.]*\.', '', text, flags=re.I)
-    text = re.sub(r';\s*the\s+avoidance\s+of\s+[^.]*is\s+a\s+documented\s+interim\s+result[^.]*', '', text, flags=re.I)
-    text = re.sub(r';\s*the\s+constitutional\s+relief\s+is\s+a\s+decisive\s+procedural\s+result,\s*while\s+the\s+ultimate\s+outcome[^.]*', '. The constitutional amparo restored key procedural protections, with the defense remaining active.', text, flags=re.I)
-    
-    # Transform observer & dossier-narration voice to authoritative firm advocacy (Angela Castillo Transversal Directive)
-    text = re.sub(r'\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b', 'In decisive procedural proceedings,', text, flags=re.I)
-    text = re.sub(r'\bIt\s+further\s+reports\s+(?:that\s+)?a\s+favourable\s+ruling\b', 'The team secured a decisive favorable ruling', text, flags=re.I)
-    text = re.sub(r'\bIt\s+further\s+reports\s+that\b', 'Additionally,', text, flags=re.I)
-    text = re.sub(r'\bThe\s+reported\s+(\d{4}\s+)?developments\s+include\b', 'Key developments include', text, flags=re.I)
-    text = re.sub(r'\bThe\s+reported\s+outcome\s+was\b', 'The strategic outcome achieved was', text, flags=re.I)
-    text = re.sub(r'\bwith\s+the\s+source\s+recording\s+that\s+the\s+client\s+obtained\s+standing\b', "securing the client's standing", text, flags=re.I)
-    text = re.sub(r'\bthe\s+source\s+records\s+that\b', 'the representation achieved that', text, flags=re.I)
-    text = re.sub(r'\bIn\s+confidential\s+matters,\s+the\s+practice\s+has\b', 'In representative contentious mandates, the practice has', text, flags=re.I)
-    text = re.sub(r'\b([A-Z][a-zA-Z\s&]+?)\s+presents\s+a\s+([A-Za-z\s&]+?)\s+practice\s+centred\s+on\b', r'\1 maintains an established \2 practice centred on', text, flags=re.I)
-    text = re.sub(r'\bThe\s+firm\s+reports\s+advising\b', 'The firm advised', text, flags=re.I)
-    text = re.sub(r'\bThe\s+firm\s+reports\s+that\s+it\b', 'The firm', text, flags=re.I)
-    text = re.sub(r'\bThe\s+firm\s+reports\b', 'The firm provides', text, flags=re.I)
-
-    # Strip raw markdown bold asterisks
+    """Formatting only; source-grounded repairs own editorial wording and meaning."""
+    if not isinstance(text, str):
+        return ''
     text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    return '\n'.join(re.sub(r'[ \t\u00a0]+', ' ', line).strip()
+                     for line in text.replace('\r\n', '\n').split('\n')).strip()
 
-    # Specific sentence-level promotions and transforms
-    text = re.sub(r'\bNo final disposition of [^.]*? is stated, and none is claimed\.?\s*', '', text, flags=re.I)
-    text = re.sub(r'\bThe source frames the objective as ([^.]*?) while the matter continues\.?', r'The representation centers on \1 while proceedings remain active.', text, flags=re.I)
-    text = re.sub(r'\bThe source frames the objective as ([^.]*?\.)', r'The representation centers on \1', text, flags=re.I)
-    text = re.sub(r'\bNo (?:monetary )?value, completion (?:date|status) or (?:discrete )?final outcome is supplied\.?\s*', '', text, flags=re.I)
-    text = re.sub(r'\bThe supplied status is ongoing and does not establish a final merits result[^.]*\.?\s*', 'The proceeding remains ongoing pending final judicial determination. ', text, flags=re.I)
-    text = re.sub(r'\bThe supplied completion information states that the case was won in ([^,]+),\s*dismissing the four lawsuits and suspensions\.?', r'In \1, the team secured a decisive ruling dismissing the four lawsuits and vacating all suspensions.', text, flags=re.I)
-    text = re.sub(r'\bThe firm revoked the four suspensions\b', 'The team successfully overturned the four suspensions', text, flags=re.I)
-    text = re.sub(r'\bThe matter strengthens the practice[’\']s evidence of [^.]*\.?\s*', '', text, flags=re.I)
-
-    # Transform passive lawyer attribution formulas to direct firm leadership advocacy (Role Fidelity & Accuracy)
-    text = re.sub(r'\bJosé Alberto Díaz Méndez\s+(?:led\s+the\s+representation\s+as\s+lead\s+partner|is\s+the\s+lead\s+partner)\b', 'José Alberto Díaz Méndez led the representation as lead lawyer', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b', r'\1 led the representation as lead partner, supported by \2 on the team', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b', r'\1 and \2 led the representation as lead partners', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(partner|lawyer)\b', r'\1 led the representation as lead \2', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+the\s+lead\s+(partner|lawyer)\b', r'\1 led the representation as lead \2', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b', r'\1 also leads', text, flags=re.I)
-    text = re.sub(r'\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b', 'serves as lead partner', text, flags=re.I)
-    text = re.sub(r'\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b', 'serve as lead partners', text, flags=re.I)
-    text = re.sub(r'\bhas\s+documented\s+responsibility\s+for\b', 'directs', text, flags=re.I)
-
-    # Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
-    def _clean_c2_lead(m):
-        firm = m.group(1)
-        practice = re.sub(r'\s+table$', '', m.group(2), flags=re.I).strip()
-        return f"{firm} demonstrates an established {practice} practice in Mexico, distinguished by"
-
-    text = re.sub(
-        r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:presents\s+an\s+established\s+practice\s+in|warrants\s+recognition\s+in)\s+Chambers\s+Latin\s+America(?:[\'’]s)\s+(?:Mexico\s+)?([A-Za-z\s&]+?)(?:\s+table)?\s*(?:,\s*distinguished\s+by|distinguished\s+by|\s+for)\b',
-        _clean_c2_lead,
-        text,
-        flags=re.I
-    )
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b', r'\1 presents an established practice in \2, distinguished by', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b', r'\1 maintains an established practice distinguished by', text, flags=re.I)
-    text = re.sub(r'\b(?:warrants\s+recognition|merits\s+recognition)\b', 'maintains proven market standing', text, flags=re.I)
-    text = re.sub(r'\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers(?:\s+&?\s*Partners)?\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b', 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in', text, flags=re.I)
-    text = re.sub(r'\bOn\s+this\s+basis,\s+[A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?\s+respectfully\s+petitions\s+Chambers\s+for\s+first-time\s+inclusion\s+in\s+([^\n.]+?)\.\s*', '', text, flags=re.I)
-    text = re.sub(r'\b[A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.', '', text, flags=re.I)
-    text = re.sub(r'\b(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\.', '', text, flags=re.I)
-    text = re.sub(r'\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\.', '', text, flags=re.I)
-    
-    # Strip trailing or semicolon audit caveats
-    text = re.sub(r';\s*(?:no completion or approval should be inferred|the ultimate (?:merits )?outcome is not stated|it does not state a final conclusion[^.]*|without claiming a final decision[^.]*)', '', text, flags=re.I)
-    text = re.sub(r',\s*(?:while the ultimate (?:merits )?outcome is not stated|so these results are interim operational outcomes[^.]*)', '', text, flags=re.I)
-
-    # Strip metadiscourse prefixes cleanly
-    text = re.sub(r'\b(?:the\s+(?:submitted\s+)?source\s+(?:reports|describes|states|records)\s+that|the\s+(?:submitted\s+)?source\s+(?:reports|describes|states|records)|the\s+corrected\s+matter\s+text\s+therefore\s+attributes\s+the\s+outcome\s+to\s+the\s+source\s+rather\s+than\s+presenting\s+it\s+as\s+independently\s+established\.?)\s*', '', text, flags=re.I).strip()
-    # Clean leading "that " from sentences left by prefix stripping
-    text = re.sub(r'(?<=\.\s)[Tt]hat\s+(the\s+)', r'The \1', text)
-    text = re.sub(r'^[Tt]hat\s+(the\s+)', r'The \1', text)
-    text = re.sub(r'\bFirm[’\']s\s+Name[:\s]*', '', text, flags=re.I)
-    # Strip internal audit disclaimers / prediction caveats from public prose (Angela Castillo Directive)
-    text = re.sub(r'(?:The\s+)?comparison\s+is\s+limited\s+to\s+(?:the\s+)?available\s+official\s+profile\s+commentary[^.!?]*[.!?]?\s*', '', text, flags=re.I)
-    text = re.sub(r'(?:The\s+)?available\s+(?:external|profile|official)\s+research\s+(?:is\s+limited\s+to|covers\s+only)[^.!?]*[.!?]?\s*', '', text, flags=re.I)
-    text = re.sub(r'(?:This|The)\s+(?:comparison|assessment|analysis|score|evaluation)\s+is\s+not\s+(?:presented\s+as\s+)?a\s+(?:prediction\s+of\s+)?(?:ranking\s+)?(?:prediction|outcome)[^.!?]*[.!?]?\s*', '', text, flags=re.I)
-    text = re.sub(r'\b(?:without\s+asserting|not\s+asserting)\s+a\s+ranking[^.!?]*[.!?]?\s*', '', text, flags=re.I)
-    
-    # Sentence-level audit voice filter: purge sentences that merely narrate evidence absence/limitations
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    clean_sentences = []
-    for sent in sentences:
-        s = sent.strip()
-        if not s:
-            continue
-        if AUDIT_VOICE.search(s):
-            sub_part = re.sub(r';\s*no completion or approval should be inferred.*', '', s, flags=re.I).strip()
-            if not AUDIT_VOICE.search(sub_part) and len(sub_part.split()) >= 6:
-                if not sub_part.endswith('.'): sub_part += '.'
-                clean_sentences.append(sub_part)
-            continue
-        clean_sentences.append(s)
-    text = ' '.join(clean_sentences).strip()
-    
-    def _capitalize_sentence(match):
-        prefix = match.string[max(0, match.start() - 15):match.start()]
-        if re.search(r'\b(?:C\.V\.|S\.C\.|S\.A\.|LLC\.|Inc\.|Ltd\.)\s*$', prefix, re.I):
-            return match.group(1)
-        return match.group(1).upper()
-
-    text = re.sub(r'(?<=[.!?]\s)([a-z])', _capitalize_sentence, text)
-    # Sentence capitalization fix following legal entity acronyms (S.A. DE C.V., C.V., S.C., etc.)
-    text = re.sub(r'\b(S\.A\.\s+DE\s+C\.V\.|C\.V\.|S\.C\.|S\.A\.P\.I\.\s+DE\s+C\.V\.|S\.\s+DE\s+R\.L\.\s+DE\s+C\.V\.)\s+(Is|In|And|To|For|As|With|By|Of|On|At)\b', lambda m: f"{m.group(1)} {m.group(2).lower()}", text)
-    return text.strip()
 
 def submission_voice_paths(proposal):
     fields = {'b10': proposal.get('b10', ''), 'c2': proposal.get('c2', '')}
     fields.update({f'matters/{i}/text': item.get('text', '') for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'matters/{i}/completion_status': item.get('completion_status', '') for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'candidates/{i}/submission_bio': item.get('submission_bio', '') for i, item in enumerate(proposal.get('candidates', []))})
-    return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or ''))]
+    surface = re.compile(r"\b(?:the record (?:separately )?(?:lists|identifies)|no (?:final )?(?:portfolio-wide )?outcome is stated|no (?:monetary )?value, completion (?:status|date) or (?:discrete )?final outcome is stated|neither recovery nor compensation is stated|it does not report recovery|the remaining procedural stage is not specified|respectfully petitions|invite the Chambers research team to consult)\b", re.I)
+    grammar = re.compile(r"\b(?:A\.C\.|S\.A\.\s+(?:DE|de)\s+C\.V\.)\s+Is\b|[a-z]{4,}\.[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ]{2,}|[.!?]\s+the team\b")
+    return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or '')) or surface.search(str(value or '')) or grammar.search(str(value or ''))]
 
 TASK += " All Submission fields, including confidential matter narratives and completion_status for D8/E8, must present the firm's source-backed work directly. Never narrate what the source states or omits. Keep uncertainty in the underlying fact (for example, proceedings remain pending), and keep evidence assessments in internal Audit fields. Do not erase genuine legal work involving evidence or audits. A confidential matter VALUE is distinct from confidential identity: keep an otherwise publishable matter public, but never reveal its restricted amount, range or order of magnitude in public prose. Omit that economic detail automatically; do not ask the user to authorize disclosure when the source already restricts it."
 

@@ -20,7 +20,7 @@ class MicroSourceAuthorityTests(unittest.TestCase):
     def test_overlong_b10_is_not_silently_truncated(self):
         from types import SimpleNamespace
         with patch('agents.micro_optimizer.get_micro_model') as model:
-            model.return_value.invoke.return_value=SimpleNamespace(content=' '.join(['word']*510)+'.')
+            model.return_value.invoke.return_value=SimpleNamespace(content=' '.join(['word']*1010)+'.')
             result=optimize_b10_micro('Source practice narrative.')
         self.assertFalse(result['success'])
         self.assertNotIn('enhanced_b10',result)

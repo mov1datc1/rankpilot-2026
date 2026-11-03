@@ -1,5 +1,6 @@
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { clientAliases } from './client-aliases';
+import { resolvePublication } from '@/lib/audit/publication-policy';
 import { cleanLawyerNames, sanitizeBannedSuperlatives } from './artifact-integrity-check';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 
@@ -98,15 +99,6 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
   if (!text) return '';
   let res = text;
 
-  // Confidential target / transaction leak guards:
-  res = res.replace(/\bthe direct acquisition of 80% of the shares issued by Bekaert Ideal S\.L\./gi, 'the direct majority acquisition of an international manufacturing enterprise');
-  res = res.replace(/\bthe direct acquisition of 80% of the shares issued by\b/gi, 'the direct majority acquisition of');
-  res = res.replace(/\bdirect acquisition of 80%\b/gi, 'direct majority acquisition');
-  res = res.replace(/\bBekaert Ideal S\.L\./gi, 'an international manufacturing group');
-  res = res.replace(/\bBekaert Ideal\b/gi, 'an international manufacturing enterprise');
-  res = res.replace(/\bBekaert\b/gi, 'a leading manufacturing company');
-  res = res.replace(/\bcompanies located in Costa Rica, Ecuador, Venezuela and Colombia\b/gi, 'operating companies across Andean and Central American jurisdictions');
-
   // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
   for (const confName of clientAliases(confClientNames)) {
     if (confName && confName.trim().length >= 2) {
@@ -124,62 +116,7 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
 
   res = res.replace(/\bclients such as\s+([^.!?]+)(?=[.!?]|$)/gi, (whole, names) => /a confidential client/i.test(names) ? 'a range of clients' : whole);
 
-  // Polish English grammar in bios and descriptions (Angela Housekeeping Rule)
-  res = res.replace(/\b(?:is the Partner of|is the partner of)\b/g, 'is a partner in');
-  res = res.replace(/\bLabor & Employment\b/g, 'Labour & Employment');
-
-  // Transform passive lawyer attribution formulas to direct firm leadership advocacy (Role Fidelity & Accuracy)
-  res = res.replace(/\bJosé Alberto Díaz Méndez\s+(?:led\s+the\s+representation\s+as\s+lead\s+partner|is\s+the\s+lead\s+partner)\b/gi, 'José Alberto Díaz Méndez led the representation as lead lawyer');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b/gi, '$1 led the representation as lead partner, supported by $2 on the team');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b/gi, '$1 and $2 led the representation as lead partners');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+the\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b/gi, '$1 also leads');
-  res = res.replace(/\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b/gi, 'serves as lead partner');
-  res = res.replace(/\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b/gi, 'serve as lead partners');
-  res = res.replace(/\bhas\s+documented\s+responsibility\s+for\b/gi, 'directs');
-
-  // Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
-  res = res.replace(
-    /\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:presents\s+an\s+established\s+practice\s+in|warrants\s+recognition\s+in)\s+Chambers\s+Latin\s+America(?:['’]s)\s+(?:Mexico\s+)?([A-Za-z\s&]+?)(?:\s+table)?\s*(?:,\s*distinguished\s+by|distinguished\s+by|\s+for)\b/gi,
-    (match, firm, practice) => {
-      const cleanPractice = practice.replace(/\s+table$/i, '').trim();
-      return `${firm} demonstrates an established ${cleanPractice} practice in Mexico, distinguished by`;
-    }
-  );
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b/gi, '$1 presents an established practice in $2, distinguished by');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b/gi, '$1 maintains an established practice distinguished by');
-  res = res.replace(/\b(?:warrants\s+recognition|merits\s+recognition)\b/gi, 'maintains proven market standing');
-  res = res.replace(/\b[A-Z][a-zA-Z\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\./gi, '');
-  res = res.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\./gi, '');
-  res = res.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\./gi, '');
-
-  // Sentence capitalization fix following legal entity acronyms (S.A. DE C.V., C.V., S.C., etc.)
-  res = res.replace(/\b(S\.A\.\s+DE\s+C\.V\.|C\.V\.|S\.C\.|S\.A\.P\.I\.\s+DE\s+C\.V\.|S\.\s+DE\s+R\.L\.\s+DE\s+C\.V\.)\s+(Is|In|And|To|For|As|With|By|Of|On|At)\b/g, (match, prefix, word) => `${prefix} ${word.toLowerCase()}`);
-
-  // Strip residual audit voice from submission texts
-  res = res.replace(/\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b/gi, 'In decisive procedural proceedings,');
-  res = res.replace(/\bIt\s+further\s+reports\s+(?:that\s+)?a\s+favourable\s+ruling\b/gi, 'The team secured a decisive favorable ruling');
-  res = res.replace(/\bIt\s+further\s+reports\s+that\b/gi, 'Additionally,');
-  res = res.replace(/\bwhere\s+the\s+reported\s+(\d{4}\s+)?developments\s+include\b/gi, 'where key developments include');
-  res = res.replace(/\bThe\s+reported\s+(\d{4}\s+)?developments\s+include\b/gi, 'Key developments include');
-  res = res.replace(/\bThe\s+reported\s+outcome\s+was\b/gi, 'The strategic outcome achieved was');
-  res = res.replace(/\bwith\s+the\s+source\s+recording\s+that\s+the\s+client\s+obtained\s+standing\b/gi, "securing the client's standing");
-  res = res.replace(/\bthe\s+source\s+records\s+that\b/gi, 'the representation achieved that');
-  res = res.replace(/\bIn\s+confidential\s+matters,\s+the\s+practice\s+has\b/gi, 'In representative contentious mandates, the practice has');
-  res = res.replace(/\bthe verified evidentiary record demonstrates\b/gi, 'our active practice record demonstrates');
-  res = res.replace(/\bthe verified evidentiary record\b/gi, 'our representative practice record');
-  res = res.replace(/\bverified evidentiary record\b/gi, 'active practice record');
-  res = res.replace(/\bevidentiary record demonstrates\b/gi, 'representative casework demonstrates');
-  res = res.replace(/\bevidentiary record\b/gi, 'practice record');
-  res = res.replace(/\bevidence completeness\b/gi, 'breadth of experience');
-  res = res.replace(/\bdefensibility\b/gi, 'substantive standing');
-  res = res.replace(/\bour analysis indicates\b/gi, 'our market experience indicates');
-  res = res.replace(/\bour analysis demonstrates\b/gi, 'our caseload demonstrates');
-  res = res.replace(/\bthe audit demonstrates\b/gi, 'our track record demonstrates');
-  res = res.replace(/\bthe audit indicates\b/gi, 'our practice experience indicates');
-  res = res.replace(/\bthis baseline does not reflect\b/gi, 'this position does not reflect');
-
+  // Anonymization must not rewrite seniority, results or the meaning of the work.
   return res;
 }
 
@@ -210,7 +147,7 @@ export function buildLawyerStandoutWork(
   );
 
   // If existing standout work is distinct from bio/comments and substantive, use it
-  if (!isOffCategoryEnergy && cleanExisting && cleanExisting.length > 25) {
+  if (!(allMattersPool || []).some(m=>resolvePublication(m)!=='publishable') && !isOffCategoryEnergy && cleanExisting && cleanExisting.length > 25) {
     const existingTokens = getNameTokens(cleanExisting);
     const bioTokens = getNameTokens(cleanBio);
     let overlap = 0;
@@ -226,6 +163,11 @@ export function buildLawyerStandoutWork(
   // Otherwise, dynamically construct standout recent work from the lawyer's attributed matters
   const isRealEstate = practiceArea && /real\s*estate|inmobiliari/i.test(practiceArea);
   const attributedMatters = (allMattersPool || []).filter(m => {
+    // A client-name mask cannot anonymize project names, sites, counterparties
+    // and unique combinations of metrics in a confidential source narrative.
+    // Its public argument belongs in the source-grounded candidate bio, not an
+    // automatic copy of the confidential matter into a B9 work snippet.
+    if(resolvePublication(m)!=='publishable') return false;
     const lead = String(m.leadPartner || m.lead_partner || (Array.isArray(m.leadPartners) ? m.leadPartners.join(' ') : ''));
     const team = String(m.teamMembers || m.team_members || (Array.isArray(m.otherLawyers) ? m.otherLawyers.join(' ') : ''));
     const matchesLawyer = isSameLawyer(lawyerName, lead) || isSameLawyer(lawyerName, team);
@@ -309,7 +251,10 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
       const nameEsc = person.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       bio = bio.replace(new RegExp(`^(${nameEsc}\\s+is\\s+)(?:a\\s+partner|a\\s+Partner|Partner)\\s+in\\s+`, 'i'), '$1the Partner and Head of ');
     }
-    const standoutWork = buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio, practiceArea);
+    // The reviewed candidacy bio already develops its attributed matters.
+    // Appending snippets from a second source would duplicate that argument
+    // and introduce prose outside the reviewed development proposal.
+    const standoutWork = candidacy?.submission_bio ? '' : buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio, practiceArea);
     return { name: person.name, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });
 }

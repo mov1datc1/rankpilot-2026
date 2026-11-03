@@ -3,6 +3,10 @@ from core.register_review import register_defects, register_output_limit
 from core.editorial_development import submission_voice_paths
 
 class RegisterReviewTests(unittest.TestCase):
+    def test_client_identity_is_not_a_sector_descriptor_to_remove(self):
+        self.package['matters'][0]['client']='Example'
+        self.check['claims']=[{'scope':'letter','artifact_quote':'Industrial employer Example is selected.','conflicting_artifact_term':'Example'}]
+        self.assertEqual(register_defects(self.package,[self.check]),[])
     def setUp(self):
         self.package={'matters':[{'id':'m','rawNotes':'The client operates industrial facilities.','confidentialityEvidence':{'client_register':[{'quote':'Example | Internet services | Y'}]}}],'rendered_artifact':'The industrial employer retained the firm.','rendered_audit':'Industrial employer Example is selected.'}
         self.check={'matter_id':'m','relationship':'conflicting','rationale':'Source sectors differ; sector is not needed for the labour work.','register_quote':'Internet services','narrative_quote':'industrial facilities','nonessential_sector':True,'claims':[{'scope':'submission','artifact_quote':'The industrial employer retained the firm.','conflicting_artifact_term':'industrial'}]}
