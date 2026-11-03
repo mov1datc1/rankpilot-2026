@@ -37,19 +37,19 @@ global.fetch=async(url,options)=>{
  return Response.json({success:true,judge:{passed:true,defects:[]},trace:[{role:'editor',usage:{total_tokens:150}},{role:'portfolio_reviewer',usage:{total_tokens:25}}]});
 };
 async function stage(){job.status='running';job.leaseToken=`lease-${job.cursor}`;await runJobStage(structuredClone(job));}
-test('a transient internal failure queues recovery on the same job and completes without a resume request',async()=>{
+test('an unknown provider failure pauses the same job without purchasing a duplicate call',async()=>{
  reset();await stage();
  const sourceHash=job.sourceHash,normalFetch=global.fetch;
  try {
   global.fetch=async()=>Response.json({success:false,code:'AI_REVIEW_UNAVAILABLE',error:'Temporary upstream failure'},{status:502});
-  const before=Date.now();await stage();
-  assert.equal(job.status,'queued');assert.equal(job.cursor,1);assert.ok(+new Date(job.leaseUntil)>=before+330000);
+  await stage();
+  assert.equal(job.status,'indeterminate');assert.equal(job.cursor,1);assert.equal(job.leaseUntil,null);
   global.fetch=normalFetch;
   for(let i=0;i<5 && job.status==='queued';i++)await stage();
-  assert.equal(job.status,'completed');assert.equal(job.id,'job');assert.equal(job.sourceHash,sourceHash);
+  assert.equal(job.status,'indeterminate');assert.equal(job.id,'job');assert.equal(job.sourceHash,sourceHash);
   assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
   assert.equal(job.ledger.filter(e=>e.issue?.code==='AI_REVIEW_UNAVAILABLE').length,1);
-  assert.ok(submission.chambersData.approved_artifact.audit_base64);
+  assert.ok(!submission.chambersData.approved_artifact);
  } finally {global.fetch=normalFetch;}
 });
 test('worker completes real paired DOCX with strategy first, reserves untouched, no browser authentication',async()=>{

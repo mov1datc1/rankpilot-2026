@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.9] — 2026-11-03 — Stop costly retry loops
+
+- Permit only one retry per failed stage/cursor across all builds; deploying a fix no longer replenishes the automatic retry allowance.
+- Stop automatic recovery after an unknown provider outcome. A timeout or elapsed lease does not prove completion, zero usage or permission to purchase a duplicate generation. Reject same-source manual restart of an indeterminate job even after five minutes.
+- Permit at most two automatic final-review repair rounds, and stop on any previously reviewed content hash rather than checking only the most recent review. Source integrity and independent exact-document approval remain mandatory.
+- These are spending safeguards, not a new autonomous acceptance pass. Normal preparation still consumes tokens; the existing cumulative stage-start budget is not a guaranteed provider billing cap. Durable recovery by provider response ID remains unimplemented.
+
 ## [1.0.8] — 2026-11-03 — Preventive validation before the autonomous acceptance test
 
 - Detect shared combinations of explicit confidential metrics across all public B9/B10/C2 fields before Word generation, and batch their source-bound repair targets. Preserve source records and confidential E narratives; this conservative preflight never grants approval or replaces the independent semantic and exact-document review.

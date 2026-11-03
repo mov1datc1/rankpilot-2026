@@ -7,8 +7,8 @@ export function generatedContentHash(data:any):string {
 }
 export function mayRepairAutomatically(ledger:any[],data:any):boolean {
   const reviews=(ledger || []).filter(e=>e.stage==='artifact' && e.generated_content_hash);
-  if(reviews.length>=3) return false;
-  return !reviews.length || reviews.at(-1).generated_content_hash!==generatedContentHash(data);
+  if(reviews.length>=2) return false;
+  return !reviews.some(e=>e.generated_content_hash===generatedContentHash(data));
 }
 
 /** A known generated claim cannot silently pass while its rejected wording survives.

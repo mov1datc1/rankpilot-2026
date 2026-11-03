@@ -62,7 +62,8 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(requestRepair && last?.status==='needs_review' && last.resultHash===resultHash && !repair) throw new Error('AUTO_REPAIR_UNAVAILABLE');
     if(!repair && last?.resultHash===resultHash && last?.sourceHash===sourceHash && ['completed','needs_review'].includes(last.status)) return last;
     if(last?.sourceHash===sourceHash && !retry) return last;
-    if(last?.status==='indeterminate' && Date.now()-new Date(last.updatedAt).getTime()<300000) throw new Error('PROVIDER_OUTCOME_UNKNOWN');
+    // Elapsed time is not evidence of provider completion or zero usage.
+    if(last?.status==='indeterminate' && last.sourceHash===sourceHash) throw new Error('PROVIDER_OUTCOME_UNKNOWN');
     const tasks=repair?.tasks || ['selection'];
     const ledger=repair ? [{stage:'artifact',status:'repair_requested'}] : [];
     if(repair) {

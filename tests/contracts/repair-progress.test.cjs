@@ -8,7 +8,13 @@ test('automatic repair continues only with content progress and within bounded a
  assert.equal(mayRepairAutomatically([review],{...before,draft_revision:2}),false);
  const after={editorial_review:{letter:{portfolio:'Corrected'}}};
  assert.equal(mayRepairAutomatically([review],after),true);
- assert.equal(mayRepairAutomatically([review,review,review],after),false);
+ assert.equal(mayRepairAutomatically([review,review],after),false);
+});
+test('a content cycle is stopped even when it differs from the last review',()=>{
+ const a={editorial_review:{letter:{portfolio:'A'}}},b={editorial_review:{letter:{portfolio:'B'}}};
+ const history=[{stage:'artifact',generated_content_hash:generatedContentHash(a)},{stage:'artifact',generated_content_hash:generatedContentHash(b)}];
+ assert.equal(mayRepairAutomatically(history,a),false);
+ assert.equal(mayRepairAutomatically(history,{editorial_review:{letter:{portfolio:'C'}}}),false);
 });
 const {unrepairedGeneratedClaims}=require('../../src/lib/editorial/repair-progress.ts');
 test('a concrete requested correction cannot disappear from review while the rejected claim survives',()=>{

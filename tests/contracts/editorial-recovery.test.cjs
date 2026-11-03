@@ -2,14 +2,17 @@ require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {recoveryPlan,editorialTokenBudget}=require('../../src/lib/editorial/recovery.ts');
 const job={cursor:2,stage:'audit',ledger:[],issue:{owner:'rankpilot'}};
-test('unknown provider outcome is quarantined beyond the engine lease before automatic retry',()=>{
- const plan=recoveryPlan(job,'AI_REVIEW_UNAVAILABLE','build',1000);
- assert.ok(+plan.retryAt>=331000);assert.equal(plan.attempt,1);
+test('unknown provider outcomes never buy another call after a delay or deployment',()=>{
+ for(const code of ['AI_REVIEW_UNAVAILABLE','INTERRUPTED','EXISTING_CALL','STAGE_FAILED','DRAFT_CONFLICT']) {
+  assert.equal(recoveryPlan(job,code,'build',1000),null);
+  assert.equal(recoveryPlan(job,code,'fixed',Date.now()+3600000),null);
+ }
 });
-test('three same-stage failures stop automatic consumption, a new build gets a bounded recovery',()=>{
- const ledger=Array.from({length:3},()=>({stage:'audit',cursor:2,worker_commit:'old',issue:{code:'DEVELOPMENT_REJECTED'}}));
+test('one retry per stage/cursor, with no extra allowance after a deployment',()=>{
+ const ledger=Array.from({length:2},()=>({stage:'audit',cursor:2,worker_commit:'old',issue:{code:'DEVELOPMENT_REJECTED'}}));
+ assert.ok(recoveryPlan({...job,ledger:ledger.slice(0,1)},'DEVELOPMENT_REJECTED','fixed'));
  assert.equal(recoveryPlan({...job,ledger},'DEVELOPMENT_REJECTED','old'),null);
- assert.ok(recoveryPlan({...job,ledger},'DEVELOPMENT_REJECTED','fixed'));
+ assert.equal(recoveryPlan({...job,ledger},'DEVELOPMENT_REJECTED','fixed'),null);
  assert.equal(recoveryPlan({...job,ledger:[...ledger,...ledger]},'DEVELOPMENT_REJECTED','another'),null);
 });
 test('recovery preserves the cumulative budget and never takes over factual user questions or changed sources',()=>{

@@ -24,13 +24,14 @@ export function spentTokens(ledger:any[]) {
 }
 export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{retryAt:Date;attempt:number}|null {
   if(!recoverable.has(code) || job.issue?.owner==='user' || job.issue?.retryable===false || job.cursor>=40 || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger) || authorizedReviewUsed(job.ledger)) return null;
-  // Three failures per stage/cursor/build, bounded globally even across deployments.
+  // Waiting out a lease cannot establish whether the provider already billed
+  // or finished a call. Do not buy another generation on an unknown outcome.
+  if(uncertain.has(code)) return null;
+  // One retry per stage/cursor. Deploying a fix never replenishes this allowance.
   const failures=(job.ledger || []).filter((e:any)=>e.issue && e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor));
-  if(failures.length>=6) return null;
-  const attempts=failures.filter((e:any)=>e.worker_commit===commit).length;
-  if(attempts>=(code==='AI_OUTPUT_LIMIT'?2:3)) return null;
-  // Longer than the engine's 330s lease. Never overlap an unknown provider call.
-  const delay=uncertain.has(code)?360000:Math.min(120000,15000*2**attempts);
+  if(failures.length>=2) return null;
+  const attempts=failures.length;
+  const delay=Math.min(120000,15000*2**attempts);
   return {retryAt:new Date(now+delay),attempt:attempts+1};
 }
 
