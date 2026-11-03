@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.7] — 2026-11-03 — Same-party spelling and confidential public prose
+
+- Treat corroborated orthographic name variants within the same original matter as an internal alias editing task, including selected matters. Preserve both literal source variants; never infer a different corporate identity or grant approval from a similarity check.
+- Require the reviewer’s explicit same-party assessment, exact same-record names and bounded spelling corroboration. Different legal entities, geographic qualifiers, roles, values and fabricated output quotes retain their existing gates.
+- Reinforce generation and repair instructions against combining confidential transaction, location and case-specific metrics in public B9/B10/C2. Keep exact facts in E.
+- Record the compatible prompt revision `same-party-aliases-v1` in role traces. Keep the release contract and renderer unchanged; a repair still re-renders and independently reviews its exact new pair.
+- Live test before this follow-up: Ramos completed the normal UI flow with bounded automatic repairs and approved exact Word downloads. DeForest correctly rejected identifying public prose but also raised an avoidable same-party spelling confirmation; this follow-up addresses that false positive. Private evidence stays outside Git.
+
 - Follow-up: bind failed-review draft pairs to their saved inputs and serve those exact bytes on draft download; avoid regenerating a different preview from raw database matters.
 - Follow-up: describe stored B10 and amounts as recorded, without unsupported verification labels; route corrected-artifact review to RankPilot rather than asking the client to change source data.
 

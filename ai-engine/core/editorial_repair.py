@@ -26,6 +26,8 @@ TASK+=''' For a defect explicitly marked conflict_resolution=omit_nonessential_d
 
 TASK+=''' When a confidentiality defect identifies a revealing combination in public B9/B10/C2, generalize ONLY that combination in the permitted public fields. Keep the legal work, personal attribution and supported scale in non-identifying terms. Preserve every exact source fact and metric in confidential section E; never weaken the confidential matter narrative merely to anonymize a public profile. This is an allowed privacy transformation, not invented evidence or a source edit.'''
 
+TASK += " A same-party spelling variant is an editorial alias, not a genuine unanswered identity question. Preserve original source fields and add both attested variants once in the internal Audit when relevant; do not invent a corporate identity or ask the user to select spelling. For public privacy repairs, remove the identifying combination across ALL flagged B9/B10/C2 fields while retaining meaningful legal work and attribution. Retain exact private figures in E only."
+
 def repair_targets(package, strategy, proposal):
     from core.editorial_development import SOURCE_FIELDS, _norm, literal_quote, development_errors, submission_voice_paths
     errors=development_errors(package,strategy,proposal)
