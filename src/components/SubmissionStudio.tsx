@@ -3620,7 +3620,7 @@ export default function SubmissionStudio({
                         ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Haz clic en Optimizar Todo para estructurar los 4 Pilares Institucionales.`
                         : b10WordCount > 1000
                           ? `⚠️ Excede el presupuesto editorial de 1.000 palabras (${b10WordCount}/1000w). Calibra la extensión para mantener la densidad analítica en ${selectedDirectory}.`
-                          : `${b10WordCount} palabras (estándar editorial de hasta 1.000w). ${needsB10Optimization(chambersData,b10Text) ? 'Conserva el texto de origen; pendiente de optimizar.' : 'Posicionamiento institucional verificado.'}`}
+                          : `${b10WordCount} palabras (estándar editorial de hasta 1.000w). ${needsB10Optimization(chambersData,b10Text) ? 'Conserva el texto de origen; pendiente de optimizar.' : 'Redacción guardada; consulta el estado de revisión de la entrega.'}`}
                     </p>
                     {b10Text.trim() && <p aria-label="Vista previa del B10 actual" style={{fontSize:'0.72rem',color:'#475569',lineHeight:1.45}}>{b10Text.trim().slice(0,180)}{b10Text.trim().length > 180 ? '…' : ''}</p>}
                     <button
@@ -3662,7 +3662,7 @@ export default function SubmissionStudio({
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
                         {flagshipMatter.value && flagshipMatter.value !== 'N/A' && flagshipMatter.value !== 'Not disclosed'
-                          ? `Monto verificado: ${formatCleanValue(flagshipMatter.value) || flagshipMatter.value}. Estructurado en 3 párrafos orgánicos (Mandato, Desafío Técnico y Precedente).`
+                          ? `Monto registrado: ${formatCleanValue(flagshipMatter.value) || flagshipMatter.value}. Comprueba su fuente antes de presentar.`
                           : `Asunto priorizado para ${firmName}. El Audit explica su aportación a la selección.`}
                       </p>
                       <button

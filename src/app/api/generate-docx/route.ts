@@ -1,4 +1,4 @@
-import { artifactHash, deliveryInputHash } from '@/lib/audit/artifact-binding';
+import { artifactHash, deliveryInputHash, storedDraftBytes } from '@/lib/audit/artifact-binding';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
@@ -97,6 +97,16 @@ export async function GET(request: NextRequest) {
       const bytes=Buffer.from(encoded,'base64');
       if(artifactHash(bytes)!==expected)return NextResponse.json({error:'No se pudo comprobar la versión anterior.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
+    }
+    if(exportMode==='draft') {
+      let bytes:Buffer|null;
+      try { bytes=storedDraftBytes(submission,chambersData,docType); }
+      catch { return NextResponse.json({error:'La integridad del borrador guardado no pudo verificarse.'},{status:409}); }
+      if(bytes) return new NextResponse(new Uint8Array(bytes),{headers:{
+        'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition':buildSafeContentDisposition(docType==='submission'?'Submission_BORRADOR':'Audit_BORRADOR',submission.practiceArea,'docx'),
+        'Cache-Control':'private, no-store','X-Artifact-SHA256':artifactHash(bytes),'X-Artifact-Status':'draft'
+      }});
     }
     const pair=chambersData.approved_artifact;
     const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;

@@ -1,3 +1,7 @@
+## Seguimiento de descarga exacta y etiquetas — 2026-11-03
+
+f90c922 publicado en main, Vercel y ambos servicios Render. Ambos expedientes actuales guardados en Draft, revisión 4, sin aprobación; read-back comprobado y fuentes intactas. Los cuatro borradores finales locales tienen QA visual (55 páginas, incluyendo comparación de páginas idénticas). La descarga autenticada reveló que el endpoint regeneraba una pareja distinta desde datos raw; este seguimiento sirve el draft_artifact exacto cuando su input_hash sigue vigente y sus SHA256 coinciden. Ambos borradores se vincularon mediante transacción y guardas, sin cambiar textos ni aprobación. No invalidar esa vinculación mediante metadatos incidentales. Los históricos aprobados permanecen sin cambios. Etiquetas B10 y monto pasan a “guardado/registrado”; pendiente de revisión del Word corresponde a RankPilot. No se realizaron más generaciones OpenAI.
+
 ## 2026-11-03 — v1.0.6 y recuperación de expedientes en curso
 
 Jonathan autorizó corregir código, revisar sesiones, fuentes y descargas. Confirmó workspace Render `tea-cvqs3da4d50c73esalu0`. Autorizó dos reparaciones y dos revisiones OpenAI por caso, sin reextracción, y después UNA revisión final adicional por caso. Ese alcance quedó consumido. No crear otras generaciones sin nueva autorización. Hay timeouts con consumo desconocido; no afirmar consumo cero. La recuperación local por Responses ID no equivale a haber integrado background polling en el worker de producción.

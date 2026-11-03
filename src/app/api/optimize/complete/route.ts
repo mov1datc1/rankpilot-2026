@@ -14,7 +14,7 @@ import { Packer } from 'docx';
 import prisma from '@/lib/prisma';
 import { editorialUser } from '@/lib/editorial/identity';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
-import { artifactHash, deliveryInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
+import { artifactHash, deliveryInputHash, draftInputHash, RENDERER_VERSION, ARTIFACT_REVIEW_VERSION } from '@/lib/audit/artifact-binding';
 import { buildAuditDoc } from '@/app/api/generate-docx/audit-builder';
 import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
             revision_id: inputHash,
             directory: submission.targetDirectory,
           };
+          data.draft_artifact.input_hash=draftInputHash(submission,data);
         }
       }
     }

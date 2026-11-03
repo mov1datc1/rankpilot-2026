@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+- Follow-up: bind failed-review draft pairs to their saved inputs and serve those exact bytes on draft download; avoid regenerating a different preview from raw database matters.
+- Follow-up: describe stored B10 and amounts as recorded, without unsupported verification labels; route corrected-artifact review to RankPilot rather than asking the client to change source data.
+
 ## [1.0.6] — 2026-11-03 — Source-bound repair and exact-document release
 
 - Preserve every critical finding from the final reviewer. A returned letter no longer suppresses defects or creates an approval.

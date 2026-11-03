@@ -85,3 +85,17 @@ test('a rejected current claim can be repaired without overwriting unaffected hu
  assert.equal(fixed.matters[0].optimizedText,state.development.matters[0].text);assert.equal(fixed.matters[0].rawNotes,data.matters[0].rawNotes);
  assert.equal(data.matters[0].optimizedText,'The team won.');
 });
+
+test('draft download preserves the saved pair and refuses corruption or stale inputs',()=>{
+ const {artifactHash,draftInputHash,storedDraftBytes}=require('../../src/lib/audit/artifact-binding.ts');
+ const sub={practiceArea:'Tax',targetDirectory:'Chambers'}, data={enhanced_b10:'Current prose.',release_verdict:{passed:false}};
+ const bytes=Buffer.from('exact saved draft bytes');
+ data.draft_artifact={base64:bytes.toString('base64'),sha256:artifactHash(bytes),audit_base64:bytes.toString('base64'),audit_sha256:artifactHash(bytes)};
+ data.draft_artifact.input_hash=draftInputHash(sub,data);
+ assert.deepEqual(storedDraftBytes(sub,data,'submission'),bytes);
+ assert.deepEqual(storedDraftBytes(sub,data,'audit'),bytes);
+ data.enhanced_b10='Edited prose.';assert.equal(storedDraftBytes(sub,data,'submission'),null);
+ data.enhanced_b10='Current prose.';data.draft_artifact.base64=Buffer.from('corrupted').toString('base64');
+ assert.throws(()=>storedDraftBytes(sub,data,'submission'),/DRAFT_ARTIFACT_CORRUPTED/);
+ assert.equal(data.release_verdict.passed,false);
+});

@@ -28,3 +28,19 @@ export function previousApprovedArtifact(submission:any,data:any) {
   }
   return data.previous_approved_artifact || null;
 }
+
+/** Draft bytes have their own binding; they never confer editorial approval. */
+export function draftInputHash(submission:any,data:any=submission.chambersData || {}) {
+  const {draft_artifact,...inputs}=data;
+  return deliveryInputHash(submission,inputs);
+}
+export function storedDraftBytes(submission:any,data:any,kind:string):Buffer|null {
+  const draft=data.draft_artifact;
+  if(!draft || draft.input_hash!==draftInputHash(submission,data)) return null;
+  const encoded=kind==='submission'?draft.base64:kind==='audit'?draft.audit_base64:null;
+  const expected=kind==='submission'?draft.sha256:draft.audit_sha256;
+  if(!encoded || !expected) return null;
+  const bytes=Buffer.from(encoded,'base64');
+  if(artifactHash(bytes)!==expected) throw new Error('DRAFT_ARTIFACT_CORRUPTED');
+  return bytes;
+}
