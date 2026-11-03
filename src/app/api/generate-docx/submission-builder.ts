@@ -170,13 +170,30 @@ export function stripAuditVoice(rawText: string): string {
   text = text.replace(/\bThe\s+firm\s+reports\s+that\s+it\b/gi, 'The firm');
   text = text.replace(/\bThe\s+firm\s+reports\b/gi, 'The firm provides');
 
+  // 1c. Transform passive lawyer attribution formulas to direct firm leadership advocacy (Angela Castillo Directive)
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b/gi, '$1 led the representation as lead partner, supported by $2 on the team');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b/gi, '$1 and $2 led the representation as lead partners');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(?:partner|lawyer)\b/gi, '$1 led the representation as lead partner');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b/gi, '$1 also leads');
+  text = text.replace(/\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b/gi, 'serves as lead partner');
+  text = text.replace(/\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b/gi, 'serve as lead partners');
+  text = text.replace(/\bhas\s+documented\s+responsibility\s+for\b/gi, 'directs');
+
+  // 1d. Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b/gi, '$1 presents an established practice in $2, distinguished by');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b/gi, '$1 maintains an established practice distinguished by');
+  text = text.replace(/\b(?:warrants\s+recognition|merits\s+recognition)\b/gi, 'maintains proven market standing');
+  text = text.replace(/\b[A-Z][a-zA-Z\s&]+?\s+invites\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\./gi, '');
+  text = text.replace(/\binvites\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\./gi, '');
+  text = text.replace(/\binvites\s+researcher\s+dialogue[^\n.]*\./gi, '');
+
   // 2. Strip trailing or semicolon audit caveats
   text = text.replace(/;\s*(?:no\s+(?:final\s+|formal\s+|matter\s+|portfolio\s+|overall\s+)*(?:completion\s+status|outcome|result|decision)\s+is\s+stated|while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated|no\s+completion\s+or\s+approval\s+should\s+be\s+inferred|it\s+does\s+not\s+state\s+a\s+final\s+conclusion[^.]*|without\s+claiming\s+a\s+final\s+decision[^.]*)[^.]*/gi, '');
   text = text.replace(/,\s*(?:while\s+the\s+ultimate\s+(?:merits\s+)?outcome\s+is\s+not\s+stated|with\s+no\s+(?:final\s+|formal\s+|litigation\s+|portfolio\s+|overall\s+)*(?:outcome|completion\s+status|result)\s+stated|so\s+these\s+results\s+are\s+interim\s+operational\s+outcomes[^.]*)[^.]*/gi, '');
   text = text.replace(/;\s*no\s+formal\s+(?:overall\s+)?completion\s+status\s+(?:or\s+regulatory\s+outcome\s+)?is\s+stated[^.]*/gi, '');
   
   // 3. Sentence-level audit voice filter
-  const auditPattern = /(?:\b(?:the\s+(?:submitted\s+)?(?:source|narrative|dossier|record)|this\s+record|the\s+available\s+(?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately\s+records|does\s+not|doesn't|gives\s+no|contains\s+no|does\s+not\s+report|does\s+not\s+provide|does\s+not\s+define|does\s+not\s+state|states|describes|records|reports)\b|\bno\s+(?:completion|approval|result|outcome|final\s+decision)\s+should\s+be\s+inferred\b|\b(?:the\s+)?(?:ultimate|final)\s+(?:merits\s+)?(?:result|outcome)\s+is\s+not\s+stated\b|\bwithout\s+claiming\s+a\s+final\s+decision\b|\bso\s+the\s+matter\s+should\s+be\s+presented\s+as\b|\bit\s+does\s+not\s+identify\s+that\s+figure\s+as\b|\bthe\s+narrative\s+therefore\s+records\b|\bdoes\s+not\s+provide\s+a\s+matter\s+value\b|\bdoes\s+not\s+define\s+that\s+economic\s+concept\b|\bno\s+discrete\s+matter\s+value\s+has\s+been\s+specified\b|\bmonetary\s+amounts\s+are\s+not\s+stated\b|\bavailable\s+mandate\s+record\s+does\s+not\s+state\b|\bverified\s+evidentiary\s+record\b|\bour\s+analysis\s+(?:indicates|demonstrates)\b|\bthe\s+audit\s+(?:demonstrates|indicates)\b)/i;
+  const auditPattern = /(?:\b(?:the\s+(?:submitted\s+)?(?:source|narrative|dossier|record)|this\s+record|the\s+available\s+(?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately\s+records|does\s+not|doesn't|gives\s+no|contains\s+no|does\s+not\s+report|does\s+not\s+provide|does\s+not\s+define|does\s+not\s+state|states|describes|records|reports)\b|\bno\s+(?:completion|approval|result|outcome|final\s+decision)\s+should\s+be\s+inferred\b|\b(?:the\s+)?(?:ultimate|final)\s+(?:merits\s+)?(?:result|outcome)\s+is\s+not\s+stated\b|\bwithout\s+claiming\s+a\s+final\s+decision\b|\bso\s+the\s+matter\s+should\s+be\s+presented\s+as\b|\bit\s+does\s+not\s+identify\s+that\s+figure\s+as\b|\bthe\s+narrative\s+therefore\s+records\b|\bdoes\s+not\s+provide\s+a\s+matter\s+value\b|\bdoes\s+not\s+define\s+that\s+economic\s+concept\b|\bno\s+discrete\s+matter\s+value\s+has\s+been\s+specified\b|\bmonetary\s+amounts\s+are\s+not\s+stated\b|\bavailable\s+mandate\s+record\s+does\s+not\s+state\b|\bverified\s+evidentiary\s+record\b|\bour\s+analysis\s+(?:indicates|demonstrates)\b|\bthe\s+audit\s+(?:demonstrates|indicates)\b|\b(?:is\s+identified\s+as\s+lead|is\s+named\s+as\s+lead|invites\s+researcher\s+dialogue|warrants\s+recognition)\b)/i;
   
   const sentences = text.split(/(?<=[.!?])\s+/);
   const cleanSentences: string[] = [];

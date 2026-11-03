@@ -96,7 +96,11 @@ AUDIT_VOICE = re.compile(
     r"(?:the\s+)?(?:update|source)\s+reports\s+that|"
     r"it\s+further\s+reports|"
     r"the\s+reported\s+(?:\d{4}\s+)?developments|"
-    r"with\s+the\s+source\s+recording"
+    r"with\s+the\s+source\s+recording|"
+    r"is\s+identified\s+as\s+lead|"
+    r"is\s+named\s+as\s+lead|"
+    r"invites\s+researcher\s+dialogue|"
+    r"warrants\s+recognition"
     r")\b",
     re.I,
 )
@@ -145,6 +149,23 @@ def sanitize_narrative_voice(text):
     text = re.sub(r'\bThe\s+firm\s+reports\s+advising\b', 'The firm advised', text, flags=re.I)
     text = re.sub(r'\bThe\s+firm\s+reports\s+that\s+it\b', 'The firm', text, flags=re.I)
     text = re.sub(r'\bThe\s+firm\s+reports\b', 'The firm provides', text, flags=re.I)
+
+    # Transform passive lawyer attribution formulas to direct firm leadership advocacy (Angela Castillo Directive)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b', r'\1 led the representation as lead partner, supported by \2 on the team', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b', r'\1 and \2 led the representation as lead partners', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(?:partner|lawyer)\b', r'\1 led the representation as lead partner', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b', r'\1 also leads', text, flags=re.I)
+    text = re.sub(r'\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b', 'serves as lead partner', text, flags=re.I)
+    text = re.sub(r'\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b', 'serve as lead partners', text, flags=re.I)
+    text = re.sub(r'\bhas\s+documented\s+responsibility\s+for\b', 'directs', text, flags=re.I)
+
+    # Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b', r'\1 presents an established practice in \2, distinguished by', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b', r'\1 maintains an established practice distinguished by', text, flags=re.I)
+    text = re.sub(r'\b(?:warrants\s+recognition|merits\s+recognition)\b', 'maintains proven market standing', text, flags=re.I)
+    text = re.sub(r'\b[A-Z][a-zA-Z\s&]+?\s+invites\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.', '', text, flags=re.I)
+    text = re.sub(r'\binvites\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\.', '', text, flags=re.I)
+    text = re.sub(r'\binvites\s+researcher\s+dialogue[^\n.]*\.', '', text, flags=re.I)
     
     # Strip trailing or semicolon audit caveats
     text = re.sub(r';\s*(?:no completion or approval should be inferred|the ultimate (?:merits )?outcome is not stated|it does not state a final conclusion[^.]*|without claiming a final decision[^.]*)', '', text, flags=re.I)

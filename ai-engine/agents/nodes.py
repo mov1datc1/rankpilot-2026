@@ -4143,7 +4143,7 @@ def artifact_validation_node(state: AgentState) -> Dict:
         if supporting:
             examples = ", ".join(supporting[:3])
             proposition = (
-                f"{lawyer_name} is identified as lead lawyer on {len(supporting)} "
+                f"{lawyer_name} led the representation as lead lawyer on {len(supporting)} "
                 f"submitted matter{'s' if len(supporting) != 1 else ''}, including {examples}."
             )
         if not supporting:

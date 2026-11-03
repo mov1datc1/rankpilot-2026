@@ -185,4 +185,24 @@ DeForest respectfully requests first-time recognition for its demonstrated abili
     assert.doesNotMatch(standout, /power plants/i);
     assert.match(standout, /EL CIELO COUNTRY CLUB/i);
   });
+
+  await t.test('8. Lawyer Direct Attribution: Transform Passive "is identified as lead partner" into Direct Leadership Advocacy', () => {
+    const rawMatter = "The firm continues to manage 35 active labour proceedings connected with the integration. Eduardo Garduño is identified as lead partner and Ana Ruiz as a team member. José Alberto Díaz Méndez is identified as lead partner. Garduño is also named as lead partner on a nationwide litigation platform.";
+    const cleanMatter = stripAuditVoice(rawMatter);
+
+    assert.doesNotMatch(cleanMatter, /is identified as lead partner/i);
+    assert.doesNotMatch(cleanMatter, /is also named as lead partner/i);
+    assert.match(cleanMatter, /Eduardo Garduño led the representation as lead partner, supported by Ana Ruiz on the team/i);
+    assert.match(cleanMatter, /José Alberto Díaz Méndez led the representation as lead partner/i);
+    assert.match(cleanMatter, /Garduño also leads a nationwide litigation platform/i);
+  });
+
+  await t.test('9. C2 Submission Pleading & Researcher Dialogue: Zero "warrants recognition" and Zero "invites researcher dialogue"', () => {
+    const rawC2 = "DeForest Abogados warrants recognition in Chambers Latin America’s Mexico Labour & Employment table for its employer-side work. DeForest invites researcher dialogue with client referees regarding the team’s leadership, responsiveness, collective-relations capability and handling of complex employer-side mandates across Mexico.";
+    const cleanC2 = stripAuditVoice(rawC2);
+
+    assert.doesNotMatch(cleanC2, /warrants recognition/i);
+    assert.doesNotMatch(cleanC2, /invites researcher dialogue/i);
+    assert.match(cleanC2, /DeForest Abogados presents an established practice in Chambers Latin America’s Mexico Labour & Employment table, distinguished by its employer-side work/i);
+  });
 });

@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.4] — 2026-11-03 — Atribución Directa de Liderazgo de Abogados, Erradicación de Fórmulas Poco Naturales en C2 y Resolución de Bloqueos de Entrega
+
+### Added
+- **Suite de Pruebas de Regresión Ampliada a 10 Criterios ([`tests/contracts/angela-editorial-acceptance.test.cjs`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/tests/contracts/angela-editorial-acceptance.test.cjs))**:
+  - Test 8: Atribución directa del trabajo de abogados: erradicación sistemática de `"is identified as lead partner"`, `"is named as lead partner"`, `"is also named as lead partner on..."`, reemplazándolos por fórmulas asertivas de liderazgo directo (`"[Lawyer] led the representation as lead partner, supported by [Lawyer2] on the team"`, `"[Lawyer] also leads..."`). Incluye soporte Unicode para nombres con caracteres latinos/acentuados (`Garduño`, `Díaz`, `Méndez`, `López`).
+  - Test 9: Sanitización de C2: erradicación total de construcciones poco naturales como `"[Firm] warrants recognition in [Table] for..."` y `"DeForest invites researcher dialogue with client referees regarding..."`.
+
+### Changed
+- **Atribución Directa del Liderazgo de Socios ([`submission-builder.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts), [`lawyer-curator.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/docx/lawyer-curator.ts), [`editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py), [`nodes.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/agents/nodes.py))**:
+  - Sustitución determinista de frases pasivas o de registro judicial por atribución directa de liderazgo sustantivo:
+    - `"Eduardo Garduño is identified as lead partner and Ana Ruiz as a team member"` ➔ `"Eduardo Garduño led the representation as lead partner, supported by Ana Ruiz on the team"`
+    - `"José Alberto Díaz Méndez is identified as lead partner"` ➔ `"José Alberto Díaz Méndez led the representation as lead partner"`
+    - `"Garduño is also named as lead partner on a nationwide litigation platform"` ➔ `"Garduño also leads a nationwide litigation platform"`
+    - `"{lawyer_name} is identified as lead lawyer on..."` ➔ `"{lawyer_name} led the representation as lead lawyer on..."`
+- **Tono Institucional Asertivo y Natural en C2**:
+  - `"DeForest Abogados warrants recognition in Chambers... for..."` ➔ `"DeForest Abogados presents an established practice in Chambers... distinguished by..."`
+  - Eliminación total de la invitación artificial a entrevistarse con referencias (`"DeForest invites researcher dialogue with client referees regarding..."`), ya que Chambers contacta las referencias directamente y no forma parte del estándar de un submission formal.
+- **Autocorrección y Enrutamiento Seguro de Confidencialidad ([`src/lib/audit/input-review.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/audit/input-review.ts))**:
+  - Cuando un asunto no cuenta con confirmación explícita de confidencialidad en el documento fuente (campo en blanco), el sistema lo enruta de forma segura y automática como `confidential` (Sección E), protegiendo la privacidad del cliente y evitando que bloquee erróneamente el flujo de aprobación con alertas innecesarias para el usuario.
+
 ## [1.0.3] — 2026-11-02 — Voz de Defensa Institucional Transversal, Eliminación de Narración de Bitácora Procesal y Aislamiento de Práctica en Perfiles
 
 ### Added
