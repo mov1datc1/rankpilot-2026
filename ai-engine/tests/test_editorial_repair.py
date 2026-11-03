@@ -6,6 +6,21 @@ from core.editorial_development import develop
 from core.editorial_repair import repair_targets, apply_corrections
 
 class TargetedRepairTests(unittest.TestCase):
+    def test_public_bio_privacy_never_edits_matching_confidential_matter_or_sends_other_sources(self):
+        from core.editorial_repair import repair_rejected_development
+        proposal=copy.deepcopy(DEV)
+        proposal['candidates'][0]['submission_bio']=proposal['matters'][0]['text']
+        defect={'code':'UNSUPPORTED_CLAIM','severity':'critical','owner':'rankpilot','scope':'submission',
+            'matter_id':'m1','field_path':'candidates/0/submission_bio',
+            'artifact_quote':proposal['candidates'][0]['submission_bio'],
+            'message':'Generalize this confidential result in public B9.'}
+        with patch('core.editorial_repair.repair_development',return_value={}) as repair:
+            repair_rejected_development({'package':PACKAGE,'strategy':STRATEGY},proposal,[defect])
+        targets=repair.call_args.args[2]
+        self.assertEqual(set(targets),{'candidates/0/submission_bio'})
+        evidence=targets['candidates/0/submission_bio']['source_evidence']
+        self.assertEqual(evidence['matter']['id'],'m1');self.assertNotIn('package',evidence)
+
     def test_privacy_repair_covers_all_flagged_overviews_with_only_affected_source(self):
         from core.editorial_repair import repair_rejected_development
         proposal=copy.deepcopy(DEV)

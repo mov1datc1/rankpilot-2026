@@ -2,15 +2,28 @@
 const recoverable = new Set(['INTERRUPTED','EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE','DRAFT_CONFLICT','SELECTION_REVIEW_DEFERRED','DEVELOPMENT_REJECTED','GROUNDING_REJECTED','AI_OUTPUT_LIMIT','AI_REVIEW_INVALID']);
 const uncertain = new Set(['INTERRUPTED','EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE','DRAFT_CONFLICT']);
 
-export function editorialTokenBudget() {
+/** Extensions are private ledger events recorded only after explicit approval. */
+export function authorizedExtension(ledger:any[]=[]) {
+  return [...ledger].reverse().find((e:any)=>e.status==='authorized_extension' && e.authorization?.approved_by &&
+    Number.isSafeInteger(e.authorization.additional_tokens) && e.authorization.additional_tokens>0 &&
+    Number.isSafeInteger(e.authorization.spent_tokens) && e.authorization.spent_tokens>=0 &&
+    e.authorization.final_reviews===1);
+}
+export function authorizedReviewUsed(ledger:any[]=[]) {
+  const grant=authorizedExtension(ledger);
+  return !!grant && ledger.slice(ledger.indexOf(grant)+1).some(e=>e.stage==='artifact' && (e.trace || e.issue));
+}
+export function editorialTokenBudget(ledger:any[]=[]) {
   const configured=Number(process.env.EDITORIAL_TOKEN_BUDGET || 1200000);
-  return Number.isFinite(configured) && configured>0 ? configured:1200000;
+  const base=Number.isFinite(configured) && configured>0 ? configured:1200000;
+  const grant=authorizedExtension(ledger);
+  return grant ? Math.max(base,grant.authorization.spent_tokens+grant.authorization.additional_tokens):base;
 }
 export function spentTokens(ledger:any[]) {
   return (ledger || []).reduce((total:number,item:any)=>total+Number(item.trace?.usage?.total_tokens || 0),0);
 }
 export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{retryAt:Date;attempt:number}|null {
-  if(!recoverable.has(code) || job.issue?.owner==='user' || job.issue?.retryable===false || job.cursor>=40 || spentTokens(job.ledger)>=editorialTokenBudget()) return null;
+  if(!recoverable.has(code) || job.issue?.owner==='user' || job.issue?.retryable===false || job.cursor>=40 || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger) || authorizedReviewUsed(job.ledger)) return null;
   // Three failures per stage/cursor/build, bounded globally even across deployments.
   const failures=(job.ledger || []).filter((e:any)=>e.issue && e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor));
   if(failures.length>=6) return null;

@@ -50,3 +50,15 @@ test('ambiguous template-label diagnostics are reassessed without approving or t
 test('a rejected selection never buys another complete selector automatically',()=>{
  assert.equal(recoveryPlan({stage:'selection',cursor:0,issue:{owner:'rankpilot'},ledger:[]},'SELECTION_REJECTED','fixed'),null);
 });
+
+test('explicit extension adds only its approved ceiling and permits no second final call',()=>{
+ const {authorizedReviewUsed}=require('../../src/lib/editorial/recovery.ts');
+ const used=1209770,grant={status:'authorized_extension',authorization:{approved_by:'Explicit user approval',spent_tokens:used,additional_tokens:250000,final_reviews:1}};
+ const ledger=[{trace:{usage:{total_tokens:used}}},grant];
+ assert.equal(editorialTokenBudget(ledger),1459770);assert.equal(authorizedReviewUsed(ledger),false);
+ assert.ok(recoveryPlan({...job,ledger},'DEVELOPMENT_REJECTED','fixed'));
+ const reviewed=[...ledger,{stage:'artifact',issue:{code:'AI_REVIEW_UNAVAILABLE'}}];
+ assert.equal(authorizedReviewUsed(reviewed),true);assert.equal(recoveryPlan({...job,ledger:reviewed},'AI_REVIEW_UNAVAILABLE','fixed'),null);
+ assert.equal(recoveryPlan({...job,ledger:[...ledger,{trace:{usage:{total_tokens:250000}}}]},'DEVELOPMENT_REJECTED','fixed'),null);
+ assert.equal(editorialTokenBudget([{...grant,authorization:{...grant.authorization,approved_by:''}}]),editorialTokenBudget());
+});

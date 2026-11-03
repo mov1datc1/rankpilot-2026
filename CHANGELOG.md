@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.0.7] — 2026-11-03 — Same-party spelling and confidential public prose
 
+- Bind public biography privacy corrections to their public paths even when the confidential E narrative has the same literal text; retain E and use only the affected matter source for that delta.
+- Support an explicit private-ledger budget extension without resetting prior usage. A grant permits one final review; a rejection or provider failure cannot purchase another review automatically.
 - Live follow-up: finish a persisted semantic correction's local validation before replaying old artifact findings. Prevent an already corrected field from being sent back as an unchanged repair target; keep the independent Word review mandatory.
 - Bind each development repair path to its actual text or candidate value schema. Resume a stopped generated repair only after a code change, at the same job/cursor and with its existing ledger, failure limits and token budget; do not restart selection or reset consumption.
 - Cover every public overview field explicitly flagged in a confidentiality finding, even when its literal quote comes from only one field. Preserve already applied public fixes during residual validation; send only the affected matter source for these privacy deltas.

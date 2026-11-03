@@ -1,7 +1,7 @@
 import { stableHash } from './contracts';
 import { targetedRepair } from './jobs';
 import { mayRepairAutomatically } from './repair-progress';
-import { needsDiagnosticReview, recoveryPlan, editorialTokenBudget, spentTokens } from './recovery';
+import { needsDiagnosticReview, recoveryPlan, editorialTokenBudget, spentTokens, authorizedExtension } from './recovery';
 
 type Decision = {
   version: 1;
@@ -34,7 +34,8 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
   if(data.release_verdict?.passed===true && data.final_artifact_review?.judge?.passed===true && !critical.length)
     return decision('complete','independent_review_passed');
   if(critical.some((d:any)=>d.owner==='user')) return decision('needs_input','source_confirmation_required');
-  if(spentTokens(job.ledger)>=editorialTokenBudget()) return decision('pause','token_budget');
+  if(authorizedExtension(job.ledger)) return decision('pause','authorized_review_limit');
+  if(spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)) return decision('pause','token_budget');
   if(needsDiagnosticReview(data)) {
     const issue={code:'AI_REVIEW_INVALID',owner:'rankpilot',retryable:true};
     const marker={stage:'artifact',cursor:job.cursor,issue,worker_commit:commit};

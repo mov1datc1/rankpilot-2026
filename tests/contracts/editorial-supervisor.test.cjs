@@ -31,3 +31,10 @@ test('only the independent release and artifact verdict together authorize compl
  const d=data();d.final_artifact_review.judge={passed:true,defects:[]};assert.notEqual(superviseArtifact(job(),d,'build').action,'complete');d.release_verdict.passed=true;assert.equal(superviseArtifact(job(),d,'build').action,'complete');
  d.final_artifact_review.judge.defects=[issue];assert.notEqual(superviseArtifact(job(),d,'build').action,'complete');
 });
+
+test('one expressly authorized final review can approve exact bytes but cannot start another repair',()=>{
+ const j=job();j.ledger=[{status:'authorized_extension',authorization:{approved_by:'Explicit user approval',spent_tokens:1209770,additional_tokens:250000,final_reviews:1}}];
+ assert.equal(superviseArtifact(j,data(),'build').reason,'authorized_review_limit');
+ const d=data();d.final_artifact_review.judge={passed:true,defects:[]};d.release_verdict.passed=true;
+ assert.equal(superviseArtifact(j,d,'build').action,'complete');
+});

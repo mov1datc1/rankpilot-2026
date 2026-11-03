@@ -12,7 +12,7 @@ import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
 import { POST as b10 } from '@/app/api/optimize/b10/route';
 import { POST as complete } from '@/app/api/optimize/complete/route';
-import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview } from './recovery';
+import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview, authorizedReviewUsed } from './recovery';
 
 /** Recover only the latest job, with unchanged owned sources, under the same lock as enqueue. */
 export async function recoverStoppedJobs() {
@@ -64,7 +64,8 @@ export async function runJobStage(job:any) {
     const submission=await prisma.submission.findUnique({where:{id:job.submissionId},include:{matters:true}});
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
     if(cursor>=40) throw new Error('STAGE_BUDGET');
-    if(spentTokens(job.ledger)>=editorialTokenBudget()) throw new Error('TOKEN_BUDGET');
+    if(spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)) throw new Error('TOKEN_BUDGET');
+    if(stage==='artifact' && authorizedReviewUsed(job.ledger)) throw new Error('AUTHORIZED_REVIEW_LIMIT');
     const handler=stage==='selection'||stage==='development'||stage==='audit'?review:stage==='b10'?b10:stage==='artifact'?complete:stage?.startsWith('matter:')?matter:null;
     if(!handler) throw new Error('INVALID_STAGE');
     const previousFailure=(job.ledger || []).filter((entry:any)=>entry.stage===stage && entry.issue).at(-1);

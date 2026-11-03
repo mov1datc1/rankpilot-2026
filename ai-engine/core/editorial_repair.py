@@ -256,8 +256,17 @@ def repair_rejected_development(state, proposal, defects):
         if not exact and str(defect.get('field_path','')).lower() in allowed:
             exact=[str(defect['field_path']).lower()]
         privacy_paths=public_privacy_paths(defect,proposal)
-        if privacy_paths:
-            exact=[p for p in exact if p in ('b10','c2') or (p.startswith('candidates/') and p.endswith('/submission_bio'))]
+        public_path=str(defect.get('field_path',''))
+        public_privacy=bool(privacy_paths) or (defect.get('scope')=='submission' and
+            re.search(r'confidencial|confidential',str(defect.get('message','')),re.I) and
+            (public_path in ('b10','c2') or (public_path.startswith('candidates/') and public_path.endswith('/submission_bio'))))
+        if public_privacy:
+            # A public bio can quote the confidential E narrative verbatim.
+            # Privacy repair must never target E just because it matches first.
+            exact=[p for p in allowed if isinstance(allowed[p],str) and quote and quote in norm(allowed[p])
+                   and (p in ('b10','c2') or (p.startswith('candidates/') and p.endswith('/submission_bio')))]
+            if public_path in allowed and public_path not in exact:
+                exact.append(public_path)
         exact=list(dict.fromkeys(exact+privacy_paths))
         exact=[p for p in exact if p not in state.get('residual_repaired_public_paths',[])]
         if not exact and any(k in str(defect.get('message','')).lower() for k in ('b9','confidencial','confidential')):
@@ -275,7 +284,7 @@ def repair_rejected_development(state, proposal, defects):
             if term:exact=list(dict.fromkeys(exact+[path for path in candidates if isinstance(allowed[path],str) and term in norm(allowed[path]).casefold()]))
         for path in exact:
             evidence=source_for(path)
-            if path in public_privacy_paths(defect,proposal) and defect.get('matter_id'):
+            if public_privacy and defect.get('matter_id'):
                 matter=next((m for m in source_package.get('matters',[]) if m['id']==defect['matter_id']),None)
                 if matter is not None:
                     evidence={'matter':matter,'privacy_only':True,'instruction':'Generalize this matter’s identifying combination only; preserve every other claim verbatim.'}
