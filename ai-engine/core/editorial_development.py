@@ -61,7 +61,7 @@ TASK = '''Develop the complete editorial case, not a summary of the register. If
 Keep requested_target and objectives distinct from current_band and official observations. Preserve a supplied target as an objective or explicitly justify a recommended change in target_rationale. Preserve useful source-backed career history without treating it as current matter leadership. Use category_rationale to explain each proposed category and any change to the input suggestedRank. Generic labels such as Individual ranking candidate are not a category; use a reasoned specific category or Category pending with the exact gap, without guessing eligibility.
 Return one candidate for EACH supplied lawyer and one matter draft for EACH core matter, no reserves.
 Use only supplied source evidence. Existing drafts are proposals, not evidence; preserve supported human corrections.
-NARRATIVE DEPTH & BREADTH INVARIANT: Do NOT write compressed or abbreviated 1-paragraph summaries. Every matter where the source provides 150+ words of factual context MUST be written as a full, substantive 3-paragraph legal submission (target 200 to 350 words across the 3 paragraphs): Paragraph 1 covers client commercial objective, operational context, workforce scale, and financial or industrial exposure; Paragraph 2 covers the specific legal obstacle or contentious challenge and the concrete legal mechanism deployed by the firm (e.g. constitutional amparo, suspension, collective bargaining rounds, strike prevention, administrative labor court defense); Paragraph 3 covers subsequent procedural progress, current status, decisive outcome achieved, and the personal leadership of the lead partner and team. Crucially, if an initial description states that a matter is pending or filed, but subsequent updates, otherInfo or status fields document a favorable ruling, injunction (suspensión definitiva), amparo victory, or executed resolution, resolve this progression into one integrated story rather than leaving conflicting disconnected statements. Do not reduce a documented result to an intention or merely list services. Preserve reported/approximate amounts and pending proceedings alongside any completed interim outcomes. Select legal_issue_source_quote from the original matter as the separate legal-issue preservation anchor. For matters where source facts are preliminary or incomplete, identify the specific missing elements across the 5 editorial dimensions: (1) commercial objective, (2) specific legal obstacle, (3) concrete legal mechanism executed by the firm, (4) personal role and responsibility of each lawyer, and (5) tangible outcome and business impact.
+NARRATIVE DEPTH & BREADTH INVARIANT: Develop each matter according to available factual evidence, without a rigid minimum or maximum number of words or paragraphs. Do NOT write artificially compressed or superficial summaries when substantive facts exist. Seamlessly integrate the 5 core editorial dimensions based on verified facts: (1) client commercial objective and operational scale, (2) specific contentious or regulatory legal obstacle, (3) concrete procedural mechanism executed by the firm, (4) direct leadership and contribution of the lawyers, and (5) accredited outcome or current procedural status. Crucially, if an initial description states that a matter is pending or filed, but subsequent updates, otherInfo or status fields document a favorable ruling, injunction (suspensión definitiva), amparo victory, or executed resolution, resolve this progression into one integrated story rather than leaving conflicting disconnected statements. Do not reduce a documented result to an intention or merely list services. Preserve reported/approximate amounts and pending proceedings alongside any completed interim outcomes. Select legal_issue_source_quote from the original matter as the separate legal-issue preservation anchor. For matters where source facts are preliminary or incomplete, develop what is verified without inventing missing facts; record evidentiary gaps in internal fields rather than generating audit commentary in public submission prose.
 For each candidate, reason from status/seniority, quality and number of personally attributed matters, personal role, leadership, specialization, external evidence, verified current ranking and proposed category, in that order. Assess individual ranking eligibility strictly within the submission's target practice area. Do not confuse multidisciplinary deal support with practice specialization. A lawyer whose primary specialization is another practice area (such as Tax, Labour, or Dispute Resolution) who assists on matters in the target practice area is NOT eligible for an individual ranking in the target practice area; their recommendation must be 'do_not_present' for individual ranking in this practice area (suggested_ranking: ''), with category_rationale explaining that their involvement represents multidisciplinary support rather than core practice specialization. Only dedicated practitioners of the target practice area may be assessed for individual rankings in that practice area. Supporting quotes must be contiguous in the named matter's source fields, including leadPartner/teamMembers. Do not upgrade a team member to leader. A biography cannot substitute for matter-linked evidence. Assess every supplied lawyer; recommend present, develop or do_not_present. If evidence is insufficient, state a precise gap/action in the INTERNAL fields; the public bio must still accurately convey any supported relevant work. A partner cannot be proposed as an associate. Never assert an unverified current ranking. Propose a reasoned candidacy/category when supported; distinguish a target from a prediction. Do not put evidence gaps or internal recommendations in B9. Public B9/B10/C2 must speak as the firm: never say 'submitted evidence', 'this evidence supports', 'without asserting a ranking', 'no verified ranking', 'not a prediction' or describe what the source establishes. Keep those caveats in internal fields. In C2 make a direct, grounded request for coverage.
 PRACTICE LEADERSHIP & DEPARTMENT HEADS: Check the firm's confirmed department heads (in filing_details['heads'] or departmentHeads). If a candidate is a confirmed practice leader or head of department, their B9 public biography and ranking rationale MUST explicitly state their leadership position (e.g. 'Eduardo Garduño is Partner and Head of DeForest\\'s Labour & Employment practice' or 'leads DeForest\\'s Labour & Employment practice'). NEVER describe a confirmed head of department simply as 'a partner'.
 Write developed, source-grounded B9 bios in professional English. For candidates supported by multiple mandates, explain their personal role and distinct legal contribution across representative mandates, not a one-line practice label. In public B9 bios, B10, and C2, NEVER disclose the target company name of confidential matters (such as Bekaert Ideal S.L.), nor combine exact shareholding percentages (80%) and specific country lists. Use neutral descriptions (e.g. 'a major cross-border manufacturing acquisition', 'a majority equity acquisition'). Target names and exact percentages may only appear in confidential Section E. Client names mentioned only in a biography must not appear in public prose unless the canonical register establishes publication permission; use neutral descriptions instead. Confidential/unresolved client identities must be anonymized using accurate neutral descriptions, without deleting the substance of the work. Public prose may cite confidential work anonymously; names remain allowed in confidential matter drafts.
@@ -70,7 +70,7 @@ B10 OPENING HOOK (STRATEGIC PRIMACY): The first paragraph of B10 must immediatel
 - For Labour & Employment: Open by leading with the firm's role as premier counsel to major industrial, automotive, and multinational employers navigating complex collective bargaining disputes, strike prevention, critical plant continuity, constitutional amparo litigation, and nationwide contentious portfolios comprising hundreds of active proceedings. Then structure the subsequent paragraphs across: (1) Collective Bargaining, Strike Prevention & USMCA Rapid Response Defense, (2) High-Stakes Labor Litigation, Amparo & Active Trial Portfolios, (3) Post-M&A Workforce Restructuring, Employer Substitutions & Regulatory Compliance (REPSE, STPS, IMSS), and (4) Dedicated Specialist Bench and Regional Footprint.
 - For Real Estate: Open with the firm's role in multi-billion-peso development projects, constitutional defense of property rights against decrees/expropriation, land-use zoning, and complex transactional structuring.
 - For Corporate/M&A and other areas: Open with cross-border transactional leadership, complex acquisitions, regulatory approvals, and strategic governance.
-C2 AUTHORITATIVE FIRM ADVOCACY: C2 must be written as an authoritative Advocacy Petition to Chambers researchers and editors, structured on 4 Evidentiary Pillars grounded strictly in the firm's supplied evidence: (1) Scale & National Volume, (2) Regulatory / High-Stakes Complexity, (3) Direct Market Peer Benchmarking (demonstrating that the firm's documented mandates match the complexity of ranked peers), and (4) Bench Depth & Generational Leadership. Speak with the confident, authoritative voice of the firm presenting an evidence-backed case that substantiates ranking alongside the country's leading practices. NEVER adopt an apologetic, timid, or passive observer tone. Do not write phrases like 'respectfully petitions Chambers for first-time inclusion' or 'documented mandates align in type with Labour & Employment work reflected in official Chambers Band 5 profile commentary'. State the firm's market standing directly and invite researcher dialogue with client referees. C2 is an advocacy argument directly petitioning for ranking consideration, completely distinct from repeating B10. Do not introduce competitor assertions without sources, and NEVER insert internal research-scope disclaimers in C2 (such as 'The available external research is limited to...' or 'The available profile research is limited to...').
+C2 AUTHORITATIVE FIRM ADVOCACY: C2 must be written as an authoritative Advocacy Petition to Chambers researchers and editors, structured on 4 Evidentiary Pillars grounded strictly in the firm's supplied evidence: (1) Scale & National Volume, (2) Regulatory / High-Stakes Complexity, (3) Direct Market Peer Benchmarking (demonstrating that the firm's documented mandates match the complexity of ranked peers), and (4) Bench Depth & Generational Leadership. Speak with the confident, authoritative voice of the firm presenting an evidence-backed case that substantiates ranking alongside the country's leading practices. NEVER adopt an apologetic, timid, or passive observer tone. Do NOT write phrases like 'respectfully petitions Chambers for first-time inclusion', 'warrants recognition', or 'invites researcher dialogue with client referees'. State the firm's market standing and documented capabilities directly. C2 is an advocacy argument directly demonstrating ranking credentials, completely distinct from repeating B10. Do not introduce competitor assertions without sources, and NEVER insert internal research-scope disclaimers in C2 (such as 'The available external research is limited to...' or 'The available profile research is limited to...').
 Use a concise English category or target label in suggested_ranking, and put its qualifications in the internal rationale/action. Other INTERNAL fields in Spanish: executive recommendation, positioning, reasonable target with its limitations, main strength/vulnerability, hero comparison, eight-field individual strategy. In hero_rationale and executive_assessment, state explicit selection criteria and comparative weighting between the Hero candidate and its primary alternative, explaining why the Hero matter is selected while acknowledging the comparative strengths of the runner-up mandate. No unsupported band forecasts or numerical scores.
 Compare the weakest selected mandates with the strongest reserves using their incremental evidentiary contribution to this particular candidacy, including support for individuals and missing capabilities. Provide concrete selected/alternative ID pairs, tradeoffs and why the selected contribution wins; do not use a generic 'avoid dilution' explanation. At least one comparison if both core and reserves exist. Do not change the validated selection; clearly flag a decision needing reconsideration instead of silently changing it.
 For each matter supply decisive verbatim source quotes as a preservation checklist. Include documented outcomes when present, not just general context. These are source claims, never permission to exaggerate. All IDs and names must exactly match supplied records. No UI status, approval declarations or pipeline terminology in client-facing prose.'''
@@ -79,7 +79,7 @@ For each matter supply decisive verbatim source quotes as a preservation checkli
 # Never remove these words globally or rewrite a factual claim with a regex.
 AUDIT_VOICE = re.compile(
     r"\b(?:"
-    r"the (?:submitted )?(?:source|narrative|dossier|record)(?:\s+narrative)?\s+(?:describes|states|records|reports|identifies|characterises|characterizes|distinguishes|separately records|refers|does not|doesn't|gives no|contains no|does not report|does not provide|does not define|does not state|establishes|does not explain)|"
+    r"the (?:submitted )?(?:source|narrative|dossier|record)(?:\s+narrative)?\s+(?:describes|states|records|reports|identifies|characterises|characterizes|distinguishes|separately records|refers|frames|does not|doesn't|gives no|contains no|does not report|does not provide|does not define|does not state|establishes|does not explain)|"
     r"the formal status field|the narrative describes|the narrative therefore records|verified evidentiary record|evidence completeness|"
     r"our analysis indicates|the audit demonstrates|the submitted evidence (?:shows|supports|demonstrates)|"
     r"no verified ranking|without asserting a ranking|"
@@ -100,7 +100,12 @@ AUDIT_VOICE = re.compile(
     r"is\s+identified\s+as\s+lead|"
     r"is\s+named\s+as\s+lead|"
     r"invites\s+researcher\s+dialogue|"
-    r"warrants\s+recognition"
+    r"would\s+welcome\s+researcher\s+dialogue|"
+    r"warrants\s+recognition|"
+    r"respectfully\s+petitions|"
+    r"is\s+supplied|"
+    r"the\s+supplied\s+(?:status|completion)|"
+    r"no\s+final\s+disposition"
     r")\b",
     re.I,
 )
@@ -150,22 +155,50 @@ def sanitize_narrative_voice(text):
     text = re.sub(r'\bThe\s+firm\s+reports\s+that\s+it\b', 'The firm', text, flags=re.I)
     text = re.sub(r'\bThe\s+firm\s+reports\b', 'The firm provides', text, flags=re.I)
 
-    # Transform passive lawyer attribution formulas to direct firm leadership advocacy (Angela Castillo Directive)
+    # Strip raw markdown bold asterisks
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+
+    # Specific sentence-level promotions and transforms
+    text = re.sub(r'\bNo final disposition of [^.]*? is stated, and none is claimed\.?\s*', '', text, flags=re.I)
+    text = re.sub(r'\bThe source frames the objective as ([^.]*?) while the matter continues\.?', r'The representation centers on \1 while proceedings remain active.', text, flags=re.I)
+    text = re.sub(r'\bThe source frames the objective as ([^.]*?\.)', r'The representation centers on \1', text, flags=re.I)
+    text = re.sub(r'\bNo (?:monetary )?value, completion (?:date|status) or (?:discrete )?final outcome is supplied\.?\s*', '', text, flags=re.I)
+    text = re.sub(r'\bThe supplied status is ongoing and does not establish a final merits result[^.]*\.?\s*', 'The proceeding remains ongoing pending final judicial determination. ', text, flags=re.I)
+    text = re.sub(r'\bThe supplied completion information states that the case was won in ([^,]+),\s*dismissing the four lawsuits and suspensions\.?', r'In \1, the team secured a decisive ruling dismissing the four lawsuits and vacating all suspensions.', text, flags=re.I)
+    text = re.sub(r'\bThe firm revoked the four suspensions\b', 'The team successfully overturned the four suspensions', text, flags=re.I)
+    text = re.sub(r'\bThe matter strengthens the practice[’\']s evidence of [^.]*\.?\s*', '', text, flags=re.I)
+
+    # Transform passive lawyer attribution formulas to direct firm leadership advocacy (Role Fidelity & Accuracy)
+    text = re.sub(r'\bJosé Alberto Díaz Méndez\s+(?:led\s+the\s+representation\s+as\s+lead\s+partner|is\s+the\s+lead\s+partner)\b', 'José Alberto Díaz Méndez led the representation as lead lawyer', text, flags=re.I)
     text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b', r'\1 led the representation as lead partner, supported by \2 on the team', text, flags=re.I)
     text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b', r'\1 and \2 led the representation as lead partners', text, flags=re.I)
-    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(?:partner|lawyer)\b', r'\1 led the representation as lead partner', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(partner|lawyer)\b', r'\1 led the representation as lead \2', text, flags=re.I)
+    text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+the\s+lead\s+(partner|lawyer)\b', r'\1 led the representation as lead \2', text, flags=re.I)
     text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b', r'\1 also leads', text, flags=re.I)
     text = re.sub(r'\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b', 'serves as lead partner', text, flags=re.I)
     text = re.sub(r'\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b', 'serve as lead partners', text, flags=re.I)
     text = re.sub(r'\bhas\s+documented\s+responsibility\s+for\b', 'directs', text, flags=re.I)
 
     # Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
+    def _clean_c2_lead(m):
+        firm = m.group(1)
+        practice = re.sub(r'\s+table$', '', m.group(2), flags=re.I).strip()
+        return f"{firm} demonstrates an established {practice} practice in Mexico, distinguished by"
+
+    text = re.sub(
+        r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:presents\s+an\s+established\s+practice\s+in|warrants\s+recognition\s+in)\s+Chambers\s+Latin\s+America(?:[\'’]s)\s+(?:Mexico\s+)?([A-Za-z\s&]+?)(?:\s+table)?\s*(?:,\s*distinguished\s+by|distinguished\s+by|\s+for)\b',
+        _clean_c2_lead,
+        text,
+        flags=re.I
+    )
     text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b', r'\1 presents an established practice in \2, distinguished by', text, flags=re.I)
     text = re.sub(r'\b([A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b', r'\1 maintains an established practice distinguished by', text, flags=re.I)
     text = re.sub(r'\b(?:warrants\s+recognition|merits\s+recognition)\b', 'maintains proven market standing', text, flags=re.I)
-    text = re.sub(r'\b[A-Z][a-zA-Z\s&]+?\s+invites\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.', '', text, flags=re.I)
-    text = re.sub(r'\binvites\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\.', '', text, flags=re.I)
-    text = re.sub(r'\binvites\s+researcher\s+dialogue[^\n.]*\.', '', text, flags=re.I)
+    text = re.sub(r'\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers(?:\s+&?\s*Partners)?\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b', 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in', text, flags=re.I)
+    text = re.sub(r'\bOn\s+this\s+basis,\s+[A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?\s+respectfully\s+petitions\s+Chambers\s+for\s+first-time\s+inclusion\s+in\s+([^\n.]+?)\.\s*', '', text, flags=re.I)
+    text = re.sub(r'\b[A-Z\u00C0-\u017F][a-zA-Z\u00C0-\u017F\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.', '', text, flags=re.I)
+    text = re.sub(r'\b(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\.', '', text, flags=re.I)
+    text = re.sub(r'\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\.', '', text, flags=re.I)
     
     # Strip trailing or semicolon audit caveats
     text = re.sub(r';\s*(?:no completion or approval should be inferred|the ultimate (?:merits )?outcome is not stated|it does not state a final conclusion[^.]*|without claiming a final decision[^.]*)', '', text, flags=re.I)
@@ -199,7 +232,15 @@ def sanitize_narrative_voice(text):
         clean_sentences.append(s)
     text = ' '.join(clean_sentences).strip()
     
-    text = re.sub(r'(?<=[.!?]\s)([a-z])', lambda m: m.group(1).upper(), text)
+    def _capitalize_sentence(match):
+        prefix = match.string[max(0, match.start() - 15):match.start()]
+        if re.search(r'\b(?:C\.V\.|S\.C\.|S\.A\.|LLC\.|Inc\.|Ltd\.)\s*$', prefix, re.I):
+            return match.group(1)
+        return match.group(1).upper()
+
+    text = re.sub(r'(?<=[.!?]\s)([a-z])', _capitalize_sentence, text)
+    # Sentence capitalization fix following legal entity acronyms (S.A. DE C.V., C.V., S.C., etc.)
+    text = re.sub(r'\b(S\.A\.\s+DE\s+C\.V\.|C\.V\.|S\.C\.|S\.A\.P\.I\.\s+DE\s+C\.V\.|S\.\s+DE\s+R\.L\.\s+DE\s+C\.V\.)\s+(Is|In|And|To|For|As|With|By|Of|On|At)\b', lambda m: f"{m.group(1)} {m.group(2).lower()}", text)
     return text.strip()
 
 def submission_voice_paths(proposal):

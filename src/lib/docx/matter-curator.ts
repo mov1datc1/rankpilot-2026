@@ -15,6 +15,7 @@
 
 
 import { recoverClientLegalName } from '@/lib/audit/extraction-auditor';
+import { resolvePublication } from '@/lib/audit/publication-policy';
 
 export interface CuratedMattersResult {
   officialPubMatters: any[];
@@ -113,7 +114,7 @@ export function curateMatters(allMatters: any[], practiceArea: string = '', cham
     : matters
         .filter(m => !m.isExcluded && !['Excluded', 'Pruned'].includes(m.status))
         .filter(m => !(isLabour && isAdverseEmployeeMatter(m)));
-  const restricted = (m: any) => m.isConfidential === true || m.confidential === true || m.is_confidential === true || m.confidentialityConfirmed === false || ['confirmation_required', 'non_publishable', 'confidential'].includes(m.publish_status || m.confidentialityStatus || m.publishStatus);
+  const restricted = (m: any) => resolvePublication(m) !== 'publishable';
   const officialPubMatters: any[] = [], officialConfMatters: any[] = [];
   const selected = new Set<any>();
   for (const m of candidates) {

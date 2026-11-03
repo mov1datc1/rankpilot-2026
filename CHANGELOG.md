@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.5] — 2026-11-03 — Política Centralizada de Publicación, Fidelidad de Rol de Abogados, Erradicación Integral de Voz Auditora y Flexibilidad Narrativa
+
+### Added
+- **Módulo Centralizado de Política de Publicación ([`src/lib/audit/publication-policy.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/audit/publication-policy.ts))**:
+  - Implementación del resolver canónico tri-estado `resolvePublication(m)` y enrutador de entrega `publicationRoute(m)`, eliminando discrepancias entre `input-review` y `matter-curator`.
+  - Protege de forma infalible asuntos con permisos contradictorios, ausentes o pendientes (`confirmation_required` / `confidential`), garantizando que jamás se filtren a la sección pública D.
+  - Pase perfecto de 22/22 pruebas de contrato en [`tests/contracts/input-review.test.cjs`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/tests/contracts/input-review.test.cjs), incorporado formalmente al workflow de CI ([`editorial-contracts.yml`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/.github/workflows/editorial-contracts.yml)).
+- **Suite de Pruebas de Regresión Ampliada a 12 Criterios ([`tests/contracts/angela-editorial-acceptance.test.cjs`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/tests/contracts/angela-editorial-acceptance.test.cjs))**:
+  - Test 10: Erradicación sistemática de observaciones metodológicas sobre el expediente y promoción estratégica de notas de estado en asuntos activos.
+  - Test 11: Erradicación transversal de peticiones tímidas (`respectfully petitions`), invitaciones a dialogar con investigadores (`would welcome researcher dialogue`), limpieza de asteriscos Markdown (`**Pillar 1**`) y corrección de capitalización tras razones sociales (`S.A. DE C.V.`).
+
+### Changed
+- **Fidelidad Estricta de Rol de Abogados ([`submission-builder.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/app/api/generate-docx/submission-builder.ts), [`lawyer-curator.ts`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/src/lib/docx/lawyer-curator.ts), [`editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py))**:
+  - Corrección de la expresión regular de atribución de liderazgo: se preserva con precisión si el profesional es `lead lawyer` o `lead partner`.
+  - Se impide la elevación indebida de categoría profesional (e.g. Asociados como `José Alberto Díaz Méndez` ahora se acreditan fielmente como `"led the representation as lead lawyer"`, sin inflar el cargo a socio).
+- **Erradicación de Residuos de Voz Auditora y Comentarios sobre la Fuente**:
+  - Transformación de `"The source frames the objective as [X] while the matter continues"` ➔ `"The representation centers on [X] while proceedings remain active"`.
+  - Supresión automática de advertencias sobre carencia de datos del expediente (`"No final disposition of... is stated, and none is claimed"`, `"No monetary value, completion date or discrete final outcome is supplied"`, `"No value, completion status or final outcome is supplied"`).
+  - Transformación de estados continuos a lenguaje forense natural: `"The supplied status is ongoing..."` ➔ `"The proceeding remains ongoing pending final judicial determination"`.
+  - Corrección de atribución judicial: sustitución de `"The firm revoked the four suspensions"` por `"The team successfully overturned the four suspensions"`.
+- **Perfeccionamiento Editorial de C2 y Eliminación de Peticiones Serviles**:
+  - Eliminación de `"respectfully petitions Chambers for first-time inclusion"` y `"The firm would welcome researcher dialogue with client referees..."` en Ramos Castillo.
+  - Reemplazo de la fórmula poco natural `"DeForest Abogados presents an established practice in Chambers Latin America’s Mexico Labour & Employment table"` por la asertiva `"DeForest Abogados demonstrates an established Labour & Employment practice in Mexico, distinguished by..."`.
+  - Eliminación de marcadores Markdown directos (`**Pillar 1**` ➔ `Pillar 1`).
+- **Corrección de Capitalización tras Abreviaturas Legales**:
+  - Eliminación de mayúsculas artificiales causadas por puntos de razones sociales (`"S.A. DE C.V. Is"` ➔ `"S.A. DE C.V. is"`, `"S.A. DE C.V. In"` ➔ `"S.A. DE C.V. in"`).
+- **Flexibilización de Extensión Narrativa en AI-Engine ([`ai-engine/core/editorial_development.py`](file:///Users/jonathanpalacios/Downloads/Rankpilot-2026/rankpilot-new-repo/ai-engine/core/editorial_development.py))**:
+  - Eliminación del requisito rígido de 3 párrafos y 200–350 palabras fijas, sustituyéndolo por desarrollo sustantivo y proporcional a la evidencia fáctica verificable disponible sobre las 5 dimensiones editoriales.
+
 ## [1.0.4] — 2026-11-03 — Atribución Directa de Liderazgo de Abogados, Erradicación de Fórmulas Poco Naturales en C2 y Resolución de Bloqueos de Entrega
 
 ### Added

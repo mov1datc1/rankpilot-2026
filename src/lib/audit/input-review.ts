@@ -1,9 +1,8 @@
+import { resolvePublication } from './publication-policy';
+
 /** Shared by the guided review and persistence. Unknown permission is never public. */
 export function publicationStatus(m: any): string {
-  if (m.isConfidential === true || m.is_confidential === true || m.confidential === true || ['confidential', 'non_publishable'].includes(m.publish_status) || [m.confidentialityStatus, m.confidentiality_status, m.publishStatus].includes('confidential')) return 'confidential';
-  if (m.isConfidential === false || m.is_confidential === false || [m.publish_status, m.confidentialityStatus, m.confidentiality_status, m.publishStatus].includes('publishable')) return 'publishable';
-  // Safe directory default: unconfirmed matters are routed to Section E (Confidential) to protect client privacy
-  return 'confidential';
+  return resolvePublication(m);
 }
 
 export function confirmPublicationStatus(m: any, status: string) {

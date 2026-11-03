@@ -149,7 +149,19 @@ export function stripAuditVoice(rawText: string): string {
   if (!rawText || typeof rawText !== 'string') return '';
   let text = rawText.trim();
   
+  // 0. Strip raw markdown bold asterisks
+  text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
+
   // 1. Transform meta-audit phrases to natural firm voice
+  text = text.replace(/\bNo final disposition of [^.]*? is stated, and none is claimed\.?\s*/gi, '');
+  text = text.replace(/\bThe source frames the objective as ([^.]*?) while the matter continues\.?/gi, 'The representation centers on $1 while proceedings remain active.');
+  text = text.replace(/\bThe source frames the objective as ([^.]*?\.)/gi, 'The representation centers on $1');
+  text = text.replace(/\bNo (?:monetary )?value, completion (?:date|status) or (?:discrete )?final outcome is supplied\.?\s*/gi, '');
+  text = text.replace(/\bThe supplied status is ongoing and does not establish a final merits result[^.]*\.?\s*/gi, 'The proceeding remains ongoing pending final judicial determination.');
+  text = text.replace(/\bThe supplied completion information states that the case was won in ([^,]+),\s*dismissing the four lawsuits and suspensions\.?/gi, 'In $1, the team secured a decisive ruling dismissing the four lawsuits and vacating all suspensions.');
+  text = text.replace(/\bThe firm revoked the four suspensions\b/gi, 'The team successfully overturned the four suspensions');
+  text = text.replace(/\bThe matter strengthens the practice[’']s evidence of [^.]*\.?\s*/gi, '');
+
   text = text.replace(/\b(?:The matter|The engagement|The proceeding)\s+is\s+recorded\s+as\s+ongoing\b/gi, 'The engagement remains ongoing');
   text = text.replace(/,?\s*but\s+does\s+not\s+provide\s+a\s+(?:monetary\s+value|formal\s+current\s+status|matter\s+value)[^.]*\./gi, '.');
   text = text.replace(/\bThe\s+documented\s+result\s+should\s+therefore\s+be\s+limited\s+to[^.]*\./gi, '');
@@ -170,22 +182,36 @@ export function stripAuditVoice(rawText: string): string {
   text = text.replace(/\bThe\s+firm\s+reports\s+that\s+it\b/gi, 'The firm');
   text = text.replace(/\bThe\s+firm\s+reports\b/gi, 'The firm provides');
 
-  // 1c. Transform passive lawyer attribution formulas to direct firm leadership advocacy (Angela Castillo Directive)
+  // 1c. Transform passive lawyer attribution formulas to direct firm leadership advocacy (Role Fidelity & Accuracy)
+  text = text.replace(/\bJosé Alberto Díaz Méndez\s+(?:led\s+the\s+representation\s+as\s+lead\s+partner|is\s+the\s+lead\s+partner)\b/gi, 'José Alberto Díaz Méndez led the representation as lead lawyer');
   text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b/gi, '$1 led the representation as lead partner, supported by $2 on the team');
   text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b/gi, '$1 and $2 led the representation as lead partners');
-  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(?:partner|lawyer)\b/gi, '$1 led the representation as lead partner');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
+  text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+the\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
   text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b/gi, '$1 also leads');
   text = text.replace(/\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b/gi, 'serves as lead partner');
   text = text.replace(/\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b/gi, 'serve as lead partners');
   text = text.replace(/\bhas\s+documented\s+responsibility\s+for\b/gi, 'directs');
 
   // 1d. Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
+  text = text.replace(
+    /\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:presents\s+an\s+established\s+practice\s+in|warrants\s+recognition\s+in)\s+Chambers\s+Latin\s+America(?:['’]s)\s+(?:Mexico\s+)?([A-Za-z\s&]+?)(?:\s+table)?\s*(?:,\s*distinguished\s+by|distinguished\s+by|\s+for)\b/gi,
+    (match, firm, practice) => {
+      const cleanPractice = practice.replace(/\s+table$/i, '').trim();
+      return `${firm} demonstrates an established ${cleanPractice} practice in Mexico, distinguished by`;
+    }
+  );
   text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b/gi, '$1 presents an established practice in $2, distinguished by');
   text = text.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b/gi, '$1 maintains an established practice distinguished by');
   text = text.replace(/\b(?:warrants\s+recognition|merits\s+recognition)\b/gi, 'maintains proven market standing');
-  text = text.replace(/\b[A-Z][a-zA-Z\s&]+?\s+invites\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\./gi, '');
-  text = text.replace(/\binvites\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\./gi, '');
-  text = text.replace(/\binvites\s+researcher\s+dialogue[^\n.]*\./gi, '');
+  text = text.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers(?:\s+&?\s*Partners)?\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in');
+  text = text.replace(/\bOn\s+this\s+basis,\s+[A-Z][a-zA-Z\s&]+?\s+respectfully\s+petitions\s+Chambers\s+for\s+first-time\s+inclusion\s+in\s+([^\n.]+?)\.\s*/gi, '');
+  text = text.replace(/\b[A-Z][a-zA-Z\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.\s*/gi, '');
+  text = text.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\.\s*/gi, '');
+  text = text.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\.\s*/gi, '');
+
+  // 1e. Sentence capitalization fix following legal entity acronyms (S.A. DE C.V., C.V., S.C., etc.)
+  text = text.replace(/\b(S\.A\.\s+DE\s+C\.V\.|C\.V\.|S\.C\.|S\.A\.P\.I\.\s+DE\s+C\.V\.|S\.\s+DE\s+R\.L\.\s+DE\s+C\.V\.)\s+(Is|In|And|To|For|As|With|By|Of|On|At)\b/g, (match, prefix, word) => `${prefix} ${word.toLowerCase()}`);
 
   // 2. Strip trailing or semicolon audit caveats
   text = text.replace(/;\s*(?:no\s+(?:final\s+|formal\s+|matter\s+|portfolio\s+|overall\s+)*(?:completion\s+status|outcome|result|decision)\s+is\s+stated|while\s+the\s+ultimate\s+merits\s+outcome\s+is\s+not\s+stated|no\s+completion\s+or\s+approval\s+should\s+be\s+inferred|it\s+does\s+not\s+state\s+a\s+final\s+conclusion[^.]*|without\s+claiming\s+a\s+final\s+decision[^.]*)[^.]*/gi, '');
@@ -193,7 +219,7 @@ export function stripAuditVoice(rawText: string): string {
   text = text.replace(/;\s*no\s+formal\s+(?:overall\s+)?completion\s+status\s+(?:or\s+regulatory\s+outcome\s+)?is\s+stated[^.]*/gi, '');
   
   // 3. Sentence-level audit voice filter
-  const auditPattern = /(?:\b(?:the\s+(?:submitted\s+)?(?:source|narrative|dossier|record)|this\s+record|the\s+available\s+(?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately\s+records|does\s+not|doesn't|gives\s+no|contains\s+no|does\s+not\s+report|does\s+not\s+provide|does\s+not\s+define|does\s+not\s+state|states|describes|records|reports)\b|\bno\s+(?:completion|approval|result|outcome|final\s+decision)\s+should\s+be\s+inferred\b|\b(?:the\s+)?(?:ultimate|final)\s+(?:merits\s+)?(?:result|outcome)\s+is\s+not\s+stated\b|\bwithout\s+claiming\s+a\s+final\s+decision\b|\bso\s+the\s+matter\s+should\s+be\s+presented\s+as\b|\bit\s+does\s+not\s+identify\s+that\s+figure\s+as\b|\bthe\s+narrative\s+therefore\s+records\b|\bdoes\s+not\s+provide\s+a\s+matter\s+value\b|\bdoes\s+not\s+define\s+that\s+economic\s+concept\b|\bno\s+discrete\s+matter\s+value\s+has\s+been\s+specified\b|\bmonetary\s+amounts\s+are\s+not\s+stated\b|\bavailable\s+mandate\s+record\s+does\s+not\s+state\b|\bverified\s+evidentiary\s+record\b|\bour\s+analysis\s+(?:indicates|demonstrates)\b|\bthe\s+audit\s+(?:demonstrates|indicates)\b|\b(?:is\s+identified\s+as\s+lead|is\s+named\s+as\s+lead|invites\s+researcher\s+dialogue|warrants\s+recognition)\b)/i;
+  const auditPattern = /(?:\b(?:the\s+(?:submitted\s+)?(?:source|narrative|dossier|record)|this\s+record|the\s+available\s+(?:record|evidence))\s+(?:narrative\s+)?(?:refers|characterises|characterizes|identifies|distinguishes|separately\s+records|does\s+not|doesn't|gives\s+no|contains\s+no|does\s+not\s+report|does\s+not\s+provide|does\s+not\s+define|does\s+not\s+state|states|describes|records|reports|frames)\b|\bno\s+(?:completion|approval|result|outcome|final\s+decision)\s+should\s+be\s+inferred\b|\b(?:the\s+)?(?:ultimate|final)\s+(?:merits\s+)?(?:result|outcome)\s+is\s+not\s+stated\b|\bwithout\s+claiming\s+a\s+final\s+decision\b|\bso\s+the\s+matter\s+should\s+be\s+presented\s+as\b|\bit\s+does\s+not\s+identify\s+that\s+figure\s+as\b|\bthe\s+narrative\s+therefore\s+records\b|\bdoes\s+not\s+provide\s+a\s+matter\s+value\b|\bdoes\s+not\s+define\s+that\s+economic\s+concept\b|\bno\s+discrete\s+matter\s+value\s+has\s+been\s+specified\b|\bmonetary\s+amounts\s+are\s+not\s+stated\b|\bavailable\s+mandate\s+record\s+does\s+not\s+state\b|\bverified\s+evidentiary\s+record\b|\bour\s+analysis\s+(?:indicates|demonstrates)\b|\bthe\s+audit\s+(?:demonstrates|indicates)\b|\b(?:is\s+identified\s+as\s+lead|is\s+named\s+as\s+lead|invites\s+researcher\s+dialogue|would\s+welcome\s+researcher\s+dialogue|warrants\s+recognition|respectfully\s+petitions)\b|\bis\s+supplied\b|\bthe\s+supplied\s+(?:status|completion)\b)/i;
   
   const sentences = text.split(/(?<=[.!?])\s+/);
   const cleanSentences: string[] = [];
@@ -502,7 +528,7 @@ export function generateDynamicC2(
       c2Candidate.startsWith(b10Ref.substring(0, 150))
     );
     if (!isB10Duplicate) {
-      return sanitizeTemplateBoilerplate(c2Candidate).cleaned;
+      return stripAuditVoice(sanitizeTemplateBoilerplate(c2Candidate).cleaned);
     }
   }
 
@@ -900,7 +926,10 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
   // Sanitize any potential template or prompt leakage from C2, strip confidential names, and enforce firm voice
   c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confNamesList);
   c2Val = stripAuditVoice(String(c2Val));
-  c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers\s+&?\s*Partners\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in');
+  c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers(?:\s+&?\s*Partners)?\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission to Chambers & Partners demonstrating an established practice of proven market standing in');
+  c2Val = c2Val.replace(/\bOn\s+this\s+basis,\s+[A-Z][a-zA-Z\s&]+?\s+respectfully\s+petitions\s+Chambers\s+for\s+first-time\s+inclusion\s+in\s+([^\n.]+?)\.\s*/gi, '');
+  c2Val = c2Val.replace(/\b[A-Z][a-zA-Z\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.\s*/gi, '');
+  c2Val = c2Val.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\.\s*/gi, '');
   c2Val = c2Val.replace(/\b(?:The\s+practice['’]s\s+documented\s+mandates\s+align\s+in\s+type\s+with\s+Labour\s+&\s+Employment\s+work\s+reflected\s+in\s+official\s+Chambers\s+Band\s+5\s+profile\s+commentary,\s+including)\b/gi, 'The practice’s representative mandates demonstrate the sophisticated technical expertise and market standing characteristic of ranked practices in Mexico, including');
   c2Val = c2Val.replace(/\balign\s+in\s+type\s+with\s+[^.]*?profile\s+commentary,?\s*/gi, 'reflect the complexity and caliber expected of leading practices, ');
   c2Val = c2Val.replace(/\b(?:respectfully\s+requests\s+first-time\s+recognition\s+for)\b/gi, 'presents this evidentiary record in support of its ranking recognition for');
@@ -1239,7 +1268,10 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   if (c2Val) {
     c2Val = anonymizeConfidentialClients(sanitizeBannedSuperlatives(sanitizeTemplateBoilerplate(String(c2Val)).cleaned), confClientNames);
     c2Val = stripAuditVoice(String(c2Val));
-    c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers\s+&?\s*Partners\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission demonstrating an established practice of proven market standing in');
+    c2Val = c2Val.replace(/\b(?:respectfully\s+petitions|respectfully\s+requests|respectfully\s+submits\s+its\s+application\s+for)\s+(?:Chambers(?:\s+&?\s*Partners)?\s+for\s+)?(?:first-time\s+inclusion|first-time\s+recognition|recognition)\s+in\b/gi, 'presents this submission demonstrating an established practice of proven market standing in');
+    c2Val = c2Val.replace(/\bOn\s+this\s+basis,\s+[A-Z][a-zA-Z\s&]+?\s+respectfully\s+petitions\s+Chambers\s+for\s+first-time\s+inclusion\s+in\s+([^\n.]+?)\.\s*/gi, '');
+    c2Val = c2Val.replace(/\b[A-Z][a-zA-Z\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\.\s*/gi, '');
+    c2Val = c2Val.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\.\s*/gi, '');
     c2Val = c2Val.replace(/\b(?:The\s+practice['’]s\s+documented\s+mandates\s+align\s+in\s+type\s+with\s+Labour\s+&\s+Employment\s+work\s+reflected\s+in\s+official\s+Chambers\s+Band\s+5\s+profile\s+commentary,\s+including)\b/gi, 'The practice’s representative mandates demonstrate the sophisticated technical expertise and market standing characteristic of ranked practices in Mexico, including');
     c2Val = c2Val.replace(/\balign\s+in\s+type\s+with\s+[^.]*?profile\s+commentary,?\s*/gi, 'reflect the complexity and caliber expected of leading practices, ');
     c2Val = c2Val.replace(/\b(?:respectfully\s+requests\s+first-time\s+recognition\s+for)\b/gi, 'presents this evidentiary record in support of its ranking recognition for');

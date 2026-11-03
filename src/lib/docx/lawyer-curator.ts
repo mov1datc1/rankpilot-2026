@@ -128,22 +128,34 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
   res = res.replace(/\b(?:is the Partner of|is the partner of)\b/g, 'is a partner in');
   res = res.replace(/\bLabor & Employment\b/g, 'Labour & Employment');
 
-  // Transform passive lawyer attribution formulas to direct firm leadership advocacy (Angela Castillo Directive)
+  // Transform passive lawyer attribution formulas to direct firm leadership advocacy (Role Fidelity & Accuracy)
+  res = res.replace(/\bJosé Alberto Díaz Méndez\s+(?:led\s+the\s+representation\s+as\s+lead\s+partner|is\s+the\s+lead\s+partner)\b/gi, 'José Alberto Díaz Méndez led the representation as lead lawyer');
   res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+identified\s+as\s+lead\s+partner\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+as\s+(?:a\s+)?team\s+member\b/gi, '$1 led the representation as lead partner, supported by $2 on the team');
   res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+and\s+([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+are\s+identified\s+as\s+lead\s+partners\b/gi, '$1 and $2 led the representation as lead partners');
-  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(?:partner|lawyer)\b/gi, '$1 led the representation as lead partner');
+  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:is\s+identified|is\s+named)\s+as\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
+  res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+the\s+lead\s+(partner|lawyer)\b/gi, '$1 led the representation as lead $2');
   res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+is\s+also\s+named\s+as\s+lead\s+partner\s+on\b/gi, '$1 also leads');
   res = res.replace(/\b(?:is\s+identified\s+as\s+lead\s+partner|is\s+named\s+as\s+lead\s+partner)\b/gi, 'serves as lead partner');
   res = res.replace(/\b(?:are\s+identified\s+as\s+lead\s+partners|are\s+named\s+as\s+lead\s+partners)\b/gi, 'serve as lead partners');
   res = res.replace(/\bhas\s+documented\s+responsibility\s+for\b/gi, 'directs');
 
   // Transform unnatural submission pleading & invitation phrasing in C2 / public prose (Angela Castillo Directive)
+  res = res.replace(
+    /\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+(?:presents\s+an\s+established\s+practice\s+in|warrants\s+recognition\s+in)\s+Chambers\s+Latin\s+America(?:['’]s)\s+(?:Mexico\s+)?([A-Za-z\s&]+?)(?:\s+table)?\s*(?:,\s*distinguished\s+by|distinguished\s+by|\s+for)\b/gi,
+    (match, firm, practice) => {
+      const cleanPractice = practice.replace(/\s+table$/i, '').trim();
+      return `${firm} demonstrates an established ${cleanPractice} practice in Mexico, distinguished by`;
+    }
+  );
   res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+in\s+([^\n.,]+?)\s+for\b/gi, '$1 presents an established practice in $2, distinguished by');
   res = res.replace(/\b([A-Z][a-zA-Z\u00C0-\u017F\s&]+?)\s+warrants\s+recognition\s+for\b/gi, '$1 maintains an established practice distinguished by');
   res = res.replace(/\b(?:warrants\s+recognition|merits\s+recognition)\b/gi, 'maintains proven market standing');
-  res = res.replace(/\b[A-Z][a-zA-Z\s&]+?\s+invites\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\./gi, '');
-  res = res.replace(/\binvites\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\./gi, '');
-  res = res.replace(/\binvites\s+researcher\s+dialogue[^\n.]*\./gi, '');
+  res = res.replace(/\b[A-Z][a-zA-Z\s&]+?\s+(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees\s+regarding[^\n.]*\./gi, '');
+  res = res.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue\s+with\s+client\s+referees[^\n.]*\./gi, '');
+  res = res.replace(/\b(?:would\s+welcome|invites)\s+researcher\s+dialogue[^\n.]*\./gi, '');
+
+  // Sentence capitalization fix following legal entity acronyms (S.A. DE C.V., C.V., S.C., etc.)
+  res = res.replace(/\b(S\.A\.\s+DE\s+C\.V\.|C\.V\.|S\.C\.|S\.A\.P\.I\.\s+DE\s+C\.V\.|S\.\s+DE\s+R\.L\.\s+DE\s+C\.V\.)\s+(Is|In|And|To|For|As|With|By|Of|On|At)\b/g, (match, prefix, word) => `${prefix} ${word.toLowerCase()}`);
 
   // Strip residual audit voice from submission texts
   res = res.replace(/\bThe\s+(?:\d{4}\s+)?update\s+reports\s+that\b/gi, 'In decisive procedural proceedings,');

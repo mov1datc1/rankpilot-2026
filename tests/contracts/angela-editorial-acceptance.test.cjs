@@ -186,14 +186,14 @@ DeForest respectfully requests first-time recognition for its demonstrated abili
     assert.match(standout, /EL CIELO COUNTRY CLUB/i);
   });
 
-  await t.test('8. Lawyer Direct Attribution: Transform Passive "is identified as lead partner" into Direct Leadership Advocacy', () => {
-    const rawMatter = "The firm continues to manage 35 active labour proceedings connected with the integration. Eduardo Garduño is identified as lead partner and Ana Ruiz as a team member. José Alberto Díaz Méndez is identified as lead partner. Garduño is also named as lead partner on a nationwide litigation platform.";
+  await t.test('8. Lawyer Direct Attribution: Transform Passive "is identified as lead partner" into Direct Leadership Advocacy with Role Fidelity', () => {
+    const rawMatter = "The firm continues to manage 35 active labour proceedings connected with the integration. Eduardo Garduño is identified as lead partner and Ana Ruiz as a team member. José Alberto Díaz Méndez is identified as lead lawyer. Garduño is also named as lead partner on a nationwide litigation platform.";
     const cleanMatter = stripAuditVoice(rawMatter);
 
     assert.doesNotMatch(cleanMatter, /is identified as lead partner/i);
     assert.doesNotMatch(cleanMatter, /is also named as lead partner/i);
     assert.match(cleanMatter, /Eduardo Garduño led the representation as lead partner, supported by Ana Ruiz on the team/i);
-    assert.match(cleanMatter, /José Alberto Díaz Méndez led the representation as lead partner/i);
+    assert.match(cleanMatter, /José Alberto Díaz Méndez led the representation as lead lawyer/i);
     assert.match(cleanMatter, /Garduño also leads a nationwide litigation platform/i);
   });
 
@@ -203,6 +203,43 @@ DeForest respectfully requests first-time recognition for its demonstrated abili
 
     assert.doesNotMatch(cleanC2, /warrants recognition/i);
     assert.doesNotMatch(cleanC2, /invites researcher dialogue/i);
-    assert.match(cleanC2, /DeForest Abogados presents an established practice in Chambers Latin America’s Mexico Labour & Employment table, distinguished by its employer-side work/i);
+    assert.match(cleanC2, /DeForest Abogados demonstrates an established Labour & Employment practice in Mexico, distinguished by/i);
+  });
+
+  await t.test('10. Source Audit Voice Eradication & Strategic Promotion', () => {
+    const rawMatter1 = "No final disposition of the union-representativeness dispute is stated, and none is claimed. The source frames the objective as preservation of operational stability and workforce continuity while the matter continues.";
+    const clean1 = stripAuditVoice(rawMatter1);
+    assert.doesNotMatch(clean1, /no final disposition/i);
+    assert.doesNotMatch(clean1, /the source frames/i);
+    assert.match(clean1, /The representation centers on preservation of operational stability and workforce continuity while proceedings remain active/i);
+
+    const rawMatter2 = "Working jointly across practices. No monetary value, completion date or discrete final outcome is supplied. No value, completion status or final outcome is supplied. José Alberto Díaz Méndez led the representation as lead partner.";
+    const clean2 = stripAuditVoice(rawMatter2);
+    assert.doesNotMatch(clean2, /is supplied/i);
+    assert.doesNotMatch(clean2, /completion status or final outcome/i);
+    assert.match(clean2, /José Alberto Díaz Méndez led the representation as lead lawyer/i);
+
+    const rawMatter3 = "EDIFICACIONES Y CONSTRUCCIONES SAN CARLOS, S.A. DE C.V. Is developing a real estate project. The supplied status is ongoing and does not establish a final merits result or discrete financial recovery.";
+    const clean3 = stripAuditVoice(rawMatter3);
+    assert.doesNotMatch(clean3, /the supplied status/i);
+    assert.match(clean3, /S\.A\. DE C\.V\. is developing/i);
+    assert.match(clean3, /The proceeding remains ongoing pending final judicial determination/i);
+
+    const rawMatter4 = "The firm revoked the four suspensions within three weeks. The supplied completion information states that the case was won in early 2020, dismissing the four lawsuits and suspensions.";
+    const clean4 = stripAuditVoice(rawMatter4);
+    assert.doesNotMatch(clean4, /the firm revoked/i);
+    assert.doesNotMatch(clean4, /the supplied completion/i);
+    assert.match(clean4, /The team successfully overturned the four suspensions/i);
+    assert.match(clean4, /In early 2020, the team secured a decisive ruling dismissing the four lawsuits and vacating all suspensions/i);
+  });
+
+  await t.test('11. C2 Pleading and Dialogue Eradication & Markdown Cleanup', () => {
+    const rawC2 = "On this basis, Ramos Castillo Abogados respectfully petitions Chambers for first-time inclusion in Real Estate Mexico. The firm would welcome researcher dialogue with client referees regarding the team’s responsiveness. **Pillar 1 — Scale and geographic reach.** DURANPARK, S.A. DE C.V. In relation to the Center.";
+    const cleanC2 = stripAuditVoice(rawC2);
+    assert.doesNotMatch(cleanC2, /respectfully petitions Chambers/i);
+    assert.doesNotMatch(cleanC2, /would welcome researcher dialogue/i);
+    assert.doesNotMatch(cleanC2, /\*\*/);
+    assert.match(cleanC2, /Pillar 1 — Scale and geographic reach/);
+    assert.match(cleanC2, /S\.A\. DE C\.V\. in relation to/);
   });
 });

@@ -13,7 +13,7 @@ export function preparationInputIssues(data:any,matters:any[]=data?.matters || [
   if (!firm || !String(firm).trim()) issues.push('Indica el nombre de la firma.');
   if (!practice || !String(practice).trim()) issues.push('Indica el área de práctica.');
   if (!matters.length) issues.push('No hay asuntos cargados en el expediente.');
-  if (matters.length && matters.every(m => !String(m.source_excerpt || m.rawNotes || m.summary || m.notes || '').trim())) {
+  if (matters.length && matters.every(m => !String(m.source_excerpt || m.rawNotes || m.summary || m.notes || m.title || m.name || m.description || m.client || m.id || '').trim())) {
     issues.push('Falta describir el trabajo realizado en los asuntos cargados.');
   }
   return issues;
