@@ -53,3 +53,9 @@ Validación local posterior: 429 pruebas Python correctas, 456 Node correctas y 
 Estas correcciones no convierten esta prueba fallida en aprobada. No se reanudó el trabajo, se amplió presupuesto ni se compró otra extracción. Falta comprobar una ejecución completa con la nueva versión fija.
 
 Evidencia privada fuera de Git: `scratch/autonomia-v1-0-13-deforest-2026-11-04`, con protocolo, versión, acciones UI, observaciones, snapshots, ledger, recibo de consumo/integridad y replay de la cita. No contiene una entrega final nueva.
+
+## Publicación de la corrección posterior
+
+v1.0.14 publicada en dev/main: `72ddfc0a3156e5acd4cdf3157fa85a649caf6470`. Motor `dep-dblncftg1s2s73d5hqt0` y worker `dep-dblncftg1s2s73d5hr5g` LIVE; health online con mismo commit y huella `eec6821f2a0b51b5059b5b06087c19e804d2d1028601bc4895431a528477a7b2`. Vercel informa success para `dpl_5yBfwHLYu9P8R9gTaSYFaMEiaraa`. No se confirmó un run nuevo de Actions remoto.
+
+No hubo trabajos activos antes de publicar. El único intento de DeForest mantiene el fallo histórico. Publicar la corrección no equivale a ejecutar ni aprobar otra prueba. No se adquirieron más llamadas de generación después de detenerse la selección.
