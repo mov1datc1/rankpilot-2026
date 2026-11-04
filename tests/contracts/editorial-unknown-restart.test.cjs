@@ -14,3 +14,18 @@ test('manual retry cannot buy a duplicate call for an unknown same-source outcom
  assert.equal(mutations,0);
  assert.equal(await enqueue(submission,false),last);
 });
+test('a lost browser start response returns the same active job on another click',async()=>{
+ for(const status of ['queued','running']) {
+  last={id:'already-started',status,sourceHash:stableHash(sourceSnapshot(submission)),ledger:[]};
+  assert.equal(await enqueue(submission,true),last);
+  assert.equal(mutations,0);
+ }
+});
+test('unknown usage cannot obtain a fresh budget through failed status or manual retry',async()=>{
+ for(const status of ['failed','needs_review','indeterminate']) {
+  last={id:'unknown-transport',status,sourceHash:stableHash(sourceSnapshot(submission)),ledger:[{trace:{usage:{total_tokens:100}}},{trace:{usage:{unknown_calls:1},usage_status:'unknown'}}]};
+  await assert.rejects(enqueue(submission,true),/PROVIDER_OUTCOME_UNKNOWN/);
+  assert.equal(mutations,0);
+  assert.equal(last.ledger[0].trace.usage.total_tokens,100);
+ }
+});

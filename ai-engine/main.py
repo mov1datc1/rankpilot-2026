@@ -1254,7 +1254,7 @@ async def review_step_endpoint(request: Request):
         return JSONResponse(content={'success': True, 'next_stage': next_stage, 'state': state})
     except Exception as error:
         logger.exception('Editorial step failed')
-        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace_history',getattr(error,'trace',None))})
 
 
 @api.post('/review-package')
@@ -1272,7 +1272,7 @@ async def review_package_endpoint(request: Request):
     except Exception as error:
         logger.exception('Editorial package review failed')
         from utils.provider_errors import provider_failure
-        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace_history',getattr(error,'trace',None))})
 
 
 @api.post('/verify-rendered-package')
@@ -1295,7 +1295,7 @@ async def verify_rendered_package_endpoint(request: Request):
     except Exception as error:
         logger.exception('Rendered artifact review failed')
         from utils.provider_errors import provider_failure
-        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace',None)})
+        return JSONResponse(status_code=502, content={**provider_failure(error),'trace':getattr(error,'trace_history',getattr(error,'trace',None))})
 
 
 @api.post('/verify-ranking')

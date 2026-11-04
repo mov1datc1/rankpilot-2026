@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.16] — 2026-11-04 — Completed-review counters and transport accounting
+
+- Preserve the completed semantic-review count when a call is deferred before starting or fails without a usable verdict. Remove the fixed counter assignment that exhausted repair early after checkpoint continuation.
+- Separate safe pre-call deferral from unavailable provider responses. Preserve known usage, explicitly mark unknown transport consumption and prevent automatic or manual same-source retries from purchasing a duplicate call.
+- Keep prior-call identity during trace aggregation, without counting saved calls twice or presenting unknown usage as zero. Retain active-job idempotency, cumulative budgets and real review limits.
+- v1.0.15 acceptance stopped before drafting; no new approved Word pair or subsequent paid rerun. Local regressions cover staged continuation, SDK timeouts, lost motor responses and repeated clicks. See `docs/reviews/2026-11-04-contadores-y-conexion-v1-0-16.md`; this is not autonomous production acceptance.
+
 ## [1.0.15] — 2026-11-04 — Global capacity in bounded selection repair
 
 - Bound selected corrections by the remaining global portfolio capacity in the response schema, while preserving unaffected decisions, order and hero. Supply unchanged-core context so correcting a reserve rationale can use a source-based comparison without automatically promoting it.

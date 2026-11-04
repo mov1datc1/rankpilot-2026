@@ -2,6 +2,19 @@ require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {recoveryPlan,editorialTokenBudget}=require('../../src/lib/editorial/recovery.ts');
 const job={cursor:2,stage:'audit',ledger:[],issue:{owner:'rankpilot'}};
+test('mixed known and unknown usage survives aggregation and blocks automatic recovery',()=>{
+ const {stageTraceDelta}=require('../../src/lib/audit/review-checkpoint.ts');
+ const {spentTokens,hasUnknownProviderUsage}=require('../../src/lib/editorial/recovery.ts');
+ const prior={role:'strategist',provider_request_id:'prior',usage:{total_tokens:100}};
+ const unknown={role:'selection_reviewer',usage:{unknown_calls:1},usage_status:'unknown'};
+ const trace=stageTraceDelta([],[prior,unknown]);
+ assert.equal(trace.usage.total_tokens,100);assert.equal(trace.usage.unknown_calls,1);
+ assert.equal(trace.usage_status,'partial_unknown');
+ assert.equal(stageTraceDelta([prior,unknown],[prior,unknown]),null);
+ const ledger=[{trace}];assert.equal(spentTokens(ledger),100);assert.ok(hasUnknownProviderUsage(ledger));
+ assert.equal(recoveryPlan({...job,ledger},'SELECTION_REVIEW_DEFERRED','fixed'),null);
+ assert.equal(recoveryPlan({...job,ledger},'DEVELOPMENT_REJECTED','fixed'),null);
+});
 test('unknown provider outcomes never buy another call after a delay or deployment',()=>{
  for(const code of ['AI_REVIEW_UNAVAILABLE','INTERRUPTED','EXISTING_CALL','STAGE_FAILED','DRAFT_CONFLICT']) {
   assert.equal(recoveryPlan(job,code,'build',1000),null);

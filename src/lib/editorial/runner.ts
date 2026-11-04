@@ -12,7 +12,7 @@ import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
 import { POST as b10 } from '@/app/api/optimize/b10/route';
 import { POST as complete } from '@/app/api/optimize/complete/route';
-import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview, authorizedReviewUsed } from './recovery';
+import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview, authorizedReviewUsed, hasUnknownProviderUsage } from './recovery';
 
 /** Recover only the latest job, with unchanged owned sources, under the same lock as enqueue. */
 export async function recoverStoppedJobs() {
@@ -64,6 +64,7 @@ export async function runJobStage(job:any) {
     const submission=await prisma.submission.findUnique({where:{id:job.submissionId},include:{matters:true}});
     if(!submission || submission.userId!==job.userId || stableHash(sourceSnapshot(submission))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
     if(cursor>=40) throw new Error('STAGE_BUDGET');
+    if(hasUnknownProviderUsage(job.ledger)) throw new Error('PROVIDER_OUTCOME_UNKNOWN');
     if(spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)) throw new Error('TOKEN_BUDGET');
     if(stage==='artifact' && authorizedReviewUsed(job.ledger)) throw new Error('AUTHORIZED_REVIEW_LIMIT');
     const handler=stage==='selection'||stage==='development'||stage==='audit'?review:stage==='b10'?b10:stage==='artifact'?complete:stage?.startsWith('matter:')?matter:null;
@@ -113,7 +114,7 @@ export async function runJobStage(job:any) {
     }
   } catch(error:any) {
     const code=error.message;
-    status=code==='SOURCE_CHANGED'?'superseded':code==='HUMAN_DRAFT_STALE'?'needs_review':['EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE'].includes(code)?'indeterminate':'failed';
+    status=code==='SOURCE_CHANGED'?'superseded':code==='HUMAN_DRAFT_STALE'?'needs_review':['EXISTING_CALL','STAGE_FAILED','AI_REVIEW_UNAVAILABLE','PROVIDER_OUTCOME_UNKNOWN'].includes(code)?'indeterminate':'failed';
     issue=code==='HUMAN_DRAFT_STALE'?{...systemIssue(code,'Cambió una fuente de un texto editado. Revisa esa redacción antes de continuar.',false),owner:'user',action:'review'}:
       systemIssue(code,code==='SOURCE_CHANGED'?'Cambiaste las fuentes durante la revisión. El trabajo guardado se conserva; inicia una revisión de la versión actual.':code==='SELECTION_REJECTED'?'RankPilot no pudo validar su selección. Conservamos tus datos; puedes reintentar esta etapa.':result?.error || 'No se completó esta etapa. Conservamos las etapas guardadas.',result?.retryable!==false);
     const failure={stage,cursor:job.cursor,issue,trace,worker_commit:process.env.RENDER_GIT_COMMIT || 'local'};

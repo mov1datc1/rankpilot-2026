@@ -155,5 +155,7 @@ export function stageTraceDelta(previous:any[], current:any[]) {
   if(calls.length<2) return calls[0] || null;
   const usage:any={input_tokens:0,output_tokens:0,total_tokens:0};
   for(const call of calls) for(const key of Object.keys(usage)) usage[key]+=Number(call.usage?.[key] || 0);
-  return {role:'selection_with_review',usage,seconds:calls.reduce((n:number,c:any)=>n+Number(c.seconds || 0),0),calls};
+  const unknown=calls.reduce((n:number,call:any)=>n+Number(call.usage?.unknown_calls || 0),0);
+  if(unknown) usage.unknown_calls=unknown;
+  return {role:'selection_with_review',usage,...(unknown?{usage_status:'partial_unknown'}:{}),seconds:calls.reduce((n:number,c:any)=>n+Number(c.seconds || 0),0),calls};
 }

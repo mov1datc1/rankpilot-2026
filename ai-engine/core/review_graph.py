@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Literal, Optional
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field, model_validator, ValidationError
+from openai import APIConnectionError
 from openai.lib._pydantic import to_strict_json_schema
 from langgraph.graph import StateGraph, END
 from utils.model_factory import create_chat_model, get_model_settings
@@ -274,7 +275,7 @@ def role_payload(payload, role):
     return result
 
 class SelectionReviewDeferred(TimeoutError):
-    """No request started: checkpoint the selector and give review a fresh budget."""
+    """No request started: checkpoint for another stage time window, not new tokens."""
 
 class EditorialResponseError(ValueError):
     def __init__(self, message, trace):
@@ -309,8 +310,21 @@ def invoke_role(state, role, schema, instruction, payload):
         model=model.model_copy(update={'max_tokens':min(32768,max(16384,output_limit*2))})
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
     # otherwise raises before returning metadata. Validate locally after status.
-    result = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True).invoke([
-        ('system', BASE + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))])
+    chain = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True)
+    messages = [
+        ('system', BASE + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))]
+    try:
+        result = chain.invoke(messages)
+    except (APIConnectionError, TimeoutError, ConnectionError) as error:
+        # The request may have reached the provider even without a response.
+        # Never manufacture zero tokens or buy another call on this evidence.
+        failure = EditorialResponseError('provider outcome unknown', {
+            'role':role,'seconds':round(time.monotonic()-started,3),
+            'usage':{'unknown_calls':1},'usage_status':'unknown',
+            'prompt_version':_RULES['version'],'prompt_revision':_RULES.get('prompt_revision',_RULES['version'])
+        })
+        failure.trace_history = list(state.get('trace', [])) + [failure.trace]
+        raise failure from error
     raw = result.get('raw')
     trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':getattr(raw,'response_metadata',{}).get('model_name'), 'prompt_version':_RULES['version'], 'prompt_revision':_RULES.get('prompt_revision',_RULES['version']), 'retrieved_rules':router.get_rag_manifest(), 'provider_request_id':getattr(raw,'id',None)}]
     trace[-1]['reasoning_version']=REASONING_VERSION if reasoning_guidance(role) else None
@@ -432,8 +446,13 @@ def selection_review(state):
         trace = list(state.get('trace', []))
         if getattr(error, 'trace', None): trace.append(error.trace)
         errors = ['RankPilot no pudo completar la comprobación de la selección; la propuesta y las fuentes se conservan para reintentar.']
+        # invoke_role raises this BEFORE creating/calling the model. Saving a
+        # stage checkpoint must neither spend nor replenish semantic reviews.
+        # Failed transport has no completed semantic verdict either. Its paid
+        # outcome is recorded separately; the durable worker must quarantine it.
+        attempts = state.get('selection_review_attempts', 0)
         return {'selection_review_validated':False,'selection_review_unavailable':True,'selection_review_deferred':isinstance(error,SelectionReviewDeferred),'selection_validated':False,
-                'selection_review_attempts':2,'errors':errors,'trace':trace,
+                'selection_review_attempts':attempts,'errors':errors,'trace':trace,
                 'selection_feedback':{'strategy':state['strategy'],'errors':errors,'semantic_rejection':False}}
 
 

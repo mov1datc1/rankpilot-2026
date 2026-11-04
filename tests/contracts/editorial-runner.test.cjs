@@ -37,6 +37,54 @@ global.fetch=async(url,options)=>{
  return Response.json({success:true,judge:{passed:true,defects:[]},trace:[{role:'editor',usage:{total_tokens:150}},{role:'portfolio_reviewer',usage:{total_tokens:25}}]});
 };
 async function stage(){job.status='running';job.leaseToken=`lease-${job.cursor}`;await runJobStage(structuredClone(job));}
+test('a lost engine response preserves known tokens and quarantines unknown usage without a retry',async()=>{
+ reset();await stage();const normal=global.fetch;let requests=0;
+ try {
+  global.fetch=async()=>{requests++;throw new TypeError('Network response lost');};
+  await stage();
+  assert.equal(job.status,'indeterminate');assert.equal(job.cursor,1);
+  assert.equal(job.ledger[0].trace.usage.total_tokens,100);
+  assert.equal(job.ledger.at(-1).trace.usage.unknown_calls,1);
+  assert.equal(job.ledger.at(-1).trace.usage_status,'unknown');
+  await stage();
+  assert.equal(requests,1);assert.equal(job.status,'indeterminate');
+  assert.equal(job.issue.code,'PROVIDER_OUTCOME_UNKNOWN');
+  assert.ok(!submission.chambersData.approved_artifact);
+ } finally {global.fetch=normal;}
+});
+test('an unavailable semantic response is not mislabeled as an unstarted deferred review',async()=>{
+ reset();const normal=global.fetch;
+ global.fetch=async(url,options)=>{
+  const response=await normal(url,options);const result=await response.json();
+  result.state.selection_validated=false;result.state.selection_review_validated=false;
+  result.state.selection_review_unavailable=true;result.state.selection_review_deferred=false;
+  result.state.selection_review_attempts=0;
+  result.state.trace.push({role:'selection_reviewer',usage:{unknown_calls:1},usage_status:'unknown'});
+  return Response.json({...result,next_stage:'done'});
+ };
+ try {
+  await stage();assert.equal(job.status,'indeterminate');assert.equal(job.issue.code,'AI_REVIEW_UNAVAILABLE');
+  assert.equal(job.issue.retryable,false);assert.equal(job.cursor,0);
+  assert.equal(job.ledger[0].trace.usage.total_tokens,100);
+  assert.equal(job.ledger[0].trace.usage.unknown_calls,1);
+  assert.equal(submission.chambersData.review_checkpoint.state.selection_review_attempts,0);
+  assert.equal(calls.length,1);
+ } finally {global.fetch=normal;}
+});
+test('failure trace history preserves prior billing without counting it twice',async()=>{
+ reset();await stage();const normal=global.fetch;
+ global.fetch=async()=>Response.json({success:false,code:'AI_REVIEW_UNAVAILABLE',trace:[
+  ...submission.chambersData.review_checkpoint.state.trace,
+  {role:'development',usage:{unknown_calls:1},usage_status:'unknown'}
+ ]},{status:502});
+ try {
+  await stage();assert.equal(job.status,'indeterminate');
+  const {spentTokens,hasUnknownProviderUsage}=require('../../src/lib/editorial/recovery.ts');
+  assert.equal(spentTokens(job.ledger),100);assert.ok(hasUnknownProviderUsage(job.ledger));
+  assert.equal(job.ledger.at(-1).trace.usage.total_tokens,undefined);
+  assert.equal(job.ledger.at(-1).trace.usage.unknown_calls,1);
+ } finally {global.fetch=normal;}
+});
 test('an unknown provider failure pauses the same job without purchasing a duplicate call',async()=>{
  reset();await stage();
  const sourceHash=job.sourceHash,normalFetch=global.fetch;
