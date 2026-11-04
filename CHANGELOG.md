@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.12] — 2026-11-04 — Grounded qualifications and actionable review states
+
+- Preserve a finding's semantic source field while binding its exact generated repair location. Sector containment can reach the existing targeted repairer instead of becoming stranded after binding.
+- Allow a critical, independently grounded final-outcome overclaim to route to bounded prose repair when separate literal interim/procedural evidence preserves the material work and selection basis. Keep original uncertainty in the internal Audit; never choose victory, defeat or ongoing status. The corrected exact Word pair still requires independent review.
+- Compare the same source attribute and procedural stage: workforce characteristics do not alone contradict an industry register, and a general judicial standard is not automatically a decision in the client's matter.
+- Explain what to do in each UI state: wait during an active review, answer genuine data questions, and consult findings/download the available internal Audit after a terminal pause. Remove unavailable resume instructions and disable an unchanged stopped attempt's generate action. An explicit repair click cannot reset the same paused attempt's allowance.
+- Existing stopped cases, original sources, rejection verdicts, budgets and automatic repair-round limits remain intact. This change does not establish an autonomous production pass or authorize a new paid run.
+
 ## [1.0.11] — 2026-11-03 — Repair personal attribution and generated role claims
 
 - Require a candidate to be named in the original matter supporting their candidacy. A literal quotation naming another lawyer no longer satisfies personal attribution; repair the affected whole candidate without changing the source or the mandate.

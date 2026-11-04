@@ -380,10 +380,14 @@ class AuditResponsibilityTests(unittest.TestCase):
 
     def test_warning_sector_containment_still_runs_the_automatic_repair(self):
         state={'package':PACKAGE,'strategy':STRATEGY,'development':DEV,'development_reusable':True,'repair_feedback':[{'severity':'warning','owner':'rankpilot','scope':'submission','code':'SOURCE_CONFLICT','field_path':'client_sector','artifact_quote':'Disputed optional sector','conflicting_artifact_term':'sector','conflict_resolution':'omit_nonessential_descriptor'}]}
-        with patch('core.editorial_repair.repair_rejected_development',return_value={'development_validated':False}) as locator:
-            result=develop(state)
-        locator.assert_called_once()
-        self.assertFalse(result['development_validated'])
+        for semantic_path in (False,True):
+            trial=copy.deepcopy(state)
+            if semantic_path:
+                trial['repair_feedback'][0].update(field_path='matters/0/text',source_field_path='client_sector')
+            with patch('core.editorial_repair.repair_rejected_development',return_value={'development_validated':False}) as locator:
+                result=develop(trial)
+            locator.assert_called_once()
+            self.assertFalse(result['development_validated'])
 
     def test_submission_repairs_are_context_not_audit_field_tasks(self):
         from core.editorial_repair import repair_letter

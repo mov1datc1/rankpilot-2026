@@ -138,6 +138,8 @@ TASK += " B9 must state supported credentials and personal contributions directl
 
 TASK += " PERSONAL ATTRIBUTION: A literal quotation naming another lead lawyer is not evidence for this candidate. Every supporting matter must name this candidate in that matter's original fields; otherwise omit that support and reassess the candidate without altering the mandate. D5/E5 Lead partner is a template heading for matter responsibility, not proof of partner seniority; preserve personally attributed leadership using a neutral lawyer title when no explicit professional title is established."
 
+TASK += " UNCONFIRMED FINAL OUTCOMES: Distinguish a general legal standard from a ruling in this specific client matter; different subjects, procedural stages or dates alone are not incompatible facts. If the final merits outcome cannot be reconciled, do not choose a victory or defeat or infer the case remains ongoing. Retain separately documented interim relief or procedural work where it supports the selected matter; keep decisive uncontested scale and attribution. Apply that qualification consistently to the matter narrative, completion_status, B9, B10 and C2. Record both source passages and the unresolved final outcome in the INTERNAL Audit. Source uncertainty does not authorize erasing useful work or changing selection; if the selection depends on a disputed final victory, it needs genuine clarification."
+
 def literal_quote(value):
     value=str(value or '').strip()
     if len(value)>1 and (value[0],value[-1]) in [('“','”'),('\"','\"'),('‘','’')]:
@@ -356,7 +358,7 @@ def develop(state):
             and d.get('owner')=='rankpilot' and d.get('scope')!='letter'
             and (d.get('severity')=='critical' or (d.get('artifact_quote') and (
                 (d.get('code')=='EDITORIAL_STYLE' and d.get('field_path')) or
-                (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and d.get('field_path')=='client_sector' and d.get('conflicting_artifact_term') and str(d['conflicting_artifact_term']).casefold() in str(d['artifact_quote']).casefold()))))]
+                (d.get('code')=='SOURCE_CONFLICT' and d.get('conflict_resolution')=='omit_nonessential_descriptor' and (d.get('source_field_path') or d.get('field_path'))=='client_sector' and d.get('conflicting_artifact_term') and str(d['conflicting_artifact_term']).casefold() in str(d['artifact_quote']).casefold()))))]
         concrete=[d for d in semantic if not str(d.get('message','')).startswith('La aceptación editorial no está completa:')]
         if concrete:semantic=concrete
         elif renderer_only:semantic=[]

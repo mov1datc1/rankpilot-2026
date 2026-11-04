@@ -43,3 +43,9 @@ test('stopped generated repair resumes only after code change, preserving cursor
   assert.equal(await enqueue(submission,true,true),last);assert.equal(last.status,'failed');assert.equal(inserts,0);
  }finally{if(originalBuild===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=originalBuild;}
 });
+
+test('a supervisor pause keeps its ledger and does not acquire a fresh allowance through explicit repair',async()=>{
+ reset();last.ledger=[{stage:'artifact',supervision:{action:'pause',reason:'repair_progress_limit'}}];
+ const saved=structuredClone(last);
+ assert.equal(await enqueue(submission,true,true),last);assert.equal(inserts,0);assert.deepEqual(last,saved);
+});

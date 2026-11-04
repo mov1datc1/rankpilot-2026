@@ -25,7 +25,9 @@ export function bindGeneratedFindings(defects:any[], development:any):any[] {
     const hits=fields.filter(f=>norm(f.text).includes(norm(d.artifact_quote)));
     const matching=hits.filter(f=>f.matterId===d.matter_id);
     const selected=matching.length===1?matching:hits;
-    return selected.length===1?{...d,scope:'submission',field_path:selected[0].path}:d;
+    return selected.length===1?{...d,scope:'submission',
+      ...(d.field_path && d.field_path!==selected[0].path ? {source_field_path:d.source_field_path || d.field_path}:{}),
+      field_path:selected[0].path}:d;
   });
 }
 

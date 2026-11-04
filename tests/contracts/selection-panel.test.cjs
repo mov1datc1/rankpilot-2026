@@ -6,10 +6,12 @@ const React=require('react');const {renderToStaticMarkup}=require('react-dom/ser
 test('an exhausted automatic review reports a real pause without promising continuation or a paid restart',()=>{
  const {publicJob}=require('../../src/lib/editorial/jobs.ts');
  const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});
- const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:['La revisión editorial se ejecutará después de guardar la redacción.'],warnings:[],approved:false,job,onResolve:()=>{}}));
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{editorial_review:{letter:{}},final_artifact_review:{judge:{defects:[{code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',message:'Retira el descriptor sectorial discutido.'}]}}},errors:[],warnings:[],approved:false,job,onResolve:()=>{}}));
  assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Preparación pausada'));
  assert.ok(html.includes('No habrá más intentos automáticos'));assert.ok(html.includes('entrega final sigue pendiente'));
  assert.ok(!html.includes('continuará automáticamente'));assert.ok(!html.includes('<button'));
+ assert.ok(html.includes('no se reanudará al esperar'));assert.ok(html.includes('descarga el Audit'));
+ assert.ok(!html.includes('Pulsa «Revisar y preparar documentos»'));assert.ok(!html.includes('para reanudar el proceso'));
 });
 const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Synthetic Client. Reintenta la revisión editorial.'];
 function buttons(node){if(!node||typeof node!=='object')return[];return [...(node.type==='button'?[node]:[]),...React.Children.toArray(node.props?.children).flatMap(buttons)];}
@@ -61,4 +63,11 @@ test('a stopped internal job remains RankPilot responsibility without a user rep
  assert.ok(html.includes('Preparación pausada'));
  assert.ok(!html.includes('Reanudar preparación'));assert.ok(!html.includes('secret-id'));assert.ok(!html.includes('<button'));
  assert.ok(!html.includes('No quedan respuestas pendientes'));
+});
+
+test('a running repair asks the user to wait without suggesting another paid start',()=>{
+ const data={final_artifact_review:{judge:{defects:[{severity:'critical',owner:'rankpilot',message:'Retira el descriptor discutido.'}]}}};
+ const html=renderToStaticMarkup(ReviewPanel({data,errors:[],warnings:[],approved:false,job:{status:'running'},onResolve:()=>{}}));
+ assert.ok(html.includes('Espera a que termine'));assert.ok(html.includes('Puedes cerrar esta pestaña'));
+ assert.ok(!html.includes('para reanudar el proceso'));assert.ok(!html.includes('<button'));
 });

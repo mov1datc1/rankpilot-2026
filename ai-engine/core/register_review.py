@@ -6,12 +6,12 @@ from typing import Literal
 class RegisterClaim(BaseModel):
     scope: Literal['submission','letter']
     artifact_quote: str
-    conflicting_artifact_term: str = Field(description='The exact disputed industry descriptor in the output, NEVER the client name. A client name or legally relevant work alone is not an assertion of industry.')
+    conflicting_artifact_term: str = Field(description='The exact disputed client-industry assertion, NEVER the client name, workforce size/characteristic or description of legal work. Do not turn a compatible attribute into a mutually exclusive industry classification.')
 
 class RegisterCheck(BaseModel):
     matter_id: str
     relationship: Literal['consistent','conflicting','not_comparable']
-    rationale: str = Field(description='Use at most 25 words. Compare the client industry in its original register row with the SAME client in the matter narrative. Service descriptions are not client industries. Explain compatible broader/narrower descriptions rather than inventing a conflict.')
+    rationale: str = Field(description='Use at most 25 words. Compare the SAME attribute of the SAME client: workforce characteristics and legal services are not primary-industry classifications. Labels need not be exclusive. Explain compatible broader/narrower descriptions rather than inventing a conflict; different words alone are insufficient.')
     register_quote: str = Field(default='',description='Empty unless relationship is conflicting. For a conflict, copy only the short literal register phrase identifying the disputed industry.')
     narrative_quote: str = Field(default='',description='Empty unless relationship is conflicting. For a conflict, copy only the short literal narrative phrase identifying the competing industry.')
     nonessential_sector: bool = Field(default=False,description='True only if withdrawing an optional industry descriptor preserves all legally significant facts, scale, roles and selection. Never use for identity, amounts, outcomes or permissions.')

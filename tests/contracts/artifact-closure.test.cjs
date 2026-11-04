@@ -120,3 +120,16 @@ test('draft download preserves the saved pair and refuses corruption or stale in
  assert.throws(()=>storedDraftBytes(sub,data,'submission'),/DRAFT_ARTIFACT_CORRUPTED/);
  assert.equal(data.release_verdict.passed,false);
 });
+
+test('source semantics survive generated-field binding for sector and outcome repairs',()=>{
+ const claim='The disputed claim.',dev={matters:[{matter_id:'m',text:claim}]};
+ for(const [field,resolution] of [['client_sector','omit_nonessential_descriptor'],['outcome','qualify_disputed_outcome']]){
+  const defect={code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',scope:'submission',matter_id:'m',field_path:field,artifact_quote:claim,conflicting_artifact_term:'disputed',conflict_resolution:resolution,qualification_validated:true};
+  const bound=bindGeneratedFindings([defect],dev)[0];
+  assert.equal(bound.field_path,'matters/0/text');assert.equal(bound.source_field_path,field);
+  assert.equal(bindGeneratedFindings([bound],dev)[0].source_field_path,field);
+  assert.equal(defect.field_path,field);assert.equal(defect.source_field_path,undefined);
+  assert.deepEqual(targetedRepair({editorial_development:dev,final_artifact_review:{judge:{defects:[bound]}}}),{tasks:['development','audit','artifact'],letter:true});
+  if(field==='outcome')assert.equal(targetedRepair({editorial_development:dev,final_artifact_review:{judge:{defects:[{...bound,qualification_validated:false}]}}}),null);
+ }
+});

@@ -32,3 +32,12 @@ test('an invalid sector diagnostic cannot lock already-neutral prose into a repa
  assert.deepEqual(unrepairedGeneratedClaims([defect],defect.artifact_quote,''),[]);
  assert.deepEqual(unrepairedGeneratedClaims([{...defect,conflicting_artifact_term:null}],defect.artifact_quote,''),[]);
 });
+
+test('bound sector and validated outcome corrections remain rejected while the exact claim survives',()=>{
+ for(const [field,resolution] of [['client_sector','omit_nonessential_descriptor'],['outcome','qualify_disputed_outcome']]){
+  const d={code:'SOURCE_CONFLICT',owner:'rankpilot',severity:'critical',scope:'submission',field_path:'matters/0/text',source_field_path:field,artifact_quote:'The disputed claim.',conflicting_artifact_term:'disputed',conflict_resolution:resolution,qualification_validated:true};
+  assert.equal(unrepairedGeneratedClaims([d],d.artifact_quote,'').length,1);
+  assert.equal(unrepairedGeneratedClaims([d],'Corrected result.',d.artifact_quote).length,0);
+  if(field==='outcome')assert.deepEqual(unrepairedGeneratedClaims([{...d,qualification_validated:false}],d.artifact_quote,''),[]);
+ }
+});

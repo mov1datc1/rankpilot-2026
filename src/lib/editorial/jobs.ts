@@ -60,6 +60,8 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       }
       return last;
     }
+    // A stopped attempt cannot acquire a fresh repair allowance by another click.
+    if(last?.sourceHash===sourceHash && last?.resultHash===resultHash && last?.ledger?.at(-1)?.supervision?.action==='pause') return last;
     const repair=requestRepair && last?.status==='needs_review' && last.resultHash===resultHash ? targetedRepair(current.chambersData) : null;
     if(requestRepair && last?.status==='needs_review' && last.resultHash===resultHash && !repair) throw new Error('AUTO_REPAIR_UNAVAILABLE');
     if(!repair && last?.resultHash===resultHash && last?.sourceHash===sourceHash && ['completed','needs_review'].includes(last.status)) return last;
@@ -86,8 +88,9 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
 /** Repairs may change generated prose, never source facts or human-edited text. */
 export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
   const containedConflict=(d:any)=>d.code==='SOURCE_CONFLICT' && (
-    (d.conflict_resolution==='omit_nonessential_descriptor' && d.field_path==='client_sector' && d.conflicting_artifact_term && String(d.artifact_quote || '').toLowerCase().includes(String(d.conflicting_artifact_term).toLowerCase())) ||
-    (d.conflict_resolution==='preserve_source_aliases' && d.field_path==='client' && d.scope==='letter'));
+    (d.conflict_resolution==='omit_nonessential_descriptor' && (d.source_field_path || d.field_path)==='client_sector' && d.conflicting_artifact_term && String(d.artifact_quote || '').toLowerCase().includes(String(d.conflicting_artifact_term).toLowerCase())) ||
+    (d.conflict_resolution==='preserve_source_aliases' && d.field_path==='client' && d.scope==='letter') ||
+    (d.conflict_resolution==='qualify_disputed_outcome' && (d.source_field_path || d.field_path)==='outcome' && d.qualification_validated===true && ['submission','letter'].includes(d.scope)));
   const defects=bindGeneratedFindings(data.final_artifact_review?.judge?.defects || [],data.editorial_development).filter((d:any)=>
     d.severity==='critical' || (d.owner==='rankpilot' && d.artifact_quote &&
       ((d.code==='EDITORIAL_STYLE' && d.field_path) || containedConflict(d))));

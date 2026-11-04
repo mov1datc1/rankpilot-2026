@@ -316,6 +316,7 @@ export default function SubmissionStudio({
     practice_area: currentPracticeArea
   }, matters);
   const preparationBlocked=inputIssues.length>0 || !readiness.canOptimize;
+  const reviewAttemptStopped=Boolean(editorialJob?.pauseReason && !reviewIsStale(chambersData) && !studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
   const resolvePreparationInputs=()=>{
     if(inputIssues.length){setReviewPending(true);setShowValidationWizard(true);}
     else setShowReadinessModal(true);
@@ -641,6 +642,7 @@ export default function SubmissionStudio({
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(preparationBlocked) {resolvePreparationInputs();return;}
     if(isOptimizingAll) return;
+    if(reviewAttemptStopped) {setDraftSaveError('Este intento está detenido. Esperar o volver a generar no lo reanudará. Consulta los hallazgos y descarga el Audit disponible para revisar lo pendiente.');return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
@@ -1168,9 +1170,9 @@ export default function SubmissionStudio({
           {/* Primary CTA: Optimizar Todo */}
           <button
             onClick={() => handleOptimizeAll(false)}
-            disabled={isOptimizingAll || preparationBlocked}
+            disabled={isOptimizingAll || preparationBlocked || reviewAttemptStopped}
             style={{
-              background: isOptimizingAll || preparationBlocked
+              background: isOptimizingAll || preparationBlocked || reviewAttemptStopped
                 ? '#CBD5E1' 
                 : isFullyOptimized 
                   ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' 
@@ -1184,7 +1186,7 @@ export default function SubmissionStudio({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              cursor: isOptimizingAll || preparationBlocked ? 'not-allowed' : 'pointer',
+              cursor: isOptimizingAll || preparationBlocked || reviewAttemptStopped ? 'not-allowed' : 'pointer',
               boxShadow: isOptimizingAll 
                 ? 'none' 
                 : isFullyOptimized 
@@ -1192,10 +1194,10 @@ export default function SubmissionStudio({
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
+            title={reviewAttemptStopped ? 'Este intento está detenido. Consulta los hallazgos y el Audit; esperar no lo reanudará.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Preparando entrega…' : 'Revisar y generar'}</span>
+            <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Revisión detenida' : 'Revisar y generar'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
@@ -1420,7 +1422,7 @@ export default function SubmissionStudio({
               </div>
               <button
                 onClick={() => handleOptimizeAll(false)}
-                disabled={isOptimizingAll || preparationBlocked}
+                disabled={isOptimizingAll || preparationBlocked || reviewAttemptStopped}
                 style={{
                   opacity: preparationBlocked ? 0.45 : 1,
                   background: '#2563EB',
