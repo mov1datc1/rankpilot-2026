@@ -19,3 +19,7 @@ Pruebas locales simulan aplazamiento antes de llamar, reanudación con el límit
 438 pruebas Python correctas, 462 contratos Node correctos y uno omitido; tipos y compilación correctos. El replay local del registro real muestra que el contador adelantado impedía una reparación todavía disponible según las revisiones completadas. No modifica el expediente y no prueba cómo responderá el siguiente modelo ni aprueba documentos.
 
 Esto no acredita cierre autónomo en producción ni una prueba real de desconectar Internet en todos los pasos. Siguen pendientes las confirmaciones evitables o duplicadas y una salida útil para culminar después de un fallo interno. No reactivar intentos terminados ni anunciar que los Word están aprobados.
+
+## Publicación verificada
+
+Publicado en dev/main: `3917e1b31f808bf2b9e242f302cc8d251825bd8d`, con árbol idéntico a los archivos probados localmente. Motor y worker confirmados LIVE, health online con huella coincidente y Vercel success. La publicación se completó mediante el conector GitHub después de verificar que dos timeouts de push no habían movido las ramas. No hubo nuevas llamadas a OpenAI ni modificaciones del expediente. Las consultas finales al registro no conectaron; no se presenta una lectura posterior al despliegue como verificada. No atribuir automáticamente todos los problemas de conectividad a la red del usuario.
