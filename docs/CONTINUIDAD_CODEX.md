@@ -1,3 +1,9 @@
+## 2026-11-04 — v1.0.13 publicada y health verificado; comprobación dirigida pendiente
+
+Código e6d863bc41f5078cfa4acbfd0f21806ae542cb14 publicado en dev/main por push atómico. Motor dep-dblm11nb9u1s73d03kjg y worker dep-dblm11nb9u1s73d03ks0 LIVE. Health devuelve mismo commit y huella 0273edfd562a386649a478c9925ce77579e80ebeab6aa14921f42076cda613ac, igual al cálculo local. Vercel GitHub status success (dpl_6Xe3dwntU2whBQf9Ymqgqjccrk8v); Actions sigue sin run devuelto por el conector, no afirmar CI remoto aprobado. 424 Python correctas, 455 Node correctas/una omitida y TS correcto.
+
+Replay de solo lectura en scratch/closure-v13-focused/offline-receipt.json confirma selección literal válida en ambos snapshots, 33/32 checks semánticos originales supported, fuentes inalteradas y ningún approved_artifact. Estos son controles de regresión, no una prueba autónoma nueva. Cero llamadas OpenAI y cero escrituras a expedientes en este trabajo. La solicitud asíncrona de comprobación dirigida de sector/desenlace por hasta 40.000 tokens combinados sigue SIN respuesta: no ejecutar llamadas hasta autorización. No ampliar a otro recorrido completo con ese permiso. Un intento local de estimar tokens no pudo cargar el vocabulario público tiktoken por red restringida; no llegó al proveedor ni transmitió fuentes. Preparar contador/cota antes de cualquier llamada autorizada.
+
 ## 2026-11-04 — Objetivo ratificado por Jonathan; v1.0.13 en preparación
 
 Jonathan aclaró que necesita que la herramienta funcione de principio a fin para Ángela, quien debe distinguir borrador y documento completo y saber cómo culminar. No sustituir ese objetivo por una derivación a soporte. El cambio de asistencia por correo propuesto en el turno anterior se RETIRÓ sin commit, despliegue ni envío; no existe un ticket de soporte nuevo.

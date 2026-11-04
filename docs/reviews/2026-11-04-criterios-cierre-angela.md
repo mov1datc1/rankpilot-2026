@@ -33,3 +33,9 @@ Revisar todas las páginas y hechos decisivos de los Word aprobados, y comprobar
 ## Validación local de v1.0.13
 
 424 pruebas Python correctas; 455 contratos Node correctos y una prueba omitida; TypeScript correcto. Las regresiones nuevas prueban rechazo repetido con núcleo/insignia válidos sin redacción posterior ni llamadas adicionales, reutilización agotada sin llamada, reparación de borrador con fuente propia y rechazo de fallback a borrador al existir Word real, y ubicación inequívoca del diagnóstico facts. Todo sin OpenAI ni escrituras a los expedientes.
+
+## Publicación verificada
+
+Commit `e6d863bc41f5078cfa4acbfd0f21806ae542cb14` en dev/main. Motor `dep-dblm11nb9u1s73d03kjg` y worker `dep-dblm11nb9u1s73d03ks0` LIVE. Health online con mismo commit y huella local `0273edfd562a386649a478c9925ce77579e80ebeab6aa14921f42076cda613ac`. Vercel informa success para el commit. No se confirmó Actions remoto.
+
+Ninguna nueva llamada a OpenAI ni cambios de expedientes. Se pidió autorización de hasta 40.000 tokens combinados para comprobar de forma dirigida los dos bloqueos con modelo real; sigue pendiente. Esa comprobación, si se autoriza, no sustituye el recorrido autónomo completo ni autoriza otra extracción, reinicio o ampliación de trabajos antiguos.
