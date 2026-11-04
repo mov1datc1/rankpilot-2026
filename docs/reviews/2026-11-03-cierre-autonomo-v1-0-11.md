@@ -1,5 +1,7 @@
 # Estado de corrección y comprobación autónoma de v1.0.11
 
+Actualización posterior: se recuperó Chrome y se ejecutaron ambos casos. Ninguno obtuvo aprobación final. Véase [el resultado real y sus pendientes](2026-11-03-resultado-autonomo-v1-0-11.md). Lo que sigue conserva el registro previo a ese recorrido.
+
 Las correcciones están publicadas y verificadas técnicamente. Todavía no se acredita el cierre autónomo de ambos casos con esta versión: falta repetir el recorrido desde la interfaz después de recuperar una ventana accesible de Chrome.
 
 ## Versión publicada
