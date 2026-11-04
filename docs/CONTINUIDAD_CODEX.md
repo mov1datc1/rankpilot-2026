@@ -1,3 +1,7 @@
+## 2026-11-04 — Publicación verificada de v1.0.15, sin otra ejecución pagada
+
+Commit cd86e0ba1cd4ddf4c60dc701d60049454d4f7912 publicado por avance rápido en dev/main. Motor dep-dblnrm8473hc73bp20t0 y worker dep-dblnrm8473hc73bp215g LIVE en ese commit. Health online devuelve el mismo commit y la huella 533739f5514208828265e357ee999c358b1649292835561fadef3846d97a5252, igual a local. Vercel success para ese commit. 433 pruebas Python y456 contratos Node correctos/uno omitido, tipos y build correctos. No afirmar CI remoto ni prueba autónoma aprobada. El rechazo inicial del push se resolvió eliminando el informe específico antes de publicar; el commit rechazado c08f5a9 no es ancestro del publicado. No se enviaron datos nuevos del expediente al repositorio público. El detalle privado se conserva localmente. No hubo llamadas pagadas, reinicios ni rescates después del fallo de aceptación. La siguiente decisión no debe basarse en que el despliegue haya terminado: siguen abiertas las brechas señaladas debajo.
+
 ## 2026-11-04 — Prueba de aceptación v1.0.14 fallida; corrección posterior v1.0.15
 
 La nueva ejecución fija se detuvo en selección: la reparación promovió una reserva y pasó de20a21core. El gate rechazó correctamente. Sin documentos nuevos aprobados ni reactivación del intento. Evidencia e identificadores del expediente permanecen localmente fuera de Git; consultar el registro privado del trabajo antes de otra ejecución. No iniciar llamadas ni rescatar intentos automáticamente.

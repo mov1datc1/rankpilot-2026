@@ -13,3 +13,7 @@ Las propuestas continúan sujetas al control estructural y a una nueva revisión
 433 pruebas Python y 456 contratos Node correctos; un contrato omitido. Tipos y compilación correctos. La primera compilación falló por descarga de Google Fonts con red restringida; la repetición con red terminó correctamente. Regresiones ficticias cubren portafolio lleno, capacidad libre, intercambio acotado y rechazo del asunto número 21, incluyendo reparación seguida por revisión independiente. Un replay local rechaza la propuesta excedida sin generar nuevas llamadas ni alterar estado.
 
 Esto no demuestra una ejecución autónoma aprobada en producción. Siguen pendientes las confirmaciones duplicadas o evitables en ingestión y una acción suficiente para que el usuario culmine ante un fallo interno. No existe una pareja nueva aprobada que revisar visualmente. No anunciar cierre de aceptación ni funcionamiento universal.
+
+## Publicación
+
+Corrección publicada en dev/main: `cd86e0ba1cd4ddf4c60dc701d60049454d4f7912`. Motor y worker confirmados LIVE en ese commit; health online y huella idéntica a local. Vercel reporta success. No se ejecutó otra prueba pagada tras el fallo. El informe específico se retiró del commit no publicado al comprobar que el repositorio es público; aquí solo se registra diagnóstico técnico anónimo.
