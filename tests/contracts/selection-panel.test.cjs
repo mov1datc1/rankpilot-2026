@@ -3,6 +3,14 @@ const fs=require('node:fs');const ts=require('typescript');const {test}=require(
 require.extensions['.tsx']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,file);
 const {ReviewPanel}=require('../../src/components/EditorialReview.tsx');
 const React=require('react');const {renderToStaticMarkup}=require('react-dom/server');
+test('an exhausted automatic review reports a real pause without promising continuation or a paid restart',()=>{
+ const {publicJob}=require('../../src/lib/editorial/jobs.ts');
+ const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:['La revisión editorial se ejecutará después de guardar la redacción.'],warnings:[],approved:false,job,onResolve:()=>{}}));
+ assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Preparación pausada'));
+ assert.ok(html.includes('No habrá más intentos automáticos'));assert.ok(html.includes('entrega final sigue pendiente'));
+ assert.ok(!html.includes('continuará automáticamente'));assert.ok(!html.includes('<button'));
+});
 const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Synthetic Client. Reintenta la revisión editorial.'];
 function buttons(node){if(!node||typeof node!=='object')return[];return [...(node.type==='button'?[node]:[]),...React.Children.toArray(node.props?.children).flatMap(buttons)];}
 test('selection panel renders one explicit retry button and dispatches its action',()=>{

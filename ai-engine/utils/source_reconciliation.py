@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from utils.filing_reconciliation import ReconciledFinding, validate_findings
 from utils.filing_extraction import merge_model_filing_fields
 
-VERSION = 'source-reconciliation-v1'
+VERSION = 'source-reconciliation-v2'
 _CACHE = OrderedDict()
 _INFLIGHT = {}
 _CACHE_LOCK = threading.Lock()
@@ -101,6 +101,9 @@ Absent means genuinely not stated; do not copy instructions or placeholder answe
 Also recover five filing fields with literal source_quote: departmentName,numPartners,numLawyers,contacts,departmentHeads. Counts are department scoped, never firm totals/biographies. Non-partners or staff is not a qualified-lawyer count unless the source expressly identifies that category as lawyers. Closed B2/B3 headcount lists may be counted using counted_names; do not count selected/key lawyers. Keep interview contacts distinct from department heads. Preserve all explicit contradictory alternatives. Filing source_quote must be a contiguous verbatim passage from the ORIGINAL unit (without line numbers). Return missing filing facts as no findings. Source spans use the displayed original line numbers, 1-based and inclusive. The source language may be any language.'''
 
 
+PROMPT += ''' Temporal status: an explicit dated UPDATE/ACTUALIZACIÓN following an earlier pending status is the author's chronology, not two conflicting alternatives. For completionDate return status=found with ALL chronological spans, including the update heading, both proceedings if present, and the later result. Never drop the history or infer activity after the latest stated update. Reserve conflicting for incompatible claims about the same event and period; differing dates alone or a pending appeal later decided are not conflicts.'''
+
+
 def normalize(value):
     return ' '.join(str(value or '').split())
 
@@ -124,9 +127,16 @@ def read_facts(facts, fields, lines, bounds=None):
             raise ValueError('Invalid evidence status')
         if fact.status == 'conflicting' and len(set(parts)) < 2:
             raise ValueError('Conflict needs distinct source alternatives')
-        values[fact.field] = '\n'.join(parts) if fact.status == 'found' else ''
-        evidence[fact.field] = {'status': fact.status, 'quotes': parts, 'spans': [s.model_dump() for s in fact.evidence]}
-        if fact.status == 'conflicting':
+        resolution = None
+        if fact.field == 'completionDate' and fact.status == 'conflicting':
+            from utils.temporal_source import explicit_status_update
+            resolution = explicit_status_update(parts, fact.evidence, lines)
+        status = 'found' if resolution else fact.status
+        values[fact.field] = ('\n\n' if resolution else '\n').join(parts) if status == 'found' else ''
+        evidence[fact.field] = {'status': status, 'quotes': parts, 'spans': [s.model_dump() for s in fact.evidence]}
+        if resolution:
+            evidence[fact.field].update(model_status=fact.status, resolution=resolution)
+        if status == 'conflicting':
             issues.append({'field': fact.field, 'kind': 'conflicting', 'alternatives': parts})
     return values, evidence, issues
 
@@ -273,6 +283,7 @@ def total_usage(usages):
     totals = {key: sum(u.get(key, 0) for u in usages) for key in ('input_tokens', 'output_tokens', 'total_tokens')}
     totals['input_token_details'] = {'cache_read': sum(u.get('input_token_details', {}).get('cache_read', 0) for u in usages)}
     totals['output_token_details'] = {'reasoning': sum(u.get('output_token_details', {}).get('reasoning', 0) for u in usages)}
+    totals['unknown_calls'] = sum(u.get('unknown_calls', 0) for u in usages)
     return totals
 
 
@@ -325,7 +336,8 @@ def reconcile_source(text, matters, filing, lawyers=None):
             try: responses.append(future.result())
             except Exception as error:
                 errors.append(error)
-                responses.append((None, getattr(error, 'usage', {})))
+                reported = getattr(error, 'usage', {})
+                responses.append((None, reported if 'total_tokens' in reported else {**reported, 'unknown_calls': 1}))
     usages = [usage for _, usage in responses]
     usage = total_usage(usages)
     if errors:

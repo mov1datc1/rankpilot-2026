@@ -513,6 +513,13 @@ def writer(state):
     return {'letter':letter,'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1,'writer_validated':not errors,'errors':errors}
 
 def editor(state):
+    from core.editorial_voice import rendered_voice_defects
+    style_defects = rendered_voice_defects(state['package'], state.get('development') or state['package'].get('editorial_development'))
+    if style_defects:
+        # A known literal defect already rejects these bytes. Repair before
+        # paying for another full review; no approval or source edit occurs.
+        return {'judge': calibrate_verdict({'passed': False, 'defects': style_defects},
+                state['package'], state.get('strategy')), 'trace': state.get('trace', [])}
     register_instruction=''
     if state['package'].get('rendered_artifact'):
         register_instruction=' Mandatory source-register comparisons: populate every required register_checks key in the output schema. Inspect the industry column inside confidentialityEvidence.client_register, not merely the matter narrative. Never silently choose one conflicting source. If an optional sector was already withdrawn, return no claims; if it remains in either exact document, identify every affected literal claim and disputed term.'

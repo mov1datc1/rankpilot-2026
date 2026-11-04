@@ -25,8 +25,10 @@ export function publicJob(job:any) {
   const waiting=job.status==='queued';
   const paused=!active && job.status!=='completed';
   const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
+  const lastDecision=job.ledger?.at(-1)?.supervision;
+  const pauseReason=paused && lastDecision?.action==='pause' ? lastDecision.reason : null;
   const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {

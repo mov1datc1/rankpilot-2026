@@ -1,7 +1,11 @@
 .git
 node_modules
 .next
-ai-engine
+# The frontend and engine share this small literal editorial contract.
+ai-engine/*
+!ai-engine/core/
+ai-engine/core/*
+!ai-engine/core/editorial_voice_rules.json
 docs
 scratch
 angela-20octubre

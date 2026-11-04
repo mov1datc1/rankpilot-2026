@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.10] — 2026-11-03 — Chronology and autonomous editorial repair
+
+- Preserve explicit dated status updates and their earlier pending history as a literal chronology, with an auditable resolution marker. Restrict deterministic reconciliation to dated, contiguous status passages with proceeding continuity; preserve real or ambiguous conflicts. No client or hero is hardcoded.
+- Share the observed B9/C2/D8/E8 voice regressions between development validation and exact-Word preflight. Bind affected fields to the existing source-bound repairer; reject unchanged defects and retain independent review of the corrected exact pair. A backend literal guard also rejects these defects without purchasing a full review.
+- Clarify genuine source questions and paused automatic preparation. Expose a supervisor pause without encouraging another paid start or promising automatic continuation.
+- Retain reported reconciliation usage on deterministic fallback; identify unknown or partially unknown provider consumption rather than presenting it as zero.
+- Keep the existing retry, cumulative budget and two-round repair limits. Offline replay of the previously blocked extraction and previously approved defective Word is available in `scripts/acceptance/replay-autonomy-regressions.py`; historical cases and files remain untouched. This entry does not claim a new autonomous production pass.
+
 ## [1.0.9] — 2026-11-03 — Stop costly retry loops
 
 - Permit only one retry per failed stage/cursor across all builds; deploying a fix no longer replenishes the automatic retry allowance.

@@ -9,6 +9,31 @@ from core.review_graph import review_rendered_package, register_gate
 
 
 class ArtifactClosureTest(unittest.TestCase):
+    def test_shared_real_voice_regressions_and_legal_language(self):
+        from core.editorial_voice import RULES, voice_matches
+        for text in RULES['reject']:
+            for path in ('b10','c2','matters/0/text','matters/0/completion_status','candidates/0/submission_bio'):
+                proposal={'b10':'','c2':'','matters':[{'text':'','completion_status':''}],'candidates':[{'submission_bio':''}]}
+                parent=proposal
+                parts=path.split('/')
+                for part in parts[:-1]:parent=parent[int(part)] if isinstance(parent,list) else parent[part]
+                parent[parts[-1]]=text
+                with self.subTest(text=text,path=path):self.assertIn(path,submission_voice_paths(proposal))
+        for text in RULES['allow']:
+            self.assertEqual(voice_matches(text),[],text)
+            self.assertEqual(submission_voice_paths({'b10':text}),[],text)
+
+    def test_known_rendered_voice_cannot_pass_even_without_development_or_model(self):
+        from core.review_graph import editor
+        for development in (None,{'candidates':[{'submission_bio':'The supplied profile describes leadership.'}]}):
+            state={'package':{'rendered_artifact':'The supplied profile describes leadership.'},'strategy':{},'letter':{},'development':development}
+            with patch('core.review_graph.invoke_role') as paid:
+                result=editor(state)
+            paid.assert_not_called()
+            self.assertFalse(result['judge']['passed'])
+            self.assertTrue(all(d['owner']=='rankpilot' for d in result['judge']['defects']))
+            if development:self.assertEqual(result['judge']['defects'][0]['field_path'],'candidates/0/submission_bio')
+
     def test_rejected_pair_does_not_buy_auxiliary_clause_review(self):
         from core.review_graph import editor
         finding={'code':'UNSUPPORTED_CLAIM','severity':'critical','scope':'submission',

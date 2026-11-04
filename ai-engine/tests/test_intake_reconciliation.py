@@ -41,6 +41,19 @@ class IntakeReconciliationTests(unittest.TestCase):
         self.assertEqual(json.loads(response.body)['source_errors'][0]['code'],'SOURCE_DIRECTORY_MISMATCH')
         extraction.assert_not_called()
 
+    def test_full_reconciliation_fallback_preserves_known_and_unknown_consumption(self):
+        import asyncio,json
+        from main import _extract_readable_source
+        from utils.source_reconciliation import ReconciliationError
+        text='B1 Department name\nTax\nPublishable Matter 1\nD1 Name of client\nExample Client\nD2 Summary of matter\nAdvised on a tax appeal.\nD3 Matter value\n100 USD\n'
+        for usage,expected in [({'total_tokens':123,'unknown_calls':0},'reported'),({'total_tokens':123,'unknown_calls':1},'partial_unknown'),({},'unknown')]:
+            with patch('utils.source_reconciliation.reconcile_source',side_effect=ReconciliationError('Nonliteral evidence',usage)):
+                response=asyncio.run(_extract_readable_source(text,{'reconcile_source':True}))
+            self.assertEqual(response.status_code,200)
+            report=json.loads(response.body)['source_reconciliation']
+            self.assertEqual(report['usage'],usage);self.assertEqual(report['usage_status'],expected)
+            self.assertEqual(report['status'],'fallback_deterministic')
+
     def test_numbered_form_calls_reconciler_and_preserves_literal_matters(self):
         import asyncio,json
         from main import _extract_readable_source

@@ -206,6 +206,25 @@ class TargetedRepairTests(unittest.TestCase):
             result=develop({'package':PACKAGE,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
         self.assertFalse(result['development_validated'])
 
+    def test_observed_b9_c2_and_status_defects_repair_together_in_one_call(self):
+        original=copy.deepcopy(DEV);original['matters'][0]['completion_status']='N/A'
+        proposal=copy.deepcopy(original)
+        proposal['c2']='The firm respectfully seeks recognition. '+original['c2']
+        proposal['candidates'][0]['submission_bio']='The supplied profile describes leadership. '+original['candidates'][0]['submission_bio']
+        proposal['matters'][0]['completion_status']='Matter status field: N/A; no concluded representation outcome is stated.'
+        paths=['c2','candidates/0/submission_bio','matters/0/completion_status']
+        def at(value,path):
+            for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
+            return value
+        fix={'corrections':[{'path':path,'value':at(original,path),'reason':'Direct firm voice, preserving supported work and absent status.'} for path in paths],'unresolved':[]}
+        package=copy.deepcopy(PACKAGE)
+        with patch('core.review_graph.invoke_role',return_value=(fix,[])) as paid:
+            result=develop({'package':package,'strategy':STRATEGY,'development':proposal,'development_reusable':True})
+        paid.assert_called_once()
+        self.assertTrue(result['development_validated'])
+        self.assertEqual(result['development'],original)
+        self.assertEqual(package,PACKAGE)
+
     def test_semantic_repair_locates_one_field_and_preserves_rest(self):
         proposal=copy.deepcopy(DEV)
         proposal['matters'][0]['text']='The team negotiated.'

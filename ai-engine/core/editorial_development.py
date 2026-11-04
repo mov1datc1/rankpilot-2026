@@ -121,17 +121,20 @@ def sanitize_narrative_voice(text):
 
 
 def submission_voice_paths(proposal):
+    from core.editorial_voice import voice_matches
     fields = {'b10': proposal.get('b10', ''), 'c2': proposal.get('c2', '')}
     fields.update({f'matters/{i}/text': item.get('text', '') for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'matters/{i}/completion_status': item.get('completion_status', '') for i, item in enumerate(proposal.get('matters', []))})
     fields.update({f'candidates/{i}/submission_bio': item.get('submission_bio', '') for i, item in enumerate(proposal.get('candidates', []))})
     surface = re.compile(r"\b(?:the record (?:separately )?(?:lists|identifies)|no (?:final )?(?:portfolio-wide )?outcome is stated|no (?:monetary )?value, completion (?:status|date) or (?:discrete )?final outcome is stated|neither recovery nor compensation is stated|it does not report recovery|the remaining procedural stage is not specified|respectfully petitions|invite the Chambers research team to consult)\b", re.I)
     grammar = re.compile(r"\b(?:A\.C\.|S\.A\.\s+(?:DE|de)\s+C\.V\.)\s+Is\b|[a-z]{4,}\.[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ]{2,}|[.!?]\s+the team\b")
-    return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or '')) or surface.search(str(value or '')) or grammar.search(str(value or ''))]
+    return [path for path, value in fields.items() if AUDIT_VOICE.search(str(value or '')) or surface.search(str(value or '')) or grammar.search(str(value or '')) or voice_matches(value)]
 
 TASK += " PUBLIC CONFIDENTIALITY: Calling a client confidential or omitting its name is insufficient. In public B9, B10 and C2, do not reproduce a confidential mandate's identifying footprint through combinations of transaction/acquisition, counterparties, specific facilities or states, workforce totals, exact proceeding counts or case-specific values. Describe the legal work, difficulty and personal contribution in neutral terms. Do not carry a distinctive subset of that footprint from B9 into B10/C2. Preserve the precise facts and all decisive metrics in the confidential E narrative. Department-wide figures expressly supplied as department-wide facts retain their own scope."
 
 TASK += " All Submission fields, including confidential matter narratives and completion_status for D8/E8, must present the firm's source-backed work directly. Never narrate what the source states or omits. Keep uncertainty in the underlying fact (for example, proceedings remain pending), and keep evidence assessments in internal Audit fields. Do not erase genuine legal work involving evidence or audits. A confidential matter VALUE is distinct from confidential identity: keep an otherwise publishable matter public, but never reveal its restricted amount, range or order of magnitude in public prose. Omit that economic detail automatically; do not ask the user to authorize disclosure when the source already restricts it."
+
+TASK += " B9 must state supported credentials and personal contributions directly, never 'the supplied profile/biography/materials'. C2 must request coverage directly, never 'respectfully seeks' or 'the submission identifies'. D8/E8 must convey only the documented procedural status: never describe a status field or an omitted outcome. If the source has no status, use N/A without commentary; never invent ongoing proceedings or a completed result. Historical status followed by an explicit later update is a chronology: incorporate the later documented outcome and retain necessary procedural context, without inventing recent activity."
 
 def literal_quote(value):
     value=str(value or '').strip()

@@ -7,6 +7,17 @@ const {reviewPackage}=require('../../src/lib/audit/review-checkpoint.ts');
 const {bindGeneratedFindings,renderedSubmissionFindings}=require('../../src/lib/editorial/artifact-findings.ts');
 const {targetedRepair}=require('../../src/lib/editorial/jobs.ts');
 const {anonymizeConfidentialClients}=require('../../src/lib/docx/lawyer-curator.ts');
+const voiceRules=require('../../ai-engine/core/editorial_voice_rules.json');
+
+test('actual voice regressions route every affected generated field to bounded repair',()=>{
+ for(const text of voiceRules.reject) {
+  const dev={b10:text,c2:text,matters:[{matter_id:'m',text,completion_status:text}],candidates:[{submission_bio:text}]};
+  const findings=renderedSubmissionFindings(text,dev);
+  assert.deepEqual(new Set(findings.map(d=>d.field_path)),new Set(['b10','c2','matters/0/text','matters/0/completion_status','candidates/0/submission_bio']),text);
+  assert.ok(findings.every(d=>d.owner==='rankpilot' && d.severity==='critical' && d.retryable));
+ }
+ for(const text of voiceRules.allow)assert.deepEqual(renderedSubmissionFindings(text,{b10:text}),[],text);
+});
 
 for(const directory of ['Chambers','Legal 500']) for(const permissions of [{},{isConfidential:false,confidentialityConfirmed:false},{isConfidential:false,confidentialityStatus:'confirmation_required'}]) {
  test(`${directory}: uncertain permission stays restricted in actual DOCX public sections (${JSON.stringify(permissions)})`,async()=>{

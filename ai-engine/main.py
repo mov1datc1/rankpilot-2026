@@ -1022,7 +1022,7 @@ async def _extract_readable_source(doc_text, context):
 
         reconciliation = {}
         if context.get('reconcile_source'):
-            from utils.source_reconciliation import reconcile_source
+            from utils.source_reconciliation import reconcile_source, VERSION as reconciliation_version
             try:
                 reviewed = await asyncio.to_thread(reconcile_source, doc_text, matters, filing, lawyers=roster)
                 matters = reviewed['matters']
@@ -1056,7 +1056,7 @@ async def _extract_readable_source(doc_text, context):
                 logger.warning('Proceeding with clean deterministic extraction fallback since %d matters were extracted', len(matters))
                 reconciliation = {
                     'source_reconciliation': {
-                        'version': 'source-reconciliation-v1',
+                        'version': reconciliation_version,
                         'status': 'fallback_deterministic',
                         'source_characters': len(doc_text),
                         'covered_characters': len(doc_text),
@@ -1064,6 +1064,8 @@ async def _extract_readable_source(doc_text, context):
                         'notice': 'Extracción base completada; la conciliación secundaria no pudo completarse.',
                         'warning': 'La conciliación secundaria por IA no alteró la extracción base.',
                         'error_detail': str(error),
+                        'usage': getattr(error, 'usage', {}),
+                        'usage_status': 'partial_unknown' if getattr(error, 'usage', {}).get('unknown_calls') else 'reported' if 'total_tokens' in getattr(error, 'usage', {}) else 'unknown',
                     }
                 }
         elif context.get('reconcile_filing'):

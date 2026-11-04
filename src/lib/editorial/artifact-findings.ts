@@ -1,3 +1,5 @@
+import voiceRules from '../../../ai-engine/core/editorial_voice_rules.json';
+
 /** Literal bindings let the repairer edit generated fields, never source facts.
  * A reviewer may label a source-vs-output defect 'facts'; locate its output claim
  * before routing the correction, without buying a model call to locate it. */
@@ -33,6 +35,7 @@ export function renderedSubmissionFindings(rendered:string, development:any, mat
     if(index>=0 && actual && output.includes(norm(actual)) && !fields.some(f=>f.path===`matters/${index}/text` && f.text===actual)) fields.push({path:`matters/${index}/text`,text:actual,matterId:matter.id});
   }
   const patterns=[
+    ...voiceRules.patterns.map(pattern=>new RegExp(pattern,'i')),
     /\b(?:the (?:submitted )?(?:source|record|narrative|dossier) (?:separately )?(?:lists|identifies|reports|states|frames|describes|records)|the supplied (?:status|completion)|no final outcome is stated|(?:neither recovery nor compensation|no monetary value[^.]*|no value[^.]*) is (?:stated|supplied)|it does not report recovery|the remaining procedural stage is not specified)\b/i,
     /\b(?:respectfully petitions|researcher dialogue|invite the Chambers research team to consult|welcome the opportunity to discuss)\b/i,
     /\b(?:S\.A\.\s+(?:DE|de)\s+C\.V\.|A\.C\.|LLC\.|Inc\.)\s+Is\b/,

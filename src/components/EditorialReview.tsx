@@ -4,9 +4,9 @@ import { reviewIssues, reviewIsStale, type ReviewDestination } from '@/lib/audit
 import { Sparkles } from 'lucide-react';
 
 export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onResolve:(destination:ReviewDestination,message:string)=>void}) {
-  const stopped=job?.issue && !['queued','running','completed'].includes(job.status);
+  const stopped=(job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
   const isRunning=!!job && ['queued','running'].includes(job.status);
-  const systemManaged=isRunning || Boolean(stopped && ['rankpilot','Optimización editorial'].includes(job?.issue?.owner));
+  const systemManaged=isRunning || Boolean(stopped && (job?.pauseReason || ['rankpilot','Optimización editorial'].includes(job?.issue?.owner)));
   const recovering=job?.recovering || ((job?.issue?.owner==='rankpilot' || job?.issue?.owner==='Optimización editorial') && isRunning);
   const issues=approved ? [] : reviewIssues(data,errors);
   const humanCount=issues.filter(issue=>issue.owner!=='RankPilot' && issue.owner!=='Optimización editorial').length;
@@ -101,7 +101,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}
     {!stale && warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
-    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? recovering?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'No necesitas realizar ninguna corrección. La entrega se habilitará cuando supere la revisión.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
+    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':job?.pauseReason?'RankPilot no pudo completar la revisión dentro de los límites de este intento. No habrá más intentos automáticos. El borrador y el avance se conservan; no hay datos que debas corregir para resolver esta pausa. La entrega final sigue pendiente.':'RankPilot no pudo completar esta etapa. El borrador y el avance se conservan; no necesitas modificar ni volver a subir tus fuentes. La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
   </section></>;
 }
 

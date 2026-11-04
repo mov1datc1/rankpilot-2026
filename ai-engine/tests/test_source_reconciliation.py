@@ -19,6 +19,48 @@ def fixture():
     return unit, review
 
 class SourceReconciliationTests(unittest.TestCase):
+    def test_explicit_later_status_update_is_chronology_not_conflict(self):
+        from utils.source_reconciliation import read_facts
+        old='The appeal filed in 2017 is under review. The 2020 appeal is pending, with a resolution expected in 2022.'
+        new='UPDATE 2023\nThe ruling for the 2017 appeal was upheld. A favorable judgment for the 2020 appeal was obtained and enforced in July 2023.'
+        lines=(old+'\n\n'+new).splitlines()
+        fact=Fact(field='completionDate',status='conflicting',evidence=[Span(start=1,end=1),Span(start=3,end=4)])
+        values,evidence,issues=read_facts([fact],('completionDate',),lines)
+        self.assertEqual(issues,[])
+        self.assertEqual(values['completionDate'],old+'\n\n'+new)
+        self.assertEqual(evidence['completionDate']['model_status'],'conflicting')
+        self.assertEqual(evidence['completionDate']['resolution']['latest_update_year'],2023)
+        self.assertEqual(evidence['completionDate']['quotes'],[old,new])
+
+    def test_ambiguous_or_incompatible_updates_stay_pending(self):
+        from utils.source_reconciliation import read_facts
+        cases=[
+            ('The 2023 appeal is pending.','UPDATE 2023\nThe 2023 appeal judgment was granted.'),
+            ('The 2017 appeal is pending.','UPDATE 2023\nThe 2020 appeal judgment was granted.'),
+            ('The 2017 appeal is pending.','The 2017 appeal judgment was granted in 2023.'),
+            ('The 2017 appeal is pending.','UPDATE 2023\nThe 2017 appeal judgment was granted and denied.'),
+            ('The 2017 appeal is pending.','UPDATE 2023\nThe 2017 appeal hearing is scheduled.'),
+        ]
+        for old,new in cases:
+            with self.subTest(new=new):
+                lines=(old+'\n'+new).splitlines()
+                fact=Fact(field='completionDate',status='conflicting',evidence=[Span(start=1,end=1),Span(start=2,end=len(lines))])
+                values,_,issues=read_facts([fact],('completionDate',),lines)
+                self.assertEqual(values['completionDate'],'');self.assertEqual(len(issues),1)
+
+    def test_update_cannot_hide_intervening_conflict_or_resolve_a_value(self):
+        from utils.source_reconciliation import read_facts
+        lines=['The 2017 appeal is pending.','The 2017 appeal was denied in 2023.','UPDATE 2023','The 2017 appeal judgment was granted.']
+        for field in ('completionDate','value'):
+            fact=Fact(field=field,status='conflicting',evidence=[Span(start=1,end=1),Span(start=3,end=4)])
+            self.assertEqual(len(read_facts([fact],(field,),lines)[2]),1)
+
+    def test_unknown_provider_consumption_is_not_reported_as_zero(self):
+        unit,_=fixture()
+        with patch('utils.source_reconciliation.review_batch',side_effect=TimeoutError('provider timeout')), self.assertRaises(ReconciliationError) as caught:
+            reconcile_source(unit['text'],unit['existing'],{'filing_details':{}})
+        self.assertEqual(caught.exception.usage['unknown_calls'],1)
+
     def test_corrects_wrong_cell_and_recovers_entire_narrative_with_evidence(self):
         unit,review=fixture();m=apply_unit(unit,review)['matters'][0]
         self.assertEqual(m['client'],'North Solar')
