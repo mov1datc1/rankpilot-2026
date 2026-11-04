@@ -129,5 +129,5 @@
       "test_required": true
     }
   ],
-  "prompt_revision": "shared-source-comparison-and-register-citations-v6"
+  "prompt_revision": "capacity-aware-bounded-selection-repair-v7"
 }

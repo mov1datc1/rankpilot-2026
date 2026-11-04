@@ -54,7 +54,7 @@ class SelectionSemanticTests(unittest.TestCase):
         calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            if role=='strategist':return {'corrections':GOOD['matters'],'unresolved':[]},[]
+            if role=='strategist':return {'core_corrections':GOOD['matters'],'other_corrections':[],'unresolved':[]},[]
             return verdict('repair_required',SOURCE),[]
         with patch('core.review_graph.strategist',return_value={'strategy':GOOD,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':{'directory':'Chambers','practice_area':'Real Estate','matters':[MATTER]}})
@@ -72,7 +72,7 @@ class SelectionSemanticTests(unittest.TestCase):
             calls.append(role)
             if role=='strategist':
                 self.assertEqual(len(payload['rejected_decisions']),1)
-                return {'corrections':payload['rejected_decisions'],'unresolved':[]},[]
+                return {'core_corrections':[d for d in payload['rejected_decisions'] if d['disposition']=='core'],'other_corrections':[d for d in payload['rejected_decisions'] if d['disposition']!='core'],'unresolved':[]},[]
             attempt=calls.count('selection_reviewer')
             checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE} for i in (1,2)}
             return {'checks':checks},[]
@@ -91,7 +91,7 @@ class SelectionSemanticTests(unittest.TestCase):
             return {'strategy':BAD if len(calls)==1 else GOOD,'errors':[]}
         def invoke(state,role,*args):
             calls.append(role)
-            if role=='strategist':return {'corrections':GOOD['matters'],'unresolved':[]},[]
+            if role=='strategist':return {'core_corrections':GOOD['matters'],'other_corrections':[],'unresolved':[]},[]
             return (verdict('repair_required',SOURCE) if calls.count(role)==1 else verdict()),[]
         # Use a nonempty core on first attempt so the deterministic selection gate passes.
         bad_core={**BAD,'matters':[{**BAD['matters'][0],'disposition':'core'}],'hero_matter_id':'property-1'}
@@ -214,7 +214,7 @@ class SelectionSemanticTests(unittest.TestCase):
         previous={**GOOD,'matters':[GOOD['matters'][0],untouched]}
         repaired={**GOOD['matters'][0],'rationale':'Qualified outcome; the source does not establish final resolution.'}
         state={'package':{'matters':[MATTER,peer]},'strategy':previous,'selection_feedback':{'strategy':previous,'semantic_rejection':True,'failed_checks':{'property-1':{'status':'repair_required','source_quote':SOURCE}}}}
-        result=repair_selection(state,lambda *args:({'corrections':[repaired],'unresolved':[]},[]))
+        result=repair_selection(state,lambda *args:({'core_corrections':[repaired],'other_corrections':[],'unresolved':[]},[]))
         self.assertEqual(result['strategy']['matters'][1],untouched)
         self.assertEqual(result['selection_repair_report']['corrected_matter_ids'],['property-1'])
         self.assertEqual(previous['matters'][0],GOOD['matters'][0])

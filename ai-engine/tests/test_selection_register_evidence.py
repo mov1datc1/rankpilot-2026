@@ -47,7 +47,7 @@ class SelectionRegisterEvidenceTests(unittest.TestCase):
         before=copy.deepcopy(PACKAGE);calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            if role=='strategist':return {'corrections':[corrected],'unresolved':[]},[]
+            if role=='strategist':return {'core_corrections':[corrected],'other_corrections':[],'unresolved':[]},[]
             return (BAD if calls.count('selection_reviewer')==1 else GOOD),[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':PACKAGE,'operation':'strategy'})
@@ -63,7 +63,7 @@ class SelectionRegisterEvidenceTests(unittest.TestCase):
         calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            return ({'corrections':[DECISION],'unresolved':[]} if role=='strategist' else BAD),[]
+            return ({'core_corrections':[DECISION],'other_corrections':[],'unresolved':[]} if role=='strategist' else BAD),[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':PACKAGE})
         self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer'])

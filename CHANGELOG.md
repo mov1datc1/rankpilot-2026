@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.15] — 2026-11-04 — Global capacity in bounded selection repair
+
+- Bound selected corrections by the remaining global portfolio capacity in the response schema, while preserving unaffected decisions, order and hero. Supply unchanged-core context so correcting a reserve rationale can use a source-based comparison without automatically promoting it.
+- Keep independent structural and semantic gates, original sources, cumulative budgets and retry caps. The new contract rejects a captured 21-core proposal without another model call or approval.
+- The v1.0.14 acceptance test stopped when a bounded repair promoted a reserve beyond the 20-core limit. No new approved Word pair. Duplicate intake confirmations and an insufficient action after an internal stop remain open; see `docs/reviews/2026-11-04-prueba-capacidad-seleccion-v1-0-14.md`.
+
 ## [1.0.14] — 2026-11-04 — Original register evidence across selection review
 
 - Accept a selection review diagnostic's exact original client-register row only when it belongs to that same client's own evidence. This permits the existing bounded repair and independent recheck; it never approves the rejected decision or substitutes a register row for the selector's legal-work citation.

@@ -96,15 +96,30 @@ def repair_selection(state, invoke):
     ids=tuple(d['matter_id'] for d in previous['matters'] if d['matter_id'] in failed and d['matter_id'] in register)
     if not ids:return None
     from core.review_graph import Disposition
-    decision=create_model('RejectedDecisionCorrection',__base__=Disposition,matter_id=(Literal[ids],...))
-    schema=create_model('BoundedSelectionRepair',corrections=(list[decision],...),unresolved=(list[str],...))
+    # A local correction still consumes the GLOBAL portfolio capacity. Separate
+    # core corrections in the transport schema so a reserve cannot silently
+    # become the 21st selected matter while unaffected decisions stay locked.
+    unchanged_core=[d for d in previous['matters'] if d['matter_id'] not in ids and d['disposition']=='core']
+    capacity=max(0,20-len(unchanged_core))
+    core_decision=create_model('SelectedDecisionCorrection',__base__=Disposition,
+        matter_id=(Literal[ids],...),disposition=(Literal['core'],...))
+    other_decision=create_model('UnselectedDecisionCorrection',__base__=Disposition,
+        matter_id=(Literal[ids],...),disposition=(Literal['reserve','excluded'],...))
+    schema=create_model('BoundedSelectionRepair',
+        core_corrections=(list[core_decision],Field(max_length=capacity)),
+        other_corrections=(list[other_decision],Field(max_length=len(ids))),unresolved=(list[str],...))
     result,trace=invoke(state,'strategist',schema,
-        'Correct ONLY the supplied rejected selection decisions against original sources. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
+        'Correct ONLY the supplied rejected selection decisions against original sources. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. Respect portfolio_constraints: core_corrections share only the remaining capacity after unchanged cores. Return each rejected ID exactly once across core_corrections and other_corrections. A request to correct a reserve rationale does NOT require promotion. Compare its legal contribution with the supplied unchanged-core context and the other rejected decisions; retain reserve with a defensible comparative rationale when appropriate. Any promotion must fit remaining capacity, including a source-backed demotion among the rejected decisions when necessary; never demote an unaffected matter or the hero to make space. Pending publication permission does not itself justify reserve or exclusion when confidential delivery is available. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
         {'scope':{k:state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
+         'portfolio_constraints':{'core_limit':20,'unchanged_core_count':len(unchanged_core),'correction_core_capacity':capacity,'hero_matter_id':previous.get('hero_matter_id')},
+         'unchanged_core_context':unchanged_core,
          'failed_checks':failed,'sources':[register[mid] for mid in ids],
          'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
-    fixed=copy.deepcopy(previous);corrections={d['matter_id']:d for d in result['corrections']}
-    if set(corrections)!=set(ids) or len(corrections)!=len(result['corrections']):
+    # Validate even when an alternate caller bypasses invoke_role's schema gate.
+    result=schema.model_validate(result).model_dump()
+    proposed=result['core_corrections']+result['other_corrections']
+    fixed=copy.deepcopy(previous);corrections={d['matter_id']:d for d in proposed}
+    if set(corrections)!=set(ids) or len(corrections)!=len(proposed):
         return {'strategy':previous,'errors':['RankPilot debe completar la corrección de las decisiones señaladas; las demás se conservan.'],'trace':trace,'selection_validated':False}
     fixed['matters']=[corrections.get(d['matter_id'],d) for d in previous['matters']]
     core=[d['matter_id'] for d in fixed['matters'] if d['disposition']=='core']
