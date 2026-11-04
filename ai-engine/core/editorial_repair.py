@@ -31,6 +31,8 @@ TASK += " A same-party spelling variant is an editorial alias, not a genuine una
 
 TASK += " Voice repairs: B9 states attested credentials and contributions directly, without 'supplied biography/profile/materials'. C2 requests coverage directly, without 'respectfully seeks' or 'the submission identifies'. D8/E8 states the documented procedural position, not what a status field says or what the document omits. If no actual status is documented, N/A is permitted without further commentary; never invent ongoing proceedings or a final outcome. Preserve genuine uncertainty and integrate explicit dated updates without assuming later activity."
 
+TASK += " Remove an unsupported supporting_matter from a candidate when that original mandate names other lawyers and never this candidate. Reconcile the candidate's rationale and bio; keep the mandate itself and all other candidates intact. A D5/E5 Lead partner template heading does not promote its named matter leader to partner. For a non-nominated leader, correct an added partner title with neutral leadership wording while preserving both original passages; do not turn this software wording correction into a user-confirmation request. A mismatch in the Audit core count must be corrected to the unchanged canonical selection, never by adding matters."
+
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
     message=str(defect.get('message',''))
@@ -65,9 +67,10 @@ def repair_targets(package, strategy, proposal):
         person=roster.get(_norm(candidate.get('name')), {})
         invalid_support=[]
         for support in candidate.get('supporting_matters',[]):
+            from core.role_evidence import matter_names_person
             matter=register.get(support.get('matter_id'),{})
             quote=literal_quote(support.get('source_quote'))
-            if support.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS):
+            if support.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS) or not matter_names_person(candidate.get('name'), matter):
                 invalid_support.append(support.get('matter_id'))
         support_ids=[s.get('matter_id') for s in candidate.get('supporting_matters',[])]
         if invalid_support or len(support_ids)!=len(set(support_ids)) or (candidate.get('recommendation')=='present' and not support_ids):

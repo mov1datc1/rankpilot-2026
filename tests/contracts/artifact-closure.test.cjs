@@ -63,6 +63,16 @@ test('facts-scoped output defects route directly to bounded development repair',
  assert.deepEqual(targetedRepair({editorial_development:dev,final_artifact_review:{judge:{defects:[defect]}}}).tasks,['development','audit','artifact']);
  assert.equal(bindGeneratedFindings([{...defect,owner:'user'}],dev)[0].scope,'facts');
 });
+
+test('an internal candidacy attribution routes to its whole candidate and does not strand an Audit correction',()=>{
+ const role='Lead lawyer of the litigation platform.';
+ const dev={candidates:[{submission_bio:'Ana advises employers.',supporting_matters:[{matter_id:'m',personal_role:role,source_quote:'Laura led the matter.'}]}]};
+ const defect={code:'UNSUPPORTED_CLAIM',severity:'critical',owner:'rankpilot',scope:'strategy',field_path:'leadPartner',matter_id:'m',source_quote:'Laura led the matter.',artifact_quote:role};
+ const bound=bindGeneratedFindings([defect],dev)[0];
+ assert.equal(bound.scope,'submission');assert.equal(bound.field_path,'candidates/0');
+ assert.deepEqual(targetedRepair({editorial_development:dev,final_artifact_review:{judge:{defects:[defect,{code:'SELECTION_MISMATCH',severity:'critical',owner:'rankpilot',scope:'letter',artifact_quote:'Core matter incorrectly called reserve.'}]}}}).tasks,['development','audit','artifact']);
+ assert.deepEqual(renderedSubmissionFindings('Ana advises employers.',dev),[]);
+});
 test('exact-text preflight finds known styles cheaply without deleting source-backed content',()=>{
  const text='The record separately lists a header amount. The mandate is ongoing and no final outcome is stated.';
  const dev={matters:[{matter_id:'m',text}]};const faults=renderedSubmissionFindings(text,dev);

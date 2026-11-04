@@ -3,18 +3,23 @@ import voiceRules from '../../../ai-engine/core/editorial_voice_rules.json';
 /** Literal bindings let the repairer edit generated fields, never source facts.
  * A reviewer may label a source-vs-output defect 'facts'; locate its output claim
  * before routing the correction, without buying a model call to locate it. */
-function generatedFields(development:any) {
+function generatedFields(development:any, includeInternal=false) {
   const fields:Array<{path:string,text:string,matterId?:string}>=[];
   for(const key of ['b10','c2']) if(development?.[key]) fields.push({path:key,text:development[key]});
   (development?.matters || []).forEach((m:any,i:number)=>{
     for(const key of ['text','completion_status']) if(m[key]) fields.push({path:`matters/${i}/${key}`,text:m[key],matterId:m.matter_id});
   });
   (development?.candidates || []).forEach((c:any,i:number)=>fields.push({path:`candidates/${i}/submission_bio`,text:c.submission_bio || ''}));
+  if(includeInternal) (development?.candidates || []).forEach((c:any,i:number)=>{
+    (c.supporting_matters || []).forEach((support:any)=>{
+      if(support.personal_role)fields.push({path:`candidates/${i}`,text:support.personal_role,matterId:support.matter_id});
+    });
+  });
   return fields;
 }
 const norm=(v:any)=>String(v || '').replace(/\s+/g,' ').trim();
 export function bindGeneratedFindings(defects:any[], development:any):any[] {
-  const fields=generatedFields(development);
+  const fields=generatedFields(development,true);
   return (defects || []).map(d=>{
     if(d.owner!=='rankpilot' || d.scope==='letter' || !d.artifact_quote) return d;
     const hits=fields.filter(f=>norm(f.text).includes(norm(d.artifact_quote)));

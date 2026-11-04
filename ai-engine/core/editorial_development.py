@@ -136,6 +136,8 @@ TASK += " All Submission fields, including confidential matter narratives and co
 
 TASK += " B9 must state supported credentials and personal contributions directly, never 'the supplied profile/biography/materials'. C2 must request coverage directly, never 'respectfully seeks' or 'the submission identifies'. D8/E8 must convey only the documented procedural status: never describe a status field or an omitted outcome. If the source has no status, use N/A without commentary; never invent ongoing proceedings or a completed result. Historical status followed by an explicit later update is a chronology: incorporate the later documented outcome and retain necessary procedural context, without inventing recent activity."
 
+TASK += " PERSONAL ATTRIBUTION: A literal quotation naming another lead lawyer is not evidence for this candidate. Every supporting matter must name this candidate in that matter's original fields; otherwise omit that support and reassess the candidate without altering the mandate. D5/E5 Lead partner is a template heading for matter responsibility, not proof of partner seniority; preserve personally attributed leadership using a neutral lawyer title when no explicit professional title is established."
+
 def literal_quote(value):
     value=str(value or '').strip()
     if len(value)>1 and (value[0],value[-1]) in [('“','”'),('\"','\"'),('‘','’')]:
@@ -271,6 +273,9 @@ def development_errors(package, strategy, proposal):
             found_support=any(any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in support_candidates)
             if item.get('matter_id') not in core or not found_support:
                 errors.append(f"Atribución sin evidencia literal del asunto: {candidate.get('name')}")
+            from core.role_evidence import matter_names_person
+            if not matter_names_person(candidate.get('name'), matter):
+                errors.append(f"Atribución personal sin nombre en fuentes del asunto: {candidate.get('name')}")
             if not str(item.get('personal_role','')).strip():errors.append(f"Falta papel personal: {candidate.get('name')}")
     for field in ('filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2'):
         if not str(proposal.get(field,'')).strip():errors.append(f'Falta desarrollo editorial: {field}')

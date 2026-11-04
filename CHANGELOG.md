@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.11] — 2026-11-03 — Repair personal attribution and generated role claims
+
+- Require a candidate to be named in the original matter supporting their candidacy. A literal quotation naming another lawyer no longer satisfies personal attribution; repair the affected whole candidate without changing the source or the mandate.
+- Bind findings about internal supporting-matter roles to their generated candidate object, including when the reviewer labels their scope strategy. This prevents a repairable attribution from stranding a companion Audit correction.
+- Distinguish a standard D5/E5 Lead partner heading from an explicit professional-title declaration for non-nominated matter leaders. When the institution explicitly lists the person as an associate, correct RankPilot's added partner title with neutral leadership wording; keep actual title conflicts and nominated-person eligibility gates.
+- Treat a literal wrong Audit core total as critical when it demonstrably disagrees with canonical selection. Preserve the selection and correct the generated count.
+- Explain that absent publication permission may remain unconfirmed while the matter stays restricted to the confidential section. No new consent is fabricated.
+- Fixed-version v1.0.10 production test did not pass: both jobs stopped with their rejection preserved. The two new causes above were reproduced offline before these changes; no historical job, source, limit or verdict was rewritten. See `docs/reviews/2026-11-03-prueba-autonoma-v1-0-10.md`.
+
 ## [1.0.10] — 2026-11-03 — Chronology and autonomous editorial repair
 
 - Preserve explicit dated status updates and their earlier pending history as a literal chronology, with an auditable resolution marker. Restrict deterministic reconciliation to dated, contiguous status passages with proceeding continuity; preserve real or ambiguous conflicts. No client or hero is hardcoded.

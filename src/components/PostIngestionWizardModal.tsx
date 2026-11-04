@@ -918,7 +918,7 @@ export default function PostIngestionWizardModal({
                     <ExtractionIssues value={matter} onChange={next=>setMatters(previous=>previous.map(m=>m.id===matter.id?next:m))} />
                     {needsPublicationChoice ? <fieldset className="review-decision">
                       <legend>Permiso de publicación {isUnconfirmed ? '· Requiere tu decisión' : '· Confirmado'}</legend>
-                      <p>Indica cómo puede presentarse este asunto al directorio.</p>
+                      <p>El permiso de publicación sigue sin confirmar. Puedes continuar y conservar este asunto solo en la sección confidencial; esto no autoriza su publicación. Si dispones de una confirmación, indica abajo cómo puede presentarse.</p>
                       <div className="review-options">
                         {[['publishable', 'Autorizado para publicar'], ['confidential', 'Confidencial']].map(([status, label]) => (
                           <label key={status} className={confStatus === status ? 'selected' : ''}>

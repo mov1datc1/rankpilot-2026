@@ -199,6 +199,34 @@ class TargetedRepairTests(unittest.TestCase):
                      'Proceedings remain pending; the team secured interim relief.'):
             self.assertEqual(submission_voice_paths({'b10':text,'matters':[{'text':text}]}),[])
 
+    def test_another_lawyers_literal_quote_does_not_prove_personal_attribution(self):
+        from core.editorial_development import development_errors
+        package=copy.deepcopy(PACKAGE)
+        package['matters'][0].update(source_excerpt='Partner Laura Vega led the negotiations.',leadPartner='Laura Vega')
+        proposal=copy.deepcopy(DEV)
+        proposal['candidates'][0]['supporting_matters'][0]['source_quote']='Partner Laura Vega led the negotiations.'
+        errors=development_errors(package,STRATEGY,proposal)
+        self.assertTrue(any('Atribución personal sin nombre' in e for e in errors))
+        targets=repair_targets(package,STRATEGY,proposal)
+        self.assertIn('candidates/0',targets)
+        self.assertEqual(targets['candidates/0']['current_value'],proposal['candidates'][0])
+
+    def test_bound_internal_attribution_repairs_one_candidate_without_a_paid_locator(self):
+        package=copy.deepcopy(PACKAGE);strategy=copy.deepcopy(STRATEGY);original=copy.deepcopy(DEV)
+        source='Laura Vega led a separate appeal.'
+        package['matters'].append({'id':'m3','source_excerpt':source,'leadPartner':'Laura Vega'})
+        strategy['matters'].append({'matter_id':'m3','disposition':'core'})
+        original['matters'].append({'matter_id':'m3','text':source,'decisive_source_quotes':[source]})
+        proposal=copy.deepcopy(original)
+        proposal['candidates'][0]['supporting_matters'].append({'matter_id':'m3','source_quote':source,'personal_role':'Lead lawyer of the separate appeal.'})
+        defect={'code':'UNSUPPORTED_CLAIM','severity':'critical','owner':'rankpilot','scope':'submission','field_path':'candidates/0','matter_id':'m3','source_quote':source,'artifact_quote':'Lead lawyer of the separate appeal.','message':'Remove the mandate wrongly attributed to this candidate.'}
+        fix={'corrections':[{'path':'candidates/0','value':original['candidates'][0],'reason':'Retain the actual personally attributed support only.'}],'unresolved':[]}
+        before=copy.deepcopy(package)
+        with patch('core.review_graph.invoke_role',return_value=(fix,[])) as paid:
+            result=develop({'package':package,'strategy':strategy,'development':proposal,'development_reusable':True,'repair_feedback':[defect]})
+        paid.assert_called_once();self.assertTrue(result['development_validated'])
+        self.assertEqual(result['development'],original);self.assertEqual(package,before)
+
     def test_voice_repair_retaining_commentary_does_not_pass(self):
         proposal=copy.deepcopy(DEV);proposal['matters'][0]['text']='The verified evidentiary record demonstrates success.'
         repair={'corrections':[{'path':'matters/0/text','value':'Our analysis indicates success.','reason':'Changed wording'}],'unresolved':[]}
