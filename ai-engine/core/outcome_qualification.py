@@ -13,11 +13,40 @@ class OutcomeQualification(BaseModel):
     preserves_selection_basis: bool = Field(description='True only if the existing selection remains defensible WITHOUT relying on the disputed final victory. Otherwise request genuine source clarification.')
 
 
-def grounded_outcome_qualification(defect, package):
+def generated_claim_texts(package, scope, draft_context=None):
+    """Bind to final bytes when supplied; otherwise to explicit generated fields.
+
+    Never fall back to an obsolete draft while reviewing rendered documents.
+    Original source fields can prove the facts, never the existence of an output claim.
+    """
+    package=package or {}
+    if 'rendered_artifact' in package or 'rendered_audit' in package:
+        return [package.get('rendered_artifact' if scope=='submission' else 'rendered_audit','')]
+    context=draft_context or {}
+    if scope=='letter':
+        return [context.get('letter',{}).get(key,'') for key in ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps')]
+    development=context.get('development') or {}
+    return ([development.get(key,'') for key in ('b10','c2')]
+        + [matter.get(key,'') for matter in development.get('matters',[]) for key in ('text','completion_status')]
+        + [candidate.get('submission_bio','') for candidate in development.get('candidates',[])])
+
+
+def outcome_claim_scope(defect, package, draft_context=None):
+    """A semantic facts label cannot hide an exact, uniquely located output claim."""
+    norm=lambda value:' '.join(str(value or '').split()).casefold()
+    quote=norm(defect.get('artifact_quote'))
+    if not quote:return None
+    scope=defect.get('scope')
+    scopes=[scope] if scope in ('submission','letter') else ['submission','letter'] if scope=='facts' else []
+    found=[scope for scope in scopes if any(quote in norm(text) for text in generated_claim_texts(package,scope,draft_context))]
+    return found[0] if len(found)==1 else None
+
+
+def grounded_outcome_qualification(defect, package, draft_context=None):
     """A grounded repair permission remains a critical failure until re-reviewed."""
     if (defect.get('code')!='SOURCE_CONFLICT' or defect.get('conflict_basis')!='source_vs_source'
         or defect.get('conflict_resolution')!='qualify_disputed_outcome'
-        or defect.get('field_path')!='outcome' or defect.get('scope') not in ('submission','letter')):
+        or defect.get('field_path')!='outcome' or defect.get('scope') not in ('submission','letter','facts')):
         return False
     assessment=defect.get('outcome_qualification') or {}
     if not assessment.get('preserves_material_work') or not assessment.get('preserves_selection_basis'):
@@ -45,6 +74,4 @@ def grounded_outcome_qualification(defect, package):
     elif kind=='procedural_step':
         if not re.search(r'\b(?:filed|lodged|submitted|appealed|admitted|present\w*|interpus\w*|promovi\w*)\b',result):return False
     else:return False
-    claim=norm(defect.get('artifact_quote'))
-    rendered=norm((package or {}).get('rendered_artifact' if defect['scope']=='submission' else 'rendered_audit'))
-    return bool(claim and claim in rendered)
+    return outcome_claim_scope(defect,package,draft_context) is not None

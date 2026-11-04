@@ -30,7 +30,7 @@ class OutcomeQualificationTests(unittest.TestCase):
 
     def test_permission_requires_same_record_distinct_procedural_evidence_and_exact_document(self):
         changes=[{'field_path':field} for field in ['value','client','leadPartner','publication_permission']]
-        changes += [{'scope':'facts'},{'scope':'strategy'},{'matter_id':'other'},{'artifact_quote':'Not in Word'}, {'conflict_basis':'source_vs_artifact'},{'outcome_qualification':None}]
+        changes += [{'scope':'strategy'},{'matter_id':'other'},{'artifact_quote':'Not in Word'}, {'conflict_basis':'source_vs_artifact'},{'outcome_qualification':None}]
         for delta in changes:
             with self.subTest(delta=delta):self.assertFalse(grounded_outcome_qualification({**DEFECT,**delta},PACKAGE))
         for delta in [{'preserves_selection_basis':False},{'preserves_material_work':False}, {'disputed_alternatives':[WIN,WIN]}, {'disputed_alternatives':[WIN,'Invented passage']}, {'undisputed_result_quote':WIN},{'undisputed_result_quote':'Invented relief'}, {'result_kind':'procedural_step'}]:
@@ -83,3 +83,41 @@ class OutcomeQualificationTests(unittest.TestCase):
         self.assertEqual(package,before)
         self.assertNotIn('approved_artifact',result)
         self.assertNotIn('judge',result)
+
+    def test_draft_qualification_can_request_repair_before_word_is_generated(self):
+        package={k:v for k,v in PACKAGE.items() if k!='rendered_artifact'}
+        context={'development':{'matters':[{'matter_id':'m','text':CLAIM}]},'letter':{}}
+        self.assertTrue(grounded_outcome_qualification(DEFECT,package,context))
+        verdict=calibrate_verdict({'passed':False,'defects':[DEFECT]},package,draft_context=context)
+        self.assertFalse(verdict['passed'])
+        self.assertEqual(verdict['defects'][0]['owner'],'rankpilot')
+        self.assertTrue(verdict['defects'][0]['qualification_validated'])
+        self.assertFalse(grounded_outcome_qualification(DEFECT,package))
+        self.assertFalse(grounded_outcome_qualification(DEFECT,{**package,'rendered_artifact':'Different actual Word'},context))
+        self.assertFalse(grounded_outcome_qualification(DEFECT,{**package,'rendered_audit':'An actual Audit'},context))
+        self.assertFalse(grounded_outcome_qualification(DEFECT,package,{'development':{'matters':[{'text':CLAIM[:12]},{'text':CLAIM[12:]}]}}))
+        audit_defect={**DEFECT,'scope':'letter'}
+        self.assertTrue(grounded_outcome_qualification(audit_defect,package,{'letter':{'portfolio':CLAIM}}))
+        self.assertFalse(grounded_outcome_qualification(audit_defect,package,context))
+
+    def test_editor_retains_a_grounded_draft_repair_as_critical(self):
+        package={k:v for k,v in PACKAGE.items() if k!='rendered_artifact'}
+        development={'matters':[{'matter_id':'m','text':CLAIM}]}
+        with patch('core.review_graph.invoke_role',return_value=({'passed':False,'defects':[copy.deepcopy(DEFECT)]},[])) as invoke:
+            result=editor({'package':package,'strategy':{},'letter':{},'development':development})
+        self.assertEqual(invoke.call_count,1)
+        self.assertFalse(result['judge']['passed'])
+        self.assertEqual(result['judge']['defects'][0]['owner'],'rankpilot')
+        self.assertTrue(result['judge']['defects'][0]['qualification_validated'])
+
+    def test_facts_label_binds_only_to_a_unique_exact_generated_claim(self):
+        defect={**DEFECT,'scope':'facts'}
+        result=calibrate_verdict({'passed':False,'defects':[defect]},PACKAGE)
+        self.assertFalse(result['passed'])
+        self.assertEqual(result['defects'][0]['scope'],'submission')
+        self.assertEqual(result['defects'][0]['owner'],'rankpilot')
+        self.assertEqual(defect['scope'],'facts')
+        ambiguous={**PACKAGE,'rendered_audit':CLAIM}
+        self.assertFalse(grounded_outcome_qualification(defect,ambiguous))
+        self.assertTrue(grounded_outcome_qualification(DEFECT,ambiguous))
+        self.assertFalse(grounded_outcome_qualification(defect,{**PACKAGE,'rendered_artifact':''}))

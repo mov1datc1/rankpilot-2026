@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.13] — 2026-11-04 — Review evidence and complete-draft repair
+
+- Remove inherited semantic-selection approval on exhausted repair merely because core count and hero membership are structurally valid. A repeated rejection stays rejected, stops before drafting and cannot purchase another correction.
+- Bind grounded outcome qualification to explicit generated draft fields before rendering; when rendered documents exist, never fall back to stale draft prose. A facts-scoped diagnostic can route to generated repair only through a unique literal output match and the existing source-evidence requirements.
+- Preserve original evidence, cumulative consumption, repair caps and independent exact-pair review. No support handoff replaces acceptance of the user journey.
+- Track Ángela's requests against observable completion criteria in `docs/reviews/2026-11-04-criterios-cierre-angela.md`. These changes and offline regressions do not establish a new autonomous production pass.
+
 ## [1.0.12] — 2026-11-04 — Grounded qualifications and actionable review states
 
 - Preserve a finding's semantic source field while binding its exact generated repair location. Sector containment can reach the existing targeted repairer instead of becoming stranded after binding.

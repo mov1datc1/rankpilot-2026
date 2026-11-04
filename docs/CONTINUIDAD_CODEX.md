@@ -1,3 +1,11 @@
+## 2026-11-04 — Objetivo ratificado por Jonathan; v1.0.13 en preparación
+
+Jonathan aclaró que necesita que la herramienta funcione de principio a fin para Ángela, quien debe distinguir borrador y documento completo y saber cómo culminar. No sustituir ese objetivo por una derivación a soporte. El cambio de asistencia por correo propuesto en el turno anterior se RETIRÓ sin commit, despliegue ni envío; no existe un ticket de soporte nuevo.
+
+v1.0.13 elimina tres bypass heredados de selección semántica rechazada que la aprobaban por número core/insignia al agotar reparación. Es un defecto real reproducido, pero NO explica los bloqueos de las dos últimas corridas: sus 33/32 checks están supported y no tienen selection_qualified_notes. Otra corrección permite fundamentar una reparación de desenlace sobre un campo de borrador explícito, sin necesitar primero un Word, y localizar una cita generada del diagnóstico facts solo si su documento es inequívoco. No se cambian fuentes, presupuesto, rondas ni aprobación de Word. Plan/matriz: docs/reviews/2026-11-04-criterios-cierre-angela.md.
+
+Se solicitó por request_user_input_async una comprobación DIRIGIDA con OpenAI de los dos bloqueos, máximo 40.000 tokens combinados, sin extracción ni reinicios. No es una prueba completa nueva ni permite usar el saldo de los trabajos antiguos. Mientras no responda, solo trabajo local; no iniciar llamadas dependientes de esa autorización. Publicación y validación final por registrar. No afirmar cierre autónomo.
+
 ## 2026-11-04 — v1.0.12 publicada; interfaz comprobada, sin nueva prueba pagada
 
 Commit 20809ac2644cbfaa53e64e0ce956fc720a435081 en dev/main por push atómico. Motor dep-dbllf7m7bikc73957kig y worker dep-dbllf7m7bikc73957krg LIVE en ese commit; health online con huella 10feaea83baa093a3e073e8560f7e96f28eedbecb65d0c10a0efbd3120e8a7e1. Vercel producción Ready dpl_6VvAZgdW2ookoZsTVSmyGYVRacQi, alias y estado Vercel success confirmados. GitHub Actions del commit sin confirmación (conector lista vacía; CLI timeout22s), no afirmar CI remoto aprobado. Validación local 419 Python, 455 Node y una omitida, TS y build correctos.

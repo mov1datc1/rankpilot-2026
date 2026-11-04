@@ -19,7 +19,7 @@ from utils.model_response import require_complete_response
 from utils.rag_router import RAGRouter
 from core.grounding import factual_issues
 from core.source_aliases import grounded_spelling_alias
-from core.outcome_qualification import OutcomeQualification, grounded_outcome_qualification
+from core.outcome_qualification import OutcomeQualification, grounded_outcome_qualification, outcome_claim_scope
 from core.register_review import RegisterCheck, register_rows, register_defects, register_output_limit, register_verdict_contract
 from core.selection_contract import selection_contract, project_selection
 from core.editorial_development import develop, development_errors, literal_quote, bind_quote
@@ -57,7 +57,7 @@ class Defect(BaseModel):
     matter_id: Optional[str]
     message: str = Field(description='Plain Spanish: explain the concrete issue and the action needed. Preserve names, figures and source quotes verbatim.')
     conflict_basis: Optional[Literal['source_vs_source', 'source_vs_artifact']] = Field(default=None, description='SOURCE_CONFLICT is only conflicting SOURCE records. A generated draft contradicting an unambiguous source is UNSUPPORTED_CLAIM, source_vs_artifact, and RankPilot must repair it; never ask the user to reconfirm the clear source.')
-    conflict_resolution: Optional[Literal['omit_nonessential_descriptor','preserve_source_aliases','qualify_disputed_outcome','confirm_source']] = Field(default=None, description='For source_vs_source only. omit_nonessential_descriptor is allowed ONLY for a nonessential client-sector descriptor that generated prose unnecessarily asserts: withdraw that descriptor without choosing either source, changing selection or losing decisive evidence. Set field_path=client_sector and provide the literal artifact claim. Never use this for identity, amounts, dates, outcomes, roles, permissions or an industry essential to the legal/strategic case. preserve_source_aliases is allowed in the internal Audit for a reserve/excluded record, or a selected record with grounded alias_basis=same_party_spelling and source_aliases: quote both supplied name variants explicitly, without deciding identity or rewriting a canonical name; field_path=client. qualify_disputed_outcome is allowed ONLY for field_path=outcome, scope=submission or letter, with a complete outcome_qualification assessment and a literal overclaimed final result in that exact document. Preserve independently evidenced interim/procedural work without deciding final victory, final defeat or ongoing status, and record the unresolved outcome in the internal Audit. Selection must remain defensible without the disputed final result. Return one concrete finding per affected generated field, including C2 and Audit claims; never omit supported substantive work. An already qualified account does not assert either disputed result; retain its uncertainty as a nonblocking internal observation. All other material source conflicts require confirm_source. Withholding a disputed optional descriptor does not resolve or edit the original source.')
+    conflict_resolution: Optional[Literal['omit_nonessential_descriptor','preserve_source_aliases','qualify_disputed_outcome','confirm_source']] = Field(default=None, description='For source_vs_source only. omit_nonessential_descriptor is allowed ONLY for a nonessential client-sector descriptor that generated prose unnecessarily asserts: withdraw that descriptor without choosing either source, changing selection or losing decisive evidence. Set field_path=client_sector and provide the literal artifact claim. Never use this for identity, amounts, dates, outcomes, roles, permissions or an industry essential to the legal/strategic case. preserve_source_aliases is allowed in the internal Audit for a reserve/excluded record, or a selected record with grounded alias_basis=same_party_spelling and source_aliases: quote both supplied name variants explicitly, without deciding identity or rewriting a canonical name; field_path=client. qualify_disputed_outcome is allowed ONLY for field_path=outcome, scope=submission or letter, with a complete outcome_qualification assessment and a literal overclaimed final result in the supplied generated draft field or exact rendered document. Preserve independently evidenced interim/procedural work without deciding final victory, final defeat or ongoing status, and record the unresolved outcome in the internal Audit. Selection must remain defensible without the disputed final result. Return one concrete finding per affected generated field, including C2 and Audit claims; never omit supported substantive work. An already qualified account does not assert either disputed result; retain its uncertainty as a nonblocking internal observation. All other material source conflicts require confirm_source. Withholding a disputed optional descriptor does not resolve or edit the original source.')
     outcome_qualification: Optional[OutcomeQualification] = Field(default=None, description='Only for qualify_disputed_outcome: document separately attested interim/procedural work and why selection remains valid without choosing either disputed final outcome. This authorizes a generated-text repair, not a passing verdict or a source edit.')
     alias_basis: Optional[Literal['same_party_spelling','different_or_uncertain_party']] = Field(default=None, description='Only for client name variants: same_party_spelling means the SAME party in the SAME matter with a minor orthographic difference, not different subsidiaries, persons, offices or roles. Assess the source context; similarity alone is insufficient.')
     source_aliases: List[str] = Field(default_factory=list, description='For same_party_spelling, exactly two literal name variants: the original client field and its narrative spelling in that SAME matter. Preserve both original sources; never invent a canonical legal identity.')
@@ -425,20 +425,7 @@ def selection_gate(state):
 def selection_review(state):
     from core.selection_review import review_selection
     try:
-        res = review_selection(state, invoke_role)
-        if res.get('errors'):
-            from core.selection_review import can_repair_selection
-            merged_state = {**state, **res}
-            if not can_repair_selection(merged_state):
-                strategy = merged_state.get('strategy', {})
-                core = [m['matter_id'] for m in strategy.get('matters', []) if m.get('disposition') == 'core']
-                hero = strategy.get('hero_matter_id')
-                if core and len(core) <= 20 and (not hero or hero in core):
-                    res['selection_validated'] = True
-                    res['selection_review_validated'] = True
-                    res['selection_qualified_notes'] = list(res.get('errors', []))
-                    res['errors'] = []
-        return res
+        return review_selection(state, invoke_role)
     except Exception as error:
         # Preserve the successful selector and its usage if the independent
         # reviewer is unavailable. A later retry reuses it, never invents a pass.
@@ -527,7 +514,7 @@ def editor(state):
         # paying for another full review; no approval or source edit occurs.
         return {'judge': calibrate_verdict({'passed': False, 'defects': style_defects+count_defects},
                 state['package'], state.get('strategy')), 'trace': state.get('trace', [])}
-    register_instruction=' Compare the SAME fact, subject, event and procedural stage before declaring a source conflict. A general judicial standard is not itself a judgment in this client matter. If the final merits result remains uncertain but independently evidenced interim/procedural work supports the selection, when exact rendered documents are supplied, qualify the generated claims with qualify_disputed_outcome and literal evidence; do not ask the client to invent an answer. List each affected generated field separately. In the corrected documents, require the limited accurate result and internal Audit uncertainty, not restoration of a disputed final victory merely because it appears in decisive_source_quotes. Never silently approve an overclaimed result or qualify away identity, amounts, professional roles, publication permission or an essential selection premise.'
+    register_instruction=' Compare the SAME fact, subject, event and procedural stage before declaring a source conflict. A general judicial standard is not itself a judgment in this client matter. If the final merits result remains uncertain but independently evidenced interim/procedural work supports the selection, qualify the generated claims with qualify_disputed_outcome and literal evidence; do not ask the client to invent an answer. List each affected generated field separately. In the corrected documents, require the limited accurate result and internal Audit uncertainty, not restoration of a disputed final victory merely because it appears in decisive_source_quotes. Never silently approve an overclaimed result or qualify away identity, amounts, professional roles, publication permission or an essential selection premise.'
     if state['package'].get('rendered_artifact'):
         register_instruction+=' Mandatory source-register comparisons: populate every required register_checks key in the output schema. Inspect the industry column inside confidentialityEvidence.client_register, not merely the matter narrative. Compare the same attribute: a workforce characteristic or description of legal services is not an exclusive classification of the client industry. Different compatible attributes alone are not a conflict. Never silently choose between genuinely incompatible source facts. If an optional disputed sector was already withdrawn, return no claims; if it remains in either exact document, identify every affected literal industry claim and disputed term.'
     verdict,trace=invoke_role(state,'editor',register_verdict_contract(state['package'], Verdict),
@@ -537,7 +524,7 @@ def editor(state):
     # bounded correction can fix the full batch rather than buying extra rounds.
     verdict.setdefault('defects', []).extend(count_defects)
     for defect in verdict.get('defects',[]):
-        if defect.get('conflict_resolution')=='qualify_disputed_outcome' and not grounded_outcome_qualification(defect,state['package']):
+        if defect.get('conflict_resolution')=='qualify_disputed_outcome' and not grounded_outcome_qualification(defect,state['package'],{'development':state.get('development') or state['package'].get('editorial_development'),'letter':state.get('letter',{})}):
             raise EditorialResponseError('review diagnostic not grounded: outcome qualification lacks distinct same-record source evidence or an exact artifact claim',trace[-1] if trace else {})
     try:
         pkg = state['package']
@@ -672,9 +659,10 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
                 and defect.get('scope')=='letter' and bool(defect.get('source_quote')) and bool(claim) and claim in rendered
                 and any(m.get('id')==defect.get('matter_id') for m in permissions)
                 and (any(d.get('matter_id')==defect.get('matter_id') and d.get('disposition') in ('reserve','excluded') for d in (strategy or {}).get('matters',[])) or grounded_spelling_alias(defect,package)))
-            outcome_containment=grounded_outcome_qualification(defect,package)
+            outcome_containment=grounded_outcome_qualification(defect,package,draft_context)
             if outcome_containment:
                 defect.update(qualification_validated=True,severity='critical',
+                    scope=outcome_claim_scope(defect,package,draft_context),
                     internal_diagnostic=defect.get('message'),
                     message='Reformula las afirmaciones de desenlace definitivo usando únicamente el trabajo procesal no controvertido y su resultado acreditado. Conserva en el Audit la incertidumbre de fondo y ambas fuentes. No elijas victoria o derrota, no infieras que el proceso sigue abierto y no pidas confirmar el desenlace para entregar esa versión limitada.')
             defect['owner']='user' if (code=='SOURCE_CONFLICT' and not (containment or alias_containment or outcome_containment)) or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
@@ -810,11 +798,6 @@ def select_or_reuse(state):
         if state.get('selection_feedback',{}).get('semantic_rejection'):
             from core.selection_review import repair_selection, can_repair_selection
             if state.get('selection_failure_history') and not can_repair_selection(state):
-                strategy = state.get('strategy', {})
-                core = [m['matter_id'] for m in strategy.get('matters', []) if m.get('disposition') == 'core']
-                hero = strategy.get('hero_matter_id')
-                if core and len(core) <= 20 and (not hero or hero in core):
-                    return {'selection_validated': True, 'selection_review_validated': True, 'errors': []}
                 return {'errors':state.get('selection_feedback',{}).get('errors') or ['La corrección de selección alcanzó su límite sin una validación independiente.'],
                         'selection_validated':False,'selection_review_validated':False}
             bounded=repair_selection(state,invoke_role)
@@ -856,15 +839,6 @@ def create_review_graph():
             from core.selection_review import can_repair_selection
             if can_repair_selection(s):
                 return 'strategy'
-            strategy = s.get('strategy', {})
-            core = [m['matter_id'] for m in strategy.get('matters', []) if m.get('disposition') == 'core']
-            hero = strategy.get('hero_matter_id')
-            if core and len(core) <= 20 and (not hero or hero in core):
-                s['selection_validated'] = True
-                s['selection_review_validated'] = True
-                s['selection_qualified_notes'] = list(s.get('errors', []))
-                s['errors'] = []
-                return 'stop' if s.get('operation') == 'strategy' else 'development'
             return 'release'
         return 'stop' if s.get('operation')=='strategy' else 'development'
     g.add_conditional_edges('selection_review',after_selection_review,{'strategy':'strategy','release':'release','stop':END,'development':'development'})
