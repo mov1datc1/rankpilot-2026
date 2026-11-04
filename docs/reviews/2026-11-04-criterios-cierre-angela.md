@@ -39,3 +39,7 @@ Revisar todas las páginas y hechos decisivos de los Word aprobados, y comprobar
 Commit `e6d863bc41f5078cfa4acbfd0f21806ae542cb14` en dev/main. Motor `dep-dblm11nb9u1s73d03kjg` y worker `dep-dblm11nb9u1s73d03ks0` LIVE. Health online con mismo commit y huella local `0273edfd562a386649a478c9925ce77579e80ebeab6aa14921f42076cda613ac`. Vercel informa success para el commit. No se confirmó Actions remoto.
 
 Ninguna nueva llamada a OpenAI ni cambios de expedientes. Se pidió autorización de hasta 40.000 tokens combinados para comprobar de forma dirigida los dos bloqueos con modelo real; sigue pendiente. Esa comprobación, si se autoriza, no sustituye el recorrido autónomo completo ni autoriza otra extracción, reinicio o ampliación de trabajos antiguos.
+
+## Comprobación dirigida posterior
+
+La comprobación autorizada terminó con dos llamadas y 27.683 tokens reportados, sin bloqueos en los dos extractos. No se necesitó reparación. Resultados, reservas y límites en [informe dirigido](2026-11-04-comprobacion-dirigida-v1-0-13.md). No modifica el estado pendiente de la prueba autónoma completa.
