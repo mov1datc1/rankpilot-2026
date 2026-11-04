@@ -4,7 +4,7 @@ Reference conversations inform this method, never a client's facts, target,
 ranking, selected portfolio or publication permission.
 """
 
-REASONING_VERSION = 'editorial-reasoning-v1'
+REASONING_VERSION = 'editorial-reasoning-v2-source-comparisons'
 
 COMMON = '''EDITORIAL REASONING: Build a cumulative case from evidence, not a prettier service list.
 Distinguish the triggering transaction or dispute, the precise legal/commercial difficulty, the firm's intervention, the documented result or current stage, and the personally attributed role. Retain the fact that makes the legal problem distinctive: an unusual identity issue, priority conflict, regulatory constraint or procedural obstacle must not disappear behind a generic procedure name and amount. Do not invent novelty or binding precedent from a successful outcome.
@@ -17,6 +17,11 @@ WRITING = '''NARRATIVE EXECUTION: Open with the actual reason the client needed 
 
 REVIEW = '''EDITORIAL COVERAGE REVIEW: Compare the delivered matter with its original source and legal_issue_source_quote, not just the writer's self-selected result quotes. Check whether the reader can understand the distinctive legal obstacle and the firm's response. An omitted material legal mechanism requires source-backed repair even when every remaining amount and outcome is accurate. Do not manufacture a missing fact or impose verbosity: short sources can support short drafts. Stylistic preferences alone remain nonblocking. Compare candidate priorities and portfolio tradeoffs against supplied evidence, not the example firm's preferred ordering.'''
 
+SOURCE_COMPARISON = """SOURCE COMPARISON: Compare the SAME party, attribute, event, time and procedural stage before declaring incompatibility. A client-industry label and a workforce characteristic or description of legal services are not mutually exclusive industry classifications. Different economic concepts, a historical status followed by an explicit update, or a general judicial standard and a client-case result are not automatically contradictions. Preserve actual incompatible source facts without choosing either version. A nonessential sector descriptor cannot by itself invalidate otherwise supported legal work or force exclusion; correct an actual erroneous generated industry assertion without erasing scale, legal contribution or selection evidence. A review finding can quote the original client-register row supplied in the SAME matter's confidentialityEvidence; copy its literal quote, never another client's row or a reconstruction of cells. Questions are for genuine source decisions, not for the user to repair generated wording."""
+
+COMMON += '\n' + SOURCE_COMPARISON
+REVIEW += '\n' + SOURCE_COMPARISON
+
 def reasoning_guidance(role):
     if role in ('strategist','selection_reviewer'):
         return COMMON
@@ -24,4 +29,6 @@ def reasoning_guidance(role):
         return COMMON + '\n' + WRITING
     if role == 'editor':
         return REVIEW
+    if role == 'repair':
+        return SOURCE_COMPARISON
     return ''

@@ -1,7 +1,32 @@
 """Independent source-to-decision review before any selected matter is developed."""
+import re
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, create_model
-from core.editorial_development import bind_quote
+from core.editorial_development import bind_quote, literal_quote
+
+
+def bind_selection_review_quote(value, matter):
+    """Bind a diagnostic to its narrative or its own original client-register row.
+
+    A register row is evidence for a review finding, not a substitute for the
+    legal-work quote required from a selector. Never borrow another client's row
+    or accept a model reconstruction of cells as if it were the original.
+    """
+    bound = bind_quote(value, matter)
+    if bound:
+        return bound
+    norm = lambda text: ' '.join(str(text or '').split()).casefold()
+    client_name = lambda text: norm(re.sub(r'^(?:client|cliente)\s*:\s*', '', str(text or ''), flags=re.I))
+    client = client_name(matter.get('client'))
+    quote = norm(literal_quote(value))
+    if not client or not quote:
+        return ''
+    for row in (matter.get('confidentialityEvidence') or {}).get('client_register', []):
+        original = row.get('quote')
+        if (isinstance(original, str) and client_name(row.get('client')) == client
+                and norm(original) == quote):
+            return original
+    return ''
 
 
 def can_repair_selection(state):
@@ -40,7 +65,7 @@ def review_selection(state, invoke):
     for ref, check in result['checks'].items():
         if check['status'] == 'repair_required':
             matter = refs[ref]
-            quote = bind_quote(check['source_quote'], matter)
+            quote = bind_selection_review_quote(check['source_quote'], matter)
             if not quote:
                 errors.append('La revisión de la selección debe justificar su hallazgo con una cita de la fuente.')
             else:
@@ -49,7 +74,7 @@ def review_selection(state, invoke):
     result['checks'] = {refs[ref]['id']: check for ref, check in result['checks'].items()}
     failed = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}
     # Unbound diagnoses must not buy a correction or become a passing review.
-    bound = all(bind_quote(c['source_quote'], next(m for m in matters if m['id']==mid)) for mid,c in failed.items())
+    bound = all(bind_selection_review_quote(c['source_quote'], next(m for m in matters if m['id']==mid)) for mid,c in failed.items())
     history = list(state.get('selection_failure_history', [])) + [sorted(failed) if bound else []]
     return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':False, 'selection_review_deferred':False,
             'selection_failure_history': history,

@@ -208,6 +208,7 @@ export async function POST(request: NextRequest) {
     const existingChambers = (submission.chambersData as any) || {};
     const updatedChambersData = {
       ...existingChambers,
+      restricted_delivery_policy: 'restricted-unconfirmed-v1',
       release_verdict: { passed: false, status: 'needs_review', errors: ['Source evidence changed; validation required.'] },
       canonical_matter_selection: null,
       cloned_docx_b64: null,

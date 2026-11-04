@@ -224,3 +224,16 @@ test('an old approved artifact cannot bypass missing inputs in either final down
   assert.ok([409,422].includes(res.status),type);
  }
 });
+
+test('fresh ingestion keeps unconfirmed publication restricted without asking for consent merely to proceed',async()=>{
+ reset();assert.equal((await extract()).status,200);
+ const data=state.submission.chambersData,matter=data.matters[0];
+ const {getDeliveryState}=require('../../src/lib/audit/delivery-state.ts');
+ assert.equal(data.restricted_delivery_policy,'restricted-unconfirmed-v1');
+ assert.equal(matter.confidentialityConfirmed,false);assert.equal(matter.publish_status,'confirmation_required');assert.equal(matter.isConfidential,true);
+ const delivery=getDeliveryState(data,data.matters);
+ assert.equal(delivery.approved,false);
+ assert.ok(!delivery.errors.some(message=>message.includes('Confirma los permisos de publicación')));
+ assert.ok(delivery.warnings.some(message=>message.includes('únicamente como confidenciales')));
+ assert.equal(data.approved_artifact,null);
+});

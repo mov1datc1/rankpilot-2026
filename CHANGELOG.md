@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.14] — 2026-11-04 — Original register evidence across selection review
+
+- Accept a selection review diagnostic's exact original client-register row only when it belongs to that same client's own evidence. This permits the existing bounded repair and independent recheck; it never approves the rejected decision or substitutes a register row for the selector's legal-work citation.
+- Share same-party, same-attribute and same-event source-comparison guidance across strategy, selection review, development, Audit, repair and final review. Workforce characteristics and primary-industry classifications are not automatically mutually exclusive facts.
+- Preserve foreign-row, rewritten-quote and repeated-finding rejections, unchanged sources, budgets and retry caps.
+- Persist the existing restricted-unconfirmed delivery policy at ingestion so a permission left pending for confidential delivery does not reappear as a mandatory user confirmation before editorial preparation. Consent and artifact approval remain unconfirmed.
+- Fresh v1.0.13 DeForest UI test stopped in selection at an own-register quote rejected by a narrative-only binder. The historical rejection remains intact. This correction was made only after that run terminated; no autonomous pass is claimed.
+
 ## [1.0.13] — 2026-11-04 — Review evidence and complete-draft repair
 
 - Remove inherited semantic-selection approval on exhausted repair merely because core count and hero membership are structurally valid. A repeated rejection stays rejected, stops before drafting and cannot purchase another correction.
