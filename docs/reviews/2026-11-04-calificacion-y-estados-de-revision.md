@@ -18,4 +18,15 @@ Para un resultado de fondo que el usuario no puede confirmar, el juez puede prop
 
 ## Publicación
 
-Compilación de producción correcta con acceso de red para las fuentes. La compilación inicial no pudo descargar las fuentes de Google en el entorno restringido; no fue un error de tipos. Pendiente registrar commit y estado remoto verificados.
+Compilación de producción correcta con acceso de red para las fuentes. La compilación inicial no pudo descargar las fuentes de Google en el entorno restringido; no fue un error de tipos. Commit y estado remoto registrados a continuación.
+
+## Publicación y comprobación de interfaz
+
+- Código `20809ac2644cbfaa53e64e0ce956fc720a435081`, publicado por fast-forward en `dev` y `main` (push atómico correcto).
+- Motor Render `dep-dbllf7m7bikc73957kig` y worker `dep-dbllf7m7bikc73957krg`: `live`, ambos en ese commit.
+- Health del motor: online, commit exacto y huella `10feaea83baa093a3e073e8560f7e96f28eedbecb65d0c10a0efbd3120e8a7e1`.
+- Vercel producción `dpl_6VvAZgdW2ookoZsTVSmyGYVRacQi`: Ready, alias de producción comprobado y estado GitHub Vercel success. No se obtuvo confirmación de un nuevo run de GitHub Actions: el conector devolvió lista vacía y la consulta CLI agotó 22 segundos; no presentar CI remoto como aprobado.
+- Chrome, sesión de Ángela, mismo DeForest detenido: tras recargar se comprobó «Revisión detenida» deshabilitado, texto explícito de que esperar no reanuda y ausencia de la instrucción anterior de pulsar el botón oculto. Menú «Descargar» muestra `Audit Estratégico — Borrador` y el Word borrador; no se solicitó generación ni se descargó como entrega aprobada.
+- Consulta Render de logs nivel error entre 16:06:43 y 16:09:43 UTC sin entradas. Es un intervalo limitado, no evidencia de ausencia de todos los errores.
+
+Estas comprobaciones verifican publicación y presentación. Los dos expedientes siguen rechazados y no se ha realizado una prueba autónoma nueva con OpenAI en esta versión.

@@ -1,3 +1,9 @@
+## 2026-11-04 — v1.0.12 publicada; interfaz comprobada, sin nueva prueba pagada
+
+Commit 20809ac2644cbfaa53e64e0ce956fc720a435081 en dev/main por push atómico. Motor dep-dbllf7m7bikc73957kig y worker dep-dbllf7m7bikc73957krg LIVE en ese commit; health online con huella 10feaea83baa093a3e073e8560f7e96f28eedbecb65d0c10a0efbd3120e8a7e1. Vercel producción Ready dpl_6VvAZgdW2ookoZsTVSmyGYVRacQi, alias y estado Vercel success confirmados. GitHub Actions del commit sin confirmación (conector lista vacía; CLI timeout22s), no afirmar CI remoto aprobado. Validación local 419 Python, 455 Node y una omitida, TS y build correctos.
+
+Chrome recuperado: sesión de Ángela en DeForest, recarga únicamente. Se verificó botón Revisión detenida deshabilitado, instrucciones sin falso reintento, no esperar en página y menú Descargar con Audit Estratégico — Borrador disponible. No se editaron respuestas, fuentes o Word; no se inició generación ni ninguna llamada nueva a OpenAI. Ambos rechazos v1.0.11 permanecen. La interfaz comprobada NO es prueba de una entrega autónoma aprobada. Informe docs/reviews/2026-11-04-calificacion-y-estados-de-revision.md. Cambios de documentación posteriores conservan el mismo código funcional.
+
 ## 2026-11-04 — v1.0.12 preparada; no nueva ejecución pagada
 
 Jonathan confirmó que NO conoce el desenlace de fondo del asunto detenido en Ramos. No interpretar esa respuesta como victoria, derrota o proceso abierto. Se conserva la incertidumbre de los originales. También señaló que un mensaje de responsabilidad de RankPilot no basta: el usuario necesita saber si debe esperar o actuar. La captura muestra la contradicción real entre «Pulsa Revisar y preparar documentos», botón ausente y pausa sin más intentos.
