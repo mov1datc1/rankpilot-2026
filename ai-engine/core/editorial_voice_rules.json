@@ -1,12 +1,14 @@
 {
-  "version": "editorial-voice-v2",
+  "version": "editorial-voice-v3",
   "patterns": [
     "\\bthe\\s+supplied\\s+(?:biograph(?:y|ies)|profile|materials|documents|information|evidence)\\b",
     "\\b(?:is\\s+)?(?:also\\s+)?identified\\s+in\\s+the\\s+(?:supplied\\s+)?biograph(?:y|ies)\\b",
     "\\b(?:matter\\s+)?status\\s+field\\b",
     "\\bno\\s+(?:concluded|completed|final)\\s+(?:(?:negotiation|representation|judicial|litigation|portfolio-wide)\\s+)?(?:outcome|result|resolution)\\s+is\\s+(?:stated|supplied|provided|reported)\\b",
     "\\brespectfully\\s+(?:seeks|requests|petitions)\\s+(?:(?:Chambers|Legal\\s*500|for|first-time|continued)\\s+){0,4}(?:recognition|coverage|inclusion|ranking)\\b",
-    "\\bthe\\s+submission\\s+(?:also\\s+)?(?:identifies|describes|states|records|reports|lists)\\b"
+    "\\bthe\\s+submission\\s+(?:also\\s+)?(?:identifies|describes|states|records|reports|lists)\\b",
+    "\\b(?:the\\s+)?source\\s+materials\\s+contain\\s+(?:inconsistent|conflicting)\\s+(?:nonessential\\s+)?sector\\s+(?:descriptors|descriptions|classifications)\\b",
+    "\\bno\\s+sector\\s+classification\\s+is\\s+(?:stated|provided|given)\\s+here\\b"
   ],
   "reject": [
     "also identified in the supplied biography",
@@ -16,13 +18,17 @@
     "No concluded negotiation outcome is stated.",
     "No concluded representation outcome is stated.",
     "The firm respectfully seeks recognition.",
-    "The submission also identifies a national practice."
+    "The submission also identifies a national practice.",
+    "No sector classification is stated here because the source materials contain inconsistent nonessential sector descriptors.",
+    "The source materials contain conflicting sector descriptions."
   ],
   "allow": [
     "We challenged the evidence supplied by the authority.",
     "The team audited payroll and presented evidence to the court.",
     "The court respectfully requests further submissions.",
     "Proceedings remain pending; the team secured interim relief.",
-    "The team supplied information requested by the regulator."
+    "The team supplied information requested by the regulator.",
+    "The team reconciled inconsistent evidence submitted by the opposing party.",
+    "The opposing party source materials contain inconsistent dates; the team challenged their admissibility."
   ]
 }

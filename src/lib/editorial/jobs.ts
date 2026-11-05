@@ -102,7 +102,7 @@ export function targetedRepair(data:any):{tasks:string[];letter:boolean}|null {
     (d.conflict_resolution==='qualify_disputed_outcome' && (d.source_field_path || d.field_path)==='outcome' && d.qualification_validated===true && ['submission','letter'].includes(d.scope)));
   const defects=bindGeneratedFindings(data.final_artifact_review?.judge?.defects || [],data.editorial_development).filter((d:any)=>
     d.severity==='critical' || (d.owner==='rankpilot' && d.artifact_quote &&
-      ((d.code==='EDITORIAL_STYLE' && d.field_path) || containedConflict(d))));
+      ((d.code==='UNSUPPORTED_CLAIM' && d.source_quote && d.field_path) || (d.code==='EDITORIAL_STYLE' && d.field_path) || containedConflict(d))));
   if(!defects.length) return null;
   if(data.editorial_development) {
     const generated=defects.filter((d:any)=>d.owner==='rankpilot' &&

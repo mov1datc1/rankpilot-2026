@@ -140,6 +140,13 @@ test('concrete punctuation defects are repaired automatically without making opt
  assert.deepEqual(targetedRepair(data),{tasks:['development','audit','artifact'],letter:true});
  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,artifact_quote:'',field_path:null,message:'I prefer shorter prose.'}]}}}),null);
 });
+test('a bound generated false assertion is actionable even when the reviewer labels it warning',()=>{
+ const defect={code:'UNSUPPORTED_CLAIM',severity:'warning',owner:'rankpilot',scope:'submission',field_path:'matters/0/text',matter_id:'m',source_quote:'The team advised the employer.',artifact_quote:'The source materials contain conflicting sector descriptions.',message:'Withdraw the generated editorial claim.'};
+ const data={editorial_development:{matters:[{matter_id:'m',text:defect.artifact_quote}]},final_artifact_review:{judge:{defects:[defect]}}};
+ assert.deepEqual(targetedRepair(data),{tasks:['development','audit','artifact'],letter:true});
+ for(const change of [{owner:'user'},{source_quote:''},{artifact_quote:''}])
+  assert.equal(targetedRepair({...data,final_artifact_review:{judge:{defects:[{...defect,...change}]}}}),null);
+});
 test('a disputed optional sector is withdrawn automatically only with the explicit editorial containment verdict',()=>{
  const defect={code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',scope:'submission',field_path:'client_sector',artifact_quote:'Disputed sector',conflicting_artifact_term:'sector',conflict_resolution:'omit_nonessential_descriptor'};
  const data={editorial_development:{},final_artifact_review:{judge:{defects:[defect]}}};

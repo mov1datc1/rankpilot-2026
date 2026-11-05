@@ -19,6 +19,12 @@ class Repair(BaseModel):
     corrections: list[Correction]
     unresolved: list[str]
 
+
+def unknown_repair_usage(trace):
+    return any(bool((call.get('usage') or {}).get('unknown_calls'))
+               or call.get('usage_status') in ('unknown','partial_unknown')
+               or unknown_repair_usage(call.get('calls',[])) for call in trace or [])
+
 TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct incompatible ranking categories using the confirmed seniority; do not invent a current rank. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
 TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and selected matters. If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
@@ -30,6 +36,8 @@ TASK+=''' When a confidentiality defect identifies a revealing combination in pu
 TASK += " A same-party spelling variant is an editorial alias, not a genuine unanswered identity question. Preserve original source fields and add both attested variants once in the internal Audit when relevant; do not invent a corporate identity or ask the user to select spelling. For public privacy repairs, remove the identifying combination across ALL flagged B9/B10/C2 fields while retaining meaningful legal work and attribution. Retain exact private figures in E only."
 
 TASK += " Voice repairs: B9 states attested credentials and contributions directly, without 'supplied biography/profile/materials'. C2 requests coverage directly, without 'respectfully seeks' or 'the submission identifies'. D8/E8 states the documented procedural position, not what a status field says or what the document omits. If no actual status is documented, N/A is permitted without further commentary; never invent ongoing proceedings or a final outcome. Preserve genuine uncertainty and integrate explicit dated updates without assuming later activity."
+
+TASK += " rejected_quotes is a bound postcondition for this generated field: remove or faithfully correct those exact false assertions, including actionable warnings alongside critical defects in the same field. Editing another sentence is insufficient. Preserve supported legal facts. Explain decisions to omit an optional descriptor only in reason or the internal Audit; never add a Submission sentence about source inconsistency, sector classification omitted, or why an editorial choice was made."
 
 TASK += " Remove an unsupported supporting_matter from a candidate when that original mandate names other lawyers and never this candidate. Reconcile the candidate's rationale and bio; keep the mandate itself and all other candidates intact. A D5/E5 Lead partner template heading does not promote its named matter leader to partner. For a non-nominated leader, correct an added partner title with neutral leadership wording while preserving both original passages; do not turn this software wording correction into a user-confirmation request. A mismatch in the Audit core count must be corrected to the unchanged canonical selection, never by adding matters."
 
@@ -107,6 +115,8 @@ def repair_targets(package, strategy, proposal):
         else:
             evidence={'package':package,'strategy':strategy};value=proposal[path]
         add(path,value,'Remove auditor commentary about sources from this Submission field. Present supported work directly; preserve numbers, outcomes, attribution and uncertainty. Do not invent a completed outcome or delete substantive legal evidence/audit work.',evidence)
+        from core.editorial_voice import voice_matches
+        targets[path]['rejected_quotes']=voice_matches(value)
     from core.public_privacy import public_privacy_findings
     for finding in public_privacy_findings(package,strategy,proposal):
         path=finding['path'];parts=path.split('/')
@@ -122,7 +132,7 @@ def repair_targets(package, strategy, proposal):
         add(path,value,problem,evidence)
     return targets
 
-def apply_corrections(proposal, targets, repair):
+def apply_corrections(proposal, targets, repair, allow_unchanged=False):
     result=copy.deepcopy(proposal);seen=set()
     for fix in repair.get('corrections',[]):
         path=fix.get('path')
@@ -137,7 +147,7 @@ def apply_corrections(proposal, targets, repair):
                 raise ValueError('Repair cannot change candidate identity')
         elif not isinstance(value,str):
             raise ValueError('Invalid text correction')
-        if value == targets[path]['current_value']:
+        if not allow_unchanged and value == targets[path]['current_value']:
             raise ValueError('Repair returned unchanged target')
         seen.add(path);parts=path.split('/');parent=result
         for part in parts[:-1]:parent=parent[int(part)] if isinstance(parent,list) else parent[part]
@@ -150,6 +160,10 @@ def apply_corrections(proposal, targets, repair):
 def repair_development(state, proposal, targets):
     from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
+    if unknown_repair_usage(state.get('trace',[])):
+        return {'development':proposal,'development_validated':False,
+                'errors':['No se inicia otra reparación con consumo del proveedor desconocido.'],
+                'trace':state.get('trace',[])}
     # Bind shape to path, so a prose target cannot receive a Candidate object.
     shapes=[]
     for kind,paths in (
@@ -177,17 +191,59 @@ def repair_development(state, proposal, targets):
         if isinstance(evidence,dict) and set(evidence)=={'package','strategy'}:
             if shared is None:shared=evidence
             if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
-    feedback=[{k:v for k,v in d.items() if k!='artifact_quote'} for d in state.get('repair_feedback',[])]
+    feedback=list(state.get('repair_feedback',[]))
     repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
     try:
-        fixed=apply_corrections(proposal,targets,repair)
+        fixed=apply_corrections(proposal,targets,repair,allow_unchanged=True)
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
+    def at(document,path):
+        value=document
+        for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
+        return value
+    norm=lambda value:' '.join(str(value or '').split()).casefold()
+    def failures(document):
+        return [path for path,target in targets.items()
+                if at(document,path)==target['current_value'] or any(
+                    norm(quote) in norm(at(document,path)) for quote in target.get('rejected_quotes',[]) if norm(quote))]
+    failed=failures(fixed)
+    retry_count=0
+    retry_error=None
+    # Retry a known completed but ineffective textual correction once, before
+    # buying another full Audit/render/judge cycle. Already corrected fields and
+    # unrelated sources are excluded. Unknown provider outcomes never enter here.
+    if failed and not repair.get('unresolved') and all(targets[path].get('rejected_quotes') for path in failed):
+        known=bool(trace) and not unknown_repair_usage(trace) and all(
+            isinstance((call.get('usage') or {}).get('total_tokens'),(int,float))
+            and (call.get('usage') or {})['total_tokens']>=0 for call in trace)
+        if known:
+            retry_count=1
+            retry_targets={path:{**copy.deepcopy(payload_targets[path]),'current_value':at(fixed,path)} for path in failed}
+            # Materialize only shared evidence needed by this remaining target.
+            uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in retry_targets.values())
+            retry_correction=create_model('ResidualTextCorrection',path=(Literal[tuple(failed)],...),value=(str,...),reason=(str,...))
+            retry_schema=create_model('ResidualTextRepair',__base__=Repair,corrections=(list[retry_correction],...))
+            try:
+                retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left a rejected quotation unchanged. Correct ONLY repair_targets. Each rejected_quotes entry MUST be absent from its replacement. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of the rejected assertion.',
+                    {'repair_targets':retry_targets,'shared_source_evidence':shared if uses_shared else None,'feedback':[],
+                     'previous_failure':'Rejected quotation survived; changing another sentence is not a repair.'})
+                fixed=apply_corrections(fixed,retry_targets,retry,allow_unchanged=True)
+                repair={**retry,'unresolved':retry.get('unresolved',[])}
+            except Exception as error:
+                # A pre-call deadline or failed second request must not erase
+                # the first paid response or its known/unknown usage history.
+                if getattr(error,'trace_history',None):trace=error.trace_history
+                elif getattr(error,'trace',None):trace=list(trace)+[error.trace]
+                retry_error='La corrección localizada no pudo completarse; se conserva el avance y el consumo.'
+            failed=failures(fixed)
     fixed=bind_development(state['package'],fixed)
     errors=development_errors(state['package'],state['strategy'],fixed)
+    if retry_error:errors.append(retry_error)
+    errors.extend('La reparación no retiró la afirmación rechazada: '+path for path in failed)
     if repair.get('unresolved'):errors.extend('Reparación pendiente: '+str(e) for e in repair['unresolved'])
     return {'development':fixed,'development_validated':not errors,'errors':errors,'trace':trace,
-            'repair_report':{'corrected_paths':[c['path'] for c in repair.get('corrections',[])],'unresolved':repair.get('unresolved',[])}}
+            'repair_report':{'corrected_paths':[path for path in targets if path not in failed],
+                             'unresolved':repair.get('unresolved',[]),'failed_paths':failed,'surgical_retries':retry_count}}
 
 class RepairLocation(BaseModel):
     path: str
@@ -307,6 +363,14 @@ def repair_rejected_development(state, proposal, defects):
                 targets[path]['problem']+=' '+defect.get('message','Repair the rejected generated claim.')
             else:
                 targets[path]={'current_value':allowed[path],'problem':defect.get('message','Repair the rejected generated claim.'),'source_evidence':evidence}
+            # Bind a correction postcondition to this exact generated field.
+            # An omission may be fixed by addition, so its existing quote is not
+            # forbidden. Source questions and unbound claims are never deleted.
+            if (defect.get('owner')=='rankpilot' and defect.get('code') in ('UNSUPPORTED_CLAIM','EDITORIAL_STYLE')
+                    and quote and isinstance(allowed[path],str) and quote in norm(allowed[path])):
+                quotes=targets[path].setdefault('rejected_quotes',[])
+                quotes[:]=[existing for existing in quotes if norm(existing) not in quote]
+                if not any(quote in norm(existing) for existing in quotes):quotes.append(defect['artifact_quote'])
     if not remaining:
         return repair_development({**state,'repair_feedback':defects},proposal,targets)
     all_feedback=defects;defects=remaining
