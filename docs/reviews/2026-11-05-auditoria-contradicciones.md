@@ -1,6 +1,6 @@
 # Auditoría transversal de pausas y contradicciones
 
-Estado: candidato de publicación v1.0.18 posterior a la última aceptación fallida; despliegue y prueba autónoma pendientes. No validado con una nueva ejecución de OpenAI. No se modificaron fuentes privadas, expedientes detenidos, presupuestos ni documentos históricos durante esta auditoría.
+Estado: v1.0.18 publicada y prueba nueva terminada sin aprobación de la entrega. No se modificaron fuentes privadas, expedientes detenidos, presupuestos ni documentos históricos durante esta auditoría.
 
 Se revisaron las reglas compartidas, contratos de selección y reparación, preflight del builder, dependencias del checkpoint, persistencia del trabajo, consumo conocido/desconocido, recuperación y presentación de hallazgos. La revisión no prueba que todos los posibles documentos produzcan una entrega aprobada.
 
@@ -25,7 +25,7 @@ Se revisaron las reglas compartidas, contratos de selección y reparación, pref
 ## Límites que se conservan
 
 - Máximo tres revisiones semánticas de selección. La nueva lectura del diagnóstico ocupa una de esas plazas; no amplía presupuesto ni reinicia contadores.
-- La reparación final automática permite como máximo dos revisiones de la pareja Word en su historial de progreso: revisión inicial y una revisión después de reparación. Algunas notas históricas decían «dos rondas de reparación»; esa descripción no refleja el límite actual. No se aumenta para resolver una discrepancia documental.
+- La reparación final automática permite como máximo dos ciclos de reparación después de la comprobación inicial. El supervisor evalúa el historial anterior a la comprobación actual: puede haber tres comprobaciones del artefacto en total, algunas deterministas sin llamada al modelo. La prueba nueva observó ese límite; no se amplió.
 - Las discrepancias materiales de identidad, moneda, importe, rol o desenlace siguen requiriendo evidencia o una respuesta real cuando no existe una formulación fiel. Un descriptor prescindible puede omitirse bajo las reglas existentes; eso no autoriza inventar un resultado.
 - La conexión del navegador no gobierna el trabajo durable. Una pérdida entre motor y proveedor puede dejar consumo desconocido; se conserva y se detiene. No existe recuperación durable por Responses ID ni un tope de facturación impuesto al proveedor.
 - El presupuesto de tokens se comprueba al iniciar una etapa; una etapa con varias llamadas puede sobrepasarlo antes de registrar su consumo. No debe anunciarse como un límite duro de facturación.
@@ -36,4 +36,16 @@ Se revisaron las reglas compartidas, contratos de selección y reparación, pref
 
 454 pruebas Python correctas. 473 contratos Node correctos y uno omitido. TypeScript y compilación de producción correctos. Pruebas locales con respuestas simuladas, sin nuevas llamadas a OpenAI.
 
-La aceptación autónoma sigue pendiente. Antes de repetir extracción completa, corresponde comprobar con el modelo configurado que el diagnóstico tipado, la contención de un descriptor opcional y la reparación limitada funcionan juntos. El usuario autorizó posteriormente publicar e iniciar una prueba nueva desde cero. No reutilizar intentos históricos ni ampliar sus límites. La entrega completa deberá superar después una prueba fija sin cambios de código ni correcciones manuales durante su ejecución.
+La aceptación autónoma completa sigue pendiente. El usuario autorizó publicar y probar desde cero; la ejecución y su fallo se documentan abajo. La prueba mantuvo la versión fija y no tuvo correcciones manuales durante su ejecución. No reutilizar este intento histórico ni ampliar sus límites.
+
+## Publicación y prueba nueva de v1.0.18
+
+Código `8fff1b9f71cc30710182c085b1a1568a735c53dd`, publicado en dev y main mediante avance atómico. Vercel Production Ready `MjYbqTTvT6KFhzZnVFKGoJhmDuww`; motor `dep-dbmbr3rncjis73958q6g` y worker `dep-dbmbr3jncjis73958pvg` LIVE en el mismo commit, con despliegues automáticos. Health online y huella `3621743322bcb8fbca38556a64ea41ce891c0c51e3fc86d9c092d2db12962e6b`. El estado GitHub consultado confirma Vercel success; no se afirma una ejecución separada de CI.
+
+Prueba nueva por opción B en la sesión habitual: original intacto, una extracción, revisión normal conservando permiso ausente sin confirmar en E y una preparación editorial. Versión fija, sin correcciones manuales, ampliaciones ni reinicios. Recuperó 32 asuntos; la selección superó tres revisiones semánticas y conservó 19 principales. El aplazamiento previo a una llamada continuó bajo el mismo trabajo. El desarrollo reparó automáticamente voz auditora y el proceso generó el Audit y una pareja Word borrador.
+
+La entrega terminó `needs_review / repair_progress_limit`, con un hallazgo crítico de contenido generado. Una explicación editorial de por qué se omitía un sector afirmaba una incompatibilidad entre clasificación sectorial y característica de la fuerza laboral. El revisor señaló que eran atributos distintos; la frase cuestionada permaneció después de la corrección y el control de afirmaciones sin reparar la volvió a rechazar antes de otra revisión de pago. No hubo artefacto aprobado. Los límites detuvieron el intento; no se levantaron para obtener un pase.
+
+Consumo conocido: 56.010 de extracción y 799.822 editoriales, total 855.832 tokens. Un trabajo y 12 entradas de ledger; las entradas sin llamada nueva no se contabilizan como consumo de modelo. Se conservaron fuentes, snapshots, respuestas, documentos borrador, trazas y recibo final en evidencia privada fuera de Git. El observador de solo lectura terminó al detectar la pausa. No se inició otra ejecución.
+
+La selección autónoma avanzó respecto del intento anterior, pero no se ha cerrado la aceptación completa. La siguiente corrección debe impedir que una decisión interna sobre omitir atributos se convierta en una afirmación del Submission y comprobar que el reparador elimina la cita exacta rechazada en el campo correcto. No corresponde solicitar al usuario que cambie sus fuentes, ni quitar el control final, ni aumentar las rondas para ocultar este fallo.
