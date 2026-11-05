@@ -7,6 +7,12 @@ const db={$transaction:async fn=>fn(tx)};
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:db};return load.call(this,name,...args);};
 const {enqueue}=require('../../src/lib/editorial/jobs.ts');
 Module._load=load;
+test('an explicit retry or newer build cannot reset a rejected selection allowance',async()=>{
+ last={id:'rejected',status:'failed',stage:'selection',sourceHash:stableHash(sourceSnapshot(submission)),ledger:[{trace:{usage:{total_tokens:123}}}],issue:{code:'SELECTION_REJECTED'}};
+ const before=structuredClone(last);
+ for(const retry of [false,true]) assert.equal(await enqueue(submission,retry),last);
+ assert.equal(mutations,0);assert.deepEqual(last,before);
+});
 const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts');
 test('manual retry cannot buy a duplicate call for an unknown same-source outcome after the lease expires',async()=>{
  last={id:'unknown',status:'indeterminate',sourceHash:stableHash(sourceSnapshot(submission)),updatedAt:new Date(Date.now()-86400000),ledger:[],issue:{code:'AI_REVIEW_UNAVAILABLE'}};

@@ -8,12 +8,14 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const isRunning=!!job && ['queued','running'].includes(job.status);
   const systemManaged=isRunning || Boolean(stopped && (job?.pauseReason || ['rankpilot','Optimización editorial'].includes(job?.issue?.owner)));
   const recovering=job?.recovering || ((job?.issue?.owner==='rankpilot' || job?.issue?.owner==='Optimización editorial') && isRunning);
-  const issues=approved ? [] : reviewIssues(data,errors);
+  const issues=approved ? [] : reviewIssues(data,errors,job);
   const humanCount=issues.filter(issue=>issue.owner!=='RankPilot' && issue.owner!=='Optimización editorial').length;
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
-  const pausedInstructions='Este intento está detenido y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere resolver esta pausa y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.';
+  const pausedInstructions=job?.issue?.code==='SELECTION_REJECTED'
+    ? 'La selección no superó la revisión y este intento terminó antes de redactar los documentos. Puedes consultar los motivos abajo y cerrar este expediente. No vuelvas a pulsar «Revisar y generar» ni a subir el original: no hay otra revisión automática pendiente ni una respuesta del cliente que desbloquee este intento. Se requiere corregir la selección generada en RankPilot; la entrega final aún no está disponible.'
+    : 'Este intento está detenido y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere resolver esta pausa y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.';
   return <>
     {!approved && (
       <div style={{

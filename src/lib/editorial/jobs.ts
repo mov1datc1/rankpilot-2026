@@ -26,7 +26,7 @@ export function publicJob(job:any) {
   const paused=!active && job.status!=='completed';
   const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
   const lastDecision=job.ledger?.at(-1)?.supervision;
-  const pauseReason=paused && lastDecision?.action==='pause' ? lastDecision.reason : null;
+  const pauseReason=paused && lastDecision?.action==='pause' ? lastDecision.reason : paused && job.issue?.code==='SELECTION_REJECTED' ? 'selection_rejected' : null;
   const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
   return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
@@ -50,6 +50,9 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(last && ['running','queued'].includes(last.status)) return last;
     const snapshot=sourceSnapshot(current),sourceHash=stableHash(snapshot);
     if(last?.sourceHash===sourceHash && hasUnknownProviderUsage(last.ledger)) throw new Error('PROVIDER_OUTCOME_UNKNOWN');
+    // A rejected bounded selection cannot buy a fresh allowance via retry=true.
+    // A later software release also must not reactivate this historical attempt.
+    if(last?.sourceHash===sourceHash && last?.issue?.code==='SELECTION_REJECTED') return last;
     const resultHash=deliveryInputHash(current,current.chambersData || {});
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
     // Resume a stopped repair after a code fix at its exact cursor. Keep the

@@ -13,7 +13,7 @@ BAD={'matters':[{'matter_id':'property-1','disposition':'reserve','legal_underst
 GOOD={**BAD,'matters':[{**BAD['matters'][0],'disposition':'core','legal_understanding':'Pending challenge to zoning restrictions and property rights.','rationale':'Direct property rights work'}],'hero_matter_id':'property-1'}
 
 def verdict(status='supported',quote=''):
-    return {'checks':{'M01':{'status':status,'explanation':'Property rights, not a tax assessment.', 'source_quote':quote}}}
+    return {'checks':{'M01':{'status':status,'explanation':'Property rights, not a tax assessment.', 'source_quote':quote,'decision_quote':'core' if status=='repair_required' else ''}}}
 
 class SelectionSemanticTests(unittest.TestCase):
     def test_recovery_requires_new_evidenced_failure_and_keeps_a_hard_limit(self):
@@ -74,7 +74,7 @@ class SelectionSemanticTests(unittest.TestCase):
                 self.assertEqual(len(payload['rejected_decisions']),1)
                 return {'core_corrections':[d for d in payload['rejected_decisions'] if d['disposition']=='core'],'other_corrections':[d for d in payload['rejected_decisions'] if d['disposition']!='core'],'unresolved':[]},[]
             attempt=calls.count('selection_reviewer')
-            checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE} for i in (1,2)}
+            checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE,'decision_quote':strategy['matters'][i-1]['rationale']} for i in (1,2)}
             return {'checks':checks},[]
         with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
             result=create_review_graph().invoke({'package':{'directory':'Chambers','matters':[MATTER,peer]},'operation':'strategy'})
@@ -108,7 +108,7 @@ class SelectionSemanticTests(unittest.TestCase):
 
     def test_reviewer_checks_excluded_matter_and_requires_source_support(self):
         state={'package':{'matters':[MATTER]},'strategy':BAD}
-        result=review_selection(state,lambda *args:(verdict('repair_required',SOURCE),[]))
+        result=review_selection(state,lambda *args:({'checks':{'M01':{**verdict('repair_required',SOURCE)['checks']['M01'],'decision_quote':'Tax controversy'}}},[]))
         self.assertFalse(result['selection_validated'])
         self.assertIn('property-1',result['selection_review']['checks'])
         self.assertTrue(result['selection_feedback']['semantic_rejection'])

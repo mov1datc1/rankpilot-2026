@@ -28,7 +28,7 @@ from core.editorial_development import develop, development_errors, literal_quot
 class Disposition(BaseModel):
     matter_id: str
     disposition: Literal['core', 'reserve', 'excluded']
-    rationale: str
+    rationale: str = Field(description='Source-backed comparative legal contribution. Do not use available slots as legal merit or request confirmation of work/deliverables already described in the source.')
     legal_understanding: str = ""
     source_quote: str = Field(description='Exact source words supporting this decision; never invented.')
 
@@ -359,6 +359,7 @@ def register_gate(state):
     return {'errors':errors,'trace':list(state.get('trace',[])),'writer_attempts':0,'selection_validated':False}
 
 def strategist(state):
+    from core.selection_review import SELECTION_REASONING
     schema, references = selection_contract(state['package']['matters'])
     reverse = {matter_id: ref for ref, matter_id in references.items()}
     payload = {**state['package'], 'matters': [{**m, 'id': reverse[m['id']]} for m in state['package']['matters']],
@@ -367,7 +368,7 @@ def strategist(state):
     if feedback:
         payload['previous_failed_selection'] = {'errors': feedback.get('errors', []),
             'decisions': [{**d, 'matter_id': reverse.get(d.get('matter_id'), 'UNKNOWN')} for d in feedback.get('strategy', {}).get('matters', [])]}
-    proposal,trace=invoke_role(state,'strategist',schema,
+    proposal,trace=invoke_role(state,'strategist',schema, SELECTION_REASONING +
         'First reconstruct each mandate in legal_understanding: asset or transaction, legal problem, work performed, result versus pending relief, and practice nexus. A legal procedure or client sector is not the practice classification. Then return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
     strategy = project_selection(proposal, schema, references, state['package']['matters'])
     # Keep the comparative order supplied by the strategist, with the validated

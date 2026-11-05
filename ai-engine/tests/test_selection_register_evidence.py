@@ -13,7 +13,7 @@ MATTER={'id':'m1','client':'Fictional Sentinel','source_excerpt':SOURCE,'publish
 DECISION={'matter_id':'m1','disposition':'core','rationale':'A security-sector employer mandate.','legal_understanding':'The client is a security-sector company; the firm represents its workforce litigation.','source_quote':SOURCE}
 STRATEGY={'matters':[DECISION],'hero_matter_id':'m1','pending_questions':[],'thesis':'Employer-side Labour & Employment'}
 PACKAGE={'directory':'Chambers','practice_area':'Labour & Employment','matters':[MATTER]}
-BAD={'checks':{'M01':{'status':'repair_required','explanation':'Correct only the optional generated industry assertion; retain supported legal work.','source_quote':ROW}}}
+BAD={'checks':{'M01':{'status':'repair_required','explanation':'Correct only the optional generated industry assertion; retain supported legal work.','source_quote':ROW,'decision_quote':'A security-sector employer mandate.'}}}
 GOOD={'checks':{'M01':{'status':'supported','explanation':'The supported employer work remains accurately described.','source_quote':''}}}
 
 class SelectionRegisterEvidenceTests(unittest.TestCase):

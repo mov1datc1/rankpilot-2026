@@ -3,6 +3,17 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {curateLawyers}=require('../../src/lib/docx/lawyer-curator.ts');
 const {reviewIssues,describeReviewIssue}=require('../../src/lib/audit/review-actions.ts');
+test('a terminal selection displays its actual findings instead of a ready-draft marker',()=>{
+ const job={status:'failed',stage:'selection',issue:{code:'SELECTION_REJECTED',owner:'rankpilot'}};
+ const data={matters:[{id:'m1',client:'Fictional Employer'}],review_checkpoint:{state:{selection_review:{checks:{m1:{status:'repair_required',explanation:'The rationale denies implemented agreements.',decision_quote:'No work documented.',source_quote:'The firm implemented agreements.'},m2:{status:'supported',explanation:'Supported.'}}}}}};
+ const before=structuredClone(data);
+ const issues=reviewIssues(data,['Draft edited; validation required.'],job);
+ assert.equal(issues.length,1);assert.match(issues[0].title,/Fictional Employer/);
+ assert.match(issues[0].message,/implemented agreements/);assert.doesNotMatch(issues[0].message,/listo|actualizado/);
+ assert.equal(issues[0].owner,'Optimización editorial');assert.deepEqual(data,before);
+ assert.match(reviewIssues({...data,review_checkpoint:{}},[],job)[0].message,/antes de redactar/);
+ assert.notDeepEqual(reviewIssues(data,['Draft edited; validation required.'],{...job,status:'running'}),issues);
+});
 const person={name:'Sofia Vega',isPartner:true,isRanked:false,currentRank:'Unranked',suggestedRank:'Associate to Watch'};
 const project=(people,matters=[],data={})=>curateLawyers(people,matters,'Synthetic Legal','Tax','Latin America — Mexico',data);
 test('unavailable individual evidence cannot become Unranked or Ranked N in B9',()=>{

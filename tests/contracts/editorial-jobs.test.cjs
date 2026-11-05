@@ -5,6 +5,11 @@ const {sourceSnapshot,stableHash,draftSourceHash,draftDisposition}=require('../.
 const {editorialIdentity,editorialUser}=require('../../src/lib/editorial/identity.ts');
 const {reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
 const {engineMatchesWorker,EDITORIAL_VERSION}=require('../../src/lib/editorial/contracts.ts');
+test('a rejected selection exposes a terminal pause even without an artifact supervisor verdict',()=>{
+ const job={id:'j',status:'failed',stage:'selection',cursor:0,tasks:['selection'],ledger:[],issue:{code:'SELECTION_REJECTED',owner:'rankpilot'}};
+ assert.equal(publicJob(job).pauseReason,'selection_rejected');
+ assert.equal(publicJob({...job,status:'queued'}).pauseReason,null);
+});
 test('rolling deployments require identical engine code and RAG, not identical UI commits',()=>{
  const fingerprint='a'.repeat(64);
  assert.equal(engineMatchesWorker({version:EDITORIAL_VERSION,commit:'previous-ui',engine_fingerprint:fingerprint},fingerprint),true);

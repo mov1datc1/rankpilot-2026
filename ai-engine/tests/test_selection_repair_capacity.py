@@ -34,7 +34,7 @@ class SelectionRepairCapacityTests(unittest.TestCase):
                 answer={'core_corrections':[],'other_corrections':[corrected],'unresolved':[]}
                 return schema.model_validate(answer).model_dump(),[]
             return {'checks':{f'M{i+1:02d}':{'status':'repair_required' if len(calls)==1 and i==20 else 'supported',
-                'explanation':'Compare legal contribution rather than optional consent.','source_quote':SOURCE if i==20 else ''} for i in range(21)}},[]
+                'explanation':'Compare legal contribution rather than optional consent.','source_quote':SOURCE if i==20 else '', 'decision_quote':strategy['matters'][i]['rationale'] if i==20 else ''} for i in range(21)}},[]
         with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':package,'operation':'strategy'})
         self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer'])
