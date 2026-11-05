@@ -123,13 +123,15 @@ def repair_targets(package, strategy, proposal):
         value=proposal[path] if len(parts)==1 else proposal['candidates'][int(parts[1])]['submission_bio']
         existing=targets.get(path)
         evidence=(existing or {}).get('source_evidence',{'affected_confidential_matters':[]})
-        if 'affected_confidential_matters' in evidence:
-            matter=register[finding['matter_id']]
-            if matter not in evidence['affected_confidential_matters']:evidence['affected_confidential_matters'].append(matter)
+        evidence.setdefault('affected_confidential_matters',[])
+        matter=register[finding['matter_id']]
+        if matter not in evidence['affected_confidential_matters']:evidence['affected_confidential_matters'].append(matter)
         problem=((existing or {}).get('problem','')+' Generalize the case-specific combination of confidential metrics in this PUBLIC field. '
                  'Keep the legal work and personal attribution; retain exact metrics and all decisive facts in E. '
                  'Preserve unrelated public text and confirmed department-wide facts. Never edit the confidential narrative or ask the user for an editorial correction.')
         add(path,value,problem,evidence)
+        targets[path].setdefault('privacy_matter_ids',[])
+        if finding['matter_id'] not in targets[path]['privacy_matter_ids']:targets[path]['privacy_matter_ids'].append(finding['matter_id'])
     return targets
 
 def apply_corrections(proposal, targets, repair, allow_unchanged=False):
@@ -203,8 +205,10 @@ def repair_development(state, proposal, targets):
         return value
     norm=lambda value:' '.join(str(value or '').split()).casefold()
     def failures(document):
+        from core.public_privacy import public_privacy_findings
+        privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
         return [path for path,target in targets.items()
-                if at(document,path)==target['current_value'] or any(
+                if path in privacy_paths or at(document,path)==target['current_value'] or any(
                     norm(quote) in norm(at(document,path)) for quote in target.get('rejected_quotes',[]) if norm(quote))]
     failed=failures(fixed)
     retry_count=0
@@ -212,7 +216,7 @@ def repair_development(state, proposal, targets):
     # Retry a known completed but ineffective textual correction once, before
     # buying another full Audit/render/judge cycle. Already corrected fields and
     # unrelated sources are excluded. Unknown provider outcomes never enter here.
-    if failed and not repair.get('unresolved') and all(targets[path].get('rejected_quotes') for path in failed):
+    if failed and not repair.get('unresolved') and all(targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids') for path in failed):
         known=bool(trace) and not unknown_repair_usage(trace) and all(
             isinstance((call.get('usage') or {}).get('total_tokens'),(int,float))
             and (call.get('usage') or {})['total_tokens']>=0 for call in trace)
@@ -226,7 +230,7 @@ def repair_development(state, proposal, targets):
             try:
                 retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left a rejected quotation unchanged. Correct ONLY repair_targets. Each rejected_quotes entry MUST be absent from its replacement. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of the rejected assertion.',
                     {'repair_targets':retry_targets,'shared_source_evidence':shared if uses_shared else None,'feedback':[],
-                     'previous_failure':'Rejected quotation survived; changing another sentence is not a repair.'})
+                     'previous_failure':'The rejected quotation or identifying private metric/context survives. Generalize only the public footprint, preserving its substantive legal work and every exact confidential E narrative.'})
                 fixed=apply_corrections(fixed,retry_targets,retry,allow_unchanged=True)
                 repair={**retry,'unresolved':retry.get('unresolved',[])}
             except Exception as error:
@@ -239,7 +243,7 @@ def repair_development(state, proposal, targets):
     fixed=bind_development(state['package'],fixed)
     errors=development_errors(state['package'],state['strategy'],fixed)
     if retry_error:errors.append(retry_error)
-    errors.extend('La reparación no retiró la afirmación rechazada: '+path for path in failed)
+    errors.extend('La reparación no completó la corrección requerida: '+path for path in failed)
     if repair.get('unresolved'):errors.extend('Reparación pendiente: '+str(e) for e in repair['unresolved'])
     return {'development':fixed,'development_validated':not errors,'errors':errors,'trace':trace,
             'repair_report':{'corrected_paths':[path for path in targets if path not in failed],

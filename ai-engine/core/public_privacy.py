@@ -18,6 +18,35 @@ COUNT = re.compile(r'(?<!\w)(?P<number>'+NUMBER+'|'+'|'.join(WORDS)+r')\s+'
                    r'(?:(?:active|labour|labor|Mexican|ongoing|activos?|laborales?|mexicanos?)\s+){0,3}'
                    r'(?P<unit>employees|workers|empleados|trabajadores|states|estados|proceedings|disputes|claims|litigios|procedimientos|companies|empresas|facilities|plantas|inspections|inspecciones|hectares|hectáreas)\b',re.I)
 
+# A single case metric can identify a mandate when its transaction, procedure
+# or sensitive investigation is also described. These tags locate a privacy
+# transformation; they never establish client identity or a legal outcome.
+CASE_CONTEXT = {
+    'acquisition':r'\b(?:acquisition|post[- ]acquisition|adquisici[oó]n)\b',
+    'constitutional_proceeding':r'\b(?:amparo|constitutional (?:litigation|proceedings?|challenge|relief))\b',
+    'investigation':r'\b(?:internal (?:employment )?investigation|investigaci[oó]n interna)\b',
+    'judgment':r'\b(?:adverse (?:labou?r )?judgments?|sentencias? adversas?)\b',
+    'litigation':r'\b(?:litigation|litigios?|labou?r disputes?|employment disputes?)\b',
+    'restructuring':r'\b(?:restructuring|employer[- ]substitution|reestructuraci[oó]n)\b',
+}
+
+
+def case_context(text):
+    return {key for key,pattern in CASE_CONTEXT.items() if re.search(pattern,str(text or ''),re.I)}
+
+
+def money_currencies(text):
+    result={}
+    for match in MONEY.finditer(str(text or '')):
+        if not match['currency']:continue
+        number=_number(match['number'])
+        if number is None:continue
+        number*=MAGNITUDES.get(str(match['magnitude']).casefold(),1)
+        currency=match['currency'].upper()
+        currency={'US$':'USD','€':'EUR','£':'GBP'}.get(currency,currency)
+        result.setdefault(('amount',str(number.normalize())),set()).add(currency)
+    return result
+
 def _number(value):
     value=value.casefold()
     if value in WORDS:
@@ -73,10 +102,23 @@ def public_privacy_findings(package, strategy, proposal):
         if matter.get('id') not in core:continue
         if not (matter.get('publication_route')=='E' or matter.get('resolved_publication_status') in ('confidential','confirmation_required')
                 or matter.get('publish_status') in ('confidential','non_publishable','confirmation_required')):continue
-        source='\n'.join(str(matter.get(k) or '') for k in ('source_excerpt','rawNotes','summary','value','completionDate','otherInfo'))
+        source='\n'.join(str(matter.get(k) or '') for k in ('source_excerpt','rawNotes','summary','notes','description','value','completionDate','otherInfo'))
         facts=metric_facts(source)
         for path,value in fields.items():
             shared=facts & metric_facts(value)
-            if len(shared)<2:continue
-            result.append({'matter_id':matter['id'],'path':path,'metrics':sorted(shared)})
+            source_money,public_money=money_currencies(source),money_currencies(value)
+            # Equal numerals in explicitly different currencies are not the
+            # same confidential metric. '$' remains ambiguous, never USD proof.
+            shared={fact for fact in shared if not (fact[0]=='amount'
+                    and source_money.get(fact) and public_money.get(fact)
+                    and '$' not in source_money[fact] | public_money[fact]
+                    and not source_money[fact] & public_money[fact])}
+            context=case_context(source) & case_context(value)
+            linked=False
+            if path.startswith('candidates/'):
+                candidate=proposal['candidates'][int(path.split('/')[1])]
+                linked=any(s.get('matter_id')==matter['id'] for s in candidate.get('supporting_matters',[]))
+            if len(shared)<2 and not (shared and (context or linked)):continue
+            result.append({'matter_id':matter['id'],'path':path,'metrics':sorted(shared),
+                           'case_context':sorted(context),'candidate_source_link':linked})
     return result

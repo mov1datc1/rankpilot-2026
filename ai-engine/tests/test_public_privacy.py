@@ -7,6 +7,59 @@ from core.editorial_repair import repair_targets, repair_rejected_development
 from test_editorial_development import PACKAGE,STRATEGY,DEV
 
 class PublicPrivacyTests(unittest.TestCase):
+    def test_single_confidential_metric_with_a_case_context_is_batched_before_render(self):
+        package,proposal,_=self.fixture()
+        source='The team led post-acquisition integration for more than 4,200 employees.'
+        package['matters'][0]['source_excerpt']=source
+        package['matters'][0]['rawNotes']=source
+        proposal['b10']='The practice advises employers on preventive compliance.'
+        proposal['c2']='The team led post-acquisition integration for more than 4,200 employees.'
+        proposal['candidates'][0]['submission_bio']='She led integration of 4,200 employees.'
+        findings=public_privacy_findings(package,STRATEGY,proposal)
+        self.assertEqual({f['path'] for f in findings},{'c2','candidates/0/submission_bio'})
+        self.assertTrue(all(len(f['metrics'])==1 for f in findings))
+        targets=repair_targets(package,STRATEGY,proposal)
+        self.assertIn('m1',targets['c2']['privacy_matter_ids'])
+        self.assertEqual(proposal['matters'][0]['text'],self.fixture()[2])
+
+    def test_one_exact_private_amount_with_amparo_or_sensitive_investigation_is_not_missed(self):
+        for text in ('The firm handles an amparo in litigation with exposure of MXN12 million.',
+                     'The firm led an internal employment investigation preventing litigation of MXN640,000.'):
+            package,proposal,_=self.fixture()
+            package['matters'][0].update(source_excerpt=text,rawNotes=text)
+            proposal.update(b10='The team advises employers.',c2=text)
+            proposal['candidates'][0]['submission_bio']='She advises on employment law.'
+            self.assertEqual([f['path'] for f in public_privacy_findings(package,STRATEGY,proposal)],['c2'])
+
+    def test_equal_numbers_in_different_known_currencies_are_not_the_same_case_metric(self):
+        package,proposal,_=self.fixture()
+        package['matters'][0].update(source_excerpt='The team leads amparo litigation concerning MXN12 million.',rawNotes='')
+        proposal.update(b10='The team advises employers.',c2='The team leads amparo litigation concerning USD12 million.')
+        proposal['candidates'][0]['submission_bio']='She advises on employment law.'
+        self.assertEqual(public_privacy_findings(package,STRATEGY,proposal),[])
+
+    def test_privacy_postcondition_retries_only_the_remaining_public_field(self):
+        from core.editorial_repair import repair_development
+        package=copy.deepcopy(PACKAGE);proposal=copy.deepcopy(DEV)
+        source='The firm handles an amparo in litigation with exposure of MXN12 million.'
+        package['matters'][0].update(publication_route='E',resolved_publication_status='confidential',source_excerpt=str(package['matters'][0].get('source_excerpt') or package['matters'][0].get('rawNotes') or '')+'\n'+source)
+        proposal['c2']=source
+        before=copy.deepcopy((package,proposal['matters']))
+        targets=repair_targets(package,STRATEGY,proposal)
+        self.assertEqual(set(targets),{'c2'})
+        def invoke(state,role,schema,instruction,payload):
+            self.assertEqual(set(payload['repair_targets']),{'c2'})
+            n=len(state.get('trace',[]))
+            text=source+' The client remained advised.' if n==0 else 'The team handles constitutionally significant employment litigation and advises on financial exposure.'
+            return {'corrections':[{'path':'c2','value':text,'reason':'Retain meaningful work, generalize the public financial footprint.'}],'unresolved':[]},list(state.get('trace',[]))+[{'role':'repair','usage':{'total_tokens':10}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
+            result=repair_development({'package':package,'strategy':STRATEGY},proposal,targets)
+        self.assertEqual(model.call_count,2)
+        self.assertEqual(result['repair_report']['surgical_retries'],1)
+        self.assertTrue(result['development_validated'])
+        self.assertEqual((package,result['development']['matters']),before)
+        self.assertNotIn('approved_artifact',result)
+
     def fixture(self):
         package=copy.deepcopy(PACKAGE);proposal=copy.deepcopy(DEV)
         source='The firm manages 35 active labour proceedings for more than 5,000 employees across six Mexican states.'
