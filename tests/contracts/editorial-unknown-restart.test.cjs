@@ -14,6 +14,14 @@ test('an explicit retry or newer build cannot reset a rejected selection allowan
  assert.equal(mutations,0);assert.deepEqual(last,before);
 });
 const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts');
+test('manual retry cannot reset a failed development, grounding or exhausted budget',async()=>{
+ for(const code of ['DEVELOPMENT_REJECTED','GROUNDING_REJECTED','TOKEN_BUDGET','AI_OUTPUT_LIMIT','SELECTION_DIAGNOSTIC_INVALID']) {
+  last={id:'failed',status:'failed',sourceHash:stableHash(sourceSnapshot(submission)),stage:'development',ledger:[{trace:{usage:{total_tokens:123}}}],issue:{code,owner:'rankpilot'}};
+  const before=structuredClone(last);
+  for(const retry of [false,true]) assert.equal(await enqueue(submission,retry),last);
+  assert.deepEqual(last,before);assert.equal(mutations,0);
+ }
+});
 test('manual retry cannot buy a duplicate call for an unknown same-source outcome after the lease expires',async()=>{
  last={id:'unknown',status:'indeterminate',sourceHash:stableHash(sourceSnapshot(submission)),updatedAt:new Date(Date.now()-86400000),ledger:[],issue:{code:'AI_REVIEW_UNAVAILABLE'}};
  await assert.rejects(enqueue(submission,true),/PROVIDER_OUTCOME_UNKNOWN/);

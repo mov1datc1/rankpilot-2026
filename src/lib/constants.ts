@@ -14,6 +14,9 @@ export const DIRECTORIES = [
   'Best Lawyers',
 ] as const;
 
+/** Targets covered by the independent editorial/Word release contract. */
+export const EDITORIAL_DIRECTORIES = ['Chambers & Partners','Legal 500'] as const;
+
 export const REGIONS = [
   'Latin America',
   'Global',

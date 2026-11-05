@@ -31,7 +31,7 @@
     },
     {
       "id": "RP03",
-      "criterion": "Resolve publication permission during extraction review before editorial reasoning. Search client and matter sources; absent or conflicting flags require a saved user decision. Explicit confidentiality propagates globally; never infer public from absence or reopen unchanged confirmed decisions.",
+      "criterion": "Publication follows the canonical restricted_confidential_delivery application rule and the saved per-matter destination. Public disclosure requires explicit consent. Retaining a permitted confidential destination does not confirm consent, require a new answer or reduce editorial merit. Preserve original permission evidence and saved decisions.",
       "scope": "all_practices",
       "test_required": true
     },
@@ -126,5 +126,8 @@
       "test_required": true
     }
   ],
-  "prompt_revision": "grounded-selection-diagnostics-v8"
+  "prompt_revision": "typed-application-selection-evidence-v9",
+  "application_rules": {
+    "restricted_confidential_delivery": "Under restricted-unconfirmed-v1, a matter with publication_route E and resolved_publication_status confidential or confirmation_required is eligible for confidential delivery and editorial selection without a new publication decision. Consent remains unconfirmed when absent; public identification is forbidden. Preserve explicit source restrictions on the work, result or amount. This rule never establishes client facts or legal merit."
+  }
 }

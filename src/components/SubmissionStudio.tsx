@@ -46,7 +46,7 @@ import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/
 import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { PreparationBanner } from '@/components/PreparationBanner';
-import {preparationInputIssues, officialFilingGaps} from '@/lib/audit/preparation-input';
+import {editorialPreparationIssues, officialFilingGaps} from '@/lib/audit/preparation-input';
 import { FilingDetails } from '@/components/FilingDetails';
 import { PreparationProgress } from '@/components/PreparationProgress';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
@@ -310,7 +310,7 @@ export default function SubmissionStudio({
     if (await handleSaveDraft()) router.push('/reports');
   };
 
-  const inputIssues = preparationInputIssues({
+  const inputIssues = editorialPreparationIssues({
     ...chambersData,
     firm_name: chambersData.firm_name || chambersData.firmName || (submission as any).firmName,
     practice_area: currentPracticeArea

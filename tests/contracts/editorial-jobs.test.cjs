@@ -5,6 +5,23 @@ const {sourceSnapshot,stableHash,draftSourceHash,draftDisposition}=require('../.
 const {editorialIdentity,editorialUser}=require('../../src/lib/editorial/identity.ts');
 const {reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
 const {engineMatchesWorker,EDITORIAL_VERSION}=require('../../src/lib/editorial/contracts.ts');
+test('a historical pause does not lock newly saved sources while unchanged failures stay paused',()=>{
+ const source={targetDirectory:'Chambers',practiceArea:'Tax',chambersData:{matters:[{id:'m',rawNotes:'Original appeal.'}]}};
+ const job={id:'j',status:'failed',stage:'selection',cursor:0,tasks:['selection'],ledger:[],sourceHash:stableHash(sourceSnapshot(source)),issue:{code:'SELECTION_DIAGNOSTIC_INVALID',owner:'rankpilot',retryable:false}};
+ const current=publicJob(job,source);assert.equal(current.sourceMatches,true);assert.equal(current.pauseReason,'selection_diagnostic_invalid');
+ const edited=structuredClone(source);edited.chambersData.matters[0].rawNotes='New original evidence supplied by the user.';
+ const historical=publicJob(job,edited);assert.equal(historical.sourceMatches,false);assert.equal(historical.pauseReason,null);
+ const {isStoppedSelection}=require('../../src/lib/audit/review-actions.ts');assert.equal(isStoppedSelection(historical),false);
+ assert.equal(job.status,'failed');assert.equal(job.issue.retryable,false);
+});
+test('a permanently unavailable selection diagnostic exposes a terminal pause without changing retryability',()=>{
+ const issue={code:'AI_REVIEW_UNAVAILABLE',owner:'rankpilot',retryable:false};
+ const job={id:'j',status:'indeterminate',stage:'selection',cursor:0,tasks:['selection'],ledger:[],issue};
+ assert.equal(publicJob(job).pauseReason,'selection_review_unavailable');
+ assert.equal(publicJob(job).issue.retryable,false);
+ assert.equal(publicJob({...job,status:'running'}).pauseReason,null);
+ assert.equal(publicJob({...job,stage:'development'}).pauseReason,null);
+});
 test('a rejected selection exposes a terminal pause even without an artifact supervisor verdict',()=>{
  const job={id:'j',status:'failed',stage:'selection',cursor:0,tasks:['selection'],ledger:[],issue:{code:'SELECTION_REJECTED',owner:'rankpilot'}};
  assert.equal(publicJob(job).pauseReason,'selection_rejected');

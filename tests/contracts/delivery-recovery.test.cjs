@@ -3,6 +3,17 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {curateLawyers}=require('../../src/lib/docx/lawyer-curator.ts');
 const {reviewIssues,describeReviewIssue}=require('../../src/lib/audit/review-actions.ts');
+test('an unavailable selection diagnostic exposes its findings and distinguishes application authority',()=>{
+ const job={status:'indeterminate',stage:'selection',issue:{code:'AI_REVIEW_UNAVAILABLE',owner:'rankpilot',retryable:false}};
+ const data={matters:[{id:'m1',client:'Fictional Employer'}],review_checkpoint:{state:{selection_review:{checks:{m1:{status:'repair_required',evidence_bound:false,explanation:'Wrong delivery gate.',decision_quote:'No delivery without consent.',source_quote:'',rule_quote:'Confidential delivery remains permitted.'}}}}}};
+ const issues=reviewIssues(data,['Draft edited; validation required.'],job);
+ assert.equal(issues.length,1);assert.match(issues[0].title,/Diagnóstico por comprobar/);
+ assert.match(issues[0].message,/Regla de RankPilot citada/);assert.doesNotMatch(issues[0].message,/Cita aportada|listo para contrastar/);
+ assert.equal(issues[0].owner,'Optimización editorial');
+ const {isStoppedSelection}=require('../../src/lib/audit/review-actions.ts');
+ assert.equal(isStoppedSelection(job),true);assert.equal(isStoppedSelection({...job,status:'running'}),false);
+ assert.equal(isStoppedSelection({...job,stage:'development'}),false);
+});
 test('a terminal selection displays its actual findings instead of a ready-draft marker',()=>{
  const job={status:'failed',stage:'selection',issue:{code:'SELECTION_REJECTED',owner:'rankpilot'}};
  const data={matters:[{id:'m1',client:'Fictional Employer'}],review_checkpoint:{state:{selection_review:{checks:{m1:{status:'repair_required',explanation:'The rationale denies implemented agreements.',decision_quote:'No work documented.',source_quote:'The firm implemented agreements.'},m2:{status:'supported',explanation:'Supported.'}}}}}};

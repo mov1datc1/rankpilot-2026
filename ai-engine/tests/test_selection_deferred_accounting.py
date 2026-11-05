@@ -7,9 +7,17 @@ from core.review_graph import selection_review, run_editorial_stage, SelectionRe
 from test_selection_repair_capacity import fixture, SOURCE
 
 class DeferredSelectionAccountingTests(unittest.TestCase):
+    def test_unexpected_sdk_invocation_error_never_becomes_zero_known_usage(self):
+        package,strategy=fixture(1)
+        with patch('core.review_graph.create_chat_model') as model:
+            model.return_value.with_structured_output.return_value.invoke.side_effect=RuntimeError('SDK invocation failed')
+            result=selection_review({'package':package,'strategy':strategy,'trace':[{'usage':{'total_tokens':123}}]})
+        self.assertEqual(result['trace'][0]['usage']['total_tokens'],123)
+        self.assertEqual(result['trace'][-1]['usage'],{'unknown_calls':1})
+        self.assertFalse(result['selection_diagnostic_invalid'])
     def test_pre_call_deferral_preserves_counter_history_trace_and_sources(self):
         package,strategy=fixture(2)
-        for attempts in (0,1,2,3):
+        for attempts in (0,1,2):
             with self.subTest(attempts=attempts):
                 state={'package':package,'strategy':strategy,'stage_deadline':time.monotonic()+40,
                        'selection_review_attempts':attempts,'selection_failure_history':[['m0']],

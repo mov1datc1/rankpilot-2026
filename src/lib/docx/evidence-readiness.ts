@@ -4,6 +4,8 @@
  * before optimization to prevent the generation of hollow or fabricated directory submissions.
  */
 
+import {matterSourceText} from '@/lib/audit/preparation-input';
+
 export interface MatterCompletenessStatus {
   id: string;
   name: string;
@@ -57,7 +59,7 @@ export interface EvidenceReadinessResult {
 export function calculateEvidenceReadiness(matters:any[]=[],lawyers:any[]=[],b10Text='',options?:{practiceArea?:string;calibratedPracticeArea?:string}):EvidenceReadinessResult {
   const blockers:string[]=[],warnings:string[]=[];
   const matterStatuses=matters.map((m,idx)=>{
-    const text=String(m.source_excerpt || m.rawNotes || m.summary || m.notes || '');
+    const text=matterSourceText(m);
     const hasClient=Boolean(String(m.client || '').trim());
     const hasValue=Boolean(String(m.value || m.matter_value || '').trim());
     const hasLeadPartner=Boolean(String(m.leadPartner || m.lead_partner || '').trim());
@@ -69,8 +71,7 @@ export function calculateEvidenceReadiness(matters:any[]=[],lawyers:any[]=[],b10
   const missingElements={totalMatters:matters.length,mattersWithoutClient:count('hasClient'),mattersWithoutValue:count('hasValue'),mattersWithoutOutcome:count('hasOutcome'),mattersWithoutLeadPartner:count('hasLeadPartner'),missingLawyers:!lawyers.length,missingB10:!b10Text.trim()};
   if(!matters.length)blockers.push('Añade al menos un asunto con su fuente antes de redactar.');
   if(!String(b10Text || '').trim())blockers.push('Añade la descripción del departamento para fundamentar su presentación.');
-  if(missingElements.missingB10)warnings.push('Falta la descripción del departamento en el origen; la IA la estructurará a partir de los asuntos.');
-  if(matters.length && matters.every(m=>!String(m.source_excerpt || m.rawNotes || m.summary || '').trim()))blockers.push('Falta describir el trabajo realizado en las fuentes de los asuntos.');
+  if(matters.length && matters.some(m=>!matterSourceText(m)))blockers.push('Falta describir el trabajo realizado en las fuentes de los asuntos incompletos.');
   if(missingElements.mattersWithoutClient)warnings.push(`${missingElements.mattersWithoutClient} asunto(s) requieren identificar al cliente o su descripción autorizada.`);
   if(missingElements.mattersWithoutOutcome)warnings.push(`${missingElements.mattersWithoutOutcome} asunto(s) no indican su estado actual. Si siguen pendientes, indícalo; no necesitas inventar un resultado.`);
   if(missingElements.mattersWithoutLeadPartner)warnings.push(`${missingElements.mattersWithoutLeadPartner} asunto(s) no atribuyen el trabajo a una persona responsable.`);

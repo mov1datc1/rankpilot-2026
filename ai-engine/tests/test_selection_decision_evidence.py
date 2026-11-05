@@ -61,6 +61,6 @@ class SelectionDecisionEvidenceTests(unittest.TestCase):
              patch('core.review_graph.invoke_role', side_effect=invoke), \
              patch('core.review_graph.develop') as develop:
             result = create_review_graph().invoke({'package': PACKAGE, 'operation': 'strategy'})
-        self.assertEqual(calls, ['selection_reviewer'])
+        self.assertEqual(calls, ['selection_reviewer', 'selection_reviewer'])
         develop.assert_not_called()
         self.assertFalse(result['selection_review_validated'])

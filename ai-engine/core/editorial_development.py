@@ -159,7 +159,8 @@ def strip_template_prefix(value):
 def _norm(value):
     return ' '.join(str(value or '').split()).casefold()
 
-SOURCE_FIELDS=('source_excerpt','rawNotes','summary','leadPartner','teamMembers','value','completionDate','otherInfo')
+NARRATIVE_SOURCE_FIELDS=('source_excerpt','rawNotes','summary','notes','description')
+SOURCE_FIELDS=NARRATIVE_SOURCE_FIELDS+('leadPartner','teamMembers','value','completionDate','otherInfo')
 
 def bind_quote(value, matter):
     """Recover an exact source span; only tolerate a clause-ending period.

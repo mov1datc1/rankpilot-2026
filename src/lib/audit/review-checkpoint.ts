@@ -101,12 +101,18 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   // The matching strategy key proves the original register order is unchanged.
   // Resolve transport references before downstream roles see source document numbers.
   state.strategy = displayStrategyReferences(state.strategy,payload.matters || []);
-  if (state.selection_validated === false) return {...base,stage:'strategy',step_keys:{strategy:keys.strategy},state:{
+  if (state.selection_validated === false) {
+    // A pending selection retains its review budget and diagnostics, never
+    // downstream prose generated for an unvalidated portfolio.
+    for(const key of ['development','development_validated','letter','judge','render_gate','release_verdict']) delete state[key];
+    return {...base,stage:'strategy',step_keys:{strategy:keys.strategy},state:{
+    ...state,
     strategy:state.strategy,selection_validated:false,trace:state.trace || [],
     selection_review_attempts:state.selection_review_attempts || 0,
     selection_failure_history:state.selection_failure_history || [],
     selection_feedback:{...state.selection_feedback,strategy:state.strategy,errors:state.errors || state.selection_feedback?.errors || [],semantic_rejection:state.selection_feedback?.semantic_rejection ?? state.selection_review_validated===false},
   }};
+  }
   if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};
   if (!state.development || !state.development_validated || keys.development !== reviewStepHash('development',payload,state)) {
     state.development_reusable=!!state.development && keys.development===reviewStepHash('development',payload,state);

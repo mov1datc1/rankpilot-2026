@@ -25,7 +25,7 @@ import { createSubmission } from '@/app/actions/submissions';
 import { createClient } from '@/utils/supabase/client';
 import PremiumSelect from '@/components/PremiumSelect';
 import { 
-  DIRECTORIES, 
+  EDITORIAL_DIRECTORIES,
   REGIONS, 
   PRACTICE_AREAS, 
   BANDS, 
@@ -534,7 +534,7 @@ function BuilderContent() {
                     label="Directorio Target"
                     value={targetDirectory}
                     onChange={setTargetDirectory}
-                    options={DIRECTORIES}
+                    options={EDITORIAL_DIRECTORIES}
                   />
                 </div>
               </div>

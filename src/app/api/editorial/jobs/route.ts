@@ -1,4 +1,4 @@
-import {preparationInputIssues} from '@/lib/audit/preparation-input';
+import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
@@ -19,7 +19,7 @@ export async function GET(request:NextRequest) {
   if(!submission) return NextResponse.json({error:'Expediente no disponible.'},{status:404});
   try {
     const job=await latestJob(submission.id);
-    return NextResponse.json({reviewContract:REVIEW_CONTRACT,job:publicJob(job),...(!job || ['queued','running'].includes(job.status)?{}:{chambersData:submission.chambersData,matters:(submission.chambersData as any)?.matters || submission.matters,status:submission.status})},{headers:{'Cache-Control':'no-store'}});
+    return NextResponse.json({reviewContract:REVIEW_CONTRACT,job:publicJob(job,submission),...(!job || ['queued','running'].includes(job.status)?{}:{chambersData:submission.chambersData,matters:(submission.chambersData as any)?.matters || submission.matters,status:submission.status})},{headers:{'Cache-Control':'no-store'}});
   } catch {return NextResponse.json({error:'No se pudo consultar el avance. Tus datos se conservan.'},{status:503});}
 }
 export async function POST(request:NextRequest) {
@@ -27,7 +27,7 @@ export async function POST(request:NextRequest) {
   const submission=await owned(body.submissionId);
   if(!submission) return NextResponse.json({error:'Expediente no disponible.'},{status:404});
   const data:any={...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
-  const inputIssues=preparationInputIssues(data,data.matters || submission.matters || []);
+  const inputIssues=editorialPreparationIssues(data,data.matters || submission.matters || []);
   if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
   const issues=scopeIssues(selectedScope(submission),data.source_reports || []);
   if(issues.length) return NextResponse.json({code:issues[0].code,error:issues.map(i=>i.message).join(' '),issues},{status:422});
@@ -37,6 +37,6 @@ export async function POST(request:NextRequest) {
     return NextResponse.json({job:publicJob(await enqueue(submission,body.retry===true,body.repair===true))},{status:202});
   } catch(error:any) {
     if(error.message==='AUTO_REPAIR_UNAVAILABLE') return NextResponse.json({code:'AUTO_REPAIR_UNAVAILABLE',error:'RankPilot no encontró una reparación automática respaldada por las fuentes para este hallazgo. El expediente se conserva; no necesitas alterar tus datos para resolver un error de generación.'},{status:422});
-    return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'La llamada anterior aún puede seguir activa. Espera unos minutos antes de reintentar para evitar consumo duplicado.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});
+    return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'No podemos confirmar el resultado de la llamada anterior. El intento está detenido para evitar consumo duplicado; esperar o volver a generar no lo reanuda. El expediente se conserva.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});
   }
 }

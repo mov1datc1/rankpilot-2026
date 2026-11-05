@@ -1,4 +1,4 @@
-import {preparationInputIssues} from '@/lib/audit/preparation-input';
+import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { projectDevelopment } from '@/lib/editorial/development';
 import { selectedScope, scopeIssues } from '@/lib/audit/analysis-scope';
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
     const data: any = {...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
-    const inputIssues=preparationInputIssues(data,data.matters || submission.matters || []);
+    const inputIssues=editorialPreparationIssues(data,data.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),data.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
     locked = null;
     const trace=receivedTrace;
     if(result.state.selection_review_deferred) return NextResponse.json({success:false,code:'SELECTION_REVIEW_DEFERRED',error:'Selección guardada. RankPilot continuará automáticamente con su revisión independiente.',trace},{status:503});
+    if(result.state.selection_diagnostic_invalid) return NextResponse.json({success:false,code:'SELECTION_DIAGNOSTIC_INVALID',error:'RankPilot recibió la revisión, pero no pudo fundamentar uno de sus hallazgos. Conservamos las respuestas y el consumo; este intento no iniciará más llamadas.',retryable:false,trace},{status:422});
     if(result.state.selection_review_unavailable) return NextResponse.json({success:false,code:'AI_REVIEW_UNAVAILABLE',error:'La comprobación no devolvió un resultado utilizable. Conservamos el avance y detenemos los reintentos para evitar duplicar consumo.',retryable:false,trace},{status:502});
     if(result.state.errors?.length) return NextResponse.json({success:false,code:stage==='strategy'?'SELECTION_REJECTED':'DEVELOPMENT_REJECTED',error:result.state.errors.join(' '),retryable:!(stage==='development' && result.state.development_repair_unlocatable===true),trace},{status:422});
     return NextResponse.json({success: true, done: nextStage === 'done', completed: reviewSteps.indexOf(nextStage), stage: nextStage, trace, message: reviewStepLabels[nextStage as keyof typeof reviewStepLabels]});

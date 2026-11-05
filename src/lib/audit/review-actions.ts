@@ -35,17 +35,22 @@ export function reviewIsStale(data:any) {
     (data.release_verdict?.errors || []).some((message:string)=>/^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)));
 }
 
+export function isStoppedSelection(job:any):boolean {
+  return job?.sourceMatches!==false && job?.stage==='selection' && !['queued','running','completed'].includes(job.status)
+    && ['SELECTION_REJECTED','AI_REVIEW_UNAVAILABLE','SELECTION_DIAGNOSTIC_INVALID'].includes(job.issue?.code);
+}
+
 export function reviewIssues(data:any, errors:string[], job?:any) {
   // A current failed selection has never reached the Word reviewer. Do not
   // replace its concrete checks with an unrelated "draft ready" release marker.
-  if(job?.stage==='selection' && !['queued','running','completed'].includes(job.status) && job.issue?.code==='SELECTION_REJECTED') {
+  if(isStoppedSelection(job)) {
     const checks=data?.review_checkpoint?.state?.selection_review?.checks || {};
     const matters=new Map((data?.matters || []).map((matter:any)=>[matter.id,matter]));
     const findings=Object.entries(checks).filter(([,check]:any)=>check?.status==='repair_required').map(([id,check]:any)=>({
-      title:`Selección pendiente: ${(matters.get(id) as any)?.client || 'asunto del expediente'}`,
+      title:`${check.evidence_bound===false ? 'Diagnóstico por comprobar' : 'Selección pendiente'}: ${(matters.get(id) as any)?.client || 'asunto del expediente'}`,
       owner:'Optimización editorial',destination:'retry-selection' as ReviewDestination,
       action:'Esta revisión terminó sin aprobar la selección. No hay una respuesta del cliente pendiente ni una continuación automática.',
-      message:`El revisor observó: ${check.explanation}${check.decision_quote ? `\nTexto cuestionado: ${check.decision_quote}` : ''}${check.source_quote ? `\nFuente citada: ${check.source_quote}` : ''}`,
+      message:`${check.evidence_bound===false ? 'RankPilot no pudo vincular este diagnóstico con su evidencia. ' : ''}El revisor observó: ${check.explanation}${check.decision_quote ? `\nTexto cuestionado: ${check.decision_quote}` : ''}${check.source_quote ? `\nCita aportada: ${check.source_quote}` : ''}${check.rule_quote ? `\nRegla de RankPilot citada: ${check.rule_quote}` : ''}`,
     }));
     return findings.length ? findings : [{title:'Selección sin aprobar',owner:'Optimización editorial',destination:'retry-selection' as ReviewDestination,
       action:'Esta revisión terminó sin aprobar la selección. No hay una continuación automática.',message:'La preparación se detuvo antes de redactar Submission y Audit. El original y los datos extraídos se conservan.'}];

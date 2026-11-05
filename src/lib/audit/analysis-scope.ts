@@ -32,6 +32,8 @@ export function scopeIssues(scope:AnalysisScope,reports:any[]=[],modality?:strin
  const rawModality = String(modality || scope.modality || '').trim().toLowerCase();
  const isScratch = rawModality === 'scratch' || rawModality === 'sources' || rawModality === 'b' || rawModality.startsWith('b') || rawModality.includes('scratch');
  const issues:{code:string;field:keyof AnalysisScope;selected:string;detected:string;source:string;quote:string;message:string}[]=[];
+ if(canonical(scope.directory,'directory') && !['chambers','legal 500'].includes(canonical(scope.directory,'directory')))
+  issues.push({code:'DIRECTORY_UNSUPPORTED',field:'directory',selected:scope.directory,detected:'',source:'',quote:'',message:'La preparación y revisión final están disponibles para Chambers & Partners y Legal 500. Selecciona uno como destino; en la opción B puedes usar originales de otros directorios.'});
  for(const field of Object.keys(labels) as (keyof AnalysisScope)[]) {
   if(field==='modality') continue;
   if(field==='guide_region' && scope[field]===undefined) continue; // Legacy scope has no asserted guide; never invent one.

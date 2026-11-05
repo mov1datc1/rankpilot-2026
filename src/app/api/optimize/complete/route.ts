@@ -1,4 +1,4 @@
-import {preparationInputIssues} from '@/lib/audit/preparation-input';
+import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
 import { bindGeneratedFindings, renderedSubmissionFindings } from '@/lib/editorial/artifact-findings';
 import { supportedDevelopment } from '@/lib/editorial/development';
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const submission = await prisma.submission.findUnique({where:{id:body.submissionId},include:{matters:true}});
     if (!submission || ![user.id,account?.id].includes(submission.userId)) return NextResponse.json({error:'Not found'}, {status:404});
     const previous = {...(submission.chambersData as any || {}), firm_name: (submission.chambersData as any)?.firm_name || (submission as any).firmName, practice_area: (submission.chambersData as any)?.practice_area || submission.practiceArea};
-    const inputIssues=preparationInputIssues(previous,previous.matters || submission.matters || []);
+    const inputIssues=editorialPreparationIssues(previous,previous.matters || submission.matters || []);
     if(inputIssues.length) return NextResponse.json({code:'INPUT_REQUIRED',error:'Resuelve los datos pendientes antes de preparar los documentos.',issues:inputIssues},{status:422});
     const scopeProblems=scopeIssues(selectedScope(submission),previous.source_reports || []);
     if(scopeProblems.length) return NextResponse.json({code:scopeProblems[0].code,error:scopeProblems.map(i=>i.message).join(' '),issues:scopeProblems},{status:422});
