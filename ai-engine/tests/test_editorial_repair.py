@@ -6,6 +6,24 @@ from core.editorial_development import develop
 from core.editorial_repair import repair_targets, apply_corrections
 
 class TargetedRepairTests(unittest.TestCase):
+    def test_immutable_source_value_never_buys_locator_or_blocks_located_text_repairs(self):
+        from core.editorial_repair import repair_rejected_development
+        from core.review_graph import calibrate_verdict
+        package=copy.deepcopy(PACKAGE);package['matters'][0]['value']='USD 710,000'
+        source={'code':'REVIEW_REQUIRED','owner':'rankpilot','severity':'critical','scope':'facts',
+                'matter_id':'m1','field_path':'value','artifact_quote':'USD 710,000','message':'Economic concept is absent.'}
+        prose={'code':'EDITORIAL_OMISSION','owner':'rankpilot','severity':'critical','scope':'submission',
+               'matter_id':'m1','field_path':'matters/0/text','artifact_quote':DEV['matters'][0]['text'],
+               'message':'Preserve the original documented scale.'}
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No locator for immutable source')),patch('core.editorial_repair.repair_development',return_value={}) as repair:
+            repair_rejected_development({'package':package,'strategy':STRATEGY},DEV,[source,prose])
+        self.assertEqual(set(repair.call_args.args[2]),{'matters/0/text'})
+        question=calibrate_verdict({'defects':[source]},package,STRATEGY)['defects'][0]
+        self.assertEqual(question['owner'],'user');self.assertEqual(question['action'],'confirm')
+        self.assertIn('qué representa',question['message'])
+        invented=calibrate_verdict({'defects':[{**source,'artifact_quote':'USD 999,000'}]},package,STRATEGY)['defects'][0]
+        self.assertEqual(invented['owner'],'rankpilot')
+
     def test_public_bio_privacy_never_edits_matching_confidential_matter_or_sends_other_sources(self):
         from core.editorial_repair import repair_rejected_development
         proposal=copy.deepcopy(DEV)

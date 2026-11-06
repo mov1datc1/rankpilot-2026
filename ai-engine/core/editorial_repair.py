@@ -297,9 +297,13 @@ def unique_defects(defects):
 
 def repair_rejected_development(state, proposal, defects):
     """Locate semantic defects before editing; no full-proposal regeneration."""
-    from core.review_graph import invoke_role, role_payload
+    from core.review_graph import invoke_role, role_payload, calibrate_verdict
     defects=unique_defects(defects)
-    dev_defects=[d for d in defects if d.get('scope')!='letter']
+    # Reclassify historical cached source questions before purchasing a locator.
+    defects=[calibrate_verdict({'defects':[d]},state['package'],state['strategy'])['defects'][0]
+             if d.get('code')=='REVIEW_REQUIRED' and d.get('scope')=='facts' and d.get('field_path')=='value' else d
+             for d in defects]
+    dev_defects=[d for d in defects if d.get('scope')!='letter' and d.get('owner')!='user']
     if not dev_defects:
         return {'development':proposal,'development_validated':True,'errors':[],'trace':state.get('trace',[])}
     defects=dev_defects

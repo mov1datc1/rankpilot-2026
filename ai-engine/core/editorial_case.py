@@ -146,6 +146,16 @@ def obligations(package, strategy, proposal):
     # The public argument must keep a supplied target as a request, not a ranking.
     if package.get('requested_target'):
         add('target','executive_assessment',[{'source_excerpt':str(package['requested_target'])}], 'Preserve or explicitly justify changing the supplied target: '+str(package['requested_target']))
+    if proposal.get('version')=='editorial-development-v4':
+        core={d['matter_id'] for d in strategy.get('matters',[]) if d.get('disposition')=='core'}
+        for i,draft in enumerate(proposal.get('matters',[])):
+            matter=register.get(draft.get('matter_id'),{})
+            if draft.get('matter_id') not in core:continue
+            restricted=matter.get('publication_route')=='E' or matter.get('resolved_publication_status')!='publishable'
+            add(f'matter:{draft["matter_id"]}:evidence',f'matters/{i}/text',[matter],
+                'Independently compare this selected matter narrative against its ORIGINAL source. Preserve the distinctive legal issue, evidenced contribution, outcome, personal attribution and decisive scale, including material workforce, locations, proceedings and economic quantities with their correct concepts and currencies. Internal decisive_source_quotes are evidence to execute, not a substitute for facts in the narrative. '+
+                ('This is confidential section E: public-profile anonymization does not justify removing private source metrics here. Respect any explicit source restriction on a particular fact. ' if restricted else 'This is public section D: respect all explicit publication restrictions. ')+
+                'Do not require irrelevant numbers, invent missing outcomes, conflate aggregate and individual amounts or resolve genuine source contradictions. Declared decisive evidence: '+str(draft.get('decisive_source_quotes',[])))
     return result
 
 

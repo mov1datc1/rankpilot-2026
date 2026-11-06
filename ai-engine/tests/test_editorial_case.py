@@ -1,6 +1,6 @@
 import copy
 import unittest
-from core.editorial_case import CASE_VERSION, additional_leaders, case_errors, obligations, execution_defects
+from core.editorial_case import CASE_VERSION, additional_leaders, case_errors, obligations, execution_defects, execution_output
 from core.editorial_development import development_errors, development_contract, DEVELOPMENT_VERSION
 from core.editorial_repair import repair_targets, apply_corrections
 from core.editorial_voice import voice_matches
@@ -17,6 +17,17 @@ def fixture():
     return p,s,v
 
 class EditorialCaseTests(unittest.TestCase):
+    def test_every_selected_narrative_has_its_own_source_execution_obligation(self):
+        p,s,v=fixture();p['matters'][0]['publication_route']='E'
+        items=[o for o in obligations(p,s,v) if o['id'].startswith('matter:')]
+        self.assertEqual(len(items),1);self.assertEqual(items[0]['field'],'matters/0/text')
+        self.assertEqual(items[0]['sources'],[p['matters'][0]])
+        self.assertIn('confidential section E',items[0]['instruction'])
+        self.assertIn('not a substitute',items[0]['instruction'])
+        # Internal quotations cannot satisfy the required narrative proof.
+        with self.assertRaisesRegex(ValueError,'omitted or duplicated'):
+            execution_defects(p,s,v,{},[])
+
     def test_reserve_is_valid_personal_evidence_but_excluded_is_not(self):
         p,s,v=fixture();v['candidates'][0]['supporting_matters'].append({'matter_id':'m2','personal_role':'Led the investigation','source_quote':'Partner Sofia Vega led an investigation'})
         self.assertEqual(development_errors(p,s,v),[])
@@ -51,7 +62,7 @@ class EditorialCaseTests(unittest.TestCase):
             execution_defects(p,s,v,letter,[])
         checks=[]
         for o in obligations(p,s,v):
-            text=letter[o['field']] if o['field'] in letter else v['b10'] if o['field']=='b10' else v['c2'] if o['field']=='c2' else v['candidates'][0]['submission_bio']
+            text=execution_output(p,v,letter,o['field'])[0]
             checks.append({'obligation_id':o['id'],'status':'met','artifact_quote':text,'source_quote':'prevented a strike','reason':'Executes the attributed source work'})
         self.assertEqual(execution_defects(p,s,v,letter,checks),[])
         wrong=copy.deepcopy(checks);wrong[0]['artifact_quote']=v['c2']
@@ -108,7 +119,9 @@ class EditorialCaseTests(unittest.TestCase):
         p['matters'].append({'id':'m3','source_excerpt':'The team handled routine documentation.'});s['matters'].append({'matter_id':'m3','disposition':'reserve'})
         v['comparisons'].append({'selected_id':'m1','alternative_id':'m3','audit_required':False,'incremental_contribution':'Outcome compared with routine documentation','tradeoff':'The documented collective result is more distinctive'})
         self.assertEqual(case_errors(p,s,v),[])
-        self.assertEqual(obligations(p,s,v)[-1]['field'],'comparisons/1/tradeoff')
+        internal=next(o for o in obligations(p,s,v) if o['id']=='comparison:1')
+        self.assertEqual(internal['field'],'comparisons/1/tradeoff')
+        self.assertEqual(internal['output_scope'],'internal')
 
     def test_case_node_runs_before_drafting_without_an_extra_model_role(self):
         from test_review_graph import ReviewGraphTests

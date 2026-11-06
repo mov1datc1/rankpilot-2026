@@ -751,7 +751,19 @@ def calibrate_verdict(verdict, package=None, strategy=None, draft_context=None):
                     scope=outcome_claim_scope(defect,package,draft_context),
                     internal_diagnostic=defect.get('message'),
                     message='Reformula las afirmaciones de desenlace definitivo usando únicamente el trabajo procesal no controvertido y su resultado acreditado. Conserva en el Audit la incertidumbre de fondo y ambas fuentes. No elijas victoria o derrota, no infieras que el proceso sigue abierto y no pidas confirmar el desenlace para entregar esa versión limitada.')
-            defect['owner']='user' if (code=='SOURCE_CONFLICT' and not (containment or alias_containment or outcome_containment)) or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
+            # A question about an unchanged source value has no generated field
+            # for the prose locator to edit. Require its meaning from the user;
+            # keep actual generated amount errors on the normal repair route.
+            source_value_question=False
+            if code=='REVIEW_REQUIRED' and defect.get('scope')=='facts' and defect.get('field_path')=='value':
+                entity=next((m for m in permissions if m.get('id')==defect.get('matter_id')), {})
+                value=' '.join(str(entity.get('value') or '').split())
+                claim=' '.join(str(defect.get('artifact_quote') or '').split())
+                source_value_question=bool(value and claim and value==claim)
+                if source_value_question:
+                    defect.update(internal_diagnostic=defect.get('message'),
+                        message='Confirma qué representa la cuantía «'+str(entity['value'])+'» de '+str(entity.get('client') or entity.get('name') or 'este asunto')+' (por ejemplo, exposición, importe reclamado o valor de la operación), o indica que no está disponible. Conservaremos las demás cuantías con sus conceptos y monedas; después podrás continuar la revisión.')
+            defect['owner']='user' if source_value_question or (code=='SOURCE_CONFLICT' and not (containment or alias_containment or outcome_containment)) or (code=='PUBLICATION_PERMISSION' and not permissions_known) else 'rankpilot'
             defect['action']='confirm' if defect['owner']=='user' else 'retry'
             defect['retryable']=defect['owner']=='rankpilot'
             # A nonblocking note on cached internal strategy is not a request
