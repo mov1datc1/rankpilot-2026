@@ -131,8 +131,8 @@ class ReviewCostTests(unittest.TestCase):
         writer.assert_not_called()
 
     def test_hero_order_is_shared_with_letter_and_exports(self):
-        decisions = {ref: {'disposition': 'core', 'legal_understanding':'Source-backed work and status.', 'priority': i, 'rationale': 'Evidence', 'source_quote': 'Source'} for i, ref in enumerate(['M01', 'M02', 'M03'], 1)}
-        proposal = {'decisions': decisions, 'hero_reference': 'M03', 'pending_questions': [], 'thesis': 'Source'}
+        decisions = {ref: {'non_core_disposition': 'reserve', 'legal_understanding':'Source-backed work and status.', 'priority': i, 'rationale': 'Evidence', 'source_quote': 'Source'} for i, ref in enumerate(['M01', 'M02', 'M03'], 1)}
+        proposal = {'decisions': decisions, 'core_references': ['M03','M01','M02'], 'pending_questions': [], 'thesis': 'Source'}
         with patch('core.review_graph.invoke_role', return_value=(proposal, [])):
             result = strategist({'package': {'matters': [{'id': x} for x in ['a', 'b', 'c']]}})
         self.assertEqual([x['matter_id'] for x in result['strategy']['matters']], ['c', 'a', 'b'])

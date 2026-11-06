@@ -75,7 +75,7 @@ class ReviewGraphTests(unittest.TestCase):
     def test_invented_quote_stops_before_writing(self):
         strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'source_quote':'The client won USD 90 million.'}]}
         result,calls=self.run_graph(strategy=strategy)
-        self.assertEqual(calls,['strategist'])
+        self.assertEqual(calls,['strategist','strategist'])  # one bounded field repair, never approval
         self.assertFalse(result['release_verdict']['passed'])
 
     def test_letter_repair_is_bounded_and_does_not_redo_strategy(self):
@@ -122,14 +122,14 @@ class ReviewGraphTests(unittest.TestCase):
         strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'source_quote':'The appeal was successful.'}]}
         result,calls=self.run_graph(strategy=strategy)
         self.assertFalse(result['selection_validated'])
-        self.assertEqual(calls,['strategist'])
+        self.assertEqual(calls,['strategist','strategist'])  # one bounded field repair, never approval
         self.assertNotIn('Editorial review did not approve this package.',result['release_verdict']['errors'])
 
     def test_source_quotes_cannot_join_two_different_fields(self):
         package={**PACKAGE,'matters':[{**PACKAGE['matters'][0],'source_excerpt':'The appeal remains','rawNotes':'pending.'}]}
         result,calls=self.run_graph(package=package)
         self.assertFalse(result['selection_validated'])
-        self.assertEqual(calls,['strategist'])
+        self.assertEqual(calls,['strategist','strategist'])  # one bounded field repair, never approval
 
 class PublicationRepairOwnershipTests(unittest.TestCase):
     def test_known_permissions_make_generated_leak_a_system_repair(self):

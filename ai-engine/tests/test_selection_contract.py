@@ -10,9 +10,9 @@ class SelectionContractTests(unittest.TestCase):
     def setUp(self):
         self.matters = [{'id': f'uuid-{i}', 'client': f'Client {i}', 'rawNotes': f'The team advised on mandate {i}.'} for i in range(32)]
         self.schema, self.refs = selection_contract(self.matters)
-        self.proposal = {'decisions': {ref: {'disposition': 'core' if i < 20 else 'reserve', 'legal_understanding':'Source-backed work and status.', 'priority': i + 1,
+        self.proposal = {'decisions': {ref: {'non_core_disposition': 'reserve', 'legal_understanding':'Source-backed work and status.', 'priority': i + 1,
             'rationale': 'Source-backed mandate', 'source_quote': self.matters[i]['rawNotes']} for i, ref in enumerate(self.refs)},
-            'hero_reference': 'M01', 'pending_questions': [], 'thesis': 'Evidence'}
+            'core_references': list(self.refs)[:20], 'pending_questions': [], 'thesis': 'Evidence'}
 
     def test_all_32_references_required_and_project_to_original_ids(self):
         result = project_selection(self.proposal, self.schema, self.refs)
@@ -25,8 +25,21 @@ class SelectionContractTests(unittest.TestCase):
             bad = copy.deepcopy(self.proposal)
             if change == 'missing': del bad['decisions']['M31']
             elif change == 'unknown': bad['decisions']['M99'] = bad['decisions'].pop('M31')
-            else: bad['hero_reference'] = 'M99'
+            else: bad['core_references'][0] = 'M99'
             with self.assertRaises(ValidationError): project_selection(bad, self.schema, self.refs)
+
+    def test_capacity_is_in_model_schema_before_generation(self):
+        self.assertEqual(self.schema.model_json_schema()['properties']['core_references']['maxItems'],20)
+        bad=copy.deepcopy(self.proposal);bad['core_references']=list(self.refs)[:21]
+        with self.assertRaises(ValidationError):project_selection(bad,self.schema,self.refs)
+
+    def test_no_quota_duplicate_or_fallback_can_add_a_core(self):
+        proposal=copy.deepcopy(self.proposal);proposal['core_references']=['M32','M01','M32']
+        result=project_selection(proposal,self.schema,self.refs)
+        self.assertEqual([d['matter_id'] for d in result['matters'] if d['disposition']=='core'],['uuid-31','uuid-0'])
+        self.assertEqual(len(result['matters']),32);self.assertEqual(result['hero_matter_id'],'uuid-31')
+        proposal['core_references']=[];result=project_selection(proposal,self.schema,self.refs)
+        self.assertFalse(any(d['disposition']=='core' for d in result['matters']));self.assertIsNone(result['hero_matter_id'])
 
     def test_mixed_quotes_are_still_rejected_not_repaired_by_fabricating_evidence(self):
         bad = copy.deepcopy(self.proposal)
