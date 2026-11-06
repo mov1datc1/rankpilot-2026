@@ -18,7 +18,8 @@ function AttemptReference({job}:{job:any}) {
 export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onResolve:(destination:ReviewDestination,message:string)=>void}) {
   const stopped=job?.sourceMatches!==false && (job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
   const isRunning=!!job && ['queued','running'].includes(job.status);
-  const systemManaged=isRunning || Boolean(stopped && (job?.pauseReason || ['rankpilot','Optimización editorial'].includes(job?.issue?.owner)));
+  const canResumeResidual=job?.canResumeResidual===true && job?.sourceMatches!==false;
+  const systemManaged=isRunning || Boolean(stopped && !canResumeResidual && (job?.pauseReason || ['rankpilot','Optimización editorial'].includes(job?.issue?.owner)));
   const recovering=job?.recovering || ((job?.issue?.owner==='rankpilot' || job?.issue?.owner==='Optimización editorial') && isRunning);
   const issues=approved ? [] : reviewIssues(data,errors,job);
   const humanCount=issues.filter(issue=>issue.owner!=='RankPilot' && issue.owner!=='Optimización editorial').length;
@@ -85,7 +86,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     )}
     <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit'}</h2>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit'}</h2>
     {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Revisión detenida; consulta abajo qué puedes hacer.' : 'La entrega oficial se habilita al completar la revisión automática.'}</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {stopped && systemManaged && !approved && job?.id && <AttemptReference job={job}/>}
@@ -93,11 +94,11 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     {stopped && !systemManaged && !approved && (
       <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
         <div>
-          <div style={{fontSize:14,fontWeight:700,color:'#166534'}}>Reanudar preparación de documentos oficiales</div>
-          <div style={{fontSize:13,color:'#15803D',marginTop:2}}>El sistema aplicará las mejoras editoriales y generará la versión oficial de Submission y Audit.</div>
+          <div style={{fontSize:14,fontWeight:700,color:'#166534'}}>{canResumeResidual?'Continuar la corrección guardada':'Reanudar preparación de documentos oficiales'}</div>
+          <div style={{fontSize:13,color:'#15803D',marginTop:2}}>{canResumeResidual?'Pulsa Continuar preparación. Se conserva el avance; no necesitas volver a cargar tus fuentes. Después se completarán los documentos y su revisión final.':'El sistema aplicará las mejoras editoriales y revisará el Submission y el Audit antes de habilitar la entrega.'}</div>
         </div>
         <button type="button" disabled={busy} onClick={()=>onResolve('retry-review','Reanudar preparación')} style={{background:'#16A34A',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
-          {busy ? 'Preparando…' : 'Revisar y generar entrega oficial →'}
+          {busy ? 'Preparando…' : canResumeResidual?'Continuar preparación →':'Revisar y generar entrega oficial →'}
         </button>
       </div>
     )}

@@ -43,6 +43,7 @@ TASK += " rejected_quotes is a bound postcondition for this generated field: rem
 TASK += " Remove an unsupported supporting_matter from a candidate when that original mandate names other lawyers and never this candidate. Reconcile the candidate's rationale and bio; keep the mandate itself and all other candidates intact. A D5/E5 Lead partner template heading does not promote its named matter leader to partner. For a non-nominated leader, correct an added partner title with neutral leadership wording while preserving both original passages; do not turn this software wording correction into a user-confirmation request. A mismatch in the Audit core count must be corrected to the unchanged canonical selection, never by adding matters."
 
 TASK += " For a validated qualify_disputed_outcome correction, do not resolve the source conflict. Replace unqualified final-victory or final-defeat claims ONLY in permitted generated fields with the separately evidenced interim/procedural achievement in outcome_qualification. Preserve decisive uncontested facts and personal attribution. Do not infer ongoing proceedings or a completion date from the disputed result. Keep both original alternatives and explicit final-outcome uncertainty in the Audit; confirmation is optional if the client later wants to add a final result, not a prerequisite for the limited accurate version. The corrected exact Word pair must still pass independent review. Never extend this exception to identity, amounts, roles, permission or a case whose selection depends on the disputed final result."
+TASK += " When a text-only biography target supplies preserve_profile_quotes, retain each unaffected credential span verbatim and correct only the separate identified wording. This target cannot edit the candidate's profile-coverage metadata or other fields. If the defect overlaps one of those spans, report that conflict unresolved rather than silently breaking its binding."
 
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
@@ -123,6 +124,9 @@ def repair_targets(package, strategy, proposal):
         add(path,value,'Remove auditor commentary about sources from this Submission field. Present supported work directly; preserve numbers, outcomes, attribution and uncertainty. Do not invent a completed outcome or delete substantive legal evidence/audit work.',evidence)
         from core.editorial_voice import voice_matches
         targets[path]['rejected_quotes']=voice_matches(value)
+        if parts[0]=='candidates':
+            targets[path]['preserve_profile_quotes']=[c.get('public_quote') for c in item.get('profile_coverage',[])
+                if c.get('decision') in ('retain','generalize') and c.get('public_quote')]
     from core.public_privacy import public_privacy_findings
     for finding in public_privacy_findings(package,strategy,proposal):
         path=finding['path'];parts=path.split('/')
@@ -233,26 +237,49 @@ def repair_development(state, proposal, targets):
                 if path in privacy_paths or at(document,path)==target['current_value'] or any(
                     norm(quote) in norm(at(document,path)) for quote in target.get('rejected_quotes',[]) if norm(quote))]
     failed=failures(fixed)
+    # A whole-candidate correction can introduce a local voice fault in its
+    # biography. Validate descendants as well as the original edited object;
+    # completing a correction is not merely changing the parent's value.
+    from core.editorial_development import submission_voice_paths
+    owned=lambda path:any(path==parent or path.startswith(parent+'/') for parent in targets)
+    local_targets=repair_targets(state['package'],state['strategy'],fixed)
+    voice_residuals={path:local_targets[path] for path in submission_voice_paths(fixed)
+                     if owned(path) and path in local_targets
+                     and isinstance(local_targets[path].get('current_value'),str)}
+    retry_targets={path:copy.deepcopy(payload_targets[path]) for path in failed
+                   if isinstance(targets[path]['current_value'],str)
+                   and (targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids'))}
+    for path,target in voice_residuals.items():
+        if path in retry_targets:
+            retry_targets[path]['problem']=retry_targets[path].get('problem','')+' '+target.get('problem','')
+            retry_targets[path]['rejected_quotes']=list(dict.fromkeys(
+                retry_targets[path].get('rejected_quotes',[])+target.get('rejected_quotes',[])))
+        else:retry_targets[path]=copy.deepcopy(target)
+    for path,target in retry_targets.items():
+        target['current_value']=at(fixed,path)
+        if path.startswith('candidates/') and path.endswith('/submission_bio'):
+            candidate=fixed['candidates'][int(path.split('/')[1])]
+            target['preserve_profile_quotes']=[c.get('public_quote') for c in candidate.get('profile_coverage',[])
+                if c.get('decision') in ('retain','generalize') and c.get('public_quote')]
     retry_count=0
     retry_error=None
     # Retry a known completed but ineffective textual correction once, before
     # buying another full Audit/render/judge cycle. Already corrected fields and
     # unrelated sources are excluded. Unknown provider outcomes never enter here.
-    if failed and not repair.get('unresolved') and all(targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids') for path in failed):
+    if retry_targets and not repair.get('unresolved') and all(path in retry_targets for path in failed):
         known=bool(trace) and not unknown_repair_usage(trace) and all(
             isinstance((call.get('usage') or {}).get('total_tokens'),(int,float))
             and (call.get('usage') or {})['total_tokens']>=0 for call in trace)
         if known:
             retry_count=1
-            retry_targets={path:{**copy.deepcopy(payload_targets[path]),'current_value':at(fixed,path)} for path in failed}
             # Materialize only shared evidence needed by this remaining target.
             uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in retry_targets.values())
-            retry_correction=create_model('ResidualTextCorrection',path=(Literal[tuple(failed)],...),value=(str,...),reason=(str,...))
+            retry_correction=create_model('ResidualTextCorrection',path=(Literal[tuple(retry_targets)],...),value=(str,...),reason=(str,...))
             retry_schema=create_model('ResidualTextRepair',__base__=Repair,corrections=(list[retry_correction],...))
             try:
-                retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left a rejected quotation unchanged. Correct ONLY repair_targets. Each rejected_quotes entry MUST be absent from its replacement. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of the rejected assertion.',
+                retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
                     {'repair_targets':retry_targets,'shared_source_evidence':shared if uses_shared else None,'feedback':[],
-                     'previous_failure':'The rejected quotation or identifying private metric/context survives. Generalize only the public footprint, preserving its substantive legal work and every exact confidential E narrative.'})
+                     'previous_failure':'A rejected claim, private footprint or auditor voice remains in these exact generated fields. Preserve other corrected fields, all confidential E facts and the unchanged profile credentials.'})
                 fixed=apply_corrections(fixed,retry_targets,retry,allow_unchanged=True)
                 repair={**retry,'unresolved':retry.get('unresolved',[])}
             except Exception as error:
@@ -262,6 +289,8 @@ def repair_development(state, proposal, targets):
                 elif getattr(error,'trace',None):trace=list(trace)+[error.trace]
                 retry_error='La corrección localizada no pudo completarse; se conserva el avance y el consumo.'
             failed=failures(fixed)
+    remaining_voice=[path for path in submission_voice_paths(fixed) if owned(path)]
+    failed=list(dict.fromkeys(failed+remaining_voice))
     fixed=bind_development(state['package'],fixed)
     errors=development_errors(state['package'],state['strategy'],fixed)
     if retry_error:errors.append(retry_error)

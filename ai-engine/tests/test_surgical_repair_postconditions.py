@@ -10,6 +10,30 @@ BAD='The source materials contain inconsistent nonessential sector descriptors.'
 
 
 class SurgicalRepairPostconditionTests(unittest.TestCase):
+    def test_whole_candidate_repair_corrects_one_new_bio_residual_without_rewriting_the_object(self):
+        from core.editorial_repair import repair_development
+        proposal=copy.deepcopy(DEV);proposal['b10']='Earlier overview.'
+        proposal['candidates'][0]['submission_bio']='An earlier generic biography.'
+        candidate=copy.deepcopy(DEV['candidates'][0])
+        candidate['submission_bio']+=' The supplied biography identifies this contribution.'
+        first={'corrections':[{'path':'candidates/0','value':candidate,'reason':'Restore credential accountability.'},
+                              {'path':'b10','value':DEV['b10'],'reason':'Correct public prose.'}],'unresolved':[]}
+        targets={'candidates/0':{'current_value':proposal['candidates'][0],'source_evidence':{'person':PACKAGE['lawyers'][0]}},
+                 'b10':{'current_value':proposal['b10'],'source_evidence':{'department':'Source-backed work.'}}}
+        calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(payload)
+            answer=first if len(calls)==1 else {'corrections':[{'path':'candidates/0/submission_bio','value':DEV['candidates'][0]['submission_bio'],'reason':'Present the supported contribution directly.'}],'unresolved':[]}
+            schema.model_validate(answer)
+            if len(calls)==2:self.assertEqual(set(payload['repair_targets']),{'candidates/0/submission_bio'})
+            return answer,list(state.get('trace',[]))+[{'role':'repair','usage':{'total_tokens':10}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
+            result=repair_development({'package':PACKAGE,'strategy':STRATEGY},proposal,targets)
+        self.assertEqual(model.call_count,2);self.assertTrue(result['development_validated'])
+        self.assertEqual(result['development'],DEV)
+        self.assertEqual(result['repair_report']['surgical_retries'],1)
+        self.assertEqual(sum(t['usage']['total_tokens'] for t in result['trace']),20)
+
     def fixture(self):
         proposal=copy.deepcopy(DEV)
         proposal['matters'][0]['text']+=' '+BAD
