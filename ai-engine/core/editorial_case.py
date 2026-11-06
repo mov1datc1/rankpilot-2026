@@ -126,6 +126,11 @@ def obligations(package, strategy, proposal):
     for i,candidate in enumerate(proposal.get('candidates',[])):
         sources=[register.get(s['matter_id'],{}) for s in candidate.get('supporting_matters',[])]
         sources += [p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))]
+        heads=package.get('filing_details',{}).get('heads') or package.get('departmentHeads') or []
+        head=next((h for h in heads if isinstance(h,dict) and identity(h.get('name'))==identity(candidate.get('name'))),None)
+        if head and public_profile(candidate):
+            add(f'head:{i}:b9',f'candidates/{i}/submission_bio',[{'name':head['name'],'confirmed_department_head':head}],
+                'Preserve the separately confirmed department-head function in this person public bio using natural sourced prose. Headship does not by itself establish partner seniority. Judge actual leadership coverage against this original administrative head entry; the renderer cannot insert or promote a title to satisfy this obligation.')
         add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
         if candidate.get('recommendation')=='present' and public_profile(candidate):
             add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')

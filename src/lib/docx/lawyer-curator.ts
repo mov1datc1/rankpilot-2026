@@ -251,14 +251,10 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
     const suggestedRank = /^(?:category pending|categor[ií]a pendiente)$/i.test(String(proposed).trim()) || isPartner === true && /associate/i.test(proposed) ? '' : proposed;
-    const deptHeads = chambersData?.departmentHeads || chambersData?.department?.department_heads || chambersData?.filing_details?.heads || [];
-    const isDeptHead = deptHeads.some((h: any) => isSameLawyer(person.name, h.name || h));
     const sourceBio = String(candidacy?.submission_bio || person.comments || person.bio || '');
-    let bio = anonymizeConfidentialClients(sourceBio, confNames);
-    if (isDeptHead && bio) {
-      const nameEsc = person.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      bio = bio.replace(new RegExp(`^(${nameEsc}\\s+is\\s+)(?:a\\s+partner|a\\s+Partner|Partner)\\s+in\\s+`, 'i'), '$1the Partner and Head of ');
-    }
+    // Render the reviewed claim; administrative head metadata cannot silently
+    // rewrite a sourced biography or change its evidence anchors.
+    const bio = anonymizeConfidentialClients(sourceBio, confNames);
     // The reviewed candidacy bio already develops its attributed matters.
     // Appending snippets from a second source would duplicate that argument
     // and introduce prose outside the reviewed development proposal.

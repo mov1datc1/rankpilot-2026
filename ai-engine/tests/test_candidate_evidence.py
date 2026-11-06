@@ -1,6 +1,6 @@
 import copy
 import unittest
-from core.candidate_evidence import profile_units, profile_errors, category_error
+from core.candidate_evidence import profile_units, profile_errors, category_error, bind_public_quote
 from core.editorial_case import obligations, execution_verdict_contract, execution_defects, execution_output
 from core.editorial_development import development_errors, DEVELOPMENT_VERSION, development_contract
 from core.editorial_repair import repair_targets, apply_corrections
@@ -19,6 +19,34 @@ def candidate_case():
     return p,s,v
 
 class CandidateEvidenceTests(unittest.TestCase):
+    def test_binding_does_not_promote_or_rewrite_a_department_heads_bio(self):
+        from core.editorial_development import bind_development
+        p,s,v=candidate_case();p['filing_details']={'heads':[{'name':'Sofia Vega'}]}
+        v['candidates'][0]['submission_bio']='Sofia Vega is a partner in the employment practice. '+PUBLIC
+        original=copy.deepcopy(v)
+        bound=bind_development(p,v)
+        self.assertEqual(bound['candidates'][0]['submission_bio'],original['candidates'][0]['submission_bio'])
+        self.assertNotIn('Partner and Head',bound['candidates'][0]['submission_bio'])
+        self.assertEqual(v,original)
+
+    def test_joined_profile_clauses_bind_only_the_actual_unchanged_words(self):
+        bio='His work connects legal strategy with regional implementation, and he provides coordination within the national approach.'
+        for quote,expected in [('His work connects legal strategy with regional implementation.','His work connects legal strategy with regional implementation'),('He provides coordination within the national approach.','he provides coordination within the national approach')]:
+            self.assertEqual(bind_public_quote(quote,bio),expected)
+        for quote in ['He leads coordination within the national approach.','He provides coordination across four countries.','He provides coordination.','']:
+            self.assertEqual(bind_public_quote(quote,bio),quote)
+        repeated='he provides coordination within the national approach, and he provides coordination within the national approach.'
+        quote='He provides coordination within the national approach.'
+        self.assertEqual(bind_public_quote(quote,repeated),quote)
+
+    def test_confirmed_headship_is_reviewed_against_its_source_instead_of_inserted(self):
+        p,s,v=candidate_case();head={'name':'Sofia Vega','email':'sofia@example.test'}
+        p['filing_details']={'heads':[head]}
+        obligation=next(o for o in obligations(p,s,v) if o['id']=='head:0:b9')
+        self.assertEqual(obligation['sources'],[{'name':'Sofia Vega','confirmed_department_head':head}])
+        self.assertEqual(obligation['field'],'candidates/0/submission_bio')
+        self.assertIn('does not by itself establish partner',obligation['instruction'])
+
     def test_source_profile_register_deduplicates_fields_and_excludes_contacts(self):
         person={'name':'Sofia Vega','bio':'Sofia Vega | sofia@example.test | 2022 | '+BIO,'comments':BIO,'standout_work':'Sofia served as Legal Director for three countries at Example Staffing.'}
         units=profile_units(person)

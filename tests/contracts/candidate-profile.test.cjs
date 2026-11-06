@@ -33,6 +33,12 @@ test('final profile projection is taken from the exact Word after anonymization'
  assert.match(profiles['Sofia Vega'],/four decades at a confidential entity/);assert.doesNotMatch(profiles['Sofia Vega'],/Example Motors|confidential client/);
  assert.ok(wordXmlText(xml).includes(profiles['Sofia Vega'].split('\n').find(x=>x.includes('four decades'))));
 });
+test('department-head metadata does not rewrite a reviewed biography',()=>{
+ const bio='Sofia Vega is a partner in the employment practice. She leads sourced negotiations.';
+ const data={departmentHeads:[{name:'Sofia Vega'}],editorial_development:{candidates:[{name:'Sofia Vega',recommendation:'present',submission_bio:bio,suggested_ranking:'Band 5 candidate'}]}};
+ const [person]=curateLawyers([{name:'Sofia Vega',isPartner:true,bio}],[],'Synthetic Firm','Labour & Employment','Mexico',data);
+ assert.equal(person.bio,bio);assert.doesNotMatch(person.bio,/the Partner and Head/);
+});
 test('contact and interview rows do not substitute for biography rows',()=>{
  const xml='<w:tr><w:tc><w:p><w:t>Sofia Vega</w:t></w:p></w:tc><w:tc><w:p><w:t>sofia@example.test</w:t></w:p></w:tc></w:tr>';
  assert.deepEqual(wordTableProfiles(xml,['Sofia Vega']),{});

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.29] — 2026-11-06 — Faithful biography and output-quote binding
+
+- Remove post-generation partner/head rewrites from the Python evidence binder and Word curator. Verify confirmed headship through a separate source-bound B9 obligation.
+- Bind joined-sentence profile quotes only to a unique actual span containing unchanged words; preserve strict source, omission and substantive review checks.
+- 519 Python tests, 486 Node passes/one skip, TypeScript and production build pass. Existing-response offline replay clears the reproduced checks without a new generation. The prior acceptance failed before final documents; see `docs/reviews/2026-11-06-faithful-profile-binding-v1-0-29.md`.
+
 ## [1.0.28] — 2026-11-06 — Matter evidence, source questions and exact drafts
 
 - Require independent source-to-narrative execution proof for each selected matter, retaining decisive confidential scale and public privacy boundaries.
