@@ -79,6 +79,12 @@ class CandidateEvidenceTests(unittest.TestCase):
         fixed=apply_corrections(v,{'candidates/0':targets['candidates/0']},{'corrections':[{'path':'candidates/0','value':corrected,'reason':'Restore the source profile evidence.'}]})
         self.assertEqual(development_errors(p,s,fixed),[])
         self.assertEqual(v['matters'],fixed['matters'])
+    def test_text_only_voice_repair_receives_unchanged_credential_bindings(self):
+        p,s,v=candidate_case();v['candidates'][0]['submission_bio']+=' The supplied biography identifies the legal work.'
+        target=repair_targets(p,s,v)['candidates/0/submission_bio']
+        self.assertEqual(target['preserve_profile_quotes'],[PUBLIC,PUBLIC])
+        self.assertEqual(target['source_evidence']['person']['bio'],BIO)
+        self.assertNotIn('candidates/0',repair_targets(p,s,v))
     def test_category_placeholder_is_rejected_and_pending_is_actionable(self):
         p,s,v=candidate_case();c=v['candidates'][0]
         for label in ('Band ranking candidate','Individual ranking candidate','Potential band candidate','BAND RANKING CANDIDATE'):
