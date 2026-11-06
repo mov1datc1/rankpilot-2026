@@ -4,7 +4,10 @@ This is not a second strategist. It neither changes selection nor creates public
 bios from matter headings. Scope and source evidence stay authoritative.
 """
 import re
-from pydantic import BaseModel, Field
+import unicodedata
+from enum import StrEnum
+from hashlib import sha256
+from pydantic import BaseModel, Field, create_model, ConfigDict
 from typing import Literal
 from core.role_evidence import identity, matter_names_person
 
@@ -106,7 +109,8 @@ def obligations(package, strategy, proposal):
     result=[]
     register={m['id']:m for m in package.get('matters',[])}
     def add(key,field,sources,instruction):
-        result.append({'id':key,'field':field,'sources':sources,'instruction':instruction})
+        result.append({'id':key,'field':field,'sources':sources,'instruction':instruction,
+            'output_scope':'internal' if field.startswith('comparisons/') else 'audit' if field in ('leadership','evidence_gaps','executive_assessment') else 'submission'})
     for i,argument in enumerate(proposal.get('case_plan',{}).get('institutional_arguments',[])):
         sources=[register.get(e['matter_id'],{}) for e in argument.get('evidence',[])]
         for field in ('b10','c2'):
@@ -120,11 +124,65 @@ def obligations(package, strategy, proposal):
     for i,leader in enumerate(additional_leaders(package,strategy)):
         add(f'leader:{i}','leadership',[register[mid] for mid in leader['matter_ids']], 'Evaluate '+leader['name']+' internally; preserve documented work and request only genuinely absent seniority/profile facts. Do not invent a public bio.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):
-        add(f'comparison:{i}','evidence_gaps' if comparison.get('audit_required',True) else f'comparisons/{i}/tradeoff',[register.get(comparison.get(k),{}) for k in ('selected_id','alternative_id')], 'Preserve this specific validated tradeoff, not a generic dilution statement: '+comparison.get('incremental_contribution','')+' '+comparison.get('tradeoff',''))
+        add(f'comparison:{i}','evidence_gaps' if comparison.get('audit_required',True) else f'comparisons/{i}/tradeoff',[register.get(comparison.get(k),{}) for k in ('selected_id','alternative_id')], ('Preserve this specific validated tradeoff in the Audit. ' if comparison.get('audit_required',True) else 'Evaluate this INTERNAL tradeoff in the development proposal; do not require its publication in the executive Audit. ')+'Do not replace the comparative reasoning with a generic dilution statement: '+comparison.get('incremental_contribution','')+' '+comparison.get('tradeoff',''))
     # The public argument must keep a supplied target as a request, not a ranking.
     if package.get('requested_target'):
         add('target','executive_assessment',[{'source_excerpt':str(package['requested_target'])}], 'Preserve or explicitly justify changing the supplied target: '+str(package['requested_target']))
     return result
+
+
+def execution_output(package, proposal, letter, path):
+    """Same visible formatting as the renderers, without altering facts or words."""
+    is_letter=path in ('leadership','evidence_gaps','executive_assessment')
+    if is_letter:
+        value=letter.get(path,'');rendered=package.get('rendered_audit')
+        value=re.sub(r'\*\*([^*\n]+)\*\*|\*([^*\n]+)\*',lambda m:m.group(1) or m.group(2),str(value))
+        value=re.sub(r'(?m)^\s*#{1,6}\s+','',value)
+        value=re.sub(r'\bnot_found\b','sin coincidencia exacta en la consulta',value)
+    else:
+        value=proposal
+        try:
+            for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
+        except (KeyError,IndexError,TypeError):value=''
+        rendered=None if path.startswith('comparisons/') else package.get('rendered_artifact')
+        if rendered is not None:value=re.sub(r'\*\*([^*]+)\*\*',r'\1',str(value))
+    return unicodedata.normalize('NFC',str(value or '')),rendered
+
+
+def execution_verdict_contract(package, strategy, proposal, letter, base):
+    """Model-facing proof keys and quotations are bound before generation.
+
+    Quote enums are shared by output field; the full leadership letter is not
+    duplicated for every candidate. Status/reason remain independent judgments.
+    A legal-looking quote from another field cannot satisfy this schema.
+    """
+    if proposal.get('version')!='editorial-development-v3':return base
+    norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
+    fields={};quote_types={}
+    for obligation in obligations(package,strategy,proposal):
+        path=obligation['field'];text,rendered=execution_output(package,proposal,letter,path)
+        options=list(dict.fromkeys(norm(p) for p in text.splitlines() if norm(p)))
+        if rendered is not None:options=[q for q in options if q in norm(rendered)]
+        if not options:
+            raise ValueError('review diagnostic not grounded: expected output field absent from exact artifact: '+path)
+        key=(path,tuple(options))
+        if key not in quote_types:
+            name='OutputQuote_'+sha256(path.encode()).hexdigest()[:12]
+            quote_types[key]=StrEnum(name,{f'Q{i}':value for i,value in enumerate(options)})
+        check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
+            status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
+            artifact_quote=(quote_types[key],Field(description='Choose the exact passage in this obligation output field. Internal comparisons are not required in the Audit.')),
+            source_quote=(str,Field(description='Contiguous exact original words from one of this obligation own sources.')),
+            reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning; appearance of words alone is not proof.')))
+        fields[obligation['id']]=(check,...)
+    checks=create_model('EveryCaseExecutionProof',__config__=ConfigDict(extra='forbid'),**fields)
+    return create_model('BoundCaseVerdict',__base__=base,case_checks=(checks,...))
+
+
+def project_execution_checks(verdict):
+    checks=verdict.get('case_checks')
+    if not isinstance(checks,dict):return verdict
+    return {**verdict,'case_checks':[{'obligation_id':key,**value,'artifact_quote':str(value['artifact_quote'])} for key,value in checks.items()]}
 
 
 def execution_defects(package, strategy, proposal, letter, checks):
@@ -133,19 +191,12 @@ def execution_defects(package, strategy, proposal, letter, checks):
     expected={o['id']:o for o in obligations(package,strategy,proposal)}
     if len(checks)!=len(expected) or {c.get('obligation_id') for c in checks}!=set(expected):
         raise ValueError('review diagnostic not grounded: case execution review omitted or duplicated obligations')
-    norm=lambda v:' '.join(str(v or '').split())
+    norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
     defects=[]
     for check in checks:
         obligation=expected[check['obligation_id']];path=obligation['field']
         is_letter=path in ('leadership','evidence_gaps','executive_assessment')
-        if is_letter:
-            generated=letter.get(path,'');rendered=package.get('rendered_audit')
-        else:
-            value=proposal
-            try:
-                for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
-            except (KeyError,IndexError,TypeError):value=''
-            generated=value;rendered=None if path.startswith('comparisons/') else package.get('rendered_artifact')
+        generated,rendered=execution_output(package,proposal,letter,path)
         quote=norm(check.get('artifact_quote'))
         if not quote or quote not in norm(generated) or (rendered is not None and quote not in norm(rendered)):
             raise ValueError('review diagnostic not grounded: case execution review quote is not in its expected field and artifact')

@@ -81,7 +81,7 @@ class EditorialCaseTests(unittest.TestCase):
         verdict={'passed':True,'defects':[],'acceptance':[{'criterion':key,'status':'met','evidence':'General approval'} for key in ACCEPTANCE_CRITERIA]}
         with patch('core.review_graph.invoke_role',return_value=(verdict,[{'usage':{'total_tokens':17}}])) as model:
             with self.assertRaisesRegex(EditorialResponseError,'omitted') as error:
-                editor({'package':p,'strategy':s,'development':v,'letter':{'leadership':'A candidate'}})
+                editor({'package':p,'strategy':s,'development':v,'letter':{'leadership':'A candidate','evidence_gaps':'Routine advice adds no distinct capability.'}})
         self.assertEqual(model.call_count,1);self.assertEqual(error.exception.trace['usage']['total_tokens'],17)
 
     def test_obligations_reference_sources_once_and_do_not_mutate_state(self):

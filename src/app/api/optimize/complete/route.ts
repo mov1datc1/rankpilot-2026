@@ -1,3 +1,4 @@
+import { wordXmlText } from '@/lib/docx/xml-text';
 import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
 import { bindGeneratedFindings, renderedSubmissionFindings } from '@/lib/editorial/artifact-findings';
@@ -120,10 +121,10 @@ export async function POST(request: NextRequest) {
         const auditDoc=buildAuditDoc(previous.firm_name || previous.firmName || '',submission.practiceArea,data.analysis,{},review.letter,{...submission,chambersData:{...data,artifact_pair_revision:inputHash},matters});
         auditBuffer=await Packer.toBuffer(auditDoc);
         const auditArchive=await JSZip.loadAsync(auditBuffer);
-        const renderedAudit=(await auditArchive.file('word/document.xml')!.async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+        const renderedAudit=wordXmlText(await auditArchive.file('word/document.xml')!.async('string'));
         const archive=await JSZip.loadAsync(buffer);
         const parts=Object.keys(archive.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
-        const rendered=(await Promise.all(parts.map(async name=>`${name}: ${(await archive.files[name].async('string')).replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')}`))).join('\n');
+        const rendered=(await Promise.all(parts.map(async name=>`${name}: ${wordXmlText(await archive.files[name].async('string'))}`))).join('\n');
         const priorFindings=previous.completed_review_input_hash===inputHash && !previous.final_review_stale ? previous.final_artifact_review?.judge?.defects || [] : [];
         const unrepaired=[...renderedSubmissionFindings(rendered,data.editorial_development,matters),...unrepairedGeneratedClaims([...(review.repair_feedback || []),...priorFindings],rendered,renderedAudit)];
         let finalReview:any;
@@ -146,7 +147,16 @@ export async function POST(request: NextRequest) {
           if(!finalResponse.ok && ['AI_OUTPUT_LIMIT','AI_REVIEW_INVALID'].includes(finalReview.code)) {
             // The provider returned a terminal response, so this lease can safely
             // be released. Timeouts with unknown outcomes retain their lease.
-            const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...previous,review_checkpoint:{...previous.review_checkpoint,lease_until:0}}}});
+            // Retain the SAME candidate pair and strategy as an explicitly
+            // unapproved draft. A diagnostic failure must not replace the
+            // generated executive letter with the source-inventory fallback.
+            const retained:any={...data,approved_artifact:null,final_artifact_review:null,
+              release_verdict:{passed:false,status:'awaiting_artifact_review',errors:['Falta una revisión final válida.']}};
+            retained.draft_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),
+              audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),
+              revision_id:inputHash,directory:submission.targetDirectory};
+            retained.draft_artifact.input_hash=draftInputHash(submission,retained);
+            const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:retained}});
             if(released.count!==1) throw new Error('DRAFT_CONFLICT');
             return NextResponse.json({success:false,code:finalReview.code,error:finalReview.code==='AI_REVIEW_INVALID'?'RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.':'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
           }

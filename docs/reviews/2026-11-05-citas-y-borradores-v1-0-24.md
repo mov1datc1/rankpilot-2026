@@ -1,0 +1,13 @@
+# Pruebas de citas y coherencia de borradores — v1.0.24
+
+La prueba autónoma anterior terminó sin aprobación después de dos respuestas de revisión inválidas. Se recuperaron en lectura las respuestas y su entrada original, sin repetir generaciones. Ambas cubrían las obligaciones y usaban fuentes propias, pero nueve comprobaciones citaban el Audit donde se exigía la comparación interna. Otras citas correspondían al texto visible sin los marcadores de negrita del campo original. No fue una petición de datos del cliente ni una caída de internet.
+
+La revisión ahora recibe un objeto con una propiedad obligatoria por obligación. Cada comprobación elige su cita entre pasajes literales del campo de salida correspondiente; los pasajes se comparten por campo para evitar duplicarlos por candidato. La visibilidad distingue Submission, Audit y comparaciones internas. El juicio sobre cumplimiento y su razón siguen siendo independientes: elegir una cita válida no aprueba automáticamente una obligación. La fuente propia, el texto del archivo exacto y las comprobaciones semánticas siguen siendo necesarios. No se convierten en aprobadas las respuestas históricas inválidas.
+
+La comparación con la prosa visible reproduce únicamente el formato del renderer. La extracción de XML del Word decodifica comillas, apóstrofos y referencias numéricas una sola vez, conservando texto literal que parezca una entidad. No se cambian cifras, nombres ni hechos para hacer coincidir una cita. Un campo que no esté en el archivo exacto falla antes de comprar otra revisión.
+
+También se encontró un problema de conservación: la salida temprana por diagnóstico inválido guardaba el estado anterior y perdía la pareja recién renderizada. La descarga del Audit podía volver al inventario fuente aunque la carta ejecutiva existiera en el checkpoint. Ahora conserva los mismos bytes como borrador con hash y aprobación falsa. Si no existen bytes guardados, una propuesta de writer validada y vinculada a las fuentes actuales puede proyectarse para una descarga de borrador. No guarda ni reanuda el caso; una edición de fuente impide reutilizarla. Los finales siguen requiriendo revisión independiente de sus bytes.
+
+Validación: 498 pruebas Python; 478 contratos Node correctos y uno omitido; TypeScript y compilación final de producción aprobados. Los replays locales reproducen las causas y validan el contrato con el caso guardado; no son una nueva aceptación del modelo ni autorización para publicar documentos.
+
+No se amplían los presupuestos ni los intentos y no se reinician expedientes fallidos. La nueva aceptación autónoma permanece pendiente. El aprendizaje nocturno no forma parte de este cambio.

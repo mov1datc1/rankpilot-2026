@@ -85,7 +85,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v6-consistency'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy,case_contract:'shared-editorial-case-v1'} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
-    ...(stage === 'editor' ? {letter:state.letter} : {}),
+    ...(stage === 'editor' ? {letter:state.letter,case_quote_contract:'field-bound-visible-quotes-v2'} : {}),
   });
 }
 

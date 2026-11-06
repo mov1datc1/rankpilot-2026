@@ -9,7 +9,7 @@ const db=box=>({submission:{findUnique:async()=>structuredClone(box),updateMany:
 const prisma=new Proxy({}, {get:(_,key)=>key==='$transaction'?async (fn,options)=>{const pending=structuredClone(state);const result=await fn(db(pending));saveAttempts++;if(saveFailures>0){saveFailures--;assert.equal(options.timeout,30000);throw Object.assign(new Error('A commit cannot be executed on an expired transaction'),{code:'P2028'});}state=pending;return result;}:db(state)[key]});
 const load=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:prisma};if(name==='@/utils/supabase/server')return{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:'u'}}})}})};return load.call(this,name,...args);};
 const {POST}=require('../../src/app/api/optimize/complete/route.ts');
-const {deliveryInputHash,artifactHash}=require('../../src/lib/audit/artifact-binding.ts');
+const {deliveryInputHash,artifactHash,storedDraftBytes}=require('../../src/lib/audit/artifact-binding.ts');
 global.fetch=async(url,options)=>{
  const payload=JSON.parse(options.body);calls.push({url,payload});
  if(url.endsWith('/review-package'))return Response.json({success:true,selection_validated:true,selection_review_validated:true,development_validated:true,development:{version:'editorial-development-v2'},ranking_verification:{status:'unavailable'},strategy:{matters:[{matter_id:'m1',disposition:'core',rationale:'Pending tax appeal',source_quote:'The appeal remains pending'}],hero_matter_id:'m1'},letter:{executive_assessment:'Pending tax appeal',portfolio:'One mandate',leadership:'Not provided',evidence_gaps:'Outcome pending',next_steps:'Update the outcome'},judge:{passed:true,defects:[]},release_verdict:{passed:true,status:'passed',errors:[]}});
@@ -208,6 +208,14 @@ test('a grounded-diagnostic retry releases the terminal provider lease and retai
   const response=await complete({checkpoint:true});const result=await response.json();
   assert.equal(response.status,502);assert.equal(result.code,'AI_REVIEW_INVALID');
   assert.equal(result.trace.usage.total_tokens,321);assert.equal(state.chambersData.review_checkpoint.lease_until,0);
+  assert.equal(state.chambersData.approved_artifact,null);assert.equal(state.chambersData.release_verdict.passed,false);
+  assert.ok(storedDraftBytes(state,state.chambersData,'submission'));
+  const audit=storedDraftBytes(state,state.chambersData,'audit');assert.ok(audit);
+  const xml=await (await JSZip.loadAsync(audit)).file('word/document.xml').async('string');
+  assert.match(xml,/Strategic Audit Letter/);assert.doesNotMatch(xml,/Internal Evidence Review/);
+  assert.equal(state.chambersData.canonical_matter_selection.hero_matter_id,'m1');
+  const oldB10=state.chambersData.enhanced_b10;state.chambersData.enhanced_b10='Changed output';
+  assert.equal(storedDraftBytes(state,state.chambersData,'audit'),null);state.chambersData.enhanced_b10=oldB10;
  }finally{global.fetch=saved;}
 });
 
