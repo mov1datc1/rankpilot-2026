@@ -121,6 +121,25 @@ test('draft download preserves the saved pair and refuses corruption or stale in
  assert.equal(data.release_verdict.passed,false);
 });
 
+test('starting a failed repair preserves exact draft bytes including E8, but source or prose edits invalidate them',()=>{
+ const {artifactHash,deliveryInputHash,draftInputHash,storedDraftBytes}=require('../../src/lib/audit/artifact-binding.ts');
+ const sub={practiceArea:'Tax',targetDirectory:'Chambers'};
+ for(const legacy of [false,true]) {
+  const data={matters:[{id:'m',rawNotes:'Interim relief granted.',editorial_completion_status:'Interim relief granted.'}],completed_review_input_hash:'review-revision',review_checkpoint:{state:{development_validated:true}}};
+  const bytes=Buffer.from('Exact reviewed E8 and narrative');
+  const binding=legacy?deliveryInputHash(sub,data):draftInputHash(sub,data);
+  data.draft_artifact={base64:bytes.toString('base64'),sha256:artifactHash(bytes),input_hash:binding,revision_id:'review-revision'};
+  data.completed_review_input_hash=null;data.review_checkpoint.state.development_validated=false;
+  data.release_verdict={passed:false,status:'repairing'};
+  assert.deepEqual(storedDraftBytes(sub,data,'submission'),bytes);
+  for(const key of ['rawNotes','editorial_completion_status']) {
+   const edited=structuredClone(data);edited.matters[0][key]='Changed';
+   assert.equal(storedDraftBytes(sub,edited,'submission'),null);
+  }
+  assert.equal(data.release_verdict.passed,false);
+ }
+});
+
 test('source semantics survive generated-field binding for sector and outcome repairs',()=>{
  const claim='The disputed claim.',dev={matters:[{matter_id:'m',text:claim}]};
  for(const [field,resolution] of [['client_sector','omit_nonessential_descriptor'],['outcome','qualify_disputed_outcome']]){

@@ -71,6 +71,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(last?.sourceHash===sourceHash && last?.status==='failed') return last;
     // A stopped attempt cannot acquire a fresh repair allowance by another click.
     if(last?.sourceHash===sourceHash && last?.resultHash===resultHash && last?.ledger?.at(-1)?.supervision?.action==='pause') return last;
+    if(waitingForSourceInput(last,current.chambersData,sourceHash)) return last;
     const repair=requestRepair && last?.status==='needs_review' && last.resultHash===resultHash ? targetedRepair(current.chambersData) : null;
     if(requestRepair && last?.status==='needs_review' && last.resultHash===resultHash && !repair) throw new Error('AUTO_REPAIR_UNAVAILABLE');
     if(!repair && last?.resultHash===resultHash && last?.sourceHash===sourceHash && ['completed','needs_review'].includes(last.status)) return last;
@@ -92,6 +93,14 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     const jobs:any[]=await tx.$queryRaw`INSERT INTO "EditorialJob" ("id","submissionId","userId","sourceHash","snapshot","tasks","stage","ledger") VALUES (${id},${current.id},${current.userId},${sourceHash},${JSON.stringify(snapshot)}::jsonb,${JSON.stringify(tasks)}::jsonb,${tasks[0]},${JSON.stringify(ledger)}::jsonb) RETURNING *`;
     return jobs[0];
   },{timeout:30000,maxWait:10000});
+}
+
+/** Repeated clicks cannot buy another correction while the same source answer
+ * is pending after the independent generated fields were repaired. */
+export function waitingForSourceInput(job:any,data:any,sourceHash:string):boolean {
+  return job?.status==='needs_review' && job.sourceHash===sourceHash
+    && (job.ledger || []).some((entry:any)=>entry.supervision?.reason==='generated_corrections_before_source_input')
+    && (data?.final_artifact_review?.judge?.defects || []).some((d:any)=>d.severity==='critical' && d.owner==='user');
 }
 
 /** Repairs may change generated prose, never source facts or human-edited text. */

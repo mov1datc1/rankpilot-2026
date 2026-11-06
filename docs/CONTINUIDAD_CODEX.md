@@ -1024,3 +1024,9 @@ Correcciónpequeña68cabcf sólo review-actions+téstregresión: avisoSourceevid
    - Ramas `dev` y `main` fusionadas, probadas (36/36 rutas Next.js Turbopack) y sincronizadas en GitHub (`mov1datc1/rankpilot-2026`).
    - Despliegue en producción exitoso en Vercel (`https://rankpilot-2026.vercel.app`).
 
+# 2026-11-06 — Corrección v1.0.28 validada localmente
+
+Reparadas tres rutas reproducidas del último estado fallido: obligaciones por cada narrativa seleccionada; separación de pregunta literal sobre valor fuente y reparación de prosa, con correcciones independientes antes de esperar respuesta y sin recomprar juez; conservación de bytes exactos del borrador al limpiar solo la marca de caché de revisión. Fuentes y estados editados siguen invalidando los bytes. Compatibilidad antigua limitada al mismo hash reconstruido, sin aprobar entregas rechazadas.
+
+516 Python, 485 Node y una omitida; tipos y build correctos. Replay privado sin LLM: cuatro destinos generados localizados sin localizador, una pregunta fuente separada, 18 obligaciones de narrativa y hashes del par revisado recuperados exactamente. No hubo nueva extracción, llamada OpenAI, edición de fuentes ni reactivación del intento fallido. Esto no acredita una prueba autónoma nueva ni cierre de calidad editorial. Informe técnico público anonimizado: docs/reviews/2026-11-06-evidence-routing-draft-binding-v1-0-28.md. Publicar solo la lista revisada desde el checkout aislado; conservar evidencias privadas y cambios ajenos.
+

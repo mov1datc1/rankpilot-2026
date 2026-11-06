@@ -31,12 +31,22 @@ export function previousApprovedArtifact(submission:any,data:any) {
 
 /** Draft bytes have their own binding; they never confer editorial approval. */
 export function draftInputHash(submission:any,data:any=submission.chambersData || {}) {
-  const {draft_artifact,...inputs}=data;
+  // Resetting a review cache marker starts a repair; it does not edit the
+  // candidate documents. All source and generated content remains bound.
+  const {draft_artifact,completed_review_input_hash,...inputs}=data;
   return deliveryInputHash(submission,inputs);
 }
 export function storedDraftBytes(submission:any,data:any,kind:string):Buffer|null {
   const draft=data.draft_artifact;
-  if(!draft || draft.input_hash!==draftInputHash(submission,data)) return null;
+  if(!draft) return null;
+  const current=draftInputHash(submission,data);
+  // Legacy drafts included this cache marker. Accept only the exact old
+  // binding reconstructed from their own revision, never changed content.
+  const {draft_artifact,...legacyInputs}=data;
+  const legacy=deliveryInputHash(submission,legacyInputs);
+  const resetLegacy=data.completed_review_input_hash===null && typeof draft.revision_id==='string'
+    ? deliveryInputHash(submission,{...legacyInputs,completed_review_input_hash:draft.revision_id}) : null;
+  if(![current,legacy,resetLegacy].includes(draft.input_hash)) return null;
   const encoded=kind==='submission'?draft.base64:kind==='audit'?draft.audit_base64:null;
   const expected=kind==='submission'?draft.sha256:draft.audit_sha256;
   if(!encoded || !expected) return null;

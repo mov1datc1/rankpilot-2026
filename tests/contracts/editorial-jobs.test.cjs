@@ -5,6 +5,15 @@ const {sourceSnapshot,stableHash,draftSourceHash,draftDisposition}=require('../.
 const {editorialIdentity,editorialUser}=require('../../src/lib/editorial/identity.ts');
 const {reviewStepHash}=require('../../src/lib/audit/review-checkpoint.ts');
 const {engineMatchesWorker,EDITORIAL_VERSION}=require('../../src/lib/editorial/contracts.ts');
+test('after mixed repairs repeated clicks wait for a source answer without resetting the ledger',()=>{
+ const {waitingForSourceInput}=require('../../src/lib/editorial/jobs.ts');
+ const job={status:'needs_review',sourceHash:'original',ledger:[{supervision:{reason:'generated_corrections_before_source_input'}}]};
+ const data={final_artifact_review:{judge:{defects:[{severity:'critical',owner:'user'}]}}};
+ assert.equal(waitingForSourceInput(job,data,'original'),true);
+ assert.equal(waitingForSourceInput(job,data,'answered-source'),false);
+ assert.equal(waitingForSourceInput({...job,status:'running'},data,'original'),false);
+ assert.equal(waitingForSourceInput(job,{final_artifact_review:{judge:{defects:[]}}},'original'),false);
+});
 test('a historical pause does not lock newly saved sources while unchanged failures stay paused',()=>{
  const source={targetDirectory:'Chambers',practiceArea:'Tax',chambersData:{matters:[{id:'m',rawNotes:'Original appeal.'}]}};
  const job={id:'j',status:'failed',stage:'selection',cursor:0,tasks:['selection'],ledger:[],sourceHash:stableHash(sourceSnapshot(source)),issue:{code:'SELECTION_DIAGNOSTIC_INVALID',owner:'rankpilot',retryable:false}};

@@ -33,7 +33,11 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
     ({version:1,action,reason,findings,...extra});
   if(data.release_verdict?.passed===true && data.final_artifact_review?.judge?.passed===true && !critical.length)
     return decision('complete','independent_review_passed');
-  if(critical.some((d:any)=>d.owner==='user')) return decision('needs_input','source_confirmation_required');
+  const needsInput=critical.some((d:any)=>d.owner==='user');
+  const sourceDecision=()=>decision('needs_input','source_confirmation_required');
+  // Complete independent generated-text corrections once before asking for
+  // source input. Do not repurchase an artifact judge while input is missing.
+  if(needsInput && !targetedRepair(data)) return sourceDecision();
   if(authorizedExtension(job.ledger)) return decision('pause','authorized_review_limit');
   if(spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)) return decision('pause','token_budget');
   if(needsDiagnosticReview(data)) {
@@ -46,9 +50,10 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
   const attempted=new Set((job.ledger || []).flatMap((entry:any)=>
     entry.supervision?.action==='repair' ? entry.supervision.findings || []:[]));
   if(findings.some(fingerprint=>attempted.has(fingerprint)))
-    return decision('pause','same_finding_after_repair');
+    return needsInput ? sourceDecision() : decision('pause','same_finding_after_repair');
   if(!mayRepairAutomatically(job.ledger || [],data)) return decision('pause','repair_progress_limit');
   const repair=targetedRepair(data);
-  return repair ? decision('repair','targeted_generated_content',{repair})
+  return repair ? decision('repair',needsInput?'generated_corrections_before_source_input':'targeted_generated_content',
+      {repair:needsInput?{...repair,tasks:repair.tasks.filter(task=>task!=='artifact')}:repair})
     : decision('pause','no_supported_repair');
 }

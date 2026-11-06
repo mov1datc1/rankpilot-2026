@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.28] — 2026-11-06 — Matter evidence, source questions and exact drafts
+
+- Require independent source-to-narrative execution proof for each selected matter, retaining decisive confidential scale and public privacy boundaries.
+- Separate bound questions about unchanged source values from generated-prose repair. Apply independent corrections once, await source input without another artifact judge, and prevent repeated clicks from resetting that waiting state.
+- Preserve exact unapproved draft bytes when a review cache marker is reset; retain source/prose invalidation and narrowly support legacy draft bindings.
+- 516 Python tests, 485 Node passes/one skip, TypeScript and production build pass. Saved-state replay uses no model calls. No new autonomous acceptance is claimed. See `docs/reviews/2026-11-06-evidence-routing-draft-binding-v1-0-28.md`.
+
 ## [1.0.16] — 2026-11-04 — Completed-review counters and transport accounting
 
 - Preserve the completed semantic-review count when a call is deferred before starting or fails without a usable verdict. Remove the fixed counter assignment that exhausted repair early after checkpoint continuation.
