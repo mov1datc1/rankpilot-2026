@@ -47,7 +47,7 @@ def bind_selection_review_quote(value, matter):
 
 def can_repair_selection(state):
     """Permit a new evidenced failure, never loop on an unchanged failed matter."""
-    if state.get('selection_review_unavailable') or state.get('selection_diagnostic_invalid') or state.get('selection_review_attempts', 0) >= 3:
+    if state.get('selection_review_unavailable') or state.get('selection_diagnostic_invalid') or state.get('selection_review_attempts', 0) >= 3 or state.get('selection_repair_attempts', 0) >= 2:
         return False
     history = state.get('selection_failure_history', [])
     if not history or not history[-1]:
@@ -144,6 +144,8 @@ def repair_selection(state, invoke):
     register={m['id']:m for m in state['package']['matters']}
     ids=tuple(d['matter_id'] for d in previous['matters'] if d['matter_id'] in failed and d['matter_id'] in register)
     if not ids:return None
+    if feedback.get('field_only'):
+        return repair_selection_fields(state,invoke,previous,failed,register,ids)
     from core.review_graph import Disposition
     # A local correction still consumes the GLOBAL portfolio capacity. Separate
     # core corrections in the transport schema so a reserve cannot silently
@@ -176,4 +178,33 @@ def repair_selection(state, invoke):
     core=[d['matter_id'] for d in fixed['matters'] if d['disposition']=='core']
     if fixed.get('hero_matter_id') not in core:
         return {'strategy':previous,'errors':['La corrección requiere revisar el Hero Matter; se conserva la selección anterior.'],'trace':trace,'selection_validated':False}
-    return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_report':{'corrected_matter_ids':list(corrections),'unaffected_decisions_preserved':True,'source_uncertainties':result.get('unresolved',[])}}
+    return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_attempts':state.get('selection_repair_attempts',0)+1,'selection_repair_report':{'corrected_matter_ids':list(corrections),'unaffected_decisions_preserved':True,'source_uncertainties':result.get('unresolved',[])}}
+
+
+def repair_selection_fields(state,invoke,previous,failed,register,ids):
+    """Correct located generated rationales; portfolio and sources stay locked."""
+    import copy
+    correction=create_model('SelectionRationaleCorrection',matter_id=(Literal[ids],...),rationale=(str,Field(min_length=1)))
+    schema=create_model('SelectionRationaleRepairs',corrections=(list[correction],Field(min_length=len(ids),max_length=len(ids))))
+    result,trace=invoke(state,'strategist',schema,
+        'Correct ONLY the rejected internal rationales against their own original sources. '
+        'Preserve the legal selection justification and comparative contribution. '
+        'Do not round a source amount into an unqualified different number: use the original exact amount/currency '
+        'or omit a nonessential numeric restatement while retaining the legal rationale. '
+        'Never borrow figures from another matter. Never change disposition, hero, order, quotations or legal understanding. '
+        'Return each supplied matter ID exactly once. This correction is subject to the unchanged deterministic '
+        'grounding gate and an independent source-to-decision review; it grants no approval.',
+        {'failed_checks':failed,'sources':[register[mid] for mid in ids],
+         'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
+    result=schema.model_validate(result).model_dump()
+    patches={p['matter_id']:p['rationale'] for p in result['corrections']}
+    attempts=state.get('selection_repair_attempts',0)+1
+    if set(patches)!=set(ids) or len(patches)!=len(result['corrections']):
+        return {'strategy':previous,'errors':['La corrección debe cubrir cada justificación señalada una sola vez.'],
+                'trace':trace,'selection_validated':False,'selection_repair_attempts':attempts}
+    fixed=copy.deepcopy(previous)
+    for decision in fixed['matters']:
+        if decision['matter_id'] in patches:decision['rationale']=patches[decision['matter_id']]
+    return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_attempts':attempts,
+            'selection_repair_report':{'corrected_matter_ids':list(ids),'field_paths':['rationale'],
+                'unaffected_decisions_preserved':True,'portfolio_preserved':True}}
