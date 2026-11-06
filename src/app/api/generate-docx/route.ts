@@ -1,3 +1,4 @@
+import { currentReviewDraft } from '@/lib/audit/draft-review';
 import { artifactHash, deliveryInputHash, storedDraftBytes } from '@/lib/audit/artifact-binding';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import { createHash } from 'node:crypto';
@@ -107,6 +108,22 @@ export async function GET(request: NextRequest) {
         'Content-Disposition':buildSafeContentDisposition(docType==='submission'?'Submission_BORRADOR':'Audit_BORRADOR',submission.practiceArea,'docx'),
         'Cache-Control':'private, no-store','X-Artifact-SHA256':artifactHash(bytes),'X-Artifact-Status':'draft'
       }});
+    }
+    if(exportMode==='draft' && ['submission','audit'].includes(docType)) {
+      const candidate=currentReviewDraft(submission,chambersData);
+      if(candidate) {
+        const draftSubmission={...submission,chambersData:candidate,matters:candidate.matters || submission.matters};
+        const firm=candidate.firm_name || candidate.firmName || '';
+        const doc=docType==='audit'
+          ? buildAuditDoc(firm,submission.practiceArea,candidate.analysis,{},candidate.editorial_review.letter,draftSubmission)
+          : buildSubmissionDoc(firm,submission.practiceArea,candidate,draftSubmission,'draft');
+        const bytes=await Packer.toBuffer(doc);
+        return new NextResponse(new Uint8Array(bytes),{headers:{
+          'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition':buildSafeContentDisposition(docType==='submission'?'Submission_BORRADOR':'Audit_BORRADOR',submission.practiceArea,'docx'),
+          'Cache-Control':'private, no-store','X-Artifact-SHA256':artifactHash(bytes),'X-Artifact-Status':'draft'
+        }});
+      }
     }
     const pair=chambersData.approved_artifact;
     const isApproved = getDeliveryState(chambersData, chambersData.matters || submission.matters, true).approved;
