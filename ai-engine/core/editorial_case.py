@@ -5,13 +5,18 @@ bios from matter headings. Scope and source evidence stay authoritative.
 """
 import re
 import unicodedata
-from enum import StrEnum
+from enum import Enum
 from hashlib import sha256
 from pydantic import BaseModel, Field, create_model, ConfigDict
 from typing import Literal
 from core.role_evidence import identity, matter_names_person
 
 CASE_VERSION = 'editorial-case-v1'
+
+class OutputQuote(str, Enum):
+    """String-valued proofs on the engine's Python 3.10 runtime."""
+    def __str__(self):
+        return self.value
 
 class CaseEvidence(BaseModel):
     matter_id: str
@@ -168,7 +173,7 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
         key=(path,tuple(options))
         if key not in quote_types:
             name='OutputQuote_'+sha256(path.encode()).hexdigest()[:12]
-            quote_types[key]=StrEnum(name,{f'Q{i}':value for i,value in enumerate(options)})
+            quote_types[key]=OutputQuote(name,{f'Q{i}':value for i,value in enumerate(options)})
         check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
             status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
             artifact_quote=(quote_types[key],Field(description='Choose the exact passage in this obligation output field. Internal comparisons are not required in the Audit.')),
