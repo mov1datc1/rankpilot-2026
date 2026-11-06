@@ -207,13 +207,14 @@ def bind_development(package, proposal):
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
-    dept_heads = [h.get('name') for h in (package.get('filing_details', {}).get('heads') or package.get('departmentHeads') or []) if isinstance(h, dict) and h.get('name')]
     for candidate in proposal.get('candidates',[]):
-        cand_name = candidate.get('name', '')
-        if any(_norm(cand_name) == _norm(h) or _norm(cand_name) in _norm(h) or _norm(h) in _norm(cand_name) for h in dept_heads):
-            bio = candidate.get('submission_bio', '')
-            bio = re.sub(r'^(' + re.escape(cand_name) + r'\s+is\s+)(?:a\s+partner|a\s+Partner|Partner)\s+in\s+', r'\1the Partner and Head of ', bio, flags=re.I)
-            candidate['submission_bio'] = bio
+        # Binding evidence must not rewrite the biography after its quotations
+        # have been generated. Head/partner claims belong to sourced drafting
+        # and independent review, not an unconditional text substitution.
+        from core.candidate_evidence import bind_public_quote
+        for item in candidate.get('profile_coverage',[]):
+            if item.get('decision') in ('retain','generalize'):
+                item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''))
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
     return proposal

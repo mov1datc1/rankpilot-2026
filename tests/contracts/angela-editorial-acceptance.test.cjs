@@ -12,9 +12,10 @@ test('editorial faults are routed to source-grounded repair, never erased by for
  assert.equal(findings.length,1);assert.equal(findings[0].severity,'critical');assert.equal(findings[0].field_path,'matters/0/text');
 });
 test('confirmed partner who heads the department retains both source-backed functions',()=>{
- const raw=[{name:'Eduardo Garduño',role:'Partner',comments:'Eduardo Garduño is a partner in the Labour & Employment practice.'}];
- const curated=curateLawyers(raw,[],'Synthetic Firm','Labour & Employment','Mexico',{departmentHeads:[{name:'Eduardo Garduño'}]});
- assert.match(curated[0].comments,/the Partner and Head of/);
+ const bio='Sofia Vega is a partner and heads the Labour & Employment practice.';
+ const raw=[{name:'Sofia Vega',role:'Partner',comments:bio}];
+ const curated=curateLawyers(raw,[],'Synthetic Firm','Labour & Employment','Mexico',{departmentHeads:[{name:'Sofia Vega'}]});
+ assert.equal(curated[0].comments,bio);assert.match(curated[0].comments,/partner and heads/);
 });
 test('B10 preserves the reviewed argument and documented scale instead of replacing its opening',()=>{
  const text='The department advises industrial employers on collective negotiations and constitutional labour litigation. It supported an integration affecting more than 5,000 employees, coordinating employment documentation, active disputes and workforce governance across several manufacturing sites.';

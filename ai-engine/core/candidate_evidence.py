@@ -11,6 +11,21 @@ MATERIAL_ROLE=re.compile(r'\b(?:served|worked|appointed|director|counsel|preside
 def norm(value):
     return ' '.join(unicodedata.normalize('NFC',str(value or '')).split())
 
+
+def bind_public_quote(quote, bio):
+    """Anchor the same words after sentence joining; never repair a claim.
+
+    Output evidence is distinct from immutable source evidence. A generated
+    sentence can become a clause or start in lowercase without losing its
+    words. Return only a unique actual span; changed or absent words still fail.
+    """
+    text=norm(bio);literal=norm(quote)
+    if not literal or literal in text:return quote
+    stem=literal.removesuffix('.')
+    if len(stem.split())<4:return quote
+    matches=list(re.finditer(r'(?<!\w)'+re.escape(stem)+r'(?!\w)',text,re.I))
+    return matches[0].group() if len(matches)==1 else quote
+
 class ProfileCoverage(BaseModel):
     reference: str
     decision: Literal['retain','generalize','omit']

@@ -1,0 +1,11 @@
+# Faithful profile binding v1.0.29
+
+A fresh fixed-version acceptance stopped before the Audit and final Word pair. The generated-text repair removed auditor voice but three profile-quote checks still failed. This is a failed autonomous acceptance, not evidence that the final documents improved.
+
+Read-only retrieval of the two existing provider responses and offline replay isolated the cause. The Python evidence binder rewrote a biography's opening from a partner formulation to a partner-and-head formulation after the model had supplied its literal profile quote. The same substitution also existed in the Word curator. A subsequent repair could therefore reproduce a valid opening and immediately have it changed again. Two other anchors referred to standalone sentences that had become clauses, changing only initial case and terminal punctuation.
+
+The binder and renderer no longer add or rewrite role assertions. Drafting receives confirmed department-head metadata, and a separate own-source B9 execution obligation verifies that function without treating headship as proof of partnership. The independent reviewer remains responsible for substantive role coverage. The renderer preserves a sourced head claim already present in the reviewed biography.
+
+Output profile quotes may bind to a unique actual span containing the same words after sentence joining. Only case, normalized whitespace and a terminal full stop are accommodated. Different words, absent spans, short fragments and ambiguous matches remain unchanged and fail the existing checks. Source quotations, unit accounting, material-credential omission rules, source and role attribution, confidentiality, final Word review and budgets remain mandatory. This is not fuzzy semantic approval.
+
+Validation: 519 Python tests; 486 Node passes and one skip; TypeScript and production build pass. The saved provider-response replay applies the already purchased corrections and yields no local development errors, without changing any biography or source during binding and without another model generation. Public regression fixtures are fictional. No failed job was resumed or approved. The repaired software still requires a new fixed-version autonomous acceptance; offline replay cannot certify output quality.
