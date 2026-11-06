@@ -1,5 +1,5 @@
 {
-  "version": "editorial-voice-v3",
+  "version": "editorial-voice-v4",
   "patterns": [
     "\\bthe\\s+supplied\\s+(?:biograph(?:y|ies)|profile|materials|documents|information|evidence)\\b",
     "\\b(?:is\\s+)?(?:also\\s+)?identified\\s+in\\s+the\\s+(?:supplied\\s+)?biograph(?:y|ies)\\b",
@@ -8,7 +8,9 @@
     "\\brespectfully\\s+(?:seeks|requests|petitions)\\s+(?:(?:Chambers|Legal\\s*500|for|first-time|continued)\\s+){0,4}(?:recognition|coverage|inclusion|ranking)\\b",
     "\\bthe\\s+submission\\s+(?:also\\s+)?(?:identifies|describes|states|records|reports|lists)\\b",
     "\\b(?:the\\s+)?source\\s+materials\\s+contain\\s+(?:inconsistent|conflicting)\\s+(?:nonessential\\s+)?sector\\s+(?:descriptors|descriptions|classifications)\\b",
-    "\\bno\\s+sector\\s+classification\\s+is\\s+(?:stated|provided|given)\\s+here\\b"
+    "\\bno\\s+sector\\s+classification\\s+is\\s+(?:stated|provided|given)\\s+here\\b",
+    "\\bno\\s+final\\s+(?:procedural\\s+)?(?:outcome|ruling)\\s+is\\s+(?:stated|reported|provided)\\b",
+    "\\bthe\\s+available\\s+matter\\s+records\\s+do\\s+not\\s+specify\\b"
   ],
   "reject": [
     "also identified in the supplied biography",
@@ -20,7 +22,10 @@
     "The firm respectfully seeks recognition.",
     "The submission also identifies a national practice.",
     "No sector classification is stated here because the source materials contain inconsistent nonessential sector descriptors.",
-    "The source materials contain conflicting sector descriptions."
+    "The source materials contain conflicting sector descriptions.",
+    "No final procedural outcome is stated.",
+    "No final ruling is reported.",
+    "The available matter records do not specify his individual responsibilities."
   ],
   "allow": [
     "We challenged the evidence supplied by the authority.",
@@ -29,6 +34,7 @@
     "Proceedings remain pending; the team secured interim relief.",
     "The team supplied information requested by the regulator.",
     "The team reconciled inconsistent evidence submitted by the opposing party.",
-    "The opposing party source materials contain inconsistent dates; the team challenged their admissibility."
+    "The opposing party source materials contain inconsistent dates; the team challenged their admissibility.",
+    "No final ruling has been issued; the appeal remains pending."
   ]
 }

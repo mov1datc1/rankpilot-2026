@@ -9,7 +9,7 @@ LETTER={k:'Source-grounded text.' for k in ['executive_assessment','portfolio','
 
 def development(package):
     source=package['matters'][0].get('rawNotes',SOURCE)
-    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
+    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'case_plan':{'version':'editorial-case-v1','institutional_arguments':[{'proposition':'Tax appeal representation','evidence':[{'matter_id':'m1','source_quote':source}],'b10_contribution':'Explain the appeal','c2_contribution':'Support coverage through this work'}],'additional_leaders':[],'target_decision':'No requested band supplied'},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
 
 class ReviewGraphTests(unittest.TestCase):
     def test_register_revalidation_preserves_paid_call_history(self):
@@ -50,6 +50,9 @@ class ReviewGraphTests(unittest.TestCase):
             result=strategy if role=='strategist' else development(package) if role=='development' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[], 'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]})
             if role=='editor' and 'acceptance' not in result:
                 result={**result,'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]}
+            if role=='editor' and state.get('development',{}).get('version')=='editorial-development-v3':
+                from core.editorial_case import obligations
+                result={**result,'case_checks':[{'obligation_id':o['id'],'status':'met','artifact_quote':state['development'][o['field']],'source_quote':source.get('rawNotes') or source.get('source_excerpt'),'reason':'Synthetic reviewer executes source-backed field'} for o in obligations(package,state['strategy'],state['development']) for source in o['sources'][:1]]}
             return result, state.get('trace',[])+[{'role':role}]
         def select(state):
             result, trace = invoke(state, 'strategist')

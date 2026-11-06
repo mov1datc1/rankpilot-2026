@@ -8,7 +8,8 @@ import copy
 import re
 from typing import Literal, Union
 from pydantic import BaseModel, create_model
-from core.editorial_development import Candidate
+from core.editorial_development import Candidate, Comparison
+from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors
 
 class Correction(BaseModel):
     path: str
@@ -26,7 +27,7 @@ def unknown_repair_usage(trace):
                or unknown_repair_usage(call.get('calls',[])) for call in trace or [])
 
 TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct incompatible ranking categories using the confirmed seniority; do not invent a current rank. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
-TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and selected matters. If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
+TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and eligible source matters (core or pertinent reserve, never excluded work). If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
 TASK+=''' Write natural public prose, including confidential-section narratives: never explain that a source, record or supplied field states or omits something. Express an actual pending state as ongoing without inventing a final judicial decision. Keep material uncertainty but put source-completeness assessments in internal fields. The form label Lead Partner(s) alone is not evidence of partner seniority: use lead lawyer unless the person's actual partner status is supported by the roster or explicit substantive source text. Fix capitalization after legal suffixes without turning a true new sentence into a lowercase fragment. Do not leave joined sentences or malformed English.'''
 TASK+=''' For a defect explicitly marked conflict_resolution=omit_nonessential_descriptor and source_field_path (or unbound field_path)=client_sector, withdraw ONLY the disputed optional industry descriptor from generated prose, choosing neither source version. Keep all supported mandate facts, scale, outcomes, roles and the canonical selection. This editorial containment is resolvable without confirming or changing the source sector. Retain the original source discrepancy; never extend this exception to material identity, amount, date, outcome, attribution or permission conflicts.'''
@@ -58,6 +59,7 @@ def repair_targets(package, strategy, proposal):
     register={m['id']:{k:v for k,v in m.items() if k in source_keys} for m in package.get('matters',[])}
     roster={_norm(l.get('name') or l.get('fullName')):l for l in package.get('lawyers',[])}
     core={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='core'}
+    eligible_support = eligible_support_ids(package,strategy)
     targets={}
     def add(path,value,problem,evidence):
         targets[path]={'current_value':value,'problem':problem,'source_evidence':evidence}
@@ -80,16 +82,16 @@ def repair_targets(package, strategy, proposal):
             from core.role_evidence import matter_names_person
             matter=register.get(support.get('matter_id'),{})
             quote=literal_quote(support.get('source_quote'))
-            if support.get('matter_id') not in core or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS) or not matter_names_person(candidate.get('name'), matter):
+            if support.get('matter_id') not in eligible_support or not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS) or not matter_names_person(candidate.get('name'), matter):
                 invalid_support.append(support.get('matter_id'))
         support_ids=[s.get('matter_id') for s in candidate.get('supporting_matters',[])]
         if invalid_support or len(support_ids)!=len(set(support_ids)) or (candidate.get('recommendation')=='present' and not support_ids):
-            add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and duplicates, then reconcile the bio, category and recommendation with actual evidence. This flags generated claims, not invalid source matters.',{'person':person,'selected_matters':[m for mid,m in register.items() if mid in core]})
+            add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and duplicates, then reconcile the bio, category and recommendation with actual evidence. This flags generated claims, not invalid source matters.',{'person':person,'eligible_source_matters':[m for mid,m in register.items() if mid in eligible_support],'dispositions':strategy.get('matters',[])})
             continue
         for j,support in enumerate(candidate.get('supporting_matters',[])):
             matter=register.get(support.get('matter_id'),{})
             quote=literal_quote(support.get('source_quote'))
-            if support.get('matter_id') in core and (not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS)):
+            if support.get('matter_id') in eligible_support and (not _norm(quote) or not any(_norm(quote) in _norm(matter.get(f)) for f in SOURCE_FIELDS)):
                 add(f'candidates/{i}/supporting_matters/{j}/source_quote',quote,'Quote must substantiate this person’s stated role in this matter.',{'person':person,'claimed_role':support.get('personal_role'),'matter':matter})
             if not str(support.get('personal_role','')).strip():add(f'candidates/{i}/supporting_matters/{j}/personal_role','','Missing personal role; do not upgrade membership to leadership.',{'person':person,'matter':matter})
         for field in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
@@ -132,6 +134,13 @@ def repair_targets(package, strategy, proposal):
         add(path,value,problem,evidence)
         targets[path].setdefault('privacy_matter_ids',[])
         if finding['matter_id'] not in targets[path]['privacy_matter_ids']:targets[path]['privacy_matter_ids'].append(finding['matter_id'])
+    case_faults=case_errors(package,strategy,proposal) if proposal.get('version') == 'editorial-development-v3' else []
+    if any('comparaciones de reservas' in e for e in case_faults):
+        add('comparisons',proposal.get('comparisons',[]),'Append missing reserve comparisons; preserve existing pairs and text.',{'package':package,'strategy':strategy})
+    if any('comparación visible' in e for e in case_faults) and proposal.get('comparisons'):
+        add('comparisons/0/audit_required',False,'Expose the closest borderline comparison in the Audit; retain its source-backed tradeoff.',{'package':package,'strategy':strategy})
+    if any('comparaciones de reservas' not in e and 'comparación visible' not in e for e in case_faults):
+        add('case_plan',proposal.get('case_plan',{}),'Repair the shared source-bound case plan and all documented additional-leader assessments; preserve sources, selection and public prose.',{'package':package,'strategy':strategy})
     return targets
 
 def apply_corrections(proposal, targets, repair, allow_unchanged=False):
@@ -142,11 +151,17 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
             raise ValueError('Repair attempted an invalid or repeated generated field')
         value=fix.get('value')
         if isinstance(targets[path]['current_value'],dict):
-            if not isinstance(value,dict) or len(path.split('/'))!=2 or not path.startswith('candidates/'):
+            if not isinstance(value,dict) or (path!='case_plan' and (len(path.split('/'))!=2 or not path.startswith('candidates/'))):
                 raise ValueError('Invalid candidate correction')
-            value=Candidate.model_validate(value).model_dump()
-            if value['name']!=targets[path]['current_value']['name']:
+            value=(EditorialCase if path=='case_plan' else Candidate).model_validate(value).model_dump()
+            if path!='case_plan' and value['name']!=targets[path]['current_value']['name']:
                 raise ValueError('Repair cannot change candidate identity')
+        elif path=='comparisons' and isinstance(value,list):
+            value=[Comparison.model_validate(item).model_dump() for item in value]
+            original=[Comparison.model_validate(item).model_dump() for item in targets[path]['current_value']]
+            if value[:len(original)]!=original:raise ValueError('Repair cannot rewrite existing comparisons while appending missing pairs')
+        elif isinstance(value,bool) and isinstance(targets[path]['current_value'],bool):
+            pass
         elif not isinstance(value,str):
             raise ValueError('Invalid text correction')
         if not allow_unchanged and value == targets[path]['current_value']:
@@ -170,21 +185,24 @@ def repair_development(state, proposal, targets):
     shapes=[]
     for kind,paths in (
         (str,[p for p,t in targets.items() if isinstance(t['current_value'],str)]),
-        (Candidate,[p for p,t in targets.items() if isinstance(t['current_value'],dict)])):
+        (bool,[p for p,t in targets.items() if isinstance(t['current_value'],bool)]),
+        (Candidate,[p for p,t in targets.items() if isinstance(t['current_value'],dict) and p!='case_plan']),
+        (EditorialCase,[p for p in targets if p=='case_plan']),
+        (list[Comparison],[p for p in targets if p=='comparisons'])):
         if paths:
-            shapes.append(create_model('EditorialTextCorrection' if kind is str else 'EditorialCandidateCorrection',
+            shapes.append(create_model('EditorialCorrection'+str(len(shapes)),
                 path=(Literal[tuple(paths)],...),value=(kind,...),reason=(str,...)))
     correction=Union[tuple(shapes)] if len(shapes)>1 else shapes[0]
     schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
     # Semantic targets share the same complete evidence. Send it once, not once
     # per generated path; distinct target-specific evidence remains untouched.
     shared=None;payload_targets=copy.deepcopy(targets)
-    for target in payload_targets.values():
+    for target_path,target in payload_targets.items():
         evidence=target.get('source_evidence')
         if isinstance(evidence,dict) and set(evidence)=={'package','strategy'} and isinstance(evidence['package'].get('matters'),list):
             # Public prose is grounded in the selected portfolio. Reserve
             # sources and old generated proposals are not evidence for it.
-            selected={d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
+            selected=eligible_support_ids(evidence['package'],state['strategy']) if target_path=='comparisons' else {d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
             package=role_payload({'package':evidence['package']},'development')['package']
             package['matters']=[m for m in package.get('matters',[]) if m.get('id') in selected]
             strategy={**evidence['strategy'],'matters':[d for d in evidence['strategy'].get('matters',[]) if d.get('matter_id') in selected]}
@@ -283,6 +301,7 @@ def repair_rejected_development(state, proposal, defects):
     defects=dev_defects
     source_package=role_payload({'package':state['package']},'development')['package']
     allowed={key:value for key,value in proposal.items() if isinstance(value,str) and key!='version'}
+    if isinstance(proposal.get('case_plan'),dict):allowed['case_plan']=proposal['case_plan']
     for i,item in enumerate(proposal.get('matters',[])):
         allowed[f'matters/{i}/text']=item.get('text','')
         allowed[f'matters/{i}/completion_status']=item.get('completion_status','')
@@ -455,3 +474,5 @@ def repair_letter(state):
             'letter_repair_report':{'corrected_fields':sorted(seen | set(condensed_fields)),
                                     'condensation_requested':needs_condensation,'condensed_fields':condensed_fields,
                                     'unresolved':result.get('unresolved',[])}}
+
+TASK += " The shared case_plan is internal, source-bound and common to both documents. Preserve its decisions through prose repairs. Reserve disposition does not erase a personally attributed mandate. Never demote a candidate merely because a supporting source is reserved. Do not change roster or add a public biography for an additional internal leader. Preserve every validated comparison and explain only genuinely missing evidence."

@@ -97,9 +97,12 @@ def public_privacy_findings(package, strategy, proposal):
     fields.update({f'candidates/{i}/submission_bio':c.get('submission_bio','')
                    for i,c in enumerate(proposal.get('candidates',[]))})
     core={d['matter_id'] for d in strategy.get('matters',[]) if d.get('disposition')=='core'}
+    # Personal evidence can also come from a pertinent reserve. Its public
+    # quantitative footprint needs exactly the same privacy postcondition.
+    tracked=core | {s.get('matter_id') for c in proposal.get('candidates',[]) for s in c.get('supporting_matters',[])}
     result=[]
     for matter in package.get('matters',[]):
-        if matter.get('id') not in core:continue
+        if matter.get('id') not in tracked:continue
         if not (matter.get('publication_route')=='E' or matter.get('resolved_publication_status') in ('confidential','confirmation_required')
                 or matter.get('publish_status') in ('confidential','non_publishable','confirmation_required')):continue
         source='\n'.join(str(matter.get(k) or '') for k in ('source_excerpt','rawNotes','summary','notes','description','value','completionDate','otherInfo'))
