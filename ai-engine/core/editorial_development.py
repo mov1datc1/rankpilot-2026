@@ -10,7 +10,8 @@ import copy
 from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
-DEVELOPMENT_VERSION = 'editorial-development-v2'
+DEVELOPMENT_VERSION = 'editorial-development-v3'
+from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, additional_leaders, case_errors, prepare_case
 
 class SupportingMatter(BaseModel):
     matter_id: str
@@ -38,12 +39,14 @@ class MatterDraft(BaseModel):
     decisive_source_quotes: list[str] = Field(description='Internal evidence only: copy exact contiguous source spans covering decisive outcomes, contribution, scale and personal roles. Never anonymize, add square-bracket substitutions, translate, add a final period or complete a source fragment. These quotes are not exported as public prose and do not claim independent verification.')
 
 class Comparison(BaseModel):
+    audit_required: bool = Field(default=True, description="True for a material borderline tradeoff the client must see; false for a clearly weaker reserve assessed internally. Keep the Audit concise, not a dump of every comparison.")
     selected_id: str
     alternative_id: str
     incremental_contribution: str
     tradeoff: str
 
 class Development(BaseModel):
+    case_plan: EditorialCase
     filing_recommendation: str
     positioning: str
     target: str
@@ -65,12 +68,14 @@ NARRATIVE DEPTH & BREADTH INVARIANT: Develop each matter according to available 
 For each candidate, reason from status/seniority, quality and number of personally attributed matters, personal role, leadership, specialization, external evidence, verified current ranking and proposed category, in that order. Assess individual ranking eligibility strictly within the submission's target practice area. Do not confuse multidisciplinary deal support with practice specialization. A lawyer whose primary specialization is another practice area (such as Tax, Labour, or Dispute Resolution) who assists on matters in the target practice area is NOT eligible for an individual ranking in the target practice area; their recommendation must be 'do_not_present' for individual ranking in this practice area (suggested_ranking: 'Not proposed in this practice area'), with category_rationale explaining that their involvement represents multidisciplinary support rather than core practice specialization. Only dedicated practitioners of the target practice area may be assessed for individual rankings in that practice area. Supporting quotes must be contiguous in the named matter's source fields, including leadPartner/teamMembers. Do not upgrade a team member to leader. A biography cannot substitute for matter-linked evidence. Assess every supplied lawyer; recommend present, develop or do_not_present. If evidence is insufficient, state a precise gap/action in the INTERNAL fields; the public bio must still accurately convey any supported relevant work. A partner cannot be proposed as an associate. Never assert an unverified current ranking. Propose a reasoned candidacy/category when supported; distinguish a target from a prediction. Do not put evidence gaps or internal recommendations in B9. Public B9/B10/C2 must speak as the firm: never say 'submitted evidence', 'this evidence supports', 'without asserting a ranking', 'no verified ranking', 'not a prediction' or describe what the source establishes. Keep those caveats in internal fields. In C2 make a direct, grounded request for coverage.
 PRACTICE LEADERSHIP & DEPARTMENT HEADS: Use confirmed department heads in filing_details['heads'] or departmentHeads. Public B9 must state a supported practice leadership role; describe partner status only if the roster or substantive source separately confirms it. Never insert names or titles from an example or another firm.
 Write developed, source-grounded English B9 bios. For multiple personally attributed mandates, explain distinct legal contributions without a generic one-line label. In public B9/B10/C2 remove confidential client and counterparty identities and identifying combinations of case-specific amounts, percentages, workforce, proceedings, facilities and geography. Preserve that exact evidence in E. Describe the legal work, difficulty and personal contribution meaningfully in neutral terms. A name omitted from public prose does not anonymize a distinctive quantitative footprint. A bio-only client name needs confirmed publication permission in the canonical register.
-Write B10 (budget 500 to 1,000 words; do not abbreviate or artificially compress) and C2 in English: articulate the practice's evidenced identity, national footprint, client scale, and strategic differentiation using ONLY the supplied source facts. B10 must NOT be a mere sequential listing of matters.
+Write B10 (maximum 1,000 words, no minimum; allocate depth according to the available distinctive evidence) and C2 in English: articulate the practice's evidenced identity, national footprint, client scale, and strategic differentiation using ONLY the supplied source facts. B10 must NOT be a mere sequential listing of matters.
 B10 OPENING: Start with the strongest differentiator actually established by this portfolio. Develop the relevant capabilities proportionately to their evidence, including contentious, transactional, regulatory and preventive work when documented. Never presume a firm is premier counsel, handles hundreds of proceedings, has multi-billion projects or performs cross-border transactions from its practice-area label. Preserve public privacy constraints even when scale is strategically useful; precise private case metrics remain in E.
 C2 FIRM ADVOCACY: Make a direct grounded case for coverage, distinct from B10. Organize around evidenced strengths such as scale, complexity, personal leadership and depth. Benchmark peers only when actual supplied external evidence permits that comparison; no mandatory pillar justifies invention. Do not use timid stock petitions, unsupported market standing or internal research-scope disclaimers. Keep qualifications and evidence gaps in the internal Audit.
 Use a concise English category or target label in suggested_ranking, and put its qualifications in the internal rationale/action. Other INTERNAL fields in Spanish: executive recommendation, positioning, reasonable target with its limitations, main strength/vulnerability, hero comparison, eight-field individual strategy. In hero_rationale and executive_assessment, state explicit selection criteria and comparative weighting between the Hero candidate and its primary alternative, explaining why the Hero matter is selected while acknowledging the comparative strengths of the runner-up mandate. No unsupported band forecasts or numerical scores.
 Compare the weakest selected mandates with the strongest reserves using their incremental evidentiary contribution to this particular candidacy, including support for individuals and missing capabilities. Provide concrete selected/alternative ID pairs, tradeoffs and why the selected contribution wins; do not use a generic 'avoid dilution' explanation. At least one comparison if both core and reserves exist. Do not change the validated selection; clearly flag a decision needing reconsideration instead of silently changing it.
 For each matter supply decisive verbatim source quotes as a preservation checklist. Include documented outcomes when present, not just general context. These are source claims, never permission to exaggerate. All IDs and names must exactly match supplied records. No UI status, approval declarations or pipeline terminology in client-facing prose.'''
+
+TASK += " SHARED EDITORIAL CASE: First form case_plan version editorial-case-v1 from original evidence and the validated strategy. Both the Submission and Audit execute this SAME plan. Each institutional proposition must explain a specific evidenced distinction and how B10 demonstrates it and C2 argues for coverage. Return source-bound evidence for each; never a mere service list. Evaluate EVERY additional_leader supplied in source_obligations internally, preserving their exact matter IDs and deciding what actual missing information would change. These internal evaluations do not add public B9 profiles or infer seniority. Cover every reserve once INTERNALLY in comparisons against its closest relevant selected alternative. Mark audit_required only for material borderline decisions that merit the client’s attention (at least one when reserves exist); the other comparisons remain internal. Order the closest decisions first, considering capability redundancy, available outcomes and support for individual candidates, especially at the selection boundary. Do not satisfy this by comparing every reserve only with the hero. If the validated selection needs reconsideration, explain the specific tradeoff without silently altering membership. Candidate support may use personally attributed pertinent CORE OR RESERVE matters: reserve status never erases evidence, but excluded/off-practice work cannot establish individual eligibility. Do not ask for a role, result or contribution already present in those sources. The case_plan is internal and must never expose its source quotations in public prose. No additional model role, quota, ranking prediction or source alteration is authorised by this contract."
 
 # Narrow metadiscourse patterns: legal evidence and audits can be the work itself.
 # Never remove these words globally or rewrite a factual claim with a regex.
@@ -218,6 +223,7 @@ def development_errors(package, strategy, proposal):
                   for f in public_privacy_findings(package,strategy,proposal))
     register={m['id']:m for m in package.get('matters', [])}
     core={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='core'}
+    eligible_support = eligible_support_ids(package, strategy)
     reserves={d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'}
     drafts=proposal.get('matters',[])
     ids=[m.get('matter_id') for m in drafts]
@@ -274,7 +280,7 @@ def development_errors(package, strategy, proposal):
                     if line not in support_candidates:
                         support_candidates.append(line)
             found_support=any(any(_norm(c) in _norm(matter.get(f)) for f in fields) for c in support_candidates)
-            if item.get('matter_id') not in core or not found_support:
+            if item.get('matter_id') not in eligible_support or not found_support:
                 errors.append(f"Atribución sin evidencia literal del asunto: {candidate.get('name')}")
             from core.role_evidence import matter_names_person
             if not matter_names_person(candidate.get('name'), matter):
@@ -289,6 +295,8 @@ def development_errors(package, strategy, proposal):
         if item.get('selected_id') not in core or item.get('alternative_id') not in reserves:
             errors.append('Comparación con una identidad o disposición incorrecta.')
         if not item.get('incremental_contribution') or not item.get('tradeoff'):errors.append('Comparación sin contribución incremental y contrapartida.')
+    if proposal.get('version') == DEVELOPMENT_VERSION:
+        errors.extend(case_errors(package, strategy, proposal))
     return errors
 
 
@@ -297,7 +305,7 @@ def development_contract(package, strategy):
     reserves=tuple(d['matter_id'] for d in strategy['matters'] if d['disposition']=='reserve')
     names=tuple(l.get('name') or l.get('fullName') for l in package.get('lawyers',[]))
     if not core:raise ValueError('Editorial development requires a selected portfolio')
-    support=create_model('RegisteredSupport',__base__=SupportingMatter,matter_id=(Literal[core],...))
+    support=create_model('RegisteredSupport',__base__=SupportingMatter,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
     candidate=create_model('RegisteredCandidate',__base__=Candidate,name=(Literal[names] if names else str,...),supporting_matters=(list[support],...))
     draft=create_model('RegisteredDraft',__base__=MatterDraft,matter_id=(Literal[core],...))
     comparison=create_model('RegisteredComparison',__base__=Comparison,selected_id=(Literal[core],...),alternative_id=(Literal[reserves] if reserves else str,...))
@@ -380,7 +388,7 @@ def develop(state):
         targets=repair_targets(state['package'],state['strategy'],bound)
         if targets:
             return repair_development(state,bound,targets)
-    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[])})
+    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)

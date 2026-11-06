@@ -172,7 +172,7 @@ class TargetedRepairTests(unittest.TestCase):
         package['matters'][0]['optimizedText']='Generated false claim'
         proposal=copy.deepcopy(DEV);proposal['candidates'][0]['supporting_matters'][0]['source_quote']='Wrong generated quote'
         target=repair_targets(package,STRATEGY,proposal)['candidates/0']
-        self.assertNotIn('optimizedText',target['source_evidence']['selected_matters'][0])
+        self.assertNotIn('optimizedText',target['source_evidence']['eligible_source_matters'][0])
         self.assertEqual(package['matters'][0]['optimizedText'],'Generated false claim')
 
     def test_audit_voice_is_detected_and_repaired_locally(self):

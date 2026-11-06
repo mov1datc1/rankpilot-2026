@@ -83,7 +83,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
   return reviewInputHash({policy:'role-deliverables-v5-unified-chronological',stage,source,
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v6-consistency'}:{}),
-    ...(stage !== 'strategy' ? {strategy:state.strategy} : {}),
+    ...(stage !== 'strategy' ? {strategy:state.strategy,case_contract:'shared-editorial-case-v1'} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter} : {}),
   });
