@@ -32,6 +32,16 @@ class ExecutionQuoteContractTests(unittest.TestCase):
         p,s,v,l=self.setup_case();schema=execution_verdict_contract(p,s,v,l,Verdict);r=self.response(p,s,v,l)
         r['case_checks']['argument:0:b10']['artifact_quote']=v['c2']
         with self.assertRaises(ValidationError):schema.model_validate(r)
+    def test_python_mode_dump_keeps_literal_quotes_in_saved_proofs(self):
+        p,s,v,l=self.setup_case();schema=execution_verdict_contract(p,s,v,l,Verdict)
+        response=self.response(p,s,v,l)
+        parsed=schema.model_validate(response).model_dump()
+        projected=project_execution_checks(parsed)
+        for check in projected['case_checks']:
+            expected=response['case_checks'][check['obligation_id']]['artifact_quote']
+            self.assertEqual(check['artifact_quote'],expected)
+            self.assertEqual(type(check['artifact_quote']),str)
+        self.assertEqual(execution_defects(p,s,v,l,projected['case_checks']),[])
     def test_formatting_is_not_factual_normalisation(self):
         p,s,v,l=self.setup_case();r=project_execution_checks(self.response(p,s,v,l));r['case_checks'][0]['artifact_quote']='Different factual words'
         with self.assertRaisesRegex(ValueError,'expected field'):execution_defects(p,s,v,l,r['case_checks'])

@@ -18,6 +18,7 @@ from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from core.graph import app as graph_app 
+from core.review_graph import review_graph as editorial_review_graph
 from langchain_core.messages import HumanMessage
 from agents.nodes import writer_node
 from utils.docx_generator import generate_docx_report
