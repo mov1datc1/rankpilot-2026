@@ -110,7 +110,15 @@ export function anonymizeConfidentialClients(text: string, confClientNames: stri
       // Keep the supplied role while anonymizing the entity without inventing a relationship.
       const employment = new RegExp(`((?:general legal director|legal director|general counsel|chief legal officer|in-house counsel)\\s+(?:of|at|for)\\s+)${esc}${trail}`, 'gi');
       res = res.replace(employment, '$1a company');
-      res = res.replace(reg, 'a confidential client');
+      res = res.replace(reg, (match, offset: number, whole: string) => {
+        const before=whole.slice(Math.max(0,offset-100),offset);
+        const after=whole.slice(offset+match.length);
+        // The name's presence in the confidential register is not proof of
+        // the relationship described by this particular biography sentence.
+        const explicitClient=/(?:the (?:firm|team) (?:advis(?:e[sd]?|ing)|represent(?:s|ed|ing)?)|clients? such as)\s+$/i.test(before)
+          || /^\s+(?:retained|engaged|instructed|appointed)\s+(?:us|the (?:firm|team))\b/i.test(after);
+        return explicitClient ? 'a confidential client' : 'a confidential entity';
+      });
     }
   }
 
@@ -242,7 +250,7 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     const proposed = (candidacy?.recommendation === 'present' && !isTaxOrOffPractice) ? candidacy.suggested_ranking : (candidacy || isTaxOrOffPractice) ? '' : person.suggestedRank || person.suggestedRanking || person.suggested_ranking || person.suggested_rank || '';
     // Preserve the source proposal in the record/Audit; never print an
     // associate candidacy alongside an explicitly declared partner role.
-    const suggestedRank = isPartner === true && /associate/i.test(proposed) ? '' : proposed;
+    const suggestedRank = /^(?:category pending|categor[ií]a pendiente)$/i.test(String(proposed).trim()) || isPartner === true && /associate/i.test(proposed) ? '' : proposed;
     const deptHeads = chambersData?.departmentHeads || chambersData?.department?.department_heads || chambersData?.filing_details?.heads || [];
     const isDeptHead = deptHeads.some((h: any) => isSameLawyer(person.name, h.name || h));
     const sourceBio = String(candidacy?.submission_bio || person.comments || person.bio || '');

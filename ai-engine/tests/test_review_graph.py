@@ -50,7 +50,7 @@ class ReviewGraphTests(unittest.TestCase):
             result=strategy if role=='strategist' else development(package) if role=='development' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[], 'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]})
             if role=='editor' and 'acceptance' not in result:
                 result={**result,'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]}
-            if role=='editor' and state.get('development',{}).get('version')=='editorial-development-v3':
+            if role=='editor' and state.get('development',{}).get('version') in ('editorial-development-v3','editorial-development-v4'):
                 from core.editorial_case import obligations
                 result={**result,'case_checks':[{'obligation_id':o['id'],'status':'met','artifact_quote':state['development'][o['field']],'source_quote':source.get('rawNotes') or source.get('source_excerpt'),'reason':'Synthetic reviewer executes source-backed field'} for o in obligations(package,state['strategy'],state['development']) for source in o['sources'][:1]]}
             return result, state.get('trace',[])+[{'role':role}]

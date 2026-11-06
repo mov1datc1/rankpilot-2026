@@ -10,7 +10,8 @@ import copy
 from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
-DEVELOPMENT_VERSION = 'editorial-development-v3'
+DEVELOPMENT_VERSION = 'editorial-development-v4'
+from core.candidate_evidence import ProfileCoverage, profile_errors, category_error
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, additional_leaders, case_errors, prepare_case
 
 class SupportingMatter(BaseModel):
@@ -24,6 +25,8 @@ class Candidate(BaseModel):
     current_ranking: str
     suggested_ranking: str
     category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
+    category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category.')
+    profile_coverage: list[ProfileCoverage] = Field(default_factory=list)
     why_candidate: str
     supporting_matters: list[SupportingMatter]
     external_evidence: str
@@ -262,8 +265,11 @@ def development_errors(package, strategy, proposal):
             errors.append(f"Categoría incompatible con cargo confirmado: {candidate.get('name')}")
         for field in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio'):
             if not str(candidate.get(field,'')).strip():errors.append(f"Falta {field}: {candidate.get('name')}")
-        if candidate.get('recommendation')=='present' and _norm(candidate.get('suggested_ranking')) in ('individual ranking candidate','candidate','candidato individual','ranking candidate'):
-            errors.append(f"Falta una categoría razonada o una brecha explícita: {candidate.get('name')}")
+        category_problem=category_error(candidate) if proposal.get('version')==DEVELOPMENT_VERSION else None
+        if category_problem:
+            errors.append(category_problem+': '+str(candidate.get('name')))
+        if proposal.get('version')==DEVELOPMENT_VERSION:
+            errors.extend('Perfil B9: '+str(candidate.get('name'))+': '+e for e in profile_errors(person,candidate))
         support=candidate.get('supporting_matters',[])
         support_ids=[item.get('matter_id') for item in support]
         if len(support_ids)!=len(set(support_ids)):
@@ -295,7 +301,7 @@ def development_errors(package, strategy, proposal):
         if item.get('selected_id') not in core or item.get('alternative_id') not in reserves:
             errors.append('Comparación con una identidad o disposición incorrecta.')
         if not item.get('incremental_contribution') or not item.get('tradeoff'):errors.append('Comparación sin contribución incremental y contrapartida.')
-    if proposal.get('version') == DEVELOPMENT_VERSION:
+    if proposal.get('version') in ('editorial-development-v3', DEVELOPMENT_VERSION):
         errors.extend(case_errors(package, strategy, proposal))
     return errors
 
@@ -401,3 +407,5 @@ def develop(state):
         for c in proposal.get('candidates', []):
             if 'submission_bio' in c: c['submission_bio'] = sanitize_narrative_voice(c['submission_bio'])
     return {'development':proposal,'errors':errors,'trace':trace,'development_validated':not errors}
+
+TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Return one profile_coverage decision for EVERY unit of this candidate, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."

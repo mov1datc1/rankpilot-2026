@@ -1,9 +1,9 @@
 import { draftSourceHash, stableHash } from './contracts';
 import { createHash } from 'node:crypto';
 
-export const DEVELOPMENT_VERSION = 'editorial-development-v3';
-/** v1 saved proposals remain reviewable; v2 adds source-bound legal reasoning. */
-export const supportedDevelopment = (value:any) => ['editorial-development-v1', 'editorial-development-v2', DEVELOPMENT_VERSION].includes(value?.version);
+export const DEVELOPMENT_VERSION = 'editorial-development-v4';
+/** Historical proposals remain readable; v4 adds source profile accountability. */
+export const supportedDevelopment = (value:any) => ['editorial-development-v1', 'editorial-development-v2', 'editorial-development-v3', DEVELOPMENT_VERSION].includes(value?.version);
 const hash=(text:string)=>createHash('sha256').update(JSON.stringify(text)).digest('hex');
 
 /** Apply generated proposals without changing the source roster or evidence.
