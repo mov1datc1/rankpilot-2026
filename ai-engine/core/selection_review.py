@@ -7,6 +7,7 @@ from utils.review_policy import APPLICATION_RULES, bind_application_rule
 
 
 SELECTION_REASONING = '''Separate source facts from editorial decisions and application constraints. The application permits at most 20 core matters; that maximum and remaining capacity are configuration, not facts that need a client-source quotation. Capacity alone never establishes legal merit or requires filling a slot. Evaluate the entire current decision, including legal_understanding, before alleging an omission: do not report as absent work or deliverables it already describes. Distinguish a conditional recommendation to strengthen evidence from a factual assertion that the existing evidence does not exist. A reserve can have concrete deliverables and still contribute less differentiated legal work than selected matters. Optional missing outcomes, values, dates or permission do not alone require exclusion when the documented work and confidential route support delivery.'''
+SELECTION_REASONING += ''' For a concrete false comparative premise (unique, distinct or incremental capability), use evidence_kind=portfolio_comparison and comparison_reference for the OTHER original matter. Quote that other matter's actual source in source_quote and THIS questioned decision's exact comparative premise in decision_quote. Do not use a peer source to challenge this matter's standalone facts, attribute a peer outcome to it, or ask for your preferred ordering. For an own-source factual error use evidence_kind=source and comparison_reference=null. Application_rule and supported also require comparison_reference=null. Every comparative rejection still needs an explicit bound source for the questioned decision itself.'''
 
 
 def bind_decision_quote(value, decision):
@@ -45,6 +46,33 @@ def bind_selection_review_quote(value, matter):
     return ''
 
 
+COMPARATIVE_PREMISE=re.compile(r'\b(?:incremental|distinct|unique|differentiated|compared|than|additional|overlap|duplicates?|relative|stronger|weaker|less|more|comparativ[aeo]|diferenciad[oa]|distint[oa]|adicional)\b',re.I)
+
+
+def resolve_declared_comparison(check, target_ref, refs, decisions):
+    """Recover an explicit Mxx proof address, never infer a comparative fact.
+
+    Legacy diagnostics lacked a comparison type. Their own explanation may
+    already identify the peer. Rebind that address only when both original
+    sources, the target premise and the uniquely quoted peer are unambiguous.
+    Ordinary source errors and unlabeled foreign quotations remain invalid.
+    """
+    if check.get('evidence_kind')!='source' or check.get('comparison_reference') or check.get('rule_id') or check.get('rule_quote'):
+        return
+    target=refs[target_ref];decision=decisions.get(target['id'],{})
+    if (not COMPARATIVE_PREMISE.search(check.get('decision_quote',''))
+        or not bind_decision_quote(check.get('decision_quote'),decision)
+        or not bind_quote(decision.get('source_quote',''),target)
+        or bind_selection_review_quote(check.get('source_quote'),target)):
+        return
+    declared=set(re.findall(r'\bM\d{2,}\b',check.get('explanation','').upper()))-{target_ref}
+    matches=[ref for ref,m in refs.items() if ref!=target_ref and m['id'] in decisions
+             and bind_selection_review_quote(check.get('source_quote'),m)]
+    if len(matches)==1 and matches[0] in declared:
+        check.update(evidence_kind='portfolio_comparison',comparison_reference=matches[0],
+                     evidence_kind_original='source',comparison_reference_recovered=True)
+
+
 def can_repair_selection(state):
     """Permit a new evidenced failure, never loop on an unchanged failed matter."""
     if state.get('selection_review_unavailable') or state.get('selection_diagnostic_invalid') or state.get('selection_review_attempts', 0) >= 3 or state.get('selection_repair_attempts', 0) >= 2:
@@ -75,7 +103,8 @@ class DecisionCheck(BaseModel):
     explanation: str = Field(description='Brief evidence-based reason; identify a concrete false premise or omitted decisive evidence, not a stylistic preference.')
     source_quote: str = Field(description='For source-based repair_required, one contiguous original source quote proving the error. Empty for application_rule and supported.')
     decision_quote: str = Field(default='', description='For repair_required, exact contiguous words from THIS decision rationale, legal_understanding or disposition that contain the false premise. For an omission, quote the affected rationale and first check the entire decision. Never translate or reconstruct a quotation. Empty for supported.')
-    evidence_kind: Literal['source', 'application_rule'] = Field(default='source', description='Source is original client evidence. Application_rule is only an error applying a supplied application rule to this same matter; never use it to establish legal facts, outcomes, amounts or industry.')
+    evidence_kind: Literal['source', 'application_rule', 'portfolio_comparison'] = Field(default='source', description='Source tests this matter own facts. Portfolio_comparison tests an explicit relative/incremental premise against another identified original matter, never assigns its facts to this matter. Application_rule tests only a supplied application constraint.')
+    comparison_reference: str | None = Field(default=None, description='Only for portfolio_comparison: the exact Mxx reference of the OTHER matter whose original source_quote challenges this decision comparative premise. Null for source, application_rule and supported.')
     rule_id: Literal['restricted_confidential_delivery'] | None = None
     rule_quote: str = Field(default='', description='For application_rule only: exact statement from application_rules. source_quote must be empty. Never quote serialized application metadata as original source evidence.')
 
@@ -84,8 +113,10 @@ def review_selection(state, invoke):
     matters = state['package']['matters']
     refs = {f'M{i+1:02d}': m for i, m in enumerate(matters)}
     reverse = {m['id']: ref for ref, m in refs.items()}
+    check_contract=create_model('ReferencedDecisionCheck',__base__=DecisionCheck,
+                                comparison_reference=(Literal[tuple(refs)] | None,None))
     checks = create_model('EveryDecisionReview', __config__=ConfigDict(extra='forbid'),
-                          **{ref: (DecisionCheck, ...) for ref in refs})
+                          **{ref: (check_contract, ...) for ref in refs})
     schema = create_model('SelectionReview', checks=(checks, ...))
     proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test EVERY selection decision, including reserves and exclusions, against the original source, not merely against its quote. Return a check for every reference. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
         {'scope': {k: state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
@@ -106,10 +137,20 @@ def review_selection(state, invoke):
     for ref, check in result['checks'].items():
         if check['status'] == 'repair_required':
             matter = refs[ref]
+            resolve_declared_comparison(check,ref,refs,decisions)
             if check['evidence_kind'] == 'application_rule':
-                quote = '' if check['source_quote'] else bind_application_rule(check['rule_id'], check['rule_quote'], matter, state['package'])
+                quote = '' if check['source_quote'] or check['comparison_reference'] else bind_application_rule(check['rule_id'], check['rule_quote'], matter, state['package'])
+            elif check['evidence_kind']=='portfolio_comparison':
+                other=refs.get(check['comparison_reference'])
+                decision=decisions.get(matter['id'],{})
+                comparative=bool(COMPARATIVE_PREMISE.search(check['decision_quote']))
+                target_bound=bind_quote(decision.get('source_quote',''),matter)
+                quote=bind_selection_review_quote(check['source_quote'],other) if (
+                    other and other['id']!=matter['id'] and other['id'] in decisions
+                    and comparative and target_bound and not check['rule_id'] and not check['rule_quote']) else ''
+                if quote:check['comparison_matter_id']=other['id']
             else:
-                quote = '' if check['rule_id'] or check['rule_quote'] else bind_selection_review_quote(check['source_quote'], matter)
+                quote = '' if check['rule_id'] or check['rule_quote'] or check['comparison_reference'] else bind_selection_review_quote(check['source_quote'], matter)
             decision_quote = bind_decision_quote(check['decision_quote'], decisions.get(matter['id'], {}))
             check['evidence_bound'] = bool(quote and decision_quote)
             if not quote or not decision_quote:
@@ -167,6 +208,8 @@ def repair_selection(state, invoke):
          'portfolio_constraints':{'core_limit':20,'unchanged_core_count':len(unchanged_core),'correction_core_capacity':capacity,'hero_matter_id':previous.get('hero_matter_id')},
          'unchanged_core_context':unchanged_core,
          'failed_checks':failed,'sources':[register[mid] for mid in ids],
+         'comparison_sources':[register[mid] for mid in dict.fromkeys(
+             c.get('comparison_matter_id') for c in failed.values() if c.get('evidence_kind')=='portfolio_comparison') if mid in register],
          'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
     # Validate even when an alternate caller bypasses invoke_role's schema gate.
     result=schema.model_validate(result).model_dump()

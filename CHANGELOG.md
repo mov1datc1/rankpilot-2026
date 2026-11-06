@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.30] — 2026-11-06 — Explicit comparison evidence in selection
+
+- Bind comparative selection findings to the target's own source and exact comparative premise plus an explicitly referenced peer's original source. Keep ordinary foreign factual quotations invalid.
+- Recover only a unique peer address already declared in legacy diagnostics, avoiding a paid diagnostic replay for that address. Bounded correction receives both sources and can edit only the rejected decision.
+- 524 Python tests, 486 Node passes/one skip, TypeScript and production build pass. Captured-verdict replay uses no model calls and keeps the selection rejected pending correction. See `docs/reviews/2026-11-06-selection-comparison-contract-v1-0-30.md`.
+
 ## [1.0.29] — 2026-11-06 — Faithful biography and output-quote binding
 
 - Remove post-generation partner/head rewrites from the Python evidence binder and Word curator. Verify confirmed headship through a separate source-bound B9 obligation.
