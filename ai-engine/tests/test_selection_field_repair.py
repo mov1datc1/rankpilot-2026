@@ -15,7 +15,7 @@ class SelectionFieldRepairTests(unittest.TestCase):
     def test_rounded_amount_is_rejected_and_located_without_changing_source(self):
         state=self.state();before=copy.deepcopy(state);result=selection_gate(state)
         self.assertFalse(result['selection_validated'])
-        self.assertEqual(result['selection_feedback']['failed_checks']['m1']['field_path'],'rationale')
+        self.assertEqual(result['selection_feedback']['failed_checks']['m1']['field_paths'],['rationale'])
         self.assertTrue(can_repair_selection({**state,**result}))
         self.assertEqual(state,before)
     def test_patch_can_change_only_rationale_and_keeps_other_decisions(self):
@@ -25,7 +25,7 @@ class SelectionFieldRepairTests(unittest.TestCase):
         def invoke(s,role,schema,instruction,payload):
             self.assertEqual([m['id'] for m in payload['sources']],['m1'])
             self.assertNotIn('disposition',schema.model_fields)
-            return {'corrections':[{'matter_id':'m1','rationale':'Core for constitutional relief; stated value US$2,345,678.00.'}]},[]
+            return {'corrections':[{'matter_id':'m1','field_path':'rationale','text':'Core for constitutional relief; stated value US$2,345,678.00.'}]},[]
         fixed=repair_selection(state,invoke)
         self.assertTrue(selection_gate({**state,**fixed})['selection_validated'])
         expected=copy.deepcopy(before['strategy']);expected['matters'][0]['rationale']=fixed['strategy']['matters'][0]['rationale']
@@ -35,7 +35,7 @@ class SelectionFieldRepairTests(unittest.TestCase):
         state=self.state();calls=[]
         def invoke(s,role,*args):
             calls.append(role)
-            return {'corrections':[{'matter_id':'m1','rationale':DECISION['rationale']}]},[]
+            return {'corrections':[{'matter_id':'m1','field_path':'rationale','text':DECISION['rationale']}]},[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({**state,'operation':'strategy'})
         self.assertEqual(calls,['strategist']);develop.assert_not_called()
@@ -45,11 +45,28 @@ class SelectionFieldRepairTests(unittest.TestCase):
         state=self.state();calls=[]
         def invoke(s,role,*args):
             calls.append(role)
-            if role=='strategist':return {'corrections':[{'matter_id':'m1','rationale':'Core for constitutional relief; value US$2,345,678.00.'}]},[]
+            if role=='strategist':return {'corrections':[{'matter_id':'m1','field_path':'rationale','text':'Core for constitutional relief; value US$2,345,678.00.'}]},[]
             return {'checks':{'M01':{'status':'supported','explanation':'Documented relief and exact source value.','source_quote':'','decision_quote':'','evidence_kind':'source','rule_id':None,'rule_quote':''}}},[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
             result=create_review_graph().invoke({**state,'operation':'strategy'})
         self.assertEqual(calls,['strategist','selection_reviewer']);self.assertTrue(result['selection_review_validated'])
+    def test_invalid_generated_quote_can_be_repaired_without_changing_rationale(self):
+        state=self.state();state['strategy']['matters'][0].update(rationale='Core for constitutional relief.',source_quote='Invented quotation about a different case.')
+        state.update(selection_gate(state));self.assertTrue(state['selection_field_repairable'])
+        fixed=repair_selection(state,lambda *args:({'corrections':[{'matter_id':'m1','field_path':'source_quote','text':SOURCE}]},[]))
+        self.assertEqual(fixed['strategy']['matters'][0]['rationale'],'Core for constitutional relief.')
+        self.assertTrue(selection_gate({**state,**fixed})['selection_validated'])
+
+    def test_undeclared_field_patch_cannot_change_strategy(self):
+        state=self.state();state.update(selection_gate(state))
+        fixed=repair_selection(state,lambda *args:({'corrections':[{'matter_id':'m1','field_path':'source_quote','text':SOURCE}]},[]))
+        self.assertEqual(fixed['strategy'],state['strategy']);self.assertFalse(fixed['selection_validated'])
+
+    def test_own_supplementary_source_number_is_not_an_invention(self):
+        state=self.state();state['package']['matters'][0]['otherInfo']='The documented exposure was USD 7654321.'
+        state['strategy']['matters'][0]['rationale']='Constitutional relief on exposure USD 7654321.'
+        self.assertTrue(selection_gate(state)['selection_validated'])
+
     def test_structural_failure_does_not_buy_numeric_repair(self):
         state=self.state();state['strategy']['matters'][0]['disposition']='reserve'
         result=selection_gate(state)

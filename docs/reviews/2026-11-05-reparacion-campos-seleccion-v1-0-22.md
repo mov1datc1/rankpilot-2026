@@ -7,3 +7,5 @@ El grafo ahora localiza los defectos numéricos o de moneda de una justificació
 Las reparaciones comparten un máximo de dos con la recuperación semántica y conservan el corte ante un fallo repetido en el mismo asunto, revisión no disponible o diagnóstico inválido. Los fallos estructurales o de citas mantienen su rechazo. No se aumenta el presupuesto ni se reinicia el intento fallido. El hash de selección cambia para impedir reutilizar una validación del contrato anterior.
 
 Validación: 486 pruebas Python aprobadas, incluidas seis de reparación localizada, conservación de decisiones, revisión independiente y corte de repetición. La aceptación autónoma de esta versión sigue pendiente. No se publican fuentes, importes privados ni identificadores de expedientes.
+
+Publicación: PR #2, merge `52795ec2c10bc3d310ea97c9cdb31a5445965fb7`; motor y worker LIVE, frontend de producción READY y health coincidente. La prueba nueva terminó antes de redactar: el selector propuso 21 asuntos core. No alcanzó la nueva reparación de campos ni produjo otra pareja Word. Se preservó el intento sin reactivarlo; la corrección del contrato de capacidad se documenta en v1.0.23.

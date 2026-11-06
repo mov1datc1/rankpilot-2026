@@ -382,7 +382,7 @@ def strategist(state):
         payload['previous_failed_selection'] = {'errors': feedback.get('errors', []),
             'decisions': [{**d, 'matter_id': reverse.get(d.get('matter_id'), 'UNKNOWN')} for d in feedback.get('strategy', {}).get('matters', [])]}
     proposal,trace=invoke_role(state,'strategist',schema, SELECTION_REASONING +
-        'First reconstruct each mandate in legal_understanding: asset or transaction, legal problem, work performed, result versus pending relief, and practice nexus. A legal procedure or client sector is not the practice classification. Then return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Assign every input matter ID exactly once to core, reserve or excluded. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Hero may be null only with an evidence-based explanation in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
+        'First reconstruct each mandate in legal_understanding: asset or transaction, legal problem, work performed, result versus pending relief, and practice nexus. A legal procedure or client sector is not the practice classification. Then return one required decision for EACH supplied M reference. References are assigned by the application and identify distinct registered matters; never merge or invent references. Copy one contiguous quote ONLY from that reference, not from adjacent matters. Previous failed selection is diagnostic output, never source evidence: correct its reported omissions or mixed quotes. Set priority for comparative ordering (1 strongest), not a quality score. Order core matters by comparative editorial contribution, strongest first; put reserves and exclusions afterwards. Return an interpretation for every registered reference. Choose the selected portfolio ONLY in core_references (maximum 20), ordered strongest first with the Hero first. For every decision supply non_core_disposition as its reserve/excluded fallback, used only if that reference is outside core_references. Prefer relevant evidenced mandates; never use client name as a shortcut. Each rationale needs a verbatim quote from that matter source. At most 20 core matters for this Chambers review. Flag missing evidence. Choose the hero from the strongest source-backed core mandate, including confidential matters: confidentiality controls placement, not editorial strength. Respect preferred_hero_id if supported. Leave core_references empty only when no mandate is source-backed and explain why in the thesis. Compare marginal contribution of borderline core and reserve matters: legal complexity, outcome, role, sector diversity and redundancy, not just monetary size. Do not fill a quota. Do not fabricate a minimum matter count.',payload)
     strategy = project_selection(proposal, schema, references, state['package']['matters'])
     # Keep the comparative order supplied by the strategist, with the validated
     # hero first. Both exports project this exact order; the renderer never ranks.
@@ -402,7 +402,7 @@ def selection_gate(state):
     hero=state['strategy'].get('hero_matter_id')
     if hero and hero not in core:errors.append('Hero must belong to the selected portfolio.')
     for d in decisions:
-        m=source.get(d['matter_id'],{});text=' '.join(str(m.get(k) or '') for k in NARRATIVE_SOURCE_FIELDS)
+        m=source.get(d['matter_id'],{});text=' '.join(str(m.get(k) or '') for k in (*NARRATIVE_SOURCE_FIELDS,'otherInfo'))
         quote=d.get('source_quote','').strip()
         # A clipped literal clause may end in a period instead of the source comma.
         # Preserve every internal word, number and punctuation mark; require token boundaries.
@@ -428,7 +428,11 @@ def selection_gate(state):
                             supported = True
                             break
                 if supported: break
-        if not supported:errors.append(f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial.")
+        if not supported:
+            message=f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial."
+            errors.append(message)
+            field_failures[d['matter_id']]={'status':'repair_required','field_paths':['source_quote'],
+                'decision_quote':quote,'errors':[message]}
         rationale=d.get('rationale','')
         rationale_errors=[]
         # Projection expands transport references into registered client labels.
@@ -449,10 +453,11 @@ def selection_gate(state):
                 if material_unsupported:
                     errors.append(issue['message']);rationale_errors.append(issue['message'])
         if rationale_errors:
-            field_failures[d['matter_id']]={'status':'repair_required','field_path':'rationale',
-                'decision_quote':d.get('rationale',''),'errors':rationale_errors}
+            failure=field_failures.setdefault(d['matter_id'],{'status':'repair_required','field_paths':[],
+                'decision_quote':d.get('rationale',''),'errors':[]})
+            failure['field_paths'].append('rationale');failure['errors'].extend(rationale_errors)
     result={'errors':errors,'selection_validated':not errors,'selection_field_repairable':False}
-    # Route only located generated-field defects. Structural/citation errors
+    # Route only located generated-field defects. Structural errors
     # still fail closed; never let a repair alter selection or weaken grounding.
     if errors and len(errors)==sum(len(v['errors']) for v in field_failures.values()):
         history=list(state.get('selection_failure_history',[]))+[sorted(field_failures)]

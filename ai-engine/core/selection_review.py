@@ -182,29 +182,34 @@ def repair_selection(state, invoke):
 
 
 def repair_selection_fields(state,invoke,previous,failed,register,ids):
-    """Correct located generated rationales; portfolio and sources stay locked."""
+    """Repair only located generated quotes/rationales, never portfolio or sources."""
     import copy
-    correction=create_model('SelectionRationaleCorrection',matter_id=(Literal[ids],...),rationale=(str,Field(min_length=1)))
-    schema=create_model('SelectionRationaleRepairs',corrections=(list[correction],Field(min_length=len(ids),max_length=len(ids))))
+    targets={(mid,path) for mid in ids for path in failed[mid]['field_paths']}
+    correction=create_model('SelectionFieldCorrection',matter_id=(Literal[ids],...),
+        field_path=(Literal['rationale','source_quote'],...),text=(str,Field(min_length=1)))
+    schema=create_model('SelectionFieldRepairs',corrections=(list[correction],Field(min_length=len(targets),max_length=len(targets))))
     result,trace=invoke(state,'strategist',schema,
-        'Correct ONLY the rejected internal rationales against their own original sources. '
-        'Preserve the legal selection justification and comparative contribution. '
-        'Do not round a source amount into an unqualified different number: use the original exact amount/currency '
-        'or omit a nonessential numeric restatement while retaining the legal rationale. '
-        'Never borrow figures from another matter. Never change disposition, hero, order, quotations or legal understanding. '
-        'Return each supplied matter ID exactly once. This correction is subject to the unchanged deterministic '
-        'grounding gate and an independent source-to-decision review; it grants no approval.',
+        'Correct ONLY the identified field_paths against their own original sources. '
+        'Preserve legal contribution and all unaffected fields. For source_quote copy one contiguous exact '
+        'passage of the SAME source that substantiates this decision; never fabricate or borrow evidence. '
+        'For rationale use exact source amounts/currencies or omit a nonessential numeric restatement '
+        'while retaining the legal rationale. Never change disposition, hero, order or legal understanding. '
+        'Return each identified matter_id/field_path pair exactly once. This correction requires the '
+        'unchanged grounding gate and independent source-to-decision review; it grants no approval.',
         {'failed_checks':failed,'sources':[register[mid] for mid in ids],
          'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
     result=schema.model_validate(result).model_dump()
-    patches={p['matter_id']:p['rationale'] for p in result['corrections']}
+    patches={(p['matter_id'],p['field_path']):p['text'] for p in result['corrections']}
     attempts=state.get('selection_repair_attempts',0)+1
-    if set(patches)!=set(ids) or len(patches)!=len(result['corrections']):
-        return {'strategy':previous,'errors':['La corrección debe cubrir cada justificación señalada una sola vez.'],
+    if set(patches)!=targets or len(patches)!=len(result['corrections']):
+        return {'strategy':previous,'errors':['La corrección debe cubrir cada campo señalado una sola vez.'],
                 'trace':trace,'selection_validated':False,'selection_repair_attempts':attempts}
     fixed=copy.deepcopy(previous)
     for decision in fixed['matters']:
-        if decision['matter_id'] in patches:decision['rationale']=patches[decision['matter_id']]
+        for path in ('rationale','source_quote'):
+            key=(decision['matter_id'],path)
+            if key in patches:decision[path]=patches[key]
     return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_attempts':attempts,
-            'selection_repair_report':{'corrected_matter_ids':list(ids),'field_paths':['rationale'],
+            'selection_repair_report':{'corrected_matter_ids':list(ids),
+                'field_paths':sorted({path for _,path in targets}),
                 'unaffected_decisions_preserved':True,'portfolio_preserved':True}}

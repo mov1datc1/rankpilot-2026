@@ -1,0 +1,11 @@
+# Selección con capacidad en el contrato — v1.0.23
+
+Una prueba fija de v1.0.22 propuso 21 asuntos principales, aunque la configuración permite hasta 20. El control determinista rechazó la selección antes de desarrollar o revisar los documentos. La respuesta del proveedor fue completa, con consumo conocido: no se atribuye esta parada a internet y no hubo otra pareja aprobada que comparar.
+
+La respuesta del selector ahora contiene una única lista ordenada `core_references` con `maxItems: 20` en el esquema enviado al proveedor. Su primer elemento define el Hero. Cada registro sigue teniendo una interpretación obligatoria y una disposición reserva/excluido aplicable cuando queda fuera de esa lista. La aplicación proyecta una sola decisión por registro y conserva el orden elegido. No recorta arbitrariamente una selección excesiva ni exige llenar veinte plazas.
+
+La validación posterior, la revisión semántica independiente y la comparación de contribuciones continúan siendo necesarias. Las decisiones guardadas conservan su formato canónico y la reparación semántica existente sigue sujeta a la capacidad global. El hash de selección cambia para evitar reutilizar contratos anteriores.
+
+Las citas generadas que no se vinculen con su fuente ahora comparten la reparación de campos localizada. Solo pueden cambiar los pares ID/campo señalados entre `source_quote` y `rationale`; fuentes, portafolio, Hero, orden e interpretación jurídica permanecen bloqueados. Se vuelve a aplicar el mismo control y luego la revisión independiente. Los números de la información suplementaria del propio asunto también cuentan como fuente; no se admiten cifras ajenas. No se amplían rondas ni presupuesto y se conserva el corte de repetición.
+
+Validación local: 491 pruebas Python, 474 contratos Node (uno omitido), TypeScript y compilación de producción aprobados. Incluyen capacidad en el esquema, referencias desconocidas/omitidas, selección menor al límite, Hero coherente, citas inventadas o mezcladas sin aprobación, corrección localizada y bloqueo de campos no autorizados. La aceptación autónoma y la comparación de la nueva pareja de documentos siguen pendientes. Las pruebas locales no certifican calidad editorial universal.
