@@ -316,7 +316,7 @@ export default function SubmissionStudio({
     practice_area: currentPracticeArea
   }, matters);
   const preparationBlocked=inputIssues.length>0 || !readiness.canOptimize;
-  const reviewAttemptStopped=Boolean(editorialJob?.pauseReason && !reviewIsStale(chambersData) && !studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
+  const reviewAttemptStopped=Boolean(editorialJob?.pauseReason && !editorialJob?.canResumeResidual && !reviewIsStale(chambersData) && !studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
   const resolvePreparationInputs=()=>{
     if(inputIssues.length){setReviewPending(true);setShowValidationWizard(true);}
     else setShowReadinessModal(true);
@@ -1197,7 +1197,7 @@ export default function SubmissionStudio({
             title={reviewAttemptStopped ? 'Este intento está detenido. Consulta los hallazgos y el Audit; esperar no lo reanudará.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Revisión detenida' : 'Revisar y generar'}</span>
+            <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Revisión detenida' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Revisar y generar'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
