@@ -1,4 +1,4 @@
-import { wordXmlText } from '@/lib/docx/xml-text';
+import { wordXmlText, wordTableProfiles } from '@/lib/docx/xml-text';
 import {editorialPreparationIssues} from '@/lib/audit/preparation-input';
 import { unrepairedGeneratedClaims } from '@/lib/editorial/repair-progress';
 import { bindGeneratedFindings, renderedSubmissionFindings } from '@/lib/editorial/artifact-findings';
@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
         const archive=await JSZip.loadAsync(buffer);
         const parts=Object.keys(archive.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
         const rendered=(await Promise.all(parts.map(async name=>`${name}: ${wordXmlText(await archive.files[name].async('string'))}`))).join('\n');
+        const renderedCandidateBios=wordTableProfiles(await archive.file('word/document.xml')!.async('string'),(data.editorial_development?.candidates || []).map((c:any)=>c.name));
         const priorFindings=previous.completed_review_input_hash===inputHash && !previous.final_review_stale ? previous.final_artifact_review?.judge?.defects || [] : [];
         const unrepaired=[...renderedSubmissionFindings(rendered,data.editorial_development,matters),...unrepairedGeneratedClaims([...(review.repair_feedback || []),...priorFindings],rendered,renderedAudit)];
         let finalReview:any;
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
         } else {
           const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
             method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
+            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit,rendered_candidate_bios:renderedCandidateBios},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
           });
           finalReview=await finalResponse.json();
           receivedTrace=finalReview.trace || null;

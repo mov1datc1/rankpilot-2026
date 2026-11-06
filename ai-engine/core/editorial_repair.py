@@ -77,6 +77,10 @@ def repair_targets(package, strategy, proposal):
         if not str(draft.get('text','')).strip():add(f'matters/{i}/text',draft.get('text',''),'Missing source-backed matter prose.',matter)
     for i,candidate in enumerate(proposal.get('candidates',[])):
         person=roster.get(_norm(candidate.get('name')), {})
+        from core.candidate_evidence import profile_units, profile_errors, category_error
+        if proposal.get('version')=='editorial-development-v4' and (profile_errors(person,candidate) or category_error(candidate)):
+            add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{'person':person,'profile_units':profile_units(person),'eligible_source_matters':[m for mid,m in register.items() if mid in eligible_support]})
+            continue
         invalid_support=[]
         for support in candidate.get('supporting_matters',[]):
             from core.role_evidence import matter_names_person
@@ -134,7 +138,7 @@ def repair_targets(package, strategy, proposal):
         add(path,value,problem,evidence)
         targets[path].setdefault('privacy_matter_ids',[])
         if finding['matter_id'] not in targets[path]['privacy_matter_ids']:targets[path]['privacy_matter_ids'].append(finding['matter_id'])
-    case_faults=case_errors(package,strategy,proposal) if proposal.get('version') == 'editorial-development-v3' else []
+    case_faults=case_errors(package,strategy,proposal) if proposal.get('version') in ('editorial-development-v3','editorial-development-v4') else []
     if any('comparaciones de reservas' in e for e in case_faults):
         add('comparisons',proposal.get('comparisons',[]),'Append missing reserve comparisons; preserve existing pairs and text.',{'package':package,'strategy':strategy})
     if any('comparación visible' in e for e in case_faults) and proposal.get('comparisons'):
@@ -153,7 +157,7 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         if isinstance(targets[path]['current_value'],dict):
             if not isinstance(value,dict) or (path!='case_plan' and (len(path.split('/'))!=2 or not path.startswith('candidates/'))):
                 raise ValueError('Invalid candidate correction')
-            value=(EditorialCase if path=='case_plan' else Candidate).model_validate(value).model_dump()
+            value=(EditorialCase if path=='case_plan' else Candidate).model_validate(value).model_dump(exclude_unset=True)
             if path!='case_plan' and value['name']!=targets[path]['current_value']['name']:
                 raise ValueError('Repair cannot change candidate identity')
         elif path=='comparisons' and isinstance(value,list):

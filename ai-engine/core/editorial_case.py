@@ -120,12 +120,25 @@ def obligations(package, strategy, proposal):
         sources=[register.get(e['matter_id'],{}) for e in argument.get('evidence',[])]
         for field in ('b10','c2'):
             add(f'argument:{i}:{field}',field,sources,'Execute the source strategy thesis: '+str(strategy.get('thesis',''))+'. '+argument['proposition']+' '+argument[field+'_contribution'])
+    def public_profile(candidate):
+        directory=str(package.get('directory') or '').casefold()
+        return not ('500' in directory) or (candidate.get('recommendation')=='present' and str(candidate.get('suggested_ranking') or '').casefold()!='category pending')
     for i,candidate in enumerate(proposal.get('candidates',[])):
         sources=[register.get(s['matter_id'],{}) for s in candidate.get('supporting_matters',[])]
-        if not sources: sources=[p for p in package.get('lawyers',[]) if identity(p.get('name'))==identity(candidate.get('name'))]
-        add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected.')
-        if candidate.get('recommendation')=='present':
+        sources += [p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))]
+        add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
+        if candidate.get('recommendation')=='present' and public_profile(candidate):
             add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
+    if proposal.get('version')=='editorial-development-v4':
+        from core.candidate_evidence import profile_units
+        for i,candidate in enumerate(proposal.get('candidates',[])):
+            if not public_profile(candidate):continue
+            person=next((p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
+            coverage={c.get('reference'):c for c in candidate.get('profile_coverage',[])}
+            for unit in profile_units(person):
+                decision=coverage.get(unit['reference'],{})
+                add(f'profile:{i}:{unit["reference"]}',f'candidates/{i}/submission_bio',[{'source_excerpt':unit['source_quote']}],
+                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
     for i,leader in enumerate(additional_leaders(package,strategy)):
         add(f'leader:{i}','leadership',[register[mid] for mid in leader['matter_ids']], 'Evaluate '+leader['name']+' internally; preserve documented work and request only genuinely absent seniority/profile facts. Do not invent a public bio.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):
@@ -150,6 +163,10 @@ def execution_output(package, proposal, letter, path):
             for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
         except (KeyError,IndexError,TypeError):value=''
         rendered=None if path.startswith('comparisons/') else package.get('rendered_artifact')
+        if rendered is not None and proposal.get('version')=='editorial-development-v4' and path.startswith('candidates/'):
+            try:name=proposal['candidates'][int(path.split('/')[1])]['name']
+            except (IndexError,KeyError,ValueError):name=''
+            value=(package.get('rendered_candidate_bios') or {}).get(name,'')
         if rendered is not None:value=re.sub(r'\*\*([^*]+)\*\*',r'\1',str(value))
     return unicodedata.normalize('NFC',str(value or '')),rendered
 
@@ -161,7 +178,7 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
     duplicated for every candidate. Status/reason remain independent judgments.
     A legal-looking quote from another field cannot satisfy this schema.
     """
-    if proposal.get('version')!='editorial-development-v3':return base
+    if proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):return base
     norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
     fields={};quote_types={}
     for obligation in obligations(package,strategy,proposal):
@@ -219,8 +236,9 @@ def execution_defects(package, strategy, proposal, letter, checks):
 def prepare_case(state):
     """Unpaid graph boundary: derive obligations before drafting either document."""
     package,strategy=state['package'],state['strategy']
+    from core.candidate_evidence import profile_units, CHAMBERS_CATEGORY_GUIDANCE
     eligible=support_ids(package,strategy)
-    return {'case_requirements':{'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
+    return {'case_requirements':{'category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
         'reserve_ids':[d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'],
