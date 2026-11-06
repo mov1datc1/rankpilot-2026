@@ -121,6 +121,8 @@ class ReviewState(TypedDict, total=False):
     selection_feedback: dict
     selection_validated: bool
     selection_repair_report: dict
+    selection_repair_attempts: int
+    selection_field_repairable: bool
     selection_review: dict
     selection_review_validated: bool
     selection_review_unavailable: bool
@@ -389,7 +391,7 @@ def strategist(state):
     return {'strategy':strategy,'trace':trace,'errors':[]}
 
 def selection_gate(state):
-    source={m['id']:m for m in state['package']['matters']}; decisions=state['strategy']['matters'];ids=[m['matter_id'] for m in decisions];errors=[]
+    source={m['id']:m for m in state['package']['matters']}; decisions=state['strategy']['matters'];ids=[m['matter_id'] for m in decisions];errors=[];field_failures={}
     if len(ids)!=len(set(ids)) or set(ids)!=set(source):
         missing = [str(m.get('client') or m.get('name') or matter_id) for matter_id, m in source.items() if matter_id not in ids]
         detail = f" Faltan decisiones para: {', '.join(missing)}." if missing else ''
@@ -428,6 +430,7 @@ def selection_gate(state):
                 if supported: break
         if not supported:errors.append(f"No se pudo vincular una cita de la selección con la fuente de {m.get('client') or d['matter_id']}. Reintenta la revisión editorial.")
         rationale=d.get('rationale','')
+        rationale_errors=[]
         # Projection expands transport references into registered client labels.
         # Numbers inside an exact referenced label are identity, not a new claim
         # about this mandate. Never exempt numbers outside that exact span.
@@ -437,15 +440,26 @@ def selection_gate(state):
                 rationale=re.sub(r'(?<!\w)'+re.escape(label)+r'(?!\w)','[registered entity]',rationale)
         for issue in factual_issues(text + ' ' + str(m.get('value') or ''), rationale, d['matter_id']):
             if issue['code'] == 'UNSUPPORTED_CURRENCY':
-                errors.append(issue['message'])
+                errors.append(issue['message']);rationale_errors.append(issue['message'])
             elif issue['code'] == 'UNSUPPORTED_NUMBER':
                 from decimal import Decimal
                 from core.grounding import numbers
                 unsupported = numbers(rationale, include_written=True) - numbers(text + ' ' + str(m.get('value') or ''), include_written=True)
                 material_unsupported = {n for n in unsupported if Decimal(n) >= 100}
                 if material_unsupported:
-                    errors.append(issue['message'])
-    return {'errors':errors,'selection_validated':not errors}
+                    errors.append(issue['message']);rationale_errors.append(issue['message'])
+        if rationale_errors:
+            field_failures[d['matter_id']]={'status':'repair_required','field_path':'rationale',
+                'decision_quote':d.get('rationale',''),'errors':rationale_errors}
+    result={'errors':errors,'selection_validated':not errors,'selection_field_repairable':False}
+    # Route only located generated-field defects. Structural/citation errors
+    # still fail closed; never let a repair alter selection or weaken grounding.
+    if errors and len(errors)==sum(len(v['errors']) for v in field_failures.values()):
+        history=list(state.get('selection_failure_history',[]))+[sorted(field_failures)]
+        result.update(selection_field_repairable=True,selection_failure_history=history,selection_review_validated=False,
+            selection_feedback={'strategy':state['strategy'],'errors':errors,
+                'semantic_rejection':True,'field_only':True,'failed_checks':field_failures})
+    return result
 
 
 def selection_review(state):
@@ -878,7 +892,11 @@ def create_review_graph():
     g.set_conditional_entry_point(entry, {n:n for n in ('register','case','development','writer','editor')})
     g.add_conditional_edges('register',lambda s:'release' if s['errors'] else 'strategy',{'release':'release','strategy':'strategy'})
     g.add_conditional_edges('strategy',lambda s:'release' if s.get('errors') else 'selection',{'release':'release','selection':'selection'})
-    g.add_conditional_edges('selection',lambda s:'release' if s['errors'] else 'selection_review',{'release':'release','selection_review':'selection_review'})
+    def after_selection(s):
+        if not s.get('errors'):return 'selection_review'
+        from core.selection_review import can_repair_selection
+        return 'strategy' if s.get('selection_field_repairable') and can_repair_selection(s) else 'release'
+    g.add_conditional_edges('selection',after_selection,{'strategy':'strategy','release':'release','selection_review':'selection_review'})
     def after_selection_review(s):
         if s.get('errors'):
             from core.selection_review import can_repair_selection, can_recheck_selection_diagnostic
