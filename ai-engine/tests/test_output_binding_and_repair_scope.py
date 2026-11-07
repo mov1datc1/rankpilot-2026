@@ -8,6 +8,35 @@ from test_editorial_development import PACKAGE,STRATEGY,DEV
 
 
 class OutputBindingAndRepairScopeTests(unittest.TestCase):
+    def test_one_scoped_binding_cleanup_keeps_all_other_fields_and_sources(self):
+        from test_editorial_execution import linked_case
+        from test_surgical_repair_postconditions import native_answer
+        p,s,good=linked_case();proposal=copy.deepcopy(good);proposal['candidates'][0]['submission_bio']='An earlier generic biography.'
+        first=copy.deepcopy(good['candidates'][0]);first['profile_coverage'][0]['public_quote']='An output paraphrase absent from the actual biography.'
+        target={'candidates/0':{'current_value':proposal['candidates'][0],'source_evidence':{'person':p['lawyers'][0]}}}
+        calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(payload)
+            answer=native_answer({'corrections':[{'path':'candidates/0','value':first if len(calls)==1 else good['candidates'][0],'reason':'Synchronize own evidence.'}],'unresolved':[]},payload['target_references'])
+            schema.model_validate(answer)
+            return answer,list(state.get('trace',[]))+[{'usage':{'total_tokens':10}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=repair_development({'package':p,'strategy':s},proposal,target)
+        self.assertEqual(len(calls),2);self.assertEqual(set(calls[1]['repair_targets']),{'candidates/0'})
+        self.assertEqual(result['development'],good);self.assertTrue(result['development_validated'])
+        self.assertEqual(result['repair_report']['surgical_retries'],1)
+        self.assertEqual(sum(t['usage']['total_tokens'] for t in result['trace']),20)
+
+    def test_ineffective_binding_cleanup_cannot_buy_a_third_call_or_approval(self):
+        from test_editorial_execution import linked_case
+        p,s,proposal=linked_case();bad=copy.deepcopy(proposal['candidates'][0]);bad['profile_coverage'][0]['public_quote']='An absent output paraphrase that does not prove the credential.'
+        targets={'candidates/0':{'current_value':proposal['candidates'][0],'source_evidence':{'person':p['lawyers'][0]}}}
+        with patch('core.review_graph.invoke_role',return_value=({'corrections':[{'path':'candidates/0','value':bad,'reason':'Ineffective metadata edit.'}],'unresolved':[]},[{'usage':{'total_tokens':10}}])) as model:
+            result=repair_development({'package':p,'strategy':s},proposal,targets)
+        self.assertEqual(model.call_count,2);self.assertFalse(result['development_validated'])
+        self.assertEqual(result['repair_report']['surgical_retries'],1)
+        self.assertNotIn('approved_artifact',result)
+
     def test_known_name_prefix_binds_only_its_actual_full_name_assertion(self):
         bio='Sofia Vega brings experience in workforce governance.'
         quote='Sofia brings experience in workforce governance.'

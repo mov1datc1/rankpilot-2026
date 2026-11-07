@@ -310,6 +310,7 @@ def repair_development(state, proposal, targets):
         fixed=apply_corrections(proposal,targets,repair,allow_unchanged=True)
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
+    fixed=bind_development(state['package'],fixed)
     def at(document,path):
         value=document
         for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
@@ -340,6 +341,26 @@ def repair_development(state, proposal, targets):
             retry_targets[path]['rejected_quotes']=list(dict.fromkeys(
                 retry_targets[path].get('rejected_quotes',[])+target.get('rejected_quotes',[])))
         else:retry_targets[path]=copy.deepcopy(target)
+    # A repaired candidate can still have a mismatched output proof. Give only
+    # that owned BIO/proof group the same one bounded cleanup, not the portfolio
+    # or every original repair target. Never broaden a BIO-only authorization.
+    from core.candidate_evidence import profile_errors,category_error
+    people={str(p.get('name') or p.get('fullName')):p for p in state['package'].get('lawyers',[])}
+    for i,candidate in enumerate(fixed.get('candidates',[])):
+        path=f'candidates/{i}'
+        profile=profile_errors(people.get(candidate.get('name'),{}),candidate)
+        personal=personal_case_errors(state['package'],candidate,state['strategy']) if fixed.get('execution_contract')==EXECUTION_CONTRACT else []
+        only_binding=(bool(profile or personal)
+            and all(e=='Credencial retenida ausente del B9 de esta persona.' for e in profile)
+            and all(e=='La contribución personal debe ejecutarse literalmente en el B9 de esta persona.' for e in personal))
+        if not owned(path) or not only_binding or category_error(candidate) or path not in local_targets:continue
+        target=copy.deepcopy(local_targets[path]);target['mutable_fields']=['submission_bio','profile_coverage','submission_case_coverage']
+        target['problem']='Synchronize only this BIO and its exact output proofs against its own original profile and personally attributed mandates. Retain every material career role and existing legal contribution, category, source unit and personal source binding. Copy each public_quote from the actual current BIO. If the BIO omits supplied material evidence, restore it faithfully; never pick an unrelated matching passage to excuse an omission. Report only an actually blocked authorized field as unresolved.'
+        child=path+'/submission_bio'
+        if child in retry_targets:
+            prior=retry_targets.pop(child);target['problem']+=' '+prior.get('problem','')
+            if prior.get('rejected_quotes'):target.update(rejected_quotes=prior['rejected_quotes'],rejected_quote_path=child)
+        retry_targets[path]=target
     for path,target in retry_targets.items():
         target['current_value']=at(fixed,path)
         if path.startswith('candidates/') and path.endswith('/submission_bio'):
