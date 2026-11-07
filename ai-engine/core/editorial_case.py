@@ -220,7 +220,22 @@ def execution_output(package, proposal, letter, path):
     return unicodedata.normalize('NFC',str(value or '')),rendered
 
 
-def execution_verdict_contract(package, strategy, proposal, letter, base):
+def execution_quote_catalog(package, strategy, proposal, letter):
+    """Own-field passage references; generated text and source facts never change."""
+    if proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):return {}
+    norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
+    catalog={}
+    for obligation in obligations(package,strategy,proposal):
+        path=obligation['field'];text,rendered=execution_output(package,proposal,letter,path)
+        options=list(dict.fromkeys(norm(p) for p in text.splitlines() if norm(p)))
+        if rendered is not None:options=[q for q in options if q in norm(rendered)]
+        if not options:
+            raise ValueError('review diagnostic not grounded: expected output field absent from exact artifact: '+path)
+        catalog[obligation['id']]={'P_'+sha256((path+'\0'+q).encode()).hexdigest()[:16]:q for q in options}
+    return catalog
+
+
+def execution_verdict_contract(package, strategy, proposal, letter, base, compact=False):
     """Model-facing proof keys and quotations are bound before generation.
 
     Quote enums are shared by output field; the full leadership letter is not
@@ -230,6 +245,7 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
     if proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):return base
     norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
     fields={};quote_types={}
+    catalog=execution_quote_catalog(package,strategy,proposal,letter) if compact else {}
     for obligation in obligations(package,strategy,proposal):
         path=obligation['field'];text,rendered=execution_output(package,proposal,letter,path)
         options=list(dict.fromkeys(norm(p) for p in text.splitlines() if norm(p)))
@@ -239,7 +255,12 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
         key=(path,tuple(options))
         if key not in quote_types:
             name='OutputQuote_'+sha256(path.encode()).hexdigest()[:12]
-            quote_types[key]=OutputQuote(name,{f'Q{i}':value for i,value in enumerate(options)})
+            if compact:
+                refs=catalog[obligation['id']]
+                quote_types[key]=OutputQuote(name,{f'Q{i}':ref for i,ref in enumerate(refs)})
+                quote_types[key].__doc__='Choose a passage ID after reading its complete text. This is a field-bound reference, not a semantic approval. Passage catalog: '+str(refs)
+            else:
+                quote_types[key]=OutputQuote(name,{f'Q{i}':value for i,value in enumerate(options)})
         source_type=str
         source_description='Contiguous exact original words from one of this obligation own sources.'
         if obligation.get('confirmed_input_name'):
@@ -248,19 +269,34 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
             source_description='Cite the exact name in this confirmed department-head entry. Its head function comes from the structured input field. Template headings, email labels and inferred titles are not source quotations. Independently judge whether the output preserves that function.'
         check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
             status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
-            artifact_quote=(quote_types[key],Field(description='Choose the exact passage in this obligation output field. Internal comparisons are not required in the Audit.')),
-            source_quote=(source_type,Field(description=source_description)),
-            reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning; appearance of words alone is not proof.')))
+            **{('artifact_ref' if compact else 'artifact_quote'):(quote_types[key],Field(description='Choose the passage in this obligation output field. Read its full text in the passage catalog before judging execution. Internal comparisons are not required in the Audit.'))},
+            source_quote=(source_type,Field(description=source_description+(' Copy a short decisive fragment, at most 360 characters.' if compact else ''),**({'max_length':360} if compact and source_type is str else {}))),
+            reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning in at most 40 words; appearance of words alone is not proof.',**({'max_length':400} if compact else {}))))
         fields[obligation['id']]=(check,...)
     checks=create_model('EveryCaseExecutionProof',__config__=ConfigDict(extra='forbid'),**fields)
     return create_model('BoundCaseVerdict',__base__=base,case_checks=(checks,...))
 
 
-def project_execution_checks(verdict):
+def project_execution_checks(verdict, quote_catalog=None):
+    """Resolve compact transport before the existing literal/source validation.
+
+    Never treat a reference as approval. Unknown, foreign-field or stale IDs
+    fail closed. Saved proofs retain full literal passages, not provider IDs.
+    """
     checks=verdict.get('case_checks')
     if not isinstance(checks,dict):return verdict
-    return {**verdict,'case_checks':[{'obligation_id':key,**value,'artifact_quote':str(value['artifact_quote']),
-        'source_quote':str(value.get('source_quote',''))} for key,value in checks.items()]}
+    projected=[]
+    for key,value in checks.items():
+        check=dict(value)
+        if 'artifact_ref' in check:
+            ref=str(check.pop('artifact_ref'))
+            allowed=(quote_catalog or {}).get(key,{})
+            if 'artifact_quote' in check or ref not in allowed:
+                raise ValueError('review diagnostic not grounded: unknown or foreign output passage reference: '+key)
+            check['artifact_quote']=allowed[ref]
+        projected.append({'obligation_id':key,**check,'artifact_quote':str(check['artifact_quote']),
+            'source_quote':str(check.get('source_quote',''))})
+    return {**verdict,'case_checks':projected}
 
 
 def execution_defects(package, strategy, proposal, letter, checks):
