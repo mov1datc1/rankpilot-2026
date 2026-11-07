@@ -1,5 +1,8 @@
 """Independent source-to-decision review before any selected matter is developed."""
 import re
+import hashlib
+import json
+import copy
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from core.editorial_development import bind_quote, literal_quote
@@ -101,7 +104,7 @@ def can_recheck_selection_diagnostic(state):
 
 class DecisionCheck(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    status: Literal['supported', 'repair_required']
+    status: Literal['supported', 'repair_required', 'advisory']
     explanation: str = Field(description='Brief evidence-based reason; identify a concrete false premise or omitted decisive evidence, not a stylistic preference.')
     source_quote: str = Field(description='For source-based repair_required, one contiguous original source quote proving the error. Empty for application_rule and supported.')
     decision_quote: str = Field(default='', description='For repair_required, exact contiguous words from THIS decision rationale, legal_understanding or disposition that contain the false premise. For an omission, quote the affected rationale and first check the entire decision. Never translate or reconstruct a quotation. Empty for supported.')
@@ -111,21 +114,53 @@ class DecisionCheck(BaseModel):
     rule_quote: str = Field(default='', description='For application_rule only: exact statement from application_rules. source_quote must be empty. Never quote serialized application metadata as original source evidence.')
     correction_dispositions: list[Literal['core','reserve','excluded']] = Field(default_factory=list, max_length=3,
         description='For a bound repair_required that requires changing disposition, all source-defensible dispositions that resolve this defect. Empty when prose/fact correction can suffice. Never prescribe a preferred ordering or fill a quota.')
+    review_dependencies: list[str] = Field(default_factory=list,
+        description='Other Mxx decisions whose source or disposition affects this check, including every peer used for a supported comparison. Empty for a standalone own-source decision.')
+
+
+def selection_proof_fingerprint(state, mid, check):
+    """Bind a passing check to its exact sources, decision and dependencies."""
+    package=state['package'];register={m['id']:m for m in package['matters']}
+    decisions={d['matter_id']:d for d in state['strategy']['matters']}
+    dependencies=set(check.get('review_dependencies',[]))
+    decision=decisions.get(mid,{})
+    # An undeclared comparative dependency is conservatively portfolio-wide.
+    if not dependencies and COMPARATIVE_PREMISE.search(str(decision.get('rationale',''))+' '+str(decision.get('legal_understanding',''))):
+        dependencies=set(register)-{mid}
+    payload={'contract':'selection-proof-v1','scope':{k:package.get(k) for k in
+             ('directory','practice_area','jurisdiction','delivery_policy','lawyers')},
+             'rules':APPLICATION_RULES,'thesis':state['strategy'].get('thesis'),
+             'hero':state['strategy'].get('hero_matter_id'),
+             'inputs':[(key,register.get(key),decisions.get(key)) for key in sorted(dependencies|{mid})]}
+    return hashlib.sha256(json.dumps(payload,sort_keys=True,ensure_ascii=False,default=str).encode()).hexdigest()
 
 
 def review_selection(state, invoke):
     matters = state['package']['matters']
     refs = {f'M{i+1:02d}': m for i, m in enumerate(matters)}
     reverse = {m['id']: ref for ref, m in refs.items()}
+    previous=state.get('selection_review_proofs',{})
+    reused={mid:copy.deepcopy(proof['check']) for mid,proof in previous.items()
+            if mid in reverse and proof.get('check',{}).get('status') in ('supported','advisory')
+            and proof.get('fingerprint')==selection_proof_fingerprint(state,mid,proof['check'])}
+    active={ref:m for ref,m in refs.items() if m['id'] not in reused}
+    if not active:
+        return {'selection_review':{'checks':reused},'selection_review_validated':True,
+                'selection_validated':True,'errors':[],'trace':[],
+                'selection_review_unavailable':False,'selection_diagnostic_invalid':False,
+                'selection_review_deferred':False,
+                'selection_review_reused_ids':list(reused)}
     check_contract=create_model('ReferencedDecisionCheck',__base__=DecisionCheck,
-                                comparison_reference=(Literal[tuple(refs)] | None,None))
+                                comparison_reference=(Literal[tuple(refs)] | None,None),
+                                review_dependencies=(list[Literal[tuple(refs)]],Field(default_factory=list)))
     checks = create_model('EveryDecisionReview', __config__=ConfigDict(extra='forbid'),
-                          **{ref: (check_contract, ...) for ref in refs})
+                          **{ref: (check_contract, ...) for ref in active})
     schema = create_model('SelectionReview', checks=(checks, ...))
-    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test EVERY selection decision, including reserves and exclusions, against the original source, not merely against its quote. Return a check for every reference. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. If the disposition itself contradicts the documented practice/client-side thesis or a supplied constraint, set correction_dispositions to ALL source-defensible dispositions resolving that precise defect; exclude the present disposition only when changing it is necessary. A textual disclaimer cannot cure a rejected inclusion decision. For ordinary factual/prose defects, supported decisions or a mere ordering preference, leave correction_dispositions empty. Missing optional evidence alone does not require demotion. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
+    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test every reference listed in review_targets, including reserves and exclusions, against the original source, not merely against its quote. Other matters are comparison context, not new review targets. Return only the required schema keys. Declare all review_dependencies for comparisons, including supported ones. Use advisory for internal follow-up on optional dates or unexplained amounts when the decision does not rely on their meaning and does not assert a false concept; preserve the uncertainty for the Audit without blocking selection. An omitted decisive amount underpinning selection, an invented economic meaning or a false outcome remains repair_required. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. If the disposition itself contradicts the documented practice/client-side thesis or a supplied constraint, set correction_dispositions to ALL source-defensible dispositions resolving that precise defect; exclude the present disposition only when changing it is necessary. A textual disclaimer cannot cure a rejected inclusion decision. For ordinary factual/prose defects, supported decisions or a mere ordering preference, leave correction_dispositions empty. Missing optional evidence alone does not require demotion. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
         {'scope': {k: state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
          'delivery_policy': state['package'].get('delivery_policy'),
          'application_rules': APPLICATION_RULES,
+         'review_targets':list(active),
          **({'previous_invalid_diagnostic': {'checks':state.get('selection_review',{}).get('checks',{}),
              'instruction':'Reassess the SAME unchanged decisions. Correct the diagnosis and its evidence type or quote; never invent a quotation or treat an application rule as a client fact. Recheck all decisions independently.'}}
             if state.get('selection_diagnostic_invalid') else {}),
@@ -165,11 +200,20 @@ def review_selection(state, invoke):
                 check['decision_quote'] = decision_quote
                 errors.append(f"Revisar la interpretación de {matter.get('client') or matter['id']}: {check['explanation']}")
     result['checks'] = {refs[ref]['id']: check for ref, check in result['checks'].items()}
+    for check in result['checks'].values():
+        check['review_dependencies']=[refs[ref]['id'] for ref in check.get('review_dependencies',[])]
+    result['checks']={**reused,**result['checks']}
+    proofs={mid:{'check':copy.deepcopy(check),'fingerprint':selection_proof_fingerprint(state,mid,check)}
+            for mid,check in result['checks'].items() if check['status']=='supported' or (
+                check['status']=='advisory' and bind_selection_review_quote(check.get('source_quote'),next(m for m in matters if m['id']==mid)))}
     failed = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}
     # Unbound diagnoses must not buy a correction or become a passing review.
     bound = diagnostics_bound
     history = list(state.get('selection_failure_history', [])) + [sorted(failed) if bound else []]
     return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':not diagnostics_bound, 'selection_diagnostic_invalid':not diagnostics_bound, 'selection_review_deferred':False,
+            'selection_review_proofs':proofs,'selection_review_reused_ids':list(reused),
+            'selection_advisories':[{**check,'matter_id':mid} for mid,check in result['checks'].items()
+                if check['status']=='advisory' and bind_selection_review_quote(check.get('source_quote'),next(m for m in matters if m['id']==mid))],
             'selection_diagnostic_rechecks':state.get('selection_diagnostic_rechecks',0)+int(bool(state.get('selection_diagnostic_invalid'))),
             'selection_failure_history': history,
             'selection_validated': not errors, 'errors': errors, 'trace': trace,

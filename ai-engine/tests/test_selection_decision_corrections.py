@@ -36,7 +36,7 @@ class SelectionDecisionCorrectionTests(unittest.TestCase):
             failed={'local','peer'} if attempt==1 else {'local'} if attempt==2 else set()
             return {'checks':{f'M{i+1:02d}':{'status':'repair_required' if m['id'] in failed else 'supported',
                 'explanation':'Concrete source interpretation needs correction.','source_quote':SOURCE if m['id'] in failed else '',
-                'decision_quote':'core' if m['id'] in failed else ''} for i,m in enumerate(state['package']['matters'])}},[]
+                'decision_quote':'core' if m['id'] in failed else ''} for i,m in enumerate(state['package']['matters']) if f'M{i+1:02d}' in payload['review_targets']}},[]
         with patch('core.review_graph.strategist',return_value={'strategy':state['strategy'],'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
             result=create_review_graph().invoke({'package':state['package'],'operation':'strategy'})
         self.assertTrue(result['selection_review_validated'])

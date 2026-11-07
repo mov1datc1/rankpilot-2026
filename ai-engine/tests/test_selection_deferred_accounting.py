@@ -40,7 +40,7 @@ class DeferredSelectionAccountingTests(unittest.TestCase):
             nonlocal real_reviews,deferred
             if role=='strategist':
                 events.append('repair')
-                decisions=payload['rejected_decisions']
+                decisions=[{**d,'rationale':d['rationale']+' Corrected interpretation.'} for d in payload['rejected_decisions']]
                 return {'core_corrections':[d for d in decisions if d['disposition']=='core'],
                         'other_corrections':[d for d in decisions if d['disposition']!='core'],'unresolved':[]},state.get('trace',[])
             if real_reviews==1 and not deferred:
@@ -49,7 +49,7 @@ class DeferredSelectionAccountingTests(unittest.TestCase):
             real_reviews+=1;events.append('review')
             bad_index=real_reviews-1 if real_reviews<3 else -1
             checks={f'M{i+1:02d}':{'status':'repair_required' if i==bad_index else 'supported',
-                'explanation':'Concrete source-grounded interpretation correction.','source_quote':SOURCE if i==bad_index else '', 'decision_quote':strategy['matters'][i]['rationale'] if i==bad_index else ''} for i in range(3)}
+                'explanation':'Concrete source-grounded interpretation correction.','source_quote':SOURCE if i==bad_index else '', 'decision_quote':strategy['matters'][i]['rationale'] if i==bad_index else ''} for i in range(3) if f'M{i+1:02d}' in payload['review_targets']}
             return {'checks':checks},state.get('trace',[])+[{'role':'selection_reviewer','usage':{'total_tokens':10}}]
         with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}) as select,patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             paused=run_editorial_stage('strategy',{'package':package})
