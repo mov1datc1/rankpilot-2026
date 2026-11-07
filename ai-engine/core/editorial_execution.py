@@ -21,7 +21,19 @@ class InstitutionalLink(BaseModel):
 def norm(value):
     return ' '.join(str(value or '').split())
 
-def personal_case_errors(package,candidate):
+def primary_lead_anchor(package,strategy,candidate):
+    """Use canonical priority among this person's source-confirmed lead mandates."""
+    from core.role_evidence import matter_names_person
+    register={m['id']:m for m in package.get('matters',[])}
+    if candidate.get('recommendation')!='present':return None
+    for decision in (strategy or {}).get('matters',[]):
+        matter=register.get(decision.get('matter_id'),{})
+        lead={k:matter.get(k) for k in ('leadPartner','lead_partner')}
+        if decision.get('disposition')=='core' and matter_names_person(candidate.get('name'),lead):
+            return decision['matter_id']
+    return None
+
+def personal_case_errors(package,candidate,strategy=None):
     from core.editorial_development import bind_quote
     from core.role_evidence import matter_names_person
     sources={m['id']:m for m in package.get('matters',[])}
@@ -39,6 +51,9 @@ def personal_case_errors(package,candidate):
         ids.append(mid);quotes.append(q)
     if len(set(ids))<required or len(ids)!=len(set(ids)) or len(quotes)!=len(set(quotes)):
         errors.append('El B9 propuesto requiere contribuciones distintas de sus asuntos atribuidos, no una biografía genérica.')
+    anchor=primary_lead_anchor(package,strategy,candidate)
+    if anchor and anchor not in ids:
+        errors.append('B9 debe ejecutar el mandato principal personalmente liderado según la prioridad canónica, no sustituirlo por asuntos secundarios.')
     return errors
 
 def institutional_errors(proposal):
@@ -57,11 +72,16 @@ def institutional_errors(proposal):
             errors.append('C2 debe argumentar la cobertura solicitada, no copiar el párrafo de B10.')
     return errors
 
-def execution_errors(package,proposal):
+def execution_errors(package,proposal,strategy=None):
     if proposal.get('execution_contract')!=EXECUTION_CONTRACT:return []
     errors=institutional_errors(proposal)
     for c in proposal.get('candidates',[]):
-        errors.extend('Caso personal B9: '+str(c.get('name'))+': '+e for e in personal_case_errors(package,c))
+        errors.extend('Caso personal B9: '+str(c.get('name'))+': '+e for e in personal_case_errors(package,c,strategy))
+    from core.contextual_financial_evidence import missing_contextual_amounts
+    register={m['id']:m for m in package.get('matters',[])}
+    for draft in proposal.get('matters',[]):
+        if missing_contextual_amounts(register.get(draft.get('matter_id'),{}),draft.get('text','')):
+            errors.append('Contexto financiero original omitido en E2: '+str(draft.get('matter_id')))
     errors.extend('Función departamental B9 ausente: '+proposal['candidates'][i]['name'] for i in missing_head_bios(package,proposal))
     return errors
 
