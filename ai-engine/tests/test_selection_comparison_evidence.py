@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 import copy
 import unittest
 from core.selection_review import review_selection, repair_selection, can_repair_selection
@@ -47,7 +48,7 @@ class ComparisonEvidenceTests(unittest.TestCase):
             self.assertEqual([m['id'] for m in payload['comparison_sources']],['b'])
             self.assertEqual([m['matter_id'] for m in payload['rejected_decisions']],['a'])
             corrected={**state['strategy']['matters'][0],'rationale':'Adds a documented strike-prevention result alongside the existing union litigation.'}
-            return {'core_corrections':[corrected],'other_corrections':[],'unresolved':[]},[]
+            return repair_answer(args[-1] if 'args' in locals() else payload,[corrected]),[]
         repaired=repair_selection({**state,**review},invoke)
         self.assertEqual(repaired['strategy']['matters'][1],before['strategy']['matters'][1])
         self.assertEqual(state,before)

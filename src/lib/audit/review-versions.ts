@@ -5,3 +5,6 @@ export const ARTIFACT_REVIEW_VERSION = 26;
 
 /** Current server requirements, also advertised to tabs open across deployments. */
 export const REVIEW_CONTRACT = {policy: REVIEW_POLICY_VERSION, renderer: RENDERER_VERSION, artifact: ARTIFACT_REVIEW_VERSION};
+
+/** Rebinds old paid diagnoses locally; never grants new provider attempts. */
+export const SELECTION_DIAGNOSTIC_CONTRACT = 'isolated-selection-diagnostics-v1';

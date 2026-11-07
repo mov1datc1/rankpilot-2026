@@ -6,7 +6,9 @@ import copy
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from core.editorial_development import bind_quote, literal_quote
-from utils.review_policy import APPLICATION_RULES, bind_application_rule
+from utils.review_policy import APPLICATION_RULES, bind_application_rule, EDITORIAL_RULES
+
+SELECTION_DIAGNOSTIC_CONTRACT = EDITORIAL_RULES.get('selection_diagnostic_contract', 'isolated-selection-diagnostics-v1')
 
 
 SELECTION_REASONING = '''Separate source facts from editorial decisions and application constraints. The application permits at most 20 core matters; that maximum and remaining capacity are configuration, not facts that need a client-source quotation. Capacity alone never establishes legal merit or requires filling a slot. Evaluate the entire current decision, including legal_understanding, before alleging an omission: do not report as absent work or deliverables it already describes. Distinguish a conditional recommendation to strengthen evidence from a factual assertion that the existing evidence does not exist. A reserve can have concrete deliverables and still contribute less differentiated legal work than selected matters. Optional missing outcomes, values, dates or permission do not alone require exclusion when the documented work and confidential route support delivery.'''
@@ -78,8 +80,14 @@ def resolve_declared_comparison(check, target_ref, refs, decisions):
 
 def can_repair_selection(state):
     """Permit new failures or a strict shrinking residual within the same cap."""
-    if state.get('selection_review_unavailable') or state.get('selection_diagnostic_invalid') or state.get('selection_review_attempts', 0) >= 3 or state.get('selection_repair_attempts', 0) >= 2:
+    if (state.get('selection_review_unavailable') or state.get('selection_review_attempts', 0) >= 3
+        or state.get('selection_repair_attempts', 0) >= 2 or _unknown_usage(state.get('trace',[]))):
         return False
+    # A partial verdict may repair ONLY independently bound findings. Invalid
+    # diagnoses stay pending and cannot confer release approval.
+    if state.get('selection_diagnostic_invalid'):
+        failed=state.get('selection_feedback',{}).get('failed_checks',{})
+        if not failed or not all(c.get('evidence_bound') is True for c in failed.values()):return False
     history = state.get('selection_failure_history', [])
     if not history or not history[-1]:
         return False
@@ -100,6 +108,44 @@ def can_recheck_selection_diagnostic(state):
             and state.get('selection_diagnostic_rechecks', 0) < 1
             and state.get('selection_review_attempts', 0) < 3
             and not any(unknown(trace) for trace in state.get('trace', [])))
+
+
+def _unknown_usage(trace):
+    if isinstance(trace,list):return any(_unknown_usage(c) for c in trace)
+    if not isinstance(trace,dict):return False
+    return (bool((trace.get('usage') or {}).get('unknown_calls'))
+        or trace.get('usage_status') in ('unknown','partial_unknown')
+        or any(_unknown_usage(c) for c in trace.get('calls',[])))
+
+
+def rebind_selection_diagnostics(state):
+    """Revalidate a paid historical diagnosis locally, without another review.
+
+    Sources/strategy/coverage must still match. This grants neither approval nor
+    new attempts; the durable job separately authorizes a one-time continuation.
+    """
+    if (not state.get('selection_diagnostic_invalid')
+        or state.get('selection_diagnostic_contract')==SELECTION_DIAGNOSTIC_CONTRACT
+        or _unknown_usage(state.get('trace',[]))):return None
+    matters=state['package']['matters'];refs={f'M{i+1:02d}':m for i,m in enumerate(matters)}
+    reverse={m['id']:ref for ref,m in refs.items()}
+    stored=state.get('selection_review',{}).get('checks',{})
+    if not any(c.get('status')=='repair_required' for c in stored.values()) or set(stored)!=set(reverse) or {d['matter_id'] for d in state.get('strategy',{}).get('matters',[])}!=set(reverse):return None
+    checks={}
+    try:
+        for mid,value in stored.items():
+            check={k:copy.deepcopy(v) for k,v in value.items() if k in DecisionCheck.model_fields}
+            deps=check.get('review_dependencies',[])
+            if any(dep not in reverse for dep in deps):return None
+            check['review_dependencies']=[reverse[dep] for dep in deps]
+            checks[reverse[mid]]=DecisionCheck.model_validate(check).model_dump()
+        before=copy.deepcopy(state.get('selection_failure_history',[]))
+        result=_bind_selection_verdict(state,{'checks':checks},refs,{},list(state.get('trace',[])),paid=False)
+        result['selection_rebind_report']={'contract':SELECTION_DIAGNOSTIC_CONTRACT,
+            'provider_calls':0,'reviews_preserved':state.get('selection_review_attempts',0),
+            'previous_failure_history':before}
+        return result
+    except (ValueError,KeyError,TypeError):return None
 
 
 class DecisionCheck(BaseModel):
@@ -146,10 +192,10 @@ def review_selection(state, invoke):
     active={ref:m for ref,m in refs.items() if m['id'] not in reused}
     if not active:
         return {'selection_review':{'checks':reused},'selection_review_validated':True,
-                'selection_validated':True,'errors':[],'trace':[],
+                'selection_validated':True,'errors':[],
                 'selection_review_unavailable':False,'selection_diagnostic_invalid':False,
                 'selection_review_deferred':False,
-                'selection_review_reused_ids':list(reused)}
+                'selection_review_reused_ids':list(reused),'trace':list(state.get('trace',[]))}
     check_contract=create_model('ReferencedDecisionCheck',__base__=DecisionCheck,
                                 comparison_reference=(Literal[tuple(refs)] | None,None),
                                 review_dependencies=(list[Literal[tuple(refs)]],Field(default_factory=list)))
@@ -170,6 +216,13 @@ def review_selection(state, invoke):
          'strategy': {**state['strategy'], 'matters': [{**d, 'matter_id': reverse[d['matter_id']]} for d in state['strategy']['matters']],
                       'hero_matter_id': reverse.get(state['strategy'].get('hero_matter_id'))}})
     result = schema.model_validate(proposal).model_dump()
+    return _bind_selection_verdict(state,result,refs,reused,trace)
+
+
+def _bind_selection_verdict(state,result,refs,reused,trace,paid=True):
+    """Bind each finding independently; never promote an invalid diagnosis."""
+    result = copy.deepcopy(result)
+    matters=state['package']['matters']
     errors = []
     diagnostics_bound = True
     decisions = {d['matter_id']: d for d in state['strategy']['matters']}
@@ -212,19 +265,32 @@ def review_selection(state, invoke):
     proofs={mid:{'check':copy.deepcopy(check),'fingerprint':selection_proof_fingerprint(state,mid,check)}
             for mid,check in result['checks'].items() if check['status']=='supported' or (
                 check['status']=='advisory' and bind_selection_review_quote(check.get('source_quote'),next(m for m in matters if m['id']==mid)))}
-    failed = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required'}
+    failed = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required' and c.get('evidence_bound') is True}
+    pending = {mid:c for mid,c in result['checks'].items() if c['status']=='repair_required' and c.get('evidence_bound') is not True}
+    for mid,check in failed.items():
+        if not check.get('correction_dispositions'):
+            decision=decisions.get(mid,{})
+            located=any(bind_decision_quote(check.get('decision_quote'),decision,fields=(field,))
+                for field in ('rationale','legal_understanding'))
+            # These two generated fields express one interpretation. Review and
+            # repair them together so the same rejected premise cannot survive
+            # in its neighbouring prose; source quote and selection stay locked.
+            check['field_paths']=[field for field in ('rationale','legal_understanding') if field in decision] if located else []
+    field_only=bool(failed) and all(c.get('field_paths') and not c.get('correction_dispositions') for c in failed.values())
     # Unbound diagnoses must not buy a correction or become a passing review.
-    bound = diagnostics_bound
-    history = list(state.get('selection_failure_history', [])) + [sorted(failed) if bound else []]
-    return {'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':not diagnostics_bound, 'selection_diagnostic_invalid':not diagnostics_bound, 'selection_review_deferred':False,
+    history = list(state.get('selection_failure_history', []))
+    if paid:history.append(sorted(failed))
+    elif history:history[-1]=sorted(failed)
+    else:history=[sorted(failed)]
+    return {'selection_diagnostic_contract':SELECTION_DIAGNOSTIC_CONTRACT,'selection_review': result, 'selection_review_validated': not errors, 'selection_review_unavailable':not diagnostics_bound and not bool(failed), 'selection_diagnostic_invalid':not diagnostics_bound, 'selection_review_deferred':False,
             'selection_review_proofs':proofs,'selection_review_reused_ids':list(reused),
             'selection_advisories':[{**check,'matter_id':mid} for mid,check in result['checks'].items()
                 if check['status']=='advisory' and bind_selection_review_quote(check.get('source_quote'),next(m for m in matters if m['id']==mid))],
-            'selection_diagnostic_rechecks':state.get('selection_diagnostic_rechecks',0)+int(bool(state.get('selection_diagnostic_invalid'))),
+            'selection_diagnostic_rechecks':state.get('selection_diagnostic_rechecks',0)+int(paid and bool(state.get('selection_diagnostic_invalid'))),
             'selection_failure_history': history,
             'selection_validated': not errors, 'errors': errors, 'trace': trace,
-            'selection_review_attempts': state.get('selection_review_attempts', 0) + 1,
-            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection': bool(errors) and diagnostics_bound,'failed_checks':failed}}
+            'selection_review_attempts': state.get('selection_review_attempts', 0) + int(paid),
+            'selection_feedback': {'strategy': state['strategy'], 'errors': errors, 'semantic_rejection':bool(failed),'field_only':field_only,'failed_checks':failed,'pending_diagnostics':pending}}
 
 
 def repair_selection(state, invoke):
@@ -280,6 +346,11 @@ def repair_selection(state, invoke):
     if any(d['disposition'] not in allowed[d['matter_id']] for d in proposed):
         return {'strategy':previous,'errors':['La corrección debe resolver la decisión señalada, además de su redacción.'],
                 'trace':trace,'selection_validated':False,'selection_repair_attempts':state.get('selection_repair_attempts',0)+1}
+    originals={d['matter_id']:d for d in previous['matters']}
+    if any(not failed[mid].get('correction_dispositions')
+        and patch.get('source_quote')!=originals[mid].get('source_quote') for mid,patch in corrections.items()):
+        return {'strategy':previous,'errors':['La reparación de redacción debe conservar su cita de fuente.'],
+                'trace':trace,'selection_validated':False,'selection_repair_attempts':state.get('selection_repair_attempts',0)+1}
     fixed['matters']=[corrections.get(d['matter_id'],d) for d in previous['matters']]
     core=[d['matter_id'] for d in fixed['matters'] if d['disposition']=='core']
     if fixed.get('hero_matter_id') not in core:
@@ -291,18 +362,24 @@ def repair_selection_fields(state,invoke,previous,failed,register,ids):
     """Repair only located generated quotes/rationales, never portfolio or sources."""
     import copy
     targets={(mid,path) for mid in ids for path in failed[mid]['field_paths']}
-    correction=create_model('SelectionFieldCorrection',matter_id=(Literal[ids],...),
-        field_path=(Literal['rationale','source_quote'],...),text=(str,Field(min_length=1)))
-    schema=create_model('SelectionFieldRepairs',corrections=(list[correction],Field(min_length=len(targets),max_length=len(targets))))
+    correction=create_model('SelectionFieldCorrection',__config__=ConfigDict(extra='forbid'),matter_id=(Literal[ids],...),
+        field_path=(Literal[tuple(sorted({path for _,path in targets}))],...),text=(str,Field(min_length=1)))
+    schema=create_model('SelectionFieldRepairs',__config__=ConfigDict(extra='forbid'),corrections=(list[correction],Field(min_length=len(targets),max_length=len(targets))))
     result,trace=invoke(state,'strategist',schema,
         'Correct ONLY the identified field_paths against their own original sources. '
         'Preserve legal contribution and all unaffected fields. For source_quote copy one contiguous exact '
         'passage of the SAME source that substantiates this decision; never fabricate or borrow evidence. '
         'For rationale use exact source amounts/currencies or omit a nonessential numeric restatement '
-        'while retaining the legal rationale. Never change disposition, hero, order or legal understanding. '
+        'while retaining the legal rationale. For legal_understanding correct only the located factual/prose defect. '
+        'For a comparative defect use comparison_sources only as context, never as this matter facts. '
+        'Omit an optional disputed sector descriptor without choosing between sources or discarding legal work. '
+        'Preserve legal work, independently supported results, original amounts/currencies and unresolved source qualifications. '
+        'Never change disposition, hero, order, source evidence or any unlisted field. '
         'Return each identified matter_id/field_path pair exactly once. This correction requires the '
         'unchanged grounding gate and independent source-to-decision review; it grants no approval.',
-        {'failed_checks':failed,'sources':[register[mid] for mid in ids],
+        {'delivery_policy':state['package'].get('delivery_policy'),'application_rules':APPLICATION_RULES,
+         'failed_checks':failed,'sources':[register[mid] for mid in ids],
+         'comparison_sources':[register[mid] for mid in dict.fromkeys(c.get('comparison_matter_id') for c in failed.values()) if mid in register],
          'rejected_decisions':[d for d in previous['matters'] if d['matter_id'] in ids]})
     result=schema.model_validate(result).model_dump()
     patches={(p['matter_id'],p['field_path']):p['text'] for p in result['corrections']}
@@ -312,7 +389,7 @@ def repair_selection_fields(state,invoke,previous,failed,register,ids):
                 'trace':trace,'selection_validated':False,'selection_repair_attempts':attempts}
     fixed=copy.deepcopy(previous)
     for decision in fixed['matters']:
-        for path in ('rationale','source_quote'):
+        for path in ('rationale','source_quote','legal_understanding'):
             key=(decision['matter_id'],path)
             if key in patches:decision[path]=patches[key]
     return {'strategy':fixed,'errors':[],'trace':trace,'selection_repair_attempts':attempts,

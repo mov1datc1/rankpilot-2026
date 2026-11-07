@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 import copy
 import unittest
 from unittest.mock import patch
@@ -73,7 +74,7 @@ class SelectionSemanticTests(unittest.TestCase):
             if role=='strategist':
                 self.assertEqual(len(payload['rejected_decisions']),1)
                 fixed=[{**d,'rationale':d['rationale']+' Corrected interpretation.'} for d in payload['rejected_decisions']]
-                return {'core_corrections':[d for d in fixed if d['disposition']=='core'],'other_corrections':[d for d in fixed if d['disposition']!='core'],'unresolved':[]},[]
+                return repair_answer(payload,fixed),[]
             attempt=calls.count('selection_reviewer')
             checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE,'decision_quote':strategy['matters'][i-1]['rationale'],
                 'review_dependencies':['M01'] if i==2 else []} for i in (1,2) if f'M{i:02d}' in payload['review_targets']}

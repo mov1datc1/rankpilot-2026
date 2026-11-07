@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 """A source-register citation must reach bounded repair, never false approval."""
 import copy
 import unittest
@@ -47,7 +48,7 @@ class SelectionRegisterEvidenceTests(unittest.TestCase):
         before=copy.deepcopy(PACKAGE);calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            if role=='strategist':return {'core_corrections':[corrected],'other_corrections':[],'unresolved':[]},[]
+            if role=='strategist':return repair_answer(args[-1] if 'args' in locals() else payload,[corrected]),[]
             return (BAD if calls.count('selection_reviewer')==1 else GOOD),[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':PACKAGE,'operation':'strategy'})
@@ -63,7 +64,7 @@ class SelectionRegisterEvidenceTests(unittest.TestCase):
         calls=[]
         def invoke(state,role,*args):
             calls.append(role)
-            return ({'core_corrections':[DECISION],'other_corrections':[],'unresolved':[]} if role=='strategist' else BAD),[]
+            return (repair_answer(args[-1],[DECISION]) if role=='strategist' else BAD),[]
         with patch('core.review_graph.strategist',return_value={'strategy':STRATEGY,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke),patch('core.review_graph.develop') as develop:
             result=create_review_graph().invoke({'package':PACKAGE})
         self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer'])

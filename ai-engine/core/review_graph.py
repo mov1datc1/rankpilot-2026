@@ -130,6 +130,8 @@ class ReviewState(TypedDict, total=False):
     selection_review: dict
     selection_review_validated: bool
     selection_review_unavailable: bool
+    selection_diagnostic_contract: str
+    selection_rebind_report: dict
     selection_diagnostic_invalid: bool
     selection_diagnostic_rechecks: int
     selection_review_deferred: bool
@@ -480,7 +482,9 @@ def selection_gate(state):
 
 
 def selection_review(state):
-    from core.selection_review import review_selection
+    from core.selection_review import review_selection, rebind_selection_diagnostics
+    rebound=rebind_selection_diagnostics(state)
+    if rebound is not None:return rebound
     if state.get('selection_review_attempts',0)>=3:
         valid=state.get('selection_review_validated') is True and state.get('selection_validated') is True
         return {'selection_review_validated':valid,'selection_validated':valid,
@@ -959,10 +963,10 @@ def create_review_graph():
     def after_selection_review(s):
         if s.get('errors'):
             from core.selection_review import can_repair_selection, can_recheck_selection_diagnostic
-            if can_recheck_selection_diagnostic(s):
-                return 'selection_review'
             if can_repair_selection(s):
                 return 'strategy'
+            if can_recheck_selection_diagnostic(s):
+                return 'selection_review'
             return 'release'
         return 'stop' if s.get('operation')=='strategy' else 'case'
     g.add_conditional_edges('selection_review',after_selection_review,{'selection_review':'selection_review','strategy':'strategy','release':'release','stop':END,'case':'case'})
