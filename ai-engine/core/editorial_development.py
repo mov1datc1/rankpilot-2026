@@ -71,6 +71,8 @@ EXECUTION_INSTRUCTION=''' Return execution_contract linked-editorial-execution-v
 
 EXECUTION_INSTRUCTION += ' Preserve material career roles even when their original sentence also contains a promotional comparison: retain the role through its actual public_quote, keep the complete original source_quote internally, and withdraw unverified national-superiority or reputation claims from public prose. Do not mechanically copy such comparisons merely to preserve a credential. In B10/C2, do not collectively describe a list as partners when it includes leaders whose partner status is unknown; use neutral lawyer/team leadership and preserve actual individual roles.'
 
+EXECUTION_INSTRUCTION += ' Every present candidate B9 must execute the highest-priority canonical core mandate personally led by that lawyer, alongside distinct existing personal evidence. Do not omit that primary source merely because other supporting cases have easier prose. Preserve all explicit narrative financial context in confidential E2, distinguishing source project cost, claim/exposure and legal matter value with their original currencies. Never move identifying metrics into public sections.'
+
 TASK = '''Develop the complete editorial case, not a summary of the register. If repair_feedback is supplied, repair the identified defects in previous_development and preserve unaffected source-backed content.
 Keep requested_target and objectives distinct from current_band and official observations. Preserve a supplied target as an objective or explicitly justify a recommended change in target_rationale. Preserve useful source-backed career history without treating it as current matter leadership. Use category_rationale to explain each proposed category and any change to the input suggestedRank. Generic labels such as Individual ranking candidate are not a category; use a reasoned specific category or Category pending with the exact gap, without guessing eligibility.
 Return one candidate for EACH supplied lawyer and one matter draft for EACH core matter, no reserves.
@@ -315,7 +317,7 @@ def development_errors(package, strategy, proposal):
         if not item.get('incremental_contribution') or not item.get('tradeoff'):errors.append('Comparación sin contribución incremental y contrapartida.')
     if proposal.get('version') in ('editorial-development-v3', DEVELOPMENT_VERSION):
         errors.extend(case_errors(package, strategy, proposal))
-    errors.extend(execution_errors(package,proposal))
+    errors.extend(execution_errors(package,proposal,strategy))
     return errors
 
 

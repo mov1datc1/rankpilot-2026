@@ -10,7 +10,7 @@ from typing import Literal, Union
 from pydantic import BaseModel, create_model
 from core.editorial_development import Candidate, Comparison
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors
-from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios
+from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
 
 class Correction(BaseModel):
     path: str
@@ -89,9 +89,16 @@ def repair_targets(package, strategy, proposal):
     for i,candidate in enumerate(proposal.get('candidates',[])):
         person=roster.get(_norm(candidate.get('name')), {})
         from core.candidate_evidence import profile_units, profile_errors, category_error
-        linked_fault=proposal.get('execution_contract')==EXECUTION_CONTRACT and personal_case_errors(package,candidate)
+        anchor=primary_lead_anchor(package,strategy,candidate)
+        linked_fault=proposal.get('execution_contract')==EXECUTION_CONTRACT and personal_case_errors(package,candidate,strategy)
         if proposal.get('version')=='editorial-development-v4' and (profile_errors(person,candidate) or category_error(candidate) or linked_fault):
             add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Develop distinct personally attributed contributions in B9 and bind submission_case_coverage to its own sources and actual bio passages. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{**candidate_evidence(candidate,person),'profile_units':profile_units(person)})
+            if anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_errors(person,candidate) and not category_error(candidate) and not personal_case_errors(package,candidate):
+                target=targets[f'candidates/{i}']
+                target.update(mutable_fields=['submission_bio','submission_case_coverage'],append_personal_anchor=anchor)
+                if anchor not in {s.get('matter_id') for s in candidate.get('supporting_matters',[])}:target['mutable_fields'].append('supporting_matters')
+                target['source_evidence'].update(required_primary_lead_matter_id=anchor)
+                target['problem']='Add a source-bound contribution, legal issue, action and evidenced result or actual pending position from the required primary lead mandate to B9, using safe public generalisation. Bind one appended submission_case_coverage entry to its own original source and new actual BIO passage. Retain the complete existing BIO block verbatim; place the new primary contribution before it if natural. Preserve every existing personal source link, career credential, category and unrelated candidacy field. Add supporting_matters only if this required source is absent. Do not disclose restricted names or identifying metrics in public prose.'
             continue
         invalid_support=[]
         for support in candidate.get('supporting_matters',[]):
@@ -171,6 +178,13 @@ def repair_targets(package, strategy, proposal):
             'Bind every shared case argument to its actual distinct B10 and C2 passage. This internal mapping cannot invent text or substitute another field.',{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')})
         if ' '.join(proposal.get('b10','').split())==' '.join(proposal.get('c2','').split()):
             add('c2',proposal.get('c2',''),'Develop the source-grounded coverage request from the shared arguments instead of copying B10. Preserve the objective, sources and factual limits.',{'package':package,'strategy':strategy})
+    if proposal.get('execution_contract')==EXECUTION_CONTRACT:
+        from core.contextual_financial_evidence import missing_contextual_amounts
+        for i,draft in enumerate(proposal.get('matters',[])):
+            matter=register.get(draft.get('matter_id'),{})
+            if missing_contextual_amounts(matter,draft.get('text','')):
+                path=f'matters/{i}/text';old_problem=targets.get(path,{}).get('problem','')
+                add(path,draft.get('text',''),old_problem+' Preserve the explicitly reported financial evidence in this confidential narrative, with each original currency and concept. Distinguish project cost, exposure and legal matter value; never recast one as another. Keep the supported work, result and attribution. This does not authorize any public metric.',matter)
     return targets
 
 def apply_corrections(proposal, targets, repair, allow_unchanged=False):
@@ -193,7 +207,18 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
                 if any(after[k]!=before[k] for k in before if k not in mutable):
                     raise ValueError('Biography repair cannot change unrelated candidacy fields')
                 bindings=lambda c:[(item['matter_id'],item['source_quote']) for item in c.get('submission_case_coverage',[])]
-                if bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
+                anchor=targets[path].get('append_personal_anchor')
+                if anchor:
+                    old=bindings(before);new=bindings(after)
+                    if new[:len(old)]!=old or len(new)!=len(old)+1 or new[-1][0]!=anchor:
+                        raise ValueError('Primary-mandate repair must append only its required source binding')
+                    if before['submission_bio'] not in after['submission_bio']:
+                        raise ValueError('Primary-mandate repair cannot rewrite the existing BIO')
+                    if after['supporting_matters']!=before['supporting_matters']:
+                        old_support=before['supporting_matters'];new_support=after['supporting_matters']
+                        if new_support[:len(old_support)]!=old_support or len(new_support)!=len(old_support)+1 or new_support[-1]['matter_id']!=anchor:
+                            raise ValueError('Primary-mandate repair cannot replace supporting evidence')
+                elif bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
         elif path=='institutional_execution' and isinstance(value,list):
             value=[InstitutionalLink.model_validate(item).model_dump() for item in value]
         elif path=='comparisons' and isinstance(value,list):
@@ -575,6 +600,9 @@ def repair_letter(state):
     condensed_fields=[key for key in fixed if fixed[key]!=before_condensation.get(key)]
     from core.portfolio_consistency import verify_portfolio_consistency
     conflicts,trace=verify_portfolio_consistency({**state,'trace':trace},fixed)
+    from core.portfolio_counts import enumeration_defects
+    conflicts=enumeration_defects(state['strategy'],fixed,
+        require_numbered=bool(re.search(r'(?m)^\s*\d{1,2}[.)]\s+',str(state['letter'].get('portfolio','')))))+conflicts
     errors=[d['message'] for d in conflicts]
     requires_change=any(d.get('scope')=='letter' and d.get('severity')=='critical' for d in feedback)
     if result.get('unresolved') or (requires_change and not seen):errors.append('RankPilot debe completar la corrección del Audit; no se acepta una reparación sin cambios.')

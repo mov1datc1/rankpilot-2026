@@ -577,6 +577,8 @@ def writer(state):
         letter[field] = text
     from core.portfolio_consistency import verify_portfolio_consistency
     conflicts,trace = verify_portfolio_consistency({**state,'trace':trace},letter)
+    from core.portfolio_counts import enumeration_defects
+    conflicts=enumeration_defects(state['strategy'],letter)+conflicts
     if conflicts:
         from core.editorial_repair import repair_letter
         return repair_letter({**state, 'letter':letter, 'trace':trace, 'repair_feedback':conflicts})
