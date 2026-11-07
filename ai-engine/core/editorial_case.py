@@ -141,7 +141,7 @@ def obligations(package, strategy, proposal):
             if linked:
                 for j,link in enumerate(candidate['submission_case_coverage']):
                     add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
-                        'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result or actual pending position of THIS source. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
+                        'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result of THIS source. When the source supplies an achieved interim or final result, state that result; an ongoing mandate or intended stability cannot replace it. Use an actual pending position only when no achieved result is supplied. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
             else:
                 add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
     if proposal.get('version')=='editorial-development-v4':

@@ -8,6 +8,12 @@ from test_editorial_development import PACKAGE, STRATEGY, DEV
 
 BAD='The source materials contain inconsistent nonessential sector descriptors.'
 
+def native_answer(answer,references):
+    corrections={c['path']:c for c in answer['corrections']}
+    return {'results':{ref:({'path':path,'status':'corrected','value':corrections[path]['value'],'reason':corrections[path]['reason']}
+                           if path in corrections else {'path':path,'status':'unresolved','reason':' '.join(answer['unresolved'])})
+                       for ref,path in references.items()},'source_notes':[]}
+
 
 class SurgicalRepairPostconditionTests(unittest.TestCase):
     def test_whole_candidate_repair_corrects_one_new_bio_residual_without_rewriting_the_object(self):
@@ -24,6 +30,7 @@ class SurgicalRepairPostconditionTests(unittest.TestCase):
         def invoke(state,role,schema,instruction,payload):
             calls.append(payload)
             answer=first if len(calls)==1 else {'corrections':[{'path':'candidates/0/submission_bio','value':DEV['candidates'][0]['submission_bio'],'reason':'Present the supported contribution directly.'}],'unresolved':[]}
+            answer=native_answer(answer,payload['target_references'])
             schema.model_validate(answer)
             if len(calls)==2:self.assertEqual(set(payload['repair_targets']),{'candidates/0/submission_bio'})
             return answer,list(state.get('trace',[]))+[{'role':'repair','usage':{'total_tokens':10}}]
@@ -49,6 +56,7 @@ class SurgicalRepairPostconditionTests(unittest.TestCase):
         def invoke(state,role,schema,instruction,payload):
             payloads.append(copy.deepcopy(payload))
             answer=answers[len(payloads)-1]
+            answer=native_answer(answer,payload['target_references'])
             schema.model_validate(answer)
             return answer,list(state.get('trace',[]))+[{'role':'repair','usage':{'total_tokens':10}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
@@ -136,8 +144,10 @@ class SurgicalRepairPostconditionTests(unittest.TestCase):
             if len(calls)==2:
                 self.assertEqual(set(payload['repair_targets']),{'matters/0/text'})
                 with self.assertRaises(ValidationError):
-                    schema.model_validate({'corrections':[{'path':'c2','value':'Unrequested rewrite.','reason':'No.'}],'unresolved':[]})
-            return (first if len(calls)==1 else self.answer(DEV['matters'][0]['text'])),list(state.get('trace',[]))+[{'usage':{'total_tokens':10}}]
+                    schema.model_validate({'results':{'T01':{'path':'c2','status':'corrected','value':'Unrequested rewrite.','reason':'No.'}},'source_notes':[]})
+            answer=native_answer(first if len(calls)==1 else self.answer(DEV['matters'][0]['text']),payload['target_references'])
+            schema.model_validate(answer)
+            return answer,list(state.get('trace',[]))+[{'usage':{'total_tokens':10}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke):
             result=repair_development({'package':PACKAGE,'strategy':STRATEGY},proposal,targets)
         self.assertEqual(result['development'],DEV)

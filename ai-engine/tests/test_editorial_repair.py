@@ -93,11 +93,13 @@ class TargetedRepairTests(unittest.TestCase):
         with patch('core.review_graph.invoke_role',return_value=({'corrections':[],'unresolved':['Fixture']},[])) as model:
             repair_development({'package':PACKAGE,'strategy':STRATEGY},DEV,targets)
         schema=model.call_args.args[2]
+        answer={'results':{'T01':{'path':'b10','status':'corrected','value':'Supported prose.','reason':'Correction'},
+                           'T02':{'path':'candidates/0','status':'corrected','value':DEV['candidates'][0],'reason':'Correction'}},'source_notes':[]}
         for path,value in [('b10',DEV['candidates'][0]),('candidates/0','Wrong shape')]:
             with self.subTest(path=path),self.assertRaises(ValidationError):
-                schema.model_validate({'corrections':[{'path':path,'value':value,'reason':'Correction'}],'unresolved':[]})
-        schema.model_validate({'corrections':[{'path':'b10','value':'Supported prose.','reason':'Correction'},
-            {'path':'candidates/0','value':DEV['candidates'][0],'reason':'Correction'}],'unresolved':[]})
+                bad=copy.deepcopy(answer);bad['results']['T01' if path=='b10' else 'T02']['value']=value
+                schema.model_validate(bad)
+        schema.model_validate(answer)
 
     def test_renderer_value_restriction_does_not_buy_a_prose_locator(self):
         package=copy.deepcopy(PACKAGE)

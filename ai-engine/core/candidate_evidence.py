@@ -12,7 +12,7 @@ def norm(value):
     return ' '.join(unicodedata.normalize('NFC',str(value or '')).split())
 
 
-def bind_public_quote(quote, bio):
+def bind_public_quote(quote, bio, person_name=''):
     """Anchor the same words after sentence joining; never repair a claim.
 
     Output evidence is distinct from immutable source evidence. A generated
@@ -23,8 +23,22 @@ def bind_public_quote(quote, bio):
     if not literal or literal in text:return quote
     stem=literal.removesuffix('.')
     if len(stem.split())<4:return quote
-    matches=list(re.finditer(r'(?<!\w)'+re.escape(stem)+r'(?!\w)',text,re.I))
-    return matches[0].group() if len(matches)==1 else quote
+    variants=[stem]
+    # Resolve only this already-identified person's leading name prefix, never
+    # another actor or a changed factual clause. The rest must match exactly.
+    parts=norm(person_name).split()
+    for count in range(1,len(parts)):
+        prefix=' '.join(parts[:count])
+        if re.match(r'^'+re.escape(prefix)+r'\s+',stem,re.I):
+            variants.append(norm(person_name)+stem[len(prefix):])
+    # An additive "also" preserves the same assertion. Negation, tense,
+    # qualifiers, roles, figures and every other word remain immutable.
+    for variant in list(variants):
+        if re.match(r'^(?:He|She)\s+(?!also\b)',variant,re.I):
+            variants.append(re.sub(r'^(He|She)\s+',r'\1 also ',variant,flags=re.I))
+    matches={(m.start(),m.end()):m.group() for variant in variants for m in re.finditer(
+        r'(?<!\w)'+re.escape(variant)+r'(?!\w)',text,re.I)}
+    return next(iter(matches.values())) if len(matches)==1 else quote
 
 class ProfileCoverage(BaseModel):
     reference: str

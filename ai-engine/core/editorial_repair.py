@@ -7,7 +7,7 @@ still a proposal and must pass the original validators and final document judge.
 import copy
 import re
 from typing import Literal, Union
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, ConfigDict
 from core.editorial_development import Candidate, Comparison
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors
 from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
@@ -21,13 +21,48 @@ class Repair(BaseModel):
     corrections: list[Correction]
     unresolved: list[str]
 
+def repair_result_contract(targets):
+    """One exclusive outcome for each authorized field; notes are not tasks."""
+    outcomes={}
+    for i,(path,target) in enumerate(targets.items()):
+        current=target['current_value']
+        kind=(str if isinstance(current,str) else bool if isinstance(current,bool) else
+              EditorialCase if path=='case_plan' else Candidate if isinstance(current,dict) else
+              list[Comparison] if path=='comparisons' else list[InstitutionalLink] if path=='institutional_execution' else None)
+        if kind is None:raise ValueError('Unsupported repair target shape')
+        applied=create_model('AppliedField'+str(i),__config__=ConfigDict(extra='forbid'),
+            path=(Literal[path],...),status=(Literal['corrected'],...),value=(kind,...),reason=(str,...))
+        blocked=create_model('BlockedField'+str(i),__config__=ConfigDict(extra='forbid'),
+            path=(Literal[path],...),status=(Literal['unresolved'],...),reason=(str,...))
+        outcomes[f'T{i+1:02d}']=(Union[applied,blocked],...)
+    result=create_model('EveryAuthorizedRepairField',__config__=ConfigDict(extra='forbid'),**outcomes)
+    return create_model('TargetedEditorialRepairResults',__config__=ConfigDict(extra='forbid'),
+        results=(result,...),source_notes=(list[str],...))
+
+def repair_references(targets):
+    return {f'T{i+1:02d}':path for i,path in enumerate(targets)}
+
+def project_repair_result(result,targets):
+    # Existing saved diagnostics and offline fixtures retain their old shape.
+    if 'results' not in result:return result
+    refs=repair_references(targets)
+    if set(result['results'])!=set(refs):raise ValueError('Every authorized field needs exactly one outcome')
+    projected={'corrections':[],'unresolved':[],'source_notes':result.get('source_notes',[])}
+    for ref,path in refs.items():
+        item=result['results'][ref]
+        if item.get('path')!=path or not item.get('reason'):raise ValueError('Repair outcome does not match its authorized field')
+        if item['status']=='corrected':projected['corrections'].append({'path':path,'value':item['value'],'reason':item['reason']})
+        elif item['status']=='unresolved':projected['unresolved'].append(path+': '+item['reason'])
+        else:raise ValueError('Invalid field outcome')
+    return projected
+
 
 def unknown_repair_usage(trace):
     return any(bool((call.get('usage') or {}).get('unknown_calls'))
                or call.get('usage_status') in ('unknown','partial_unknown')
                or unknown_repair_usage(call.get('calls',[])) for call in trace or [])
 
-TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct incompatible ranking categories using the confirmed seniority; do not invent a current rank. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
+TASK='''Repair only the rejected generated fields identified in repair_targets. This is a targeted correction, not a new submission or strategy. Use the supplied original sources and preserve all unaffected content. For a quotation, copy a contiguous exact passage from the SAME named matter; do not paraphrase, stitch separate passages, borrow from another matter or create evidence. Select the passage that actually supports the claimed fact/role; never replace it with an unrelated matching quote just to satisfy validation. If no supporting passage exists, leave the correction unresolved. For prose, retain documented outcomes, numbers, attribution, uncertainty and confidentiality. Correct an incompatible ranking category only when that candidate/category field is explicitly mutable, using confirmed seniority; never invent a current rank. A biography-only target cannot establish a category or change an already non-nominated Category pending decision. Shorten B10 only when requested, preserving decisive evidence. Never change sources, confirmed user answers, the portfolio, identities, publication permissions or approval status. Return only allowed paths, with a concise internal reason for each correction. Do not ask the user to repair generated wording. If evidence is genuinely missing or contradictory, report that in unresolved rather than guessing. A subsequent independent source and final-document review will assess every repair.'''
 TASK+=''' When an entire candidates/N object is an allowed target, reassess that candidate's generated attribution against the supplied person and eligible source matters (core or pertinent reserve, never excluded work). If a claimed supporting matter names someone else and does not support this candidate, REMOVE that supporting entry; do not seek or invent a quote for an unsupported role. Revise the same candidate's recommendation, ranking rationale, internal strategy and public bio to match the remaining actual evidence. Preserve the exact candidate name, confirmed seniority and all supported work. If no personally attributed matter remains, use develop or do_not_present and accurately describe the gap. Do not leave an avoidable false generated attribution unresolved merely because no evidence exists for it: withdraw that claim. Genuine source contradictions remain unresolved. Return the complete corrected candidate object as value for this path, not JSON encoded inside a string.'''
 TASK+=''' repair_targets and their problem labels describe defects in GENERATED text, never source evidence. A wrong quote or duplicate entry does not invalidate the underlying matter or another source-backed attribution to it. Retain a valid attribution once and remove only the unsupported/duplicate claims. Do not report a source conflict merely because the generated proposal disagrees with its source.'''
 TASK+=''' Write natural public prose, including confidential-section narratives: never explain that a source, record or supplied field states or omits something. Express an actual pending state as ongoing without inventing a final judicial decision. Keep material uncertainty but put source-completeness assessments in internal fields. The form label Lead Partner(s) alone is not evidence of partner seniority: use lead lawyer unless the person's actual partner status is supported by the roster or explicit substantive source text. Fix capitalization after legal suffixes without turning a true new sentence into a lowercase fragment. Do not leave joined sentences or malformed English.'''
@@ -46,6 +81,7 @@ TASK += " Remove an unsupported supporting_matter from a candidate when that ori
 TASK += " For a validated qualify_disputed_outcome correction, do not resolve the source conflict. Replace unqualified final-victory or final-defeat claims ONLY in permitted generated fields with the separately evidenced interim/procedural achievement in outcome_qualification. Preserve decisive uncontested facts and personal attribution. Do not infer ongoing proceedings or a completion date from the disputed result. Keep both original alternatives and explicit final-outcome uncertainty in the Audit; confirmation is optional if the client later wants to add a final result, not a prerequisite for the limited accurate version. The corrected exact Word pair must still pass independent review. Never extend this exception to identity, amounts, roles, permission or a case whose selection depends on the disputed final result."
 TASK += " When a text-only biography target supplies preserve_profile_quotes, retain each unaffected credential span verbatim and correct only the separate identified wording. This target cannot edit the candidate's profile-coverage metadata or other fields. If the defect overlaps one of those spans, report that conflict unresolved rather than silently breaking its binding."
 TASK += " A candidate object target with mutable_fields authorizes only those fields. When correcting a rejected promotional claim overlapping a profile unit, preserve the original source unit and material career role, update its actual public_quote/retain-or-generalize decision, and withdraw only the rejected assertion. Do not preserve the rejected wording merely because its old public_quote included a valid credential. Keep all personally attributed source bindings. For linked-editorial-execution-v1, refresh affected submission_case_coverage and institutional_execution output quotations together with their prose. Retain all original source links, roles and shared argument indices. These are internal bindings; never print them in the documents."
+TASK += " Return exactly one results outcome for each supplied target_references entry. A field is either corrected with its typed value or unresolved because THAT authorized generated change cannot be applied; never both. Record useful source questions outside the permitted change in source_notes. In particular, missing seniority or personal evidence for an already non-nominated Category pending lawyer does not prevent a factual team-member BIO and is not an unresolved BIO correction. Do not invent those facts. source_notes do not grant approval or replace a genuinely blocked requested correction."
 
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
@@ -249,20 +285,7 @@ def repair_development(state, proposal, targets):
                 'errors':['No se inicia otra reparación con consumo del proveedor desconocido.'],
                 'trace':state.get('trace',[])}
     targets=coherent_repair_targets(proposal,targets)
-    # Bind shape to path, so a prose target cannot receive a Candidate object.
-    shapes=[]
-    for kind,paths in (
-        (str,[p for p,t in targets.items() if isinstance(t['current_value'],str)]),
-        (bool,[p for p,t in targets.items() if isinstance(t['current_value'],bool)]),
-        (Candidate,[p for p,t in targets.items() if isinstance(t['current_value'],dict) and p!='case_plan']),
-        (EditorialCase,[p for p in targets if p=='case_plan']),
-        (list[Comparison],[p for p in targets if p=='comparisons']),
-        (list[InstitutionalLink],[p for p in targets if p=='institutional_execution'])):
-        if paths:
-            shapes.append(create_model('EditorialCorrection'+str(len(shapes)),
-                path=(Literal[tuple(paths)],...),value=(kind,...),reason=(str,...)))
-    correction=Union[tuple(shapes)] if len(shapes)>1 else shapes[0]
-    schema=create_model('TargetedEditorialRepair',__base__=Repair,corrections=(list[correction],...))
+    schema=repair_result_contract(targets)
     # Semantic targets share the same complete evidence. Send it once, not once
     # per generated path; distinct target-specific evidence remains untouched.
     shared=None;payload_targets=copy.deepcopy(targets)
@@ -281,8 +304,9 @@ def repair_development(state, proposal, targets):
             if shared is None:shared=evidence
             if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
     feedback=list(state.get('repair_feedback',[]))
-    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
+    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
     try:
+        repair=project_repair_result(repair,targets)
         fixed=apply_corrections(proposal,targets,repair,allow_unchanged=True)
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
@@ -335,14 +359,14 @@ def repair_development(state, proposal, targets):
             retry_count=1
             # Materialize only shared evidence needed by this remaining target.
             uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in retry_targets.values())
-            retry_correction=create_model('ResidualTextCorrection',path=(Literal[tuple(retry_targets)],...),value=(str,...),reason=(str,...))
-            retry_schema=create_model('ResidualTextRepair',__base__=Repair,corrections=(list[retry_correction],...))
+            retry_schema=repair_result_contract(retry_targets)
             try:
                 retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
-                    {'repair_targets':retry_targets,'shared_source_evidence':shared if uses_shared else None,'feedback':[],
+                    {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
                      'previous_failure':'A rejected claim, private footprint or auditor voice remains in these exact generated fields. Preserve other corrected fields, all confidential E facts and the unchanged profile credentials.'})
+                retry=project_repair_result(retry,retry_targets)
                 fixed=apply_corrections(fixed,retry_targets,retry,allow_unchanged=True)
-                repair={**retry,'unresolved':retry.get('unresolved',[])}
+                repair={**retry,'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
             except Exception as error:
                 # A pre-call deadline or failed second request must not erase
                 # the first paid response or its known/unknown usage history.
@@ -359,7 +383,8 @@ def repair_development(state, proposal, targets):
     if repair.get('unresolved'):errors.extend('Reparación pendiente: '+str(e) for e in repair['unresolved'])
     return {'development':fixed,'development_validated':not errors,'errors':errors,'trace':trace,
             'repair_report':{'corrected_paths':[path for path in targets if path not in failed],
-                             'unresolved':repair.get('unresolved',[]),'failed_paths':failed,'surgical_retries':retry_count}}
+                             'unresolved':repair.get('unresolved',[]),'source_notes':repair.get('source_notes',[]),
+                             'failed_paths':failed,'surgical_retries':retry_count}}
 
 class RepairLocation(BaseModel):
     path: str
