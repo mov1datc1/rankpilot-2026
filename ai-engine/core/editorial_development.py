@@ -71,6 +71,7 @@ EXECUTION_INSTRUCTION=''' Return execution_contract linked-editorial-execution-v
 
 EXECUTION_INSTRUCTION += ' Preserve material career roles even when their original sentence also contains a promotional comparison: retain the role through its actual public_quote, keep the complete original source_quote internally, and withdraw unverified national-superiority or reputation claims from public prose. Do not mechanically copy such comparisons merely to preserve a credential. In B10/C2, do not collectively describe a list as partners when it includes leaders whose partner status is unknown; use neutral lawyer/team leadership and preserve actual individual roles.'
 
+EXECUTION_INSTRUCTION += ' For each personal mandate, execute every available achieved result in safe public generalisation; an ongoing status or a goal cannot substitute for an achieved result supplied by the source. Use pending relief only when no result is supplied.'
 EXECUTION_INSTRUCTION += ' Every present candidate B9 must execute the highest-priority canonical core mandate personally led by that lawyer, alongside distinct existing personal evidence. Do not omit that primary source merely because other supporting cases have easier prose. Preserve all explicit narrative financial context in confidential E2, distinguishing source project cost, claim/exposure and legal matter value with their original currencies. Never move identifying metrics into public sections.'
 
 TASK = '''Develop the complete editorial case, not a summary of the register. If repair_feedback is supplied, repair the identified defects in previous_development and preserve unaffected source-backed content.
@@ -224,10 +225,10 @@ def bind_development(package, proposal):
         from core.candidate_evidence import bind_public_quote
         for item in candidate.get('profile_coverage',[]):
             if item.get('decision') in ('retain','generalize'):
-                item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''))
+                item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''),candidate.get('name',''))
         for item in candidate.get('submission_case_coverage',[]):
             item['source_quote']=bind_quote(item.get('source_quote',''),register.get(item.get('matter_id'),{})) or literal_quote(item.get('source_quote',''))
-            item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''))
+            item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''),candidate.get('name',''))
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
     return proposal
