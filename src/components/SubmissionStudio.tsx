@@ -1274,7 +1274,7 @@ export default function SubmissionStudio({
                       {isLegal500 ? 'Legal 500 Master DOCX' : 'Chambers Master DOCX'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: deliveryState.approved ? '#059669' : '#D97706', fontWeight: 500 }}>
-                      {deliveryState.approved ? '✓ Documento aprobado para entrega oficial' : 'Borrador editable (asuntos y B10 optimizados)'}
+                      {deliveryState.approved ? '✓ Documento aprobado para entrega oficial' : 'Borrador de trabajo · sin aprobación final'}
                     </div>
                   </div>
                 </a>
@@ -1301,7 +1301,7 @@ export default function SubmissionStudio({
                       {deliveryState.approved ? 'Audit Estratégico DOCX' : 'Audit Estratégico — Borrador'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                      Carta ejecutiva para socios con conciliación 1:1
+                      {deliveryState.approved ? 'Carta ejecutiva para socios con conciliación 1:1' : 'Versión de trabajo · consulta los pendientes antes de presentar'}
                     </div>
                   </div>
                 </a>
