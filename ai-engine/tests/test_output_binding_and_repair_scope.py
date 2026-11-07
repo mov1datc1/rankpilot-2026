@@ -19,6 +19,8 @@ class OutputBindingAndRepairScopeTests(unittest.TestCase):
         bio='He also leads constitutional litigation that restored the right of defence.'
         quote='He leads constitutional litigation that restored the right of defence.'
         self.assertIn(bind_public_quote(quote,bio,'Luis Prado'),bio)
+        body='He also restored the employer’s right of defence.'
+        self.assertIn(bind_public_quote("He restored the employer's right of defence.",body,'Luis Prado'),body)
 
     def test_negation_tense_figures_roles_and_other_names_never_fuzzy_match(self):
         for quote,bio in [
@@ -26,6 +28,7 @@ class OutputBindingAndRepairScopeTests(unittest.TestCase):
             ('Sofia led the workforce negotiations.','Sofia Vega may lead the workforce negotiations.'),
             ('Sofia managed 10 labour proceedings.','Sofia Vega managed 20 labour proceedings.'),
             ('Sofia is the department head.','Sofia Vega is the department associate.'),
+            ("He restored the employer's right of defence.",'He restored the employers’ right of defence.'),
             ('Luis led the workforce negotiations.','Sofia Vega led the workforce negotiations.')]:
             self.assertEqual(bind_public_quote(quote,bio,'Sofia Vega'),quote)
 

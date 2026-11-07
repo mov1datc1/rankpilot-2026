@@ -15,7 +15,8 @@ export function canBindPublicQuote(quote:any,bio:any,name:any):boolean {
     if(new RegExp('^'+escape(prefix)+'\\s+','iu').test(stem)) variants.push(norm(name)+stem.slice(prefix.length));
   }
   for(const variant of [...variants]) if(/^(He|She)\s+(?!also\b)/iu.test(variant)) variants.push(variant.replace(/^(He|She)\s+/iu,'$1 also '));
-  const matches=new Set<string>();
-  for(const variant of variants) for(const match of text.matchAll(new RegExp('(?<![\\p{L}\\p{N}_])'+escape(variant)+'(?![\\p{L}\\p{N}_])','giu'))) matches.add(match.index+':'+(match.index!+match[0].length));
+  const glyphs=(value:string)=>value.replace(/[‘’]/gu,"'").replace(/[“”]/gu,'"');
+  const matches=new Set<string>(),view=glyphs(text);
+  for(const variant of variants) for(const match of view.matchAll(new RegExp('(?<![\\p{L}\\p{N}_])'+escape(glyphs(variant))+'(?![\\p{L}\\p{N}_])','giu'))) matches.add(match.index+':'+(match.index!+match[0].length));
   return matches.size===1;
 }

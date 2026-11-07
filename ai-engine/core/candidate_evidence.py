@@ -36,8 +36,12 @@ def bind_public_quote(quote, bio, person_name=''):
     for variant in list(variants):
         if re.match(r'^(?:He|She)\s+(?!also\b)',variant,re.I):
             variants.append(re.sub(r'^(He|She)\s+',r'\1 also ',variant,flags=re.I))
-    matches={(m.start(),m.end()):m.group() for variant in variants for m in re.finditer(
-        r'(?<!\w)'+re.escape(variant)+r'(?!\w)',text,re.I)}
+    # Quote glyphs have identical positions and meaning; return the actual
+    # biography glyphs. Apostrophe placement, negation and all words stay exact.
+    glyphs=str.maketrans({'‘':"'",'’':"'",'“':'"','”':'"'})
+    view=text.translate(glyphs)
+    matches={(m.start(),m.end()):text[m.start():m.end()] for variant in variants for m in re.finditer(
+        r'(?<!\w)'+re.escape(variant.translate(glyphs))+r'(?!\w)',view,re.I)}
     return next(iter(matches.values())) if len(matches)==1 else quote
 
 class ProfileCoverage(BaseModel):

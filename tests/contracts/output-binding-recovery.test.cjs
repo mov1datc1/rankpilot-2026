@@ -18,6 +18,8 @@ function fixture(){
 test('known identity and additive bindings never alter prose or accept changed facts',()=>{
  assert.equal(canBindPublicQuote('Sofia brings experience in workforce governance.','Sofia Vega brings experience in workforce governance.','Sofia Vega'),true);
  assert.equal(canBindPublicQuote('He leads constitutional litigation that restored the right of defence.','He also leads constitutional litigation that restored the right of defence.','Luis Prado'),true);
+ assert.equal(canBindPublicQuote("He restored the employer's right of defence.",'He also restored the employer’s right of defence.','Luis Prado'),true);
+ assert.equal(canBindPublicQuote("He restored the employer's right of defence.",'He restored the employers’ right of defence.','Luis Prado'),false);
  for(const body of ['Sofia Vega did not lead workforce negotiations.','Sofia Vega may lead workforce negotiations.','Luis Prado led workforce negotiations.'])assert.equal(canBindPublicQuote('Sofia led workforce negotiations.',body,'Sofia Vega'),false);
  assert.equal(canBindPublicQuote('He leads collective labour negotiations.','He also leads collective labour negotiations. He also leads collective labour negotiations.','Luis Prado'),false);
 });
