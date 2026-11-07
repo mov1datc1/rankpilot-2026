@@ -72,15 +72,18 @@ class SelectionSemanticTests(unittest.TestCase):
             calls.append(role)
             if role=='strategist':
                 self.assertEqual(len(payload['rejected_decisions']),1)
-                return {'core_corrections':[d for d in payload['rejected_decisions'] if d['disposition']=='core'],'other_corrections':[d for d in payload['rejected_decisions'] if d['disposition']!='core'],'unresolved':[]},[]
+                fixed=[{**d,'rationale':d['rationale']+' Corrected interpretation.'} for d in payload['rejected_decisions']]
+                return {'core_corrections':[d for d in fixed if d['disposition']=='core'],'other_corrections':[d for d in fixed if d['disposition']!='core'],'unresolved':[]},[]
             attempt=calls.count('selection_reviewer')
-            checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE,'decision_quote':strategy['matters'][i-1]['rationale']} for i in (1,2)}
+            checks={f'M{i:02d}':{'status':'repair_required' if attempt==i else 'supported','explanation':'Concrete source distinction','source_quote':SOURCE,'decision_quote':strategy['matters'][i-1]['rationale'],
+                'review_dependencies':['M01'] if i==2 else []} for i in (1,2) if f'M{i:02d}' in payload['review_targets']}
             return {'checks':checks},[]
         with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
             result=create_review_graph().invoke({'package':{'directory':'Chambers','matters':[MATTER,peer]},'operation':'strategy'})
         self.assertEqual(calls,['selection_reviewer','strategist','selection_reviewer','strategist','selection_reviewer'])
         self.assertTrue(result['selection_review_validated'])
-        self.assertEqual(result['strategy'],strategy)
+        self.assertEqual(result['strategy']['hero_matter_id'],strategy['hero_matter_id'])
+        self.assertTrue(all(d['rationale'].endswith('Corrected interpretation.') for d in result['strategy']['matters']))
 
 
     def test_semantic_rejection_repairs_before_any_development(self):
