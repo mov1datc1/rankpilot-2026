@@ -1,0 +1,11 @@
+# Included biographies and concrete comparisons v1.0.38
+
+Chambers includes profiles whose internal decision is develop or do_not_present, but detailed personal-case review previously covered only present candidates. A single directory visibility rule now also governs source-linked work requirements, primary lead priority and exact-file obligations. Included profiles with personally attributed sources must execute those sources and their achieved outcomes. A non-nomination remains a non-nomination; profiles with no supplied personal mandate are not forced to invent one. Omitted Legal 500 profiles retain their existing scope.
+
+Any targeted biography edit with existing output proofs now groups that biography with its affected output references in the original correction call. Category, supporting evidence and personal source bindings remain immutable; original profile references and source quotations cannot be changed or dropped. This avoids a second repair caused solely by stale output quotations after a valid wording correction. The existing bounded cleanup and usage accounting are retained.
+
+Generic relative-scale labels in reserve comparisons must be replaced with concrete supplied facts, legal distinctions or comparable quantities. The same deterministic wording guard runs on internal comparisons and the Audit reserve section, before rendering and after its normal repair. It does not certify all quantitative semantics: the independent source-grounded review remains required. Pending risk cannot be recast as an achieved outcome.
+
+Development and Audit dependency keys advance; artifact review advances to 25. Renderer remains 21. Earlier approval is not silently reused for the changed contract. No new budgets, retry allowances, extraction or automatic approval are introduced.
+
+Validation: 589 Python tests, 497 Node passes with one skip and TypeScript checks. Fictional regressions cover non-nominated included profiles, omitted directory profiles, unsupported team-only results, same-call BIO/proof repair, immutable profile sources and concrete comparison wording. A captured backend continuation exposed the gaps; it ended without approval and is not a fresh autonomous or browser acceptance test. No private source, provider response or customer document is published.

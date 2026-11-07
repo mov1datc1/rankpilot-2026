@@ -106,7 +106,26 @@ def case_errors(package, strategy, proposal):
     if reserves-compared:errors.append('Faltan comparaciones de reservas frente a su alternativa pertinente del núcleo.')
     if reserves and not any(c.get('audit_required',True) for c in proposal.get('comparisons',[])):
         errors.append('Falta una comparación visible de frontera en el Audit.')
+    for i,comparison in enumerate(proposal.get('comparisons',[])):
+        for field in ('incremental_contribution','tradeoff'):
+            if vague_scale_comparison(comparison.get(field,'')):
+                errors.append(f'Comparación de escala imprecisa: comparisons/{i}/{field}')
     return errors
+
+
+VAGUE_SCALE=re.compile(r'\b(?:(?:menor|mayor)\s+escala|(?:smaller|larger|lower|greater)[ -]+scale)\b',re.I)
+
+def vague_scale_comparison(value):
+    # State concrete sourced facts, not a relative label that hides its basis.
+    return bool(VAGUE_SCALE.search(str(value or '')))
+
+def comparison_style_defects(letter):
+    text=str(letter.get('evidence_gaps') or '')
+    match=VAGUE_SCALE.search(text)
+    if not match:return []
+    return [{'code':'EDITORIAL_STYLE','severity':'critical','scope':'letter','owner':'rankpilot',
+        'field_path':'evidence_gaps','matter_id':None,'artifact_quote':match.group(),'source_quote':'',
+        'message':'Sustituye la etiqueta relativa de escala por diferencias jurídicas o cantidades comparables expresamente suministradas. No inventes mediciones ni conviertas un riesgo pendiente en un resultado alcanzado.'}]
 
 
 def obligations(package, strategy, proposal):
@@ -121,8 +140,8 @@ def obligations(package, strategy, proposal):
         for field in ('b10','c2'):
             add(f'argument:{i}:{field}',field,sources,'Execute the source strategy thesis: '+str(strategy.get('thesis',''))+'. '+argument['proposition']+' '+argument[field+'_contribution'])
     def public_profile(candidate):
-        directory=str(package.get('directory') or '').casefold()
-        return not ('500' in directory) or (candidate.get('recommendation')=='present' and str(candidate.get('suggested_ranking') or '').casefold()!='category pending')
+        from core.editorial_execution import public_bio_included
+        return public_bio_included(package,candidate)
     for i,candidate in enumerate(proposal.get('candidates',[])):
         sources=[register.get(s['matter_id'],{}) for s in candidate.get('supporting_matters',[])]
         sources += [p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))]
@@ -135,7 +154,7 @@ def obligations(package, strategy, proposal):
             # Let the reviewer cite the actual entry, never invent B7 labels.
             result[-1]['confirmed_input_name']=head['name']
         add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
-        if candidate.get('recommendation')=='present' and public_profile(candidate):
+        if public_profile(candidate) and (candidate.get('recommendation')=='present' or candidate.get('supporting_matters') or candidate.get('submission_case_coverage')):
             from core.editorial_execution import EXECUTION_CONTRACT
             linked=proposal.get('execution_contract')==EXECUTION_CONTRACT and candidate.get('submission_case_coverage')
             if linked:
