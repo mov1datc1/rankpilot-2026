@@ -2,11 +2,55 @@ import copy
 import unittest
 from pydantic import ValidationError
 from openai.lib._pydantic import to_strict_json_schema
-from core.editorial_repair import coherent_repair_targets, repair_result_contract, project_repair_result, apply_corrections
+from core.editorial_repair import coherent_repair_targets, repair_result_contract, project_repair_result, apply_corrections, repair_targets, repair_development, TASK
+from unittest.mock import patch
 from test_editorial_execution import linked_case
 
 
 class BiographyDeltaTests(unittest.TestCase):
+    def test_initial_output_binding_repair_uses_the_immutable_native_delta(self):
+        for broken in ('profile','personal','both'):
+            with self.subTest(broken=broken):
+                p,s,v=linked_case();good=copy.deepcopy(v['candidates'][0]);c=v['candidates'][0]
+                if broken in ('profile','both'):c['profile_coverage'][0]['public_quote']='A generated quotation absent from the BIO.'
+                if broken in ('personal','both'):c['submission_case_coverage'][0]['public_quote']='Another absent output quotation.'
+                before=copy.deepcopy((p,s,v));targets=repair_targets(p,s,v)
+                self.assertEqual(set(targets),{'candidates/0'})
+                self.assertEqual(set(targets['candidates/0']['mutable_fields']),{'submission_bio','profile_coverage','submission_case_coverage'})
+                delta={'submission_bio':good['submission_bio'],
+                    'profile_coverage':{u['reference']:{k:u[k] for k in ('decision','public_quote','reason')} for u in good['profile_coverage']},
+                    'submission_case_coverage':{f'S{i+1:02d}':u['public_quote'] for i,u in enumerate(good['submission_case_coverage'])}}
+                answer={'results':{'T01':{'path':'candidates/0','status':'corrected','value':delta,'reason':'Use the actual BIO passages for the same sources.'}},'source_notes':[]}
+                def invoke(state,role,schema,instruction,payload):
+                    schema.model_validate(answer)
+                    self.assertTrue(state['source_only_repair'])
+                    return answer,[{'role':'repair','usage':{'total_tokens':10}}]
+                with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
+                    result=repair_development({'package':p,'strategy':s},v,targets)
+                model.assert_called_once();self.assertTrue(result['development_validated'],result.get('errors'))
+                self.assertEqual(result['development']['candidates'][0],good)
+                self.assertEqual((p,s,v),before)
+
+    def test_invalid_source_category_or_attribution_keeps_the_full_repair_scope(self):
+        for fault in ('profile_source','category','support_source','support_person','duplicate_support','missing_role','missing_internal_field'):
+            with self.subTest(fault=fault):
+                p,s,v=linked_case();c=v['candidates'][0]
+                c['profile_coverage'][0]['public_quote']='Absent output quotation.'
+                if fault=='profile_source':c['profile_coverage'][0]['source_quote']='Invented career evidence.'
+                elif fault=='category':c['suggested_ranking']='Candidate'
+                elif fault=='support_source':c['supporting_matters'][0]['source_quote']='Invented mandate evidence.'
+                elif fault=='support_person':p['matters'][0]['leadPartner']='Another Person';p['matters'][0]['source_excerpt']='Another Person led this mandate.'
+                elif fault=='duplicate_support':c['supporting_matters'].append(copy.deepcopy(c['supporting_matters'][0]))
+                elif fault=='missing_role':c['supporting_matters'][0]['personal_role']=''
+                else:c['recommended_action']=''
+                target=repair_targets(p,s,v)['candidates/0']
+                self.assertNotIn('mutable_fields',target)
+
+    def test_repair_prompt_limits_whole_candidate_instructions_to_the_full_schema(self):
+        self.assertIn('WITHOUT mutable_fields',TASK)
+        self.assertIn('the whole-candidate instructions do not authorize',TASK)
+        self.assertIn('Only a required primary_contribution may quote new original evidence',TASK)
+
     def fixture(self):
         p,s,v=linked_case();c=v['candidates'][0]
         targets=coherent_repair_targets(v,{'candidates/0/submission_bio':{'current_value':c['submission_bio'],
