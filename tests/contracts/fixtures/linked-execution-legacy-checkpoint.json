@@ -1,0 +1,66 @@
+{
+  "origin": "Fictional fixture serialized by the preceding v1.0.32 checkpoint implementation",
+  "payload": {
+    "directory": "Chambers",
+    "practice_area": "Labour & Employment",
+    "lawyers": [
+      {
+        "name": "Sofia Vega"
+      }
+    ],
+    "matters": [
+      {
+        "id": "m1",
+        "client": "Example Employer",
+        "source_excerpt": "Sofia Vega led negotiations that prevented a strike.",
+        "publish_status": "confidential",
+        "publication_route": "E",
+        "resolved_publication_status": "confidential"
+      }
+    ]
+  },
+  "saved": {
+    "created_at": 5000,
+    "state": {
+      "strategy": {
+        "matters": [
+          {
+            "matter_id": "m1",
+            "disposition": "core",
+            "rationale": "Negotiation prevented a strike."
+          }
+        ],
+        "hero_matter_id": "m1",
+        "thesis": "Employer-side collective negotiations with a documented result.",
+        "pending_questions": []
+      },
+      "selection_validated": true,
+      "selection_review_validated": true,
+      "selection_review_attempts": 2,
+      "development": {
+        "version": "editorial-development-v4",
+        "b10": "Previous practice case."
+      },
+      "development_validated": true,
+      "letter": {
+        "executive_assessment": "Previous verdict."
+      },
+      "writer_validated": true,
+      "errors": [],
+      "repair_feedback": [],
+      "trace": [
+        {
+          "role": "strategist",
+          "usage": {
+            "total_tokens": 37
+          }
+        }
+      ]
+    },
+    "step_keys": {
+      "strategy": "f197c2d27e6ca7b6eae1b55eb0c59f9cd0cf65f451ece43f109a56fe59a5d068",
+      "development": "4b6a21b43c5af79afc5185e3871116d83d676efa6cf2b32370ca485fb325bc77",
+      "writer": "7da262021364c9d0d70c422f9e1db87fff962455ce58c5ea63eca60bfd20b2dc"
+    }
+  }
+}

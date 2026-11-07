@@ -136,7 +136,14 @@ def obligations(package, strategy, proposal):
             result[-1]['confirmed_input_name']=head['name']
         add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
         if candidate.get('recommendation')=='present' and public_profile(candidate):
-            add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
+            from core.editorial_execution import EXECUTION_CONTRACT
+            linked=proposal.get('execution_contract')==EXECUTION_CONTRACT and candidate.get('submission_case_coverage')
+            if linked:
+                for j,link in enumerate(candidate['submission_case_coverage']):
+                    add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
+                        'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result or actual pending position of THIS source. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
+            else:
+                add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
     if proposal.get('version')=='editorial-development-v4':
         from core.candidate_evidence import profile_units
         for i,candidate in enumerate(proposal.get('candidates',[])):

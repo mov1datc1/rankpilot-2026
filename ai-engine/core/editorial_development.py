@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, create_model
 
 DEVELOPMENT_VERSION = 'editorial-development-v4'
 from core.candidate_evidence import ProfileCoverage, profile_errors, category_error
+from core.editorial_execution import PersonalCaseLink, InstitutionalLink, EXECUTION_CONTRACT, execution_errors
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, additional_leaders, case_errors, prepare_case
 
 class SupportingMatter(BaseModel):
@@ -27,6 +28,7 @@ class Candidate(BaseModel):
     category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
     category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category.')
     profile_coverage: list[ProfileCoverage] = Field(default_factory=list)
+    submission_case_coverage: list[PersonalCaseLink] = Field(default_factory=list)
     why_candidate: str
     supporting_matters: list[SupportingMatter]
     external_evidence: str
@@ -49,6 +51,8 @@ class Comparison(BaseModel):
     tradeoff: str
 
 class Development(BaseModel):
+    execution_contract: str = ''
+    institutional_execution: list[InstitutionalLink] = Field(default_factory=list)
     case_plan: EditorialCase
     filing_recommendation: str
     positioning: str
@@ -62,6 +66,10 @@ class Development(BaseModel):
     matters: list[MatterDraft]
     b10: str
     c2: str = Field(description='English firm-voice case for inclusion/coverage built from the selected evidence. No invented current ranking, band or external reputation.')
+
+EXECUTION_INSTRUCTION=''' Return execution_contract linked-editorial-execution-v1. For every present candidate, submission_case_coverage must bind distinct personally attributed supporting mandates to original source_quote and actual submission_bio public_quote (up to two where that evidence exists; one if only one supporting mandate exists). Develop their specific legal contribution, issue and evidenced result or actual pending position in natural B9 prose, retaining material career credentials; a specialty list is not the personal argument. Do not invent an outcome to fill a link. Reserved sources remain eligible personal evidence. Keep confidential identities and identifying metrics out of public quotes. Return institutional_execution once per case_plan institutional argument, using its zero-based argument_index and exact b10_quote/c2_quote from their own fields. B10 demonstrates what the practice did and achieved; C2 explains why that evidence warrants the requested coverage, without copying the B10 passage or repeating a service catalogue. These links are internal verification metadata, not new text to publish. A separately confirmed department head must be described as leading the department/practice in B9; merely being Partner or leading an individual mandate is insufficient.'''
+
+EXECUTION_INSTRUCTION += ' Preserve material career roles even when their original sentence also contains a promotional comparison: retain the role through its actual public_quote, keep the complete original source_quote internally, and withdraw unverified national-superiority or reputation claims from public prose. Do not mechanically copy such comparisons merely to preserve a credential. In B10/C2, do not collectively describe a list as partners when it includes leaders whose partner status is unknown; use neutral lawyer/team leadership and preserve actual individual roles.'
 
 TASK = '''Develop the complete editorial case, not a summary of the register. If repair_feedback is supplied, repair the identified defects in previous_development and preserve unaffected source-backed content.
 Keep requested_target and objectives distinct from current_band and official observations. Preserve a supplied target as an objective or explicitly justify a recommended change in target_rationale. Preserve useful source-backed career history without treating it as current matter leadership. Use category_rationale to explain each proposed category and any change to the input suggestedRank. Generic labels such as Individual ranking candidate are not a category; use a reasoned specific category or Category pending with the exact gap, without guessing eligibility.
@@ -215,6 +223,9 @@ def bind_development(package, proposal):
         for item in candidate.get('profile_coverage',[]):
             if item.get('decision') in ('retain','generalize'):
                 item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''))
+        for item in candidate.get('submission_case_coverage',[]):
+            item['source_quote']=bind_quote(item.get('source_quote',''),register.get(item.get('matter_id'),{})) or literal_quote(item.get('source_quote',''))
+            item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''))
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
     return proposal
@@ -304,6 +315,7 @@ def development_errors(package, strategy, proposal):
         if not item.get('incremental_contribution') or not item.get('tradeoff'):errors.append('Comparación sin contribución incremental y contrapartida.')
     if proposal.get('version') in ('editorial-development-v3', DEVELOPMENT_VERSION):
         errors.extend(case_errors(package, strategy, proposal))
+    errors.extend(execution_errors(package,proposal))
     return errors
 
 
@@ -313,10 +325,13 @@ def development_contract(package, strategy):
     names=tuple(l.get('name') or l.get('fullName') for l in package.get('lawyers',[]))
     if not core:raise ValueError('Editorial development requires a selected portfolio')
     support=create_model('RegisteredSupport',__base__=SupportingMatter,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
-    candidate=create_model('RegisteredCandidate',__base__=Candidate,name=(Literal[names] if names else str,...),supporting_matters=(list[support],...))
+    personal_link=create_model('RegisteredPersonalCaseLink',__base__=PersonalCaseLink,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
+    candidate=create_model('RegisteredCandidate',__base__=Candidate,name=(Literal[names] if names else str,...),supporting_matters=(list[support],...),
+        submission_case_coverage=(list[personal_link],Field(default_factory=list)))
     draft=create_model('RegisteredDraft',__base__=MatterDraft,matter_id=(Literal[core],...))
     comparison=create_model('RegisteredComparison',__base__=Comparison,selected_id=(Literal[core],...),alternative_id=(Literal[reserves] if reserves else str,...))
-    return create_model('RegisteredDevelopment',__base__=Development,candidates=(list[candidate],...),matters=(list[draft],...),comparisons=(list[comparison],...))
+    return create_model('RegisteredDevelopment',__base__=Development,candidates=(list[candidate],...),matters=(list[draft],...),comparisons=(list[comparison],...),
+        execution_contract=(Literal[EXECUTION_CONTRACT],EXECUTION_CONTRACT))
 
 def renderer_owned_finding(defect, package):
     """Only the renderer owns D3; preserve the explicit source restriction.
@@ -395,7 +410,7 @@ def develop(state):
         targets=repair_targets(state['package'],state['strategy'],bound)
         if targets:
             return repair_development(state,bound,targets)
-    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
+    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)
