@@ -10,6 +10,7 @@ from typing import Literal, Union
 from pydantic import BaseModel, create_model
 from core.editorial_development import Candidate, Comparison
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors
+from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios
 
 class Correction(BaseModel):
     path: str
@@ -44,6 +45,7 @@ TASK += " Remove an unsupported supporting_matter from a candidate when that ori
 
 TASK += " For a validated qualify_disputed_outcome correction, do not resolve the source conflict. Replace unqualified final-victory or final-defeat claims ONLY in permitted generated fields with the separately evidenced interim/procedural achievement in outcome_qualification. Preserve decisive uncontested facts and personal attribution. Do not infer ongoing proceedings or a completion date from the disputed result. Keep both original alternatives and explicit final-outcome uncertainty in the Audit; confirmation is optional if the client later wants to add a final result, not a prerequisite for the limited accurate version. The corrected exact Word pair must still pass independent review. Never extend this exception to identity, amounts, roles, permission or a case whose selection depends on the disputed final result."
 TASK += " When a text-only biography target supplies preserve_profile_quotes, retain each unaffected credential span verbatim and correct only the separate identified wording. This target cannot edit the candidate's profile-coverage metadata or other fields. If the defect overlaps one of those spans, report that conflict unresolved rather than silently breaking its binding."
+TASK += " A candidate object target with mutable_fields authorizes only those fields. When correcting a rejected promotional claim overlapping a profile unit, preserve the original source unit and material career role, update its actual public_quote/retain-or-generalize decision, and withdraw only the rejected assertion. Do not preserve the rejected wording merely because its old public_quote included a valid credential. Keep all personally attributed source bindings. For linked-editorial-execution-v1, refresh affected submission_case_coverage and institutional_execution output quotations together with their prose. Retain all original source links, roles and shared argument indices. These are internal bindings; never print them in the documents."
 
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
@@ -64,6 +66,14 @@ def repair_targets(package, strategy, proposal):
     targets={}
     def add(path,value,problem,evidence):
         targets[path]={'current_value':value,'problem':problem,'source_evidence':evidence}
+    def candidate_evidence(candidate,person):
+        from core.role_evidence import matter_names_person,identity
+        related=[m for mid,m in register.items() if mid in eligible_support and matter_names_person(candidate.get('name'),m)]
+        claims={m.get('matter_id') for m in candidate.get('supporting_matters',[])}
+        return {'person':person,'eligible_source_matters':related,
+            'invalid_claimed_sources':[m for mid,m in register.items() if mid in claims and m not in related],
+            'public_entity_restrictions':[{k:m.get(k) for k in ('client','name','publication_route','resolved_publication_status')} for m in register.values()],
+            'confirmed_heads':[{'name':h['name']} for h in package.get('filing_details',{}).get('heads',[]) if isinstance(h,dict) and identity(h.get('name'))==identity(candidate.get('name'))]}
     for i,draft in enumerate(proposal.get('matters',[])):
         matter=register.get(draft.get('matter_id'),{})
         from core.editorial_development import DEVELOPMENT_VERSION
@@ -79,8 +89,9 @@ def repair_targets(package, strategy, proposal):
     for i,candidate in enumerate(proposal.get('candidates',[])):
         person=roster.get(_norm(candidate.get('name')), {})
         from core.candidate_evidence import profile_units, profile_errors, category_error
-        if proposal.get('version')=='editorial-development-v4' and (profile_errors(person,candidate) or category_error(candidate)):
-            add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{'person':person,'profile_units':profile_units(person),'eligible_source_matters':[m for mid,m in register.items() if mid in eligible_support]})
+        linked_fault=proposal.get('execution_contract')==EXECUTION_CONTRACT and personal_case_errors(package,candidate)
+        if proposal.get('version')=='editorial-development-v4' and (profile_errors(person,candidate) or category_error(candidate) or linked_fault):
+            add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Develop distinct personally attributed contributions in B9 and bind submission_case_coverage to its own sources and actual bio passages. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{**candidate_evidence(candidate,person),'profile_units':profile_units(person)})
             continue
         invalid_support=[]
         for support in candidate.get('supporting_matters',[]):
@@ -91,7 +102,7 @@ def repair_targets(package, strategy, proposal):
                 invalid_support.append(support.get('matter_id'))
         support_ids=[s.get('matter_id') for s in candidate.get('supporting_matters',[])]
         if invalid_support or len(support_ids)!=len(set(support_ids)) or (candidate.get('recommendation')=='present' and not support_ids):
-            add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and duplicates, then reconcile the bio, category and recommendation with actual evidence. This flags generated claims, not invalid source matters.',{'person':person,'eligible_source_matters':[m for mid,m in register.items() if mid in eligible_support],'dispositions':strategy.get('matters',[])})
+            add(f'candidates/{i}',candidate,'Correct this generated candidacy; remove unsupported personal attributions and duplicates, then reconcile the bio, category and recommendation with actual evidence. This flags generated claims, not invalid source matters.',{**candidate_evidence(candidate,person),'dispositions':strategy.get('matters',[])})
             continue
         for j,support in enumerate(candidate.get('supporting_matters',[])):
             matter=register.get(support.get('matter_id'),{})
@@ -149,6 +160,17 @@ def repair_targets(package, strategy, proposal):
         add('comparisons/0/audit_required',False,'Expose the closest borderline comparison in the Audit; retain its source-backed tradeoff.',{'package':package,'strategy':strategy})
     if any('comparaciones de reservas' not in e and 'comparación visible' not in e for e in case_faults):
         add('case_plan',proposal.get('case_plan',{}),'Repair the shared source-bound case plan and all documented additional-leader assessments; preserve sources, selection and public prose.',{'package':package,'strategy':strategy})
+    for i in missing_head_bios(package,proposal):
+        if f'candidates/{i}' not in targets:
+            candidate=proposal['candidates'][i]
+            add(f'candidates/{i}/submission_bio',candidate['submission_bio'],
+                'State this separately confirmed department-head function in natural B9 prose. A partner title or leading a matter alone does not state that function. Preserve existing career credentials and personally attributed work; do not invent partner seniority.',
+                {'candidate':candidate,'confirmed_heads':package.get('filing_details',{}).get('heads',[])})
+    if proposal.get('execution_contract')==EXECUTION_CONTRACT and institutional_errors(proposal):
+        add('institutional_execution',proposal.get('institutional_execution',[]),
+            'Bind every shared case argument to its actual distinct B10 and C2 passage. This internal mapping cannot invent text or substitute another field.',{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')})
+        if ' '.join(proposal.get('b10','').split())==' '.join(proposal.get('c2','').split()):
+            add('c2',proposal.get('c2',''),'Develop the source-grounded coverage request from the shared arguments instead of copying B10. Preserve the objective, sources and factual limits.',{'package':package,'strategy':strategy})
     return targets
 
 def apply_corrections(proposal, targets, repair, allow_unchanged=False):
@@ -164,6 +186,16 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
             value=(EditorialCase if path=='case_plan' else Candidate).model_validate(value).model_dump(exclude_unset=True)
             if path!='case_plan' and value['name']!=targets[path]['current_value']['name']:
                 raise ValueError('Repair cannot change candidate identity')
+            mutable=targets[path].get('mutable_fields')
+            if mutable:
+                before=Candidate.model_validate(targets[path]['current_value']).model_dump()
+                after=Candidate.model_validate(value).model_dump()
+                if any(after[k]!=before[k] for k in before if k not in mutable):
+                    raise ValueError('Biography repair cannot change unrelated candidacy fields')
+                bindings=lambda c:[(item['matter_id'],item['source_quote']) for item in c.get('submission_case_coverage',[])]
+                if bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
+        elif path=='institutional_execution' and isinstance(value,list):
+            value=[InstitutionalLink.model_validate(item).model_dump() for item in value]
         elif path=='comparisons' and isinstance(value,list):
             value=[Comparison.model_validate(item).model_dump() for item in value]
             original=[Comparison.model_validate(item).model_dump() for item in targets[path]['current_value']]
@@ -177,6 +209,8 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         seen.add(path);parts=path.split('/');parent=result
         for part in parts[:-1]:parent=parent[int(part)] if isinstance(parent,list) else parent[part]
         key=int(parts[-1]) if isinstance(parent,list) else parts[-1]
+        if targets[path].get('mutable_fields'):
+            value={**parent[key],**{field:value[field] for field in targets[path]['mutable_fields'] if field in value}}
         parent[key]=value
     if set(targets) - seen and not repair.get('unresolved'):
         raise ValueError('Repair left targets unchanged')
@@ -189,6 +223,7 @@ def repair_development(state, proposal, targets):
         return {'development':proposal,'development_validated':False,
                 'errors':['No se inicia otra reparación con consumo del proveedor desconocido.'],
                 'trace':state.get('trace',[])}
+    targets=coherent_repair_targets(proposal,targets)
     # Bind shape to path, so a prose target cannot receive a Candidate object.
     shapes=[]
     for kind,paths in (
@@ -196,7 +231,8 @@ def repair_development(state, proposal, targets):
         (bool,[p for p,t in targets.items() if isinstance(t['current_value'],bool)]),
         (Candidate,[p for p,t in targets.items() if isinstance(t['current_value'],dict) and p!='case_plan']),
         (EditorialCase,[p for p in targets if p=='case_plan']),
-        (list[Comparison],[p for p in targets if p=='comparisons'])):
+        (list[Comparison],[p for p in targets if p=='comparisons']),
+        (list[InstitutionalLink],[p for p in targets if p=='institutional_execution'])):
         if paths:
             shapes.append(create_model('EditorialCorrection'+str(len(shapes)),
                 path=(Literal[tuple(paths)],...),value=(kind,...),reason=(str,...)))
@@ -234,8 +270,8 @@ def repair_development(state, proposal, targets):
         from core.public_privacy import public_privacy_findings
         privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
         return [path for path,target in targets.items()
-                if path in privacy_paths or at(document,path)==target['current_value'] or any(
-                    norm(quote) in norm(at(document,path)) for quote in target.get('rejected_quotes',[]) if norm(quote))]
+                if path in privacy_paths or (not target.get('binding_only') and at(document,path)==target['current_value']) or any(
+                    norm(quote) in norm(at(document,target.get('rejected_quote_path',path))) for quote in target.get('rejected_quotes',[]) if norm(quote))]
     failed=failures(fixed)
     # A whole-candidate correction can introduce a local voice fault in its
     # biography. Validate descendants as well as the original edited object;
@@ -365,8 +401,16 @@ def repair_rejected_development(state, proposal, defects):
             person_name=cand.get('name','')
             lawyers=source_package.get('lawyers',[])
             person=next((l for l in lawyers if str(l.get('name','')).strip().casefold()==str(person_name).strip().casefold()),{})
+            from core.role_evidence import matter_names_person, identity
+            eligible=eligible_support_ids(state['package'],state['strategy'])
+            related=[m for m in source_package.get('matters',[]) if m['id'] in eligible and matter_names_person(person_name,m)]
             return {'scope':{k:source_package.get(k) for k in ('directory','practice_area','jurisdiction')},
-                    'candidate':cand,'source_person':person,'package':source_package,'strategy':state['strategy']}
+                    'candidacy_context':{k:cand.get(k) for k in ('name','recommendation','suggested_ranking','category_rationale','why_candidate')},
+                    'source_person':person,'personally_attributed_matters':related,
+                    'confirmed_heads':[{'name':h['name']} for h in source_package.get('filing_details',{}).get('heads',[])
+                        if isinstance(h,dict) and identity(h.get('name'))==identity(person_name)],
+                    'public_entity_restrictions':[{k:m.get(k) for k in ('client','name','publication_route','resolved_publication_status')}
+                        for m in source_package.get('matters',[])]}
         return {'package':source_package,'strategy':state['strategy']}
     # Include all deterministic faults already visible in this proposal in the
     # same paid repair, rather than discovering another field after each call.
@@ -449,6 +493,36 @@ def repair_rejected_development(state, proposal, defects):
     if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
         return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace,'development_repair_unlocatable':True}
     return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)
+
+
+def coherent_repair_targets(proposal,targets):
+    """A biography and its evidence links change together, within one candidate.
+
+    Source units stay immutable. This permits removing a rejected marketing
+    claim while retaining the same unit's material career credential.
+    """
+    targets=copy.deepcopy(targets)
+    norm=lambda value:' '.join(str(value or '').split()).casefold()
+    for path,target in list(targets.items()):
+        if not re.fullmatch(r'candidates/\d+/submission_bio',path):continue
+        parent='/'.join(path.split('/')[:2]);candidate=proposal['candidates'][int(path.split('/')[1])]
+        if parent in targets:continue
+        spans=[c.get('public_quote','') for c in candidate.get('profile_coverage',[]) if c.get('decision') in ('retain','generalize')]
+        spans.extend(c.get('public_quote','') for c in candidate.get('submission_case_coverage',[]))
+        if not any(norm(q) and norm(span) and (norm(q) in norm(span) or norm(span) in norm(q))
+                   for q in target.get('rejected_quotes',[]) for span in spans):continue
+        targets[parent]={**target,'current_value':candidate,
+            'mutable_fields':['submission_bio','profile_coverage','submission_case_coverage'],
+            'rejected_quote_path':path,
+            'problem':target.get('problem','')+' Update only the bio and its exact output bindings. Remove the rejected assertion while preserving the original material credential, source units, personal source bindings, ranking decision and all other candidacy fields. Generalize a material unit to its supported role without its rejected promotional clause; never erase the career role.'}
+        targets[parent]['preserve_profile_quotes']=[span for span in spans if span and not any(
+            norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in target.get('rejected_quotes',[]))]
+        del targets[path]
+    if proposal.get('execution_contract')==EXECUTION_CONTRACT and any(p in targets for p in ('b10','c2')):
+        targets.setdefault('institutional_execution',{'current_value':proposal.get('institutional_execution',[]),
+            'binding_only':True,'problem':'Refresh only exact B10/C2 output quotations after their targeted correction, retaining every argument index. Unaffected quotations may stay unchanged.',
+            'source_evidence':{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')}})
+    return targets
 
 
 def repair_letter(state):

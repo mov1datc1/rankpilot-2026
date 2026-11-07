@@ -83,6 +83,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
   return reviewInputHash({policy:'role-deliverables-v5-unified-chronological',selection_contract:'capacity-bound-selection-v3-comparative-evidence',stage,source,
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v7-disposition-reasons'}:{}),
+    ...(stage==='development'?{development_contract:'linked-editorial-execution-v1'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy,case_contract:'shared-editorial-case-v4-faithful-profile-quotes'} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter,case_quote_contract:'field-bound-visible-quotes-v2'} : {}),
