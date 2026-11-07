@@ -13,12 +13,12 @@ SELECTION_REASONING = '''Separate source facts from editorial decisions and appl
 SELECTION_REASONING += ''' For a concrete false comparative premise (unique, distinct or incremental capability), use evidence_kind=portfolio_comparison and comparison_reference for the OTHER original matter. Quote that other matter's actual source in source_quote and THIS questioned decision's exact comparative premise in decision_quote. Do not use a peer source to challenge this matter's standalone facts, attribute a peer outcome to it, or ask for your preferred ordering. For an own-source factual error use evidence_kind=source and comparison_reference=null. Application_rule and supported also require comparison_reference=null. Every comparative rejection still needs an explicit bound source for the questioned decision itself.'''
 
 
-def bind_decision_quote(value, decision):
+def bind_decision_quote(value, decision, fields=('rationale', 'legal_understanding', 'disposition')):
     """A rejection must identify words in this decision, never another one."""
     quote = ' '.join(literal_quote(value).split())
     if not quote:
         return ''
-    for field in ('rationale', 'legal_understanding', 'disposition'):
+    for field in fields:
         text = str(decision.get(field) or '')
         if quote.casefold() in ' '.join(text.split()).casefold():
             return quote
@@ -182,7 +182,13 @@ def review_selection(state, invoke):
             elif check['evidence_kind']=='portfolio_comparison':
                 other=refs.get(check['comparison_reference'])
                 decision=decisions.get(matter['id'],{})
-                comparative=bool(COMPARATIVE_PREMISE.search(check['decision_quote']))
+                # The reviewer explicitly declares the comparison and peer. Bind its
+                # literal prose and both sources; a keyword list cannot decide
+                # whether a grounded comparison may enter repair. Disposition
+                # alone is not a comparative premise. Legacy inference above
+                # retains its stricter lexical guard.
+                comparative=bool(bind_decision_quote(check['decision_quote'],decision,
+                    fields=('rationale','legal_understanding')))
                 target_bound=bind_quote(decision.get('source_quote',''),matter)
                 quote=bind_selection_review_quote(check['source_quote'],other) if (
                     other and other['id']!=matter['id'] and other['id'] in decisions
@@ -241,7 +247,10 @@ def repair_selection(state, invoke):
     # become the 21st selected matter while unaffected decisions stay locked.
     unchanged_core=[d for d in previous['matters'] if d['matter_id'] not in ids and d['disposition']=='core']
     capacity=max(0,20-len(unchanged_core))
-    allowed={mid:set(failed[mid].get('correction_dispositions') or ('core','reserve','excluded')) for mid in ids}
+    # A prose/fact diagnosis is not permission to reselect the portfolio.
+    # Changing disposition requires an explicit, source-bound review constraint.
+    current={d['matter_id']:d['disposition'] for d in previous['matters']}
+    allowed={mid:set(failed[mid].get('correction_dispositions') or (current[mid],)) for mid in ids}
     core_ids=tuple(mid for mid in ids if 'core' in allowed[mid])
     core_decision=create_model('SelectedDecisionCorrection',__base__=Disposition,
         matter_id=(Literal[core_ids or ids],...),disposition=(Literal['core'],...))
@@ -251,12 +260,13 @@ def repair_selection(state, invoke):
         core_corrections=(list[core_decision],Field(max_length=min(capacity,len(core_ids)))),
         other_corrections=(list[other_decision],Field(max_length=len(ids))),unresolved=(list[str],...))
     result,trace=invoke(state,'strategist',schema,
-        SELECTION_REASONING + ' Correct ONLY the supplied rejected selection decisions against original sources. Resolve the decision the diagnosis rejects, not merely its wording: if inclusion contradicts the evidenced portfolio thesis, a disclaimer retaining that inclusion is not a correction. Respect each nonempty correction_dispositions constraint; do not ask for optional evidence when a faithful reserve decision is already possible. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. Respect portfolio_constraints: core_corrections share only the remaining capacity after unchanged cores. Capacity bookkeeping controls the schema only: never copy remaining slots or a quota into rationale or legal_understanding. Justify legal contribution on its own merits. Return each rejected ID exactly once across core_corrections and other_corrections. A request to correct a reserve rationale does NOT require promotion. Compare its legal contribution with the supplied unchanged-core context and the other rejected decisions; retain reserve with a defensible comparative rationale when appropriate. Any promotion must fit remaining capacity, including a source-backed demotion among the rejected decisions when necessary; never demote an unaffected matter or the hero to make space. Pending publication permission does not itself justify reserve or exclusion when confidential delivery is available. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
+        SELECTION_REASONING + ' Correct ONLY the supplied rejected selection decisions against original sources. Resolve the decision the diagnosis rejects, not merely its wording: if inclusion contradicts the evidenced portfolio thesis, a disclaimer retaining that inclusion is not a correction. Respect allowed_dispositions for each target: an empty or absent correction_dispositions locks its current disposition; do not ask for optional evidence when a faithful reserve decision is already possible. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. Respect portfolio_constraints: core_corrections share only the remaining capacity after unchanged cores. Capacity bookkeeping controls the schema only: never copy remaining slots or a quota into rationale or legal_understanding. Justify legal contribution on its own merits. Return each rejected ID exactly once across core_corrections and other_corrections. A request to correct a reserve rationale does NOT require promotion. Compare its legal contribution with the supplied unchanged-core context and the other rejected decisions; retain reserve with a defensible comparative rationale when appropriate. Any promotion must fit remaining capacity, including a source-backed demotion among the rejected decisions when necessary; never demote an unaffected matter or the hero to make space. Pending publication permission does not itself justify reserve or exclusion when confidential delivery is available. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
         {'scope':{k:state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
          'delivery_policy': state['package'].get('delivery_policy'),
          'application_rules': APPLICATION_RULES,
          'portfolio_constraints':{'core_limit':20,'unchanged_core_count':len(unchanged_core),'correction_core_capacity':capacity,'hero_matter_id':previous.get('hero_matter_id')},
          'unchanged_core_context':unchanged_core,
+         'allowed_dispositions':{mid:sorted(allowed[mid]) for mid in ids},
          'failed_checks':failed,'sources':[register[mid] for mid in ids],
          'comparison_sources':[register[mid] for mid in dict.fromkeys(
              c.get('comparison_matter_id') for c in failed.values() if c.get('evidence_kind')=='portfolio_comparison') if mid in register],

@@ -56,6 +56,8 @@ class SelectionRepairCapacityTests(unittest.TestCase):
 
     def test_paired_swap_only_changes_rejected_decisions_and_preserves_hero(self):
         package,strategy=fixture();state=repair_state(package,strategy,['m19','m20'])
+        state['selection_feedback']['failed_checks']['m19']['correction_dispositions']=['reserve']
+        state['selection_feedback']['failed_checks']['m20']['correction_dispositions']=['core']
         def invoke(state,role,schema,instruction,payload):
             self.assertEqual(payload['portfolio_constraints']['correction_core_capacity'],1)
             return {'core_corrections':[{**strategy['matters'][-1],'disposition':'core'}],
@@ -68,6 +70,7 @@ class SelectionRepairCapacityTests(unittest.TestCase):
 
     def test_promotion_can_use_real_spare_capacity(self):
         package,strategy=fixture(19);state=repair_state(package,strategy,['m19'])
+        state['selection_feedback']['failed_checks']['m19']['correction_dispositions']=['core']
         def invoke(state,role,schema,instruction,payload):
             self.assertEqual(payload['portfolio_constraints']['correction_core_capacity'],1)
             return {'core_corrections':[{**strategy['matters'][-1],'disposition':'core'}],'other_corrections':[],'unresolved':[]},[]
