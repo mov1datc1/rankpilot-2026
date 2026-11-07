@@ -1,0 +1,12 @@
+# Graph boundaries and bounded rechecks v1.0.42
+
+A cross-stage audit identified four concrete inconsistencies.
+
+1. Development could bind and validate BIO/B10/C2 output proofs, then strip presentation markup from their prose after validation. A valid proposal could consequently return development_validated=true with nonliteral output references. Generated presentation is now canonicalized before binding and validation, including its output references. Original evidence remains verbatim. Fresh, reused and repaired development share the same boundary; no post-validation rewrite remains.
+2. A classification-only writer recheck returned without advancing writer_attempts. A subsequent rejected letter could obtain an additional writer/editor pass beyond the intended two-pass limit. That return now increments the existing counter; rejection remains rejection.
+3. The direct full-review endpoint capped graph steps at 12 even though the existing permitted selection and writer retries can traverse 17 nodes. Staged and full callers now share a 24-step safety ceiling. This does not increase provider-call allowances, writer attempts, selection reviews, repair rounds or token budgets.
+4. A legacy release assertion only logged failed gates while allowing a completed report/PDF to be returned. Older completed-report callers now require positive source, reconciliation, artifact, constitutional and release gates, with no artifact rollback. Pending interrogation without a completed report remains a draft. The current process-document compatibility route already forwards intake into the staged Studio workflow; this change closes the older service boundary without replacing the current worker.
+
+The audit distinguishes the active staged graph (register, strategy, selection, selection review, shared case, development, writer, editor, release), its durable worker and exact-file gate, from the 21-node historical pipeline. Sources, permission resolution, immutable repairs, prior usage and official/draft downloads retain their existing guards. Mechanical rendering does not confer editorial approval.
+
+Synthetic regression tests cover fresh/reused/repaired formatting, original evidence preservation, writer counter advancement, repeated rejection termination, the 17-node bounded path, each legacy gate, rollback and incomplete source interrogation. These tests use mocked model responses and real routing/binding/validation; they do not establish fresh production document quality. No model, SDK, reasoning, budget or new automatic retry is introduced.
