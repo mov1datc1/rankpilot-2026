@@ -17,7 +17,11 @@ class OutputBindingAndRepairScopeTests(unittest.TestCase):
         calls=[]
         def invoke(state,role,schema,instruction,payload):
             calls.append(payload)
-            answer=native_answer({'corrections':[{'path':'candidates/0','value':first if len(calls)==1 else good['candidates'][0],'reason':'Synchronize own evidence.'}],'unresolved':[]},payload['target_references'])
+            value=first if len(calls)==1 else {
+                'submission_bio':good['candidates'][0]['submission_bio'],
+                'profile_coverage':{u['reference']:{k:u[k] for k in ('decision','public_quote','reason')} for u in good['candidates'][0]['profile_coverage']},
+                'submission_case_coverage':None}
+            answer=native_answer({'corrections':[{'path':'candidates/0','value':value,'reason':'Synchronize own evidence.'}],'unresolved':[]},payload['target_references'])
             schema.model_validate(answer)
             return answer,list(state.get('trace',[]))+[{'usage':{'total_tokens':10}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke):

@@ -6,8 +6,8 @@ still a proposal and must pass the original validators and final document judge.
 """
 import copy
 import re
-from typing import Literal, Union
-from pydantic import BaseModel, create_model, ConfigDict
+from typing import Literal, Union, Optional
+from pydantic import BaseModel, create_model, ConfigDict, Field
 from core.editorial_development import Candidate, Comparison
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors, vague_scale_comparison
 from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
@@ -21,6 +21,34 @@ class Repair(BaseModel):
     corrections: list[Correction]
     unresolved: list[str]
 
+def biography_delta_contract(target):
+    """A BIO repair cannot emit source links, identities or ranking decisions."""
+    current=target['current_value'];fields={}
+    if 'submission_bio' in target['mutable_fields']:fields['submission_bio']=(str,...)
+    if 'profile_coverage' in target['mutable_fields']:
+        unit=create_model('ProfileOutputOnly',__config__=ConfigDict(extra='forbid'),
+            decision=(Literal['retain','generalize','omit'],...),public_quote=(str,...),reason=(str,...))
+        profiles=create_model('ExistingProfileOutputReferences',__config__=ConfigDict(extra='forbid'),
+            **{p['reference']:(unit,...) for p in current.get('profile_coverage',[])})
+        fields['profile_coverage']=(Optional[profiles],Field(description='Null preserves every existing profile output proof. Otherwise return every existing reference, updating only its output decision/quote/reason. Original source units cannot be emitted or changed.'))
+    if 'submission_case_coverage' in target['mutable_fields']:
+        cases=create_model('ExistingPersonalOutputReferences',__config__=ConfigDict(extra='forbid'),
+            **{f'S{i+1:02d}':(str,Field(description='Actual BIO quote for existing personally attributed source binding '+str(i+1)+'. The original matter and source quote remain immutable.')) for i,_ in enumerate(current.get('submission_case_coverage',[]))})
+        fields['submission_case_coverage']=(Optional[cases],Field(description='Null preserves every existing personal output quote. Otherwise use S01, S02 etc in original binding order. Never substitute another mandate.'))
+    return create_model('BiographyOutputDelta',__config__=ConfigDict(extra='forbid'),**fields)
+
+def expand_biography_delta(target,value):
+    delta=biography_delta_contract(target).model_validate(value).model_dump()
+    result=copy.deepcopy(target['current_value'])
+    if 'submission_bio' in delta:result['submission_bio']=delta['submission_bio']
+    profiles=delta.get('profile_coverage')
+    if profiles is not None:
+        for unit in result.get('profile_coverage',[]):unit.update(profiles[unit['reference']])
+    cases=delta.get('submission_case_coverage')
+    if cases is not None:
+        for i,unit in enumerate(result.get('submission_case_coverage',[])):unit['public_quote']=cases[f'S{i+1:02d}']
+    return result
+
 def repair_result_contract(targets):
     """One exclusive outcome for each authorized field; notes are not tasks."""
     outcomes={}
@@ -29,6 +57,7 @@ def repair_result_contract(targets):
         kind=(str if isinstance(current,str) else bool if isinstance(current,bool) else
               EditorialCase if path=='case_plan' else Candidate if isinstance(current,dict) else
               list[Comparison] if path=='comparisons' else list[InstitutionalLink] if path=='institutional_execution' else None)
+        if biography_output_targets_only({path:target}):kind=biography_delta_contract(target)
         if kind is None:raise ValueError('Unsupported repair target shape')
         applied=create_model('AppliedField'+str(i),__config__=ConfigDict(extra='forbid'),
             path=(Literal[path],...),status=(Literal['corrected'],...),value=(kind,...),reason=(str,...))
@@ -51,7 +80,11 @@ def project_repair_result(result,targets):
     for ref,path in refs.items():
         item=result['results'][ref]
         if item.get('path')!=path or not item.get('reason'):raise ValueError('Repair outcome does not match its authorized field')
-        if item['status']=='corrected':projected['corrections'].append({'path':path,'value':item['value'],'reason':item['reason']})
+        if item['status']=='corrected':
+            value=item['value']
+            if biography_output_targets_only({path:targets[path]}) and isinstance(value,dict) and 'name' not in value:
+                value=expand_biography_delta(targets[path],value)
+            projected['corrections'].append({'path':path,'value':value,'reason':item['reason']})
         elif item['status']=='unresolved':projected['unresolved'].append(path+': '+item['reason'])
         else:raise ValueError('Invalid field outcome')
     return projected
@@ -279,6 +312,13 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         raise ValueError('Repair left targets unchanged')
     return result
 
+def biography_output_targets_only(targets):
+    allowed={'submission_bio','profile_coverage','submission_case_coverage'}
+    return bool(targets) and all(
+        bool(re.fullmatch(r'candidates/\d+',path)) and bool(target.get('mutable_fields'))
+        and set(target['mutable_fields'])<=allowed
+        for path,target in targets.items())
+
 def repair_development(state, proposal, targets):
     from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
@@ -287,6 +327,8 @@ def repair_development(state, proposal, targets):
                 'errors':['No se inicia otra reparación con consumo del proveedor desconocido.'],
                 'trace':state.get('trace',[])}
     targets=coherent_repair_targets(proposal,targets)
+    bio_only=biography_output_targets_only(targets)
+    ranking_context=None if bio_only else (state.get('ranking_verification') or state.get('package',{}).get('ranking_verification'))
     schema=repair_result_contract(targets)
     # Semantic targets share the same complete evidence. Send it once, not once
     # per generated path; distinct target-specific evidence remains untouched.
@@ -306,7 +348,7 @@ def repair_development(state, proposal, targets):
             if shared is None:shared=evidence
             if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
     feedback=list(state.get('repair_feedback',[]))
-    repair,trace=invoke_role(state,'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':state.get('ranking_verification') or state.get('package',{}).get('ranking_verification')})
+    repair,trace=invoke_role({**state,'source_only_repair':bio_only},'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':ranking_context})
     try:
         repair=project_repair_result(repair,targets)
         fixed=apply_corrections(proposal,targets,repair,allow_unchanged=True)
@@ -384,7 +426,7 @@ def repair_development(state, proposal, targets):
             uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in retry_targets.values())
             retry_schema=repair_result_contract(retry_targets)
             try:
-                retry,trace=invoke_role({**state,'trace':trace},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
+                retry,trace=invoke_role({**state,'trace':trace,'source_only_repair':biography_output_targets_only(retry_targets)},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
                     {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
                      'previous_failure':'A rejected claim, private footprint or auditor voice remains in these exact generated fields. Preserve other corrected fields, all confidential E facts and the unchanged profile credentials.'})
                 retry=project_repair_result(retry,retry_targets)
@@ -664,3 +706,5 @@ def repair_letter(state):
                                     'unresolved':result.get('unresolved',[])}}
 
 TASK += " The shared case_plan is internal, source-bound and common to both documents. Preserve its decisions through prose repairs. Reserve disposition does not erase a personally attributed mandate. Never demote a candidate merely because a supporting source is reserved. Do not change roster or add a public biography for an additional internal leader. Preserve every validated comparison and explain only genuinely missing evidence."
+
+TASK += " For a BiographyOutputDelta return only the permitted BIO and keyed output references. Null preserves the existing reference map. Profile keys are their original P references; personal keys S01, S02 etc refer to original binding order. Source quotations, matter IDs, identity, category and supporting mandates are read-only and cannot appear in the delta. Keep every original source link even when the new BIO explains another already supplied mandate. Never replace an existing binding to make room for another; edit prose and its actual public quotes only."
