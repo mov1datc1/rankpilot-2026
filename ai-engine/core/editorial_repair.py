@@ -9,7 +9,7 @@ import re
 from typing import Literal, Union
 from pydantic import BaseModel, create_model, ConfigDict
 from core.editorial_development import Candidate, Comparison
-from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors
+from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors, vague_scale_comparison
 from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
 
 class Correction(BaseModel):
@@ -161,7 +161,7 @@ def repair_targets(package, strategy, proposal):
             add(field,proposal.get(field,''),'Missing editorial field; B10 must not exceed 1,000 words.',{'package':package,'strategy':strategy})
     for i,comparison in enumerate(proposal.get('comparisons',[])):
         for field in ('incremental_contribution','tradeoff'):
-            if not comparison.get(field):add(f'comparisons/{i}/{field}','','Explain the specific incremental contribution and tradeoff.',{'selected':register.get(comparison.get('selected_id')),'reserve':register.get(comparison.get('alternative_id'))})
+            if not comparison.get(field) or vague_scale_comparison(comparison.get(field,'')):add(f'comparisons/{i}/{field}',comparison.get(field,''),'Explain the specific supported legal contribution or supplied comparable quantities. Remove generic relative-scale labels; do not invent measurements or turn a pending risk into an achieved result.',{'selected':register.get(comparison.get('selected_id')),'reserve':register.get(comparison.get('alternative_id'))})
     for path in submission_voice_paths(proposal):
         parts=path.split('/')
         if parts[0]=='matters':
@@ -255,6 +255,8 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
                         if new_support[:len(old_support)]!=old_support or len(new_support)!=len(old_support)+1 or new_support[-1]['matter_id']!=anchor:
                             raise ValueError('Primary-mandate repair cannot replace supporting evidence')
                 elif bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
+                profile_sources=lambda c:[(item.get('reference'),item.get('source_quote')) for item in c.get('profile_coverage',[])]
+                if profile_sources(after)!=profile_sources(before):raise ValueError('Biography repair cannot change original profile source units')
         elif path=='institutional_execution' and isinstance(value,list):
             value=[InstitutionalLink.model_validate(item).model_dump() for item in value]
         elif path=='comparisons' and isinstance(value,list):
@@ -580,13 +582,12 @@ def coherent_repair_targets(proposal,targets):
         if parent in targets:continue
         spans=[c.get('public_quote','') for c in candidate.get('profile_coverage',[]) if c.get('decision') in ('retain','generalize')]
         spans.extend(c.get('public_quote','') for c in candidate.get('submission_case_coverage',[]))
-        if not any(norm(q) and norm(span) and (norm(q) in norm(span) or norm(span) in norm(q))
-                   for q in target.get('rejected_quotes',[]) for span in spans):continue
+        if not spans:continue
         targets[parent]={**target,'current_value':candidate,
             'mutable_fields':['submission_bio','profile_coverage','submission_case_coverage'],
             'rejected_quote_path':path,
             'problem':target.get('problem','')+' Update only the bio and its exact output bindings. Remove the rejected assertion while preserving the original material credential, source units, personal source bindings, ranking decision and all other candidacy fields. Generalize a material unit to its supported role without its rejected promotional clause; never erase the career role.'}
-        targets[parent]['preserve_profile_quotes']=[span for span in spans if span and not any(
+        targets[parent]['preserve_profile_quotes']=[span for span in spans if target.get('rejected_quotes') and span and not any(
             norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in target.get('rejected_quotes',[]))]
         del targets[path]
     if proposal.get('execution_contract')==EXECUTION_CONTRACT and any(p in targets for p in ('b10','c2')):
@@ -649,6 +650,8 @@ def repair_letter(state):
     from core.portfolio_counts import enumeration_defects
     conflicts=enumeration_defects(state['strategy'],fixed,
         require_numbered=bool(re.search(r'(?m)^\s*\d{1,2}[.)]\s+',str(state['letter'].get('portfolio','')))))+conflicts
+    from core.editorial_case import comparison_style_defects
+    conflicts=comparison_style_defects(fixed)+conflicts
     errors=[d['message'] for d in conflicts]
     requires_change=any(d.get('scope')=='letter' and d.get('severity')=='critical' for d in feedback)
     if result.get('unresolved') or (requires_change and not seen):errors.append('RankPilot debe completar la corrección del Audit; no se acepta una reparación sin cambios.')

@@ -21,11 +21,17 @@ class InstitutionalLink(BaseModel):
 def norm(value):
     return ' '.join(str(value or '').split())
 
+def public_bio_included(package,candidate):
+    """Match directory output scope without changing nomination eligibility."""
+    return '500' not in str(package.get('directory') or '').casefold() or (
+        candidate.get('recommendation')=='present'
+        and str(candidate.get('suggested_ranking') or '').casefold()!='category pending')
+
 def primary_lead_anchor(package,strategy,candidate):
     """Use canonical priority among this person's source-confirmed lead mandates."""
     from core.role_evidence import matter_names_person
     register={m['id']:m for m in package.get('matters',[])}
-    if candidate.get('recommendation')!='present':return None
+    if not public_bio_included(package,candidate):return None
     for decision in (strategy or {}).get('matters',[]):
         matter=register.get(decision.get('matter_id'),{})
         lead={k:matter.get(k) for k in ('leadPartner','lead_partner')}
@@ -39,7 +45,7 @@ def personal_case_errors(package,candidate,strategy=None):
     sources={m['id']:m for m in package.get('matters',[])}
     support={m['matter_id'] for m in candidate.get('supporting_matters',[])}
     links=candidate.get('submission_case_coverage',[])
-    required=min(2,len(support)) if candidate.get('recommendation')=='present' else 0
+    required=min(2,len(support)) if public_bio_included(package,candidate) else 0
     errors=[];ids=[];quotes=[]
     for link in links:
         mid=link.get('matter_id');matter=sources.get(mid,{})
