@@ -42,6 +42,15 @@ export function isStoppedSelection(job:any):boolean {
 }
 
 export function reviewIssues(data:any, errors:string[], job?:any) {
+  // A rejected development has not produced the document pair. An old draft
+  // invalidation marker must not describe this terminal attempt as ready.
+  if(job?.sourceMatches!==false && job?.stage==='development' && job?.status==='failed'
+    && job?.issue?.owner==='rankpilot' && job?.issue?.code==='DEVELOPMENT_REJECTED') {
+    return [{title:'Redacción detenida antes de preparar los documentos',owner:'RankPilot',
+      destination:'retry-review' as ReviewDestination,
+      message:'La reparación automática no pudo validar la redacción. Este intento no llegó a preparar el par final de Submission y Audit. El original y los datos extraídos se conservan.',
+      action:'Copia la referencia de este intento y compártela con quien administra RankPilot. Esperar no lo reanudará; no necesitas volver a cargar el original ni corregir sus datos para resolver este fallo.'}];
+  }
   // A current failed selection has never reached the Word reviewer. Do not
   // replace its concrete checks with an unrelated "draft ready" release marker.
   if(isStoppedSelection(job)) {

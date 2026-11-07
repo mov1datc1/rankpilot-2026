@@ -3,6 +3,17 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {reviewIssues}=require('../../src/lib/audit/review-actions.ts');
 
+test('a terminal development rejection never presents an old draft-ready marker',()=>{
+  const issues=reviewIssues({},['Draft edited; validation required.'],{status:'failed',stage:'development',issue:{code:'DEVELOPMENT_REJECTED',owner:'rankpilot'}});
+  assert.equal(issues.length,1);
+  assert.match(issues[0].title,/Redacción detenida/);
+  assert.doesNotMatch(issues[0].message,/listo para/);
+  assert.match(issues[0].message,/no llegó a preparar el par final/);
+  assert.match(issues[0].action,/Copia la referencia/);
+  assert.match(issues[0].action,/Esperar no lo reanudará/);
+  assert.doesNotMatch(issues[0].action,/Pulsa.*(Revisar|Preparar)/);
+});
+
 test('missing valid automatic review does not tell the user to edit source data',()=>{
   const issues=reviewIssues({},['Falta una revisión final válida.'],{status:'failed',stage:'artifact',issue:{code:'AI_REVIEW_INVALID',owner:'rankpilot'}});
   assert.equal(issues.length,1);assert.equal(issues[0].owner,'RankPilot');
