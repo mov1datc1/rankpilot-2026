@@ -35,6 +35,12 @@ def biography_delta_contract(target):
         cases=create_model('ExistingPersonalOutputReferences',__config__=ConfigDict(extra='forbid'),
             **{f'S{i+1:02d}':(str,Field(description='Actual BIO quote for existing personally attributed source binding '+str(i+1)+'. The original matter and source quote remain immutable.')) for i,_ in enumerate(current.get('submission_case_coverage',[]))})
         fields['submission_case_coverage']=(Optional[cases],Field(description='Null preserves every existing personal output quote. Otherwise use S01, S02 etc in original binding order. Never substitute another mandate.'))
+    if target.get('append_personal_anchor'):
+        contribution=create_model('RequiredPrimaryContribution',__config__=ConfigDict(extra='forbid'),
+            source_quote=(str,Field(description='One exact contiguous passage from the required primary mandate supporting this person and contribution.')),
+            public_quote=(str,Field(description='The new actual BIO passage developing this primary contribution, preserving confidentiality.')),
+            personal_role=(str,Field(description='Only the personal role supported by that primary mandate.')))
+        fields['primary_contribution']=(contribution,Field(description='Append exactly one contribution for required_primary_lead_matter_id. Existing source links, identities, categories and supporting mandates are read-only.'))
     return create_model('BiographyOutputDelta',__config__=ConfigDict(extra='forbid'),**fields)
 
 def expand_biography_delta(target,value):
@@ -47,6 +53,13 @@ def expand_biography_delta(target,value):
     cases=delta.get('submission_case_coverage')
     if cases is not None:
         for i,unit in enumerate(result.get('submission_case_coverage',[])):unit['public_quote']=cases[f'S{i+1:02d}']
+    if target.get('append_personal_anchor'):
+        anchor=target['append_personal_anchor'];new=delta['primary_contribution']
+        result.setdefault('submission_case_coverage',[]).append({
+            'matter_id':anchor,'source_quote':new['source_quote'],'public_quote':new['public_quote']})
+        if anchor not in {s.get('matter_id') for s in result.get('supporting_matters',[])}:
+            result.setdefault('supporting_matters',[]).append({
+                'matter_id':anchor,'source_quote':new['source_quote'],'personal_role':new['personal_role']})
     return result
 
 def repair_result_contract(targets):
@@ -316,7 +329,7 @@ def biography_output_targets_only(targets):
     allowed={'submission_bio','profile_coverage','submission_case_coverage'}
     return bool(targets) and all(
         bool(re.fullmatch(r'candidates/\d+',path)) and bool(target.get('mutable_fields'))
-        and set(target['mutable_fields'])<=allowed
+        and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') else set()))
         for path,target in targets.items())
 
 def repair_development(state, proposal, targets):
@@ -708,3 +721,4 @@ def repair_letter(state):
 TASK += " The shared case_plan is internal, source-bound and common to both documents. Preserve its decisions through prose repairs. Reserve disposition does not erase a personally attributed mandate. Never demote a candidate merely because a supporting source is reserved. Do not change roster or add a public biography for an additional internal leader. Preserve every validated comparison and explain only genuinely missing evidence."
 
 TASK += " For a BiographyOutputDelta return only the permitted BIO and keyed output references. Null preserves the existing reference map. Profile keys are their original P references; personal keys S01, S02 etc refer to original binding order. Source quotations, matter IDs, identity, category and supporting mandates are read-only and cannot appear in the delta. Keep every original source link even when the new BIO explains another already supplied mandate. Never replace an existing binding to make room for another; edit prose and its actual public quotes only."
+TASK += " When primary_contribution is required, supply only that new contribution's literal original source_quote, actual BIO public_quote and source-supported personal_role. The application appends the required mandate without accepting a replacement list or model-selected matter ID. Preserve the complete existing BIO verbatim and add the missing contribution. Existing bindings and supporting evidence remain read-only. This one new source quote is the sole exception to the output-only delta; it must pass the original source and personal-attribution validators."

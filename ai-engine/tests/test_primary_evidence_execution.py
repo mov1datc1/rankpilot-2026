@@ -1,7 +1,8 @@
 import copy
 import unittest
 from core.editorial_execution import execution_errors, primary_lead_anchor
-from core.editorial_repair import repair_targets, apply_corrections
+from core.editorial_repair import repair_targets, apply_corrections, repair_result_contract, project_repair_result
+from pydantic import ValidationError
 from test_editorial_execution import linked_case, SECOND
 
 PRIMARY='Sofia Vega led project employment structuring and prevented a threatened strike.'
@@ -20,6 +21,55 @@ def anchored_case():
 
 
 class PrimaryEvidenceExecutionTests(unittest.TestCase):
+    def native_append(self, existing_support=False):
+        p,s,v=anchored_case()
+        if existing_support:
+            v['candidates'][0]['supporting_matters'].append({'matter_id':'primary','personal_role':'Led project work','source_quote':PRIMARY})
+        targets={'candidates/0':repair_targets(p,s,v)['candidates/0']}
+        answer={'results':{'T01':{'path':'candidates/0','status':'corrected','reason':'Develop the missing primary contribution.',
+            'value':{'submission_bio':PRIMARY+' '+v['candidates'][0]['submission_bio'],
+                     'submission_case_coverage':None,
+                     'primary_contribution':{'source_quote':PRIMARY,'public_quote':PRIMARY,'personal_role':'Led project work'}}}},'source_notes':[]}
+        return p,s,v,targets,answer
+
+    def test_native_primary_delta_appends_without_reemitting_existing_sources(self):
+        for existing_support in (False,True):
+            with self.subTest(existing_support=existing_support):
+                p,s,v,t,answer=self.native_append(existing_support);before=copy.deepcopy((p,s,v))
+                schema=repair_result_contract(t)
+                from openai.lib._pydantic import to_strict_json_schema
+                strict=to_strict_json_schema(schema)
+                self.assertIn('RequiredPrimaryContribution',strict['$defs'])
+                fixed=apply_corrections(v,t,project_repair_result(schema.model_validate(answer).model_dump(),t))
+                old=v['candidates'][0];new=fixed['candidates'][0]
+                self.assertEqual(new['submission_case_coverage'][:-1],old['submission_case_coverage'])
+                self.assertEqual(new['submission_case_coverage'][-1]['matter_id'],'primary')
+                self.assertEqual(sum(x['matter_id']=='primary' for x in new['supporting_matters']),1)
+                for field in old:
+                    if field not in ('submission_bio','submission_case_coverage','supporting_matters'):
+                        self.assertEqual(new[field],old[field])
+                self.assertEqual(execution_errors(p,fixed,s),[])
+                self.assertEqual((p,s,v),before)
+
+    def test_native_primary_delta_cannot_replace_sources_or_choose_another_mandate(self):
+        p,s,v,t,answer=self.native_append();schema=repair_result_contract(t)
+        for field in ('name','suggested_ranking','supporting_matters','matter_id'):
+            bad=copy.deepcopy(answer);bad['results']['T01']['value'][field]='Forbidden'
+            with self.assertRaises(ValidationError):schema.model_validate(bad)
+        bad=copy.deepcopy(answer);bad['results']['T01']['value']['primary_contribution']['matter_id']='m2'
+        with self.assertRaises(ValidationError):schema.model_validate(bad)
+        bad=copy.deepcopy(answer);bad['results']['T01']['value']['submission_case_coverage']={'S01':'Existing quote'}
+        with self.assertRaises(ValidationError):schema.model_validate(bad)
+
+    def test_new_contribution_still_requires_original_source_and_existing_bio(self):
+        p,s,v,t,answer=self.native_append();schema=repair_result_contract(t)
+        bad=copy.deepcopy(answer);bad['results']['T01']['value']['primary_contribution']['source_quote']='Invented source evidence'
+        fixed=apply_corrections(v,t,project_repair_result(schema.model_validate(bad).model_dump(),t))
+        self.assertTrue(execution_errors(p,fixed,s))
+        bad=copy.deepcopy(answer);bad['results']['T01']['value']['submission_bio']=PRIMARY
+        with self.assertRaisesRegex(ValueError,'cannot rewrite the existing BIO'):
+            apply_corrections(v,t,project_repair_result(schema.model_validate(bad).model_dump(),t))
+
     def test_two_secondary_links_do_not_replace_primary_source(self):
         p,s,v=anchored_case()
         self.assertEqual(primary_lead_anchor(p,s,v['candidates'][0]),'primary')
