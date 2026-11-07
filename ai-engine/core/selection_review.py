@@ -74,14 +74,16 @@ def resolve_declared_comparison(check, target_ref, refs, decisions):
 
 
 def can_repair_selection(state):
-    """Permit a new evidenced failure, never loop on an unchanged failed matter."""
+    """Permit new failures or a strict shrinking residual within the same cap."""
     if state.get('selection_review_unavailable') or state.get('selection_diagnostic_invalid') or state.get('selection_review_attempts', 0) >= 3 or state.get('selection_repair_attempts', 0) >= 2:
         return False
     history = state.get('selection_failure_history', [])
     if not history or not history[-1]:
         return False
     previous = {mid for batch in history[:-1] for mid in batch}
-    return not previous.intersection(history[-1])
+    current=set(history[-1])
+    return (not previous.intersection(current)
+            or (len(history)>1 and current < set(history[-2])))
 
 
 def can_recheck_selection_diagnostic(state):
@@ -107,6 +109,8 @@ class DecisionCheck(BaseModel):
     comparison_reference: str | None = Field(default=None, description='Only for portfolio_comparison: the exact Mxx reference of the OTHER matter whose original source_quote challenges this decision comparative premise. Null for source, application_rule and supported.')
     rule_id: Literal['restricted_confidential_delivery'] | None = None
     rule_quote: str = Field(default='', description='For application_rule only: exact statement from application_rules. source_quote must be empty. Never quote serialized application metadata as original source evidence.')
+    correction_dispositions: list[Literal['core','reserve','excluded']] = Field(default_factory=list, max_length=3,
+        description='For a bound repair_required that requires changing disposition, all source-defensible dispositions that resolve this defect. Empty when prose/fact correction can suffice. Never prescribe a preferred ordering or fill a quota.')
 
 
 def review_selection(state, invoke):
@@ -118,7 +122,7 @@ def review_selection(state, invoke):
     checks = create_model('EveryDecisionReview', __config__=ConfigDict(extra='forbid'),
                           **{ref: (check_contract, ...) for ref in refs})
     schema = create_model('SelectionReview', checks=(checks, ...))
-    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test EVERY selection decision, including reserves and exclusions, against the original source, not merely against its quote. Return a check for every reference. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
+    proposal, trace = invoke(state, 'selection_reviewer', schema, SELECTION_REASONING + ''' Independently test EVERY selection decision, including reserves and exclusions, against the original source, not merely against its quote. Return a check for every reference. Verify that legal_understanding accurately represents asset/transaction, legal problem, work, outcome versus pending relief and practice nexus. A literal quote can coexist with a false rationale. Reject a property/development mandate mislabeled tax, or a transaction recast as litigation. Industry, monetary size, client name or procedural forum alone cannot establish practice fit. Check that borderline selected matters have defensible incremental value over stronger source-backed reserves. Do not require your preferred order or a fixed count: flag only a concrete unsupported premise, lost decisive evidence or contradictory decision. For a source-based error, identify the exact affected decision_quote and its exact original source_quote. If the disposition itself contradicts the documented practice/client-side thesis or a supplied constraint, set correction_dispositions to ALL source-defensible dispositions resolving that precise defect; exclude the present disposition only when changing it is necessary. A textual disclaimer cannot cure a rejected inclusion decision. For ordinary factual/prose defects, supported decisions or a mere ordering preference, leave correction_dispositions empty. Missing optional evidence alone does not require demotion. For an error applying restricted confidential delivery, set evidence_kind=application_rule, use the supplied rule_id and exact rule_quote, and leave source_quote empty. Never treat serialized routing metadata as original client evidence or use an application rule as evidence of legal facts. Provide a precise corrective explanation in Spanish. No new facts, no demands for missing optional data, no questions to the user about mistakes made by RankPilot. Keep supported explanations under 20 words; repair explanations under 80 words.''',
         {'scope': {k: state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
          'delivery_policy': state['package'].get('delivery_policy'),
          'application_rules': APPLICATION_RULES,
@@ -193,15 +197,17 @@ def repair_selection(state, invoke):
     # become the 21st selected matter while unaffected decisions stay locked.
     unchanged_core=[d for d in previous['matters'] if d['matter_id'] not in ids and d['disposition']=='core']
     capacity=max(0,20-len(unchanged_core))
+    allowed={mid:set(failed[mid].get('correction_dispositions') or ('core','reserve','excluded')) for mid in ids}
+    core_ids=tuple(mid for mid in ids if 'core' in allowed[mid])
     core_decision=create_model('SelectedDecisionCorrection',__base__=Disposition,
-        matter_id=(Literal[ids],...),disposition=(Literal['core'],...))
+        matter_id=(Literal[core_ids or ids],...),disposition=(Literal['core'],...))
     other_decision=create_model('UnselectedDecisionCorrection',__base__=Disposition,
         matter_id=(Literal[ids],...),disposition=(Literal['reserve','excluded'],...))
     schema=create_model('BoundedSelectionRepair',
-        core_corrections=(list[core_decision],Field(max_length=capacity)),
+        core_corrections=(list[core_decision],Field(max_length=min(capacity,len(core_ids)))),
         other_corrections=(list[other_decision],Field(max_length=len(ids))),unresolved=(list[str],...))
     result,trace=invoke(state,'strategist',schema,
-        SELECTION_REASONING + ' Correct ONLY the supplied rejected selection decisions against original sources. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. Respect portfolio_constraints: core_corrections share only the remaining capacity after unchanged cores. Capacity bookkeeping controls the schema only: never copy remaining slots or a quota into rationale or legal_understanding. Justify legal contribution on its own merits. Return each rejected ID exactly once across core_corrections and other_corrections. A request to correct a reserve rationale does NOT require promotion. Compare its legal contribution with the supplied unchanged-core context and the other rejected decisions; retain reserve with a defensible comparative rationale when appropriate. Any promotion must fit remaining capacity, including a source-backed demotion among the rejected decisions when necessary; never demote an unaffected matter or the hero to make space. Pending publication permission does not itself justify reserve or exclusion when confidential delivery is available. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
+        SELECTION_REASONING + ' Correct ONLY the supplied rejected selection decisions against original sources. Resolve the decision the diagnosis rejects, not merely its wording: if inclusion contradicts the evidenced portfolio thesis, a disclaimer retaining that inclusion is not a correction. Respect each nonempty correction_dispositions constraint; do not ask for optional evidence when a faithful reserve decision is already possible. Preserve every unaffected decision, portfolio order and hero. Do not regenerate the portfolio. Respect portfolio_constraints: core_corrections share only the remaining capacity after unchanged cores. Capacity bookkeeping controls the schema only: never copy remaining slots or a quota into rationale or legal_understanding. Justify legal contribution on its own merits. Return each rejected ID exactly once across core_corrections and other_corrections. A request to correct a reserve rationale does NOT require promotion. Compare its legal contribution with the supplied unchanged-core context and the other rejected decisions; retain reserve with a defensible comparative rationale when appropriate. Any promotion must fit remaining capacity, including a source-backed demotion among the rejected decisions when necessary; never demote an unaffected matter or the hero to make space. Pending publication permission does not itself justify reserve or exclusion when confidential delivery is available. A contradiction in source outcomes is not permission to invent a reconciliation or claim an unqualified victory: distinguish documented procedural work from the unresolved final outcome, and say what remains uncertain in the internal rationale. Do not discard relevant work solely because optional information is missing. Correct a false practice classification when supported. Keep each matter_id exact; quote one contiguous source passage from that matter. If the final outcome is genuinely ambiguous, qualify that outcome explicitly while retaining the undisputed legal work and report the source uncertainty in unresolved; a qualified correction is still required. Leave corrections absent only if no faithful decision can be formulated. Corrections remain subject to the same independent semantic review.',
         {'scope':{k:state['package'].get(k) for k in ('directory','practice_area','jurisdiction')},
          'delivery_policy': state['package'].get('delivery_policy'),
          'application_rules': APPLICATION_RULES,
@@ -217,6 +223,9 @@ def repair_selection(state, invoke):
     fixed=copy.deepcopy(previous);corrections={d['matter_id']:d for d in proposed}
     if set(corrections)!=set(ids) or len(corrections)!=len(proposed):
         return {'strategy':previous,'errors':['RankPilot debe completar la corrección de las decisiones señaladas; las demás se conservan.'],'trace':trace,'selection_validated':False}
+    if any(d['disposition'] not in allowed[d['matter_id']] for d in proposed):
+        return {'strategy':previous,'errors':['La corrección debe resolver la decisión señalada, además de su redacción.'],
+                'trace':trace,'selection_validated':False,'selection_repair_attempts':state.get('selection_repair_attempts',0)+1}
     fixed['matters']=[corrections.get(d['matter_id'],d) for d in previous['matters']]
     core=[d['matter_id'] for d in fixed['matters'] if d['disposition']=='core']
     if fixed.get('hero_matter_id') not in core:

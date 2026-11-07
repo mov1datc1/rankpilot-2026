@@ -14,6 +14,17 @@ const {GET}=require('../../src/app/api/generate-docx/route.ts');
 const {updateSubmissionValidatedData}=require('../../src/app/actions/submissions.ts');
 global.fetch=async()=>new Response(JSON.stringify(extracted),{headers:{'Content-Type':'application/json'}});
 const extract=()=>POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',text:'source'})}));
+test('text-only sources persist a successful extraction without a document URL or second call',async()=>{
+ reset();const original=global.fetch;let calls=0,payload;
+ global.fetch=async(url,options)=>{calls++;payload=JSON.parse(options.body);return Response.json(extracted);};
+ try {
+  const sources=[{name:'fictional.txt',text:'Original source text'}];
+  const result=await POST(new NextRequest('http://localhost/api/extract-document',{method:'POST',body:JSON.stringify({submissionId:'s',sources})}));
+  assert.equal(result.status,200);assert.equal(calls,1);assert.equal(payload.user_input,'');
+  assert.deepEqual(payload.sources,sources);assert.deepEqual(state.submission.chambersData.sources,sources);
+  assert.equal(state.matters[0].client,'New');assert.equal(state.submission.documentUrl,undefined);
+ } finally {global.fetch=original;}
+});
 test('empty successful extractor response preserves old draft',async()=>{reset();extracted.matters=[];assert.equal((await extract()).status,422);assert.equal(state.matters[0].id,'old');});
 test('partial extraction preserves previous draft and reports sources',async()=>{reset();extracted.partial=true;extracted.source_errors=[{source:'missing.docx'}];const res=await extract();assert.equal(res.status,422);assert.equal((await res.json()).code,'PARTIAL_EXTRACTION');assert.equal(state.matters[0].id,'old');});
 test('create failure rolls back deletion',async()=>{reset();failCreate=true;assert.equal((await extract()).status,500);assert.equal(state.matters[0].id,'old');});

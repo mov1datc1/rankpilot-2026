@@ -1,0 +1,11 @@
+# Decision-bound selection correction v1.0.34
+
+A bounded correction could repair several rejected decisions but leave one selected matter in place by adding a disclaimer instead of resolving its inclusion. The loop guard then treated the shrinking residual as an unchanged failed batch and stopped before drafting.
+
+The independent selection reviewer can now state the source-defensible dispositions that resolve a concrete rejected decision. The correction transport excludes selected IDs whose bound diagnosis requires a different disposition. Runtime checks also reject other disallowed dispositions. Ordinary prose corrections and legacy diagnostics remain compatible; missing optional information alone does not require demotion. Every correction still needs the unchanged source gate and independent semantic review. Neither code nor a diagnostic grants approval or changes original evidence.
+
+The existing maximum of two repairs and three reviews remains. Within those limits, a strict subset of the previous failed IDs can receive the final local correction. An identical, expanding or overlapping replacement batch cannot obtain another attempt through this progress exception. Unavailable or unbound diagnostics remain ineligible. Checkpoints, accumulated usage and prior review counts are retained; deployment does not revive stopped production jobs.
+
+The text-only extraction route also normalizes its absent document URL before persistence. Previously an accepted sources array containing inline text could finish extraction and then throw while saving. The regression exercises the actual handler and verifies one engine call, unchanged source text, persisted matters and no invented URL.
+
+Validation: 548 Python tests; Node contracts and TypeScript checks. Fictional fixtures exercise shrinking progress through the real graph, hard limits, repeated-failure stopping, schema/runtime disposition constraints, legacy prose repair and unaffected evidence. An isolated backend run of the preceding release stopped at selection and produced no new Word pair. This release does not claim fresh browser acceptance or improved final document quality before those documents exist. Private sources, model responses and customer documents are excluded from publication.
