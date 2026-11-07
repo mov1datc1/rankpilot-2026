@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     if(missingScope.length) return NextResponse.json({code:'SCOPE_REQUIRED',error:missingScope.map(i=>i.message).join(' '),issues:missingScope},{status:422});
 
     const sources = confidentialityOnly ? ((submission.chambersData as any)?.sources || []) : body.sources || context?.sources || [];
-    const sourceInput = (confidentialityOnly ? '' : userInput) || submission.documentUrl || (sources.length > 0 ? sources[0].url : '');
+    const sourceInput = (confidentialityOnly ? '' : userInput) || submission.documentUrl || (sources.length > 0 ? sources[0].url : '') || '';
     if (!sourceInput && sources.length === 0) {
       return NextResponse.json({ error: 'No source document available to extract' }, { status: 400 });
     }
