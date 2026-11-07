@@ -131,6 +131,9 @@ def obligations(package, strategy, proposal):
         if head and public_profile(candidate):
             add(f'head:{i}:b9',f'candidates/{i}/submission_bio',[{'name':head['name'],'confirmed_department_head':head}],
                 'Preserve the separately confirmed department-head function in this person public bio using natural sourced prose. Headship does not by itself establish partner seniority. Judge actual leadership coverage against this original administrative head entry; the renderer cannot insert or promote a title to satisfy this obligation.')
+            # This is structured confirmed input, not a verbatim form heading.
+            # Let the reviewer cite the actual entry, never invent B7 labels.
+            result[-1]['confirmed_input_name']=head['name']
         add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
         if candidate.get('recommendation')=='present' and public_profile(candidate):
             add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
@@ -206,10 +209,16 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
         if key not in quote_types:
             name='OutputQuote_'+sha256(path.encode()).hexdigest()[:12]
             quote_types[key]=OutputQuote(name,{f'Q{i}':value for i,value in enumerate(options)})
+        source_type=str
+        source_description='Contiguous exact original words from one of this obligation own sources.'
+        if obligation.get('confirmed_input_name'):
+            source_type=OutputQuote('ConfirmedHead_'+sha256(obligation['confirmed_input_name'].encode()).hexdigest()[:12],
+                {'NAME':obligation['confirmed_input_name']})
+            source_description='Cite the exact name in this confirmed department-head entry. Its head function comes from the structured input field. Template headings, email labels and inferred titles are not source quotations. Independently judge whether the output preserves that function.'
         check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
             status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
             artifact_quote=(quote_types[key],Field(description='Choose the exact passage in this obligation output field. Internal comparisons are not required in the Audit.')),
-            source_quote=(str,Field(description='Contiguous exact original words from one of this obligation own sources.')),
+            source_quote=(source_type,Field(description=source_description)),
             reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning; appearance of words alone is not proof.')))
         fields[obligation['id']]=(check,...)
     checks=create_model('EveryCaseExecutionProof',__config__=ConfigDict(extra='forbid'),**fields)
@@ -219,7 +228,8 @@ def execution_verdict_contract(package, strategy, proposal, letter, base):
 def project_execution_checks(verdict):
     checks=verdict.get('case_checks')
     if not isinstance(checks,dict):return verdict
-    return {**verdict,'case_checks':[{'obligation_id':key,**value,'artifact_quote':str(value['artifact_quote'])} for key,value in checks.items()]}
+    return {**verdict,'case_checks':[{'obligation_id':key,**value,'artifact_quote':str(value['artifact_quote']),
+        'source_quote':str(value.get('source_quote',''))} for key,value in checks.items()]}
 
 
 def execution_defects(package, strategy, proposal, letter, checks):
@@ -240,7 +250,7 @@ def execution_defects(package, strategy, proposal, letter, checks):
         source=check.get('source_quote','')
         bound=any(bind_quote(source,m) or (norm(source) and any(norm(source) in norm(m.get(k)) for k in ('bio','comments','key_focus','name','fullName','role'))) for m in obligation['sources'])
         if not bound or not check.get('reason') or check.get('status') not in ('met','failed'):
-            raise ValueError('review diagnostic not grounded: case execution review lacks its own source evidence or valid decision')
+            raise ValueError('review diagnostic not grounded: case execution review lacks its own source evidence or valid decision: '+obligation['id'].split(':')[0]+':'+path)
         if check['status']=='failed':
             defects.append({'code':'EDITORIAL_OMISSION','severity':'critical','owner':'rankpilot',
                 'scope':'letter' if is_letter else 'submission','matter_id':None,'field_path':path,
