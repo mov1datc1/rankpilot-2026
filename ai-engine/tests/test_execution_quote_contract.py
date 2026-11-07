@@ -65,3 +65,30 @@ class ExecutionQuoteContractTests(unittest.TestCase):
 
     def test_legacy_contract_is_unchanged(self):
         self.assertIs(execution_verdict_contract({}, {}, {'version':'editorial-development-v2'}, {}, Verdict),Verdict)
+
+    def test_confirmed_head_proof_uses_the_actual_input_entry_not_invented_form_labels(self):
+        p,s,v,l=self.setup_case();p['filing_details']={'heads':[{'name':'Sofia Vega'}]}
+        schema=execution_verdict_contract(p,s,v,l,Verdict);r=self.response(p,s,v,l)
+        proof=r['case_checks']['head:0:b9']
+        proof.update(status='failed',source_quote='B7 Head or Heads of department\nName\nSofia Vega',
+            reason='The bio omits the separately confirmed department-head function.')
+        with self.assertRaises(ValidationError):schema.model_validate(r)
+        proof['source_quote']='Luis Prado'
+        with self.assertRaises(ValidationError):schema.model_validate(r)
+        proof['source_quote']='Sofia Vega'
+        parsed=project_execution_checks(schema.model_validate(r).model_dump())
+        defects=execution_defects(p,s,v,l,parsed['case_checks'])
+        self.assertEqual(len(defects),1)
+        self.assertEqual(defects[0]['field_path'],'candidates/0/submission_bio')
+        self.assertEqual(defects[0]['severity'],'critical')
+        self.assertEqual(defects[0]['source_quote'],'Sofia Vega')
+        self.assertNotIn('Head',v['candidates'][0]['submission_bio'])
+
+    def test_head_constraint_does_not_expand_other_obligations_source_scope(self):
+        p,s,v,l=self.setup_case();p['filing_details']={'heads':[{'name':'Sofia Vega'}]}
+        schema=execution_verdict_contract(p,s,v,l,Verdict);r=self.response(p,s,v,l)
+        r['case_checks']['head:0:b9']['source_quote']='Sofia Vega'
+        r['case_checks']['argument:0:b10']['source_quote']='A claim from another matter'
+        parsed=project_execution_checks(schema.model_validate(r).model_dump(mode='json'))
+        with self.assertRaisesRegex(ValueError,'source evidence.*argument:b10'):
+            execution_defects(p,s,v,l,parsed['case_checks'])
