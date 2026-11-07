@@ -1,0 +1,11 @@
+# Personal evidence capacity and unpaid development recheck
+
+The personal-execution validator counted every supporting mandate as substantive personal evidence, including source quotations consisting only of Other team members. It could demand two individual legal achievements for an accurately limited, category-pending profile not proposed for nomination. The primary-lead anchor also accepted a short name occurring as the prefix of a longer structured lead name.
+
+The shared personal-argument requirement now distinguishes literal original team listings from substantively attributed work. Proposed nominations retain the full requirement. Category-pending profiles not proposed for nomination may accurately retain supplied credentials and participation without invented individual achievements; substantive support still requires distinct arguments. An exact structured lead name still requires its primary contribution. Structured lead matching does not infer identity from a shorter-name prefix. This does not merge source identities or resolve an ambiguous alias.
+
+Development guidance, its deterministic validator and the exact-Word reviewer share that distinction. Existing source facts, material credentials, individual results and safe public generalisation remain required. Optional identity/role follow-up stays internal while the firm submission can proceed with the supported limited profile.
+
+One explicit same-job continuation can revalidate a saved failed development after a software fix. It requires unchanged sources, known usage, remaining normal budget, no unresolved final semantic judgment and a unique ledger marker. The worker passes recheck-only mode through the API to the graph. That mode runs all current validators against the reusable proposal and never calls the model, whether it passes or fails. A pass permits the normal Audit and final exact-Word review; it is not release approval. Failure remains terminal rather than purchasing another repair allowance.
+
+Validation: 635 Python tests, 502 Node passes and one skip; TypeScript passed. The private stopped-proposal preflight passes the actual recheck-only path without changing any prose, source, strategy, links or trace, and without a provider call. Fresh autonomous quality and final document approval remain unproven until runtime validation.

@@ -42,6 +42,12 @@ export function isStoppedSelection(job:any):boolean {
 }
 
 export function reviewIssues(data:any, errors:string[], job?:any) {
+  if(job?.canRecheckDevelopment===true && job?.sourceMatches!==false) {
+    return [{title:'Recomprobar la redacción guardada',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
+      message:'Hay una corrección disponible para comprobar de nuevo el borrador conservado. Esta comprobación no vuelve a redactarlo ni reinicia el consumo.',
+      action:'Pulsa «Continuar preparación». Si la redacción supera la comprobación, continuará la preparación del Audit y la revisión de ambos documentos.'}];
+  }
+
   if(job?.canResumeSelectionDiagnostic===true && job?.sourceMatches!==false) {
     return [{title:'Continuar la reparación de la selección',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
       message:'Hay una corrección disponible para revisar los hallazgos guardados y reparar los campos afectados. No necesitas cambiar ni volver a subir el original.',

@@ -372,6 +372,16 @@ def develop(state):
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
     previous=state.get('development')
+    if state.get('development_revalidation_only'):
+        if not previous or not state.get('development_reusable'):
+            return {'errors':['La propuesta guardada ya no corresponde a sus fuentes.'],'development_validated':False,'development_repair_unlocatable':True}
+        bound=bind_development(state['package'],previous)
+        errors=development_errors(state['package'],state['strategy'],bound)
+        if any(isinstance(d,dict) and (d.get('severity')=='critical' or d.get('artifact_quote')) for d in state.get('repair_feedback',[])):
+            errors.append('La entrega conserva una revisión semántica pendiente.')
+        return {'development':bound,'errors':errors,'development_validated':not errors,
+            'development_repair_unlocatable':bool(errors),'trace':list(state.get('trace',[])),
+            'development_recheck_report':{'provider_calls':0,'source_and_strategy_reused':True}}
     if previous and state.get('development_reusable'):
         bound=bind_development(state['package'],previous)
         errors=development_errors(state['package'],state['strategy'],bound)
@@ -423,3 +433,5 @@ def develop(state):
     return {'development':proposal,'errors':errors,'trace':trace,'development_validated':not errors}
 
 TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Return one profile_coverage decision for EVERY unit of this candidate, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
+
+TASK += " PERSONAL EVIDENCE CAPACITY: Read source_obligations.personal_attribution_policy. A literal team listing alone establishes membership, not individual substantive responsibility or achievements. Keep such a category-pending, not-nominated public profile limited to supplied credentials and participation; do not manufacture two personal contributions or force a client answer merely to complete the report. This exception does not dilute substantive personally attributed mandates or an actual proposed nomination. Do not identify a shorter name with a longer lead name without source support. Record optional identity or role follow-up internally."

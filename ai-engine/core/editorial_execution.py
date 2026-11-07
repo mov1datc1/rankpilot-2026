@@ -29,15 +29,27 @@ def public_bio_included(package,candidate):
 
 def primary_lead_anchor(package,strategy,candidate):
     """Use canonical priority among this person's source-confirmed lead mandates."""
-    from core.role_evidence import matter_names_person
+    from core.role_evidence import role_names_person_exactly
     register={m['id']:m for m in package.get('matters',[])}
     if not public_bio_included(package,candidate):return None
     for decision in (strategy or {}).get('matters',[]):
         matter=register.get(decision.get('matter_id'),{})
-        lead={k:matter.get(k) for k in ('leadPartner','lead_partner')}
-        if decision.get('disposition')=='core' and matter_names_person(candidate.get('name'),lead):
+        if decision.get('disposition')=='core' and any(role_names_person_exactly(candidate.get('name'),matter.get(k)) for k in ('leadPartner','lead_partner')):
             return decision['matter_id']
     return None
+
+def personal_argument_requirement(package,candidate):
+    """Share the source-capacity threshold with the exact-document reviewer."""
+    sources={m['id']:m for m in package.get('matters',[])}
+    support={m['matter_id'] for m in candidate.get('supporting_matters',[])}
+    from core.role_evidence import team_listing_quote
+    # Directory inclusion does not turn a team list into individual legal work.
+    # A proposed nomination still needs its full personal argument; a limited,
+    # category-pending profile can state only participation actually supplied.
+    nominated=candidate.get('recommendation')=='present' or str(candidate.get('suggested_ranking') or '').casefold()!='category pending'
+    substantive={item.get('matter_id') for item in candidate.get('supporting_matters',[])
+        if not team_listing_quote(candidate.get('name'),item.get('source_quote'),sources.get(item.get('matter_id'),{}))}
+    return min(2,len(support if nominated else substantive)) if public_bio_included(package,candidate) else 0
 
 def personal_case_errors(package,candidate,strategy=None):
     from core.editorial_development import bind_quote
@@ -45,7 +57,7 @@ def personal_case_errors(package,candidate,strategy=None):
     sources={m['id']:m for m in package.get('matters',[])}
     support={m['matter_id'] for m in candidate.get('supporting_matters',[])}
     links=candidate.get('submission_case_coverage',[])
-    required=min(2,len(support)) if public_bio_included(package,candidate) else 0
+    required=personal_argument_requirement(package,candidate)
     errors=[];ids=[];quotes=[]
     for link in links:
         mid=link.get('matter_id');matter=sources.get(mid,{})
