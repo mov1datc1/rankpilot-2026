@@ -59,8 +59,9 @@ class SelectionFieldRepairTests(unittest.TestCase):
 
     def test_undeclared_field_patch_cannot_change_strategy(self):
         state=self.state();state.update(selection_gate(state))
-        fixed=repair_selection(state,lambda *args:({'corrections':[{'matter_id':'m1','field_path':'source_quote','text':SOURCE}]},[]))
-        self.assertEqual(fixed['strategy'],state['strategy']);self.assertFalse(fixed['selection_validated'])
+        from pydantic import ValidationError
+        with self.assertRaises(ValidationError):
+            repair_selection(state,lambda *args:({'corrections':[{'matter_id':'m1','field_path':'source_quote','text':SOURCE}]},[]))
 
     def test_own_supplementary_source_number_is_not_an_invention(self):
         state=self.state();state['package']['matters'][0]['otherInfo']='The documented exposure was USD 7654321.'

@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 """Checkpointing before a provider call cannot consume a semantic review."""
 import copy
 import time
@@ -41,8 +42,7 @@ class DeferredSelectionAccountingTests(unittest.TestCase):
             if role=='strategist':
                 events.append('repair')
                 decisions=[{**d,'rationale':d['rationale']+' Corrected interpretation.'} for d in payload['rejected_decisions']]
-                return {'core_corrections':[d for d in decisions if d['disposition']=='core'],
-                        'other_corrections':[d for d in decisions if d['disposition']!='core'],'unresolved':[]},state.get('trace',[])
+                return repair_answer(payload,decisions),state.get('trace',[])
             if real_reviews==1 and not deferred:
                 deferred=True;events.append('defer_before_call')
                 raise SelectionReviewDeferred('Checkpoint before the next request')

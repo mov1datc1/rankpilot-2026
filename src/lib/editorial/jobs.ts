@@ -6,6 +6,8 @@ import { bindGeneratedFindings } from './artifact-findings';
 import { recoveryPlan, hasUnknownProviderUsage } from './recovery';
 import { isStoppedSelection } from '@/lib/audit/review-actions';
 import { canResumeEditorialResidual } from './residual-recovery';
+import {canResumeSelectionDiagnostic} from './selection-recovery';
+import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -31,8 +33,9 @@ export function publicJob(job:any, submission?:any) {
   const lastDecision=job.ledger?.at(-1)?.supervision;
   const pauseReason=sourceMatches===false ? null : paused && lastDecision?.action==='pause' ? lastDecision.reason : isStoppedSelection(job) ? (job.issue.code==='SELECTION_REJECTED'?'selection_rejected':job.issue.code==='SELECTION_DIAGNOSTIC_INVALID'?'selection_diagnostic_invalid':'selection_review_unavailable') : job.status==='failed' && job.issue?.owner==='rankpilot' ? 'stage_stopped' : null;
   const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
-  const canResumeResidual=!!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const canResumeSelection=!!submission && sourceMatches===true && canResumeSelectionDiagnostic(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canResumeResidual=canResumeSelection || !!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,canResumeSelectionDiagnostic:canResumeSelection,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
@@ -59,6 +62,12 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(last?.sourceHash===sourceHash && last?.issue?.code==='SELECTION_REJECTED') return last;
     const resultHash=deliveryInputHash(current,current.chambersData || {});
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
+    if(retry && canResumeSelectionDiagnostic(last,current.chambersData,sourceHash,build)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'selection_diagnostic_recovery_requested',
+        diagnostic_contract:SELECTION_DIAGNOSTIC_CONTRACT,worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
     if(retry && canResumeEditorialResidual(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'residual_recovery_requested',worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;

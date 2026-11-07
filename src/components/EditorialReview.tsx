@@ -95,7 +95,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
       <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
         <div>
           <div style={{fontSize:14,fontWeight:700,color:'#166534'}}>{canResumeResidual?'Continuar la corrección guardada':'Reanudar preparación de documentos oficiales'}</div>
-          <div style={{fontSize:13,color:'#15803D',marginTop:2}}>{canResumeResidual?'Pulsa Continuar preparación. Se conserva el avance; no necesitas volver a cargar tus fuentes. Después se completarán los documentos y su revisión final.':'El sistema aplicará las mejoras editoriales y revisará el Submission y el Audit antes de habilitar la entrega.'}</div>
+          <div style={{fontSize:13,color:'#15803D',marginTop:2}}>{canResumeResidual?'Pulsa Continuar preparación. Se conserva el avance; no necesitas volver a cargar tus fuentes. Se repararán los campos pendientes y se volverá a revisar la entrega antes de habilitar los documentos.':'El sistema aplicará las mejoras editoriales y revisará el Submission y el Audit antes de habilitar la entrega.'}</div>
         </div>
         <button type="button" disabled={busy} onClick={()=>onResolve('retry-review','Reanudar preparación')} style={{background:'#16A34A',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
           {busy ? 'Preparando…' : canResumeResidual?'Continuar preparación →':'Revisar y generar entrega oficial →'}

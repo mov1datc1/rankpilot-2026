@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 """A grounded local repair must still fit the complete portfolio."""
 import copy
 import unittest
@@ -28,10 +29,9 @@ class SelectionRepairCapacityTests(unittest.TestCase):
         def invoke(state,role,schema,instruction,payload):
             calls.append(role)
             if role=='strategist':
-                self.assertEqual(payload['portfolio_constraints']['correction_core_capacity'],0)
-                self.assertEqual(len(payload['unchanged_core_context']),20)
+                self.assertEqual(payload['failed_checks']['m20']['field_paths'],['rationale','legal_understanding'])
                 corrected={**strategy['matters'][-1],'rationale':'Reserve because the selected mandates document more differentiated collective negotiations; consent remains unconfirmed.'}
-                answer={'core_corrections':[],'other_corrections':[corrected],'unresolved':[]}
+                answer=repair_answer(payload,[corrected])
                 return schema.model_validate(answer).model_dump(),[]
             return {'checks':{f'M{i+1:02d}':{'status':'repair_required' if len(calls)==1 and i==20 else 'supported',
                 'explanation':'Compare legal contribution rather than optional consent.','source_quote':SOURCE if i==20 else '', 'decision_quote':strategy['matters'][i]['rationale'] if i==20 else ''} for i in range(21)}},[]

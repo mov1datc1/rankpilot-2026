@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 import copy
 import unittest
 import test_selection_comparison_evidence as comparison_fixtures
@@ -35,7 +36,7 @@ class ExplicitComparisonContractTests(unittest.TestCase):
             self.assertEqual([m['id'] for m in payload['sources']], ['a'])
             self.assertEqual([m['id'] for m in payload['comparison_sources']], ['b'])
             fixed = {**initial['strategy']['matters'][0], 'rationale': 'Documents a strike-prevention result alongside the existing union litigation.'}
-            return {'core_corrections': [fixed], 'other_corrections': [], 'unresolved': []}, []
+            return repair_answer(payload,[fixed]), []
         fixed = repair_selection({**state, **review}, repair)
         self.assertEqual(fixed['strategy']['matters'][1], initial['strategy']['matters'][1])
         self.assertEqual(fixed['strategy']['hero_matter_id'], initial['strategy']['hero_matter_id'])
@@ -58,21 +59,15 @@ class ExplicitComparisonContractTests(unittest.TestCase):
             self.assertFalse(can_repair_selection(result))
 
     def test_prose_diagnosis_cannot_demote_or_promote_even_with_spare_capacity(self):
+        from pydantic import ValidationError
         for current, attempted in (('core', 'reserve'), ('reserve', 'core')):
-            with self.subTest(current=current):
-                state, verdict = self.fixture()
-                state['strategy']['matters'][0]['disposition'] = current
-                review = review_selection(state, lambda *args: (verdict, []))
-                def invoke(s, role, schema, instruction, payload):
-                    self.assertEqual(payload['allowed_dispositions']['a'], [current])
-                    changed = {**state['strategy']['matters'][0], 'disposition': attempted}
-                    return {'core_corrections': [changed] if attempted == 'core' else [],
-                            'other_corrections': [changed] if attempted != 'core' else [], 'unresolved': []}, []
-                if attempted == 'core':
-                    from pydantic import ValidationError
-                    with self.assertRaises(ValidationError):
-                        repair_selection({**state, **review}, invoke)
-                else:
-                    result = repair_selection({**state, **review}, invoke)
-                    self.assertFalse(result['selection_validated'])
-                    self.assertEqual(result['strategy'], state['strategy'])
+            state, verdict = self.fixture()
+            state['strategy']['matters'][0]['disposition'] = current
+            review = review_selection(state, lambda *args: (verdict, []))
+            def invoke(s, role, schema, instruction, payload):
+                self.assertEqual(set(schema.model_fields), {'corrections'})
+                changed = {**state['strategy']['matters'][0], 'disposition': attempted}
+                return {'core_corrections': [changed] if attempted == 'core' else [],
+                        'other_corrections': [changed] if attempted != 'core' else [], 'unresolved': []}, []
+            with self.assertRaises(ValidationError):
+                repair_selection({**state, **review}, invoke)

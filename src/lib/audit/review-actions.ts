@@ -42,6 +42,12 @@ export function isStoppedSelection(job:any):boolean {
 }
 
 export function reviewIssues(data:any, errors:string[], job?:any) {
+  if(job?.canResumeSelectionDiagnostic===true && job?.sourceMatches!==false) {
+    return [{title:'Continuar la reparación de la selección',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
+      message:'Hay una corrección disponible para revisar los hallazgos guardados y reparar los campos afectados. No necesitas cambiar ni volver a subir el original.',
+      action:'Pulsa «Continuar preparación». Se conserva este intento, su avance y el consumo acumulado; después se comprobará de nuevo la selección.'}];
+  }
+
   // A rejected development has not produced the document pair. An old draft
   // invalidation marker must not describe this terminal attempt as ready.
   if(job?.sourceMatches!==false && job?.stage==='development' && job?.status==='failed'

@@ -1,3 +1,4 @@
+from selection_answer_fixture import repair_answer
 """Application policy can repair a wrong gate, never authenticate legal facts."""
 import copy
 import unittest
@@ -36,7 +37,7 @@ class SelectionApplicationEvidenceTests(unittest.TestCase):
         def invoke(state,role,*args):
             calls.append(role)
             if role=='strategist':
-                return {'core_corrections':[corrected],'other_corrections':[],'unresolved':[]},[]
+                return repair_answer(args[-1] if 'args' in locals() else payload,[corrected]),[]
             attempt=calls.count(role)
             check=diagnosis(evidence_kind='source',rule_id=None,rule_quote='',source_quote='"publication_route":"E"') if attempt==1 else diagnosis() if attempt==2 else {'status':'supported','source_quote':'','explanation':'Supported work.'}
             return {'checks':{'M01':check}},[]
@@ -132,7 +133,7 @@ class SelectionApplicationEvidenceTests(unittest.TestCase):
             self.assertEqual(payload['delivery_policy'], 'restricted-unconfirmed-v1')
             self.assertEqual(payload['application_rules']['restricted_confidential_delivery'], RULE)
             if role == 'strategist':
-                return {'core_corrections': [corrected], 'other_corrections': [], 'unresolved': []}, []
+                return repair_answer(payload,[corrected]), []
             if calls.count(role) == 1:
                 return {'checks': {'M01': diagnosis()}}, []
             return {'checks': {'M01': {'status': 'supported', 'source_quote': '', 'explanation': 'Supported work.'}}}, []

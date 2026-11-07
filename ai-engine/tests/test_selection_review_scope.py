@@ -68,7 +68,7 @@ class SelectionReviewScopeTests(unittest.TestCase):
     def test_no_unchanged_review_buys_another_model_call_or_review_allowance(self):
         state=fixture();state.update(review(state));before=copy.deepcopy(state)
         result=review_selection(state,lambda *args:(_ for _ in ()).throw(AssertionError('Unexpected model call')))
-        self.assertTrue(result['selection_review_validated']);self.assertEqual(result['trace'],[])
+        self.assertTrue(result['selection_review_validated']);self.assertEqual(result['trace'],state['trace'])
         self.assertNotIn('selection_review_attempts',result);self.assertEqual(state,before)
 
     def test_legacy_diagnostics_without_proofs_are_not_implicitly_cached(self):
