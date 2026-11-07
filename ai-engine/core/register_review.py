@@ -1,5 +1,6 @@
 """Bind the final review's register/narrative comparison to original evidence."""
 import re
+import copy
 from pydantic import BaseModel, Field, create_model
 from typing import Literal
 
@@ -19,6 +20,46 @@ class RegisterCheck(BaseModel):
 
 def register_rows(package):
     return {m['id']:m for m in package.get('matters',[]) if any(r.get('quote') for r in (m.get('confidentialityEvidence') or {}).get('client_register',[]))}
+
+def nonasserted_sector_advisories(verdict,package):
+    """Keep a redundant optional register warning from invalidating the review.
+
+    The canonical register check remains. No critical defect or acceptance
+    decision is changed. Both exact artifacts must already omit the term.
+    """
+    if not isinstance(verdict,dict) or not isinstance(verdict.get('defects'),list):return verdict,[]
+    if not package.get('rendered_artifact') or not package.get('rendered_audit'):return verdict,[]
+    norm=lambda value:' '.join(str(value or '').split()).casefold()
+    rows=register_rows(package);checks=verdict.get('register_checks',{})
+    if isinstance(checks,list):checks={c.get('matter_id'):c for c in checks if isinstance(c,dict)}
+    if not isinstance(checks,dict):return verdict,[]
+    kept=[];notes=[]
+    for defect in verdict['defects']:
+        mid=defect.get('matter_id');check=checks.get(mid,{});row=rows.get(mid,{})
+        term=norm(defect.get('conflicting_artifact_term'));quote=norm(defect.get('artifact_quote'))
+        scope=defect.get('scope');rendered=norm(package.get('rendered_artifact' if scope=='submission' else 'rendered_audit'))
+        eligible=(defect.get('code')=='SOURCE_CONFLICT' and defect.get('severity')=='warning'
+            and defect.get('conflict_basis')=='source_vs_source'
+            and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
+            and defect.get('owner')!='user' and defect.get('field_path')=='client_sector' and scope in ('submission','letter')
+            and check.get('relationship')=='conflicting' and check.get('nonessential_sector') is True
+            and bool(term and quote and row) and quote in rendered)
+        if eligible:
+            reg=norm(check.get('register_quote'));nar=norm(check.get('narrative_quote'))
+            grounded=bool(reg and nar and any(reg in norm(r.get('quote')) for r in row['confidentialityEvidence']['client_register'])
+                and any(nar in norm(row.get(k)) for k in ('source_excerpt','rawNotes','summary')))
+            duplicate=any(c.get('scope')==scope and norm(c.get('artifact_quote'))==quote
+                and norm(c.get('conflicting_artifact_term'))==term for c in check.get('claims',[]))
+            absent=not any(re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',norm(package[k]))
+                for k in ('rendered_artifact','rendered_audit'))
+            if grounded and duplicate and absent:
+                notes.append({'code':'NON_ASSERTED_OPTIONAL_SECTOR','matter_id':mid,
+                    'reason':'The optional descriptor is absent from both exact artifacts. Its original register conflict remains available; no acceptance decision or critical finding was changed.'})
+                continue
+        kept.append(defect)
+    if not notes:return verdict,[]
+    result=copy.deepcopy(verdict);result['defects']=copy.deepcopy(kept)
+    return result,notes
 
 def register_verdict_contract(package, base):
     """Require every original row in the provider schema, not just the prompt.

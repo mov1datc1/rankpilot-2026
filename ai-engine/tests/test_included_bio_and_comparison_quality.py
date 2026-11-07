@@ -79,3 +79,21 @@ class IncludedBiographyQualityTests(unittest.TestCase):
         self.assertEqual(defect[0]['field_path'],'evidence_gaps')
         self.assertEqual(defect[0]['owner'],'rankpilot')
         self.assertEqual(comparison_style_defects({'evidence_gaps':'El núcleo acredita riesgo de paro y sindicatos competidores; la reserva describe negociación sin resultado declarado.'}),[])
+
+    def test_bio_and_audit_consistency_cannot_be_excused_by_two_valid_links(self):
+        p,s,v=linked_case();c=v['candidates'][0];c['recommendation']='develop'
+        check=next(o for o in obligations(p,s,v) if o['id']=='candidate:0:b9_audit_consistency')
+        self.assertEqual(check['field'],'candidates/0/submission_bio')
+        self.assertIn('actual Audit leadership argument',check['instruction'])
+        self.assertIn('every mandate the BIO itself describes',check['instruction'])
+        self.assertIn(p['matters'][0],check['sources'])
+        self.assertIn(p['lawyers'][0],check['sources'])
+        self.assertIn('cannot excuse a material mismatch',check['instruction'])
+
+    def test_only_immutable_bio_output_repairs_can_skip_external_ranking_context(self):
+        from core.editorial_repair import biography_output_targets_only
+        target={'candidates/0':{'mutable_fields':['submission_bio','profile_coverage','submission_case_coverage']}}
+        self.assertTrue(biography_output_targets_only(target))
+        for changed in ({'candidates/0':{}},{'candidates/0':{'mutable_fields':['submission_bio','suggested_ranking']}},
+                        {**target,'b10':{}},{}):
+            self.assertFalse(biography_output_targets_only(changed))

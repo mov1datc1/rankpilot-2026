@@ -307,7 +307,7 @@ def invoke_role(state, role, schema, instruction, payload):
     router = RAGRouter()
     # This narrow role interprets a supplied clause's membership predicate.
     # Directory/practice examples add no evidence and can distract from negation.
-    methodology = '' if role == 'portfolio_reviewer' else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
+    methodology = '' if role == 'portfolio_reviewer' or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
@@ -352,7 +352,12 @@ def invoke_role(state, role, schema, instruction, payload):
         require_complete_response(raw)
         if result.get('parsing_error') or result.get('parsed') is None:
             raise ValueError('structured response unavailable')
-        parsed=schema.model_validate(result['parsed'])
+        value=result['parsed']
+        if role=='editor':
+            from core.register_review import nonasserted_sector_advisories
+            value,notes=nonasserted_sector_advisories(value,package)
+            if notes:trace[-1]['diagnostic_advisories']=notes
+        parsed=schema.model_validate(value)
     except Exception as error:
         if isinstance(error,ValidationError) and 'review diagnostic not grounded' in str(error):
             raise EditorialResponseError('review diagnostic not grounded',trace[-1]) from error
