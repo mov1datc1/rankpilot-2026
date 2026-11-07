@@ -26,6 +26,10 @@ from core.register_review import RegisterCheck, register_rows, register_defects,
 from core.selection_contract import selection_contract, project_selection
 from core.editorial_development import develop, development_errors, literal_quote, bind_quote, NARRATIVE_SOURCE_FIELDS
 
+# The full bounded route can execute 17 nodes (three selection reviews and two
+# writer/editor passes). This is a graph-step ceiling, not more model retries.
+EDITORIAL_GRAPH_RECURSION_LIMIT = 24
+
 class Disposition(BaseModel):
     matter_id: str
     disposition: Literal['core', 'reserve', 'excluded']
@@ -562,7 +566,7 @@ def writer(state):
         from core.editorial_case import comparison_style_defects
         conflicts=comparison_style_defects(state['letter'])+conflicts
         if not conflicts and audit_word_count(state['letter'])<=AUDIT_WORD_LIMIT:
-            return {'letter':state['letter'],'trace':trace,'writer_validated':True,'errors':[],'repair_feedback':[],'letter_repair_requested':False,'letter_repair_report':{'corrected_fields':[],'classification_rechecked':True,'unresolved':[]}}
+            return {'letter':state['letter'],'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1,'writer_validated':True,'errors':[],'repair_feedback':[],'letter_repair_requested':False,'letter_repair_report':{'corrected_fields':[],'classification_rechecked':True,'unresolved':[]}}
         state={**state,'trace':trace,'repair_feedback':conflicts or feedback}
     if state.get('letter') and state.get('repair_feedback'):
         from core.editorial_repair import repair_letter
@@ -983,7 +987,7 @@ def run_editorial_stage(stage, state):
         raise ValueError('Source-grounded semantic selection review required')
     if stage == 'writer' and not state.get('development_validated'):
         raise ValueError('Validated editorial development required')
-    return create_review_graph().invoke({**state,'operation':stage,'stage_deadline':time.monotonic()+225}, {'recursion_limit':16})
+    return create_review_graph().invoke({**state,'operation':stage,'stage_deadline':time.monotonic()+225}, {'recursion_limit':EDITORIAL_GRAPH_RECURSION_LIMIT})
 
 
 def review_rendered_package(state, allow_repair=False):

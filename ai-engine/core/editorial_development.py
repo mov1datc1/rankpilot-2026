@@ -212,25 +212,35 @@ def bind_quote(value, matter):
 
 def bind_development(package, proposal):
     proposal=copy.deepcopy(proposal)
+    # Canonicalize generated presentation before binding and validation, never
+    # after returning development_validated. Source evidence stays verbatim.
+    for field in ('b10','c2'):
+        if field in proposal:proposal[field]=sanitize_narrative_voice(proposal[field])
     register={m['id']:m for m in package.get('matters',[])}
     for draft in proposal.get('matters',[]):
+        for field in ('text','completion_status'):
+            if field in draft:draft[field]=sanitize_narrative_voice(draft[field])
         matter=register.get(draft.get('matter_id'),{})
         draft['decisive_source_quotes']=[bind_quote(q,matter) or literal_quote(q) for q in draft.get('decisive_source_quotes',[])]
         if 'legal_issue_source_quote' in draft:
             draft['legal_issue_source_quote']=bind_quote(draft['legal_issue_source_quote'],matter) or literal_quote(draft['legal_issue_source_quote'])
     for candidate in proposal.get('candidates',[]):
+        if 'submission_bio' in candidate:candidate['submission_bio']=sanitize_narrative_voice(candidate['submission_bio'])
         # Binding evidence must not rewrite the biography after its quotations
         # have been generated. Head/partner claims belong to sourced drafting
         # and independent review, not an unconditional text substitution.
         from core.candidate_evidence import bind_public_quote
         for item in candidate.get('profile_coverage',[]):
             if item.get('decision') in ('retain','generalize'):
-                item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''),candidate.get('name',''))
+                item['public_quote']=bind_public_quote(sanitize_narrative_voice(item.get('public_quote','')),candidate.get('submission_bio',''),candidate.get('name',''))
         for item in candidate.get('submission_case_coverage',[]):
             item['source_quote']=bind_quote(item.get('source_quote',''),register.get(item.get('matter_id'),{})) or literal_quote(item.get('source_quote',''))
-            item['public_quote']=bind_public_quote(item.get('public_quote',''),candidate.get('submission_bio',''),candidate.get('name',''))
+            item['public_quote']=bind_public_quote(sanitize_narrative_voice(item.get('public_quote','')),candidate.get('submission_bio',''),candidate.get('name',''))
         for support in candidate.get('supporting_matters',[]):
             support['source_quote']=bind_quote(support.get('source_quote'),register.get(support.get('matter_id'),{})) or literal_quote(support.get('source_quote'))
+    for link in proposal.get('institutional_execution',[]):
+        for field in ('b10_quote','c2_quote'):
+            if field in link:link[field]=sanitize_narrative_voice(link[field])
     return proposal
 
 def development_errors(package, strategy, proposal):
@@ -401,13 +411,6 @@ def develop(state):
             from core.editorial_repair import repair_rejected_development
             return repair_rejected_development({**state,'repair_feedback':semantic},bound,semantic)
         if not errors:
-            bound['b10'] = sanitize_narrative_voice(bound.get('b10', ''))
-            bound['c2'] = sanitize_narrative_voice(bound.get('c2', ''))
-            for d in bound.get('matters', []):
-                if 'text' in d: d['text'] = sanitize_narrative_voice(d['text'])
-                if 'completion_status' in d: d['completion_status'] = sanitize_completion_status(d['completion_status'])
-            for c in bound.get('candidates', []):
-                if 'submission_bio' in c: c['submission_bio'] = sanitize_narrative_voice(c['submission_bio'])
             return {'development':bound,'errors':[],'development_validated':True}
         from core.editorial_repair import repair_targets, repair_development
         targets=repair_targets(state['package'],state['strategy'],bound)
@@ -417,14 +420,6 @@ def develop(state):
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)
-    if not errors:
-        proposal['b10'] = sanitize_narrative_voice(proposal.get('b10', ''))
-        proposal['c2'] = sanitize_narrative_voice(proposal.get('c2', ''))
-        for d in proposal.get('matters', []):
-            if 'text' in d: d['text'] = sanitize_narrative_voice(d['text'])
-            if 'completion_status' in d: d['completion_status'] = sanitize_completion_status(d['completion_status'])
-        for c in proposal.get('candidates', []):
-            if 'submission_bio' in c: c['submission_bio'] = sanitize_narrative_voice(c['submission_bio'])
     return {'development':proposal,'errors':errors,'trace':trace,'development_validated':not errors}
 
 TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Return one profile_coverage decision for EVERY unit of this candidate, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."

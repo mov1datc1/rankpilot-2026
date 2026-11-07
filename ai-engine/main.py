@@ -60,7 +60,13 @@ class PipelineReleaseError(RuntimeError):
 
 
 def _assert_release_approved(result: dict) -> None:
-    """Log audit status; never block user delivery on quality review checks."""
+    """Legacy analysis may remain a draft; a final report must pass its gates.
+
+    Builder now uses extraction plus the staged editorial worker. Keep older
+    service callers from presenting a rejected legacy result as completed.
+    """
+    if not result.get('is_complete') and not result.get('pdf_url'):
+        return
 
     checks = {
         "source_validation": result.get("source_validation", {}),
@@ -69,12 +75,13 @@ def _assert_release_approved(result: dict) -> None:
         "constitutional_validation": result.get("constitutional_validation", {}),
         "release_verdict": result.get("release_verdict", {}),
     }
-    failed = [name for name, check in checks.items() if check.get("passed") is not True]
-    rollbacks = checks["artifact_validation"].get("matter_rollbacks") or []
+    failed = [name for name, check in checks.items() if not isinstance(check,dict) or check.get("passed") is not True]
+    artifact_check=checks['artifact_validation']
+    rollbacks = (artifact_check.get("matter_rollbacks") or []) if isinstance(artifact_check,dict) else []
     if rollbacks:
         failed.append("artifact_validation.matter_rollbacks")
     if failed:
-        print(f"[RELEASE AUDIT] ⚠️ Audit checks flagged: {failed}. Delivering results to user and preserving logs for Admin.")
+        raise ValueError('RELEASE_REJECTED: '+', '.join(failed))
 
 # 1. Instancia de la API para comunicación con el Backend
 api = FastAPI(title="RankPilot AI Core", version="26.26")
@@ -1267,8 +1274,8 @@ async def review_package_endpoint(request: Request):
             return JSONResponse(status_code=400, content={'success':False,'error':'Invalid review package'})
         from utils.ranking_verifier import verify_ranking_claim
         payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload)
-        from core.review_graph import review_graph
-        result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':12})
+        from core.review_graph import review_graph, EDITORIAL_GRAPH_RECURSION_LIMIT
+        result = await asyncio.to_thread(review_graph.invoke, {'package':payload}, {'recursion_limit':EDITORIAL_GRAPH_RECURSION_LIMIT})
         return JSONResponse(content={'success':True, 'ranking_verification':payload['ranking_verification'], **{key:result.get(key) for key in ('strategy','selection_validated','selection_review','selection_review_validated','development','development_validated','letter','judge','render_gate','release_verdict','trace')}})
     except Exception as error:
         logger.exception('Editorial package review failed')
