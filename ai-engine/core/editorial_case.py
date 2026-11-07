@@ -164,7 +164,10 @@ def obligations(package, strategy, proposal):
                     add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
                         'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result of THIS source. When the source supplies an achieved interim or final result, state that result; an ongoing mandate or intended stability cannot replace it. Use an actual pending position only when no achieved result is supplied. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
             else:
-                add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
+                from core.editorial_execution import personal_argument_requirement,primary_lead_anchor
+                limited=personal_argument_requirement(package,candidate)==0 and not primary_lead_anchor(package,strategy,candidate)
+                instruction=('The original mandate evidence establishes team participation only for '+candidate['name']+'. Preserve supplied profile credentials and participation; do not demand or invent individual legal responsibility, leadership, results or a nomination. Follow up missing evidence internally without blocking this limited accurate profile.' if limited else 'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
+                add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,instruction)
     if proposal.get('version')=='editorial-development-v4':
         from core.candidate_evidence import profile_units
         for i,candidate in enumerate(proposal.get('candidates',[])):
@@ -295,4 +298,5 @@ def prepare_case(state):
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
         'reserve_ids':[d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'],
+        'personal_attribution_policy':'A team listing establishes participation only, not individual legal responsibility or results. For a category-pending profile not proposed for nomination, preserve actual credentials and participation without inventing substantive case contributions. Exact lead names establish their own role; a shorter name alone does not establish identity with a longer name. Substantively attributed work still requires developed, distinct B9 arguments.',
         'personal_evidence':{p.get('name') or p.get('fullName'):[m['id'] for m in package.get('matters',[]) if m['id'] in eligible and matter_names_person(p.get('name') or p.get('fullName'),m)] for p in package.get('lawyers',[])}}}

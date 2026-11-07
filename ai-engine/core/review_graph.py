@@ -114,6 +114,8 @@ class ReviewState(TypedDict, total=False):
     development_validated: bool
     development_repair_unlocatable: bool
     development_reusable: bool
+    development_revalidation_only: bool
+    development_recheck_report: dict
     repair_feedback: list
     repair_report: dict
     output_recovery_attempt: int

@@ -40,3 +40,28 @@ def role_heading_is_not_promotion(defect, package):
     claim = ' '.join(str(defect.get('artifact_quote') or '').split())
     rendered = ' '.join(str(package.get('rendered_artifact' if defect['scope']=='submission' else 'rendered_audit') or '').split())
     return bool(claim and claim in rendered)
+
+
+def role_names_person_exactly(name, value):
+    """A structured role listing is not authority for a shorter-name alias."""
+    if isinstance(value,(list,tuple)):
+        return any(role_names_person_exactly(name,item) for item in value)
+    target=identity(name)
+    parts=re.split(r'[,;/&\n]|\b(?:and|y)\b',str(value or ''),flags=re.I)
+    return bool(target) and any(identity(part)==target for part in parts)
+
+
+def team_listing_quote(name, quote, matter):
+    """Recognise literal participation evidence, not an individual achievement.
+
+    This checks original structured team fields, not a model's role label.
+    A narrative passage or lead-role quotation is not exempted.
+    """
+    clean=re.sub(r'^\s*(?:other\s+)?team\s+members?\s*:\s*','',str(quote or ''),flags=re.I)
+    value=identity(clean);target=identity(name)
+    if not value or not target:return False
+    for key in ('teamMembers','team_members'):
+        team=identity(matter.get(key))
+        if team and (value==team or value==target) and re.search(r'(?<!\w)'+re.escape(target)+r'(?!\w)',team):
+            return True
+    return False
