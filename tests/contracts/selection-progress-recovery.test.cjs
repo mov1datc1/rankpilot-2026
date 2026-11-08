@@ -8,7 +8,7 @@ function fixture(){
  const state={selection_diagnostic_invalid:false,selection_validated:false,selection_review_validated:false,selection_review_attempts:2,selection_repair_attempts:1,
   selection_failure_history:[['a','b','c','d'],['b','new']],trace:[{usage:{total_tokens:55}}],strategy:{matters:ids.map(matter_id=>({matter_id,disposition:'core'}))},
   selection_review:{checks},selection_feedback:{failed_checks:{b:checks.b,new:checks.new}}};
- const source={id:'s',userId:'u',targetDirectory:'Chambers',practiceArea:'Labour & Employment',matters:[],chambersData:{matters:ids.map(id=>({id,rawNotes:'The firm negotiated collective agreements.'})),review_checkpoint:{state}}};
+ const source={id:'s',userId:'u',targetDirectory:'Chambers',practiceArea:'Labour & Employment',matters:[],chambersData:{matters:ids.map(id=>({id,rawNotes:'The firm negotiated collective agreements.'})),review_checkpoint:{created_at:Date.now(),step_keys:{strategy:'saved-key'},state}}};
  const sourceHash=stableHash(sourceSnapshot(source));
  const job={id:'j',submissionId:'s',userId:'u',status:'failed',stage:'selection',cursor:0,tasks:['selection'],sourceHash,ledger:[{stage:'selection',worker_commit:'old-build',trace:{usage:{total_tokens:55}}}],issue:{owner:'rankpilot',code:'SELECTION_REJECTED',retryable:false}};
  return {source,state,sourceHash,job};
@@ -19,6 +19,7 @@ test('smaller mixed batch can continue only after fix with original remaining al
  assert.deepEqual({source,job},before);
  for(const changed of [{...job,status:'running'},{...job,cursor:1},{...job,issue:{...job.issue,owner:'user'}},{...job,ledger:[...job.ledger,{status:'selection_progress_recovery_requested'}]},{...job,ledger:[{worker_commit:'old-build',trace:{usage:{unknown_calls:1}}}]},{...job,ledger:[{worker_commit:'old-build',trace:{usage:{total_tokens:1200000}}}]}]) assert.equal(canResumeSelectionProgress(changed,source.chambersData,sourceHash,'fixed-build'),false);
  for(const delta of [{selection_review_attempts:3},{selection_repair_attempts:2},{selection_diagnostic_invalid:true},{selection_failure_history:[['a','b'],['b','new']]},{selection_review:{checks:{}}},{trace:[]}]) assert.equal(canResumeSelectionProgress(job,{...source.chambersData,review_checkpoint:{state:{...state,...delta}}},sourceHash,'fixed-build'),false);
+ for(const created_at of [Date.now()-86400001,Date.now()+60000,undefined]) assert.equal(canResumeSelectionProgress(job,{...source.chambersData,review_checkpoint:{...source.chambersData.review_checkpoint,created_at}},sourceHash,'fixed-build'),false);
  assert.equal(canResumeSelectionProgress(job,source.chambersData,'changed-source','fixed-build'),false);
  assert.equal(canResumeSelectionProgress(job,source.chambersData,sourceHash,'old-build'),false);
 });

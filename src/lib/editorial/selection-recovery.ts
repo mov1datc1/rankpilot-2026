@@ -30,7 +30,7 @@ export function canResumeSelectionDiagnostic(job:any,data:any,sourceHash:string,
 /** One explicit continuation after correcting a premature progress stop.
  * Uses only the already remaining repair/review allowance, never a reset. */
 export function canResumeSelectionProgress(job:any,data:any,sourceHash:string,commit:string):boolean {
-  const state=data?.review_checkpoint?.state,history=state?.selection_failure_history;
+  const checkpoint=data?.review_checkpoint,state=checkpoint?.state,history=state?.selection_failure_history,now=Date.now();
   if(!job || job.status!=='failed' || job.stage!=='selection' || job.cursor!==0
     || job.tasks?.length!==1 || job.tasks[0]!=='selection' || job.sourceHash!==sourceHash
     || job.issue?.code!=='SELECTION_REJECTED' || job.issue?.owner!=='rankpilot'
@@ -38,6 +38,8 @@ export function canResumeSelectionProgress(job:any,data:any,sourceHash:string,co
     || job.ledger.some((e:any)=>e.status==='selection_progress_recovery_requested')
     || hasUnknownProviderUsage(job.ledger) || hasUnknownProviderUsage([{trace:state?.trace}])
     || authorizedReviewUsed(job.ledger) || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)
+    || !Number.isFinite(checkpoint?.created_at) || now<checkpoint.created_at || now-checkpoint.created_at>=86400000
+    || !checkpoint.step_keys?.strategy
     || state?.selection_diagnostic_invalid!==false || state.selection_review_unavailable===true
     || state.selection_validated!==false || state.selection_review_validated!==false
     || !Number.isSafeInteger(state.selection_review_attempts) || state.selection_review_attempts!==2
