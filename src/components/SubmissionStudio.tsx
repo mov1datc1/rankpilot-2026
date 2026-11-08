@@ -642,7 +642,7 @@ export default function SubmissionStudio({
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(preparationBlocked) {resolvePreparationInputs();return;}
     if(isOptimizingAll) return;
-    if(reviewAttemptStopped) {setDraftSaveError('Este intento está detenido. Esperar o volver a generar no lo reanudará. Consulta los hallazgos y descarga el Audit disponible para revisar lo pendiente.');return;}
+    if(reviewAttemptStopped) {setDraftSaveError('Este intento está detenido. Esperar o volver a generar no lo reanudará. Consulta los hallazgos y la acción indicada en el estado de entrega.');return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);

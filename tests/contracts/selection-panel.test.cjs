@@ -71,3 +71,13 @@ test('a running repair asks the user to wait without suggesting another paid sta
  assert.ok(html.includes('Espera a que termine'));assert.ok(html.includes('Puedes cerrar esta pestaña'));
  assert.ok(!html.includes('para reanudar el proceso'));assert.ok(!html.includes('<button'));
 });
+
+
+test('a failed development offers only existing artifacts and does not invent budget exhaustion',()=>{
+ const props={data:{},errors:[],warnings:[],approved:false,onResolve:()=>{},job:{id:'job',stage:'development',status:'failed',pauseReason:'DEVELOPMENT_REJECTED',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED'}}};
+ const without=renderToStaticMarkup(React.createElement(ReviewPanel,props));
+ assert.match(without,/todavía no preparó el Audit/);assert.doesNotMatch(without,/Audit disponible|descarga el Audit|dentro de los límites/);
+ assert.match(without,/Copiar referencia/);assert.doesNotMatch(without,/continuará automáticamente/);
+ const withAudit=renderToStaticMarkup(React.createElement(ReviewPanel,{...props,data:{editorial_review:{letter:{executive_assessment:'Saved analysis'}}}}));
+ assert.match(withAudit,/Audit disponible/);assert.doesNotMatch(withAudit,/todavía no preparó el Audit/);
+});

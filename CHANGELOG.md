@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.51] — 2026-11-08 — Coherent biography preservation and bounded recovery
+
+- Protect only source-bound quotations actually present in the current biography. Missing generated output references remain validation failures, not immutable prose.
+- Recover full-candidate and narrow biography corrections in the same single bounded retry, retaining independent valid corrections and each target's original write scope. Preserve unresolved source questions and cumulative/unknown usage guards.
+- Distinguish a non-nominated team member from an individual ranking proposal; retain sourced participation without requiring invented personal outcomes.
+- Report residual validation/application errors and exact retry paths. Do not claim an Audit exists before it was prepared or mislabel every drafting failure as exhausted budget.
+- Offline regressions and paid-response replay validate recovery routing, not native editorial quality or a new approved document pair. See `docs/reviews/2026-11-08-coherent-repair-v1-0-51.md`.
+
 ## [1.0.30] — 2026-11-06 — Explicit comparison evidence in selection
 
 - Bind comparative selection findings to the target's own source and exact comparative premise plus an explicitly referenced peer's original source. Keep ordinary foreign factual quotations invalid.
