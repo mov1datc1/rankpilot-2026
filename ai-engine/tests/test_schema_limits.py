@@ -32,3 +32,28 @@ class SerializedSchemaLimitsTests(unittest.TestCase):
             with self.assertRaises(EditorialResponseError) as caught:invoke_role({'trace':[{'usage':{'total_tokens':7}}]},'editor',schema,'Review',{})
         factory.assert_not_called();self.assertFalse(provider_failure(caught.exception)['retryable'])
         self.assertEqual(caught.exception.trace_history,[{'usage':{'total_tokens':7}}])
+
+    def test_large_passage_choices_keep_every_id_without_relaxing_own_scope(self):
+        import copy,re
+        from utils.schema_limits import bounded_reference_schema
+        first=['S_'+format(i,'016x') for i in range(1001)]
+        second=['S_'+format(2000+i,'016x') for i in range(5)]
+        schema={'type':'object','properties':{'own':{'type':'string','enum':first},'other':{'type':'string','enum':second}},'required':['own','other'],'additionalProperties':False}
+        before=copy.deepcopy(schema);fixed=bounded_reference_schema(schema);validate_schema_limits(fixed)
+        for value in first:self.assertRegex(value,fixed['properties']['own']['pattern'])
+        for value in second:self.assertIsNone(re.fullmatch(fixed['properties']['own']['pattern'],value))
+        self.assertIsNone(re.fullmatch(fixed['properties']['own']['pattern'],'S_invented'))
+        self.assertEqual(schema,before)
+        # A single long reference enum can hit the string ceiling before 1,000 values.
+        smaller={'type':'string','enum':first[:834]}
+        self.assertIn('pattern',bounded_reference_schema(smaller))
+
+    def test_pydantic_enum_still_validates_original_large_reference_contract(self):
+        from enum import Enum
+        from pydantic import ValidationError
+        from utils.schema_limits import bounded_reference_schema
+        choices={'Q'+str(i):'S_'+format(i,'016x') for i in range(1001)}
+        typ=Enum('LargeOwnSource',choices,type=str);model=create_model('LargeOwnProof',source_ref=(typ,...))
+        provider=bounded_reference_schema(to_strict_json_schema(model));validate_schema_limits(provider)
+        model.model_validate({'source_ref':choices['Q1000']})
+        with self.assertRaises(ValidationError):model.model_validate({'source_ref':'S_'+format(2000,'016x')})

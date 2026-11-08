@@ -330,9 +330,8 @@ def invoke_role(state, role, schema, instruction, payload):
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
     if remaining<20: raise TimeoutError('Editorial stage budget exhausted before next call')
-    from utils.schema_limits import validate_schema_limits
-    strict_schema=to_strict_json_schema(schema)
-    try:validate_schema_limits(strict_schema)
+    from utils.schema_limits import bounded_reference_schema
+    try:strict_schema=bounded_reference_schema(to_strict_json_schema(schema))
     except ValueError as schema_error:
         failure=EditorialResponseError('review diagnostic not grounded: serialized schema exceeds provider limits',{})
         failure.trace_history=list(state.get('trace',[]));failure.diagnostic_retry_exhausted=True
