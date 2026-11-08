@@ -48,9 +48,9 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
       action:'Pulsa «Continuar preparación». Si la redacción supera la comprobación, continuará la preparación del Audit y la revisión de ambos documentos.'}];
   }
 
-  if(job?.canResumeSelectionDiagnostic===true && job?.sourceMatches!==false) {
+  if((job?.canResumeSelectionDiagnostic===true || job?.canResumeSelectionProgress===true) && job?.sourceMatches!==false) {
     return [{title:'Continuar la reparación de la selección',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
-      message:'Hay una corrección disponible para revisar los hallazgos guardados y reparar los campos afectados. No necesitas cambiar ni volver a subir el original.',
+      message:'Hay una corrección disponible para revisar los hallazgos guardados y reparar las decisiones afectadas. No necesitas cambiar ni volver a subir el original.',
       action:'Pulsa «Continuar preparación». Se conserva este intento, su avance y el consumo acumulado; después se comprobará de nuevo la selección.'}];
   }
 

@@ -79,7 +79,7 @@ def resolve_declared_comparison(check, target_ref, refs, decisions):
 
 
 def can_repair_selection(state):
-    """Permit new failures or a strict shrinking residual within the same cap."""
+    """Permit new failures or fewer unresolved matters within the same cap."""
     if (state.get('selection_review_unavailable') or state.get('selection_review_attempts', 0) >= 3
         or state.get('selection_repair_attempts', 0) >= 2 or _unknown_usage(state.get('trace',[]))):
         return False
@@ -91,10 +91,14 @@ def can_repair_selection(state):
     history = state.get('selection_failure_history', [])
     if not history or not history[-1]:
         return False
+    # A corrected batch may reveal a new defect elsewhere. Requiring a set
+    # subset misclassifies four failures becoming two as no progress when one
+    # remaining ID overlaps. Strictly fewer unresolved matters is measured
+    # progress; same/expanding overlaps still stop, and caps never replenish.
     previous = {mid for batch in history[:-1] for mid in batch}
     current=set(history[-1])
     return (not previous.intersection(current)
-            or (len(history)>1 and current < set(history[-2])))
+            or (len(history)>1 and len(current) < len(set(history[-2]))))
 
 
 def can_recheck_selection_diagnostic(state):
