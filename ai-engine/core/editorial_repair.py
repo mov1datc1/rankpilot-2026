@@ -33,7 +33,7 @@ def biography_delta_contract(target):
         fields['profile_coverage']=(Optional[profiles],Field(description='Null preserves every existing profile output proof. Otherwise return every existing reference, updating only its output decision/quote/reason. Original source units cannot be emitted or changed.'))
     if 'submission_case_coverage' in target['mutable_fields']:
         cases=create_model('ExistingPersonalOutputReferences',__config__=ConfigDict(extra='forbid'),
-            **{f'S{i+1:02d}':(str,Field(description='Actual BIO quote for existing personally attributed source binding '+str(i+1)+'. The original matter and source quote remain immutable.')) for i,_ in enumerate(current.get('submission_case_coverage',[]))})
+            **{f'S{i+1:02d}':(str,Field(description='Actual BIO quote for matter_id '+str(link.get('matter_id'))+'; source is current_value.submission_case_coverage/'+str(i)+'. Keep this exact source association, not sentence order. Never reuse another mandate quotation.')) for i,link in enumerate(current.get('submission_case_coverage',[]))})
         fields['submission_case_coverage']=(Optional[cases],Field(description='Null preserves every existing personal output quote. Otherwise use S01, S02 etc in original binding order. Never substitute another mandate.'))
     if target.get('append_personal_anchor'):
         contribution=create_model('RequiredPrimaryContribution',__config__=ConfigDict(extra='forbid'),
@@ -129,6 +129,7 @@ TASK += " When a text-only biography target supplies preserve_profile_quotes, re
 TASK += " A candidate object target with mutable_fields authorizes only those fields. When correcting a rejected promotional claim overlapping a profile unit, preserve the original source unit and material career role, update its actual public_quote/retain-or-generalize decision, and withdraw only the rejected assertion. Do not preserve the rejected wording merely because its old public_quote included a valid credential. Keep all personally attributed source bindings. For linked-editorial-execution-v1, refresh affected submission_case_coverage and institutional_execution output quotations together with their prose. Retain all original source links, roles and shared argument indices. These are internal bindings; never print them in the documents."
 TASK += " Return exactly one results outcome for each supplied target_references entry. A field is either corrected with its typed value or unresolved because THAT authorized generated change cannot be applied; never both. Record useful source questions outside the permitted change in source_notes. In particular, missing seniority or personal evidence for an already non-nominated Category pending lawyer does not prevent a factual team-member BIO and is not an unresolved BIO correction. Do not invent those facts. source_notes do not grant approval or replace a genuinely blocked requested correction."
 TASK += " preserve_generated_quotes contains source-bound passages actually present in the current BIO. Keep them verbatim, adding or correcting only the affected material and its output bindings. Other public_quote values may be invalid references: synchronize them to the actual corrected BIO rather than treating them as immutable prose. An expanded B9 may use up to 1,000 words when its personally attributed work requires them. Every submission_case_coverage entry must have a matching supporting_matters entry with its own valid attribution; keep all required_personal_matter_ids. For an included but non-nominated team member, preserve factual participation and credentials; remove unsupported individual-result links without deleting that person's supported participation BIO. Do not put nomination decisions or missing-evidence commentary in public prose."
+TASK += " personal_binding_obligations locates each BIO defect by S reference and immutable matter_id. Resolve every listed duplicate_with pair using each mandate's own legal issue, action and supported outcome, never by adding its confidential metrics. Follow public_biography_policy even if only an output-reference defect is listed. A rejected candidate delta was NOT committed: current_value remains authoritative; application failures describe the rejected proposal. Do not assume its extra sentences exist. Keep every S reference mapped to its named matter, independent of sentence order."
 
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
@@ -228,9 +229,9 @@ def repair_targets(package, strategy, proposal):
             evidence=register.get(item.get('matter_id'),{})
             value=item.get(parts[-1], '')
         elif parts[0]=='candidates':
-            if '/'.join(parts[:2]) in targets:continue
             item=proposal['candidates'][int(parts[1])]
             evidence={'person':roster.get(_norm(item.get('name')),{}),'matters':[register.get(s.get('matter_id'),{}) for s in item.get('supporting_matters',[])]}
+            if '/'.join(parts[:2]) in targets:evidence={}  # Parent already carries these own sources.
             value=item['submission_bio']
         else:
             evidence={'package':package,'strategy':strategy};value=proposal[path]
@@ -365,21 +366,9 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         raise ValueError('Repair left targets unchanged')
     return result
 
-def apply_valid_corrections(proposal,targets,repair):
-    """Keep valid independent fields when another completed delta is rejected."""
-    fixed=copy.deepcopy(proposal);failures={};seen=set()
-    for correction in repair.get('corrections',[]):
-        path=correction.get('path')
-        if path not in targets or path in seen:raise ValueError('Repair attempted an invalid or repeated generated field')
-        seen.add(path)
-        try:
-            fixed=apply_corrections(fixed,{path:targets[path]},
-                {'corrections':[correction],'unresolved':[]},allow_unchanged=True)
-        except ValueError as error:
-            failures[path]=str(error)
-    if set(targets)-seen and not repair.get('unresolved'):
-        raise ValueError('Repair left targets unchanged')
-    return fixed,failures
+def apply_valid_corrections(proposal,targets,repair,package=None,strategy=None):
+    from core.repair_acceptance import accept_repair_deltas
+    return accept_repair_deltas(proposal,targets,repair,apply_corrections,package,strategy)
 
 
 def biography_output_targets_only(targets):
@@ -421,7 +410,7 @@ def repair_development(state, proposal, targets):
     repair,trace=invoke_role({**state,'source_only_repair':bio_only},'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':ranking_context})
     try:
         repair=project_repair_result(repair,targets)
-        fixed,application_errors=apply_valid_corrections(proposal,targets,repair)
+        fixed,application_errors=apply_valid_corrections(proposal,targets,repair,state['package'],state['strategy'])
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
     fixed=bind_development(state['package'],fixed)
@@ -448,11 +437,10 @@ def repair_development(state, proposal, targets):
     voice_residuals={path:local_targets[path] for path in submission_voice_paths(fixed)
                      if owned(path) and path in local_targets
                      and isinstance(local_targets[path].get('current_value'),str)}
-    # A parent repair may resolve its evidence bindings but leave only the
-    # department-role sentence. That residual is now a BIO child, not the old
-    # parent path. Recover it within the same bounded attempt and ownership.
+    # Compose every owned BIO residual (voice, privacy or headship), not a
+    # whitelist of symptom types. Never broaden the original mutable fields.
     for path,target in local_targets.items():
-        if target.get('confirmed_head_function') and path.endswith('/submission_bio') and owned(path):
+        if path.startswith('candidates/') and path.endswith('/submission_bio') and owned(path):
             parent='/'.join(path.split('/')[:2]);original=targets.get(parent,{})
             if not original.get('mutable_fields') or 'submission_bio' in original['mutable_fields']:
                 voice_residuals[path]=target
@@ -534,7 +522,7 @@ def repair_development(state, proposal, targets):
                     {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
                      'previous_failure':'These authorized fields failed their listed postconditions. Correct the BIO and its own permitted proof or attribution fields together. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair, not another portfolio review.'})
                 retry=project_repair_result(retry,retry_targets)
-                fixed,retry_application_errors=apply_valid_corrections(fixed,retry_targets,retry)
+                fixed,retry_application_errors=apply_valid_corrections(fixed,retry_targets,retry,state['package'],state['strategy'])
                 application_errors={**{p:e for p,e in application_errors.items() if p not in retry_targets},**retry_application_errors}
                 repair={**retry,'unresolved':list(dict.fromkeys(unresolved_before+retry.get('unresolved',[]))),
                         'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
@@ -782,7 +770,8 @@ def coherent_repair_targets(proposal,targets,package=None):
             target['preserve_generated_quotes']=list(dict.fromkeys(span for span in spans if span
                 and norm(span) in norm(candidate.get('submission_bio','')) and not any(
                 norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in rejected)))
-    return targets
+    from core.biography_obligations import enrich_biography_targets
+    return enrich_biography_targets(package,proposal,targets)
 
 
 def repair_letter(state):

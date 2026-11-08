@@ -1,3 +1,9 @@
+## 2026-11-08 — v1.0.53: diagnóstico localizado y aceptación transaccional de B9
+
+Separadas las responsabilidades de diagnóstico, generación y aceptación de reparaciones. Cada referencia personal indica su asunto inmutable y los duplicados exactos. La preservación deja de congelar citas ausentes o defectuosas. Antes de sustituir un candidato, se comparan sus obligaciones de evidencia, privacidad, voz, jefatura, categoría y calidad personal: una regresión rechaza ese cambio y conserva el candidato previo, sin perder las correcciones independientes. La única recuperación recibe el valor realmente conservado y los defectos localizados de la propuesta rechazada. No se aumentan rondas, límites ni presupuestos, ni se omite la revisión final.
+
+707 pruebas Python, 509 contratos Node correctos/una omisión existente y TypeScript correctos. Ocho regresiones nuevas y una prueba adaptada al rollback atómico. Replay con respuestas ya pagadas rechaza las regresiones e impide conservar métricas privadas nuevas: cero generaciones adicionales. Esto valida los mecanismos locales; todavía no acredita una nueva pareja Word ni calidad editorial final. Ver docs/reviews/2026-11-08-transactional-biography-v1-0-53.md.
+
 ## 2026-11-08 — v1.0.52: conservar todas las obligaciones de una reparación B9
 
 La prueba nueva v51 corrigió los defectos anteriores, pero quedó detenida por una función departamental omitida. El reparador descartaba esa instrucción si ya existía un target del candidato y la recuperación de bindings sustituía instrucciones concurrentes. Ahora la función confirmada se añade a las obligaciones existentes; voz, privacidad y credenciales se conservan. Un residual BIO dentro del candidato original recibe el mismo único reintento acotado. No se deduce jefatura sin fuente ni se insertan frases automáticamente.
