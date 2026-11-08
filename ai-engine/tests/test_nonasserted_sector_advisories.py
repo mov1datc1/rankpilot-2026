@@ -60,3 +60,28 @@ class NonassertedSectorAdvisoryTests(unittest.TestCase):
         fixed,notes=nonasserted_sector_advisories(v,p)
         self.assertFalse(fixed['passed']);self.assertEqual(fixed['acceptance'],v['acceptance'])
         self.assertEqual(fixed['defects'],[critical]);self.assertEqual(len(notes),1)
+
+    def test_source_only_optional_warning_keeps_grounded_register_without_fake_artifact_claim(self):
+        p,v=fixture();d=v['defects'][0];d.update(scope='facts',artifact_quote='',conflicting_artifact_term=None)
+        v['register_checks']['m1']['claims']=[]
+        before=copy.deepcopy((p,v))
+        fixed,notes=nonasserted_sector_advisories(v,p)
+        self.assertEqual(fixed['defects'],[]);self.assertEqual(len(notes),1)
+        for key in ('passed','case_checks','acceptance','register_checks'):self.assertEqual(fixed[key],v[key])
+        self.assertEqual((p,v),before)
+
+    def test_source_only_warning_cannot_hide_claims_critical_or_unbound_conflicts(self):
+        for change in ('critical','user','field','scope','claim','reg','nar','rendered','output_reg','output_nar'):
+            p,v=fixture();d=v['defects'][0];d.update(scope='facts',artifact_quote='',conflicting_artifact_term=None)
+            c=v['register_checks']['m1'];c['claims']=[]
+            if change=='critical':d['severity']='critical'
+            elif change=='user':d['owner']='user'
+            elif change=='field':d['field_path']='outcome'
+            elif change=='scope':d['scope']='submission'
+            elif change=='claim':c['claims']=[{'artifact_quote':'Still asserted'}]
+            elif change=='reg':c['register_quote']='foreign register'
+            elif change=='nar':c['narrative_quote']='foreign narrative'
+            elif change=='rendered':p['rendered_audit']=''
+            elif change=='output_reg':p['rendered_audit']+=' Private education.'
+            else:p['rendered_artifact']+=' private security workforces.'
+            self.assertEqual(nonasserted_sector_advisories(v,p),(v,[]),change)

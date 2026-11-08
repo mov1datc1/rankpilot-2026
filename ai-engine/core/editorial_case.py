@@ -235,7 +235,41 @@ def execution_quote_catalog(package, strategy, proposal, letter):
     return catalog
 
 
-def execution_verdict_contract(package, strategy, proposal, letter, base, compact=False):
+def execution_source_catalog(package, strategy, proposal):
+    """Own-source passage choices, never model-authored proof quotations.
+
+    Complete sources remain in the review payload. These lossless excerpts only
+    transport citations; selecting one does not decide semantic sufficiency.
+    Shared source sets reuse the same schema enum instead of repeating its text.
+    """
+    if proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):return {}
+    from core.editorial_development import SOURCE_FIELDS
+    normalize=lambda value:' '.join(unicodedata.normalize('NFC',str(value or '')).split())
+    result={}
+    for obligation in obligations(package,strategy,proposal):
+        texts=list(dict.fromkeys(normalize(source.get(field))
+            for source in obligation['sources']
+            for field in SOURCE_FIELDS+('bio','comments','key_focus','name','fullName','role')
+            if normalize(source.get(field))))
+        # source_excerpt normally contains the narrative and role cells already.
+        texts=[text for text in texts if not any(text!=other and text in other for other in texts)]
+        passages=[]
+        for text in texts:
+            for sentence in re.split(r'(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])',text):
+                while len(sentence)>360:
+                    end=sentence.rfind(' ',0,361)
+                    if end<1:end=360
+                    passages.append(sentence[:end]);sentence=sentence[end:].lstrip()
+                if sentence:passages.append(sentence)
+        choices={ 'S_'+sha256(quote.encode()).hexdigest()[:16]:quote
+            for quote in dict.fromkeys(passages) if quote }
+        if not choices:
+            raise ValueError('review diagnostic not grounded: own source passage absent: '+obligation['id'])
+        result[obligation['id']]=choices
+    return result
+
+
+def execution_verdict_contract(package, strategy, proposal, letter, base, compact=False, source_refs=False):
     """Model-facing proof keys and quotations are bound before generation.
 
     Quote enums are shared by output field; the full leadership letter is not
@@ -244,7 +278,8 @@ def execution_verdict_contract(package, strategy, proposal, letter, base, compac
     """
     if proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):return base
     norm=lambda v:' '.join(unicodedata.normalize('NFC',str(v or '')).split())
-    fields={};quote_types={}
+    fields={};quote_types={};source_types={}
+    source_catalog=execution_source_catalog(package,strategy,proposal) if source_refs else {}
     catalog=execution_quote_catalog(package,strategy,proposal,letter) if compact else {}
     for obligation in obligations(package,strategy,proposal):
         path=obligation['field'];text,rendered=execution_output(package,proposal,letter,path)
@@ -267,17 +302,27 @@ def execution_verdict_contract(package, strategy, proposal, letter, base, compac
             source_type=OutputQuote('ConfirmedHead_'+sha256(obligation['confirmed_input_name'].encode()).hexdigest()[:12],
                 {'NAME':obligation['confirmed_input_name']})
             source_description='Cite the exact name in this confirmed department-head entry. Its head function comes from the structured input field. Template headings, email labels and inferred titles are not source quotations. Independently judge whether the output preserves that function.'
+        if source_refs:
+            choices=source_catalog[obligation['id']]
+            source_key=tuple(sorted(choices.items()))
+            if source_key not in source_types:
+                source_type=OutputQuote('SourcePassage_'+sha256(str(source_key).encode()).hexdigest()[:16],
+                    {f'S{i}':ref for i,ref in enumerate(choices)})
+                source_type.__doc__='Choose an allowed ID in the source_passages table in the review payload. Read the full original source; the passage is a citation, never semantic approval.'
+                source_types[source_key]=source_type
+            source_type=source_types[source_key]
+            source_description='Choose an original source passage ID from this obligation catalog. Never paraphrase the original. Independently judge whether the output executes the required evidence.'
         check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
             status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
             **{('artifact_ref' if compact else 'artifact_quote'):(quote_types[key],Field(description='Choose the passage in this obligation output field. Read its full text in the passage catalog before judging execution. Internal comparisons are not required in the Audit.'))},
-            source_quote=(source_type,Field(description=source_description+(' Copy a short decisive fragment, at most 360 characters.' if compact else ''),**({'max_length':360} if compact and source_type is str else {}))),
+            **{('source_ref' if source_refs else 'source_quote'):(source_type,Field(description=source_description+(' Copy a short decisive fragment, at most 360 characters.' if compact and not source_refs else ''),**({'max_length':360} if compact and source_type is str else {})))},
             reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning in at most 40 words; appearance of words alone is not proof.',**({'max_length':400} if compact else {}))))
         fields[obligation['id']]=(check,...)
     checks=create_model('EveryCaseExecutionProof',__config__=ConfigDict(extra='forbid'),**fields)
     return create_model('BoundCaseVerdict',__base__=base,case_checks=(checks,...))
 
 
-def project_execution_checks(verdict, quote_catalog=None):
+def project_execution_checks(verdict, quote_catalog=None, source_catalog=None):
     """Resolve compact transport before the existing literal/source validation.
 
     Never treat a reference as approval. Unknown, foreign-field or stale IDs
@@ -294,6 +339,12 @@ def project_execution_checks(verdict, quote_catalog=None):
             if 'artifact_quote' in check or ref not in allowed:
                 raise ValueError('review diagnostic not grounded: unknown or foreign output passage reference: '+key)
             check['artifact_quote']=allowed[ref]
+        if 'source_ref' in check:
+            ref=str(check.pop('source_ref'))
+            allowed=(source_catalog or {}).get(key,{})
+            if 'source_quote' in check or ref not in allowed:
+                raise ValueError('review diagnostic not grounded: unknown or foreign source passage reference: '+key)
+            check['source_quote']=allowed[ref]
         projected.append({'obligation_id':key,**check,'artifact_quote':str(check['artifact_quote']),
             'source_quote':str(check.get('source_quote',''))})
     return {**verdict,'case_checks':projected}

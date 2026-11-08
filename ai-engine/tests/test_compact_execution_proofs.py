@@ -2,7 +2,7 @@ import copy,json,unittest
 from unittest.mock import patch
 from pydantic import ValidationError
 from openai.lib._pydantic import to_strict_json_schema
-from core.editorial_case import execution_verdict_contract,execution_quote_catalog,project_execution_checks,execution_defects
+from core.editorial_case import execution_verdict_contract,execution_quote_catalog,project_execution_checks,execution_defects,execution_source_catalog
 from core.review_graph import Verdict,editor
 import test_execution_quote_contract as legacy
 
@@ -58,7 +58,11 @@ class CompactExecutionProofTests(unittest.TestCase):
         p,s,v,l,_,compact,_=self.fixture()
         def invoke(state,role,schema,instruction,payload):
             self.assertEqual(role,'editor');self.assertIn('artifact_ref',instruction)
-            return schema.model_validate(compact).model_dump(),[]
+            reply=copy.deepcopy(compact)
+            for key,check in reply['case_checks'].items():
+                check.pop('source_quote')
+                check['source_ref']=next(iter(execution_source_catalog(p,s,v)[key]))
+            return schema.model_validate(reply).model_dump(),[]
         with patch('core.review_graph.invoke_role',side_effect=invoke):
             result=editor({'package':p,'strategy':s,'development':v,'letter':l})
         self.assertEqual(result['judge']['case_checks'][0]['artifact_quote'],v['b10'])
