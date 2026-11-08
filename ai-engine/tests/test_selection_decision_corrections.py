@@ -53,6 +53,44 @@ class SelectionDecisionCorrectionTests(unittest.TestCase):
                         {'selection_diagnostic_invalid':True},{'selection_review_unavailable':True}):
             self.assertFalse(can_repair_selection({**state,**changes}))
 
+    def test_graph_repairs_smaller_batch_with_new_and_remaining_findings(self):
+        from core.review_graph import create_review_graph
+        state=fixture()
+        for mid in ('old1','old2','old3','new'):
+            state['package']['matters'].append({**state['package']['matters'][1],'id':mid})
+            state['strategy']['matters'].append({**state['strategy']['matters'][1],'matter_id':mid})
+        state.update(selection_review_attempts=2,selection_repair_attempts=1,
+            selection_failure_history=[['local','old1','old2','old3'],['local','new']])
+        state['selection_feedback']['failed_checks']['new']={**state['selection_feedback']['failed_checks']['local'],'correction_dispositions':[]}
+        before=copy.deepcopy(state);calls=[]
+        def invoke(current,role,schema,instruction,payload):
+            calls.append(role)
+            if role=='strategist':
+                self.assertEqual({d['matter_id'] for d in payload['rejected_decisions']},{'local','new'})
+                self.assertEqual(payload['allowed_dispositions']['local'],['reserve'])
+                return {'core_corrections':[d for d in payload['rejected_decisions'] if d['matter_id']=='new'],
+                    'other_corrections':[{**d,'disposition':'reserve'} for d in payload['rejected_decisions'] if d['matter_id']=='local'],
+                    'unresolved':[]},[]
+            return {'checks':{ref:{'status':'supported','explanation':'Corrected decision agrees with source.','source_quote':''}
+                for ref in payload['review_targets']}},[]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=create_review_graph().invoke({**state,'operation':'strategy'})
+        self.assertTrue(result['selection_review_validated'])
+        self.assertEqual(calls,['strategist','selection_reviewer'])
+        self.assertEqual(result['selection_review_attempts'],3)
+        self.assertEqual(result['selection_repair_attempts'],2)
+        self.assertEqual(next(d for d in result['strategy']['matters'] if d['matter_id']=='local')['disposition'],'reserve')
+        self.assertEqual(state,before)
+
+    def test_fewer_failures_with_new_matter_can_use_remaining_second_repair(self):
+        state={'selection_review_attempts':2,'selection_repair_attempts':1,
+               'selection_failure_history':[['a','b','c','d'],['b','new']]}
+        self.assertTrue(can_repair_selection(state))
+        for changes in ({'selection_review_attempts':3},{'selection_repair_attempts':2},
+                        {'trace':[{'usage':{'unknown_calls':1}}]},
+                        {'selection_diagnostic_invalid':True}, {'selection_review_unavailable':True}):
+            self.assertFalse(can_repair_selection({**state,**changes}))
+
     def test_same_expanding_or_partial_overlap_failures_do_not_buy_retries(self):
         for history in ([['a'],['a']],[['a','b'],['a','b']],[['a'],['a','b']],
                         [['a','b'],['b','c']]):
