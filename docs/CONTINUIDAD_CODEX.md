@@ -1,3 +1,9 @@
+## 2026-11-08 — v1.0.51: preservation and repair contracts reconciled
+
+Independent audit reproduced the prior drafting failure using its saved native response, without a new generation. The preservation guard treated absent output references as immutable BIO text; a mixed full-candidate/BIO-delta batch then prevented the one allowed residual retry. Non-nominated team members also acquired personal-outcome requirements from a descriptive category label.
+
+The correction protects only actual source-bound BIO spans, retains source/completeness/privacy/category validation, and retries only affected owned fields once. Independent corrected fields survive; known cumulative consumption, unknown-usage stops and source-dependent unresolved questions remain. Terminal UI describes only artifacts that exist. See `docs/reviews/2026-11-08-coherent-repair-v1-0-51.md` for validation and limits. No old failed job was reopened and no new paid case was run. Publication status belongs in the local private control; this entry alone does not establish deployment or autonomous acceptance.
+
 ## 2026-11-04 — Nueva prueba v1.0.15 detenida; corrección posterior de contadores y conexión
 
 Jonathan autorizó repetir desde cero por opción B y después pidió cubrir fallos de Internet. Se hizo una nueva ejecución UI en la sesión habitual, una extracción y una preparación, sin correcciones manuales de roles/permisos ni código durante la prueba. Se detuvo antes de redactar. No excedió el límite de selección. Dos revisiones semánticas reales quedaron como tres porque un aplazamiento anterior a la llamada asignó contador fijo dos. Consumo, expediente, snapshots e identificadores en evidencia privada local fuera de Git. No reactivar ni repetir automáticamente este intento. No se ejecutó otro caso.

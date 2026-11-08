@@ -46,7 +46,10 @@ def personal_argument_requirement(package,candidate):
     # Directory inclusion does not turn a team list into individual legal work.
     # A proposed nomination still needs its full personal argument; a limited,
     # category-pending profile can state only participation actually supplied.
-    nominated=candidate.get('recommendation')=='present' or str(candidate.get('suggested_ranking') or '').casefold()!='category pending'
+    # A descriptive label (including "Not proposed") is not a nomination.
+    # Inclusion in Chambers B9 still preserves sourced participation and any
+    # substantive work, but must not turn a team listing into personal results.
+    nominated=candidate.get('recommendation')=='present'
     substantive={item.get('matter_id') for item in candidate.get('supporting_matters',[])
         if not team_listing_quote(candidate.get('name'),item.get('source_quote'),sources.get(item.get('matter_id'),{}))}
     return min(2,len(support if nominated else substantive)) if public_bio_included(package,candidate) else 0

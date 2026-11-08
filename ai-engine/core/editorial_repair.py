@@ -128,6 +128,7 @@ TASK += " For a validated qualify_disputed_outcome correction, do not resolve th
 TASK += " When a text-only biography target supplies preserve_profile_quotes, retain each unaffected credential span verbatim and correct only the separate identified wording. This target cannot edit the candidate's profile-coverage metadata or other fields. If the defect overlaps one of those spans, report that conflict unresolved rather than silently breaking its binding."
 TASK += " A candidate object target with mutable_fields authorizes only those fields. When correcting a rejected promotional claim overlapping a profile unit, preserve the original source unit and material career role, update its actual public_quote/retain-or-generalize decision, and withdraw only the rejected assertion. Do not preserve the rejected wording merely because its old public_quote included a valid credential. Keep all personally attributed source bindings. For linked-editorial-execution-v1, refresh affected submission_case_coverage and institutional_execution output quotations together with their prose. Retain all original source links, roles and shared argument indices. These are internal bindings; never print them in the documents."
 TASK += " Return exactly one results outcome for each supplied target_references entry. A field is either corrected with its typed value or unresolved because THAT authorized generated change cannot be applied; never both. Record useful source questions outside the permitted change in source_notes. In particular, missing seniority or personal evidence for an already non-nominated Category pending lawyer does not prevent a factual team-member BIO and is not an unresolved BIO correction. Do not invent those facts. source_notes do not grant approval or replace a genuinely blocked requested correction."
+TASK += " preserve_generated_quotes contains source-bound passages actually present in the current BIO. Keep them verbatim, adding or correcting only the affected material and its output bindings. Other public_quote values may be invalid references: synchronize them to the actual corrected BIO rather than treating them as immutable prose. An expanded B9 may use up to 1,000 words when its personally attributed work requires them. Every submission_case_coverage entry must have a matching supporting_matters entry with its own valid attribution; keep all required_personal_matter_ids. For an included but non-nominated team member, preserve factual participation and credentials; remove unsupported individual-result links without deleting that person's supported participation BIO. Do not put nomination decisions or missing-evidence commentary in public prose."
 
 def public_privacy_paths(defect, proposal):
     """Respect every public overview field explicitly flagged by the reviewer."""
@@ -178,6 +179,9 @@ def repair_targets(package, strategy, proposal):
         linked_fault=personal_case_errors(package,candidate,strategy) if proposal.get('execution_contract')==EXECUTION_CONTRACT else []
         if proposal.get('version')=='editorial-development-v4' and (profile_faults or category_error(candidate) or linked_fault or quality_faults):
             add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Develop distinct personally attributed contributions in B9 and bind submission_case_coverage to its own sources and actual bio passages. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{**candidate_evidence(candidate,person),'profile_units':profile_units(person)})
+            from core.personal_quality import required_personal_matters
+            targets[f'candidates/{i}']['validation_errors']=profile_faults+linked_fault+quality_faults
+            targets[f'candidates/{i}']['required_personal_matter_ids']=required_personal_matters(package,strategy,candidate)
             if quality_faults:
                 targets[f'candidates/{i}']['problem']+=' Complete all missing material personally attributed work in a developed B9 (up to 1,000 words, without padding), preserve existing evidenced contributions and credentials, and return an individually grounded category_assessment. Do not shrink the BIO to two matters. '+ ' '.join(quality_faults)
             elif anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_faults and not category_error(candidate) and not personal_case_errors(package,candidate):
@@ -235,7 +239,8 @@ def repair_targets(package, strategy, proposal):
         targets[path]['rejected_quotes']=voice_matches(value)
         if parts[0]=='candidates':
             targets[path]['preserve_profile_quotes']=[c.get('public_quote') for c in item.get('profile_coverage',[])
-                if c.get('decision') in ('retain','generalize') and c.get('public_quote')]
+                if c.get('decision') in ('retain','generalize') and c.get('public_quote')
+                and _norm(c['public_quote']) in _norm(item.get('submission_bio',''))]
     from core.public_privacy import public_privacy_findings
     for finding in public_privacy_findings(package,strategy,proposal):
         path=finding['path'];parts=path.split('/')
@@ -424,9 +429,11 @@ def repair_development(state, proposal, targets):
     def failures(document):
         from core.public_privacy import public_privacy_findings
         privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
+        residual=repair_targets(state['package'],state['strategy'],document)
         return [path for path,target in targets.items()
                 if path in application_errors or path in privacy_paths or (not target.get('binding_only') and at(document,path)==target['current_value']) or any(
-                    norm(quote) in norm(at(document,target.get('rejected_quote_path',path))) for quote in target.get('rejected_quotes',[]) if norm(quote))]
+                    norm(quote) in norm(at(document,target.get('rejected_quote_path',path))) for quote in target.get('rejected_quotes',[]) if norm(quote))
+                or any(p==path or p.startswith(path+'/') for p in residual)]
     failed=failures(fixed)
     # A whole-candidate correction can introduce a local voice fault in its
     # biography. Validate descendants as well as the original edited object;
@@ -438,8 +445,10 @@ def repair_development(state, proposal, targets):
                      if owned(path) and path in local_targets
                      and isinstance(local_targets[path].get('current_value'),str)}
     retry_targets={path:copy.deepcopy(payload_targets[path]) for path in failed
-                   if (isinstance(targets[path]['current_value'],str) or (isinstance(targets[path]['current_value'],dict) and targets[path].get('mutable_fields')))
-                   and (path in application_errors or targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids'))}
+                   if (isinstance(targets[path]['current_value'],str) or (isinstance(targets[path]['current_value'],dict)
+                       and (targets[path].get('mutable_fields') or re.fullmatch(r'candidates/\d+',path))))
+                   and (path in application_errors or targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids')
+                        or (re.fullmatch(r'candidates/\d+',path) and path in local_targets))}
     for path,target in voice_residuals.items():
         if path in retry_targets:
             retry_targets[path]['problem']=retry_targets[path].get('problem','')+' '+target.get('problem','')
@@ -465,19 +474,41 @@ def repair_development(state, proposal, targets):
         if child in retry_targets:
             prior=retry_targets.pop(child);target['problem']+=' '+prior.get('problem','')
             if prior.get('rejected_quotes'):target.update(rejected_quotes=prior['rejected_quotes'],rejected_quote_path=child)
+        # Never broaden the original authorization, even if recomputing the
+        # residual would now suggest a whole-candidate change.
+        original=targets.get(path)
+        if original and original.get('mutable_fields'):
+            target['mutable_fields']=[f for f in target['mutable_fields'] if f in original['mutable_fields']]
         retry_targets[path]=target
+    # A genuinely unresolved source-dependent field does not prevent an
+    # independent known correction. Legacy unlocated failures remain a stop.
+    unresolved_before=list(repair.get('unresolved',[]))
+    blocked_paths={path for path in targets if any(str(item).startswith(path+': ') for item in unresolved_before)}
+    unlocated_unresolved=any(not any(str(item).startswith(path+': ') for path in targets) for item in unresolved_before)
+    retry_targets={path:target for path,target in retry_targets.items()
+                   if not any(path==blocked or path.startswith(blocked+'/') for blocked in blocked_paths)}
+    # Coalesce a parent and its BIO residual before constructing the retry
+    # schema. Refresh preservation against the current, independently retained
+    # state; stale children must never overwrite a newly repaired candidate.
+    retry_targets=coherent_repair_targets(fixed,retry_targets,package=state.get('package'))
     for path,target in retry_targets.items():
         target['current_value']=at(fixed,path)
+        if re.fullmatch(r'candidates/\d+',path):
+            target['problem']=target.get('problem','')+' The preceding correction failed these postconditions: '+str(application_errors.get(path,'The candidate still fails its own validation.'))
+            if path in local_targets:
+                for key in ('validation_errors','required_personal_matter_ids'):
+                    if key in local_targets[path]:target[key]=local_targets[path][key]
         if path.startswith('candidates/') and path.endswith('/submission_bio'):
             candidate=fixed['candidates'][int(path.split('/')[1])]
             target['preserve_profile_quotes']=[c.get('public_quote') for c in candidate.get('profile_coverage',[])
-                if c.get('decision') in ('retain','generalize') and c.get('public_quote')]
+                if c.get('decision') in ('retain','generalize') and c.get('public_quote')
+                and norm(c['public_quote']) in norm(candidate.get('submission_bio',''))]
     retry_count=0
     retry_error=None
     # Retry a known completed but ineffective textual correction once, before
     # buying another full Audit/render/judge cycle. Already corrected fields and
     # unrelated sources are excluded. Unknown provider outcomes never enter here.
-    if retry_targets and not repair.get('unresolved') and all(path in retry_targets for path in failed):
+    if retry_targets and not unlocated_unresolved:
         known=bool(trace) and not unknown_repair_usage(trace) and all(
             isinstance((call.get('usage') or {}).get('total_tokens'),(int,float))
             and (call.get('usage') or {})['total_tokens']>=0 for call in trace)
@@ -489,11 +520,12 @@ def repair_development(state, proposal, targets):
             try:
                 retry,trace=invoke_role({**state,'trace':trace,'source_only_repair':biography_output_targets_only(retry_targets)},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
                     {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
-                     'previous_failure':'A rejected claim, private footprint or auditor voice remains in these exact generated fields. Preserve other corrected fields, all confidential E facts and the unchanged profile credentials.'})
+                     'previous_failure':'These authorized fields failed their listed postconditions. Correct the BIO and its own permitted proof or attribution fields together. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair, not another portfolio review.'})
                 retry=project_repair_result(retry,retry_targets)
                 fixed,retry_application_errors=apply_valid_corrections(fixed,retry_targets,retry)
                 application_errors={**{p:e for p,e in application_errors.items() if p not in retry_targets},**retry_application_errors}
-                repair={**retry,'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
+                repair={**retry,'unresolved':list(dict.fromkeys(unresolved_before+retry.get('unresolved',[]))),
+                        'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
             except Exception as error:
                 # A pre-call deadline or failed second request must not erase
                 # the first paid response or its known/unknown usage history.
@@ -511,7 +543,8 @@ def repair_development(state, proposal, targets):
     return {'development':fixed,'development_validated':not errors,'errors':errors,'trace':trace,
             'repair_report':{'corrected_paths':[path for path in targets if path not in failed],
                              'unresolved':repair.get('unresolved',[]),'source_notes':repair.get('source_notes',[]),
-                             'failed_paths':failed,'surgical_retries':retry_count}}
+                             'failed_paths':failed,'surgical_retries':retry_count,
+                             'application_errors':application_errors,'retry_paths':list(retry_targets) if retry_count else []}}
 
 class RepairLocation(BaseModel):
     path: str
@@ -702,7 +735,7 @@ def coherent_repair_targets(proposal,targets,package=None):
             'mutable_fields':['submission_bio','profile_coverage','submission_case_coverage'],
             'rejected_quote_path':path,
             'problem':target.get('problem','')+' Update only the bio and its exact output bindings. Remove the rejected assertion while preserving the original material credential, source units, personal source bindings, ranking decision and all other candidacy fields. Generalize a material unit to its supported role without its rejected promotional clause; never erase the career role.'}
-        targets[parent]['preserve_profile_quotes']=[span for span in spans if target.get('rejected_quotes') and span and not any(
+        targets[parent]['preserve_profile_quotes']=[span for span in spans if target.get('rejected_quotes') and span and norm(span) in norm(candidate.get('submission_bio','')) and not any(
             norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in target.get('rejected_quotes',[]))]
         del targets[path]
     if proposal.get('execution_contract')==EXECUTION_CONTRACT and any(p in targets for p in ('b10','c2')):
@@ -730,7 +763,11 @@ def coherent_repair_targets(proposal,targets,package=None):
                 and (package is None or source_norm(x.get('source_quote')) in source_units) and not affected_span(x.get('public_quote',''))]
             spans.extend(x.get('public_quote','') for x in candidate.get('submission_case_coverage',[])
                 if x.get('matter_id') not in privacy and (package is None or (x.get('matter_id') in register and matter_names_person(candidate.get('name'),register[x['matter_id']]) and bind_quote(x.get('source_quote'),register[x['matter_id']]))))
-            target['preserve_generated_quotes']=list(dict.fromkeys(span for span in spans if span and not any(
+            # A generated output reference is not evidence that the words were
+            # ever written. Protect only real, source-bound BIO spans. Missing
+            # contributions remain obligations of the original validators.
+            target['preserve_generated_quotes']=list(dict.fromkeys(span for span in spans if span
+                and norm(span) in norm(candidate.get('submission_bio','')) and not any(
                 norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in rejected)))
     return targets
 
