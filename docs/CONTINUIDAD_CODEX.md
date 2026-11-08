@@ -1,3 +1,9 @@
+## 2026-11-08 — v1.0.52: conservar todas las obligaciones de una reparación B9
+
+La prueba nueva v51 corrigió los defectos anteriores, pero quedó detenida por una función departamental omitida. El reparador descartaba esa instrucción si ya existía un target del candidato y la recuperación de bindings sustituía instrucciones concurrentes. Ahora la función confirmada se añade a las obligaciones existentes; voz, privacidad y credenciales se conservan. Un residual BIO dentro del candidato original recibe el mismo único reintento acotado. No se deduce jefatura sin fuente ni se insertan frases automáticamente.
+
+Seis regresiones nuevas: cinco fallaban antes del cambio. 699 pruebas Python correctas. Replay de las dos respuestas ya pagadas confirma la omisión exacta de la instrucción en ambos payloads anteriores y su presencia después del cambio; las respuestas antiguas siguen rechazadas, como corresponde. Cero generaciones adicionales. No hay nuevo Word aprobado ni aceptación editorial; la prueba v51 se conserva fallida. Tooltip detenido indica la acción de revisión sin ofrecer un Audit inexistente.
+
 ## 2026-11-08 — v1.0.51: preservation and repair contracts reconciled
 
 Independent audit reproduced the prior drafting failure using its saved native response, without a new generation. The preservation guard treated absent output references as immutable BIO text; a mixed full-candidate/BIO-delta batch then prevented the one allowed residual retry. Non-nominated team members also acquired personal-outcome requirements from a descriptive category label.

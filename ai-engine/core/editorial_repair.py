@@ -264,11 +264,15 @@ def repair_targets(package, strategy, proposal):
     if any('comparaciones de reservas' not in e and 'comparación visible' not in e for e in case_faults):
         add('case_plan',proposal.get('case_plan',{}),'Repair the shared source-bound case plan and all documented additional-leader assessments; preserve sources, selection and public prose.',{'package':package,'strategy':strategy})
     for i in missing_head_bios(package,proposal):
-        if f'candidates/{i}' not in targets:
-            candidate=proposal['candidates'][i]
-            add(f'candidates/{i}/submission_bio',candidate['submission_bio'],
-                'State this separately confirmed department-head function in natural B9 prose. A partner title or leading a matter alone does not state that function. Preserve existing career credentials and personally attributed work; do not invent partner seniority.',
-                {'candidate':candidate,'confirmed_heads':package.get('filing_details',{}).get('heads',[])})
+        candidate=proposal['candidates'][i]
+        parent=f'candidates/{i}';path=parent if parent in targets else parent+'/submission_bio'
+        # Headship is an independent obligation, even when a different fault
+        # already owns the whole candidate or this BIO. Never overwrite voice,
+        # privacy, source-binding or preservation requirements on that target.
+        target=targets.setdefault(path,{'current_value':candidate['submission_bio'],'source_evidence':{}})
+        target['problem']=target.get('problem','')+' State this separately confirmed department-head function in natural B9 prose. A partner title or leading a matter alone does not state that function. Preserve existing career credentials and personally attributed work; do not invent partner seniority.'
+        target['confirmed_head_function']={'name':candidate['name'],'source_path':'filing_details.heads'}
+        target.setdefault('validation_errors',[]).append('Función departamental B9 ausente: '+candidate['name'])
     if proposal.get('execution_contract')==EXECUTION_CONTRACT and institutional_errors(proposal):
         add('institutional_execution',proposal.get('institutional_execution',[]),
             'Bind every shared case argument to its actual distinct B10 and C2 passage. This internal mapping cannot invent text or substitute another field.',{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')})
@@ -444,6 +448,14 @@ def repair_development(state, proposal, targets):
     voice_residuals={path:local_targets[path] for path in submission_voice_paths(fixed)
                      if owned(path) and path in local_targets
                      and isinstance(local_targets[path].get('current_value'),str)}
+    # A parent repair may resolve its evidence bindings but leave only the
+    # department-role sentence. That residual is now a BIO child, not the old
+    # parent path. Recover it within the same bounded attempt and ownership.
+    for path,target in local_targets.items():
+        if target.get('confirmed_head_function') and path.endswith('/submission_bio') and owned(path):
+            parent='/'.join(path.split('/')[:2]);original=targets.get(parent,{})
+            if not original.get('mutable_fields') or 'submission_bio' in original['mutable_fields']:
+                voice_residuals[path]=target
     retry_targets={path:copy.deepcopy(payload_targets[path]) for path in failed
                    if (isinstance(targets[path]['current_value'],str) or (isinstance(targets[path]['current_value'],dict)
                        and (targets[path].get('mutable_fields') or re.fullmatch(r'candidates/\d+',path))))
@@ -469,7 +481,7 @@ def repair_development(state, proposal, targets):
             and all(e=='La contribución personal debe ejecutarse literalmente en el B9 de esta persona.' for e in personal))
         if not owned(path) or not only_binding or category_error(candidate) or path not in local_targets:continue
         target=copy.deepcopy(local_targets[path]);target['mutable_fields']=['submission_bio','profile_coverage','submission_case_coverage']
-        target['problem']='Synchronize only this BIO and its exact output proofs against its own original profile and personally attributed mandates. Retain every material career role and existing legal contribution, category, source unit and personal source binding. Copy each public_quote from the actual current BIO. If the BIO omits supplied material evidence, restore it faithfully; never pick an unrelated matching passage to excuse an omission. Report only an actually blocked authorized field as unresolved.'
+        target['problem']=target.get('problem','')+' Synchronize only this BIO and its exact output proofs against its own original profile and personally attributed mandates. Retain every material career role and existing legal contribution, category, source unit and personal source binding. Copy each public_quote from the actual current BIO. If the BIO omits supplied material evidence, restore it faithfully; never pick an unrelated matching passage to excuse an omission. Report only an actually blocked authorized field as unresolved.'
         child=path+'/submission_bio'
         if child in retry_targets:
             prior=retry_targets.pop(child);target['problem']+=' '+prior.get('problem','')
@@ -721,8 +733,9 @@ def coherent_repair_targets(proposal,targets,package=None):
             # must not overwrite the newly repaired parent from an old value.
             merged=targets[parent]
             merged['problem']=merged.get('problem','')+' '+target.get('problem','')
-            for key in ('rejected_quotes','privacy_matter_ids','preserve_profile_quotes'):
+            for key in ('rejected_quotes','privacy_matter_ids','preserve_profile_quotes','validation_errors'):
                 if target.get(key):merged[key]=list(dict.fromkeys(merged.get(key,[])+target[key]))
+            if target.get('confirmed_head_function'):merged['confirmed_head_function']=target['confirmed_head_function']
             merged['rejected_quote_path']=path
             if target.get('source_evidence'):
                 merged['source_evidence']={'candidate_evidence':merged.get('source_evidence'),'biography_correction_evidence':target['source_evidence']}

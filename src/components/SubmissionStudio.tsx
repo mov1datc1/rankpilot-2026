@@ -1194,7 +1194,7 @@ export default function SubmissionStudio({
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={reviewAttemptStopped ? 'Este intento está detenido. Consulta los hallazgos y el Audit; esperar no lo reanudará.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
+            title={reviewAttemptStopped ? 'Este intento está detenido. Consulta los hallazgos y usa «Solicitar revisión»; esperar no lo reanudará.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
             <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Revisión detenida' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Revisar y generar'}</span>

@@ -1,0 +1,7 @@
+# Reparación de obligaciones concurrentes B9
+
+Una función departamental confirmada podía faltar en el BIO aunque el reparador terminara correctamente otras correcciones. El validador sí detectaba la omisión, pero `repair_targets` solo emitía su instrucción cuando no existía un target de candidato completo. Otro defecto sobre el mismo BIO podía sobrescribir instrucciones de voz. Además, el cleanup de bindings reemplazaba el problema completo y no recogía un residual de jefatura que había pasado del padre al hijo BIO.
+
+El cambio conserva las obligaciones concurrentes, adjunta el hecho confirmado con referencia a `filing_details.heads`, mantiene la instrucción al acotar bindings y recupera el hijo únicamente dentro del alcance originalmente autorizado. Una sola recuperación; fuente, selección, permisos, límites y consumo desconocido intactos. El validador y el juez final siguen siendo necesarios. No hay inserción determinista de prosa ni excepción de aprobación.
+
+Seis regresiones verifican concurrencia con bindings y voz, residual padre/hijo, negativa sin fuente y parada sin tercer intento. Cinco fallaban contra v51. Suite Python: 699 correctas. Replay privado de respuestas existentes reproduce exactamente el estado terminal anterior y acredita que ambas solicitudes carecían de la instrucción; la versión corregida la incluye. Ese replay no genera respuestas nuevas ni acredita calidad nativa. La prueba completa v51 sigue fallida y no produjo pareja Word.
