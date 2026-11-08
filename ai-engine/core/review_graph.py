@@ -129,6 +129,9 @@ class ReviewState(TypedDict, total=False):
     selection_repair_report: dict
     selection_repair_attempts: int
     selection_field_repairable: bool
+    selection_repair_replay_only: bool
+    selection_repair_replay_report: dict
+    selection_repair_replay_errors: list[str]
     selection_review: dict
     selection_review_validated: bool
     selection_review_unavailable: bool
@@ -385,7 +388,8 @@ def register_gate(state):
     # equivalent "non_publishable". Neither is an unresolved permission.
     if any(not restricted_delivery(m, state['package']) and (m.get('confidentialityConfirmed') is False or m.get('publish_status') not in ('publishable','non_publishable','confidential')) for m in matters):
         errors.append('Confirma la confidencialidad de los asuntos pendientes antes de preparar la candidatura.')
-    return {'errors':errors,'trace':list(state.get('trace',[])),'writer_attempts':0,'selection_validated':False}
+    return {'errors':errors,'trace':list(state.get('trace',[])),'writer_attempts':0,'selection_validated':False,
+        'selection_repair_replay_errors':list(state.get('errors',[])) if state.get('selection_repair_replay_only') else []}
 
 def strategist(state):
     from core.selection_review import SELECTION_REASONING
@@ -919,6 +923,9 @@ def select_or_reuse(state):
         except (ValueError, KeyError, TypeError):
             pass
     try:
+        if state.get('selection_repair_replay_only'):
+            from core.selection_repair_cache import replay_selection_repair
+            return replay_selection_repair(state)
         if state.get('selection_feedback',{}).get('semantic_rejection'):
             from core.selection_review import repair_selection, can_repair_selection
             if state.get('selection_failure_history') and not can_repair_selection(state):

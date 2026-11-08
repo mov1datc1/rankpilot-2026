@@ -6,7 +6,7 @@ import { bindGeneratedFindings } from './artifact-findings';
 import { recoveryPlan, hasUnknownProviderUsage } from './recovery';
 import { isStoppedSelection } from '@/lib/audit/review-actions';
 import { canResumeEditorialResidual } from './residual-recovery';
-import {canResumeSelectionDiagnostic,canResumeSelectionProgress} from './selection-recovery';
+import {canResumeSelectionDiagnostic,canResumeSelectionProgress,canReplaySelectionRepair} from './selection-recovery';
 import {canRecheckDevelopment} from './development-recheck';
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 
@@ -37,8 +37,9 @@ export function publicJob(job:any, submission?:any) {
   const canResumeSelection=!!submission && sourceMatches===true && canResumeSelectionDiagnostic(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canRecheck=!!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeProgress=!!submission && sourceMatches===true && canResumeSelectionProgress(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canResumeResidual=canRecheck || canResumeSelection || canResumeProgress || !!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canRecheckDevelopment:canRecheck,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const canReplay=!!submission && sourceMatches===true && canReplaySelectionRepair(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canResumeResidual=canRecheck || canResumeSelection || canResumeProgress || canReplay || !!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
@@ -66,6 +67,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
     if(retry && canResumeSelectionProgress(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'selection_progress_recovery_requested',worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
+    if(retry && canReplaySelectionRepair(last,current.chambersData,sourceHash,build)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'selection_repair_cache_replay_requested',worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }

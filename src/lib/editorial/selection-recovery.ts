@@ -58,3 +58,23 @@ export function canResumeSelectionProgress(job:any,data:any,sourceHash:string,co
     && rejected.length===current.size && Object.keys(failed).length===current.size
     && rejected.every(id=>current.has(id) && checks[id].evidence_bound===true && failed[id]?.evidence_bound===true);
 }
+
+
+/** Reuse one already billed legacy repair, with its final review still unused. */
+export function canReplaySelectionRepair(job:any,data:any,sourceHash:string,commit:string):boolean {
+  const cp=data?.review_checkpoint,s=cp?.state,last=s?.trace?.at(-1),now=Date.now();
+  return !!job && job.status==='failed' && job.stage==='selection' && job.cursor===0
+    && job.tasks?.length===1 && job.tasks[0]==='selection' && job.sourceHash===sourceHash
+    && job.issue?.code==='SELECTION_REJECTED' && job.issue?.owner==='rankpilot'
+    && !!commit && commit!=='local' && !!job.ledger?.length && job.ledger.at(-1)?.worker_commit!==commit
+    && !job.ledger.some((e:any)=>e.status==='selection_repair_cache_replay_requested')
+    && !hasUnknownProviderUsage(job.ledger) && !hasUnknownProviderUsage([{trace:s?.trace}])
+    && !authorizedReviewUsed(job.ledger) && spentTokens(job.ledger)<editorialTokenBudget(job.ledger)
+    && Number.isFinite(cp?.created_at) && now>=cp.created_at && now-cp.created_at<86400000
+    && !!cp.step_keys?.strategy && s?.selection_validated===false && s.selection_diagnostic_invalid===false
+    && s.selection_repair_attempts===2 && s.selection_review_attempts===2
+    && Array.isArray(s.errors) && s.errors.length===1 && s.errors[0]==='La reparación de redacción debe conservar su cita de fuente.'
+    && s.selection_feedback?.field_only===false
+    && last?.role==='strategist' && last.prompt_revision==='decreasing-selection-residual-progress-v33'
+    && /^resp_[a-z0-9]+$/.test(last.provider_request_id || '') && Number.isSafeInteger(last.usage?.total_tokens) && last.usage.total_tokens>0;
+}
