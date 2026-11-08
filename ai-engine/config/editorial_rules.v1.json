@@ -126,7 +126,7 @@
       "test_required": true
     }
   ],
-  "prompt_revision": "coherent-biography-preservation-and-bounded-recovery-v37",
+  "prompt_revision": "composable-headship-and-biography-repair-obligations-v38",
   "application_rules": {
     "restricted_confidential_delivery": "Under restricted-unconfirmed-v1, a matter with publication_route E and resolved_publication_status confidential or confirmation_required is eligible for confidential delivery and editorial selection without a new publication decision. Consent remains unconfirmed when absent; public identification is forbidden. Preserve explicit source restrictions on the work, result or amount. This rule never establishes client facts or legal merit."
   },
