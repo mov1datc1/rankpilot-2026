@@ -38,6 +38,26 @@ def nonasserted_sector_advisories(verdict,package):
         mid=defect.get('matter_id');check=checks.get(mid,{});row=rows.get(mid,{})
         term=norm(defect.get('conflicting_artifact_term'));quote=norm(defect.get('artifact_quote'))
         scope=defect.get('scope');rendered=norm(package.get('rendered_artifact' if scope=='submission' else 'rendered_audit'))
+        # A source-only warning is not a generated-text repair. Preserve its
+        # canonical register comparison, require both exact documents to omit
+        # BOTH competing literal descriptors, and keep all critical decisions.
+        source_only=(defect.get('code')=='SOURCE_CONFLICT' and defect.get('severity')=='warning'
+            and defect.get('conflict_basis')=='source_vs_source'
+            and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
+            and defect.get('owner')!='user' and defect.get('field_path')=='client_sector'
+            and scope=='facts' and not term and not quote
+            and check.get('relationship')=='conflicting' and check.get('nonessential_sector') is True
+            and check.get('claims')==[] and bool(row))
+        if source_only:
+            reg=norm(check.get('register_quote'));nar=norm(check.get('narrative_quote'))
+            grounded=bool(reg and nar and any(reg in norm(r.get('quote')) for r in row['confidentialityEvidence']['client_register'])
+                and any(nar in norm(row.get(k)) for k in ('source_excerpt','rawNotes','summary')))
+            absent=all(not re.search(r'(?<!\w)'+re.escape(term)+r'(?!\w)',norm(package[k]))
+                for term in (reg,nar) for k in ('rendered_artifact','rendered_audit')) if reg and nar else False
+            if grounded and absent:
+                notes.append({'code':'NON_ASSERTED_OPTIONAL_SECTOR','matter_id':mid,
+                    'reason':'Source-only warning retained in its canonical grounded register comparison; both competing descriptors are absent from both exact documents.'})
+                continue
         eligible=(defect.get('code')=='SOURCE_CONFLICT' and defect.get('severity')=='warning'
             and defect.get('conflict_basis')=='source_vs_source'
             and defect.get('conflict_resolution')=='omit_nonessential_descriptor'
