@@ -1,5 +1,5 @@
 {
-  "version": "editorial-voice-v5",
+  "version": "editorial-voice-v6",
   "patterns": [
     "\\bthe\\s+supplied\\s+(?:biograph(?:y|ies)|profile|materials|documents|information|evidence)\\b",
     "\\b(?:is\\s+)?(?:also\\s+)?identified\\s+in\\s+the\\s+(?:supplied\\s+)?biograph(?:y|ies)\\b",
@@ -12,7 +12,8 @@
     "\\bno\\s+final\\s+(?:procedural\\s+)?(?:outcome|ruling)\\s+is\\s+(?:stated|reported|provided)\\b",
     "\\bthe\\s+available\\s+matter\\s+records\\s+do\\s+not\\s+specify\\b",
     "\\bthe\\s+source\\s+(?:(?:also|separately)\\s+)?(?:lists?|states?|identifies|reports?|describes)\\b",
-    "\\bthe\\s+submission\\s+(?:also\\s+)?(?:shows|demonstrates)\\b"
+    "\\bthe\\s+submission\\s+(?:also\\s+)?(?:shows|demonstrates)\\b",
+    "\\b(?:is|was)\\s+the\\s+Partner\\s+(?:of|in)\\b"
   ],
   "reject": [
     "also identified in the supplied biography",
@@ -30,7 +31,8 @@
     "The available matter records do not specify his individual responsibilities.",
     "The source also lists a matter value of USD 100,000.",
     "The source separately identifies two project values.",
-    "The submission also shows distinct individual leadership."
+    "The submission also shows distinct individual leadership.",
+    "Sofia is the Partner of the Labour practice."
   ],
   "allow": [
     "We challenged the evidence supplied by the authority.",
@@ -40,6 +42,7 @@
     "The team supplied information requested by the regulator.",
     "The team reconciled inconsistent evidence submitted by the opposing party.",
     "The opposing party source materials contain inconsistent dates; the team challenged their admissibility.",
-    "No final ruling has been issued; the appeal remains pending."
+    "No final ruling has been issued; the appeal remains pending.",
+    "She is the partner responsible for the investigation."
   ]
 }

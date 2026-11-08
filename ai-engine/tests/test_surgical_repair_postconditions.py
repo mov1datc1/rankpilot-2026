@@ -16,7 +16,7 @@ def native_answer(answer,references):
 
 
 class SurgicalRepairPostconditionTests(unittest.TestCase):
-    def test_whole_candidate_repair_corrects_one_new_bio_residual_without_rewriting_the_object(self):
+    def test_whole_candidate_regression_is_rolled_back_before_one_scoped_retry(self):
         from core.editorial_repair import repair_development
         proposal=copy.deepcopy(DEV);proposal['b10']='Earlier overview.'
         proposal['candidates'][0]['submission_bio']='An earlier generic biography.'
@@ -29,10 +29,14 @@ class SurgicalRepairPostconditionTests(unittest.TestCase):
         calls=[]
         def invoke(state,role,schema,instruction,payload):
             calls.append(payload)
-            answer=first if len(calls)==1 else {'corrections':[{'path':'candidates/0/submission_bio','value':DEV['candidates'][0]['submission_bio'],'reason':'Present the supported contribution directly.'}],'unresolved':[]}
+            answer=first if len(calls)==1 else {'corrections':[{'path':'candidates/0','value':DEV['candidates'][0],'reason':'Restore evidence without introducing auditor voice.'}],'unresolved':[]}
             answer=native_answer(answer,payload['target_references'])
             schema.model_validate(answer)
-            if len(calls)==2:self.assertEqual(set(payload['repair_targets']),{'candidates/0/submission_bio'})
+            if len(calls)==2:
+                self.assertEqual(set(payload['repair_targets']),{'candidates/0'})
+                self.assertEqual(payload['repair_targets']['candidates/0']['current_value']['submission_bio'],
+                                 proposal['candidates'][0]['submission_bio'])
+                self.assertIn('submission_voice', str(payload))
             return answer,list(state.get('trace',[]))+[{'role':'repair','usage':{'total_tokens':10}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
             result=repair_development({'package':PACKAGE,'strategy':STRATEGY},proposal,targets)
