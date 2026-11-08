@@ -6,6 +6,7 @@ running with different API modes or token settings.
 """
 
 import os
+import re
 from typing import Dict, Literal
 
 from langchain_openai import ChatOpenAI
@@ -68,7 +69,11 @@ def get_model_settings(purpose: ModelPurpose = "standard", model_override: str =
         "max_retries": 0,
         "openai_api_key": os.environ.get("OPENAI_API_KEY"),
     }
-    if "gpt-5" in model_name:
+    if re.match(r"^gpt-(?:5|6)(?:[.\-]|$)", model_name):
+        if model_name in ("gpt-6-astra","gpt-6.1-sol") and reasoning=="none":
+            raise ValueError("This reasoning model does not support none effort")
+        if model_name.startswith("gpt-6"):
+            settings.pop("temperature",None)
         settings["reasoning_effort"] = reasoning
         # GPT-5.6 is designed for the Responses API; make the transport explicit
         # so different LangChain call sites cannot select it implicitly.

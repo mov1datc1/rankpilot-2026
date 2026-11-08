@@ -18,6 +18,9 @@ class OutputQuote(str, Enum):
     def __str__(self):
         return self.value
 
+ExecutionStatus=OutputQuote('ExecutionStatus',{'MET':'met','FAILED':'failed'})
+ExecutionStatus.__doc__='Judge actual execution: met or failed. Passage selection alone does not establish sufficiency.'
+
 class CaseEvidence(BaseModel):
     matter_id: str
     source_quote: str
@@ -134,7 +137,7 @@ def obligations(package, strategy, proposal):
     register={m['id']:m for m in package.get('matters',[])}
     def add(key,field,sources,instruction):
         result.append({'id':key,'field':field,'sources':sources,'instruction':instruction,
-            'output_scope':'internal' if field.startswith('comparisons/') else 'audit' if field in ('leadership','evidence_gaps','executive_assessment') else 'submission'})
+            'output_scope':'internal' if field.startswith('comparisons/') or (field.startswith('candidates/') and not field.endswith('/submission_bio')) else 'audit' if field in ('leadership','evidence_gaps','executive_assessment') else 'submission'})
     for i,argument in enumerate(proposal.get('case_plan',{}).get('institutional_arguments',[])):
         sources=[register.get(e['matter_id'],{}) for e in argument.get('evidence',[])]
         for field in ('b10','c2'):
@@ -163,11 +166,22 @@ def obligations(package, strategy, proposal):
                 for j,link in enumerate(candidate['submission_case_coverage']):
                     add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
                         'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result of THIS source. When the source supplies an achieved interim or final result, state that result; an ongoing mandate or intended stability cannot replace it. Use an actual pending position only when no achieved result is supplied. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
+                if proposal.get('personal_quality_contract')=='complete-personal-case-v1':
+                    for j,link in enumerate(candidate['submission_case_coverage']):
+                        add(f'personal_audit:{i}:{j}','leadership',[register.get(link.get('matter_id'),{})],
+                            'Execute the SAME personally attributed contribution and achieved result or actual pending status used in this person B9, in a compact individual Audit argument. Do not replace it with an unrelated mandate or let the Audit invent a stronger result. Person: '+candidate['name']+'. B9 passage: '+str(link.get('public_quote','')))
             else:
                 from core.editorial_execution import personal_argument_requirement,primary_lead_anchor
                 limited=personal_argument_requirement(package,candidate)==0 and not primary_lead_anchor(package,strategy,candidate)
                 instruction=('The original mandate evidence establishes team participation only for '+candidate['name']+'. Preserve supplied profile credentials and participation; do not demand or invent individual legal responsibility, leadership, results or a nomination. Follow up missing evidence internally without blocking this limited accurate profile.' if limited else 'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
                 add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,instruction)
+    if proposal.get('personal_quality_contract')=='complete-personal-case-v1':
+        for i,candidate in enumerate(proposal.get('candidates',[])):
+            person=next((p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
+            sources=[person]+[register.get(item.get('matter_id'),{}) for item in candidate.get('supporting_matters',[])]
+            assessment=candidate.get('category_assessment') or {}
+            add(f'category:{i}:fit',f'candidates/{i}/category_rationale',sources,
+                'Independently assess the proposed category against THIS person career stage, positive eligibility criterion, personal work and counterevidence. Missing current-ranking matches do not establish emerging reputation. Partner status alone neither proves nor rules out Up and Coming. That category needs developing reputation and contribution to practice growth; established experience/leadership must be addressed. Reject a generic category applied without an individual evidentiary explanation; when unsupported, require Category pending and a precise criterion/action. Person: '+candidate['name']+'. Current category: '+str(candidate.get('suggested_ranking'))+'. Structured assessment: '+str(assessment))
     if proposal.get('version')=='editorial-development-v4':
         from core.candidate_evidence import profile_units
         for i,candidate in enumerate(proposal.get('candidates',[])):
@@ -211,7 +225,8 @@ def execution_output(package, proposal, letter, path):
         try:
             for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
         except (KeyError,IndexError,TypeError):value=''
-        rendered=None if path.startswith('comparisons/') else package.get('rendered_artifact')
+        internal=path.startswith('comparisons/') or (path.startswith('candidates/') and not path.endswith('/submission_bio'))
+        rendered=None if internal else package.get('rendered_artifact')
         if rendered is not None and proposal.get('version')=='editorial-development-v4' and path.startswith('candidates/'):
             try:name=proposal['candidates'][int(path.split('/')[1])]['name']
             except (IndexError,KeyError,ValueError):name=''
@@ -313,9 +328,9 @@ def execution_verdict_contract(package, strategy, proposal, letter, base, compac
             source_type=source_types[source_key]
             source_description='Choose an original source passage ID from this obligation catalog. Never paraphrase the original. Independently judge whether the output executes the required evidence.'
         check=create_model('Proof_'+sha256(obligation['id'].encode()).hexdigest()[:12],__config__=ConfigDict(extra='forbid'),
-            status=(Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.')),
-            **{('artifact_ref' if compact else 'artifact_quote'):(quote_types[key],Field(description='Choose the passage in this obligation output field. Read its full text in the passage catalog before judging execution. Internal comparisons are not required in the Audit.'))},
-            **{('source_ref' if source_refs else 'source_quote'):(source_type,Field(description=source_description+(' Copy a short decisive fragment, at most 360 characters.' if compact and not source_refs else ''),**({'max_length':360} if compact and source_type is str else {})))},
+            status=((ExecutionStatus,...) if compact else (Literal['met','failed'],Field(description='Judge actual execution of this obligation. Optional style preferences are not failures.'))),
+            **{('artifact_ref' if compact else 'artifact_quote'):((quote_types[key],...) if compact else (quote_types[key],Field(description='Choose the passage in this obligation output field. Read its full text in the passage catalog before judging execution. Internal comparisons are not required in the Audit.')))},
+            **{('source_ref' if source_refs else 'source_quote'):((source_type,...) if source_refs else (source_type,Field(description=source_description+(' Copy a short decisive fragment, at most 360 characters.' if compact else ''),**({'max_length':360} if compact and source_type is str else {}))))},
             reason=(str,Field(min_length=1,description='Explain the source-to-output reasoning in at most 40 words; appearance of words alone is not proof.',**({'max_length':400} if compact else {}))))
         fields[obligation['id']]=(check,...)
     checks=create_model('EveryCaseExecutionProof',__config__=ConfigDict(extra='forbid'),**fields)
@@ -379,9 +394,11 @@ def execution_defects(package, strategy, proposal, letter, checks):
 def prepare_case(state):
     """Unpaid graph boundary: derive obligations before drafting either document."""
     package,strategy=state['package'],state['strategy']
+    from core.personal_quality import required_personal_matters
     from core.candidate_evidence import profile_units, CHAMBERS_CATEGORY_GUIDANCE
     eligible=support_ids(package,strategy)
-    return {'case_requirements':{'category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
+    return {'case_requirements':{'personal_quality_contract':'complete-personal-case-v1','category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
+        'personal_work_requirements':{(p.get('name') or p.get('fullName')):required_personal_matters(package,strategy,{'name':p.get('name') or p.get('fullName'),'recommendation':'present','suggested_ranking':'prospective source assessment'}) for p in package.get('lawyers',[])},
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
         'reserve_ids':[d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'],

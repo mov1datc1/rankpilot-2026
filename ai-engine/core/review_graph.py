@@ -309,20 +309,33 @@ class EditorialResponseError(ValueError):
         self.trace=trace
 
 
+def _review_failure(message,trace):
+    error=EditorialResponseError(message,trace[-1] if trace else {})
+    error.trace_history=list(trace)
+    error.diagnostic_retry_exhausted=any(call.get('role')=='diagnostic_reviewer' for call in trace)
+    return error
+
+
 def invoke_role(state, role, schema, instruction, payload):
     from core.editorial_reasoning import reasoning_guidance, REASONING_VERSION
     instruction += '\n' + reasoning_guidance(role)
     started = time.monotonic()
-    purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
+    purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer', 'diagnostic_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
     # This narrow role interprets a supplied clause's membership predicate.
     # Directory/practice examples add no evidence and can distract from negation.
-    methodology = '' if role == 'portfolio_reviewer' or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
+    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer') or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
     if remaining<20: raise TimeoutError('Editorial stage budget exhausted before next call')
+    from utils.schema_limits import bounded_reference_schema
+    try:strict_schema=bounded_reference_schema(to_strict_json_schema(schema))
+    except ValueError as schema_error:
+        failure=EditorialResponseError('review diagnostic not grounded: serialized schema exceeds provider limits',{})
+        failure.trace_history=list(state.get('trace',[]));failure.diagnostic_retry_exhausted=True
+        raise failure from schema_error
     model=create_chat_model(purpose, request_timeout=remaining-5) if remaining!=float('inf') else create_chat_model(purpose)
     output_limit=get_model_settings(purpose)['max_tokens']
     if role=='editor':
@@ -337,11 +350,13 @@ def invoke_role(state, role, schema, instruction, payload):
         if planned_limit!=output_limit:
             output_limit=planned_limit
             model=model.model_copy(update={'max_tokens':output_limit})
-    if state.get('output_recovery_attempt'):
+    if role=='diagnostic_reviewer':
+        model=model.model_copy(update={'max_tokens':min(output_limit,4096)})
+    if state.get('output_recovery_attempt') and role!='diagnostic_reviewer':
         model=model.model_copy(update={'max_tokens':min(32768,max(16384,output_limit*2))})
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
     # otherwise raises before returning metadata. Validate locally after status.
-    chain = model.with_structured_output(to_strict_json_schema(schema), method='json_schema', strict=True, include_raw=True)
+    chain = model.with_structured_output(strict_schema, method='json_schema', strict=True, include_raw=True)
     messages = [
         ('system', BASE + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))]
     try:
@@ -369,7 +384,24 @@ def invoke_role(state, role, schema, instruction, payload):
             value,notes=nonasserted_sector_advisories(value,package)
             if notes:trace[-1]['diagnostic_advisories']=notes
         parsed=schema.model_validate(value)
+        if role=='editor':
+            from core.diagnostic_repair import validate_diagnostic_bindings
+            value=parsed.model_dump(mode='json')
+            validate_diagnostic_bindings(schema,value,payload)
     except Exception as error:
+        if role=='editor' and isinstance(error,ValidationError) and isinstance(locals().get('value'),dict):
+            from core.diagnostic_repair import repair_diagnostic
+            try:
+                repaired=repair_diagnostic(state,schema,value,error,payload,trace,invoke_role)
+                if repaired is not None:return repaired
+            except Exception as scoped_error:
+                failure=EditorialResponseError('review diagnostic not grounded: scoped recheck did not validate',getattr(scoped_error,'trace',trace[-1]))
+                failure.trace_history=getattr(scoped_error,'trace_history',None) or (list(trace)+([scoped_error.trace] if getattr(scoped_error,'trace',None) else []))
+                failure.diagnostic_retry_exhausted=True
+                raise failure from scoped_error
+            failure=EditorialResponseError('review diagnostic not grounded: no bounded item recheck available',trace[-1])
+            failure.trace_history=trace;failure.diagnostic_retry_exhausted=True
+            raise failure from error
         if isinstance(error,ValidationError) and 'review diagnostic not grounded' in str(error):
             raise EditorialResponseError('review diagnostic not grounded',trace[-1]) from error
         message='max_output_tokens: incomplete response' if 'max_output_tokens' in str(error) else 'structured response unavailable'
@@ -583,7 +615,7 @@ def writer(state):
         return repair_letter(state)
     practice_label = str(state.get('package', {}).get('practice_area') or 'de la práctica objetivo').strip()
     letter,trace=invoke_role(state,'writer',Letter,
-        f'Treat selection_advisories as optional internal follow-up, never as a new prerequisite for selection or delivery. Do not reinterpret an unexplained source figure as exposure, project value or fees. Write a concise internal executive letter in Spanish in five sections, approximately 1200–1800 words when the evidence warrants it, structured for a 3–5 page executive document, without padding. Use compact paragraphs per candidate instead of repeating eight numbered labels; express common ranking-verification limitations once with explicit scope. Budget roughly 220 words for verdict, 420 for portfolio, 650 for individuals, 230 for reserves and 130 for actions. Preserve all material decisions within 1800 words total. Use client/person names, never database IDs or UUIDs in reader-facing prose. Use executive_assessment for the filing verdict, target, main strength/vulnerability and comparative hero rationale (articulating source-grounded qualitative selection criteria between the selected Hero matter and its strongest alternative; do not invent numerical weights, scores or percentages when no documented scoring method was supplied); portfolio for the core (MUST list EXACTLY the full ordered core portfolio, enumerating each core matter from 1 to N without omitting the last matter); leadership for individual strategy (evaluate candidates strictly within the target practice area ({practice_label}), distinguishing core practice specialists from multidisciplinary support partners); evidence_gaps for key comparative exclusions and reserves (use neutral disposition headings "**Asuntos en reserva**" and "**Asuntos excluidos del portafolio**". Explain each actual source-grounded reason in the body. Exclusion from the chosen portfolio does not establish that a matter is outside {practice_label}: distinguish practice relevance from represented client side, strategic thesis and other selection reasons. A reserve may already have sufficient evidence and lose on comparative value or capacity; request additional information only when its genuine absence would change that decision); next_steps for the short actionable pre-filing list and genuine evidence gaps (formulate targeted adaptive questions across commercial objective, legal barrier, firm solution, lawyer roles, and client outcome). The CURRENT Submission wording is development.b10, development.c2 and development.candidates[].submission_bio. b10_source and source bios are historical evidence, not the delivered prose. Do not carry forward warnings or correction tasks for claims already removed from the current proposal. State unresolved source limitations only where they still matter. Put all concrete reserve/exclusion comparisons in evidence_gaps and only the ordered core in portfolio; never use evidence_gaps for a general checklist of missing facts. Include development.target_rationale and each candidate category_rationale: explain specific category choices or their precise unresolved criterion, and changes to supplied targets. Treat internal_referee_notes as user-supplied contact planning, never a verified endorsement or public evidence. Do not expose email addresses, telephone numbers or contact details in either document. Acknowledge supplied references in next_steps without claiming they were contacted or repeating a request already answered; ask only for specific remaining gaps. State outstanding filing_details accurately without inferring contacts or headcount. The validated development.case_plan is the shared editorial case. Execute every case_obligation, including internal assessments of additional source-attributed leaders without adding public B9 profiles or titles. State concrete sourced differences in reserve comparisons. Do not label them menor escala, mayor escala, smaller scale or larger scale; give actual supplied facts or comparable quantities rather than an unqualified hierarchy. Never turn an ongoing risk into an achieved result. Preserve audit_required reserve comparisons compactly; other source-backed comparisons remain internal, never dump all reserves into the client letter. Never invent a new strategy in the Audit that B9/B10/C2 do not execute; identify a genuine discrepancy for targeted correction. The validated development contains all required decisions: reconcile them without dropping its individual fields or borderline comparisons. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Incompatible explicit titles affecting a nominated candidate require user resolution. A D5/E5 Lead partner form heading identifies the responsible lawyer and does not establish partner seniority. For other matter leaders use neutral leadership attribution without adding a partner title; keep literal source evidence. Never ask the user to resolve a promotion invented by generated prose. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
+        f'Treat selection_advisories as optional internal follow-up, never as a new prerequisite for selection or delivery. Do not reinterpret an unexplained source figure as exposure, project value or fees. Write a concise internal executive letter in Spanish in five sections, approximately 1200–1800 words when the evidence warrants it, structured for a 3–5 page executive document, without padding. Use compact paragraphs per candidate instead of repeating eight numbered labels; express common ranking-verification limitations once with explicit scope. Budget roughly 220 words for verdict, 420 for portfolio, 650 for individuals, 230 for reserves and 130 for actions. Preserve all material decisions within 1800 words total. Use client/person names, never database IDs or UUIDs in reader-facing prose. Use executive_assessment for the filing verdict, target, main strength/vulnerability and comparative hero rationale (articulating source-grounded qualitative selection criteria between the selected Hero matter and its strongest alternative; do not invent numerical weights, scores or percentages when no documented scoring method was supplied); portfolio for the core (MUST list EXACTLY the full ordered core portfolio, enumerating each core matter from 1 to N without omitting the last matter); leadership for individual strategy (evaluate candidates strictly within the target practice area ({practice_label}), distinguishing core practice specialists from multidisciplinary support partners); evidence_gaps for key comparative exclusions and reserves (use neutral disposition headings "**Asuntos en reserva**" and "**Asuntos excluidos del portafolio**". Explain each actual source-grounded reason in the body. Exclusion from the chosen portfolio does not establish that a matter is outside {practice_label}: distinguish practice relevance from represented client side, strategic thesis and other selection reasons. A reserve may already have sufficient evidence and lose on comparative value or capacity; request additional information only when its genuine absence would change that decision); next_steps for the short actionable pre-filing list and genuine evidence gaps (formulate targeted adaptive questions across commercial objective, legal barrier, firm solution, lawyer roles, and client outcome). The personal argument is complete, not capped at two matters: leadership must reconcile all material submission_case_coverage contributions with category_assessment and the actual B9, preserving achieved results and individual category maturity. A compact Audit may group cases without erasing their distinct contribution. The CURRENT Submission wording is development.b10, development.c2 and development.candidates[].submission_bio. b10_source and source bios are historical evidence, not the delivered prose. Do not carry forward warnings or correction tasks for claims already removed from the current proposal. State unresolved source limitations only where they still matter. Put all concrete reserve/exclusion comparisons in evidence_gaps and only the ordered core in portfolio; never use evidence_gaps for a general checklist of missing facts. Include development.target_rationale and each candidate category_rationale: explain specific category choices or their precise unresolved criterion, and changes to supplied targets. Treat internal_referee_notes as user-supplied contact planning, never a verified endorsement or public evidence. Do not expose email addresses, telephone numbers or contact details in either document. Acknowledge supplied references in next_steps without claiming they were contacted or repeating a request already answered; ask only for specific remaining gaps. State outstanding filing_details accurately without inferring contacts or headcount. The validated development.case_plan is the shared editorial case. Execute every case_obligation, including internal assessments of additional source-attributed leaders without adding public B9 profiles or titles. State concrete sourced differences in reserve comparisons. Do not label them menor escala, mayor escala, smaller scale or larger scale; give actual supplied facts or comparable quantities rather than an unqualified hierarchy. Never turn an ongoing risk into an achieved result. Preserve audit_required reserve comparisons compactly; other source-backed comparisons remain internal, never dump all reserves into the client letter. Never invent a new strategy in the Audit that B9/B10/C2 do not execute; identify a genuine discrepancy for targeted correction. The validated development contains all required decisions: reconcile them without dropping its individual fields or borderline comparisons. List the selected portfolio in strategy order, hero first, with one brief source-backed contribution per matter. Focus on legal evidence and business actions. Do not narrate pipeline stages, say whether a rendered file has been supplied, or declare delivery approval: those are separate application states and can change after this letter is written. Discuss evidence and actionable gaps. No technical logs or invented achievements, score, band prediction, team size or outcome. Clearly distinguish pending matters from results. Use only facts and the validated strategy. The portfolio must match the exact core/reserve/excluded IDs and hero; name the strongest borderline alternatives and explain comparative exclusion. Leadership must assess each candidate separately using seniority and personally attributed roles in source matters before generic biography: distinguish declared current rank from verified rank, proposed candidacy from established recognition, supporting mandates, personal role, external evidence, gaps and next action. A partner is not eligible for an associate category. Incompatible explicit titles affecting a nominated candidate require user resolution. A D5/E5 Lead partner form heading identifies the responsible lawyer and does not establish partner seniority. For other matter leaders use neutral leadership attribution without adding a partner title; keep literal source evidence. Never ask the user to resolve a promotion invented by generated prose. Never transfer a firm rank or the work of another person to a candidate. If correcting, change only the identified defects.',
         {'package':state['package'],'strategy':state['strategy'],'selection_advisories':state.get('selection_advisories',[]),'repair_source_notes':state.get('repair_report',{}).get('source_notes',[]),'development':state.get('development'), 'previous_letter':state.get('letter'),'case_obligations':obligations(state['package'],state['strategy'],state.get('development') or {}) if (state.get('development') or {}).get('version') in ('editorial-development-v3','editorial-development-v4') else [],'defects':state.get('repair_feedback') or state.get('judge',{}).get('defects',[])})
     letter,trace=condense_audit_letter(state,letter,trace)
     errors=[] if audit_word_count(letter)<=AUDIT_WORD_LIMIT else ['RankPilot debe condensar el Audit ejecutivo conservando las decisiones y su respaldo.']
@@ -633,7 +665,7 @@ def editor(state):
     verdict.setdefault('defects', []).extend(count_defects)
     for defect in verdict.get('defects',[]):
         if defect.get('conflict_resolution')=='qualify_disputed_outcome' and not grounded_outcome_qualification(defect,state['package'],{'development':state.get('development') or state['package'].get('editorial_development'),'letter':state.get('letter',{})}):
-            raise EditorialResponseError('review diagnostic not grounded: outcome qualification lacks distinct same-record source evidence or an exact artifact claim',trace[-1] if trace else {})
+            raise _review_failure('review diagnostic not grounded: outcome qualification lacks distinct same-record source evidence or an exact artifact claim',trace)
     try:
         pkg = state['package']
         if isinstance(verdict.get('register_checks'), dict):
@@ -670,14 +702,14 @@ def editor(state):
             verdict['register_checks'] = cleaned_checks
         verdict.setdefault('defects', []).extend(register_defects(state['package'],verdict.get('register_checks',[])))
     except ValueError as error:
-        raise EditorialResponseError(str(error),trace[-1]) from error
+        raise _review_failure(str(error),trace) from error
     development = state.get('development') or state['package'].get('editorial_development')
     if development:
         if development.get('version') in ('editorial-development-v3','editorial-development-v4'):
             try:
                 verdict.setdefault('defects',[]).extend(execution_defects(state['package'],state['strategy'],development,state['letter'],verdict.get('case_checks',[])))
             except ValueError as error:
-                raise EditorialResponseError(str(error),trace[-1] if trace else {}) from error
+                raise _review_failure(str(error),trace) from error
         from core.editorial_development import submission_voice_paths
         for path in submission_voice_paths(development):
             value=development
@@ -691,7 +723,7 @@ def editor(state):
         if any(c.get('status')=='failed' for c in checks) and not any(
             d.get('severity')=='critical' and (d.get('artifact_quote') or d.get('source_quote'))
             for d in verdict.get('defects',[])):
-            raise EditorialResponseError('review diagnostic not grounded: failed acceptance has no concrete critical finding',trace[-1] if trace else {})
+            raise _review_failure('review diagnostic not grounded: failed acceptance has no concrete critical finding',trace)
         missing = set(ACCEPTANCE_CRITERIA) - set(present)
         if failed or missing or len(present) != len(set(present)):
             verdict.setdefault('defects', []).append({'code':'EDITORIAL_OMISSION','severity':'critical','scope':'submission','matter_id':None,'message':'La aceptación editorial no está completa: ' + ', '.join(sorted(set(failed) | missing)), 'source_quote':'','artifact_quote':''})

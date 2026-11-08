@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
 DEVELOPMENT_VERSION = 'editorial-development-v4'
+from core.personal_quality import CategoryAssessment, PERSONAL_QUALITY_CONTRACT, personal_quality_errors
 from core.candidate_evidence import ProfileCoverage, profile_errors, category_error
 from core.editorial_execution import PersonalCaseLink, InstitutionalLink, EXECUTION_CONTRACT, execution_errors
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, additional_leaders, case_errors, prepare_case
@@ -27,6 +28,7 @@ class Candidate(BaseModel):
     suggested_ranking: str
     category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
     category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category.')
+    category_assessment: CategoryAssessment | None = None
     profile_coverage: list[ProfileCoverage] = Field(default_factory=list)
     submission_case_coverage: list[PersonalCaseLink] = Field(default_factory=list)
     why_candidate: str
@@ -51,6 +53,7 @@ class Comparison(BaseModel):
     tradeoff: str = Field(description="State concrete source-grounded differences. Never label a reserve menor escala/mayor escala/smaller scale/larger scale; state the actual supplied facts or comparable quantities, with their concepts, instead. Absence of a final result is not evidence of lower scale.")
 
 class Development(BaseModel):
+    personal_quality_contract: str = ''
     execution_contract: str = ''
     institutional_execution: list[InstitutionalLink] = Field(default_factory=list)
     case_plan: EditorialCase
@@ -67,7 +70,7 @@ class Development(BaseModel):
     b10: str
     c2: str = Field(description='English firm-voice case for inclusion/coverage built from the selected evidence. No invented current ranking, band or external reputation.')
 
-EXECUTION_INSTRUCTION=''' Return execution_contract linked-editorial-execution-v1. For every biography actually included by the directory (all supplied Chambers profiles, including develop/do_not_present; Legal 500 only the nominated profiles it includes), submission_case_coverage must bind distinct personally attributed supporting mandates to original source_quote and actual submission_bio public_quote (up to two where that evidence exists; one if only one supporting mandate exists). Keep the nomination decision separate from biography quality. The Audit and this BIO must defend the same distinctive personal contributions. For every mandate described in the BIO, retain any supplied achieved result; do not change it into intended prevention or pending status. Supporting only two source links does not excuse incomplete additional work assertions. When an achieved interim/final result is supplied, execute it; an ongoing mandate or intended stability cannot replace an achieved result. Develop their specific legal contribution, issue and evidenced result or actual pending position in natural B9 prose, retaining material career credentials; a specialty list is not the personal argument. Do not invent an outcome to fill a link. Reserved sources remain eligible personal evidence. Keep confidential identities and identifying metrics out of public quotes. Return institutional_execution once per case_plan institutional argument, using its zero-based argument_index and exact b10_quote/c2_quote from their own fields. B10 demonstrates what the practice did and achieved; C2 explains why that evidence warrants the requested coverage, without copying the B10 passage or repeating a service catalogue. These links are internal verification metadata, not new text to publish. A separately confirmed department head must be described as leading the department/practice in B9; merely being Partner or leading an individual mandate is insufficient.'''
+EXECUTION_INSTRUCTION=''' Return execution_contract linked-editorial-execution-v1. For every biography actually included by the directory (all supplied Chambers profiles, including develop/do_not_present; Legal 500 only the nominated profiles it includes), submission_case_coverage must bind distinct personally attributed supporting mandates to original source_quote and actual submission_bio public_quote (all material personally led core mandates and substantive supporting work; there is no two-matter ceiling). Keep the nomination decision separate from biography quality. The Audit and this BIO must defend the same distinctive personal contributions. For every mandate described in the BIO, retain any supplied achieved result; do not change it into intended prevention or pending status. Supporting only two source links does not excuse incomplete additional work assertions. When an achieved interim/final result is supplied, execute it; an ongoing mandate or intended stability cannot replace an achieved result. Develop their specific legal contribution, issue and evidenced result or actual pending position in natural B9 prose, retaining material career credentials; a specialty list is not the personal argument. Do not invent an outcome to fill a link. Reserved sources remain eligible personal evidence. Keep confidential identities and identifying metrics out of public quotes. Return institutional_execution once per case_plan institutional argument, using its zero-based argument_index and exact b10_quote/c2_quote from their own fields. B10 demonstrates what the practice did and achieved; C2 explains why that evidence warrants the requested coverage, without copying the B10 passage or repeating a service catalogue. These links are internal verification metadata, not new text to publish. A separately confirmed department head must be described as leading the department/practice in B9; merely being Partner or leading an individual mandate is insufficient.'''
 
 EXECUTION_INSTRUCTION += ' Preserve material career roles even when their original sentence also contains a promotional comparison: retain the role through its actual public_quote, keep the complete original source_quote internally, and withdraw unverified national-superiority or reputation claims from public prose. Do not mechanically copy such comparisons merely to preserve a credential. In B10/C2, do not collectively describe a list as partners when it includes leaders whose partner status is unknown; use neutral lawyer/team leadership and preserve actual individual roles.'
 
@@ -329,22 +332,25 @@ def development_errors(package, strategy, proposal):
     if proposal.get('version') in ('editorial-development-v3', DEVELOPMENT_VERSION):
         errors.extend(case_errors(package, strategy, proposal))
     errors.extend(execution_errors(package,proposal,strategy))
+    errors.extend(personal_quality_errors(package,strategy,proposal))
     return errors
 
 
-def development_contract(package, strategy):
+def development_contract(package, strategy, personal_quality=False):
     core=tuple(d['matter_id'] for d in strategy['matters'] if d['disposition']=='core')
     reserves=tuple(d['matter_id'] for d in strategy['matters'] if d['disposition']=='reserve')
     names=tuple(l.get('name') or l.get('fullName') for l in package.get('lawyers',[]))
     if not core:raise ValueError('Editorial development requires a selected portfolio')
     support=create_model('RegisteredSupport',__base__=SupportingMatter,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
     personal_link=create_model('RegisteredPersonalCaseLink',__base__=PersonalCaseLink,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
+    extra={'category_assessment':(CategoryAssessment,...)} if personal_quality else {}
     candidate=create_model('RegisteredCandidate',__base__=Candidate,name=(Literal[names] if names else str,...),supporting_matters=(list[support],...),
-        submission_case_coverage=(list[personal_link],Field(default_factory=list)))
+        submission_case_coverage=(list[personal_link],Field(default_factory=list)),**extra)
     draft=create_model('RegisteredDraft',__base__=MatterDraft,matter_id=(Literal[core],...))
     comparison=create_model('RegisteredComparison',__base__=Comparison,selected_id=(Literal[core],...),alternative_id=(Literal[reserves] if reserves else str,...))
     return create_model('RegisteredDevelopment',__base__=Development,candidates=(list[candidate],...),matters=(list[draft],...),comparisons=(list[comparison],...),
-        execution_contract=(Literal[EXECUTION_CONTRACT],EXECUTION_CONTRACT))
+        execution_contract=(Literal[EXECUTION_CONTRACT],EXECUTION_CONTRACT),
+        **({'personal_quality_contract':(Literal[PERSONAL_QUALITY_CONTRACT],...)} if personal_quality else {}))
 
 def renderer_owned_finding(defect, package):
     """Only the renderer owns D3; preserve the explicit source restriction.
@@ -372,6 +378,12 @@ def develop(state):
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
     previous=state.get('development')
+    if previous and (state.get('case_requirements') or {}).get('personal_quality_contract')==PERSONAL_QUALITY_CONTRACT and previous.get('personal_quality_contract')!=PERSONAL_QUALITY_CONTRACT:
+        # A new explicit development review must not silently reuse the former
+        # two-case contract. Upgrade generated metadata only; original sources
+        # and previously approved historical bytes are untouched.
+        previous={**previous,'personal_quality_contract':PERSONAL_QUALITY_CONTRACT}
+        state={**state,'development':previous}
     if state.get('development_revalidation_only'):
         if not previous or not state.get('development_reusable'):
             return {'errors':['La propuesta guardada ya no corresponde a sus fuentes.'],'development_validated':False,'development_repair_unlocatable':True}
@@ -426,7 +438,7 @@ def develop(state):
         targets=repair_targets(state['package'],state['strategy'],bound)
         if targets:
             return repair_development(state,bound,targets)
-    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy']),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
+    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy'],personal_quality=True),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)
@@ -435,3 +447,5 @@ def develop(state):
 TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Return one profile_coverage decision for EVERY unit of this candidate, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
 
 TASK += " PERSONAL EVIDENCE CAPACITY: Read source_obligations.personal_attribution_policy. A literal team listing alone establishes membership, not individual substantive responsibility or achievements. Keep such a category-pending, not-nominated public profile limited to supplied credentials and participation; do not manufacture two personal contributions or force a client answer merely to complete the report. This exception does not dilute substantive personally attributed mandates or an actual proposed nomination. Do not identify a shorter name with a longer lead name without source support. Record optional identity or role follow-up internally."
+
+TASK += " PERSONAL QUALITY CONTRACT: return personal_quality_contract complete-personal-case-v1. Develop B9 to the depth of the supplied evidence, up to 1,000 words per person where warranted, with no artificial minimum, quota or instruction to shorten a rich profile. Source_obligations.personal_work_requirements identifies ALL personally led selected mandates; supporting_matters and submission_case_coverage must preserve those and every substantively attributed supporting mandate, including pertinent reserves. Explain legal obstacle, personal action and achieved result or actual pending status in developed natural prose, not a catalogue. Group related work without deleting distinctive achieved contributions, material credentials or source-grounded career scope. Public anonymization may generalize names and identifying metrics, never erase legal substance or turn former employment into client work. Limited team-only evidence supports participation, not invented responsibility or filler. For each person return category_assessment: criterion, original career-stage evidence, positive growth evidence where Up and Coming is proposed, career-stage assessment and counterevidence. A missing ranking match, first submission or a partner title alone does not establish emerging reputation or practice growth. Address established career/leadership evidence; choose Category pending with its precise missing criterion/action when the category is not defensible. The Audit must use this same individual argument and category assessment. Preserve all material facts before editing for length; the concise Audit budget does not apply to B9."

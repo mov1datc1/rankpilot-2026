@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
             retained.draft_artifact.input_hash=draftInputHash(submission,retained);
             const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:retained}});
             if(released.count!==1) throw new Error('DRAFT_CONFLICT');
-            return NextResponse.json({success:false,code:finalReview.code,error:finalReview.code==='AI_REVIEW_INVALID'?'RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.':'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
+            return NextResponse.json({success:false,code:finalReview.code,...(finalReview.retryable===false?{retryable:false}:{}),error:finalReview.code==='AI_REVIEW_INVALID'?'RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.':'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
           }
           if(!finalResponse.ok) throw new Error(processingFeedback(finalReview,finalResponse.status,'review'));
         }

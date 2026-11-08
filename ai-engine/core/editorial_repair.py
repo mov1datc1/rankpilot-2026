@@ -173,10 +173,14 @@ def repair_targets(package, strategy, proposal):
         from core.candidate_evidence import profile_units, profile_errors, category_error
         anchor=primary_lead_anchor(package,strategy,candidate)
         profile_faults=profile_errors(person,candidate)
+        from core.personal_quality import personal_quality_errors
+        quality_faults=[e for e in personal_quality_errors(package,strategy,proposal) if e.startswith(f'Calidad personal candidates/{i}:')]
         linked_fault=personal_case_errors(package,candidate,strategy) if proposal.get('execution_contract')==EXECUTION_CONTRACT else []
-        if proposal.get('version')=='editorial-development-v4' and (profile_faults or category_error(candidate) or linked_fault):
+        if proposal.get('version')=='editorial-development-v4' and (profile_faults or category_error(candidate) or linked_fault or quality_faults):
             add(f'candidates/{i}',candidate,'Account for every original profile credential alongside mandate evidence; retain material career/office facts or justify a genuine omission. Develop distinct personally attributed contributions in B9 and bind submission_case_coverage to its own sources and actual bio passages. Specify a concrete category or Category pending with the exact missing criterion and action. Preserve source, identity, permissions and supported attribution.',{**candidate_evidence(candidate,person),'profile_units':profile_units(person)})
-            if anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_faults and not category_error(candidate) and not personal_case_errors(package,candidate):
+            if quality_faults:
+                targets[f'candidates/{i}']['problem']+=' Complete all missing material personally attributed work in a developed B9 (up to 1,000 words, without padding), preserve existing evidenced contributions and credentials, and return an individually grounded category_assessment. Do not shrink the BIO to two matters. '+ ' '.join(quality_faults)
+            elif anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_faults and not category_error(candidate) and not personal_case_errors(package,candidate):
                 target=targets[f'candidates/{i}']
                 target.update(mutable_fields=['submission_bio','submission_case_coverage'],append_personal_anchor=anchor)
                 if anchor not in {s.get('matter_id') for s in candidate.get('supporting_matters',[])}:target['mutable_fields'].append('supporting_matters')
@@ -335,6 +339,11 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
             pass
         elif not isinstance(value,str):
             raise ValueError('Invalid text correction')
+        protected=targets[path].get('preserve_generated_quotes',[])
+        bio=value.get('submission_bio','') if isinstance(value,dict) else value
+        normalize=lambda text:' '.join(str(text or '').split())
+        if any(normalize(quote) not in normalize(bio) for quote in protected):
+            raise ValueError('Biography repair cannot remove an unaffected evidenced contribution or credential')
         if not allow_unchanged and value == targets[path]['current_value']:
             raise ValueError('Repair returned unchanged target')
         seen.add(path);parts=path.split('/');parent=result
@@ -346,6 +355,23 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
     if set(targets) - seen and not repair.get('unresolved'):
         raise ValueError('Repair left targets unchanged')
     return result
+
+def apply_valid_corrections(proposal,targets,repair):
+    """Keep valid independent fields when another completed delta is rejected."""
+    fixed=copy.deepcopy(proposal);failures={};seen=set()
+    for correction in repair.get('corrections',[]):
+        path=correction.get('path')
+        if path not in targets or path in seen:raise ValueError('Repair attempted an invalid or repeated generated field')
+        seen.add(path)
+        try:
+            fixed=apply_corrections(fixed,{path:targets[path]},
+                {'corrections':[correction],'unresolved':[]},allow_unchanged=True)
+        except ValueError as error:
+            failures[path]=str(error)
+    if set(targets)-seen and not repair.get('unresolved'):
+        raise ValueError('Repair left targets unchanged')
+    return fixed,failures
+
 
 def biography_output_targets_only(targets):
     allowed={'submission_bio','profile_coverage','submission_case_coverage'}
@@ -361,7 +387,7 @@ def repair_development(state, proposal, targets):
         return {'development':proposal,'development_validated':False,
                 'errors':['No se inicia otra reparación con consumo del proveedor desconocido.'],
                 'trace':state.get('trace',[])}
-    targets=coherent_repair_targets(proposal,targets)
+    targets=coherent_repair_targets(proposal,targets,package=state.get('package'))
     bio_only=biography_output_targets_only(targets)
     ranking_context=None if bio_only else (state.get('ranking_verification') or state.get('package',{}).get('ranking_verification'))
     schema=repair_result_contract(targets)
@@ -386,7 +412,7 @@ def repair_development(state, proposal, targets):
     repair,trace=invoke_role({**state,'source_only_repair':bio_only},'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':ranking_context})
     try:
         repair=project_repair_result(repair,targets)
-        fixed=apply_corrections(proposal,targets,repair,allow_unchanged=True)
+        fixed,application_errors=apply_valid_corrections(proposal,targets,repair)
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
     fixed=bind_development(state['package'],fixed)
@@ -399,7 +425,7 @@ def repair_development(state, proposal, targets):
         from core.public_privacy import public_privacy_findings
         privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
         return [path for path,target in targets.items()
-                if path in privacy_paths or (not target.get('binding_only') and at(document,path)==target['current_value']) or any(
+                if path in application_errors or path in privacy_paths or (not target.get('binding_only') and at(document,path)==target['current_value']) or any(
                     norm(quote) in norm(at(document,target.get('rejected_quote_path',path))) for quote in target.get('rejected_quotes',[]) if norm(quote))]
     failed=failures(fixed)
     # A whole-candidate correction can introduce a local voice fault in its
@@ -412,8 +438,8 @@ def repair_development(state, proposal, targets):
                      if owned(path) and path in local_targets
                      and isinstance(local_targets[path].get('current_value'),str)}
     retry_targets={path:copy.deepcopy(payload_targets[path]) for path in failed
-                   if isinstance(targets[path]['current_value'],str)
-                   and (targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids'))}
+                   if (isinstance(targets[path]['current_value'],str) or (isinstance(targets[path]['current_value'],dict) and targets[path].get('mutable_fields')))
+                   and (path in application_errors or targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids'))}
     for path,target in voice_residuals.items():
         if path in retry_targets:
             retry_targets[path]['problem']=retry_targets[path].get('problem','')+' '+target.get('problem','')
@@ -465,7 +491,8 @@ def repair_development(state, proposal, targets):
                     {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
                      'previous_failure':'A rejected claim, private footprint or auditor voice remains in these exact generated fields. Preserve other corrected fields, all confidential E facts and the unchanged profile credentials.'})
                 retry=project_repair_result(retry,retry_targets)
-                fixed=apply_corrections(fixed,retry_targets,retry,allow_unchanged=True)
+                fixed,retry_application_errors=apply_valid_corrections(fixed,retry_targets,retry)
+                application_errors={**{p:e for p,e in application_errors.items() if p not in retry_targets},**retry_application_errors}
                 repair={**retry,'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
             except Exception as error:
                 # A pre-call deadline or failed second request must not erase
@@ -645,7 +672,7 @@ def repair_rejected_development(state, proposal, defects):
     return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)
 
 
-def coherent_repair_targets(proposal,targets):
+def coherent_repair_targets(proposal,targets,package=None):
     """A biography and its evidence links change together, within one candidate.
 
     Source units stay immutable. This permits removing a rejected marketing
@@ -656,7 +683,18 @@ def coherent_repair_targets(proposal,targets):
     for path,target in list(targets.items()):
         if not re.fullmatch(r'candidates/\d+/submission_bio',path):continue
         parent='/'.join(path.split('/')[:2]);candidate=proposal['candidates'][int(path.split('/')[1])]
-        if parent in targets:continue
+        if parent in targets:
+            # One candidate is one atomic repair target. A second BIO child
+            # must not overwrite the newly repaired parent from an old value.
+            merged=targets[parent]
+            merged['problem']=merged.get('problem','')+' '+target.get('problem','')
+            for key in ('rejected_quotes','privacy_matter_ids','preserve_profile_quotes'):
+                if target.get(key):merged[key]=list(dict.fromkeys(merged.get(key,[])+target[key]))
+            merged['rejected_quote_path']=path
+            if target.get('source_evidence'):
+                merged['source_evidence']={'candidate_evidence':merged.get('source_evidence'),'biography_correction_evidence':target['source_evidence']}
+            del targets[path]
+            continue
         spans=[c.get('public_quote','') for c in candidate.get('profile_coverage',[]) if c.get('decision') in ('retain','generalize')]
         spans.extend(c.get('public_quote','') for c in candidate.get('submission_case_coverage',[]))
         if not spans:continue
@@ -671,6 +709,29 @@ def coherent_repair_targets(proposal,targets):
         targets.setdefault('institutional_execution',{'current_value':proposal.get('institutional_execution',[]),
             'binding_only':True,'problem':'Refresh only exact B10/C2 output quotations after their targeted correction, retaining every argument index. Unaffected quotations may stay unchanged.',
             'source_evidence':{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')}})
+    if proposal.get('personal_quality_contract')=='complete-personal-case-v1':
+        for path,target in targets.items():
+            if not re.fullmatch(r'candidates/\d+(?:/submission_bio)?',path):continue
+            candidate=proposal['candidates'][int(path.split('/')[1])]
+            rejected=target.get('rejected_quotes',[])
+            from core.editorial_development import bind_quote
+            from core.role_evidence import matter_names_person,identity
+            source_person=next((p for p in (package or {}).get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
+            from core.candidate_evidence import profile_units,norm as source_norm
+            source_units={source_norm(u['source_quote']) for u in profile_units(source_person)}
+            register={m['id']:m for m in (package or {}).get('matters',[])}
+            privacy=set(target.get('privacy_matter_ids',[]))
+            from core.public_privacy import metric_facts
+            affected=[register[mid] for mid in privacy if mid in register]
+            def affected_span(span):
+                return any((metric_facts(span) & metric_facts(' '.join(str(m.get(k) or '') for k in ('source_excerpt','rawNotes','summary','value'))))
+                    or (str(m.get('client') or m.get('clientName') or '').strip() and str(m.get('client') or m.get('clientName')).casefold() in span.casefold()) for m in affected)
+            spans=[x.get('public_quote','') for x in candidate.get('profile_coverage',[]) if x.get('decision') in ('retain','generalize')
+                and (package is None or source_norm(x.get('source_quote')) in source_units) and not affected_span(x.get('public_quote',''))]
+            spans.extend(x.get('public_quote','') for x in candidate.get('submission_case_coverage',[])
+                if x.get('matter_id') not in privacy and (package is None or (x.get('matter_id') in register and matter_names_person(candidate.get('name'),register[x['matter_id']]) and bind_quote(x.get('source_quote'),register[x['matter_id']]))))
+            target['preserve_generated_quotes']=list(dict.fromkeys(span for span in spans if span and not any(
+                norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in rejected)))
     return targets
 
 
@@ -697,6 +758,17 @@ def repair_letter(state):
     if scoped_delta:
         source_package={**source_package,'matters':[m for m in source_package.get('matters',[]) if m['id'] in changed_ids]}
         development={'matters':[m for m in (development or {}).get('matters',[]) if m['matter_id'] in changed_ids]}
+    candidate_indices={int(match.group(1)) for d in concrete
+        if (match:=re.match(r'^candidates/(\d+)(?:/|$)',str(d.get('field_path') or '')))}
+    personal_delta=bool(concrete) and len(candidate_indices)>0 and all(re.match(r'^candidates/\d+(?:/|$)',str(d.get('field_path') or '')) for d in concrete) and not feedback and not source_questions
+    if personal_delta:
+        fields=('leadership','executive_assessment','next_actions')
+        candidates=[c for i,c in enumerate((development or {}).get('candidates',[])) if i in candidate_indices]
+        names={c.get('name') for c in candidates}
+        ids={s['matter_id'] for c in candidates for s in c.get('supporting_matters',[])}
+        source_package={**source_package,'lawyers':[p for p in source_package.get('lawyers',[]) if (p.get('name') or p.get('fullName')) in names],
+            'matters':[m for m in source_package.get('matters',[]) if m['id'] in ids]}
+        development={'candidates':candidates,'target':(development or {}).get('target')}
     if classification_only:
         source_package={'matters':[{k:m.get(k) for k in ('id','client','name')} for m in state['package'].get('matters',[])]}
     variants=tuple(create_model('AuditCorrection_'+field,path=(Literal[field],...),value=(list[NextAction] if field=='next_actions' else str,...),reason=(str,...)) for field in fields)
@@ -705,7 +777,7 @@ def repair_letter(state):
     result,trace=invoke_role(state,'writer',schema,
         'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. For preserve_source_aliases on an internal reserve label, explicitly retain BOTH original name variants in the comparison; do not choose a canonical identity or ask the user to correct spelling. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. submission_review_context describes a separate Submission review: reconcile the Audit with CURRENT development, but never try to edit Submission fields or report those separate defects as unresolved Audit tasks. source_questions are context, NOT editing tasks: retain genuine unanswered factual questions without inventing answers and never put them in unresolved merely because the user has not answered. unresolved is only for a requested GENERATED correction that cannot be applied. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a generated field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
         {'previous_letter':state['letter'],'defects':feedback,'source_questions':source_questions,'submission_review_context':submission_context,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else development,
-         'scope_instruction':'Only reconcile mentions of the supplied changed matters. Preserve unrelated text and recommendations; the full independent source review still follows.' if scoped_delta else None})
+         'scope_instruction':'Only reconcile these changed personal arguments/categories. Preserve all other individual recommendations and text.' if personal_delta else 'Only reconcile mentions of the supplied changed matters. Preserve unrelated text and recommendations; the full independent source review still follows.' if scoped_delta else None})
     fixed=copy.deepcopy(state['letter']);seen=set()
     for correction in result['corrections']:
         key=correction['path'];value=correction['value']
