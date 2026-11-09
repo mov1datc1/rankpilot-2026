@@ -28,9 +28,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
-  const pausedInstructions=job?.nextAction?.description || (isStoppedSelection(job)
-    ? 'La selección no superó la revisión y este intento terminó antes de redactar los documentos. Puedes consultar los motivos abajo y cerrar este expediente. No vuelvas a pulsar «Revisar y generar» ni a subir el original: no hay otra revisión automática pendiente ni una respuesta del cliente que desbloquee este intento. Se requiere corregir la selección generada en RankPilot; la entrega final aún no está disponible.'
-    : 'Esta operación requiere recuperación y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere completar esta operación y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.');
+  const recoveryInstructions=job?.nextAction?.description || 'Copia la referencia y compártela con soporte para recuperar la preparación. Tus fuentes y el avance están guardados; no necesitas volver a cargar el original.';
   if(available) {
     const findings=(data?.final_artifact_review?.judge?.defects || []);
     const findingMessages=new Set(findings.map((d:any)=>d.message));
@@ -39,15 +37,28 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     const all=[...messages,...warnings.filter(message=>!seen.has(message)).map(message=>({message}))];
     const fieldLabel=(d:any)=>{
       const path=String(d.field_path || '');
-      const candidate=path.match(/^candidates\/(\d+)/);
+      const candidate=path.match(/^candidates\/(\d+)/) || String(d.message || '').match(/Calidad personal candidates\/(\d+)/);
+      const matter=path.match(/^matters\/(\d+)\//);
+      const personal=String(d.message || '').match(/^(?:Caso personal B9|Perfil B9):\s*([^:]+):/);
+      if(personal)return `B9 · ${personal[1]}`;
+      if(matter) {
+        const id=data.editorial_development?.matters?.[Number(matter[1])]?.matter_id;
+        return `Asunto · ${data.matters?.find((m:any)=>m.id===id)?.client || 'Redacción del asunto'}`;
+      }
       return candidate ? `B9 · ${data.editorial_development?.candidates?.[Number(candidate[1])]?.name || 'Candidatura'}`
-        : path==='b10'?'B10 · Departamento':path==='c2'?'C2 · Posicionamiento':d.scope==='letter'?'Audit':path || 'Documentos';
+        : path==='b10'?'B10 · Departamento':path==='c2'?'C2 · Posicionamiento':path==='research_period'?'Periodo de investigación'
+        : path==='client'?'Identificación del cliente':d.scope==='letter' || ['executive_assessment','rendered_audit'].includes(path)?'Audit':'Documentos';
     };
+    const summary=(d:any)=>/^Caso personal B9:/.test(d.message)?'Comprueba que el perfil describa la aportación personal y su resultado.'
+      :/^Calidad personal candidates\//.test(d.message)?'Comprueba que la categoría propuesta esté respaldada por las fuentes de este abogado.'
+      :/^La aceptación editorial no está completa:/.test(d.message)?'Consulta las observaciones de contenido indicadas en esta revisión.'
+      :d.message;
     return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A'}}>
       <h2 style={{fontSize:22,margin:'0 0 10px'}}>{delivery.label}</h2>
       <p>Descarga el Submission y el Audit desde «Descargar». {delivery.hasObservations?'Consulta estos hallazgos antes de presentarlos; no necesitas iniciar otro intento para obtener los archivos.':'La revisión no dejó observaciones pendientes.'}</p>
       {all.map((d:any,i:number)=><details key={i} style={{borderTop:'1px solid #E2E8F0',padding:'12px 0'}}>
-        <summary style={{cursor:'pointer',fontWeight:600}}>{fieldLabel(d)} · {d.message}</summary>
+        <summary style={{cursor:'pointer',fontWeight:600}}>{fieldLabel(d)} · {summary(d)}</summary>
+        {summary(d)!==d.message && <p><strong>Detalle de la revisión:</strong> {d.message}</p>}
         {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
         {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
       </details>)}
@@ -103,7 +114,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
             margin: 0,
             fontWeight: 500
           }}>
-            La entrega final se habilita después de revisar los documentos. {humanCount > 0 ? 'Las confirmaciones que requieren tu respuesta aparecen abajo.' : systemManaged ? (isRunning ? (job?.nextAction?.description || 'La revisión está en curso. Espera a que termine; puedes cerrar esta pestaña y volver después.') : pausedInstructions) : 'Pulsa la acción del pendiente para preparar los documentos.'}
+            Aquí verás cuándo están disponibles el Submission y el Audit. {humanCount > 0 ? 'Las confirmaciones que requieren tu respuesta aparecen abajo.' : systemManaged ? (isRunning ? (job?.nextAction?.description || 'La revisión está en curso. Espera a que termine; puedes cerrar esta pestaña y volver después.') : recoveryInstructions) : 'Pulsa la acción del pendiente para preparar los documentos.'}
           </p>
         </div>
       </div>
@@ -112,18 +123,18 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>{available?'Documentos disponibles':'Preparación de documentos'}</div>
     <h2 style={{fontSize:22,margin:'8px 0'}}>{available?delivery.label:job?.nextAction?.title || (recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación de documentos':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit')}</h2>
     {!available && !approved && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
-    {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Consulta abajo la acción necesaria.' : 'La entrega oficial se habilita al completar la revisión automática.'}</p>}
+    {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Consulta abajo la acción necesaria.' : 'El siguiente paso aparece junto a cada observación.'}</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {available ? 'Descarga Submission y Audit. Consulta abajo los hallazgos y qué conviene revisar antes de presentarlos.' : 'El Submission y el Audit se preparan con el avance guardado.'}</p>
     {stopped && systemManaged && !approved && job?.id && <AttemptReference job={job}/>}
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
     {stopped && !systemManaged && !approved && job?.issue?.owner!=='user' && (
       <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
         <div>
-          {!job?.nextAction && <><div style={{fontSize:14,fontWeight:700,color:'#166534'}}>{canResumeResidual?'Continuar la corrección guardada':'Reanudar preparación de documentos oficiales'}</div>
+          {!job?.nextAction && <><div style={{fontSize:14,fontWeight:700,color:'#166534'}}>{canResumeResidual?'Continuar la corrección guardada':'Continuar preparación de documentos'}</div>
           <div style={{fontSize:13,color:'#15803D',marginTop:2}}>{canResumeResidual?'Se conserva el avance y se corregirán solo los campos pendientes.':'El sistema aplicará las mejoras editoriales y revisará ambos documentos.'}</div></>}
         </div>
         <button type="button" disabled={busy} onClick={()=>onResolve('retry-review','Reanudar preparación')} style={{background:'#16A34A',color:'#fff',border:'none',borderRadius:8,padding:'9px 18px',fontWeight:700,cursor:'pointer',fontSize:13,boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}>
-          {busy ? 'Preparando…' : canResumeResidual?'Continuar preparación →':'Revisar y generar entrega oficial →'}
+          {busy ? 'Preparando…' : canResumeResidual?'Continuar preparación →':'Preparar documentos →'}
         </button>
       </div>
     )}
@@ -133,25 +144,25 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     </details> : <div key={`${index}-${issue.title}`} style={{border:'1px solid #E2E8F0',borderRadius:10,padding:14,background:'#FAFAFA'}}>
       <span style={{fontSize:11,fontWeight:700,color:(issue.owner==='RankPilot'||issue.owner==='Optimización editorial')?'#4338CA':'#92400E'}}>{issue.owner}</span>
       <h3 style={{fontSize:15,margin:'5px 0'}}>{issue.title}</h3>
-      <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{systemManaged && ['RankPilot','Optimización editorial'].includes(issue.owner) ? (isRunning ? 'Espera a que termine la revisión. Puedes cerrar esta pestaña y consultar el resultado al volver.' : pausedInstructions) : issue.action}</p>
+      <p style={{fontSize:13,lineHeight:1.6,margin:'6px 0 10px',color:'#475569'}}>{systemManaged && ['RankPilot','Optimización editorial'].includes(issue.owner) ? (isRunning ? 'Espera a que termine la revisión. Puedes cerrar esta pestaña y consultar el resultado al volver.' : recoveryInstructions) : issue.action}</p>
       {!(systemManaged && ['RankPilot','Optimización editorial'].includes(issue.owner)) && !isRunning && <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginTop:8}}>
         <button type="button" disabled={busy} onClick={()=>onResolve(issue.destination==='review'?'retry-review':issue.destination,issue.message)} style={{color:'#4338CA',background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:7,padding:'7px 12px',fontWeight:600,cursor:'pointer',fontSize:13}}>
-          {issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección de asuntos'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Revisar y preparar documentos'):issue.destination==='period'?'Ajustar periodo de investigación':issue.destination==='ranking'?'Verificar ranking oficial':issue.destination==='lawyers'?'Ajustar abogado en Studio':issue.destination==='wizard'?'Ajustar asunto en Studio':'Ajustar este pendiente'} →
+          {issue.destination==='retry-selection'?(busy?'Reintentando…':'Reintentar selección de asuntos'):issue.destination==='retry-review'||issue.destination==='review'?(stale?'Revisar correcciones guardadas':'Preparar documentos'):issue.destination==='period'?'Ajustar periodo de investigación':issue.destination==='ranking'?'Verificar ranking oficial':issue.destination==='lawyers'?'Ajustar abogado en Studio':issue.destination==='wizard'?'Ajustar asunto en Studio':'Ajustar este pendiente'} →
         </button>
       </div>}
       <details open style={{fontSize:13,lineHeight:1.65,marginTop:10}}>
-        <summary style={{cursor:'pointer',color:'#475569',fontWeight:500}}>Detalles del pendiente y cómo ajustarlo</summary>
+        <summary style={{cursor:'pointer',color:'#475569',fontWeight:500}}>Detalle de la observación</summary>
         <p style={{whiteSpace:'pre-wrap',marginBottom:0,marginTop:6,color:'#334155'}}>{issue.message}</p>
       </details>
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}
     {!stale && warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
-    {!available && !approved && !job?.nextAction && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'RankPilot no pudo completar esta etapa. No habrá más intentos automáticos. El contenido y el avance se conservan. No necesitas mantener esta página abierta: esperar no reanudará este intento. Consulta los hallazgos' + (data?.editorial_review?.letter ? ' y el Audit disponible.' : '; este intento todavía no preparó el Audit.') + ' La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
+    {!available && !approved && !job?.nextAction && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':recoveryInstructions : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Guarda tus cambios y pulsa «Preparar documentos». Se conservará el avance vigente y se crearán los Word con las observaciones que queden.'}</p>}
   </section></>;
 }
 
 export function ReadableAudit({letter,label,actions}:{letter:any;label:string;actions?:React.ReactNode}) {
-  const sections=[['executive_assessment','Evaluación ejecutiva','Lectura inicial'],['next_steps','Próximos pasos','Qué falta para avanzar'],['evidence_gaps','Exclusiones y reservas','Comparación con los asuntos seleccionados'],['portfolio','Portafolio seleccionado','Asunto insignia, selección y reservas'],['leadership','Liderazgo y atribución','Evaluación de cada abogado']];
+  const sections=[['executive_assessment','Evaluación ejecutiva','Lectura inicial'],['next_steps','Próximos pasos','Recomendaciones antes de presentar'],['evidence_gaps','Exclusiones y reservas','Comparación con los asuntos seleccionados'],['portfolio','Portafolio seleccionado','Asunto insignia, selección y reservas'],['leadership','Liderazgo y atribución','Evaluación de cada abogado']];
   return <article style={{background:'#fff',padding:'clamp(16px, 3vw, 32px)',borderRadius:14,border:'1px solid #E2E8F0',color:'#0F172A',overflowWrap:'anywhere'}}>
     <p style={{fontSize:12,fontWeight:700,color:'#4338CA',margin:0}}>STRATEGIC AUDIT · {label}</p>
     <h2 style={{fontSize:26,margin:'8px 0'}}>Tu estrategia, por partes</h2>

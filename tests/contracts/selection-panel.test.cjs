@@ -42,6 +42,10 @@ test('saved corrections display a new-review action and retain old findings as h
  assert.doesNotMatch(html,/Corregir este pendiente/);assert.match(html,/Confirma el cargo de Sofia Vega/);
  const legacy={...data,final_review_stale:undefined,release_verdict:{errors:['Draft edited; validation required.']}};
  assert.match(renderToStaticMarkup(ReviewPanel({...props,data:legacy})),/Guardado confirmado/);
+ const current={...legacy,release_verdict:{errors:['Contenido editado; requiere nueva revisión.']}};
+ const {reviewIsStale}=require('../../src/lib/audit/review-actions.ts');
+ assert.equal(reviewIsStale(current),true);
+ assert.match(renderToStaticMarkup(ReviewPanel({...props,data:current,errors:current.release_verdict.errors})),/Guardado confirmado/);
 });
 
 const {recordReviewResponse,reviewIssues,focusedReviewScope}=require('../../src/lib/audit/review-actions.ts');
@@ -86,10 +90,10 @@ test('a running repair asks the user to wait without suggesting another paid sta
 test('a failed development offers only existing artifacts and does not invent budget exhaustion',()=>{
  const props={data:{},errors:[],warnings:[],approved:false,onResolve:()=>{},job:{id:'job',stage:'development',status:'failed',pauseReason:'DEVELOPMENT_REJECTED',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED'}}};
  const without=renderToStaticMarkup(React.createElement(ReviewPanel,props));
- assert.match(without,/todavía no preparó el Audit/);assert.doesNotMatch(without,/Audit disponible|descarga el Audit|dentro de los límites/);
+ assert.match(without,/no llegó a preparar el par final/);assert.doesNotMatch(without,/Audit disponible|descarga el Audit|dentro de los límites/);
  assert.match(without,/Copiar referencia/);assert.doesNotMatch(without,/continuará automáticamente/);
  const withAudit=renderToStaticMarkup(React.createElement(ReviewPanel,{...props,data:{editorial_review:{letter:{executive_assessment:'Saved analysis'}}}}));
- assert.match(withAudit,/Audit disponible/);assert.doesNotMatch(withAudit,/todavía no preparó el Audit/);
+ assert.match(withAudit,/Copiar referencia/);assert.doesNotMatch(withAudit,/Audit disponible|descarga el Audit/);
 });
 
 test('available documents show only availability and located observations, without paused or draft status',()=>{
@@ -100,4 +104,14 @@ test('available documents show only availability and located observations, witho
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:['B9 conserva una cita interna pendiente.'],warnings:[],approved:false,job:{status:'completed',nextAction:{kind:'download'}},onResolve:()=>{}}));
  assert.match(html,/Documentos disponibles · con observaciones/);assert.match(html,/B10 · Departamento/);assert.match(html,/Achieved result/);assert.match(html,/B9 conserva una cita interna pendiente/);
  assert.doesNotMatch(html,/Borrador|pausad|detenid|Solicita recuperar|Entrega pendiente/i);
+});
+test('internal B9 checks have a human heading while preserving the complete finding',()=>{
+ const {REVIEW_CONTRACT:c}=require('../../src/lib/audit/review-versions.ts');
+ const message='Calidad personal candidates/0: La categoría requiere evidencia propia literal.';
+ const data={draft_revision:1,completed_review_policy_version:c.policy,completed_renderer_version:c.renderer,completed_artifact_review_version:c.artifact,
+  available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
+  editorial_development:{candidates:[{name:'Sofia Vega'}]},final_artifact_review:{judge:{passed:false,defects:[]}},release_verdict:{passed:false,status:'needs_review'}};
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[message],warnings:[],approved:false,onResolve:()=>{}}));
+ assert.match(html,/<summary[^>]*>B9 · Sofia Vega · Comprueba que la categoría/);
+ assert.ok(html.includes(message));assert.match(html,/Detalle de la revisión/);
 });

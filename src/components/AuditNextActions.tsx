@@ -6,7 +6,7 @@ export function AuditNextActions({data,busy,onNavigate,onReferences,onPrepare,su
   const [editing,setEditing]=useState<AuditAction|null>(null),[notes,setNotes]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState('');
   const actions=auditActions(data.editorial_review?.letter),answered=actions.filter(a=>auditActionHasResponse(data,a)).length;
   return <section id="audit-next-actions" aria-label="Acciones del Audit" style={{scrollMarginTop:110}}>
-    <p>Completa aquí la información que tengas. No necesitas rehacer ni volver a subir el documento. Estas recomendaciones no bloquean por sí solas la descarga; los conflictos que impidan entregar aparecen en el panel de revisión.</p>
+    <p>Completa aquí la información que tengas. No necesitas rehacer ni volver a subir el documento. Puedes descargar los documentos disponibles desde «Descargar». Si añades información, guárdala y pulsa «Actualizar documentos» para incorporarla a una nueva versión.</p>
     <p role="status">{actions.length-answered} recomendaciones sin respuesta · {answered} con información guardada{data.final_review_stale?' · pendiente de revisar en los documentos':''}.</p>
     {actions.map(action=><section key={action.id} style={{border:'1px solid #CBD5E1',borderRadius:10,padding:16,marginBottom:12}}>
       <p style={{marginTop:0,whiteSpace:'pre-wrap'}}>{action.message}</p>

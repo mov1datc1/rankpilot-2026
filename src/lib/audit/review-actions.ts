@@ -17,8 +17,8 @@ export function describeReviewIssue(message: string) {
   if (message === 'Falta una revisión final válida.') return {title:'Revisión automática sin completar',owner:'RankPilot',action:'Los documentos guardados se conservan. Consulta el estado del intento para continuar o solicitar su revisión; este aviso no pide corregir datos ni volver a cargar las fuentes.',destination:'retry-review' as ReviewDestination};
   if (message === 'Las correcciones están guardadas como borrador. Falta revisar independientemente esta pareja Word actual.') return {title:'Revisar los documentos corregidos',owner:'RankPilot',action:'La pareja Word corregida requiere revisión editorial. Las fuentes y las correcciones ya están guardadas; este pendiente no pide cambiar datos del cliente.',destination:'retry-review' as ReviewDestination};
   if (message === 'Source evidence changed; validation required.') return {title:'Revisión editorial pendiente',owner:'RankPilot',action:'Guarda la validación de los datos extraídos y prepara los documentos. Este aviso no pide modificar la fuente.',destination:'retry-review' as ReviewDestination};
-  if (/^Los documentos guardados corresponden a una revisión anterior\./.test(message)) return {title:'Comprobar los documentos con la revisión actual',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit». Tus respuestas guardadas se conservan; no tienes que confirmarlas otra vez.',destination:'retry-review' as ReviewDestination};
-  if (/^(Genera y revisa|Reintenta la revisión editorial|La revisión editorial|El documento no superó|Draft edited;|Borrador editado;)/.test(message)) return {title:'Revisar la entrega guardada',owner:'RankPilot',action:'Comprueba la versión guardada y sus documentos sin volver a capturar las respuestas.',destination:'retry-review' as ReviewDestination};
+  if (/^Los documentos guardados corresponden a una revisión anterior\./.test(message)) return {title:'Comprobar los documentos con la revisión actual',owner:'RankPilot',action:'Pulsa «Preparar documentos». Tus respuestas guardadas se conservan; no tienes que confirmarlas otra vez.',destination:'retry-review' as ReviewDestination};
+  if (/^(Genera y revisa|Reintenta la revisión editorial|La revisión editorial|El documento no superó|Draft edited;|Borrador editado;|Contenido editado;)/.test(message)) return {title:'Revisar la entrega guardada',owner:'RankPilot',action:'Comprueba la versión guardada y sus documentos sin volver a capturar las respuestas.',destination:'retry-review' as ReviewDestination};
   if (/comprobación de la selección|Revisar la interpretación de|revisión de la selección|Strategy does not reconcile|conciliar la selección|vincular una cita de la selección|Core exceeds configured|No source-backed matter|Hero must belong/i.test(message)) return {title:'RankPilot debe rehacer la selección de asuntos',owner:'RankPilot',action:'La selección generada no pasó la comprobación de fuentes. Reintenta esta etapa: se conservan tus documentos, datos y redacciones. No necesitas corregir las fuentes por este error.',destination:'retry-selection' as ReviewDestination};
   if (/renderizador|registro canónico|basándose aparentemente|identidades obtenidas/i.test(message)) return {title:'Corregir los perfiles añadidos al Word',owner:'RankPilot',action:'El Word debe usar solo los abogados registrados y no inferir cargos desde los asuntos.',destination:'review' as ReviewDestination};
   if (/research_period|per[ií]odo (?:de investigaci[oó]n|aplicable)|elegibilidad temporal|fechas de/i.test(message)) return {title:'Confirmar el periodo y las fechas de los asuntos',owner:'Tu confirmación',action:'Indica las fechas de investigación y comprueba la actividad de cada asunto seleccionado dentro de ese intervalo.',destination:'period' as ReviewDestination};
@@ -33,7 +33,7 @@ export function describeReviewIssue(message: string) {
 /** Keep individual judge findings rather than the concatenated legacy error. */
 export function reviewIsStale(data:any) {
   return !!data?.final_artifact_review && (data.final_review_stale === true ||
-    (data.release_verdict?.errors || []).some((message:string)=>/^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)));
+    (data.release_verdict?.errors || []).some((message:string)=>/^(Draft edited; validation required\.|(?:Borrador|Contenido) editado; requiere nueva revisión\.)$/.test(message)));
 }
 
 export function isStoppedSelection(job:any):boolean {
@@ -50,7 +50,7 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
 
   if(job?.canRecheckDevelopment===true && job?.sourceMatches!==false) {
     return [{title:'Recomprobar la redacción guardada',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
-      message:'Hay una corrección disponible para comprobar de nuevo el borrador conservado. Esta comprobación no vuelve a redactarlo ni reinicia el consumo.',
+      message:'Hay una corrección disponible para comprobar de nuevo la redacción guardada. Esta comprobación no vuelve a redactarlo ni reinicia el consumo.',
       action:'Pulsa «Continuar preparación». Si la redacción supera la comprobación, continuará la preparación del Audit y la revisión de ambos documentos.'}];
   }
 
@@ -103,14 +103,14 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
   const issues=[...new Set<string>(messages)].map(message=>{
     const defect=defects.find((d:any)=>d.message===message);
     const presentation=describeReviewIssue(message);
-    const localizedMessage = /^(Draft edited; validation required\.|Borrador editado; requiere nueva revisión\.)$/.test(message)
-      ? 'El borrador fue actualizado y está listo para contrastar y preparar los documentos oficiales.'
+    const localizedMessage = /^(Draft edited; validation required\.|(?:Borrador|Contenido) editado; requiere nueva revisión\.)$/.test(message)
+      ? 'Tus cambios están guardados. Pulsa «Preparar documentos» para incorporarlos al Submission y al Audit.'
       : message;
-    if(defect?.owner==='rankpilot') return {message:localizedMessage,...presentation,owner:'Optimización editorial',action:'La optimización automática tiene ajustes pendientes. Pulsa «Revisar y preparar documentos» para reanudar el proceso editorial.',destination:'retry-review' as ReviewDestination};
+    if(defect?.owner==='rankpilot') return {message:localizedMessage,...presentation,owner:'Optimización editorial',action:'La optimización automática tiene ajustes pendientes. Pulsa «Preparar documentos» para reanudar el proceso editorial.',destination:'retry-review' as ReviewDestination};
     if (defect?.owner==='user' && presentation.destination==='review') return {message:localizedMessage,...presentation,owner:'Tu confirmación',destination:'wizard' as ReviewDestination};
     return {message:localizedMessage,...presentation};
   });
-  if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar Submission y Audit» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'retry-review' as ReviewDestination});
+  if (stale) issues.unshift({message:'Tus respuestas están guardadas. Los hallazgos anteriores aún no se han comprobado contra estos cambios.',title:'Cambios guardados · revisión pendiente',owner:'RankPilot',action:'Pulsa «Preparar documentos» para revisar la versión guardada. No necesitas capturar otra vez las respuestas que ya confirmaste.',destination:'retry-review' as ReviewDestination});
   const selection=issues.filter(issue=>issue.destination==='retry-selection');
   const baseIssues = selection.length ? [{...selection[0],message:selection.map(issue=>issue.message).join('\n')},...issues.filter(issue=>issue.destination!=='retry-selection' && issue.message!=='Genera y revisa el archivo final antes de descargar.')] : issues;
 

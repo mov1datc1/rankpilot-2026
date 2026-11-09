@@ -27,7 +27,18 @@ test('legacy reviewed flag cannot hide a missing required count after reopening'
 test('pending preparation banner offers resolution instead of generation',()=>{
  const {PreparationBanner}=require('../../src/components/PreparationBanner.tsx');
  const html=renderToStaticMarkup(React.createElement(PreparationBanner,{approved:false,busy:false,needsReview:true,onPrepare(){},onReview(){},onAudit(){}}));
- assert.match(html,/Ver pendientes/);assert.doesNotMatch(html,/>Preparar documentos</);
+ assert.match(html,/Ver siguiente paso/);assert.doesNotMatch(html,/>Preparar documentos</);
+});
+test('available documents direct the user to downloads and the relevant next view',()=>{
+ const {PreparationBanner}=require('../../src/components/PreparationBanner.tsx');
+ const findButton=node=>!node || typeof node!=='object'?null:node.type==='button'?node:React.Children.toArray(node.props?.children).map(findButton).find(Boolean);
+ for(const hasObservations of [true,false]) {
+  let action='';const props={approved:!hasObservations,available:true,hasObservations,busy:false,needsReview:true,onPrepare(){action='prepare';},onReview(){action='observations';},onAudit(){action='audit';}};
+  const html=renderToStaticMarkup(React.createElement(PreparationBanner,props));
+  assert.match(html,/Abre «Descargar»/);assert.match(html,hasObservations?/con observaciones/:/sin observaciones/);
+  assert.doesNotMatch(html,/>Preparar documentos</);findButton(PreparationBanner(props)).props.onClick();
+  assert.equal(action,hasObservations?'observations':'audit');
+ }
 });
 test('first preparation stage is indeterminate with a real stage count, not a frozen zero percent',()=>{
  const {PreparationProgress}=require('../../src/components/PreparationProgress.tsx');
