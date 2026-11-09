@@ -3,6 +3,11 @@ import {stableHash} from './contracts';
 export const FIELD_RECOVERY_CONTRACT='field-recovery-v1';
 export type RepairStrategy='targeted_correction'|'source_reconstruction';
 
+export function fieldMethodCount(attempts:Record<string,number>,path:string):number {
+  return Math.max(0,...Object.entries(attempts).filter(([field])=>field===path
+    || field.startsWith(path+'/') || path.startsWith(field+'/')).map(([,count])=>Number(count)||0));
+}
+
 /** An output paraphrase cannot buy a new allowance for the same source duty.
  * These keys are scoped to the immutable job source hash by the worker.
  */
@@ -21,8 +26,8 @@ export function fieldRecoveryPlan(ledger:any[],defects:any[],fieldAttempts:Recor
   if(!concrete.length)return {keys:[],reason:'no_supported_repair'};
   const keys=[...new Set<string>(concrete.map(obligationKey))].sort();
   const fields=[...new Set<string>(concrete.map(d=>String(d.field_path)))].sort();
-  const priorByKey=new Map(Object.entries(fieldAttempts).map(([field,count])=>[
-    obligationKey({scope:'submission',field_path:field}),Number(count) || 0]));
+  const priorByKey=new Map(concrete.map(defect=>[obligationKey(defect),defect.scope==='submission'
+    ? fieldMethodCount(fieldAttempts,String(defect.field_path)):0]));
   const attempts=keys.map(key=>ledger.filter(entry=>entry.supervision?.action==='repair'
     && entry.supervision?.recovery_contract===FIELD_RECOVERY_CONTRACT
     && entry.supervision?.obligation_keys?.includes(key)));

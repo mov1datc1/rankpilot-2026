@@ -998,7 +998,7 @@ export default function SubmissionStudio({
             }}
           >
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: readiness.level === 'critical' ? '#DC2626' : readiness.color }} />
-            <span>Revisar datos del expediente</span>
+            <span>{preparationBlocked?'Completar datos pendientes':'Consultar datos del expediente'}</span>
             <HelpCircle size={13} style={{ opacity: 0.75, marginLeft: '1px' }} />
           </button>
 

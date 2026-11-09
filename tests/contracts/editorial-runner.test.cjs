@@ -277,3 +277,15 @@ test('context reconsideration reaches the engine once with old attempts and rema
  };
  try{await stage();assert.equal(job.status,'queued');assert.equal(job.cursor,1);assert.equal(submission.chambersData.review_checkpoint.state.field_context_recheck,false);assert.deepEqual(submission.chambersData.review_checkpoint.state.field_review_attempts,{b10:2,c2:2});assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),100);}finally{global.fetch=normal;}
 });
+
+test('legacy reconstruction request survives an unstarted capacity check without resetting its prior state',async()=>{
+ reset();await stage();const normal=global.fetch;let requests=0;
+ const cp=submission.chambersData.review_checkpoint;cp.state.development={version:'editorial-development-v2',candidates:[],matters:[],b10:'Retained'};
+ job.ledger.push({stage:'development',status:'legacy_development_recovery_requested'});
+ global.fetch=async(url,options)=>{
+  requests++;const payload=JSON.parse(options.body);assert.equal(payload.state.legacy_development_recovery,true);
+  return Response.json({success:true,next_stage:'done',state:{...payload.state,development_validated:false,
+   budget_stop:{code:'AI_BUDGET_CHECK_UNAVAILABLE'},trace:[...(payload.state.trace || []),{role:'repair',usage:{total_tokens:0},provider_request_started:false}]}});
+ };
+ try{await stage();assert.equal(job.status,'queued');await stage();assert.equal(requests,2);assert.equal(job.status,'failed');assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),100);}finally{global.fetch=normal;}
+});

@@ -14,3 +14,10 @@ test('current context, other field failures, unknown usage and exhausted budgets
 test('a real continuation action never simultaneously tells the user to contact an administrator',()=>{
  const {job,data}=fixture();for(const context of [false,true]){const [issue]=reviewIssues(data,[],{...job,canResumeResidual:true,canRecheckFieldContext:context,sourceMatches:true});assert.match(issue.action,/Continuar preparación/);assert.doesNotMatch(issue.action,/administr|Copia la referencia/);}
 });
+
+test('a prior incomplete mandate-only review may once include an explicitly supplied head, never get a general third retry',()=>{
+ const {job,data}=fixture();data.departmentHeads=[{name:'Sofia Vega'}];const s=data.review_checkpoint.state;s.field_review_context_version='selected-institutional-sources-v1';s.field_review_failures=[{field_path:'c2',obligation_id:'argument:0:c2',owner:'rankpilot',source_quote:'Lead Partner(s): Sofia Vega.'}];job.ledger.push({status:'field_context_review_requested',worker_commit:'prior'});
+ assert.equal(canRecheckFieldContext(job,data,'same','new'),true);
+ job.ledger.push({status:'field_context_review_requested',context_version:FIELD_CONTEXT_VERSION,worker_commit:'new'});assert.equal(canRecheckFieldContext(job,data,'same','future'),false);
+ job.ledger.pop();data.departmentHeads=[];assert.equal(canRecheckFieldContext(job,data,'same','new'),false);
+});

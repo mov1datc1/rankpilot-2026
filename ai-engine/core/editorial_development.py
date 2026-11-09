@@ -396,6 +396,9 @@ def develop(state):
 
 def develop_proposal(state):
     from core.review_graph import invoke_role
+    if state.get('legacy_development_recovery'):
+        from core.legacy_development_recovery import resume_legacy_development
+        return resume_legacy_development(state)
     if state.get('field_context_recheck'):
         from core.field_review import recheck_context
         return recheck_context(state)

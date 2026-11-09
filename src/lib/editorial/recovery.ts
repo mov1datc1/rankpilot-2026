@@ -17,7 +17,13 @@ export function editorialTokenBudget(ledger:any[]=[]) {
   const configured=Number(process.env.EDITORIAL_TOKEN_BUDGET || 1200000);
   const base=Number.isFinite(configured) && configured>0 ? configured:1200000;
   const grant=authorizedExtension(ledger);
-  return grant ? Math.max(base,grant.authorization.spent_tokens+grant.authorization.additional_tokens):base;
+  // Capacity is distinct from a one-review exception: it never refreshes
+  // field methods, failure counters, unknown calls or final acceptance.
+  const capacity=ledger.filter(e=>e.status==='authorized_validation_capacity'
+    && e.authorization?.approved_by && e.authorization?.reason
+    && Number.isSafeInteger(e.authorization.total_tokens) && e.authorization.total_tokens>0)
+    .reduce((maximum,e)=>Math.max(maximum,e.authorization.total_tokens),base);
+  return grant ? Math.max(capacity,grant.authorization.spent_tokens+grant.authorization.additional_tokens):capacity;
 }
 export function spentTokens(ledger:any[]) {
   return (ledger || []).reduce((total:number,item:any)=>total+Number(item.trace?.usage?.total_tokens || 0),0);

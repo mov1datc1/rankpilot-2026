@@ -121,6 +121,8 @@ class ReviewState(TypedDict, total=False):
     field_review_enabled: bool
     field_context_recheck: bool
     field_review_context_version: str
+    legacy_development_recovery: bool
+    legacy_field_recovery_report: dict
     field_review_receipts: list
     field_review_attempts: dict
     field_review_failures: list

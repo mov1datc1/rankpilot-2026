@@ -22,6 +22,35 @@ def verdict(units,failed_field=None):
 
 
 class FieldReviewTests(unittest.TestCase):
+    def test_parent_method_is_inherited_without_mixing_unrelated_sibling_fields(self):
+        from core.field_review import method_count
+        self.assertEqual(method_count({'candidates/0':2},'candidates/0/submission_bio'),2)
+        self.assertEqual(method_count({'candidates/0/submission_bio':2},'candidates/0'),2)
+        self.assertEqual(method_count({'candidates/0/submission_bio':2},'candidates/0/category_rationale'),0)
+        self.assertEqual(method_count({'candidates/0':2},'candidates/01/submission_bio'),0)
+
+    def test_institutional_context_preserves_all_original_firm_inputs_not_generated_drafts(self):
+        from core.field_review import review_payload
+        current=state();p=current['package']
+        p.update(filing_details={'heads':[{'name':'Sofia Vega'}],'num_partners':2},
+            b10_source='Original department governance.',c2_source='Original coverage objective.',
+            b10_draft='Generated department claim.',c2_draft='Generated coverage claim.',
+            editorial_development={'b10':'Generated old proposal'},
+            internal_referee_notes='Private referee logistics')
+        units=units_for(current);group=[u for u in units if u['field'] in ('b10','c2')]
+        context=review_payload(group)['institutional_context']
+        self.assertEqual(context['filing_details'],p['filing_details'])
+        self.assertEqual(context['b10_source'],p['b10_source'])
+        self.assertEqual(context['c2_source'],p['c2_source'])
+        self.assertEqual(context['lawyers'],p['lawyers'])
+        for key in ('editorial_development','b10_draft','c2_draft','internal_referee_notes','matters'):
+            self.assertNotIn(key,context)
+        before={u['field']:u['hash'] for u in group}
+        p['filing_details']['heads'][0]['name']='Another confirmed head'
+        after={u['field']:u['hash'] for u in units_for(current)}
+        self.assertNotEqual(before['b10'],after['b10'])
+        self.assertNotEqual(before['c2'],after['c2'])
+
     def test_context_recheck_keeps_methods_and_requires_a_real_new_verdict(self):
         from core.field_review import recheck_context, INSTITUTIONAL_CONTEXT
         current=state();current.update(field_context_recheck=True,

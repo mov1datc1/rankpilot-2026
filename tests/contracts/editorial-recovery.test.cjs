@@ -2,6 +2,16 @@ require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {recoveryPlan,editorialTokenBudget}=require('../../src/lib/editorial/recovery.ts');
 const job={cursor:2,stage:'audit',ledger:[],issue:{owner:'rankpilot'}};
+test('authorized validation capacity preserves spend and does not reset failed methods or unknown calls',()=>{
+ const {spentTokens,authorizedReviewUsed}=require('../../src/lib/editorial/recovery.ts');
+ const used={trace:{usage:{total_tokens:1236241}}};
+ const grant={status:'authorized_validation_capacity',authorization:{approved_by:'Owner',reason:'Complete validation with bounded recovery',total_tokens:3000000}};
+ const ledger=[used,grant];assert.equal(editorialTokenBudget(ledger),3000000);assert.equal(spentTokens(ledger),1236241);
+ assert.equal(authorizedReviewUsed([...ledger,{stage:'artifact',trace:{usage:{total_tokens:10}}}]),false);
+ assert.equal(recoveryPlan({...job,ledger:[...ledger,...Array.from({length:2},()=>({stage:'audit',cursor:2,issue:{code:'DEVELOPMENT_REJECTED'}}))]},'DEVELOPMENT_REJECTED','new'),null);
+ assert.equal(recoveryPlan({...job,ledger:[...ledger,{trace:{usage:{unknown_calls:1}}}]},'DEVELOPMENT_REJECTED','new'),null);
+ assert.equal(editorialTokenBudget([{...grant,authorization:{...grant.authorization,total_tokens:Infinity}}]),editorialTokenBudget());
+});
 test('mixed known and unknown usage survives aggregation and blocks automatic recovery',()=>{
  const {stageTraceDelta}=require('../../src/lib/audit/review-checkpoint.ts');
  const {spentTokens,hasUnknownProviderUsage}=require('../../src/lib/editorial/recovery.ts');
