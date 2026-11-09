@@ -316,7 +316,7 @@ export default function SubmissionStudio({
     practice_area: currentPracticeArea
   }, matters);
   const preparationBlocked=inputIssues.length>0 || !readiness.canOptimize;
-  const reviewAttemptStopped=Boolean(editorialJob?.pauseReason && !editorialJob?.canResumeResidual && !reviewIsStale(chambersData) && !studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
+  const reviewAttemptStopped=Boolean(!getDeliveryState(chambersData,matters,true).available && editorialJob?.pauseReason && !editorialJob?.canResumeResidual && !reviewIsStale(chambersData) && !studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
   const resolvePreparationInputs=()=>{
     if(inputIssues.length){setReviewPending(true);setShowValidationWizard(true);}
     else setShowReadinessModal(true);

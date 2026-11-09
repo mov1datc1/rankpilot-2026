@@ -1,3 +1,4 @@
+import {getDeliveryState} from '@/lib/audit/delivery-state';
 import {canContinueWithObservations} from './observations-continuation';
 import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
@@ -49,9 +50,10 @@ export function publicJob(job:any, submission?:any) {
   const canResumeBudget=!!submission && sourceMatches===true
     && job.resultHash===deliveryInputHash(submission,submission.chambersData || {})
     && canResumeBudgetReview(job,submission.chambersData,job.sourceHash);
+  const delivery=submission && getDeliveryState(submission.chambersData,submission.chambersData?.matters || submission.matters || [],true);
   const canDeliver=!!submission && sourceMatches===true && canContinueWithObservations(job,submission.chambersData,job.sourceHash);
   const canResumeResidual=canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,hasObservations:submission?.chambersData?.available_artifact?.observation_status==='with_observations'}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
