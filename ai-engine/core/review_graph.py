@@ -485,6 +485,15 @@ def selection_gate(state):
             errors.append(message)
             field_failures[d['matter_id']]={'status':'repair_required','field_paths':['source_quote'],
                 'decision_quote':quote,'errors':[message]}
+            foreign=[mid for mid,other in source.items() if mid!=d['matter_id'] and bind_quote(quote,other)]
+            if foreign:
+                # An exact quote from another record is a concrete cross-record
+                # attribution risk. Repair its interpretation with its quote,
+                # rather than laundering a foreign argument through a new cite.
+                field_failures[d['matter_id']].update(
+                    field_paths=['source_quote','rationale','legal_understanding'],
+                    foreign_quote_matter_ids=foreign,
+                    correction_instruction='This quote belongs to another registered matter. Reconstruct the legal understanding and rationale from THIS matter source together with its exact quote. Preserve disposition, order and hero; do not import facts from the foreign matter.')
         rationale=d.get('rationale','')
         rationale_errors=[]
         # Projection expands transport references into registered client labels.
@@ -507,7 +516,8 @@ def selection_gate(state):
         if rationale_errors:
             failure=field_failures.setdefault(d['matter_id'],{'status':'repair_required','field_paths':[],
                 'decision_quote':d.get('rationale',''),'errors':[]})
-            failure['field_paths'].append('rationale');failure['errors'].extend(rationale_errors)
+            if 'rationale' not in failure['field_paths']:failure['field_paths'].append('rationale')
+            failure['errors'].extend(rationale_errors)
     result={'errors':errors,'selection_validated':not errors,'selection_field_repairable':False}
     # Route only located generated-field defects. Structural errors
     # still fail closed; never let a repair alter selection or weaken grounding.

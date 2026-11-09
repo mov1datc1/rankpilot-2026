@@ -78,6 +78,28 @@ def resolve_declared_comparison(check, target_ref, refs, decisions):
                      evidence_kind_original='source',comparison_reference_recovered=True)
 
 
+def first_semantic_failure_after_grounding_repair(state):
+    """Grounding and meaning are different checks, even for the same record.
+
+    The initial literal/numeric patch must have passed its own gate. Only the
+    first independently bound semantic verdict may use the remaining second
+    repair; repeated semantic failures never qualify for this transition.
+    """
+    report=state.get('selection_repair_report',{})
+    failed=state.get('selection_feedback',{}).get('failed_checks',{})
+    if (state.get('selection_review_attempts')!=1 or state.get('selection_repair_attempts')!=1
+        or state.get('selection_diagnostic_invalid') or state.get('selection_review_unavailable')
+        or report.get('portfolio_preserved') is not True or not report.get('corrected_matter_ids')
+        or not report.get('field_paths') or not set(report['field_paths'])<={'source_quote','rationale','legal_understanding'}
+        or not failed or not all(c.get('evidence_bound') is True for c in failed.values())
+        or not state.get('package') or not state.get('strategy')):
+        return False
+    from core.review_graph import selection_gate
+    # The gate can recover literal source punctuation; evaluate a copy so the
+    # scheduler cannot silently alter the saved strategy while checking it.
+    return selection_gate(copy.deepcopy(state))['selection_validated'] is True
+
+
 def can_repair_selection(state):
     """Permit new failures or fewer unresolved matters within the same cap."""
     if (state.get('selection_review_unavailable') or state.get('selection_review_attempts', 0) >= 3
@@ -88,6 +110,7 @@ def can_repair_selection(state):
     if state.get('selection_diagnostic_invalid'):
         failed=state.get('selection_feedback',{}).get('failed_checks',{})
         if not failed or not all(c.get('evidence_bound') is True for c in failed.values()):return False
+    if first_semantic_failure_after_grounding_repair(state):return True
     history = state.get('selection_failure_history', [])
     if not history or not history[-1]:
         return False

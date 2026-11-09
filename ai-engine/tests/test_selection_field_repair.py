@@ -12,6 +12,53 @@ STRATEGY={'matters':[DECISION],'hero_matter_id':'m1','pending_questions':[],'the
 
 class SelectionFieldRepairTests(unittest.TestCase):
     def state(self):return {'package':{'directory':'Chambers','matters':[copy.deepcopy(MATTER)]},'strategy':copy.deepcopy(STRATEGY)}
+    def test_foreign_quote_repairs_the_coupled_interpretation_not_only_the_quote(self):
+        state=self.state();state['strategy']['matters'][0].update(rationale='Foreign work.',legal_understanding='A different mandate.',source_quote='The firm negotiated a collective agreement.')
+        state['package']['matters'].append({**MATTER,'id':'m2','source_excerpt':'The firm negotiated a collective agreement.'})
+        state['strategy']['matters'].append({**DECISION,'matter_id':'m2','disposition':'reserve','source_quote':'The firm negotiated a collective agreement.','rationale':'Collective work.'})
+        result=selection_gate(state)
+        target=result['selection_feedback']['failed_checks']['m1']
+        self.assertEqual(set(target['field_paths']),{'source_quote','rationale','legal_understanding'})
+        self.assertEqual(target['foreign_quote_matter_ids'],['m2'])
+
+    def test_first_semantic_review_after_resolved_grounding_can_use_remaining_attempt(self):
+        from test_selection_decision_evidence import PACKAGE, STRATEGY, check, DECISION as D
+        from core.selection_review import review_selection
+        state={'package':copy.deepcopy(PACKAGE),'strategy':copy.deepcopy(STRATEGY),
+            'selection_repair_attempts':1,'selection_failure_history':[['m1']],
+            'selection_repair_report':{'portfolio_preserved':True,'unaffected_decisions_preserved':True,'field_paths':['source_quote'],'corrected_matter_ids':['m1']}}
+        state.update(review_selection(state,lambda *args:(check(D['rationale']),[{'usage':{'total_tokens':7}}])))
+        before=copy.deepcopy(state)
+        self.assertTrue(can_repair_selection(state));self.assertEqual(state,before)
+        for change in [{'selection_repair_attempts':2},{'selection_review_attempts':2},{'selection_review_attempts':3},{'trace':[{'usage':{'unknown_calls':1}}]},{'selection_diagnostic_invalid':True}]:
+            self.assertFalse(can_repair_selection({**state,**change}))
+        state['strategy']['matters'][0]['source_quote']='Still invented'
+        self.assertFalse(can_repair_selection(state))
+
+    def test_graph_repairs_first_semantic_finding_after_literal_patch_without_reset(self):
+        from test_selection_decision_evidence import PACKAGE, STRATEGY, SOURCE as OWN, check, DECISION as D
+        strategy=copy.deepcopy(STRATEGY);strategy['matters'][0]['source_quote']='Invented initial quote'
+        calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(role)
+            if role=='strategist':
+                corrections=[]
+                for mid,c in payload['failed_checks'].items():
+                    for field in c['field_paths']:
+                        corrections.append({'matter_id':mid,'field_path':field,'text':OWN if field=='source_quote' else 'The firm implemented employment agreements and workplace regulations.'})
+                answer={'corrections':corrections}
+            elif calls.count('selection_reviewer')==1:answer=check(D['rationale'])
+            else:answer={'checks':{'M01':{'status':'supported','explanation':'Own deliverables are accurately stated.','source_quote':''}}}
+            return answer,state.get('trace',[])+[{'role':role,'usage':{'total_tokens':7}}]
+        with patch('core.review_graph.strategist',return_value={'strategy':strategy,'errors':[]}),patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=create_review_graph().invoke({'package':copy.deepcopy(PACKAGE),'operation':'strategy'})
+        self.assertEqual(calls,['strategist','selection_reviewer','strategist','selection_reviewer'])
+        self.assertTrue(result['selection_review_validated'])
+        self.assertEqual(result['selection_repair_attempts'],2)
+        self.assertEqual(result['selection_review_attempts'],2)
+        self.assertEqual(sum(t['usage']['total_tokens'] for t in result['trace']),28)
+        self.assertEqual(result['strategy']['hero_matter_id'],'m1')
+
     def test_rounded_amount_is_rejected_and_located_without_changing_source(self):
         state=self.state();before=copy.deepcopy(state);result=selection_gate(state)
         self.assertFalse(result['selection_validated'])

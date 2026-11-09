@@ -42,13 +42,22 @@ export function canResumeSelectionProgress(job:any,data:any,sourceHash:string,co
     || !checkpoint.step_keys?.strategy
     || state?.selection_diagnostic_invalid!==false || state.selection_review_unavailable===true
     || state.selection_validated!==false || state.selection_review_validated!==false
-    || !Number.isSafeInteger(state.selection_review_attempts) || state.selection_review_attempts!==2
+    || !Number.isSafeInteger(state.selection_review_attempts) || ![1,2].includes(state.selection_review_attempts)
     || state.selection_repair_attempts!==1
     || !Array.isArray(state.trace) || !state.trace.length
     || state.trace.some((call:any)=>typeof call?.usage?.total_tokens!=='number' || call.usage.total_tokens<0)
     || !Array.isArray(history) || history.length!==2 || !history.every((batch:any)=>Array.isArray(batch) && batch.every((id:any)=>typeof id==='string'))) return false;
   const previous=new Set(history[0]),current=new Set(history[1]);
-  if(!current.size || current.size>=previous.size) return false;
+  const report=state.selection_repair_report;
+  // A literal/numeric repair can precede the FIRST semantic verdict. Repeated
+  // record IDs across those checks do not mean the same repair failed twice.
+  // Python rechecks the original grounding gate before any paid continuation.
+  const firstSemanticAfterGrounding=state.selection_review_attempts===1
+    && state.selection_field_repairable===false && report?.portfolio_preserved===true
+    && Array.isArray(report.corrected_matter_ids) && report.corrected_matter_ids.length>0
+    && Array.isArray(report.field_paths) && report.field_paths.length>0
+    && report.field_paths.every((p:string)=>['source_quote','rationale','legal_understanding'].includes(p));
+  if(!current.size || !(firstSemanticAfterGrounding || state.selection_review_attempts===2 && current.size<previous.size)) return false;
   const checks=state.selection_review?.checks || {},failed=state.selection_feedback?.failed_checks || {};
   const decisions=state.strategy?.matters || [],ids=(data.matters || []).map((m:any)=>m.id);
   const rejected=Object.keys(checks).filter(id=>checks[id]?.status==='repair_required');
