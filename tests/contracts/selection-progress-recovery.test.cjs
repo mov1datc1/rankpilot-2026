@@ -40,3 +40,17 @@ test('progress continuation enqueues exactly once without replacing job, source,
   assert.equal(job.ledger.length,2);assert.equal(job.ledger[0].trace.usage.total_tokens,55);assert.equal(job.ledger[1].status,'selection_progress_recovery_requested');assert.equal(job.cursor,0);assert.equal(job.sourceHash,sourceHash);assert.deepEqual(state,before);
  }finally{Module._load=load;if(env===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=env}
 });
+test('first semantic verdict can use remaining allowance after a completed grounding repair',()=>{
+ const {source,state,sourceHash,job}=fixture();
+ state.selection_review_attempts=1;state.selection_field_repairable=false;
+ state.selection_failure_history=[['b'],['b','new']];
+ state.selection_repair_report={portfolio_preserved:true,corrected_matter_ids:['b'],field_paths:['source_quote','rationale']};
+ const before=structuredClone({source,job});
+ assert.equal(canResumeSelectionProgress(job,source.chambersData,sourceHash,'fixed-build'),true);
+ assert.deepEqual({source,job},before);
+ for(const delta of [{selection_field_repairable:true},{selection_repair_report:{}},{selection_repair_attempts:2},{selection_review_attempts:2},{selection_diagnostic_invalid:true},{trace:[{usage:{unknown_calls:1}}]}]) {
+  assert.equal(canResumeSelectionProgress(job,{...source.chambersData,review_checkpoint:{...source.chambersData.review_checkpoint,state:{...state,...delta}}},sourceHash,'fixed-build'),false);
+ }
+ const unbound=structuredClone(state);unbound.selection_feedback.failed_checks.b.evidence_bound=false;
+ assert.equal(canResumeSelectionProgress(job,{...source.chambersData,review_checkpoint:{...source.chambersData.review_checkpoint,state:unbound}},sourceHash,'fixed-build'),false);
+});
