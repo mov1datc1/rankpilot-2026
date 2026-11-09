@@ -4,7 +4,7 @@ import { studioMatters, studioDraftChanged } from '@/lib/editorial/studio-draft'
 import { AuditNextActions } from '@/components/AuditNextActions';
 import { type AuditAction } from '@/lib/audit/next-actions';
 import { processingFeedback } from '@/lib/ux/processing-feedback';
-import { needsB10Optimization, hasValidatedSelection } from '@/lib/audit/optimization-state';
+import { needsB10Optimization, hasValidatedSelection, savedPreparationProgress } from '@/lib/audit/optimization-state';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import { REVIEW_CONTRACT } from '@/lib/audit/review-versions';
 import React, { useState, useEffect, useTransition } from 'react';
@@ -401,6 +401,8 @@ export default function SubmissionStudio({
   const optimizedMattersCount = draftingPortfolio.filter(m => (m.optimizedText || m.optimized_text || '').trim()).length;
   const targetMattersCount = draftingPortfolio.length;
   const isFullyOptimized = targetMattersCount > 0 && optimizedMattersCount >= targetMattersCount;
+  const savedPreparation=savedPreparationProgress(chambersData,editorialJob?.sourceMatches,
+    studioDraftChanged(chambersData,submission.matters || [],matters,b10Text));
 
   const categorized = React.useMemo(() => {
     // Before AI optimization runs, do not prematurely prune or hide confidential/surplus matters.
@@ -3586,10 +3588,10 @@ export default function SubmissionStudio({
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    {deliveryState.approved && !isOptimizingAll ? 'Documentos revisados' : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
+                    {deliveryState.approved && !isOptimizingAll ? 'Documentos revisados' : savedPreparation && !hasRunOptimization ? `${savedPreparation.prepared} de ${savedPreparation.selected} asuntos seleccionados con borrador guardado` : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
-                    {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'B10 conserva la redacción de origen; Preparar Submission y Audit completará ese paso.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
+                    {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : savedPreparation && !hasRunOptimization ? 'El avance está guardado. La nueva redacción sigue en revisión; consulta el próximo paso en Estado de entrega.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'El editor conserva el texto de origen. Consulta el próximo paso en Estado de entrega.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}
                   </p>
                 </div>
 
@@ -3699,11 +3701,11 @@ export default function SubmissionStudio({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
                         <span style={{ fontSize: '0.85rem' }}>⭐</span>
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>
-                          {hasRunOptimization ? 'Sin asunto insignia designado' : 'Insignia: selección pendiente'}
+                          {hasRunOptimization ? 'Sin asunto insignia designado' : savedPreparation ? 'Selección guardada · entrega pendiente' : 'Insignia: selección pendiente'}
                         </span>
                       </div>
                       <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '0 0 0.6rem 0', lineHeight: 1.45 }}>
-                        {hasRunOptimization ? 'La selección revisada no designó un asunto insignia. Consulta la justificación en el Audit o elige un candidato para una nueva revisión.' : 'Optimizar Todo revisará la selección y propondrá un asunto insignia cuando haya evidencia suficiente. También puedes proponerlo con Hacer Insignia.'}
+                        {hasRunOptimization ? 'La selección revisada no designó un asunto insignia. Consulta la justificación en el Audit o elige un candidato para una nueva revisión.' : savedPreparation ? 'Los asuntos ya fueron seleccionados. Su propuesta se incorporará al editor cuando termine la validación de la redacción; no necesitas seleccionarlos otra vez.' : 'La preparación revisará la selección y propondrá un asunto insignia cuando haya evidencia suficiente.'}
                       </p>
                       <button
                         onClick={() => scrollTo('section-d')}
