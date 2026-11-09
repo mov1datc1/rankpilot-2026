@@ -22,6 +22,50 @@ def verdict(units,failed_field=None):
 
 
 class FieldReviewTests(unittest.TestCase):
+    def test_context_recheck_keeps_methods_and_requires_a_real_new_verdict(self):
+        from core.field_review import recheck_context, INSTITUTIONAL_CONTEXT
+        current=state();current.update(field_context_recheck=True,
+            field_review_attempts={'b10':2},field_review_failures=[{
+                'field_path':'b10','obligation_id':'argument:0:b10','owner':'rankpilot'}])
+        before=copy.deepcopy(current['development'])
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('Schedule first, do not regenerate')):
+            current.update(develop(current))
+        self.assertFalse(current['development_validated'])
+        self.assertEqual(current['field_review_attempts'],{'b10':2})
+        self.assertEqual(current['development'],before)
+        self.assertEqual(current['repair_continuation']['phase'],'review')
+        def failed(s,role,schema,instruction,payload):
+            return verdict(payload['units'],'b10'),[{'role':role,'usage':{'total_tokens':10}}]
+        with patch('core.review_graph.invoke_role',side_effect=failed):current.update(advance(current))
+        self.assertEqual(current['field_review_context_version'],INSTITUTIONAL_CONTEXT)
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No third repair')):
+            current.update(advance(current))
+        self.assertFalse(current['development_validated'])
+        self.assertIsNone(current['repair_continuation'])
+        self.assertTrue(recheck_context(current)['development_repair_unlocatable'])
+
+    def test_institutional_review_sees_other_selected_sources_without_cross_person_leakage(self):
+        current=state();p=current['package'];s=current['strategy']
+        p['matters'].append({'id':'other-core','source_excerpt':'A separate selected mandate established the specialised-services structure.'})
+        p['matters'].append({'id':'excluded','source_excerpt':'Unrelated excluded mandate.'})
+        s['matters'].extend([{'matter_id':'other-core','disposition':'core'}, {'matter_id':'excluded','disposition':'exclude'}])
+        units=units_for(current)
+        institutional=[u for u in units if u['field'] in ('b10','c2')]
+        for u in institutional:
+            self.assertTrue(any(r.get('id')=='other-core' for r in u['sources'].values()))
+            self.assertFalse(any(r.get('id')=='excluded' for r in u['sources'].values()))
+            # The proposition still has its own required evidence; context
+            # cannot stand in for executing that proposition.
+            self.assertFalse(any(p['matters'][-2]['source_excerpt'] in o['source_passages'].values() for o in u['obligations']))
+        person=next(u for u in units if u['field']=='candidates/0/submission_bio')
+        self.assertFalse(any(r.get('id')=='other-core' for r in person['sources'].values()))
+        old={u['field']:u['hash'] for u in units}
+        p['matters'][-2]['source_excerpt']+=' A corrected original result.'
+        changed={u['field']:u['hash'] for u in units_for(current)}
+        self.assertNotEqual(old['b10'],changed['b10'])
+        self.assertNotEqual(old['c2'],changed['c2'])
+        self.assertEqual(old['candidates/0/submission_bio'],changed['candidates/0/submission_bio'])
+
     def test_shared_wording_does_not_expand_a_located_fields_repair_scope(self):
         from core.editorial_repair import repair_rejected_development
         current=state();v=current['development'];v['c2']=v['b10']

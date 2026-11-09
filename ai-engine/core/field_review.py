@@ -14,6 +14,7 @@ from typing import Literal
 from pydantic import ConfigDict, Field, create_model
 
 VERSION = 'source-field-review-v1'
+INSTITUTIONAL_CONTEXT = 'selected-institutional-sources-v1'
 TASK = '''Review only these source-bound editorial units before document assembly.
 For EACH obligation judge whether the actual output executes its supplied rule
 against the complete original sources. A matching quote is not semantic proof.
@@ -25,7 +26,13 @@ does not require invented detail or padding: an accurate limited profile is vali
 Mark failed only for a concrete material violation of this obligation; optional
 wording preferences are met, not blocking defects. Identify an allowed output
 passage and original source passage, and explain the exact omission or error and
-what the authorised field must preserve. Do not rewrite text, change sources,
+what the authorised field must preserve. Institutional B10/C2 contain several
+arguments: each obligation's source_ids identify the evidence it must execute,
+not an exhaustive list of evidence for the whole section. Check additional
+claims against that field's contextual_source_ids before alleging absence of
+support. Do not remove a valid contribution merely because a different argument
+supplies its evidence. Context from another mandate cannot establish a result
+or personal role in the mandate being checked. Do not rewrite text, change sources,
 nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
 
 
@@ -79,6 +86,15 @@ def units_for(state):
     result=[]
     from utils.review_policy import EDITORIAL_RULES
     for unit in groups.values():
+        if unit['field'] in ('b10','c2'):
+            core={m['matter_id'] for m in strategy.get('matters',[]) if m.get('disposition')=='core'}
+            context=[]
+            for matter in package.get('matters',[]):
+                if matter.get('id') not in core:continue
+                original={k:v for k,v in matter.items() if k in source_fields}
+                key=digest(original);unit['sources'][key]=original;context.append(key)
+            unit['contextual_source_ids']=context
+            unit['context_version']=INSTITUTIONAL_CONTEXT
         unit['output_passages']={'P_'+digest(q)[:16]:q for q in
             dict.fromkeys(' '.join(line.split()) for line in unit['output'].splitlines() if line.strip())}
         unit['hash']=digest({'version':VERSION,'policy':EDITORIAL_RULES,**unit})
@@ -127,7 +143,8 @@ def review_payload(units):
             passages.update(obligation['source_passages'])
             checks.append({k:v for k,v in obligation.items() if k!='source_passages'} |
                           {'source_refs':list(obligation['source_passages'])})
-        items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks})
+        items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks,
+            **({'contextual_source_ids':unit['contextual_source_ids']} if 'contextual_source_ids' in unit else {})})
     return {'units':items,'original_sources':records,'original_passages':passages}
 
 
@@ -217,6 +234,24 @@ def unknown_usage(trace):
     return unknown_repair_usage(trace)
 
 
+def recheck_context(state):
+    """Reconsider an old incomplete-source diagnosis, never replenish repairs."""
+    from core.editorial_development import development_errors
+    failures=state.get('field_review_failures',[])
+    eligible=(state.get('field_review_context_version')!=INSTITUTIONAL_CONTEXT
+        and state.get('development_reusable') and not unknown_usage(state.get('trace',[]))
+        and failures and all(d.get('field_path') in ('b10','c2')
+            and str(d.get('obligation_id','')).startswith('argument:') for d in failures))
+    errors=development_errors(state['package'],state['strategy'],state['development'])
+    if not eligible or errors:
+        return {'development_validated':False,'development_repair_unlocatable':True,
+            'field_context_recheck':False,'repair_continuation':None,
+            'errors':errors or ['La comprobación del contexto no es aplicable a este intento.']}
+    # The earlier diagnosis remains in history. A new source-bound verdict must
+    # actually pass; even a corrected context cannot buy a third repair method.
+    return schedule(state,{'field_context_recheck':False,'repair_continuation':None})
+
+
 def advance(state):
     from core.editorial_repair import unknown_repair_usage, repair_rejected_development
     pending=state.get('repair_continuation') or {}
@@ -245,6 +280,8 @@ def advance(state):
     receipts,defects=project_checks(units,result)
     saved=[r for r in state.get('field_review_receipts',[]) if r.get('field') not in paths]+receipts
     update={'trace':trace,'field_review_receipts':saved}
+    if any(u['field'] in ('b10','c2') for u in units):
+        update['field_review_context_version']=INSTITUTIONAL_CONTEXT
     if defects:
         return {**update,'development_validated':False,'development_repair_unlocatable':False,
             'field_review_failures':defects,
