@@ -184,3 +184,35 @@ test('unstarted semantic review is checkpointed and automatically continued with
   assert.equal(calls[1].payload.state.selection_feedback.semantic_rejection,false);
  }finally{global.fetch=normal;}
 });
+
+test('saved residual groups continue the same development cursor and bill each response once',async()=>{
+ reset();await stage();const normal=global.fetch;let parts=0;
+ global.fetch=async(url,options)=>{
+  const payload=JSON.parse(options.body);
+  if(payload.stage==='development' && parts++<3){
+   calls.push({url,payload});
+   const prior=payload.state.repair_continuation;
+   if(parts>1)assert.equal(prior.residual_requests,parts-2);
+   return Response.json({success:true,next_stage:'done',state:{...payload.state,
+    development:{version:'editorial-development-v2',b10:'Retained prose',candidates:[],matters:[]},
+    development_validated:false,errors:['Saved remaining field.'],
+    repair_continuation:{version:'bounded-residual-v1',pending_groups:[{'candidates/0':{}}],residual_requests:parts-1},
+    trace:[...(payload.state.trace || []),{role:'repair',usage:{total_tokens:20},provider_request_id:'partial-'+parts}]}});
+  }
+  const response=await normal(url,options);const value=await response.json();
+  if(value.state)value.state.repair_continuation=null;
+  return Response.json(value);
+ };
+ try {
+  for(let i=0;i<3;i++){
+   await stage();assert.equal(job.status,'queued');assert.equal(job.cursor,1);assert.equal(job.issue,null);
+   assert.equal(job.ledger.at(-1).trace.usage.total_tokens,20);
+   // Simulate recreating the coordinator from its durable record.
+   job=JSON.parse(JSON.stringify(job));
+  }
+  await stage();assert.equal(job.cursor,2);assert.equal(job.stage,'audit');
+  assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
+  assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),260);
+  assert.ok(!submission.chambersData.approved_artifact);
+ } finally {global.fetch=normal;}
+});

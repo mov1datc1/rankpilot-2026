@@ -118,6 +118,8 @@ class ReviewState(TypedDict, total=False):
     development_recheck_report: dict
     repair_feedback: list
     repair_report: dict
+    repair_continuation: dict
+    durable_repair_steps: bool
     output_recovery_attempt: int
     strategy: dict
     letter: dict
@@ -1042,7 +1044,7 @@ def run_editorial_stage(stage, state):
         raise ValueError('Source-grounded semantic selection review required')
     if stage == 'writer' and not state.get('development_validated'):
         raise ValueError('Validated editorial development required')
-    return create_review_graph().invoke({**state,'operation':stage,'stage_deadline':time.monotonic()+225}, {'recursion_limit':EDITORIAL_GRAPH_RECURSION_LIMIT})
+    return create_review_graph().invoke({**state,'operation':stage,'durable_repair_steps':stage=='development','stage_deadline':time.monotonic()+225}, {'recursion_limit':EDITORIAL_GRAPH_RECURSION_LIMIT})
 
 
 def review_rendered_package(state, allow_repair=False):

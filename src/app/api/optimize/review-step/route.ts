@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
     if (savedResult.count !== 1) throw new Error('DRAFT_CONFLICT');
     locked = null;
     const trace=receivedTrace;
+    if(stage==='development' && result.state.repair_continuation?.version==='bounded-residual-v1' && result.state.repair_continuation.pending_groups?.length && result.state.development_validated===false) return NextResponse.json({success:true,continuation:true,stage:'development',trace,message:'Correcciones guardadas. RankPilot continúa con el siguiente campo pendiente.'});
     if(result.state.selection_review_deferred) return NextResponse.json({success:false,code:'SELECTION_REVIEW_DEFERRED',error:'Selección guardada. RankPilot continuará automáticamente con su revisión independiente.',trace},{status:503});
     if(result.state.selection_diagnostic_invalid) return NextResponse.json({success:false,code:'SELECTION_DIAGNOSTIC_INVALID',error:'RankPilot recibió la revisión, pero no pudo fundamentar uno de sus hallazgos. Conservamos las respuestas y el consumo; este intento no iniciará más llamadas.',retryable:false,trace},{status:422});
     if(result.state.selection_review_unavailable) return NextResponse.json({success:false,code:'AI_REVIEW_UNAVAILABLE',error:'La comprobación no devolvió un resultado utilizable. Conservamos el avance y detenemos los reintentos para evitar duplicar consumo.',retryable:false,trace},{status:502});

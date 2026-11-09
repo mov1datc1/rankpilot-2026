@@ -83,6 +83,13 @@ export async function runJobStage(job:any) {
     if(!updated || stableHash(sourceSnapshot(updated))!==job.sourceHash) throw new Error('SOURCE_CHANGED');
     const data:any=updated.chambersData || {};
     trace=trace || (stage==='artifact' && !result.cached?stageTraceDelta([],data.final_artifact_review?.trace || []):null);
+    if(result.continuation) {
+      const pending=data.review_checkpoint?.state?.repair_continuation;
+      if(stage!=='development' || pending?.version!=='bounded-residual-v1' || !pending.pending_groups?.length || hasUnknownProviderUsage([{trace}])) throw new Error('INVALID_REPAIR_CONTINUATION');
+      // A saved unfinished field is not a failed attempt or a completed stage.
+      // Keep the cursor and ledger; each queued group is consumed exactly once.
+      retryAt=new Date(Date.now()+1000);
+    } else {
     if(stage==='artifact') generatedHash=generatedContentHash(data);
     if(stage==='selection') tasks=planDrafting({...data,matters:data.matters || updated.matters});
     cursor++;
@@ -111,6 +118,7 @@ export async function runJobStage(job:any) {
       status=supervision?.action==='complete'?'completed':'needs_review';
       resultHash=deliveryInputHash(updated,data);
       }
+    }
     }
   } catch(error:any) {
     const code=error.message;

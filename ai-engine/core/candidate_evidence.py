@@ -31,11 +31,27 @@ def bind_public_quote(quote, bio, person_name=''):
         prefix=' '.join(parts[:count])
         if re.match(r'^'+re.escape(prefix)+r'\s+',stem,re.I):
             variants.append(norm(person_name)+stem[len(prefix):])
+    # Within this person's BIO only, bind the same predicate when the writer
+    # substitutes the identified person's subject with He/She. No other actor,
+    # predicate, negation, quantity or tense is replaced; uniqueness below is
+    # mandatory and the final source review still checks personal attribution.
+    for count in range(1,len(parts)+1):
+        prefix=' '.join(parts[:count])
+        if re.match(r'^'+re.escape(prefix)+r'\s+',stem,re.I):
+            tail=stem[len(prefix):]
+            variants.extend(pronoun+tail for pronoun in ('He','She'))
+    subject=re.match(r'^(He|She)\s+',stem,re.I)
+    if subject:
+        tail=stem[subject.end()-1:]
+        variants.extend(' '.join(parts[:count])+tail for count in range(1,len(parts)+1))
     # An additive "also" preserves the same assertion. Negation, tense,
     # qualifiers, roles, figures and every other word remain immutable.
     for variant in list(variants):
         if re.match(r'^(?:He|She)\s+(?!also\b)',variant,re.I):
             variants.append(re.sub(r'^(He|She)\s+',r'\1 also ',variant,flags=re.I))
+    for variant in list(variants):
+        if re.match(r'^(?:He|She)\s+(?:is|was|has|had)\s+(?!also\b)',variant,re.I):
+            variants.append(re.sub(r'^(He|She)\s+(is|was|has|had)\s+',r'\1 \2 also ',variant,flags=re.I))
     # Quote glyphs have identical positions and meaning; return the actual
     # biography glyphs. Apostrophe placement, negation and all words stay exact.
     glyphs=str.maketrans({'‘':"'",'’':"'",'“':'"','”':'"'})
@@ -72,7 +88,11 @@ def profile_errors(person, candidate):
     refs=[c.get('reference') for c in actual]
     errors=[]
     if len(refs)!=len(set(refs)) or set(refs)!=set(expected):
-        errors.append('Falta rendición completa de credenciales del perfil fuente.')
+        missing=[r for r in expected if r not in refs]
+        unexpected=[r for r in refs if r not in expected]
+        duplicate=sorted({r for r in refs if refs.count(r)>1})
+        errors.append('Falta rendición completa de credenciales del perfil fuente. '
+            +f'Missing references: {missing}; unexpected: {unexpected}; duplicated: {duplicate}.')
     for item in actual:
         unit=expected.get(item.get('reference'))
         if not unit or norm(item.get('source_quote'))!=norm(unit['source_quote']):
@@ -81,7 +101,8 @@ def profile_errors(person, candidate):
         decision=item.get('decision');quote=norm(item.get('public_quote'))
         if decision in ('retain','generalize'):
             if not quote or quote not in norm(candidate.get('submission_bio')):
-                errors.append('Credencial retenida ausente del B9 de esta persona.')
+                errors.append('Credencial retenida ausente del B9 de esta persona. '
+                    +f"profile_coverage/{item.get('reference')}/public_quote={item.get('public_quote')!r}; copy from the corrected BIO or restore the missing material credential.")
         elif decision=='omit':
             if MATERIAL_ROLE.search(unit['source_quote']):errors.append('Una credencial profesional material debe conservarse o generalizarse, no omitirse.')
             if quote:errors.append('Una omisión no puede declarar una cita pública retenida.')

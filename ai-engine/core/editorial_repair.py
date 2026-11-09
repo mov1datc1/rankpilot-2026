@@ -304,7 +304,7 @@ def candidate_output_repair_only(package,strategy,candidate,person,profile_fault
     from core.editorial_development import bind_quote
     from core.role_evidence import matter_names_person
     if not person or not (profile_faults or personal_faults) or category_error(candidate):return False
-    if any(e!='Credencial retenida ausente del B9 de esta persona.' for e in profile_faults):return False
+    if any(not e.startswith('Credencial retenida ausente del B9 de esta persona.') for e in profile_faults):return False
     if any(e!='La contribución personal debe ejecutarse literalmente en el B9 de esta persona.' for e in personal_faults):return False
     if person.get('isPartner') is True and re.search(r'associate|asociado',candidate.get('suggested_ranking',''),re.I):return False
     if any(not str(candidate.get(f,'')).strip() for f in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio')):return False
@@ -362,8 +362,13 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         protected=targets[path].get('preserve_generated_quotes',[])
         bio=value.get('submission_bio','') if isinstance(value,dict) else value
         normalize=lambda text:' '.join(str(text or '').split())
-        if any(normalize(quote) not in normalize(bio) for quote in protected):
-            raise ValueError('Biography repair cannot remove an unaffected evidenced contribution or credential')
+        from core.candidate_evidence import bind_public_quote
+        person_name=value.get('name','') if isinstance(value,dict) else ''
+        missing_protected=[quote for quote in protected
+            if normalize(bind_public_quote(quote,bio,person_name)) not in normalize(bio)]
+        if missing_protected:
+            raise ValueError('Biography repair cannot remove an unaffected evidenced contribution or credential. '
+                +'Restore these exact spans: '+repr(missing_protected))
         if not allow_unchanged and value == targets[path]['current_value']:
             raise ValueError('Repair returned unchanged target')
         seen.add(path);parts=path.split('/');parent=result
@@ -387,6 +392,26 @@ def biography_output_targets_only(targets):
         bool(re.fullmatch(r'candidates/\d+',path)) and bool(target.get('mutable_fields'))
         and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') else set()))
         for path,target in targets.items())
+
+
+def repair_value_at(document,path):
+    value=document
+    for part in path.split('/'):
+        value=value[int(part)] if isinstance(value,list) else value[part]
+    return value
+
+
+def repair_failures(state,document,targets,application_errors):
+    from core.public_privacy import public_privacy_findings
+    privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
+    residual=repair_targets(state['package'],state['strategy'],document)
+    norm=lambda value:' '.join(str(value or '').split()).casefold()
+    return [path for path,target in targets.items()
+        if path in application_errors or path in privacy_paths
+        or (not target.get('binding_only') and repair_value_at(document,path)==target['current_value'])
+        or any(norm(q) in norm(repair_value_at(document,target.get('rejected_quote_path',path)))
+               for q in target.get('rejected_quotes',[]) if norm(q))
+        or any(p==path or p.startswith(path+'/') for p in residual)]
 
 
 def invoke_residual_repair(state, group, shared=None):
@@ -437,19 +462,8 @@ def repair_development(state, proposal, targets):
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
     fixed=bind_development(state['package'],fixed)
-    def at(document,path):
-        value=document
-        for part in path.split('/'):value=value[int(part)] if isinstance(value,list) else value[part]
-        return value
-    norm=lambda value:' '.join(str(value or '').split()).casefold()
     def failures(document):
-        from core.public_privacy import public_privacy_findings
-        privacy_paths={f['path'] for f in public_privacy_findings(state['package'],state['strategy'],document)}
-        residual=repair_targets(state['package'],state['strategy'],document)
-        return [path for path,target in targets.items()
-                if path in application_errors or path in privacy_paths or (not target.get('binding_only') and at(document,path)==target['current_value']) or any(
-                    norm(quote) in norm(at(document,target.get('rejected_quote_path',path))) for quote in target.get('rejected_quotes',[]) if norm(quote))
-                or any(p==path or p.startswith(path+'/') for p in residual)]
+        return repair_failures(state,document,targets,application_errors)
     failed=failures(fixed)
     # A whole-candidate correction can introduce a local voice fault in its
     # biography. Validate descendants as well as the original edited object;
@@ -531,7 +545,7 @@ def repair_development(state, proposal, targets):
     # state; stale children must never overwrite a newly repaired candidate.
     retry_targets=coherent_repair_targets(fixed,retry_targets,package=state.get('package'))
     for path,target in retry_targets.items():
-        target['current_value']=at(fixed,path)
+        target['current_value']=repair_value_at(fixed,path)
         if re.fullmatch(r'candidates/\d+',path):
             target['problem']=target.get('problem','')+' The preceding correction failed these postconditions: '+str(application_errors.get(path,'The candidate still fails its own validation.'))
             if path in local_targets:
@@ -546,6 +560,9 @@ def repair_development(state, proposal, targets):
     retry_attempted_paths=[]
     residual_requests=0
     retry_error=None
+    if retry_targets and not unlocated_unresolved and state.get('durable_repair_steps') and not unknown_repair_usage(trace):
+        from core.repair_continuation import defer_repair
+        return defer_repair(state,fixed,targets,retry_targets,shared,repair,application_errors,trace)
     # Retry a known completed but ineffective textual correction once, before
     # buying another full Audit/render/judge cycle. Already corrected fields and
     # unrelated sources are excluded. Unknown provider outcomes never enter here.

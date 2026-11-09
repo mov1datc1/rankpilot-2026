@@ -44,13 +44,16 @@ def biography_faults(package, strategy, proposal, index):
     for binding in personal_bindings(package, candidate):
         for issue in binding['issues']:
             faults.append({'code': issue, 'reference': binding['reference'],
-                           'matter_id': binding['matter_id'], 'duplicate_with': binding['duplicate_with']})
+                           'matter_id': binding['matter_id'], 'duplicate_with': binding['duplicate_with'],
+                           'rejected_output_quote': binding['current_output_quote'] if issue=='output_quote_absent' else None})
     linked = {x.get('matter_id') for x in candidate.get('submission_case_coverage', [])}
     if proposal.get('personal_quality_contract') == 'complete-personal-case-v1':
         faults.extend({'code': 'required_matter_missing', 'matter_id': mid}
                       for mid in required_personal_matters(package, strategy, candidate) if mid not in linked)
     path = f'candidates/{index}/submission_bio'
-    if path in submission_voice_paths(proposal): faults.append({'code': 'submission_voice'})
+    if path in submission_voice_paths(proposal):
+        from core.editorial_voice import voice_matches
+        faults.append({'code':'submission_voice','rejected_output_quote':voice_matches(candidate.get('submission_bio',''))})
     faults.extend({'code': 'confidential_public_metrics', 'matter_id': f['matter_id']}
                   for f in public_privacy_findings(package, strategy, proposal) if f['path'] == path)
     if index in missing_head_bios(package, proposal): faults.append({'code': 'confirmed_head_missing'})
@@ -68,7 +71,7 @@ def new_biography_faults(package, strategy, before, after, index):
     import json
     # S keys are presentation positions: deleting an invalid full-candidate
     # binding may shift them. Compare defects by stable source identity.
-    signature = lambda f: json.dumps({k: v for k, v in f.items() if k not in ('reference', 'duplicate_with')}, sort_keys=True)
+    signature = lambda f: json.dumps({k: v for k, v in f.items() if k not in ('reference', 'duplicate_with', 'rejected_output_quote')}, sort_keys=True)
     old = Counter(signature(f) for f in biography_faults(package, strategy, before, index))
     new = []
     for fault in biography_faults(package, strategy, after, index):
