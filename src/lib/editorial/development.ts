@@ -12,7 +12,7 @@ const hash=(text:string)=>createHash('sha256').update(JSON.stringify(text)).dige
  */
 export function projectDevelopment(data:any, state:any) {
   const development=state.development;
-  if(state.development_validated!==true || !supportedDevelopment(development)) throw new Error('DEVELOPMENT_REJECTED');
+  if(!(state.development_validated===true || state.development_delivery_ready===true) || !supportedDevelopment(development)) throw new Error('DEVELOPMENT_REJECTED');
   const core=new Set(state.strategy.matters.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id));
   const drafts=new Map<string,any>((development.matters || []).map((d:any)=>[d.matter_id,d]));
   if(drafts.size!==core.size || [...core].some(id=>!drafts.has(String(id)))) throw new Error('DEVELOPMENT_REJECTED');

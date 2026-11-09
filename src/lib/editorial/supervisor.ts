@@ -6,7 +6,7 @@ import {FIELD_RECOVERY_CONTRACT,fieldRecoveryPlan,type RepairStrategy} from './f
 
 type Decision = {
   version: 1;
-  action: 'complete' | 'repair' | 'reassess' | 'needs_input' | 'pause';
+  action: 'complete' | 'deliver' | 'repair' | 'reassess' | 'needs_input' | 'pause';
   reason: string;
   findings: string[];
   repair?: {tasks:string[];letter:boolean};
@@ -35,7 +35,8 @@ export function superviseArtifact(job:any,data:any,commit:string,now=Date.now())
     String(d.message || '').startsWith('La aceptación editorial no está completa:') && !d.source_quote && !d.artifact_quote));
   const findings=[...new Set<string>(concrete.map(findingFingerprint))].sort();
   const decision=(action:Decision['action'],reason:string,extra:Partial<Decision>={}):Decision=>
-    ({version:1,action,reason,findings,...extra});
+    ({version:1,action:((action==='pause' || action==='needs_input') && data.available_artifact?.base64
+      && data.available_artifact?.audit_base64) ? 'deliver':action,reason,findings,...extra});
   if(data.release_verdict?.passed===true && data.final_artifact_review?.judge?.passed===true && !critical.length)
     return decision('complete','independent_review_passed');
   const needsInput=critical.some((d:any)=>d.owner==='user');

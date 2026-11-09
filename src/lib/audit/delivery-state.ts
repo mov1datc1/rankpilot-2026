@@ -3,6 +3,8 @@ import { REVIEW_CONTRACT } from './review-versions';
 import {preparationInputIssues, officialFilingGaps} from './preparation-input';
 export interface DeliveryStateResult {
   approved: boolean;
+  available: boolean;
+  hasObservations: boolean;
   errors: string[];
   warnings: string[];
   label: string;
@@ -51,7 +53,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
     errors.push('Confirma los permisos de publicación de los asuntos pendientes.');
   }
   if (matters.some(m => valueConflict(m) || (m.valueResolution && !validValueResolution(m)))) errors.push('Resuelve los importes o monedas contradictorios antes de la entrega final.');
-  if (requireArtifact && !data?.approved_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
+  if (requireArtifact && !data?.approved_artifact?.input_hash && !data?.available_artifact?.input_hash) errors.push('Genera y revisa el archivo final antes de descargar.');
   if (requireArtifact && data?.approved_artifact?.input_hash && (data.completed_review_policy_version !== expectedContract.policy || data.completed_renderer_version !== expectedContract.renderer || data.completed_artifact_review_version !== expectedContract.artifact)) errors.push('Los documentos guardados corresponden a una revisión anterior. Prepara Submission y Audit para comprobar la versión actual.');
   const warnings: string[] = (data?.final_artifact_review?.judge?.defects || []).filter((d:any)=>d.severity==='warning').map((d:any)=>String(d.message));
   if(data?.restricted_delivery_policy === 'restricted-unconfirmed-v1' && matters.some(m=>publicationStatus(m)==='confirmation_required')) warnings.push('Los asuntos sin permiso confirmado se entregan únicamente como confidenciales; su publicación sigue pendiente.');
@@ -63,5 +65,13 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   } else if (data?.ranking_verification?.status === 'verified_mismatch') {
     warnings.push(data.ranking_verification.message || `Discrepancia detectada en ${dirLabel}: declaraste posición ${data?.ranking_claim || data?.current_band}, pero la consulta oficial muestra ${data?.ranking_verification?.observed_band}. Puedes definir o confirmar esta posición en Verificación de ranking.`);
   }
-  return { approved: errors.length === 0, errors: Array.from(new Set(errors)), warnings: Array.from(new Set(warnings)), label: errors.length ? 'Revisión pendiente' : warnings.length ? 'Revisión aprobada con observaciones' : 'Revisión aprobada' };
+  const pair=data?.available_artifact || data?.approved_artifact || data?.draft_artifact;
+  const available=!!(pair?.base64 && pair?.audit_base64 && pair?.input_hash)
+    && data?.final_review_stale!==true
+    && (pair.review_revision===undefined || pair.review_revision===data?.draft_revision)
+    && data?.completed_review_policy_version===expectedContract.policy
+    && data?.completed_renderer_version===expectedContract.renderer
+    && data?.completed_artifact_review_version===expectedContract.artifact;
+  const hasObservations=errors.length>0 || warnings.length>0 || pair?.observation_status==='with_observations';
+  return { available,hasObservations,approved: errors.length === 0, errors: Array.from(new Set(errors)), warnings: Array.from(new Set(warnings)), label:available ? `Documentos disponibles · ${hasObservations?'con observaciones':'sin observaciones'}` : 'Preparación de documentos' };
 }

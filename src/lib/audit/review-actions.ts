@@ -70,7 +70,7 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
   // invalidation marker must not describe this terminal attempt as ready.
   if(job?.sourceMatches!==false && job?.stage==='development' && job?.status==='failed'
     && job?.issue?.owner==='rankpilot' && job?.issue?.code==='DEVELOPMENT_REJECTED') {
-    return [{title:'Redacción detenida antes de preparar los documentos',owner:'RankPilot',
+    return [{title:'Preparación de archivos pendiente',owner:'RankPilot',
       destination:'retry-review' as ReviewDestination,
       message:'La reparación automática no pudo validar la redacción. Este intento no llegó a preparar el par final de Submission y Audit. El original y los datos extraídos se conservan.',
       action:'Copia la referencia de este intento y compártela con quien administra RankPilot. Esperar no lo reanudará; no necesitas volver a cargar el original ni corregir sus datos para resolver este fallo.'}];
@@ -87,7 +87,7 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
       message:`${check.evidence_bound===false ? 'RankPilot no pudo vincular este diagnóstico con su evidencia. ' : ''}El revisor observó: ${check.explanation}${check.decision_quote ? `\nTexto cuestionado: ${check.decision_quote}` : ''}${check.source_quote ? `\nCita aportada: ${check.source_quote}` : ''}${check.rule_quote ? `\nRegla de RankPilot citada: ${check.rule_quote}` : ''}`,
     }));
     return findings.length ? findings : [{title:'Selección sin aprobar',owner:'Optimización editorial',destination:'retry-selection' as ReviewDestination,
-      action:'Esta revisión terminó sin aprobar la selección. No hay una continuación automática.',message:'La preparación se detuvo antes de redactar Submission y Audit. El original y los datos extraídos se conservan.'}];
+      action:'Esta revisión terminó sin aprobar la selección. No hay una continuación automática.',message:'Todavía no se crearon los archivos Submission y Audit. El original y los datos extraídos se conservan.'}];
   }
   const allDefects = data?.final_artifact_review?.judge?.defects || [];
   const defects = allDefects.filter((d:any)=>

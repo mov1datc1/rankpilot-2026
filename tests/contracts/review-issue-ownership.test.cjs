@@ -6,7 +6,7 @@ const {reviewIssues}=require('../../src/lib/audit/review-actions.ts');
 test('a terminal development rejection never presents an old draft-ready marker',()=>{
   const issues=reviewIssues({},['Draft edited; validation required.'],{status:'failed',stage:'development',issue:{code:'DEVELOPMENT_REJECTED',owner:'rankpilot'}});
   assert.equal(issues.length,1);
-  assert.match(issues[0].title,/Redacción detenida/);
+  assert.match(issues[0].title,/Preparación de archivos pendiente/);
   assert.doesNotMatch(issues[0].message,/listo para/);
   assert.match(issues[0].message,/no llegó a preparar el par final/);
   assert.match(issues[0].action,/Copia la referencia/);

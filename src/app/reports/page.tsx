@@ -1,4 +1,5 @@
 'use client';
+import {getDeliveryState} from '@/lib/audit/delivery-state';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
@@ -298,32 +299,13 @@ export default function ReportsPage() {
                 const defects = cd?.final_artifact_review?.judge?.defects || [];
                 const criticalDefects = defects.filter((d: any) => d.severity === 'critical');
                 const hasPendingReview = verdict?.status === 'needs_review' || criticalDefects.length > 0;
-                const isApproved = sub.status === 'Optimized' && (verdict?.passed === true || !verdict);
+                const delivery=getDeliveryState(cd,cd?.matters || sub.matters,true);
+                const isApproved=delivery.available;
 
-                // Derive display status
-                let displayStatus = sub.status;
-                let statusBg = '#eff6ff';
-                let statusColor = '#1d4ed8';
-                let StatusIcon = FileText;
-                if (sub.status === 'Accepted') {
-                  statusBg = '#dcfce7'; statusColor = '#15803d'; StatusIcon = CheckCircle2; displayStatus = 'Accepted';
-                } else if (sub.status === 'Rejected') {
-                  statusBg = '#fee2e2'; statusColor = '#b91c1c'; StatusIcon = AlertTriangle; displayStatus = 'Rejected';
-                } else if (needsEvidence) {
-                  statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle; displayStatus = 'Needs Evidence';
-                } else if (hasPendingReview && sub.status !== 'Optimized') {
-                  const isStale = cd?.final_review_stale === true;
-                  statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
-                  displayStatus = isStale ? 'Revisión pendiente' : criticalDefects.length > 0 ? `Pendientes (${criticalDefects.length})` : 'Requiere revisión';
-                } else if (sub.status === 'Submitted' && !needsEvidence) {
-                  statusBg = '#ECFDF5'; statusColor = '#065F46'; StatusIcon = CheckCircle2; displayStatus = 'Analyzed';
-                } else if (sub.status === 'Processing') {
-                  statusBg = '#DBEAFE'; statusColor = '#1D4ED8'; StatusIcon = Clock; displayStatus = 'Processing in background';
-                } else if (sub.status === 'Draft') {
-                  statusBg = '#F1F5F9'; statusColor = '#475569'; StatusIcon = Clock; displayStatus = 'Draft';
-                } else if (sub.status === 'Error') {
-                  statusBg = '#fee2e2'; statusColor = '#dc2626'; StatusIcon = AlertTriangle; displayStatus = 'Error';
-                }
+                const displayStatus=delivery.available ? delivery.label : isProcessing?'Preparando documentos':'Preparación de documentos';
+                const statusBg=delivery.available ? (delivery.hasObservations?'#FEF3C7':'#dcfce7'):'#eff6ff';
+                const statusColor=delivery.available ? (delivery.hasObservations?'#92400E':'#15803d'):'#1d4ed8';
+                const StatusIcon=delivery.available ? (delivery.hasObservations?AlertTriangle:CheckCircle2):Clock;
 
                 const destination = sub.status === 'Processing'
                   ? `/submissions/processing?id=${sub.id}`
@@ -396,7 +378,7 @@ export default function ReportsPage() {
                         {isApproved ? (
                           <a
                             title="Download Chambers Submission DOCX"
-                            href={`/api/generate-docx?id=${sub.id}&type=submission`}
+                            href={`/api/generate-docx?id=${sub.id}&type=submission${cd.available_artifact?"&mode=available":""}`}
                             aria-disabled={isProcessing}
                             style={{
                               padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #c7d2fe',
@@ -414,7 +396,7 @@ export default function ReportsPage() {
                           </a>
                         ) : (
                           <button
-                            title={hasPendingReview ? 'Resolver observaciones en Studio antes de descargar el documento oficial' : 'Borrador en preparación'}
+                            title={'Abrir la preparación de documentos'}
                             onClick={() => window.location.href = hasPendingReview ? `${destination}#studio-delivery-review` : destination}
                             style={{
                               padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0',
@@ -426,7 +408,7 @@ export default function ReportsPage() {
                             }}
                           >
                             <FileText size={14} />
-                            {hasPendingReview ? (cd?.final_review_stale ? 'Revisar' : 'Resolver') : 'Borrador'}
+                            {'Abrir'}
                           </button>
                         )}
 

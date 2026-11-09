@@ -1,3 +1,5 @@
+import {getDeliveryState} from '@/lib/audit/delivery-state';
+import {canContinueWithObservations} from './observations-continuation';
 import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
 import { stableHash, sourceSnapshot, draftDisposition, ReviewIssue, EDITORIAL_VERSION } from './contracts';
@@ -37,7 +39,7 @@ export function publicJob(job:any, submission?:any) {
   const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
   const lastDecision=job.ledger?.at(-1)?.supervision;
   const pauseReason=sourceMatches===false ? null : paused && lastDecision?.action==='pause' ? lastDecision.reason : isStoppedSelection(job) ? (job.issue.code==='SELECTION_REJECTED'?'selection_rejected':job.issue.code==='SELECTION_DIAGNOSTIC_INVALID'?'selection_diagnostic_invalid':'selection_review_unavailable') : job.status==='failed' && job.issue?.owner==='rankpilot' ? 'stage_stopped' : null;
-  const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
+  const message=paused?'La preparación requiere una acción. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
   const canResumeSelection=!!submission && sourceMatches===true && canResumeSelectionDiagnostic(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeRepair=!!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeLegacy=!!submission && sourceMatches===true && canResumeLegacyDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
@@ -48,13 +50,15 @@ export function publicJob(job:any, submission?:any) {
   const canResumeBudget=!!submission && sourceMatches===true
     && job.resultHash===deliveryInputHash(submission,submission.chambersData || {})
     && canResumeBudgetReview(job,submission.chambersData,job.sourceHash);
-  const canResumeResidual=canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const delivery=submission && getDeliveryState(submission.chambersData,submission.chambersData?.matters || submission.matters || [],true);
+  const canDeliver=!!submission && sourceMatches===true && canContinueWithObservations(job,submission.chambersData,job.sourceHash);
+  const canResumeResidual=canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
   if(!issue || issue.owner==='user') return issue;
-  return {...issue,message:'La preparación está pausada. Tu información y el avance están guardados. No necesitas modificar ni volver a subir el documento.'};
+  return {...issue,message:'La preparación requiere una acción. Tu información y el avance están guardados. No necesitas modificar ni volver a subir el documento.'};
 }
 export async function latestJob(submissionId:string) {
   const rows:any[]=await prisma.$queryRaw`SELECT * FROM "EditorialJob" WHERE "submissionId"=${submissionId} ORDER BY "createdAt" DESC LIMIT 1`;
@@ -81,6 +85,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       const checkpoint=capacityRecoveryCheckpoint(last,current.chambersData);
       await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),review_checkpoint:checkpoint}}});
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${cursor},"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='needs_review' RETURNING *`;
+      return resumed[0] || last;
+    }
+    if(retry && canContinueWithObservations(last,current.chambersData,sourceHash)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'delivery_observations_requested',worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }
     if(retry && canResumeSelectionProgress(last,current.chambersData,sourceHash,build)) {

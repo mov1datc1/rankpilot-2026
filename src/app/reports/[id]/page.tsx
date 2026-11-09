@@ -1,3 +1,4 @@
+import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
@@ -301,7 +302,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
                 fontSize: '0.78rem'
               }}>
                 <span style={{ color: '#64748B', fontWeight: 500 }}>Status:</span>
-                <strong style={{ color: '#0F172A', fontWeight: 700 }}>{submission.status || 'Optimized'}</strong>
+                <strong style={{ color: '#0F172A', fontWeight: 700 }}>{getDeliveryState(submission.chambersData,(submission.chambersData as any)?.matters || submission.matters,true).label}</strong>
               </div>
 
               <div style={{ height: '22px', width: '1px', background: '#E2E8F0', margin: '0 0.2rem' }} />

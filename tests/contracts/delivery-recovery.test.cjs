@@ -22,7 +22,7 @@ test('a terminal selection displays its actual findings instead of a ready-draft
  assert.equal(issues.length,1);assert.match(issues[0].title,/Fictional Employer/);
  assert.match(issues[0].message,/implemented agreements/);assert.doesNotMatch(issues[0].message,/listo|actualizado/);
  assert.equal(issues[0].owner,'Optimización editorial');assert.deepEqual(data,before);
- assert.match(reviewIssues({...data,review_checkpoint:{}},[],job)[0].message,/antes de redactar/);
+ assert.match(reviewIssues({...data,review_checkpoint:{}},[],job)[0].message,/no se crearon los archivos/);
  assert.notDeepEqual(reviewIssues(data,['Draft edited; validation required.'],{...job,status:'running'}),issues);
 });
 const person={name:'Sofia Vega',isPartner:true,isRanked:false,currentRank:'Unranked',suggestedRank:'Associate to Watch'};
