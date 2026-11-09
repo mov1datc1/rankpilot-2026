@@ -1,3 +1,7 @@
+## 2026-11-09 — v1.0.66: instrucciones coherentes en Submission Studio
+
+Mensajes y acciones alineados con documentos disponibles con/sin observaciones. Descargar y consultar hallazgos no reinicia la generación; preparación, continuación y actualización tienen nombres consistentes. Encabezados comprensibles conservan el detalle completo de cada hallazgo. Compatibilidad de revisiones anteriores con «Contenido editado». 552 pruebas Node, una omisión existente y TypeScript correctos. Sin llamadas de generación. Ver docs/reviews/2026-11-09-studio-user-messages-v1-0-66.md.
+
 ## 2026-11-08 — v1.0.56: participación y alcance de recuperación coherentes
 
 Las listas de integrantes con encabezados de formulario podían interpretarse como contribuciones individuales, exigiendo resultados que las fuentes no atribuían. Se normaliza el encabezado tanto en la cita como en el campo original y se exige identidad exacta; una narrativa sustantiva o un rol de liderazgo sigue requiriendo cobertura propia.
