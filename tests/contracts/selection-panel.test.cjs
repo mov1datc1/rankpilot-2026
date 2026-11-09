@@ -17,10 +17,10 @@ test('an exhausted automatic review reports a real pause without promising conti
  const {publicJob}=require('../../src/lib/editorial/jobs.ts');
  const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{editorial_review:{letter:{}},final_artifact_review:{judge:{defects:[{code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',message:'Retira el descriptor sectorial discutido.'}]}}},errors:[],warnings:[],approved:false,job,onResolve:()=>{}}));
- assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Solicita recuperar este intento'));
- assert.ok(html.includes('compártela con quien administra RankPilot'));assert.ok(html.includes('conserva este expediente'));
+ assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Recupera la preparación de los documentos'));
+ assert.ok(html.includes('compártela con soporte'));assert.ok(html.includes('Conservamos tus fuentes'));
  assert.ok(!html.includes('continuará automáticamente'));assert.equal((html.match(/<button/g) || []).length,1);assert.match(html,/Copiar referencia/);
- assert.ok(html.includes('Esperar no lo reanudará'));assert.ok(html.includes('no vuelvas a cargar el original'));
+ assert.ok(html.includes('No se pudieron crear los dos archivos'));assert.ok(html.includes('no vuelvas a cargar el original'));
  assert.ok(!html.includes('Pulsa «Revisar y preparar documentos»'));assert.ok(!html.includes('para reanudar el proceso'));
 });
 const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Synthetic Client. Reintenta la revisión editorial.'];
@@ -70,7 +70,7 @@ test('a stopped internal job remains RankPilot responsibility without a user rep
  const {publicJobIssue}=require('../../src/lib/editorial/jobs.ts');
  const issue=publicJobIssue({owner:'rankpilot',code:'DEVELOPMENT_REJECTED',message:'Cita decisiva sin vínculo literal: secret-id'});
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:['La revisión editorial se ejecutará después de guardar la redacción.'],warnings:[],approved:false,job:{status:'failed',issue},onResolve:()=>{}}));
- assert.ok(html.includes('Preparación pausada'));
+ assert.ok(html.includes('Preparación de documentos'));
  assert.ok(!html.includes('Reanudar preparación'));assert.ok(!html.includes('secret-id'));assert.ok(!html.includes('<button'));
  assert.ok(!html.includes('No quedan respuestas pendientes'));
 });
@@ -90,4 +90,14 @@ test('a failed development offers only existing artifacts and does not invent bu
  assert.match(without,/Copiar referencia/);assert.doesNotMatch(without,/continuará automáticamente/);
  const withAudit=renderToStaticMarkup(React.createElement(ReviewPanel,{...props,data:{editorial_review:{letter:{executive_assessment:'Saved analysis'}}}}));
  assert.match(withAudit,/Audit disponible/);assert.doesNotMatch(withAudit,/todavía no preparó el Audit/);
+});
+
+test('available documents show only availability and located observations, without paused or draft status',()=>{
+ const {REVIEW_CONTRACT:c}=require('../../src/lib/audit/review-versions.ts');
+ const data={draft_revision:1,completed_review_policy_version:c.policy,completed_renderer_version:c.renderer,completed_artifact_review_version:c.artifact,
+  available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
+  final_artifact_review:{judge:{passed:false,defects:[{severity:'critical',owner:'rankpilot',scope:'submission',field_path:'b10',message:'Conserva el resultado de la fuente.',source_quote:'Achieved result.',artifact_quote:'Advised the client.'}]}},release_verdict:{passed:false,status:'needs_review'}};
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[],warnings:[],approved:false,job:{status:'completed',nextAction:{kind:'download'}},onResolve:()=>{}}));
+ assert.match(html,/Documentos disponibles · con observaciones/);assert.match(html,/B10 · Departamento/);assert.match(html,/Achieved result/);
+ assert.doesNotMatch(html,/Borrador|pausad|detenid|Solicita recuperar|Entrega pendiente/i);
 });

@@ -1,4 +1,5 @@
 'use client';
+import {getDeliveryState} from '@/lib/audit/delivery-state';
 
 import { useState, useEffect } from 'react';
 import { BarChart2, FileText, Zap, CheckCircle2, Clock, TrendingUp, ArrowUpRight, AlertTriangle, Globe } from 'lucide-react';
@@ -128,7 +129,7 @@ export default function DashboardAnalyticsPage() {
               const cd = sub.chambersData as any;
               const fName = cd?.firm_name || cd?.firmName || cd?.strategicContext?.firm_name || cd?.metadata?.firm_name || 'Firma Legal';
               const isOptimized = sub.status === 'Optimized' || (sub.mattersCount > 0 && sub.mattersCount === sub.optimizedCount);
-              const statusDisplay = sub.status || (isOptimized ? 'Optimized' : 'In Progress');
+              const statusDisplay=getDeliveryState(cd,cd?.matters || [],true).label;
 
               return (
                 <div
@@ -225,12 +226,12 @@ export default function DashboardAnalyticsPage() {
                 const editorialConf = cd?.editorial_confidence?.overall_confidence || '';
                 const needsEvidence = editorialConf === 'insufficient' || editorialConf === 'low';
 
-                let statusLabel = isOptimizedSub ? 'Optimized' : (isReady ? 'Analyzed' : (sub.status || 'In Progress'));
+                let statusLabel = getDeliveryState(cd,cd?.matters || [],true).label;
                 let statusBg = isReady ? '#ECFDF5' : '#FEF3C7';
                 let statusColor = isReady ? '#065F46' : '#92400E';
                 let StatusIcon = isReady ? CheckCircle2 : Clock;
                 if (needsEvidence) {
-                  statusLabel = 'Needs Evidence'; statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
+                  statusLabel = getDeliveryState(cd,cd?.matters || [],true).label; statusBg = '#FEF3C7'; statusColor = '#92400E'; StatusIcon = AlertTriangle;
                 }
                 if (sub.chambersData && (sub.chambersData as any)._pipeline_error) {
                   statusLabel = 'Error'; statusBg = '#fee2e2'; statusColor = '#dc2626'; StatusIcon = AlertTriangle;

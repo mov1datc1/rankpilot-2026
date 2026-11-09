@@ -112,6 +112,11 @@ class ReviewState(TypedDict, total=False):
     stage_deadline: float
     development: dict
     development_validated: bool
+    development_delivery_ready: bool
+    delivery_observations_requested: bool
+    field_review_observations: list
+    writer_delivery_ready: bool
+    writer_observations: list
     development_repair_unlocatable: bool
     development_reusable: bool
     development_revalidation_only: bool
@@ -1024,7 +1029,19 @@ def create_review_graph():
     def observed(name, fn):
         def run(state):
             started=time.monotonic(); result=fn(state)
-            if name=='development':result.setdefault('development_repair_unlocatable',False)
+            if name=='writer' and result.get('errors') and result.get('letter'):
+                from core.editorial_repair import unknown_repair_usage
+                letter=result['letter']
+                if (not unknown_repair_usage(result.get('trace',state.get('trace',[])))
+                    and all(isinstance(letter.get(k),str) and letter[k].strip() for k in
+                        ('executive_assessment','portfolio','leadership','evidence_gaps','next_steps'))):
+                    result={**result,'writer_delivery_ready':True,'writer_validated':False,
+                        'writer_observations':list(result['errors']),'errors':[]}
+
+            if name=='development':
+                result.setdefault('development_repair_unlocatable',False)
+                result.setdefault('development_delivery_ready',False)
+            if name=='writer':result.setdefault('writer_delivery_ready',False)
             result['node_events']=list(state.get('node_events',[]))+[{'node':name,'seconds':round(time.monotonic()-started,3),'status':'rejected' if result.get('errors') else 'completed'}]
             return result
         return run
@@ -1068,7 +1085,7 @@ def run_editorial_stage(stage, state):
         raise ValueError('Validated selection required')
     if stage in ('development','writer') and not state.get('selection_review_validated'):
         raise ValueError('Source-grounded semantic selection review required')
-    if stage == 'writer' and not state.get('development_validated'):
+    if stage == 'writer' and not (state.get('development_validated') or state.get('development_delivery_ready')):
         raise ValueError('Validated editorial development required')
     return create_review_graph().invoke({**state,'operation':stage,'durable_repair_steps':stage=='development','stage_deadline':time.monotonic()+225}, {'recursion_limit':EDITORIAL_GRAPH_RECURSION_LIMIT})
 

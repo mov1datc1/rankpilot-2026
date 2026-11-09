@@ -21,7 +21,7 @@ import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
 
-const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,selection_review:review.selection_review,selection_review_validated:review.selection_review_validated,development:review.development,development_validated:review.development_validated,release_verdict:review.release_verdict,render_gate:review.render_gate});
+const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,selection_review:review.selection_review,selection_review_validated:review.selection_review_validated,development:review.development,development_validated:review.development_validated,development_delivery_ready:review.development_delivery_ready,field_review_observations:review.field_review_observations,writer_observations:review.writer_observations,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
 /** One completion authority: source register → bounded editorial review → exact artifact. */
 export async function POST(request: NextRequest) {
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
     if (!review.success || !review.release_verdict) return NextResponse.json({error:'Respuesta de revisión incompleta. El borrador se conserva.'}, {status:502});
     if(review.selection_validated && !review.selection_review_validated) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta contrastar la interpretación y selección con las fuentes antes de preparar los documentos.'},{status:409});
-    if(review.selection_validated && (!review.development_validated || !supportedDevelopment(review.development))) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
+    if(review.selection_validated && (!(review.development_validated || review.development_delivery_ready) || !supportedDevelopment(review.development))) return NextResponse.json({code:'EDITORIAL_PIPELINE_REQUIRED',error:'Falta desarrollar y validar el Submission completo antes de aprobar la entrega.'},{status:409});
     const originalReviewHash = reviewOutputHash(review);
     review = {...review,letter:normalizeLetterSections(review.letter)};
     const decisions = review.strategy?.matters || [];
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const data:any = {
       ...previous,restricted_delivery_policy:'restricted-unconfirmed-v1',completed_review_policy_version:REVIEW_POLICY_VERSION,completed_renderer_version:RENDERER_VERSION,completed_artifact_review_version:ARTIFACT_REVIEW_VERSION,matters,enhanced_b7:b10,enhanced_b10:b10,completed_review_input_hash:inputHash,completed_review_result_hash:originalReviewHash,
       ...(previous.review_checkpoint ? {review_checkpoint:{...previous.review_checkpoint,lease_until:0}} : {}),
-      cloned_docx_b64:null,approved_artifact:null,final_artifact_review:null,final_review_stale:false,review_responses:[],
+      cloned_docx_b64:null,approved_artifact:null,available_artifact:null,draft_artifact:null,final_artifact_review:null,final_review_stale:false,review_responses:[],
       draft_revision:Number(previous.draft_revision || 0)+1,
       canonical_matter_selection:selectionValidated ? {core_matter_ids:decisions.filter((d:any)=>d.disposition==='core').map((d:any)=>d.matter_id),reserve_matter_ids:decisions.filter((d:any)=>d.disposition==='reserve').map((d:any)=>d.matter_id),excluded_matter_ids:decisions.filter((d:any)=>d.disposition==='excluded').map((d:any)=>d.matter_id),hero_matter_id:review.strategy?.hero_matter_id || null} : null,
       hero_matter_id:selectionValidated ? review.strategy?.hero_matter_id || null : null,
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // approve delivery. Never persist a provisional approval before that judge.
     const readiness=getDeliveryState(review.render_gate ? {...data,release_verdict:review.render_gate} : data,matters);
     data.release_verdict={passed:false,status:'needs_review',errors:readiness.errors};
-    if (readiness.approved) {
+    if (readiness.approved || (review.development_delivery_ready && (review.writer_validated || review.writer_delivery_ready))) {
       let buffer: Buffer | null = null;
       let auditBuffer: Buffer | null = null;
       try {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         const priorFindings=previous.completed_review_input_hash===inputHash && !previous.final_review_stale ? previous.final_artifact_review?.judge?.defects || [] : [];
         const unrepaired=[...renderedSubmissionFindings(rendered,data.editorial_development,matters),...unrepairedGeneratedClaims([...(review.repair_feedback || []),...priorFindings],rendered,renderedAudit)];
         let finalReview:any;
-        if(unrepaired.length) {
+        if(unrepaired.length && !review.development_delivery_ready) {
           // Deterministic preflight of prior findings, not a new model verdict.
           // Repair first; the changed exact DOCX pair still needs the full judge.
           finalReview={success:false,verification_gate:'unapplied_editorial_correction',judge:{passed:false,defects:unrepaired},trace:[]};
@@ -157,6 +157,8 @@ export async function POST(request: NextRequest) {
               audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),
               revision_id:inputHash,directory:submission.targetDirectory};
             retained.draft_artifact.input_hash=draftInputHash(submission,retained);
+            retained.available_artifact={...retained.draft_artifact,review_revision:retained.draft_revision,
+              observation_status:'with_observations',reviewed:false,input_hash:deliveryInputHash(submission,retained)};
             const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:retained}});
             if(released.count!==1) throw new Error('DRAFT_CONFLICT');
             return NextResponse.json({success:false,code:finalReview.code,...(finalReview.retryable===false?{retryable:false}:{}),error:finalReview.code==='AI_REVIEW_INVALID'?'RankPilot está comprobando una observación interna. Tus documentos guardados se conservan.':'La revisión necesita recuperar una respuesta incompleta. Tus documentos guardados se conservan.',trace:finalReview.trace || null},{status:502});
@@ -165,14 +167,14 @@ export async function POST(request: NextRequest) {
         }
         if(finalReview.judge) finalReview.judge.defects=bindGeneratedFindings(finalReview.judge.defects || [],data.editorial_development);
         data.final_artifact_review=finalReview;
-        if(!finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
+        if(!readiness.approved || !finalReview.success || !finalReview.judge?.passed || finalReview.judge.defects?.some((d:any)=>d.severity==='critical')) throw new Error(finalReview.judge?.defects?.map((d:any)=>d.message).join('; ') || 'El archivo final requiere correcciones.');
         data.release_verdict={passed:true,status:'passed',errors:[]};
         data.judgeVerdict=finalReview.judge;
         // Persist only the pair whose exact text was independently reviewed.
         // Repairs run through the durable worker, re-render and return here.
         data.approved_artifact={base64:buffer.toString('base64'),sha256:artifactHash(buffer),audit_base64:auditBuffer.toString('base64'),audit_sha256:artifactHash(auditBuffer),revision_id:inputHash,input_hash:deliveryInputHash(submission,data),directory:submission.targetDirectory};
       } catch (error:any) {
-        data.release_verdict={passed:false,status:'needs_review',errors:data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`El documento no superó la validación final: ${error.message}`]};
+        data.release_verdict={passed:false,status:'needs_review',errors:[...readiness.errors,...(data.final_artifact_review?.judge?.defects?.filter((d:any)=>d.severity==='critical').map((d:any)=>d.message) || [`No se completó la revisión automática: ${error.message}`])]};
         // Always provide the working draft so the user can inspect progress and is not blocked from reviewing their draft
         if (buffer && auditBuffer) {
           data.draft_artifact = {
@@ -187,6 +189,13 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+    const candidatePair=data.approved_artifact || data.draft_artifact;
+    if(candidatePair?.base64 && candidatePair?.audit_base64) {
+      data.available_artifact={...candidatePair,review_revision:data.draft_revision,
+        observation_status:data.release_verdict.passed && !(data.final_artifact_review?.judge?.defects || []).length ? 'without_observations':'with_observations',
+        reviewed:!!data.final_artifact_review?.judge, input_hash:deliveryInputHash(submission,data)};
+      data.available_artifact.observation_status=getDeliveryState(data,matters,true).hasObservations?'with_observations':'without_observations';
+    }
     // The paid review and exact DOCX bytes stay outside the transaction. Retry
     // only a known rollback, using the same in-memory result and version guard.
     savingArtifact=true;
@@ -195,7 +204,7 @@ export async function POST(request: NextRequest) {
       const lock=await tx.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date()}});
       if(lock.count!==1) throw new Error('DRAFT_CONFLICT');
       for(const m of matters) await tx.matter.updateMany({where:{id:m.id,submissionId:submission.id},data:{optimizedText:m.optimizedText,status:'Optimized'}});
-      return tx.submission.update({where:{id:submission.id},data:{status:data.release_verdict.passed?'Optimized':'Draft',chambersData:data},include:{matters:true}});
+      return tx.submission.update({where:{id:submission.id},data:{status:data.available_artifact?'DocumentsAvailable':'Preparing',chambersData:data},include:{matters:true}});
     },{timeout:30000,maxWait:5000});
     let updated;
     try { updated=await save(); }

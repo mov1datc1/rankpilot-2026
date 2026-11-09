@@ -139,10 +139,12 @@ test('source changes stop the next stage before a paid request',async()=>{
  await stage();assert.equal(job.status,'superseded');assert.equal(calls.length,count);
 });
 
-test('artifact repair is targeted, carries evidence, and stops after one attempt',async()=>{
+test('artifact repair is bounded and completes with observed files instead of trapping the user',async()=>{
  reset();repairMode=true;
  for(let guard=0;guard<15;guard++){await stage();if(job.status!=='queued')break;}
- assert.equal(job.status,'needs_review',JSON.stringify(job));
+ assert.equal(job.status,'completed',JSON.stringify(job));
+ assert.equal(job.ledger.at(-1).supervision.action,'deliver');
+ assert.ok(submission.chambersData.available_artifact.base64);
  assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,1);
  assert.equal(submission.chambersData.final_artifact_review.verification_gate,'unapplied_editorial_correction');
  const developments=calls.filter(c=>c.payload.stage==='development');

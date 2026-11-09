@@ -1,5 +1,6 @@
 'use client';
 
+import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { reviewIssues, reviewIsStale, isStoppedSelection, type ReviewDestination } from '@/lib/audit/review-actions';
 import { Sparkles } from 'lucide-react';
 import {useState} from 'react';
@@ -15,21 +16,44 @@ function AttemptReference({job}:{job:any}) {
 }
 
 export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onResolve:(destination:ReviewDestination,message:string)=>void}) {
-  const stopped=job?.sourceMatches!==false && (job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
+  const delivery=getDeliveryState(data,data?.matters || [],true);
+  const available=delivery.available;
+  const stopped=!available && job?.sourceMatches!==false && (job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
   const isRunning=!!job && ['queued','running'].includes(job.status);
   const canResumeResidual=job?.canResumeResidual===true && job?.sourceMatches!==false;
   const systemManaged=isRunning || Boolean(stopped && !canResumeResidual && (job?.pauseReason || ['rankpilot','Optimización editorial'].includes(job?.issue?.owner)));
   const recovering=job?.recovering || ((job?.issue?.owner==='rankpilot' || job?.issue?.owner==='Optimización editorial') && isRunning);
-  const issues=approved ? [] : reviewIssues(data,errors,job);
+  const issues=approved ? [] : reviewIssues(data,errors,available ? null:job);
   const humanCount=issues.filter(issue=>issue.owner!=='RankPilot' && issue.owner!=='Optimización editorial').length;
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
   const pausedInstructions=job?.nextAction?.description || (isStoppedSelection(job)
     ? 'La selección no superó la revisión y este intento terminó antes de redactar los documentos. Puedes consultar los motivos abajo y cerrar este expediente. No vuelvas a pulsar «Revisar y generar» ni a subir el original: no hay otra revisión automática pendiente ni una respuesta del cliente que desbloquee este intento. Se requiere corregir la selección generada en RankPilot; la entrega final aún no está disponible.'
-    : 'Este intento está detenido y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere resolver esta pausa y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.');
+    : 'Esta operación requiere recuperación y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere completar esta operación y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.');
+  if(available) {
+    const findings=(data?.final_artifact_review?.judge?.defects || []);
+    const messages=findings.length ? findings : errors.map(message=>({message}));
+    const seen=new Set(messages.map((d:any)=>d.message));
+    const all=[...messages,...warnings.filter(message=>!seen.has(message)).map(message=>({message}))];
+    const fieldLabel=(d:any)=>{
+      const path=String(d.field_path || '');
+      const candidate=path.match(/^candidates\/(\d+)/);
+      return candidate ? `B9 · ${data.editorial_development?.candidates?.[Number(candidate[1])]?.name || 'Candidatura'}`
+        : path==='b10'?'B10 · Departamento':path==='c2'?'C2 · Posicionamiento':d.scope==='letter'?'Audit':path || 'Documentos';
+    };
+    return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A'}}>
+      <h2 style={{fontSize:22,margin:'0 0 10px'}}>{delivery.label}</h2>
+      <p>Descarga el Submission y el Audit desde «Descargar». {delivery.hasObservations?'Consulta estos hallazgos antes de presentarlos; no necesitas iniciar otro intento para obtener los archivos.':'La revisión no dejó observaciones pendientes.'}</p>
+      {all.map((d:any,i:number)=><details key={i} style={{borderTop:'1px solid #E2E8F0',padding:'12px 0'}}>
+        <summary style={{cursor:'pointer',fontWeight:600}}>{fieldLabel(d)} · {d.message}</summary>
+        {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
+        {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
+      </details>)}
+    </section>;
+  }
   return <>
-    {!approved && !job?.nextAction && (
+    {!available && !approved && !job?.nextAction && (
       <div style={{
         background: 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)',
         border: '1px solid #FDBA74',
@@ -68,7 +92,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
               borderRadius: 6,
               border: '1px solid #FDBA74'
             }}>
-              {data?.draft_artifact ? 'Borrador disponible para revisión' : 'Preparación de documentos'}
+              {data?.draft_artifact ? 'Documentos en preparación' : 'Preparación de documentos'}
             </span>
           </div>
           <p style={{
@@ -84,11 +108,11 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
       </div>
     )}
     <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
-    <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':job?.nextAction?.title || (recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit')}</h2>
-    {!approved && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
-    {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Revisión detenida; consulta abajo qué puedes hacer.' : 'La entrega oficial se habilita al completar la revisión automática.'}</p>}
-    <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
+    <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>{available?'Documentos disponibles':'Preparación de documentos'}</div>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{available?delivery.label:job?.nextAction?.title || (recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación de documentos':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit')}</h2>
+    {!available && !approved && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
+    {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Consulta abajo la acción necesaria.' : 'La entrega oficial se habilita al completar la revisión automática.'}</p>}
+    <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {available ? 'Descarga Submission y Audit. Consulta abajo los hallazgos y qué conviene revisar antes de presentarlos.' : 'El Submission y el Audit se preparan con el avance guardado.'}</p>
     {stopped && systemManaged && !approved && job?.id && <AttemptReference job={job}/>}
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
     {stopped && !systemManaged && !approved && job?.issue?.owner!=='user' && (
@@ -121,7 +145,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}
     {!stale && warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
-    {!approved && !job?.nextAction && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'RankPilot no pudo completar esta etapa. No habrá más intentos automáticos. El borrador y el avance se conservan. No necesitas mantener esta página abierta: esperar no reanudará este intento. Consulta los hallazgos' + (data?.editorial_review?.letter ? ' y el Audit disponible.' : '; este intento todavía no preparó el Audit.') + ' La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
+    {!available && !approved && !job?.nextAction && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'RankPilot no pudo completar esta etapa. No habrá más intentos automáticos. El contenido y el avance se conservan. No necesitas mantener esta página abierta: esperar no reanudará este intento. Consulta los hallazgos' + (data?.editorial_review?.letter ? ' y el Audit disponible.' : '; este intento todavía no preparó el Audit.') + ' La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
   </section></>;
 }
 

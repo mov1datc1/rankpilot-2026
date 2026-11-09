@@ -292,7 +292,7 @@ export default function SubmissionStudio({
         matters, b10Text, practiceArea: currentPracticeArea,
         firmName: chambersData.firm_name || chambersData.firmName || ''
       });
-      if (!result.success) throw new Error(result.error || 'No se pudo guardar el borrador.');
+      if (!result.success) throw new Error(result.error || 'No se pudo guardar los cambios.');
       if (result.matters) setMatters(result.matters);
       setChambersData((prev: any) => ({...prev, matters: result.matters || matters, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.']}}));
       setDraftSavedToast(true);
@@ -644,7 +644,7 @@ export default function SubmissionStudio({
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
     if(preparationBlocked) {resolvePreparationInputs();return;}
     if(isOptimizingAll) return;
-    if(reviewAttemptStopped) {setDraftSaveError('Este intento está detenido. Esperar o volver a generar no lo reanudará. Consulta los hallazgos y la acción indicada en el estado de entrega.');return;}
+    if(reviewAttemptStopped) {setDraftSaveError('La preparación requiere una acción. Esperar o volver a generar no lo reanudará. Consulta los hallazgos y la acción indicada en el estado de entrega.');return;}
     if(!readiness.canOptimize) {setShowReadinessModal(true);return;}
     setShowReadinessModal(false);
     const dirty=studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
@@ -774,7 +774,7 @@ export default function SubmissionStudio({
       return m;
     }));
     setMatterViewMode(prev => ({ ...prev, [key]: 'original' }));
-    setMatterSuccessMsg(prev => ({ ...prev, [key]: 'Revertido al borrador original del cliente.' }));
+    setMatterSuccessMsg(prev => ({ ...prev, [key]: 'Revertido al documento original del cliente.' }));
     setTimeout(() => {
       setMatterSuccessMsg(prev => ({ ...prev, [key]: '' }));
     }, 4000);
@@ -1022,7 +1022,7 @@ export default function SubmissionStudio({
               cursor: isSavingDraft ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title="Guardar borrador actual. Recuerda que los cambios también se respaldan automáticamente."
+            title="Guardar cambios actuales. Recuerda que los cambios también se respaldan automáticamente."
           >
             {isSavingDraft ? (
               <RefreshCw size={13} className="animate-spin" />
@@ -1031,7 +1031,7 @@ export default function SubmissionStudio({
             ) : (
               <Save size={13} color="#64748B" />
             )}
-            <span>{isSavingDraft ? 'Guardando...' : draftSavedToast ? '✓ Borrador Guardado' : 'Guardar Borrador'}</span>
+            <span>{isSavingDraft ? 'Guardando...' : draftSavedToast ? '✓ Cambios guardados' : 'Guardar cambios'}</span>
           </button>
 
           {/* Grouped Tools Dropdown */}
@@ -1156,7 +1156,7 @@ export default function SubmissionStudio({
                 >
                   <FileText size={16} color="#64748B" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Ver Borrador Original</div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>Ver Documento original</div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>DOCX con textos originales sin optimizar</div>
                   </div>
                 </a>
@@ -1196,10 +1196,10 @@ export default function SubmissionStudio({
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={reviewAttemptStopped ? 'Este intento está detenido. Consulta los hallazgos y usa «Copiar referencia» para solicitar la revisión a quien administra RankPilot; esperar no lo reanudará.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
+            title={reviewAttemptStopped ? 'La preparación requiere una acción. Consulta los hallazgos y usa «Copiar referencia» para recuperar la preparación con soporte.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Revisar y generar los documentos con los datos confirmados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Revisión detenida' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Revisar y generar'}</span>
+            <span>{isOptimizingAll ? 'Preparando entrega…' : reviewAttemptStopped ? 'Recuperar documentos' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Revisar y generar'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
@@ -1252,11 +1252,12 @@ export default function SubmissionStudio({
               }}>
                 {/* Official Master DOCX */}
                 <a
-                  href={isLegal500
-                    ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=${deliveryState.approved ? 'optimized' : 'draft'}`
-                    : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=${deliveryState.approved ? 'optimized' : 'draft'}`}
+                  aria-disabled={!deliveryState.available}
+                  href={!deliveryState.available ? undefined : isLegal500
+                    ? `/api/generate-docx?id=${submission.id}&type=submission&template=master_legal500&mode=${deliveryState.available ? 'available' : 'draft'}`
+                    : `/api/generate-docx?id=${submission.id}&type=submission&template=master_chambers&mode=${deliveryState.available ? 'available' : 'draft'}`}
                   onClick={() => setShowDownloadMenu(false)}
-                  title={deliveryState.approved ? 'Descargar Submission aprobado para entrega oficial' : 'Descargar borrador de trabajo en Word'}
+                  title={'Descargar Submission · consulta las observaciones del expediente'}
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
@@ -1276,14 +1277,15 @@ export default function SubmissionStudio({
                       {isLegal500 ? 'Legal 500 Master DOCX' : 'Chambers Master DOCX'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: deliveryState.approved ? '#059669' : '#D97706', fontWeight: 500 }}>
-                      {deliveryState.approved ? '✓ Documento aprobado para entrega oficial' : 'Borrador de trabajo · sin aprobación final'}
+                      {deliveryState.label}
                     </div>
                   </div>
                 </a>
 
                 {/* Audit Estratégico DOCX */}
                 <a
-                  href={`/api/generate-docx?id=${submission.id}&type=audit&mode=${deliveryState.approved ? 'optimized' : 'draft'}`}
+                  aria-disabled={!deliveryState.available}
+                  href={!deliveryState.available ? undefined : `/api/generate-docx?id=${submission.id}&type=audit&mode=${deliveryState.available ? 'available' : 'draft'}`}
                   onClick={() => setShowDownloadMenu(false)}
                   style={{
                     display: 'flex',
@@ -1300,17 +1302,17 @@ export default function SubmissionStudio({
                   <FileText size={16} color="#4F46E5" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0F172A' }}>
-                      {deliveryState.approved ? 'Audit Estratégico DOCX' : 'Audit Estratégico — Borrador'}
+                      {'Audit Estratégico DOCX'}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                      {deliveryState.approved ? 'Carta ejecutiva para socios con conciliación 1:1' : 'Versión de trabajo · consulta los pendientes antes de presentar'}
+                      {'Carta ejecutiva · consulta las observaciones antes de presentar'}
                     </div>
                   </div>
                 </a>
 
                 <div style={{ height: '1px', background: '#F1F5F9', margin: '4px 0' }} />
 
-                {/* Borrador Original */}
+                {/* Documento original */}
                 <a
                   href={`/api/generate-docx?id=${submission.id}&type=submission&mode=original`}
                   onClick={() => setShowDownloadMenu(false)}
@@ -1329,7 +1331,7 @@ export default function SubmissionStudio({
                   <FileText size={16} color="#64748B" style={{ marginTop: '2px', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#475569' }}>
-                      Borrador Original DOCX
+                      Documento original DOCX
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
                       Documento con textos literales sin optimizar
@@ -1443,7 +1445,7 @@ export default function SubmissionStudio({
               </button>
             </div>
           )}
-          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.approved ? 'Entrega aprobada' : 'Ver pendientes para obtener el Submission'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} actions={<AuditNextActions prepareBlocked={preparationBlocked} onResolveInputs={resolvePreparationInputs} data={chambersData} submissionId={submission.id} busy={isOptimizingAll || isSavingDraft} onNavigate={navigateAuditAction} onPrepare={()=>void handleOptimizeAll(false)} onReferences={async (action,notes)=>{
+          {chambersData.editorial_review?.letter ? <div style={{display:'grid',gap:20}}><details style={{background:'#EFF6FF',border:'1px solid #C7D2FE',borderRadius:12,padding:16}}><summary style={{cursor:'pointer',fontWeight:700,color:'#3730A3'}}>{deliveryState.available ? deliveryState.label : 'Ver preparación de documentos'} →</summary><div style={{marginTop:16}}>{reviewPanel}</div></details><ReadableAudit letter={chambersData.editorial_review.letter} label={deliveryState.label} actions={<AuditNextActions prepareBlocked={preparationBlocked} onResolveInputs={resolvePreparationInputs} data={chambersData} submissionId={submission.id} busy={isOptimizingAll || isSavingDraft} onNavigate={navigateAuditAction} onPrepare={()=>void handleOptimizeAll(false)} onReferences={async (action,notes)=>{
             const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),auditActionId:action.id,refereeNotes:notes});
             if(!result.success)throw new Error(result.error || 'No se pudo guardar.');
             setChambersData((prev:any)=>({...prev,...applyAuditSave(result),audit_referee_notes:result.refereeNotes,draft_revision:result.revision,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
@@ -1770,10 +1772,12 @@ export default function SubmissionStudio({
             {preparationBlocked && <section className="studio-review-panel" aria-label="Datos pendientes de confirmar" style={{background: '#FFFBEB', borderColor: '#FCD34D'}}>
               <strong>Completa los datos antes de revisar y generar</strong>
               <ul>{[...inputIssues,...readiness.blockers].map((issue,index)=><li key={index}>{issue}</li>)}</ul>
-              <p>Puedes guardar el borrador, salir y continuar después. La generación y las descargas se habilitarán cuando corresponda.</p>
+              <p>Puedes guardar los cambios, salir y continuar después. La generación y las descargas se habilitarán cuando corresponda.</p>
               <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs}>Resolver pendientes <ArrowRight size={16} /></button>
             </section>}
             <PreparationBanner
+              available={deliveryState.available}
+              hasObservations={deliveryState.hasObservations}
               approved={deliveryState.approved}
               busy={isOptimizingAll}
               needsReview={preparationBlocked || !!editorialJob?.issue || editorialJob?.status === 'needs_review' || (isFullyOptimized && !deliveryState.approved)}
@@ -2478,7 +2482,7 @@ export default function SubmissionStudio({
                       </div>
                     </div>
 
-                    {/* Segmented View Mode Controller (Chambers / Borrador Original / Comparar) */}
+                    {/* Segmented View Mode Controller (Chambers / Documento original / Comparar) */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       {hasBoth ? (
                         <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', gap: '3px' }}>
@@ -2523,7 +2527,7 @@ export default function SubmissionStudio({
                             }}
                           >
                             <FileText size={11} color="#64748B" />
-                            Borrador Original
+                            Documento original
                           </button>
 
                           <button
@@ -2551,7 +2555,7 @@ export default function SubmissionStudio({
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
-                            {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Borrador Original'}
+                            {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Documento original'}
                           </span>
                         </div>
                       )}
@@ -2577,7 +2581,7 @@ export default function SubmissionStudio({
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                               <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                📄 Borrador Original del Cliente
+                                📄 Documento original del Cliente
                               </span>
                               <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
                                 {originalText.split(/\s+/).filter(Boolean).length} palabras
@@ -2691,7 +2695,7 @@ export default function SubmissionStudio({
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                           <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
-                            📄 Mostrando borrador original recibido del cliente
+                            📄 Mostrando documento original recibido del cliente
                           </span>
                           {optimizedText && (
                             <button
@@ -3098,7 +3102,7 @@ export default function SubmissionStudio({
                         </div>
                       </div>
 
-                      {/* Segmented View Mode Controller (Chambers / Borrador Original / Comparar) */}
+                      {/* Segmented View Mode Controller (Chambers / Documento original / Comparar) */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         {hasBoth ? (
                           <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', gap: '3px' }}>
@@ -3143,7 +3147,7 @@ export default function SubmissionStudio({
                               }}
                             >
                               <FileText size={11} color="#64748B" />
-                              Borrador Original
+                              Documento original
                             </button>
 
                             <button
@@ -3171,7 +3175,7 @@ export default function SubmissionStudio({
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
-                              {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Borrador Original'}
+                              {optimizedText ? '✨ Redacción Optimizada Chambers' : '📄 Documento original'}
                             </span>
                           </div>
                         )}
@@ -3197,7 +3201,7 @@ export default function SubmissionStudio({
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                  📄 Borrador Original del Cliente
+                                  📄 Documento original del Cliente
                                 </span>
                                 <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
                                   {originalText.split(/\s+/).filter(Boolean).length} palabras
@@ -3311,7 +3315,7 @@ export default function SubmissionStudio({
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                             <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
-                              📄 Mostrando borrador original recibido del cliente
+                              📄 Mostrando documento original recibido del cliente
                             </span>
                             {optimizedText && (
                               <button
@@ -3584,11 +3588,11 @@ export default function SubmissionStudio({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
                     <ShieldCheck size={16} color={isFullyOptimized ? '#4ADE80' : '#38BDF8'} />
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: isFullyOptimized ? '#A5B4FC' : '#94A3B8' }}>
-                      {isFullyOptimized ? 'Redacción guardada' : 'Borrador en preparación'}
+                      {deliveryState.available ? deliveryState.label : 'Preparando documentos'}
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    {deliveryState.approved && !isOptimizingAll ? 'Documentos revisados' : savedPreparation && !hasRunOptimization ? `${savedPreparation.prepared} de ${savedPreparation.selected} asuntos seleccionados con borrador guardado` : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
+                    {deliveryState.available && !isOptimizingAll ? deliveryState.label : savedPreparation && !hasRunOptimization ? `${savedPreparation.prepared} de ${savedPreparation.selected} asuntos seleccionados con redacción guardada` : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
                     {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.approved ? 'El documento final superó la revisión de esta versión.' : savedPreparation && !hasRunOptimization ? 'El avance está guardado. La nueva redacción sigue en revisión; consulta el próximo paso en Estado de entrega.' : `${deliveryState.label}. ${needsB10Optimization(chambersData,b10Text) ? 'El editor conserva el texto de origen. Consulta el próximo paso en Estado de entrega.' : 'Consulta los hallazgos del expediente antes de presentar.'}`}

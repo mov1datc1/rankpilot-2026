@@ -1,0 +1,9 @@
+# v1.0.64 — Document availability independent of editorial approval
+
+An exhausted source-bound field correction previously stopped the entire job before Word assembly. The owner changed the product requirement: deliver complete available documents with or without observations, retaining the independent findings instead of treating every editorial defect as a delivery blocker.
+
+Structurally valid development can now retain a failed field review as a source/output-bound observation after its existing repair allowance. Other fields continue through review. Observations do not create successful receipts or an approval; edits invalidate their disposition. A complete Audit with remaining bounded-repair findings can likewise proceed to exact-file review. Missing content, unknown provider outcomes and file-generation failures are not falsely advertised as available.
+
+The exact Submission/Audit pair is stored independently of approval and downloaded with current-input and byte-integrity checks. The final supervisor can finish with observed documents when recovery is exhausted. The UI uses “Documentos disponibles · con observaciones” or “Documentos disponibles · sin observaciones”; findings remain visible. In-progress work is described as preparation. A single source-current continuation migrates an eligible historical semantic stop without resetting calls, sources, methods or token usage.
+
+Validation: 766 Python tests and 548 Node tests passed (one existing skip); TypeScript passed. Additional focused availability and live continuation checks are recorded separately. Offline replay preserved historical sources, content, methods and trace while scheduling remaining field reviews. These checks do not establish document quality or a production completion. No new model, prompt revision or source extraction is introduced.

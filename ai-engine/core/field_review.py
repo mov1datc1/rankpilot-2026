@@ -223,12 +223,16 @@ def schedule(state,result=None):
     result=dict(result or {});merged={**state,**result}
     units=units_for(merged)
     receipts=merged.get('field_review_receipts',[])
-    pending=[u for u in units if not any(receipt_matches(u,r) for r in receipts)]
+    observations=[o for o in merged.get('field_review_observations',[]) if any(
+        u['field']==o.get('field') and u['hash']==o.get('hash') for u in units)]
+    result['field_review_observations']=observations
+    pending=[u for u in units if not any(receipt_matches(u,r) for r in receipts)
+        and not any(o['field']==u['field'] and o['hash']==u['hash'] for o in observations)]
     if not pending:
-        return {**result,'repair_continuation':None,'development_validated':True,'errors':[],
+        return {**result,'repair_continuation':None,'development_validated':not observations,'development_delivery_ready':True,'errors':[],
             'field_review_failures':[],
             'repair_feedback':merged.get('field_review_parent_feedback',[]) + merged.get('field_review_reconciled_feedback',[])}
-    return {**result,'development_validated':False,'development_repair_unlocatable':False,
+    return {**result,'development_validated':False,'development_delivery_ready':False,'development_repair_unlocatable':False,
         'errors':['Redacción guardada; comprobando los campos contra sus fuentes antes de preparar los documentos.'],
         'repair_continuation':{'version':VERSION,'phase':'review','proposal_hash':digest(merged['development']),
             'pending_groups':batches(pending)}}
@@ -248,7 +252,7 @@ def after_repair(state,result):
             'repair_continuation':{'version':VERSION,'phase':'repair',
                 'proposal_hash':digest(result.get('development',state['development'])),
                 'pending_groups':[sorted(paths)]}}
-    return {**result,'repair_continuation':None,'development_repair_unlocatable':True}
+    return retain_observations(state,{**result,'repair_continuation':None,'development_repair_unlocatable':True})
 
 
 def unknown_usage(trace):
@@ -284,8 +288,8 @@ def advance(state):
         defects=state.get('field_review_failures',[])
         paths={d['field_path'] for d in defects};attempts=dict(state.get('field_review_attempts',{}))
         if not paths or any(method_count(attempts,path)>=2 for path in paths):
-            return {'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
-                'errors':['La recuperación de estos campos agotó sus dos métodos; se conserva el avance.']}
+            return retain_observations(state,{'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
+                'errors':['La recuperación de estos campos agotó sus dos métodos; se conserva el avance.']})
         strategy='source_reconstruction' if any(method_count(attempts,path) for path in paths) else 'targeted_correction'
         previous_counts={path:method_count(attempts,path) for path in paths}
         for path in paths:attempts[path]=previous_counts[path]+1
@@ -313,3 +317,30 @@ def advance(state):
             'repair_continuation':{'version':VERSION,'phase':'repair','proposal_hash':digest(state['development']),
                 'pending_groups':[list(dict.fromkeys(d['field_path'] for d in defects))]}}
     return schedule(state,update)
+
+
+def retain_observations(state,result=None):
+    """Finish usable, source-bound prose without pretending a failed check passed.
+
+    Only a structurally valid saved proposal can proceed. Each remaining unit
+    is still reviewed; changed text/source invalidates these dispositions too.
+    """
+    from core.editorial_development import development_errors
+    merged={**state,**(result or {})}
+    failures=merged.get('field_review_failures') or []
+    if (unknown_usage(merged.get('trace',[])) or not failures
+        or development_errors(merged['package'],merged['strategy'],merged['development'])
+        or any(d.get('owner')!='rankpilot' or not d.get('artifact_quote')
+            or not d.get('source_quote') or not d.get('field_path') for d in failures)):
+        return result or {'development_validated':False,'development_repair_unlocatable':True,
+            'repair_continuation':None,'errors':['No se pudo completar la redacción; el avance está guardado.']}
+    units={u['field']:u for u in units_for(merged)}
+    if any(d['field_path'] not in units for d in failures):return result or {}
+    fields={d['field_path'] for d in failures}
+    kept=[o for o in merged.get('field_review_observations',[]) if o.get('field') not in fields]
+    kept += [{'field':field,'hash':units[field]['hash'],
+        'defects':[d for d in failures if d['field_path']==field],
+        'reason':'bounded_repair_finished_with_observations'} for field in sorted(fields)]
+    return schedule(merged,{**(result or {}),'field_review_observations':kept,
+        'development_repair_unlocatable':False,'field_review_failures':[],
+        'repair_continuation':None,'errors':[]})

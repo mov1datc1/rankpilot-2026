@@ -152,8 +152,9 @@ class FieldReviewTests(unittest.TestCase):
             current.update(advance(current))
             self.assertEqual(current['repair_continuation']['phase'],'repair')
             current.update(advance(current))
-            # The second failed result must explicitly clear the old continuation.
-            self.assertIsNone(current.get('repair_continuation'))
+            # Stop repairing this field, retain its diagnosis, review other units.
+            self.assertEqual(current['repair_continuation']['phase'],'review')
+            self.assertTrue(current['field_review_observations'])
         self.assertEqual(methods,['targeted_correction','source_reconstruction'])
         self.assertFalse(current['development_validated'])
         self.assertEqual(current['field_review_attempts'][target],2)
@@ -211,8 +212,9 @@ class FieldReviewTests(unittest.TestCase):
         current['field_review_attempts']={d['field_path']:2 for d in current['field_review_failures']}
         with patch('core.review_graph.invoke_role',side_effect=AssertionError('Exhausted')):
             stopped=advance(current)
-        self.assertTrue(stopped['development_repair_unlocatable'])
-        self.assertIsNone(stopped['repair_continuation'])
+        self.assertFalse(stopped['development_repair_unlocatable'])
+        self.assertTrue(stopped['field_review_observations'])
+        self.assertFalse(stopped['development_validated'])
 
     def test_foreign_or_missing_proofs_cannot_produce_receipts(self):
         units=units_for(state());response=verdict(units)
@@ -251,3 +253,30 @@ class FieldReviewTests(unittest.TestCase):
             rendered_candidate_bios={v['candidates'][0]['name']:v['candidates'][0]['submission_bio']})
         with patch.dict(os.environ,{'AI_ENGINE_SERVICE_TOKEN':'different-server-secret'}):
             self.assertEqual(verified_obligations(p,s,v),[])
+
+class AvailableWithObservationsTests(unittest.TestCase):
+    def test_exhausted_field_keeps_documents_moving_without_approval_or_new_repair(self):
+        from core.field_review import retain_observations
+        current=state();units=units_for(current);target=units[0]['field']
+        other=[u for u in units if u['field']!=target]
+        current['field_review_receipts']=project_checks(other,verdict(other))[0]
+        current['field_review_failures']=project_checks([units[0]],verdict([units[0]],target))[1]
+        current['field_review_attempts']={target:2};before=copy.deepcopy(current)
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No paid retry')):
+            result=retain_observations(current)
+        self.assertFalse(result['development_validated'])
+        self.assertTrue(result['development_delivery_ready'])
+        self.assertFalse(result['errors']);self.assertIsNone(result['repair_continuation'])
+        self.assertEqual(result['field_review_observations'][0]['defects'],before['field_review_failures'])
+        self.assertEqual(current,before)
+        updated={**current,**result};updated['development']['b10']+=' Changed output.'
+        self.assertFalse(schedule(updated)['development_delivery_ready'])
+        self.assertTrue(schedule(updated)['repair_continuation'])
+
+    def test_missing_proposal_or_unknown_call_never_becomes_available(self):
+        from core.field_review import retain_observations
+        current=state();units=units_for(current)
+        current['field_review_failures']=project_checks([units[0]],verdict([units[0]],units[0]['field']))[1]
+        current['trace']=[{'usage':{'unknown_calls':1}}]
+        result=retain_observations(current,{'errors':['Unknown provider outcome'],'development_validated':False})
+        self.assertFalse(result.get('development_delivery_ready'));self.assertTrue(result['errors'])

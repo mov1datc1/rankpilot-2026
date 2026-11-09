@@ -1,5 +1,5 @@
 import { currentReviewDraft } from '@/lib/audit/draft-review';
-import { artifactHash, deliveryInputHash, storedDraftBytes } from '@/lib/audit/artifact-binding';
+import { artifactHash, deliveryInputHash, storedAvailableBytes, storedDraftBytes } from '@/lib/audit/artifact-binding';
 import { getDeliveryState } from '@/lib/audit/delivery-state';
 import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
@@ -98,6 +98,21 @@ export async function GET(request: NextRequest) {
       const bytes=Buffer.from(encoded,'base64');
       if(artifactHash(bytes)!==expected)return NextResponse.json({error:'No se pudo comprobar la versión anterior.'},{status:409});
       return new NextResponse(new Uint8Array(bytes),{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Cache-Control':'private, no-store','Content-Disposition':`attachment; filename="${docType==='submission'?'Submission':'Audit'}_version_anterior.docx"`}});
+    }
+    if(exportMode==='available' || (exportMode==='optimized' && (chambersData.available_artifact || chambersData.draft_artifact))) {
+      const requested=searchParams.get('template') || searchParams.get('format') || '';
+      if(docType==='submission' && requested && /legal.?500/i.test(requested)!==/legal.?500/i.test(submission.targetDirectory || ''))
+        return NextResponse.json({error:'El formato solicitado no corresponde a los archivos guardados.'},{status:409});
+      let bytes:Buffer|null;
+      try {bytes=storedAvailableBytes(submission,chambersData,docType);}
+      catch {return NextResponse.json({code:'ARTIFACT_INTEGRITY',error:'No se pudo verificar el archivo guardado. Conservamos el expediente para recuperarlo.'},{status:409});}
+      if(!bytes)return NextResponse.json({code:'ARTIFACT_NOT_AVAILABLE',error:'Aún no hay documentos completos para la versión actual. Abre el expediente para continuar la preparación.'},{status:409});
+      return new NextResponse(new Uint8Array(bytes),{headers:{
+        'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition':buildSafeContentDisposition(docType==='submission'?'Submission':'Audit',submission.practiceArea,'docx'),
+        'Cache-Control':'private, no-store','X-Artifact-SHA256':artifactHash(bytes),
+        'X-Artifact-Status':getDeliveryState(chambersData,chambersData.matters || submission.matters,true).hasObservations?'with_observations':'without_observations',
+      }});
     }
     if(exportMode==='draft') {
       let bytes:Buffer|null;

@@ -177,5 +177,5 @@ test('initial preparation shows the four real stages and separates waiting from 
  const base={id:'j',stage:'selection',cursor:0,tasks:['selection'],createdAt:'2026-10-11T20:00:00Z'};
  const running=publicJob({...base,status:'running'});assert.equal(running.total,4);assert.equal(running.completed,0);assert.equal(running.startedAt,base.createdAt);assert.match(running.message,/Comparando/);
  const waiting=publicJob({...base,status:'queued',issue:{owner:'rankpilot'}});assert.equal(waiting.waiting,true);assert.match(waiting.message,/espera/);
- const paused=publicJob({...base,status:'failed',issue:{owner:'rankpilot',message:'secret error'}});assert.match(paused.message,/pausada/);assert.doesNotMatch(paused.issue.message,/secret|recuperando/);
+ const paused=publicJob({...base,status:'failed',issue:{owner:'rankpilot',message:'secret error'}});assert.match(paused.message,/requiere una acción/);assert.doesNotMatch(paused.issue.message,/secret|recuperando/);
 });
