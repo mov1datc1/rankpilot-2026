@@ -60,6 +60,12 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
       action:'Pulsa «Continuar preparación». Se conserva este intento, su avance y el consumo acumulado; después se comprobará de nuevo la selección.'}];
   }
 
+  if(job?.canResumeResidual===true && job?.sourceMatches!==false) {
+    return [{title:job.canRecheckFieldContext?'Comprobar el contexto de la redacción':'Continuar la corrección guardada',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
+      message:job.canRecheckFieldContext?'La revisión anterior no recibió todo el contexto de los asuntos seleccionados. Se puede contrastar la redacción guardada con esas fuentes.':'Hay campos pendientes que pueden corregirse conservando el avance guardado.',
+      action:'Pulsa «Continuar preparación». Se conservan las fuentes, el avance y el consumo; después se revisarán los documentos antes de habilitar la entrega.'}];
+  }
+
   // A rejected development has not produced the document pair. An old draft
   // invalidation marker must not describe this terminal attempt as ready.
   if(job?.sourceMatches!==false && job?.stage==='development' && job?.status==='failed'

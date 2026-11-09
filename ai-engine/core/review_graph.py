@@ -119,6 +119,8 @@ class ReviewState(TypedDict, total=False):
     repair_feedback: list
     repair_strategy: str
     field_review_enabled: bool
+    field_context_recheck: bool
+    field_review_context_version: str
     field_review_receipts: list
     field_review_attempts: dict
     field_review_failures: list

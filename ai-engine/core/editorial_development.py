@@ -396,6 +396,9 @@ def develop(state):
 
 def develop_proposal(state):
     from core.review_graph import invoke_role
+    if state.get('field_context_recheck'):
+        from core.field_review import recheck_context
+        return recheck_context(state)
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
     if state.get('repair_continuation'):

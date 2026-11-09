@@ -262,3 +262,18 @@ test('pre-call capacity checks preserve checkpoints and only count unavailable c
   } finally {global.fetch=normal;}
  }
 });
+
+test('context reconsideration reaches the engine once with old attempts and remaining capacity',async()=>{
+ reset();await stage();const normal=global.fetch;const saved=submission.chambersData.review_checkpoint;
+ saved.state.field_review_attempts={b10:2,c2:2};
+ job.ledger.push({stage:'development',status:'field_context_review_requested'});
+ global.fetch=async(url,options)=>{
+  const payload=JSON.parse(options.body);
+  assert.equal(payload.state.field_context_recheck,true);
+  assert.deepEqual(payload.state.field_review_attempts,{b10:2,c2:2});
+  assert.equal(new Headers(options.headers).get('X-RankPilot-Token-Allowance'),'1199900');
+  return Response.json({success:true,next_stage:'done',state:{...payload.state,field_context_recheck:false,
+   development_validated:false,repair_continuation:{version:'source-field-review-v1',phase:'review',pending_groups:[['b10','c2']]}}});
+ };
+ try{await stage();assert.equal(job.status,'queued');assert.equal(job.cursor,1);assert.equal(submission.chambersData.review_checkpoint.state.field_context_recheck,false);assert.deepEqual(submission.chambersData.review_checkpoint.state.field_review_attempts,{b10:2,c2:2});assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),100);}finally{global.fetch=normal;}
+});
