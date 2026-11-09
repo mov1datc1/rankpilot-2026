@@ -13,6 +13,29 @@ from test_surgical_repair_postconditions import native_answer
 
 
 class RepairContractCoherenceTests(unittest.TestCase):
+    def test_recovery_can_fix_category_source_and_output_binding_together(self):
+        from core.editorial_repair import repair_targets
+        p,s,v=complete_case();good=copy.deepcopy(v['candidates'][0]);c=v['candidates'][0]
+        c['category_assessment']['career_stage_evidence']=['Invented career evidence.']
+        c['submission_case_coverage'][0]['public_quote']='Absent output quotation.'
+        before=copy.deepcopy((p,s,v));calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(copy.deepcopy(payload))
+            target=payload['repair_targets']['candidates/0']
+            self.assertNotIn('mutable_fields',target, 'Invalid category evidence must remain repairable on recovery')
+            value=copy.deepcopy(c if len(calls)==1 else good)
+            value['submission_bio']+=' Her practice combines these contributions.'
+            answer=native_answer({'corrections':[{'path':'candidates/0','value':value,'reason':'Repair source and output evidence.'}], 'unresolved':[]},payload['target_references'])
+            schema.model_validate(answer)
+            return answer,list(state.get('trace',[]))+[{'usage':{'total_tokens':17}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=repair_development({'package':p,'strategy':s},v,repair_targets(p,s,v))
+        self.assertEqual(len(calls),2)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual((p,s,v),before)
+        self.assertEqual(result['development']['candidates'][0]['category_assessment'],good['category_assessment'])
+        self.assertEqual(sum(t['usage']['total_tokens'] for t in result['trace']),34)
+
     def test_absent_output_reference_is_not_immutable_biography_text(self):
         p,s,v=complete_case();c=v['candidates'][0]
         absent='A generated quotation that was never written in the biography.'

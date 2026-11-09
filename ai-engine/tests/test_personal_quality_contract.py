@@ -33,6 +33,16 @@ def complete_case():
     return p,s,v
 
 class PersonalQualityContractTests(unittest.TestCase):
+    def test_invalid_category_quote_identifies_exact_field_without_relaxing_evidence(self):
+        p,s,v=complete_case();c=v['candidates'][0]
+        c['category_assessment']['career_stage_evidence']=['Sofia Vega leads the newly established employment practice.']
+        errors=personal_quality_errors(p,s,v)
+        self.assertEqual(len(errors),1)
+        self.assertIn('category_assessment/career_stage_evidence/0',errors[0])
+        self.assertIn(repr(c['category_assessment']['career_stage_evidence'][0]),errors[0])
+        c['category_assessment']['career_stage_evidence']=['Sofia Vega leads the newly established employment practice']
+        self.assertEqual(personal_quality_errors(p,s,v),[])
+
     def test_two_correct_links_do_not_excuse_omitting_the_third_material_contribution(self):
         p,s,v=complete_case();self.assertEqual(personal_quality_errors(p,s,v),[])
         v['candidates'][0]['submission_case_coverage'].pop()
