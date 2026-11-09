@@ -1,17 +1,21 @@
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { databasePoolOptions } from './database-pool'
 
-const connectionString = `${process.env.DATABASE_URL}`
+const runtime = globalThis as unknown as { rankpilotPrisma?: PrismaClient }
 
-const pool = new Pool({
-  connectionString,
-  max: 3,
-  idleTimeoutMillis: 20000,
-  keepAlive: true,
-})
-const adapter = new PrismaPg(pool)
+function createPrisma() {
+  const pool = new Pool(databasePoolOptions(process.env))
+  pool.on('error', (error: Error & { code?: string }) => {
+    console.error('Database idle connection failed', { code: error.code || 'CONNECTION_ERROR' })
+  })
+  // No statementNameGenerator: adapter-pg uses unnamed statements, compatible
+  // with Supavisor transaction pooling. Transactions still pin one connection.
+  return new PrismaClient({ adapter: new PrismaPg(pool) })
+}
 
-const prisma = new PrismaClient({ adapter })
+const prisma = runtime.rankpilotPrisma ?? createPrisma()
+runtime.rankpilotPrisma = prisma
 
 export default prisma
