@@ -50,6 +50,17 @@ test('completion preserves the explicitly selected ranking scope and research pe
 });
 test('completion reviews actual DOCX and binds exact bytes to current draft',async()=>{reset();const r=await complete();assert.equal(r.status,200);const data=state.chambersData;assert.equal(data.release_verdict.passed,true,JSON.stringify(data.release_verdict));assert.equal(calls.length,1);assert.ok(calls[0].payload.package.rendered_artifact.includes('MXN 1000000'));const bytes=Buffer.from(data.approved_artifact.base64,'base64');assert.ok((await JSZip.loadAsync(bytes)).file('word/document.xml'));assert.equal(data.approved_artifact.sha256,artifactHash(bytes));assert.equal(data.approved_artifact.input_hash,deliveryInputHash(state));});
 test('final reviewer defect preserves available exact files without conferring approval',async()=>{reset();rejectFinal=true;const r=await complete();assert.equal(r.status,200);assert.equal(state.chambersData.release_verdict.passed,false);assert.equal(state.chambersData.approved_artifact,null);assert.equal(state.status,'DocumentsAvailable');assert.ok(state.chambersData.available_artifact.base64);assert.ok(state.chambersData.available_artifact.audit_base64);assert.equal(state.chambersData.available_artifact.observation_status,'with_observations');assert.equal(calls.length,1);assert.ok(state.chambersData.release_verdict.errors[0].includes('Injected rendered claim defect'));});
+test('complete content with unrepaired internal observations is rendered and reviewed without false approval',async()=>{
+ reset();seedReview();const review=state.chambersData.review_checkpoint.state;
+ Object.assign(review,{development_validated:false,development_delivery_ready:true,writer_validated:true,
+   development_observations:['B9 internal citation remains unverified.'],render_gate:{passed:false,errors:['B9 internal citation remains unverified.']}});
+ assert.equal((await complete()).status,200);const data=state.chambersData;
+ assert.equal(calls.length,1);assert.ok(calls[0].payload.package.rendered_artifact);assert.ok(calls[0].payload.package.rendered_audit);
+ assert.equal(data.release_verdict.passed,false);assert.equal(data.approved_artifact,null);
+ assert.ok(data.release_verdict.errors.includes('B9 internal citation remains unverified.'));
+ assert.ok(data.available_artifact.base64 && data.available_artifact.audit_base64);
+ assert.equal(data.available_artifact.observation_status,'with_observations');
+});
 test('concurrent save during review rejects completion without overwriting draft',async()=>{reset();seedReview();conflict=true;const before=structuredClone(state);assert.equal((await complete()).status,409);assert.deepEqual(state,before);});
 test('unsaved optimized text cannot bypass persisted version',async()=>{reset();assert.equal((await complete({matters:[{...state.matters[0],optimizedText:'Invented outcome'}]})).status,409);assert.equal(calls.length,0);});
 const {POST:optimizeMatter}=require('../../src/app/api/optimize/matter/route.ts');

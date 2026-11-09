@@ -21,7 +21,7 @@ import { buildSubmissionDoc } from '@/app/api/generate-docx/submission-builder';
 
 export const maxDuration = 300;
 
-const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,selection_review:review.selection_review,selection_review_validated:review.selection_review_validated,development:review.development,development_validated:review.development_validated,development_delivery_ready:review.development_delivery_ready,field_review_observations:review.field_review_observations,writer_observations:review.writer_observations,release_verdict:review.release_verdict,render_gate:review.render_gate});
+const reviewOutputHash = (review:any) => reviewInputHash({strategy:review.strategy,letter:review.letter,judge:review.judge,ranking_verification:review.ranking_verification,selection_validated:review.selection_validated,selection_review:review.selection_review,selection_review_validated:review.selection_review_validated,development:review.development,development_validated:review.development_validated,development_delivery_ready:review.development_delivery_ready,development_observations:review.development_observations,field_review_observations:review.field_review_observations,writer_observations:review.writer_observations,release_verdict:review.release_verdict,render_gate:review.render_gate});
 
 /** One completion authority: source register → bounded editorial review → exact artifact. */
 export async function POST(request: NextRequest) {

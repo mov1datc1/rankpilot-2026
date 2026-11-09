@@ -36,3 +36,13 @@ test('completed repair capacity continues the same saved semantic attempt once w
  job.ledger.push({status:'delivery_observations_requested'});assert.equal(canContinueWithObservations(job,data,'same'),false);
  job.ledger=[{trace:{usage:{unknown_calls:1}}}];assert.equal(canContinueWithObservations(job,data,'same'),false);
 });
+test('exhausted local citation repair can migrate once to assembly; active or unknown repairs cannot',()=>{
+ const state={selection_validated:true,selection_review_validated:true,development:{b10:'Saved'},development_reusable:true,development_repair_unlocatable:true,
+   repair_report:{failed_paths:['candidates/0'],unresolved:[]},field_review_attempts:{'candidates/0':2},trace:[{usage:{total_tokens:31}}]};
+ const data={review_checkpoint:{state}},job={status:'failed',stage:'development',tasks:['development'],cursor:0,sourceHash:'same',issue:{code:'DEVELOPMENT_REJECTED',owner:'rankpilot'},ledger:[{trace:{usage:{total_tokens:31}}}]};
+ const before=structuredClone({job,data});assert.equal(canContinueWithObservations(job,data,'same'),true);assert.deepEqual({job,data},before);
+ state.field_review_attempts['candidates/0']=1;assert.equal(canContinueWithObservations(job,data,'same'),false);
+ state.field_review_attempts['candidates/0']=2;state.repair_continuation={pending_groups:[]};assert.equal(canContinueWithObservations(job,data,'same'),false);
+ delete state.repair_continuation;state.repair_report.unresolved=['Source answer needed'];assert.equal(canContinueWithObservations(job,data,'same'),false);
+ state.repair_report.unresolved=[];job.ledger.push({status:'delivery_observations_requested'});assert.equal(canContinueWithObservations(job,data,'same'),false);
+});

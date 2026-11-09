@@ -97,7 +97,7 @@ test('available documents show only availability and located observations, witho
  const data={draft_revision:1,completed_review_policy_version:c.policy,completed_renderer_version:c.renderer,completed_artifact_review_version:c.artifact,
   available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
   final_artifact_review:{judge:{passed:false,defects:[{severity:'critical',owner:'rankpilot',scope:'submission',field_path:'b10',message:'Conserva el resultado de la fuente.',source_quote:'Achieved result.',artifact_quote:'Advised the client.'}]}},release_verdict:{passed:false,status:'needs_review'}};
- const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[],warnings:[],approved:false,job:{status:'completed',nextAction:{kind:'download'}},onResolve:()=>{}}));
- assert.match(html,/Documentos disponibles · con observaciones/);assert.match(html,/B10 · Departamento/);assert.match(html,/Achieved result/);
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:['B9 conserva una cita interna pendiente.'],warnings:[],approved:false,job:{status:'completed',nextAction:{kind:'download'}},onResolve:()=>{}}));
+ assert.match(html,/Documentos disponibles · con observaciones/);assert.match(html,/B10 · Departamento/);assert.match(html,/Achieved result/);assert.match(html,/B9 conserva una cita interna pendiente/);
  assert.doesNotMatch(html,/Borrador|pausad|detenid|Solicita recuperar|Entrega pendiente/i);
 });
