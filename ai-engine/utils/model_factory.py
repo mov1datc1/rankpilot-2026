@@ -9,7 +9,7 @@ import os
 import re
 from typing import Dict, Literal
 
-from langchain_openai import ChatOpenAI
+from utils.provider_budget import BudgetedChatOpenAI as ChatOpenAI
 
 
 ModelPurpose = Literal["extraction", "standard", "editorial", "judge", "rewrite", "letter", "development", "repair"]

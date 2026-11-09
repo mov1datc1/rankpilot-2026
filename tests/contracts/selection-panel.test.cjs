@@ -7,10 +7,10 @@ test('an exhausted automatic review reports a real pause without promising conti
  const {publicJob}=require('../../src/lib/editorial/jobs.ts');
  const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{editorial_review:{letter:{}},final_artifact_review:{judge:{defects:[{code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',message:'Retira el descriptor sectorial discutido.'}]}}},errors:[],warnings:[],approved:false,job,onResolve:()=>{}}));
- assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Preparación pausada'));
- assert.ok(html.includes('No habrá más intentos automáticos'));assert.ok(html.includes('entrega final sigue pendiente'));
+ assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Solicita recuperar este intento'));
+ assert.ok(html.includes('compártela con quien administra RankPilot'));assert.ok(html.includes('conserva este expediente'));
  assert.ok(!html.includes('continuará automáticamente'));assert.equal((html.match(/<button/g) || []).length,1);assert.match(html,/Copiar referencia/);
- assert.ok(html.includes('no se reanudará al esperar'));assert.ok(html.includes('descarga el Audit'));
+ assert.ok(html.includes('Esperar no lo reanudará'));assert.ok(html.includes('no vuelvas a cargar el original'));
  assert.ok(!html.includes('Pulsa «Revisar y preparar documentos»'));assert.ok(!html.includes('para reanudar el proceso'));
 });
 const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Synthetic Client. Reintenta la revisión editorial.'];

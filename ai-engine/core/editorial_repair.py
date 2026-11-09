@@ -25,6 +25,8 @@ class Repair(BaseModel):
 def biography_delta_contract(target):
     """A BIO repair cannot emit source links, identities or ranking decisions."""
     current=target['current_value'];fields={}
+    if target.get('append_participation'):
+        fields['participation_quote']=(str,Field(description='Exact passage in the corrected public BIO explicitly describing team participation in the supplied mandate. The original source, identity and membership role are fixed by the contract. No leadership, achieved result or nomination may be inferred.'))
     if 'submission_bio' in target['mutable_fields']:fields['submission_bio']=(str,...)
     if 'biography_depth' in target['mutable_fields']:fields['biography_depth']=(BiographyDepth,...)
     if 'profile_coverage' in target['mutable_fields']:
@@ -63,6 +65,11 @@ def expand_biography_delta(target,value):
         if anchor not in {s.get('matter_id') for s in result.get('supporting_matters',[])}:
             result.setdefault('supporting_matters',[]).append({
                 'matter_id':anchor,'source_quote':new['source_quote'],'personal_role':new['personal_role']})
+    if target.get('append_participation'):
+        source=target['append_participation']
+        result.setdefault('submission_case_coverage',[]).append({**source,'public_quote':delta['participation_quote']})
+        if source['matter_id'] not in {s.get('matter_id') for s in result.get('supporting_matters',[])}:
+            result.setdefault('supporting_matters',[]).append({**source,'personal_role':'Team member; no individual leadership or result inferred.'})
     return result
 
 def repair_result_contract(targets):
@@ -86,6 +93,18 @@ def repair_result_contract(targets):
 
 def repair_references(targets):
     return {f'T{i+1:02d}':path for i,path in enumerate(targets)}
+
+
+def recovery_instruction(state):
+    if state.get('repair_strategy')!='source_reconstruction':
+        return ''
+    return (' SOURCE RECONSTRUCTION: the same source obligation survived a targeted correction. '
+            'Do not paraphrase the prior attempted fix. Reconstruct ONLY the authorized field '
+            'from its original source evidence and explicit obligations, then verify every '
+            'retained material fact and all output bindings. The old draft is a preservation '
+            'checklist, not evidence. Respect all mutable_fields and protected passages; do '
+            'not expand scope, nomination or source roles. Return unresolved only for a precise '
+            'source insufficiency, never merely because a prior wording attempt failed.')
 
 def project_repair_result(result,targets):
     # Existing saved diagnostics and offline fixtures retain their old shape.
@@ -186,7 +205,19 @@ def repair_targets(package, strategy, proposal):
             from core.personal_quality import required_personal_matters
             targets[f'candidates/{i}']['validation_errors']=profile_faults+linked_fault+quality_faults
             targets[f'candidates/{i}']['required_personal_matter_ids']=required_personal_matters(package,strategy,candidate)
-            if quality_faults:
+            from core.participation_contract import participation_requirement, participation_errors
+            participation=participation_requirement(package,strategy,candidate)
+            participation_only=(participation and participation_errors(package,strategy,candidate)
+                and not profile_faults and not category_error(candidate) and not quality_faults
+                and all(e.startswith('B9 omite el vínculo de participación documentada:') for e in linked_fault)
+                and not candidate.get('submission_case_coverage'))
+            if participation_only:
+                target=targets[f'candidates/{i}']
+                source=participation['sources'][0]
+                target.update(mutable_fields=['submission_bio','submission_case_coverage','supporting_matters'],
+                    append_participation=source,participation_obligation=participation)
+                target['problem']=participation['instruction']+' Preserve existing credentials and all other candidate fields.'
+            elif quality_faults:
                 targets[f'candidates/{i}']['problem']+=' Complete all missing material personally attributed work in a developed B9 (target 500–1,000 words for proposed candidates, without padding; justify a genuine source limitation through biography_depth), preserve existing evidenced contributions and credentials, and return an individually grounded category_assessment. Do not shrink the BIO to two matters. '+ ' '.join(quality_faults)
             elif anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_faults and not category_error(candidate) and not personal_case_errors(package,candidate):
                 target=targets[f'candidates/{i}']
@@ -336,7 +367,19 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
                     raise ValueError('Biography repair cannot change unrelated candidacy fields')
                 bindings=lambda c:[(item['matter_id'],item['source_quote']) for item in c.get('submission_case_coverage',[])]
                 anchor=targets[path].get('append_personal_anchor')
-                if anchor:
+                participation=targets[path].get('append_participation')
+                if participation:
+                    old=bindings(before);new=bindings(after)
+                    if new!=old+[(participation['matter_id'],participation['source_quote'])]:
+                        raise ValueError('Participation repair must append only its fixed original membership source')
+                    expected_support=copy.deepcopy(before['supporting_matters'])
+                    if participation['matter_id'] not in {s['matter_id'] for s in expected_support}:
+                        expected_support.append({**participation,'personal_role':'Team member; no individual leadership or result inferred.'})
+                    if after['supporting_matters']!=expected_support:
+                        raise ValueError('Participation repair cannot change supporting roles or evidence')
+                    if before['submission_bio'] not in after['submission_bio']:
+                        raise ValueError('Participation repair must preserve the existing limited BIO')
+                elif anchor:
                     old=bindings(before);new=bindings(after)
                     if new[:len(old)]!=old or len(new)!=len(old)+1 or new[-1][0]!=anchor:
                         raise ValueError('Primary-mandate repair must append only its required source binding')
@@ -390,7 +433,7 @@ def biography_output_targets_only(targets):
     allowed={'submission_bio','profile_coverage','submission_case_coverage','biography_depth'}
     return bool(targets) and all(
         bool(re.fullmatch(r'candidates/\d+',path)) and bool(target.get('mutable_fields'))
-        and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') else set()))
+        and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') or target.get('append_participation') else set()))
         for path,target in targets.items())
 
 
@@ -418,7 +461,7 @@ def invoke_residual_repair(state, group, shared=None):
     """One residual request for this disjoint group, using its current evidence."""
     from core.review_graph import invoke_role
     uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in group.values())
-    instruction=TASK+' The previous correction left or introduced a localized defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.'
+    instruction=TASK+recovery_instruction(state)+' The previous correction left or introduced a localized defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.'
     if any(t.get('depth_recovery') for t in group.values()):
         instruction+=' This request concerns ONE proposed biography. Follow its measured depth_recovery obligation: complete the substantive personal argument, not merely its output references. Do not claim expansion when merely rephrasing; a shorter complete argument is preferable to padded repetition. Use its own source evidence and return the BIO and exact output bindings together.'
     return invoke_role({**state,'source_only_repair':biography_output_targets_only(group)},'repair',repair_result_contract(group),instruction,
@@ -455,7 +498,8 @@ def repair_development(state, proposal, targets):
             if shared is None:shared=evidence
             if evidence==shared:target['source_evidence']={'reference':'shared_source_evidence'}
     feedback=list(state.get('repair_feedback',[]))
-    repair,trace=invoke_role({**state,'source_only_repair':bio_only},'repair',schema,TASK,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':ranking_context})
+    instruction=TASK+recovery_instruction(state)
+    repair,trace=invoke_role({**state,'source_only_repair':bio_only},'repair',schema,instruction,{'repair_targets':payload_targets,'target_references':repair_references(targets),'shared_source_evidence':shared,'feedback':feedback,'ranking_verification':ranking_context,'repair_strategy':state.get('repair_strategy','targeted_correction')})
     try:
         repair=project_repair_result(repair,targets)
         fixed,application_errors=apply_valid_corrections(proposal,targets,repair,state['package'],state['strategy'])
@@ -690,7 +734,12 @@ def repair_rejected_development(state, proposal, defects):
     for defect in defects:
         quote=norm(defect.get('artifact_quote'))
         candidates=list(allowed)
-        if defect.get('matter_id'):
+        bound=defect.get('field_path')
+        if bound in allowed and isinstance(allowed[bound],str) and quote and quote in norm(allowed[bound]):
+            # A source-bound field review already supplied the exact address.
+            # Repeated prose elsewhere is not authority to repair that field.
+            exact=[bound]
+        elif defect.get('matter_id'):
             indices=[i for i,m in enumerate(proposal.get('matters',[])) if m.get('matter_id')==defect['matter_id']]
             matter_candidates=[path for path in candidates if any(path.startswith(f'matters/{i}/') for i in indices)]
             exact=[path for path in matter_candidates if quote and isinstance(allowed[path],str) and quote in norm(allowed[path])]
@@ -873,6 +922,7 @@ def repair_letter(state):
     change=Union[variants] if len(variants)>1 else variants[0]
     schema=create_model('AuditDelta',corrections=(list[change],...),unresolved=(list[str],...))
     result,trace=invoke_role(state,'writer',schema,
+        recovery_instruction(state)+
         'Repair the existing executive Audit after the supplied defects or targeted Submission correction. Return ONLY fields requiring change; all others are preserved exactly. For preserve_source_aliases on an internal reserve label, explicitly retain BOTH original name variants in the comparison; do not choose a canonical identity or ask the user to correct spelling. Reconcile the letter with CURRENT development and original sources. Remove warnings about generated defects already corrected. submission_review_context describes a separate Submission review: reconcile the Audit with CURRENT development, but never try to edit Submission fields or report those separate defects as unresolved Audit tasks. source_questions are context, NOT editing tasks: retain genuine unanswered factual questions without inventing answers and never put them in unresolved merely because the user has not answered. unresolved is only for a requested GENERATED correction that cannot be applied. A source-backed institutional B10 figure is not contradicted merely because another matter has the same number for a different population. Never claim a rendered document is approved or blocked: report strategic recommendations and genuine evidence gaps. Do not repeat system diagnostics or ask users to fix generated wording. Preserve portfolio, hero, candidates, supported comparisons and confirmed answers. Keep the whole five-section letter within 1800 words. next_steps is generated from next_actions; change next_actions only for genuine changed recommendations, preserving useful unanswered actions. If a generated field cannot be corrected faithfully, report unresolved. This patch must still pass the independent exact-Word review.',
         {'previous_letter':state['letter'],'defects':feedback,'source_questions':source_questions,'submission_review_context':submission_context,'package':source_package,'strategy':state['strategy'],'development':None if classification_only else development,
          'scope_instruction':'Only reconcile these changed personal arguments/categories. Preserve all other individual recommendations and text.' if personal_delta else 'Only reconcile mentions of the supplied changed matters. Preserve unrelated text and recommendations; the full independent source review still follows.' if scoped_delta else None})
@@ -916,3 +966,4 @@ TASK += " For a BiographyOutputDelta return only the permitted BIO and keyed out
 TASK += " When primary_contribution is required, supply only that new contribution's literal original source_quote, actual BIO public_quote and source-supported personal_role. The application appends the required mandate without accepting a replacement list or model-selected matter ID. Preserve the complete existing BIO verbatim and add the missing contribution. Existing bindings and supporting evidence remain read-only. This one new source quote is the sole exception to the output-only delta; it must pass the original source and personal-attribution validators."
 
 TASK += " " + DEPTH_INSTRUCTION
+TASK += " When participation_quote is required, return only the actual added public BIO passage describing team membership. Keep the existing limited BIO verbatim and add the supported participation. The application appends the fixed original source and membership role itself; do not return or alter source quotes, matter IDs, category or identity. This cannot establish leadership, individual results or a nomination."

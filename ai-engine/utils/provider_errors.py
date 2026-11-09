@@ -2,6 +2,12 @@
 
 def provider_failure(error):
     text = str(error).lower()
+    if getattr(error,'code',None)=='EDITORIAL_BUDGET_REQUIRED':
+        return {'success':False,'code':'EDITORIAL_BUDGET_REQUIRED','retryable':False,
+                'error':'El saldo de este intento no alcanza para completar la siguiente operación. No se inició esa generación; el avance se conserva.'}
+    if getattr(error,'code',None)=='AI_BUDGET_CHECK_UNAVAILABLE':
+        return {'success':False,'code':'AI_BUDGET_CHECK_UNAVAILABLE','retryable':True,
+                'error':'No se pudo comprobar la capacidad de la siguiente operación. No se inició esa generación; el avance se conserva.'}
     if 'review diagnostic not grounded' in text:
         return {'success':False,'code':'AI_REVIEW_INVALID',**({'retryable':False} if getattr(error,'diagnostic_retry_exhausted',False) else {}),'error':'RankPilot está comprobando una observación interna antes de continuar. El avance se conserva.'}
     if any(term in text for term in ('insufficient_quota', 'credit_balance_exhausted', 'no credits remaining', 'billing_hard_limit')):

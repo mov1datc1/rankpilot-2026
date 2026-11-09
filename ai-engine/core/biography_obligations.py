@@ -41,6 +41,9 @@ def biography_faults(package, strategy, proposal, index):
     from core.editorial_development import submission_voice_paths
     from core.role_evidence import identity
     candidate = proposal['candidates'][index]; faults = []
+    from core.participation_contract import participation_errors
+    faults.extend({'code':'participation_missing','detail':error}
+                  for error in participation_errors(package,strategy,candidate))
     for binding in personal_bindings(package, candidate):
         for issue in binding['issues']:
             faults.append({'code': issue, 'reference': binding['reference'],

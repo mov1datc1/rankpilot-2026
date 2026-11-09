@@ -117,6 +117,13 @@ class ReviewState(TypedDict, total=False):
     development_revalidation_only: bool
     development_recheck_report: dict
     repair_feedback: list
+    repair_strategy: str
+    field_review_enabled: bool
+    field_review_receipts: list
+    field_review_attempts: dict
+    field_review_failures: list
+    field_review_parent_feedback: list
+    field_review_reconciled_feedback: list
     repair_report: dict
     repair_continuation: dict
     durable_repair_steps: bool
@@ -322,12 +329,12 @@ def invoke_role(state, role, schema, instruction, payload):
     from core.editorial_reasoning import reasoning_guidance, REASONING_VERSION
     instruction += '\n' + reasoning_guidance(role)
     started = time.monotonic()
-    purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer', 'diagnostic_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
+    purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer', 'diagnostic_reviewer', 'field_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
     # This narrow role interprets a supplied clause's membership predicate.
     # Directory/practice examples add no evidence and can distract from negation.
-    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer') or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
+    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer','field_reviewer') or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
@@ -364,6 +371,13 @@ def invoke_role(state, role, schema, instruction, payload):
     try:
         result = chain.invoke(messages)
     except Exception as error:
+        from utils.provider_budget import BudgetPreflightError
+        if isinstance(error,BudgetPreflightError):
+            error.trace={'role':role,'usage':{'input_tokens':0,'output_tokens':0,'total_tokens':0},
+                'provider_request_started':False,'budget_admission':error.details,
+                'budget_check_code':error.code}
+            error.trace_history=list(state.get('trace',[]))+[error.trace]
+            raise
         # The request may have reached the provider even without a response.
         # Never manufacture zero tokens or buy another call on this evidence.
         failure = EditorialResponseError('provider outcome unknown', {
@@ -651,6 +665,14 @@ def writer(state):
     return {'letter':letter,'trace':trace,'writer_attempts':state.get('writer_attempts',0)+1,'writer_validated':not errors,'errors':errors}
 
 def editor(state):
+    from core.field_review import verified_obligations
+    package=dict(state['package'])
+    package.pop('_verified_field_obligations',None)
+    verified=verified_obligations(package,state.get('strategy') or {},state.get('development') or package.get('editorial_development') or {})
+    package.pop('field_review_receipts',None)
+    if verified:
+        package['_verified_field_obligations']=verified
+    state={**state,'package':package}
     from core.editorial_voice import rendered_voice_defects
     style_defects = rendered_voice_defects(state['package'], state.get('development') or state['package'].get('editorial_development'))
     from core.portfolio_counts import rendered_count_defects

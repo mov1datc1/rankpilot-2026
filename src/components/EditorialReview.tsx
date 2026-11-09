@@ -7,8 +7,8 @@ import {useState} from 'react';
 function AttemptReference({job}:{job:any}) {
   const [referenceStatus,setReferenceStatus]=useState('');
   return <div style={{background:'#FFF7ED',border:'1px solid #FED7AA',borderRadius:10,padding:14,marginBottom:16}}>
-      <strong>Solicita la revisión de este intento</strong>
-      <p style={{fontSize:13,lineHeight:1.6}}>Copia la referencia y compártela con quien administra RankPilot para que revise el fallo. Esperar o volver a generar no reanuda este intento; conserva este expediente para consultar sus hallazgos.</p>
+      <strong>{job.nextAction?.title || 'Solicita la revisión de este intento'}</strong>
+      <p style={{fontSize:13,lineHeight:1.6}}>{job.nextAction?.description || 'Copia la referencia y compártela con quien administra RankPilot para que revise el fallo. Esperar o volver a generar no reanuda este intento; conserva este expediente para consultar sus hallazgos.'}</p>
       <code style={{overflowWrap:'anywhere'}}>{job.id}</code>
       <button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(`RankPilot · intento ${job.id} · etapa ${job.stage} · estado ${job.status} · código ${job.issue?.code || 'sin código'}`);setReferenceStatus('Referencia copiada.');}catch{setReferenceStatus('No se pudo copiar automáticamente. Selecciona y copia la referencia que aparece arriba.');}}} style={{marginLeft:10,padding:'7px 12px',cursor:'pointer'}}>Copiar referencia</button>
       <p role="status" style={{fontSize:13}}>{referenceStatus}</p>
@@ -26,9 +26,9 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
-  const pausedInstructions=isStoppedSelection(job)
+  const pausedInstructions=job?.nextAction?.description || (isStoppedSelection(job)
     ? 'La selección no superó la revisión y este intento terminó antes de redactar los documentos. Puedes consultar los motivos abajo y cerrar este expediente. No vuelvas a pulsar «Revisar y generar» ni a subir el original: no hay otra revisión automática pendiente ni una respuesta del cliente que desbloquee este intento. Se requiere corregir la selección generada en RankPilot; la entrega final aún no está disponible.'
-    : 'Este intento está detenido y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere resolver esta pausa y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.';
+    : 'Este intento está detenido y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere resolver esta pausa y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.');
   return <>
     {!approved && (
       <div style={{
@@ -79,14 +79,14 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
             margin: 0,
             fontWeight: 500
           }}>
-            La entrega final se habilita después de revisar los documentos. {humanCount > 0 ? 'Las confirmaciones que requieren tu respuesta aparecen abajo.' : systemManaged ? (isRunning ? 'La revisión está en curso. Espera a que termine; puedes cerrar esta pestaña y volver después.' : pausedInstructions) : 'Pulsa la acción del pendiente para preparar los documentos.'}
+            La entrega final se habilita después de revisar los documentos. {humanCount > 0 ? 'Las confirmaciones que requieren tu respuesta aparecen abajo.' : systemManaged ? (isRunning ? (job?.nextAction?.description || 'La revisión está en curso. Espera a que termine; puedes cerrar esta pestaña y volver después.') : pausedInstructions) : 'Pulsa la acción del pendiente para preparar los documentos.'}
           </p>
         </div>
       </div>
     )}
     <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>Entrega {approved?'aprobada':'pendiente'}</div>
-    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit'}</h2>
+    <h2 style={{fontSize:22,margin:'8px 0'}}>{approved?'Documentos revisados y disponibles':job?.nextAction?.title || (recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación pausada':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit')}</h2>
     {!approved && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Revisión detenida; consulta abajo qué puedes hacer.' : 'La entrega oficial se habilita al completar la revisión automática.'}</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {approved ? 'Submission y Audit disponibles para descargar.' : data?.editorial_review?.letter?'El Audit está disponible como revisión interna; aún no equivale a una entrega aprobada.':'El Audit se redacta durante la revisión editorial.'}</p>
     {stopped && systemManaged && !approved && job?.id && <AttemptReference job={job}/>}
@@ -118,7 +118,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     </div>)}</div>
     {stale && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Ver hallazgos de la versión anterior</summary><p>Se conservan como historial; falta comprobar cuáles siguen vigentes.</p><ul>{(data.final_artifact_review.judge?.defects || []).map((d:any,i:number)=><li key={i}>{d.message}</li>)}</ul></details>}
     {!stale && warnings.length>0 && <details style={{marginTop:16,fontSize:13,lineHeight:1.6}}><summary style={{cursor:'pointer'}}>Otras observaciones ({warnings.length})</summary><ul>{warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></details>}
-    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'RankPilot no pudo completar esta etapa. No habrá más intentos automáticos. El borrador y el avance se conservan. No necesitas mantener esta página abierta: esperar no reanudará este intento. Consulta los hallazgos' + (data?.editorial_review?.letter ? ' y el Audit disponible.' : '; este intento todavía no preparó el Audit.') + ' La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.'}</p>}
+    {!approved && <p style={{fontSize:13,lineHeight:1.6,color:'#475569',marginBottom:0}}>{job?.nextAction?.description || (systemManaged && !humanCount ? isRunning?'RankPilot continuará automáticamente. Puedes cerrar esta pestaña.':'RankPilot no pudo completar esta etapa. No habrá más intentos automáticos. El borrador y el avance se conservan. No necesitas mantener esta página abierta: esperar no reanudará este intento. Consulta los hallazgos' + (data?.editorial_review?.letter ? ' y el Audit disponible.' : '; este intento todavía no preparó el Audit.') + ' La entrega final sigue pendiente.' : issues.some(issue=>issue.destination==='retry-selection') ? 'Pulsa «Reintentar selección». RankPilot repetirá esa etapa y continuará con el Audit y la revisión del Word si la selección supera la comprobación.' : 'Después de guardar las correcciones, pulsa «Preparar Submission y Audit». Se reutiliza el avance que siga vigente; la descarga se habilita cuando el Word supera la revisión.')}</p>}
   </section></>;
 }
 

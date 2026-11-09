@@ -11,6 +11,25 @@ from test_surgical_repair_postconditions import native_answer
 
 
 class RepairContinuationTests(unittest.TestCase):
+    def test_unstarted_budget_check_preserves_group_and_unused_residual_attempt(self):
+        from utils.provider_budget import BudgetPreflightError
+        p,s,v,valid=self.setup_case();calls,invoke=self.invoke(valid)
+        state={'package':p,'strategy':s,'durable_repair_steps':True}
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            first=repair_development(state,v,repair_targets(p,s,v))
+        before=copy.deepcopy(first)
+        error=BudgetPreflightError('AI_BUDGET_CHECK_UNAVAILABLE')
+        error.trace_history=first['trace']+[{'usage':{'total_tokens':0},'provider_request_started':False}]
+        with patch('core.review_graph.invoke_role',side_effect=error):
+            paused=resume_repair({**state,**first,'development_reusable':True})
+        self.assertEqual(paused['repair_continuation'],before['repair_continuation'])
+        self.assertEqual(paused['development'],before['development'])
+        self.assertEqual(sum(t['usage']['total_tokens'] for t in paused['trace']),11)
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            resumed=resume_repair({**state,**paused,'development_reusable':True})
+        self.assertEqual(resumed['repair_continuation']['residual_requests'],1)
+        self.assertEqual(len(resumed['repair_continuation']['pending_groups']),2)
+
     def setup_case(self):
         p,s,v=depth_case()
         valid=copy.deepcopy(v['candidates'][0]['submission_case_coverage'])

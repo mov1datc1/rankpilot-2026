@@ -113,6 +113,27 @@ test('recreated coordinator continues from persisted cursor without rerunning se
  const saved=structuredClone(job);const count=calls.length;job=JSON.parse(JSON.stringify(saved));
  await stage();assert.equal(calls.length,count+1);assert.equal(calls.at(-1).payload.stage,'writer');assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
 });
+test('field recovery preserves the job and ledger, changes method, then completes only after independent review',async()=>{
+ reset();repairMode=true;const normalFetch=global.fetch;
+ global.fetch=async(url,options)=>{
+  const payload=JSON.parse(options.body);
+  if(payload.stage==='development' && payload.state?.repair_strategy==='source_reconstruction')repairMode=false;
+  const response=await normalFetch(url,options);const body=await response.json();
+  if(body.state)body.state.case_requirements={...(body.state.case_requirements || {}),recovery_contract:'field-recovery-v1'};
+  return Response.json(body,{status:response.status});
+ };
+ try {
+  for(let guard=0;guard<15;guard++){await stage();if(job.status!=='queued')break;}
+  assert.equal(job.status,'completed',JSON.stringify(job));assert.equal(job.id,'job');
+  assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
+  const repairs=job.ledger.filter(e=>e.supervision?.action==='repair');
+  assert.deepEqual(repairs.map(e=>e.supervision.repair_strategy),['targeted_correction','source_reconstruction']);
+  assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,2);
+  assert.ok(submission.chambersData.approved_artifact.audit_base64);
+  assert.equal(submission.chambersData.matters[0].optimizedText,submission.chambersData.matters[0].rawNotes);
+  assert.ok(job.ledger.reduce((sum,e)=>sum+(e.trace?.usage?.total_tokens || 0),0)>475);
+ } finally {global.fetch=normalFetch;repairMode=false;}
+});
 test('source changes stop the next stage before a paid request',async()=>{
  reset();await stage();const count=calls.length;submission.chambersData.matters[0].rawNotes='Corrected source';
  await stage();assert.equal(job.status,'superseded');assert.equal(calls.length,count);
@@ -185,7 +206,7 @@ test('unstarted semantic review is checkpointed and automatically continued with
  }finally{global.fetch=normal;}
 });
 
-test('saved residual groups continue the same development cursor and bill each response once',async()=>{
+for(const version of ['bounded-residual-v1','source-field-review-v1'])test(`${version} continues the same development cursor and bills each response once`,async()=>{
  reset();await stage();const normal=global.fetch;let parts=0;
  global.fetch=async(url,options)=>{
   const payload=JSON.parse(options.body);
@@ -196,7 +217,7 @@ test('saved residual groups continue the same development cursor and bill each r
    return Response.json({success:true,next_stage:'done',state:{...payload.state,
     development:{version:'editorial-development-v2',b10:'Retained prose',candidates:[],matters:[]},
     development_validated:false,errors:['Saved remaining field.'],
-    repair_continuation:{version:'bounded-residual-v1',pending_groups:[{'candidates/0':{}}],residual_requests:parts-1},
+    repair_continuation:{version,pending_groups:[{'candidates/0':{}}],residual_requests:parts-1},
     trace:[...(payload.state.trace || []),{role:'repair',usage:{total_tokens:20},provider_request_id:'partial-'+parts}]}});
   }
   const response=await normal(url,options);const value=await response.json();
@@ -215,4 +236,29 @@ test('saved residual groups continue the same development cursor and bill each r
   assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),260);
   assert.ok(!submission.chambersData.approved_artifact);
  } finally {global.fetch=normal;}
+});
+
+test('pre-call capacity checks preserve checkpoints and only count unavailable checks get one retry',async()=>{
+ for(const code of ['AI_BUDGET_CHECK_UNAVAILABLE','EDITORIAL_BUDGET_REQUIRED']) {
+  reset();await stage();const normal=global.fetch;let attempts=0;const allowances=[];
+  global.fetch=async(url,options)=>{
+   attempts++;const payload=JSON.parse(options.body);
+   allowances.push(new Headers(options.headers).get('X-RankPilot-Token-Allowance'));
+   return Response.json({success:true,next_stage:'done',state:{...payload.state,
+    development:{version:'editorial-development-v2',b10:'Retained prose',candidates:[],matters:[]},
+    development_validated:false,budget_stop:{code},errors:['Generation not started'],
+    repair_continuation:{version:'source-field-review-v1',phase:'review',pending_groups:[['b10']]},
+    trace:[...(payload.state.trace || []),{role:'field_reviewer',usage:{total_tokens:0},provider_request_started:false}]}});
+  };
+  try {
+   await stage();
+   assert.equal(job.cursor,1);assert.equal(job.issue.code,code);
+   assert.deepEqual(submission.chambersData.review_checkpoint.state.repair_continuation.pending_groups,[['b10']]);
+   if(code==='AI_BUDGET_CHECK_UNAVAILABLE') {assert.equal(job.status,'queued');await stage();assert.equal(attempts,2);}
+   else assert.equal(attempts,1);
+   assert.equal(job.status,'failed');assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),100);
+   assert.ok(allowances.every(a=>a==='1199900'));
+   assert.ok(!submission.chambersData.approved_artifact);
+  } finally {global.fetch=normal;}
+ }
 });

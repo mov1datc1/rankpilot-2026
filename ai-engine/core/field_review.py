@@ -1,0 +1,255 @@
+"""Persisted source-to-field review before paying to assemble the Audit/Word.
+
+Uses the final review's obligations, not a second editorial policy. Receipts bind
+source, instructions and actual output; an edit invalidates only its own unit.
+The final byte-bound document review remains independent and mandatory.
+"""
+import copy
+import json
+import hmac
+import os
+from collections import OrderedDict
+from hashlib import sha256
+from typing import Literal
+from pydantic import ConfigDict, Field, create_model
+
+VERSION = 'source-field-review-v1'
+TASK = '''Review only these source-bound editorial units before document assembly.
+For EACH obligation judge whether the actual output executes its supplied rule
+against the complete original sources. A matching quote is not semantic proof.
+Check legal mechanism, result/status, attribution, credentials and decisive scale
+where required. Confidential E narratives retain private source evidence; public
+BIO/B10/C2 must generalise restricted identities and identifying metrics. Team
+membership is not leadership or personal achievement. Missing source information
+does not require invented detail or padding: an accurate limited profile is valid.
+Mark failed only for a concrete material violation of this obligation; optional
+wording preferences are met, not blocking defects. Identify an allowed output
+passage and original source passage, and explain the exact omission or error and
+what the authorised field must preserve. Do not rewrite text, change sources,
+nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
+
+
+def digest(value):
+    return sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
+
+
+def receipt_matches(unit,receipt,require_signature=False):
+    if receipt.get('version')!=VERSION or receipt.get('hash')!=unit['hash'] or receipt.get('field')!=unit['field']:
+        return False
+    wanted={o['id'] for o in unit['obligations']};checks=receipt.get('checks',[])
+    if len(checks)!=len(wanted) or {c.get('obligation_id') for c in checks}!=wanted or any(c.get('status')!='met' for c in checks):return False
+    secret=os.environ.get('AI_ENGINE_SERVICE_TOKEN')
+    if require_signature or secret:
+        if not secret or not isinstance(receipt.get('signature'),str):return False
+        unsigned={k:v for k,v in receipt.items() if k!='signature'}
+        expected=hmac.new(secret.encode(),json.dumps(unsigned,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode(),sha256).hexdigest()
+        if not hmac.compare_digest(expected,receipt['signature']):return False
+    return True
+
+
+def units_for(state):
+    from core.editorial_case import obligations, execution_source_catalog, execution_output
+    from core.editorial_development import SOURCE_FIELDS
+    source_fields=set(SOURCE_FIELDS) | {'id','name','fullName','title','client','clientDescription','source_label',
+        'bio','comments','key_focus','standout_work','standoutWork','credentials','professional_roles',
+        'role','isPartner','is_partner','roleResolution','confirmed_department_head',
+        'currentRank','current_ranking','isRanked','is_ranked','otherFirms','crossBorder',
+        'valueResolution','valueConflict','confidential','isConfidential','confidentialityStatus',
+        'confidentialityConfirmed','confidentialityEvidence','publish_status','publishStatus',
+        'publication_route','resolved_publication_status'}
+    package,strategy,proposal=state['package'],state['strategy'],state['development']
+    sources=execution_source_catalog(package,strategy,proposal)
+    groups=OrderedDict()
+    for obligation in obligations(package,strategy,proposal):
+        # Cross-document argument consistency needs the finished Audit. It stays
+        # in the independent final review, not a fictitious early approval.
+        if obligation['output_scope']=='audit' or obligation['id'].endswith('b9_audit_consistency'):
+            continue
+        path=obligation['field']
+        text,_=execution_output(package,proposal,{},path)
+        if not text.strip():
+            raise ValueError('Field review cannot certify an absent output: '+path)
+        unit=groups.setdefault(path,{'field':path,'output':text,'obligations':[], 'sources':{}})
+        refs={}
+        for source in obligation['sources']:
+            original={k:v for k,v in source.items() if k in source_fields}
+            key=digest(original);unit['sources'][key]=original;refs[key]=True
+        unit['obligations'].append({'id':obligation['id'],'instruction':obligation['instruction'],
+            'source_ids':list(refs),'source_passages':sources[obligation['id']]})
+    result=[]
+    from utils.review_policy import EDITORIAL_RULES
+    for unit in groups.values():
+        unit['output_passages']={'P_'+digest(q)[:16]:q for q in
+            dict.fromkeys(' '.join(line.split()) for line in unit['output'].splitlines() if line.strip())}
+        unit['hash']=digest({'version':VERSION,'policy':EDITORIAL_RULES,**unit})
+        result.append(unit)
+    return result
+
+
+def batches(units):
+    # Review a person's BIO/category together, and B10/C2 together. Their own
+    # original evidence is sent once; unrelated records retain distinct rules.
+    families=OrderedDict()
+    for unit in units:
+        path=unit['field'];family='/'.join(path.split('/')[:2]) if path.startswith('candidates/') else 'institution' if path in ('b10','c2') else path
+        families.setdefault(family,[]).append(unit)
+    result=[];batch=[]
+    for family in families.values():
+        combined=batch+family
+        size=len(json.dumps(review_payload(combined),ensure_ascii=False).encode())
+        checks=sum(len(u['obligations']) for u in combined)
+        if batch and (len(combined)>6 or size>120000 or checks>24):
+            result.append([u['field'] for u in batch]);batch=[]
+        batch.extend(family)
+    if batch:result.append([u['field'] for u in batch])
+    return result
+
+
+def contract(units):
+    fields={}
+    for unit in units:
+        for item in unit['obligations']:
+            fields[item['id']]=(create_model('FieldProof_'+digest(item['id'])[:12],__config__=ConfigDict(extra='forbid'),
+                status=(Literal['met','failed'],...),
+                artifact_ref=(Literal[tuple(unit['output_passages'])],...),
+                source_ref=(Literal[tuple(item['source_passages'])],...),
+                reason=(str,Field(min_length=1,max_length=500))),...)
+    checks=create_model('FieldChecks',__config__=ConfigDict(extra='forbid'),**fields)
+    return create_model('SourceFieldVerdict',__config__=ConfigDict(extra='forbid'),checks=(checks,...))
+
+
+def review_payload(units):
+    """One copy per original record/passage, irrespective of obligation count."""
+    records={};passages={};items=[]
+    for unit in units:
+        records.update(unit['sources']);checks=[]
+        for obligation in unit['obligations']:
+            passages.update(obligation['source_passages'])
+            checks.append({k:v for k,v in obligation.items() if k!='source_passages'} |
+                          {'source_refs':list(obligation['source_passages'])})
+        items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks})
+    return {'units':items,'original_sources':records,'original_passages':passages}
+
+
+def project_checks(units,result):
+    parsed=contract(units).model_validate(result).model_dump()
+    receipts=[];defects=[]
+    for unit in units:
+        checks=[]
+        for item in unit['obligations']:
+            check=parsed['checks'][item['id']]
+            proof={'obligation_id':item['id'],'status':check['status'],
+                'source_quote':item['source_passages'][check['source_ref']],
+                'artifact_quote':unit['output_passages'][check['artifact_ref']],'reason':check['reason']}
+            checks.append(proof)
+            if check['status']=='failed':
+                defects.append({'code':'EDITORIAL_OMISSION','severity':'critical','owner':'rankpilot','scope':'submission',
+                    'field_path':unit['field'],'matter_id':None,'source_quote':proof['source_quote'],
+                    'artifact_quote':proof['artifact_quote'],'message':proof['reason'],'obligation_id':item['id']})
+        if all(c['status']=='met' for c in checks):
+            receipt={'version':VERSION,'field':unit['field'],'hash':unit['hash'],'checks':checks}
+            secret=os.environ.get('AI_ENGINE_SERVICE_TOKEN')
+            if secret:receipt['signature']=hmac.new(secret.encode(),json.dumps(receipt,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode(),sha256).hexdigest()
+            receipts.append(receipt)
+    return receipts,defects
+
+
+def verified_obligations(package,strategy,proposal):
+    """Reuse signed proofs only where the actual exported field is identifiable.
+
+    A full-document substring is not a field locator. Matter narratives/B10/C2
+    continue through final checks; BIO uses the actual Word-table extraction.
+    Internal category/comparison fields bind to the exact retained proposal.
+    """
+    from core.editorial_case import execution_output
+    secret=os.environ.get('AI_ENGINE_SERVICE_TOKEN')
+    if not secret or not package.get('rendered_artifact') or not package.get('field_review_receipts') or proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):
+        return []
+    original={k:v for k,v in package.items() if k not in
+        ('rendered_artifact','rendered_audit','rendered_candidate_bios','_verified_field_obligations','field_review_receipts')}
+    units={u['field']:u for u in units_for({'package':original,'strategy':strategy,'development':proposal})}
+    valid=[]
+    for signed in package.get('field_review_receipts',[]):
+        path=signed.get('field','');unit=units.get(path)
+        if not unit or not receipt_matches(unit,signed,require_signature=True):continue
+        if not path.startswith(('candidates/','comparisons/')):continue
+        if path.endswith('/submission_bio'):
+            actual,_=execution_output(package,proposal,{},path)
+            if ' '.join(actual.split())!=' '.join(unit['output'].split()):continue
+        valid.extend(o['id'] for o in unit['obligations'])
+    return sorted(set(valid))
+
+
+def schedule(state,result=None):
+    result=dict(result or {});merged={**state,**result}
+    units=units_for(merged)
+    receipts=merged.get('field_review_receipts',[])
+    pending=[u for u in units if not any(receipt_matches(u,r) for r in receipts)]
+    if not pending:
+        return {**result,'repair_continuation':None,'development_validated':True,'errors':[],
+            'field_review_failures':[],
+            'repair_feedback':merged.get('field_review_parent_feedback',[]) + merged.get('field_review_reconciled_feedback',[])}
+    return {**result,'development_validated':False,'development_repair_unlocatable':False,
+        'errors':['Redacción guardada; comprobando los campos contra sus fuentes antes de preparar los documentos.'],
+        'repair_continuation':{'version':VERSION,'phase':'review','proposal_hash':digest(merged['development']),
+            'pending_groups':batches(pending)}}
+
+
+def after_repair(state,result):
+    """A residual continuation belongs to the same field recovery method."""
+    paths={d['field_path'] for d in state.get('field_review_failures',[])}
+    attempts=state.get('field_review_attempts',{})
+    result={**result,'field_review_attempts':attempts,'repair_strategy':state.get('repair_strategy','targeted_correction')}
+    if result.get('development_validated'):
+        return schedule(state,result)
+    if result.get('repair_continuation'):
+        return result
+    if paths and not unknown_usage(result.get('trace',[])) and all(attempts.get(path,0)<2 for path in paths):
+        return {**result,'development_repair_unlocatable':False,
+            'repair_continuation':{'version':VERSION,'phase':'repair',
+                'proposal_hash':digest(result.get('development',state['development'])),
+                'pending_groups':[sorted(paths)]}}
+    return {**result,'repair_continuation':None,'development_repair_unlocatable':True}
+
+
+def unknown_usage(trace):
+    from core.editorial_repair import unknown_repair_usage
+    return unknown_repair_usage(trace)
+
+
+def advance(state):
+    from core.editorial_repair import unknown_repair_usage, repair_rejected_development
+    pending=state.get('repair_continuation') or {}
+    if pending.get('proposal_hash')!=digest(state['development']) or unknown_repair_usage(state.get('trace',[])):
+        return {'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
+            'errors':['La revisión por campos perdió vigencia o conserva una operación sin resultado confirmado.']}
+    if pending.get('phase')=='repair':
+        defects=state.get('field_review_failures',[])
+        paths={d['field_path'] for d in defects};attempts=dict(state.get('field_review_attempts',{}))
+        if not paths or any(attempts.get(path,0)>=2 for path in paths):
+            return {'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
+                'errors':['La recuperación de estos campos agotó sus dos métodos; se conserva el avance.']}
+        strategy='source_reconstruction' if any(attempts.get(path,0) for path in paths) else 'targeted_correction'
+        for path in paths:attempts[path]=attempts.get(path,0)+1
+        current={**state,'repair_continuation':None,'repair_strategy':strategy,'repair_feedback':defects,
+                 'field_review_attempts':attempts}
+        result=repair_rejected_development(current,state['development'],defects)
+        return after_repair(current,result)
+    from core.review_graph import invoke_role
+    available={u['field']:u for u in units_for(state)}
+    paths=(pending.get('pending_groups') or [[]])[0]
+    if not paths or len(paths)!=len(set(paths)) or any(p not in available for p in paths):
+        raise ValueError('Invalid persisted field review group')
+    units=[available[p] for p in paths]
+    result,trace=invoke_role(state,'field_reviewer',contract(units),TASK,review_payload(units))
+    receipts,defects=project_checks(units,result)
+    saved=[r for r in state.get('field_review_receipts',[]) if r.get('field') not in paths]+receipts
+    update={'trace':trace,'field_review_receipts':saved}
+    if defects:
+        return {**update,'development_validated':False,'development_repair_unlocatable':False,
+            'field_review_failures':defects,
+            'field_review_reconciled_feedback':state.get('field_review_reconciled_feedback',[])+defects,
+            'errors':['Hallazgos localizados; RankPilot corregirá esos campos antes de preparar los documentos.'],
+            'repair_continuation':{'version':VERSION,'phase':'repair','proposal_hash':digest(state['development']),
+                'pending_groups':[list(dict.fromkeys(d['field_path'] for d in defects))]}}
+    return schedule(state,update)

@@ -107,7 +107,15 @@ async def service_boundary(request: Request, call_next):
             return JSONResponse(status_code=401, content={'error':'Service authentication required'})
         if not expected and os.environ.get('RENDER'):
             return JSONResponse(status_code=503, content={'error':'Service authentication is not configured'})
-    response=await call_next(request)
+    from utils.provider_budget import request_budget, RequestBudget
+    allowance=request.headers.get('x-rankpilot-token-allowance')
+    if allowance is not None and (not allowance.isdecimal() or len(allowance)>12):
+        return JSONResponse(status_code=400,content={'error':'Invalid editorial allowance'})
+    budget_token=request_budget.set(RequestBudget(int(allowance)) if allowance is not None else None)
+    try:
+        response=await call_next(request)
+    finally:
+        request_budget.reset(budget_token)
     response.headers["X-RankPilot-Policy"]=REVIEW_POLICY_VERSION
     return response
 
@@ -1243,13 +1251,21 @@ async def review_step_endpoint(request: Request):
             return JSONResponse(status_code=400, content={'success': False, 'error': 'Invalid review step'})
         from core.review_graph import run_editorial_stage, release_gate
         from utils.ranking_verifier import verify_ranking_claim
-        state = {**(body.get('state') or {}), 'package': payload}
+        state = {**(body.get('state') or {}), 'package': payload,
+                 'field_review_enabled': stage=='development'}
+        state.pop('budget_stop',None)
         if stage in ('strategy','development'):
             payload['ranking_verification'] = await asyncio.to_thread(verify_ranking_claim, payload, state.get('ranking_verification'))
             state['ranking_verification'] = payload['ranking_verification']
         else:
             payload['ranking_verification'] = state.get('ranking_verification', {})
         state = await asyncio.to_thread(run_editorial_stage, stage, state)
+        from utils.provider_budget import request_budget
+        budget=request_budget.get()
+        if budget and budget.last_stop:
+            state['budget_stop']=budget.last_stop
+            state['errors']=['La siguiente generación no se inició; se conserva el avance y el consumo anterior.']
+            if stage=='development':state['development_validated']=False
         if state.get('repair_continuation'):
             next_stage = 'done'  # Saved below; the durable worker resumes the same role.
         elif state.get('errors'):
@@ -1294,6 +1310,12 @@ async def verify_rendered_package_endpoint(request: Request):
             return JSONResponse(status_code=400, content={'success':False,'error':'Missing rendered artifact'})
         from core.review_graph import review_rendered_package
         result = await asyncio.to_thread(review_rendered_package, {'package':payload['package'],'strategy':payload.get('strategy',{}),'letter':payload.get('letter',{}),'trace':[],'output_recovery_attempt':1 if payload.get('output_recovery') is True else 0}, payload.get('allow_repair', True))
+        from utils.provider_budget import request_budget, BudgetPreflightError
+        budget=request_budget.get()
+        if budget and budget.last_stop:
+            from utils.provider_errors import provider_failure
+            stopped=BudgetPreflightError(**budget.last_stop)
+            return JSONResponse(status_code=502,content={**provider_failure(stopped),'trace':result.get('trace',[])})
         judge = dict(result.get('judge') or {})
         # A proposed/repaired letter is not proof that the exact rendered bytes
         # passed. Never discard scope-specific or acceptance findings here.

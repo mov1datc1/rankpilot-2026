@@ -18,6 +18,6 @@ class ServicePolicyTest(unittest.IsolatedAsyncioTestCase):
         response = SimpleNamespace(headers={})
         async def handler(request):
             return response
-        result = await namespace['service_boundary'](SimpleNamespace(url=SimpleNamespace(path='/health')), handler)
+        result = await namespace['service_boundary'](SimpleNamespace(url=SimpleNamespace(path='/health'),headers={}), handler)
         self.assertEqual(result.headers['X-RankPilot-Policy'], json.loads((ROOT / 'config/editorial_rules.v1.json').read_text())['version'])
         self.assertIs(result, response)
