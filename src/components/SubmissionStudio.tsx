@@ -294,7 +294,7 @@ export default function SubmissionStudio({
       });
       if (!result.success) throw new Error(result.error || 'No se pudo guardar los cambios.');
       if (result.matters) setMatters(result.matters);
-      setChambersData((prev: any) => ({...prev, matters: result.matters || matters, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Borrador editado; requiere nueva revisión.']}}));
+      setChambersData((prev: any) => ({...prev, matters: result.matters || matters, draft_revision: result.revision, release_verdict: {passed: false, status: 'needs_review', errors: ['Contenido editado; requiere nueva revisión.']}}));
       setDraftSavedToast(true);
       setTimeout(() => setDraftSavedToast(false), 3500);
       return true;
@@ -592,7 +592,7 @@ export default function SubmissionStudio({
       text += `Los campos básicos revisados están presentes; queda pendiente la revisión editorial y del archivo.\n`;
     }
 
-    text += `\nFavor de enviar estos datos a la brevedad para incorporar al borrador de RankPilot.\n`;
+    text += `\nFavor de enviar estos datos a la brevedad para incorporar al expediente de RankPilot.\n`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -4226,7 +4226,7 @@ export default function SubmissionStudio({
                 </div>
               </div>
 
-              {readiness.blockers.length>0 && <div role="status" style={{padding:'1rem',background:'#FFF7ED',borderRadius:8}}><strong>Antes de redactar:</strong><ul>{readiness.blockers.map(message=><li key={message}>{message}</li>)}</ul><p>Completa estos datos y vuelve a intentar. El borrador permanece disponible.</p></div>}
+              {readiness.blockers.length>0 && <div role="status" style={{padding:'1rem',background:'#FFF7ED',borderRadius:8}}><strong>Antes de redactar:</strong><ul>{readiness.blockers.map(message=><li key={message}>{message}</li>)}</ul><p>Completa estos datos y vuelve a intentar. Tus datos y cambios se conservan.</p></div>}
 
               {/* High-capacity portfolio advisory (ej. Ramos Castillo con 33 asuntos) */}
               {matters.length >= 10 && readiness.mattersNeedingAttention.length > 0 && (
@@ -4291,7 +4291,7 @@ export default function SubmissionStudio({
                       ¿No tienes la información completa en este momento?
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: '0.15rem' }}>
-                      Tu borrador se guarda en tiempo real. Puedes salir con tranquilidad y retomarlo más tarde desde tu listado de submissions.
+                      Tus cambios se guardan en tiempo real. Puedes salir y retomar el expediente desde tu listado de submissions.
                     </div>
                   </div>
                 </div>

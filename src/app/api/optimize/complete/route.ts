@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
           if([401,403].includes(finalResponse.status)) {
             const released=await prisma.submission.updateMany({where:{id:submission.id,updatedAt:submission.updatedAt},data:{updatedAt:new Date(),chambersData:{...previous,review_checkpoint:{...previous.review_checkpoint,lease_until:0}}}});
             if(released.count!==1) throw new Error('DRAFT_CONFLICT');
-            return NextResponse.json({success:false,code:'ENGINE_AUTH_FAILED',retryable:false,error:'La preparación está pausada por una conexión interna. Tus datos y redacciones se conservan.',trace:receivedTrace},{status:503});
+            return NextResponse.json({success:false,code:'ENGINE_AUTH_FAILED',retryable:false,error:'No se pudo conectar con el servicio de revisión. Tus datos y redacciones se conservan. Comparte la referencia del expediente con soporte para recuperar la operación.',trace:receivedTrace},{status:503});
           }
           if(!finalResponse.ok && ['AI_OUTPUT_LIMIT','AI_REVIEW_INVALID'].includes(finalReview.code)) {
             // The provider returned a terminal response, so this lease can safely
