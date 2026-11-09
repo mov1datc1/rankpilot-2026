@@ -85,11 +85,14 @@ def institutional_errors(proposal):
         errors.append('C2 debe argumentar la cobertura solicitada, no duplicar B10.')
     if set(ids)!=expected or len(ids)!=len(set(ids)):
         errors.append('B10 y C2 deben ejecutar cada argumento de la propuesta compartida.')
-    for link in links:
+    for index,link in enumerate(links):
         b,c=norm(link.get('b10_quote')),norm(link.get('c2_quote'))
-        if not b or b not in norm(proposal.get('b10')) or not c or c not in norm(proposal.get('c2')):
-            errors.append('La prueba de ejecución institucional debe citar su propio campo B10/C2.')
-        elif b==c:
+        for field,quote in (('b10',b),('c2',c)):
+            if not quote or quote not in norm(proposal.get(field)):
+                errors.append('La prueba de ejecución institucional debe citar su propio campo B10/C2. '
+                              f'institutional_execution/{index}/{field}_quote={link.get(field+"_quote")!r}; '
+                              f'copy one exact contiguous passage from the CURRENT {field}, without joining separate sentences.')
+        if b and c and b==c:
             errors.append('C2 debe argumentar la cobertura solicitada, no copiar el párrafo de B10.')
     return errors
 

@@ -17,6 +17,64 @@ def linked_case():
     return p,s,v
 
 class LinkedExecutionTests(unittest.TestCase):
+    def test_structured_residuals_receive_one_owned_recovery_with_current_evidence(self):
+        p,s,v=linked_case();original=copy.deepcopy(v)
+        v['case_plan']['institutional_arguments'][0]['evidence'][0]['source_quote']='Invented source quote'
+        v['institutional_execution'][0]['c2_quote']='Invented public quote'
+        targets=repair_targets(p,s,v);calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            group=payload['repair_targets'];calls.append(copy.deepcopy(payload))
+            corrections=[]
+            for path,t in group.items():
+                value=copy.deepcopy(t['current_value'])
+                if len(calls)>1:value=copy.deepcopy(original[path])
+                corrections.append({'path':path,'value':value,'reason':'Correct own binding'})
+            return {'corrections':corrections,'unresolved':[]},state.get('trace',[])+[{'role':'repair','usage':{'total_tokens':7}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=repair_development({'package':p,'strategy':s,'trace':[]},v,targets)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual(len(calls),2)
+        self.assertEqual(set(calls[1]['repair_targets']),{'case_plan','institutional_execution'})
+        self.assertIn('Invented source quote',str(calls[1]['repair_targets']['case_plan']['validation_errors']))
+        self.assertIn('c2_quote',str(calls[1]['repair_targets']['institutional_execution']['validation_errors']))
+        self.assertEqual(calls[1]['repair_targets']['institutional_execution']['source_evidence']['b10'],v['b10'])
+        self.assertEqual(result['development']['candidates'],original['candidates'])
+        self.assertEqual(result['development']['matters'],original['matters'])
+
+    def test_ineffective_structured_recovery_is_bounded_and_stays_rejected(self):
+        p,s,v=linked_case();v['institutional_execution'][0]['c2_quote']='Invented public quote'
+        targets=repair_targets(p,s,v)
+        def invoke(state,role,schema,instruction,payload):
+            return {'corrections':[{'path':path,'value':t['current_value'],'reason':'Still wrong'} for path,t in payload['repair_targets'].items()],'unresolved':[]},state.get('trace',[])+[{'usage':{'total_tokens':7}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
+            result=repair_development({'package':p,'strategy':s,'trace':[]},v,targets)
+        self.assertEqual(model.call_count,2)
+        self.assertFalse(result['development_validated'])
+        self.assertEqual(result['repair_report']['retry_paths'],['institutional_execution'])
+        self.assertEqual(result['repair_report']['failed_paths'],['institutional_execution'])
+
+    def test_institutional_recovery_reads_retained_c2_after_prose_correction(self):
+        p,s,v=linked_case();v['institutional_execution'][0]['c2_quote']='Old missing quote'
+        targets=repair_targets(p,s,v)
+        targets['c2']={'current_value':v['c2'],'problem':'Clarify coverage','source_evidence':{'package':p,'strategy':s}}
+        replacement='The firm requests recognition for its collective labour negotiations.'
+        calls=[]
+        def invoke(state,role,schema,instruction,payload):
+            calls.append(copy.deepcopy(payload));corrections=[]
+            for path,t in payload['repair_targets'].items():
+                value=copy.deepcopy(t['current_value'])
+                if path=='c2':value=replacement
+                elif len(calls)>1:
+                    self.assertEqual(t['source_evidence']['c2'],replacement)
+                    value[0]['c2_quote']=replacement
+                corrections.append({'path':path,'value':value,'reason':'Synchronize current output'})
+            return {'corrections':corrections,'unresolved':[]},state.get('trace',[])+[{'usage':{'total_tokens':7}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=repair_development({'package':p,'strategy':s,'trace':[]},v,targets)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual(set(calls[1]['repair_targets']),{'institutional_execution'})
+        self.assertEqual(result['development']['c2'],replacement)
+
     def test_new_contract_is_exposed_by_generation_schema_without_rejecting_legacy_proposals(self):
         p,s,v=linked_case();self.assertEqual(development_errors(p,s,v),[])
         model=development_contract(p,s);self.assertEqual(model.model_validate(v).execution_contract,EXECUTION_CONTRACT)
