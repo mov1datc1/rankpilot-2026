@@ -1,5 +1,5 @@
 {
-  "version": "editorial-voice-v6",
+  "version": "editorial-voice-v7",
   "patterns": [
     "\\bthe\\s+supplied\\s+(?:biograph(?:y|ies)|profile|materials|documents|information|evidence)\\b",
     "\\b(?:is\\s+)?(?:also\\s+)?identified\\s+in\\s+the\\s+(?:supplied\\s+)?biograph(?:y|ies)\\b",
@@ -13,7 +13,12 @@
     "\\bthe\\s+available\\s+matter\\s+records\\s+do\\s+not\\s+specify\\b",
     "\\bthe\\s+source\\s+(?:(?:also|separately)\\s+)?(?:lists?|states?|identifies|reports?|describes)\\b",
     "\\bthe\\s+submission\\s+(?:also\\s+)?(?:shows|demonstrates)\\b",
-    "\\b(?:is|was)\\s+the\\s+Partner\\s+(?:of|in)\\b"
+    "\\b(?:is|was)\\s+the\\s+Partner\\s+(?:of|in)\\b",
+    "\\bas\\s+(?:the\\s+)?named\\s+(?:co[- ]?)?lead\\b",
+    "\\bis\\s+listed\\s+as\\s+(?:a\\s+)?team\\s+member\\b",
+    "\\bdocumented\\s+outcomes\\s+include\\b",
+    "\\b(?:obtained|secured|achieved)\\s+documented\\s+(?:constitutional|investigation|inspection|litigation|relief|protection|outcomes?|results?)\\b",
+    "\\b((?:[\\w’'-]+[ ,]+){7,}[\\w’'-]+[.!?])\\s+\\1"
   ],
   "reject": [
     "also identified in the supplied biography",
@@ -32,7 +37,14 @@
     "The source also lists a matter value of USD 100,000.",
     "The source separately identifies two project values.",
     "The submission also shows distinct individual leadership.",
-    "Sofia is the Partner of the Labour practice."
+    "Sofia is the Partner of the Labour practice.",
+    "As named lead, she secured interim relief.",
+    "As named co-lead, he negotiated the agreement.",
+    "He is listed as a team member on this mandate.",
+    "Documented outcomes include interim relief.",
+    "The team obtained documented constitutional protection.",
+    "She leads the employment practice across the national offices. She leads the employment practice across the national offices.",
+    "The team has obtained documented constitutional, investigation and inspection-related results."
   ],
   "allow": [
     "We challenged the evidence supplied by the authority.",
@@ -43,6 +55,10 @@
     "The team reconciled inconsistent evidence submitted by the opposing party.",
     "The opposing party source materials contain inconsistent dates; the team challenged their admissibility.",
     "No final ruling has been issued; the appeal remains pending.",
-    "She is the partner responsible for the investigation."
+    "She is the partner responsible for the investigation.",
+    "She documented the payroll irregularities before filing the claim.",
+    "She led the proceedings and secured constitutional protection.",
+    "The court named lead counsel for the consolidated proceedings.",
+    "The team obtained documented consent before transferring employee records."
   ]
 }

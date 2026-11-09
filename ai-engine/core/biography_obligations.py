@@ -84,6 +84,8 @@ def enrich_biography_targets(package, proposal, targets):
     for path, target in targets.items():
         if not re.fullmatch(r'candidates/\d+', path): continue
         candidate = proposal['candidates'][int(path.split('/')[1])]
+        if candidate.get('biography_depth') is not None and 'submission_bio' in target.get('mutable_fields', []):
+            target['mutable_fields'] = list(dict.fromkeys([*target['mutable_fields'], 'biography_depth']))
         bindings = personal_bindings(package, candidate)
         target['personal_binding_obligations'] = bindings
         target['public_biography_policy'] = (

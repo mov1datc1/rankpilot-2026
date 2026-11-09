@@ -49,7 +49,7 @@ class ProfileCoverage(BaseModel):
     decision: Literal['retain','generalize','omit']
     source_quote: str = Field(description='Copy the complete original profile unit referenced here, without rewriting it.')
     public_quote: str = Field(description='Exact words in this same candidate submission_bio retaining its material credential. Empty only for a justified omission.')
-    reason: str = Field(description='Internal reason: preserve material career, office and qualification evidence alongside mandates. Privacy may hide an identity, not erase the role. Omit only immaterial, duplicate or unsupported content, explaining which and why.')
+    reason: str = Field(description='Internal reason: preserve material career, office and qualification evidence alongside mandates. Privacy may hide an identity, not erase the role. For generalize identify the actual original restriction; a former employer or professional association is not automatically a client and must retain its name unless specifically restricted. Omit only immaterial, duplicate or unsupported content, explaining which and why.')
 
 
 def profile_units(person):

@@ -9,6 +9,7 @@ import re
 from typing import Literal, Union, Optional
 from pydantic import BaseModel, create_model, ConfigDict, Field
 from core.editorial_development import Candidate, Comparison
+from core.biography_depth import BiographyDepth, DEPTH_INSTRUCTION
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors, vague_scale_comparison
 from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
 
@@ -25,6 +26,7 @@ def biography_delta_contract(target):
     """A BIO repair cannot emit source links, identities or ranking decisions."""
     current=target['current_value'];fields={}
     if 'submission_bio' in target['mutable_fields']:fields['submission_bio']=(str,...)
+    if 'biography_depth' in target['mutable_fields']:fields['biography_depth']=(BiographyDepth,...)
     if 'profile_coverage' in target['mutable_fields']:
         unit=create_model('ProfileOutputOnly',__config__=ConfigDict(extra='forbid'),
             decision=(Literal['retain','generalize','omit'],...),public_quote=(str,...),reason=(str,...))
@@ -47,6 +49,7 @@ def expand_biography_delta(target,value):
     delta=biography_delta_contract(target).model_validate(value).model_dump()
     result=copy.deepcopy(target['current_value'])
     if 'submission_bio' in delta:result['submission_bio']=delta['submission_bio']
+    if 'biography_depth' in delta:result['biography_depth']=delta['biography_depth']
     profiles=delta.get('profile_coverage')
     if profiles is not None:
         for unit in result.get('profile_coverage',[]):unit.update(profiles[unit['reference']])
@@ -128,7 +131,7 @@ TASK += " For a validated qualify_disputed_outcome correction, do not resolve th
 TASK += " When a text-only biography target supplies preserve_profile_quotes, retain each unaffected credential span verbatim and correct only the separate identified wording. This target cannot edit the candidate's profile-coverage metadata or other fields. If the defect overlaps one of those spans, report that conflict unresolved rather than silently breaking its binding."
 TASK += " A candidate object target with mutable_fields authorizes only those fields. When correcting a rejected promotional claim overlapping a profile unit, preserve the original source unit and material career role, update its actual public_quote/retain-or-generalize decision, and withdraw only the rejected assertion. Do not preserve the rejected wording merely because its old public_quote included a valid credential. Keep all personally attributed source bindings. For linked-editorial-execution-v1, refresh affected submission_case_coverage and institutional_execution output quotations together with their prose. Retain all original source links, roles and shared argument indices. These are internal bindings; never print them in the documents."
 TASK += " Return exactly one results outcome for each supplied target_references entry. A field is either corrected with its typed value or unresolved because THAT authorized generated change cannot be applied; never both. Record useful source questions outside the permitted change in source_notes. In particular, missing seniority or personal evidence for an already non-nominated Category pending lawyer does not prevent a factual team-member BIO and is not an unresolved BIO correction. Do not invent those facts. source_notes do not grant approval or replace a genuinely blocked requested correction."
-TASK += " preserve_generated_quotes contains source-bound passages actually present in the current BIO. Keep them verbatim, adding or correcting only the affected material and its output bindings. Other public_quote values may be invalid references: synchronize them to the actual corrected BIO rather than treating them as immutable prose. An expanded B9 may use up to 1,000 words when its personally attributed work requires them. Every submission_case_coverage entry must have a matching supporting_matters entry with its own valid attribution; keep all required_personal_matter_ids. For an included but non-nominated team member, preserve factual participation and credentials; remove unsupported individual-result links without deleting that person's supported participation BIO. Do not put nomination decisions or missing-evidence commentary in public prose."
+TASK += " preserve_generated_quotes contains source-bound passages actually present in the current BIO. Keep them verbatim, adding or correcting only the affected material and its output bindings. Other public_quote values may be invalid references: synchronize them to the actual corrected BIO rather than treating them as immutable prose. Follow the shared B9 EDITORIAL DEPTH policy; expansion develops original evidence, never filler. Every submission_case_coverage entry must have a matching supporting_matters entry with its own valid attribution; keep all required_personal_matter_ids. For an included but non-nominated team member, preserve factual participation and credentials; remove unsupported individual-result links without deleting that person's supported participation BIO. Do not put nomination decisions or missing-evidence commentary in public prose."
 TASK += " personal_binding_obligations locates each BIO defect by S reference and immutable matter_id. Resolve every listed duplicate_with pair using each mandate's own legal issue, action and supported outcome, never by adding its confidential metrics. Follow public_biography_policy even if only an output-reference defect is listed. A rejected candidate delta was NOT committed: current_value remains authoritative; application failures describe the rejected proposal. Do not assume its extra sentences exist. Keep every S reference mapped to its named matter, independent of sentence order."
 
 def public_privacy_paths(defect, proposal):
@@ -184,17 +187,22 @@ def repair_targets(package, strategy, proposal):
             targets[f'candidates/{i}']['validation_errors']=profile_faults+linked_fault+quality_faults
             targets[f'candidates/{i}']['required_personal_matter_ids']=required_personal_matters(package,strategy,candidate)
             if quality_faults:
-                targets[f'candidates/{i}']['problem']+=' Complete all missing material personally attributed work in a developed B9 (up to 1,000 words, without padding), preserve existing evidenced contributions and credentials, and return an individually grounded category_assessment. Do not shrink the BIO to two matters. '+ ' '.join(quality_faults)
+                targets[f'candidates/{i}']['problem']+=' Complete all missing material personally attributed work in a developed B9 (target 500–1,000 words for proposed candidates, without padding; justify a genuine source limitation through biography_depth), preserve existing evidenced contributions and credentials, and return an individually grounded category_assessment. Do not shrink the BIO to two matters. '+ ' '.join(quality_faults)
             elif anchor and anchor not in {link.get('matter_id') for link in candidate.get('submission_case_coverage',[])} and not profile_faults and not category_error(candidate) and not personal_case_errors(package,candidate):
                 target=targets[f'candidates/{i}']
                 target.update(mutable_fields=['submission_bio','submission_case_coverage'],append_personal_anchor=anchor)
                 if anchor not in {s.get('matter_id') for s in candidate.get('supporting_matters',[])}:target['mutable_fields'].append('supporting_matters')
                 target['source_evidence'].update(required_primary_lead_matter_id=anchor)
                 target['problem']='Add a source-bound contribution, legal issue, action and evidenced result or actual pending position from the required primary lead mandate to B9, using safe public generalisation. Bind one appended submission_case_coverage entry to its own original source and new actual BIO passage. Retain the complete existing BIO block verbatim; place the new primary contribution before it if natural. Preserve every existing personal source link, career credential, category and unrelated candidacy field. Add supporting_matters only if this required source is absent. Do not disclose restricted names or identifying metrics in public prose.'
-            elif candidate_output_repair_only(package,strategy,candidate,person,profile_faults,linked_fault):
+            elif not quality_faults and candidate_output_repair_only(package,strategy,candidate,person,profile_faults,linked_fault):
                 target=targets[f'candidates/{i}']
                 target['mutable_fields']=['submission_bio','profile_coverage','submission_case_coverage']
                 target['problem']='Repair only this BIO and its keyed output quotations. Every original profile unit, personal source binding, supporting mandate, identity, recommendation and category is already valid and read-only. Restore material credentials and legal contributions faithfully where the BIO omits them, and copy actual BIO passages into the corresponding output references. Never substitute an unrelated matching quote to hide missing substance.'
+            from core.biography_depth import biography_depth_errors
+            depth_faults=[f'Calidad personal candidates/{i}: '+e for e in biography_depth_errors(package,proposal,i)]
+            if depth_faults and quality_faults == depth_faults and not profile_faults and not linked_fault and not category_error(candidate):
+                targets[f'candidates/{i}']['mutable_fields']=['submission_bio','profile_coverage','submission_case_coverage','biography_depth']
+                targets[f'candidates/{i}']['problem']+=' Only depth and output wording/bindings are editable. Preserve nomination, category, every original profile unit and mandate binding; do not downgrade the nomination to evade depth.'
             continue
         invalid_support=[]
         for support in candidate.get('supporting_matters',[]):
@@ -372,7 +380,7 @@ def apply_valid_corrections(proposal,targets,repair,package=None,strategy=None):
 
 
 def biography_output_targets_only(targets):
-    allowed={'submission_bio','profile_coverage','submission_case_coverage'}
+    allowed={'submission_bio','profile_coverage','submission_case_coverage','biography_depth'}
     return bool(targets) and all(
         bool(re.fullmatch(r'candidates/\d+',path)) and bool(target.get('mutable_fields'))
         and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') else set()))
@@ -855,3 +863,5 @@ TASK += " The shared case_plan is internal, source-bound and common to both docu
 
 TASK += " For a BiographyOutputDelta return only the permitted BIO and keyed output references. Null preserves the existing reference map. Profile keys are their original P references; personal keys S01, S02 etc refer to original binding order. Existing source quotations, matter IDs, identity, category and supporting mandates are read-only and cannot be returned as replacement lists. Only a required primary_contribution may quote new original evidence for its fixed mandate, as defined by its own typed schema. Keep every original source link even when the new BIO explains another already supplied mandate. Never replace an existing binding to make room for another; edit prose and its actual public quotes only."
 TASK += " When primary_contribution is required, supply only that new contribution's literal original source_quote, actual BIO public_quote and source-supported personal_role. The application appends the required mandate without accepting a replacement list or model-selected matter ID. Preserve the complete existing BIO verbatim and add the missing contribution. Existing bindings and supporting evidence remain read-only. This one new source quote is the sole exception to the output-only delta; it must pass the original source and personal-attribution validators."
+
+TASK += " " + DEPTH_INSTRUCTION

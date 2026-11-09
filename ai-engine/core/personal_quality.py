@@ -53,6 +53,8 @@ def personal_quality_errors(package, strategy, proposal):
     errors = []
     for index, candidate in enumerate(proposal.get('candidates', [])):
         prefix = f'Calidad personal candidates/{index}: '
+        from core.biography_depth import biography_depth_errors
+        errors.extend(prefix + error for error in biography_depth_errors(package, proposal, index))
         required = required_personal_matters(package, strategy, candidate)
         linked = {link.get('matter_id') for link in candidate.get('submission_case_coverage', [])}
         if set(required) - linked:

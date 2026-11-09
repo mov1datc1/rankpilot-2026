@@ -182,6 +182,15 @@ def obligations(package, strategy, proposal):
             assessment=candidate.get('category_assessment') or {}
             add(f'category:{i}:fit',f'candidates/{i}/category_rationale',sources,
                 'Independently assess the proposed category against THIS person career stage, positive eligibility criterion, personal work and counterevidence. Missing current-ranking matches do not establish emerging reputation. Partner status alone neither proves nor rules out Up and Coming. That category needs developing reputation and contribution to practice growth; established experience/leadership must be addressed. Reject a generic category applied without an individual evidentiary explanation; when unsupported, require Category pending and a precise criterion/action. Person: '+candidate['name']+'. Current category: '+str(candidate.get('suggested_ranking'))+'. Structured assessment: '+str(assessment))
+    from core.biography_depth import DEPTH_CONTRACT, DEPTH_POLICY
+    if proposal.get('biography_depth_contract') == DEPTH_CONTRACT:
+        for i,candidate in enumerate(proposal.get('candidates',[])):
+            if not public_profile(candidate): continue
+            person=next((p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
+            from core.role_evidence import matter_names_person
+            own=[m for mid,m in register.items() if mid in support_ids(package,strategy) and matter_names_person(candidate.get('name'),m)]
+            add(f'depth:{i}:b9',f'candidates/{i}/submission_bio',[person]+own,
+                DEPTH_POLICY+' Independently compare the complete original evidence to the actual BIO. Reject superficial compression, repeated leadership sentences, catalogues and unsupported padding even when word count passes. Verify source_limited against all these sources; it is not a self-certified waiver. If actually insufficient, accept the accurate shorter profile and keep the precise optional follow-up internal. A former employer or professional association must not be anonymized merely because a client identity needs permission; honor actual register restrictions. Internal depth assessment: '+str(candidate.get('biography_depth')))
     if proposal.get('version')=='editorial-development-v4':
         from core.candidate_evidence import profile_units
         for i,candidate in enumerate(proposal.get('candidates',[])):
@@ -191,7 +200,7 @@ def obligations(package, strategy, proposal):
             for unit in profile_units(person):
                 decision=coverage.get(unit['reference'],{})
                 add(f'profile:{i}:{unit["reference"]}',f'candidates/{i}/submission_bio',[{'source_excerpt':unit['source_quote']}],
-                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
+                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. A former employer or professional association must retain its source name unless an actual source/register restriction applies; a hypothetical client-permission gap is not such a restriction. Check the original relationship and the stated generalize reason. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
     for i,leader in enumerate(additional_leaders(package,strategy)):
         add(f'leader:{i}','leadership',[register[mid] for mid in leader['matter_ids']], 'Evaluate '+leader['name']+' internally; preserve documented work and request only genuinely absent seniority/profile facts. Do not invent a public bio.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):
@@ -397,7 +406,7 @@ def prepare_case(state):
     from core.personal_quality import required_personal_matters
     from core.candidate_evidence import profile_units, CHAMBERS_CATEGORY_GUIDANCE
     eligible=support_ids(package,strategy)
-    return {'case_requirements':{'personal_quality_contract':'complete-personal-case-v1','category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
+    return {'case_requirements':{'biography_depth_contract':'sourced-biography-depth-v1','personal_quality_contract':'complete-personal-case-v1','category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
         'personal_work_requirements':{(p.get('name') or p.get('fullName')):required_personal_matters(package,strategy,{'name':p.get('name') or p.get('fullName'),'recommendation':'present','suggested_ranking':'prospective source assessment'}) for p in package.get('lawyers',[])},
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
