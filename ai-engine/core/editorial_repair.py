@@ -386,6 +386,19 @@ def biography_output_targets_only(targets):
         and set(target['mutable_fields'])<=(allowed | ({'supporting_matters'} if target.get('append_personal_anchor') else set()))
         for path,target in targets.items())
 
+
+def invoke_residual_repair(state, group, shared=None):
+    """One residual request for this disjoint group, using its current evidence."""
+    from core.review_graph import invoke_role
+    uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in group.values())
+    instruction=TASK+' The previous correction left or introduced a localized defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.'
+    if any(t.get('depth_recovery') for t in group.values()):
+        instruction+=' This request concerns ONE proposed biography. Follow its measured depth_recovery obligation: complete the substantive personal argument, not merely its output references. Do not claim expansion when merely rephrasing; a shorter complete argument is preferable to padded repetition. Use its own source evidence and return the BIO and exact output bindings together.'
+    return invoke_role({**state,'source_only_repair':biography_output_targets_only(group)},'repair',repair_result_contract(group),instruction,
+        {'repair_targets':group,'target_references':repair_references(group),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
+         'previous_failure':'These authorized fields failed their listed postconditions. Correct the BIO and its own permitted proof or attribution fields together. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair for these fields, not another portfolio review.'})
+
+
 def repair_development(state, proposal, targets):
     from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
@@ -512,6 +525,8 @@ def repair_development(state, proposal, targets):
                 if c.get('decision') in ('retain','generalize') and c.get('public_quote')
                 and norm(c['public_quote']) in norm(candidate.get('submission_bio',''))]
     retry_count=0
+    retry_attempted_paths=[]
+    residual_requests=0
     retry_error=None
     # Retry a known completed but ineffective textual correction once, before
     # buying another full Audit/render/judge cycle. Already corrected fields and
@@ -523,17 +538,17 @@ def repair_development(state, proposal, targets):
         if known:
             retry_count=1
             # Materialize only shared evidence needed by this remaining target.
-            uses_shared=any(t.get('source_evidence')=={'reference':'shared_source_evidence'} for t in retry_targets.values())
-            retry_schema=repair_result_contract(retry_targets)
+            from core.biography_depth import residual_repair_groups
             try:
-                retry,trace=invoke_role({**state,'trace':trace,'source_only_repair':biography_output_targets_only(retry_targets)},'repair',retry_schema,TASK+' The previous correction left or introduced a localized wording defect. Correct ONLY repair_targets. Every rejected_quotes entry must be corrected. Preserve every supplied preserve_profile_quotes span verbatim; correct the separate affected wording without rewriting those credentials. Put editorial reasons in reason, never in Submission prose. Do not remove supported legal work or substitute a paraphrase of a rejected false assertion.',
-                    {'repair_targets':retry_targets,'target_references':repair_references(retry_targets),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
-                     'previous_failure':'These authorized fields failed their listed postconditions. Correct the BIO and its own permitted proof or attribution fields together. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair, not another portfolio review.'})
-                retry=project_repair_result(retry,retry_targets)
-                fixed,retry_application_errors=apply_valid_corrections(fixed,retry_targets,retry,state['package'],state['strategy'])
-                application_errors={**{p:e for p,e in application_errors.items() if p not in retry_targets},**retry_application_errors}
-                repair={**retry,'unresolved':list(dict.fromkeys(unresolved_before+retry.get('unresolved',[]))),
-                        'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
+                for group in residual_repair_groups(retry_targets):
+                    retry_attempted_paths.extend(group)
+                    residual_requests+=1
+                    retry,trace=invoke_residual_repair({**state,'trace':trace},group,shared)
+                    retry=project_repair_result(retry,group)
+                    fixed,retry_application_errors=apply_valid_corrections(fixed,group,retry,state['package'],state['strategy'])
+                    application_errors={**{p:e for p,e in application_errors.items() if p not in group},**retry_application_errors}
+                    repair={**retry,'unresolved':list(dict.fromkeys(repair.get('unresolved',[])+retry.get('unresolved',[]))),
+                            'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
             except Exception as error:
                 # A pre-call deadline or failed second request must not erase
                 # the first paid response or its known/unknown usage history.
@@ -552,7 +567,8 @@ def repair_development(state, proposal, targets):
             'repair_report':{'corrected_paths':[path for path in targets if path not in failed],
                              'unresolved':repair.get('unresolved',[]),'source_notes':repair.get('source_notes',[]),
                              'failed_paths':failed,'surgical_retries':retry_count,
-                             'application_errors':application_errors,'retry_paths':list(retry_targets) if retry_count else []}}
+                             'application_errors':application_errors,'retry_paths':retry_attempted_paths,
+                             'residual_requests':residual_requests}}
 
 class RepairLocation(BaseModel):
     path: str

@@ -1,3 +1,11 @@
+## 2026-11-08 — v1.0.55: profundidad sustantiva y recuperación por persona
+
+Un objetivo editorial de extensión podía convertirse en una pausa puramente numérica, mientras la reparación conjunta corregía citas sin desarrollar el argumento personal. B9 mantiene el objetivo de 500–1.000 palabras por candidatura, pero una longitud inferior no bloquea por sí sola: el juez debe localizar una omisión sustantiva contra las fuentes originales. Se mantienen las verificaciones de atribución, credenciales, cobertura, privacidad y límite máximo; contar palabras no acredita calidad.
+
+La única recuperación residual separa los B9 pendientes por persona y entrega su longitud medida como contexto de planificación, sin exigir relleno. Los grupos son disjuntos, conservan el consumo acumulado y la aceptación transaccional. Una respuesta desconocida o un fallo detiene los grupos restantes y conserva correcciones anteriores; el informe distingue los grupos realmente intentados. La limitación de fuente de un perfil no nominado no crea una candidatura ni un bloqueo artificial. Las reglas compartidas detectan más comentarios de auditor sobre lo que el expediente afirma y permiten corregirlos conservando las fuentes.
+
+Validación: 720 pruebas Python, 509 Node correctas/una omisión, TypeScript correcto. Comprobación dirigida de las reparaciones con evidencia autorizada, sin modificar el expediente de prueba. No equivale a una nueva entrega autónoma ni a aceptación final de la calidad. Publicación y nuevo recorrido desde Builder deben verificarse por separado. Ver docs/reviews/2026-11-08-substantive-biography-v1-0-55.md.
+
 ## 2026-11-08 — v1.0.54: profundidad personal y voz editorial coherentes
 
 Las candidaturas podían aprobarse como perfiles demasiado breves porque el máximo de 1.000 palabras no expresaba una meta de desarrollo. Nuevo contrato compartido: B9 de 500–1.000 palabras por candidatura propuesta, desarrollando solo evidencia propia. Una fuente realmente limitada permite un perfil menor con carencia concreta y acción opcional; el juez contrasta esa excepción con todos los asuntos propios pertinentes y la biografía original. No basta contar palabras ni autodeclarar insuficiencia. Los perfiles no nominados mantienen alcance proporcional. El Audit conserva su presupuesto ejecutivo y el mismo argumento personal.

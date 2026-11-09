@@ -38,7 +38,7 @@ class Candidate(BaseModel):
     external_evidence: str
     evidence_gaps: str
     recommended_action: str
-    submission_bio: str = Field(description='Source-backed English B9 argument. Demonstrate personally attributed work; no audit voice, gaps or invented roles. Preserve confidentiality through sector descriptions.')
+    submission_bio: str = Field(description='Source-backed English B9 argument, normally aiming for 500–1,000 words per proposed person where the evidence warrants it. Develop the legal difficulty, personal action and achieved result; never pad to meet a count. Demonstrate personally attributed work; no audit voice, gaps or invented roles. Preserve confidentiality through sector descriptions.')
 
 class MatterDraft(BaseModel):
     matter_id: str
