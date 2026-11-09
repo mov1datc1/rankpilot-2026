@@ -75,6 +75,9 @@ def personal_case_errors(package,candidate,strategy=None):
     anchor=primary_lead_anchor(package,strategy,candidate)
     if anchor and anchor not in ids:
         errors.append('B9 debe ejecutar el mandato principal personalmente liderado según la prioridad canónica, no sustituirlo por asuntos secundarios.')
+    if strategy is not None:
+        from core.participation_contract import participation_errors
+        errors.extend(participation_errors(package,strategy,candidate))
     return errors
 
 def institutional_errors(proposal):

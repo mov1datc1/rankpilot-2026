@@ -9,6 +9,7 @@ import { canResumeEditorialResidual } from './residual-recovery';
 import {canResumeSelectionDiagnostic,canResumeSelectionProgress,canReplaySelectionRepair} from './selection-recovery';
 import {canRecheckDevelopment} from './development-recheck';
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
+import {editorialNextAction} from './next-action';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -26,7 +27,7 @@ export function publicJob(job:any, submission?:any) {
   if(!job) return null;
   const sourceMatches=submission && typeof job.sourceHash==='string' ? stableHash(sourceSnapshot(submission))===job.sourceHash : null;
   const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',development:'Desarrollando Submission, candidaturas y posicionamiento',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
-  const recovering=['queued','running'].includes(job.status) && job.issue?.owner==='rankpilot';
+  const recovering=['queued','running'].includes(job.status) && (job.issue?.owner==='rankpilot' || [...(job.ledger || [])].reverse().find((e:any)=>e.supervision)?.supervision?.action==='repair');
   const active=['queued','running'].includes(job.status);
   const waiting=job.status==='queued';
   const paused=!active && job.status!=='completed';
@@ -35,11 +36,12 @@ export function publicJob(job:any, submission?:any) {
   const pauseReason=sourceMatches===false ? null : paused && lastDecision?.action==='pause' ? lastDecision.reason : isStoppedSelection(job) ? (job.issue.code==='SELECTION_REJECTED'?'selection_rejected':job.issue.code==='SELECTION_DIAGNOSTIC_INVALID'?'selection_diagnostic_invalid':'selection_review_unavailable') : job.status==='failed' && job.issue?.owner==='rankpilot' ? 'stage_stopped' : null;
   const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
   const canResumeSelection=!!submission && sourceMatches===true && canResumeSelectionDiagnostic(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canRecheck=!!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canResumeRepair=!!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canRecheck=!canResumeRepair && !!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeProgress=!!submission && sourceMatches===true && canResumeSelectionProgress(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canReplay=!!submission && sourceMatches===true && canReplaySelectionRepair(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canResumeResidual=canRecheck || canResumeSelection || canResumeProgress || canReplay || !!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  const canResumeResidual=canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
@@ -76,7 +78,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       return resumed[0] || last;
     }
     if(last?.sourceHash===sourceHash && last?.issue?.code==='SELECTION_REJECTED') return last;
-    if(retry && canRecheckDevelopment(last,current.chambersData,sourceHash,build)) {
+    if(retry && canRecheckDevelopment(last,current.chambersData,sourceHash,build) && !canResumeEditorialResidual(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'development_recheck_requested',worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;

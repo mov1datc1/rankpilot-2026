@@ -70,6 +70,14 @@ def resume_repair(state):
             'unresolved':list(dict.fromkeys(repair.get('unresolved',[])+retry.get('unresolved',[]))),
             'source_notes':list(dict.fromkeys(repair.get('source_notes',[])+retry.get('source_notes',[])))}
     except Exception as error:
+        from utils.provider_budget import BudgetPreflightError
+        if isinstance(error,BudgetPreflightError):
+            # No generation started: preserve the queued group and its unused
+            # allowance, including successful earlier groups and their usage.
+            pending['attempted_paths']=[p for p in pending['attempted_paths'] if p not in group]
+            pending['residual_requests']-=1
+            pending['pending_groups']=[group]+groups
+            return deferred_result(fixed,pending,getattr(error,'trace_history',None) or trace)
         if getattr(error,'trace_history',None):trace=error.trace_history
         elif getattr(error,'trace',None):trace.append(error.trace)
         retry_error='La corrección localizada no pudo completarse; se conserva el avance y el consumo.'

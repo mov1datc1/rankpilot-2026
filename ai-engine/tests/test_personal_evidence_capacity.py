@@ -38,6 +38,8 @@ class PersonalEvidenceCapacityTests(unittest.TestCase):
                     for matter in p['matters']:
                         matter[key]=heading+matter.pop('teamMembers')
                     strategy={'matters':[{'matter_id':m['id'],'disposition':'core'} for m in p['matters']]}
+                    c['submission_case_coverage']=[{'matter_id':'a','source_quote':c['supporting_matters'][0]['source_quote'],
+                        'public_quote':c['submission_bio']}]
                     self.assertEqual(personal_case_errors(p,c,strategy),[])
                     self.assertEqual(required_personal_matters(p,strategy,c),[])
                     self.assertTrue(team_listing_quote(c['name'],c['name'],p['matters'][0]))

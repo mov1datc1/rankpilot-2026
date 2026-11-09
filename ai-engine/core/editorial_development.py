@@ -185,7 +185,7 @@ def _norm(value):
     return ' '.join(str(value or '').split()).casefold()
 
 NARRATIVE_SOURCE_FIELDS=('source_excerpt','rawNotes','summary','notes','description')
-SOURCE_FIELDS=NARRATIVE_SOURCE_FIELDS+('leadPartner','teamMembers','value','completionDate','otherInfo')
+SOURCE_FIELDS=NARRATIVE_SOURCE_FIELDS+('leadPartner','lead_partner','teamMembers','team_members','value','completionDate','otherInfo')
 
 def bind_quote(value, matter):
     """Recover an exact source span; only tolerate a clause-ending period.
@@ -379,6 +379,22 @@ def renderer_owned_finding(defect, package):
 
 
 def develop(state):
+    if state.get('field_review_enabled'):
+        from core.field_review import VERSION, advance, schedule, after_repair
+        if (state.get('repair_continuation') or {}).get('version')==VERSION:
+            return advance(state)
+        result=develop_proposal(state)
+        if state.get('repair_continuation') and state.get('field_review_failures'):
+            return after_repair(state,result)
+        if result.get('development_validated'):
+            if not state.get('field_review_failures'):
+                result['field_review_parent_feedback']=list(state.get('repair_feedback',[]))
+            return schedule(state,result)
+        return result
+    return develop_proposal(state)
+
+
+def develop_proposal(state):
     from core.review_graph import invoke_role
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
@@ -460,6 +476,7 @@ def develop(state):
 TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Return one profile_coverage decision for EVERY unit of this candidate, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
 
 TASK += " PERSONAL EVIDENCE CAPACITY: Read source_obligations.personal_attribution_policy. A literal team listing alone establishes membership, not individual substantive responsibility or achievements. Keep such a category-pending, not-nominated public profile limited to supplied credentials and participation; do not manufacture two personal contributions or force a client answer merely to complete the report. This exception does not dilute substantive personally attributed mandates or an actual proposed nomination. Do not identify a shorter name with a longer lead name without source support. Record optional identity or role follow-up internally."
+TASK += " SHARED PARTICIPATION REQUIREMENTS: source_obligations.participation_requirements supplies exact original team listings and the same obligation enforced before repair and at final review. For an included limited, non-nominated profile, bind at least one actual participation passage through submission_case_coverage and supporting_matters to one supplied source. This is membership evidence, not a personal-result requirement. Preserve a natural public generalisation, source identity and the existing nomination decision. A specialty sentence without that participation is incomplete."
 
 TASK += " PERSONAL QUALITY CONTRACT: return personal_quality_contract complete-personal-case-v1. Develop B9 according to the shared B9 EDITORIAL DEPTH policy, preserving rich personal evidence rather than compressing it into a short profile. Source_obligations.personal_work_requirements identifies ALL personally led selected mandates; supporting_matters and submission_case_coverage must preserve those and every substantively attributed supporting mandate, including pertinent reserves. Explain legal obstacle, personal action and achieved result or actual pending status in developed natural prose, not a catalogue. Group related work without deleting distinctive achieved contributions, material credentials or source-grounded career scope. Public anonymization may generalize names and identifying metrics, never erase legal substance or turn former employment into client work. Limited team-only evidence supports participation, not invented responsibility or filler. For each person return category_assessment: criterion, original career-stage evidence, positive growth evidence where Up and Coming is proposed, career-stage assessment and counterevidence. A missing ranking match, first submission or a partner title alone does not establish emerging reputation or practice growth. Address established career/leadership evidence; choose Category pending with its precise missing criterion/action when the category is not defensible. The Audit must use this same individual argument and category assessment. Preserve all material facts before editing for length; the concise Audit budget does not apply to B9."
 

@@ -167,10 +167,17 @@ def obligations(package, strategy, proposal):
             linked=proposal.get('execution_contract')==EXECUTION_CONTRACT and candidate.get('submission_case_coverage')
             if linked:
                 for j,link in enumerate(candidate['submission_case_coverage']):
+                    from core.participation_contract import participation_link, INSTRUCTION as PARTICIPATION_INSTRUCTION
+                    if participation_link(package,candidate,link):
+                        add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
+                            PARTICIPATION_INSTRUCTION+' Person: '+candidate['name']+'. Actual bound passage: '+str(link.get('public_quote','')))
+                        continue
                     add(f'personal_case:{i}:{j}',f'candidates/{i}/submission_bio',[register.get(link.get('matter_id'),{})],
                         'Independently verify that '+candidate['name']+' B9 develops the personally attributed legal contribution, distinctive issue and evidenced result of THIS source. When the source supplies an achieved interim or final result, state that result; an ongoing mandate or intended stability cannot replace it. Use an actual pending position only when no achieved result is supplied. A generic specialty list or a different mandate is not execution. Preserve safe public generalisation; do not demand restricted names or metrics. Internal intended passage: '+str(link.get('public_quote','')))
                 if proposal.get('personal_quality_contract')=='complete-personal-case-v1':
                     for j,link in enumerate(candidate['submission_case_coverage']):
+                        if participation_link(package,candidate,link):
+                            continue
                         add(f'personal_audit:{i}:{j}','leadership',[register.get(link.get('matter_id'),{})],
                             'Execute the SAME personally attributed contribution and achieved result or actual pending status used in this person B9, in a compact individual Audit argument. Do not replace it with an unrelated mandate or let the Audit invent a stronger result. Person: '+candidate['name']+'. B9 passage: '+str(link.get('public_quote','')))
             else:
@@ -178,6 +185,11 @@ def obligations(package, strategy, proposal):
                 limited=personal_argument_requirement(package,candidate)==0 and not primary_lead_anchor(package,strategy,candidate)
                 instruction=('The original mandate evidence establishes team participation only for '+candidate['name']+'. Preserve supplied profile credentials and participation; do not demand or invent individual legal responsibility, leadership, results or a nomination. Follow up missing evidence internally without blocking this limited accurate profile.' if limited else 'Develop '+candidate['name']+' through personally attributed work; execute the current candidacy without disclosing restricted identities or metrics.')
                 add(f'candidate:{i}:b9',f'candidates/{i}/submission_bio',sources,instruction)
+        from core.participation_contract import participation_requirement
+        participation=participation_requirement(package,strategy,candidate)
+        if participation:
+            add(participation['id'],f'candidates/{i}/submission_bio',
+                [register[s['matter_id']] for s in participation['sources']],participation['instruction'])
     if proposal.get('personal_quality_contract')=='complete-personal-case-v1':
         for i,candidate in enumerate(proposal.get('candidates',[])):
             person=next((p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
@@ -221,7 +233,8 @@ def obligations(package, strategy, proposal):
                 'Independently compare this selected matter narrative against its ORIGINAL source. Preserve the distinctive legal issue, evidenced contribution, outcome, personal attribution and decisive scale, including material workforce, locations, proceedings and economic quantities with their correct concepts and currencies. Internal decisive_source_quotes are evidence to execute, not a substitute for facts in the narrative. '+
                 ('This is confidential section E: public-profile anonymization does not justify removing private source metrics here. Respect any explicit source restriction on a particular fact. ' if restricted else 'This is public section D: respect all explicit publication restrictions. ')+
                 'Do not require irrelevant numbers, invent missing outcomes, conflate aggregate and individual amounts or resolve genuine source contradictions. Declared decisive evidence: '+str(draft.get('decisive_source_quotes',[])))
-    return result
+    verified=set(package.get('_verified_field_obligations',[]))
+    return [item for item in result if item['id'] not in verified]
 
 
 def execution_output(package, proposal, letter, path):
@@ -408,9 +421,14 @@ def prepare_case(state):
     package,strategy=state['package'],state['strategy']
     from core.personal_quality import required_personal_matters
     from core.candidate_evidence import profile_units, CHAMBERS_CATEGORY_GUIDANCE
+    from core.participation_contract import participation_sources, INSTRUCTION as PARTICIPATION_INSTRUCTION, VERSION as PARTICIPATION_VERSION
     eligible=support_ids(package,strategy)
     return {'case_requirements':{'biography_depth_contract':'sourced-biography-depth-v1','personal_quality_contract':'complete-personal-case-v1','category_methodology':CHAMBERS_CATEGORY_GUIDANCE if 'chambers' in str(package.get('directory') or '').casefold() else None,'profile_requirements':[{'name':p.get('name') or p.get('fullName'),'units':profile_units(p)} for p in package.get('lawyers',[])],'version':CASE_VERSION,'strategy_thesis':strategy.get('thesis',''),
         'personal_work_requirements':{(p.get('name') or p.get('fullName')):required_personal_matters(package,strategy,{'name':p.get('name') or p.get('fullName'),'recommendation':'present','suggested_ranking':'prospective source assessment'}) for p in package.get('lawyers',[])},
+        'participation_requirements':{'version':PARTICIPATION_VERSION,'instruction':PARTICIPATION_INSTRUCTION,
+            'applies_when':'The directory includes this profile, no nomination is proposed and sources establish only team membership rather than personal substantive work.',
+            'people':{(p.get('name') or p.get('fullName')):participation_sources(package,strategy,p.get('name') or p.get('fullName')) for p in package.get('lawyers',[])}},
+        'recovery_contract':'field-recovery-v1',
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
         'reserve_ids':[d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'],

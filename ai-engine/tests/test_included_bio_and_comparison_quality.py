@@ -32,8 +32,13 @@ class IncludedBiographyQualityTests(unittest.TestCase):
         p,s,v=linked_case();c=v['candidates'][0]
         c.update(recommendation='develop',supporting_matters=[],submission_case_coverage=[])
         for m in p['matters']:m['leadPartner']='Luis Prado';m['teamMembers']='Sofia Vega'
+        self.assertTrue(any('participación documentada' in e for e in personal_case_errors(p,c,s)))
+        c['submission_bio']+=' Sofia participates in the employment team.'
+        c['supporting_matters']=[{'matter_id':'m1','source_quote':'Sofia Vega','personal_role':'Team member'}]
+        c['submission_case_coverage']=[{'matter_id':'m1','source_quote':'Sofia Vega','public_quote':'Sofia participates in the employment team.'}]
         self.assertEqual(personal_case_errors(p,c,s),[])
-        self.assertFalse(any(o['id'].startswith('personal_case:') for o in obligations(p,s,v)))
+        check=next(o for o in obligations(p,s,v) if o['id']=='personal_case:0:0')
+        self.assertIn('do not invent leadership',check['instruction'])
 
     def test_plain_bio_edit_refreshes_its_proofs_in_the_same_paid_call(self):
         p,s,v=linked_case();before=copy.deepcopy(v);c=copy.deepcopy(v['candidates'][0])

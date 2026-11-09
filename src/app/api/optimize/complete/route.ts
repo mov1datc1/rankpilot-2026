@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         } else {
           const finalResponse=await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/verify-rendered-package`,{
             method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(remaining()),
-            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit,rendered_candidate_bios:renderedCandidateBios},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
+            body:JSON.stringify({package:{...reviewPackage(submission,previous,matters),field_review_receipts:review.field_review_receipts || [],ranking_verification:review.ranking_verification,rendered_artifact:rendered,rendered_audit:renderedAudit,rendered_candidate_bios:renderedCandidateBios},strategy:review.strategy,letter:review.letter,allow_repair:false,output_recovery:body.outputRecovery===true})
           });
           finalReview=await finalResponse.json();
           receivedTrace=finalReview.trace || null;
