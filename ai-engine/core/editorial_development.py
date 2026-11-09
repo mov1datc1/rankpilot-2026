@@ -397,6 +397,10 @@ def develop(state):
 def develop_proposal(state):
     from core.review_graph import invoke_role
     if state.get('delivery_observations_requested'):
+        from core.development_delivery import retain_complete_development
+        complete=retain_complete_development(state)
+        if complete is not None:
+            return {**complete,'delivery_observations_requested':False}
         from core.field_review import retain_observations
         return {**retain_observations(state),'delivery_observations_requested':False}
     if state.get('legacy_development_recovery'):

@@ -33,7 +33,8 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     : 'Esta operación requiere recuperación y no se reanudará al esperar. Consulta los hallazgos de abajo' + (data?.editorial_review?.letter ? ' y descarga el Audit desde «Descargar» para revisar lo pendiente.' : ' para revisar lo pendiente.') + ' La entrega final requiere completar esta operación y completar una nueva revisión; volver a pulsar «Revisar y generar» no elimina el límite de este intento.');
   if(available) {
     const findings=(data?.final_artifact_review?.judge?.defects || []);
-    const messages=findings.length ? findings : errors.map(message=>({message}));
+    const findingMessages=new Set(findings.map((d:any)=>d.message));
+    const messages=[...findings,...errors.filter(message=>!findingMessages.has(message)).map(message=>({message}))];
     const seen=new Set(messages.map((d:any)=>d.message));
     const all=[...messages,...warnings.filter(message=>!seen.has(message)).map(message=>({message}))];
     const fieldLabel=(d:any)=>{

@@ -113,6 +113,7 @@ class ReviewState(TypedDict, total=False):
     development: dict
     development_validated: bool
     development_delivery_ready: bool
+    development_observations: list
     delivery_observations_requested: bool
     field_review_observations: list
     writer_delivery_ready: bool
@@ -1039,6 +1040,9 @@ def create_review_graph():
                         'writer_observations':list(result['errors']),'errors':[]}
 
             if name=='development':
+                from core.development_delivery import retain_complete_development
+                retained=retain_complete_development(state,result)
+                if retained is not None:result=retained
                 result.setdefault('development_repair_unlocatable',False)
                 result.setdefault('development_delivery_ready',False)
             if name=='writer':result.setdefault('writer_delivery_ready',False)

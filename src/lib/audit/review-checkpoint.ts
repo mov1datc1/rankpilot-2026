@@ -105,7 +105,7 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   if (state.selection_validated === false) {
     // A pending selection retains its review budget and diagnostics, never
     // downstream prose generated for an unvalidated portfolio.
-    for(const key of ['development','development_validated','development_delivery_ready','field_review_observations','writer_delivery_ready','writer_observations','letter','judge','render_gate','release_verdict']) delete state[key];
+    for(const key of ['development','development_validated','development_delivery_ready','development_observations','field_review_observations','writer_delivery_ready','writer_observations','letter','judge','render_gate','release_verdict']) delete state[key];
     return {...base,stage:'strategy',step_keys:{strategy:keys.strategy},state:{
     ...state,
     strategy:state.strategy,selection_validated:false,trace:state.trace || [],
