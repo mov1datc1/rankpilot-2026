@@ -71,11 +71,14 @@ def personal_quality_errors(package, strategy, proposal):
         source_fields = ('bio', 'comments', 'standout_work', 'standoutWork', 'credentials', 'professional_roles', 'name', 'fullName', 'role')
         own_sources = [register[mid] for mid in required if mid in register]
         own_sources += [register[s['matter_id']] for s in candidate.get('supporting_matters', []) if s.get('matter_id') in register]
-        for quote in assessment['career_stage_evidence'] + assessment['growth_evidence']:
-            literal = ' '.join(quote.split())
-            if not literal or not (any(literal in ' '.join(str(person.get(k) or '').split()) for k in source_fields)
-                                   or any(bind_quote(quote, matter) for matter in own_sources)):
-                errors.append(prefix + 'La categoría requiere evidencia propia literal, no otra persona ni una búsqueda sin coincidencia.')
+        for field in ('career_stage_evidence', 'growth_evidence'):
+            for quote_index, quote in enumerate(assessment[field]):
+                literal = ' '.join(quote.split())
+                if not literal or not (any(literal in ' '.join(str(person.get(k) or '').split()) for k in source_fields)
+                                       or any(bind_quote(quote, matter) for matter in own_sources)):
+                    errors.append(prefix + 'La categoría requiere evidencia propia literal, no otra persona ni una búsqueda sin coincidencia. '
+                                  + f'Campo category_assessment/{field}/{quote_index}; cita rechazada: {quote!r}. '
+                                  + 'Copia un fragmento exacto de la fuente propia, sin completar ni parafrasear su puntuación.')
         if not all(str(assessment.get(key) or '').strip() for key in ('career_stage_assessment','counterevidence','alternative_category','alternative_comparison')):
             errors.append(prefix + 'La categoría debe contrastar etapa profesional y evidencia contraria.')
         label = re.sub(r'[^a-z]', '', str(candidate.get('suggested_ranking', '')).casefold())

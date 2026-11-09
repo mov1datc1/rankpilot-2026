@@ -57,11 +57,13 @@ def team_listing_quote(name, quote, matter):
     This checks original structured team fields, not a model's role label.
     A narrative passage or lead-role quotation is not exempted.
     """
-    clean=re.sub(r'^\s*(?:other\s+)?team\s+members?\s*:\s*','',str(quote or ''),flags=re.I)
-    value=identity(clean);target=identity(name)
+    def without_heading(value):
+        return re.sub(r'^\s*(?:other\s+)?team\s+members?\s*:\s*','',str(value or ''),flags=re.I)
+    value=identity(without_heading(quote));target=identity(name)
     if not value or not target:return False
     for key in ('teamMembers','team_members'):
-        team=identity(matter.get(key))
-        if team and (value==team or value==target) and re.search(r'(?<!\w)'+re.escape(target)+r'(?!\w)',team):
+        listing=without_heading(matter.get(key))
+        team=identity(listing)
+        if team and (value==team or value==target) and role_names_person_exactly(name,listing):
             return True
     return False
