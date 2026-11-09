@@ -28,3 +28,22 @@ test('recheck enqueue preserves the same ledger, source, paid reviews and saved 
  assert.equal((await enqueue(source,true)).id,'j');assert.equal((await enqueue(source,true)).id,'j');assert.equal(updates,1);assert.equal(job.cursor,1);assert.equal(job.sourceHash,sourceHash);assert.equal(job.ledger[0].trace.usage.total_tokens,55);assert.equal(job.ledger[1].status,'development_recheck_requested');assert.deepEqual(source.chambersData.review_checkpoint.state,state);
  }finally{Module._load=original;if(env===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=env;}
 });
+
+test('a skipped structured correction resumes repair rather than a validator-only dead end',async()=>{
+ const {source,sourceHash,job}=fixture(),s=source.chambersData.review_checkpoint.state;
+ Object.assign(s.development,{case_plan:{institutional_arguments:[]},institutional_execution:[]});
+ s.repair_report={corrected_paths:['candidates/0'],failed_paths:['case_plan','institutional_execution'],retry_paths:['candidates/0'],surgical_retries:1,unresolved:[]};
+ let updates=0;
+ const db={submission:{findUnique:async()=>structuredClone(source)},$queryRaw:async(strings,...values)=>{
+  const sql=strings.join('?');if(sql.includes('FOR UPDATE'))return [{id:'s'}];if(sql.includes('SELECT * FROM "EditorialJob"'))return [structuredClone(job)];
+  if(sql.includes('UPDATE "EditorialJob"')){updates++;job.status='queued';job.ledger.push(...JSON.parse(values.find(v=>typeof v==='string'&&v.startsWith('[{'))));return [structuredClone(job)];}throw Error('Unexpected query');
+ }};db.$transaction=async fn=>fn(db);
+ const original=Module._load,env=process.env.VERCEL_GIT_COMMIT_SHA;Module._load=function(name,...args){if(name==='@/lib/prisma')return{__esModule:true,default:db};return original.call(this,name,...args);};process.env.VERCEL_GIT_COMMIT_SHA='fixed-build';
+ try {
+  delete require.cache[require.resolve('../../src/lib/editorial/jobs.ts')];const {enqueue,publicJob}=require('../../src/lib/editorial/jobs.ts');
+  const visible=publicJob(job,source);assert.equal(visible.canResumeResidual,true);assert.equal(visible.canRecheckDevelopment,false);
+  await enqueue(source,true);await enqueue(source,true);
+  assert.equal(updates,1);assert.equal(job.ledger.at(-1).status,'residual_recovery_requested');
+  assert.equal(job.cursor,1);assert.equal(job.sourceHash,sourceHash);assert.equal(job.ledger[0].trace.usage.total_tokens,55);
+ } finally {Module._load=original;if(env===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=env;}
+});

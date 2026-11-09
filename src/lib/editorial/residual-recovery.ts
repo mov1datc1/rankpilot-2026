@@ -37,6 +37,17 @@ function quoteResiduals(state:any,data:any):boolean {
   return valid && bindings>0;
 }
 
+/** A legacy repair could omit structured targets from its residual queue.
+ * Recover only that unused opportunity, never a field already retried. */
+function skippedStructuredResiduals(state:any):boolean {
+  const report=state?.repair_report,failed=report?.failed_paths,attempted=report?.retry_paths;
+  if(report?.surgical_retries!==1 || report.unresolved?.length || !Array.isArray(failed) || !failed.length
+    || !Array.isArray(attempted) || state.selection_validated!==true || state.selection_review_validated!==true
+    || (state.repair_feedback || []).some((d:any)=>d.severity==='critical' || d.artifact_quote))return false;
+  return failed.every((path:any)=>['case_plan','institutional_execution'].includes(path)
+    && state.development?.[path] && !attempted.some((p:any)=>p===path || String(p).startsWith(path+'/')));
+}
+
 /** One explicit continuation of a legacy local wording residual after a code
  * fix. It keeps the same source, cursor, ledger and normal token budget. New
  * repairs handle this residual inside their own bounded correction call. */
@@ -52,9 +63,12 @@ export function canResumeEditorialResidual(job:any,data:any,sourceHash:string,co
     || state.trace.some((call:any)=>typeof call?.usage?.total_tokens!=='number' || call.usage.total_tokens<0)
     || authorizedReviewUsed(job.ledger) || spentTokens(job.ledger)>=editorialTokenBudget(job.ledger)
     || !state?.development || state.development_validated===true
-    || !report?.corrected_paths?.length || report.surgical_retries!==0
+    || !report?.corrected_paths?.length
+    || !Array.isArray(state.errors) || !state.errors.length) return false;
+  if(skippedStructuredResiduals(state))return true;
+  if(report.surgical_retries!==0
     || report.failed_paths?.length
-    || !Array.isArray(state.errors) || !state.errors.length || state.errors.length>3) return false;
+    || state.errors.length>3) return false;
   const voice=!report.unresolved?.length && state.errors.every((message:any)=>{
     const match=String(message).match(/^Voz auditora en Submission: (b10|c2|candidates\/\d+\/submission_bio|matters\/\d+\/(?:text|completion_status))$/);
     if(!match || !report.corrected_paths.some((parent:string)=>match[1]===parent || match[1].startsWith(parent+'/'))) return false;

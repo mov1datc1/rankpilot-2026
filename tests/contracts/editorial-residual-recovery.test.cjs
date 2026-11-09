@@ -32,3 +32,15 @@ test('only located descendant wording residuals qualify, never source or profile
  data.review_checkpoint.state.trace=[];
  assert.equal(canResumeEditorialResidual(job,data,'unchanged-source','new-build'),false);
 });
+
+test('an omitted structured residual has one explicit continuation but a retried or uncertain one does not',()=>{
+ const {job,data}=fixture(),s=data.review_checkpoint.state;
+ Object.assign(s,{selection_validated:true,selection_review_validated:true,errors:['Institutional source binding failed.']});
+ Object.assign(s.development,{case_plan:{institutional_arguments:[]},institutional_execution:[]});
+ Object.assign(s.repair_report,{surgical_retries:1,failed_paths:['case_plan','institutional_execution'],retry_paths:['candidates/0']});
+ assert.equal(canResumeEditorialResidual(job,data,'unchanged-source','new-build'),true);
+ s.repair_report.retry_paths.push('case_plan');
+ assert.equal(canResumeEditorialResidual(job,data,'unchanged-source','new-build'),false);
+ s.repair_report.retry_paths.pop();job.ledger.push({status:'residual_recovery_requested'});
+ assert.equal(canResumeEditorialResidual(job,data,'unchanged-source','next-build'),false);
+});
