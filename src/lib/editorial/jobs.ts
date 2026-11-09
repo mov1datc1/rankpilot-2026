@@ -11,7 +11,7 @@ import {canRecheckDevelopment,canRecheckFieldContext,FIELD_CONTEXT_VERSION} from
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 import {editorialNextAction} from './next-action';
 import {canResumeLegacyDevelopment} from './legacy-development-recovery';
-import {canResumeBudgetReview} from './budget-continuation';
+import {canResumeBudgetReview,capacityRecoveryCheckpoint} from './budget-continuation';
 import {editorialTokenBudget} from './recovery';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
@@ -78,6 +78,8 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     if(retry && last?.resultHash===resultHash && canResumeBudgetReview(last,current.chambersData,sourceHash)) {
       const cursor=last.cursor-1;
       const marker={stage:'artifact',cursor,status:'capacity_continuation_requested',capacity:editorialTokenBudget(last.ledger),worker_commit:build,source_hash:sourceHash};
+      const checkpoint=capacityRecoveryCheckpoint(last,current.chambersData);
+      await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),review_checkpoint:checkpoint}}});
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${cursor},"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='needs_review' RETURNING *`;
       return resumed[0] || last;
     }
