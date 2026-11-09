@@ -272,6 +272,7 @@ def repair_targets(package, strategy, proposal):
         add('comparisons/0/audit_required',False,'Expose the closest borderline comparison in the Audit; retain its source-backed tradeoff.',{'package':package,'strategy':strategy})
     if any('comparaciones de reservas' not in e and 'comparación visible' not in e for e in case_faults):
         add('case_plan',proposal.get('case_plan',{}),'Repair the shared source-bound case plan and all documented additional-leader assessments; preserve sources, selection and public prose.',{'package':package,'strategy':strategy})
+        targets['case_plan']['validation_errors']=[e for e in case_faults if 'comparaciones de reservas' not in e and 'comparación visible' not in e]
     for i in missing_head_bios(package,proposal):
         candidate=proposal['candidates'][i]
         parent=f'candidates/{i}';path=parent if parent in targets else parent+'/submission_bio'
@@ -285,6 +286,7 @@ def repair_targets(package, strategy, proposal):
     if proposal.get('execution_contract')==EXECUTION_CONTRACT and institutional_errors(proposal):
         add('institutional_execution',proposal.get('institutional_execution',[]),
             'Bind every shared case argument to its actual distinct B10 and C2 passage. This internal mapping cannot invent text or substitute another field.',{'case_plan':proposal.get('case_plan'),'b10':proposal.get('b10'),'c2':proposal.get('c2')})
+        targets['institutional_execution']['validation_errors']=institutional_errors(proposal)
         if ' '.join(proposal.get('b10','').split())==' '.join(proposal.get('c2','').split()):
             add('c2',proposal.get('c2',''),'Develop the source-grounded coverage request from the shared arguments instead of copying B10. Preserve the objective, sources and factual limits.',{'package':package,'strategy':strategy})
     if proposal.get('execution_contract')==EXECUTION_CONTRACT:
@@ -396,7 +398,7 @@ def invoke_residual_repair(state, group, shared=None):
         instruction+=' This request concerns ONE proposed biography. Follow its measured depth_recovery obligation: complete the substantive personal argument, not merely its output references. Do not claim expansion when merely rephrasing; a shorter complete argument is preferable to padded repetition. Use its own source evidence and return the BIO and exact output bindings together.'
     return invoke_role({**state,'source_only_repair':biography_output_targets_only(group)},'repair',repair_result_contract(group),instruction,
         {'repair_targets':group,'target_references':repair_references(group),'shared_source_evidence':shared if uses_shared else None,'feedback':[],
-         'previous_failure':'These authorized fields failed their listed postconditions. Correct the BIO and its own permitted proof or attribution fields together. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair for these fields, not another portfolio review.'})
+         'previous_failure':'These authorized fields failed their listed postconditions. Correct each authorized field and its permitted proofs together; for BIO targets synchronize the biography and its output bindings. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair for these fields, not another portfolio review.'})
 
 
 def repair_development(state, proposal, targets):
@@ -465,11 +467,22 @@ def repair_development(state, proposal, targets):
             parent='/'.join(path.split('/')[:2]);original=targets.get(parent,{})
             if not original.get('mutable_fields') or 'submission_bio' in original['mutable_fields']:
                 voice_residuals[path]=target
+    # Every field admitted by the initial typed contract can receive its one
+    # residual correction, including plans, output links, lists and booleans.
+    # Ownership and original mutable-field limits remain unchanged.
     retry_targets={path:copy.deepcopy(payload_targets[path]) for path in failed
-                   if (isinstance(targets[path]['current_value'],str) or (isinstance(targets[path]['current_value'],dict)
-                       and (targets[path].get('mutable_fields') or re.fullmatch(r'candidates/\d+',path))))
-                   and (path in application_errors or targets[path].get('rejected_quotes') or targets[path].get('privacy_matter_ids')
-                        or (re.fullmatch(r'candidates/\d+',path) and path in local_targets))}
+                   if path in application_errors or targets[path].get('rejected_quotes')
+                   or targets[path].get('privacy_matter_ids') or path in local_targets}
+    for path,target in retry_targets.items():
+        residual=local_targets.get(path,{})
+        if residual:
+            target['problem']=target.get('problem','')+' '+residual.get('problem','')
+            if 'validation_errors' in residual:target['validation_errors']=residual['validation_errors']
+        if path=='institutional_execution':
+            # Bind to retained prose after the first correction, never stale
+            # output that has already been replaced during this attempt.
+            target['source_evidence']=residual.get('source_evidence',{
+                'case_plan':fixed.get('case_plan'),'b10':fixed.get('b10'),'c2':fixed.get('c2')})
     for path,target in voice_residuals.items():
         if path in retry_targets:
             retry_targets[path]['problem']=retry_targets[path].get('problem','')+' '+target.get('problem','')

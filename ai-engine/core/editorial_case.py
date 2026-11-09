@@ -90,12 +90,15 @@ def case_errors(package, strategy, proposal):
     register={m['id']:m for m in package.get('matters', [])}
     core={d['matter_id'] for d in strategy.get('matters', []) if d.get('disposition')=='core'}
     if not plan.get('institutional_arguments'):errors.append('Falta tesis institucional sustentada.')
-    for argument in plan.get('institutional_arguments', []):
+    for argument_index,argument in enumerate(plan.get('institutional_arguments', [])):
         if any(not str(argument.get(k) or '').strip() for k in ('proposition','b10_contribution','c2_contribution')) or not argument.get('evidence'):
             errors.append('Argumento institucional incompleto.')
-        for evidence in argument.get('evidence', []):
+        for evidence_index,evidence in enumerate(argument.get('evidence', [])):
             if evidence.get('matter_id') not in core or not bind_quote(evidence.get('source_quote'),register.get(evidence.get('matter_id'),{})):
-                errors.append('Argumento institucional sin evidencia propia del núcleo.')
+                errors.append('Argumento institucional sin evidencia propia del núcleo. '
+                              f'case_plan/institutional_arguments/{argument_index}/evidence/{evidence_index}: '
+                              f'matter_id={evidence.get("matter_id")}; source_quote={evidence.get("source_quote")!r}. '
+                              'Copy an exact contiguous passage from this own selected source; preserve the supported argument.')
     expected={identity(p['name']):set(p['matter_ids']) for p in additional_leaders(package,strategy)}
     actual=plan.get('additional_leaders',[])
     if len(actual)!=len(expected) or {identity(p.get('name')) for p in actual}!=set(expected):
