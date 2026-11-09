@@ -1250,7 +1250,9 @@ async def review_step_endpoint(request: Request):
         else:
             payload['ranking_verification'] = state.get('ranking_verification', {})
         state = await asyncio.to_thread(run_editorial_stage, stage, state)
-        if state.get('errors'):
+        if state.get('repair_continuation'):
+            next_stage = 'done'  # Saved below; the durable worker resumes the same role.
+        elif state.get('errors'):
             next_stage = 'done'
             state.update(release_gate(state, require_judge=False))
         else:

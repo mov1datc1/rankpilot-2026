@@ -382,6 +382,9 @@ def develop(state):
     from core.review_graph import invoke_role
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
+    if state.get('repair_continuation'):
+        from core.repair_continuation import resume_repair
+        return resume_repair(state)
     previous=state.get('development')
     if previous and (state.get('case_requirements') or {}).get('biography_depth_contract')==DEPTH_CONTRACT and previous.get('biography_depth_contract')!=DEPTH_CONTRACT:
         # Only a new explicit review upgrades generated metadata. Historical
