@@ -3,6 +3,16 @@ const fs=require('node:fs');const ts=require('typescript');const {test}=require(
 require.extensions['.tsx']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,file);
 const {ReviewPanel}=require('../../src/components/EditorialReview.tsx');
 const React=require('react');const {renderToStaticMarkup}=require('react-dom/server');
+test('one status explains the next action once and a repaired-context continuation has one preparation button',()=>{
+ const {editorialNextAction}=require('../../src/lib/editorial/next-action.ts');
+ const job={id:'j',status:'failed',stage:'development',pauseReason:'stage_stopped',sourceMatches:true,canResumeResidual:true,canRecheckFieldContext:true,issue:{code:'DEVELOPMENT_REJECTED',owner:'rankpilot'}};
+ job.nextAction=editorialNextAction(job,{canResume:true});
+ const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{},errors:[],warnings:[],approved:false,job,onResolve:()=>{}}));
+ assert.equal(html.split(job.nextAction.description).length-1,1);
+ assert.equal((html.match(/<button/g)||[]).length,1);
+ assert.match(html,/Hallazgo de la revisión/);assert.match(html,/Continuar preparación/);
+ assert.doesNotMatch(html,/compártela|Solicita recuperar|Revisión detenida; consulta/);
+});
 test('an exhausted automatic review reports a real pause without promising continuation or a paid restart',()=>{
  const {publicJob}=require('../../src/lib/editorial/jobs.ts');
  const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});

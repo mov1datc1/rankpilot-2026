@@ -1,6 +1,6 @@
 import {authorizedReviewUsed,editorialTokenBudget,hasUnknownProviderUsage,spentTokens} from './recovery';
 
-export const FIELD_CONTEXT_VERSION='selected-institutional-sources-v1';
+export const FIELD_CONTEXT_VERSION='complete-institutional-sources-v2';
 
 /** One source-complete diagnostic of a legacy institutional failure. Keeps all
  * prior repair methods and tokens; another deploy cannot refresh this right. */
@@ -10,7 +10,12 @@ export function canRecheckFieldContext(job:any,data:any,sourceHash:string,commit
     && job.tasks?.[job.cursor]==='development' && job.issue?.code==='DEVELOPMENT_REJECTED'
     && job.issue?.owner==='rankpilot' && !!commit && commit!=='local' && !!job.ledger?.length
     && job.ledger.at(-1)?.worker_commit!==commit
-    && !job.ledger.some((e:any)=>e.status==='field_context_review_requested')
+    && !job.ledger.some((e:any)=>e.status==='field_context_review_requested' && e.context_version===FIELD_CONTEXT_VERSION)
+    && (job.ledger.filter((e:any)=>e.status==='field_context_review_requested').length===0
+      || (job.ledger.filter((e:any)=>e.status==='field_context_review_requested').length===1
+        && s?.field_review_context_version==='selected-institutional-sources-v1'
+        && (data.departmentHeads || data.department?.department_heads || []).length>0
+        && failures?.every((d:any)=>d.field_path==='c2' && /^Lead Partner\(s\):/i.test(d.source_quote || ''))))
     && !hasUnknownProviderUsage(job.ledger) && !hasUnknownProviderUsage([{trace:s?.trace}])
     && !authorizedReviewUsed(job.ledger) && spentTokens(job.ledger)<editorialTokenBudget(job.ledger)
     && s?.selection_validated===true && s.selection_review_validated===true

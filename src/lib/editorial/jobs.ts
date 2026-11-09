@@ -7,9 +7,12 @@ import { recoveryPlan, hasUnknownProviderUsage } from './recovery';
 import { isStoppedSelection } from '@/lib/audit/review-actions';
 import { canResumeEditorialResidual } from './residual-recovery';
 import {canResumeSelectionDiagnostic,canResumeSelectionProgress,canReplaySelectionRepair} from './selection-recovery';
-import {canRecheckDevelopment,canRecheckFieldContext} from './development-recheck';
+import {canRecheckDevelopment,canRecheckFieldContext,FIELD_CONTEXT_VERSION} from './development-recheck';
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 import {editorialNextAction} from './next-action';
+import {canResumeLegacyDevelopment} from './legacy-development-recovery';
+import {canResumeBudgetReview,capacityRecoveryCheckpoint} from './budget-continuation';
+import {editorialTokenBudget} from './recovery';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -37,11 +40,15 @@ export function publicJob(job:any, submission?:any) {
   const message=paused?'La preparación está pausada. Tu información y el avance están guardados.':waiting?'Preparación en espera. Continuará automáticamente; puedes salir y volver.':labels[job.stage] || 'Redactando un asunto seleccionado';
   const canResumeSelection=!!submission && sourceMatches===true && canResumeSelectionDiagnostic(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeRepair=!!submission && sourceMatches===true && canResumeEditorialResidual(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canResumeLegacy=!!submission && sourceMatches===true && canResumeLegacyDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canRecheckContext=!!submission && sourceMatches===true && canRecheckFieldContext(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canRecheck=!canResumeRepair && !!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canRecheck=!canResumeLegacy && !canRecheckContext && !canResumeRepair && !!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeProgress=!!submission && sourceMatches===true && canResumeSelectionProgress(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canReplay=!!submission && sourceMatches===true && canReplaySelectionRepair(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canResumeResidual=canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
+  const canResumeBudget=!!submission && sourceMatches===true
+    && job.resultHash===deliveryInputHash(submission,submission.chambersData || {})
+    && canResumeBudgetReview(job,submission.chambersData,job.sourceHash);
+  const canResumeResidual=canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
   return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
@@ -68,6 +75,14 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     // A later software release also must not reactivate this historical attempt.
     const resultHash=deliveryInputHash(current,current.chambersData || {});
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
+    if(retry && last?.resultHash===resultHash && canResumeBudgetReview(last,current.chambersData,sourceHash)) {
+      const cursor=last.cursor-1;
+      const marker={stage:'artifact',cursor,status:'capacity_continuation_requested',capacity:editorialTokenBudget(last.ledger),worker_commit:build,source_hash:sourceHash};
+      const checkpoint=capacityRecoveryCheckpoint(last,current.chambersData);
+      await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),review_checkpoint:checkpoint}}});
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${cursor},"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='needs_review' RETURNING *`;
+      return resumed[0] || last;
+    }
     if(retry && canResumeSelectionProgress(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'selection_progress_recovery_requested',worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
@@ -79,8 +94,13 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
       return resumed[0] || last;
     }
     if(last?.sourceHash===sourceHash && last?.issue?.code==='SELECTION_REJECTED') return last;
+    if(retry && canResumeLegacyDevelopment(last,current.chambersData,sourceHash,build)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'legacy_development_recovery_requested',worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
     if(retry && canRecheckFieldContext(last,current.chambersData,sourceHash,build)) {
-      const marker={stage:last.stage,cursor:last.cursor,status:'field_context_review_requested',worker_commit:build,source_hash:sourceHash};
+      const marker={stage:last.stage,cursor:last.cursor,status:'field_context_review_requested',context_version:FIELD_CONTEXT_VERSION,worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }

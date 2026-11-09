@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const user = await editorialUser(request);
     if (!user) return NextResponse.json({error: 'Not authenticated'}, {status: 401});
     const account = user.email ? await prisma.user.findUnique({where: {email: user.email}}) : null;
-    const { submissionId, reviewStage, outputRecovery, fieldContextRecheck, validatorRecheckOnly, selectionRepairReplayOnly } = await request.json();
+    const { submissionId, reviewStage, outputRecovery, legacyDevelopmentRecovery, fieldContextRecheck, validatorRecheckOnly, selectionRepairReplayOnly } = await request.json();
     if (!submissionId) return NextResponse.json({error: 'Missing submissionId'}, {status: 400});
     const submission = await prisma.submission.findUnique({where: {id: submissionId}, include: {matters: true}});
     if (!submission || ![user.id, account?.id].includes(submission.userId)) return NextResponse.json({error: 'Not found'}, {status: 404});
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     engineRequestStarted = !replaying;
     const response = replaying ? NextResponse.json(pending.result) : await engineFetch(`${process.env.PYTHON_API_URL || 'http://127.0.0.1:8000'}/review-step`, {
       method: 'POST', headers: {'Content-Type': 'application/json'}, signal: AbortSignal.timeout(250000),
-      body: JSON.stringify({stage, package: payload, state: {...checkpoint.state,field_context_recheck:fieldContextRecheck===true,selection_repair_replay_only:selectionRepairReplayOnly===true,development_revalidation_only:validatorRecheckOnly===true,output_recovery_attempt:outputRecovery===true?1:0}}),
+      body: JSON.stringify({stage, package: payload, state: {...checkpoint.state,legacy_development_recovery:legacyDevelopmentRecovery===true,field_context_recheck:fieldContextRecheck===true,selection_repair_replay_only:selectionRepairReplayOnly===true,development_revalidation_only:validatorRecheckOnly===true,output_recovery_attempt:outputRecovery===true?1:0}}),
     });
     const result = await response.json();
     received = result;

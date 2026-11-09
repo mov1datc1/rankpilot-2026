@@ -14,7 +14,7 @@ from typing import Literal
 from pydantic import ConfigDict, Field, create_model
 
 VERSION = 'source-field-review-v1'
-INSTITUTIONAL_CONTEXT = 'selected-institutional-sources-v1'
+INSTITUTIONAL_CONTEXT = 'complete-institutional-sources-v2'
 TASK = '''Review only these source-bound editorial units before document assembly.
 For EACH obligation judge whether the actual output executes its supplied rule
 against the complete original sources. A matching quote is not semantic proof.
@@ -30,7 +30,11 @@ what the authorised field must preserve. Institutional B10/C2 contain several
 arguments: each obligation's source_ids identify the evidence it must execute,
 not an exhaustive list of evidence for the whole section. Check additional
 claims against that field's contextual_source_ids before alleging absence of
-support. Do not remove a valid contribution merely because a different argument
+support, and against institutional_context for confirmed department heads,
+original team profiles, objectives and original department/coverage narratives.
+Confirmed filing heads establish departmental leadership independently of a
+matter's lead-partner heading; neither by itself establishes partner seniority.
+Do not remove a valid contribution merely because a different argument
 supplies its evidence. Context from another mandate cannot establish a result
 or personal role in the mandate being checked. Do not rewrite text, change sources,
 nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
@@ -38,6 +42,13 @@ nominate anyone, or certify the complete Submission/Audit. Every check is requir
 
 def digest(value):
     return sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
+
+
+def method_count(attempts,path):
+    # A whole-candidate repair includes its BIO/category. A later descendant
+    # address cannot buy a fresh allowance; unrelated sibling fields stay apart.
+    return max([int(count) for key,count in attempts.items()
+        if key==path or path.startswith(key+'/') or key.startswith(path+'/')]+[0])
 
 
 def receipt_matches(unit,receipt,require_signature=False):
@@ -87,6 +98,11 @@ def units_for(state):
     from utils.review_policy import EDITORIAL_RULES
     for unit in groups.values():
         if unit['field'] in ('b10','c2'):
+            from core.review_graph import role_payload
+            # Reuse the source view supplied to development/repair. In
+            # particular, a practice-level claim is not limited to mandates.
+            institution=role_payload({'package':package},'development')['package']
+            unit['institutional_context']={k:v for k,v in institution.items() if k!='matters'}
             core={m['matter_id'] for m in strategy.get('matters',[]) if m.get('disposition')=='core'}
             context=[]
             for matter in package.get('matters',[]):
@@ -144,8 +160,14 @@ def review_payload(units):
             checks.append({k:v for k,v in obligation.items() if k!='source_passages'} |
                           {'source_refs':list(obligation['source_passages'])})
         items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks,
-            **({'contextual_source_ids':unit['contextual_source_ids']} if 'contextual_source_ids' in unit else {})})
-    return {'units':items,'original_sources':records,'original_passages':passages}
+            **({'contextual_source_ids':unit['contextual_source_ids'],
+                'institutional_context_ref':'institutional_context'} if 'contextual_source_ids' in unit else {})})
+    result={'units':items,'original_sources':records,'original_passages':passages}
+    contexts=[u['institutional_context'] for u in units if 'institutional_context' in u]
+    if contexts:
+        if any(c!=contexts[0] for c in contexts):raise ValueError('Institutional source views differ')
+        result['institutional_context']=contexts[0]
+    return result
 
 
 def project_checks(units,result):
@@ -221,7 +243,7 @@ def after_repair(state,result):
         return schedule(state,result)
     if result.get('repair_continuation'):
         return result
-    if paths and not unknown_usage(result.get('trace',[])) and all(attempts.get(path,0)<2 for path in paths):
+    if paths and not unknown_usage(result.get('trace',[])) and all(method_count(attempts,path)<2 for path in paths):
         return {**result,'development_repair_unlocatable':False,
             'repair_continuation':{'version':VERSION,'phase':'repair',
                 'proposal_hash':digest(result.get('development',state['development'])),
@@ -261,11 +283,12 @@ def advance(state):
     if pending.get('phase')=='repair':
         defects=state.get('field_review_failures',[])
         paths={d['field_path'] for d in defects};attempts=dict(state.get('field_review_attempts',{}))
-        if not paths or any(attempts.get(path,0)>=2 for path in paths):
+        if not paths or any(method_count(attempts,path)>=2 for path in paths):
             return {'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
                 'errors':['La recuperación de estos campos agotó sus dos métodos; se conserva el avance.']}
-        strategy='source_reconstruction' if any(attempts.get(path,0) for path in paths) else 'targeted_correction'
-        for path in paths:attempts[path]=attempts.get(path,0)+1
+        strategy='source_reconstruction' if any(method_count(attempts,path) for path in paths) else 'targeted_correction'
+        previous_counts={path:method_count(attempts,path) for path in paths}
+        for path in paths:attempts[path]=previous_counts[path]+1
         current={**state,'repair_continuation':None,'repair_strategy':strategy,'repair_feedback':defects,
                  'field_review_attempts':attempts}
         result=repair_rejected_development(current,state['development'],defects)

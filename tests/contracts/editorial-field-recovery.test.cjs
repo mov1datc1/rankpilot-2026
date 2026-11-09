@@ -50,3 +50,11 @@ test('source questions, unlocated diagnostics and independent approval retain th
  assert.equal(superviseArtifact(job(),d,'commit').action,'complete');
  d.final_artifact_review.judge.defects=[defect()];assert.notEqual(superviseArtifact(job(),d,'commit').action,'complete');
 });
+
+test('whole-candidate method counts cover descendants without consuming a separate sibling field',()=>{
+ const {fieldRecoveryPlan}=require('../../src/lib/editorial/field-recovery.ts');
+ const defect={owner:'rankpilot',severity:'critical',scope:'submission',field_path:'candidates/0/submission_bio',artifact_quote:'A claim.'};
+ assert.equal(fieldRecoveryPlan([],[defect],{'candidates/0':2}).reason,'field_recovery_exhausted');
+ assert.equal(fieldRecoveryPlan([],[{...defect,field_path:'candidates/0'}],{'candidates/0/submission_bio':2}).reason,'field_recovery_exhausted');
+ assert.equal(fieldRecoveryPlan([],[{...defect,field_path:'candidates/0/category_rationale'}],{'candidates/0/submission_bio':2}).strategy,'targeted_correction');
+});
