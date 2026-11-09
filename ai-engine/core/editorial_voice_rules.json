@@ -1,5 +1,5 @@
 {
-  "version": "editorial-voice-v7",
+  "version": "editorial-voice-v8",
   "patterns": [
     "\\bthe\\s+supplied\\s+(?:biograph(?:y|ies)|profile|materials|documents|information|evidence)\\b",
     "\\b(?:is\\s+)?(?:also\\s+)?identified\\s+in\\s+the\\s+(?:supplied\\s+)?biograph(?:y|ies)\\b",
@@ -18,7 +18,10 @@
     "\\bis\\s+listed\\s+as\\s+(?:a\\s+)?team\\s+member\\b",
     "\\bdocumented\\s+outcomes\\s+include\\b",
     "\\b(?:obtained|secured|achieved)\\s+documented\\s+(?:constitutional|investigation|inspection|litigation|relief|protection|outcomes?|results?)\\b",
-    "\\b((?:[\\w’'-]+[ ,]+){7,}[\\w’'-]+[.!?])\\s+\\1"
+    "\\b((?:[\\w’'-]+[ ,]+){7,}[\\w’'-]+[.!?])\\s+\\1",
+    "\\b(?:the\\s+)?(?:public\\s+)?record\\s+supports\\s+(?:the\\s+)?(?:ongoing\\s+nature|procedural\\s+achievement)\\b",
+    "\\b(?:the\\s+)?mandate\\s+records\\s+(?:prevention|avoidance)\\b",
+    "\\bit\\s+does\\s+not\\s+state\\s+that\\s+a\\s+formal\\b"
   ],
   "reject": [
     "also identified in the supplied biography",
@@ -44,7 +47,11 @@
     "Documented outcomes include interim relief.",
     "The team obtained documented constitutional protection.",
     "She leads the employment practice across the national offices. She leads the employment practice across the national offices.",
-    "The team has obtained documented constitutional, investigation and inspection-related results."
+    "The team has obtained documented constitutional, investigation and inspection-related results.",
+    "The public record supports the ongoing nature of that work.",
+    "The record supports the procedural achievement without asserting a final result.",
+    "The mandate records prevention of a work stoppage.",
+    "It does not state that a formal procedure occurred."
   ],
   "allow": [
     "We challenged the evidence supplied by the authority.",
@@ -59,6 +66,8 @@
     "She documented the payroll irregularities before filing the claim.",
     "She led the proceedings and secured constitutional protection.",
     "The court named lead counsel for the consolidated proceedings.",
-    "The team obtained documented consent before transferring employee records."
+    "The team obtained documented consent before transferring employee records.",
+    "The court record supports the employer’s account of the payments.",
+    "The mandate included records preservation and procedural advice."
   ]
 }
