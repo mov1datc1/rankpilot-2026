@@ -35,7 +35,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
     if (details.length) errors.push(...details);
   }
   // Hiding a technical summary must never turn a rejection into approval.
-  if (reviewRejected && !errors.length) errors.push(data?.editorial_review ? 'La revisión editorial del borrador actual sigue pendiente.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
+  if (reviewRejected && !errors.length) errors.push(data?.editorial_review ? 'La revisión editorial del contenido actual sigue pendiente.' : 'La revisión editorial se ejecutará después de guardar la redacción.');
   if (requireArtifact && data?.ranking_claim && !isUnrankedClaim(data.ranking_claim) && !['verified_match','verified_unranked'].includes(data?.ranking_verification?.status)) {
     errors.push('La posición declarada requiere verificación oficial o resolver una discrepancia.');
   }
