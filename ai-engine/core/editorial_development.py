@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, create_model
 
 DEVELOPMENT_VERSION = 'editorial-development-v4'
+from core.biography_depth import BiographyDepth, DEPTH_CONTRACT, DEPTH_INSTRUCTION
 from core.personal_quality import CategoryAssessment, PERSONAL_QUALITY_CONTRACT, personal_quality_errors
 from core.candidate_evidence import ProfileCoverage, profile_errors, category_error
 from core.editorial_execution import PersonalCaseLink, InstitutionalLink, EXECUTION_CONTRACT, execution_errors
@@ -29,6 +30,7 @@ class Candidate(BaseModel):
     category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
     category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category.')
     category_assessment: CategoryAssessment | None = None
+    biography_depth: BiographyDepth | None = None
     profile_coverage: list[ProfileCoverage] = Field(default_factory=list)
     submission_case_coverage: list[PersonalCaseLink] = Field(default_factory=list)
     why_candidate: str
@@ -54,6 +56,7 @@ class Comparison(BaseModel):
 
 class Development(BaseModel):
     personal_quality_contract: str = ''
+    biography_depth_contract: str = ''
     execution_contract: str = ''
     institutional_execution: list[InstitutionalLink] = Field(default_factory=list)
     case_plan: EditorialCase
@@ -336,7 +339,7 @@ def development_errors(package, strategy, proposal):
     return errors
 
 
-def development_contract(package, strategy, personal_quality=False):
+def development_contract(package, strategy, personal_quality=False, biography_depth=False):
     core=tuple(d['matter_id'] for d in strategy['matters'] if d['disposition']=='core')
     reserves=tuple(d['matter_id'] for d in strategy['matters'] if d['disposition']=='reserve')
     names=tuple(l.get('name') or l.get('fullName') for l in package.get('lawyers',[]))
@@ -344,13 +347,15 @@ def development_contract(package, strategy, personal_quality=False):
     support=create_model('RegisteredSupport',__base__=SupportingMatter,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
     personal_link=create_model('RegisteredPersonalCaseLink',__base__=PersonalCaseLink,matter_id=(Literal[tuple(sorted(eligible_support_ids(package,strategy)))],...))
     extra={'category_assessment':(CategoryAssessment,...)} if personal_quality else {}
+    if biography_depth: extra['biography_depth']=(BiographyDepth,...)
     candidate=create_model('RegisteredCandidate',__base__=Candidate,name=(Literal[names] if names else str,...),supporting_matters=(list[support],...),
         submission_case_coverage=(list[personal_link],Field(default_factory=list)),**extra)
     draft=create_model('RegisteredDraft',__base__=MatterDraft,matter_id=(Literal[core],...))
     comparison=create_model('RegisteredComparison',__base__=Comparison,selected_id=(Literal[core],...),alternative_id=(Literal[reserves] if reserves else str,...))
     return create_model('RegisteredDevelopment',__base__=Development,candidates=(list[candidate],...),matters=(list[draft],...),comparisons=(list[comparison],...),
         execution_contract=(Literal[EXECUTION_CONTRACT],EXECUTION_CONTRACT),
-        **({'personal_quality_contract':(Literal[PERSONAL_QUALITY_CONTRACT],...)} if personal_quality else {}))
+        **({'personal_quality_contract':(Literal[PERSONAL_QUALITY_CONTRACT],...)} if personal_quality else {}),
+        **({'biography_depth_contract':(Literal[DEPTH_CONTRACT],...)} if biography_depth else {}))
 
 def renderer_owned_finding(defect, package):
     """Only the renderer owns D3; preserve the explicit source restriction.
@@ -378,6 +383,11 @@ def develop(state):
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
     previous=state.get('development')
+    if previous and (state.get('case_requirements') or {}).get('biography_depth_contract')==DEPTH_CONTRACT and previous.get('biography_depth_contract')!=DEPTH_CONTRACT:
+        # Only a new explicit review upgrades generated metadata. Historical
+        # approved bytes stay untouched; old short prose is not certified anew.
+        previous={**previous,'biography_depth_contract':DEPTH_CONTRACT}
+        state={**state,'development':previous}
     if previous and (state.get('case_requirements') or {}).get('personal_quality_contract')==PERSONAL_QUALITY_CONTRACT and previous.get('personal_quality_contract')!=PERSONAL_QUALITY_CONTRACT:
         # A new explicit development review must not silently reuse the former
         # two-case contract. Upgrade generated metadata only; original sources
@@ -438,7 +448,7 @@ def develop(state):
         targets=repair_targets(state['package'],state['strategy'],bound)
         if targets:
             return repair_development(state,bound,targets)
-    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy'],personal_quality=True),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
+    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy'],personal_quality=True,biography_depth=True),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
     proposal=bind_development(state['package'],proposal)
     proposal['version']=DEVELOPMENT_VERSION
     errors=development_errors(state['package'],state['strategy'],proposal)
@@ -448,4 +458,6 @@ TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists
 
 TASK += " PERSONAL EVIDENCE CAPACITY: Read source_obligations.personal_attribution_policy. A literal team listing alone establishes membership, not individual substantive responsibility or achievements. Keep such a category-pending, not-nominated public profile limited to supplied credentials and participation; do not manufacture two personal contributions or force a client answer merely to complete the report. This exception does not dilute substantive personally attributed mandates or an actual proposed nomination. Do not identify a shorter name with a longer lead name without source support. Record optional identity or role follow-up internally."
 
-TASK += " PERSONAL QUALITY CONTRACT: return personal_quality_contract complete-personal-case-v1. Develop B9 to the depth of the supplied evidence, up to 1,000 words per person where warranted, with no artificial minimum, quota or instruction to shorten a rich profile. Source_obligations.personal_work_requirements identifies ALL personally led selected mandates; supporting_matters and submission_case_coverage must preserve those and every substantively attributed supporting mandate, including pertinent reserves. Explain legal obstacle, personal action and achieved result or actual pending status in developed natural prose, not a catalogue. Group related work without deleting distinctive achieved contributions, material credentials or source-grounded career scope. Public anonymization may generalize names and identifying metrics, never erase legal substance or turn former employment into client work. Limited team-only evidence supports participation, not invented responsibility or filler. For each person return category_assessment: criterion, original career-stage evidence, positive growth evidence where Up and Coming is proposed, career-stage assessment and counterevidence. A missing ranking match, first submission or a partner title alone does not establish emerging reputation or practice growth. Address established career/leadership evidence; choose Category pending with its precise missing criterion/action when the category is not defensible. The Audit must use this same individual argument and category assessment. Preserve all material facts before editing for length; the concise Audit budget does not apply to B9."
+TASK += " PERSONAL QUALITY CONTRACT: return personal_quality_contract complete-personal-case-v1. Develop B9 according to the shared B9 EDITORIAL DEPTH policy, preserving rich personal evidence rather than compressing it into a short profile. Source_obligations.personal_work_requirements identifies ALL personally led selected mandates; supporting_matters and submission_case_coverage must preserve those and every substantively attributed supporting mandate, including pertinent reserves. Explain legal obstacle, personal action and achieved result or actual pending status in developed natural prose, not a catalogue. Group related work without deleting distinctive achieved contributions, material credentials or source-grounded career scope. Public anonymization may generalize names and identifying metrics, never erase legal substance or turn former employment into client work. Limited team-only evidence supports participation, not invented responsibility or filler. For each person return category_assessment: criterion, original career-stage evidence, positive growth evidence where Up and Coming is proposed, career-stage assessment and counterevidence. A missing ranking match, first submission or a partner title alone does not establish emerging reputation or practice growth. Address established career/leadership evidence; choose Category pending with its precise missing criterion/action when the category is not defensible. The Audit must use this same individual argument and category assessment. Preserve all material facts before editing for length; the concise Audit budget does not apply to B9."
+
+TASK += " " + DEPTH_INSTRUCTION
