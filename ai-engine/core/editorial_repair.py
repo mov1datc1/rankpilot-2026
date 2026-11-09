@@ -479,16 +479,21 @@ def repair_development(state, proposal, targets):
     # A repaired candidate can still have a mismatched output proof. Give only
     # that owned BIO/proof group the same one bounded cleanup, not the portfolio
     # or every original repair target. Never broaden a BIO-only authorization.
-    from core.candidate_evidence import profile_errors,category_error
+    from core.candidate_evidence import profile_errors
+    from core.personal_quality import personal_quality_errors
+    quality_faults=personal_quality_errors(state['package'],state['strategy'],fixed)
     people={str(p.get('name') or p.get('fullName')):p for p in state['package'].get('lawyers',[])}
     for i,candidate in enumerate(fixed.get('candidates',[])):
         path=f'candidates/{i}'
         profile=profile_errors(people.get(candidate.get('name'),{}),candidate)
         personal=personal_case_errors(state['package'],candidate,state['strategy']) if fixed.get('execution_contract')==EXECUTION_CONTRACT else []
-        only_binding=(bool(profile or personal)
-            and all(e=='Credencial retenida ausente del B9 de esta persona.' for e in profile)
-            and all(e=='La contribución personal debe ejecutarse literalmente en el B9 de esta persona.' for e in personal))
-        if not owned(path) or not only_binding or category_error(candidate) or path not in local_targets:continue
+        # Use the same eligibility as initial repair. Output proof failures can
+        # coexist with invalid source/category evidence; freezing those fields
+        # would make a valid recovery impossible.
+        only_binding=(not any(e.startswith(f'Calidad personal {path}:') for e in quality_faults)
+            and candidate_output_repair_only(state['package'],state['strategy'],candidate,
+                people.get(candidate.get('name'),{}),profile,personal))
+        if not owned(path) or not only_binding or path not in local_targets:continue
         target=copy.deepcopy(local_targets[path]);target['mutable_fields']=['submission_bio','profile_coverage','submission_case_coverage']
         target['problem']=target.get('problem','')+' Synchronize only this BIO and its exact output proofs against its own original profile and personally attributed mandates. Retain every material career role and existing legal contribution, category, source unit and personal source binding. Copy each public_quote from the actual current BIO. If the BIO omits supplied material evidence, restore it faithfully; never pick an unrelated matching passage to excuse an omission. Report only an actually blocked authorized field as unresolved.'
         child=path+'/submission_bio'

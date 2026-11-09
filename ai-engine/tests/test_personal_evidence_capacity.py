@@ -28,6 +28,23 @@ class PersonalEvidenceCapacityTests(unittest.TestCase):
         self.assertFalse(team_listing_quote(c['name'],'Sofia Vega led collective negotiations.',m))
         self.assertFalse(team_listing_quote(c['name'],'Other team members: Alex Rivera.',m))
         self.assertFalse(team_listing_quote(c['name'],c['supporting_matters'][0]['source_quote'],{}))
+
+    def test_source_team_heading_does_not_invent_individual_achievements(self):
+        from core.personal_quality import required_personal_matters
+        for heading in ('Other team members: ', 'Other team members:\n', 'TEAM MEMBERS:\n'):
+            for key in ('teamMembers','team_members'):
+                with self.subTest(heading=heading,key=key):
+                    p,c=self.participation()
+                    for matter in p['matters']:
+                        matter[key]=heading+matter.pop('teamMembers')
+                    strategy={'matters':[{'matter_id':m['id'],'disposition':'core'} for m in p['matters']]}
+                    self.assertEqual(personal_case_errors(p,c,strategy),[])
+                    self.assertEqual(required_personal_matters(p,strategy,c),[])
+                    self.assertTrue(team_listing_quote(c['name'],c['name'],p['matters'][0]))
+                    self.assertFalse(team_listing_quote(c['name'],'Sofia Vega led collective negotiations.',p['matters'][0]))
+
+    def test_team_membership_does_not_resolve_a_shorter_name_alias(self):
+        self.assertFalse(team_listing_quote('Sofia Vega','Sofia Vega',{'teamMembers':'Other team members: Sofia Vega Morales and Alex Rivera.'}))
     def test_primary_role_requires_exact_name_not_a_prefix_alias(self):
         p,c=self.participation();p['matters'][0]['leadPartner']='Sofia Vega Morales.'
         strategy={'matters':[{'matter_id':'a','disposition':'core'}]}
