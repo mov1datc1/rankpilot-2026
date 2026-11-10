@@ -112,6 +112,19 @@ test('internal B9 checks have a human heading while preserving the complete find
   available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},
   editorial_development:{candidates:[{name:'Sofia Vega'}]},final_artifact_review:{judge:{passed:false,defects:[]}},release_verdict:{passed:false,status:'needs_review'}};
  const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data,errors:[message],warnings:[],approved:false,onResolve:()=>{}}));
- assert.match(html,/<summary[^>]*>B9 · Sofia Vega · Comprueba que la categoría/);
- assert.ok(html.includes(message));assert.match(html,/Detalle de la revisión/);
+ assert.match(html,/B9 · Sofia Vega · Revisa el respaldo de la candidatura individual/);
+ assert.ok(html.includes(message));assert.match(html,/Mensaje original de la revisión/);
+});
+
+test('available observations offer navigation only and retain technical messages inside collapsed details',()=>{
+ const {REVIEW_CONTRACT:c}=require('../../src/lib/audit/review-versions.ts');
+ const defects=[{code:'MISSING_TEMPORAL_METADATA',field_path:'research_period',message:'Falta research_period global; mantener acción interna.'},{code:'SOURCE_CONFLICT',field_path:'client',message:'Usa “Acme” y “ACME” para el mismo asunto. Presentar ambas variantes.'}];
+ const data={draft_revision:1,completed_review_policy_version:c.policy,completed_renderer_version:c.renderer,completed_artifact_review_version:c.artifact,available_artifact:{base64:'bytes',audit_base64:'audit',input_hash:'bound',review_revision:1,observation_status:'with_observations'},final_artifact_review:{judge:{defects}},release_verdict:{passed:false}};
+ const calls=[];const tree=ReviewPanel({data,errors:[],warnings:[],approved:false,onResolve:(...args)=>calls.push(args)});
+ for(const button of buttons(tree))button.props.onClick();
+ assert.deepEqual(calls,[['period',defects[0].message],['wizard',defects[1].message]]);
+ const html=renderToStaticMarkup(tree);assert.doesNotMatch(html,/<details open/);
+ const visible=html.replace(/<details>[\s\S]*?<\/details>/g,'');
+ assert.doesNotMatch(visible,/research_period|acción interna|Presentar ambas variantes/);
+ assert.match(visible,/Qué puedes hacer/);assert.match(html,/research_period/);
 });

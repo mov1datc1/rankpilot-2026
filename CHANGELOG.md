@@ -1,3 +1,7 @@
+## 2026-11-09 — v1.0.67: observaciones comprensibles y acciones de consulta
+
+Explicaciones de hallazgos separadas de diagnósticos internos, con acción específica para periodo, nombres, confidencialidad y ranking. Mensajes originales y citas preservados en detalle. Periodo conectado a formulario y guardado existentes, sin generación automática. 558 pruebas Node, una omisión existente y TypeScript. Ver docs/reviews/2026-11-09-user-observations-v1-0-67.md.
+
 ## 2026-11-09 — v1.0.66: instrucciones coherentes en Submission Studio
 
 Mensajes y acciones alineados con documentos disponibles con/sin observaciones. Descargar y consultar hallazgos no reinicia la generación; preparación, continuación y actualización tienen nombres consistentes. Encabezados comprensibles conservan el detalle completo de cada hallazgo. Compatibilidad de revisiones anteriores con «Contenido editado». 552 pruebas Node, una omisión existente y TypeScript correctos. Sin llamadas de generación. Ver docs/reviews/2026-11-09-studio-user-messages-v1-0-66.md.

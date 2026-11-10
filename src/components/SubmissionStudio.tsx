@@ -47,6 +47,7 @@ import ImportFromAssistantModal from '@/components/ImportFromAssistantModal';
 import { needsInputReview, displayedMatterValue, hasPendingValue } from '@/lib/audit/input-review';
 import { PreparationBanner } from '@/components/PreparationBanner';
 import {editorialPreparationIssues, officialFilingGaps} from '@/lib/audit/preparation-input';
+import {ResearchPeriodForm} from '@/components/ResearchPeriodForm';
 import { FilingDetails } from '@/components/FilingDetails';
 import { PreparationProgress } from '@/components/PreparationProgress';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
@@ -328,6 +329,7 @@ export default function SubmissionStudio({
   const returnToAudit=()=>{setAuditAction(null);setFilingOpenRequest(0);setActiveTab('audit');window.setTimeout(()=>document.getElementById('audit-next-actions')?.scrollIntoView({behavior:'smooth',block:'start'}),100);};
   const applyAuditSave=(result:any)=>({audit_action_responses:result.auditActionResponses,previous_approved_artifact:result.previousApprovedArtifact});
   const [activeReviewMessage,setActiveReviewMessage]=useState<string | undefined>();
+  const [showResearchPeriod,setShowResearchPeriod]=useState(false);
   const [periodFrom, setPeriodFrom] = useState(initialChambersData?.research_period?.from || '');
   const [periodTo, setPeriodTo] = useState(initialChambersData?.research_period?.to || '');
   const saveResearchPeriod = async () => {
@@ -337,6 +339,7 @@ export default function SubmissionStudio({
       if(!result.success) throw new Error(result.error);
       setChambersData((prev:any)=>({...prev,...applyAuditSave(result),research_period:{from:periodFrom,to:periodTo,source:'User-confirmed submission instructions'},draft_revision:result.revision,review_responses:result.reviewResponses,final_review_stale:true,approved_artifact:null,release_verdict:{passed:false,status:'needs_review'}}));
       setActiveReviewMessage(undefined);
+      setShowResearchPeriod(false);
       if(auditAction)returnToAudit();else document.getElementById('studio-delivery-review')?.scrollIntoView({behavior:'smooth',block:'start'});
     } catch(error) {setDraftSaveError(error instanceof Error?error.message:'No se pudo guardar el periodo.');}
     finally {setIsSavingDraft(false);}
@@ -360,9 +363,10 @@ export default function SubmissionStudio({
     if (destination === 'retry-selection' || destination === 'retry-review') { void handleOptimizeAll(false,destination==='retry-review' && !reviewIsStale(chambersData)); return; }
     if (destination === 'wizard' || destination === 'lawyers') { setFocusedReview(focusedReviewScope(message,chambersData.lawyers || [],matters,(chambersData.final_artifact_review?.judge?.defects || []).find((d:any)=>d.message===message))); setReviewLawyersFirst(destination === 'lawyers'); setReviewPending(false); setShowValidationWizard(true); return; }
     setActiveReviewMessage(message);
+    if(destination==='period')setShowResearchPeriod(true);
     setActiveTab('studio');
     window.setTimeout(() => {
-      const target=document.getElementById(destination === 'ranking' ? 'studio-ranking-review' : 'studio-delivery-review');
+      const target=document.getElementById(destination === 'ranking' ? 'studio-ranking-review' : destination==='period' ? 'studio-research-period' : 'studio-delivery-review');
       if (target instanceof HTMLDetailsElement) target.open=true;
       target?.scrollIntoView({behavior:'smooth',block:'start'});
     }, 100);
@@ -1714,6 +1718,7 @@ export default function SubmissionStudio({
             <div id="studio-delivery-review" style={{scrollMarginTop:100}}>
               {isOptimizingAll ? <section role="status" className="studio-review-panel"><strong>Preparando documentos</strong><p>{optimizeAllProgress?.stage} El avance se guarda automáticamente; puedes salir y volver después.</p></section> : reviewPanel}
             </div>
+            {showResearchPeriod && <ResearchPeriodForm from={periodFrom} to={periodTo} busy={isSavingDraft} onFrom={setPeriodFrom} onTo={setPeriodTo} onSave={saveResearchPeriod} onClose={()=>setShowResearchPeriod(false)} />}
             <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1.25rem',border:'1px solid #CBD5E1',borderRadius:12,background:'#fff'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,marginBottom:8}}>
                 <strong style={{fontSize:15,color:'#0F172A'}}>Verificación oficial del ranking</strong>

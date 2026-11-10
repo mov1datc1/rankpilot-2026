@@ -1,5 +1,6 @@
 'use client';
 
+import {observationPresentation} from '@/lib/audit/observation-presentation';
 import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { reviewIssues, reviewIsStale, isStoppedSelection, type ReviewDestination } from '@/lib/audit/review-actions';
 import { Sparkles } from 'lucide-react';
@@ -49,19 +50,21 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
         : path==='b10'?'B10 · Departamento':path==='c2'?'C2 · Posicionamiento':path==='research_period'?'Periodo de investigación'
         : path==='client'?'Identificación del cliente':d.scope==='letter' || ['executive_assessment','rendered_audit'].includes(path)?'Audit':'Documentos';
     };
-    const summary=(d:any)=>/^Caso personal B9:/.test(d.message)?'Comprueba que el perfil describa la aportación personal y su resultado.'
-      :/^Calidad personal candidates\//.test(d.message)?'Comprueba que la categoría propuesta esté respaldada por las fuentes de este abogado.'
-      :/^La aceptación editorial no está completa:/.test(d.message)?'Consulta las observaciones de contenido indicadas en esta revisión.'
-      :d.message;
     return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A'}}>
       <h2 style={{fontSize:22,margin:'0 0 10px'}}>{delivery.label}</h2>
       <p>Descarga el Submission y el Audit desde «Descargar». {delivery.hasObservations?'Consulta estos hallazgos antes de presentarlos; no necesitas iniciar otro intento para obtener los archivos.':'La revisión no dejó observaciones pendientes.'}</p>
-      {all.map((d:any,i:number)=><details key={i} style={{borderTop:'1px solid #E2E8F0',padding:'12px 0'}}>
-        <summary style={{cursor:'pointer',fontWeight:600}}>{fieldLabel(d)} · {summary(d)}</summary>
-        {summary(d)!==d.message && <p><strong>Detalle de la revisión:</strong> {d.message}</p>}
-        {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
-        {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
-      </details>)}
+      {all.map((d:any,i:number)=>{const observation=observationPresentation(d);return <article key={i} style={{borderTop:'1px solid #E2E8F0',padding:'16px 0'}}>
+        <h3 style={{fontSize:16,margin:'0 0 8px'}}>{fieldLabel(d)} · {observation.title}</h3>
+        <p style={{margin:'8px 0',lineHeight:1.6}}>{observation.explanation}</p>
+        <p style={{margin:'8px 0',lineHeight:1.6}}><strong>Qué puedes hacer: </strong>{observation.action}</p>
+        {observation.destination && <button type="button" disabled={busy} onClick={()=>onResolve(observation.destination!,d.message)} style={{cursor:'pointer',padding:'8px 12px',marginBottom:10}}>{observation.button} →</button>}
+        <details>
+          <summary style={{cursor:'pointer'}}>Ver detalle y citas de la revisión</summary>
+          <p><strong>Mensaje original de la revisión:</strong> {d.message}</p>
+          {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
+          {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
+        </details>
+      </article>;})}
     </section>;
   }
   return <>
