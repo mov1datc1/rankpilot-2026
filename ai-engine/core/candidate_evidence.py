@@ -67,9 +67,9 @@ class ProfilePrivacyBasis(BaseModel):
 
 
 class ProfileCoverage(BaseModel):
-    reference: str
+    reference: str = Field(description='Original profile unit ID. If it names multiple entities, repeat this reference in separate records, one exact atomic entity per record, retaining the complete original unit in source_quote.')
     relationship: Literal['former_employer','professional_association','client','qualification','other'] = 'other'
-    entity_name: str = Field(default='', description='Exact source entity whose identity this credential uses; empty only when the unit has no named entity. A former employer is not a client mandate.')
+    entity_name: str = Field(default='', description='One exact atomic source entity, never a concatenated list. Use separate records with the same reference for several entities. Empty only when the unit has no named entity. A former employer is not a client mandate.')
     privacy_basis: ProfilePrivacyBasis | None = Field(default=None, description='Required only for generalize: bind the actual source restriction. A hypothetical lack of permission is not evidence. Null for retain/omit.')
     decision: Literal['retain','generalize','omit']
     source_quote: str = Field(description='Copy the complete original profile unit referenced here, without rewriting it.')
@@ -129,10 +129,13 @@ def profile_errors(person, candidate, package=None):
     actual=candidate.get('profile_coverage',[])
     refs=[c.get('reference') for c in actual]
     errors=[]
-    if len(refs)!=len(set(refs)) or set(refs)!=set(expected):
+    identities=[(c.get('reference'),norm(c.get('entity_name'))) for c in actual]
+    ambiguous={r for r in refs if refs.count(r)>1 and any(
+        not norm(c.get('entity_name')) or c.get('decision')=='omit' for c in actual if c.get('reference')==r)}
+    if len(identities)!=len(set(identities)) or ambiguous or set(refs)!=set(expected):
         missing=[r for r in expected if r not in refs]
         unexpected=[r for r in refs if r not in expected]
-        duplicate=sorted({r for r in refs if refs.count(r)>1})
+        duplicate=sorted(ambiguous | {r for r,e in identities if identities.count((r,e))>1})
         errors.append('Falta rendición completa de credenciales del perfil fuente. '
             +f'Missing references: {missing}; unexpected: {unexpected}; duplicated: {duplicate}.')
     for item in actual:

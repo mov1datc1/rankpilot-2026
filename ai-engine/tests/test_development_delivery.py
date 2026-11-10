@@ -7,6 +7,52 @@ from core.editorial_development import develop
 
 
 class CompleteDevelopmentDeliveryTests(unittest.TestCase):
+    def test_initial_contract_exhaustion_continues_through_all_field_reviews_without_third_repair(self):
+        from core.field_review import advance, units_for
+        from test_field_review import verdict
+        s=self.fixture();s.pop('field_review_attempts')
+        s['repair_report'].update(surgical_retries=1,residual_requests=1,retry_paths=['candidates/0'])
+        before=copy.deepcopy(s['development']);calls=[]
+        s.update(develop(s))
+        self.assertFalse(s['development_delivery_ready'])
+        self.assertEqual(s['repair_continuation']['phase'],'review')
+        def review(current,role,schema,instruction,payload):
+            self.assertEqual(role,'field_reviewer')
+            calls.extend(u['field'] for u in payload['units'])
+            return verdict(payload['units']),current['trace']+[{'role':role,'usage':{'total_tokens':11}}]
+        with patch('core.review_graph.invoke_role',side_effect=review):
+            for _ in range(20):
+                s.update(advance(s))
+                if not s.get('repair_continuation'):break
+        self.assertTrue(s['development_delivery_ready'])
+        self.assertFalse(s['development_validated'])
+        self.assertEqual(set(calls),{u['field'] for u in units_for(s)})
+        self.assertEqual(len(calls),len(set(calls)))
+        self.assertEqual(s['development'],before)
+        self.assertTrue(s['development_observations'])
+
+    def test_unattempted_local_residual_cannot_claim_exhaustion(self):
+        for changes in [{'retry_paths':[]},{'residual_requests':0},{'surgical_retries':0}]:
+            s=self.fixture();s.pop('field_review_attempts')
+            s['repair_report'].update(surgical_retries=1,residual_requests=1,retry_paths=['candidates/0'])
+            s['repair_report'].update(changes)
+            self.assertIsNone(retain_complete_development(s))
+
+    def test_semantic_observation_can_finish_alongside_existing_local_binding_observation(self):
+        from core.field_review import retain_observations, units_for, project_checks
+        from test_field_review import verdict
+        s=self.fixture();s['development_observations']=['placeholder']
+        from core.editorial_development import development_errors
+        s['development_observations']=development_errors(s['package'],s['strategy'],s['development'])
+        units=units_for(s);target=units[0]['field']
+        receipts,defects=project_checks(units,verdict(units,target))
+        s.update(field_review_receipts=receipts,field_review_failures=defects)
+        result=retain_observations(s)
+        self.assertTrue(result['development_delivery_ready'])
+        self.assertFalse(result['development_validated'])
+        self.assertFalse(result.get('repair_continuation'))
+        self.assertEqual(len(result['field_review_observations']),1)
+
     def fixture(self):
         s=state()
         s['development']['candidates'][0]['submission_case_coverage'][0]['public_quote']='An outdated internal binding.'

@@ -22,6 +22,14 @@ class Repair(BaseModel):
     corrections: list[Correction]
     unresolved: list[str]
 
+def profile_output_keys(items):
+    """Keep legacy single-unit keys, disambiguating atomic entities by position."""
+    refs=[item['reference'] for item in items]
+    seen={}
+    for item in items:
+        ref=item['reference'];seen[ref]=seen.get(ref,0)+1
+        yield (ref if refs.count(ref)==1 else f'{ref}__{seen[ref]}'),item
+
 def biography_delta_contract(target):
     """A BIO repair cannot emit source links, identities or ranking decisions."""
     current=target['current_value'];fields={}
@@ -33,7 +41,7 @@ def biography_delta_contract(target):
         unit=create_model('ProfileOutputOnly',__config__=ConfigDict(extra='forbid'),
             decision=(Literal['retain','generalize','omit'],...),public_quote=(str,...),reason=(str,...))
         profiles=create_model('ExistingProfileOutputReferences',__config__=ConfigDict(extra='forbid'),
-            **{p['reference']:(unit,...) for p in current.get('profile_coverage',[])})
+            **{key:(unit,Field(description='Output proof for original source '+p['reference']+', entity '+str(p.get('entity_name') or '(unnamed)')+'. Preserve this identity and relationship.')) for key,p in profile_output_keys(current.get('profile_coverage',[]))})
         fields['profile_coverage']=(Optional[profiles],Field(description='Null preserves every existing profile output proof. Otherwise return every existing reference, updating only its output decision/quote/reason. Original source units cannot be emitted or changed.'))
     if 'submission_case_coverage' in target['mutable_fields']:
         cases=create_model('ExistingPersonalOutputReferences',__config__=ConfigDict(extra='forbid'),
@@ -54,7 +62,7 @@ def expand_biography_delta(target,value):
     if 'biography_depth' in delta:result['biography_depth']=delta['biography_depth']
     profiles=delta.get('profile_coverage')
     if profiles is not None:
-        for unit in result.get('profile_coverage',[]):unit.update(profiles[unit['reference']])
+        for key,unit in profile_output_keys(result.get('profile_coverage',[])):unit.update(profiles[key])
     cases=delta.get('submission_case_coverage')
     if cases is not None:
         for i,unit in enumerate(result.get('submission_case_coverage',[])):unit['public_quote']=cases[f'S{i+1:02d}']
@@ -557,7 +565,7 @@ def repair_development(state, proposal, targets):
     people={str(p.get('name') or p.get('fullName')):p for p in state['package'].get('lawyers',[])}
     for i,candidate in enumerate(fixed.get('candidates',[])):
         path=f'candidates/{i}'
-        profile=profile_errors(people.get(candidate.get('name'),{}),candidate)
+        profile=profile_errors(people.get(candidate.get('name'),{}),candidate,state['package'])
         personal=personal_case_errors(state['package'],candidate,state['strategy']) if fixed.get('execution_contract')==EXECUTION_CONTRACT else []
         # Use the same eligibility as initial repair. Output proof failures can
         # coexist with invalid source/category evidence; freezing those fields
@@ -970,3 +978,5 @@ TASK += " " + DEPTH_INSTRUCTION
 TASK += " When participation_quote is required, return only the actual added public BIO passage describing team membership. Keep the existing limited BIO verbatim and add the supported participation. The application appends the fixed original source and membership role itself; do not return or alter source quotes, matter IDs, category or identity. This cannot establish leadership, individual results or a nomination."
 
 TASK += " A client-register restriction applies to a client mandate, not automatically to a separately sourced former-employer or professional-association credential. Those career relationships require an explicit profile restriction before hiding the employer/association. Preserve the named career fact without publishing that entity as a client or connecting it to a confidential mandate."
+
+TASK += " A profile sentence may name several clients or professional bodies. Emit one profile_coverage record per atomic named entity, repeating the same reference and full source_quote. Never join a list into entity_name or use one client restriction to justify all the others. Bind each generalization separately; preserve each retained association/employer. The complete source unit is still reviewed once with ALL its entity records."

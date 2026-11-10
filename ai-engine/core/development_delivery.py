@@ -5,22 +5,46 @@ successful review. The exact Word pair still receives independent review.
 """
 
 def retain_complete_development(state, result=None):
-    from core.editorial_development import development_contract, development_errors, _norm
     from core.editorial_repair import unknown_repair_usage
     from core.field_review import method_count
-    from core.public_privacy import public_privacy_findings
 
     current={**state,**(result or {})}
     if (result is not None and not result.get('errors')) or (result is None and not state.get('delivery_observations_requested')):
         return None
     report=current.get('repair_report') or {}
     failed=report.get('failed_paths') or []
+    semantic_exhausted=bool(failed) and all(method_count(current.get('field_review_attempts',{}),p)>=2 for p in failed)
+    # Initial contract repair happens BEFORE field review, so it has its own
+    # bounded initial+residual receipt, not field-review method counters.
+    # Require every failed path to have actually received that residual call.
+    local_exhausted=(bool(failed) and report.get('surgical_retries')==1
+        and report.get('residual_requests',0)>0
+        and all(p in report.get('retry_paths',[]) for p in failed))
     if (current.get('repair_continuation')
         or not current.get('selection_validated') or not current.get('selection_review_validated')
         or not current.get('development_reusable') or report.get('unresolved')
-        or not failed or any(method_count(current.get('field_review_attempts',{}),p)<2 for p in failed)
+        or not (semantic_exhausted or local_exhausted)
         or unknown_repair_usage(current.get('trace',[]))):
         return None
+    proposal=current['development']
+    findings=complete_proposal_findings(current)
+    if not findings:return None
+    retained={**(result or {}),'development':proposal,'development_validated':False,
+        'development_delivery_ready':True,'development_repair_unlocatable':False,
+        'development_observations':list(dict.fromkeys(findings)),
+        'repair_continuation':None,'errors':[]}
+    if local_exhausted and not semantic_exhausted and current.get('field_review_enabled'):
+        # Local proof defects must not skip independent semantic review or
+        # buy another copy of the same exhausted contract correction.
+        from core.field_review import schedule
+        return schedule(current,retained)
+    return retained
+
+
+def complete_proposal_findings(current):
+    """Return local findings only for a complete, identity-bound, privacy-safe proposal."""
+    from core.editorial_development import development_contract, development_errors, _norm
+    from core.public_privacy import public_privacy_findings
     package=current['package'];strategy=current['strategy'];proposal=current['development']
     try:
         # Registered identities and serialisable fields are mandatory even
@@ -37,11 +61,6 @@ def retain_complete_development(state, result=None):
             or any(not c['submission_bio'].strip() for c in proposal['candidates'])
             or public_privacy_findings(package,strategy,proposal)):
             return None
-        findings=development_errors(package,strategy,proposal)
+        return development_errors(package,strategy,proposal)
     except (ValueError,TypeError,KeyError,AttributeError):
         return None
-    if not findings:return None
-    return {**(result or {}),'development':proposal,'development_validated':False,
-        'development_delivery_ready':True,'development_repair_unlocatable':False,
-        'development_observations':list(dict.fromkeys(findings)),
-        'repair_continuation':None,'errors':[]}

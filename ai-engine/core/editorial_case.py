@@ -211,13 +211,15 @@ def obligations(package, strategy, proposal):
         for i,candidate in enumerate(proposal.get('candidates',[])):
             if not public_profile(candidate):continue
             person=next((p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))),{})
-            coverage={c.get('reference'):c for c in candidate.get('profile_coverage',[])}
             for unit in profile_units(person):
-                decision=coverage.get(unit['reference'],{})
-                basis=decision.get('privacy_basis') or {}
-                privacy_sources=[person] if basis.get('kind')=='profile_restriction' else [register[basis['matter_id']]] if basis.get('matter_id') in register else []
+                decisions=[c for c in candidate.get('profile_coverage',[]) if c.get('reference')==unit['reference']]
+                privacy_sources=[]
+                for decision in decisions:
+                    basis=decision.get('privacy_basis') or {}
+                    source=person if basis.get('kind')=='profile_restriction' else register.get(basis.get('matter_id'))
+                    if source is not None and source not in privacy_sources:privacy_sources.append(source)
                 add(f'profile:{i}:{unit["reference"]}',f'candidates/{i}/submission_bio',[{'source_excerpt':unit['source_quote']}]+privacy_sources,
-                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. A former employer or professional association must retain its source name unless an actual source/register restriction applies; a hypothetical client-permission gap is not such a restriction. Check relationship, entity_name and privacy_basis against the original: a quote about employment alone is NOT a confidentiality restriction, and another entity\'s restriction does not apply. A literal privacy_basis is not semantic permission to anonymize. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
+                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. A former employer or professional association must retain its source name unless an actual source/register restriction applies; a hypothetical client-permission gap is not such a restriction. Check EVERY named entity, relationship and privacy_basis against the original, including entities omitted from the internal records. A quote about employment alone is NOT a confidentiality restriction, and another entity\'s restriction does not apply. A literal privacy_basis is not semantic permission to anonymize. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decisions: '+str(decisions))
     for i,leader in enumerate(additional_leaders(package,strategy)):
         add(f'leader:{i}','leadership',[register[mid] for mid in leader['matter_ids']], 'Evaluate '+leader['name']+' internally; preserve documented work and request only genuinely absent seniority/profile facts. Do not invent a public bio.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):

@@ -19,6 +19,45 @@ def candidate_case():
     return p,s,v
 
 class CandidateEvidenceTests(unittest.TestCase):
+    def test_multiple_entities_share_a_source_unit_without_becoming_one_identity(self):
+        p,s,v=candidate_case();person=p['lawyers'][0];c=v['candidates'][0]
+        person['bio']='Sofia serves as chair at Example Federation and Example Council.'
+        c['submission_bio']=person['bio']
+        c['profile_coverage']=[{'reference':'P01','relationship':'professional_association',
+            'entity_name':name,'decision':'retain','source_quote':person['bio'],
+            'public_quote':person['bio'],'privacy_basis':None,'reason':'Retains this professional office.'}
+            for name in ['Example Federation','Example Council']]
+        self.assertEqual(profile_errors(person,c,p),[])
+        item=next(o for o in obligations(p,s,v) if o['id']=='profile:0:P01')
+        self.assertIn('Example Federation',item['instruction']);self.assertIn('Example Council',item['instruction'])
+        self.assertEqual(len([o for o in obligations(p,s,v) if o['id']=='profile:0:P01']),1)
+        from core.editorial_repair import biography_delta_contract,expand_biography_delta
+        target={'current_value':c,'mutable_fields':['profile_coverage']}
+        delta={'profile_coverage':{'P01__1':{'decision':'retain','public_quote':'First distinct output.','reason':'First office.'},
+            'P01__2':{'decision':'retain','public_quote':'Second distinct output.','reason':'Second office.'}}}
+        biography_delta_contract(target).model_validate(delta)
+        changed=expand_biography_delta(target,delta)
+        self.assertEqual([x['public_quote'] for x in changed['profile_coverage']],['First distinct output.','Second distinct output.'])
+        self.assertEqual([x['entity_name'] for x in changed['profile_coverage']],['Example Federation','Example Council'])
+        c['profile_coverage'].append(copy.deepcopy(c['profile_coverage'][0]))
+        self.assertTrue(any('duplicated' in e for e in profile_errors(person,c,p)))
+
+    def test_each_generalized_client_keeps_its_own_restriction_and_review_source(self):
+        p,s,v=candidate_case();person=p['lawyers'][0];c=v['candidates'][0]
+        person['bio']='Sofia advises Example Manufacturing and Example Energy on workforce governance.'
+        c['submission_bio']='Sofia advises employers on workforce governance.'
+        c['profile_coverage']=[]
+        for i,name in enumerate(['Example Manufacturing','Example Energy']):
+            p['matters'].append({'id':f'client-{i}','client':name,'publication_route':'E'})
+            c['profile_coverage'].append({'reference':'P01','relationship':'client','entity_name':name,
+                'decision':'generalize','source_quote':person['bio'],'public_quote':c['submission_bio'],
+                'privacy_basis':{'kind':'client_register','matter_id':f'client-{i}','source_quote':name},'reason':'Restricted client identity.'})
+        self.assertEqual(profile_errors(person,c,p),[])
+        item=next(o for o in obligations(p,s,v) if o['id']=='profile:0:P01')
+        self.assertTrue(all(m in item['sources'] for m in p['matters'][-2:]))
+        c['profile_coverage'][1]['privacy_basis']=c['profile_coverage'][0]['privacy_basis']
+        self.assertTrue(any('misma entidad' in e for e in profile_errors(person,c,p)))
+
     def test_binding_does_not_promote_or_rewrite_a_department_heads_bio(self):
         from core.editorial_development import bind_development
         p,s,v=candidate_case();p['filing_details']={'heads':[{'name':'Sofia Vega'}]}
