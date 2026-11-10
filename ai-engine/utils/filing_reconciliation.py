@@ -41,6 +41,8 @@ def reconcile_filing(text, deterministic):
         'source_characters': len(text), 'accepted_findings': len(findings),
         'rejected_fields': sorted(set(rejected)),
         'usage': getattr(raw, 'usage_metadata', None) or {},
+        'provider_request_id': getattr(raw, 'id', None),
+        'model': (getattr(raw, 'response_metadata', {}) or {}).get('model_name'),
     }
     return merged
 
