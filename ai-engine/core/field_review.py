@@ -26,7 +26,14 @@ does not require invented detail or padding: an accurate limited profile is vali
 Mark failed only for a concrete material violation of this obligation; optional
 wording preferences are met, not blocking defects. Identify an allowed output
 passage and original source passage, and explain the exact omission or error and
-what the authorised field must preserve. Institutional B10/C2 contain several
+what the authorised field must preserve. For a failed check set failure_kind:
+omission means supported material is missing; unsupported_claim means existing
+prose asserts a wrong or unsupported fact, role, outcome or disclosure;
+style means a concrete violation of the supplied field's writing contract.
+For met checks use null. Optional wording preferences remain met. A false
+attribution is unsupported_claim, not an omission merely because the correct
+actor is absent: the false assertion must be withdrawn, not preserved verbatim.
+Institutional B10/C2 contain several
 arguments: each obligation's source_ids identify the evidence it must execute,
 not an exhaustive list of evidence for the whole section. Check additional
 claims against that field's contextual_source_ids before alleging absence of
@@ -143,6 +150,8 @@ def contract(units):
         for item in unit['obligations']:
             fields[item['id']]=(create_model('FieldProof_'+digest(item['id'])[:12],__config__=ConfigDict(extra='forbid'),
                 status=(Literal['met','failed'],...),
+                failure_kind=(Literal['omission','unsupported_claim','style'] | None,
+                    Field(default=None,description='Null for met; classify a failed check so repair can distinguish adding missing content from replacing rejected prose.')),
                 artifact_ref=(Literal[tuple(unit['output_passages'])],...),
                 source_ref=(Literal[tuple(item['source_passages'])],...),
                 reason=(str,Field(min_length=1,max_length=500))),...)
@@ -177,12 +186,17 @@ def project_checks(units,result):
         checks=[]
         for item in unit['obligations']:
             check=parsed['checks'][item['id']]
+            if check['status']=='met' and check.get('failure_kind') is not None:
+                raise ValueError('A met check cannot carry a failure kind')
             proof={'obligation_id':item['id'],'status':check['status'],
                 'source_quote':item['source_passages'][check['source_ref']],
                 'artifact_quote':unit['output_passages'][check['artifact_ref']],'reason':check['reason']}
             checks.append(proof)
             if check['status']=='failed':
-                defects.append({'code':'EDITORIAL_OMISSION','severity':'critical','owner':'rankpilot','scope':'submission',
+                # Legacy receipts without the new type retain their former
+                # omission semantics; never infer a destructive edit from prose.
+                code={'unsupported_claim':'UNSUPPORTED_CLAIM','style':'EDITORIAL_STYLE'}.get(check.get('failure_kind'),'EDITORIAL_OMISSION')
+                defects.append({'code':code,'severity':'critical','owner':'rankpilot','scope':'submission',
                     'field_path':unit['field'],'matter_id':None,'source_quote':proof['source_quote'],
                     'artifact_quote':proof['artifact_quote'],'message':proof['reason'],'obligation_id':item['id']})
         if all(c['status']=='met' for c in checks):
@@ -236,7 +250,11 @@ def schedule(state,result=None):
     if not pending:
         return {**result,'repair_continuation':None,'development_validated':not observations and not merged.get('development_observations'),'development_delivery_ready':True,'errors':[],
             'field_review_failures':[],
-            'repair_feedback':merged.get('field_review_parent_feedback',[]) + merged.get('field_review_reconciled_feedback',[])}
+            # History is retained separately. Only findings bound to CURRENT
+            # output remain tasks; resolved verdicts must not become new Audit
+            # warnings. Parent feedback still reconciles the companion document.
+            'repair_feedback':merged.get('field_review_parent_feedback',[]) +
+                [d for observation in observations for d in observation.get('defects',[])]}
     return {**result,'development_validated':False,'development_delivery_ready':False,'development_repair_unlocatable':False,
         'errors':['Redacción guardada; comprobando los campos contra sus fuentes antes de preparar los documentos.'],
         'repair_continuation':{'version':VERSION,'phase':'review','proposal_hash':digest(merged['development']),

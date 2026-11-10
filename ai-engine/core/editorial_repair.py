@@ -499,7 +499,8 @@ def repair_development(state, proposal, targets):
         if isinstance(evidence,dict) and set(evidence)=={'package','strategy'} and isinstance(evidence['package'].get('matters'),list):
             # Public prose is grounded in the selected portfolio. Reserve
             # sources and old generated proposals are not evidence for it.
-            selected=eligible_support_ids(evidence['package'],state['strategy']) if target_path=='comparisons' else {d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
+            comparison_target=target_path=='comparisons' or target_path.startswith('comparisons/')
+            selected=eligible_support_ids(evidence['package'],state['strategy']) if comparison_target else {d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
             package=role_payload({'package':evidence['package']},'development')['package']
             package['matters']=[m for m in package.get('matters',[]) if m.get('id') in selected]
             strategy={**evidence['strategy'],'matters':[d for d in evidence['strategy'].get('matters',[]) if d.get('matter_id') in selected]}
@@ -825,7 +826,12 @@ def repair_rejected_development(state, proposal, defects):
         if path not in allowed or not isinstance(index,int) or not 0<=index<len(defects) or not item.get('reason'):
             return {'development':proposal,'development_validated':False,'errors':['Invalid bounded repair location.'],'trace':trace}
         covered.add(index)
-        targets[path]={'current_value':allowed[path],'problem':item['reason'],'source_evidence':source_for(path)}
+        # Several findings may resolve to one field, including one already
+        # located directly. A locator supplies an address, not authority to
+        # replace earlier instructions or remove their rejection postconditions.
+        target=targets.setdefault(path,{'current_value':allowed[path],'problem':'','source_evidence':source_for(path)})
+        additions=[defects[index].get('message',''),item['reason']]
+        target['problem']='\n'.join(part for part in [target.get('problem',''),*additions] if part)
     if plan.get('unresolved') or len(covered)!=len(defects) or not targets:
         return {'development':proposal,'development_validated':False,'errors':['RankPilot debe localizar la corrección editorial sin regenerar contenido no afectado.'],'trace':trace,'development_repair_unlocatable':True}
     return repair_development({**state,'trace':trace,'repair_feedback':all_feedback},proposal,targets)

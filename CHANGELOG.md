@@ -1,3 +1,15 @@
+## 2026-11-10 — v1.0.72: coherencia de metodología, diagnóstico y reparación
+
+Integra las dos auditorías siguientes: metodología RAG separada por propósito, conservación de instrucciones concurrentes, clasificación de errores, revisión de hallazgos vigentes, reparación puntual de Audit y reglas compartidas en herramientas manuales. Validación: 801 pruebas Python y contratos offline de 46 campos/11 grupos. La calidad de los nuevos documentos se comprobará tras el despliegue; estos tests no constituyen aceptación editorial.
+
+## 2026-11-10 — preparación local: coherencia de instrucciones entre grafos y reparación
+
+Revisión por campos distingue afirmaciones falsas de omisiones y separa historial de tareas vigentes. El grafo directo pasa el diagnóstico a reparación puntual del Audit. Revisión de categoría recibe su decisión completa y distingue no nominación. Herramientas manuales comparten reglas de actor y profundidad proporcional, sin cuota de tres párrafos. 801 pruebas Python; esquemas de 46 campos/11 grupos comprobados offline. Sin publicación ni generación nueva. Ver docs/reviews/graph-instruction-handoff.md.
+
+## 2026-11-10 — preparación local: metodología acotada y traspaso íntegro al reparador
+
+El localizador conserva instrucciones concurrentes y condiciones de rechazo por campo; las comparaciones individuales conservan su fuente de reserva. RAG histórico con ejemplos de clientes y mandatos de voz contradictorios queda en cuarentena, sustituido por metodología separada por propósito. Reparaciones delimitadas usan fuentes y obligaciones sin recuperar ejemplos generales. 794 pruebas Python correctas; tres regresiones reproducidas antes del cambio. Sin nuevas generaciones, despliegue ni valoración de Word. Ver docs/reviews/scoped-methodology-repair-handoff.md.
+
 ## 2026-11-10 — v1.0.68: referencia de calidad y conservación de evidencia
 
 Banco offline de pares Word con hashes, comprobaciones por campo y rúbrica editorial ligada a los archivos. Credenciales separan relación profesional, identidad y restricción fuente; el render conserva únicamente la mención profesional vinculada y sigue anonimizando la identidad en mandatos confidenciales. Eliminadas sustituciones nominales/sectoriales codificadas en el render Legal 500. Evidencias decisivas reciben veredictos propios dentro de la revisión por campo; no se amplían reintentos. Redacción pública separada del Audit previo; diagnósticos técnicos conservados en observaciones, fuera de la carta ejecutiva.

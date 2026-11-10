@@ -11,6 +11,23 @@ from utils.rag_router import RAGRouter  # noqa: E402
 
 
 class RAGRouterTests(unittest.TestCase):
+    def test_production_context_quarantines_historical_client_blueprints(self):
+        router=RAGRouter()
+        for task in ('development narrative', 'writer leadership', 'editor preservation', 'strategist selection'):
+            chunks=router.retrieve('Labour & Employment','Chambers','Mexico',task=task)
+            sources={c.source for c in chunks}
+            self.assertEqual(sources,{'Editorial_Methodology_Scoped.txt',
+                'Lawyer_Leadership_Methodology_Scoped.txt','Labour_Editorial_Methodology_Scoped.txt'})
+            text='\n'.join(c.text for c in chunks)
+            for leaked in ('Schaeffler','DeForest','Vitesco','4 states','BRL 8M',
+                           'Supreme Editorial Law','ALWAYS outperform','Partner X led'):
+                self.assertNotIn(leaked,text)
+            self.assertIn('firm\'s voice',text)
+            self.assertIn('internal Audit',text)
+            self.assertIn('who performed a specific action',text)
+        for entry in router.catalog['quarantined_documents']:
+            self.assertTrue((Path(router.knowledge_dir)/entry['source']).exists())
+
     def test_routes_chunks_and_exposes_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

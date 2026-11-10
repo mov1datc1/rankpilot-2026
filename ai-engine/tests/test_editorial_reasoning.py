@@ -9,6 +9,24 @@ from test_editorial_development import PACKAGE, STRATEGY, DEV
 
 
 class EditorialReasoningTests(unittest.TestCase):
+    def test_targeted_repair_uses_its_evidence_without_generic_rag(self):
+        from core.review_graph import invoke_role
+        from core.editorial_repair import Repair, TASK
+        raw=SimpleNamespace(usage_metadata=None,response_metadata={})
+        payload={'repair_targets':{'matters/0/text':{'current_value':'Current prose',
+                 'problem':'Preserve the actual firm actor.',
+                 'source_evidence':{'source_excerpt':'The firm designed the strategy.'}}}}
+        with patch('core.review_graph.RAGRouter.get_rag_context') as rag,patch('core.review_graph.create_chat_model') as model:
+            model.return_value.with_structured_output.return_value.invoke.return_value={
+                'parsed':{'corrections':[],'unresolved':['Offline fixture']},'raw':raw}
+            _,trace=invoke_role({'package':PACKAGE},'repair',Repair,TASK,payload)
+        rag.assert_not_called()
+        messages=model.return_value.with_structured_output.return_value.invoke.call_args.args[0]
+        self.assertIn('The firm designed the strategy.',messages[1][1])
+        self.assertIn('Preserve the actual firm actor.',messages[1][1])
+        self.assertIn(TASK,messages[0][1])
+        self.assertEqual(trace[-1]['retrieved_rules'],[])
+
     def test_clause_classification_uses_only_its_supplied_evidence(self):
         from core.review_graph import invoke_role, Verdict
         raw=SimpleNamespace(usage_metadata=None,response_metadata={})

@@ -360,9 +360,10 @@ def invoke_role(state, role, schema, instruction, payload):
     purpose = 'judge' if role in ('editor', 'selection_reviewer', 'portfolio_reviewer', 'diagnostic_reviewer', 'field_reviewer') else 'letter' if role == 'writer' else 'development' if role == 'development' else 'repair' if role == 'repair' else 'editorial'
     package = state.get('package', {})
     router = RAGRouter()
-    # This narrow role interprets a supplied clause's membership predicate.
-    # Directory/practice examples add no evidence and can distract from negation.
-    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer','field_reviewer') or (role=='repair' and state.get('source_only_repair') is True) else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
+    # Narrow checks and repairs execute source-bound obligations supplied in
+    # their payload. Reopening generic strategy/reference examples here adds
+    # competing objectives without supplying evidence for the authorized fix.
+    methodology = '' if role in ('portfolio_reviewer','diagnostic_reviewer','field_reviewer','repair') else router.get_rag_context(package.get('practice_area', ''), package.get('directory', ''), package.get('ranking_jurisdiction') or package.get('jurisdiction', ''), package.get('ranking_edition', ''), package.get('guide_region', ''), task=role + ' ' + instruction)
     remaining=state.get('stage_deadline', float('inf'))-time.monotonic()
     if role=='selection_reviewer' and remaining<90:
         raise SelectionReviewDeferred('Save the proposal before starting independent review')
@@ -1068,6 +1069,13 @@ def create_review_graph():
             return result
         return run
     for name,fn in [('register',register_gate),('strategy',select_or_reuse),('selection',selection_gate),('selection_review',selection_review),('case',prepare_case),('development',develop),('writer',writer),('editor',editor),('release',release_gate)]:g.add_node(name,observed(name,fn))
+    def audit_repair(state):
+        # Direct graph execution must carry the current judge's diagnosis into
+        # the same targeted path used by Studio, not regenerate the whole letter.
+        feedback=[d for d in state['judge'].get('defects',[])
+                  if d.get('scope')=='letter' and d.get('owner')!='user']
+        return writer({**state,'repair_feedback':feedback})
+    g.add_node('audit_repair',observed('writer',audit_repair))
     def entry(s):
         return {'strategy':'register','development':'case','writer':'writer','editor':'editor'}.get(s.get('operation'),'register')
     g.set_conditional_entry_point(entry, {n:n for n in ('register','case','development','writer','editor')})
@@ -1091,10 +1099,11 @@ def create_review_graph():
     g.add_edge('case','development')
     g.add_conditional_edges('development',lambda s:'release' if s['errors'] else 'stop' if s.get('operation')=='development' else 'writer',{'release':'release','stop':END,'writer':'writer'})
     g.add_conditional_edges('writer',lambda s:'release' if s.get('errors') else 'stop' if s.get('operation')=='writer' else 'editor',{'release':'release','stop':END,'editor':'editor'})
+    g.add_conditional_edges('audit_repair',lambda s:'release' if s.get('errors') else 'editor',{'release':'release','editor':'editor'})
     def after_editor(s):
         critical=[d for d in s['judge'].get('defects',[]) if d['severity']=='critical']
-        return 'writer' if not s.get('operation') and critical and all(d['scope']=='letter' for d in critical) and s.get('writer_attempts',0)<2 else 'release'
-    g.add_conditional_edges('editor',after_editor,{'writer':'writer','release':'release'})
+        return 'audit_repair' if not s.get('operation') and critical and all(d['scope']=='letter' and d.get('owner')!='user' for d in critical) and s.get('writer_attempts',0)<2 else 'release'
+    g.add_conditional_edges('editor',after_editor,{'audit_repair':'audit_repair','release':'release'})
     g.add_edge('release',END)
     return g.compile()
 

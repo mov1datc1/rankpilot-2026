@@ -53,9 +53,9 @@ class DevelopmentTests(unittest.TestCase):
     def test_production_rag_includes_individual_methodology_and_later_practice_sections(self):
         r=RAGRouter();chunks=r.retrieve('Labour & Employment','Chambers','Mexico',task='individual lawyer candidate leadership personal role matter evidence narrative outcomes')
         sources={c.source for c in chunks}
-        self.assertIn('¿Cómo rankeamos abogado_as__.txt',sources)
-        self.assertIn('Global Lawyer Leadership Framework — RankPilot RAG v1.txt',sources)
-        labour=[c for c in chunks if c.source=='UNIVERSAL CHAMBERS LABOUR LOGIC.txt']
+        self.assertIn('Editorial_Methodology_Scoped.txt',sources)
+        self.assertIn('Lawyer_Leadership_Methodology_Scoped.txt',sources)
+        labour=[c for c in chunks if c.source=='Labour_Editorial_Methodology_Scoped.txt']
         old={'rag-0e14054bcbd1','rag-2591427b0a2e','rag-15e8447cf657'}
         self.assertTrue(any(c.chunk_id not in old for c in labour))
         self.assertGreater(max(c.score for c in chunks),1)

@@ -96,7 +96,9 @@ class GraphBoundaryInvariantTests(unittest.TestCase):
             model=stack.enter_context(patch('core.review_graph.invoke_role',return_value=(copy.deepcopy(letter),[])))
             result=graph.create_review_graph().invoke({'package':p,'letter':letter,'repair_feedback':[defect]},
                     {'recursion_limit':getattr(graph,'EDITORIAL_GRAPH_RECURSION_LIMIT',12)})
-        model.assert_called_once();self.assertEqual(model.call_args.args[1],'writer');self.assertEqual((p,s,v),before)
+        # Both classification-only rechecks resolve locally in this fixture;
+        # the second judge verdict no longer falls through to full rewriting.
+        model.assert_not_called();self.assertEqual((p,s,v),before)
         self.assertEqual(len(review_calls),selection_failures+1);self.assertEqual(len(editor_calls),2)
         self.assertEqual(result['writer_attempts'],2);self.assertFalse(result['release_verdict']['passed'])
         return result

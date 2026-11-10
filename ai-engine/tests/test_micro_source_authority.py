@@ -2,6 +2,20 @@ import unittest
 from unittest.mock import patch
 from agents.micro_optimizer import optimize_b10_micro,optimize_matter_micro
 class MicroSourceAuthorityTests(unittest.TestCase):
+    def test_manual_rewrite_preserves_source_sized_paragraphs_and_actor_policy(self):
+        from types import SimpleNamespace
+        from core.role_evidence import ACTOR_INSTRUCTION
+        text='The firm advised the employer.\n\nThe firm prepared the strategy.\n\nThe appeal remains pending.\n\nThe firm coordinates the response.'
+        with patch('agents.micro_optimizer.get_micro_model') as model:
+            model.return_value.invoke.return_value=SimpleNamespace(content=text)
+            result=optimize_matter_micro({'client':'Employer','rawNotes':text})
+        self.assertTrue(result['success'])
+        self.assertEqual(result['optimized_text'],text)
+        messages=model.return_value.invoke.call_args.args[0]
+        self.assertIn(ACTOR_INSTRUCTION,messages[0].content)
+        self.assertNotIn('three organic paragraphs',messages[1].content)
+        self.assertNotIn('estándar Chambers',result['rationale'])
+
     def test_short_matter_does_not_split_company_abbreviations(self):
         from types import SimpleNamespace
         text = 'Synthetic Client S.A. de C.V. retained the team. The appeal remains pending.'
