@@ -221,6 +221,11 @@ def verified_obligations(package,strategy,proposal):
 
 def schedule(state,result=None):
     result=dict(result or {});merged={**state,**result}
+    if merged.get('development_observations'):
+        from core.editorial_development import development_errors
+        current_errors=development_errors(merged['package'],merged['strategy'],merged['development'])
+        result['development_observations']=[e for e in merged['development_observations'] if e in current_errors]
+        merged.update(result)
     units=units_for(merged)
     receipts=merged.get('field_review_receipts',[])
     observations=[o for o in merged.get('field_review_observations',[]) if any(
@@ -229,7 +234,7 @@ def schedule(state,result=None):
     pending=[u for u in units if not any(receipt_matches(u,r) for r in receipts)
         and not any(o['field']==u['field'] and o['hash']==u['hash'] for o in observations)]
     if not pending:
-        return {**result,'repair_continuation':None,'development_validated':not observations,'development_delivery_ready':True,'errors':[],
+        return {**result,'repair_continuation':None,'development_validated':not observations and not merged.get('development_observations'),'development_delivery_ready':True,'errors':[],
             'field_review_failures':[],
             'repair_feedback':merged.get('field_review_parent_feedback',[]) + merged.get('field_review_reconciled_feedback',[])}
     return {**result,'development_validated':False,'development_delivery_ready':False,'development_repair_unlocatable':False,
@@ -328,8 +333,14 @@ def retain_observations(state,result=None):
     from core.editorial_development import development_errors
     merged={**state,**(result or {})}
     failures=merged.get('field_review_failures') or []
+    local_errors=development_errors(merged['package'],merged['strategy'],merged['development'])
+    if local_errors and all(e in merged.get('development_observations',[]) for e in local_errors):
+        from core.development_delivery import complete_proposal_findings
+        # Previously exhausted internal bindings remain observations. Check
+        # completeness and privacy again after any semantic correction.
+        if complete_proposal_findings(merged) is not None:local_errors=[]
     if (unknown_usage(merged.get('trace',[])) or not failures
-        or development_errors(merged['package'],merged['strategy'],merged['development'])
+        or local_errors
         or any(d.get('owner')!='rankpilot' or not d.get('artifact_quote')
             or not d.get('source_quote') or not d.get('field_path') for d in failures)):
         return result or {'development_validated':False,'development_repair_unlocatable':True,

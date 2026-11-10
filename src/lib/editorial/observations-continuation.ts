@@ -9,9 +9,13 @@ export function canContinueWithObservations(job:any,data:any,sourceHash:string):
   const semantic=Array.isArray(defects) && defects.length>0
     && defects.every((d:any)=>d.owner==='rankpilot' && d.field_path && d.source_quote && d.artifact_quote
       && fieldMethodCount(state.field_review_attempts || {},d.field_path)>=2);
+  const report=state?.repair_report;
+  const residualExhausted=report?.surgical_retries===1 && report?.residual_requests>0
+    && Array.isArray(failed) && failed.length>0 && failed.every((path:any)=>report?.retry_paths?.includes(path));
   const local=state?.development_reusable===true && state?.development_repair_unlocatable===true
     && Array.isArray(failed) && failed.length>0 && !state.repair_report?.unresolved?.length
-    && failed.every((path:any)=>typeof path==='string' && fieldMethodCount(state.field_review_attempts || {},path)>=2);
+    && failed.every((path:any)=>typeof path==='string')
+    && (residualExhausted || failed.every((path:any)=>fieldMethodCount(state.field_review_attempts || {},path)>=2));
   return !!job && job.status==='failed' && job.stage==='development'
     && job.tasks?.[job.cursor]==='development' && job.sourceHash===sourceHash
     && job.issue?.code==='DEVELOPMENT_REJECTED' && job.issue?.owner==='rankpilot'
