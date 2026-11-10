@@ -21,6 +21,7 @@ from utils.rag_router import RAGRouter
 from utils.review_policy import EDITORIAL_RULES, APPLICATION_RULES, restricted_delivery, supports_editorial_directory
 from core.grounding import factual_issues
 from core.source_aliases import grounded_spelling_alias
+from core.role_evidence import ACTOR_INSTRUCTION
 from core.outcome_qualification import OutcomeQualification, grounded_outcome_qualification, outcome_claim_scope
 from core.register_review import RegisterCheck, register_rows, register_defects, register_output_limit, register_verdict_contract
 from core.selection_contract import selection_contract, project_selection
@@ -181,6 +182,7 @@ Value confidentiality is distinct from matter publication permission. Matter-lev
 Unknown practice requirements require questions or abstention. A user's requested ranking is an objective, not an established fact.
 '''
 
+BASE += ACTOR_INSTRUCTION
 BASE += "\nCAREER RELATIONSHIP: A source-supplied former-employer or professional-association credential is distinct from a client mandate. A confidential mandate involving the same entity does not alone prohibit naming that employer or association in its original career role. Require an explicit restriction covering that career fact before anonymizing it. Never expose a client relationship or confidential work under this exception; verify the original relationship and the actual public sentence."
 
 _RULES = EDITORIAL_RULES
