@@ -1,0 +1,11 @@
+# Current judge findings and residual repairs
+
+A saved repair report could make development prioritize local validation faults before passing current final-judge findings to the repairer. This differed from the earlier availability/cache defect: even after scheduling reached the engine, the request could still omit a current false assertion in another field.
+
+When a judge finding is still literally bound to the current generated field, repair now combines it with the existing local residual targets in the same authorized call. Claims that no longer occur in previously corrected fields retain the existing stale-feedback handling. Source questions, invalid paths and Audit-only findings do not become public-text deletions. Atomic BIO/output-binding repair preserves identity and source evidence while releasing the specific rejected assertion from protected prose.
+
+A second check locates repeated substantive sentences, including a long exact ending repeated after a changed introductory subject, within each generated field. It does not compare different fields or treat shared document facts as duplicates. Repair retains the substance and distinct actors/qualifications; repetition is not classified as a false claim. Existing bounded recovery and delivery-with-observations remain in place.
+
+Validation: a before-change regression reproduces the omitted current BIO finding. Tests cover current/stale/source-only paths, retained source state, repeated prose, and rejecting an unchanged repeated passage while accepting one retained occurrence. An offline replay of a saved checkpoint reaches the repair request with both current actor findings, their rejection postconditions and the repeated overview; it does not call a model or edit stored documents. No model quality improvement or autonomous complete-run acceptance is claimed.
+
+The worker's existing regression confirms a scheduled correction invalidates availability cache, executes development and bounded recovery, retains usage and reaches independent final review. Retrieval traces show scoped methodology in strategy/development/Audit, with source-bound repair and field checks deliberately excluding generic RAG. Legacy /process graphs are not the Studio execution path and are not certified by this audit.

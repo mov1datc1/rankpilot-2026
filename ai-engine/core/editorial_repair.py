@@ -292,6 +292,12 @@ def repair_targets(package, strategy, proposal):
             targets[path]['preserve_profile_quotes']=[c.get('public_quote') for c in item.get('profile_coverage',[])
                 if c.get('decision') in ('retain','generalize') and c.get('public_quote')
                 and _norm(c['public_quote']) in _norm(item.get('submission_bio',''))]
+    from core.editorial_repetition import repetition_fields
+    for path,quotes in repetition_fields(proposal).items():
+        target=targets.setdefault(path,{'current_value':repair_value_at(proposal,path),
+            'source_evidence':{'package':package,'strategy':strategy}})
+        target['duplicate_sentences']=quotes
+        target['problem']=target.get('problem','')+' Remove redundant repetitions within this field. Retain the supported substance once without duplicating the same argument. Preserve all distinct actors, qualifications, legal facts, source bindings and arguments; if a shared passage describes different work, rewrite the repetition while preserving both facts. These sentences are duplicated, not false; do not delete their substance.'
     from core.public_privacy import public_privacy_findings
     for finding in public_privacy_findings(package,strategy,proposal):
         path=finding['path'];parts=path.split('/')
@@ -423,6 +429,10 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
         if missing_protected:
             raise ValueError('Biography repair cannot remove an unaffected evidenced contribution or credential. '
                 +'Restore these exact spans: '+repr(missing_protected))
+        if targets[path].get('duplicate_sentences'):
+            from core.editorial_repetition import repeated_sentences
+            if repeated_sentences(bio):
+                raise ValueError('Repair still repeats substantive sentences within the target field')
         if not allow_unchanged and value == targets[path]['current_value']:
             raise ValueError('Repair returned unchanged target')
         seen.add(path);parts=path.split('/');parent=result
@@ -748,8 +758,10 @@ def repair_rejected_development(state, proposal, defects):
     # same paid repair, rather than discovering another field after each call.
     from core.editorial_development import submission_voice_paths
     from core.public_privacy import public_privacy_findings
-    local_paths=set(submission_voice_paths(proposal)) | {f['path'] for f in public_privacy_findings(state['package'],state['strategy'],proposal)}
-    targets={p:t for p,t in repair_targets(state['package'],state['strategy'],proposal).items() if p in local_paths};remaining=[]
+    from core.editorial_repetition import repetition_fields
+    local_paths=set(repetition_fields(proposal)) | set(submission_voice_paths(proposal)) | {f['path'] for f in public_privacy_findings(state['package'],state['strategy'],proposal)}
+    targets={p:t for p,t in repair_targets(state['package'],state['strategy'],proposal).items()
+             if state.get('include_local_repair_residuals') or p in local_paths};remaining=[]
     for defect in defects:
         quote=norm(defect.get('artifact_quote'))
         candidates=list(allowed)
@@ -853,7 +865,7 @@ def coherent_repair_targets(proposal,targets,package=None):
             # must not overwrite the newly repaired parent from an old value.
             merged=targets[parent]
             merged['problem']=merged.get('problem','')+' '+target.get('problem','')
-            for key in ('rejected_quotes','privacy_matter_ids','preserve_profile_quotes','validation_errors'):
+            for key in ('rejected_quotes','duplicate_sentences','privacy_matter_ids','preserve_profile_quotes','validation_errors'):
                 if target.get(key):merged[key]=list(dict.fromkeys(merged.get(key,[])+target[key]))
             if target.get('confirmed_head_function'):merged['confirmed_head_function']=target['confirmed_head_function']
             merged['rejected_quote_path']=path
