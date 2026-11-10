@@ -196,7 +196,12 @@ def review_batch(batch):
     key = hashlib.sha256(json.dumps([VERSION, PROMPT, get_model_profile('extraction'), payload], sort_keys=True).encode()).hexdigest()
     def invoke():
         response = model.with_structured_output(SourceRead, include_raw=True).invoke([('system', PROMPT), ('human', json.dumps(payload, ensure_ascii=False))])
-        usage = getattr(response.get('raw'), 'usage_metadata', None) or {}
+        raw = response.get('raw')
+        usage = dict(getattr(raw, 'usage_metadata', None) or {})
+        metadata = getattr(raw, 'response_metadata', {}) or {}
+        usage['provider_calls'] = [{'provider_request_id': getattr(raw, 'id', None),
+                                    'model': metadata.get('model_name'),
+                                    'service_tier': metadata.get('service_tier')}]
         if response.get('parsing_error') or response.get('parsed') is None:
             raise ReconciliationError('Incomplete source reconciliation response', usage)
         return response['parsed'], usage
@@ -284,6 +289,10 @@ def total_usage(usages):
     totals['input_token_details'] = {'cache_read': sum(u.get('input_token_details', {}).get('cache_read', 0) for u in usages)}
     totals['output_token_details'] = {'reasoning': sum(u.get('output_token_details', {}).get('reasoning', 0) for u in usages)}
     totals['unknown_calls'] = sum(u.get('unknown_calls', 0) for u in usages)
+    # Reused batches report zero new usage and keep original_usage separately.
+    # Do not count those historical response IDs as new billable calls.
+    totals['provider_calls'] = [call for u in usages if not u.get('reused')
+                               for call in u.get('provider_calls', [])]
     return totals
 
 

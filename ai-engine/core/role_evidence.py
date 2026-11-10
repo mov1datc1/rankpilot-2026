@@ -2,6 +2,20 @@
 import re
 import unicodedata
 
+ACTOR_INSTRUCTION = ''' SOURCE ACTOR PRESERVATION: Preserve separately who led a mandate,
+who performed each legal action, and whose result is documented. A lead-partner
+field supports leadership of that mandate; it does not transfer every action or
+achievement of the firm to that individual. When the source says the firm designed
+or implemented a strategy, retain the firm/team as that action's grammatical actor.
+State the named person's evidenced leadership separately (for example, the person
+led the mandate; the firm designed and implemented the strategy). Do not use a
+participial clause such as "the person led the mandate, designing and implementing"
+to make that unsupported transfer. Conversely, retain an individually performed
+action when the original explicitly attributes it to that person. Preserve the
+legal substance, outcomes, scale and supported leadership: this distinction is not
+a reason to delete a contribution or ask the user to confirm an already sourced role.
+Apply the same distinction to matter narratives, B9, B10, C2 and the Audit.'''
+
 
 def identity(value):
     value = unicodedata.normalize('NFKD', str(value or '')).casefold()
