@@ -254,6 +254,8 @@ def bind_development(package, proposal):
 def development_errors(package, strategy, proposal):
     """Identity, coverage and quotation checks independent of model approval."""
     errors=[f'Voz auditora en Submission: {path}' for path in submission_voice_paths(proposal)]
+    from core.editorial_repetition import repetition_fields
+    errors.extend('Oración sustantiva repetida en Submission: '+path for path in repetition_fields(proposal))
     from core.public_privacy import public_privacy_findings
     errors.extend(f"Combinación de métricas confidenciales en {f['path']}: {f['matter_id']}"
                   for f in public_privacy_findings(package,strategy,proposal))
@@ -448,6 +450,23 @@ def develop_proposal(state):
         if errors and state.get('repair_report',{}).get('corrected_paths'):
             from core.editorial_repair import repair_targets, repair_development, public_privacy_paths, repair_rejected_development
             applied=set(state['repair_report']['corrected_paths'])
+            # A previous delta does not make a NEW, still-present judge finding
+            # historical. Carry current literal claims together with local
+            # residuals; otherwise a BIO binding error can hide another BIO's
+            # false assertion from the only authorized repair call.
+            from core.editorial_repair import repair_value_at
+            current=[]
+            for defect in state.get('repair_feedback',[]):
+                if not isinstance(defect,dict) or defect.get('owner')!='rankpilot' or defect.get('scope')=='letter':
+                    continue
+                if defect.get('severity')!='critical' and defect.get('code') not in ('UNSUPPORTED_CLAIM','EDITORIAL_STYLE'):
+                    continue
+                try:value=repair_value_at(bound,defect.get('field_path') or '')
+                except (KeyError,IndexError,TypeError,ValueError):continue
+                quote=_norm(defect.get('artifact_quote'))
+                if isinstance(value,str) and quote and quote in _norm(value):current.append(defect)
+            if current:
+                return repair_rejected_development({**state,'include_local_repair_residuals':True},bound,current)
             pending=[]
             for defect in state.get('repair_feedback',[]):
                 for path in public_privacy_paths(defect,bound):
