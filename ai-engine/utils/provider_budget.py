@@ -15,7 +15,8 @@ class BudgetPreflightError(RuntimeError):
 
 @dataclass
 class RequestBudget:
-    remaining: int
+    remaining: int | None
+    spent_tokens: int = 0
     uncertain: bool = False
     last_stop: dict = field(default_factory=dict)
 
@@ -28,7 +29,7 @@ class RequestBudget:
             self.halt('PROVIDER_OUTCOME_UNKNOWN')
         if not isinstance(input_tokens,int) or isinstance(input_tokens,bool) or input_tokens<0 or output_limit<=0:
             self.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-        if input_tokens+output_limit>self.remaining:
+        if self.remaining is not None and input_tokens+output_limit>self.remaining:
             self.halt('EDITORIAL_BUDGET_REQUIRED',{
                 'input_tokens':input_tokens,'reserved_output_tokens':output_limit,'remaining_tokens':self.remaining})
 
@@ -38,7 +39,9 @@ class RequestBudget:
         if not isinstance(total,int) or isinstance(total,bool) or total<0:
             self.uncertain=True
             raise RuntimeError('provider outcome unknown: usage unavailable')
-        self.remaining-=total
+        self.spent_tokens+=total
+        if self.remaining is not None:
+            self.remaining-=total
 
 
 request_budget=ContextVar('editorial_request_budget',default=None)
@@ -58,12 +61,13 @@ class BudgetedChatOpenAI(ChatOpenAI):
         if budget is None:
             return super()._generate(messages,stop=stop,run_manager=run_manager,**kwargs)
         if budget.uncertain:budget.halt('PROVIDER_OUTCOME_UNKNOWN')
-        payload,output_limit=self._budget_payload(messages,stop,kwargs)
-        try:
-            count=self.root_client.responses.input_tokens.count(**payload,timeout=10)
-        except Exception:
-            budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-        budget.admit(count.input_tokens,output_limit)
+        if budget.remaining is not None:
+            payload,output_limit=self._budget_payload(messages,stop,kwargs)
+            try:
+                count=self.root_client.responses.input_tokens.count(**payload,timeout=10)
+            except Exception:
+                budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
+            budget.admit(count.input_tokens,output_limit)
         try:
             result=super()._generate(messages,stop=stop,run_manager=run_manager,**kwargs)
             budget.settle(result)
@@ -77,12 +81,13 @@ class BudgetedChatOpenAI(ChatOpenAI):
         if budget is None:
             return await super()._agenerate(messages,stop=stop,run_manager=run_manager,**kwargs)
         if budget.uncertain:budget.halt('PROVIDER_OUTCOME_UNKNOWN')
-        payload,output_limit=self._budget_payload(messages,stop,kwargs)
-        try:
-            count=await self.root_async_client.responses.input_tokens.count(**payload,timeout=10)
-        except Exception:
-            budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
-        budget.admit(count.input_tokens,output_limit)
+        if budget.remaining is not None:
+            payload,output_limit=self._budget_payload(messages,stop,kwargs)
+            try:
+                count=await self.root_async_client.responses.input_tokens.count(**payload,timeout=10)
+            except Exception:
+                budget.halt('AI_BUDGET_CHECK_UNAVAILABLE')
+            budget.admit(count.input_tokens,output_limit)
         try:
             result=await super()._agenerate(messages,stop=stop,run_manager=run_manager,**kwargs)
             budget.settle(result)

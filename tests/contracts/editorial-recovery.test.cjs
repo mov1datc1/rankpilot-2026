@@ -1,3 +1,5 @@
+process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET='true';
+process.env.EDITORIAL_TOKEN_BUDGET='1200000';
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {recoveryPlan,editorialTokenBudget}=require('../../src/lib/editorial/recovery.ts');
