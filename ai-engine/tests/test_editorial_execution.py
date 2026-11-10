@@ -130,7 +130,7 @@ class LinkedExecutionTests(unittest.TestCase):
         target={'candidates/0/submission_bio':{'current_value':c['submission_bio'],'problem':'Withdraw unsupported national comparison.',
             'source_evidence':{'source_person':p['lawyers'][0]},'rejected_quotes':['the most respected specialist in the country']}}
         fixed=copy.deepcopy(c);fixed['submission_bio']=good+' '+WORK
-        fixed['profile_coverage'][0].update(decision='generalize',public_quote=good,reason='Preserve the original role and employer, withdraw the unsupported comparative assessment.')
+        fixed['profile_coverage'][0].update(decision='retain',public_quote=good,reason='Preserve the original role and employer, withdraw the unsupported comparative assessment.')
         return p,s,v,target,fixed
 
     def test_bio_repair_updates_bindings_without_erasing_career_or_rejecting_immutable_source_quote(self):

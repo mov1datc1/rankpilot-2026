@@ -90,7 +90,9 @@ export function buildExecutiveAuditDoc(firmName: string, practiceArea: string, a
         return p(text.replace(/^\s*#{1,6}\s+/,''),heading?{bold:true}:{});
       }));
     }
-    for (const issue of data.release_verdict?.errors || []) sections.push(p(String(issue)));
+    // Runtime diagnostics belong to the Studio observations, not the executive
+    // letter. Preserve the five reviewed sections exactly; never append raw
+    // field paths, rejected quotations or repair instructions to the Word.
     return new Document({title: `RankPilot Strategic Audit - ${firmName}`,creator:'RankPilot',sections:[{children:sections}]});
   }
   if (data.editorial_review && !letterData) {

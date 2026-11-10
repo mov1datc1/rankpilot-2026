@@ -6,6 +6,7 @@ import {
 import { curateMatters, extractApproximateValue } from '@/lib/docx/matter-curator';
 import { resolvePublication } from '@/lib/audit/publication-policy';
 import { curateLawyers, anonymizeConfidentialClients, projectMatterLeadership, cleanLawyerUrl } from '@/lib/docx/lawyer-curator';
+import { withoutCareerMentions } from '@/lib/docx/career-evidence';
 import { runArtifactIntegrityCheck, sanitizeTemplateBoilerplate, validateAndSanitizeValue } from '@/lib/docx/artifact-integrity-check';
 import { resolveCountryJurisdiction, resolveTaxAuthority, resolveRegulatoryAuthority } from '@/lib/jurisdiction';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
@@ -665,10 +666,10 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
       if (l.focus) bioParts.push(para(`Key areas of focus:`, { size: 18, spacing: { after: 40 } }));
       const existingBio = (l.comments || l.bio || '').trim();
       if (l.comments) {
-        const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList));
+        const cleanComments = stripAuditVoice(anonymizeConfidentialClients(l.comments, confNamesList, l.career));
         bioParts.push(new Paragraph({ children: [txt(cleanComments, { size: 18 })], spacing: { after: 80 } }));
       } else if (l.bio) {
-        const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList));
+        const cleanBio = stripAuditVoice(anonymizeConfidentialClients(l.bio, confNamesList, l.career));
         bioParts.push(new Paragraph({ children: [txt(cleanBio, { size: 18 })], spacing: { after: 80 } }));
       }
       if (l.standoutWork) {
@@ -931,7 +932,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
     { name: 'C2 Feedback & Positioning', content: String(c2Val) },
     { name: 'D0 Publishable Clients', content: pubClients.join(', ') },
     { name: 'Section D Publishable Matters', content: dMattersContent },
-    { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${anonymizeConfidentialClients(l.comments || '')} ${anonymizeConfidentialClients(l.standoutWork || '')}`).join(' ') }
+    { name: 'B9 Lawyer Bios', content: lawyers.map((l: any) => `${l.name} ${withoutCareerMentions(l.comments || '', l.career || [])} ${l.standoutWork || ''}`).join(' ') }
   ];
 
   const finalDeliveryCheck = runArtifactIntegrityCheck(
@@ -1181,45 +1182,8 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
   };
 
   const sanitizeBio = (name: string, rawText: string) => {
-    let t = (rawText || '').replace(/Garruño/g, 'Garduño');
-    return anonymizeConfidentialClients(t, confClientNames)
-      .replace(/\bSCHAEFFLER\b/gi, 'a leading global automotive component manufacturer')
-      .replace(/\bVolkswagen de México y VW Financial Services\b/gi, 'a major multinational automotive manufacturer and its financial services arm')
-      .replace(/\bVolkswagen de México\b/gi, 'a major multinational automotive manufacturer')
-      .replace(/\bVolkswagen\b/gi, 'a major multinational automotive group')
-      .replace(/\bVW Financial Services\b/gi, 'a multinational automotive financing entity')
-      .replace(/\bCinemex\b/gi, 'a major national cinema exhibition and entertainment group')
-      .replace(/\bGeNI de México, S\.A\. de C\.V\.\b/gi, 'an industrial manufacturing corporation')
-      .replace(/\bGeNI de México\b/gi, 'an industrial manufacturing corporation')
-      .replace(/\bGeNi\b/gi, 'an industrial manufacturer')
-      .replace(/\bBenteler\b/gi, 'a multinational automotive technology supplier')
-      .replace(/\bMegacable\b/gi, 'a major national telecommunications provider')
-      .replace(/\bSKF\b/gi, 'a global industrial engineering and bearings corporation')
-      .replace(/\bBonatti SpA, Bonatti México\b/gi, 'an international engineering and construction contractor')
-      .replace(/\bBonatti SpA\b/gi, 'an international pipeline and infrastructure contractor')
-      .replace(/\bBonatti México\b/gi, 'an international infrastructure contractor')
-      .replace(/\bBonatti\b/gi, 'an international engineering contractor')
-      .replace(/\bBrose México, S\.A\. de C\.V\.\b/gi, 'a global automotive mechatronics manufacturer')
-      .replace(/\bBrose México\b/gi, 'a global automotive components manufacturer')
-      .replace(/\bBrose\b/gi, 'a global automotive systems manufacturer')
-      .replace(/\bMextypsa, S\.A\. de C\.V\.\b/gi, 'a specialized transport and logistics company')
-      .replace(/\bMextypsa\b/gi, 'a specialized transport and logistics enterprise')
-      .replace(/\bRobert Bosch de México\b/gi, 'a leading global mobility and technology provider')
-      .replace(/\bRobert Bosch\b/gi, 'a multinational engineering and technology corporation')
-      .replace(/\bBosch\b/gi, 'a multinational mobility and technology group')
-      .replace(/\bSuburbia\b/gi, 'a leading national retail department store chain')
-      .replace(/\bSecuritas de México\b/gi, 'a global security services provider')
-      .replace(/\bSecuritas\b/gi, 'a global security solutions group')
-      .replace(/\bAmerican Axle & Manufacturing\b/gi, 'a global automotive driveline manufacturer')
-      .replace(/\bAmerican Axle\b/gi, 'a global automotive driveline manufacturer')
-      .replace(/\bOmron\b/gi, 'a multinational automation and electronics manufacturer')
-      .replace(/\bTEKIA\b/gi, 'a specialized transportation engineering consultancy')
-      .replace(/\bRamsa Soluciones de Negocios en Bebidas\b/gi, 'a regional beverage distribution enterprise')
-      .replace(/\bRamsa\b/gi, 'a beverage logistics enterprise')
-      .replace(/\bBADAK\b/gi, 'a business software and technological solutions company')
-      .replace(/\bCoats de México\b/gi, 'an industrial thread and manufacturing corporation')
-      .replace(/\bCoats\b/gi, 'an industrial manufacturing corporation')
-      .replace(/\bNueva Empresa\b/gi, 'a corporate services and facilities management entity');
+    const lawyer = lawyers.find((l: any) => normLawyer(l.name) === normLawyer(name));
+    return anonymizeConfidentialClients(String(rawText || ''), confClientNames, lawyer?.career || []);
   };
 
   const leadingPartners = lawyers.filter((l: any) => {
@@ -1246,7 +1210,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     elements.push(para('LEADING PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
     const partnerRows = leadingPartners.map((l: any) => {
       const cand = findCandidate(l.name);
-      const name = (l.name || '').replace(/Garruño/g, 'Garduño');
+      const name = String(l.name || '');
       return [
         name,
         cleanRanking(l.currentRank || l.currentRanking || l.current_ranking || ''),
@@ -1263,7 +1227,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     elements.push(para('NEXT GENERATION PARTNERS', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
     const ngRows = nextGenPartners.map((l: any) => {
       const cand = findCandidate(l.name);
-      const name = (l.name || '').replace(/Garruño/g, 'Garduño');
+      const name = String(l.name || '');
       return [
         name,
         sanitizeBio(name, l.keyFocus || l.key_focus || cand?.key_focus || l.focus || 'Labour & Employment'),
@@ -1279,7 +1243,7 @@ function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: 
     elements.push(para('LEADING ASSOCIATES', { bold: true, size: 24, alignment: AlignmentType.CENTER, spacing: { before: 300, after: 200 } }));
     const assocRows = leadingAssociates.map((l: any) => {
       const cand = findCandidate(l.name);
-      const name = (l.name || '').replace(/Garruño/g, 'Garduño');
+      const name = String(l.name || '');
       return [
         name,
         sanitizeBio(name, l.keyFocus || l.key_focus || cand?.key_focus || l.focus || 'Labour & Employment'),

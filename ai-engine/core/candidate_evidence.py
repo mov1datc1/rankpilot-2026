@@ -60,8 +60,17 @@ def bind_public_quote(quote, bio, person_name=''):
         r'(?<!\w)'+re.escape(variant.translate(glyphs))+r'(?!\w)',view,re.I)}
     return next(iter(matches.values())) if len(matches)==1 else quote
 
+class ProfilePrivacyBasis(BaseModel):
+    kind: Literal['profile_restriction', 'client_register']
+    source_quote: str = Field(description='Exact original restriction, or exact registered client name. Never cite an editorial instruction or the generated reason.')
+    matter_id: str = Field(description='Original matter ID for client_register; empty for a restriction in the original profile.')
+
+
 class ProfileCoverage(BaseModel):
     reference: str
+    relationship: Literal['former_employer','professional_association','client','qualification','other'] = 'other'
+    entity_name: str = Field(default='', description='Exact source entity whose identity this credential uses; empty only when the unit has no named entity. A former employer is not a client mandate.')
+    privacy_basis: ProfilePrivacyBasis | None = Field(default=None, description='Required only for generalize: bind the actual source restriction. A hypothetical lack of permission is not evidence. Null for retain/omit.')
     decision: Literal['retain','generalize','omit']
     source_quote: str = Field(description='Copy the complete original profile unit referenced here, without rewriting it.')
     public_quote: str = Field(description='Exact words in this same candidate submission_bio retaining its material credential. Empty only for a justified omission.')
@@ -82,7 +91,40 @@ def profile_units(person):
     return result
 
 
-def profile_errors(person, candidate):
+def profile_privacy_error(person, item, package=None):
+    """Require an original restriction, not the generator's free-text rationale.
+
+    Literal binding is a necessary condition, not proof of semantic scope. The
+    shared source-to-field reviewer still checks that the restriction applies.
+    No names, roles or public wording are inserted by this check.
+    """
+    entity=norm(item.get('entity_name'))
+    if entity and entity not in norm(item.get('source_quote')):
+        return 'La identidad de la credencial no pertenece a su cita fuente.'
+    if item.get('decision')!='generalize':
+        if item.get('privacy_basis'):
+            return 'Una credencial no generalizada no debe declarar una restricción aplicada.'
+        if item.get('decision')=='retain' and entity and entity not in norm(item.get('public_quote')):
+            return 'La credencial declara conservar una identidad ausente de su cita B9.'
+        return None
+    basis=item.get('privacy_basis') or {};quote=norm(basis.get('source_quote'))
+    if not entity or not quote:
+        return 'Generalización de credencial sin identidad y restricción fuente verificable; conservar el empleador o asociación salvo restricción real.'
+    if basis.get('kind')=='profile_restriction':
+        originals=[norm(person.get(f)) for f in ('bio','comments','credentials','professional_roles','confidentialityEvidence')]
+        if not basis.get('matter_id') and any(quote in text for text in originals):
+            return None
+    elif basis.get('kind')=='client_register':
+        if item.get('relationship')!='client':
+            return 'La confidencialidad de un mandato no restringe por sí sola una relación profesional distinta; requiere restricción expresa del perfil.'
+        matter=next((m for m in (package or {}).get('matters',[]) if m.get('id')==basis.get('matter_id')),None)
+        if matter and entity==quote and entity in [norm(matter.get(k)) for k in ('client','name','title')] and (
+            matter.get('publication_route')=='E' or matter.get('resolved_publication_status') in ('confidential','confirmation_required')):
+            return None
+    return 'La restricción de la credencial no está vinculada a su perfil original o a la misma entidad restringida del registro.'
+
+
+def profile_errors(person, candidate, package=None):
     expected={u['reference']:u for u in profile_units(person)}
     actual=candidate.get('profile_coverage',[])
     refs=[c.get('reference') for c in actual]
@@ -98,6 +140,8 @@ def profile_errors(person, candidate):
         if not unit or norm(item.get('source_quote'))!=norm(unit['source_quote']):
             errors.append('Credencial sin cita íntegra de su propio perfil fuente.');continue
         if not norm(item.get('reason')):errors.append('Decisión de credencial sin razón interna.')
+        privacy_error=profile_privacy_error(person,item,package)
+        if privacy_error:errors.append(privacy_error)
         decision=item.get('decision');quote=norm(item.get('public_quote'))
         if decision in ('retain','generalize'):
             if not quote or quote not in norm(candidate.get('submission_bio')):

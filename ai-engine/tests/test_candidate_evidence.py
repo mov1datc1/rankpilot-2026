@@ -61,10 +61,44 @@ class CandidateEvidenceTests(unittest.TestCase):
         p,s,v=candidate_case();item=v['candidates'][0]['profile_coverage'][1]
         item.update(decision='omit',public_quote='',reason='Prefer recent matters.')
         self.assertTrue(any('material' in e for e in profile_errors(p['lawyers'][0],v['candidates'][0])))
-    def test_privacy_can_generalize_identity_without_losing_career_role(self):
+    def test_privacy_cannot_generalize_a_career_identity_with_only_a_free_text_reason(self):
         p,s,v=candidate_case();c=v['candidates'][0];c['submission_bio']='Sofia served as Legal Director for three countries at a staffing business and is Vice President of a professional labour commission.'
         for item in c['profile_coverage'][:2]:item.update(decision='generalize',public_quote=c['submission_bio'])
-        self.assertEqual(profile_errors(p['lawyers'][0],c),[])
+        self.assertTrue(any('restricción fuente' in e for e in profile_errors(p['lawyers'][0],c,p)))
+
+    def test_privacy_can_generalize_same_registered_entity_but_not_another_client(self):
+        p,s,v=candidate_case();c=v['candidates'][0];item=c['profile_coverage'][0]
+        c['submission_bio']=PUBLIC.replace('Example Staffing','a staffing business')
+        for coverage in c['profile_coverage'][:2]:coverage['public_quote']=c['submission_bio']
+        p['matters'].append({'id':'employer','client':'Example Staffing','publication_route':'E'})
+        item.update(decision='generalize',relationship='former_employer',entity_name='Example Staffing',
+            privacy_basis={'kind':'client_register','matter_id':'employer','source_quote':'Example Staffing'})
+        self.assertTrue(any('relación profesional distinta' in e for e in profile_errors(p['lawyers'][0],c,p)))
+        item['relationship']='client' # Binding validation; semantic review must still verify the claimed relationship.
+        self.assertEqual(profile_errors(p['lawyers'][0],c,p),[])
+        p['matters'][-1]['client']='Unrelated Company'
+        self.assertTrue(any('misma entidad' in e for e in profile_errors(p['lawyers'][0],c,p)))
+
+    def test_original_profile_restriction_is_bound_and_reviewed_in_its_own_context(self):
+        p,s,v=candidate_case();c=v['candidates'][0];item=c['profile_coverage'][0]
+        p['lawyers'][0]['confidentialityEvidence']='Do not publish the name Example Staffing.'
+        c['submission_bio']=PUBLIC.replace('Example Staffing','a staffing business')
+        for coverage in c['profile_coverage'][:2]:coverage['public_quote']=c['submission_bio']
+        item.update(decision='generalize',relationship='former_employer',entity_name='Example Staffing',
+            privacy_basis={'kind':'profile_restriction','matter_id':'','source_quote':p['lawyers'][0]['confidentialityEvidence']})
+        self.assertEqual(profile_errors(p['lawyers'][0],c,p),[])
+        o=next(o for o in obligations(p,s,v) if o['id']=='profile:0:P01')
+        self.assertIn(p['lawyers'][0],o['sources'])
+        item['privacy_basis']['source_quote']='Imagined restriction'
+        self.assertTrue(profile_errors(p['lawyers'][0],c,p))
+
+    def test_retain_cannot_silently_erase_the_declared_employer(self):
+        p,s,v=candidate_case();c=v['candidates'][0];item=c['profile_coverage'][0]
+        item.update(relationship='former_employer',entity_name='Example Staffing')
+        self.assertEqual(profile_errors(p['lawyers'][0],c,p),[])
+        c['submission_bio']=PUBLIC.replace('Example Staffing','a confidential entity')
+        item['public_quote']=c['submission_bio']
+        self.assertTrue(any('identidad ausente' in e for e in profile_errors(p['lawyers'][0],c,p)))
     def test_missing_duplicate_and_other_person_quotes_do_not_pass(self):
         p,s,v=candidate_case();c=v['candidates'][0]
         for transform in (lambda a:a[:-1],lambda a:a+[a[0]],lambda a:[{**x,'source_quote':'Another person was a director elsewhere.'} for x in a]):

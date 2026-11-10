@@ -62,7 +62,7 @@ def biography_faults(package, strategy, proposal, index):
     if index in missing_head_bios(package, proposal): faults.append({'code': 'confirmed_head_missing'})
     person = next((p for p in package.get('lawyers', [])
                    if identity(p.get('name') or p.get('fullName')) == identity(candidate.get('name'))), {})
-    faults.extend({'code': 'profile_evidence', 'detail': error} for error in profile_errors(person, candidate))
+    faults.extend({'code': 'profile_evidence', 'detail': error} for error in profile_errors(person, candidate, package))
     if category_error(candidate): faults.append({'code': 'category', 'detail': category_error(candidate)})
     prefix = f'Calidad personal candidates/{index}:'
     faults.extend({'code': 'personal_quality', 'detail': error} for error in personal_quality_errors(package, strategy, proposal)

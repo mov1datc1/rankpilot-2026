@@ -1,3 +1,9 @@
+## 2026-11-10 — preparado localmente: referencia de calidad y conservación de evidencia
+
+Banco offline de pares Word con hashes, comprobaciones por campo y rúbrica editorial ligada a los archivos. Credenciales separan relación profesional, identidad y restricción fuente; el render conserva únicamente la mención profesional vinculada y sigue anonimizando la identidad en mandatos confidenciales. Eliminadas sustituciones nominales/sectoriales codificadas en el render Legal 500. Evidencias decisivas reciben veredictos propios dentro de la revisión por campo; no se amplían reintentos. Redacción pública separada del Audit previo; diagnósticos técnicos conservados en observaciones, fuera de la carta ejecutiva.
+
+Validación local: 777 Python, 562 Node correctas/una omisión existente y TypeScript. Evaluador probado con archivos históricos privados, sin llamadas OpenAI. No implica nueva aceptación editorial, publicación ni reescritura de los documentos existentes. Ver docs/reviews/quality-reference.md.
+
 ## 2026-11-09 — v1.0.67: observaciones comprensibles y acciones de consulta
 
 Explicaciones de hallazgos separadas de diagnósticos internos, con acción específica para periodo, nombres, confidencialidad y ranking. Mensajes originales y citas preservados en detalle. Periodo conectado a formulario y guardado existentes, sin generación automática. 558 pruebas Node, una omisión existente y TypeScript. Ver docs/reviews/2026-11-09-user-observations-v1-0-67.md.

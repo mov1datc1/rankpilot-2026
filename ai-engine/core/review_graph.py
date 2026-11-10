@@ -181,6 +181,8 @@ Value confidentiality is distinct from matter publication permission. Matter-lev
 Unknown practice requirements require questions or abstention. A user's requested ranking is an objective, not an established fact.
 '''
 
+BASE += "\nCAREER RELATIONSHIP: A source-supplied former-employer or professional-association credential is distinct from a client mandate. A confidential mandate involving the same entity does not alone prohibit naming that employer or association in its original career role. Require an explicit restriction covering that career fact before anonymizing it. Never expose a client relationship or confidential work under this exception; verify the original relationship and the actual public sentence."
+
 _RULES = EDITORIAL_RULES
 BASE += "\nVERSIONED REVIEW CRITERIA:\n" + "\n".join(f"{r['id']}: {r['criterion']}" for r in _RULES['rules'])
 BASE += '\nAPPLICATION RULES (application authority, never client-source evidence):\n' + '\n'.join(f'{key}: {value}' for key,value in APPLICATION_RULES.items())
@@ -270,6 +272,20 @@ def compact_review_payload(value):
 
 def role_payload(payload, role):
     result = compact_review_payload(payload)
+    if role in ('development','repair'):
+        # Public prose uses original evidence + the shared case, not an old
+        # executive letter as a writing example. Keep the precise repair
+        # finding and strategy; the independent editor still sees both files.
+        packages=[result.get('package')]
+        shared=result.get('shared_source_evidence') or {}
+        if isinstance(shared,dict):packages.append(shared.get('package'))
+        for target in (result.get('repair_targets') or {}).values():
+            evidence=target.get('source_evidence') or {}
+            if isinstance(evidence,dict):packages.append(evidence.get('package'))
+        for original in packages:
+            if isinstance(original,dict):
+                for key in ('rendered_audit','editorial_review','review_checkpoint','letter'):
+                    original.pop(key,None)
     for obligation in result.get('case_obligations', []):
         obligation['source_references']=[{'matter_id':m['id']} if m.get('id') else {'person':m.get('name') or m.get('fullName')} if m.get('name') or m.get('fullName') else {'source_quote':m.get('source_excerpt','')} for m in obligation.pop('sources',[])]
     package = result.get('package', result)
