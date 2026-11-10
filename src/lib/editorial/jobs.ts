@@ -13,7 +13,7 @@ import {canRecheckDevelopment,canRecheckFieldContext,FIELD_CONTEXT_VERSION} from
 import {SELECTION_DIAGNOSTIC_CONTRACT} from '@/lib/audit/review-versions';
 import {editorialNextAction} from './next-action';
 import {canResumeLegacyDevelopment} from './legacy-development-recovery';
-import {canResumeBudgetReview,capacityRecoveryCheckpoint} from './budget-continuation';
+import {canResumeBudgetReview,capacityRecoveryCheckpoint,canResumeRetiredBudget} from './budget-continuation';
 import {editorialTokenBudget} from './recovery';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
@@ -52,7 +52,8 @@ export function publicJob(job:any, submission?:any) {
     && canResumeBudgetReview(job,submission.chambersData,job.sourceHash);
   const delivery=submission && getDeliveryState(submission.chambersData,submission.chambersData?.matters || submission.matters || [],true);
   const canDeliver=!!submission && sourceMatches===true && canContinueWithObservations(job,submission.chambersData,job.sourceHash);
-  const canResumeResidual=canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
+  const canResumeRetired=!!submission && sourceMatches===true && canResumeRetiredBudget(job,submission.chambersData,job.sourceHash);
+  const canResumeResidual=canResumeRetired || canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
   return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message,pauseReason,sourceMatches,canResumeResidual,nextAction:editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available}),canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
@@ -79,6 +80,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     // A later software release also must not reactivate this historical attempt.
     const resultHash=deliveryInputHash(current,current.chambersData || {});
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
+    if(retry && canResumeRetiredBudget(last,current.chambersData,sourceHash)) {
+      const marker={status:'retired_budget_continuation',stage:last.stage,cursor:last.cursor,worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
     if(retry && last?.resultHash===resultHash && canResumeBudgetReview(last,current.chambersData,sourceHash)) {
       const cursor=last.cursor-1;
       const marker={stage:'artifact',cursor,status:'capacity_continuation_requested',capacity:Number.isFinite(editorialTokenBudget(last.ledger))?editorialTokenBudget(last.ledger):null,worker_commit:build,source_hash:sourceHash};

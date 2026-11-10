@@ -13,15 +13,17 @@ test('one status explains the next action once and a repaired-context continuati
  assert.match(html,/Hallazgo de la revisión/);assert.match(html,/Continuar preparación/);
  assert.doesNotMatch(html,/compártela|Solicita recuperar|Revisión detenida; consulta/);
 });
-test('an exhausted automatic review reports a real pause without promising continuation or a paid restart',()=>{
+test('an unavailable pair offers a status read without support or a paid restart',()=>{
  const {publicJob}=require('../../src/lib/editorial/jobs.ts');
  const job=publicJob({id:'j',status:'needs_review',stage:'artifact',tasks:['selection','artifact'],cursor:2,ledger:[{supervision:{action:'pause',reason:'repair_progress_limit'}}]});
- const html=renderToStaticMarkup(React.createElement(ReviewPanel,{data:{editorial_review:{letter:{}},final_artifact_review:{judge:{defects:[{code:'SOURCE_CONFLICT',severity:'critical',owner:'rankpilot',message:'Retira el descriptor sectorial discutido.'}]}}},errors:[],warnings:[],approved:false,job,onResolve:()=>{}}));
- assert.equal(job.pauseReason,'repair_progress_limit');assert.ok(html.includes('Recupera la preparación de los documentos'));
- assert.ok(html.includes('compártela con soporte'));assert.ok(html.includes('Conservamos tus fuentes'));
- assert.ok(!html.includes('continuará automáticamente'));assert.equal((html.match(/<button/g) || []).length,1);assert.match(html,/Copiar referencia/);
- assert.ok(html.includes('No se pudieron crear los dos archivos'));assert.ok(html.includes('no vuelvas a cargar el original'));
- assert.ok(!html.includes('Pulsa «Revisar y preparar documentos»'));assert.ok(!html.includes('para reanudar el proceso'));
+ let reads=0,generations=0;
+ const tree=ReviewPanel({data:{},errors:[],warnings:[],approved:false,job,onRefresh:()=>reads++,onResolve:()=>generations++});
+ const html=renderToStaticMarkup(tree);
+ assert.match(html,/Comprueba el avance guardado/);assert.match(html,/Actualizar estado/);
+ assert.doesNotMatch(html,/soporte|Copiar referencia|continuará automáticamente/);
+ assert.match(html,/Todavía no están disponibles ambos archivos/);
+ const controls=buttons(tree);assert.equal(controls.length,1);controls[0].props.onClick();
+ assert.equal(reads,1);assert.equal(generations,0);
 });
 const errors=['Strategy does not reconcile exactly with the source register.','No se pudo vincular una cita de la selección con la fuente de Synthetic Client. Reintenta la revisión editorial.'];
 function buttons(node){if(!node||typeof node!=='object')return[];return [...(node.type==='button'?[node]:[]),...React.Children.toArray(node.props?.children).flatMap(buttons)];}
@@ -88,12 +90,12 @@ test('a running repair asks the user to wait without suggesting another paid sta
 
 
 test('a failed development offers only existing artifacts and does not invent budget exhaustion',()=>{
- const props={data:{},errors:[],warnings:[],approved:false,onResolve:()=>{},job:{id:'job',stage:'development',status:'failed',pauseReason:'DEVELOPMENT_REJECTED',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED'}}};
+ const props={data:{},errors:[],warnings:[],approved:false,onRefresh:()=>{},onResolve:()=>{},job:{id:'job',stage:'development',status:'failed',pauseReason:'DEVELOPMENT_REJECTED',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED'}}};
  const without=renderToStaticMarkup(React.createElement(ReviewPanel,props));
  assert.match(without,/no llegó a preparar el par final/);assert.doesNotMatch(without,/Audit disponible|descarga el Audit|dentro de los límites/);
- assert.match(without,/Copiar referencia/);assert.doesNotMatch(without,/continuará automáticamente/);
+ assert.match(without,/Actualizar estado/);assert.doesNotMatch(without,/continuará automáticamente/);
  const withAudit=renderToStaticMarkup(React.createElement(ReviewPanel,{...props,data:{editorial_review:{letter:{executive_assessment:'Saved analysis'}}}}));
- assert.match(withAudit,/Copiar referencia/);assert.doesNotMatch(withAudit,/Audit disponible|descarga el Audit/);
+ assert.match(withAudit,/Actualizar estado/);assert.doesNotMatch(withAudit,/Audit disponible|descarga el Audit/);
 });
 
 test('available documents show only availability and located observations, without paused or draft status',()=>{

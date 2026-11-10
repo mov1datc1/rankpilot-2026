@@ -37,3 +37,16 @@ export function canResumeBudgetReview(job:any,data:any,sourceHash:string):boolea
     && !authorizedReviewUsed(job.ledger) && spentTokens(job.ledger)<capacity
     && !job.ledger.some((e:any)=>e.status==='capacity_continuation_requested' && e.capacity===(uncapped ? null:capacity));
 }
+
+/** Resume an old admission refusal only when no provider request was started.
+ * The same checkpoint, cursor, receipts and field methods remain authoritative. */
+export function canResumeRetiredBudget(job:any,data:any,sourceHash:string):boolean {
+  const state=data?.review_checkpoint?.state;
+  return !Number.isFinite(editorialTokenBudget(job?.ledger || []))
+    && job?.status==='failed' && job.sourceHash===sourceHash
+    && job.issue?.code==='EDITORIAL_BUDGET_REQUIRED' && job.issue?.owner==='rankpilot'
+    && ['selection','development','audit'].includes(job.stage) && job.tasks?.[job.cursor]===job.stage
+    && !!state && job.ledger?.at(-1)?.trace?.provider_request_started===false
+    && !hasUnknownProviderUsage(job.ledger) && !hasUnknownProviderUsage([{trace:state.trace}])
+    && !job.ledger.some((e:any)=>e.status==='retired_budget_continuation');
+}

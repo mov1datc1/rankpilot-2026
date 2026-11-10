@@ -4,19 +4,8 @@ import {observationPresentation} from '@/lib/audit/observation-presentation';
 import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { reviewIssues, reviewIsStale, isStoppedSelection, type ReviewDestination } from '@/lib/audit/review-actions';
 import { Sparkles } from 'lucide-react';
-import {useState} from 'react';
 
-function AttemptReference({job}:{job:any}) {
-  const [referenceStatus,setReferenceStatus]=useState('');
-  return <div style={{background:'#FFF7ED',border:'1px solid #FED7AA',borderRadius:10,padding:14,marginBottom:16}}>
-      {!job.nextAction && <p style={{fontSize:13,lineHeight:1.6}}>Copia esta referencia para solicitar la revisión del fallo. Conserva este expediente; no necesitas volver a cargar el original.</p>}
-      <code style={{overflowWrap:'anywhere'}}>{job.id}</code>
-      <button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(`RankPilot · intento ${job.id} · etapa ${job.stage} · estado ${job.status} · código ${job.issue?.code || 'sin código'}`);setReferenceStatus('Referencia copiada.');}catch{setReferenceStatus('No se pudo copiar automáticamente. Selecciona y copia la referencia que aparece arriba.');}}} style={{marginLeft:10,padding:'7px 12px',cursor:'pointer'}}>Copiar referencia</button>
-      <p role="status" style={{fontSize:13}}>{referenceStatus}</p>
-    </div>;
-}
-
-export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onResolve:(destination:ReviewDestination,message:string)=>void}) {
+export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,job,onRefresh,connectionError=false}:{data:any;errors:string[];warnings:string[];approved:boolean;busy?:boolean;job?:any;onRefresh?:()=>void;connectionError?:boolean;onResolve:(destination:ReviewDestination,message:string)=>void}) {
   const delivery=getDeliveryState(data,data?.matters || [],true);
   const available=delivery.available;
   const stopped=!available && job?.sourceMatches!==false && (job?.issue || job?.pauseReason) && !['queued','running','completed'].includes(job.status);
@@ -29,7 +18,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const systemCount=issues.length-humanCount;
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
-  const recoveryInstructions=job?.nextAction?.description || 'Copia la referencia y compártela con soporte para recuperar la preparación. Tus fuentes y el avance están guardados; no necesitas volver a cargar el original.';
+  const recoveryInstructions=job?.nextAction?.description || 'Consulta el estado actualizado de este expediente. Tus fuentes y el avance están guardados; no necesitas volver a cargar el original.';
   if(available) {
     const findings=(data?.final_artifact_review?.judge?.defects || []);
     const findingMessages=new Set(findings.map((d:any)=>d.message));
@@ -128,7 +117,11 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     {!available && !approved && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
     {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Consulta abajo la acción necesaria.' : 'El siguiente paso aparece junto a cada observación.'}</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {available ? 'Descarga Submission y Audit. Consulta abajo los hallazgos y qué conviene revisar antes de presentarlos.' : 'El Submission y el Audit se preparan con el avance guardado.'}</p>
-    {stopped && systemManaged && !approved && job?.id && <AttemptReference job={job}/>}
+    {onRefresh && ((stopped && systemManaged) || connectionError) && <div role="status" style={{padding:12,background:'#EEF2FF',marginBottom:16,borderRadius:8}}>
+      {connectionError && <p>No se pudo actualizar la pantalla. El estado mostrado puede estar desactualizado; volveremos a consultar automáticamente. Esta interrupción no reinicia la preparación.</p>}
+      <button type="button" onClick={onRefresh} style={{padding:'8px 12px',cursor:'pointer'}}>Actualizar estado</button>
+      <p style={{fontSize:12}}>Consulta el avance guardado, sin iniciar otra generación.</p>
+    </div>}
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
     {stopped && !systemManaged && !approved && job?.issue?.owner!=='user' && (
       <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>

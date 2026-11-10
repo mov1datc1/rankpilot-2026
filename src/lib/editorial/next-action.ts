@@ -1,5 +1,5 @@
 export type EditorialNextAction={
-  kind:'wait'|'answer'|'continue'|'download'|'review_changes'|'technical_review';
+  kind:'wait'|'answer'|'continue'|'download'|'review_changes'|'refresh';
   title:string;
   description:string;
   automatic:boolean;
@@ -24,10 +24,10 @@ export function editorialNextAction(job:any,options:{sourceMatches?:boolean|null
     'Abre la confirmación indicada abajo y guarda tu respuesta. Después pulsa «Preparar documentos» para continuar con la información actualizada.');
   if(options.canResume)return action('continue','Continúa la preparación guardada',
     'Pulsa Continuar preparación. Se conservarán las fuentes, el avance y el consumo registrado; no vuelvas a cargar el documento.');
-  if(lastDecision?.reason==='token_budget' || ['TOKEN_BUDGET','EDITORIAL_BUDGET_REQUIRED'].includes(job.issue?.code))return action('technical_review','Solicita continuar este intento',
-    'La capacidad restante de este intento no alcanza para completar la siguiente operación. Copia la referencia y compártela con soporte para solicitar la continuación con presupuesto autorizado. El avance queda guardado; no necesitas volver a cargar el original.');
-  if(job.status==='indeterminate' || lastDecision?.reason==='provider_outcome_unknown')return action('technical_review','Solicita recuperar la operación pendiente',
-    'No se pudo confirmar el resultado de una operación. Copia la referencia y compártela con soporte para recuperarla antes de repetirla. El avance queda guardado; no inicies otra generación.');
-  return action('technical_review','Recupera la preparación de los documentos',
-    'No se pudieron crear los dos archivos. Conservamos tus fuentes y el avance. Copia la referencia y compártela con soporte para recuperar esta operación; no vuelvas a cargar el original.');
+  if(lastDecision?.reason==='token_budget' || ['TOKEN_BUDGET','EDITORIAL_BUDGET_REQUIRED'].includes(job.issue?.code))return action('refresh','Consulta el avance guardado',
+    'Este intento conserva un aviso de capacidad anterior. Pulsa «Actualizar estado» para comprobar si ya están los documentos o está disponible «Continuar preparación». Consultar el estado no inicia otra generación.');
+  if(job.status==='indeterminate' || lastDecision?.reason==='provider_outcome_unknown')return action('refresh','Comprueba el resultado de la preparación',
+    'Aún no se pudo confirmar el resultado de una operación. Pulsa «Actualizar estado» para consultar el avance guardado. Esta consulta no repite la operación ni consume tokens de generación.');
+  return action('refresh','Comprueba el avance guardado',
+    'Todavía no están disponibles ambos archivos. Pulsa «Actualizar estado» para consultar el resultado o las opciones de continuación. Conservamos tus fuentes y el avance; esta consulta no inicia otra generación.');
 }

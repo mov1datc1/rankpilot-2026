@@ -37,6 +37,6 @@ export async function POST(request:NextRequest) {
     return NextResponse.json({job:publicJob(await enqueue(submission,body.retry===true,body.repair===true))},{status:202});
   } catch(error:any) {
     if(error.message==='AUTO_REPAIR_UNAVAILABLE') return NextResponse.json({code:'AUTO_REPAIR_UNAVAILABLE',error:'RankPilot no encontró una reparación automática respaldada por las fuentes para este hallazgo. El expediente se conserva; no necesitas alterar tus datos para resolver un error de generación.'},{status:422});
-    return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'No podemos confirmar el resultado de la llamada anterior. Conservamos el expediente. Comparte su referencia con soporte para recuperar la operación antes de generar otra vez y evitar consumo duplicado.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});
+    return NextResponse.json({error:error.message==='PROVIDER_OUTCOME_UNKNOWN'?'No podemos confirmar el resultado de la llamada anterior. Conservamos el expediente. Pulsa «Actualizar estado» para consultar el avance guardado. Esta consulta no repite la llamada ni inicia otra generación.':'No se pudo iniciar la revisión. El expediente se conserva.'},{status:503});
   }
 }

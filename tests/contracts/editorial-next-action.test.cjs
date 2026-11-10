@@ -15,7 +15,7 @@ test('reconstruction, source input, real resume and delivery expose distinct nex
 });
 test('exhaustion and an unknown provider result never invite another paid click',()=>{
  const budget=editorialNextAction({status:'needs_review',ledger:[{supervision:{action:'pause',reason:'token_budget'}}]});
- assert.equal(budget.kind,'technical_review');assert.match(budget.description,/presupuesto autorizado/);
+ assert.equal(budget.kind,'refresh');assert.match(budget.description,/Actualizar estado/);assert.doesNotMatch(budget.description,/soporte/);
  const unknown=editorialNextAction({status:'indeterminate'});
- assert.match(unknown.description,/antes de repetirla/);assert.equal(unknown.automatic,false);
+ assert.match(unknown.description,/no repite la operación/);assert.equal(unknown.automatic,false);
 });

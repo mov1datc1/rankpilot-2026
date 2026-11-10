@@ -1,3 +1,4 @@
+import {canResumeRetiredBudget} from './budget-continuation';
 import { stageTraceDelta } from '@/lib/audit/review-checkpoint';
 import { generatedContentHash } from './repair-progress';
 import { superviseArtifact } from './supervisor';
@@ -7,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
 import { editorialIdentity } from './identity';
 import { sourceSnapshot, stableHash } from './contracts';
-import { planDrafting, systemIssue } from './jobs';
+import { enqueue, planDrafting, systemIssue } from './jobs';
 import { deliveryInputHash } from '@/lib/audit/artifact-binding';
 import { POST as review } from '@/app/api/optimize/review-step/route';
 import { POST as matter } from '@/app/api/optimize/matter/route';
@@ -19,6 +20,13 @@ import { editorialTokenBudget, spentTokens, recoveryPlan, needsDiagnosticReview,
 export async function recoverStoppedJobs() {
   const candidates:any[]=await prisma.$queryRaw`SELECT j.* FROM "EditorialJob" j WHERE ((j."status" IN ('failed','indeterminate') AND j."issue"->>'owner'='rankpilot') OR (j."status"='needs_review' AND j."stage"='artifact')) AND j."updatedAt">now()-interval '24 hours' AND j."updatedAt"<now()-interval '6 minutes' AND NOT EXISTS (SELECT 1 FROM "EditorialJob" newer WHERE newer."submissionId"=j."submissionId" AND newer."createdAt">j."createdAt") ORDER BY j."updatedAt" DESC LIMIT 20`;
   for(const candidate of candidates) {
+    if(candidate.issue?.code==='EDITORIAL_BUDGET_REQUIRED' && !Number.isFinite(editorialTokenBudget(candidate.ledger))) {
+      // enqueue rechecks the latest owned source under the submission lock.
+      const current=await prisma.submission.findUnique({where:{id:candidate.submissionId},include:{matters:true}});
+      if(current && current.userId===candidate.userId && canResumeRetiredBudget(candidate,current.chambersData,stableHash(sourceSnapshot(current))))
+        await enqueue(current,true);
+      continue;
+    }
     const diagnostic=candidate.status==='needs_review';
     if(diagnostic && (candidate.cursor!==candidate.tasks?.length || candidate.tasks.at(-1)!=='artifact')) continue;
     const replayCursor=diagnostic?candidate.cursor-1:candidate.cursor;
