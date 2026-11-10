@@ -54,3 +54,15 @@ class BudgetHttpBoundaryTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn('judge',result)
             self.assertEqual(result['trace'][0]['usage']['total_tokens'],7)
         finally:request_budget.reset(token)
+
+    async def test_no_allowance_is_uncapped_but_still_tracks_unknown_outcomes(self):
+        boundary=endpoint('service_boundary');seen=[]
+        async def handler(request):
+            budget=request_budget.get();seen.append(budget)
+            self.assertIsNone(budget.remaining)
+            self.assertFalse(budget.uncertain)
+            return JSONResponse({'ok':True})
+        request=SimpleNamespace(url=SimpleNamespace(path='/review-step'),headers={'authorization':'Bearer synthetic-secret'})
+        with patch.dict(os.environ,{'AI_ENGINE_SERVICE_TOKEN':'synthetic-secret'}):
+            self.assertEqual((await boundary(request,handler)).status_code,200)
+        self.assertEqual(len(seen),1);self.assertIsNone(request_budget.get())

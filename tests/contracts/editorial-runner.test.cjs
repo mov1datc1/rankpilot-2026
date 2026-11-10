@@ -1,3 +1,5 @@
+process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET='true';
+process.env.EDITORIAL_TOKEN_BUDGET='1200000';
 const {completeFiling}=require('./filing-fixture.cjs');
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict'),Module=require('node:module');
@@ -290,4 +292,19 @@ test('legacy reconstruction request survives an unstarted capacity check without
    budget_stop:{code:'AI_BUDGET_CHECK_UNAVAILABLE'},trace:[...(payload.state.trace || []),{role:'repair',usage:{total_tokens:0},provider_request_started:false}]}});
  };
  try{await stage();assert.equal(job.status,'queued');await stage();assert.equal(requests,2);assert.equal(job.status,'failed');assert.equal(job.ledger.reduce((n,e)=>n+(e.trace?.usage?.total_tokens || 0),0),100);}finally{global.fetch=normal;}
+});
+
+test('uncapped worker completes existing stages past the legacy cap and retains all token receipts',async()=>{
+ const prior=process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET;delete process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET;
+ reset();job.ledger=[{trace:{usage:{total_tokens:4200000}}}];
+ const normal=global.fetch,allowances=[];
+ global.fetch=async(url,options)=>{allowances.push(new Headers(options.headers).get('X-RankPilot-Token-Allowance'));return normal(url,options);};
+ try {
+  await stage();assert.equal(job.status,'queued');assert.equal(job.cursor,1);
+  await stage();assert.equal(job.status,'queued');assert.equal(job.cursor,2);
+  const {spentTokens}=require('../../src/lib/editorial/recovery.ts');
+  assert.equal(spentTokens(job.ledger),4200200);
+  assert.ok(allowances.length>=2 && allowances.every(a=>a===null));
+  assert.ok(!submission.chambersData.approved_artifact);
+ } finally {global.fetch=normal;process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET=prior;}
 });

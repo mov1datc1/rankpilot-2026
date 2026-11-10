@@ -111,7 +111,8 @@ async def service_boundary(request: Request, call_next):
     allowance=request.headers.get('x-rankpilot-token-allowance')
     if allowance is not None and (not allowance.isdecimal() or len(allowance)>12):
         return JSONResponse(status_code=400,content={'error':'Invalid editorial allowance'})
-    budget_token=request_budget.set(RequestBudget(int(allowance)) if allowance is not None else None)
+    # Uncapped requests still track usage and stop on an uncertain provider outcome.
+    budget_token=request_budget.set(RequestBudget(int(allowance) if allowance is not None else None))
     try:
         response=await call_next(request)
     finally:

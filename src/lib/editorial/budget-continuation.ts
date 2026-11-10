@@ -28,11 +28,12 @@ export function canResumeBudgetReview(job:any,data:any,sourceHash:string):boolea
     && e.authorization?.approved_by && e.authorization?.reason
     && e.authorization.total_tokens===capacity);
   const decision=[...(job?.ledger || [])].reverse().find((e:any)=>e.supervision)?.supervision;
-  return !!grant && job?.status==='needs_review' && job.sourceHash===sourceHash
+  const uncapped=!Number.isFinite(capacity);
+  return (uncapped || !!grant) && job?.status==='needs_review' && job.sourceHash===sourceHash
     && job.stage==='artifact' && job.cursor===job.tasks?.length && job.tasks.at(-1)==='artifact'
     && decision?.action==='pause' && decision.reason==='token_budget'
     && !!data?.final_artifact_review && !!capacityRecoveryCheckpoint(job,data) && !hasUnknownProviderUsage(job.ledger)
     && !hasUnknownProviderUsage([{trace:data.review_checkpoint?.state?.trace}])
     && !authorizedReviewUsed(job.ledger) && spentTokens(job.ledger)<capacity
-    && !job.ledger.some((e:any)=>e.status==='capacity_continuation_requested' && e.capacity===capacity);
+    && !job.ledger.some((e:any)=>e.status==='capacity_continuation_requested' && e.capacity===(uncapped ? null:capacity));
 }

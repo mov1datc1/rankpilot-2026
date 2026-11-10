@@ -14,8 +14,12 @@ export function authorizedReviewUsed(ledger:any[]=[]) {
   return !!grant && ledger.slice(ledger.indexOf(grant)+1).some(e=>e.stage==='artifact' && (e.trace || e.issue));
 }
 export function editorialTokenBudget(ledger:any[]=[]) {
-  const configured=Number(process.env.EDITORIAL_TOKEN_BUDGET || 1200000);
-  const base=Number.isFinite(configured) && configured>0 ? configured:1200000;
+  // Quality recovery is bounded by field methods and progress, not a legacy
+  // cumulative token ceiling. A stored old amount alone cannot reactivate it.
+  if(process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET!=='true') return Infinity;
+  const configured=Number(process.env.EDITORIAL_TOKEN_BUDGET);
+  if(!Number.isSafeInteger(configured) || configured<=0) throw new Error('INVALID_EDITORIAL_TOKEN_BUDGET');
+  const base=configured;
   const grant=authorizedExtension(ledger);
   // Capacity is distinct from a one-review exception: it never refreshes
   // field methods, failure counters, unknown calls or final acceptance.

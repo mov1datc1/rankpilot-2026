@@ -81,7 +81,7 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
     if(retry && last?.resultHash===resultHash && canResumeBudgetReview(last,current.chambersData,sourceHash)) {
       const cursor=last.cursor-1;
-      const marker={stage:'artifact',cursor,status:'capacity_continuation_requested',capacity:editorialTokenBudget(last.ledger),worker_commit:build,source_hash:sourceHash};
+      const marker={stage:'artifact',cursor,status:'capacity_continuation_requested',capacity:Number.isFinite(editorialTokenBudget(last.ledger))?editorialTokenBudget(last.ledger):null,worker_commit:build,source_hash:sourceHash};
       const checkpoint=capacityRecoveryCheckpoint(last,current.chambersData);
       await tx.submission.update({where:{id:current.id},data:{chambersData:{...(current.chambersData as any),review_checkpoint:checkpoint}}});
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"cursor"=${cursor},"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='needs_review' RETURNING *`;

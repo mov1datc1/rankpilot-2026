@@ -80,3 +80,35 @@ class ProviderBudgetTests(unittest.TestCase):
             finally:request_budget.reset(token)
             self.assertIsNone(request_budget.get())
         asyncio.run(run())
+
+    def test_uncapped_calls_skip_count_keep_spend_and_stop_unknown_outcomes(self):
+        model,count,kwargs=self.model();budget=RequestBudget(None);token=request_budget.set(budget)
+        try:
+            with patch.object(ChatOpenAI,'_generate',return_value=self.result(1500000)):
+                model._generate([HumanMessage(content='First')],**kwargs)
+                model._generate([HumanMessage(content='Second')],**kwargs)
+            self.assertEqual(budget.spent_tokens,3000000);self.assertIsNone(budget.remaining)
+            count.assert_not_called()
+            with patch.object(ChatOpenAI,'_generate',side_effect=TimeoutError('unknown')):
+                with self.assertRaises(TimeoutError):model._generate([HumanMessage(content='Third')],**kwargs)
+            with patch.object(ChatOpenAI,'_generate') as generated:
+                with self.assertRaises(BudgetPreflightError):model._generate([HumanMessage(content='Do not repeat')],**kwargs)
+                generated.assert_not_called()
+        finally:request_budget.reset(token)
+
+    def test_uncapped_async_calls_require_usage_and_do_not_repeat_missing_receipts(self):
+        from unittest.mock import AsyncMock
+        async def run():
+            model,count,kwargs=self.model();budget=RequestBudget(None);token=request_budget.set(budget)
+            try:
+                with patch.object(ChatOpenAI,'_agenerate',new_callable=AsyncMock,return_value=self.result()):
+                    await model._agenerate([HumanMessage(content='First')],**kwargs)
+                self.assertEqual(budget.spent_tokens,120);count.assert_not_called()
+                missing=ChatResult(generations=[ChatGeneration(message=AIMessage(content='{}'))])
+                with patch.object(ChatOpenAI,'_agenerate',new_callable=AsyncMock,return_value=missing):
+                    with self.assertRaises(RuntimeError):await model._agenerate([HumanMessage(content='Second')],**kwargs)
+                with patch.object(ChatOpenAI,'_agenerate',new_callable=AsyncMock) as generated:
+                    with self.assertRaises(BudgetPreflightError):await model._agenerate([HumanMessage(content='Do not repeat')],**kwargs)
+                    generated.assert_not_called()
+            finally:request_budget.reset(token)
+        asyncio.run(run())

@@ -1,3 +1,5 @@
+process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET='true';
+process.env.EDITORIAL_TOKEN_BUDGET='1200000';
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict'),Module=require('node:module');
 const original=Module._load;Module._load=function(name,...args){if(name==='@/lib/prisma')return {__esModule:true,default:{}};return original.call(this,name,...args);};
