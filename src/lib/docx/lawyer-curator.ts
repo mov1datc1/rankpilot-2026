@@ -1,10 +1,12 @@
 import { projectConfirmedLawyerRole } from '@/lib/audit/lawyer-role';
 import { clientAliases } from './client-aliases';
+import { careerMentions, transformOutsideCareerMentions, type CareerMention } from './career-evidence';
 import { resolvePublication } from '@/lib/audit/publication-policy';
 import { cleanLawyerNames, sanitizeBannedSuperlatives } from './artifact-integrity-check';
 import { sanitizeClientName } from '@/lib/audit/extraction-auditor';
 
 export interface CuratedLawyer {
+  career?: CareerMention[];
   name: string;
   isPartner: boolean | null;
   isRanked: boolean | null;
@@ -95,8 +97,9 @@ export function cleanLawyerUrl(raw: string): string {
  * Anonymization dictionary to replace confidential client names with high-impact sector descriptors in public bios.
  * Prevents confidential leaks in public sections (B9, B10, C2) while preserving high-caliber substantive evidence.
  */
-export function anonymizeConfidentialClients(text: string, confClientNames: string[] = []): string {
+export function anonymizeConfidentialClients(text: string, confClientNames: string[] = [], career: CareerMention[] = []): string {
   if (!text) return '';
+  if (career.length) return transformOutsideCareerMentions(text,career,part=>anonymizeConfidentialClients(part,confClientNames));
   let res = text;
 
   // Catch any remaining confidential entity names (including 2-3 letter acronyms like SKF, VW, PSW)
@@ -254,12 +257,13 @@ export function curateLawyers(rawLawyers: any[], allMattersPool: any[], firmName
     const sourceBio = String(candidacy?.submission_bio || person.comments || person.bio || '');
     // Render the reviewed claim; administrative head metadata cannot silently
     // rewrite a sourced biography or change its evidence anchors.
-    const bio = anonymizeConfidentialClients(sourceBio, confNames);
+    const career = careerMentions(person,candidacy);
+    const bio = anonymizeConfidentialClients(sourceBio, confNames, career);
     // The reviewed candidacy bio already develops its attributed matters.
     // Appending snippets from a second source would duplicate that argument
     // and introduce prose outside the reviewed development proposal.
     const standoutWork = candidacy?.submission_bio ? '' : buildLawyerStandoutWork(person.name, allMattersPool, confNames, person.standoutWork || person.standout_work || '', bio, practiceArea);
-    return { name: person.name, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
+    return { name: person.name, career, isPartner, isRanked: verified ? true : null, currentRank: verified?.observed_band || '', suggestedRank, targetRank: person.targetRank || '', url: cleanLawyerUrl(person.url || ''), comments: bio, bio, supportingMatters: person.supportingMatters || '', strategicRationale: '', marketEvidence: '', evidenceGaps: '', recommendedAction: '', leave: person.leave || '', focus: person.focus || person.key_focus || '', standoutWork };
   });
 }
 

@@ -19,7 +19,7 @@ def fixture():
 class EditorialCaseTests(unittest.TestCase):
     def test_every_selected_narrative_has_its_own_source_execution_obligation(self):
         p,s,v=fixture();p['matters'][0]['publication_route']='E'
-        items=[o for o in obligations(p,s,v) if o['id'].startswith('matter:')]
+        items=[o for o in obligations(p,s,v) if o['id'].startswith('matter:') and o['id'].endswith(':evidence')]
         self.assertEqual(len(items),1);self.assertEqual(items[0]['field'],'matters/0/text')
         self.assertEqual(items[0]['sources'],[p['matters'][0]])
         self.assertIn('confidential section E',items[0]['instruction'])
@@ -27,6 +27,27 @@ class EditorialCaseTests(unittest.TestCase):
         # Internal quotations cannot satisfy the required narrative proof.
         with self.assertRaisesRegex(ValueError,'omitted or duplicated'):
             execution_defects(p,s,v,{},[])
+
+    def test_decisive_facts_are_checked_separately_in_one_field_unit(self):
+        from core.field_review import units_for
+        from core.editorial_case import execution_source_catalog
+        p,s,v=fixture();m=p['matters'][0]
+        m.update(publication_route='E',source_excerpt=m['source_excerpt']+' The integration covered 4,200 employees. The team manages twenty-seven proceedings.')
+        v['matters'][0]['decisive_source_quotes']=['The integration covered 4,200 employees.','The team manages twenty-seven proceedings.']
+        items=[o for o in obligations(p,s,v) if ':fact:' in o['id']]
+        self.assertEqual(len(items),2)
+        self.assertTrue(all(o['field']=='matters/0/text' for o in items))
+        unit=next(u for u in units_for({'package':p,'strategy':s,'development':v}) if u['field']=='matters/0/text')
+        self.assertEqual(len([o for o in unit['obligations'] if ':fact:' in o['id']]),2)
+        self.assertTrue(all('confidential section E' in o['instruction'] for o in items))
+        sources=execution_source_catalog(p,s,v)
+        for item in items:
+            self.assertEqual(list(sources[item['id']].values()),[item['fact_source_quote']])
+        # Changing prose invalidates the existing field receipt; no extra
+        # review node or newly minted repair allowance is introduced.
+        v['matters'][0]['text']+=' The integration covered 4,200 employees.'
+        changed=next(u for u in units_for({'package':p,'strategy':s,'development':v}) if u['field']=='matters/0/text')
+        self.assertNotEqual(unit['hash'],changed['hash'])
 
     def test_reserve_is_valid_personal_evidence_but_excluded_is_not(self):
         p,s,v=fixture();v['candidates'][0]['supporting_matters'].append({'matter_id':'m2','personal_role':'Led the investigation','source_quote':'Partner Sofia Vega led an investigation'})

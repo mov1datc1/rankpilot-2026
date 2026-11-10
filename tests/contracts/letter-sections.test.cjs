@@ -23,3 +23,16 @@ test('Audit uses Word bold formatting instead of literal Markdown markers',async
   assert.match(xml,/<w:b\/>[^<]*(?:<[^>]+>)*Named person/);
   assert.ok(!xml.includes('No assessment available.'));
 });
+test('executive Audit preserves actions but never appends runtime diagnostics',async()=>{
+  const {Packer}=require('docx');
+  const JSZip=require('jszip');
+  const {buildExecutiveAuditDoc}=require('../../src/app/api/generate-docx/audit-builder.ts');
+  const letter=normalizeLetterSections(shifted);
+  const data={editorial_review:{letter},release_verdict:{passed:false,errors:['Internal candidates/1 quote binding failure.']}};
+  const bytes=await Packer.toBuffer(buildExecutiveAuditDoc('Firm','Labour',{}, {},letter,{chambersData:data}));
+  const xml=await(await JSZip.loadAsync(bytes)).file('word/document.xml').async('string');
+  assert.ok(xml.includes('Action.'));
+  assert.ok(!xml.includes('Internal candidates/1'));
+  assert.deepEqual(data.release_verdict.errors,['Internal candidates/1 quote binding failure.']);
+  assert.equal(data.release_verdict.passed,false);
+});

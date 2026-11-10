@@ -141,6 +141,7 @@ TASK+=''' When a confidentiality defect identifies a revealing combination in pu
 TASK += " A same-party spelling variant is an editorial alias, not a genuine unanswered identity question. Preserve original source fields and add both attested variants once in the internal Audit when relevant; do not invent a corporate identity or ask the user to select spelling. For public privacy repairs, remove the identifying combination across ALL flagged B9/B10/C2 fields while retaining meaningful legal work and attribution. Retain exact private figures in E only."
 
 TASK += " Voice repairs: B9 states attested credentials and contributions directly, without 'supplied biography/profile/materials'. C2 requests coverage directly, without 'respectfully seeks' or 'the submission identifies'. D8/E8 states the documented procedural position, not what a status field says or what the document omits. If no actual status is documented, N/A is permitted without further commentary; never invent ongoing proceedings or a final outcome. Preserve genuine uncertainty and integrate explicit dated updates without assuming later activity."
+TASK += " Profile repairs must classify the original relationship and entity_name. Generalization requires a literal privacy_basis from the person's original restriction or the same restricted client register entry; a hypothetical lack of permission never justifies hiding an employer or association. Restore the named career credential when no actual restriction applies. Keep privacy_basis null for retain/omit and preserve all unaffected credentials and mandate evidence."
 
 TASK += " rejected_quotes is a bound postcondition for this generated field: remove or faithfully correct those exact false assertions, including actionable warnings alongside critical defects in the same field. Editing another sentence is insufficient. Preserve supported legal facts. Explain decisions to omit an optional descriptor only in reason or the internal Audit; never add a Submission sentence about source inconsistency, sector classification omitted, or why an editorial choice was made."
 
@@ -178,7 +179,7 @@ def repair_targets(package, strategy, proposal):
         claims={m.get('matter_id') for m in candidate.get('supporting_matters',[])}
         return {'person':person,'eligible_source_matters':related,
             'invalid_claimed_sources':[m for mid,m in register.items() if mid in claims and m not in related],
-            'public_entity_restrictions':[{k:m.get(k) for k in ('client','name','publication_route','resolved_publication_status')} for m in register.values()],
+            'public_entity_restrictions':[{k:m.get(k) for k in ('id','client','name','publication_route','resolved_publication_status')} for m in register.values()],
             'confirmed_heads':[{'name':h['name']} for h in package.get('filing_details',{}).get('heads',[]) if isinstance(h,dict) and identity(h.get('name'))==identity(candidate.get('name'))]}
     for i,draft in enumerate(proposal.get('matters',[])):
         matter=register.get(draft.get('matter_id'),{})
@@ -196,7 +197,7 @@ def repair_targets(package, strategy, proposal):
         person=roster.get(_norm(candidate.get('name')), {})
         from core.candidate_evidence import profile_units, profile_errors, category_error
         anchor=primary_lead_anchor(package,strategy,candidate)
-        profile_faults=profile_errors(person,candidate)
+        profile_faults=profile_errors(person,candidate,package)
         from core.personal_quality import personal_quality_errors
         quality_faults=[e for e in personal_quality_errors(package,strategy,proposal) if e.startswith(f'Calidad personal candidates/{i}:')]
         linked_fault=personal_case_errors(package,candidate,strategy) if proposal.get('execution_contract')==EXECUTION_CONTRACT else []
@@ -967,3 +968,5 @@ TASK += " When primary_contribution is required, supply only that new contributi
 
 TASK += " " + DEPTH_INSTRUCTION
 TASK += " When participation_quote is required, return only the actual added public BIO passage describing team membership. Keep the existing limited BIO verbatim and add the supported participation. The application appends the fixed original source and membership role itself; do not return or alter source quotes, matter IDs, category or identity. This cannot establish leadership, individual results or a nomination."
+
+TASK += " A client-register restriction applies to a client mandate, not automatically to a separately sourced former-employer or professional-association credential. Those career relationships require an explicit profile restriction before hiding the employer/association. Preserve the named career fact without publishing that entity as a client or connecting it to a confidential mandate."

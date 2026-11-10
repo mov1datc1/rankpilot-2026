@@ -101,6 +101,22 @@ class ReviewCostTests(unittest.TestCase):
         self.assertEqual(package['rendered_artifact'], 'Exact Word text')
         self.assertNotIn('optimizedText', package['matters'][0])
 
+    def test_public_writer_does_not_receive_old_audit_prose_as_source(self):
+        original={'bio':'Named prior employer and confirmed career.', 'rendered_audit':'Internal editorial commentary.',
+                  'letter':{'next_steps':'Internal task.'},'matters':[{'id':'m1','source_excerpt':'Actual outcome.'}]}
+        payload={'package':original,'strategy':{'thesis':'Shared evidence-based argument'},
+                 'repair_targets':{'b10':{'source_evidence':{'package':original}}},
+                 'feedback':[{'field_path':'b10','message':'Preserve the achieved outcome.'}]}
+        for role in ('development','repair'):
+            value=role_payload(payload,role)
+            self.assertNotIn('rendered_audit',value['package'])
+            self.assertNotIn('letter',value['repair_targets']['b10']['source_evidence']['package'])
+            self.assertEqual(value['package']['bio'],original['bio'])
+            self.assertEqual(value['feedback'],payload['feedback'])
+            self.assertEqual(value['strategy'],payload['strategy'])
+        self.assertEqual(role_payload(payload,'editor')['package']['rendered_audit'],original['rendered_audit'])
+        self.assertIn('rendered_audit',original)
+
     def test_portfolio_receives_candidate_evidence_for_incremental_contribution(self):
         package = {'lawyers':[{'name':'Sofia Vega','isPartner':True}], 'matters':[{'id':'m','rawNotes':'Pending appeal','optimizedText':'Draft','status':'Optimized'}], 'ranking_verification':{'status':'verified_match','individuals':[{'name':'Sofia Vega'}]}}
         strategy_input = role_payload(package,'strategist')

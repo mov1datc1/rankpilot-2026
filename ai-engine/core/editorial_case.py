@@ -214,8 +214,10 @@ def obligations(package, strategy, proposal):
             coverage={c.get('reference'):c for c in candidate.get('profile_coverage',[])}
             for unit in profile_units(person):
                 decision=coverage.get(unit['reference'],{})
-                add(f'profile:{i}:{unit["reference"]}',f'candidates/{i}/submission_bio',[{'source_excerpt':unit['source_quote']}],
-                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. A former employer or professional association must retain its source name unless an actual source/register restriction applies; a hypothetical client-permission gap is not such a restriction. Check the original relationship and the stated generalize reason. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
+                basis=decision.get('privacy_basis') or {}
+                privacy_sources=[person] if basis.get('kind')=='profile_restriction' else [register[basis['matter_id']]] if basis.get('matter_id') in register else []
+                add(f'profile:{i}:{unit["reference"]}',f'candidates/{i}/submission_bio',[{'source_excerpt':unit['source_quote']}]+privacy_sources,
+                    'Independently judge preservation of this ORIGINAL profile credential alongside matter work. Material prior employment, professional office, regional responsibility and qualifications must survive. Privacy may generalize an identity but must preserve the role and relationship. A former employer or professional association must retain its source name unless an actual source/register restriction applies; a hypothetical client-permission gap is not such a restriction. Check relationship, entity_name and privacy_basis against the original: a quote about employment alone is NOT a confidentiality restriction, and another entity\'s restriction does not apply. A literal privacy_basis is not semantic permission to anonymize. An omit decision is not proof: reject an unsupported loss of a material credential. Internal proposal decision: '+str(decision))
     for i,leader in enumerate(additional_leaders(package,strategy)):
         add(f'leader:{i}','leadership',[register[mid] for mid in leader['matter_ids']], 'Evaluate '+leader['name']+' internally; preserve documented work and request only genuinely absent seniority/profile facts. Do not invent a public bio.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):
@@ -233,6 +235,20 @@ def obligations(package, strategy, proposal):
                 'Independently compare this selected matter narrative against its ORIGINAL source. Preserve the distinctive legal issue, evidenced contribution, outcome, personal attribution and decisive scale, including material workforce, locations, proceedings and economic quantities with their correct concepts and currencies. Internal decisive_source_quotes are evidence to execute, not a substitute for facts in the narrative. '+
                 ('This is confidential section E: public-profile anonymization does not justify removing private source metrics here. Respect any explicit source restriction on a particular fact. ' if restricted else 'This is public section D: respect all explicit publication restrictions. ')+
                 'Do not require irrelevant numbers, invent missing outcomes, conflate aggregate and individual amounts or resolve genuine source contradictions. Declared decisive evidence: '+str(draft.get('decisive_source_quotes',[])))
+            # Same field, same request and same repair budget. Each decisive
+            # source passage needs its own verdict; a generic description of
+            # the mandate cannot stand in for all its outcomes and scale.
+            from core.editorial_development import bind_quote
+            for quote in dict.fromkeys(draft.get('decisive_source_quotes',[])):
+                bound=bind_quote(quote,matter)
+                if not bound:continue  # Literal binding faults use the existing repair route.
+                key=sha256(bound.encode()).hexdigest()[:16]
+                add(f'matter:{draft["matter_id"]}:fact:{key}',f'matters/{i}/text',[matter],
+                    'Check execution of THIS decisive original passage in this SAME matter narrative: '+bound+
+                    '. Require its material contribution, achieved result or actual pending status, and meaningful scale; another passage cannot satisfy this obligation. '+
+                    ('This narrative is confidential section E: retain evidenced identities and quantities unless a specific original restriction applies to the fact itself. Public B9/B10/C2 anonymization is not a reason to erase E evidence. ' if restricted else 'This narrative is public section D: honor actual publication restrictions and permit faithful safe generalisation. ')+
+                    'Do not copy source wording mechanically, infer seniority from a form heading, require an irrelevant detail, or restore a disputed result. Where sources conflict, accept the qualified supported result and retain the uncertainty in the internal Audit. A citation is evidence, not proof that the output executes it.')
+                result[-1]['fact_source_quote']=bound
     verified=set(package.get('_verified_field_obligations',[]))
     return [item for item in result if item['id'] not in verified]
 
@@ -287,9 +303,9 @@ def execution_source_catalog(package, strategy, proposal):
     normalize=lambda value:' '.join(unicodedata.normalize('NFC',str(value or '')).split())
     result={}
     for obligation in obligations(package,strategy,proposal):
-        texts=list(dict.fromkeys(normalize(source.get(field))
+        texts=[normalize(obligation['fact_source_quote'])] if obligation.get('fact_source_quote') else list(dict.fromkeys(normalize(source.get(field))
             for source in obligation['sources']
-            for field in SOURCE_FIELDS+('bio','comments','key_focus','name','fullName','role')
+            for field in SOURCE_FIELDS+('bio','comments','key_focus','name','fullName','role','credentials','professional_roles','confidentialityEvidence')
             if normalize(source.get(field))))
         # source_excerpt normally contains the narrative and role cells already.
         texts=[text for text in texts if not any(text!=other and text in other for other in texts)]
