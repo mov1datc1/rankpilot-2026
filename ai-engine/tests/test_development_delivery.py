@@ -7,6 +7,70 @@ from core.editorial_development import develop
 
 
 class CompleteDevelopmentDeliveryTests(unittest.TestCase):
+    def repaired_field_fixture(self,attempts=1):
+        from core.field_review import units_for,project_checks
+        from core.editorial_development import development_errors
+        from test_field_review import verdict
+        s=self.fixture()
+        s['development_observations']=development_errors(s['package'],s['strategy'],s['development'])
+        units=units_for(s)
+        receipts,defects=project_checks(units,verdict(units,'b10'))
+        s.update(field_review_receipts=receipts,field_review_failures=defects,
+                 field_review_attempts={'b10':attempts},repair_continuation=None)
+        proposal=copy.deepcopy(s['development'])
+        proposal['b10']+=' The team preserved operational continuity.'
+        result={'development':proposal,'development_validated':False,
+                'errors':list(s['development_observations']),'trace':s['trace'],
+                'repair_report':{'failed_paths':[],'corrected_paths':['b10'],'unresolved':[]}}
+        return s,result
+
+    def test_changed_field_is_reviewed_despite_unrelated_retained_profile_fault(self):
+        from core.field_review import after_repair,advance
+        from test_field_review import verdict
+        for attempts in (1,2):
+            s,result=self.repaired_field_fixture(attempts)
+            s.update(after_repair(s,result))
+            self.assertEqual(s['repair_continuation']['phase'],'review')
+            self.assertEqual(s['field_review_attempts'],{'b10':attempts})
+            self.assertFalse(s.get('field_review_observations'))
+            def review(current,role,schema,instruction,payload):
+                self.assertEqual(role,'field_reviewer')
+                return verdict(payload['units']),current['trace']+[{'usage':{'total_tokens':7}}]
+            with patch('core.review_graph.invoke_role',side_effect=review):
+                for _ in range(10):
+                    s.update(advance(s))
+                    if not s.get('repair_continuation'):break
+            self.assertTrue(s['development_delivery_ready'])
+            self.assertFalse(s['development_validated'])
+            self.assertTrue(s['development_observations'])
+            self.assertFalse(s.get('field_review_observations'))
+
+    def test_second_method_failure_retains_fresh_verdict_without_third_repair(self):
+        from core.field_review import after_repair,advance
+        from test_field_review import verdict
+        s,result=self.repaired_field_fixture(2)
+        s.update(after_repair(s,result))
+        def review(current,role,schema,instruction,payload):
+            self.assertEqual(role,'field_reviewer')
+            answer=verdict(payload['units'],'b10')
+            for item in answer['checks'].values():item['reason']='Fresh review of the repaired output.'
+            return answer,current['trace']+[{'usage':{'total_tokens':7}}]
+        with patch('core.review_graph.invoke_role',side_effect=review):s.update(advance(s))
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No third repair')):s.update(advance(s))
+        observation=next(o for o in s['field_review_observations'] if o['field']=='b10')
+        self.assertTrue(all(d['message']=='Fresh review of the repaired output.' for d in observation['defects']))
+        self.assertEqual(s['field_review_attempts'],{'b10':2})
+
+    def test_recheck_requires_changed_complete_known_output_without_new_local_faults(self):
+        from core.field_review import repaired_output_needs_review
+        for mutation in ('unchanged','unknown','incomplete','new_local_fault'):
+            s,result=self.repaired_field_fixture()
+            if mutation=='unchanged':result['development']=copy.deepcopy(s['development'])
+            if mutation=='unknown':result['trace']=[{'usage':{'unknown_calls':1}}]
+            if mutation=='incomplete':result['development']['matters']=[]
+            if mutation=='new_local_fault':result['development']['candidates'][0]['submission_case_coverage'][0]['source_quote']='Invented original evidence.'
+            self.assertFalse(repaired_output_needs_review(s,result,{'b10'}),mutation)
+
     def test_initial_contract_exhaustion_continues_through_all_field_reviews_without_third_repair(self):
         from core.field_review import advance, units_for
         from test_field_review import verdict

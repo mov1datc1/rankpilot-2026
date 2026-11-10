@@ -669,11 +669,18 @@ class RepairPlan(BaseModel):
 
 
 def unique_defects(defects):
-    """One concrete correction per identical claim; retain the strongest severity."""
+    """Deduplicate identical instructions, never different faults in one passage.
+
+    A reviewer can identify several missing source facts in the same paragraph.
+    Its output quote locates work; it does not identify the repair obligation.
+    """
     result=[];positions={}
+    normalized=lambda value:' '.join(str(value or '').split())
     for defect in defects:
-        quote=' '.join(str(defect.get('artifact_quote') or '').split())
-        key=tuple(defect.get(k) for k in ('code','scope','matter_id','field_path','conflict_basis','conflict_resolution','conflicting_artifact_term'))+(quote,)
+        quote=normalized(defect.get('artifact_quote'))
+        key=tuple(defect.get(k) for k in ('code','owner','scope','matter_id','field_path','obligation_id',
+            'conflict_basis','conflict_resolution','conflicting_artifact_term'))+(
+                quote,normalized(defect.get('source_quote')),normalized(defect.get('message')))
         if quote and key in positions:
             at=positions[key]
             if defect.get('severity')=='critical':result[at]=defect

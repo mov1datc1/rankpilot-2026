@@ -252,12 +252,35 @@ def after_repair(state,result):
         return schedule(state,result)
     if result.get('repair_continuation'):
         return result
+    # A global validation flag may remain false solely because a different
+    # field carries an exhausted internal-binding observation. It cannot decide
+    # whether this repair worked. Review changed output before buying another
+    # method or attaching the old verdict to the repaired text's new hash.
+    if repaired_output_needs_review(state,result,paths):
+        return schedule(state,result)
     if paths and not unknown_usage(result.get('trace',[])) and all(method_count(attempts,path)<2 for path in paths):
         return {**result,'development_repair_unlocatable':False,
             'repair_continuation':{'version':VERSION,'phase':'repair',
                 'proposal_hash':digest(result.get('development',state['development'])),
                 'pending_groups':[sorted(paths)]}}
     return retain_observations(state,{**result,'repair_continuation':None,'development_repair_unlocatable':True})
+
+
+def repaired_output_needs_review(state,result,paths):
+    from core.development_delivery import complete_proposal_findings
+    from core.editorial_repair import repair_value_at
+    merged={**state,**result}
+    if unknown_usage(merged.get('trace',[])) or not paths:return False
+    try:
+        changed=any(repair_value_at(state['development'],p)!=repair_value_at(merged['development'],p)
+                    for p in paths)
+        if not changed:return False
+        local=complete_proposal_findings(merged)
+        # New local faults still need the normal bounded repair. Existing
+        # observations neither grant approval nor invalidate unrelated work.
+        return local is not None and all(e in merged.get('development_observations',[]) for e in local)
+    except (KeyError,IndexError,TypeError,ValueError):
+        return False
 
 
 def unknown_usage(trace):
