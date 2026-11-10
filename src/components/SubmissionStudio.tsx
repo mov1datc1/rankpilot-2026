@@ -1,5 +1,6 @@
 'use client';
 
+import {observeEditorialJob} from '@/lib/editorial/job-observer';
 import { studioMatters, studioDraftChanged } from '@/lib/editorial/studio-draft';
 import { AuditNextActions } from '@/components/AuditNextActions';
 import { type AuditAction } from '@/lib/audit/next-actions';
@@ -199,6 +200,8 @@ export default function SubmissionStudio({
 
   // Global Optimization State
   const [reviewContract, setReviewContract] = useState(REVIEW_CONTRACT);
+  const [statusConnectionError,setStatusConnectionError]=useState(false);
+  const [jobWatch, setJobWatch] = useState(0);
   const [editorialJob, setEditorialJob] = useState<any>(null);
   const [isOptimizingAll, setIsOptimizingAll] = useState<boolean>(false);
   const [optimizeAllProgress, setOptimizeAllProgress] = useState<{
@@ -376,7 +379,7 @@ export default function SubmissionStudio({
     if(action.kind==='filing') {setActiveTab('studio');setFilingOpenRequest(n=>n+1);window.setTimeout(()=>document.getElementById('studio-filing-details')?.scrollIntoView({behavior:'smooth',block:'start'}),100);return;}
     resolveReviewIssue(action.kind==='period'?'period':action.kind==='lawyers'?'lawyers':'wizard',action.message);
   };
-  const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} saveLabel={auditAction?'Guardar y volver al Audit':undefined} openRequest={filingOpenRequest} onCancel={()=>{if(auditAction)returnToAudit();}} onSave={async filingDetails=>{
+  const reviewPanel = <><ReviewPanel data={chambersData} errors={deliveryState.errors} warnings={deliveryState.warnings} approved={deliveryState.approved} job={editorialJob} onRefresh={()=>setJobWatch(value=>value+1)} connectionError={statusConnectionError} onResolve={resolveReviewIssue} busy={isOptimizingAll} /><FilingDetails data={chambersData} saveLabel={auditAction?'Guardar y volver al Audit':undefined} openRequest={filingOpenRequest} onCancel={()=>{if(auditAction)returnToAudit();}} onSave={async filingDetails=>{
     const result=await updateSubmissionValidatedData(submission.id,{expectedRevision:Number(chambersData.draft_revision || 0),filingDetails,filingReviewed:true,auditActionId:auditAction?.id});
     if(!result.success){setDraftSaveError(result.error || 'No se pudo guardar.');return false;}
     if(result.unchanged){if(auditAction)returnToAudit();return true;}
@@ -606,43 +609,39 @@ export default function SubmissionStudio({
   };
 
   // Studio starts a durable job and observes it; the worker owns all transitions.
-  const [jobWatch, setJobWatch] = useState(0);
   const unsavedDraft = React.useRef(false);
   unsavedDraft.current = studioDraftChanged(chambersData,submission.matters || [],matters,b10Text);
   useEffect(() => {
-    let stopped=false;
-    let timer:ReturnType<typeof setTimeout>;
-    const controller=new AbortController();
-    const observe=async()=>{
-      try {
-        const response=await fetch(`/api/editorial/jobs?submissionId=${encodeURIComponent(submission.id)}`,{cache:'no-store',signal:controller.signal});
-        if(!response.ok) throw new Error('No se pudo consultar el avance. El motor continúa independientemente de esta pestaña.');
-        const data=await response.json();
-        if(stopped) return;
-        if(data.reviewContract) setReviewContract(data.reviewContract);
-        if(!data.job) {timer=setTimeout(observe,15000);return;}
+    const observer=observeEditorialJob({
+      read:async signal=>{
+        const response=await fetch(`/api/editorial/jobs?submissionId=${encodeURIComponent(submission.id)}`,{cache:'no-store',signal});
+        if(!response.ok)throw new Error('STATUS_UNAVAILABLE');
+        return response.json();
+      },
+      apply:(data:any)=>{
+        setStatusConnectionError(false);
+        if(data.reviewContract)setReviewContract(data.reviewContract);
+        if(!data.job)return;
         setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
         setIsOptimizingAll(active);
         setOptimizeAllProgress(active?{current:data.job.completed,total:data.job.total,startedAt:data.job.startedAt,waiting:data.job.waiting,stage:`${data.job.message}. El avance se guarda automáticamente.`}:null);
-        if(active) {timer=setTimeout(observe,3000);return;}
+        if(active)return;
         setOptimizeAllComplete(data.job.status==='completed');
         if(data.chambersData && !unsavedDraft.current) {
           setChambersData(data.chambersData);
-          if(data.matters) setMatters(data.matters);
-          setB10Text(data.chambersData.enhanced_b7 || data.chambersData.original_b10 || '');
+          setMatters(studioMatters(data.chambersData,data.matters || []));
+          setB10Text(data.chambersData.enhanced_b7 || data.chambersData.enhanced_b10 || data.chambersData.b7 || data.chambersData.original_b10 || data.chambersData.departmentDesc || '');
           setSubmissionStatus(data.status || 'Draft');
         }
-        // New jobs and automatic recovery can begin outside this tab, even
-        // after completion. Keep the visible status current without overwriting edits.
-        timer=setTimeout(observe,15000);
-      } catch(error) {
-        if(stopped) return;
-        timer=setTimeout(observe,10000);
-      }
-    };
-    void observe();
-    return ()=>{stopped=true;controller.abort();clearTimeout(timer);};
+      },
+      onError:()=>setStatusConnectionError(true),
+    });
+    const onVisible=()=>{if(document.visibilityState==='visible')observer.refresh();};
+    window.addEventListener('online',observer.refresh);
+    window.addEventListener('focus',observer.refresh);
+    document.addEventListener('visibilitychange',onVisible);
+    return ()=>{observer.dispose();window.removeEventListener('online',observer.refresh);window.removeEventListener('focus',observer.refresh);document.removeEventListener('visibilitychange',onVisible);};
   },[submission.id,jobWatch]);
 
   const handleOptimizeAll = async (_bypassReadiness:boolean=false,repairGenerated=false) => {
@@ -1175,7 +1174,7 @@ export default function SubmissionStudio({
           ) : null}
           {/* Primary document action */}
           <button
-            onClick={() => reviewAttemptStopped ? resolveReviewIssue('review','') : handleOptimizeAll(false)}
+            onClick={() => reviewAttemptStopped ? setJobWatch(value=>value+1) : handleOptimizeAll(false)}
             disabled={isOptimizingAll || preparationBlocked}
             style={{
               background: isOptimizingAll || preparationBlocked
@@ -1200,10 +1199,10 @@ export default function SubmissionStudio({
                   : '0 2px 6px rgba(79,70,229,0.3)',
               transition: 'all 0.15s ease'
             }}
-            title={reviewAttemptStopped ? 'Abre el estado de entrega para consultar cómo continuar con este expediente.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Preparar el Submission y el Audit con los datos guardados.'}
+            title={reviewAttemptStopped ? 'Consulta el estado guardado sin volver a generar documentos.' : preparationBlocked ? 'Resuelve los datos pendientes antes de generar.' : 'Preparar el Submission y el Audit con los datos guardados.'}
           >
             <Sparkles size={14} className={isOptimizingAll ? 'animate-spin' : ''} />
-            <span>{isOptimizingAll ? 'Preparando documentos…' : reviewAttemptStopped ? 'Ver cómo continuar' : editorialJob?.canResumeResidual ? 'Continuar preparación' : deliveryState.available ? 'Actualizar documentos' : 'Preparar documentos'}</span>
+            <span>{isOptimizingAll ? 'Preparando documentos…' : reviewAttemptStopped ? 'Actualizar estado' : editorialJob?.canResumeResidual ? 'Continuar preparación' : deliveryState.available ? 'Actualizar documentos' : 'Preparar documentos'}</span>
           </button>
 
           {/* Unified Download Dropdown */}
@@ -1429,7 +1428,7 @@ export default function SubmissionStudio({
                 </div>
               </div>
               <button
-                onClick={() => reviewAttemptStopped ? resolveReviewIssue('review','') : preparationBlocked ? resolvePreparationInputs() : handleOptimizeAll(false)}
+                onClick={() => reviewAttemptStopped ? setJobWatch(value=>value+1) : preparationBlocked ? resolvePreparationInputs() : handleOptimizeAll(false)}
                 disabled={isOptimizingAll}
                 style={{
                   opacity: isOptimizingAll ? 0.45 : 1,
@@ -1445,7 +1444,7 @@ export default function SubmissionStudio({
                   boxShadow: '0 2px 4px rgba(37,99,235,0.2)'
                 }}
               >
-                {isOptimizingAll ? 'Preparando documentos…' : reviewAttemptStopped ? 'Ver cómo continuar' : preparationBlocked ? 'Completar datos' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Preparar documentos'}
+                {isOptimizingAll ? 'Preparando documentos…' : reviewAttemptStopped ? 'Actualizar estado' : preparationBlocked ? 'Completar datos' : editorialJob?.canResumeResidual ? 'Continuar preparación' : 'Preparar documentos'}
               </button>
             </div>
           )}
