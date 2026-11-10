@@ -308,3 +308,29 @@ test('uncapped worker completes existing stages past the legacy cap and retains 
   assert.ok(!submission.chambersData.approved_artifact);
  } finally {global.fetch=normal;process.env.EDITORIAL_ENFORCE_TOKEN_BUDGET=prior;}
 });
+
+test('available documents do not make pending final-review repair reuse old development',async()=>{
+ reset();repairMode=true;const normalFetch=global.fetch;
+ global.fetch=async(url,options)=>{
+  const payload=JSON.parse(options.body);
+  if(payload.stage==='development' && payload.state?.repair_strategy==='source_reconstruction')repairMode=false;
+  const response=await normalFetch(url,options);const body=await response.json();
+  if(body.state && payload.stage==='development')body.state.development_delivery_ready=true;
+  if(body.state)body.state.case_requirements={...(body.state.case_requirements || {}),recovery_contract:'field-recovery-v1'};
+  return Response.json(body,{status:response.status});
+ };
+ try {
+  for(let guard=0;guard<15;guard++){await stage();if(job.status!=='queued')break;}
+  assert.equal(job.status,'completed',JSON.stringify(job));assert.equal(job.id,'job');
+  assert.equal(calls.filter(c=>c.payload.stage==='development').length,3);
+  assert.ok(job.ledger.filter(e=>e.stage==='development').every(e=>e.trace?.usage?.total_tokens>0));
+  assert.equal(calls.filter(c=>c.payload.stage==='strategy').length,1);
+  const repairs=job.ledger.filter(e=>e.supervision?.action==='repair');
+  assert.deepEqual(repairs.map(e=>e.supervision.repair_strategy),['targeted_correction','source_reconstruction']);
+  // Available first-pass bytes also receive their own independent review.
+  assert.equal(calls.filter(c=>c.url.endsWith('/verify-rendered-package')).length,3);
+  assert.ok(submission.chambersData.approved_artifact.audit_base64);
+  assert.equal(submission.chambersData.matters[0].optimizedText,submission.chambersData.matters[0].rawNotes);
+  assert.ok(job.ledger.reduce((sum,e)=>sum+(e.trace?.usage?.total_tokens || 0),0)>475);
+ } finally {global.fetch=normalFetch;repairMode=false;}
+});
