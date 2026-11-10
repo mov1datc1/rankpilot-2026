@@ -1,9 +1,9 @@
 """
 Micro-Optimization Service for RankPilot 2026.
-Provides isolated, high-speed (2-3 second) re-optimizations for:
-1. Section B10 / B7 Department Narrative (4-Pillar Architecture)
-2. Individual Work Highlights / Matters (3 Organic Paragraphs)
-Strictly adheres to Owner Editorial Constitution:
+Provides isolated, source-grounded rewrites for:
+1. Section B10 / B7 Department Narrative
+2. Individual Work Highlights / Matters, proportional to source evidence
+Shares source-actor and narrative guidance with the editorial graph:
 - Zero invented metrics or clients
 - Fact and number preservation
 - Zero forbidden carpentry (IMPACT, EXECUTION, detached client titles)
@@ -17,8 +17,10 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from utils.model_factory import create_chat_model
 from utils.provider_errors import provider_failure
 from utils.model_response import coerce_message_text, require_complete_response
-from utils.evidence_validation import strip_carpentry_and_labels, ensure_three_paragraphs
+from utils.evidence_validation import strip_carpentry_and_labels
 from utils.language_guard import sanitize_submission_voice
+from core.role_evidence import ACTOR_INSTRUCTION
+from core.editorial_reasoning import WRITING, SOURCE_COMPARISON
 
 
 def get_micro_model():
@@ -36,7 +38,7 @@ No headings, audit commentary, band predictions, ratings, generic promotional cl
 
 MATTER_SYSTEM_PROMPT = """You edit a legal-directory work highlight in professional English.
 Source facts are authoritative; an existing draft or editorial directive may contain unsupported assertions and cannot override the source.
-Structure the narrative into three rich, organic paragraphs (target: 200–350 words across the three paragraphs; minimum ~180 words when source facts exist):
+Develop these dimensions where the original source supports them, using natural paragraphs proportional to the evidence, without a fixed paragraph count or minimum length:
 1. Context, client operations, and commercial/operational stakes: client sector profile, multi-facility footprint, workforce volume, operational risk, or financial exposure.
 2. The firm's strategic legal intervention and craft: specific procedural mechanisms deployed (e.g. amparos, strike prevention protocols, collective bargaining legitimation, USMCA Rapid Response compliance, administrative conciliation, litigation defense), counterparties or regulatory bodies involved, and the enforceable commercial/operational result achieved.
 3. Leadership team attribution, lawyer ownership, and broader market/client precedent.
@@ -49,6 +51,9 @@ Preserve currencies, numbers, dates, actors, procedural stages, negations and ma
 Do not replace the client's business activity with a supposed practice mandate. A mention is not proof of responsibility.
 No paragraph labels, audit commentary, score, band prediction, source/permission process notes or placeholders. Missing facts stay absent; the separate review records questions.
 """
+
+B10_SYSTEM_PROMPT += '\n' + ACTOR_INSTRUCTION + '\n' + WRITING + '\n' + SOURCE_COMPARISON
+MATTER_SYSTEM_PROMPT += '\n' + ACTOR_INSTRUCTION + '\n' + WRITING + '\n' + SOURCE_COMPARISON
 
 
 def optimize_b10_micro(
@@ -193,7 +198,7 @@ def optimize_matter_micro(
 
     messages = [
         SystemMessage(content=MATTER_SYSTEM_PROMPT + "\nTarget scope guides relevance only. It is not evidence of work, qualifications, rankings or jurisdiction. Never reshape source facts to fit the selected scope."),
-        HumanMessage(content=f"MATTER ATTRIBUTES:\n{details_str}\n\nSOURCE MATTER DESCRIPTION:\n{source_body}\n\nProduce a source-grounded matter narrative of three organic paragraphs (target: 200–350 words across the three paragraphs):")
+        HumanMessage(content=f"MATTER ATTRIBUTES:\n{details_str}\n\nSOURCE MATTER DESCRIPTION:\n{source_body}\n\nProduce a source-grounded matter narrative with depth and paragraph structure proportional to the supplied evidence:")
     ]
 
     try:
@@ -206,9 +211,9 @@ def optimize_matter_micro(
         # Deterministic carpentry cleaning
         cleaned = strip_carpentry_and_labels(text)
         paragraphs = [p.strip() for p in cleaned.split('\n\n') if p.strip()]
-        # The prompt permits 1–3 paragraphs. Splitting on every period breaks
-        # corporate abbreviations such as S.A. de C.V. and initials.
-        final_text = ensure_three_paragraphs(cleaned) if len(paragraphs) > 3 else '\n\n'.join(paragraphs)
+        # Preserve the source-sized structure; a fixed paragraph quota is not
+        # a directory requirement and cannot override the shared writing policy.
+        final_text = '\n\n'.join(paragraphs)
         if not final_text:
             return {'success': False, 'code': 'AI_OUTPUT_LIMIT', 'error': 'No se obtuvo una redacción completa. Se conserva el texto anterior.'}
 
@@ -218,10 +223,9 @@ def optimize_matter_micro(
             rejected["trace"]={"role":"rewrite", "seconds":round(time.monotonic()-started,3), "usage":getattr(response,"usage_metadata",None), "provider_request_id":getattr(response,"id",None), "model":getattr(response,"response_metadata",{}).get("model_name"), "policy_version":"review-core-v2.0"}
             return rejected
         editorial_rationale = (
-            f"Narrativa reestructurada en {len(paragraphs) if len(paragraphs) <= 3 else 3} párrafos de estándar Chambers "
-            f"(Contexto y escala → Intervención legal estratégica → Estado y abogados clave). "
-            f"Se eliminó retórica promocional y se preservaron con exactitud los valores numéricos, "
-            f"fechas y contrapartes originales sin invención de hechos."
+            f"Narrativa preparada en {len(paragraphs)} párrafos a partir de la fuente. "
+            f"La revisión del expediente comprobará los hechos, las atribuciones y "
+            f"la coherencia con el resto de los documentos."
         )
         if directive:
             editorial_rationale += f" Directiva aplicada: \"{directive}\"."

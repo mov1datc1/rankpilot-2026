@@ -1,5 +1,5 @@
 {
-  "version": "practice-policy-v4",
+  "version": "practice-policy-v5-scoped-methodology",
   "owner_approval": null,
   "scope": "Project reference methodology; not official directory requirements or client evidence. Uncatalogued documents are quarantined. Jurisdiction-specific thresholds require separately verified applicability.",
   "documents": [
@@ -40,7 +40,7 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+      "source": "Labour_Editorial_Methodology_Scoped.txt",
       "practice": "labour",
       "directory": "chambers",
       "jurisdiction": "*",
@@ -175,7 +175,7 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+      "source": "Lawyer_Leadership_Methodology_Scoped.txt",
       "practice": "*",
       "directory": "*",
       "jurisdiction": "*",
@@ -184,22 +184,31 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "¿Cómo rankeamos abogado_as__.txt",
+      "source": "Editorial_Methodology_Scoped.txt",
       "practice": "*",
       "directory": "*",
       "jurisdiction": "*",
       "edition": "unspecified",
       "tier": "methodology",
       "approval": "project_reference_only"
+    }
+  ],
+  "quarantined_documents": [
+    {
+      "source": "UNIVERSAL CHAMBERS LABOUR LOGIC.txt",
+      "reason": "Historical mixed-scope reference superseded by scoped methodology; retained on disk for traceability, never retrieved."
     },
     {
       "source": "EDITORIAL_CONSTITUTION.txt",
-      "practice": "*",
-      "directory": "*",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "methodology",
-      "approval": "project_reference_only"
+      "reason": "Historical mixed-scope reference superseded by scoped methodology; retained on disk for traceability, never retrieved."
+    },
+    {
+      "source": "Global Lawyer Leadership Framework — RankPilot RAG v1.txt",
+      "reason": "Historical mixed-scope reference superseded by scoped methodology; retained on disk for traceability, never retrieved."
+    },
+    {
+      "source": "¿Cómo rankeamos abogado_as__.txt",
+      "reason": "Historical mixed-scope reference superseded by scoped methodology; retained on disk for traceability, never retrieved."
     }
   ]
 }

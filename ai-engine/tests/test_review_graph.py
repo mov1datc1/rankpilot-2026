@@ -48,6 +48,10 @@ class ReviewGraphTests(unittest.TestCase):
             if role=='selection_reviewer':
                 return {'checks':{f'M{i+1:02d}':{'status':'supported','explanation':'Source supports the legal nature and decision.','source_quote':''} for i,m in enumerate(package['matters'])}},state.get('trace',[])+[{'role':role}]
             result=strategy if role=='strategist' else development(package) if role=='development' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[], 'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]})
+            if role=='writer' and args and 'corrections' in args[0].model_fields:
+                result={'corrections':[{'path':'executive_assessment',
+                    'value':LETTER['executive_assessment']+' Corrected attribution.',
+                    'reason':'Apply the judge-directed Audit delta.'}],'unresolved':[]}
             if role=='editor' and 'acceptance' not in result:
                 result={**result,'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]}
             if role=='editor' and state.get('development',{}).get('version') in ('editorial-development-v3','editorial-development-v4'):

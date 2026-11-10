@@ -1,0 +1,13 @@
+# Scoped methodology and lossless repair handoff
+
+Status: implemented and tested locally; not deployed by this audit.
+
+The review-to-repair path had two remaining deterministic context defects. The semantic locator assigned a new target for each finding, overwriting prior instructions and even rejection postconditions when several findings addressed one field. Comparison repairs admitted reserve sources for the whole comparisons collection, but removed those sources when repairing a single comparison child. Targets now merge locator instructions without replacing existing constraints, and both comparison scopes retain eligible core/reserve evidence. Public institutional prose remains restricted to core sources.
+
+The active retrieval catalog also supplied mixed-scope historical references: mandatory evaluator voice conflicted with firm-voice Submission instructions; client-specific blueprints and foreign-jurisdiction criteria competed with current source evidence. Three scoped methodology documents now preserve the institutional, personal and labour reasoning without historical client answers, a compulsory narrative template or unsupported market thresholds. The four superseded files remain on disk and are explicitly quarantined in the catalog. Other practice-specific references are unchanged and are not certified by this review.
+
+Targeted repair now receives its authorized findings, original evidence and shared application rules without generic RAG retrieval. This applies to the locator and prose repair; it does not remove source evidence, lower validation standards, authorize new fields or increase retries. Generation, strategy, Audit writing and final review retain the scoped methodology. The source-actor policy remains shared.
+
+Validation: three code regressions reproduced before the changes; 794 Python tests pass after the changes, including five new checks for handoff, source scope, actual repair-message assembly and production retrieval. Capturing a historical three-obligation handoff offline preserves all three messages and leaves the source/proposal unchanged. No new provider call, browser action, document generation or production write occurred. Test success establishes these code/context properties, not semantic quality of a new Word pair.
+
+Architectural conclusion: source-bound review is useful, but it cannot compensate for contradictory upstream instructions or an information-losing repair handoff. A model's detection and its proposed edit are separate operations with different contexts. A future full run must assess the actual pair against the quality reference and user requirements; the judge's pass alone is insufficient. No claim that all repair failures or every practice-specific RAG have been resolved.
