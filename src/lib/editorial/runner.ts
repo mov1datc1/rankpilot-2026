@@ -110,8 +110,11 @@ export async function runJobStage(job:any) {
           for(const field of supervision.repair_fields || [])attempts[field]=fieldMethodCount(previousAttempts,field)+1;
           checkpoint.state.field_review_attempts=attempts;
         }
-        if(repair.tasks.includes('development')) {checkpoint.state.development_validated=false;}
-        if(repair.letter) {checkpoint.state.writer_validated=false;checkpoint.state.letter_repair_requested=true;delete checkpoint.step_keys.writer;}
+        // Availability permits downloading the existing pair; it cannot satisfy
+        // a newly scheduled repair of that same prose. Keep the dependency key
+        // and feedback so the engine repairs rather than regenerates the case.
+        if(repair.tasks.includes('development')) {checkpoint.state.development_validated=false;checkpoint.state.development_delivery_ready=false;}
+        if(repair.letter) {checkpoint.state.writer_validated=false;checkpoint.state.writer_delivery_ready=false;checkpoint.state.letter_repair_requested=true;delete checkpoint.step_keys.writer;}
         const saved=await prisma.submission.updateMany({where:{id:updated.id,updatedAt:updated.updatedAt},data:{updatedAt:new Date(),chambersData:{...data,approved_artifact:null,release_verdict:{passed:false,status:'repairing',errors:[]},completed_review_input_hash:null,review_checkpoint:checkpoint}}});
         if(saved.count!==1) throw new Error('SOURCE_CHANGED');
         tasks=tasks.concat(repair.tasks);
