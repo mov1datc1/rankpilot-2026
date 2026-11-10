@@ -1,4 +1,4 @@
-## 2026-11-10 — preparado localmente: referencia de calidad y conservación de evidencia
+## 2026-11-10 — v1.0.68: referencia de calidad y conservación de evidencia
 
 Banco offline de pares Word con hashes, comprobaciones por campo y rúbrica editorial ligada a los archivos. Credenciales separan relación profesional, identidad y restricción fuente; el render conserva únicamente la mención profesional vinculada y sigue anonimizando la identidad en mandatos confidenciales. Eliminadas sustituciones nominales/sectoriales codificadas en el render Legal 500. Evidencias decisivas reciben veredictos propios dentro de la revisión por campo; no se amplían reintentos. Redacción pública separada del Audit previo; diagnósticos técnicos conservados en observaciones, fuera de la carta ejecutiva.
 
