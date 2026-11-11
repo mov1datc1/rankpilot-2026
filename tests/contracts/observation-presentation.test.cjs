@@ -8,7 +8,7 @@ test('missing period explains the consequence and offers data entry, never a pai
 });
 test('spelling variants remain informational and preserve arbitrary names without resolving identity',()=>{
  const d={code:'SOURCE_CONFLICT',field_path:'client',message:'El Audit dice “Example Tech”, mientras la narrativa del mismo asunto usa “Example Technologies”. Presentar ambas variantes literalmente, sin decidir una denominación canónica.'};const before=JSON.stringify(d);const p=observationPresentation(d);
- assert.match(p.explanation,/Example Tech/);assert.match(p.explanation,/Example Technologies/);assert.match(p.explanation,/no dos clientes distintos/);assert.equal(p.destination,'wizard');assert.equal(JSON.stringify(d),before);
+ assert.match(p.explanation,/Example Tech/);assert.match(p.explanation,/Example Technologies/);assert.match(p.explanation,/no confirma por sí solo/);assert.equal(p.destination,'wizard');assert.equal(JSON.stringify(d),before);
  const conflict=observationPresentation({...d,message:'Hay dos nombres y no se pudo confirmar si es el mismo cliente.'});
  assert.doesNotMatch(conflict.explanation,/no dos clientes distintos/);
 });
@@ -20,4 +20,12 @@ test('confidentiality and failed ranking lookup say what users should do without
 test('unknown model messages are retained by caller but never used verbatim as the headline',()=>{
  const p=observationPresentation({message:'INTERNAL_BINDING_XYZ / candidates/8 / invalid schema'});
  assert.doesNotMatch(JSON.stringify(p),/INTERNAL_BINDING|candidates\/8|invalid schema/);assert.match(p.explanation,/mensaje completo/);assert.equal(p.destination,undefined);
+});
+
+test('B9 omissions are not mislabeled as unsupported categories',()=>{
+ const omission=observationPresentation({message:'Calidad personal candidates/0: se omitió una credencial de la fuente.'});
+ assert.match(omission.title,/aportación personal/);assert.doesNotMatch(omission.explanation,/categoría propuesta/);
+ const category=observationPresentation({message:'Calidad personal candidates/0: categoría sin madurez respaldada.'});
+ assert.match(category.explanation,/categoría propuesta/);
+ const profile=observationPresentation({message:'Perfil B9: Example: falta actuación personal.'});assert.equal(profile.destination,'lawyers');
 });

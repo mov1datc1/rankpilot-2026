@@ -144,10 +144,10 @@ class EditorialCaseTests(unittest.TestCase):
         self.assertEqual(internal['field'],'comparisons/1/tradeoff')
         self.assertEqual(internal['output_scope'],'internal')
 
-    def test_case_node_runs_before_drafting_without_an_extra_model_role(self):
+    def test_case_node_prepares_obligations_before_scoped_construction(self):
         from test_review_graph import ReviewGraphTests
         state,calls=ReviewGraphTests().run_graph()
         nodes=[event['node'] for event in state['node_events']]
         self.assertLess(nodes.index('case'),nodes.index('development'))
-        self.assertEqual(calls,['strategist','selection_reviewer','development','writer','editor'])
+        self.assertEqual(calls,['strategist','selection_reviewer','development','development','development','writer','editor'])
         self.assertEqual(state['case_requirements']['strategy_thesis'],'Tax disputes')

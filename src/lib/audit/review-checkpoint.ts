@@ -83,7 +83,7 @@ export function reviewStepHash(stage: string, payload: any, state: any = {}) {
   if (['strategy','development'].includes(stage)) delete source.internal_referee_notes;
   return reviewInputHash({policy:'role-deliverables-v5-unified-chronological',selection_contract:'capacity-bound-selection-v3-comparative-evidence',stage,source,
     ...(stage==='writer'?{letter_contract:'executive-current-proposal-v11-counted-rechecks'}:{}),
-    ...(stage==='development'?{development_contract:'linked-editorial-execution-v7-canonical-output-boundary'}:{}),
+    ...(stage==='development'?{development_contract:'scoped-editorial-construction-v1'}:{}),
     ...(stage !== 'strategy' ? {strategy:state.strategy,case_contract:'shared-editorial-case-v4-faithful-profile-quotes'} : {}),
     ...(['writer','editor'].includes(stage) ? {development:state.development} : {}),
     ...(stage === 'editor' ? {letter:state.letter,case_quote_contract:'field-bound-visible-quotes-v2'} : {}),
@@ -117,6 +117,14 @@ export function resumeReviewCheckpoint(payload: any, saved: any, now = Date.now(
   if (!state.selection_review_validated) return {...base,stage:'strategy',state:{},step_keys:{}};
   if (!state.development || !(state.development_validated || state.development_delivery_ready) || keys.development !== reviewStepHash('development',payload,state)) {
     state.development_reusable=!!state.development && keys.development===reviewStepHash('development',payload,state);
+    if(state.repair_continuation?.version==='editorial-construction-v1') {
+      if(!state.development_reusable) {
+        delete state.repair_continuation;delete state.development;delete state.development_build_report;
+      } else {
+        delete state.letter;delete state.judge;delete state.release_verdict;
+        return {...base,stage:'development',step_keys:{strategy:keys.strategy,development:keys.development}};
+      }
+    }
     if(state.development && state.errors?.length && !state.repair_feedback?.length) state.repair_feedback=state.errors.map((message:string)=>({message}));
     if(!state.repair_feedback?.length) delete state.development;if(!state.letter_repair_requested)delete state.letter;delete state.judge;delete state.release_verdict;
     state.errors=[];

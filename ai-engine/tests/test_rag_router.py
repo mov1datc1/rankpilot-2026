@@ -28,6 +28,65 @@ class RAGRouterTests(unittest.TestCase):
         for entry in router.catalog['quarantined_documents']:
             self.assertTrue((Path(router.knowledge_dir)/entry['source']).exists())
 
+    def test_practice_directory_matrix_has_only_matching_methodology(self):
+        router=RAGRouter()
+        names={'banking':'Banca y Finanzas','tax':'Derecho Tributario','labour':'Laboral',
+            'corporate':'Fusiones y Adquisiciones','disputes':'Arbitraje','competition':'Competencia',
+            'ip':'Protección de datos','regulatory':'Derecho Administrativo','energy':'Energía y Minería',
+            'real_estate':'Bienes raíces','compliance':'Compliance'}
+        catalog={e['source']:e for e in router.catalog['documents']}
+        for family,name in names.items():
+            for directory in ('Chambers','Legal 500'):
+                with self.subTest(practice=name,directory=directory):
+                    chunks=router.retrieve(name,directory,role='development',unit='matters')
+                    self.assertEqual(router.last_routing['practices'],[family])
+                    self.assertTrue(any(catalog[c.source]['practice']==family for c in chunks))
+                    self.assertTrue(all(catalog[c.source]['practice'] in (family,'*') for c in chunks))
+                    self.assertNotIn('Lawyer_Leadership_Methodology_Scoped.txt',{c.source for c in chunks})
+                    text=' '.join(c.text for c in chunks)
+                    for forbidden in ('GBP 500 million','approximate value band','Leave blank unless','Chedraui','AIDA','DISCARD'):
+                        self.assertNotIn(forbidden,text)
+
+    def test_mixed_unknown_and_short_alias_routes(self):
+        router=RAGRouter()
+        router.retrieve('Tax Litigation / Fusiones y Adquisiciones','Chambers')
+        self.assertEqual(set(router.last_routing['practices']),{'tax','disputes','corporate'})
+        chunks=router.retrieve('Shipping','Legal 500')
+        self.assertEqual(router.last_routing['practices'],[])
+        self.assertTrue(router.last_routing['general_only'])
+        self.assertEqual({c.source for c in chunks},{'Editorial_Methodology_Scoped.txt','Lawyer_Leadership_Methodology_Scoped.txt'})
+        self.assertEqual(router._practice_families('IP'),('ip',))
+        self.assertEqual(router.retrieve('Tax','Unknown directory'),[])
+
+    def test_unit_context_preserves_ownership_without_personal_strategy_in_matter_writing(self):
+        router=RAGRouter()
+        for unit in ('plan','bio','matters','institutional'):
+            chunks=router.retrieve('Tax','Chambers',role='development',unit=unit)
+            self.assertEqual('Lawyer_Leadership_Methodology_Scoped.txt' in {c.source for c in chunks},unit in ('plan','bio'))
+            self.assertIn('Editorial_Methodology_Scoped.txt',{c.source for c in chunks})
+
+    def test_exact_edition_jurisdiction_directory_and_role_scope(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'local.txt').write_text('Only this local guide.',encoding='utf-8')
+            entry=dict(source='local.txt',practice='tax',directory='chambers',jurisdiction='Mexico',edition='2026',guide_region='Latin America',tier='reference',approval='project_reference_only',roles=['strategist'])
+            (root/'rag_catalog.v2.json').write_text(json.dumps({'documents':[entry]}))
+            router=RAGRouter(directory)
+            args=dict(practice_area='Tax',directory='Chambers',jurisdiction='Mexico',edition='2026',guide_region='Latin America',role='strategist')
+            self.assertEqual(len(router.retrieve(**args)),1)
+            for field,value in [('directory','Legal 500'),('jurisdiction','UK'),('edition','2027'),('guide_region','Europe'),('role','development')]:
+                self.assertEqual(router.retrieve(**{**args,field:value}),[])
+
+    def test_long_sentence_is_not_cut_before_its_qualifier(self):
+        sentence='Long contextual instruction ' + ('word ' * 600) + 'only when supported by the source.'
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'long.txt').write_text(sentence)
+            (root/'rag_catalog.v2.json').write_text(json.dumps({'documents':[dict(source='long.txt',practice='tax',directory='chambers',tier='reference',approval='project_reference_only')]}))
+            chunks=RAGRouter(directory).retrieve('Tax','Chambers')
+            self.assertEqual(''.join(c.text for c in chunks),sentence)
+            self.assertTrue(chunks[-1].text.endswith('only when supported by the source.'))
+
     def test_routes_chunks_and_exposes_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

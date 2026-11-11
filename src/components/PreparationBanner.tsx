@@ -8,6 +8,7 @@ type Props = {
   available?:boolean;
   hasObservations?:boolean;
   busy: boolean;
+  connectionError?:boolean;
   needsReview: boolean;
   progress?: {current:number;total:number;stage:string;startedAt?:string;waiting?:boolean} | null;
   onPrepare: () => void;
@@ -16,10 +17,10 @@ type Props = {
 };
 
 /** One document status and one next action; detailed findings live in the review panel. */
-export function PreparationBanner({approved,available=approved,hasObservations=false,busy,needsReview,progress,onPrepare,onReview,onAudit}:Props) {
+export function PreparationBanner({approved,available=false,hasObservations=false,busy,connectionError=false,needsReview,progress,onPrepare,onReview,onAudit}:Props) {
   const title=busy?'Preparando documentos':available?`Documentos disponibles · ${hasObservations?'con observaciones':'sin observaciones'}`:needsReview?'Preparación de documentos':'Prepara tus documentos';
-  const description=busy?'Estamos preparando el Submission y el Audit. El avance se guarda automáticamente; puedes salir y volver después.':available?(hasObservations?'Abre «Descargar» para obtener ambos Word. Revisa las observaciones antes de presentarlos.':'Abre «Descargar» para obtener ambos Word. La revisión no dejó observaciones pendientes.'):needsReview?'Consulta el siguiente paso para continuar con los documentos.':'Pulsa «Preparar documentos». Recibirás el Submission y el Audit con la información de este expediente.';
-  const Icon=busy?LoaderCircle:approved?CheckCircle2:FileText;
+  const description=connectionError?'No pudimos actualizar el estado. Mostramos el último avance confirmado y volveremos a consultar automáticamente. No vuelvas a iniciar la preparación.':busy?'Estamos preparando el Submission y el Audit. El avance se guarda automáticamente; puedes salir y volver después.':available?(hasObservations?'Abre «Descargar» para obtener ambos Word. Revisa las observaciones antes de presentarlos.':'Abre «Descargar» para obtener ambos Word. La revisión no dejó observaciones pendientes.'):needsReview?'Consulta el siguiente paso para continuar con los documentos.':'Pulsa «Preparar documentos». Recibirás el Submission y el Audit con la información de este expediente.';
+  const Icon=busy?LoaderCircle:available?CheckCircle2:FileText;
   return <section aria-label="Preparación de documentos" aria-busy={busy} style={{background:'#EEF2FF',border:'1px solid #C7D2FE',borderRadius:12,padding:'1.25rem',color:'#1E1B4B'}}>
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:20,flexWrap:'wrap'}}>
       <div style={{display:'flex',alignItems:'flex-start',gap:12,flex:'1 1 260px',minWidth:0}}>

@@ -26,7 +26,7 @@ def reasoning_guidance(role):
     if role in ('strategist','selection_reviewer'):
         return COMMON
     if role in ('development','writer'):
-        return COMMON + '\n' + WRITING
+        return SOURCE_COMPARISON + '\n' + WRITING + '\nExecute the validated selection and shared decisions; writing does not reopen portfolio membership.'
     if role == 'editor':
         return REVIEW
     if role == 'repair':

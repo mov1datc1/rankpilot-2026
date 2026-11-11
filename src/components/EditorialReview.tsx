@@ -19,6 +19,10 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
   const totalIssues=issues.length;
   const stale=reviewIsStale(data);
   const recoveryInstructions=job?.nextAction?.description || 'Consulta el estado actualizado de este expediente. Tus fuentes y el avance están guardados; no necesitas volver a cargar el original.';
+  const refreshNotice=(connectionError || job?.nextAction?.kind==='refresh' || (stopped && systemManaged)) && <div role="status" style={{padding:12,background:'#EEF2FF',marginBottom:16,borderRadius:8}}>
+    {connectionError && <p>No se pudo actualizar la pantalla. Mostramos el último estado confirmado y volveremos a consultar automáticamente. Esta interrupción no reinicia la preparación ni pone los contadores a cero.</p>}
+    {onRefresh && <><button type="button" onClick={onRefresh} style={{padding:'8px 12px',cursor:'pointer'}}>Actualizar estado</button><p style={{fontSize:12}}>Consulta el avance guardado, sin iniciar otra generación.</p></>}
+  </div>;
   if(available) {
     const findings=(data?.final_artifact_review?.judge?.defects || []);
     const findingMessages=new Set(findings.map((d:any)=>d.message));
@@ -40,6 +44,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
         : path==='client'?'Identificación del cliente':d.scope==='letter' || ['executive_assessment','rendered_audit'].includes(path)?'Audit':'Documentos';
     };
     return <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A'}}>
+      {refreshNotice}
       <h2 style={{fontSize:22,margin:'0 0 10px'}}>{delivery.label}</h2>
       <p>Descarga el Submission y el Audit desde «Descargar». {delivery.hasObservations?'Consulta estos hallazgos antes de presentarlos; no necesitas iniciar otro intento para obtener los archivos.':'La revisión no dejó observaciones pendientes.'}</p>
       {all.map((d:any,i:number)=>{const observation=observationPresentation(d);return <article key={i} style={{borderTop:'1px solid #E2E8F0',padding:'16px 0'}}>
@@ -114,14 +119,10 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     <section aria-label="Estado de entrega" style={{background:'#fff',border:'1px solid #CBD5E1',borderRadius:14,padding:'1.25rem',color:'#0F172A',overflowWrap:'anywhere'}}>
     <div style={{fontSize:12,fontWeight:700,color:approved?'#15803D':'#B45309',textTransform:'uppercase',letterSpacing:1}}>{available?'Documentos disponibles':'Preparación de documentos'}</div>
     <h2 style={{fontSize:22,margin:'8px 0'}}>{available?delivery.label:job?.nextAction?.title || (recovering?'Preparando documentos':canResumeResidual?'Listo para continuar la preparación':stopped?'Preparación de documentos':humanCount ? `${humanCount} ${humanCount===1?'pendiente por responder':'pendientes por responder'}` : 'Listo para preparar Submission y Audit')}</h2>
-    {!available && !approved && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
+    {!available && job?.nextAction && <p role="status" style={{fontSize:14,lineHeight:1.6,color:'#334155'}}>{job.nextAction.description}</p>}
     {!approved && !job?.nextAction && systemCount>0 && <p style={{fontSize:13,color:'#4338CA'}}>{systemCount} {systemCount===1?'tarea de RankPilot':'tareas de RankPilot'} · {stopped ? 'Consulta abajo la acción necesaria.' : 'El siguiente paso aparece junto a cada observación.'}</p>}
     <p style={{fontSize:14,lineHeight:1.6,color:'#475569',margin:'0 0 16px'}}>Las redacciones guardadas se conservan. {available ? 'Descarga Submission y Audit. Consulta abajo los hallazgos y qué conviene revisar antes de presentarlos.' : 'El Submission y el Audit se preparan con el avance guardado.'}</p>
-    {onRefresh && ((stopped && systemManaged) || connectionError) && <div role="status" style={{padding:12,background:'#EEF2FF',marginBottom:16,borderRadius:8}}>
-      {connectionError && <p>No se pudo actualizar la pantalla. El estado mostrado puede estar desactualizado; volveremos a consultar automáticamente. Esta interrupción no reinicia la preparación.</p>}
-      <button type="button" onClick={onRefresh} style={{padding:'8px 12px',cursor:'pointer'}}>Actualizar estado</button>
-      <p style={{fontSize:12}}>Consulta el avance guardado, sin iniciar otra generación.</p>
-    </div>}
+    {refreshNotice}
     {data?.final_artifact_review && !approved && <p style={{fontSize:12,color:'#64748B'}}>{stale ? 'Guardado confirmado. La revisión anterior corresponde a una versión previa del expediente.' : 'Hallazgos de la última revisión. Se actualizan al revisar las correcciones guardadas.'}</p>}
     {stopped && !systemManaged && !approved && job?.issue?.owner!=='user' && (
       <div style={{background:'#F0FDF4',border:'1px solid #BBF7D0',borderRadius:10,padding:'14px 18px',marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>

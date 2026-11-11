@@ -60,7 +60,7 @@ export function getDeliveryState(data: any, matters: any[] = data?.matters || []
   const dirLabel = /500/i.test(data?.targetDirectory || data?.directory || '') ? 'The Legal 500' : 'Chambers';
   if (isUnrankedClaim(data?.ranking_claim || data?.current_band)) {
     if (data?.ranking_verification?.status === 'verified_unranked' || data?.ranking_verification?.message) {
-      warnings.push(data.ranking_verification.message || `Colocaste la firma como unranked, y la revisión en ${dirLabel} confirma que no apareciste en ninguna de las bandas correspondientes, ratificando la postulación de primera inclusión.`);
+      warnings.push(data.ranking_verification.message || `No se encontró una coincidencia exacta de la firma en la tabla consultada de ${dirLabel}. Comprueba la práctica, el país y la edición antes de mencionar un ranking; esta consulta no acredita ausencia de reconocimiento en otras tablas.`);
     }
   } else if (data?.ranking_verification?.status === 'verified_mismatch') {
     warnings.push(data.ranking_verification.message || `Discrepancia detectada en ${dirLabel}: declaraste posición ${data?.ranking_claim || data?.current_band}, pero la consulta oficial muestra ${data?.ranking_verification?.observed_band}. Puedes definir o confirmar esta posición en Verificación de ranking.`);

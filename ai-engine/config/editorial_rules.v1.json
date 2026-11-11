@@ -91,7 +91,7 @@
     },
     {
       "id": "RP13",
-      "criterion": "Repairs must be targeted and bounded; an unresolved critical defect blocks delivery.",
+      "criterion": "Repairs must be targeted and bounded. Preserve unresolved findings as observations alongside available documents; never invent facts or equate availability with approval.",
       "scope": "all_practices",
       "test_required": true
     },

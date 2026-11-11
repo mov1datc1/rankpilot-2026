@@ -415,6 +415,9 @@ def develop_proposal(state):
         return recheck_context(state)
     # The caller retains previous proposals only while their source/strategy key
     # matches. Revalidate locally before purchasing another generation.
+    if (state.get('repair_continuation') or {}).get('version')=='editorial-construction-v1':
+        from core.editorial_construction import advance
+        return advance(state,invoke_role)
     if state.get('repair_continuation'):
         from core.repair_continuation import resume_repair
         return resume_repair(state)
@@ -501,11 +504,8 @@ def develop_proposal(state):
         targets=repair_targets(state['package'],state['strategy'],bound)
         if targets:
             return repair_development(state,bound,targets)
-    proposal,trace=invoke_role(state,'development',development_contract(state['package'],state['strategy'],personal_quality=True,biography_depth=True),TASK+EXECUTION_INSTRUCTION,{'package':state['package'],'strategy':state['strategy'],'previous_development':state.get('development'),'repair_feedback':state.get('repair_feedback',[]),'source_obligations':state.get('case_requirements') or prepare_case(state)['case_requirements']})
-    proposal=bind_development(state['package'],proposal)
-    proposal['version']=DEVELOPMENT_VERSION
-    errors=development_errors(state['package'],state['strategy'],proposal)
-    return {'development':proposal,'errors':errors,'trace':trace,'development_validated':not errors}
+    from core.editorial_construction import advance
+    return advance(state,invoke_role)
 
 TASK += " SOURCE PROFILE COVERAGE: source_obligations.profile_requirements lists original profile units separately from mandate evidence. Account for EVERY unit of this candidate in profile_coverage, using separate records for its distinct named entities, using its reference and full original source_quote. Retain material prior employment, regional responsibility, professional offices, associations and qualifications in B9 alongside personally attributed matters. A current mandate does not replace career credentials. public_quote must occur literally in this candidate submission_bio. generalize only restricted identities, preserving role, scope and historical/current relationship. omit only truly immaterial, duplicated or unsupported content with an internal reason; the independent final reviewer will judge that decision against the source. Never present a former employer or professional association as a client. A named employer or association in a source biography is not, by that fact, an unconfirmed client reference. Respect explicit restrictions and entity restrictions in the actual client register. Apply source_obligations.category_methodology when supplied, keeping proposed categories separate from actual recognition. For suggested_ranking choose a specific source-supported category as an editorial target, not a forecast, or exactly Category pending and set category_missing_criterion to the precise undecided criterion and recommended_action to what would resolve it. Band ranking candidate and other generic placeholders are invalid. Do not invent a band to satisfy this rule. Explain the specific category comparison and any departure from a supplied proposal in category_rationale."
 TASK += " For every profile unit classify its relationship and copy entity_name exactly when present. generalize requires privacy_basis: the exact original restriction in this person's profile (profile_restriction, empty matter_id), or the exact same restricted client name and original matter_id (client_register). A free-text reason, missing general permission or another client's restriction cannot justify erasing an employer or association. retain keeps that entity in the B9 quote; retain/omit use null privacy_basis. These are internal facts, never public prose."

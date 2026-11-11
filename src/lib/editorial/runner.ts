@@ -95,7 +95,7 @@ export async function runJobStage(job:any) {
     trace=trace || (stage==='artifact' && !result.cached?stageTraceDelta([],data.final_artifact_review?.trace || []):null);
     if(result.continuation) {
       const pending=data.review_checkpoint?.state?.repair_continuation;
-      if(stage!=='development' || !['bounded-residual-v1','source-field-review-v1'].includes(pending?.version) || !pending.pending_groups?.length || hasUnknownProviderUsage([{trace}])) throw new Error('INVALID_REPAIR_CONTINUATION');
+      if(stage!=='development' || !['bounded-residual-v1','source-field-review-v1','editorial-construction-v1'].includes(pending?.version) || !pending.pending_groups?.length || hasUnknownProviderUsage([{trace}])) throw new Error('INVALID_REPAIR_CONTINUATION');
       // A saved unfinished field is not a failed attempt or a completed stage.
       // Keep the cursor and ledger; each queued group is consumed exactly once.
       retryAt=new Date(Date.now()+1000);
