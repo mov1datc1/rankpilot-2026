@@ -10,6 +10,7 @@ from typing import Literal, Union, Optional
 from pydantic import BaseModel, create_model, ConfigDict, Field
 from core.editorial_development import Candidate, Comparison
 from core.biography_depth import BiographyDepth, DEPTH_INSTRUCTION
+from core.profile_binding_repair import enrich_profile_bindings, binding_output_model, validate_binding_delta
 from core.role_evidence import ACTOR_INSTRUCTION
 from core.editorial_case import EditorialCase, support_ids as eligible_support_ids, case_errors, vague_scale_comparison
 from core.editorial_execution import EXECUTION_CONTRACT, InstitutionalLink, personal_case_errors, institutional_errors, missing_head_bios, primary_lead_anchor
@@ -42,8 +43,8 @@ def biography_delta_contract(target):
         unit=create_model('ProfileOutputOnly',__config__=ConfigDict(extra='forbid'),
             decision=(Literal['retain','generalize','omit'],...),public_quote=(str,...),reason=(str,...))
         profiles=create_model('ExistingProfileOutputReferences',__config__=ConfigDict(extra='forbid'),
-            **{key:(unit,Field(description='Output proof for original source '+p['reference']+', entity '+str(p.get('entity_name') or '(unnamed)')+'. Preserve this identity and relationship.')) for key,p in profile_output_keys(current.get('profile_coverage',[]))})
-        fields['profile_coverage']=(Optional[profiles],Field(description='Null preserves every existing profile output proof. Otherwise return every existing reference, updating only its output decision/quote/reason. Original source units cannot be emitted or changed.'))
+            **{key:(binding_output_model(target,key,unit),Field(description='Output proof for original source '+p['reference']+', entity '+str(p.get('entity_name') or '(unnamed)')+'. Original source remains fixed; only listed profile_binding_repairs may correct derived identity bindings.')) for key,p in profile_output_keys(current.get('profile_coverage',[]))})
+        fields['profile_coverage']=(Optional[profiles],Field(description='Null preserves every existing profile output proof. Otherwise return every existing reference. Update output decision/quote/reason and, only for listed profile_binding_repairs, its explicitly permitted derived binding fields. Original source units cannot be emitted or changed.'))
     if 'submission_case_coverage' in target['mutable_fields']:
         cases=create_model('ExistingPersonalOutputReferences',__config__=ConfigDict(extra='forbid'),
             **{f'S{i+1:02d}':(str,Field(description='Actual BIO quote for matter_id '+str(link.get('matter_id'))+'; source is current_value.submission_case_coverage/'+str(i)+'. Keep this exact source association, not sentence order. Never reuse another mandate quotation.')) for i,link in enumerate(current.get('submission_case_coverage',[]))})
@@ -63,7 +64,9 @@ def expand_biography_delta(target,value):
     if 'biography_depth' in delta:result['biography_depth']=delta['biography_depth']
     profiles=delta.get('profile_coverage')
     if profiles is not None:
-        for key,unit in profile_output_keys(result.get('profile_coverage',[])):unit.update(profiles[key])
+        for key,unit in profile_output_keys(result.get('profile_coverage',[])):
+            unit.update(profiles[key])
+            validate_binding_delta(target,key,unit)
     cases=delta.get('submission_case_coverage')
     if cases is not None:
         for i,unit in enumerate(result.get('submission_case_coverage',[])):unit['public_quote']=cases[f'S{i+1:02d}']
@@ -409,6 +412,8 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
                 elif bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
                 profile_sources=lambda c:[(item.get('reference'),item.get('source_quote')) for item in c.get('profile_coverage',[])]
                 if profile_sources(after)!=profile_sources(before):raise ValueError('Biography repair cannot change original profile source units')
+                for key,item in profile_output_keys(after.get('profile_coverage',[])):
+                    validate_binding_delta(targets[path],key,item)
         elif path=='institutional_execution' and isinstance(value,list):
             value=[InstitutionalLink.model_validate(item).model_dump() for item in value]
         elif path=='comparisons' and isinstance(value,list):
@@ -915,7 +920,7 @@ def coherent_repair_targets(proposal,targets,package=None):
                 and norm(span) in norm(candidate.get('submission_bio','')) and not any(
                 norm(q) and (norm(q) in norm(span) or norm(span) in norm(q)) for q in rejected)))
     from core.biography_obligations import enrich_biography_targets
-    return enrich_biography_targets(package,proposal,targets)
+    return enrich_biography_targets(package,proposal,enrich_profile_bindings(package,targets,profile_output_keys))
 
 
 def repair_letter(state):
@@ -1007,3 +1012,5 @@ TASK += " When participation_quote is required, return only the actual added pub
 TASK += " A client-register restriction applies to a client mandate, not automatically to a separately sourced former-employer or professional-association credential. Those career relationships require an explicit profile restriction before hiding the employer/association. Preserve the named career fact without publishing that entity as a client or connecting it to a confidential mandate."
 
 TASK += " A profile sentence may name several clients or professional bodies. Emit one profile_coverage record per atomic named entity, repeating the same reference and full source_quote. Never join a list into entity_name or use one client restriction to justify all the others. Bind each generalization separately; preserve each retained association/employer. The complete source unit is still reviewed once with ALL its entity records."
+
+TASK += " A target may explicitly list profile_binding_repairs. For ONLY those keyed profile records, repair the derived entity_name, relationship and privacy_basis together with decision/public_quote/reason. Copy entity_name from the immutable original unit and bind restrictions to supplied original evidence. Never infer an alias from spelling similarity, invent a permission, edit source units or change a candidate identity. All other profile records remain output-only. A missing identity link is an unresolved observation, not permission to expose a restricted client. The derived binding repair is an explicit exception to output-only BIO instructions and still requires local validation and independent source review."

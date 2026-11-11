@@ -1,0 +1,9 @@
+# Scoped correction of derived profile bindings
+
+A BIO output repair could be asked to correct profile privacy evidence while its schema froze the generated entity, relationship and restriction binding. The repair now exposes those three derived fields only for keyed profile records rejected by the existing privacy validator. Original profile references/quotes, candidate identity, personal mandate sources, categories, actual permissions and unaffected bindings remain unchanged. The evidence payload contains original profile restrictions and client register metadata, not a new source of permission.
+
+Both projected and directly applied binding corrections pass the original restriction validator. An unrelated client, invented restriction or spelling-similarity alias remains invalid. Independent field review includes the changed binding in its signature and must review it again. Genuine source identity uncertainty can remain an observation; the schema change is not proof that a model has resolved it.
+
+A named entity omission in a multi-entity source reference is no longer mislabeled as a duplicate identity. Actual duplicate identity pairs, unnamed ambiguous records and unsupported omission of a material professional role remain rejected. The source-to-field reviewer continues to evaluate every entity and the substance of an omission.
+
+Validation: six focused regression tests, including before-change failures; 815 Python tests pass. Offline replay of an existing response confirms previously frozen faulty bindings are exposed and the false duplicate diagnostic disappears, preserving source state and stored documents. No generation, fresh acceptance run or claimed document-quality gain accompanies this change. Existing method limits and document availability policy are unchanged.

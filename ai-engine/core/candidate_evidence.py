@@ -131,7 +131,7 @@ def profile_errors(person, candidate, package=None):
     errors=[]
     identities=[(c.get('reference'),norm(c.get('entity_name'))) for c in actual]
     ambiguous={r for r in refs if refs.count(r)>1 and any(
-        not norm(c.get('entity_name')) or c.get('decision')=='omit' for c in actual if c.get('reference')==r)}
+        not norm(c.get('entity_name')) for c in actual if c.get('reference')==r)}
     if len(identities)!=len(set(identities)) or ambiguous or set(refs)!=set(expected):
         missing=[r for r in expected if r not in refs]
         unexpected=[r for r in refs if r not in expected]
