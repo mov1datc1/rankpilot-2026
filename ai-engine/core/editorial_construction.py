@@ -8,6 +8,7 @@ import hashlib
 import json
 from typing import Literal
 from pydantic import ConfigDict, create_model
+from core import construction_bindings
 
 VERSION = 'editorial-construction-v1'
 BATCH_SIZE = 4
@@ -189,9 +190,12 @@ def advance(state, invoke):
                 'errors':['La respuesta guardada requiere corregir su contrato antes de continuar.'],'trace':trace}
     if not pending:
         pending={'version':VERSION,'source_key':source_key(state),'work':{},
-                 'pending_groups':[{'kind':'plan'}], 'completed_units':[]}
+                 'pending_groups':[{'kind':'plan'}], 'completed_units':[],
+                 'binding_contract':construction_bindings.VERSION}
     while pending['pending_groups']:
         unit=pending['pending_groups'][0];kind=unit['kind'];work=pending['work']
+        source_owned=pending.get('binding_contract')==construction_bindings.VERSION
+        bindings=None
         common={k:copy.deepcopy(package[k]) for k in ('directory','practice_area','firm_name',
             'guide_region','jurisdiction','ranking_edition','research_period','filing_details') if k in package}
         if kind=='plan':
@@ -204,9 +208,18 @@ def advance(state, invoke):
             task=MATTER_TASK;payload={'package':{**common,'matters':[m for m in package['matters'] if m['id'] in ids]},
                 'field_contracts':{i:contracts(package,strategy)[i] for i in ids},
                 'evidence_plan':[m for m in work['matters'] if m['matter_id'] in ids], 'thesis':strategy.get('thesis','')}
+            if source_owned:
+                bindings=construction_bindings.matter_bindings(payload['evidence_plan'])
+                schema=construction_bindings.matter_schema(matter,bindings)
+                payload['source_bindings']=bindings
+                task += '\nWrite the supplied canonical matter slots exactly once. Do not return matter IDs or source quotations: the application owns them. For every original anchor return anchor_execution with an exact passage from this same narrative that develops its material meaning. A public restriction changes disclosure, not legal substance. Bindings are not a semantic approval: retain all original qualifications, actors and outcomes in the prose.'
         elif kind=='bio':
             i=unit['index'];c=work['candidates'][i]
             schema=strict_model('OwnedBiography',model_fields(candidate,BIO_FIELDS));task=bio_task()
+            if source_owned:
+                bindings=construction_bindings.biography_bindings(package,strategy,c)
+                schema=construction_bindings.biography_schema(candidate,bindings)
+                task += '\nSOURCE-OWNED OUTPUT: profile_coverage keys are the original profile units; provide entity decisions for every unit without copying its original quotation or reference. submission_case_coverage keys are the supplied case_sources; return the exact B9 passage for each mandatory mandate and null only for unused optional mandates. The application inserts original source quotes and matter IDs. Read each complete original mandate for the actual issue, actor and achieved result. A lead record is not evidence that the lead personally performed every firm action. Preserve the required number of distinct contributions; these bindings do not certify semantic quality.'
             # Include full register restrictions; only own eligible sources carry narrative evidence.
             from core.role_evidence import matter_names_person
             from core.editorial_case import support_ids
@@ -215,15 +228,20 @@ def advance(state, invoke):
             ids.update(m['id'] for m in package['matters'] if m['id'] in eligible and matter_names_person(c['name'],m))
             payload={'package':{**common,'lawyers':[p for p in package.get('lawyers',[]) if (p.get('name') or p.get('fullName'))==c['name']],
                 'matters':[m for m in package['matters'] if m['id'] in ids]},
-                'privacy_register':[{k:m.get(k) for k in ('id','client','publication_route','publish_status','confidentialityEvidence')} for m in package['matters']],
+                'privacy_register':construction_bindings.privacy_register(package),
                 'shared_decision':c,'source_obligations':person_obligations(state.get('case_requirements',{}),c['name']),
                 'eligible_support_ids':sorted(ids & eligible)}
+            if bindings is not None:payload['source_bindings']=bindings
         else:
             schema=strict_model('InstitutionalProse',model_fields(full,('b10','c2','institutional_execution')))
+            if source_owned:schema=construction_bindings.institutional_schema(full,work['case_plan'])
             selected={d['matter_id'] for d in strategy['matters'] if d['disposition']=='core'}
             task=INSTITUTION_TASK;payload={'package':{**package,'matters':[m for m in package['matters'] if m['id'] in selected]},
-                'privacy_register':[{k:m.get(k) for k in ('id','client','publication_route','publish_status','confidentialityEvidence')} for m in package['matters']],
+                'privacy_register':construction_bindings.privacy_register(package),
                 'shared_decisions':decision_snapshot(work),'strategy':strategy}
+            if source_owned:
+                payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
+                task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. The application inserts the canonical argument index; do not select or reorder a different plan.'
         value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
         if len(new_trace)>len(trace):
             new_trace=[*new_trace[:-1],{**new_trace[-1],'construction_unit':copy.deepcopy(unit)}]
@@ -231,7 +249,9 @@ def advance(state, invoke):
         try:
             value=schema.model_validate(value).model_dump()
             if kind=='plan':
-                value=reconcile_categories(value);validate_plan(package,strategy,value)
+                value=reconcile_categories(value)
+                if source_owned:value=construction_bindings.complete_plan_support(package,strategy,value)
+                validate_plan(package,strategy,value)
                 work.update(value)
                 ordered=[d['matter_id'] for d in strategy['matters'] if d['disposition']=='core']
                 by_id={m['matter_id']:m for m in work['matters']};work['matters']=[by_id[mid] for mid in ordered]
@@ -239,11 +259,18 @@ def advance(state, invoke):
                 pending['pending_groups'] += ([{'kind':'matters','ids':ordered[i:i+BATCH_SIZE]} for i in range(0,len(ordered),BATCH_SIZE)]
                     +[{'kind':'bio','index':i} for i in range(len(work['candidates']))]+[{'kind':'institutional'}])
             elif kind=='matters':
+                if source_owned:
+                    value,receipts=construction_bindings.expand_matters(value,bindings)
+                    pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
                 values={m['matter_id']:m for m in value['matters']}
                 work['matters']=[{**m,**values.get(m['matter_id'],{})} for m in work['matters']]
-            elif kind=='bio':work['candidates'][unit['index']].update(value)
-            else:work.update(value)
+            elif kind=='bio':
+                if source_owned:value=construction_bindings.expand_biography(value,bindings)
+                work['candidates'][unit['index']].update(value)
+            else:
+                if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
+                work.update(value)
         except Exception as error:
             # Retain the rejected response and usage without replaying a paid unit.
             pending['failed_unit']=unit;pending['rejected_response']=value
@@ -266,7 +293,13 @@ def advance(state, invoke):
     proposal['version']=DEVELOPMENT_VERSION
     proposal['construction_contract']=VERSION
     errors=development_errors(package,strategy,proposal)
+    from core.construction_quality import initial_quality
+    first_pass=initial_quality({**state,'development':proposal})
     return {'development':proposal,'development_validated':not errors,'errors':errors,'trace':trace,
             'repair_continuation':None,'development_build_report':{'version':VERSION,
                 'completed_units':pending['completed_units'],'remaining_units':0,
-                'decision_hash':digest(decision_snapshot(proposal))}}
+                'decision_hash':digest(decision_snapshot(proposal)),
+                'binding_contract':pending.get('binding_contract'),
+                'anchor_bindings':pending.get('anchor_bindings',[]),
+                'first_pass_quality':first_pass,
+                'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}
