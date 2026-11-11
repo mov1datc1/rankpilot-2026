@@ -1,3 +1,11 @@
+## 1.0.78 — Shared construction, scoped RAG and delivery communication
+
+- Separate shared decisions, matter batches, individual profiles and institutional writing, with durable continuation and source preservation.
+- Bind Audit to the same decisions and protect qualifications during condensation.
+- Route methodology by multiple practice families and construction unit; quarantine unverified historical references.
+- Require the current document pair for availability and clarify observations, terminal actions and connection interruptions.
+- Local validation: 834 Python and 581 Node tests passed (one skipped); TypeScript passed. No new paid case or measured generative quality/latency claim. See docs/reviews/shared-construction-scoped-rag-v78.md.
+
 ## 2026-11-10 — v1.0.72: coherencia de metodología, diagnóstico y reparación
 
 Integra las dos auditorías siguientes: metodología RAG separada por propósito, conservación de instrucciones concurrentes, clasificación de errores, revisión de hallazgos vigentes, reparación puntual de Audit y reglas compartidas en herramientas manuales. Validación: 801 pruebas Python y contratos offline de 46 campos/11 grupos. La calidad de los nuevos documentos se comprobará tras el despliegue; estos tests no constituyen aceptación editorial.

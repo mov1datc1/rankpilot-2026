@@ -9,7 +9,7 @@ LETTER={k:'Source-grounded text.' for k in ['executive_assessment','portfolio','
 
 def development(package):
     source=package['matters'][0].get('rawNotes',SOURCE)
-    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'case_plan':{'version':'editorial-case-v1','institutional_arguments':[{'proposition':'Tax appeal representation','evidence':[{'matter_id':'m1','source_quote':source}],'b10_contribution':'Explain the appeal','c2_contribution':'Support coverage through this work'}],'additional_leaders':[],'target_decision':'No requested band supplied'},'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
+    return {**{k:'Evidence-backed recommendation.' for k in ['filing_recommendation','positioning','target','target_rationale','principal_strength','principal_vulnerability','hero_rationale','b10','c2']},'case_plan':{'version':'editorial-case-v1','institutional_arguments':[{'proposition':'Tax appeal representation','evidence':[{'matter_id':'m1','source_quote':source}],'b10_contribution':'Explain the appeal','c2_contribution':'Support coverage through this work'}],'additional_leaders':[],'target_decision':'No requested band supplied'},'c2':'The firm requests recognition for its evidenced tax appeal representation.','institutional_execution':[{'argument_index':0,'b10_quote':'Evidence-backed recommendation.','c2_quote':'The firm requests recognition for its evidenced tax appeal representation.'}],'candidates':[],'comparisons':[], 'matters':[{'matter_id':'m1','text':source,'legal_issue_source_quote':source,'decisive_source_quotes':[source]}]}
 
 class ReviewGraphTests(unittest.TestCase):
     def test_register_revalidation_preserves_paid_call_history(self):
@@ -48,6 +48,9 @@ class ReviewGraphTests(unittest.TestCase):
             if role=='selection_reviewer':
                 return {'checks':{f'M{i+1:02d}':{'status':'supported','explanation':'Source supports the legal nature and decision.','source_quote':''} for i,m in enumerate(package['matters'])}},state.get('trace',[])+[{'role':role}]
             result=strategy if role=='strategist' else development(package) if role=='development' else LETTER if role=='writer' else (judge or {'passed':True,'defects':[], 'acceptance':[{'criterion':k,'status':'met','evidence':SOURCE} for k in ACCEPTANCE_CRITERIA]})
+            if role=='development':
+                from construction_fixture import answer
+                result=answer(args[0],args[2],result)
             if role=='writer' and args and 'corrections' in args[0].model_fields:
                 result={'corrections':[{'path':'executive_assessment',
                     'value':LETTER['executive_assessment']+' Corrected attribution.',
@@ -67,7 +70,7 @@ class ReviewGraphTests(unittest.TestCase):
 
     def test_three_roles_share_one_strategy(self):
         result,calls=self.run_graph()
-        self.assertEqual(calls,['strategist','selection_reviewer','development','writer','editor'])
+        self.assertEqual(calls,['strategist','selection_reviewer','development','development','development','writer','editor'])
         self.assertTrue(result['render_gate']['passed']);self.assertFalse(result['release_verdict']['passed'])
 
     def test_unknown_id_stops_before_writing(self):
@@ -84,7 +87,7 @@ class ReviewGraphTests(unittest.TestCase):
 
     def test_letter_repair_is_bounded_and_does_not_redo_strategy(self):
         result,calls=self.run_graph(judge={'passed':False,'defects':[{'severity':'critical','scope':'letter','matter_id':None,'message':'Unsupported claim'}]})
-        self.assertEqual(calls,['strategist','selection_reviewer','development','writer','editor','writer','editor'])
+        self.assertEqual(calls,['strategist','selection_reviewer','development','development','development','writer','editor','writer','editor'])
         self.assertFalse(result['release_verdict']['passed'])
 
     def test_missing_permission_overrides_positive_model_judge(self):
@@ -120,7 +123,7 @@ class ReviewGraphTests(unittest.TestCase):
         package={**PACKAGE,'matters':[{**PACKAGE['matters'][0],'rawNotes':'The appeal remains pending, with a hearing scheduled.'}]}
         result,calls=self.run_graph(package=package)
         self.assertTrue(result['selection_validated'])
-        self.assertEqual(calls,['strategist','selection_reviewer','development','writer','editor'])
+        self.assertEqual(calls,['strategist','selection_reviewer','development','development','development','writer','editor'])
 
     def test_terminal_tolerance_does_not_accept_changed_words(self):
         strategy={**STRATEGY,'matters':[{**STRATEGY['matters'][0],'source_quote':'The appeal was successful.'}]}

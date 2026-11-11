@@ -1,57 +1,12 @@
 {
-  "version": "practice-policy-v5-scoped-methodology",
+  "version": "practice-policy-v6-scoped-routing",
   "owner_approval": null,
   "scope": "Project reference methodology; not official directory requirements or client evidence. Uncatalogued documents are quarantined. Jurisdiction-specific thresholds require separately verified applicability.",
   "documents": [
     {
-      "source": "Chambers_Banking_Methodology_v1.txt",
-      "practice": "banking",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Chambers_Banking_Taxonomy_v1.txt",
-      "practice": "banking",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Corporate_MA_Methodology_v1.txt",
-      "practice": "corporate",
-      "directory": "*",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Corporate_MA_Taxonomy_v1.txt",
-      "practice": "corporate",
-      "directory": "*",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
       "source": "Labour_Editorial_Methodology_Scoped.txt",
       "practice": "labour",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Labour & Employment — Legal 500 Intelligence Layer.txt",
-      "practice": "labour",
-      "directory": "legal500",
+      "directory": "*",
       "jurisdiction": "*",
       "edition": "unspecified",
       "tier": "reference",
@@ -60,70 +15,7 @@
     {
       "source": "Tax_Editorial_Methodology.txt",
       "practice": "tax",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "UNIVERSAL LEGAL 500 TAX LOGIC.txt",
-      "practice": "tax",
-      "directory": "legal500",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Tax — IFLR Intelligence Layer.txt",
-      "practice": "tax",
-      "directory": "iflr",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Tax — Leaders League Intelligence Layer.txt",
-      "practice": "tax",
-      "directory": "leadersleague",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "RAG Disputes — lógica base - Chambers.txt",
-      "practice": "disputes",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "🧠 Chambers Intelligence Engine - Competition.txt",
-      "practice": "competition",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Leaders League RAG — Competition.txt",
-      "practice": "competition",
-      "directory": "leadersleague",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "RAG Regulatory _ Public & Administrative Law.txt",
-      "practice": "regulatory",
-      "directory": "chambers",
+      "directory": "*",
       "jurisdiction": "*",
       "edition": "unspecified",
       "tier": "reference",
@@ -139,43 +31,20 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt",
-      "practice": "compliance",
-      "directory": "chambers",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "Legal500_Banking_Methodology.txt",
-      "practice": "banking",
-      "directory": "legal500",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "IFLR1000_Banking_Methodology.txt",
-      "practice": "banking",
-      "directory": "iflr",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
-      "source": "LeadersLeague_Banking_Methodology.txt",
-      "practice": "banking",
-      "directory": "leadersleague",
-      "jurisdiction": "*",
-      "edition": "unspecified",
-      "tier": "reference",
-      "approval": "project_reference_only"
-    },
-    {
       "source": "Lawyer_Leadership_Methodology_Scoped.txt",
+      "practice": "*",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only",
+      "development_units": [
+        "plan",
+        "bio"
+      ]
+    },
+    {
+      "source": "Editorial_Methodology_Scoped.txt",
       "practice": "*",
       "directory": "*",
       "jurisdiction": "*",
@@ -184,8 +53,71 @@
       "approval": "project_reference_only"
     },
     {
-      "source": "Editorial_Methodology_Scoped.txt",
-      "practice": "*",
+      "source": "Banking_Editorial_Methodology_Scoped.txt",
+      "practice": "banking",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Corporate_Editorial_Methodology_Scoped.txt",
+      "practice": "corporate",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Disputes_Editorial_Methodology_Scoped.txt",
+      "practice": "disputes",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Competition_Editorial_Methodology_Scoped.txt",
+      "practice": "competition",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Regulatory_Editorial_Methodology_Scoped.txt",
+      "practice": "regulatory",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Compliance_Editorial_Methodology_Scoped.txt",
+      "practice": "compliance",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "IP_Editorial_Methodology_Scoped.txt",
+      "practice": "ip",
+      "directory": "*",
+      "jurisdiction": "*",
+      "edition": "unspecified",
+      "tier": "methodology",
+      "approval": "project_reference_only"
+    },
+    {
+      "source": "Energy_Editorial_Methodology_Scoped.txt",
+      "practice": "energy",
       "directory": "*",
       "jurisdiction": "*",
       "edition": "unspecified",
@@ -209,6 +141,70 @@
     {
       "source": "¿Cómo rankeamos abogado_as__.txt",
       "reason": "Historical mixed-scope reference superseded by scoped methodology; retained on disk for traceability, never retrieved."
+    },
+    {
+      "source": "Chambers_Banking_Methodology_v1.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Chambers_Banking_Taxonomy_v1.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Corporate_MA_Methodology_v1.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Corporate_MA_Taxonomy_v1.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Labour & Employment — Legal 500 Intelligence Layer.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "UNIVERSAL LEGAL 500 TAX LOGIC.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Tax — IFLR Intelligence Layer.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Tax — Leaders League Intelligence Layer.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "RAG Disputes — lógica base - Chambers.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "🧠 Chambers Intelligence Engine - Competition.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Leaders League RAG — Competition.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "RAG Regulatory _ Public & Administrative Law.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "UNIVERSAL CHAMBERS COMPLIANCE LOGIC.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "Legal500_Banking_Methodology.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "IFLR1000_Banking_Methodology.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
+    },
+    {
+      "source": "LeadersLeague_Banking_Methodology.txt",
+      "reason": "Historical directory assumptions/examples are not verified for jurisdiction and edition. Replaced by source-bound project methodology; original retained for traceability."
     }
   ]
 }

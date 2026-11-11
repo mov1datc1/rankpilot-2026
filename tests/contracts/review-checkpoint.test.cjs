@@ -189,3 +189,30 @@ test('repair dependency key survives repeated lease acquisition',()=>{
  assert.equal(first.state.development_reusable,true);assert.equal(second.state.development_reusable,true);
  assert.equal(second.step_keys.development,saved.step_keys.development);
 });
+
+test('construction checkpoints survive reload without projecting partial prose or repeating completed units',async()=>{
+ reset();await step();const normal=global.fetch;let unit=0;
+ const before=structuredClone(state.chambersData);
+ global.fetch=async(url,options)=>{
+   const body=JSON.parse(options.body);calls.push(body);unit++;
+   assert.equal(body.stage,'development');
+   if(unit===2) {
+     assert.equal(body.state.repair_continuation.version,'editorial-construction-v1');
+     assert.deepEqual(body.state.development,{case_plan:{saved:true}});
+     assert.deepEqual(body.state.repair_continuation.completed_units,[{kind:'plan'}]);
+   }
+   return Response.json({success:true,next_stage:'done',state:{...body.state,
+      development:{case_plan:{saved:true}},development_validated:false,errors:[],
+      repair_continuation:{version:'editorial-construction-v1',completed_units:[{kind:'plan'}],pending_groups:[{kind:'matters',ids:['m']}]},
+      trace:[...(body.state.trace || []),{role:'development',provider_request_id:'mock-unit-'+unit,usage:{total_tokens:10}}]}});
+ };
+ try {
+   for(let i=0;i<2;i++) {
+     const response=await step();assert.equal(response.status,200);
+     assert.equal((await response.json()).continuation,true);
+   }
+   assert.equal(state.chambersData.enhanced_b7,before.enhanced_b7);
+   assert.equal(state.chambersData.editorial_development,undefined);
+   assert.equal(state.chambersData.review_checkpoint.state.trace.length,2);
+ } finally {global.fetch=normal;}
+});

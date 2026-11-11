@@ -1780,6 +1780,7 @@ export default function SubmissionStudio({
               <button type="button" disabled={isOptimizingAll} onClick={resolvePreparationInputs}>Resolver pendientes <ArrowRight size={16} /></button>
             </section>}
             <PreparationBanner
+              connectionError={statusConnectionError}
               available={deliveryState.available}
               hasObservations={deliveryState.hasObservations}
               approved={deliveryState.approved}

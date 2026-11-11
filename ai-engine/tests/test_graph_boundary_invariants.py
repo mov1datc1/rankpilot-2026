@@ -34,11 +34,19 @@ class GraphBoundaryInvariantTests(unittest.TestCase):
             self.assertIn(link['c2_quote'],result['development']['c2'])
 
     def test_fresh_development_canonicalizes_before_validating_its_output_proofs(self):
-        p,s,v=formatted_case();before=copy.deepcopy((p,s,v))
+        from test_biography_depth import depth_case
+        from construction_fixture import answer
+        p,s,v=depth_case()
+        for field in ('b10','c2'):
+            v[field]='**'+v[field]+'**'
+            for link in v['institutional_execution']:link[field+'_quote']='**'+link[field+'_quote']+'**'
+        before=copy.deepcopy((p,s,v))
         self.assertEqual(development_errors(p,s,v),[])
-        with patch('core.review_graph.invoke_role',return_value=(copy.deepcopy(v),[])) as model:
+        def invoke(state,role,schema,instruction,payload):
+            return answer(schema,payload,v),state.get('trace',[])+[{'role':role}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke) as model:
             result=develop({'package':p,'strategy':s})
-        model.assert_called_once();self.assert_canonical_valid(p,s,result)
+        self.assertEqual(model.call_count,4);self.assert_canonical_valid(p,s,result)
         self.assertEqual((p,s,v),before)
         self.assertEqual(result['development']['candidates'][0]['supporting_matters'],v['candidates'][0]['supporting_matters'])
         self.assertEqual([u['source_quote'] for u in result['development']['candidates'][0]['profile_coverage']],

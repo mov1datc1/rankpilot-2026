@@ -251,6 +251,19 @@ def obligations(package, strategy, proposal):
                     ('This narrative is confidential section E: retain evidenced identities and quantities unless a specific original restriction applies to the fact itself. Public B9/B10/C2 anonymization is not a reason to erase E evidence. ' if restricted else 'This narrative is public section D: honor actual publication restrictions and permit faithful safe generalisation. ')+
                     'Do not copy source wording mechanically, infer seniority from a form heading, require an irrelevant detail, or restore a disputed result. Where sources conflict, accept the qualified supported result and retain the uncertainty in the internal Audit. A citation is evidence, not proof that the output executes it.')
                 result[-1]['fact_source_quote']=bound
+    # Explicit editorial obligations, not hidden inside an aggregate pass flag.
+    if proposal.get('construction_contract')=='editorial-construction-v1':
+        all_sources=[register[d['matter_id']] for d in strategy.get('matters',[])
+                     if d.get('disposition')=='core' and d['matter_id'] in register]
+        add('editorial:c2_distinct_argument','c2',all_sources,
+            'Make one direct coverage request and develop distinct evidenced reasons. Two equivalent introductory requests or a repeated service catalogue do not execute this requirement. Check semantic repetition, not just identical strings. Do not demand invented market standing or longer prose.')
+        add('editorial:market_comparison','executive_assessment',
+            all_sources+[{'source_excerpt':str(package.get('ranking_verification',{}))}],
+            'Where retrieved scoped peer commentary exists, compare its actual capabilities with the selected portfolio using concrete distinctions. A table-only or absent retrieval supports a precise limitation, not invented competitors or a comparative market claim. Check this obligation independently of hero rationale and letter length.')
+        for i,candidate in enumerate(proposal.get('candidates',[])):
+            add(f'editorial:shared_category:{i}','leadership',
+                [p for p in package.get('lawyers',[]) if identity(p.get('name') or p.get('fullName'))==identity(candidate.get('name'))],
+                'The internal Audit and Submission must execute ONE current nomination/category decision. Do not qualify a different label in Audit while leaving it asserted in the Submission. Compare this exact structured decision and explain source-supported uncertainty consistently: '+str({k:candidate.get(k) for k in ('name','recommendation','suggested_ranking','category_missing_criterion','recommended_action')}))
     verified=set(package.get('_verified_field_obligations',[]))
     return [item for item in result if item['id'] not in verified]
 

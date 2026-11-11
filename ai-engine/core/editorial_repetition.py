@@ -26,4 +26,23 @@ def repetition_fields(proposal):
     fields={k:proposal.get(k,'') for k in ('b10','c2')}
     fields.update({f'candidates/{i}/submission_bio':c.get('submission_bio','') for i,c in enumerate(proposal.get('candidates',[]))})
     fields.update({f'matters/{i}/text':m.get('text','') for i,m in enumerate(proposal.get('matters',[]))})
-    return {p:quotes for p,text in fields.items() if (quotes:=repeated_sentences(text))}
+    result={p:quotes for p,text in fields.items() if (quotes:=repeated_sentences(text))}
+    opening=repeated_coverage_request(proposal.get('c2',''))
+    if opening:result['c2']=list(dict.fromkeys(result.get('c2',[])+opening))
+    return result
+
+
+def repeated_coverage_request(text):
+    """Locate adjacent requests sharing a long phrase, not arbitrary similarity.
+
+    This only returns evidence for consolidation; it never deletes a sentence
+    that may also contain a unique supporting fact.
+    """
+    sentences=re.split(r'(?<=[.!?])\s+',str(text or '').strip())[:2]
+    if len(sentences)!=2:return []
+    request=re.compile(r'\b(?:requests?|seeks?|warrants?|merits?|deserves?|should receive)\b',re.I)
+    purpose=re.compile(r'\b(?:recognition|coverage|inclusion)\b',re.I)
+    if not all(request.search(s) and purpose.search(s) for s in sentences):return []
+    words=[re.findall(r'\w+',s.casefold()) for s in sentences]
+    phrases=[{tuple(w[i:i+5]) for i in range(len(w)-4)} for w in words]
+    return sentences if phrases[0] & phrases[1] else []

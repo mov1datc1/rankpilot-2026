@@ -1,0 +1,11 @@
+# Shared editorial construction and scoped retrieval — v1.0.78
+
+A single generation previously combined portfolio decisions, matter prose, personal profiles and institutional positioning. Writers also received reviewer instructions; later condensation could remove qualifications, and Audit categories could diverge from Submission decisions.
+
+Construction now creates a shared decision plan, writes bounded matter batches and one profile per person, and then develops the institutional text. Each unit has explicit ownership, source-grounded obligations and a durable checkpoint. Selection, categories and sources remain fixed across writing units. Audit consumes the same decisions; shortening preserves material qualifications. C2 repetition and distinct market/category obligations are checked locally. The worker and API carry the construction continuation without presenting partial units as finished files or resetting usage.
+
+RAG routing recognizes multiple practice families and bounded multilingual aliases. Unknown practices use general methodology with explicit routing provenance. Historical references with unverified scope are retained in quarantine; source-bound practice methods replace contradictory C2, confidentiality and foreign threshold instructions. Leadership methodology is scoped to plan/profile construction units. Narrow reviewers and repairs continue to receive their own evidence obligations rather than generic RAG objectives.
+
+Studio advertises available documents only when the current pair exists, not from job completion or content approval alone. It exposes read-only status refresh when files are missing and reconnect notices even when previous files exist. Public next actions and terminal messages agree; profile omissions, identity variants and scoped ranking checks receive distinct explanations.
+
+Validation: 834 Python tests passed; 581 Node contracts passed with one skipped; TypeScript passed, with generation/network blocked in local suites. Focused follow-up checks passed. Routing evidence covers 11 practice families plus mixed and unknown inputs in two directories and four construction units. This is not a new generative quality benchmark: no client case was rerun and no new model-generated documents or measured latency savings are claimed.

@@ -19,7 +19,7 @@ export function editorialNextAction(job:any,options:{sourceMatches?:boolean|null
     return action('wait',job.status==='queued'?'Preparación en espera':'Preparación en curso',
       'El trabajo continuará automáticamente. Puedes cerrar esta pestaña y volver; no necesitas iniciar otro intento.',true);
   }
-  if(job.status==='completed' || options.documentsAvailable)return action('download',`Documentos disponibles · ${options.hasObservations?'con observaciones':'sin observaciones'}`,options.hasObservations?'Abre «Descargar» para obtener el Submission y el Audit. Revisa las observaciones antes de presentarlos.':'Abre «Descargar» para obtener el Submission y el Audit. La revisión no dejó observaciones pendientes.');
+  if(options.documentsAvailable===true)return action('download',`Documentos disponibles · ${options.hasObservations?'con observaciones':'sin observaciones'}`,options.hasObservations?'Abre «Descargar» para obtener el Submission y el Audit. Revisa las observaciones antes de presentarlos.':'Abre «Descargar» para obtener el Submission y el Audit. La revisión no dejó observaciones pendientes.');
   if(lastDecision?.action==='needs_input' || job.issue?.owner==='user')return action('answer','Responde los datos pendientes',
     'Abre la confirmación indicada abajo y guarda tu respuesta. Después pulsa «Preparar documentos» para continuar con la información actualizada.');
   if(options.canResume)return action('continue','Continúa la preparación guardada',
