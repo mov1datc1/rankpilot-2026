@@ -60,6 +60,12 @@ export function reviewIssues(data:any, errors:string[], job?:any) {
       action:'Pulsa «Continuar preparación». Se conserva este intento, su avance y el consumo acumulado; después se comprobará de nuevo la selección.'}];
   }
 
+  if(job?.canResumeConstructionPlan===true && job?.sourceMatches!==false) {
+    return [{title:'Completar las comparaciones pendientes',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
+      message:'El análisis guardado conserva la selección y las comparaciones ya realizadas. RankPilot puede completar las que faltan y seguir preparando los documentos.',
+      action:'Pulsa «Continuar preparación». No necesitas corregir tus datos ni volver a cargar el original; se conserva el consumo registrado.'}];
+  }
+
   if(job?.canResumeResidual===true && job?.sourceMatches!==false) {
     return [{title:job.canRecheckFieldContext?'Comprobar el contexto de la redacción':'Continuar la corrección guardada',owner:'RankPilot',destination:'retry-review' as ReviewDestination,
       message:job.canRecheckFieldContext?'La revisión anterior no recibió todo el contexto de los asuntos seleccionados. Se puede contrastar la redacción guardada con esas fuentes.':'Hay campos pendientes que pueden corregirse conservando el avance guardado.',

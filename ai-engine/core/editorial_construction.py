@@ -8,7 +8,7 @@ import hashlib
 import json
 from typing import Literal
 from pydantic import ConfigDict, create_model
-from core import construction_bindings
+from core import construction_bindings, reserve_comparisons
 
 VERSION = 'editorial-construction-v1'
 BATCH_SIZE = 4
@@ -39,6 +39,7 @@ categories or unverified targets with current recognition. Use Category pending
 with the specific undecided criterion and action when no defensible category is
 established. Preserve supplied objectives or explain a proposed change. Evaluate
 additional source leaders internally without inventing roster titles.'''
+PLAN_TASK += '\n' + reserve_comparisons.INSTRUCTION
 
 MATTER_TASK = COMMON + ''' Write these matter narratives in English. The destination
 and original restrictions are explicit in field_contracts. E is confidential:
@@ -172,6 +173,50 @@ def person_obligations(requirements, name):
     result.pop('additional_leaders',None)
     return result
 
+
+def prepare_comparison_completion(package, strategy, pending, legacy_schema):
+    """Recover only a proven coverage omission, never regenerate an accepted plan.
+
+The original response remains attached to the checkpoint. A completion has one
+owned set of missing reserves, so another click/deploy cannot replenish it.
+"""
+    if pending.get('failed_unit', {}).get('kind') != 'plan' or pending.get('plan_comparison_recovery'):
+        return False
+    try:
+        plan = legacy_schema.model_validate(pending.get('rejected_response')).model_dump()
+        absent = reserve_comparisons.missing(strategy, plan['comparisons'])
+        if not absent:
+            return False
+        try:
+            validate_plan(package, strategy, plan)
+        except ValueError as error:
+            allowed = {reserve_comparisons.MISSING_ERROR, 'Falta una comparación visible de frontera en el Audit.'}
+            if not set(str(error).split('; ')).issubset(allowed):
+                return False
+        else:
+            return False
+    except (ValueError, TypeError, KeyError):
+        return False
+    pending['work'] = copy.deepcopy(plan)
+    pending['plan_comparison_recovery'] = {'version': reserve_comparisons.VERSION,
+        'missing_ids': absent, 'preserved_comparisons': copy.deepcopy(plan['comparisons']), 'attempted': False}
+    pending.pop('failed_unit', None)
+    pending.pop('validation_error', None)
+    pending['pending_groups'] = [{'kind': 'plan_comparisons', 'ids': absent}]
+    pending['content_hash'] = digest(pending['work'])
+    return True
+
+
+def schedule_writing(package, strategy, pending):
+    work = pending['work']
+    ordered = [d['matter_id'] for d in strategy['matters'] if d['disposition'] == 'core']
+    by_id = {m['matter_id']: m for m in work['matters']}
+    work['matters'] = [by_id[mid] for mid in ordered]
+    by_name = {c['name']: c for c in work['candidates']}
+    work['candidates'] = [by_name[p.get('name') or p.get('fullName')] for p in package.get('lawyers', [])]
+    pending['pending_groups'] += ([{'kind': 'matters', 'ids': ordered[i:i+BATCH_SIZE]} for i in range(0, len(ordered), BATCH_SIZE)]
+        + [{'kind': 'bio', 'index': i} for i in range(len(work['candidates']))] + [{'kind': 'institutional'}])
+
 def advance(state, invoke):
     """One completed provider response per durable request; direct callers loop."""
     from core.editorial_development import bind_development, development_errors, DEVELOPMENT_VERSION
@@ -185,13 +230,16 @@ def advance(state, invoke):
                     or pending.get('content_hash')!=digest(pending.get('work'))):
         raise ValueError('Saved construction no longer matches its sources or completed units')
     if pending.get('failed_unit'):
+        prepare_comparison_completion(package, strategy, pending, plan_schema)
+    if pending.get('failed_unit'):
         return {'development':copy.deepcopy(pending['work']),'repair_continuation':pending,
                 'development_validated':False,'development_repair_unlocatable':True,
                 'errors':['La respuesta guardada requiere corregir su contrato antes de continuar.'],'trace':trace}
     if not pending:
         pending={'version':VERSION,'source_key':source_key(state),'work':{},
                  'pending_groups':[{'kind':'plan'}], 'completed_units':[],
-                 'binding_contract':construction_bindings.VERSION}
+                 'binding_contract':construction_bindings.VERSION,
+                 'plan_binding_contract':reserve_comparisons.VERSION}
     while pending['pending_groups']:
         unit=pending['pending_groups'][0];kind=unit['kind'];work=pending['work']
         source_owned=pending.get('binding_contract')==construction_bindings.VERSION
@@ -202,6 +250,19 @@ def advance(state, invoke):
             schema=plan_schema;task=PLAN_TASK
             payload={'package':package,'strategy':strategy,'source_obligations':state.get('case_requirements',{}),
                      'field_contracts':contracts(package,strategy)}
+            if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
+                schema = reserve_comparisons.plan_schema(plan_schema, strategy)
+                payload['reserve_comparison_bindings'] = reserve_comparisons.bindings(strategy)
+        elif kind=='plan_comparisons':
+            bindings = reserve_comparisons.bindings(strategy, unit['ids'])
+            preserved = work['comparisons']
+            schema = reserve_comparisons.completion_schema(plan_schema, strategy, bindings, preserved)
+            task = COMMON + '\n' + reserve_comparisons.INSTRUCTION + '\nComplete ONLY the missing comparisons. The accepted shared plan and existing comparisons are read-only; do not generate biographies, matter narratives or institutional prose.'
+            ids = set(unit['ids']) | {d['matter_id'] for d in strategy['matters'] if d['disposition'] == 'core'}
+            payload = {'package': {**common, 'matters': [m for m in package['matters'] if m['id'] in ids]},
+                'strategy': strategy, 'reserve_comparison_bindings': bindings,
+                'preserved_comparisons': preserved, 'institutional_case': work['case_plan'],
+                'hero_rationale': work['hero_rationale']}
         elif kind=='matters':
             ids=unit['ids'];schema=strict_model('MatterNarratives',{'matters':(list[strict_model('OwnedNarrative',{
                 'matter_id':(Literal[tuple(ids)],...),**model_fields(matter,('text','completion_status'))})],...)})
@@ -249,15 +310,21 @@ def advance(state, invoke):
         try:
             value=schema.model_validate(value).model_dump()
             if kind=='plan':
+                if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
+                    value = reserve_comparisons.expand_plan(value, strategy)
                 value=reconcile_categories(value)
                 if source_owned:value=construction_bindings.complete_plan_support(package,strategy,value)
                 validate_plan(package,strategy,value)
                 work.update(value)
-                ordered=[d['matter_id'] for d in strategy['matters'] if d['disposition']=='core']
-                by_id={m['matter_id']:m for m in work['matters']};work['matters']=[by_id[mid] for mid in ordered]
-                by_name={c['name']:c for c in work['candidates']};work['candidates']=[by_name[p.get('name') or p.get('fullName')] for p in package.get('lawyers',[])]
-                pending['pending_groups'] += ([{'kind':'matters','ids':ordered[i:i+BATCH_SIZE]} for i in range(0,len(ordered),BATCH_SIZE)]
-                    +[{'kind':'bio','index':i} for i in range(len(work['candidates']))]+[{'kind':'institutional'}])
+                schedule_writing(package, strategy, pending)
+            elif kind=='plan_comparisons':
+                pending['plan_comparison_recovery']['attempted'] = True
+                completed = copy.deepcopy(work)
+                completed['comparisons'] += reserve_comparisons.expand(value, bindings)
+                validate_plan(package, strategy, completed)
+                work.update(completed)
+                pending['plan_comparison_recovery']['completed'] = True
+                schedule_writing(package, strategy, pending)
             elif kind=='matters':
                 if source_owned:
                     value,receipts=construction_bindings.expand_matters(value,bindings)
@@ -276,6 +343,11 @@ def advance(state, invoke):
             pending['failed_unit']=unit;pending['rejected_response']=value
             pending['validation_error']=str(error);pending['pending_groups']=[]
             pending['content_hash']=digest(work)
+            if kind == 'plan' and prepare_comparison_completion(package, strategy, pending, plan_schema):
+                if not state.get('durable_repair_steps'):
+                    continue
+                return {'development':copy.deepcopy(pending['work']), 'development_validated':False,
+                        'development_repair_unlocatable':False, 'repair_continuation':pending, 'errors':[], 'trace':trace}
             return {'development':copy.deepcopy(work),'development_validated':False,
                     'repair_continuation':pending,'development_repair_unlocatable':True,
                     'errors':['La construcción conservó una respuesta que no cumple el contrato: '+str(error)],
@@ -285,7 +357,7 @@ def advance(state, invoke):
         pending['content_hash']=digest(work)
         if pending['pending_groups'] and state.get('durable_repair_steps'):
             return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
-                    'repair_continuation':pending,'trace':trace,'development_build_report':{
+                    'development_repair_unlocatable':False,'repair_continuation':pending,'trace':trace,'development_build_report':{
                         'version':VERSION,'completed_units':pending['completed_units'],'remaining_units':len(pending['pending_groups'])}}
     work.update(version=DEVELOPMENT_VERSION, execution_contract=EXECUTION_CONTRACT,
                 personal_quality_contract=PERSONAL_QUALITY_CONTRACT, biography_depth_contract=DEPTH_CONTRACT)
@@ -296,10 +368,13 @@ def advance(state, invoke):
     from core.construction_quality import initial_quality
     first_pass=initial_quality({**state,'development':proposal})
     return {'development':proposal,'development_validated':not errors,'errors':errors,'trace':trace,
+            'development_repair_unlocatable':False,
             'repair_continuation':None,'development_build_report':{'version':VERSION,
                 'completed_units':pending['completed_units'],'remaining_units':0,
                 'decision_hash':digest(decision_snapshot(proposal)),
                 'binding_contract':pending.get('binding_contract'),
+                'plan_binding_contract':pending.get('plan_binding_contract'),
+                'plan_comparison_recovery':pending.get('plan_comparison_recovery'),
                 'anchor_bindings':pending.get('anchor_bindings',[]),
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}

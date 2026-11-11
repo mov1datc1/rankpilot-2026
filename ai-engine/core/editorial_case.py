@@ -108,8 +108,8 @@ def case_errors(package, strategy, proposal):
             errors.append('Evaluación de líder sin atribuciones completas o decisión.')
     if not str(plan.get('target_decision') or '').strip():errors.append('Falta decisión explícita del objetivo.')
     reserves={d['matter_id'] for d in strategy.get('matters',[]) if d.get('disposition')=='reserve'}
-    compared={c.get('alternative_id') for c in proposal.get('comparisons',[])}
-    if reserves-compared:errors.append('Faltan comparaciones de reservas frente a su alternativa pertinente del núcleo.')
+    from core.reserve_comparisons import coverage_errors
+    errors.extend(coverage_errors(strategy, proposal.get('comparisons', [])))
     if reserves and not any(c.get('audit_required',True) for c in proposal.get('comparisons',[])):
         errors.append('Falta una comparación visible de frontera en el Audit.')
     for i,comparison in enumerate(proposal.get('comparisons',[])):
