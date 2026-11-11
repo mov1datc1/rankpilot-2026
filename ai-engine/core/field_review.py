@@ -353,6 +353,9 @@ def advance(state):
     receipts,defects=project_checks(units,result)
     saved=[r for r in state.get('field_review_receipts',[]) if r.get('field') not in paths]+receipts
     update={'trace':trace,'field_review_receipts':saved}
+    if state.get('development_build_report',{}).get('first_pass_quality'):
+        from core.construction_quality import record_first_review
+        update['development_build_report']=record_first_review(state['development_build_report'],units,result)
     if any(u['field'] in ('b10','c2') for u in units):
         update['field_review_context_version']=INSTITUTIONAL_CONTEXT
     if defects:

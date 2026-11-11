@@ -1,3 +1,11 @@
+## 1.0.79 — Source-owned construction and first-pass evidence
+
+- Complete mandatory source-confirmed lead/participation support before freezing the shared plan.
+- Compile canonical profile, matter and institutional argument bindings; keep model work focused on substantive prose and supported interpretation.
+- Preserve existing privacy/depth validation and old durable continuation contracts; no extra model calls or retry allowance.
+- Record first-review results against original field/source hashes without counting repaired text as first-pass success. Whole-pair quality remains separate.
+- See docs/reviews/source-owned-construction-v79.md for validation scope and limitations.
+
 ## 1.0.78 — Shared construction, scoped RAG and delivery communication
 
 - Separate shared decisions, matter batches, individual profiles and institutional writing, with durable continuation and source preservation.
