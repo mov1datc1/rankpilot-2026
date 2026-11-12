@@ -15,7 +15,7 @@ import {editorialNextAction} from './next-action';
 import {canResumeLegacyDevelopment} from './legacy-development-recovery';
 import {canResumeBudgetReview,capacityRecoveryCheckpoint,canResumeRetiredBudget} from './budget-continuation';
 import {editorialTokenBudget} from './recovery';
-import {canResumeConstructionPlan,PLAN_COMPARISON_RECOVERY} from './construction-recovery';
+import {canResumeConstructionPlan,canResumePostConstructionRepair,PLAN_COMPARISON_RECOVERY,POST_CONSTRUCTION_REPAIR_RECOVERY} from './construction-recovery';
 
 export function systemIssue(code:string,message:string,retryable=true):ReviewIssue {
   return {code,rule_id:'RP13',entity_id:null,field_path:null,owner:'rankpilot',action:'retry',retryable,message,source_evidence_ids:[],artifact_claim_ids:[]};
@@ -46,7 +46,8 @@ export function publicJob(job:any, submission?:any) {
   const canResumeLegacy=!!submission && sourceMatches===true && canResumeLegacyDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canRecheckContext=!!submission && sourceMatches===true && canRecheckFieldContext(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumePlan=!!submission && sourceMatches===true && canResumeConstructionPlan(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
-  const canRecheck=!canResumePlan && !canResumeLegacy && !canRecheckContext && !canResumeRepair && !!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canResumePostConstruction=!!submission && sourceMatches===true && canResumePostConstructionRepair(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
+  const canRecheck=!canResumePlan && !canResumePostConstruction && !canResumeLegacy && !canRecheckContext && !canResumeRepair && !!submission && sourceMatches===true && canRecheckDevelopment(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeProgress=!!submission && sourceMatches===true && canResumeSelectionProgress(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canReplay=!!submission && sourceMatches===true && canReplaySelectionRepair(job,submission.chambersData,job.sourceHash,process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local');
   const canResumeBudget=!!submission && sourceMatches===true
@@ -55,7 +56,7 @@ export function publicJob(job:any, submission?:any) {
   const delivery=submission && getDeliveryState(submission.chambersData,submission.chambersData?.matters || submission.matters || [],true);
   const canDeliver=!!submission && sourceMatches===true && canContinueWithObservations(job,submission.chambersData,job.sourceHash);
   const canResumeRetired=!!submission && sourceMatches===true && canResumeRetiredBudget(job,submission.chambersData,job.sourceHash);
-  const canResumeResidual=canResumePlan || canResumeRetired || canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
+  const canResumeResidual=canResumePlan || canResumePostConstruction || canResumeRetired || canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
   const nextAction=editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,constructionPlanRecovery:canResumePlan,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available});
   return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message:active?message:nextAction.description,pauseReason,sourceMatches,canResumeResidual,nextAction,canResumeConstructionPlan:canResumePlan,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
@@ -85,6 +86,11 @@ export async function enqueue(submission:any,retry=false,requestRepair=false) {
     const build=process.env.VERCEL_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || 'local';
     if(retry && canResumeConstructionPlan(last,current.chambersData,sourceHash,build)) {
       const marker={stage:last.stage,cursor:last.cursor,status:'construction_plan_recovery_requested',contract:PLAN_COMPARISON_RECOVERY,worker_commit:build,source_hash:sourceHash};
+      const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
+      return resumed[0] || last;
+    }
+    if(retry && canResumePostConstructionRepair(last,current.chambersData,sourceHash,build)) {
+      const marker={stage:last.stage,cursor:last.cursor,status:'post_construction_repair_requested',contract:POST_CONSTRUCTION_REPAIR_RECOVERY,worker_commit:build,source_hash:sourceHash};
       const resumed:any[]=await tx.$queryRaw`UPDATE "EditorialJob" SET "status"='queued',"issue"=NULL,"leaseToken"=NULL,"leaseUntil"=now(),"ledger"="ledger" || ${JSON.stringify([marker])}::jsonb,"updatedAt"=now() WHERE "id"=${last.id} AND "status"='failed' RETURNING *`;
       return resumed[0] || last;
     }

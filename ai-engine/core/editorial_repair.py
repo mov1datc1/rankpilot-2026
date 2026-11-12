@@ -57,16 +57,24 @@ def biography_delta_contract(target):
         fields['primary_contribution']=(contribution,Field(description='Append exactly one contribution for required_primary_lead_matter_id. Existing source links, identities, categories and supporting mandates are read-only.'))
     return create_model('BiographyOutputDelta',__config__=ConfigDict(extra='forbid'),**fields)
 
-def expand_biography_delta(target,value):
+def expand_biography_delta(target,value,retain_unrepaired_bindings=False):
     delta=biography_delta_contract(target).model_validate(value).model_dump()
     result=copy.deepcopy(target['current_value'])
     if 'submission_bio' in delta:result['submission_bio']=delta['submission_bio']
     if 'biography_depth' in delta:result['biography_depth']=delta['biography_depth']
     profiles=delta.get('profile_coverage')
     if profiles is not None:
+        allowed=target.get('profile_binding_repairs') or {}
         for key,unit in profile_output_keys(result.get('profile_coverage',[])):
+            prior=copy.deepcopy(unit)
             unit.update(profiles[key])
-            validate_binding_delta(target,key,unit)
+            try:
+                validate_binding_delta(target,key,unit)
+            except ValueError:
+                if not retain_unrepaired_bindings or key not in allowed:raise
+                unit.clear();unit.update(prior)
+                if prior.get('decision') in ('retain','generalize') and profiles[key].get('public_quote'):
+                    unit['public_quote']=profiles[key]['public_quote']
     cases=delta.get('submission_case_coverage')
     if cases is not None:
         for i,unit in enumerate(result.get('submission_case_coverage',[])):unit['public_quote']=cases[f'S{i+1:02d}']
@@ -130,7 +138,7 @@ def project_repair_result(result,targets):
         if item['status']=='corrected':
             value=item['value']
             if biography_output_targets_only({path:targets[path]}) and isinstance(value,dict) and 'name' not in value:
-                value=expand_biography_delta(targets[path],value)
+                value=expand_biography_delta(targets[path],value,retain_unrepaired_bindings=True)
             projected['corrections'].append({'path':path,'value':value,'reason':item['reason']})
         elif item['status']=='unresolved':projected['unresolved'].append(path+': '+item['reason'])
         else:raise ValueError('Invalid field outcome')
@@ -355,7 +363,7 @@ def candidate_output_repair_only(package,strategy,candidate,person,profile_fault
     from core.editorial_development import bind_quote
     from core.role_evidence import matter_names_person
     if not person or not (profile_faults or personal_faults) or category_error(candidate):return False
-    if any(not e.startswith('Credencial retenida ausente del B9 de esta persona.') for e in profile_faults):return False
+    if any(e.startswith(('Falta rendición completa de credenciales','Credencial sin cita íntegra')) for e in profile_faults):return False
     if any(e!='La contribución personal debe ejecutarse literalmente en el B9 de esta persona.' for e in personal_faults):return False
     if person.get('isPartner') is True and re.search(r'associate|asociado',candidate.get('suggested_ranking',''),re.I):return False
     if any(not str(candidate.get(f,'')).strip() for f in ('current_ranking','suggested_ranking','category_rationale','why_candidate','external_evidence','evidence_gaps','recommended_action','submission_bio')):return False
@@ -412,7 +420,12 @@ def apply_corrections(proposal, targets, repair, allow_unchanged=False):
                 elif bindings(after)!=bindings(before):raise ValueError('Biography repair cannot change personally attributed source bindings')
                 profile_sources=lambda c:[(item.get('reference'),item.get('source_quote')) for item in c.get('profile_coverage',[])]
                 if profile_sources(after)!=profile_sources(before):raise ValueError('Biography repair cannot change original profile source units')
+                before_profiles=dict(profile_output_keys(before.get('profile_coverage',[])))
+                allowed_bindings=targets[path].get('profile_binding_repairs') or {}
                 for key,item in profile_output_keys(after.get('profile_coverage',[])):
+                    prior_item=before_profiles.get(key,{})
+                    if key in allowed_bindings and all(item.get(k)==prior_item.get(k) for k in ('entity_name','relationship','privacy_basis','decision')):
+                        continue
                     validate_binding_delta(targets[path],key,item)
         elif path=='institutional_execution' and isinstance(value,list):
             value=[InstitutionalLink.model_validate(item).model_dump() for item in value]
@@ -1013,4 +1026,4 @@ TASK += " A client-register restriction applies to a client mandate, not automat
 
 TASK += " A profile sentence may name several clients or professional bodies. Emit one profile_coverage record per atomic named entity, repeating the same reference and full source_quote. Never join a list into entity_name or use one client restriction to justify all the others. Bind each generalization separately; preserve each retained association/employer. The complete source unit is still reviewed once with ALL its entity records."
 
-TASK += " A target may explicitly list profile_binding_repairs. For ONLY those keyed profile records, repair the derived entity_name, relationship and privacy_basis together with decision/public_quote/reason. Copy entity_name from the immutable original unit and bind restrictions to supplied original evidence. Never infer an alias from spelling similarity, invent a permission, edit source units or change a candidate identity. All other profile records remain output-only. A missing identity link is an unresolved observation, not permission to expose a restricted client. The derived binding repair is an explicit exception to output-only BIO instructions and still requires local validation and independent source review."
+TASK += " A target may explicitly list profile_binding_repairs. For ONLY those keyed profile records, repair the derived entity_name, relationship and privacy_basis together with decision/public_quote/reason. Copy entity_name from the immutable original unit and bind restrictions to supplied original evidence. For a non-material client example in a multi-entity unit whose substantive work is already retained by other entities of the same reference and whose exact name has no literal restriction match, use decision=omit with public_quote='' and privacy_basis=null rather than an unproven generalization. Never infer an alias from spelling similarity, invent a permission, edit source units or change a candidate identity. All other profile records remain output-only. A missing identity link is recorded in source_notes while still returning status=corrected for the biography and any repairable bindings, and is never permission to expose a restricted client. The derived binding repair is an explicit exception to output-only BIO instructions and still requires local validation and independent source review."
