@@ -280,3 +280,31 @@ class AvailableWithObservationsTests(unittest.TestCase):
         current['trace']=[{'usage':{'unknown_calls':1}}]
         result=retain_observations(current,{'errors':['Unknown provider outcome'],'development_validated':False})
         self.assertFalse(result.get('development_delivery_ready'));self.assertTrue(result['errors'])
+
+    def test_global_repair_cap_stops_multi_field_loop_with_observations(self):
+        from core.field_review import MAX_GLOBAL_FIELD_REPAIRS, digest
+        current=state();units=units_for(current);target=units[0]['field']
+        other=[u for u in units if u['field']!=target]
+        current['field_review_receipts']=project_checks(other,verdict(other))[0]
+        current['field_review_failures']=project_checks([units[0]],verdict([units[0]],target))[1]
+        current['field_review_attempts']={f'other_{i}':1 for i in range(MAX_GLOBAL_FIELD_REPAIRS)}
+        current['repair_continuation']={'phase':'repair','proposal_hash':digest(current['development']),'pending_groups':[[target]]}
+        with patch('core.review_graph.invoke_role',side_effect=AssertionError('No paid repair after global cap')):
+            result=advance(current)
+        self.assertTrue(result['development_delivery_ready'])
+        self.assertIsNone(result['repair_continuation'])
+        self.assertFalse(result['errors'])
+        self.assertEqual(result['field_review_observations'][0]['field'],target)
+
+    def test_require_complete_response_distinguishes_zero_token_incomplete(self):
+        from types import SimpleNamespace
+        from utils.model_response import require_complete_response
+        from utils.provider_errors import provider_failure
+        zero_abort=SimpleNamespace(response_metadata={'status':'incomplete','incomplete_details':{'reason':'content_filter'}},usage_metadata={'input_tokens':0,'output_tokens':0})
+        with self.assertRaises(ValueError) as ctx_zero:
+            require_complete_response(zero_abort)
+        self.assertEqual(provider_failure(ctx_zero.exception)['code'],'AI_REVIEW_UNAVAILABLE')
+        real_limit=SimpleNamespace(response_metadata={'status':'incomplete','incomplete_details':{'reason':'max_output_tokens'}},usage_metadata={'input_tokens':100,'output_tokens':4096})
+        with self.assertRaises(ValueError) as ctx_limit:
+            require_complete_response(real_limit)
+        self.assertEqual(provider_failure(ctx_limit.exception)['code'],'AI_OUTPUT_LIMIT')

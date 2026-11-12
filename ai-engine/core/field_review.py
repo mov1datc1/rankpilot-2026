@@ -15,6 +15,7 @@ from pydantic import ConfigDict, Field, create_model
 
 VERSION = 'source-field-review-v1'
 INSTITUTIONAL_CONTEXT = 'complete-institutional-sources-v2'
+MAX_GLOBAL_FIELD_REPAIRS = max(1, int(os.environ.get('RANKPILOT_MAX_FIELD_REPAIRS', '5')))
 TASK = '''Review only these source-bound editorial units before document assembly.
 For EACH obligation judge whether the actual output executes its supplied rule
 against the complete original sources. A matching quote is not semantic proof.
@@ -335,9 +336,10 @@ def advance(state):
     if pending.get('phase')=='repair':
         defects=state.get('field_review_failures',[])
         paths={d['field_path'] for d in defects};attempts=dict(state.get('field_review_attempts',{}))
-        if not paths or any(method_count(attempts,path)>=2 for path in paths):
+        total_repairs=sum(int(v) for v in attempts.values())
+        if not paths or total_repairs>=MAX_GLOBAL_FIELD_REPAIRS or any(method_count(attempts,path)>=2 for path in paths):
             return retain_observations(state,{'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
-                'errors':['La recuperación de estos campos agotó sus dos métodos; se conserva el avance.']})
+                'errors':['La recuperación localizada alcanzó el límite de rondas; se conserva el avance y las observaciones pendientes.']})
         strategy='source_reconstruction' if any(method_count(attempts,path) for path in paths) else 'targeted_correction'
         previous_counts={path:method_count(attempts,path) for path in paths}
         for path in paths:attempts[path]=previous_counts[path]+1

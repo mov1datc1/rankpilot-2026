@@ -8,8 +8,16 @@ from typing import Any
 def require_complete_response(message: Any) -> None:
     """A token-limited partial narrative must never replace a saved draft."""
     metadata = getattr(message, 'response_metadata', {}) or {}
-    if metadata.get('finish_reason') == 'length' or metadata.get('status') == 'incomplete' or metadata.get('incomplete_details'):
+    usage = getattr(message, 'usage_metadata', {}) or {}
+    incomplete = metadata.get('incomplete_details')
+    reason = incomplete.get('reason') if isinstance(incomplete, Mapping) else None
+    out_tokens = int(usage.get('output_tokens') or 0) if isinstance(usage, Mapping) else 0
+    if metadata.get('finish_reason') == 'length':
         raise ValueError('max_output_tokens: incomplete response')
+    if metadata.get('status') == 'incomplete' or incomplete:
+        if reason == 'max_output_tokens' or out_tokens > 0:
+            raise ValueError(f'max_output_tokens: incomplete response (reason={reason}, output_tokens={out_tokens})')
+        raise ValueError(f'incomplete provider response (0 output tokens, reason={reason})')
 
 
 def coerce_message_text(content: Any) -> str:
