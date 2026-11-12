@@ -1,3 +1,9 @@
+## 1.0.82 — Per-step continuation retry accounting and concise field-review rationale
+
+- Advance per-cursor failure accounting across completed checkpointed continuation steps so a prior sub-step stop does not block a later field-review group's single `outputRecovery` retry.
+- Bound `field_reviewer` check rationale length in the strict schema description and task instruction without altering existing signed field-review receipt hashes.
+- Validation: 857 Python tests and 585 Node tests passed (one skipped); TypeScript passed.
+
 ## 1.0.81 — Post-construction repair handoff and initial profile-binding scope
 
 - Reset stage failure accounting across explicit construction recovery markers so a pre-prose plan stop does not consume the post-construction initial repair transition.
