@@ -52,22 +52,29 @@ lawyer role and achieved result or actual stage. Incorporate later documented
 updates without inventing resolution of conflicting source outcomes. Execute all
 material anchors meaningfully, not as a list of quotations. Never insert advice
 about publication or what the source does not say. completion_status describes
-the documented stage only. Do not return new anchors or change the selected facts.'''
+the documented stage only in neutral factual terms (never audit voice such as
+"not stated", "source does not explain", "pending confirmation" or "unresolved").
+Do not return new anchors or change the selected facts.'''
 
 def bio_task():
     from core.biography_depth import DEPTH_INSTRUCTION
     return COMMON + ''' Write ONLY this person's English B9 and its evidence bindings.
-The shared nomination/category/attribution decision is read-only. Preserve material
-career credentials, prior employment, professional offices and all substantive
-personally attributed core/reserve work. Distinguish their own role from the firm's
-result. Generalise private client identities and identifying metric combinations
-without deleting legal substance. A biography employer or association is not a
-client; generalisation requires an actual restriction for that entity/relationship.
-Bind each original profile unit/entity in profile_coverage; copy source_quote
-literally and public_quote from the actual resulting BIO. Preserve every distinct
-substantive contribution in submission_case_coverage. Do not narrate verification
-rules, missing rankings or source sufficiency in public prose. Keep limited team
-participation proportionate without inventing a nomination or personal result.
+The shared nomination/category/attribution decision is read-only. If the source or
+filing_details confirms this lawyer as department head, state that department-head
+role explicitly in submission_bio. Preserve material career credentials, prior
+employment, professional offices (such as bar association committee/officer roles)
+and all substantive personally attributed core/reserve work. Distinguish their own
+role from the firm's result. Generalise private client identities and identifying
+metric combinations without deleting legal substance. A biography employer or
+association is not a client; generalisation requires an actual restriction for
+that entity/relationship. Bind each original profile unit/entity in
+profile_coverage: entity_name MUST appear literally in THAT unit's source_quote
+(never from another unit), copy source_quote literally, and for every retained
+credential copy public_quote verbatim from the actual resulting submission_bio.
+Preserve every distinct substantive contribution in submission_case_coverage. Do
+not narrate verification rules, missing rankings or source sufficiency in public
+prose. Keep limited team participation proportionate without inventing a
+nomination or personal result.
 ''' + DEPTH_INSTRUCTION
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional

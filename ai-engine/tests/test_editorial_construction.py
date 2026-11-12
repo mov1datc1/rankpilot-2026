@@ -187,5 +187,17 @@ class ConstructionTests(unittest.TestCase):
         for expected in ('industry sector expertise','areas of recent growth','department leadership and bench depth','not a cap on B10 structure','no rigid minimum'):
             self.assertIn(expected,prompt)
 
+    def test_first_pass_prompts_prevent_b9_completion_status_and_audit_leadership_regressions(self):
+        from core.editorial_construction import MATTER_TASK, bio_task
+        from core.audit_decisions import WRITING_TASK
+        self.assertIn('never audit voice', MATTER_TASK)
+        self.assertIn('pending confirmation', MATTER_TASK)
+        bio_prompt = bio_task()
+        self.assertIn('department-head', bio_prompt)
+        self.assertIn("THAT unit's source_quote", bio_prompt)
+        self.assertIn('verbatim from the actual resulting submission_bio', bio_prompt)
+        self.assertIn('líder del asunto', WRITING_TASK)
+        self.assertIn('never omit a core/reserve mandate cited in that lawyer\'s B9', WRITING_TASK)
+
 
 if __name__=='__main__':unittest.main()
