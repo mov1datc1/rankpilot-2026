@@ -1,6 +1,7 @@
 require('../../docs/reviews/review-loader.cjs');
 const {test}=require('node:test'),assert=require('node:assert/strict'),Module=require('node:module');
-const {canResumeConstructionPlan}=require('../../src/lib/editorial/construction-recovery.ts');
+const {canResumeConstructionPlan,canResumePostConstructionRepair}=require('../../src/lib/editorial/construction-recovery.ts');
+const {recoveryPlan}=require('../../src/lib/editorial/recovery.ts');
 const {sourceSnapshot,stableHash}=require('../../src/lib/editorial/contracts.ts');
 const missing='Faltan comparaciones de reservas frente a su alternativa pertinente del núcleo.';
 function fixture(){
@@ -67,4 +68,20 @@ test('status offers an effective continuation; duplicate clicks preserve ledger 
   assert.equal(job.ledger.at(-1).status,'construction_plan_recovery_requested');
   assert.deepEqual(source,before);
  } finally {Module._load=original;if(env===undefined)delete process.env.VERCEL_GIT_COMMIT_SHA;else process.env.VERCEL_GIT_COMMIT_SHA=env;}
+});
+test('completed 14-unit construction resumes initial repair once without recheck-only short-circuit',()=>{
+ const {source,sourceHash,job}=fixture(),s=source.chambersData.review_checkpoint.state;
+ delete s.repair_continuation;
+ s.development_build_report={version:'editorial-construction-v1',completed_units:[{kind:'plan_comparisons'},{kind:'institutional'}],remaining_units:0};
+ s.development={b10:'Department overview.',c2:'Coverage request.',matters:Array.from({length:20},(_,i)=>({matter_id:'m'+i,text:'Matter '+i})),candidates:[{name:'Lawyer',submission_bio:'Bio'}],comparisons:Array.from({length:11},(_,i)=>({alternative_id:'m'+(20+i),selected_id:'m0'}))};
+ job.issue={owner:'rankpilot',code:'DEVELOPMENT_REJECTED',retryable:true};
+ job.ledger=[
+  {stage:'development',cursor:1,worker_commit:'v79',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED',retryable:false},trace:{usage:{total_tokens:100}}},
+  {stage:'development',cursor:1,status:'construction_plan_recovery_requested',worker_commit:'v80'},
+  {stage:'development',cursor:1,worker_commit:'v80',issue:{owner:'rankpilot',code:'DEVELOPMENT_REJECTED',retryable:true},trace:{usage:{total_tokens:200}}}
+ ];
+ assert.ok(recoveryPlan(job,'DEVELOPMENT_REJECTED','v81'));
+ assert.equal(canResumePostConstructionRepair(job,source.chambersData,sourceHash,'v81'),true);
+ assert.equal(canResumePostConstructionRepair(job,source.chambersData,sourceHash,'v80'),false);
+ assert.equal(canResumePostConstructionRepair({...job,ledger:[...job.ledger,{status:'post_construction_repair_requested'}]},source.chambersData,sourceHash,'v81'),false);
 });

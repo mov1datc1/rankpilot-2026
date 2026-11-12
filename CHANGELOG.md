@@ -1,3 +1,11 @@
+## 1.0.81 — Post-construction repair handoff and initial profile-binding scope
+
+- Reset stage failure accounting across explicit construction recovery markers so a pre-prose plan stop does not consume the post-construction initial repair transition.
+- Expose a one-time post-construction repair continuation for a completed 14-unit assembly that stopped before initial repair or field review, without diverting into validation-only recheck.
+- Include derived profile-binding faults in initial biography output repairs and retain unproven alias bindings as observations while committing valid biography/headship fixes.
+- Validation: 857 Python tests and 585 Node tests passed (one skipped); TypeScript passed. Offline replay of the 14-unit checkpoint verifies target scoping, transactional acceptance and field-review scheduling.
+- See docs/reviews/post-construction-repair-handoff-v81.md.
+
 ## 1.0.80 — Complete reserve coverage and retained-plan continuation
 
 - Require one source-owned comparison slot for every reserve; keep internal coverage separate from Audit visibility.

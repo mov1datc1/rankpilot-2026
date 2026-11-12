@@ -94,4 +94,25 @@ class ProfileBindingRepairTests(unittest.TestCase):
         new=next(u for u in after if u['field']=='candidates/0/submission_bio')
         self.assertNotEqual(old['hash'],new['hash'])
 
+    def test_initial_repair_exposes_derived_binding_and_preserves_headship_fix_when_alias_stays_unproven(self):
+        from core.editorial_repair import repair_targets, repair_result_contract, project_repair_result
+        p,s,v,_=self.fixture();c=v['candidates'][0]
+        p['filing_details']={'heads':[{'name':c['name']}]}
+        raw=repair_targets(p,s,v);targets=coherent_repair_targets(v,raw,p)
+        target=targets['candidates/0']
+        self.assertIn('profile_coverage',target['mutable_fields'])
+        self.assertEqual(set(target['profile_binding_repairs']),{'P01'})
+        self.assertEqual(target['confirmed_head_function']['name'],c['name'])
+        delta=self.delta(target)
+        delta['submission_bio']='Sofia is Head of Department and advises a confidential business on workforce matters.'
+        delta['profile_coverage']['P01']['public_quote']=delta['submission_bio']
+        delta['profile_coverage']['P01']['privacy_basis']={'kind':'client_register','matter_id':'wrong','source_quote':'Another Business'}
+        answer={'results':{'T01':{'path':'candidates/0','status':'corrected','value':delta,'reason':'State confirmed headship; retain unproven alias for observation.'}},'source_notes':[]}
+        repair_result_contract(targets).model_validate(answer)
+        projected=project_repair_result(answer,targets)
+        fixed,failures=apply_valid_corrections(v,targets,projected,p,s)
+        self.assertEqual(failures,{})
+        self.assertIn('Head of Department',fixed['candidates'][0]['submission_bio'])
+        self.assertEqual(fixed['candidates'][0]['profile_coverage'][0]['privacy_basis'],c['profile_coverage'][0]['privacy_basis'])
+
 if __name__=='__main__':unittest.main()

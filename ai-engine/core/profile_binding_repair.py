@@ -24,7 +24,10 @@ def enrich_profile_bindings(package, targets, keyed_items):
             for m in package.get('matters', [])]}
         target['problem'] += (' The listed profile_binding_repairs are invalid derived bindings, not immutable source facts. '
                               'Correct only those keyed bindings against profile_binding_evidence. Original references and '
-                              'complete source quotations remain fixed. Unproven aliases remain observations; never invent permission.')
+                              'complete source quotations remain fixed. For a non-material client example in a multi-entity '
+                              'unit whose substantive work is already preserved and whose exact name has no literal restriction '
+                              'match, use decision=omit with public_quote=\'\' and privacy_basis=null. Unproven aliases remain '
+                              'observations in source_notes while still returning status=corrected for the biography; never invent permission.')
     return targets
 
 
