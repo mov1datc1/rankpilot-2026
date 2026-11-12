@@ -11,16 +11,22 @@ portfolio; table-only or absent research permits a scoped limitation, not invent
 market calibration or ranking forecasts. Suggested budget 220 words.
 portfolio: EXACTLY the complete ordered core, hero first, one concise source-backed
 contribution per matter. Suggested budget 420 words; preserve numbers WITH their
-concepts and qualifiers, actors, achieved results and actual pending stages.
-leadership: supply ONE analytical paragraph for each keyed person. Explain their
+concepts and qualifiers, actors, achieved results and actual pending stages. Never
+label an associate or unconfirmed lawyer as "socio líder" or "partner" solely from
+a D5/E5 Lead partner heading; use "líder del asunto" unless partner status is
+confirmed in B10/filing_details.
+leadership: supply ONE analytical paragraph for each keyed person. Explain ALL
 distinct substantive contributions and career credentials consistently with their
-CURRENT B9, safe public generalisation and personally attributed original work.
-The application renders the nomination/category and precise pending criterion
-from shared_decisions. Do not select, change or restate those decisions in the
-paragraph. Do not turn team membership into personal results or infer seniority
-from Lead partner form headings. Additional source leaders remain internal
-assessments, not invented public roster profiles. Suggested combined budget 650
-words INCLUDING the canonical headings/actions the application will insert.
+CURRENT B9 (never omit a core/reserve mandate cited in that lawyer's B9), safe
+public generalisation and personally attributed original work. The application
+renders the nomination/category and precise pending criterion from
+shared_decisions. Do not select, change or restate those decisions in the
+paragraph. Do not turn team membership into personal results or infer partner
+seniority from Lead partner form headings ("líder del asunto" for non-partner
+matter leads). Additional source-attributed matter leaders remain internal
+assessments explaining why they are not nominated (e.g. missing biography/track
+record), not invented public roster profiles. Suggested combined budget 650 words
+INCLUDING the canonical headings/actions the application will insert.
 evidence_gaps: concrete audit_required selected-versus-reserve comparisons and
 actual exclusion reasons. Use neutral headings Asuntos en reserva / Asuntos
 excluidos del portafolio. Distinguish practice relevance, represented client side,
