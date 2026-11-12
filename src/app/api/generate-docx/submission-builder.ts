@@ -455,15 +455,30 @@ export function generateDynamicC2(
     'The work highlights below set out the legal issues, the department’s role and the documented status of each selected mandate.';
 }
 
+function resolveRawMattersList(submission: any, chambersData: any): any[] {
+  const subMatters = Array.isArray(submission?.matters) ? submission.matters : [];
+  const cdMatters = Array.isArray(chambersData?.matters) ? chambersData.matters : [];
+  const coreIds = Array.isArray(chambersData?.canonical_matter_selection?.core_matter_ids)
+    ? chambersData.canonical_matter_selection.core_matter_ids.map(String)
+    : [];
+  if (coreIds.length > 0 && cdMatters.length > 0) {
+    const coreSet = new Set<string>(coreIds);
+    const subMatches = subMatters.filter((m: any) => m?.id != null && coreSet.has(String(m.id))).length;
+    const cdMatches = cdMatters.filter((m: any) => m?.id != null && coreSet.has(String(m.id))).length;
+    if (cdMatches > subMatches) {
+      return cdMatters;
+    }
+  }
+  return subMatters.length > 0 ? subMatters : cdMatters;
+}
+
 function buildChambersDoc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
   const firmLower = (firmName || '').toLowerCase();
   const practiceLower = (practiceArea || '').toLowerCase();
   // v26.36: Deterministic country jurisdiction resolution (e.g. Mexico instead of generic Latin America)
   const guideRegion = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
-  const rawMattersList = (submission?.matters && submission.matters.length > 0)
-    ? submission.matters
-    : (chambersData.matters || []);
+  const rawMattersList = resolveRawMattersList(submission, chambersData);
   
   // v26.38: Strategic Curation & Flagship Sorting (Practice Allowance Engine: up to 30 for Real Estate)
   const curation = curateMatters(rawMattersList, practiceArea, chambersData);
@@ -1026,9 +1041,7 @@ function buildChambersDoc(firmName: string, practiceArea: string, chambersData: 
 function buildLegal500Doc(firmName: string, practiceArea: string, chambersData: any, submission: any, exportMode: string = 'optimized'): Document {
   const elements: (Paragraph | Table)[] = [];
   const guideRegion = resolveCountryJurisdiction(firmName, practiceArea, chambersData, submission);
-  const rawMattersListL500 = (submission?.matters && submission.matters.length > 0)
-    ? submission.matters
-    : (chambersData.matters || []);
+  const rawMattersListL500 = resolveRawMattersList(submission, chambersData);
 
   const curationL500 = curateMatters(rawMattersListL500, practiceArea, chambersData, {
     maxTotal: 20,
