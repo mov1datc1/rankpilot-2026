@@ -48,7 +48,13 @@ proceedings and financial context with their actual concepts unless an ORIGINAL
 restriction covers that fact. Public B9/B10/C2 rules do not erase E evidence.
 D is public: respect actual permissions, including a restricted value distinct
 from identity. Develop commercial purpose, legal obstacle, firm intervention,
-lawyer role and achieved result or actual stage. Incorporate later documented
+lawyer role and achieved result or actual stage. State the documented procedural
+status (e.g., ongoing, completed or pending resolution) inside the matter
+narrative itself whenever present in the source. Never soften or hedge a sourced
+achieved result into a mere aim (write "preserved" rather than "sought to
+preserve" when achieved), and retain sourced strategic significance or precedent.
+If confidentialityEvidence.client_register and the narrative disagree on a
+nonessential client sector, omit the disputed sector label. Incorporate later documented
 updates without inventing resolution of conflicting source outcomes. Execute all
 material anchors meaningfully, not as a list of quotations. Never insert advice
 about publication or what the source does not say. completion_status describes
@@ -61,9 +67,13 @@ def bio_task():
     return COMMON + ''' Write ONLY this person's English B9 and its evidence bindings.
 The shared nomination/category/attribution decision is read-only. If the source or
 filing_details confirms this lawyer as department head, state that department-head
-role explicitly in submission_bio. Preserve material career credentials, prior
+role explicitly in submission_bio. Preserve material career credentials, scale
+qualifiers (such as "high-value" disputes), prior
 employment, professional offices (such as bar association committee/officer roles)
-and all substantive personally attributed core/reserve work. Distinguish their own
+and all substantive personally attributed core/reserve work without softening
+sourced achieved results into aims. Vary sentence openings across matter
+paragraphs (never start consecutive paragraphs with repetitive phrases such as
+"named lead partner"). Distinguish their own
 role from the firm's result. Generalise private client identities and identifying
 metric combinations without deleting legal substance. A biography employer or
 association is not a client; generalisation requires an actual restriction for

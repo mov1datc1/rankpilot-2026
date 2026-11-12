@@ -11,8 +11,10 @@ VERSION = 'reserve-comparison-slots-v1'
 MISSING_ERROR = 'Faltan comparaciones de reservas frente a su alternativa pertinente del núcleo.'
 INSTRUCTION = '''Cover EVERY supplied reserve exactly once internally, against its
 closest relevant selected alternative, using the original legal work, outcomes,
-qualifications and comparable scale. Do not compare every reserve only with the
-hero. Return each supplied comparison slot; the application owns its reserve ID.
+qualifications and comparable scale. In each tradeoff, state concrete legal
+mechanisms, positive scope/scale and documented status (ongoing/completed) for
+BOTH the selected matter and the reserve, and never reference uninvolved third
+matters. Do not compare every reserve only with the hero. Return each supplied comparison slot; the application owns its reserve ID.
 Select audit_comparison_references only for material borderline comparisons that
 the client should see (at least one across the complete plan). Other comparisons
 remain internal, not omitted. Visibility in the Audit is not coverage of the plan.

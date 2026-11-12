@@ -419,7 +419,8 @@ def invoke_role(state, role, schema, instruction, payload):
         failure.trace_history = list(state.get('trace', [])) + [failure.trace]
         raise failure from error
     raw = result.get('raw')
-    trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':getattr(raw,'response_metadata',{}).get('model_name'), 'prompt_version':_RULES['version'], 'prompt_revision':_RULES.get('prompt_revision',_RULES['version']), 'retrieved_rules':router.get_rag_manifest(), 'rag_routing':getattr(router,'last_routing',{}), 'provider_request_id':getattr(raw,'id',None)}]
+    _meta = getattr(raw, 'response_metadata', {}) or {}
+    trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':_meta.get('model_name'), 'response_status':_meta.get('status'), 'incomplete_details':_meta.get('incomplete_details'), 'finish_reason':_meta.get('finish_reason'), 'prompt_version':_RULES['version'], 'prompt_revision':_RULES.get('prompt_revision',_RULES['version']), 'retrieved_rules':router.get_rag_manifest(), 'rag_routing':getattr(router,'last_routing',{}), 'provider_request_id':getattr(raw,'id',None)}]
     trace[-1]['reasoning_version']=REASONING_VERSION if reasoning_guidance(role) else None
     try:
         require_complete_response(raw)
