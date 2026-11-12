@@ -1,4 +1,4 @@
-import {hasUnknownProviderUsage,spentTokens,editorialTokenBudget} from './recovery';
+import {hasUnknownProviderUsage,spentTokens,editorialTokenBudget,recoveryPlan} from './recovery';
 
 export const PLAN_COMPARISON_RECOVERY='reserve-comparison-slots-v1';
 export const POST_CONSTRUCTION_REPAIR_RECOVERY='post-construction-initial-repair-v1';
@@ -6,16 +6,20 @@ const missing='Faltan comparaciones de reservas frente a su alternativa pertinen
 const visibility='Falta una comparación visible de frontera en el Audit.';
 
 /** Resume a completed construction assembly that stopped on a pre-prose failure
- * counter before initial repair_development or field_review ran. */
+ * counter before initial repair_development or field_review ran, or on a
+ * single field-review output limit after earlier continuation steps advanced. */
 export function canResumePostConstructionRepair(job:any,data:any,sourceHash:string,commit:string):boolean {
-  const s=data?.review_checkpoint?.state,r=s?.development_build_report,dev=s?.development;
+  const s=data?.review_checkpoint?.state,r=s?.development_build_report,dev=s?.development,rc=s?.repair_continuation;
   if(!job || job.status!=='failed' || job.stage!=='development' || job.tasks?.[job.cursor]!=='development'
-    || job.sourceHash!==sourceHash || job.issue?.code!=='DEVELOPMENT_REJECTED' || job.issue?.owner!=='rankpilot'
+    || job.sourceHash!==sourceHash || !['DEVELOPMENT_REJECTED','AI_OUTPUT_LIMIT'].includes(job.issue?.code) || job.issue?.owner!=='rankpilot'
     || job.issue?.retryable!==true || !commit || commit==='local' || !job.ledger?.length
     || job.ledger.at(-1)?.worker_commit===commit
     || job.ledger.some((e:any)=>e.status==='post_construction_repair_requested')
     || s?.selection_validated!==true || s.selection_review_validated!==true
-    || s.development_validated!==false || s.repair_continuation || s.repair_report || s.field_review_receipts
+    || s.development_validated!==false
+    || (job.issue?.code==='AI_OUTPUT_LIMIT'
+      ? (rc?.version!=='source-field-review-v1' || !rc.pending_groups?.length || !recoveryPlan(job,job.issue.code,commit))
+      : (rc || s.repair_report || s.field_review_receipts))
     || r?.version!=='editorial-construction-v1' || r.remaining_units!==0 || !r.completed_units?.length
     || !dev || !Array.isArray(dev.matters) || !Array.isArray(dev.candidates) || !Array.isArray(dev.comparisons)
     || !String(dev.b10 || '').trim() || !String(dev.c2 || '').trim()

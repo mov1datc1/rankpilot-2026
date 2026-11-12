@@ -84,4 +84,13 @@ test('completed 14-unit construction resumes initial repair once without recheck
  assert.equal(canResumePostConstructionRepair(job,source.chambersData,sourceHash,'v81'),true);
  assert.equal(canResumePostConstructionRepair(job,source.chambersData,sourceHash,'v80'),false);
  assert.equal(canResumePostConstructionRepair({...job,ledger:[...job.ledger,{status:'post_construction_repair_requested'}]},source.chambersData,sourceHash,'v81'),false);
+ s.repair_continuation={version:'source-field-review-v1',phase:'review',pending_groups:[['matters/18/text','matters/19/text']]};
+ job.issue={owner:'rankpilot',code:'AI_OUTPUT_LIMIT',retryable:true};
+ job.ledger.push(
+  {stage:'development',cursor:1,status:'queued',issue:null,output_hash:'step-47',worker_commit:'v81',trace:{usage:{total_tokens:150}}},
+  {stage:'development',cursor:1,status:'failed',issue:job.issue,output_hash:'step-48-fail',worker_commit:'v81',trace:{usage:{total_tokens:190}}}
+ );
+ assert.ok(recoveryPlan(job,'AI_OUTPUT_LIMIT','v82'));
+ assert.equal(canResumePostConstructionRepair(job,source.chambersData,sourceHash,'v82'),true);
+ assert.equal(recoveryPlan({...job,ledger:[...job.ledger,job.ledger.at(-1)]},'AI_OUTPUT_LIMIT','v82'),null);
 });

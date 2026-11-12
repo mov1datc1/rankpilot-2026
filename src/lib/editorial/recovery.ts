@@ -45,10 +45,10 @@ export function recoveryPlan(job:any,code:string,commit:string,now=Date.now()):{
   // or finished a call. Do not buy another generation on an unknown outcome.
   if(uncertain.has(code)) return null;
   // One retry per stage/cursor. Deploying a fix never replenishes this allowance.
-  const resetAt=Math.max(
-    (job.ledger || []).map((e:any)=>e.status).lastIndexOf('construction_plan_recovery_requested'),
-    (job.ledger || []).map((e:any)=>e.status).lastIndexOf('post_construction_repair_requested')
-  );
+  const resetAt=(job.ledger || []).reduce((idx:number,e:any,i:number)=>(
+    e.status==='construction_plan_recovery_requested' || e.status==='post_construction_repair_requested'
+    || (e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor) && e.status==='queued' && !e.issue && typeof e.output_hash==='string')
+  )?i:idx,-1);
   const failures=(resetAt>=0?(job.ledger || []).slice(resetAt+1):(job.ledger || [])).filter((e:any)=>e.issue && e.stage===job.stage && (e.cursor===undefined || e.cursor===job.cursor));
   if(failures.length>=2) return null;
   const attempts=failures.length;

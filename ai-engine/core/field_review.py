@@ -43,7 +43,9 @@ Confirmed filing heads establish departmental leadership independently of a
 matter's lead-partner heading; neither by itself establishes partner seniority.
 Do not remove a valid contribution merely because a different argument
 supplies its evidence. Context from another mandate cannot establish a result
-or personal role in the mandate being checked. Do not rewrite text, change sources,
+or personal role in the mandate being checked. Keep each check reason concise
+(one or two sentences, at most 350 characters) without repeating full passages.
+Do not rewrite text, change sources,
 nominate anyone, or certify the complete Submission/Audit. Every check is required.'''
 
 
@@ -154,7 +156,7 @@ def contract(units):
                     Field(default=None,description='Null for met; classify a failed check so repair can distinguish adding missing content from replacing rejected prose.')),
                 artifact_ref=(Literal[tuple(unit['output_passages'])],...),
                 source_ref=(Literal[tuple(item['source_passages'])],...),
-                reason=(str,Field(min_length=1,max_length=500))),...)
+                reason=(str,Field(min_length=1,max_length=500,description='Concise check rationale (1-2 sentences, max 350 characters); do not repeat full passages.'))),...)
     checks=create_model('FieldChecks',__config__=ConfigDict(extra='forbid'),**fields)
     return create_model('SourceFieldVerdict',__config__=ConfigDict(extra='forbid'),checks=(checks,...))
 
