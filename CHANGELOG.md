@@ -1,3 +1,11 @@
+## 1.0.80 — Complete reserve coverage and retained-plan continuation
+
+- Require one source-owned comparison slot for every reserve; keep internal coverage separate from Audit visibility.
+- Recover a retained plan with only missing comparisons, preserving accepted decisions, source bindings and cumulative usage.
+- Expose an explicit continuation on the same job, with idempotent enqueue and one bounded completion; status polling stays read-only.
+- Validation: 856 Python tests and 584 Node tests passed (one skipped); TypeScript passed. Offline checkpoint replay proves continuation mechanics, not generated document quality.
+- See docs/reviews/reserve-plan-recovery-v80.md.
+
 ## 1.0.79 — Source-owned construction and first-pass evidence
 
 - Complete mandatory source-confirmed lead/participation support before freezing the shared plan.

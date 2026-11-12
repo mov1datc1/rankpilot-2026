@@ -25,6 +25,12 @@ def answer(schema, payload, proposal):
             candidate['submission_case_coverage']={key:links.get(source['matter_id']) for key,source in bindings['case_sources'].items()}
         return project(schema,candidate)
     value=copy.deepcopy(proposal)
+    if schema.__name__ in ('SharedEditorialPlan','MissingReserveComparisons') and payload.get('reserve_comparison_bindings') is not None:
+        by_id={c['alternative_id']:c for c in value['comparisons']}
+        owned=payload['reserve_comparison_bindings']
+        value['comparisons']={key:{k:v for k,v in by_id[mid].items() if k not in ('alternative_id','audit_required')}
+            for key,mid in owned.items()}
+        value['audit_comparison_references']=[key for key,mid in owned.items() if by_id[mid].get('audit_required',True)]
     if schema.__name__=='MatterNarratives':
         ids=set(payload['field_contracts'])
         value['matters']=[m for m in value['matters'] if m['matter_id'] in ids]
