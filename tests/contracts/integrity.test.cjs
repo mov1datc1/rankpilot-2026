@@ -215,3 +215,14 @@ test('rendered public D3 withholds restricted amount while confidential E3 and o
   assert.equal(m.value,'A six-figure amount.\nConfidential.');
  }
 });
+
+test('buildSubmissionDoc uses chambersData.matters when submission.matters has mismatched Prisma UUIDs vs core_matter_ids',async()=>{
+ const prismaRow=matter('uuid-from-prisma-1',{client:'EL CIELO COUNTRY CLUB',optimizedText:'Fallback raw text',isConfidential:false,publish_status:'publishable'});
+ const cdMatter=matter('matter-ext-3',{client:'EL CIELO COUNTRY CLUB',optimizedText:'Optimized Real Estate narrative for Hero Matter.',isConfidential:false,publish_status:'publishable'});
+ const data={matters:[cdMatter],canonical_matter_selection:{hero_matter_id:'matter-ext-3',core_matter_ids:['matter-ext-3']}};
+ const doc=buildSubmissionDoc('Ramos Castillo Abogados','Real Estate',data,{practiceArea:'Real Estate',guideRegion:'Mexico',targetDirectory:'Chambers',matters:[prismaRow]},'optimized');
+ const zip=await JSZip.loadAsync(await Packer.toBuffer(doc));
+ const text=(await zip.file('word/document.xml').async('string')).replace(/<[^>]+>/g,'');
+ assert.ok(text.includes('EL CIELO COUNTRY CLUB'));
+ assert.ok(text.includes('Optimized Real Estate narrative for Hero Matter.'));
+});
