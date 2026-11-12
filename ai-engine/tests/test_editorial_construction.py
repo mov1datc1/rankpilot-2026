@@ -174,5 +174,18 @@ class ConstructionTests(unittest.TestCase):
         self.assertIn(decision_heading(v['candidates'][0]),result['letter']['leadership'])
         self.assertEqual(invoke.call_args.args[4]['shared_decisions']['candidates'][0]['suggested_ranking'],v['candidates'][0]['suggested_ranking'])
 
+    def test_institutional_task_covers_sectors_growth_and_bench_depth_without_binding_cap(self):
+        state,v=self.fixture();instructions=[]
+        real=self.provider(v,[])
+        def invoke(s,role,schema,instruction,payload):
+            if schema.__name__=='InstitutionalProse':instructions.append(instruction)
+            return real(s,role,schema,instruction,payload)
+        result=advance(state,invoke)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual(len(instructions),1)
+        prompt=instructions[0]
+        for expected in ('industry sector expertise','areas of recent growth','department leadership and bench depth','not a cap on B10 structure','no rigid minimum'):
+            self.assertIn(expected,prompt)
+
 
 if __name__=='__main__':unittest.main()

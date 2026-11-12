@@ -71,15 +71,24 @@ participation proportionate without inventing a nomination or personal result.
 ''' + DEPTH_INSTRUCTION
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional
-case_plan. B10 demonstrates the practice's distinctive capabilities and outcomes,
-not a sequential case list; maximum 1000 words, depth proportionate to evidence.
-C2 argues for the requested coverage with distinct supported reasons; make the
-request once, without two equivalent opening sentences or copying B10. Use actual
-retrieved peer evidence only within its scope; never invent market standing.
-Both are public: generalise confidential identities and identifying combinations
-of geography, transaction details and private metrics while preserving legal work.
-Return institutional_execution with literal b10_quote/c2_quote for each shared
-argument. These bindings are internal, not additional public copy.'''
+case_plan, speaking directly as the firm (never audit voice or market superlatives).
+B10 demonstrates the practice's evidenced identity and capabilities (maximum 1000
+words, no rigid minimum or padding; allocate depth to the available evidence, not
+a sequential case list): (1) open with the strongest strategic differentiator from
+this portfolio; (2) cover industry sector expertise, geographic/national footprint
+and areas of recent growth where evidenced in the sources; (3) develop all shared
+institutional_arguments and other documented capability pillars with concrete legal
+mechanisms and outcomes; and (4) integrate department leadership and bench depth
+(confirmed heads, team architecture and distinct practitioner roles/credentials
+grounded in lawyers and shared_decisions, without inventing partner status or
+rankings). C2 argues once for the requested coverage with distinct supported
+reasons, without two equivalent opening sentences, copying B10 or repeating a
+service catalogue. Use actual retrieved peer evidence only within its scope; never
+invent market standing. Both are public: generalise confidential identities and
+identifying combinations of geography, transaction details and private metrics
+while preserving legal work and career credentials. Return institutional_execution
+with literal b10_quote/c2_quote for each shared argument. These bindings are
+internal, not additional public copy.'''
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
@@ -302,7 +311,7 @@ def advance(state, invoke):
                 'shared_decisions':decision_snapshot(work),'strategy':strategy}
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
-                task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. The application inserts the canonical argument index; do not select or reorder a different plan.'
+                task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
         value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
         if len(new_trace)>len(trace):
             new_trace=[*new_trace[:-1],{**new_trace[-1],'construction_unit':copy.deepcopy(unit)}]
