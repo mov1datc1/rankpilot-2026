@@ -134,7 +134,8 @@ office or professional association named in a lawyer's profile is a career fact,
 not a client: keep its name unless an explicit restriction covers it. When you
 state the size of the team, use department_size exactly: partners and other
 lawyers are separate figures; never present either one as the whole team, and a
-total is only their sum. Return institutional_execution
+total is only their sum. With a single partner, that partner is the person leading the
+team: never "supported by one partner" or "works with one partner". Return institutional_execution
 with literal b10_quote/c2_quote for each shared argument. These bindings are
 internal, not additional public copy.'''
 
@@ -199,6 +200,30 @@ def length_faults(package, value):
             faults.append(f'{field.upper()} has {generated} words; the maximum is 1,000. Keep every evidenced argument and tighten wording only.')
         elif original>=150 and generated<0.9*original:
             faults.append(f'{field.upper()} has {generated} words but the original {source_key} has {original}. Develop it with the supplied evidence up to at most 1,000 words; do not compress or drop its substance.')
+    return faults
+
+
+NUMBER_WORDS = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,'eleven':11,'twelve':12}
+
+
+def headcount_faults(package, value):
+    """B10/C2 must use the filing headcount: with one partner there is no other partner."""
+    size=department_size(package);partners=size.get('partners')
+    if partners is None:return []
+    faults=[]
+    for field in ('b10','c2'):
+        text=str(value.get(field) or '')
+        wrong=[]
+        if partners==1:
+            wrong+=[m.group(0) for m in re.finditer(r"\b(?:another|other|fellow|second|co-?)\s*partners?\b|\bpartners\b(?!\s+with\b)(?!-)",text,re.I)]
+            # The only partner cannot be supported by, or work with, "one partner".
+            wrong+=[m.group(0) for m in re.finditer(r"\b(?:supported\s+by|works?\s+with|working\s+with|alongside|together\s+with|assisted\s+by|backed\s+by)\s+(?:a\s+(?:team|department)\s+(?:of|comprising)\s+|a\s+(?:team|department)\s+(?:that\s+)?(?:includes|comprises)\s+)?(?:one|1|a)\s+(?:other\s+)?partner\b",text,re.I)]
+        for m in re.finditer(r"\b(\d+|"+'|'.join(NUMBER_WORDS)+r")\s+(?:\w+\s+)?partners\b",text,re.I):
+            n=m.group(1).lower();n=int(n) if n.isdigit() else NUMBER_WORDS[n]
+            if n!=partners:wrong.append(m.group(0))
+        if wrong:
+            faults.append(f"{field.upper()} states {'; '.join(sorted(set(wrong))[:3])!r}, but department_size has exactly {partners} partner{'s' if partners!=1 else ''}"
+                          f"{' and '+str(size['other_lawyers'])+' other lawyers' if size.get('other_lawyers') is not None else ''}. Describe the team with those exact figures; never imply other partners. When the only partner is the person described, write that they lead a team of the other lawyers (e.g. \"leads a team of nine other lawyers\").")
     return faults
 
 
@@ -582,7 +607,8 @@ def advance(state, invoke):
                     value,receipts=construction_bindings.expand_matters(value,bindings)
                     pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
-                faults=status_faults(package,value['matters'])
+                from core import source_reservations
+                faults=status_faults(package,value['matters'])+source_reservations.matter_faults(package,value['matters'])
                 if faults and not correcting:raise ValueError('; '.join(faults))
                 if faults:pending.setdefault('status_observations',[]).extend(faults)
                 values={m['matter_id']:m for m in value['matters']}
@@ -591,11 +617,11 @@ def advance(state, invoke):
                 if source_owned:value=construction_bindings.expand_biography(value,bindings)
                 # Style rules the prompt alone has not held: title in the first
                 # sentence and varied paragraph openings, enforced in code.
-                from core import biography_openings,biography_shape,prose_rules
+                from core import biography_openings,biography_shape,prose_rules,source_reservations
                 profile={**work['candidates'][unit['index']],**value}
                 profile,titled=biography_openings.place_title(profile,package)
                 profile,_=prose_rules.polish_candidate(profile,package)
-                shape=biography_shape.faults(profile)
+                shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)
                 prior=(pending.get('shape_fallback') or {}).get(key)
                 if shape and not correcting:
                     # Ángela's B9 architecture, checked before review: one
@@ -605,7 +631,7 @@ def advance(state, invoke):
                     raise ValueError('; '.join(shape))
                 if correcting and prior and len(shape)>prior['faults']:
                     profile={**profile,**prior['fields']}
-                    shape=biography_shape.faults(profile)
+                    shape=biography_shape.faults(profile)+source_reservations.bio_faults(package,profile)
                     pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
                 if shape:pending.setdefault('shape_observations',[]).extend(shape)
                 (pending.get('shape_fallback') or {}).pop(key,None)
@@ -615,7 +641,7 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
-                faults=length_faults(package,value)
+                faults=length_faults(package,value)+headcount_faults(package,value)
                 if faults and not correcting:
                     # Ángela's rule: develop up to 1,000 words, never shrink the
                     # original. One self-correction states the exact expectation.

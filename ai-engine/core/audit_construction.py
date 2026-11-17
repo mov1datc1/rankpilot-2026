@@ -44,7 +44,8 @@ category or target: they are read-only decisions that the application prints.
 Use names of clients and people, never internal IDs. This is an internal
 document, so confidential client names may appear. Do not narrate system
 stages, declare approval or ask the user to fix generated wording.
-executive_assessment (about 220 words): filing recommendation, objective versus
+executive_assessment (about 220 words): filing recommendation, primary AND any
+secondary objective (pursue it, or say why it does not apply yet), objective versus
 verified position, main strength and limitation, and why the hero proves the
 case better than the strongest other selected mandate, using source-grounded
 qualitative criteria and no invented scores. Preserve the supplied target or
@@ -403,6 +404,22 @@ def _comparison_line(item, text):
     return item['alternative'] + ' frente a ' + item['selected'] + ': ' + text.strip()
 
 
+MOVE_UP = re.compile(r'\b(?:move\s+up|climb|higher\s+(?:band|tier)|bands?/tiers?|subir|ascender|escalar)\b', re.I)
+UNRANKED = re.compile(r'\b(?:not\s+ranked|unranked|no\s+current|sin\s+(?:ranking|banda|clasificaci)|none|n/?a)\b', re.I)
+
+
+def objective_line(package, executive):
+    """A supplied secondary objective is addressed: a move-up goal without a current band does not apply yet."""
+    secondary = str(((package.get('objectives') or {}).get('secondary')) or '').strip()
+    if not secondary or re.search(r'objetivo\s+secundario', executive, re.I) or _fold(secondary) in _fold(executive):
+        return ''
+    band = str(package.get('current_band') or '').strip()
+    if MOVE_UP.search(secondary) and (not band or UNRANKED.search(band)):
+        return ('Objetivo secundario («' + secondary + '»): todavía no aplica, porque la práctica no tiene una banda '
+                'actual desde la cual subir; se retomará después de lograr la primera clasificación, que es el objetivo primario.')
+    return ''
+
+
 def render(state, plan, content):
     """Order, names, headings and decisions are application-owned."""
     from core.review_graph import reconcile_next_actions
@@ -418,7 +435,9 @@ def render(state, plan, content):
         reserve.append(gaps['other_reserves'].strip())
     sections = ([RESERVE_HEADING] + reserve if reserve else []) + (
         [EXCLUDED_HEADING, gaps['exclusions'].strip()] if str(gaps.get('exclusions') or '').strip() else [])
-    letter = {'executive_assessment': content['executive_assessment'].strip(), 'portfolio': portfolio,
+    executive = content['executive_assessment'].strip()
+    line = objective_line(state['package'], executive)
+    letter = {'executive_assessment': (executive + ' ' + line).strip() if line else executive, 'portfolio': portfolio,
               'leadership': '\n\n'.join(blocks), 'evidence_gaps': '\n'.join(sections),
               'next_steps': '', 'next_actions': copy.deepcopy(content.get('next_actions', []))}
     names = {str(m['id']): _label(m) for m in state['package'].get('matters', [])}

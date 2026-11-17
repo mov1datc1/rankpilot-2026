@@ -55,6 +55,24 @@ def lead_openings(text, name):
     return hits
 
 
+def _content_words(sentence):
+    return {w for w in re.findall(r"[\w’']{4,}", sentence.casefold())}
+
+
+def repeated_sentences(bio, threshold=0.65):
+    """Pairs of substantial sentences (10+ words) whose content words largely coincide."""
+    sentences = [s for s in re.split(r'(?<=[.!?])\s+', ' '.join(str(bio or '').split())) if len(s.split()) >= 10]
+    pairs = []
+    for i, a in enumerate(sentences):
+        wa = _content_words(a)
+        for b in sentences[i + 1:]:
+            wb = _content_words(b)
+            shared = wa & wb
+            if len(shared) >= 6 and len(shared) / min(len(wa), len(wb)) >= threshold:
+                pairs.append((a, b))
+    return pairs
+
+
 def faults(candidate):
     """Exact expectations for a substantial B9 (nominated or to develop) that reads as a matter list."""
     if candidate.get('recommendation') not in ('present', 'develop'):
@@ -76,6 +94,11 @@ def faults(candidate):
             'its most significant mandate (client problem, legal obstacle, own action, achieved result or exact current '
             f'stage) with related mandates following briefly; credentials once; one factual close. At most {MAX_PARAGRAPHS} '
             'paragraphs, no "Finally,"/"Additionally," list markers. Keep every fact, number, status and mandate.')
+    repeats = repeated_sentences(bio)
+    if repeats:
+        found.append('B9 REPETITION: the same content is stated twice: ' + '; '.join(
+            '"' + ' '.join(a.split()[:12]) + ' …" / "' + ' '.join(b.split()[:12]) + ' …"' for a, b in repeats[:2])
+            + '. Keep it once, where it explains the expertise.')
     from core.prose_rules import HEAD_FUNCTION
     heads = [s for s in re.split(r'(?<=[.!?])\s+', ' '.join(bio.split()))
              if any(re.search(r'\b(?:department|practice)\b', m.group(0), re.I) for m in HEAD_FUNCTION.finditer(s))]

@@ -420,12 +420,22 @@ def invoke_role(state, role, schema, instruction, payload):
         cache_key=None  # Not an OpenAI client (e.g. an offline stand-in): send nothing extra.
     if cache_key:
         model=model.model_copy(update={'model_kwargs':{**(getattr(model,'model_kwargs',None) or {}),'prompt_cache_key':cache_key}})
+    from utils import prompt_cache
+    digest=prompt_cache.schema_digest(strict_schema)
+    # Explicit caching: no paid write unless this role already ran with the
+    # identical schema in this case (the schema is part of the cached prefix).
+    cache_plan=prompt_cache.plan(role,digest,state.get('trace',[])) if 'cache_plan' in (getattr(type(model),'model_fields',None) or {}) else None
+    if cache_plan:
+        model=model.model_copy(update={'cache_plan':cache_plan})
     # Keep raw status and usage even when output is cut off: SDK Pydantic parsing
     # otherwise raises before returning metadata. Validate locally after status.
     chain = model.with_structured_output(strict_schema, method='json_schema', strict=True, include_raw=True)
     from core.editorial_role_policy import role_base
-    messages = [
-        ('system', role_base(role, BASE) + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n' + methodology + '\nTASK:\n' + instruction), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))]
+    static = role_base(role, BASE) + '\nSource references in extraction provenance point to the enclosing record source_excerpt: start/end are exact zero-based character offsets, end exclusive. Read that complete original source, including qualifications and contradictions. References only replace verbatim duplicates, not missing evidence.\n'
+    dynamic = methodology + '\nTASK:\n' + instruction
+    # Same text either way; as two blocks the static role block can carry the cache breakpoint.
+    system = [{'type':'text','text':static},{'type':'text','text':dynamic}] if cache_plan=='static' else static + dynamic
+    messages = [('system', system), ('human', json.dumps(role_payload(payload, role), ensure_ascii=False, separators=(',', ':')))]
     try:
         result = chain.invoke(messages)
     except Exception as error:
@@ -450,6 +460,8 @@ def invoke_role(state, role, schema, instruction, payload):
     trace = list(state.get('trace', [])) + [{'role':role, 'seconds':round(time.monotonic()-started,3), 'usage':getattr(raw,'usage_metadata',None), 'model':_meta.get('model_name'), 'response_status':_meta.get('status'), 'incomplete_details':_meta.get('incomplete_details'), 'finish_reason':_meta.get('finish_reason'), 'prompt_version':_RULES['version'], 'prompt_revision':_RULES.get('prompt_revision',_RULES['version']), 'retrieved_rules':router.get_rag_manifest(), 'rag_routing':getattr(router,'last_routing',{}), 'provider_request_id':getattr(raw,'id',None)}]
     trace[-1]['reasoning_version']=REASONING_VERSION if reasoning_guidance(role) else None
     if cache_key:trace[-1]['prompt_cache_key']=cache_key
+    trace[-1]['schema_digest']=digest
+    if cache_plan:trace[-1]['cache_plan']=cache_plan
     try:
         require_complete_response(raw)
         if result.get('parsing_error') or result.get('parsed') is None:

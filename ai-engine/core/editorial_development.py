@@ -29,7 +29,7 @@ class Candidate(BaseModel):
     current_ranking: str
     suggested_ranking: str
     category_rationale: str = Field(description='Why this specific category fits seniority and evidence; explain any departure from the supplied suggestedRank. If unresolved, say Category pending and the exact missing criterion.')
-    category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category.')
+    category_missing_criterion: str = Field(default='', description='Exact undecided eligibility or category-choice criterion when suggested_ranking is Category pending; state what specific evidence would resolve it. Empty for an evidenced specific category. Do not use a generic request for more references as a substitute for choosing a category. Write it in Spanish: the internal Spanish Audit prints it verbatim.')
     category_assessment: CategoryAssessment | None = None
     biography_depth: BiographyDepth | None = None
     profile_coverage: list[ProfileCoverage] = Field(default_factory=list)
@@ -38,7 +38,7 @@ class Candidate(BaseModel):
     supporting_matters: list[SupportingMatter]
     external_evidence: str
     evidence_gaps: str
-    recommended_action: str
+    recommended_action: str = Field(description='Concrete next action for this person, written in Spanish: the internal Spanish Audit prints it verbatim.')
     submission_bio: str = Field(description='Source-backed English B9 argument, normally aiming for 500–1,000 words per proposed person where the evidence warrants it. Develop the legal difficulty, personal action and achieved result; never pad to meet a count. Demonstrate personally attributed work; no audit voice, gaps or invented roles. Preserve confidentiality through sector descriptions.')
 
 class MatterDraft(BaseModel):

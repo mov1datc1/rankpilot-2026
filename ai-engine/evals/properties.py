@@ -11,7 +11,8 @@ import json
 import re
 import sys
 
-ROLE_FORM = re.compile(r'\b(?:named|recorded|listed|designated)\s+(?:as\s+)?(?:the\s+)?(?:co-?)?lead(?:-|\s)partner', re.I)
+# Any lead-partner form vocabulary in public prose (named, serves as, is lead partner, As lead partner).
+ROLE_FORM = re.compile(r'\b(?:co-?)?lead(?:-|\s)partners?\b', re.I)
 # "said to have been taken" states an unproven allegation and is correct; only
 # narration about the record, or hedging an achieved act, is auditor voice.
 HEDGE = re.compile(r'\bThe (?:record|source|form) (?:confirms|shows|states|records) that|\b(?:described|reported|said) (?:as having|to have)\s+(?!been\b)\w+ed\b', re.I)

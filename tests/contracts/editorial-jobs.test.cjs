@@ -179,3 +179,11 @@ test('initial preparation shows the four real stages and separates waiting from 
  const waiting=publicJob({...base,status:'queued',issue:{owner:'rankpilot'}});assert.equal(waiting.waiting,true);assert.match(waiting.message,/espera/);
  const paused=publicJob({...base,status:'failed',issue:{owner:'rankpilot',message:'secret error'}});assert.match(paused.message,/Actualizar estado/);assert.equal(paused.message,paused.nextAction.description);assert.doesNotMatch(paused.issue.message,/secret|recuperando/);
 });
+test('a saved continuation of the same case is shown as work, not as waiting in line',()=>{
+ const {publicJob}=require('../../src/lib/editorial/jobs.ts');
+ const job={id:'j',status:'queued',stage:'development',tasks:['selection','development','audit','artifact'],cursor:1,ledger:[{stage:'development',status:'queued'}],leaseUntil:new Date(Date.now()+1000).toISOString(),issue:null};
+ const resuming=publicJob(job);
+ assert.equal(resuming.waiting,false);assert.doesNotMatch(resuming.message,/espera/);
+ assert.equal(publicJob({...job,leaseUntil:new Date(Date.now()+120000).toISOString()}).waiting,true);
+ assert.equal(publicJob({...job,ledger:[]}).waiting,true);
+});
