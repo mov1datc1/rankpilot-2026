@@ -51,6 +51,15 @@ export async function recoverStoppedJobs() {
   }
 }
 
+/** Milliseconds until the next queued job can be claimed (bounded), so a saved
+ * continuation resumes as soon as its short pause ends instead of a fixed poll. */
+export async function nextClaimDelay(maxMs=2000) {
+  const rows:any[]=await prisma.$queryRaw`SELECT EXTRACT(EPOCH FROM (min(COALESCE("leaseUntil",now()))-now()))*1000 AS "ms" FROM "EditorialJob" WHERE "status"='queued'`;
+  const ms=Number(rows[0]?.ms);
+  if(!Number.isFinite(ms)) return maxMs;
+  return Math.max(100,Math.min(maxMs,Math.ceil(ms)+50));
+}
+
 export async function claimJob() {
   // Expired work is quarantined before the recovery sweep may replay it.
   await prisma.$executeRaw`UPDATE "EditorialJob" SET "status"='indeterminate',"updatedAt"=now(),"issue"=${JSON.stringify(systemIssue('INTERRUPTED','La etapa se interrumpió. RankPilot conserva el avance.'))}::jsonb,"ledger"="ledger" || jsonb_build_array(jsonb_build_object('stage',"stage",'cursor',"cursor",'worker_commit',${process.env.RENDER_GIT_COMMIT || 'local'}::text,'issue',jsonb_build_object('code','INTERRUPTED'),'status','indeterminate')) WHERE "status"='running' AND "leaseUntil"<now()`;

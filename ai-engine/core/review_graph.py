@@ -136,6 +136,7 @@ class ReviewState(TypedDict, total=False):
     field_review_failures: list
     field_review_repair_calls: int
     field_review_active_repair: list
+    field_review_isolated: list
     field_review_parent_feedback: list
     field_review_reconciled_feedback: list
     repair_report: dict

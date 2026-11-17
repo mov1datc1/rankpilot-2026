@@ -1,3 +1,36 @@
+## 1.0.95 — B9 written to Ángela's architecture before review; prose rules in code; legacy graph removed
+
+Ramos on v1.0.94 (job `ec4c91b9`) completed with the final review passed (8/8) and 72.38% first-pass quality. The documents still showed "named lead partner" about 11 times, "The record confirms" in B10, duplicated value lines in matters, an English Audit heading and a B9 written as one paragraph per matter.
+- **Prose rules in code** (`core/prose_rules.py`, `prose-rules-v1`). These are known answers, never judgements, and never touch numbers or names:
+  - form vocabulary becomes natural verbs ("was named lead partner in X" → "led X", "lead-partner responsibilities" → "work");
+  - auditor hedges are removed;
+  - a narrative sentence that repeats D3's value is dropped;
+  - a confirmed department head missing from their B9 is stated in its first sentence (practice-aware: heading other areas does not count).
+  Output bindings stay literal: they are re-pointed to the sentence carrying the same facts, or the field keeps its earlier wording. The rules apply after each B9, at the end of construction and after every repair.
+- **B9 shape checked before review** (`core/biography_shape.py`). A nominated or to-develop B9 written as a matter list fails the check: four or more paragraphs opening with another led mandate, more than eight paragraphs, or "Finally,"-style markers. So does one with artificial passives ("is led by X", "; X leads the matter") or a headship stated twice.
+  - It receives ONE self-correction stating Ángela's architecture: positioning opening; 2–4 legal themes opened by their strongest mandate; credentials once; factual close.
+  - If the correction is worse, or breaks another contract, the earlier valid draft is kept and the finding becomes an observation. Never a stop.
+- **B9 prompt**: an explicit "architecture of a nominated B9" (problem → obstacle → own action → result or exact stage), headship once, active voice.
+- **Fixed (latent since v1.0.92)**: the B9 step reused the name of the biography schema for its local variable. Any biography built after another one had been processed failed: the fifth B9 of a case with more than four lawyers (DeForest has seven), serial mode, or a B9 self-correction.
+- **Fixed waste**: when a unit in a parallel batch asked for its self-correction, the already-paid sibling responses were discarded and bought again. The correction now runs within the same step and the siblings are kept.
+- Matter status: a documented pending stage must be stated, and "hired to file" is not "filed". This triggers one self-correction, then becomes an observation.
+- **Parallel field review**: up to 4 review groups per step (`RANKPILOT_PARALLEL_REVIEWS`). A group that failed inside a parallel batch is retried alone, never in a loop.
+- The Audit decision heading is in Spanish ("Situación actual", "categoría pendiente").
+- **Removed** the retired 21-node full-generation graph and the code behind `/process`, `/process-async`, `/generate-report`, `/generate-docx` and `/download`. Those routes already answered 410, and they still do.
+  - Deleted: `core/graph.py`, `agents/editorial_nodes.py`, `utils/docx_generator.py`, `utils/editorial_memory.py`.
+  - Also deleted: ad-hoc root scripts and ten generated `.tex` reports.
+  - `main.py` goes from 1,341 to 594 lines and no longer compiles the old graph at start-up.
+- **Progress panel**:
+  - real per-stage time, tokens and correction calls read from the ledger;
+  - the robot says what it does between drafting and field review;
+  - the worker resumes a saved continuation as soon as its pause ends, instead of a fixed 2-second poll.
+- Offline bench `ai-engine/evals/properties.py` measures these properties on saved cases. Results before → after the rules:
+  - lead-form phrases: Ramos 11 → 0, DeForest 19 → 0;
+  - hedges 2 → 0;
+  - missing headship 1 → 0;
+  - duplicated value lines: 5 → 0 and 2 → 0.
+- Validation: 931 Python tests, 592 Node tests (1 skipped), TypeScript. No new generation was run: quality on a real case is pending the Ramos test.
+
 ## 1.0.94 — Never stop on an exhausted initial repair when it can be made safe; talking progress robot
 
 - Ramos on v1.0.93 (job `23f9ac7d`) stopped after 10.3 min. The initial repair of the single B9 rewrote it and dropped the confirmed department headship and a retained credential, so it was rejected, and the residual attempt also failed.

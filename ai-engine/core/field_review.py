@@ -500,28 +500,78 @@ def advance(state):
         return after_repair(current,result)
     from core.review_graph import invoke_role
     available={u['field']:u for u in units_for(state)}
-    paths=(pending.get('pending_groups') or [[]])[0]
+    groups=[g for g in (pending.get('pending_groups') or [[]])]
+    paths=groups[0] if groups else []
     if not paths or len(paths)!=len(set(paths)) or any(p not in available for p in paths):
         raise ValueError('Invalid persisted field review group')
-    units=[available[p] for p in paths]
-    result,trace=invoke_role(state,'field_reviewer',contract(units),TASK,review_payload(units))
-    receipts,defects=project_checks(units,result)
-    saved=[r for r in state.get('field_review_receipts',[]) if r.get('field') not in paths]+receipts
-    update={'trace':trace,'field_review_receipts':saved}
-    if state.get('development_build_report',{}).get('first_pass_quality'):
-        from core.construction_quality import record_first_review
-        update['development_build_report']=record_first_review(state['development_build_report'],units,result)
-    if any(u['field'] in ('b10','c2') for u in units):
-        update['field_review_context_version']=INSTITUTIONAL_CONTEXT
+    # Independent groups are reviewed together (each one is its own proof).
+    isolated=state.get('field_review_isolated') or []
+    if digest(paths) in isolated:
+        # This group already failed inside a parallel batch: review it alone,
+        # so a failure surfaces with its normal bounded recovery, never a loop.
+        selected=[paths]
+    else:
+        selected=[paths]+[g for g in groups[1:] if g and len(g)==len(set(g)) and all(p in available for p in g)
+                          and digest(g) not in isolated][:max(0,review_parallel()-1)]
+    outcomes=run_reviews(state,invoke_role,[[available[p] for p in g] for g in selected])
+    trace=list(state.get('trace',[]))
+    receipts_all=[r for r in state.get('field_review_receipts',[])]
+    report=state.get('development_build_report',{})
+    failures=list(state.get('field_review_failures',[]))
+    reconciled=list(state.get('field_review_reconciled_feedback',[]))
+    institutional=False
+    for units,outcome in outcomes:
+        group=[u['field'] for u in units]
+        if isinstance(outcome,BaseException):
+            # Recorded (an unknown outcome is never bought again blindly) and
+            # isolated: the group is retried at most once more, on its own.
+            if isinstance(getattr(outcome,'trace',None),dict):trace.append(outcome.trace)
+            isolated=list(dict.fromkeys(isolated+[digest(group)]))
+            continue
+        result,entry=outcome
+        trace.append(entry)
+        receipts,defects=project_checks(units,result)
+        receipts_all=[r for r in receipts_all if r.get('field') not in group]+receipts
+        if report.get('first_pass_quality'):
+            from core.construction_quality import record_first_review
+            report=record_first_review(report,units,result)
+        institutional=institutional or any(u['field'] in ('b10','c2') for u in units)
+        hashes={u['field']:u['hash'] for u in units}
+        failures=[d for d in failures if d.get('field_path') not in group]+[{**d,'unit_hash':hashes[d['field_path']]} for d in defects]
+        reconciled+=defects
+    update={'trace':trace,'field_review_receipts':receipts_all,'field_review_failures':failures,
+            'field_review_reconciled_feedback':reconciled,'field_review_isolated':isolated}
+    if report.get('first_pass_quality'):update['development_build_report']=report
+    if institutional:update['field_review_context_version']=INSTITUTIONAL_CONTEXT
     # Keep reviewing the remaining units before any repair: the complete list
     # lets one grouped call correct related fields, and gives a real first-pass
     # measurement instead of one interleaved with corrections.
-    hashes={u['field']:u['hash'] for u in units}
-    open_failures=[d for d in state.get('field_review_failures',[]) if d.get('field_path') not in paths]
-    update['field_review_failures']=open_failures+[{**d,'unit_hash':hashes[d['field_path']]} for d in defects]
-    if defects:
-        update['field_review_reconciled_feedback']=state.get('field_review_reconciled_feedback',[])+defects
     return schedule(state,update)
+
+
+def review_parallel():
+    try:return max(1,min(6,int(os.environ.get('RANKPILOT_PARALLEL_REVIEWS','4'))))
+    except ValueError:return 1
+
+
+def run_reviews(state,invoke_role,groups):
+    """[(units, (result, trace_entry) | exception)] for independent review groups."""
+    def call(units):
+        try:
+            result,trace=invoke_role({**state,'trace':[]},'field_reviewer',contract(units),TASK,review_payload(units))
+            entry=trace[-1] if trace else {'role':'field_reviewer','usage':{'unknown_calls':1},'usage_status':'unknown'}
+            return result,{**entry,**({'parallel_batch':len(groups)} if len(groups)>1 else {})}
+        except Exception as error:
+            return error
+    if len(groups)==1:
+        # A single review keeps its original semantics: errors propagate.
+        result,trace=invoke_role({**state,'trace':list(state.get('trace',[]))},'field_reviewer',contract(groups[0]),TASK,review_payload(groups[0]))
+        return [(groups[0],(result,trace[-1] if trace else {'role':'field_reviewer','usage':{'unknown_calls':1},'usage_status':'unknown'}))]
+    import contextvars
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(groups)) as pool:
+        futures=[pool.submit(contextvars.copy_context().run,call,units) for units in groups]
+        return [(units,future.result()) for units,future in zip(groups,futures)]
 
 
 def retain_observations(state,result=None,only=None):

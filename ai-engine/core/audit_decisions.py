@@ -1,4 +1,5 @@
 """Render individual decisions once; the Audit writer supplies analysis only."""
+import re
 from pydantic import ConfigDict, Field, create_model
 
 WRITING_TASK = '''Write a concise internal executive Audit in Spanish from the
@@ -59,11 +60,25 @@ def letter_contract(state, base):
     return create_model('SharedDecisionAudit',__base__=base,leadership=(leadership,...))
 
 
+def _current_position(text):
+    """Spanish wording of the current-ranking field; never asserts a ranking."""
+    value=' '.join(str(text or '').split()).rstrip('.')
+    if not value:return 'sin verificación disponible'
+    if re.search(r'\b(?:not ranked|unranked|no current ranking|sin ranking)\b',value,re.I):
+        return 'sin ranking declarado; la consulta acotada no encontró una coincidencia exacta, lo que no prueba ausencia en otras ediciones o prácticas'
+    return value
+
+
+def _category(value):
+    value=str(value or '').strip()
+    return 'categoría pendiente' if not value or value.casefold()=='category pending' else value
+
+
 def decision_heading(candidate):
     return (candidate['name']+' — Decisión: '+{'present':'proponer candidatura','develop':'desarrollar candidatura',
             'do_not_present':'no proponer candidatura'}.get(candidate.get('recommendation'),'por confirmar')+
-            '. Situación actual: '+str(candidate.get('current_ranking') or 'sin verificación disponible')+
-            '. Categoría propuesta: '+str(candidate.get('suggested_ranking') or 'Category pending')+'.')
+            '. Situación actual: '+_current_position(candidate.get('current_ranking'))+
+            '. Categoría propuesta: '+_category(candidate.get('suggested_ranking'))+'.')
 
 
 def project_letter(state, letter):

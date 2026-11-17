@@ -4,6 +4,7 @@ Each paid unit is checkpointed before the next one. Original sources and the
 validated selection are inputs, never outputs. This is construction, not repair.
 """
 import copy
+import re
 import hashlib
 import json
 from typing import Literal
@@ -85,6 +86,27 @@ Preserve every distinct substantive contribution in submission_case_coverage. Do
 not narrate verification rules, missing rankings or source sufficiency in public
 prose. Keep limited team participation proportionate without inventing a
 nomination or personal result.
+
+ARCHITECTURE OF A NOMINATED B9 (the method the editorial owner applies):
+1. Opening, one or two sentences: who this lawyer is in THIS practice: current
+   role, confirmed headship, and the kind of legal problem clients bring them,
+   shown by the evidence rather than adjectives.
+2. Body grouped by two to four legal themes drawn from their own mandates
+   (for example development continuity, expropriation, boundaries). Open each
+   theme with its most significant mandate: the client's problem, the legal
+   obstacle, this lawyer's own action or strategy, and the achieved result or
+   exact current stage with its decisive scale. Related mandates in the same
+   theme follow briefly. Never one paragraph per matter in list form.
+3. Career credentials (education, teaching, professional offices, prior
+   employment) appear once, where they explain the expertise.
+4. Close with one factual sentence on what this body of work shows for the
+   target practice: no superlatives, no ranking claims.
+Use natural verbs for the lead role (led, advised, represented); form
+vocabulary such as "named lead partner" is replaced by the application. State a
+confirmed headship once, in the opening. Write in the active voice (never "is
+led by X" or a trailing "; X leads the matter") and never as a list of matters
+("X also leads…", "Finally, X leads…"): at most eight paragraphs. The application
+checks this shape before review.
 ''' + DEPTH_INSTRUCTION
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional
@@ -145,6 +167,26 @@ def recover_plan(package, strategy, plan, pending, correcting, source_owned):
     fixes+=[{'fallback':'required_support_without_literal_source',**s} for s in skipped]
     if fixes:pending.setdefault('plan_fixes',[]).extend(fixes)
     return value
+
+
+PENDING_SOURCE = re.compile(r'\b(?:pending|ongoing|in progress|remains? (?:active|open|pending|ongoing)|awaiting|sub judice|pendiente|en tr[áa]mite|en curso)\b', re.I)
+PENDING_OUTPUT = re.compile(r'\b(?:pending|ongoing|in progress|remain\w*|awaiting|continu\w+|active|not yet|under way|underway)\b', re.I)
+
+
+def status_faults(package, matters):
+    """A documented pending stage must be stated; a mandate to file is not a filing."""
+    register={m['id']:m for m in package.get('matters',[])}
+    faults=[]
+    for item in matters:
+        source=register.get(item.get('matter_id'),{})
+        text=' '.join(str(source.get(k) or '') for k in ('source_excerpt','rawNotes','summary','completionDate','otherInfo'))
+        output=f"{item.get('text','')} {item.get('completion_status','')}"
+        label=source.get('client') or item.get('matter_id')
+        if PENDING_SOURCE.search(text) and not PENDING_OUTPUT.search(output) and not re.search(r'\b(?:won|concluded|completed|final judgment|dismissed)\b',text,re.I):
+            faults.append(f'{label}: the source records a pending or ongoing stage; state the current procedural status in the narrative or completion_status.')
+        if re.search(r'\b(?:hired|retained|engaged|instructed) to (?:file|bring|initiate|commence)\b',text,re.I) and re.search(r'\b(?:filed|brought|initiated|commenced)\b',output,re.I) and not re.search(r'\b(?:filed|brought|initiated|commenced)\b',text,re.I):
+            faults.append(f'{label}: the source says the firm was hired to file the action, not that it was filed; describe the mandate without inventing the procedural step.')
+    return faults
 
 
 def length_faults(package, value):
@@ -540,19 +582,37 @@ def advance(state, invoke):
                     value,receipts=construction_bindings.expand_matters(value,bindings)
                     pending.setdefault('anchor_bindings',[]).extend(receipts)
                 if sorted(m['matter_id'] for m in value['matters'])!=sorted(unit['ids']):raise ValueError('Narrative batch must cover each owned matter exactly once')
+                faults=status_faults(package,value['matters'])
+                if faults and not correcting:raise ValueError('; '.join(faults))
+                if faults:pending.setdefault('status_observations',[]).extend(faults)
                 values={m['matter_id']:m for m in value['matters']}
                 work['matters']=[{**m,**values.get(m['matter_id'],{})} for m in work['matters']]
             elif kind=='bio':
                 if source_owned:value=construction_bindings.expand_biography(value,bindings)
                 # Style rules the prompt alone has not held: title in the first
                 # sentence and varied paragraph openings, enforced in code.
-                from core import biography_openings
-                candidate={**work['candidates'][unit['index']],**value}
-                candidate,titled=biography_openings.place_title(candidate,package)
-                candidate,trace,style=biography_openings.vary_openings(state,invoke,candidate,trace)
+                from core import biography_openings,biography_shape,prose_rules
+                profile={**work['candidates'][unit['index']],**value}
+                profile,titled=biography_openings.place_title(profile,package)
+                profile,_=prose_rules.polish_candidate(profile,package)
+                shape=biography_shape.faults(profile)
+                prior=(pending.get('shape_fallback') or {}).get(key)
+                if shape and not correcting:
+                    # Ángela's B9 architecture, checked before review: one
+                    # self-correction with the exact expectation; this draft is
+                    # kept in case the correction is worse.
+                    pending.setdefault('shape_fallback',{})[key]={'fields':{k:profile[k] for k in value},'faults':len(shape)}
+                    raise ValueError('; '.join(shape))
+                if correcting and prior and len(shape)>prior['faults']:
+                    profile={**profile,**prior['fields']}
+                    shape=biography_shape.faults(profile)
+                    pending.setdefault('bio_shape',[]).append({'candidate':profile['name'],'kept_prior':True})
+                if shape:pending.setdefault('shape_observations',[]).extend(shape)
+                (pending.get('shape_fallback') or {}).pop(key,None)
+                profile,trace,style=biography_openings.vary_openings(state,invoke,profile,trace)
                 if titled or style:
-                    pending.setdefault('bio_style',[]).append({'candidate':candidate['name'],'title_placed':titled,**(style or {})})
-                work['candidates'][unit['index']].update({k:candidate[k] for k in value})
+                    pending.setdefault('bio_style',[]).append({'candidate':profile['name'],'title_placed':titled,**(style or {})})
+                work['candidates'][unit['index']].update({k:profile[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
                 faults=length_faults(package,value)
@@ -591,14 +651,26 @@ def advance(state, invoke):
                 for stale in ('failed_unit','rejected_response','validation_error'):pending.pop(stale,None)
                 pending['pending_groups']=remaining
                 pending['content_hash']=digest(work)
-                if not state.get('durable_repair_steps'):
+                if not state.get('durable_repair_steps') or any(not isinstance(o,BaseException) for o in prefetched.values()):
+                    # Paid sibling responses of the same parallel batch are still
+                    # in memory: correct this unit now and keep them, never re-buy.
                     continue
                 return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
                         'development_repair_unlocatable':False,'repair_continuation':pending,'trace':trace,
                         'development_build_report':{'version':VERSION,'completed_units':pending['completed_units'],
                             'remaining_units':len(remaining),'self_correction':{'unit':copy.deepcopy(unit),'error':str(error)[:600]}}}
-            pending.pop('unit_feedback',None)
-            return {'development':copy.deepcopy(work),'development_validated':False,
+            prior=(pending.get('shape_fallback') or {}).pop(key,None)
+            if kind=='bio' and prior:
+                # The correction of a B9 shape broke another contract: keep the
+                # earlier valid draft (shape recorded as an observation), never stop.
+                work['candidates'][unit['index']].update(prior['fields'])
+                pending.setdefault('bio_shape',[]).append({'candidate':work['candidates'][unit['index']]['name'],
+                    'kept_prior':True,'correction_error':str(error)[:300]})
+                for stale in ('failed_unit','rejected_response','validation_error','unit_feedback'):pending.pop(stale,None)
+                pending['pending_groups']=remaining
+            else:
+                pending.pop('unit_feedback',None)
+                return {'development':copy.deepcopy(work),'development_validated':False,
                     'repair_continuation':pending,'development_repair_unlocatable':True,
                     'errors':['La construcción conservó una respuesta que no cumple el contrato: '+str(error)],
                     'trace':trace}
@@ -615,6 +687,10 @@ def advance(state, invoke):
                         'version':VERSION,'completed_units':pending['completed_units'],'remaining_units':len(pending['pending_groups'])}}
     work.update(version=DEVELOPMENT_VERSION, execution_contract=EXECUTION_CONTRACT,
                 personal_quality_contract=PERSONAL_QUALITY_CONTRACT, biography_depth_contract=DEPTH_CONTRACT)
+    # Known editorial answers are applied in code before any review: form
+    # vocabulary, auditor voice, confirmed headship, duplicated value lines.
+    from core.prose_rules import polish_proposal
+    work,prose_report=polish_proposal(package,work)
     proposal=bind_development(package,full.model_validate(work).model_dump())
     proposal['version']=DEVELOPMENT_VERSION
     proposal['construction_contract']=VERSION
@@ -634,7 +710,11 @@ def advance(state, invoke):
                 'unit_corrections':pending.get('unit_corrections',{}),
                 'plan_fixes':pending.get('plan_fixes',[]),
                 'bio_style':pending.get('bio_style',[]),
+                'prose_rules':prose_report,
                 'length_observations':pending.get('length_observations',[]),
+                'status_observations':pending.get('status_observations',[]),
+                'bio_shape':pending.get('bio_shape',[]),
+                'shape_observations':pending.get('shape_observations',[]),
                 'rejected_responses':[{k:v for k,v in r.items()} for r in pending.get('rejected_responses',[])],
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}

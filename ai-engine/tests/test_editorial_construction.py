@@ -66,6 +66,7 @@ class ConstructionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):advance(altered,invoke)
                 invoke.assert_not_called()
 
+    @patch.dict('os.environ',{'RANKPILOT_PARALLEL_UNITS':'1'})
     def test_wrong_owned_id_retains_paid_response_without_replay(self):
         state,v=self.fixture();state['durable_repair_steps']=True;calls=[]
         state.update(advance(state,self.provider(v,calls)))

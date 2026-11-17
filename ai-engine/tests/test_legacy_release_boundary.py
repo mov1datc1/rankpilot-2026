@@ -1,37 +1,31 @@
-"""Old service entry points cannot label failed validation as a final report."""
-import copy
+"""The retired full-generation entry points answer 410 before any work runs."""
+import asyncio
+import json
 import unittest
-from main import _assert_release_approved
+from types import SimpleNamespace
 
-CHECKS=('source_validation','evidence_reconciliation','artifact_validation','constitutional_validation','release_verdict')
+from main import service_boundary
+
+RETIRED_PATHS = ('/process', '/process-async', '/download', '/generate-report', '/generate-docx')
+
 
 class LegacyReleaseBoundaryTests(unittest.TestCase):
-    def complete(self):
-        return {'is_complete':True,'pdf_url':'synthetic-report.pdf',**{k:{'passed':True} for k in CHECKS}}
+    def test_each_retired_path_is_gone_without_calling_the_app(self):
+        called = []
 
-    def test_completed_result_requires_each_positive_gate(self):
-        for key in CHECKS:
-            for value in ({},{'passed':False},None,'missing'):
-                with self.subTest(key=key,value=value):
-                    result=self.complete()
-                    if value=='missing':result.pop(key)
-                    else:result[key]=value
-                    with self.assertRaisesRegex(ValueError,'RELEASE_REJECTED'):_assert_release_approved(result)
+        async def call_next(request):
+            called.append(request.url.path)
 
-    def test_an_artifact_rollback_blocks_even_with_positive_booleans(self):
-        result=self.complete();result['artifact_validation']['matter_rollbacks']=[{'matter_id':'fictional'}]
-        with self.assertRaisesRegex(ValueError,'matter_rollbacks'):_assert_release_approved(result)
+        for path in RETIRED_PATHS:
+            with self.subTest(path=path):
+                request = SimpleNamespace(url=SimpleNamespace(path=path), headers={})
+                response = asyncio.run(service_boundary(request, call_next))
+                self.assertEqual(response.status_code, 410)
+                self.assertEqual(json.loads(response.body)['code'], 'STUDIO_REQUIRED')
+        self.assertEqual(called, [])
 
-    def test_positive_legacy_result_remains_unchanged(self):
-        result=self.complete();before=copy.deepcopy(result)
-        _assert_release_approved(result);self.assertEqual(result,before)
-
-    def test_pending_source_interrogation_remains_a_draft_without_fabricated_approval(self):
-        result={'is_complete':False,'interrogation_questions':['Confirm a genuine source fact.'],'release_verdict':{'passed':False}}
-        before=copy.deepcopy(result);_assert_release_approved(result);self.assertEqual(result,before)
-
-    def test_a_pdf_cannot_bypass_validation_by_clearing_the_complete_flag(self):
-        for result in ({'is_complete':False,'pdf_url':'synthetic-report.pdf'},
-                       {'is_complete':1},{'is_complete':'true'}):
-            with self.subTest(result=result),self.assertRaisesRegex(ValueError,'RELEASE_REJECTED'):
-                _assert_release_approved(result)
+    def test_the_retired_graph_is_no_longer_loaded(self):
+        import sys
+        import main  # noqa: F401
+        self.assertNotIn('core.graph', sys.modules)
+        self.assertNotIn('agents.editorial_nodes', sys.modules)

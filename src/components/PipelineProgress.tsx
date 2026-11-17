@@ -2,7 +2,8 @@
 import {useEffect,useState} from 'react';
 
 /** Animated, honest view of the durable editorial job: four real phases, no invented percentage. */
-type Activity={label:string;steps:{label:string;done:number;total:number}[];firstPassPercent:number|null;providerCalls:number};
+type StageMetric={stage:string;label:string;minutes:number;tokens:number;steps:number;repairs:number};
+type Activity={label:string;steps:{label:string;done:number;total:number}[];firstPassPercent:number|null;providerCalls:number;stages?:StageMetric[]};
 type Progress={current:number;total:number;startedAt?:string;waiting?:boolean;stage?:string;activity?:Activity|null};
 
 const PHASES=[
@@ -47,6 +48,7 @@ export function botSays(progress:Progress,done:boolean,active:number):string {
   if(active===0) return 'Estoy leyendo todos los asuntos y comparándolos con la metodología de la práctica.';
   if(active===1) {
     if(/Corrigiendo/.test(label)) { const g=step('Grupos corregidos'); return g && left(g) ? `Estoy corrigiendo unos campos: ${left(g)===1?'me queda 1 grupo':`me quedan ${left(g)} grupos`}.` : 'Estoy corrigiendo los últimos campos señalados.'; }
+    if(/Preparando la revisión/.test(label)) return 'Ya terminé de redactar. Estoy aplicando las reglas editoriales y preparo la revisión campo por campo.';
     const review=step('Campos contrastados con sus fuentes');
     if(review) return left(review) ? `Reviso cada campo contra sus fuentes: van ${review.done} de ${review.total}.` : 'Terminé de revisar los campos; preparo el siguiente paso.';
     const plan=step('Plan común'),matters=step('Asuntos'),bios=step('Biografías B9'),inst=step('B10 y C2');
@@ -59,6 +61,9 @@ export function botSays(progress:Progress,done:boolean,active:number):string {
   if(active===2) return 'Estoy escribiendo el Audit con las mismas decisiones del Submission y revisándolo.';
   return 'Estoy armando los dos Word y haciendo la revisión final.';
 }
+
+export function formatMinutes(minutes:number) {return minutes<1?`${Math.max(1,Math.round(minutes*60))} s`:`${minutes.toFixed(1).replace('.',',')} min`;}
+export function formatTokens(tokens:number) {return tokens>=1e6?`${(tokens/1e6).toFixed(2).replace('.',',')} M tokens`:tokens>=1e3?`${Math.round(tokens/1e3)} k tokens`:`${tokens} tokens`;}
 
 export function PipelineProgress({progress}:{progress:Progress}) {
   const [now,setNow]=useState<number|null>(null);
@@ -127,12 +132,17 @@ export function PipelineProgress({progress}:{progress:Progress}) {
     {!done && progress.activity && (progress.activity.steps.length>0 || progress.activity.firstPassPercent!==null) && <div style={{display:'flex',flexWrap:'wrap',gap:'8px 18px',alignItems:'center'}}>
       {progress.activity.steps.map(step=><div key={step.label} style={{minWidth:150,flex:'1 1 150px',maxWidth:260}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:'0.74rem',color:'#E0E7FF',marginBottom:4}}>
-          <span>{step.label}</span><span style={{fontVariantNumeric:'tabular-nums'}}>{step.done} de {step.total}</span></div>
+          <span style={{minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:8}}>{step.label}</span><span style={{fontVariantNumeric:'tabular-nums',flexShrink:0}}>{step.done} de {step.total}</span></div>
         <div style={{height:5,borderRadius:999,background:'rgba(255,255,255,.15)',overflow:'hidden'}}>
           <div style={{height:'100%',width:`${step.total?Math.round(100*step.done/step.total):0}%`,background:step.done>=step.total?'#34D399':'#38BDF8',transition:'width .6s ease'}}/></div>
       </div>)}
       {progress.activity.firstPassPercent!==null && <span style={{fontSize:'0.74rem',background:'rgba(52,211,153,.15)',border:'1px solid rgba(52,211,153,.4)',borderRadius:999,padding:'3px 10px'}}>
         Acierto en primera redacción: {progress.activity.firstPassPercent}%</span>}
+    </div>}
+    {(progress.activity?.stages || []).length>0 && <div aria-label="Métricas reales por etapa" style={{display:'flex',flexWrap:'wrap',gap:6}}>
+      {(progress.activity?.stages || []).map(m=><span key={m.stage} title={`${m.steps} pasos guardados${m.repairs?` · ${m.repairs} llamadas de corrección`:''}`}
+        style={{fontSize:'0.72rem',color:'#E0E7FF',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.14)',borderRadius:8,padding:'3px 8px',fontVariantNumeric:'tabular-nums'}}>
+        <strong style={{fontWeight:600}}>{m.label}</strong> · {formatMinutes(m.minutes)} · {formatTokens(m.tokens)}{m.repairs?` · ${m.repairs} corr.`:''}</span>)}
     </div>}
     {open!==null && <div style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.15)',borderRadius:10,padding:'8px 12px',fontSize:'0.8rem',color:'#E0E7FF'}}>
       <strong>{PHASES[open].title}.</strong> {PHASES[open].detail}

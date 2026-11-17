@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import prisma from '../../src/lib/prisma';
-import { claimJob, runJobStage, recoverStoppedJobs } from '../../src/lib/editorial/runner';
+import { claimJob, runJobStage, recoverStoppedJobs, nextClaimDelay } from '../../src/lib/editorial/runner';
 import { engineFingerprint } from '../../src/lib/editorial/engine-identity';
 import { EDITORIAL_VERSION, engineMatchesWorker } from '../../src/lib/editorial/contracts';
 
@@ -24,7 +24,7 @@ async function main() {
         if(Date.now()-lastRecovery>30000) {await recoverStoppedJobs();lastRecovery=Date.now();}
         const job=await claimJob();
         if(job) await runJobStage(job);
-        else await new Promise(r=>setTimeout(r,2000));
+        else {const wait=await nextClaimDelay().catch(()=>2000);await new Promise(r=>setTimeout(r,wait));}
       } catch {console.error('Editorial queue temporarily unavailable');await new Promise(r=>setTimeout(r,5000));}
     }
   } finally {

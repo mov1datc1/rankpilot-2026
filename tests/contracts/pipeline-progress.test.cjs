@@ -51,3 +51,22 @@ test('the robot says what the real job is doing',()=>{
  assert.match(botSays({current:4,total:4},true,3),/Listo/);
  assert.match(renderToStaticMarkup(React.createElement(PipelineProgress,{progress:review})),/van 6 de 19/);
 });
+test('per-stage metrics are summed from the saved ledger only',()=>{
+ const {stageMetrics}=require('../../src/lib/editorial/activity.ts');
+ const at='2026-11-17T10:00:00.000Z';
+ const metrics=stageMetrics([
+  {stage:'selection',started_at:at,duration_ms:120000,trace:{role:'selection',usage:{total_tokens:100000}}},
+  {stage:'development',started_at:at,duration_ms:30000,trace:{usage:{total_tokens:50000},calls:[{role:'development'},{role:'field_review'}]}},
+  {stage:'development',started_at:at,duration_ms:30000,trace:{role:'repair',usage:{total_tokens:20000}}},
+  {stage:'matter:m1',started_at:at,duration_ms:6000,trace:{role:'repair',usage:{total_tokens:5000}}},
+  {stage:'development',status:'queued'}]);
+ assert.deepEqual(metrics.map(m=>[m.stage,m.minutes,m.tokens,m.steps,m.repairs]),[['selection',2,100000,1,0],['development',1,70000,2,1],['artifact',0.1,5000,1,1]]);
+ const html=renderToStaticMarkup(React.createElement(PipelineProgress,{progress:{current:1,total:4,activity:{label:'Revisando',steps:[],firstPassPercent:null,providerCalls:3,stages:metrics}}}));
+ assert.match(html,/Selección<\/strong> · 2,0 min · 100 k tokens/);
+ assert.match(html,/Redacción<\/strong> · 1,0 min · 70 k tokens · 1 corr\./);
+});
+test('the robot says what it does after drafting, before the field review',()=>{
+ const {botSays}=require('../../src/components/PipelineProgress.tsx');
+ const says=botSays({current:1,total:4,activity:{label:'Preparando la revisión por campos',steps:[],firstPassPercent:null,providerCalls:0}},false,1);
+ assert.match(says,/terminé de redactar/);
+});
