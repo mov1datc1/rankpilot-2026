@@ -1,6 +1,7 @@
 'use client';
 
 import {observationPresentation} from '@/lib/audit/observation-presentation';
+import {groupFindings} from '@/lib/audit/finding-groups';
 import {getDeliveryState} from '@/lib/audit/delivery-state';
 import { reviewIssues, reviewIsStale, isStoppedSelection, type ReviewDestination } from '@/lib/audit/review-actions';
 import { Sparkles } from 'lucide-react';
@@ -28,7 +29,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
     const findingMessages=new Set(findings.map((d:any)=>d.message));
     const messages=[...findings,...errors.filter(message=>!findingMessages.has(message)).map(message=>({message}))];
     const seen=new Set(messages.map((d:any)=>d.message));
-    const all=[...messages,...warnings.filter(message=>!seen.has(message)).map(message=>({message}))];
+    const all=groupFindings([...messages,...warnings.filter(message=>!seen.has(message)).map(message=>({message}))]);
     const fieldLabel=(d:any)=>{
       const path=String(d.field_path || '');
       const candidate=path.match(/^candidates\/(\d+)/) || String(d.message || '').match(/Calidad personal candidates\/(\d+)/);
@@ -55,6 +56,7 @@ export function ReviewPanel({data,errors,warnings,approved,onResolve,busy=false,
         <details>
           <summary style={{cursor:'pointer'}}>Ver detalle y citas de la revisión</summary>
           <p><strong>Mensaje original de la revisión:</strong> {d.message}</p>
+          {d.related?.length>0 && <p><strong>La revisión lo señaló también así:</strong> {d.related.join(' · ')}</p>}
           {d.artifact_quote && <p><strong>En el documento:</strong> {d.artifact_quote}</p>}
           {d.source_quote && <p><strong>En la fuente:</strong> {d.source_quote}</p>}
         </details>

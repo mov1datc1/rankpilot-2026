@@ -36,7 +36,12 @@ export function publicJob(job:any, submission?:any) {
   const labels:Record<string,string>={selection:'Comparando y seleccionando los asuntos',development:'Desarrollando Submission, candidaturas y posicionamiento',b10:'Redactando la descripción del departamento',audit:'Preparando el Audit de la misma selección',artifact:'Verificando el Submission y el Audit finales'};
   const recovering=['queued','running'].includes(job.status) && (job.issue?.owner==='rankpilot' || [...(job.ledger || [])].reverse().find((e:any)=>e.supervision)?.supervision?.action==='repair');
   const active=['queued','running'].includes(job.status);
-  const waiting=job.status==='queued';
+  // A saved continuation of this same case resumes after a pause of about a
+  // second: that is work in progress, not waiting behind another case.
+  const lastEntry=job.ledger?.at(-1);
+  const leaseUntil=job.leaseUntil ? new Date(job.leaseUntil).getTime() : NaN;
+  const resuming=job.status==='queued' && lastEntry?.status==='queued' && !job.issue && (!Number.isFinite(leaseUntil) || leaseUntil-Date.now()<15000);
+  const waiting=job.status==='queued' && !resuming;
   const paused=!active && job.status!=='completed';
   const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
   const lastDecision=job.ledger?.at(-1)?.supervision;

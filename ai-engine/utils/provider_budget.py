@@ -50,8 +50,18 @@ COUNT_FIELDS={'model','input','instructions','text','tools','tool_choice','reaso
 
 
 class BudgetedChatOpenAI(ChatOpenAI):
+    # Prompt-cache plan for this call (utils.prompt_cache): None keeps the
+    # provider default; 'none'/'static' use explicit mode.
+    cache_plan: str | None = None
+
+    def _get_request_payload(self,input_,*,stop=None,**kwargs):
+        from utils import prompt_cache
+        plan=self.cache_plan if self.cache_plan is not None else ('none' if prompt_cache.mode()=='explicit' else None)
+        return prompt_cache.apply(super()._get_request_payload(input_,stop=stop,**kwargs),plan)
+
     def _budget_payload(self,messages,stop,kwargs):
-        payload=self._get_request_payload(messages,stop=stop,**kwargs)
+        from utils import prompt_cache
+        payload=prompt_cache.strip(self._get_request_payload(messages,stop=stop,**kwargs))
         if 'input' not in payload or not payload.get('max_output_tokens'):
             request_budget.get().halt('AI_BUDGET_CHECK_UNAVAILABLE')
         return {k:v for k,v in payload.items() if k in COUNT_FIELDS},int(payload['max_output_tokens'])

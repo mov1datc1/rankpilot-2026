@@ -7,7 +7,26 @@ from core.editorial_construction import advance
 from core.prose_rules import natural_lead, states_headship
 import test_editorial_construction as construction_base
 
-FILLER = ' The client faced a contested regulatory measure and the proceedings followed the documented stage with its decisive scale and timing.'
+_WORDS = ['zoning', 'licence', 'decree', 'boundary', 'easement', 'permit', 'registry', 'suspension', 'appeal', 'hearing',
+          'valuation', 'title', 'concession', 'expropriation', 'possession', 'tribunal', 'municipality', 'ordinance', 'covenant', 'survey']
+_COUNTER = iter(range(10 ** 6))
+
+
+class _Filler:
+    """Distinct filler sentences so fixtures never repeat content by accident."""
+    def __radd__(self, other):
+        return other + self._next()
+
+    def __mul__(self, n):
+        return ''.join(self._next() for _ in range(n))
+
+    def _next(self):
+        i = next(_COUNTER)
+        # Every word is unique to this sentence: no shared content by construction.
+        return ' ' + ' '.join(f'{_WORDS[(i + k) % len(_WORDS)]}{i}n{k}' for k in range(22)) + '.'
+
+
+FILLER = _Filler()
 LIST_BIO = '\n\n'.join(
     ['Ana Ruiz is a partner who advises developers on land-use disputes.' + FILLER]
     + [f'Ana Ruiz {verb} a matter number {i} for a developer.' + FILLER * 2
@@ -51,6 +70,13 @@ class ShapeRuleTests(unittest.TestCase):
         found = biography_shape.faults(self.candidate(bio))
         self.assertEqual(len(found), 1)
         self.assertIn('B9 HEADSHIP', found[0])
+
+    def test_the_same_content_stated_twice_is_flagged(self):
+        bio = THEMED_BIO + '\n\nShe is a founding partner of Ruiz Abogados, responsible for the firm’s administrative, constitutional and amparo litigation areas.' \
+            + '\n\nAna Ruiz is a founding partner of Ruiz Abogados and responsible for the firm’s administrative, constitutional and amparo litigation areas.'
+        found = biography_shape.faults(self.candidate(bio))
+        self.assertTrue(any('B9 REPETITION' in f for f in found))
+        self.assertEqual(biography_shape.repeated_sentences(THEMED_BIO), [])
 
     def test_headship_must_name_this_practice_or_the_department(self):
         self.assertFalse(states_headship('He heads the firm’s administrative, constitutional and amparo litigation areas.', 'Real Estate'))

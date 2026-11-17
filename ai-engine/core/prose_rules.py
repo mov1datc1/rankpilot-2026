@@ -39,15 +39,40 @@ EXTRA_LEAD = [
     # "X is the lead partner on/for/in Y" -> "X leads Y" (form vocabulary without "named")
     (re.compile(r'\b(?P<be>was|is)\s+(?P<adv>(?:also|likewise|further)\s+)?the\s+(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>in|on|for)\s+'),
      lambda m: f"{m.group('adv') or ''}{('co-led' if m.group('co') else 'led') if m.group('be') == 'was' else ('co-leads' if m.group('co') else 'leads')} {'the work for ' if m.group('prep') == 'for' else ''}"),
+    # "X is (also) lead partner in/on/for Y" -> "X (also) leads Y"
+    (re.compile(r'\b(?P<be>is|was)\s+(?P<adv>(?:also|likewise|further)\s+)?(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>in|on|for)\s+'),
+     lambda m: f"{m.group('adv') or ''}{_tense(m.group('be') == 'was', m.group('co'))} {'the work for ' if m.group('prep') == 'for' else ''}"),
+    # "X serves/served as (the) lead partner in/on/for Y" -> "X leads/led Y"
+    (re.compile(r'\b(?P<v>serves|served|acts|acted)\s+as\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>in|on|for)\s+'),
+     lambda m: f"{_tense(m.group('v') in ('served', 'acted'), m.group('co'))} {'the work for ' if m.group('prep') == 'for' else ''}"),
+    # "X served as lead partner, when …" -> "X led the matter, when …"
+    (re.compile(r'\b(?P<v>serves|served|acts|acted)\s+as\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner(?=\s*(?:[,;.]|when\b|where\b|after\b|while\b|as\b|and\b))'),
+     lambda m: f"{_tense(m.group('v') in ('served', 'acted'), m.group('co'))} the matter"),
+    # "As lead partner in X, he …" -> "Leading X, he …"
+    (re.compile(r'\bAs\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>in|on|for)\s+'),
+     lambda m: f"{'Co-leading' if m.group('co') else 'Leading'} {'the work for ' if m.group('prep') == 'for' else ''}"),
+    # "X was (the) lead partner, supported by …" / "… was lead partner." -> "X led the matter, …"
+    (re.compile(r'\b(?P<be>is|was)\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner(?=\s*(?:[,;.)]|$))'),
+     lambda m: f"{_tense(m.group('be') == 'was', m.group('co'))} the matter"),
+    # "X and Y are/were the lead partners (on the matter)" -> "X and Y co-lead/co-led the matter"
+    (re.compile(r'\b(?P<be>are|were)\s+(?:the\s+)?(?:co-?)?lead(?:-|\s)partners(?:\s+(?:on|for|in)\s+the\s+matter)?(?=\s*(?:[,;.)]|$))'),
+     lambda m: f"{'co-led' if m.group('be') == 'were' else 'co-lead'} the matter"),
 ]
 TAIL_LEAD = re.compile(r'\b(?P<who>[A-ZÁÉÍÓÚÑ][\w’\'-]+)\s+is\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\.')
 
 HEDGES = [
+    # "The firm reports that X" / "; the firm reports that its …" -> the fact itself
+    (re.compile(r'\bThe (?:firm|team|client) (?:reports|states|notes|indicates|says) that\s+(\w)'), lambda m: m.group(1).upper()),
+    (re.compile(r'\bthe (?:firm|team) (?:reports|states|notes|indicates|says) that\s+'), lambda m: ''),
     (re.compile(r'\bThe (?:record|source|form) (?:confirms|shows|states|records) that\s+(\w)'), lambda m: m.group(1).upper()),
     (re.compile(r'\b(?:is|was|are|were) (?:described|reported|said|stated) (?:as having|to have)\s+(\w+ed)\b'), lambda m: m.group(1)),
     (re.compile(r'\b(?:According to|As recorded in|As stated in) the (?:record|source|form)s?,\s*(\w)'), lambda m: m.group(1).upper()),
 ]
 VALUE_LINE = re.compile(r'(?:^|(?<=[.!?]\s)|(?<=\n))(?:The\s+)?(?:stated|declared|reported|approximate|estimated)\s+(?:matter\s+)?value\s+(?:was|is|of)\b[^\n]*?(?:[.!?](?=\s|$)|$)', re.I)
+
+
+def _tense(past, co):
+    return ('co-led' if co else 'led') if past else ('co-leads' if co else 'leads')
 
 
 def _verb(match, rest):
@@ -163,6 +188,26 @@ def rebind(candidate, previous_bio=None):
     return result, moved, unresolved
 
 
+def shared_identity(candidate):
+    """A retained credential whose source says "the same University" names no entity of its own.
+
+    Its entity_name is cleared only when that entity is already retained by another
+    unit whose own source quote contains it; privacy decisions are untouched.
+    """
+    result = copy.deepcopy(candidate)
+    items = result.get('profile_coverage') or []
+    owned = {_fold(i.get('entity_name')) for i in items if i.get('decision') == 'retain' and i.get('entity_name')
+             and _fold(i.get('entity_name')) in _fold(_norm(i.get('source_quote')))}
+    fixed = 0
+    for item in items:
+        entity = _fold(item.get('entity_name'))
+        if (item.get('decision') == 'retain' and entity and entity not in _fold(_norm(item.get('source_quote')))
+                and entity in owned):
+            item['entity_name'] = ''
+            fixed += 1
+    return result, fixed
+
+
 def polish_candidate(candidate, package):
     """Apply the B9 rules; bindings stay literal or the field keeps its prior text."""
     original = copy.deepcopy(candidate)
@@ -173,13 +218,14 @@ def polish_candidate(candidate, package):
             if isinstance(item.get('public_quote'), str):
                 item['public_quote'] = strip_hedges(natural_lead(item['public_quote']))
     result, titled = place_headship(result, package)
+    result, shared = shared_identity(result)
     result, moved, unresolved = rebind(result)
     before_unresolved = rebind(original)[2]
     if unresolved > before_unresolved:
         # Never trade a literal binding for style: keep the prior wording.
         return original, {'changed': False, 'reason': 'binding_would_break'}
     changed = result != original
-    return result, {'changed': changed, 'headship_placed': titled, 'rebound': moved}
+    return result, {'changed': changed, 'headship_placed': titled, 'rebound': moved, 'shared_identity': shared}
 
 
 def polish_proposal(package, proposal):

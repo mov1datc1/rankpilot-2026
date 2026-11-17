@@ -104,7 +104,7 @@ export function PipelineProgress({progress}:{progress:Progress}) {
         <span style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.18)',borderRadius:999,padding:'4px 10px'}}>{completedPhases} de {PHASES.length} etapas completas</span>
       </div>
     </div>
-    <div style={{position:'relative',height:84,margin:'0 8px'}}>
+    <div style={{position:'relative',height:104,margin:'0 8px'}}>
       <svg width="100%" height="8" style={{position:'absolute',top:58,left:0}} preserveAspectRatio="none" aria-hidden="true">
         <line x1="0" y1="4" x2="100%" y2="4" stroke="rgba(255,255,255,.15)" strokeWidth="3"/>
         <line x1="0" y1="4" x2={`${position}%`} y2="4" stroke={done?'#34D399':'#38BDF8'} strokeWidth="3" className={done?undefined:'rp-flow'} style={{transition:'all .7s ease'}}/>
@@ -129,7 +129,7 @@ export function PipelineProgress({progress}:{progress:Progress}) {
         })}
       </div>
     </div>
-    {!done && progress.activity && (progress.activity.steps.length>0 || progress.activity.firstPassPercent!==null) && <div style={{display:'flex',flexWrap:'wrap',gap:'8px 18px',alignItems:'center'}}>
+    {!done && progress.activity && (progress.activity.steps.length>0 || progress.activity.firstPassPercent!==null) && <div style={{display:'flex',flexWrap:'wrap',gap:'8px 18px',alignItems:'center',marginTop:4,paddingTop:10,borderTop:'1px solid rgba(255,255,255,.12)'}}>
       {progress.activity.steps.map(step=><div key={step.label} style={{minWidth:150,flex:'1 1 150px',maxWidth:260}}>
         <div style={{display:'flex',justifyContent:'space-between',fontSize:'0.74rem',color:'#E0E7FF',marginBottom:4}}>
           <span style={{minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginRight:8}}>{step.label}</span><span style={{fontVariantNumeric:'tabular-nums',flexShrink:0}}>{step.done} de {step.total}</span></div>

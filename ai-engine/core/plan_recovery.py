@@ -85,7 +85,7 @@ def _fallback_candidate(package, name):
     return {'name': name, 'recommendation': 'develop', 'current_ranking': current,
             'suggested_ranking': 'Category pending',
             'category_rationale': 'Category pending: the shared plan did not establish a defensible category for this person.',
-            'category_missing_criterion': 'A specific directory category supported by this person\'s career stage and personally attributed work.',
+            'category_missing_criterion': 'Una categoría concreta del directorio respaldada por la etapa profesional de esta persona y por trabajo atribuido personalmente.',
             'category_assessment': {'decision': 'pending', 'criterion': 'pending', 'career_stage_evidence': [], 'growth_evidence': [],
                 'career_stage_assessment': 'Not assessed in the shared plan; based on the supplied profile only.',
                 'alternative_category': 'Category pending',
@@ -94,7 +94,7 @@ def _fallback_candidate(package, name):
             'why_candidate': 'Included in the supplied roster; personal case to be built from their attributed mandates.',
             'supporting_matters': [], 'external_evidence': 'No verified external ranking evidence.',
             'evidence_gaps': 'Category criterion not yet established.',
-            'recommended_action': 'Confirm the applicable category and the personal contribution in the attributed mandates.'}
+            'recommended_action': 'Confirmar la categoría aplicable y la aportación personal en los mandatos atribuidos.'}
 
 
 def exact_fixes(package, strategy, plan):

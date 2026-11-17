@@ -14,6 +14,17 @@ class LeadVocabularyTests(unittest.TestCase):
             'Ramos was named lead partner when neighbours sued.': 'Ramos led the matter when neighbours sued.',
             'He is named lead partner or co-lead partner on mandates.': 'He leads or co-leads mandates.',
             'Ana is the lead partner on the appeal.': 'Ana leads the appeal.',
+            'He also served as lead partner for El Cielo in two amparos.': 'He also led the work for El Cielo in two amparos.',
+            'Ramos further serves as lead partner in an indirect amparo.': 'Ramos further leads an indirect amparo.',
+            'Ramos served as lead partner when neighbours sued.': 'Ramos led the matter when neighbours sued.',
+            'he serves as lead partner while the firm defends the client.': 'he leads the matter while the firm defends the client.',
+            'As lead partner in a confidential matter, he oversees strategy.': 'Leading a confidential matter, he oversees strategy.',
+            'He is also lead partner for an association.': 'He also leads the work for an association.',
+            'Ramos is lead partner in an amparo.': 'Ramos leads an amparo.',
+            'José Pablo Ramos Castillo is the lead partner, supported by Edgar Moro.': 'José Pablo Ramos Castillo leads the matter, supported by Edgar Moro.',
+            'Jaime Bustamante was the lead partner.': 'Jaime Bustamante led the matter.',
+            'Eduardo Garduño and Carlos Rivera were the lead partners on the matter.': 'Eduardo Garduño and Carlos Rivera co-led the matter.',
+            'Javier was the lead partner, with Yrelia Barrón as a team member.': 'Javier led the matter, with Yrelia Barrón as a team member.',
         }
         for before, after in cases.items():
             with self.subTest(before=before):
@@ -27,6 +38,11 @@ class LeadVocabularyTests(unittest.TestCase):
     def test_auditor_hedges_are_removed(self):
         self.assertEqual(strip_hedges('The record confirms that the firm secured the ruling.'), 'The firm secured the ruling.')
         self.assertEqual(strip_hedges('The team is described as having secured approval.'), 'The team secured approval.')
+
+    def test_firm_reports_that_is_an_auditor_hedge(self):
+        self.assertEqual(strip_hedges('he oversees the challenge; the firm reports that its argument secured restitution.'),
+                         'he oversees the challenge; its argument secured restitution.')
+        self.assertEqual(strip_hedges('The firm reports that the court granted relief.'), 'The court granted relief.')
 
     def test_duplicated_value_sentence_is_dropped(self):
         text = 'The firm obtained the suspension. The stated value was USD 2 million.'
@@ -63,6 +79,24 @@ class CandidateTests(unittest.TestCase):
         result, info = polish_candidate(candidate, {})
         self.assertFalse(info['changed'])
         self.assertEqual(result, candidate)
+
+
+class SharedIdentityTests(unittest.TestCase):
+    def test_same_university_line_inherits_no_identity_of_its_own(self):
+        from core.prose_rules import shared_identity
+        candidate = {'profile_coverage': [
+            {'decision': 'retain', 'entity_name': 'Universidad Panamericana', 'source_quote': 'Law degree from Universidad Panamericana.'},
+            {'decision': 'retain', 'entity_name': 'Universidad Panamericana', 'source_quote': 'Postgraduate studies from the same University.'},
+            {'decision': 'generalize', 'entity_name': 'Client X', 'source_quote': 'Advised a client.'}]}
+        result, fixed = shared_identity(candidate)
+        self.assertEqual(fixed, 1)
+        self.assertEqual(result['profile_coverage'][1]['entity_name'], '')
+        self.assertEqual(result['profile_coverage'][2]['entity_name'], 'Client X')  # privacy decisions untouched
+
+    def test_an_entity_owned_by_no_unit_is_left_for_the_validator(self):
+        from core.prose_rules import shared_identity
+        candidate = {'profile_coverage': [{'decision': 'retain', 'entity_name': 'Invented SA', 'source_quote': 'He advised developers.'}]}
+        self.assertEqual(shared_identity(candidate)[1], 0)
 
 
 class ProposalTests(unittest.TestCase):

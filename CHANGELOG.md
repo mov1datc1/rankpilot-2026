@@ -1,3 +1,34 @@
+## 1.0.96 — Prompt cache under explicit control; known answers before the final judge
+
+Ramos on v1.0.95 (job `cd21a9b8`): 20.7 min, 1.75M tokens (93% input, 1.9% cached), final review not passed. A second judge round cost 33% of the tokens.
+- **Prompt cache** (`utils/prompt_cache.py`). Measured with 9 small live calls on gpt-5.6-terra:
+  - In default mode, every call writes its whole prompt to the cache at 1.25× input price, and almost nothing is read back.
+  - The output schema is part of the cached prefix: a different schema reads nothing; the same schema reads the whole static block.
+  - Explicit mode without a breakpoint writes nothing.
+- **What changes:**
+  - Every Responses call now uses explicit mode, so writes nobody reads are no longer paid for.
+  - A single breakpoint after the role's static instructions is used only when that role has already run with the identical schema in the case. That call writes the block once, and later identical calls read it at 0.1×.
+  - The system text is unchanged, only split into two blocks.
+  - The schema digest and cache plan are recorded in every trace.
+  - The token-count request never carries cache markers.
+  - `RANKPILOT_PROMPT_CACHE=implicit|off` switches back.
+- **Known answers checked before the judge.** Each one gets one self-correction and is never a stop:
+  - **Source reservations** (`core/source_reservations.py`): a matter whose source records a later adverse decision ("even though the Supreme Court … ruled against it") cannot be cited for its criteria or precedent without that reservation, in its narrative or in a B9 (IDEX).
+  - **Headcount:** with one partner, B10/C2 can never say "supported by / works with one partner", and a stated number of partners must match the form.
+  - **Audit:** a "move up bands" secondary objective without a current band gets the application's own explanation; the writer is asked to address primary and secondary objectives.
+- **B9:**
+  - The shape check now also flags near-duplicate sentences and a headship stated twice.
+  - "Lead partner" is turned into natural verbs in every form: "serves/served as", "is (also) lead partner", "As lead partner in", and the matter team line ("X is the lead partner, supported by…" → "X leads the matter, supported by…").
+  - "The firm reports that" is removed as auditor voice.
+  - A credential line that says "the same University" no longer claims an identity of its own.
+  - On saved cases, lead-form phrases go 19 → 0 (Ramos v95) and 41 → 0 (DeForest).
+- "Pending criterion" and "Action" in the Audit are written in Spanish.
+- **Interface:**
+  - Findings that cite the same field and source passage are one card, and the generic "acceptance incomplete" line is hidden when concrete findings explain it.
+  - "Waiting for a turn" appears only when the case is really waiting.
+  - The sub-progress row no longer overlaps the stage names.
+- Validation: 947 Python tests, 595 Node tests (1 skipped), TypeScript.
+
 ## 1.0.95 — B9 written to Ángela's architecture before review; prose rules in code; legacy graph removed
 
 Ramos on v1.0.94 (job `ec4c91b9`) completed with the final review passed (8/8) and 72.38% first-pass quality. The documents still showed "named lead partner" about 11 times, "The record confirms" in B10, duplicated value lines in matters, an English Audit heading and a B9 written as one paragraph per matter.
