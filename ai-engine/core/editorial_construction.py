@@ -107,6 +107,22 @@ while preserving legal work and career credentials. Return institutional_executi
 with literal b10_quote/c2_quote for each shared argument. These bindings are
 internal, not additional public copy.'''
 
+# One self-correction per construction unit: enough to act on a precise
+# validator diagnosis, never an open-ended paid loop.
+MAX_UNIT_CORRECTIONS = 1
+CORRECTION_TASK = '''
+SELF-CORRECTION: validator_feedback.rejected_response is your previous answer for
+THIS SAME unit, and validator_feedback.errors is the application's exact reason
+for rejecting it. Return the complete corrected unit in the same schema. Fix
+every listed error; keep every part of the previous answer that the errors do
+not concern. Remove a claim the original records do not support rather than
+inventing evidence for it. Do not change the selection, other units or sources.'''
+
+
+def unit_key(unit):
+    return json.dumps(unit, sort_keys=True)
+
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
                                     separators=(',', ':')).encode()).hexdigest()
@@ -360,6 +376,13 @@ def advance(state, invoke):
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
+        feedback=pending.get('unit_feedback') or {}
+        if feedback.get('unit')==unit:
+            # The validator already said exactly what is wrong with this unit's
+            # last response. Give that diagnosis back once and ask for the same
+            # unit corrected, instead of stopping the whole case.
+            payload={**payload,'validator_feedback':{'errors':feedback['errors'],'rejected_response':feedback['rejected_response']}}
+            task += CORRECTION_TASK
         value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
         if len(new_trace)>len(trace):
             new_trace=[*new_trace[:-1],{**new_trace[-1],'construction_unit':copy.deepcopy(unit)}]
@@ -399,20 +422,42 @@ def advance(state, invoke):
                 work.update(value)
         except Exception as error:
             # Retain the rejected response and usage without replaying a paid unit.
+            corrections=pending.setdefault('unit_corrections',{})
+            key=unit_key(unit)
+            pending.setdefault('rejected_responses',[]).append({'unit':copy.deepcopy(unit),'error':str(error)[:4000],
+                'correction':corrections.get(key,0)})
+            remaining=list(pending['pending_groups'])
             pending['failed_unit']=unit;pending['rejected_response']=value
             pending['validation_error']=str(error);pending['pending_groups']=[]
             pending['content_hash']=digest(work)
             if kind == 'plan' and prepare_comparison_completion(package, strategy, pending, plan_schema):
+                pending.pop('unit_feedback',None)
                 if not state.get('durable_repair_steps'):
                     continue
                 return {'development':copy.deepcopy(pending['work']), 'development_validated':False,
                         'development_repair_unlocatable':False, 'repair_continuation':pending, 'errors':[], 'trace':trace}
+            if corrections.get(key,0)<MAX_UNIT_CORRECTIONS:
+                # Self-correct the same unit once with the validator's own
+                # diagnosis. Completed units, sources and usage are kept.
+                corrections[key]=corrections.get(key,0)+1
+                pending['unit_feedback']={'unit':copy.deepcopy(unit),'errors':str(error)[:4000],'rejected_response':value}
+                for stale in ('failed_unit','rejected_response','validation_error'):pending.pop(stale,None)
+                pending['pending_groups']=remaining
+                pending['content_hash']=digest(work)
+                if not state.get('durable_repair_steps'):
+                    continue
+                return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
+                        'development_repair_unlocatable':False,'repair_continuation':pending,'trace':trace,
+                        'development_build_report':{'version':VERSION,'completed_units':pending['completed_units'],
+                            'remaining_units':len(remaining),'self_correction':{'unit':copy.deepcopy(unit),'error':str(error)[:600]}}}
+            pending.pop('unit_feedback',None)
             return {'development':copy.deepcopy(work),'development_validated':False,
                     'repair_continuation':pending,'development_repair_unlocatable':True,
                     'errors':['La construcción conservó una respuesta que no cumple el contrato: '+str(error)],
                     'trace':trace}
 
         pending['completed_units'].append(unit);pending['pending_groups'].pop(0)
+        if (pending.get('unit_feedback') or {}).get('unit')==unit:pending.pop('unit_feedback')
         pending['content_hash']=digest(work)
         if pending['pending_groups'] and state.get('durable_repair_steps'):
             return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
@@ -436,5 +481,7 @@ def advance(state, invoke):
                 'plan_comparison_recovery':pending.get('plan_comparison_recovery'),
                 'anchor_bindings':pending.get('anchor_bindings',[]),
                 'dropped_support':pending.get('dropped_support',[]),
+                'unit_corrections':pending.get('unit_corrections',{}),
+                'rejected_responses':[{k:v for k,v in r.items()} for r in pending.get('rejected_responses',[])],
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}
