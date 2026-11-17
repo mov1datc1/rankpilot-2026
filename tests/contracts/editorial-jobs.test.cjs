@@ -187,3 +187,8 @@ test('a saved continuation of the same case is shown as work, not as waiting in 
  assert.equal(publicJob({...job,leaseUntil:new Date(Date.now()+120000).toISOString()}).waiting,true);
  assert.equal(publicJob({...job,ledger:[]}).waiting,true);
 });
+test('a continuation with a routing note is still shown as work in progress',()=>{
+ const {publicJob}=require('../../src/lib/editorial/jobs.ts');
+ const job={id:'j',status:'queued',stage:'development',tasks:['selection','development','audit','artifact'],cursor:1,ledger:[{stage:'development',status:'queued'}],leaseUntil:new Date(Date.now()+1000).toISOString(),issue:{code:'DEVELOPMENT_REJECTED',owner:'rankpilot'}};
+ assert.equal(publicJob(job).waiting,false);
+});

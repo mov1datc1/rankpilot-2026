@@ -70,3 +70,12 @@ test('the robot says what it does after drafting, before the field review',()=>{
  const says=botSays({current:1,total:4,activity:{label:'Preparando la revisión por campos',steps:[],firstPassPercent:null,providerCalls:0}},false,1);
  assert.match(says,/terminé de redactar/);
 });
+test('between selection and the first draft the robot does not claim the drafting is finished',()=>{
+ const {jobActivity}=require('../../src/lib/editorial/activity.ts');
+ const {botSays}=require('../../src/components/PipelineProgress.tsx');
+ const before=jobActivity({cursor:1,stage:'development',ledger:[]},{review_checkpoint:{state:{}}});
+ assert.equal(before.label,'Preparando el plan común de la redacción');
+ assert.match(botSays({current:1,total:4,activity:before},false,1),/plan común/);
+ const after=jobActivity({cursor:1,stage:'development',ledger:[]},{review_checkpoint:{state:{development_build_report:{}}}});
+ assert.equal(after.label,'Preparando la revisión por campos');
+});

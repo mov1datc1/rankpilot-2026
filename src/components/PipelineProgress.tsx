@@ -48,6 +48,7 @@ export function botSays(progress:Progress,done:boolean,active:number):string {
   if(active===0) return 'Estoy leyendo todos los asuntos y comparándolos con la metodología de la práctica.';
   if(active===1) {
     if(/Corrigiendo/.test(label)) { const g=step('Grupos corregidos'); return g && left(g) ? `Estoy corrigiendo unos campos: ${left(g)===1?'me queda 1 grupo':`me quedan ${left(g)} grupos`}.` : 'Estoy corrigiendo los últimos campos señalados.'; }
+    if(/Preparando el plan común/.test(label)) return 'Estoy leyendo la selección y armando el plan común de la redacción.';
     if(/Preparando la revisión/.test(label)) return 'Ya terminé de redactar. Estoy aplicando las reglas editoriales y preparo la revisión campo por campo.';
     const review=step('Campos contrastados con sus fuentes');
     if(review) return left(review) ? `Reviso cada campo contra sus fuentes: van ${review.done} de ${review.total}.` : 'Terminé de revisar los campos; preparo el siguiente paso.';

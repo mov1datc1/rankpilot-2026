@@ -1,3 +1,11 @@
+## 1.0.97 — Honest progress messages; last lead-partner form
+
+Ramos on v1.0.96 (job `b989d6e0`): 14.1 min, 1.19M tokens (−32% vs v1.0.95, with no unread cache writes), no second judge round. The final review met 7 of 8 criteria; the remaining one is a real source conflict the Audit already asks the client to confirm.
+- "X has (also) been (the) lead partner on/in/for Y" becomes "X has (also) led Y".
+- Between selection and the first saved draft, the progress panel says it is preparing the shared plan; it no longer says "Ya terminé de redactar".
+- A saved continuation that carries a routing note (e.g. `DEVELOPMENT_REJECTED`, which means "go to field review") resuming within seconds is shown as work in progress, not "En espera de turno".
+- Validation: 947 Python tests, 597 Node tests (1 skipped), TypeScript.
+
 ## 1.0.96 — Prompt cache under explicit control; known answers before the final judge
 
 Ramos on v1.0.95 (job `cd21a9b8`): 20.7 min, 1.75M tokens (93% input, 1.9% cached), final review not passed. A second judge round cost 33% of the tokens.

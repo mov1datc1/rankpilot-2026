@@ -23,6 +23,8 @@ class LeadVocabularyTests(unittest.TestCase):
             'Ramos is lead partner in an amparo.': 'Ramos leads an amparo.',
             'José Pablo Ramos Castillo is the lead partner, supported by Edgar Moro.': 'José Pablo Ramos Castillo leads the matter, supported by Edgar Moro.',
             'Jaime Bustamante was the lead partner.': 'Jaime Bustamante led the matter.',
+            'Ramos Castillo has been lead partner on challenges to decrees.': 'Ramos Castillo has led challenges to decrees.',
+            'He has also been the lead partner for a developer.': 'He has also led the work for a developer.',
             'Eduardo Garduño and Carlos Rivera were the lead partners on the matter.': 'Eduardo Garduño and Carlos Rivera co-led the matter.',
             'Javier was the lead partner, with Yrelia Barrón as a team member.': 'Javier led the matter, with Yrelia Barrón as a team member.',
         }

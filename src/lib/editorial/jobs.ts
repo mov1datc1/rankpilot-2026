@@ -40,7 +40,8 @@ export function publicJob(job:any, submission?:any) {
   // second: that is work in progress, not waiting behind another case.
   const lastEntry=job.ledger?.at(-1);
   const leaseUntil=job.leaseUntil ? new Date(job.leaseUntil).getTime() : NaN;
-  const resuming=job.status==='queued' && lastEntry?.status==='queued' && !job.issue && (!Number.isFinite(leaseUntil) || leaseUntil-Date.now()<15000);
+  // A saved step may carry a routing note (e.g. DEVELOPMENT_REJECTED: go to field review); only the time to resume matters.
+  const resuming=job.status==='queued' && lastEntry?.status==='queued' && (!Number.isFinite(leaseUntil) || leaseUntil-Date.now()<15000);
   const waiting=job.status==='queued' && !resuming;
   const paused=!active && job.status!=='completed';
   const total=job.tasks.length===1 && job.tasks[0]==='selection' ? 4 : job.tasks.length;
