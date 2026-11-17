@@ -57,6 +57,9 @@ EXTRA_LEAD = [
     # "X and Y are/were the lead partners (on the matter)" -> "X and Y co-lead/co-led the matter"
     (re.compile(r'\b(?P<be>are|were)\s+(?:the\s+)?(?:co-?)?lead(?:-|\s)partners(?:\s+(?:on|for|in)\s+the\s+matter)?(?=\s*(?:[,;.)]|$))'),
      lambda m: f"{'co-led' if m.group('be') == 'were' else 'co-lead'} the matter"),
+    # "X has been (the) lead partner on/in/for Y" -> "X has led Y"
+    (re.compile(r'\bhas\s+(?P<adv>(?:also|likewise)\s+)?been\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\s+(?P<prep>on|in|for)\s+'),
+     lambda m: f"has {m.group('adv') or ''}{'co-led' if m.group('co') else 'led'} {'the work for ' if m.group('prep') == 'for' else ''}"),
 ]
 TAIL_LEAD = re.compile(r'\b(?P<who>[A-ZÁÉÍÓÚÑ][\w’\'-]+)\s+is\s+(?:the\s+)?(?P<co>co-?)?lead(?:-|\s)partner\.')
 

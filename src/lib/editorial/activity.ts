@@ -54,7 +54,9 @@ export function jobActivity(job:any,chambersData:any):JobActivity|null {
       const groups=(pending.pending_groups || []).length;
       return {...base,label:'Corrigiendo los hallazgos localizados',steps:[reviewStep,{label:'Grupos corregidos',done:calls,total:calls+groups}]};
     }
-    return {...base,label:units.length ? 'Revisando cada campo contra sus fuentes' : 'Preparando la revisión por campos',steps:units.length ? [reviewStep] : []};
+    // Before the first construction step is saved there is no draft yet: say so, not "review".
+    const drafted=Boolean(state.development_build_report || pending.version==='source-field-review-v1');
+    return {...base,label:units.length ? 'Revisando cada campo contra sus fuentes' : drafted ? 'Preparando la revisión por campos' : 'Preparando el plan común de la redacción',steps:units.length ? [reviewStep] : []};
   }
   if(job.stage==='audit') return {...base,label:'Construyendo el Audit desde las decisiones compartidas y revisándolo',steps:[]};
   return {...base,phase:3,label:'Generando los Word y revisando el par final',steps:[]};
