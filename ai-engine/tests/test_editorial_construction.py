@@ -241,15 +241,40 @@ class ConstructionTests(unittest.TestCase):
         self.assertEqual(len(report['rejected_responses']),1)
         self.assertEqual([c[0] for c in calls].count('SharedEditorialPlan'),2)
 
-    def test_second_rejection_stops_without_another_paid_call(self):
-        state,v=self.fixture();calls=[]
+    def test_failed_correction_closes_with_source_bound_fallback_and_never_stops(self):
+        state,v=self.fixture();calls=[];payloads=[]
         broken=self.broken_plan(v)
-        result=advance(state,self.provider(broken,calls))
-        self.assertFalse(result['development_validated'])
-        self.assertTrue(result['development_repair_unlocatable'])
-        self.assertEqual([c[0] for c in calls],['SharedEditorialPlan','SharedEditorialPlan'])
-        self.assertEqual(result['repair_continuation']['failed_unit'],{'kind':'plan'})
-        self.assertNotIn('unit_feedback',result['repair_continuation'])
+        provider=self.provider(broken,calls)
+        def invoke(s,role,schema,instruction,payload):
+            if schema.__name__=='SharedEditorialPlan':payloads.append(payload)
+            return provider(s,role,schema,instruction,payload)
+        result=advance(state,invoke)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual([c[0] for c in calls].count('SharedEditorialPlan'),2)
+        # The one correction stated exactly what was expected for that matter.
+        expected=payloads[1]['validator_feedback']['expected']
+        self.assertTrue(any(e.get('matter_id')=='m1' and 'decisive_source_quotes' in e['expected'] for e in expected))
+        # The fallback is a literal passage of m1's own record, and it is recorded.
+        from core.editorial_development import bind_quote
+        m1=next(m for m in state['package']['matters'] if m['id']=='m1')
+        quotes=next(m for m in result['development']['matters'] if m['matter_id']=='m1')['decisive_source_quotes']
+        self.assertTrue(quotes and all(bind_quote(q,m1)==q for q in quotes))
+        self.assertIn({'fallback':'decisive_quote_from_own_source','matter_id':'m1'},result['development_build_report']['plan_fixes'])
+
+    def test_known_answers_are_applied_without_any_paid_correction(self):
+        from core.editorial_case import CASE_VERSION
+        state,v=self.fixture();calls=[]
+        wrong=copy.deepcopy(v)
+        wrong['case_plan']['version']='old-version'
+        wrong['matters'].append(copy.deepcopy(wrong['matters'][0]))          # duplicate matter
+        wrong['candidates'].append(copy.deepcopy(wrong['candidates'][0]))    # duplicate person
+        wrong['matters'][0]['decisive_source_quotes'].append('Words that are not in this record at all.')
+        result=advance(state,self.provider(wrong,calls))
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertEqual([c[0] for c in calls].count('SharedEditorialPlan'),1)
+        self.assertEqual(result['development']['case_plan']['version'],CASE_VERSION)
+        fixes={f['fix'] for f in result['development_build_report']['plan_fixes']}
+        self.assertTrue({'case_plan_version','matter_removed','candidate_removed','decisive_quote_removed'}<=fixes)
 
     def test_durable_self_correction_is_a_queued_step_not_a_failure(self):
         state,v=self.fixture();state['durable_repair_steps']=True;calls=[]

@@ -10,7 +10,7 @@ from pydantic import ConfigDict, Field, create_model
 VERSION = 'source-owned-construction-bindings-v1'
 
 
-def complete_plan_support(package, strategy, plan):
+def complete_plan_support(package, strategy, plan, skipped=None):
     from core.personal_quality import required_personal_matters
     from core.participation_contract import participation_requirement
     from core.editorial_development import bind_quote
@@ -27,7 +27,11 @@ def complete_plan_support(package, strategy, plan):
             matter = register[mid]
             quote = next((str(matter.get(k)) for k in ('leadPartner', 'lead_partner') if matter.get(k) and role_names_person_exactly(candidate['name'], matter.get(k))), '')
             if not bind_quote(quote, matter):
-                raise ValueError('Canonical lead record has no literal source: ' + mid)
+                if skipped is None:
+                    raise ValueError('Canonical lead record has no literal source: ' + mid)
+                # A source-data limitation the model cannot fix: record it.
+                skipped.append({'candidate': candidate['name'], 'matter_id': mid, 'reason': 'canonical_lead_without_literal_source'})
+                continue
             support.append({'matter_id': mid, 'source_quote': quote,
                 'personal_role': 'Recorded lead responsibility for this mandate. Specific personal acts and firm outcomes remain distinct and must be read in the original source.'})
             existing.add(mid)

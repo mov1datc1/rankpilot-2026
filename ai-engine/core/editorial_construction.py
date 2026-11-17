@@ -112,11 +112,30 @@ internal, not additional public copy.'''
 MAX_UNIT_CORRECTIONS = 1
 CORRECTION_TASK = '''
 SELF-CORRECTION: validator_feedback.rejected_response is your previous answer for
-THIS SAME unit, and validator_feedback.errors is the application's exact reason
-for rejecting it. Return the complete corrected unit in the same schema. Fix
-every listed error; keep every part of the previous answer that the errors do
-not concern. Remove a claim the original records do not support rather than
+THIS SAME unit, validator_feedback.errors is the application's exact reason for
+rejecting it, and validator_feedback.expected states concretely what each
+corrected element must contain (allowed IDs, exact source records). Return the
+complete corrected unit in the same schema. Follow every expected item
+literally; keep every part of the previous answer that the errors do not concern. Remove a claim the original records do not support rather than
 inventing evidence for it. Do not change the selection, other units or sources.'''
+
+
+def recover_plan(package, strategy, plan, pending, correcting, source_owned):
+    """Fix what the application knows; after the one correction, never stop."""
+    from core import plan_recovery
+    value,dropped=drop_unbound_support(package,strategy,plan)
+    if dropped:pending.setdefault('dropped_support',[]).extend(dropped)
+    value,fixes=plan_recovery.exact_fixes(package,strategy,value)
+    if correcting:
+        # The single paid correction has been used: conservative, source-bound
+        # defaults close whatever remains, recorded as observations.
+        value,fallbacks=plan_recovery.safe_fallbacks(package,strategy,value)
+        fixes+=fallbacks
+    skipped=[]
+    if source_owned:value=construction_bindings.complete_plan_support(package,strategy,value,skipped)
+    fixes+=[{'fallback':'required_support_without_literal_source',**s} for s in skipped]
+    if fixes:pending.setdefault('plan_fixes',[]).extend(fixes)
+    return value
 
 
 def unit_key(unit):
@@ -377,11 +396,13 @@ def advance(state, invoke):
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'
         feedback=pending.get('unit_feedback') or {}
-        if feedback.get('unit')==unit:
+        correcting=feedback.get('unit')==unit
+        if correcting:
             # The validator already said exactly what is wrong with this unit's
             # last response. Give that diagnosis back once and ask for the same
             # unit corrected, instead of stopping the whole case.
-            payload={**payload,'validator_feedback':{'errors':feedback['errors'],'rejected_response':feedback['rejected_response']}}
+            payload={**payload,'validator_feedback':{'errors':feedback['errors'],'expected':feedback.get('expected',[]),
+                     'rejected_response':feedback['rejected_response']}}
             task += CORRECTION_TASK
         value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
         if len(new_trace)>len(trace):
@@ -393,9 +414,7 @@ def advance(state, invoke):
                 if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
                     value = reserve_comparisons.expand_plan(value, strategy)
                 value=reconcile_categories(value)
-                value,dropped=drop_unbound_support(package,strategy,value)
-                if dropped:pending['dropped_support']=dropped
-                if source_owned:value=construction_bindings.complete_plan_support(package,strategy,value)
+                value=recover_plan(package,strategy,value,pending,correcting,source_owned)
                 validate_plan(package,strategy,value)
                 work.update(value)
                 schedule_writing(package, strategy, pending)
@@ -403,6 +422,7 @@ def advance(state, invoke):
                 pending['plan_comparison_recovery']['attempted'] = True
                 completed = copy.deepcopy(work)
                 completed['comparisons'] += reserve_comparisons.expand(value, bindings)
+                completed = recover_plan(package, strategy, completed, pending, correcting, False)
                 validate_plan(package, strategy, completed)
                 work.update(completed)
                 pending['plan_comparison_recovery']['completed'] = True
@@ -438,9 +458,14 @@ def advance(state, invoke):
                         'development_repair_unlocatable':False, 'repair_continuation':pending, 'errors':[], 'trace':trace}
             if corrections.get(key,0)<MAX_UNIT_CORRECTIONS:
                 # Self-correct the same unit once with the validator's own
-                # diagnosis. Completed units, sources and usage are kept.
+                # diagnosis and the concrete expected content. Completed
+                # units, sources and usage are kept.
                 corrections[key]=corrections.get(key,0)+1
-                pending['unit_feedback']={'unit':copy.deepcopy(unit),'errors':str(error)[:4000],'rejected_response':value}
+                expected=[]
+                if kind in ('plan','plan_comparisons') and isinstance(value,dict):
+                    from core import plan_recovery
+                    expected=plan_recovery.expectations(package,strategy,value if kind=='plan' else work,str(error).split('; '))
+                pending['unit_feedback']={'unit':copy.deepcopy(unit),'errors':str(error)[:4000],'expected':expected,'rejected_response':value}
                 for stale in ('failed_unit','rejected_response','validation_error'):pending.pop(stale,None)
                 pending['pending_groups']=remaining
                 pending['content_hash']=digest(work)
@@ -482,6 +507,7 @@ def advance(state, invoke):
                 'anchor_bindings':pending.get('anchor_bindings',[]),
                 'dropped_support':pending.get('dropped_support',[]),
                 'unit_corrections':pending.get('unit_corrections',{}),
+                'plan_fixes':pending.get('plan_fixes',[]),
                 'rejected_responses':[{k:v for k,v in r.items()} for r in pending.get('rejected_responses',[])],
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}
