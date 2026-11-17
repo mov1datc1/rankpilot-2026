@@ -148,26 +148,52 @@ class SourceOwnedConstructionTests(unittest.TestCase):
         self.assertEqual(complete['first_pass_quality']['failed'],1)
         self.assertEqual(report['first_pass_quality']['units']['b10']['checks'],{})
 
-    def test_changed_before_review_stays_unassessed_and_old_cases_are_not_relabelled(self):
+    def test_changed_before_review_is_resolved_as_not_first_pass_and_old_cases_are_not_relabelled(self):
         from core.construction_quality import record_first_review
-        report={'first_pass_quality':{'units':{'b10':{'hash':'original','obligation_ids':['one'],'checks':{}}}}}
-        changed=record_first_review(report,[{'field':'b10','hash':'changed'}],{'checks':{'one':{'status':'met'}}})
-        self.assertEqual(changed['first_pass_quality']['unassessed'],1)
-        self.assertIsNone(changed['first_pass_quality']['percent_met'])
+        report={'first_pass_quality':{'units':{'b10':{'hash':'original','obligation_ids':['one'],'checks':{}},
+            'c2':{'hash':'same','obligation_ids':['two','three'],'checks':{}}}}}
+        changed=record_first_review(report,[{'field':'b10','hash':'changed','obligations':[{'id':'one'}]}],{'checks':{'one':{'status':'met'}}})
+        quality=changed['first_pass_quality']
+        # A post-correction pass is never credited to the original construction,
+        # and a partial review still yields no percentage.
+        self.assertEqual(quality['units']['b10']['first_review'],'corrected_before_review')
+        self.assertEqual(quality['units']['b10']['checks'],{})
+        self.assertEqual((quality['corrected_before_review'],quality['met'],quality['status']),(1,0,'partial'))
+        self.assertIsNone(quality['percent_met'])
+        done=record_first_review(changed,[{'field':'c2','hash':'same'}],{'checks':{'two':{'status':'met'},'three':{'status':'failed'}}})['first_pass_quality']
+        self.assertEqual((done['status'],done['total'],done['met'],done['failed'],done['unassessed']),('complete',3,1,1,0))
+        self.assertEqual(done['percent_met'],33.33)
+        self.assertEqual((done['units_total'],done['units_first_pass'],done['units_corrected_before_review']),(2,0,1))
+        # A later review of the same unit never rewrites its first result.
+        again=record_first_review({'first_pass_quality':done},[{'field':'c2','hash':'same'}],{'checks':{'two':{'status':'met'},'three':{'status':'met'}}})
+        self.assertEqual(again['first_pass_quality']['failed'],1)
         self.assertEqual(record_first_review({'version':'old'},[],{}),{'version':'old'})
 
-    def test_actual_field_review_records_first_result_before_scheduling_repair(self):
+    def test_every_unit_is_reviewed_first_and_the_first_pass_measure_completes_before_repair(self):
         from core.field_review import units_for, schedule, advance as review_advance
         from test_field_review import verdict
         state,v=self.fixture();built=advance(state,self.provider(v,[]));state.update(built)
-        state.update(schedule(state));paths=state['repair_continuation']['pending_groups'][0]
-        units=[u for u in units_for(state) if u['field'] in paths]
-        response=verdict(units,paths[0]);before=copy.deepcopy(state['development_build_report'])
-        with patch('core.review_graph.invoke_role',return_value=(response,[])) as model:
-            result=review_advance(state)
-        self.assertEqual(model.call_count,1)
-        self.assertEqual(result['repair_continuation']['phase'],'repair')
-        self.assertGreater(result['development_build_report']['first_pass_quality']['failed'],0)
-        self.assertEqual(state['development_build_report'],before)
+        state.update(schedule(state));first=state['repair_continuation']['pending_groups'][0]
+        total=len(units_for(state));before=copy.deepcopy(state['development_build_report']);reviewed=[]
+        def invoke(s,role,schema,instruction,payload):
+            self.assertEqual(role,'field_reviewer','No repair is bought before every unit has its first review')
+            fields=[u['field'] for u in payload['units']];reviewed.extend(fields)
+            units=[u for u in units_for(s) if u['field'] in fields]
+            return verdict(units,first[0]),s.get('trace',[])
+        snapshot=copy.deepcopy(state)
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            while state['repair_continuation']['phase']=='review':
+                state.update(review_advance(state))
+        self.assertEqual(snapshot['development_build_report'],before)
+        self.assertEqual(sorted(reviewed),sorted(u['field'] for u in units_for(state)))
+        self.assertEqual(len(reviewed),total)
+        self.assertEqual(state['repair_continuation']['phase'],'repair')
+        self.assertEqual(state['repair_continuation']['pending_groups'],[[first[0]]])
+        quality=state['development_build_report']['first_pass_quality']
+        self.assertEqual(quality['status'],'complete')
+        self.assertGreater(quality['failed'],0)
+        self.assertEqual(quality['unassessed'],0)
+        self.assertIsNotNone(quality['percent_met'])
+        self.assertTrue(all(d['unit_hash'] for d in state['field_review_failures']))
 
 if __name__=='__main__':unittest.main()

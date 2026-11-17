@@ -53,6 +53,18 @@ class RepairHandoffRetrospectiveTests(unittest.TestCase):
             evidence=payload['repair_targets'][path]['source_evidence']
             if 'reference' in evidence:evidence=payload[evidence['reference']]
             return {m['id'] for m in evidence['package']['matters']}
-        self.assertEqual(ids('comparisons/0/tradeoff'),{'m1','m2','reserve'})
+        # A located tradeoff carries its OWN selected and reserve records: the
+        # reserve source is never dropped, and uninvolved mandates are not sent.
+        self.assertEqual(ids('comparisons/0/tradeoff'),{'m1','m2'})
         self.assertEqual(ids('b10'),{'m1'})
         self.assertEqual(targets,before)
+        pair_evidence=payload['repair_targets']['comparisons/0/tradeoff']['source_evidence']
+        if 'reference' in pair_evidence:pair_evidence=payload[pair_evidence['reference']]
+        self.assertFalse({'lawyers','b10_source','ranking_verification'} & set(pair_evidence['package']))
+        from core.editorial_repair import comparison_pair
+        eligible={'m1','m2','reserve'}
+        self.assertEqual(comparison_pair(DEV,'comparisons/0/tradeoff',eligible),{'m1','m2'})
+        # An unresolvable or ineligible pair keeps the complete eligible evidence.
+        self.assertIsNone(comparison_pair(DEV,'comparisons',eligible))
+        self.assertIsNone(comparison_pair(DEV,'comparisons/7/tradeoff',eligible))
+        self.assertIsNone(comparison_pair(DEV,'comparisons/0/tradeoff',{'m1','reserve'}))

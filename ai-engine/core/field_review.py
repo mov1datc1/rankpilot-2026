@@ -15,7 +15,11 @@ from pydantic import ConfigDict, Field, create_model
 
 VERSION = 'source-field-review-v1'
 INSTITUTIONAL_CONTEXT = 'complete-institutional-sources-v2'
+# Paid repair CALLS in one development review, not per-field attempts: a grouped
+# call may correct several fields. Review of every unit completes first, so the
+# budget is spent by editorial priority rather than by review order.
 MAX_GLOBAL_FIELD_REPAIRS = max(1, int(os.environ.get('RANKPILOT_MAX_FIELD_REPAIRS', '5')))
+REPAIR_GROUP_SIZE = 4
 TASK = '''Review only these source-bound editorial units before document assembly.
 For EACH obligation judge whether the actual output executes its supplied rule
 against the complete original sources. A matching quote is not semantic proof.
@@ -31,7 +35,8 @@ what the authorised field must preserve. For a failed check set failure_kind:
 omission means supported material is missing; unsupported_claim means existing
 prose asserts a wrong or unsupported fact, role, outcome or disclosure;
 style means a concrete violation of the supplied field's writing contract.
-For met checks use null. Optional wording preferences remain met. A false
+For met checks use null. Optional wording preferences remain met. source_ref
+own_passage means the obligation's single supplied source passage. A false
 attribution is unsupported_claim, not an omission merely because the correct
 actor is absent: the false assertion must be withdrawn, not preserved verbatim.
 Institutional B10/C2 contain several
@@ -147,17 +152,36 @@ def batches(units):
     return result
 
 
+OWN_PASSAGE = 'own_passage'
+
+
 def contract(units):
-    fields={}
+    """Required proof per obligation; identical proof shapes are declared once.
+
+    Every obligation of a field cites the same output passages, and an
+    obligation about ONE decisive passage has nothing to choose: its citation is
+    fixed by the application (own_passage). Sharing those types keeps each
+    binding while the provider schema stops repeating a full proof definition
+    and catalog for every obligation. Field guidance lives once in TASK.
+    """
+    from core.editorial_case import OutputQuote
+    fields={};choices={};proofs={}
+    def choice(prefix,keys):
+        keys=tuple(keys);name=prefix+digest(list(keys))[:16]
+        if name not in choices:choices[name]=OutputQuote(name,{f'R{i}':key for i,key in enumerate(keys)})
+        return choices[name]
     for unit in units:
+        output=choice('OutputPassage_',unit['output_passages'])
         for item in unit['obligations']:
-            fields[item['id']]=(create_model('FieldProof_'+digest(item['id'])[:12],__config__=ConfigDict(extra='forbid'),
-                status=(Literal['met','failed'],...),
-                failure_kind=(Literal['omission','unsupported_claim','style'] | None,
-                    Field(default=None,description='Null for met; classify a failed check so repair can distinguish adding missing content from replacing rejected prose.')),
-                artifact_ref=(Literal[tuple(unit['output_passages'])],...),
-                source_ref=(Literal[tuple(item['source_passages'])],...),
-                reason=(str,Field(min_length=1,max_length=500,description='Concise check rationale (1-2 sentences, max 350 characters); do not repeat full passages.'))),...)
+            source=choice('SourcePassage_',[OWN_PASSAGE] if len(item['source_passages'])==1 else item['source_passages'])
+            key=(output.__name__,source.__name__)
+            if key not in proofs:
+                proofs[key]=create_model('FieldProof_'+digest(list(key))[:12],__config__=ConfigDict(extra='forbid'),
+                    status=(Literal['met','failed'],...),
+                    failure_kind=(Literal['omission','unsupported_claim','style'] | None,None),
+                    artifact_ref=(output,...),source_ref=(source,...),
+                    reason=(str,Field(min_length=1,max_length=500)))
+            fields[item['id']]=(proofs[key],...)
     checks=create_model('FieldChecks',__config__=ConfigDict(extra='forbid'),**fields)
     return create_model('SourceFieldVerdict',__config__=ConfigDict(extra='forbid'),checks=(checks,...))
 
@@ -169,8 +193,9 @@ def review_payload(units):
         records.update(unit['sources']);checks=[]
         for obligation in unit['obligations']:
             passages.update(obligation['source_passages'])
-            checks.append({k:v for k,v in obligation.items() if k!='source_passages'} |
-                          {'source_refs':list(obligation['source_passages'])})
+            # The schema binds each proof to this obligation's own passages;
+            # repeating every allowed ID here only re-sends the catalog.
+            checks.append({k:v for k,v in obligation.items() if k!='source_passages'})
         items.append({'field':unit['field'],'output_passages':unit['output_passages'],'obligations':checks,
             **({'contextual_source_ids':unit['contextual_source_ids'],
                 'institutional_context_ref':'institutional_context'} if 'contextual_source_ids' in unit else {})})
@@ -183,7 +208,7 @@ def review_payload(units):
 
 
 def project_checks(units,result):
-    parsed=contract(units).model_validate(result).model_dump()
+    parsed=contract(units).model_validate(result).model_dump(mode='json')
     receipts=[];defects=[]
     for unit in units:
         checks=[]
@@ -191,8 +216,10 @@ def project_checks(units,result):
             check=parsed['checks'][item['id']]
             if check['status']=='met' and check.get('failure_kind') is not None:
                 raise ValueError('A met check cannot carry a failure kind')
+            # A single-passage obligation's citation is application-owned.
+            cited=next(iter(item['source_passages'])) if check['source_ref']==OWN_PASSAGE else check['source_ref']
             proof={'obligation_id':item['id'],'status':check['status'],
-                'source_quote':item['source_passages'][check['source_ref']],
+                'source_quote':item['source_passages'][cited],
                 'artifact_quote':unit['output_passages'][check['artifact_ref']],'reason':check['reason']}
             checks.append(proof)
             if check['status']=='failed':
@@ -210,33 +237,131 @@ def project_checks(units,result):
     return receipts,defects
 
 
-def verified_obligations(package,strategy,proposal):
-    """Reuse signed proofs only where the actual exported field is identifiable.
+def scoped_final_review():
+    return os.environ.get('RANKPILOT_SCOPED_FINAL_REVIEW','on').strip().casefold() not in ('off','0','false')
 
-    A full-document substring is not a field locator. Matter narratives/B10/C2
-    continue through final checks; BIO uses the actual Word-table extraction.
-    Internal category/comparison fields bind to the exact retained proposal.
+
+TRANSPORT_KEYS=('rendered_artifact','rendered_audit','rendered_candidate_bios','_verified_field_obligations',
+                '_scoped_final_review','field_review_receipts')
+
+
+def rendered_exactly(rendered,text):
+    """The complete reviewed prose, not a fragment, is present in the exact file."""
+    import re
+    clean=' '.join(re.sub(r'\*\*([^*]+)\*\*',r'\1',str(text or '')).split())
+    return len(clean)>=80 and ' '.join(str(rendered or '').split()).count(clean)==1
+
+
+def verified_obligations(package,strategy,proposal):
+    """Reuse signed proofs only where the actual exported text is identifiable.
+
+    BIO uses the actual Word-table extraction. Internal category/comparison
+    fields bind to the exact retained proposal. Matter narratives, B10 and C2
+    are reused when the complete reviewed prose occurs exactly once in the
+    exact Submission; section placement and identity leaks remain a task of
+    the final review of both files. Audit units carry their own line-bound proof.
     """
     from core.editorial_case import execution_output
+    import re
     secret=os.environ.get('AI_ENGINE_SERVICE_TOKEN')
     if not secret or not package.get('rendered_artifact') or not package.get('field_review_receipts') or proposal.get('version') not in ('editorial-development-v3','editorial-development-v4'):
         return []
-    original={k:v for k,v in package.items() if k not in
-        ('rendered_artifact','rendered_audit','rendered_candidate_bios','_verified_field_obligations','field_review_receipts')}
+    original={k:v for k,v in package.items() if k not in TRANSPORT_KEYS}
     units={u['field']:u for u in units_for({'package':original,'strategy':strategy,'development':proposal})}
     valid=[]
     for signed in package.get('field_review_receipts',[]):
         path=signed.get('field','');unit=units.get(path)
         if not unit or not receipt_matches(unit,signed,require_signature=True):continue
-        if not path.startswith(('candidates/','comparisons/')):continue
-        if path.endswith('/submission_bio'):
-            actual,_=execution_output(package,proposal,{},path)
-            if ' '.join(actual.split())!=' '.join(unit['output'].split()):continue
+        if path.startswith(('candidates/','comparisons/')):
+            if path.endswith('/submission_bio'):
+                actual,_=execution_output(package,proposal,{},path)
+                if ' '.join(actual.split())!=' '.join(unit['output'].split()):continue
+        elif scoped_final_review() and (path in ('b10','c2') or re.fullmatch(r'matters/\d+/text',path)):
+            if not rendered_exactly(package['rendered_artifact'],unit['output']):continue
+        else:continue
         valid.extend(o['id'] for o in unit['obligations'])
+    if scoped_final_review():
+        from core.audit_construction import verified_obligations as verified_audit
+        valid.extend(verified_audit(package))
     return sorted(set(valid))
 
 
+MATTER_FACTS=('id','name','title','client','clientDescription','value','valueResolution','valueConflict','leadPartner',
+    'lead_partner','teamMembers','team_members','completionDate','isConfidential','confidential','publish_status',
+    'publishStatus','confidentialityStatus','confidentialityConfirmed','publication_route','resolved_publication_status',
+    'crossBorder','otherFirms','source_label')
+
+
+def scoped_final_package(package,strategy,proposal):
+    """Second half of the final review: no source narrative for proven records.
+
+    A record keeps its complete source whenever any remaining obligation, the
+    client-register comparison or an unproven field still depends on it. Proven
+    records keep identity, permissions, value and team facts so the reviewer can
+    still catch a restricted identity in a public section of the exact files.
+    """
+    verified=set(package.get('_verified_field_obligations') or [])
+    if not scoped_final_review() or not verified:
+        return package,[]
+    from core.editorial_case import obligations
+    from core.register_review import register_rows
+    needed={s.get('id') for o in obligations(package,strategy,proposal) for s in o['sources']
+            if isinstance(s,dict) and s.get('id') and not s.get('anchor_only')}
+    needed |= set(register_rows(package))
+    dispositions={d['matter_id']:d.get('disposition') for d in strategy.get('matters',[])}
+    proven=[]
+    matters=[]
+    for matter in package.get('matters',[]):
+        mid=matter.get('id')
+        core_proven=dispositions.get(mid)=='core' and f'matter:{mid}:evidence' in verified
+        if mid in needed or (dispositions.get(mid)=='core' and not core_proven):
+            matters.append(matter);continue
+        proven.append(mid)
+        matters.append({**{k:matter[k] for k in MATTER_FACTS if k in matter},
+            'source_review':'proven_in_signed_field_review' if core_proven else 'not_in_submission_no_open_obligation'})
+    scoped={k:v for k,v in package.items() if k!='_verified_field_obligations'}
+    scoped['matters']=matters
+    scoped['_proven_obligation_count']=len(verified)
+    return scoped,proven
+
+
+def current_failures(failures,units):
+    """A finding stays open only while it is bound to the exact reviewed unit."""
+    hashes={u['field']:u['hash'] for u in units}
+    return [d for d in failures or [] if d.get('unit_hash') and hashes.get(d.get('field_path'))==d['unit_hash']]
+
+
+def repair_groups(failures):
+    """Disjoint owner groups, public prose first. One paid call per group.
+
+    A person's BIO and category share evidence; matter narratives and reserve
+    comparisons carry only their own records, so several fit in one call.
+    """
+    families=OrderedDict()
+    for path in dict.fromkeys(d['field_path'] for d in failures):
+        if path in ('b10','c2'):key=(0,'institution')
+        elif path.startswith('candidates/'):key=(1,'/'.join(path.split('/')[:2]))
+        elif path.startswith('matters/'):key=(2,'matters')
+        else:key=(3,'internal')
+        families.setdefault(key,[]).append(path)
+    groups=[]
+    for key in sorted(families):
+        paths=families[key];size=REPAIR_GROUP_SIZE if key[0]>=2 else len(paths)
+        groups += [paths[i:i+size] for i in range(0,len(paths),size)]
+    return groups
+
+
+def observed(units,observations,failures):
+    """Close reviewed findings as observations bound to the current text."""
+    hashes={u['field']:u['hash'] for u in units}
+    fields=sorted({d['field_path'] for d in failures if d['field_path'] in hashes})
+    return [o for o in observations if o.get('field') not in fields]+[{'field':field,'hash':hashes[field],
+        'defects':[d for d in failures if d['field_path']==field],
+        'reason':'bounded_repair_finished_with_observations'} for field in fields]
+
+
 def schedule(state,result=None):
+    """Review every pending unit first; only then spend the bounded repair calls."""
     result=dict(result or {});merged={**state,**result}
     if merged.get('development_observations'):
         from core.editorial_development import development_errors
@@ -247,28 +372,48 @@ def schedule(state,result=None):
     receipts=merged.get('field_review_receipts',[])
     observations=[o for o in merged.get('field_review_observations',[]) if any(
         u['field']==o.get('field') and u['hash']==o.get('hash') for u in units)]
-    result['field_review_observations']=observations
-    pending=[u for u in units if not any(receipt_matches(u,r) for r in receipts)
+    failures=current_failures(merged.get('field_review_failures'),units)
+    failed={d['field_path'] for d in failures}
+    pending=[u for u in units if u['field'] not in failed and not any(receipt_matches(u,r) for r in receipts)
         and not any(o['field']==u['field'] and o['hash']==u['hash'] for o in observations)]
-    if not pending:
-        return {**result,'repair_continuation':None,'development_validated':not observations and not merged.get('development_observations'),'development_delivery_ready':True,'errors':[],
-            'field_review_failures':[],
-            # History is retained separately. Only findings bound to CURRENT
-            # output remain tasks; resolved verdicts must not become new Audit
-            # warnings. Parent feedback still reconciles the companion document.
-            'repair_feedback':merged.get('field_review_parent_feedback',[]) +
-                [d for observation in observations for d in observation.get('defects',[])]}
-    return {**result,'development_validated':False,'development_delivery_ready':False,'development_repair_unlocatable':False,
-        'errors':['Redacción guardada; comprobando los campos contra sus fuentes antes de preparar los documentos.'],
-        'repair_continuation':{'version':VERSION,'phase':'review','proposal_hash':digest(merged['development']),
-            'pending_groups':batches(pending)}}
+    result.update(field_review_observations=observations,field_review_failures=failures,field_review_active_repair=[])
+    waiting={'development_validated':False,'development_delivery_ready':False,'development_repair_unlocatable':False}
+    if pending:
+        return {**result,**waiting,
+            'errors':['Redacción guardada; comprobando los campos contra sus fuentes antes de preparar los documentos.'],
+            'repair_continuation':{'version':VERSION,'phase':'review','proposal_hash':digest(merged['development']),
+                'pending_groups':batches(pending)}}
+    if failures:
+        attempts=merged.get('field_review_attempts',{})
+        budget=max(0,MAX_GLOBAL_FIELD_REPAIRS-int(merged.get('field_review_repair_calls') or 0))
+        groups=repair_groups([d for d in failures if method_count(attempts,d['field_path'])<2])[:budget]
+        owned={path for group in groups for path in group}
+        closed=[d for d in failures if d['field_path'] not in owned]
+        if closed:
+            observations=observed(units,observations,closed)
+            failures=[d for d in failures if d['field_path'] in owned]
+            result.update(field_review_observations=observations,field_review_failures=failures)
+        if groups:
+            return {**result,**waiting,
+                'errors':['Hallazgos localizados; RankPilot corregirá esos campos antes de preparar los documentos.'],
+                'repair_continuation':{'version':VERSION,'phase':'repair','proposal_hash':digest(merged['development']),
+                    'pending_groups':groups}}
+    return {**result,'repair_continuation':None,'development_validated':not observations and not merged.get('development_observations'),'development_delivery_ready':True,'errors':[],
+        'field_review_failures':[],
+        # History is retained separately. Only findings bound to CURRENT
+        # output remain tasks; resolved verdicts must not become new Audit
+        # warnings. Parent feedback still reconciles the companion document.
+        'repair_feedback':merged.get('field_review_parent_feedback',[]) +
+            [d for observation in observations for d in observation.get('defects',[])]}
 
 
 def after_repair(state,result):
     """A residual continuation belongs to the same field recovery method."""
-    paths={d['field_path'] for d in state.get('field_review_failures',[])}
+    paths=set(state.get('field_review_active_repair') or []) or {d['field_path'] for d in state.get('field_review_failures',[])}
     attempts=state.get('field_review_attempts',{})
-    result={**result,'field_review_attempts':attempts,'repair_strategy':state.get('repair_strategy','targeted_correction')}
+    calls=int(state.get('field_review_repair_calls') or 0)
+    result={**result,'field_review_attempts':attempts,'field_review_repair_calls':calls,
+            'field_review_active_repair':sorted(paths),'repair_strategy':state.get('repair_strategy','targeted_correction')}
     if result.get('development_validated'):
         return schedule(state,result)
     if result.get('repair_continuation'):
@@ -279,12 +424,13 @@ def after_repair(state,result):
     # method or attaching the old verdict to the repaired text's new hash.
     if repaired_output_needs_review(state,result,paths):
         return schedule(state,result)
-    if paths and not unknown_usage(result.get('trace',[])) and all(method_count(attempts,path)<2 for path in paths):
+    if (paths and not unknown_usage(result.get('trace',[])) and calls<MAX_GLOBAL_FIELD_REPAIRS
+            and all(method_count(attempts,path)<2 for path in paths)):
         return {**result,'development_repair_unlocatable':False,
             'repair_continuation':{'version':VERSION,'phase':'repair',
                 'proposal_hash':digest(result.get('development',state['development'])),
                 'pending_groups':[sorted(paths)]}}
-    return retain_observations(state,{**result,'repair_continuation':None,'development_repair_unlocatable':True})
+    return retain_observations(state,{**result,'repair_continuation':None,'development_repair_unlocatable':True},only=paths)
 
 
 def repaired_output_needs_review(state,result,paths):
@@ -324,7 +470,7 @@ def recheck_context(state):
             'errors':errors or ['La comprobación del contexto no es aplicable a este intento.']}
     # The earlier diagnosis remains in history. A new source-bound verdict must
     # actually pass; even a corrected context cannot buy a third repair method.
-    return schedule(state,{'field_context_recheck':False,'repair_continuation':None})
+    return schedule(state,{'field_context_recheck':False,'repair_continuation':None,'field_review_failures':[]})
 
 
 def advance(state):
@@ -334,17 +480,22 @@ def advance(state):
         return {'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
             'errors':['La revisión por campos perdió vigencia o conserva una operación sin resultado confirmado.']}
     if pending.get('phase')=='repair':
-        defects=state.get('field_review_failures',[])
+        # One owner group per paid call. Other groups keep their own findings.
+        group=list((pending.get('pending_groups') or [[]])[0])
+        defects=[d for d in state.get('field_review_failures',[]) if d['field_path'] in group]
         paths={d['field_path'] for d in defects};attempts=dict(state.get('field_review_attempts',{}))
-        total_repairs=sum(int(v) for v in attempts.values())
-        if not paths or total_repairs>=MAX_GLOBAL_FIELD_REPAIRS or any(method_count(attempts,path)>=2 for path in paths):
+        calls=int(state.get('field_review_repair_calls') or 0)
+        if not paths:
+            return schedule(state,{'repair_continuation':None})
+        if calls>=MAX_GLOBAL_FIELD_REPAIRS or any(method_count(attempts,path)>=2 for path in paths):
             return retain_observations(state,{'development_validated':False,'development_repair_unlocatable':True,'repair_continuation':None,
-                'errors':['La recuperación localizada alcanzó el límite de rondas; se conserva el avance y las observaciones pendientes.']})
+                'errors':['La recuperación localizada alcanzó el límite de rondas; se conserva el avance y las observaciones pendientes.']},only=paths)
         strategy='source_reconstruction' if any(method_count(attempts,path) for path in paths) else 'targeted_correction'
         previous_counts={path:method_count(attempts,path) for path in paths}
         for path in paths:attempts[path]=previous_counts[path]+1
         current={**state,'repair_continuation':None,'repair_strategy':strategy,'repair_feedback':defects,
-                 'field_review_attempts':attempts}
+                 'field_review_attempts':attempts,'field_review_repair_calls':calls+1,
+                 'field_review_active_repair':sorted(paths)}
         result=repair_rejected_development(current,state['development'],defects)
         return after_repair(current,result)
     from core.review_graph import invoke_role
@@ -362,17 +513,18 @@ def advance(state):
         update['development_build_report']=record_first_review(state['development_build_report'],units,result)
     if any(u['field'] in ('b10','c2') for u in units):
         update['field_review_context_version']=INSTITUTIONAL_CONTEXT
+    # Keep reviewing the remaining units before any repair: the complete list
+    # lets one grouped call correct related fields, and gives a real first-pass
+    # measurement instead of one interleaved with corrections.
+    hashes={u['field']:u['hash'] for u in units}
+    open_failures=[d for d in state.get('field_review_failures',[]) if d.get('field_path') not in paths]
+    update['field_review_failures']=open_failures+[{**d,'unit_hash':hashes[d['field_path']]} for d in defects]
     if defects:
-        return {**update,'development_validated':False,'development_repair_unlocatable':False,
-            'field_review_failures':defects,
-            'field_review_reconciled_feedback':state.get('field_review_reconciled_feedback',[])+defects,
-            'errors':['Hallazgos localizados; RankPilot corregirá esos campos antes de preparar los documentos.'],
-            'repair_continuation':{'version':VERSION,'phase':'repair','proposal_hash':digest(state['development']),
-                'pending_groups':[list(dict.fromkeys(d['field_path'] for d in defects))]}}
+        update['field_review_reconciled_feedback']=state.get('field_review_reconciled_feedback',[])+defects
     return schedule(state,update)
 
 
-def retain_observations(state,result=None):
+def retain_observations(state,result=None,only=None):
     """Finish usable, source-bound prose without pretending a failed check passed.
 
     Only a structurally valid saved proposal can proceed. Each remaining unit
@@ -380,7 +532,9 @@ def retain_observations(state,result=None):
     """
     from core.editorial_development import development_errors
     merged={**state,**(result or {})}
-    failures=merged.get('field_review_failures') or []
+    every=merged.get('field_review_failures') or []
+    failures=[d for d in every if only is None or d.get('field_path') in only]
+    rest=[d for d in every if d not in failures]
     local_errors=development_errors(merged['package'],merged['strategy'],merged['development'])
     if local_errors and all(e in merged.get('development_observations',[]) for e in local_errors):
         from core.development_delivery import complete_proposal_findings
@@ -401,5 +555,5 @@ def retain_observations(state,result=None):
         'defects':[d for d in failures if d['field_path']==field],
         'reason':'bounded_repair_finished_with_observations'} for field in sorted(fields)]
     return schedule(merged,{**(result or {}),'field_review_observations':kept,
-        'development_repair_unlocatable':False,'field_review_failures':[],
+        'development_repair_unlocatable':False,'field_review_failures':rest,
         'repair_continuation':None,'errors':[]})

@@ -1,3 +1,14 @@
+## 1.0.87 — Constructed Audit, review-first repair loop, split final review and prompt-cache routing
+
+- **Audit with the same treatment as the Submission** (`core/audit_construction.py`, contract `audit-construction-v1`, new cases only): the writer receives shared decisions, current Submission prose and literal source anchors instead of the complete register; every Audit obligation enforced by the final review (each core matter, each personally attributed contribution used in B9, each additional matter leader, each client-visible comparison) is a required schema slot; the application prints order, names, headings, nomination and category. Deterministic checks (numbered core, vague scale, "socio" for a person without confirmed partner status) plus one source-bound review of the Audit units and ONE bounded repair of the owned slots run before the documents are assembled. Met units carry signed, line-bound proofs. Switch: `RANKPILOT_AUDIT_CONSTRUCTION=off`.
+- **Review first, then repair by groups** (`core/field_review.py`): every unit receives its first source review before any repair; findings are bound to the reviewed text hash; repairs run in disjoint owner groups (B10/C2, each person, matters ×4, comparisons ×4) by editorial priority; `RANKPILOT_MAX_FIELD_REPAIRS` (default 5) now counts paid repair calls. Findings beyond the budget close as observations bound to the current text. A comparison repair carries only its own selected and reserve records; matter/comparison repairs no longer carry the ranking-verification record.
+- **First-pass measurement closes** (`core/construction_quality.py`): a unit corrected before its first review counts as not first-pass instead of staying unassessed; `percent_met` and `unit_percent_first_pass` are produced once every unit is resolved. Post-correction verdicts are never credited to the original construction.
+- **Final review split in two** (`core/field_review.py`, `core/review_graph.py`): signed proofs for matter narratives, B10 and C2 are reused when the complete reviewed prose occurs exactly once in the exact Word file, and Audit proofs when every reviewed line is present in the exact Audit. Proven records reach the final reviewer without their source narratives but with identity, permission, value and team facts; unproven fields keep complete sources; diagnostic bindings are still validated against the complete register. Switch: `RANKPILOT_SCOPED_FINAL_REVIEW=off`.
+- **Smaller review contract**: proof types and passage catalogs are shared across obligations; single-passage obligations cite `own_passage`; the payload no longer repeats every allowed passage ID.
+- **Prompt-cache routing**: each OpenAI call sends `prompt_cache_key=rankpilot:<role>:<prompt_revision>` (no client data); the key is recorded in the trace. Switch: `RANKPILOT_PROMPT_CACHE=off`. Whether the provider actually reuses the prefix (structured-output schema placement) is NOT verified and must be read from `cache_read` in the next real run.
+- Offline measurements on the saved Ramos v83 checkpoint (simulated provider, no generation): Audit writer payload 115,925 → 33,125 tokens; comparison repair 42,787 → 4,860; three-field grouped repair 47,663 → 9,736; field-review schemas 52,148 → 35,080 per full pass; final review ≈187K → ≈45K tokens of input when all fields hold proofs (≈105K with B9 unproven). These are payload sizes, not billed tokens or quality results.
+- Validation: 891 Python tests (Python 3.11 locally; CI runs 3.10), 586 Node tests passed (one skipped), TypeScript passed. No OpenAI calls, deployments or remote cases.
+
 ## 1.0.82 — Per-step continuation retry accounting and concise field-review rationale
 
 - Advance per-cursor failure accounting across completed checkpointed continuation steps so a prior sub-step stop does not block a later field-review group's single `outputRecovery` retry.
@@ -36,6 +47,106 @@
 - Require the current document pair for availability and clarify observations, terminal actions and connection interruptions.
 - Local validation: 834 Python and 581 Node tests passed (one skipped); TypeScript passed. No new paid case or measured generative quality/latency claim. See docs/reviews/shared-construction-scoped-rag-v78.md.
 
+## RAG por práctica y comunicación de entrega — 2026-11-11 — local, sin publicar
+
+- Enrutamiento por familias múltiples y alias completos; fallback general explícito; alcance de referencias y unidad de construcción trazables. Metodología por práctica acotada a fuentes; referencias históricas no verificadas conservadas en cuarentena.
+- Contexto de candidaturas limitado a plan/perfil durante construcción. Conservación de condiciones completas al fragmentar instrucciones.
+- Disponibilidad del par desacoplada de aprobación/completion; consulta de estado visible; mensajes terminales coherentes y aviso de conexión con documentos previamente guardados.
+- Observaciones de B9, identidad y ranking ajustadas al alcance real del hallazgo.
+- Validación offline:834 Python;581 Node +1omitida;TypeScript; comprobaciones finales dirigidas correctas. No generación ni nueva evaluación de calidad de documentos, sin publicación.
+
+## Construcción editorial separada · 11 noviembre 2026 · SOLO LOCAL
+
+Usuario autorizó implementar la auditoría causal y probar SIN herramienta remota ni gasto OpenAI. Se implementó un plan común previo a la prosa; lotes de hasta4asuntos; un B9 por persona con candidatura/categoría congeladas; B10/C2 independientes sobre el plan institucional. Nuevos módulos editorial_construction.py, editorial_role_policy.py, audit_decisions.py y audit_preservation.py. Audit genera análisis por persona y código inserta las decisiones compartidas. BASE del juez ya no llega al redactor; escritura no reabre selección; RP13 no exige bloquear entrega. C2 tiene detector de solicitud inicial repetida y obligación explícita; mercado y categorías se revisan por separado. Acortamiento conserva secciones si pierde anclajes o cabeceras de decisión. Continuación editorial-construction-v1 integrada con ruta, worker y checkpoints: una respuesta por bloque durable, sin proyectar documentos parciales ni perder consumo.
+
+Validación con red bloqueada:829 Python correctas;576 Node correctas/1omitida;17 de ellas verifican ruta/checkpoint; TypeScript correcto.14 pruebas nuevas de construcción. Replay local con respuestas antiguas DeForest completa14bloques(1plan+5asuntos+7perfiles+1B10/C2), fuentes idénticas, cero llamadas/tokens/USD de OpenAI. Conserva seis entidades federativas y detecta repetición C2 antes del juez. Los4diagnósticos de privacidad de la metadata antigua siguen observados; no se fabricó una reparación ni una aprobación. La nueva calidad generativa y el coste real NO se midieron. No atribuir a este replay una nueva pareja Word mejorada.
+
+Estado: código local probado; NO PUBLICADO, sin commit/PR nuevo, sin tocar expedientes remotos. Producción no modificada por esta tarea; último corte publicado v77. Familia: arquitectura de primera redacción y decisiones comunes, no otra ampliación de reintentos. Mejora causal estructural; aceptación editorial real pendiente. Registro y evidencia privados: rankpilot-new-repo/scratch/editorial-construction-local-2026-11-11/INFORME.md, validation.json, replay-result.json y logs. Conservar privados; no staging amplio. Próximo paso requiere decidir evaluación real posterior, no iniciarla automáticamente: usuario pidió esta fase solo local.
+
+## Auditoría causal de la primera redacción · 10 noviembre 2026 (México)
+
+Solicitud: investigar por qué el grafo depende de tantas reparaciones, sin repetir DeForest. Investigación solo lectura de código,44 snapshots,59 recibos y ocho respuestas OpenAI existentes con sus mensajes reales (GET; cero generación). No modificación de fuentes/Word, código de producto o despliegue. Producción continúa v77; resultado evaluado v76.
+
+Hallazgos comprobados: (1) los19 asuntos tenían destino E;17 primeras narrativas contenían voz de auditor y Schaeffler omitía en prosa hechos que sí citaba internamente; primera salida del proveedor igual al snapshot. (2) desarrollo conjunto19 asuntos+7perfiles+B10+C2+decisiones,74.701tokens entrada,60.999caracteres de sistema; BASE de revisor compartida y RP13 todavía exige bloqueo de entrega, contrario a política vigente. Sobrecarga causal es hipótesis; mezcla e instrucción obsoleta comprobadas. (3) Audit declara categoría por confirmar pero Submission conserva Established Individual para3candidatos: decisión compartida incompleta. (4) condensación real1985→1690palabras cambia seis entidades federativas→seis entidades y causa nueva observación. (5) segunda revisión descubre comparación de mercado ya ausente en primera; C2 repetitivo permanece exactamente igual y supera las3revisiones. (6) RAG sí suministró metodología pertinente; ampliar fragmentos no resuelve la confusión comprobada.
+
+Conclusión: mejorar contratos de redacción por destino y obligaciones materiales antes de escribir; separar instrucciones por rol; decisiones de categoría/atribución compartidas por ambos documentos; proteger significado al condensar; revisar cambios y dependencias con criterios editoriales explícitos. No reconstruir toda la aplicación ni quitar al juez. v77 corrige recuperación de vínculos derivados, no estas nuevas brechas.19reparaciones no equivalen a19reintentos idénticos: hubo correcciones útiles, pero36min/2,49Mtokens siguen siendo coste alto de calidad inicial. No prometer ahorro ni nueva calidad sin medición.
+
+Pendiente IMPLEMENTAR las mejoras anteriores; esta entrada documenta diagnóstico, no corrección realizada. No nueva prueba DeForest autorizada en esta fase. Informe privado completo: rankpilot-new-repo/scratch/initial-generation-audit-2026-11-10/AUDITORIA_PRIMERA_REDACCION.md; métricas y comparaciones verificadas en verified-findings.json,payload-metrics.json,timeline.json y mensajes por rol. Mantener evidencia fuera de publicación.
+
+## Corte final v77 · publicada y verificada · 10 noviembre 2026 (México)
+
+PR58 integrada en main f776ad6a499be34acca7f0f21f2be1faba9c88bf; CI42946541170 correcto. Vercel dpl_23sYoTY4PgiEgkEWGfRRTEAYJGrr READY con mismo commit en alias producción. Motor dep-dbpt8inf3r2c73b0a3dg LIVE y /health online; worker dep-dbpt8inf3r2c73b0a38g LIVE/ready02:36:06Z. Huella266371706b25d8af6ed00d4aeb2b4783e5ddc34f665609adf8936979a0c712a8 coincide con código validado. No se actualizó dev ni se forzó ninguna rama; main es el destino de producción.
+
+Corrección y validación local descritas abajo:815 Python,6regresiones dirigidas, replay del contrato y CI correcto. Se habilita reparación de vínculos derivados defectuosos; no se acredita equivalencia automática de alias ni una nueva salida editorial. Cero nuevas generaciones y cero ejecuciones DeForest; pareja v76 y consumo histórico intactos. Publicados solo7archivos de código/tests/metadatos/nota sanitizada. Evidencia local scratch/profile-binding-repair-v77-2026-11-10/publication.json e INFORME.md. La recuperación del contrato es avance causal; calidad B9/C2/categorías y eficiencia siguen con pendientes documentados.
+
+## v77 · Corrección de vínculos derivados del perfil · publicación en curso
+
+Antecedente: cierre v76 y familia de reparaciones atómicas BIO/v69. El reparador de BIO congelaba entidades/relaciones/privacy_basis aun cuando el validador rechazaba ese vínculo. Ahora el contrato expone esos campos solamente en registros existentes detectados como defectuosos, conservando referencias/citas originales, persona, mandatos, categorías y permisos. La restricción corregida vuelve a validarse y el cambio invalida la revisión previa del campo. Una omisión por entidad no se etiqueta como duplicación; duplicados auténticos y pérdida de credenciales materiales siguen rechazados.
+
+815 pruebas Python correctas,6 regresiones dirigidas y fallos reproducidos contra v76. Replay sin generación habilita P04__1/3/4/6 y elimina el falso duplicado; no inventa equivalencia entre grafías ni modifica los Word. Los vínculos originales que carecen de prueba continúan con observaciones. Avance causal del contrato, no aceptación autónoma nueva ni garantía de calidad editorial. Cero tokens OpenAI nuevos, sin más pruebas DeForest por instrucción del usuario.
+
+PR58 https://github.com/mov1datc1/rankpilot-2026/pull/58, commit6924db2122e99842e36d6cb3c223c2b5c3d1a42d, solo7archivos públicos. CI/despliegue pendientes. Evidencia privada scratch/profile-binding-repair-v77-2026-11-10/INFORME.md, before.txt, replay.json y python-tests.log. Fuentes y controles privados excluidos de publicación.
+
+Evaluación de eficiencia:36min/2,49Mtokens no óptimos;91,6% entrada,49,7%tokens en desarrollo y26,9% en artefactos. RAG recuperó lo previsto y el grafo entregó, pero instrucciones recibidas no equivalen a calidad cumplida. No se implementa ni promete ahorro medido sin nueva ejecución. Priorizar menos defectos iniciales y revisiones afectadas antes de bajar modelos o quitar el juez.
+
+## Cierre de prueba v76 · 10 noviembre 2026 (México)
+
+Prueba nueva Builder B terminada autónomamente: expediente fcf7d4a8-8f86-4449-8bc8-678694e9d210, job e1d64a04-e37d-4cd1-be0b-3ce7d4c002da; commit fijo f964b2037b1235a97066edc66d228e8ac4b26052. Un Construir y un Preparar documentos; sin correcciones manuales, reinicios, ampliaciones ni publicación durante el ensayo. Completed/cursor8, ambos Word persistidos, available=true/approved=false. Juez final passed=true con dos advertencias; permanecen dos observaciones locales del perfil de Eduardo. No confundir aprobación del juez con aprobación global.
+
+32 asuntos/7 perfiles, selección19 core/11 reserva/2 excluidos, insignia Schaeffler. RAG delimitado presente en estrategia/desarrollo/Audit. 19 reparaciones y18 revisiones por campos reales; se recuperan hechos de Schaeffler y mejoran atribuciones personales/institucionales. La rama de v76 juez final+residuo local no fue ejercitada por esta salida; conservar prueba offline como tal. 44 snapshots muestran una sola firma de los campos fuente observados.
+
+Calidad editorial estimada: Audit8/10 (igual v72), Submission7/10 (antes6,5). B9 Eduardo646/Jaime542/Javier466 palabras de prosa. Persisten repetición semántica en C2, frases internas en B9 y categoría objetivo insuficientemente precisa. No afirmar todas las solicitudes de Ángela resueltas.
+
+Causa adicional verificada, PENDIENTE de corregir: registros por entidad P04 están permitidos y no tienen identidades duplicadas; una decisión omit (Megacable) dispara el diagnóstico duplicated. Variantes entre nombre del perfil y registro fallan igualdad literal de privacidad; el reparador de prosa no puede cambiar entity_name/relationship/privacy_basis. Requiere reconciliación de evidencias derivadas con fuente inmutable, sin aceptar alias automáticamente. No repetir generación completa para diagnosticarlo. Evidencia profile-contract-diagnosis.json.
+
+Consumo: 2.491.605 tokens (55.610 extracción +2.435.995 editorial),59 recibos,USD11,45API estimados, sin uso desconocido. Frente v72:17,7% menos tokens/10,8% menos coste, sin generalizar ahorro. Informe completo y comparación: scratch/deforest-v76-2026-11-10/VALORACION.md; coste COSTE.md; originales Word conservados. Chrome perdió ventana durante el ensayo; seguimiento final servidor sololectura. Verificados bytes/XML/texto; pantalla final y paginación visual no certificadas. Ninguna modificación de código ni nuevo despliegue en esta prueba. Evidencia privada no publicar.
+
+## 10 noviembre — prueba nueva v76 solicitada desde Builder B
+
+Jonathan autorizó una prueba nueva con vigilancia de cada etapa. Chrome recuperado abriendo una ventana nueva; sesión Ángela confirmada. Mismo Word SHA256 8883fd689e5666be21d6cfeb3e1300d0c5b92c5b11012c9b6571920f5463c901; Chambers/Latin America/Mexico/Labour & Employment, primer reconocimiento y profundidad institucional, posición no confirmada. Se pulsó Construir una sola vez. Publicación y motor f964b203 verificados; worker ready mismo commit. Protocolo y evidencia privados en scratch/deforest-v76-2026-11-10. Sin modificaciones del código ni corrección manual durante el ensayo. Consumo y resultado pendientes; no confundir solicitud con ejecución completada.
+
+## Corte final 10 noviembre — v76 publicada y worker verificado
+
+PR57/main f964b2037b1235a97066edc66d228e8ac4b26052, CI42923273749 correcto. Vercel dpl_8r5H97tG1oQYe3RowPiX9E9kxEzW READY; motor dep-dbpqhgnf3r2c73at1eb0 LIVE y health con mismo commit; worker dep-dbpqhgnf3r2c73at1e60 LIVE y ready a las 23:31:37 UTC con ese commit. Huella del motor 69bbf9528c8c3523a105ddf3bcbd193eb561f1dd27da03bb6cb7a4f5868864e4 coincide con el código probado.
+
+809 Python, 575 Node correctas/1 omitida, TypeScript y esquema estricto de reparación correctos. Replay del estado real: antes llegaban candidates/0 y /1; ahora llegan también /2, B10 y sus vínculos institucionales. Las atribuciones rechazadas se conservan como tareas y se liberan de las frases protegidas. Estado y fuentes permanecen inalterados. No se ejecutó generación OpenAI ni caso nuevo desde cero. Los Word siguen siendo v72, con sus observaciones; no atribuirles una mejora todavía no generada.
+
+Informe completo por etapa: scratch/graph-audit-v76-2026-11-10/AUDITORIA_GRAFO.md. Avance causal: cierre local y publicado de un desvío posterior a la caché corregida en v74, más detección de redundancia que escapaba en B10. No equivale a aceptación autónoma ni garantiza recuperación de todos los fallos semánticos. Próximo ensayo real solo cuando se decida retomarlo; el usuario pidió detener nuevas pruebas desde cero durante esta auditoría.
+
+## 10 noviembre — v76: segundo fallo de traspaso y revisión del grafo
+
+Reproducción real: después de invalidar correctamente la caché, develop_proposal priorizaba errores locales cuando existían corrected_paths y omitía hallazgos vigentes del juez. Enviaba Eduardo y Jaime, pero no Javier. La corrección combina citas vigentes y residuos locales en la misma reparación. Preserva el tratamiento de campos ya corregidos, las fuentes y la reparación atómica. La nueva regresión falla antes y pasa después; el replay incluye ambas atribuciones y sus condiciones de rechazo sin proteger las frases incorrectas.
+
+Se añade comprobación de redundancia dentro de B10 y los demás campos generados: detecta repetición literal extensa aunque cambie el sujeto inicial. Pide conservar sustancia, actores y argumentos distintos sin repetirlos; no convierte el pasaje en una afirmación falsa. Se mantienen los límites por método y la entrega con observaciones.
+
+Trazas verificadas: RAG delimitado en estrategia, desarrollo y Audit; 24 reparaciones y 22 revisiones por campos usan fuentes sin RAG general por diseño. El worker registró dos devoluciones de caché de 582 y 548 ms, sin llamada real; v74 corrigió esa transición. El juez temprano no detectó todo lo que señaló el final. No atribuir el conjunto a extracción o configuración OpenAI sin evidencia. Informe privado: scratch/graph-audit-v76-2026-11-10/AUDITORIA_GRAFO.md.
+
+809 Python, 575 Node correctas/1 omitida y TypeScript correcto. Cero llamadas OpenAI, cero pruebas desde cero y cero cambios remotos a Word. PR57 abierta, publicación pendiente. Antecedentes v74/v75: esta reparación cierra un segundo desvío después de la caché. Los Word v72 mantienen observaciones y valoración 6,5/8; no afirmar mejora editorial nueva sin una respuesta real del reparador.
+
+## Corte final 10 noviembre — v75 publicada; expediente disponible, Chrome pendiente
+
+PR56/main d699f81b51f9085a604a369ce87fbe16b4a67b1b. CI42919097188 success (575Node/1skip,TypeScript,Python). Vercel dpl_8Lk88wRyUYsDjZ4Hxhmkmor3WZzF READY en alias producción; worker dep-dbpq3s60tbcc73ffp570 LIVE/ready23:01:59Z con mismo commit. Motor mantiene v73/5f1f2ff y salud correcta: no hubo cambios ai-engine en v75.
+
+Verificación de expediente a23:03:23Z: completed,cursor10,documentos disponibles con observaciones; hashes y consumo iguales al cierre v72 (3.027.485tokens). Cero generación nueva para esta reparación. Panel real renderizado offline muestra disponibilidad y elimina soporte; recuperación del viejo rechazo de capacidad comprobada sin mutar el caso. Chrome sigue ejecutándose pero el control nativo no encuentra ventana y la extensión falla al leer/recargar/capturar. No afirmar verificación visual ni que el contenido editorial mejoró. Evidencia scratch/studio-status-v75-2026-11-10; resultado v72 y observaciones de calidad conservados.
+
+Cierre limitado: sincronización con deadline/reconexión, consulta accionable sin generación y continuación presupuestaria idempotente publicadas. No equivale a garantizar recuperación de todo resultado desconocido del proveedor; no usar un refresco como sustituto de resolver esos fallos. La pareja disponible mantiene los pendientes editoriales documentados en VALORACION.md.
+
+## 10 noviembre — v75: reconciliación de pantalla y continuidad del límite retirado
+
+Captura del propietario conserva aviso de soporte y presupuesto antiguo; lectura remota confirma expediente v72 completed y ambos Word persistidos sin cambios. No confundir pantalla obsoleta con una nueva ejecución fallida. Se encontró consulta de polling sin timeout, capaz de congelar la última respuesta si la conexión no resuelve; no se afirma haber demostrado ese transporte exacto en Chrome, cuyo control sigue fallando.
+
+Solución: timeout12s con aborto y reconsulta10s, actualización al recuperar red/foco/visibilidad, botón de consulta sin generación, conservación de ediciones sin guardar y normalización común del snapshot. Retirado envío a soporte de los mensajes de entrega. Un rechazo histórico EDITORIAL_BUDGET_REQUIRED puede continuar una vez con el techo desactivado, checkpoint y fuente vigentes y prueba de operación no iniciada/consumo conocido. Misma transacción de enqueue en worker y usuario; no se reinician métodos, consumo ni cursor. Los resultados desconocidos no autorizan duplicar generación; Actualizar estado no promete resolver cualquier fallo permanente.
+
+Evidencia local scratch/studio-status-v75-2026-11-10/real-case-replay.json: checkpoint real previo elegible, trabajo completed no elegible, panel renderizado con documentos disponibles y observaciones. Cero nuevas llamadas OpenAI y cero escrituras DB. Pruebas de conexión colgada, respuesta tardía, estado fallido→completado y doble clic. Publicación pendiente. Antecedentes v73 (retirada techo), v74 (ejecución reparación) y recuperación UI: avance causal de admisión y lectura, no nueva aceptación editorial ni mejora de los Word. Chrome aún no verificado visualmente.
+
+## 2026-11-10 — v1.0.74: reparación posterior a disponibilidad
+
+El worker invalida los indicadores de validación y disponibilidad de la etapa al programar correcciones. Evita reutilizar la misma prosa y consumir métodos sin llamar al reparador; conserva fuentes, dependencias, diagnósticos y consumo. Regresión reproducida antes, 569 Node correctas/una omisión y TypeScript. Publicada por PR55/main e2e4d4ef33c13fdf5a44db0c1e308c2248097518, Vercel y worker verificados. No se reescriben documentos históricos.
+
+## 2026-11-10 — v1.0.73: retiro del techo acumulado antiguo
+
+Desactivado por defecto el límite acumulado de tokens, incluso si queda configurado el valor antiguo. Se conservan consumo, métodos por campo, detección de resultado desconocido y límites de progreso. El motor sin techo sigue contabilizando llamadas; no necesita preconteo para admitirlas. Una revisión final detenida sólo por presupuesto puede continuar una vez con su historial intacto. 804 pruebas Python, 568 Node correctas/una omitida y TypeScript correcto. Publicación pendiente hasta terminar la llamada de la prueba activa. Ver docs/reviews/editorial-capacity-policy.md.
+
 ## 2026-11-10 — v1.0.72: coherencia de metodología, diagnóstico y reparación
 
 Integra las dos auditorías siguientes: metodología RAG separada por propósito, conservación de instrucciones concurrentes, clasificación de errores, revisión de hallazgos vigentes, reparación puntual de Audit y reglas compartidas en herramientas manuales. Validación: 801 pruebas Python y contratos offline de 46 campos/11 grupos. La calidad de los nuevos documentos se comprobará tras el despliegue; estos tests no constituyen aceptación editorial.
@@ -48,19 +159,276 @@ Revisión por campos distingue afirmaciones falsas de omisiones y separa histori
 
 El localizador conserva instrucciones concurrentes y condiciones de rechazo por campo; las comparaciones individuales conservan su fuente de reserva. RAG histórico con ejemplos de clientes y mandatos de voz contradictorios queda en cuarentena, sustituido por metodología separada por propósito. Reparaciones delimitadas usan fuentes y obligaciones sin recuperar ejemplos generales. 794 pruebas Python correctas; tres regresiones reproducidas antes del cambio. Sin nuevas generaciones, despliegue ni valoración de Word. Ver docs/reviews/scoped-methodology-repair-handoff.md.
 
-## 2026-11-10 — v1.0.68: referencia de calidad y conservación de evidencia
+## 10 noviembre — prueba v71 en espera por petición de Jonathan; cero consumo nuevo
 
-Banco offline de pares Word con hashes, comprobaciones por campo y rúbrica editorial ligada a los archivos. Credenciales separan relación profesional, identidad y restricción fuente; el render conserva únicamente la mención profesional vinculada y sigue anonimizando la identidad en mandatos confidenciales. Eliminadas sustituciones nominales/sectoriales codificadas en el render Legal 500. Evidencias decisivas reciben veredictos propios dentro de la revisión por campo; no se amplían reintentos. Redacción pública separada del Audit previo; diagnósticos técnicos conservados en observaciones, fuera de la carta ejecutiva.
+Jonathan respondió «Estoy usando Chrome; espera». Se detiene la interacción con el navegador. La versión 1.0.71 permanece publicada y verificada en los tres servicios, PR 52 / main 796c8a9f359720baf5ed7dd8ee9e2eb87e3e1d36. La prueba nueva NO se inició: inventario remoto confirmó ausencia de un expediente nuevo, sin llamadas de extracción o generación, tokens y coste API nuevos 0.
 
-Validación local: 777 Python, 562 Node correctas/una omisión existente y TypeScript. Evaluador probado con archivos históricos privados, sin llamadas OpenAI. No implica nueva aceptación editorial, publicación ni reescritura de los documentos existentes. Ver docs/reviews/quality-reference.md.
+Punto para retomar cuando Jonathan libere Chrome: pestaña original de Ángela 521645287, Builder B, ingestión, original Word seleccionado, Chambers/Latin America/Mexico/Labour & Employment, ranking sin confirmar, First-time recognition y Demonstrate institutional depth. No pulsar hasta volver a leer el estado. La pestaña 521645401 fue navegada a Builder pero no se utilizó para crear otro caso; la pestaña vacía 521645404 no contiene datos de prueba.
 
-## 2026-11-09 — v1.0.67: observaciones comprensibles y acciones de consulta
+Corrección del observador: seleccionar por fecha local identificó por error el caso anterior 88e9c00f, cuya fecha remota aparece adelantada. Esas copias se preservaron bajo scratch/deforest-v71-2026-11-10/observation-of-prior-case y NO son resultados v71. El protocolo ahora excluye todos los identificadores existentes; no basa la identidad en fechas. No se modificó ningún expediente de producción.
 
-Explicaciones de hallazgos separadas de diagnósticos internos, con acción específica para periodo, nombres, confidencialidad y ranking. Mensajes originales y citas preservados en detalle. Periodo conectado a formulario y guardado existentes, sin generación automática. 558 pruebas Node, una omisión existente y TypeScript. Ver docs/reviews/2026-11-09-user-observations-v1-0-67.md.
+Coste de referencia comprobado del caso anterior: 1.941.487 tokens, US$8,52–8,53 estimados de API, incluyendo sus recuperaciones; no coste de una prueba v71 todavía inexistente. COSTE.md, cost-report.json y provider-billing-receipts.json están en scratch/deforest-recovery-v69-2026-11-10. Publicación completada; validación nueva y comparación de calidad pendientes. No afirmar mejora nueva ni aceptación autónoma.
 
-## 2026-11-09 — v1.0.66: instrucciones coherentes en Submission Studio
+## 10 noviembre — v71 publicada y prueba nueva preparada; coste anterior cuantificado
 
-Mensajes y acciones alineados con documentos disponibles con/sin observaciones. Descargar y consultar hallazgos no reinicia la generación; preparación, continuación y actualización tienen nombres consistentes. Encabezados comprensibles conservan el detalle completo de cada hallazgo. Compatibilidad de revisiones anteriores con «Contenido editado». 552 pruebas Node, una omisión existente y TypeScript correctos. Sin llamadas de generación. Ver docs/reviews/2026-11-09-studio-user-messages-v1-0-66.md.
+PR 52 integrada: 796c8a9f359720baf5ed7dd8ee9e2eb87e3e1d36; head 96f12932d7cbeeaf001a1e7caaf71ecb51e3facd. CI 42884532209 correcto, Vercel dpl_HX7HQ4tCKguL2uFzMYdvKZeYTrD4 READY; motor dep-dbpmv5lg1s2s73abvr0g y worker dep-dbpmv5lg1s2s73abvr90 LIVE. Corrección semántica del actor y recibos de extracción publicados. Se conserva la comprobación fallida de atribución v70 como antecedente.
+
+La nueva prueba se preparó desde Builder B en Chrome/Ángela con el original Word, Chambers, Latin America/Mexico, Labour & Employment, First-time recognition e institucional depth, sin ranking confirmado. Se emitió un único clic Construir; confirmar creación remota antes de cualquier nueva acción. Evidencia/protocolo en scratch/deforest-v71-2026-11-10. El control de Chrome devuelve estados obsoletos intermitentes; las acciones se verifican con estado nuevo y lectura remota para evitar duplicación.
+
+Referencia v69: 1.941.487 tokens, estimación API US$8,5161–8,5316 (cache-write antiguo de extracción no conservado). 48 recibos editoriales cotejados con respuestas existentes, sin generación; razonamiento incluido en salida, agregados no duplicados. Desglose en scratch/deforest-recovery-v69-2026-11-10/COSTE.md y cost-report.json. Esta cifra pertenece al intento anterior asistido, no a la nueva prueba ni al gasto de desarrollo. Tarifas oficiales Terra/Sol verificadas al 10 noviembre; no incluye infraestructura o impuestos.
+
+## 10 noviembre — v71: conservación del actor; prueba nueva y coste solicitados
+
+Jonathan autoriza publicar y repetir DeForest desde cero, cuantificando tokens y dólares. v70 ya está publicada. Se añade una regla compartida a generación, reparación y revisión: conservar por separado el liderazgo del mandato, el actor de cada actuación y el resultado; no transferir automáticamente una actuación de la firma al socio líder. La fuente y los hechos permanecen inmutables. Es una corrección de instrucciones semánticas, no una garantía determinista. No aumenta reintentos ni cambia modelos. Antecedente: comprobación v70 recuperó todos los hechos pero dejó una atribución personal indebida.
+
+Pruebas locales Python, Node (563 correctas y una omisión existente), TypeScript y diff correctos; pendiente CI/despliegue y UNA prueba Builder B completa. La prueba utilizará sus originales y la sesión de Ángela, conservará los fallos y el gasto real, sin correcciones manuales de documentos. Evidencia separada en scratch/deforest-v71-2026-11-10. Las tarifas se verificarán en OpenAI Docs por modelo y tipo de token; una estimación de API no equivale a factura ni incluye infraestructura o trabajo de desarrollo.
+
+## 10 noviembre — v70 publicada; comprobación dirigida confirma recuperación de hechos, no aprobación completa
+
+PR 51 integrada en main, commit 3ed6fe107fccd4d6a918e9052da7336077312dfc. Vercel READY y motor/worker Render LIVE en ese mismo commit. Despliegues dep-dbpmnidbedkc73djk92g y dep-dbpmnidbedkc73djk9b0; recibo y health en scratch/repair-handoff-v70-2026-11-10/publication-receipt.json.
+
+Se ejecutó una sola comprobación aislada con el código publicado y los modelos configurados: una reparación real de Schaeffler y una revisión independiente. Consumo adicional conocido 30.076 tokens, desconocido false, dos llamadas; techo 60.000. Sin nueva extracción, sin escribir en producción, sin sustituir Word y sin reiniciar contadores del trabajo anterior (1.941.487 tokens). Los demás campos y las fuentes permanecieron idénticos.
+
+Resultado causal: se conservaron los tres hallazgos y el texto reparado incorporó Vitesco Technologies, los seis estados por nombre, más de 5.000 empleados y treinta y cinco procedimientos. La pérdida de instrucciones queda corregida y comprobada en este caso real. La revisión NO aprobó íntegramente el párrafo: dos obligaciones señalaron un mismo problema de atribución, porque «Eduardo Garduño led the mandate, designing and implementing…» adjudica personalmente a Eduardo el diseño y ejecución que la fuente atribuye a la firma. Identificar al socio líder no acredita por sí solo cada actuación individual. No es la repetición del fallo de instrucciones descartadas; es una deficiencia de conservación del actor durante la reparación. No se hizo otra llamada ni se modificó manualmente el texto para ocultarla.
+
+Evidencia: probe-request.json, probe-repair-private.json, probe-review-private.json y probe-result.json. Prueba aislada, no aceptación autónoma de producción ni nueva valoración de una pareja Word. Los documentos v69 y su valoración permanecen sin cambios. Pendiente: preservar explícitamente el actor de cada actuación al reparar y validar esa restricción junto con los hechos; no declarar cerradas todas las brechas de Ángela. Avance causal limitado confirmado, con un defecto distinto visible y sin bucle de reintentos.
+
+## 10 noviembre — v70 integrada; verificación del despliegue en curso
+
+PR 51 integrada en main: 3ed6fe107fccd4d6a918e9052da7336077312dfc; implementación b039510ffc75e874918d3e6b6d857fc0dba3d087. CI 42881917340 correcto. Vercel dpl_Hg81AXyE5pSFovMqhT7T5Z1DyFPU READY en producción; motor y worker Render todavía en update_in_progress al corte. No declarar publicación completa antes de confirmar ambos.
+
+La corrección conserva todas las obligaciones distintas del juez aunque citen el mismo párrafo, y devuelve una reparación aplicada al revisor aunque otro campo conserve observaciones internas. Verificación: 789 pruebas Python, 563 Node correctas y una omisión existente, TypeScript y diff correctos. Siete archivos públicos sincronizados con comprobación de bytes previos; evidencia privada y controles preservados.
+
+Prueba dirigida preparada, todavía no iniciada: una reparación y una revisión independiente de Schaeffler, máximo 60.000 tokens adicionales, sin escribir en producción, sin extracción ni sustitución de los Word. Se utilizarán las fuentes y hallazgos guardados y los mismos modelos configurados. No se reinician los contadores del trabajo terminado. Esta comprobación aislada no sustituye una nueva prueba autónoma integral.
+
+Evidencia de publicación en scratch/repair-handoff-v70-2026-11-10. La valoración de la pareja v69 está en scratch/deforest-recovery-v69-2026-11-10/VALORACION.md; conserva las regresiones y la distinción entre entrega y calidad.
+
+## 10 noviembre — v69 entregó con observaciones; valoración y correcciones v70
+
+A las13:00CDMX el trabajo dda4ac38 terminócompleted, disponibletrue/aprobadofalse, con ambosWord persistidos. Consumo1.884.752editoriales+56.735extracción=1.941.487conocidos, desconocidofalse. Se conservan las dos intervenciones asistidas descritas: recuperación decontrato y capacidad. No es prueba autónoma aprobada.
+
+Valoración decontenido en scratch/deforest-recovery-v69-2026-11-10/VALORACION.md: Audit7,5/10,Submission6,5/10,conjunto7aprox; v64sigue mejor(8/7,7,5conjunto). Volkswagen antiguoempleador ya aparece enB9 yAuditsinapéndicetécnico;SchaefflerE2omiteVitesco/seisestados/>5000aunqueAuditlosconserva. Eltest35procedimientosfalla sólo porque exige labour; elWord sí contiene35procedimientos, anotado sin alterar elbanco. Rúbrica ligada aamboshashes; aceptacióncalidadfalse. NoQAvisualdepáginas. ChromeAXmostródisponibles/20E;capturavisualantigua,inconsistente,noseusacomoaceptación.
+
+DoscausasreproducidassinOpenAI, deaplicacióngeneral: unique_defectspisabaobligacionesdistintasconlamismacita(3→1enhero); after_repair gastabaotrométodoporelflagglobalfalsodeunperfilajeno, enlazandodespuéshallazgoviejocontextonuevo. Correcciónv70conservaobligación+fuente+instruccióny reenvíatextocambiadoarevisióncuandoelrestosonobservacioneslocalesyaadmitidas. Noeliminafuentes/privacidadnicontadores;nocompraunatercerareparación. Replayscorregidos3→3yfase review, sin modificarprosa.
+
+Commitb039510ffc75e874918d3e6b6d857fc0dba3d087, PR51 https://github.com/mov1datc1/rankpilot-2026/pull/51 abierta; aeste corte NOpublicada. 789Python,563Node/unaomisión,TypeScriptcorrectos. Evidenciaprivadanosepublicó. Laevaluaciónv69precedeestecódigo; notransferirsusresultadosav70. PendienteCI/merge/despliegue y comprobacióndirigidadeunareparación+revisión, antesdeotraextraccióncompleta.
+
+## 10 noviembre — v69: segundo bloqueo por capacidad; continuación asistida autorizada
+
+A las 12:46 CDMX (18:46 UTC), el mismo trabajo dda4ac38 se detuvo en development por EDITORIAL_BUDGET_REQUIRED. Había consumido 1.178.298 tokens editoriales y 56.735 de extracción (1.235.033 conocidos); sin llamadas de consumo desconocido. La siguiente reparación no se inició: requería entrada estimada 25.587 más reserva de salida 16.384 frente a saldo 21.702. Sin Word disponible todavía; no hay nota de calidad nueva.
+
+Jonathan reiteró autorización de continuar y había indicado expresamente que los presupuestos no debían limitar la validación, manteniendo protección contra bucles. A las 12:49 CDMX se registró authorized_validation_capacity de 3.000.000 tokens totales para este trabajo y se reencoló una sola vez en el mismo cursor. No se alteró el código publicado, fuente, contenido, métodos por campo ni consumo acumulado. Se verificaron dueño, identidad, fuente, ausencia de otro trabajo, rechazo antes de llamada y continuación guardada. Es intervención operativa asistida; no prueba autónoma aprobada ni corrección del producto para futuras insuficiencias de capacidad. La capacidad extra es un techo, no un objetivo de gasto.
+
+Evidencia privada: budget-stop-private.json, budget-stop-result.json, capacity-preview.json y capacity-receipt.json en scratch/deforest-recovery-v69-2026-11-10. El primer fallo v68 permanece congelado aparte. No repetir scripts de continuación. Pendiente: terminar la pareja, valorar contra v64 y Ángela, y registrar las limitaciones de funcionamiento general. La recurrencia confirma que separar entrega y calidad sigue incompleto antes de producir los Word.
+
+## 10 noviembre — v69 continuación iniciada del mismo trabajo
+
+18:32:35UTC: enqueue publicado reanudó una vez el trabajo dda4ac38 del expediente88e9c00f en cursor1/development. Mantiene sourceHashea090bdd y410.834tokenseditoriales+56.735extracción. No job nuevo, extracción, edición de prosa/fuentes ni ampliación. Markerdelivery_observations_requested único. 18:33:00running; checkpointprograma11gruposfieldreview y conserva los dos hallazgos locales. No hay Word final aún.
+
+Método explícito: recuperación backend con la función enqueue real, tras comprobar usuario, trabajo, fuente y elegibilidad. Chrome mostró Continuar preparación, pero fallaron las acciones por controles obsoletos y luego captura gris/sin contenido; no atribuir un clic nativo exitoso. La prueba Builder inicial sí fue nativa y falló. Scripts privados con guardia de solicitud única y recibo en scratch/deforest-recovery-v69-2026-11-10; no repetirlos. Las observaciones y el consumo no se borran.
+
+## 10 noviembre — v69 publicada; recuperación del mismo expediente pendiente de iniciar
+
+PR50 https://github.com/mov1datc1/rankpilot-2026/pull/50 integrada; main ce02522e50a7c1d992b6752d894b9a31f7f28121, implementación746ead39ee62b43f3c8d256f08303fed1fc23d31. CI42874581660 correcto. Vercel dpl_ERSBd2F4sntERDr7y5DMM9twso84 READY; motor dep-dbpm383m8hqs73a382ng y worker dep-dbpm383m8hqs73a3830g LIVE. Health confirma mismo commit y huella2c92b7afea698def3180ba9b2a7e6c56ded54bc13f0ab2027c1bbc425c145999.
+
+782Python correctas,563Node/una omisión existente,TypeScript correcto. Trece archivos públicos sincronizados con comprobación previa de bytes; controles y evidencia privada no publicados. Continúa pendiente obtener y evaluar los Word; no declarar mejora. Evidencia v68 se conserva congelada en su carpeta. Continuación v69 se registra separadamente en scratch/deforest-recovery-v69-2026-11-10 para no atribuir rescate asistido al intento autónomo. A este corte no hay nuevas llamadas OpenAI tras el fallo. UI ya mostró Continuar preparación para el mismo expediente; el primer clic fue rechazado como elemento obsoleto durante navegación, por lo que no se cuenta como continuación iniciada.
+
+## 10 noviembre — prueba autónoma v68 fallida; regresión reproducida y corrección v69 local
+
+El único Builder B creó 88e9c00f-2a6d-4f8a-9bce-81da7c91f508 / trabajo dda4ac38-5d90-467f-b3e1-2b0cbc4ec5e9. Terminó failed en development, sin Audit ni Submission nuevos. Consumo conocido: extracción56.735 + editorial410.834 =467.569tokens; sin consumo desconocido. Un Construir y un Preparar; cero reinicios/ampliaciones/intervenciones en el contenido. No es fallo de internet. No hay base para puntuar una mejora v68 contra v64: no existe nuevo par. La prueba autónoma no pasó.
+
+Causa: nuevo contrato v68 representaba una lista de clientes/asociaciones de una unidad biográfica como una sola entidad exacta. Fallaron dos vínculos de Eduardo. La reparación corrigió los demás destinos, pero su residual no corrigió ese perfil. Segundo defecto: salida con observaciones solo reconocía intentos de revisión semántica, aún no iniciada, e ignoraba el recibo de reparación inicial+residual. Regresión de contrato con un vacío anterior de recuperación; no atribuirlo a Ángela ni a fuente incorrecta.
+
+Corrección local v69: registros atómicos por entidad conservando unidad original, restricciones separadas y todos los contextos en revisión. Claves de delta desambiguadas evitan sobrescritura de entidades con la misma referencia; corregida una validación residual que omitía el paquete fuente. Continuación reconoce exclusivamente residual efectivamente ejecutado por cada campo fallido, preserva consumo y redacción y programa revisión independiente de los campos; no compra otra reparación contractual. Observaciones locales y semánticas pueden coexistir sin bucle ni aprobación falsa; privacidad y completitud se comprueban de nuevo.
+
+Replay del checkpoint real: cero llamadas OpenAI, fuente y prosa idénticas, once grupos de revisión pendientes, dos hallazgos conservados. Evidencia privada terminal-private.json, result.json y recovery-replay.json en scratch/ui-v1-0-68-deforest-2026-11-10. Validación local no sustituye la prueba publicada. No afirmar cierre ni mejora editorial. Pendiente publicar v69 y continuar este mismo trabajo desde lo ya guardado, sin nueva extracción; distinguir ese rescate asistido del intento autónomo fallido.
+
+## 10 noviembre — v68 prueba nativa iniciada, selección en curso
+
+Expediente `88e9c00f-2a6d-4f8a-9bce-81da7c91f508`, trabajo `dda4ac38-5d90-467f-b3e1-2b0cbc4ec5e9`. Builder B, misma fuente SHA8883fd68 y misma calibración; un Construir y un Preparar documentos. Producción sigue aa3e002/v68 en Vercel, motor y worker. Sin cambios de código durante la prueba, sin ampliaciones ni reinicios.
+
+Extracción 32 asuntos/7 perfiles, 56.735 tokens conocidos. Reconciliación adicional falló Nonliteral extraction evidence; el mecanismo existente conservó la extracción determinista y completó la carga. Verificación local de lectura, sin editar: los párrafos de las32narrativas aparecen literalmente y en orden en el Word original; se excluyen rótulos intermedios del formulario. Evidencia intake-literal-check.json. No atribuir a la nueva generación un éxito completo aún.
+
+Asistente de entrada completado en19pasos normales (más que los2de otras corridas), sin cambiar hechos, cargos o candidaturas. SCOTCH permanece sin permiso confirmado y solo confidencial; no se inventó autorización. UI confirma Preparando documentos/selección y permite salir/volver. Source fallback y fricción del asistente quedan para evaluación; no se reparan en vivo ni se repite extracción. Captura nativa y AX intermitentes se estabilizaron usando lectura completa de controles; extensión sigue con errores. Evidencia privada scratch/ui-v1-0-68-deforest-2026-11-10; monitor sololectura /private/tmp/rp68-monitor.cjs.
+
+Siguiente: observar terminal, obtener los Word persistidos sin regenerarlos, comparar contra v64/v65 y tres revisiones DeForest. La disponibilidad y el juez no sustituyen valoración editorial. No existe aún nota de calidad para v68.
+
+### Verificación posterior v68 · 10 noviembre, 17:36 UTC
+
+Lectura transaccional READ ONLY en producción: los tres pares históricos conservan sus seis Word byte a byte mediante la función compartida de descarga, con 5/9/14 observaciones íntegras. Render local del panel confirma lenguaje de usuario y detalles accesibles; no se atribuye a QA nativo. La consulta de expedientes recientes confirma que no se ha creado uno nuevo. Evidencia `scratch/ui-v1-0-68-deforest-2026-11-10/production-check/receipt.json` y `latest-submissions.json`. Cero llamadas OpenAI. Nueva calidad todavía no evaluable: no hay nuevo par. Acceso Chrome sigue mostrando contenido vacío/captura gris tras reconexión, Raise y pestaña nueva; se solicitó dejar el equipo desbloqueado. No se sustituyó silenciosamente la prueba Builder por una simulación ni se repitió una generación.
+
+## 10 noviembre — v68 publicada; prueba nueva pendiente de acceso al Builder
+
+PR49 https://github.com/mov1datc1/rankpilot-2026/pull/49 integrada. Main/dev `aa3e002bd1eedbb1dca72dfd899c956906837e46`; head `698fee1b8d8194f5df28bca1d995aff9b36fd283`, implementación `623511193809d837398241e1f8ff22bb0ec3e527`. CI42864809765 correcto. Vercel producción dpl_HUU96f99Xs9FVWnjGydeRUMir8jH READY sirve ese commit. Render motor dep-dbpl86dbedkc73dgrtk0 y worker dep-dbpl86dbedkc73dgrteg LIVE; worker ready17:30:04Z. Health confirma commit y huella `2ed8fdd108076549c6c0acfb0e4930530fc5fc877c0cc7d0ef7166aa81c65235`.
+
+Protocolo privado `scratch/ui-v1-0-68-deforest-2026-11-10/`: mismo original de Builder B verificado por SHA256 y configuración comparativa congelada. Cero Construir, Revisar, nuevas extracciones, generaciones o gasto OpenAI en esta publicación. Chrome conserva sesión de Ángela, pero la captura es gris y el contenido no aparece; fallan intermitentemente cgWindowNotFound y extensión timeoutMs incluso tras restablecer control. Ningún expediente nuevo creado por el agente. No afirmar prueba nativa ni mejora editorial del nuevo par todavía.
+
+Balance: publicación cerrada, evaluación de calidad pendiente; conservar v64 como referencia y contrastar también v65. Las pruebas locales y disponibilidad de servicios no sustituyen la revisión de Word nuevos. No reiniciar ni duplicar carga mientras no se haya identificado el resultado del primer intento. Evidencia: publication-receipt.json, vercel-production.json, engine-health.json y protocol.json en esa carpeta.
+
+## 10 noviembre — sugerencias de Claude contrastadas e implementadas localmente
+
+Estado: commit local `623511193809d837398241e1f8ff22bb0ec3e527`, rama `codex/quality-reference-v68`, clon `/private/tmp/rankpilot-db-recovery-v57`; 19 archivos de código/tests/documentación sincronizados al proyecto activo con comparación de bytes previa. CHANGELOG privado actualizado por separado. Sin push, merge ni despliegue; producción permanece en v67/dc4fdfc316219aa255b9b8935c82a643910ceb27. Cero llamadas nuevas a OpenAI, extracciones o reinicios de expedientes.
+
+Causa y solución, enlazadas a la valoración del 9 de noviembre y a las familias históricas de B9/ejecución de evidencia/entrega con observaciones:
+
+- El plan compartido ya existía (`development.case_plan`, fuentes y obligaciones). No se agregó otro estratega ni una segunda arquitectura. Se desglosaron las citas decisivas en comprobaciones obligatorias de su propio campo, con referencias fuente limitadas al pasaje pertinente. Las 59 comprobaciones nuevas del checkpoint real caben en los contratos del proveedor; el replay construye 48 unidades en 11 grupos. Esto puede aumentar el contenido de revisión; no amplía rondas ni resetea contadores.
+- La cobertura de perfil aceptaba generalizaciones justificadas solo con prosa libre. Ahora distingue relación, entidad y evidencia original de restricción. La confidencialidad de un mandato no se extiende automáticamente al antiguo empleo. La revisión semántica sigue verificando el significado: una cita literal por sí sola no prueba que exista restricción.
+- El render volvía a ocultar el empleador después de redactar. Conserva solo la ocurrencia profesional vinculada al perfil original y a su cita B9. La misma entidad como cliente continúa anonimizándose; no existe lista global de nombres autorizados. Perfiles antiguos sin esos vínculos no obtienen excepción automática. Eliminadas sustituciones de nombres/sectores codificadas en Legal 500; se usa la política real del registro.
+- El Audit añadía `release_verdict.errors` después de las cinco secciones: esa era la causa de los diagnósticos visibles en v65. Ya no se añaden al Word; se conservan en los datos/observaciones y no se transforma el resultado del juez en aprobado.
+- La redacción pública deja de recibir el Audit previo/checkpoint como fuente de estilo. Se mantienen fuentes, estrategia compartida y hallazgo localizado. El editor independiente conserva ambos documentos. No se agregó una pasada pagada universal ni se atribuyeron ejemplos aprobados a Ángela sin prueba.
+- Banco privado fijo con v64 como referencia, los pares v60/v65 y extracción/pareja histórica Ramos; incluye dos archivos originales con tres feedback DeForest y hashes. Evaluador offline con comprobaciones por campo y rúbrica humana ligada a los bytes. La opción `--require-release-quality` falla si faltan revisiones, hay incumplimientos o bajan criterios. No está integrada automáticamente a la publicación de GitHub; el operador debe ejecutarla con los nuevos Word. CI verifica sintéticos, no la calidad privada real.
+
+Validación: 777 Python correctas; 562 Node correctas y una omisión existente; TypeScript y diff-check correctos. Pruebas cubren credencial retenida, restricción real, entidad equivocada, mención ambigua, privacidad del cliente separado, Word B9, diagnósticos fuera del Audit, referencias de cada hecho y rechazo de retrocesos del banco. El fixture anterior llamaba generalize a retirar un superlativo conservando el empleador; ahora lo clasifica retain, sin eliminar esa prueba.
+
+Comparación offline real: v65 pierde seis comprobaciones frente a v64 (adquisición, plantilla, geografía, procedimientos, ausencia de diagnósticos y voz B9). El empleador se conserva como defecto conocido de ambas versiones; v64 no se presenta como perfecta. v60 difiere en la adquisición frente a v64. Ramos solo se congeló y comprobó estructuralmente: no nueva valoración editorial integral. Ningún Word histórico fue modificado ni se afirma nueva calidad 9/10.
+
+Evidencia: `scratch/quality-reference-v68-2026-11-10/` contiene banco, archivos fijados, comparison.json, offline-replay.json, implementation-receipt.json y logs. Guía pública: `docs/reviews/quality-reference.md`.
+
+Balance: avance causal comprobado en contratos, render y medición, no cierre autónomo. Permanecen los estados pedidos por Jonathan (documentos disponibles con/sin observaciones), sin nuevo bloqueo de entrega por esta rúbrica. Pendientes: publicación coordinada motor/worker/frontend y una generación controlada con la versión fija, seguida de evaluación real de ambos Word contra v64 y los feedback. No comprar otra corrida solo para repetir intentos ni declarar aceptación mediante tests locales.
+
+## 9 noviembre — v67 LIVE: hallazgos explicados y periodo conectado
+
+PR48 https://github.com/mov1datc1/rankpilot-2026/pull/48 integrada; main/devdc4fdfc316219aa255b9b8935c82a643910ceb27, headf47ab4493ec0ef6db3a8005c6fc57131649bf6bc. CI42757159374/job129634082072 SUCCESS: TypeScript, Node y Python. Vercel dpl_7PFx4DoJj64WcPij3M1RgUh9KgeS READY en dominio de producción; worker Render dep-dbpa1au417fc739ek1h0 LIVE, ready2026-11-10T04:44:06Z (9nov22:44 CDMX). Motor sigue sano con65; no cambió Python. Diez archivos públicos sincronizados con guardas de bytes; controles privados conservados.
+
+La capa de presentación explica hallazgo, consecuencia y acción; diagnóstico/citas permanecen desplegables. Periodo abre formulario real y guarda por ruta existente; los demás botones solo consultan datos. 558 Node correctas/una omisión y TypeScript; lectura de tres casos conserva5/9/14observaciones y seis Word idénticos. Evidencia scratch/studio-observations-v67-2026-11-09/{publication-receipt.json,production-check/receipt.json,vercel-production.json,engine-health.json}. Cero OpenAI. QA nativo Chrome no completado por native pipe startup failure; no atribuir esa prueba al render local.
+
+Balance: corrige la insuficiencia demostrada en la captura de66; avance causal de comunicación y enlace de periodo, no reescritura de documentos ni aprobación editorial. No se afirma resuelto todo hallazgo semántico. No hace falta regenerar para ver estos mensajes: recargar la pantalla publicada.
+
+## 9 noviembre — v67 validada localmente: observaciones para usuarios finales
+
+La captura del usuario demostró cierre incompleto de66: aunque los títulos mejoraban, el cuerpo seguía mostrando instrucciones del juez. Causa: el render reutilizaba message directamente salvo tres excepciones B9. Nueva capa observationPresentation separa título, explicación y acción; mantiene mensaje/citas intactos bajo detalle. Tipos comunes tienen mensajes específicos; variantes se consideran del mismo asunto solo si el hallazgo lo afirma. No se decide el nombre correcto ni se fabrica aprobación. Desconocidos reciben título neutro, con detalle completo accesible.
+
+Periodo tenía handler de guardado pero no formulario visible y el enlace regresaba al panel. Ahora abre formulario, valida fechas y usa el guardado existente; no genera. Botones de nombres/permisos/abogados/ranking solo navegan. 558 Node+una omisión existente, TypeScript correctos; tres expedientes leídos READ ONLY,5/9/14observaciones conservadas, seis Word idénticos. Evidencia scratch/studio-observations-v67-2026-11-09/production-check. Cero llamadas OpenAI. Chrome falla native pipe startup; no afirmar QA nativo. No mejora del contenido editorial, solo comunicación y navegación funcional. Publicación pendiente; antecedente66 reconocido como insuficiente por evidencia del usuario.
+
+## 9 noviembre — comprobación posterior a publicación v66 (23:41 UTC)
+
+Solicitud: probar mensajes y descarga tras publicar. Consulta nueva a producción en transacción READ ONLY, sin mutaciones ni OpenAI. Los tres expedientes mantienen sus dos Word disponibles; seis archivos obtenidos mediante storedAvailableBytes, la función compartida de descarga, con bytes idénticos a los originales guardados. ZIP/XML válidos en los seis. Estado visible Documentos disponibles · con observaciones; render local con datos recién leídos conserva5/9/14observaciones respectivamente. El trabajo v60 sigue needs_review internamente pero su pareja completa continúa disponible; no se falsificó estado interno ni aprobación.
+
+Vercel producción confirma2693cd6e7ddd15ff6384b3f7884549b79e04fd3c READY; motor online y huella65 sin cambios. Evidencia privada scratch/studio-user-messages-v66-2026-11-09/production-check/{receipt.json,integrity.json} y seis Word/paneles renderizados. Cero nuevas extracciones, generaciones o llamadas OpenAI.
+
+Límite concreto: prueba nativa de clics/descarga en Chrome no completada. getApp devuelve cgWindowNotFound; inventario confirma Chrome abierto y pestañas correctas, pero getTab devuelve timeoutMs undefined. launch_app no está implementado en este entorno. No cerrar sesiones a ciegas ni repetir intentos indefinidos. No confundir la comprobación backend con una descarga HTTP autenticada o clic nativo. No prueba nueva desde Builder ni mejora editorial de los documentos. Avance: disponibilidad, integridad y conservación de observaciones verificadas otra vez sobre producción; queda pendiente únicamente QA nativo de estos mensajes, sin necesidad de regenerar.
+
+## 9 noviembre — v66 LIVE: comunicación del Submission Studio publicada
+
+PR47 https://github.com/mov1datc1/rankpilot-2026/pull/47; main/dev2693cd6e7ddd15ff6384b3f7884549b79e04fd3c. CI42721197204 SUCCESS. Vercel dpl_EEbdGqQvVST7f8RceTWWQJ6BsSHZ READY sirve ese commit en rankpilot-2026.vercel.app; worker Render dep-dbp5gve7bikc73d62u70 LIVE y ready23:36:10Z con ese commit. Motor sigue sano en65/huella772f89fde577ac9f2491da9cbcae7cfa8ca8272eaea601a067af6fd38e52be2b: no cambió Python ni requirió redeploy.
+
+Cierre de esta tarea: mensajes consistentes para Preparar/Continuar/Actualizar documentos, Descargar, Ver observaciones y recuperación técnica; no rótulo final borrador/optimizado/pausado. Hallazgos completos conservados; prueba local del caso real mantiene14observaciones. 552 pruebas Node/una omisión, TypeScript y suite Python de CI correctos. Once archivos públicos sincronizados con guardas; documentación de control privada actualizada. Evidencia scratch/studio-user-messages-v66-2026-11-09/{publication-receipt.json,ui-render-receipt.json,vercel-production.json,engine-health.json}.
+
+Cero nuevas llamadas OpenAI, extracciones o generaciones. Chrome detectó la pestaña pero falló getTab con timeoutMs; no atribuir render local a navegación nativa. No modifica el contenido ni acredita una mejora editorial de los Word. Mantener pendientes de calidad de65; esta reparación resuelve comunicación y acciones visibles de66, sin reiniciar casos ni ocultar hallazgos.
+
+## 9 noviembre — v66 integrada; verificación del despliegue en curso
+
+PR47 https://github.com/mov1datc1/rankpilot-2026/pull/47 integrada; main/dev2693cd6e7ddd15ff6384b3f7884549b79e04fd3c, head2fc183acd0fad4776410c2827ff170899139d379. CI42721197204/job129515295174 SUCCESS (TypeScript, Node, Python). Worker Render dep-dbp5gve7bikc73d62u70 en construcción al corte; Vercel todavía sirve65. No declarar66 LIVE aún. Once archivos públicos sincronizados al proyecto activo con guardas de bytes previos; changelog y controles privados conservados. Chrome localiza pestañas pero getTab falla timeoutMs; sin comprobación nativa nueva. Cero llamadas OpenAI.
+
+## 9 noviembre — v66: mensajes del Studio alineados con disponibilidad (validado localmente)
+
+Antecedentes v64/v65: archivos disponibles pero persistían textos de aprobación, Optimizar Todo y acciones inconsistentes. Corrección en barra, descargas, Audit, estado de entrega y panel lateral: Preparar/Continuar/Actualizar documentos, Ver observaciones sin generación, Ver cómo continuar para recuperación técnica. Hallazgos internos tienen encabezados humanos y conservan íntegros mensajes/citas; compatibilidad Contenido editado para revisión anterior. No se cambió el grafo ni el contenido de los Word.
+
+552 Node correctas, una omisión existente, TypeScript y diff correctos. Renderizado local del último DeForest conserva14observaciones y disponibilidad; evidencia scratch/studio-user-messages-v66-2026-11-09/ui-render-receipt.json. Cero llamadas OpenAI, cero nuevas extracciones o generaciones. No verificación nativa de Chrome en este corte ni nueva aceptación de calidad. Avance causal en comunicación, no reparación de los hallazgos editoriales pendientes. Publicación pendiente.
+
+## 9 noviembre — v65 LIVE y tercer expediente completado: cierre funcional de disponibilidad
+
+PR46 integrada; main/dev `2fc8aec40abf7ac2c0718f0bd88dd2ad00555c95`, head `ed34a6c40a50eaf90d0071ab60ccba3d2bf5257f`, CI42717180786 correcto. Render motor dep-dbp53na9lscs73aqup80 y worker dep-dbp53na9lscs73aqup30 LIVE, Vercel dpl_6vfQaUs3vkrCUC2ooh15kJ3DhF9p READY. Salud y huella772f89fde577ac9f2491da9cbcae7cfa8ca8272eaea601a067af6fd38e52be2b comprobadas. Worker anterior05148099 ausente antes de continuar; nuevoa3d008d6 listo23:07:21Z.
+
+Último expediente d95e203b/jobf30faea9 continuado UNA vez con delivery_observations_requested, mismo trabajo y fuentes. A las23:10:57 llegó a Audit con802.299 tokens intactos: el paso que antes bloqueaba B9 no hizo otra llamada ni reescribió ese perfil. Después generó Audit/Word y ejecutó reparaciones acotadas de otros campos señalados por el juez. Terminó completed/artifact a las23:18:21UTC, available=true, approved=false. Editorial acumulado1.772.489, incremento970.190 desde802.299; extracción histórica56.217, total1.828.706. Sin consumo desconocido ni nueva extracción. La continuación previa64 había añadido161.502; conservar ambos eventos, no atribuir todo a65.
+
+Ambos archivos guardados y verificados mediante la misma función de bytes que usa la descarga: Submission32.293bytes/SHA256ca3fbd99517a1a500a9d23923fe752005c0fd0783d4e51b359f5267c3969d462; Audit14.284bytes/SHA2566c8d8ccbc4799f067c091a5701c95c9d1933035263933a0f29a99142aec9cae3. ZIP y XML válidos; texto conservado. Evidencia scratch/ui-v1-0-65-deforest-legacy-2026-11-09/{result.json,integrity-receipt.json,terminal-private.json,ui-render-receipt.json}. UI renderizada localmente con datos reales confirma «Documentos disponibles · con observaciones» y las14observaciones únicas visibles. No atribuir esta comprobación al Chrome nativo: volvió a fallar cgWindowNotFound; se intentó recuperar app/pestaña sin éxito. Las dos parejas anteriores sí se descargaron desde Chrome.
+
+Los tres expedientes tienen ahora Submission y Audit disponibles: primer caso1cb949f5 (aprobado por juez con advertencias), v60/164606e2 (hallazgos conservados) y antiguo d95e203b (hallazgos conservados). No se repitió ningún Builder. Se comprobó por separado el rótulo «sin observaciones» con datos sintéticos sin hallazgos; no fabricar ese resultado para los casos reales.
+
+Límite de calidad explícito: el último par conserva9hallazgos del juez (7critical y2warning, algunos duplican un mismo problema), además de validaciones internas. Incluye escala omitida del héroe, antiguo empleador anonimizado, comparación competitiva insuficiente, descriptor sectorial discutido, ventana de investigación y diagnósticos técnicos añadidos al Audit. NO es mejora de calidad certificada ni aprobación para presentar. Se cumple el requisito nuevo de entregar archivos con observaciones visibles; no se borra ningún hallazgo para conseguir el estado. No iniciar más generaciones para eliminar observaciones aceptadas por esta política. Pendiente una comparación de calidad independiente si se retoma ese objetivo; no afirmar cerrado el feedback editorial de Ángela.
+
+Balance: cierre funcional probado de la disponibilidad para estos tres trabajos; dos descargas nativas y una exportación exacta del servidor. No prueba nueva autónoma desde Builder, no garantía universal ante archivos incompletos o fallos técnicos y no revisión visual completa de Word (runtime sin pdf2image). Última publicación65; árbol aislado limpio y código sincronizado al proyecto activo. Control y evidencia permanecen privados.
+
+## 9 noviembre — v65 lista en PR46: cierre de la salida editorial local restante
+
+v64 recuperó el primer caso y habilitó el par v60. La continuación del último expediente antiguo f30faea9 terminó failed/development a las 22:55:12 UTC: 802.299 tokens editoriales acumulados, incremento 161.502, sin consumo desconocido ni nueva extracción. Persisten vínculos internos de B9/credencial de Jaime, aunque el texto está completo. Causa: v64 permitía entregar con fallos semánticos, pero la validación local de citas seguía interceptando antes del ensamblado. Es una omisión de la nueva política de disponibilidad, no un nuevo dato que el usuario deba proporcionar.
+
+v65 separa estructura completa de validación editorial también en esa salida: después de los métodos registrados, conserva fuentes, texto, intentos y hallazgos; permite Audit/Word y mantiene revisión independiente de ambos archivos. Selección validada, identidades registradas, texto completo y ausencia de conflicto de privacidad detectado siguen exigidos; consumo desconocido, reparación pendiente y preguntas sin resolver no se convierten en disponibilidad ficticia. Interfaz muestra observaciones internas junto a hallazgos finales. No concede aprobación ni inventa comprobaciones exitosas.
+
+Replay del checkpoint real por el grafo: cero llamadas, 16 llamadas históricas conservadas, texto y fuentes idénticos, tres observaciones retenidas, listo para ensamblar. 770 Python/550 Node+1omitida/TypeScript y regresión UI correctos. Head ed34a6c40a50eaf90d0071ab60ccba3d2bf5257f; PR46 abierta, publicación pendiente. Huella772f89fde577ac9f2491da9cbcae7cfa8ca8272eaea601a067af6fd38e52be2b. Evidencia privada scratch/available-assembly-v65-2026-11-09. Protocolo de una continuación del mismo trabajo preparado; no se ejecuta hasta verificar publicación. Sin ampliar presupuesto ni repetir extracción.
+
+## 9 noviembre — v64: primer expediente completado, dos parejas descargables comprobadas
+
+El trabajo 89d66868-d71a-4df4-bdc5-2f9d8dace4e6 terminó completed/artifact el 9 de noviembre a las 22:40:18 UTC, con código de grafo fijo v64 y una sola continuación asistida. Consumo editorial acumulado 2.486.256, incremento 1.421.255 respecto de 1.065.001; extracción histórica 56.846, total 2.543.102. Sin consumo desconocido ni nueva extracción. La revisión final pasó con tres advertencias (periodo de investigación y dos variantes de nombres); entrega añade advertencias de permisos/confidencialidad y alcance de consulta de ranking. Esto no equivale a aceptación independiente de Ángela.
+
+Chrome comprobado: «Documentos disponibles · con observaciones», Descargar habilitado y texto que no exige otro intento para obtener archivos. Descargas nativas de ambos Word verificadas contra DB: Submission 31.315 bytes, SHA256 ba9562b8038c93cb43b28afa5a23980014db5634fa1c63234550232fafda5a47; Audit 14.188 bytes, SHA256 3bf0a0677e277f83adc2dcb55381d1c5276007a38d055ab868c11280fc0f3ffe. Evidencia scratch/ui-v1-0-64-deforest-first-2026-11-09/{result.json,native-download-receipt.json,terminal-private.json}. Ya hay nueva pareja aprobada por juez con advertencias, v64; v53 sigue siendo comparador histórico. El expediente v60 también tiene descargas nativas comprobadas, con hallazgos sin aprobación; no se regeneró.
+
+Limpieza adicional de ocho textos secundarios en cinco archivos: quitar referencias de edición a borrador y reemplazar pausada/detenido en dos respuestas técnicas por acción real de recuperación. Sin cambios de flujo ni presupuesto. Commits 3335e21 y a48ea59, PR45 integrada main/dev e205e4fa986cf97639af1da12c614fcf5ff12d80; CI42713784270 correcto. Vercel dpl_EqatTFjQdsK6qgVXoQAXL6z57jEs READY, worker dep-dbp4q3m7bikc73d50ppg LIVE. Motor conserva commit8971812/huella52bf507 sin redeploy porque estos textos no cambian Python; primer trabajo terminó antes de esta publicación secundaria. Proyecto local sincronizado con comprobación de bytes previos.
+
+Último expediente antiguo f30faea9-b541-4ef9-a342-ba90dcec8d5b (sesión d95e203b) continuado una sola vez por enqueue normal, no clic nativo: legacy_development_recovery_requested, mismas fuentes y 640.797 tokens previos. Worker previo retirado y nuevo heartbeat05148099 comprobado. En curso; no afirmar todavía entrega de ese tercer expediente. No nueva prueba Builder. Renderizado visual no completado: runtime carece de pdf2image; integridad y descarga sí comprobadas, y texto de los Word conservado para comparación posterior.
+
+Balance: avance funcional demostrado para entrega con observaciones y recuperación del primer caso. No sustituirlo por afirmación de calidad perfecta ni ocultar lo pendiente del tercer caso. Esta continuación tuvo consumo sustancial; no iniciar más recorridos para eliminar advertencias editoriales toleradas por el requisito actual.
+
+## 9 noviembre — v64 LIVE; disponibilidad y ambas descargas comprobadas en Chrome
+
+Main/dev `8971812e833ac7dc7662a7e112e8c456b0addbdb`, PR44, CI correcto. Render motor/worker LIVE y Vercel READY con el mismo commit; retirada del worker anterior comprobada antes de continuar. Primer trabajo reanudado una sola vez con fuentes y consumo conservados: avanza a audit, 1.882.629 tokens editoriales conocidos al corte 22:35:32 UTC, desde 1.065.001. Sin nueva extracción; todavía no tiene pareja final.
+
+El expediente v60 (164606e2-dd3c-4ad0-be2e-20482a1ae29f) ya muestra «Documentos disponibles · con observaciones» en la sesión nativa de Ángela. Se pulsaron ambas descargas reales: Submission 29.661 bytes, SHA256 1be46284dd7094e75c60e5be98f4fcd2f4c7be3e1fdb8f4ab2b592011443ee0f; Audit 13.972 bytes, SHA256 ec01be6a97393492c42e72f3bdaa85110a539424b7c261ca4e077b113463b7bd. Coinciden exactamente con los archivos conservados en DB. No se regeneró ni consumió OpenAI para habilitar esa entrega. Evidencia privada: scratch/ui-v1-0-64-deforest-capacity-2026-11-09/native-download-receipt.json. Chrome confirma ambas descargas listas.
+
+Cierre limitado comprobado: la disponibilidad ya no depende de aprobación editorial para una pareja completa. Los seis hallazgos de v60 permanecen; no se afirma nueva calidad ni aprobación. Última pareja aprobada sigue v53. v59 todavía sin reanudación. Revisión de textos secundarios detecta tres referencias de edición a borrador y una respuesta de autenticación interna con «pausada»; limpieza de copia pendiente de publicación, sin alterar el grafo durante la prueba en curso. Renderizado visual de Word no verificado en este corte.
+
+## 9 noviembre — v64 integrada y desplegándose
+
+PR44 https://github.com/mov1datc1/rankpilot-2026/pull/44 integrada; main/dev `8971812e833ac7dc7662a7e112e8c456b0addbdb`, head `e4e7363d810ca313db5afc3982b23e823db979eb` (incluye de63fc9). CI42710673286 correcto: 766 Python, 548 Node + una omitida, TypeScript. 33 archivos públicos; documentación privada excluida. Huella motor `52bf507616dbbafd78bbbc141e958b2e17dc42e62da355412cfcb8eb990e77a7`. Render motor dep-dbp4e3qvcj2c73cn5nlg, worker dep-dbp4e3qvcj2c73cn5nu0 aún en despliegue. Vercel pendiente de verificar.
+
+Lectura previa comprueba: primer trabajo 1.065.001 tokens, segundo 640.797, tercero 1.236.241, sin consumo nuevo. Tercero ya tiene ambos Word completos e integridad correcta; el nuevo modo puede descargarlos con observaciones sin generación. Primeros dos todavía no tienen pareja completa; no anunciar disponibles hasta crearla. Replay actualizado usa también ranking_verification guardada y conserva comprobaciones B10/C2, sin revalidarlas innecesariamente. Chrome volvió a exponer la página actual, todavía versión anterior. Pendientes verificar despliegues, retirar worker anterior, continuar una sola vez y comprobar UI/descargas reales.
+
+## 9 noviembre — v64: cambio de requisito, entrega con observaciones sin exigir aprobación editorial
+
+Jonathan pidió explícitamente sustituir Borrador/Optimizado por «Documentos disponibles · con observaciones» y «Documentos disponibles · sin observaciones», y dejar de bloquear la descarga por hallazgos editoriales. Se reemplaza la ampliación de cuotas por fuente que estaba incompleta; esa propuesta queda archivada en /private/tmp/rankpilot-source-quota-proposal64 y NO se publica.
+
+Implementación local: separar disposición para ensamblar de aprobación semántica. Tras los métodos existentes de reparación, un campo estructuralmente válido conserva su hallazgo anclado al hash de fuentes/texto y permite revisar las demás unidades. No se falsifican comprobaciones positivas. Audit completo con hallazgos puede continuar al ensamblado. Se conserva la pareja exacta independientemente del veredicto y se sirve con comprobación de versión e integridad. Supervisor termina con documentos observados cuando no queda recuperación aplicable. Interfaz y lista usan disponibilidad, sin estado visible Borrador/Optimizado/Pausado; trabajo en curso se presenta como preparación. Archivos inexistentes o corruptos no se anuncian disponibles; fallos técnicos mantienen acción de recuperación.
+
+Replay offline del primer trabajo: mismos textos, fuentes, 25 llamadas históricas y contadores B10/C2/Jaime intactos; una observación conservada y grupos restantes programados. No nueva generación ni pareja Word todavía. La calidad no se declara mejorada por permitir descargar. Los hallazgos pendientes deben compararse después con el feedback de Ángela. Suite final/publicación/continuación en curso; evidencia scratch/available-documents-v64-2026-11-09.
+
+## 9 noviembre — v63 probada: avance institucional, nueva pausa por contador demasiado amplio
+
+Publicación verificada: main/dev `5ebc8b46eb711a1da259650336dcac1a78194ba9`, PR43. Continuación del mismo trabajo `89d66868-d71a-4df4-bdc5-2f9d8dace4e6` mediante enqueue normal del backend; no se acredita clic nativo de Chrome. Terminó failed/development el 9 de noviembre, 20:50:23 UTC. B10 y C2 superaron revisión; se corrigieron escala regional de Manpower y responsabilidad en litigios masivos de Jaime. El nuevo hallazgo señala el resultado preventivo de otro mandato (Ramsa), pero dos métodos contados por BIO completo impidieron repararlo. Evidencia: `scratch/complete-context-v63-2026-11-09/first-terminal-full.json`.
+
+Consumo editorial conocido: 1.065.001, incremento 208.321; extracción 56.846, total 1.121.847. Capacidad 3.000.000 intacta, sin llamadas desconocidas. Otros dos trabajos no reanudados. Sin nuevo par aprobado; último aprobado v53. Captura actual confirma veinte borradores guardados y comunicación menos repetida, pero el usuario sigue bloqueado: mejora visual no es cierre funcional.
+
+v64 local en implementación: vincular el límite a campo y registro original que sustenta el hallazgo; conservar métodos previos y gasto. Un hallazgo de otra fuente puede continuar solo con historial que demuestre que no consumió ese método. Reformular la misma fuente no renueva intentos; historial insuficiente conserva límite anterior. Pendientes implementación completa, regresiones, publicación y continuación. No afirmar reparado/publicado este cambio todavía. Familia recurrente: granularidad de recuperación, distinta del contexto institucional resuelto en esta ejecución.
+
+# v1.0.63 — contexto institucional y continuación conservando consumo
+
+Validada localmente; publicación y prueba nativa pendientes. Ver control raíz y nota pública v63. No existe nueva pareja aprobada todavía.
+
+# Estado v1.0.61 — 9 noviembre
+
+Publicada: contrato compartido por campo, revisión semántica antes del ensamblado, recuperación con límites por campo y presupuesto comprobado antes de generar. Main0c27caa, CI758Python/529Node+1skip/tsc y despliegues verificados. Continuación de expediente56 pendiente; sin aceptación nativa todavía. Evidencia y límites en control local.
+
+# Cambios
+
+### Estado verificado v1.0.60 — 9 noviembre
+
+Publicada y probada; terminal needs_review por dos omisiones de participación en B9. Sin par Word nuevo. Diagnóstico de contratos y límite presupuestario registrado en control raíz y continuidad; propuesta estructural aún no implementada. No se inició otra generación.
+
+## 1.0.60 — Continuación durable de reparaciones
+
+Un grupo residual autorizado por paso guardado, conservando propuesta, rondas, ledger y privacidad. Diagnósticos precisos de perfiles/citas y enlace de salida consistente. Validación local736Python/514Node+1skip/tsc. Publicación y nueva prueba pendientes. Ver control raízRP060 y nota técnica privada/local; no se afirma calidad final.
+
+## 9 noviembre — v59 lista localmente y en revisión; continuar mismo expediente
+
+Reparación transversal de la transición entre grounding y revisión semántica: la primera revisión semántica con pruebas vinculadas puede usar el segundo intento normal cuando la reparación literal anterior ya superó su gate. No se reponen rondas ni consumo; los fallos semánticos repetidos y consumo desconocido permanecen cerrados. Una cita exactamente perteneciente a otro asunto obliga a corregir también legal_understanding/rationale del mismo asunto, manteniendo selección/orden/insignia.
+
+730 Python, 513 Node correctas/1skip y TypeScript correcto. Regresión del grafo completo verifica dos reparaciones/dos revisiones con ledger acumulado; dos regresiones fallaron antes del cambio. Replay de la primera estrategia pagada localiza10citas ajenas; el checkpoint real tiene una reparación y dos revisiones normales aún disponibles. Elegibilidad UI y motor comprobadas sin nuevas generaciones ni escriturasDB. Commit67b3e6e91ccf75870e4ccd379f5301a7b1a76caf, huellae9d0aa1796e82193263aabca918dab3357f31e176d63375894a7b437371203cf.
+
+Evidencia scratch/selection-transition-v59-2026-11-09. Continuación preparada en scratch/ui-v1-0-59-deforest-continuation-2026-11-09, mismo expediente/trabajo y mínimo169056editoriales ya contabilizados. La prueba58 permanece fallida e intacta. No presentar una continuación tras publicación como prueba nueva autónoma. PendienteCI/despliegue/continuación/Word/calidad; ceroOpenAI adicional en este diagnóstico.
+
+## 9 noviembre — recuperación estructurada v58 validada; publicación en preparación
+
+Causa RP056: el reintento omitía objetos y listas aunque estaban autorizados por el contrato. v58 incorpora todos los targets tipados que conservan un fallo local, mantiene un solo reintento por campo y refresca B10/C2 contra la redacción conservada. Los diagnósticos señalan cita, campo y asunto exactos. No modifica fuentes, permisos, selección ni aprobación.
+
+727 pruebas Python, 512 Node y un skip previo; TypeScript correcto. Tres regresiones (dos reproducidas fallando antes del cambio) y replay de la primera respuesta v56 ya pagada: ahora incluye case_plan e institutional_execution. Una comprobación aislada real de estos dos campos pasó todos los validadores locales: 76.739 tokens conocidos, unknown false, sin tocar el expediente ni sus biografías. No es aprobación nativa ni pareja Word. Subtotal histórico seleccionado 11.937.788, no factura completa. Evidencia scratch/structured-recovery-v58-2026-11-09.
+
+PR37 de conexiones integrado: main/dev c7c492c3b75f8b179e3552383fa30901413360fa; despliegue pendiente de verificar. v58 commit local e24caef, rama codex/typed-residual-recovery-v58. Falta CI/despliegue/prueba nativa y comparación de Word. La prueba v56 permanece fallida sin alteración. Avance causal verificado, cierre pendiente.
+
+## 2026-11-09 — v1.0.57: conexiones de Vercel sin reservar sesiones del pool
+
+La creación de un borrador podía fallar antes de extraer documentos al agotarse las conexiones de Supavisor en modo sesión. En Vercel, el cliente usa el mismo host, identidad y configuración TLS en modo transaccional cuando la URL configurada apunta al pool compartido de Supabase en5432. El pool local queda limitado a una conexión, con espera de conexión acotada, y el cliente se reutiliza dentro del proceso. Los workers persistentes y otros destinos conservan su ruta y límite. No cambian migraciones, credenciales, modelos, reintentos de generación ni contadores.
+
+El adaptador PostgreSQL existente no configura nombres de sentencias preparadas y conserva las transacciones en una conexión. Validación:512pruebasNode correctas/una omitida yTypeScript. Tres regresiones cubren selección del modo, conservación de credenciales/TLS/destinos ajenos y reutilización sin otro pool. Una transacción Prisma estrictamente de lectura contra el servicio configurado respondió correctamente por6543. No acredita ausencia universal de saturación ni la aceptación editorial de documentos. Publicación pendiente hasta finalizar la prueba editorial fija en curso.
 
 ## 2026-11-08 — v1.0.56: participación y alcance de recuperación coherentes
 
@@ -86,30 +454,330 @@ Se reconoce la jefatura expresada mediante «leading the practice» sin inducir 
 
 Validación local: 716 pruebas Python, 509 Node correctas/una omisión y TypeScript correcto. Nueve regresiones nuevas; comprobación de contratos serializados sobre evidencia guardada, sin proveedor. Detecta perfiles breves y voz residual anterior sin alterar originales ni aprobar texto nuevo. La publicación y la prueba completa nueva todavía deben acreditarse; tests y replay no equivalen a calidad nativa. Ver docs/reviews/2026-11-08-editorial-depth-v1-0-54.md.
 
-## 2026-11-08 — v1.0.53: diagnóstico localizado y aceptación transaccional de B9
 
-Separadas las responsabilidades de diagnóstico, generación y aceptación de reparaciones. Cada referencia personal indica su asunto inmutable y los duplicados exactos. La preservación deja de congelar citas ausentes o defectuosas. Antes de sustituir un candidato, se comparan sus obligaciones de evidencia, privacidad, voz, jefatura, categoría y calidad personal: una regresión rechaza ese cambio y conserva el candidato previo, sin perder las correcciones independientes. La única recuperación recibe el valor realmente conservado y los defectos localizados de la propuesta rechazada. No se aumentan rondas, límites ni presupuestos, ni se omite la revisión final.
+## 8 noviembre, 15:21 MX — v53 COMPLETADA desde cero; ambos Word descargados
 
-707 pruebas Python, 509 contratos Node correctos/una omisión existente y TypeScript correctos. Ocho regresiones nuevas y una prueba adaptada al rollback atómico. Replay con respuestas ya pagadas rechaza las regresiones e impide conservar métricas privadas nuevas: cero generaciones adicionales. Esto valida los mecanismos locales; todavía no acredita una nueva pareja Word ni calidad editorial final. Ver docs/reviews/2026-11-08-transactional-biography-v1-0-53.md.
+Expediente fb6cf78d-d1d1-4157-b607-937d2b93728d/job171a4740-27f8-49a3-a0b4-bff9fc5000db. Sesión Ángela, Builder B, código53 fijo: un Construir y un Revisar, sin ediciones manuales, reinicios ni ampliaciones. Selección20core/SCHAEFFLER; desarrollo corrigió10campos y3candidatos en un reintento. Primera revisión final detectó ongoing inventado paraRecicla; reparación automática de matters/8/text y posterior revisión culminaron. Segunda revisión passed,8criteriosmet,sindefectos. UI muestra Entrega aprobada y ambos Word descargados con hashes idénticos al par guardado.
 
-## 2026-11-08 — v1.0.52: conservar todas las obligaciones de una reparación B9
+Editorial1196798/1200000, extracción56496, total1253294conocidos/unknownfalse; margen3202. Subtotal histórico seleccionado10067127, no factura total. Diagnóstico y comparación en scratch/ui-v1-0-53-deforest-2026-11-08/RESULTADO_PRUEBA.md, protocol.json y ui-download-hashes.json. SubmissionSHAa784b2e764e13ea0483b8fdff6cbac9a453d96008aa7a2611429ed0fb29732df; AuditSHA2c07d067673161973e468ba814e14fdffd01abe07cfe1b108d2aa38d2c182fe4.
 
-La prueba nueva v51 corrigió los defectos anteriores, pero quedó detenida por una función departamental omitida. El reparador descartaba esa instrucción si ya existía un target del candidato y la recuperación de bindings sustituía instrucciones concurrentes. Ahora la función confirmada se añade a las obligaciones existentes; voz, privacidad y credenciales se conservan. Un residual BIO dentro del candidato original recibe el mismo único reintento acotado. No se deduce jefatura sin fuente ni se insertan frases automáticamente.
+Avance funcional real frente a51/52. B9 conserva más casos propios y resultadosBonatti/Brose; categorías por experiencia, credenciales y relaciónempleador mejoran frentea48. No cierre100%: repite jefaturaEduardo y As named lead/co-lead, y quedan expresiones probatorias. ReconciliaciónAudit tras corregiruna frase costó99801tokens; margen normal muyestrecho. No introducir más gates sin optimizar recuperación. No hubo generación adicional tras terminal. Paginación no certificada: runtime de render empaquetado no disponible; se verificó texto/hash, no PNG de todaslaspáginas. FamiliaRP053 validada nativamente paraeste caso; calidadeditorial finalycoste siguen abiertos.
 
-Seis regresiones nuevas: cinco fallaban antes del cambio. 699 pruebas Python correctas. Replay de las dos respuestas ya pagadas confirma la omisión exacta de la instrucción en ambos payloads anteriores y su presencia después del cambio; las respuestas antiguas siguen rechazadas, como corresponde. Cero generaciones adicionales. No hay nuevo Word aprobado ni aceptación editorial; la prueba v51 se conserva fallida. Tooltip detenido indica la acción de revisión sin ofrecer un Audit inexistente.
+## 8 noviembre, 15:09 MX — prueba v53 en selección
+
+Expediente fb6cf78d-d1d1-4157-b607-937d2b93728d/job171a4740-27f8-49a3-a0b4-bff9fc5000db. Un Construir y un Revisar; extracción32asuntos/7abogados56496tokens conocidos/unknown0. Dos pasos normales de revisión de datos; SCOTCHsinconfirmación conserva confidencialidad sin inventar permiso. Selección en curso, ninguna corrección manual. Una observación de lectura no devolvió datos; interfaz mantiene progreso y no se reinició. El consumo editorial en vuelo aún no es total final. Código53fijo y límite normal sin ampliar. Evidencia scratch/ui-v1-0-53-deforest-2026-11-08.
+
+## 8 noviembre, 15:06 MX — v53 publicada; prueba nueva iniciada desde Builder B
+
+PR33/main-dev052045d803786ea5b33bb0862e90841be5b96bda. Motor dep-dboe69u8bjmc73b4t1qg y worker dep-dboe69u8bjmc73b4t23g LIVE, healthhuella c93bc3eb292c4e91cb53c2c4bbbd021a28278634f1dfdb4f0eda030b4f6e2dcd coincide; workerready21:04:13Z. Vercelproductiondpl_2CxCAwWJKw8D1UqGZhDEZ8gis5VF READY, buildmain052045d/package53, aliascanonical confirmado. CI42522776884SUCCESS. Recibo scratch/ui-v1-0-53-deforest-2026-11-08/publication-receipt.json.
+
+Nueva pestaña sesión Ángela, B confirmado visualmente, misma fuenteSHA8883fd689e5666be21d6cfeb3e1300d0c5b92c5b11012c9b6571920f5463c901/calibraciónChambers/Mexico/LatinAmerica/Labour/First-time/Institutionaldepth. Un clicConstruir; extracción en curso, aún no Revisar. Límite normal1.2m, sin ediciones/reinicios/extensiones durante prueba. No nueva parejaWord ni aprobación; no concluir calidad por publicación. FamiliaRP050/051/052 permanece abierta.
+
+## 8 noviembre — v53 integrada; despliegues en curso
+
+PR33 https://github.com/mov1datc1/rankpilot-2026/pull/33, headbdf7fac6de61c79490dedb9232d3916fb807e72a. CI42522776884SUCCESS y VercelpreviewSUCCESS. Main/dev052045d803786ea5b33bb0862e90841be5b96bda. Render motor dep-dboe69u8bjmc73b4t1qg, worker dep-dboe69u8bjmc73b4t23g en progreso; no afirmar LIVE todavía. Huellac93bc3eb292c4e91cb53c2c4bbbd021a28278634f1dfdb4f0eda030b4f6e2dcd. Diez archivos públicos sincronizados al repo original con comprobación de baseline52; historial privado y .git preservados. Consulta local GitHub tuvo timeout; conector y lectura posterior confirmaron CI, sin duplicar mutaciones. Prueba53 preparada sin clic Construir/Revisar aún, consumo adicional cero.
+
+## 8 noviembre — v53 implementada y validada localmente; publicación pendiente
+
+Jonathan pidió reparar, separar responsabilidades y continuar las pruebas. Diagnóstico en biography_obligations.py, generación localizada en editorial_repair.py y aceptación atómica en repair_acceptance.py. Cada S referencia conserva matter_id exacto; las citas defectuosas no se congelan. El candidato propuesto se compara contra el anterior antes de conservarlo: nuevas duplicaciones, métricas privadas, pérdida de fuente/jefatura/credenciales, voz o calidad causan rollback del candidato, manteniendo cambios independientes. La única recuperación recibe el valor conservado y los defectos de la propuesta rechazada. Sin más rondas, cambios de presupuesto ni aprobación por defecto.
+
+707 Python, 509 Node correctos/1skip, tsc correcto. Ocho regresiones nuevas, prueba anterior adaptada para verificar rollback en lugar de aceptar prosa defectuosa. Replay de ambas respuestas v52 ya pagadas: cero llamadas nuevas, rechaza propuestas regresivas y no conserva sus dos combinaciones confidenciales; conserva correcciones independientes. El replay sigue sin aprobación, como corresponde. Evidencia scratch/transactional-biography-v53-2026-11-08. Huellac93bc3eb292c4e91cb53c2c4bbbd021a28278634f1dfdb4f0eda030b4f6e2dcd. Familia RP050/051/052 sigue abierta hasta una nueva prueba fija y comparación real de Word; es avance causal comprobado localmente, no cierre. Consumo reciente seleccionado sigue8813833; no hubo nueva generación para reparar el código.
+
+## 8 noviembre, 12:56 MX — prueba nueva v52 TERMINADA EN FALLO; diagnóstico sin generaciones adicionales
+
+Expediente47ac7d9f-3386-41fa-a818-a2fc2448bd84/job9a199243-4c3d-4e70-83f3-6b01de57ce5a, BuilderB/sesiónÁngela, un Construir y un Revisar, worker ec67708119975423dc655893134b70ec72083811 verificado.32asuntos/7abogados, extracción57306. Selección20core/SCHAEFFLER pasó tras3revisiones/2reparaciones por omisiones e interpretaciones; desarrollo102331, reparación86470, recuperación51030. Editorial560400+extracción57306=**617706tokens conocidos/unknownfalse**. No agotó1.2m ni falló por conexión. Subtotal seleccionado8813833, no factura7días.
+
+La jefatura estaba presente desde el primer desarrollo; no certifica nativamente su mecanismo de reparación porque no hizo falta.30campos corregidos, un candidato residual. Replay exacto de2respuestas pagadas demuestra: primera reparación deja duplicaciones S03/S08 yS07/S09; segunda resuelveprimera, dejaS07/S09Recicla/REGSA y añade métricas privadasSCHAEFFLER/Securitas aB9Eduardo. No había hallazgo de combinación privada antes del segundo reintento. El aviso genérico de contribuciones distintas no señala esos vínculos; más prosa no corrige el contrato. Validación bloqueóentrega, no publicóWord; cero nuevasgeneraciones en diagnósticoGET/replay.
+
+**No hay Audit/Submission finales para comparar.** BIOEduardo238→262→320palabras; no equivale a calidad y persiste «is the Partner». Pendiente estructural: diagnósticos por vínculo/cita exacta, preservación que no congele prueba inválida, comprobación de no regresión antes de conservar candidato y recuperación solo afectada. Todavía no implementado/publicado: código52fijo durante esta prueba. No otra corrida, ampliación ni reinicio. UI muestraRevisióndetenida/Copiarreferencia/Auditno preparado. Evidencia scratch/ui-v1-0-52-deforest-2026-11-08/RESULTADO_PRUEBA.md yoffline-repair-diagnosis.json. FamiliaRP050/051/052 sigue abierta; aumento de coste frentea51 sin entrega demuestra que no cabe declarar cierre.
+
+## 8 noviembre, 12:36 MX — v52 PUBLICADA Y VERIFICADA
+
+PR32 https://github.com/mov1datc1/rankpilot-2026/pull/32 integrada; main/dev ec67708119975423dc655893134b70ec72083811, headfd582dd2ca46eb1ba57fb00b286378b2a4887175, CI42510450709SUCCESS. Motor dep-dboc1268bjmc73b2cffg y trabajador dep-dboc1268bjmc73b2cfag LIVE; healthcommit y fingerprint61964c9c430be808f512d652a776069132723498b080871ed34d610d1c77dcfd coinciden; workerready mismo commit18:34:59Z. Verceldpl_Ew35j8AU1dfkUU7VQtmjzvAjEtTh READYproduction/aliascanonical/buildmain ec67708.699Python/509Node+1skip/tscPASS; tooltip señala el botón real Copiar referencia. Siete archivos públicos sincronizados al repo original con guardhash de baseline; continuidad/changelog preservan histórico local, .git original intacto. No se publicó fuente, respuesta, Word ni control privado.
+
+Se conserva prueba51 fallida, sin nueva llamada de generación ni reinicio. Los415997tokens corresponden a esa prueba (359440editorial+56557extracción), no al replay ni publicación. La corrección está publicada pero no validada por una nueva prueba completa; falta obtener parejaWord y compararla con los tres feedback de Ángela. No declarar autonomía/calidad final cerrada. Recibo y resultado en scratch/ui-v1-0-51-deforest-2026-11-08/{v52-publication-receipt.json,RESULTADO_PRUEBA.md}.
+
+## 8 noviembre — cierre prueba v51 y corrección v52
+
+Prueba nueva DeForest Builder B FAILEDdevelopment, expediente d4a2ac8e-448d-4321-9dbb-4b626f0baac6/job414f3e56-aa52-4d10-90ff-7ed7ab64cde0. Un Construir/Revisar, fuentes/código fijos, sin ampliaciones ni ajustes manuales. Extracción32/7 56557; selección pasó primera revisión 19core/SCHAEFFLER; editorial359440 = total415997 conocidos/unknownfalse. No agotó cuota ni hay evidencia de internet como causa. 25 campos reparados, una recuperación sobre2perfiles, sin application_errors. Único residual: función departamental de Eduardo en B9. No Audit ni Word; no afirmar mejora de calidad final. Subtotal reciente seleccionado8196127, no factura7días.
+
+Replay exacto de las dos respuestas pagadas confirma ambas solicitudes sin instrucción de jefatura. Causa: el target candidato suprime el targethead; el cleanup reemplaza instrucciones concurrentes y no recogía el residual hijo cuando desaparecía el padre. v52 compone obligaciones y conserva el único reintento dentro del alcance, fuentes/privacidad/credenciales intactas. Sin jefatura no confirmada ni inserción de prosa. Seis regresiones (cinco fallaban antes),699Python/509Node+1skip/tscPASS. Replay corregido incluye obligación pero conserva rechazo de respuestas antiguas; no es nueva prueba ni aceptación. 0generaciones adicionales. Evidencia scratch/ui-v1-0-51-deforest-2026-11-08/{RESULTADO_PRUEBA.md,head-obligations-baseline.json,head-obligations-fixed.json,protocol.json}. v52 commitc3fc03f en publicación; no nuevo despliegue verificado aún.
+
+## 2026-11-08 — v1.0.51 publicada y verificada
+
+
+**Publicación RP051 verificada:** PR31 integrada, main/dev402b8d87f2f4cdb4fc4e1cec77376df92dae08a0; CI42508178511SUCCESS. Motor dep-dbobksm8bjmc73b1tta0 y trabajador dep-dbobksm8bjmc73b1ttigLIVE. Health confirma commit/fingerprint bcea37b6733a7e5c89db407771955c392d1ce2a640018d6198fcee80aacdc45b; log trabajadorready mismo commit18:09:04Z. Verceldpl_9iuF9mJuDTheZAbicMShWtUVsdBNREADY/production, aliascanonicalverificado y buildlogmain402b8d8. Muestra reciente de errores Render vacía; no equivale a validación funcional de un caso.693Python/509Node+1skip/tscPASS.0llamadas nuevasOpenAI,ningún reinicio o parWord nuevo. Evidencia publicación en scratch/repair-contracts-v51-2026-11-08/publication-receipt.json.
+
+## 2026-11-08 — v1.0.51: auditoría independiente y corrección del reparador
+
+Reproducido el fallo v50 con su respuesta pagada. Se protegían referencias de salida ausentes del BIO y el lote mixto Candidate/BIO impedía el reintento. Además, do_not_present con etiqueta Not proposed exigía resultados personales desde simples listas de equipo. Corregidos esos contratos, preservando trabajo/credenciales reales, preguntas de fuente, alcances por candidato y consumo conocido/desconocido. No se ha reactivado el expediente fallido.
+
+693 pruebas Python, 509 Node correctas/una omitida y TypeScript correctos. Nueve regresiones Python nuevas incluyen lote mixto realista y controles negativos. Replay privado: once cambios válidos conservados y exactamente cuatro perfiles dirigidos a una recuperación; detenido expresamente antes de nueva llamada. Cero generaciones/tokens nuevos; no es aprobación de calidad ni par Word nuevo. UI ya no ofrece Audit inexistente ni interpreta todo fallo como límite agotado.
+
+PR31/head e5e6eebb4cb2f40a9c785e8c4ea69b99de5a754a, CI/publicación en curso. Fingerprint bcea37b6733a7e5c89db407771955c392d1ce2a640018d6198fcee80aacdc45b. Evidencia privada scratch/repair-contracts-v51-2026-11-08; informe técnico público docs/reviews/2026-11-08-coherent-repair-v1-0-51.md. La aceptación nativa completa sigue abierta.
+
+## 2026-11-08 — v50: prueba nueva detenida en reparación B9
+
+La prueba desde Builder B contrastó la extracción y superó selección, pero no completó desarrollo: la protección literal rechazó cuatro reparaciones de perfiles y el filtro del lote impidió su limpieza acotada. La respuesta pagada reproduce el mismo fallo offline, sin generaciones adicionales. Los once campos válidos independientes se conservaron. No se generó Audit ni par Word; no se declara mejora final ni cierre de aceptación. El presupuesto no se agotó. Pendiente corregir protección de referencias no ejecutadas, alcance del reintento por candidato y coherencia de perfiles sin candidatura. Código sin cambios durante la prueba; evidencia privada en control/continuidad, fuera de publicación.
+
+## 2026-11-08 — v50 integrada y verificada: B9 completo y recuperación con alcance limitado
+
+PR30 integrada a main/dev53d258062280d664dd24204c394817f9f4227e5b; CI42504329678SUCCESS.684Python/508NodePASS+1skip/TypeScriptPASS. Motor yworkerRenderLIVE; healthSHA/fingerprint correctos. VercelREADY/aliasverificado.19archivos públicos sincronizados por hash; control y evidencia privada excluidos.
+
+B9 desarrolla todo el trabajo material personalmente atribuido, con espacio de hasta1.000palabras según fuente; Audit comprueba esas mismas contribuciones. Categorías con criterio/evidencia/contraevidencia/alternativa. Se impiden pérdidas de aportes válidos, sobrescrituras Candidate/BIO y descarte de otros deltas correctos. Recuperación quirúrgica y diagnóstico porítem, con uso conocido/desconocido preservado y sin comprar otra revisión completa al agotar el recheck. Esquemas SDK compartidos y preflight, con patrones de IDs propios equivalentes cuando los catálogos superan límites de enums, manteniendo validadores originales.
+
+No cambios de modelos reales, presupuesto normal ni fuentes. No extracción/generación nueva ni pruebaE2E; calidad nativa deWord y ahorro facturado pendientes de la próxima prueba fija solicitada. Detalles de implementación y validación en docs/reviews/2026-11-08-complete-personal-case-and-scoped-recovery-v1-0-50.md; recibo privado en scratch/personal-quality-v50-2026-11-08.
+
+## 2026-11-08 — v50: B9 con cobertura completa y recuperación por elemento; publicación pendiente
+
+El desarrollo deja de limitar B9 a dos asuntos. Un contrato obligatorio exige conservar el trabajo material personalmente atribuido, permite hasta1.000palabras porperfil según evidencia y hace que Audit compruebe las mismas contribuciones. Categorías con criterio, citas de etapa profesional, crecimiento, contraevidencia y alternativa comparada. Sin mínimo artificial ni promoción de miembros de equipo.
+
+Reparaciones protegen aportes válidos no afectados y permiten corregir privacidad/afirmaciones rechazadas; unen Candidate/BIO para evitar sobrescrituras y conservan deltas correctos si otro falla. Reintento quirúrgico residual y Audit personal con fuentes/secciones limitadas. Diagnósticos inválidos se recomprueban una vez porítem; no pueden cambiar passed/aceptación/otroschecks, mantienen gates originales y consumo conocido/desconocido. Fallo acotado impide otra revisión completa automática. SchemaSDKpreflightyrefscompartidas/patronesliterales evitan límites de enums sin truncar evidencia. Modelo/presupuesto normal sin cambios; compatibilidadGPT6preparada, no migración.
+
+684Python/508NodePASS+1skip/TypeScriptPASS. Prueba Word1000palabras sintética conserva últimoaporte; contexto1item9890vs537109caracteres enfixtureprivado117obligaciones, no ahorro facturado demostrado. PR30headc0cd7cfdae1766dc5e29eae3ac68ab6053f84c2c, pendienteCI/merge/despliegues. Sin generación/extracción nueva ni E2E; aceptación de Wordreales pendiente de próxima prueba fija solicitada porJonathan.
+
+## 2026-11-08 — v49 integrada y verificada: citas propias y observaciones internas de sector
+
+PR29/main-dev833826d3981c964eb8a314b331168c9775655f30, CI42460680842SUCCESS.656Python/506Node+1skip/TypeScriptPASS. Motor ytrabajadorRenderLIVE, saludSHA/fingerprint correctos, VercelREADY/aliasconfirmado. Diezarchivos públicos sincronizados por hash; evidencia privada excluida.
+
+La revisión exacta elige referencias de fuente propia y restaura citas literales antes de los mismos validadores. Las advertencias source-only de sector solo se apartan del contrato de reparación si las comparaciones canónicas están sustentadas, no quedan claims y los dos descriptores están ausentes de ambosWord. Registro, aceptación ycríticos intactos. No cambios de modelos, límites, reintentos ni consumo acumulado. Pruebas offline reales con82obligaciones, cero generaciones nuevas. La continuación48fallida y sus borradores se conservan; no hay nueva aceptación autónoma ni cierre total de calidad. Detalle en control privado.
+
+## 2026-11-08 — v48: avance real de la recuperación automática; entrega pendiente
+
+El mismo DeForest superó desarrollo mediante reparación acotada y completó Audit. La revisión de Word detectó pérdida de detalles del héroe en la sección confidencial; el sistema reparó el campo y regeneró Audit, y vuelve a comprobar el par exacto. Sin intervención manual en prosa, extracción nueva ni cambio de versión durante esta continuación asistida. No hay aprobación final ni aceptación autónoma desde cero todavía. Consumo y evidencia privados en el control raíz.
+
+## 2026-11-08 — v48 publicada; reparación guardada y selección validadas en producción
+
+PR28/main-dev0a1d7d7ad7b4338592c8f4e69b19f805cecec07f,CI42459085385SUCCESS/648Python/506Node+1skip/TypeScriptPASS. RenderengineworkerLIVE/healthSHA-fp correctos,VercelREADY/aliasverificado.14archivospúblicossyncconhashes;original.gitintacto.
+
+La reparación aceptaotra cita literal del mismo original sin modificarfuentes. Se reutilizó larespuesta legacyya pagada con0generacionesdereparación yse ejecutó latercerarevisiónindependiente normal: selecciónaprobada,2repairs/3reviewspreservados. Solo dosdecisionescambian;hero/orden/otras/tracesanterioresidénticos. Continúadesarrollo. Escontinuaciónbackendasistida,noaceptaciónautónoma desdecero,parWordnuevoycalidadfinalsiguenpendientes.
+
+## 2026-11-08 — v47 integrada: reconocer tandas de selección menores
+
+PR27 integrada a main/dev `a3ac3a0625f2c9a5310345619cc3a9674f5eb199`; head `d8451caeafdf89dacac22bcf77d63088b25c2ab6`, tree `f3659169ee93661209f0e4d28b9918fd207bef56`. CI42457744733SUCCESS,642Python/504NodePASS+1skip/TypeScriptPASS. Diezarchivospúblicossincronizados contra baseline46,original.gitintacto. Render motor/worker LIVE, salud SHA/fingerprint coincidentes; Vercel READY y alias de producción confirmado.
+
+La prueba nuevaUI46fallóen selección: una reparación corrigió4asuntos,la siguiente revisión dejó2(conunIDnuevo),pero strictsubsetdeIDs negóelavancesuficiente.47aceptamenornúmerodependientesconlos mismos2repairs/3reviews; iguales/mayorestandas solapadassebloquean. Continuaciónexplícitaúnicatrasfixsiquedacuota,fuentesin cambios,usoconocidoycheckpointvigente;preservaID/cursor/ledger/state. El replayreadonlyreal conservaestrategia/trace/2reviews/1repair.0nuevasgeneracionesporcorrección. Aúnno pruebareal47niWordfinales; no contarcontinuacióncomoautónomadesdecero.
+
+## 2026-11-07 — v46 integrada: reducir la salida del juez sin perder sus pruebas
+
+PR26 integrada a main/dev `57b37715f8d26ae0425d35a70f908e6887a4129d`; CI42417911401 aprobada,640Python/502Node/TypeScriptPASS y1Nodeomitida. Render motor/worker LIVE y salud SHA/fingerprint correctos; Vercel READY y alias de producción confirmado. Siete archivos públicos sincronizados contra hashes; `.git` original intacto.
+
+La continuación45 terminó FAILEDartifact: dos respuestas incompletas al repetir párrafos completos para92obligaciones. Editorial979.994+extracción56.876 conocidos, sin desconocidos/reset/extensión. No Wordfinal aprobado. V46 sustituye esas copias en el transporte por referencias verificables al campo y texto; restaura citas completas antes de los validadores existentes. Mantiene todas las obligaciones, fuentes y aceptación independiente; no cambia selección, prosa, modelos, límites ni reintentos. Replay de ambas secciones pagadas conserva92/92pruebas idénticas con aproximadamente66%menoscaracteres;0llamadas nuevas. No es un veredicto nativo completo ni aceptación autónoma. Control raíz y continuidad conservan el fallo y los pendientes de calidad.
+
+## 2026-11-07 — v45 publicada: evidencia personal y reparación con alcance protegido
+
+V44 aisló hallazgos reparables y limitó la reparación de prosa a los campos afectados, preservando fuentes, selección, orden y hero. Su continuación real aprobó selección pero se detuvo en desarrollo: el gate exigía contribuciones personales donde la fuente solo acreditaba pertenencia al equipo, y una coincidencia parcial de nombres atribuía un mandato no confirmado.
+
+V45 comparte entre desarrollo y revisión Word una obligación proporcional a la evidencia. Los perfiles no nominados con categoría pendiente pueden conservar participación y credenciales sin inventar resultados individuales; nominados y leads exactamente identificados mantienen sus obligaciones. Permite una recomprobación única del desarrollo guardado sin llamar al modelo ni resetear consumo. PR25, main/dev `542b18eaf2d280e1a2aa0e28e4634d2c183b5f15`, Render/Vercel verificados; 635 Python, 502 Node y TypeScript aprobados, una Node omitida.
+
+La continuación de backend del mismo DeForest ya superó desarrollo sin llamadas nuevas y terminó Audit. La revisión del par exacto está en recuperación automática tras una respuesta incompleta. No hay aceptación nueva desde cero ni calidad final acreditada todavía. Detalle privado y consumo en el control local; no publicar sus fuentes o respuestas.
+
+## 2026-11-07 14:48 MX — v43 PUBLICADA y verificada; validación real de reparación pendiente
+
+PR23 integrada: main/dev `0fe0e8fcdcd96ae8c02a778ba49c3038d4b0f567`, head `8eb497a8f7c25a59833d8e459e8d716d46fc0362`, tree `74882e77db7fe4e30d665059831549936ada1380`. CI42412369429 SUCCESS; 620 Python, 498 Node aprobadas y una omitida; TypeScript aprobado. Render motor `dep-dbnorjvb9u1s73cufbsg` y worker `dep-dbnorjvb9u1s73cufblg` LIVE. Health SHA coincide y fingerprint `af9afacecc30b3c8f2aefb1ca0f9d026cb30c981202c84984c0a2edc3b58717e`. Vercel producción `30g3f6k6r`, ID `dpl_2HD9aPQ8uZPN8KjjybjyfB8ACr1B`, READY y alias `rankpilot-2026.vercel.app` comprobado. Muestra de errores postdeploy vacía.
+
+Corrige binding de comparaciones explícitas sin depender de regex de palabras, conservando citas propias y del par; legado mantiene inferencia conservadora. Reparación de texto conserva disposición actual: cambiarla requiere constraint explícito y sustentado. No mueve nodo ni cambia modelos, límites o contadores. Cuatro tests nuevos, replay privado vincula dos hallazgos y permite reparación; NO es corrección semántica nativa ni aceptación Word. Cero llamadas OpenAI nuevas. Siete archivos públicos sincronizados con verificación de hashes; original.git intacto.
+
+Control raíz RP-043/42 entradas e informe `AUDITORIA_REPARADOR_Y_RUTAS_2026-11-07.md` actualizados. Recibo en `scratch/comparison-repair-v43-2026-11-07/publication-receipt.json`. Subtotal seleccionado conocido sigue en 5.383.509. UI v42 sigue FAILED selection; no hay nueva prueba, generación pendiente ni mutación de ese expediente. No reabrirlo mediante resets ni manualmente editar checkpoints. La siguiente verificación es la reparación real y posterior par exacto contra tres feedback, conservando fuentes/consumo; aún no iniciada. Riesgos futuros documentados, no afirmar arquitectura o resultados 100% cerrados.
+
+## 2026-11-07 — Auditoría transversal terminada; v42 publicada y verificada
+
+Solicitud de Jonathan: auditar y ajustar el recorrido completo antes de otra prueba desde cero, con los criterios de Ángela y el historial de reparaciones. Se trazaron los nueve nodos editoriales, la cola/checkpoints/supervisor y la entrega del par exacto; también se inventariaron los 21 nodos históricos y su separación respecto al frontend actual. Hay 23 archivos de frontera registrados y una matriz de los tres feedback DeForest.
+
+Cuatro ajustes v42: normalizar prosa y citas públicas antes de bind/validate, sin mutación después del flag válido; contar la salida anticipada de clasificación del writer; cota técnica de 24 pasos para permitir el trayecto acotado de 17 sin aumentar topes de llamadas/tokens; bloquear informes históricos completos/PDF con gates fallidos o rollback, conservando borradores de interrogación. Fuentes, selección, categorías, permisos y ledger permanecen protegidos. Once pruebas nuevas de frontera; 616 Python, 498 Node aprobadas y una omitida; TypeScript aprobado. Los tests contra el código v41 reproducen los fallos; v42 pasa. No afirmar bucle infinito observado en producción ni atribuir la detención v39 a estas causas hipotéticas: su causa confirmada sigue siendo RP-040.
+
+PR22 https://github.com/mov1datc1/rankpilot-2026/pull/22; head088d1bb17de0400db8fbf6137e22d91007f0afab, tree51114c2590a7828a527f966074816ffc3cb6af6b, main/dev8f7262dff254f5cda0c24475494490e5a1a5acb8. CI42402988145SUCCESS y previewSUCCESS. Motor dep-dbnn5dfavr4c73ali7d0 LIVE y worker dep-dbnn5dfavr4c73ali7lg LIVE. Health SHA y fp f8ec0419da9e6c40772e36b47d8cd23f2bb3f16f03f6581ab27eedfa19c75158 coinciden. Vercel efu40tvjc READY/dpl_H8Uxn4XL833TKmpnyhAREjMWgH7x y alias canonical verificado. Muestra de logs postdeploy sin errores. Diez archivos públicos revisados sincronizados al original tras baseline hash; no se tocó original.git ni se publicaron fuentes/scratch/control privados.
+
+Control raíz RP-042 actualizado: 41 entradas (002–042). Informe AUDITORIA_INTEGRAL_GRAFO_2026-11-07.md y recibo scratch/full-graph-audit-v42-2026-11-07/publication-and-audit-receipt.json. Contiene límites y riesgos: recuperación durable de respuesta desconocida aún pendiente, ninguna prueba completa de cada ruta histórica ni QA visual de Word nuevos. Auditoría actual sin llamadas OpenAI, extracciones ni expedientes nuevos. Subtotal conocido seleccionado sigue en5119265; no es total conciliado de seis días. Último DeForest jobdc16420b... sigue FAILED/development, mismo ledger y tokens358446+extract56090 en snapshot18:52:02Z. No se reabrió al publicar.
+
+La auditoría/ajustes previos a la prueba están completos; aceptación autónoma de los Word y comparación con Ángela siguen pendientes. No hay nueva prueba UI v42 iniciada ni procesos de generación en segundo plano. Antes del próximo recorrido, conservar esta versión fija, protocolo de un inicio y presupuestos normales; no resetear el caso agotado ni contar la sonda nativa v41 como prueba de v42.
+
+## 2026-11-07 — Auditoría integral v42 lista; PR22 pendiente CI
+
+Usuario pidióauditarTODOgrafo antesde freshE2E teniendoÁngelayreparacionesprevias. Trazados9nodosstage,21históricos,23archivosde frontera; callbacks/state/recovery/render/descarga y3feedbackDeForest releídosadjuntos8bc/0bd. RootAUDITORIA_INTEGRAL_GRAFO_2026-11-07.md yCONTROLRP042actualizados41entradas.
+
+4fixesv42safecheckout: formatcanonprosa+outputquotesANTESbind/validation(inclfresh/reused/repaired), no mutationaftervalidated; writerclassificationearlyreturnincrementsattempts; recursionconstant24staged+full(oldfull12failed17nodeboundedpath); historical_assert_release_approved nowblockscompleted/PDFwithfailed/missing/nullgatesorrollback,pendingnoFinaldraftretained. Source/ID/category/selection/ledger/budget/providerretryunchanged.616Python/498Node+1skip/tscPASS. New11tests pluscorrectedfixturesrunagainstoriginal41reproducefailureswithoutmodels; newcodepasses. Originalstill41untilsyncreviewedhashmanifest.
+
+PR22head088d1bb17de0400db8fbf6137e22d91007f0afab/tree51114c2590a7828a527f966074816ffc3cb6af6b,mainprev7ab42. CI42402988145inprogress. fp f8ec0419da9e6c40772e36b47d8cd23f2bb3f16f03f6581ab27eedfa19c75158. 10publicfilesmanifest/tmp/rankpilot-v42-manifest.json; privateevidence scratch/full-graph-audit-v42-2026-11-07. No newOpenAIcallsinthisaudit, norestarts/extractions, previousselectedknownsubtotal5119265unchanged(last7309fictionalprobe41not42). Do notclaimnewnative42/finalWord. Useraskedbeforefreshtrial:no newcase started. NextfinishCImerge/deployverify,sync10filesagainstbaseline41,updatecontrolreceipt. Sourcefacts/rejections/ledgersuntouched; recoveryunknownproviderremainsunimplemented. No claim100% or entireold21nodeE2E.
+
+## 2026-11-07 12:14 MX — v41 PUBLICADA; auditoría OpenAI y UNA sonda nativa ficticia APROBADA
+
+PR21/main/dev7ab42a6149c2f2d3569dc443566f3b535b0d7606,headbfd0654a463ae88fccc77c47de23d8fd3fa54769,tree67ae922a347a057c9da28765791ea937a8316153. CI42399727143SUCCESS/previewSUCCESS. Renderengine dep-dbnmj8gae00c738tngl0LIVE,worker dep-dbnmj8gae00c738tngtgLIVE,health SHA+fp8dedc3741bb810e8970afa97123ef70d43ca3eba4c43efa428e5171467e6bd94exactos. Vercel1no3675og READY/dpl_CHFe5XA2Ht8AfdLoh2996gAusz6g/aliascanonicalverificado. Errorlogsconsulta0.605Python/498Node+1skip/tscPASS.7archivos revisados sincronizados original conbaselinehash, original.gitintocable; no publicarcontrol/informeprivado/scratch.
+
+Nuevaarquitectura RP041: citasBIOoutputfaltantes iniciales solo pueden devolverdelta si fuentes/atribución/categoryya válidas; source/category/role/duplicatesinvalid mantienenCandidateamplio. InstruccionesfullCandidatecondicionadasaesquema. No cambiosmodelos/SDK/reasoning/budgets/rondas. DocsOpenAI+serialización pruebanconfigResponses5.6Terra/Solcorrectaparaúltimosrolesobservados;2respuestaspagadaspreviascompletednosalidaagotada. Primaryappend40 intacto.
+
+Usuario pidió revalidarypublicar. Se ejecutó UNAsyntheticnativeprobe: fakeSofiaVega/linked_case, invoke_role+repair_development reales, esquema/aplicador41, ninguna fuentedeclientes. APROBADA1call7309tokens(input6526/output783conreason516),unknownfalse,sources+identity+categoryunchanged,surgical_retries0. Outputprobe2048/request90s, solo sonda; no límitesproductocambiados. Preflightgratisbloqueóinput6925>6000antesred; se redujooutput3072a2048 yvalidóinput+outputestimate8973<10000, NO intento deproveedor previo. Sentinelnative-probe-intentprohíbe repetirsonda: NO --run-onceotra vez. No nuevasgeneracionesprivadas ni UIBuildernueva. Subtotalrecienteseleccionado5119265, NO totalsixdaysnofactura.
+
+Privatereceipt scratch/model-graph-audit-v41-2026-11-07/publication-and-validation-receipt.json; offline-contract-and-model-audit.json,native-probe-result.json,response,preflighthistory,baseline/manifest. RootAUDITORIA_MODELOS_Y_GRAFO_2026-11-07.md yCONTROL_REPARACIONES_RANKPILOT.mdactualizados40entradasRP002–041, fuentesoficiales,causasyprogreso/recurrencia. Tareaactualrevalidacióncontratos/modelosypublicaciónCOMPLETA; objetivoamplioWordautónomoyfeedbackSIGUEPENDIENTE. No confundir sondaunapruebaprivada/integracióndeWord. SnapshotDB18:13:32Z mismojobdc16420b.../submission4eae0097...,FAILEDdevelopmentcursor1/editorial358446/extract56090,unknownfalse,sinreset. No reabrir jobagotadorondas ni alterarlímites; siusuarioordena nuevoE2Ehacerprotocolonormalunavezconnuevaversiónfija ypresupuesto noreseteado. NadaLLMenbackground.
+
+## 2026-11-07 — Auditoría OpenAI/grafo y v41 en PR21
+
+Usuario solicitó revalidar, analizar fallos/modelos/documentación y publicar si listo. Se consultaron docs oficiales Structured Outputs, reasoning y modelos5.6Terra/Sol. Serialización offline SDK confirma Responses, esfuerzos esperados, max_output_tokens y0SDKretries; últimas2respuestas guardadas completed/bajo límites, sin llamadas nuevas. Temperature0 de fábrica omitida por SDK; no atribuir determinismo. No cambiar modelos ni límites sin evidencia.
+
+Nueva causa de exposición: reparación inicial por cita BIO ausente mantenía Candidate completo con fuentes/categoría válidas (2targets); delta tipado solo cubría otras rutas. v41 estrecha esas2rutas tras comprobar fuentes/atribución/categoría; fuentes o categorías inválidas conservan reparación amplia; append40intacto. Prompt condicionado al esquema.605Python/498Node+1skip/tscPASS; offline checkpoint3BIOdeltas, esquemas estrictos básicosPASS. Headbfd0654a463ae88fccc77c47de23d8fd3fa54769/tree67ae922a347a057c9da28765791ea937a8316153/PR21 abierta pendienteCI. fp8dedc3741bb810e8970afa97123ef70d43ca3eba4c43efa428e5171467e6bd94.
+
+Control raíz actualizado RP041/40entradas; informe raíz AUDITORIA_MODELOS_Y_GRAFO_2026-11-07.md. Evidencia privada scratch/model-graph-audit-v41-2026-11-07. Código nuevo solo en safecheckout /private/tmp/rankpilot-v17-publication; original público aúnv40 hasta synchashdespuéspublicar. NO tocaroriginal.git ni publicarcontrol/informeprivado/scratch. Últimajobrealsigue39failed/358446editorial+56090extract. No modelosnuevospor auditoría, no reseteos ni másrondas. Publicación y tests no acreditanautonomía/calidadWord; seguirvalidacióndeployyactualizarreceipt/control.
+
+## 2026-11-07 — Control vivo de reparaciones solicitado por Jonathan
+
+Se creó `../CONTROL_REPARACIONES_RANKPILOT.md` en la raíz del proyecto: reconstruye seis días (2–7 noviembre), 39 entradas por versión 1.0.2–1.0.40, descripción/causa/solución/validación/evidencia, soluciones sustituidas, consumo con límites y evaluación explícita de recurrencias. El control distingue implementación, publicación y aceptación; no declara cierre autónomo v40. Cada versión puede agrupar varias reparaciones; no se inventa autoría individual de las entradas antiguas ni total de facturación de seis días.
+
+Jonathan pidió actualizarlo siempre con lo que se repare y evaluar si hay progreso o bucle. Instrucción persistida en AGENTS.md de la raíz y del repositorio activo. Leer y actualizar el control con cada reparación, sus pruebas y cambios de estado, conservando antecedentes y pendientes. Registro local; no publicar evidencia privada. Esta tarea solo documentó: sin nuevas generaciones, despliegues ni modificaciones de expedientes. Estado de producto sigue siendo v40 publicada y verificada, última prueba UI v39 fallida; pendiente validación autónoma y comparación de Word.
+
+## 2026-11-07 11:51 MX — v40 PUBLICADA Y VERIFICADA; prueba real v39 FALLIDA, no par final
+
+PR20/main/dev7f887a03f185b3e9bbdc0ee84966c9558b48352e; head5a78f0c62adceea9c98123797e566a73862ee293. CI42398010443SUCCESS y previewSUCCESS. Renderengine dep-dbnm8pfavr4c73akejcg LIVE y worker dep-dbnm8pfavr4c73akejl0 LIVE. HealthSHA7f887/fpacb01abead8ee0241f887d4122b0a570ab3865fe35cd9fb95b040d348c08a2e7 exactos. Vercelprod imx24ov3a READY/dpl_74wC6bZk31Wjm2ZnhShEeFz89VQd y aliascanonicalrankpilot-2026.vercel.app verificado. Errorlogs postdeploy0.602Python/498Node+1skip/tscPASS.10archivos sincronizados sin tocar original.git; docs públicos genéricos sin fuentes privadas. Receipt final en scratch/ui-v1-0-39-deforest-2026-11-07/v40-publication-receipt.json.
+
+UI original de Ángela se recargó, sin Build/Review nuevos: muestra Redacción detenida antes de preparar los documentos, mensaje correcto parfinalno preparado, y descargas Borrador de trabajo·sinaprobaciónfinal/Auditborrador. Proof postdeploy-ui-v40.txt/postdeploy-download-menu.txt/postdeploy-result-v40.png. No hubo descargas de borrador que se hicieran pasar por Word finales. No se descargó par oficial porque no existe para esta ejecución. Snapshot17:50:43Z mismojobdc16420b.../submission4eae0097..., FAILEDdevelopmentcursor1, editorial358446+extract56090, unknownfalse, fuenteigual, no aumento/reinicio trasdeploy/refresh.
+
+Resultado de la ÚNICA prueba UI autorizada: FALLÓ v39 por contrato imposible de appendprimario. Reproducido gratis con respuestaoriginalya pagada; v40 tipaeseappendyconservafuentes. No fue error de internet en este rechazo. No afirmar v40probada autónomamente, no par Word nuevo para comparar con feedbackÁngela. No más generaciones desde terminal. Tokensnuevos414536,acumuladoconocido5111956. No reiniciar/reabrir/alterarallowance del caso agotado de sus2fallosdevelopment; respetar autorización puntualdeuna prueba, no nuevofullrunpordefecto. Usuarioasleep/noquestions: no se preguntó otra autorización. Siguiente validación de producto requiere otra ejecución bajo versión40 fija y contraste de sus Word reales con v38 y tresfeedbacksDeForest; no marcar objetivo cerrado. Chromeuser-ownedtab521643333sigueabierto. No scripts de generación activos, solo artefactos locales privados.
+
+## 2026-11-07 11:49 MX — v40 MERGED; producción en despliegue; ninguna generación adicional
+
+PR20 https://github.com/mov1datc1/rankpilot-2026/pull/20, head5a78f0c62adceea9c98123797e566a73862ee293/tree5667b34e00d89093f73e8a08abc68a9942dd6112. CI42398010443SUCCESS y previewSUCCESS. Main/dev7f887a03f185b3e9bbdc0ee84966c9558b48352e. Renderengine dep-dbnm8pfavr4c73akejcg UPDATE_IN_PROGRESS y worker dep-dbnm8pfavr4c73akejl0 BUILD_IN_PROGRESS; Vercelprod pendiente. fp esperadoacb01abead8ee0241f887d4122b0a570ab3865fe35cd9fb95b040d348c08a2e7. Diez archivos públicos sincronizados al original tras verificar cada baseline39, original.git intocable. Manifiesto y receipt privados en folder UI39.
+
+Además de primary_contribution y tarjeta de fallo precisa, el menú de descargas v40 no llama optimizado a un borrador no aprobado. Menú real UI39 comprobado: solo Master draft, Audit draft y original; no par oficial aprobado. Texto de descarga anterior decía “asuntos y B10 optimizados” aunque no se proyectó desarrollo: cambiado por “Borrador de trabajo · sin aprobación final”. TypeScript repetido solo tras ese cambio JSX: PASS. No tests nuevos para simple etiqueta.
+
+Prueba39 ya terminalfallida; una Build y una Review, sin otras generaciones ni cambios en fuentes/datos/prosa del caso. Tokens414536 nuevos/5111956 acumuladosconocidos, unknownfalse. No resetear/reabrir/iniciar otrofullrun por defecto: autorización específica de UNA prueba consumida. Falta verificar deploylive+fp+alias y recargar solo lectura UI para confirmar tarjetas/labels, y snapshotdejob sin nuevo consumo. Nueva v40 aún NO validada con documentos finales ni aprobación del usuario.
+
+## 2026-11-07 11:46 MX — prueba UI v39 TERMINÓ FALLIDA; causa contractual reproducida; corrección v40 en PR20
+
+El usuario autorizó específicamente el origen RankPilot, los datos privados DeForest y UNA prueba UI Builder B. Ese bloqueo de permisos quedó RESUELTO. Chrome nativo funciona; no usar los registros antiguos de permiso pendiente como estado actual. Prueba real: Builder modalidad B/Dispersos; Chambers, Labour & Employment, Mexico/Latin America, ranking no confirmado, first recognition/institutional depth. Un Word original SHA8883fd689e5666be21d6cfeb3e1300d0c5b92c5b11012c9b6571920f5463c901, un Build, una revisión. Revisión de fuente:32 asuntos/6 abogados explícitos. SCOTCH permaneció sin consentimiento de publicación, ruta confidencial segura, sin inventar respuesta.
+
+Expediente4eae0097-cb64-4fc8-9450-437cac819ee0/jobdc16420b-5803-4e58-a175-55aa4f34d0aa terminó FAILED/development a17:36:06Z bajo main2398bebe. Extracción56090 + editorial358446 =414536 tokens nuevos, conocidos acumulados5111956, unknownfalse, mismo sourceHash/cursor/ledger, no reinicios ni extensiones ni correcciones manuales durante la prueba. No produjo par Word final, por tanto NO hay comparación de nuevo par ni aceptación UI. Evidencia privada en scratch/ui-v1-0-39-deforest-2026-11-07: protocol, latest-job-observation, terminal-diagnostics, checkpoint/package originales, capturas build-processing/stopped-result.
+
+Causa exacta: guard Primary-mandate repair must append only its required source binding. GET de ambas respuestas YA PAGADAS (91779 y49885, no tokens nuevos) y replay gratuito reproducen: target candidates/1 required primary, BIOdelta devuelve dos vínculos antiguos, pero esquema no tenía campo para añadir tercero. No fue internet ni aquí una transcripción modificada de fuentes; el esquema no podía expresar lo exigido. El primer diagnóstico verbal de que cambiaba demasiados vínculos fue refinado tras ver respuesta real. Otros perfiles aún tenían output-quotes no literales después de la reparación independiente: ya existe cleanup acotado para eso, bloqueado antes por guard del anchor. No asumir que la nueva generación pasará.
+
+Corrección v40 safecheckout /private/tmp/rankpilot-v17-publication: primary_contribution tipada(source_quote/public_quote/personal_role), aplicación fija ID requerido y append único sin reemplazar vínculos anteriores; supporting se añade solo si falta. Mantiene validadores fuentes/atribución/privacidad y BIO previo. UI falla development suprime marcador viejo “borrador listo”, muestra par no producido y acción compartir referencia.602Python/498Node+1skip/tscPASS; checkpointfocusedPASS. Nueve archivos públicos revisados; árbol96195d338fc060b88d14712a7db5a5515fe736b7, commit13bf652a1dbce8d2c533823f2b9374826d358e44, PR20 abierta; CI42397833185 en curso. fpacb01abead8ee0241f887d4122b0a570ab3865fe35cd9fb95b040d348c08a2e7. Publicación autorizada, connector create_tree aceptado. Falta CI/merge/deployverificación y sincronizar9files originales cuidadosamente. NO resetear ni reabrir jobfallido: ya usó ambos fallos de desarrollo y recoveryPlan rechaza nuevo intento; no ampliar allowance para demostrar éxito. No iniciar otro fullrun por defecto bajo autorización puntual de UNA prueba ya consumida. No nuevos modelos desde terminal.
+
+## 2026-11-07 10:52 MX — v39 PRODUCCIÓN VERIFICADA; prueba UI espera permisoORIGEN específico
+
+Userautorizópublicación/Chrome; publicaciónBLOQUEO RESUELTO conesaautorización. PR19mergedmain/dev2398bebece8fc7d8167263ac54a2e7a5d9cd1e2c,featurebd187d22443b3d3e3e47bb1a84a553bcd15c43be,tree5a5a538482044eed0b3b0ec258f8e6d3977f3f33;CI42392984260SUCCESS/previewSUCCESS. Renderenginedep-dbnlcro473hc739p5lkgLIVE/worker dep-dbnlcro473hc739p5lt0LIVE. HealthSHA+fp612bc7e58ff2f6b4c9a21416b8d056ec52d8249b86301ae2dd08e5adf8d3784dexactmatchlocal a4e6e5a;Vercelprodnc6315uvwREADYfiltradoSHA. Postdeployerrorlogs0. Receipt scratch/ui-v1-0-39-deforest-2026-11-07/publication-receipt.json.
+
+UIprueba NO INICIADA,nosourceupload,nosubmissioncreated,noreview/buildclick,nuevasOpenAIcalls0. NativerecuperadoChromecom.google.Chrome:sessiónangela.castillo@rankpilot.tech, Reportstab521643333. SeabrióBuilder,deModalidadAdefault aBseleccionadovisualmente,ycontinuócalibraciónstep1TargetDirectorioChambers. Aúnwebbundlecargadoantespublicación:cuandoautorizadoreloadporUItrasconfirmarlocalsavednoUpload,volveraseleccionarB.
+
+DOMextensionrankTab39.playwright.domSnapshot/screenshot danundefined.timeoutMs; thengetByRole('heading',1.TargetDirectorio).innerText(timeout5000) fue AUTO-REVIEWDENIED pororiginpermision (NOmanualuserreject). Exactreason: generalChrome/publishauthorizationdoesnotexplicitlyauthorizeexpandingoriginpermissions. DESPUÉSdenial STOPtodosameoriginaccessINCLUYE nativeapp/API/otherbrowsers/CDP/profile,etc. No bypassdespués. Functions.request_user_input_asyncQUESTION PENDING: “¿Autorizas que la extensión de control lea e interactúe con https://rankpilot-2026.vercel.app en la sesión de Ángela, incluyendo el expediente privado de DeForest, para ejecutar una sola prueba desde Builder opción B y descargar los Word?” Opciones Síautorizositio/prueba oSolopublicar. Esperarespuestaespecífica, no gastarLLMsbackendfallbackduplicado. UsuariorespondióprevioquestiongeneralChrome; NO tomarlo comoesta nuevaoriginapproval.
+
+CUAbindingspersistentes:rankBrowser39=agent.browsers.get('1')selectedChrome;nameSession🔎RankPilotv39;rankTab39=user.claimTab521643333. rankChromeApp39=cua.getApp('com.google.Chrome') AXsíworks. CuandoautorizaciónnuevausarAPIsoportadosemanticoconoptionso nativefallbackdocumentadoSI nohaynuevoautodenial;nodeREPLCUAdocsyaRead,rewriteDocumentationencompactionbeforecontinuar. fileuploadsdocreadfilechooserprimerofallbacknativepicker siPlaywrightinservible, no shellUI. MantenerTabhandoffsiworkflowpendiente(conbloqueoNOtoquestabmarksiimplicaorigen;hastaahorasolousertaboriginalnocerrado). No cerrarventanasajenas.
+
+Pruebasegúnpriorautorizaciónpublica+testgoal:UNA freshUIBuilderB DeForestconnormal1.2Mcap,sinmanualcode/source/proseeditsduranteejecución,noextend,noreset/nodobleclicBuild. FuenteWordoriginal verificadaSHA8883fd689e5666be21d6cfeb3e1300d0c5b92c5b11012c9b6571920f5463c901,295116bytes,pathenprotocol.json. CalibracióndevolverasourcecontextnoinventBand5:ChambersLabourEmploymentMexicoLatinAmerica/currentrankunknown,firstcoverage/deptherc. Previobackendtests4697420tokensconocidosmantener,nonewtokensnow. Todoactualcodigo/patchoriginalsin.gitmutación. v38backendfrescosícompletó/Wordsaprobados,nousarloafirmarUI39 oúltimocontratocompleto.
+
+## 2026-11-07 10:51 MX — PUBLICACIÓN39 AUTORIZADA y PR19 MERGED; navegadorrequierepermisoORIGEN
+
+Usuario respondió“autorizoapublicaryabrirytomarcontroldelchrome”. Publicaciónmisma16filesmanifesthashverificadas, GitHubmainprev2d85sinmover. Create_treeAHORAAUTORIZADO5a5a538482044eed0b3b0ec258f8e6d3977f3f33; featurebd187d22443b3d3e3e47bb1a84a553bcd15c43be/branchcodex/immutable-bio-repairs-v39; PR19 CI42392984260SUCCESS/previewSUCCESS, mergedmain/dev2398bebece8fc7d8167263ac54a2e7a5d9cd1e2c. Deployengine dep-dbnlcro473hc739p5lkgUPDATE_IN_PROGRESS,worker dep-dbnlcro473hc739p5lt0LIVE, Vercelprodlog /private/tmp/rankpilot-v39-vercel-production.log pendingread. Enginehealthaúnv38esperardeploy+fp612bc7...coincida. NO provider calls/UIrunstarted. Privateprotocol scratch/ui-v1-0-39-deforest-2026-11-07.
+
+CUArewriteDocumentation leído. SelectedChromeextensionID1. bindings rankBrowser39=agent.browsers.get('1'),nameSession🔎RankPilotv39; rankTab39=user.claimTab521643333. browserplaywrightdomSnapshot/screenshot fallanundefinedtimeoutMs. browsertroubleshootingdocread. NATIVErankChromeApp39=cua.getApp('com.google.Chrome')SÍRECUPERÓventana/sesiónÁngelaactualangela.castillo@rankpilot.tech; Reportsmuchoscasosantiguos. Noconstrucción/reportnuevoyet. NativeclickBuilder34→builder;ModalityBclick597(confirmadovisualazulcheck);Continue600→CalibraciónPaso1TargetDirectorioChambersdefault. EnesepuntoeltrygetByRoleheadinginnerTextparaDOM fueAUTO-REVIEWDENIEDORIGINhttps://rankpilot-2026.vercel.app: autorizaciónChromegeneralnoexplicitaexpansiónpermisosorigen. DESPUÉS rechazoSTOPtodoaccesoaorigin,inclusonativeUI/API/otherbrowser/cdp/profile. NObypass. AsyncquestionEXPLÍCITApending:“¿Autorizasextensióndeleereinteractuarconhttps://rankpilot-2026.vercel.appensesiónÁngelaincluidoexpedienteprivadoDeForestparaUNApruebaBuilderBydescargarWords?”. Usuarioavisoencommentary; esperarrespuesta específicaantesseguirnavegador. AúnsepuedemonitorRender/Vercelmanagement APIseparados, backendhealthonrenderpublicallowed.
+
+UserquieredesdeceroUInecesitaesperardeploymentthenreloadnewbundlenobuildduplicate,modalityB,calibrationknownprotocolold,currentrankunknown,noband5invented,WordsourceoriginalSHA8883...verificadoexists. fileuploadsdocread exigechooserflowprimero(plawrightinservibleactual), fallbacknativepickerdocumentedperoNOhastaoriginapproval. Sourcepathguardadoenprotocolprivate. CrearUNAejecuciónUIconnormal1.2Mcap,sinintervenciónmanualcódigo/fuentes/prosa,norestarts/grants;previousglobal4697420keptseparately. NingúnLLMnuevoahora.
+
+## 2026-11-07 — CIERRE: v38 autónoma APROBADA; v39 LOCAL LISTA, PUBLICACIÓN AUTO-REVIEW BLOQUEADA
+
+Leer scratch/closure-v1-0-39-2026-11-07/estado-y-comparacion.md y publication-ready-manifest.json. Local SAFE commit a4e6e5a1e81da29d07c29765476dfc31c8d27b14; v39fp612bc7e58ff2f6b4c9a21416b8d056ec52d8249b86301ae2dd08e5adf8d3784d;599Python/497Node+1skip/tscPASS. 16files sincronizados al original verificando baseline06eaa9a, original.git intocable. Parche rankpilot-v39-reviewed.patch revisable. NOpublicremotecommit39/nobranch/PR39.
+
+PUBLICARv39 BLOQUEADO2vecesporauto-reviewGitHub create_tree:“public destination and payload not explicitly authorized”. Se probó porget_repoqueesrepositorioconfiguradooriginmov1datc1/rankpilot-2026,public,permissionsadmin/push;fetch_file13baselinesSHA=local06eaa9a,3nuevosfictionaltests/docs;privacyscan0datosprivadossecretoscasesUUID/privatepaths. UnmismotoolretrytraspruebasfueRECHAZADOTAMBIÉN. NO más reintentos ni víasalternas. Para seguirpublicación elcontrolrequiereautorizaciónEXPLÍCITA deesedestinopúblicoy16archivosmanifestados. Usuarioduerme/noquestions:secontinuótodo lo local yse deja solicitudexplicada paraalretomar;noasynctoolquestion. No tocarprivados/cambiarrepo/permisosparabypass.
+
+NUBE SIGUEv38 main/dev2d85fc8ea55a9eb061fd49f88013c07024c9f6fe(PR18). Renderengine dep-dbne0unavr4c73ac4h9g yworker dep-dbne0unavr4c73ac4hi0 LIVE; Vercelprod d41xe26byREADY. HealthFINAL confirmado commit2d85/fp8113a36b76f82c2903d1cc0b586c21be9bfd0b5a2e1be22d77d53b30b629c093. v38autónomabackendcompletó1110479tokenscon0extractnuevo,sinintervenciones. Worda7fa4b...Submission/8a432850...Auditfolderautonomous-editorial-v38. Perfilconstruido2resultadosconcretosmejora;NOdecirtodoÁngela100%cerrado. UIBuilderB/sesiónÁngelanoaceptación:Chromeoriginauto-reviewdeniedpermisos,persisteNOworkarounds niHTTPalVercelsite.
+
+v39 FINALañadeDeltanativoBIO-only:BiographyOutputDelta sóloBIO+mapasPxx/Sxxdeoutput;nullpreservaproofs. Fuentes/IDs/categoríasnoPUEDENemitirse enesquema. Copiaoriginalyactualizasoloproseqoutputs;applystrictoldfullsavedfixturespermanece. 3testsdelta sourceforbidden,keyedrefcoverage,etc. Source-onlyBIOrepairomiteRAG/benchmarkssólo cuandomutablefields<=BIO/profile_coverage/casecoverage, todosfuentespropias+BASE/TASKseguen. Cierre3causasadespuestas:groupB9/AuditmaterialargumentforALLincluded,voicesharedv5includingThe source also lists/The submission also shows, nonasserted optional redundantsectorwarningtoTRACEstrictsinflipapproval. Artifact26/devkeyv4/writerkeyv10/promptrevision25.
+
+Pruebadirigida v39 TERMINÓ tras3calls33849tokens(<40k), primeros16732judgemissingUSMCABIO,14758repairgeneróBIOcorrectoperoCAMBIÓPERSONALSOURCEBINDINGyviejoapplierrechazótodocandidato,2359recheckvióBIOanteriorfalló. 2preflightguardsbloquearonantesprovider:ceroextratokens. Esto NOespruebadirigidaaprobada niWord39aprobado. NuevoDeltacorrigiócontratoestructuralmenteDESPUÉS:reusóexactBIOyapagadosinmanualrewrite+nullmaps;schema+ownprofile/personal/privacy passed;TODOSotroscamposfuentescategoríasyproofsINMUTABLES. Causalvalidation.json yscoped-bio-delta-proposal.jsonprivadosenfolderdirected. 0nuevasllamadasparaeso. Optionalwarningcausalvalidation0modeldemuestra oldv38responsecompletamenteválidaconacceptedproofsindependientedesinwarn;noesv39approvalnueva.
+
+TOTALconocido4697420tokens,extracciónoriginal56713yaantescontada,no doblecount. Últimocaso fresco+directed1144328<1.2M, NOextension. No modelcallsafterdirectedcall3. No modelosnewporcap/restante,NOreabrirjobs nireset. Node92458terminó; Python48336PARADO,58452PARADO;ningúntrabajoenbackground. Noautomaticgoalcreado,noagents. Alnuevouserretomar conservarcontexto ylímites, resolverpublicaciónconautorizaciónexactasiquiera,exigirCI/deploy/healthypruebaUI;noafirmarv39freshautónoma conWordv38.
+
+## 2026-11-07 02:55 MX — v39 cambios locales596tests; prueba dirigida B9 en curso, NO publicar aún
+
+Safe checkout /private/tmp/rankpilot-v17-publication HEAD06eaa9a siguev38; v39DIRTYno commit/publicación/syncoriginaltodavía. A:core/register_review.nonasserted_sector_advisories muyacotada: solo warningsectoropc redundanteconregisterclaim, fuentesreg/narrativeownliteral, quotereal,termabsenteAMBOSWord, noowneruser. Traceadvisorysinmodificarpassed/acceptance/casechecks/registerchecks;criticals/outcome/roles/values/aliasesstrict. invoke_roleantesPydanticnormaliza. Offlinecapturedv38existing-invalid-verdict-1conoldcontract06eaa9a(v38) ahoraesválidoyexecution_defects=[]sincambiaraceptación,nounuevoapproval;receiptv39-optional-warning-causal-validation.jsonenfolderv38.
+
+B:sharededitorial_voice_rulesv5 detecta The source [also/separately] lists/states/identifies...yThe submission[also]shows/demonstrates. V38WORDactualtieneC2The submission also shows/MextypsaE2The source also lists, malvozsegúnÁngela. Se detectaráANTESAudit, NodeyPythoncompartido.
+
+C:newmandatorycandidate:i:b9_audit_consistency paraTODOSBIOincluidosconmandatos:AuditargumentoyB9mismascontribuciones/resultadosmateriales;cadaasuntodescritoenBIOdebeconservarresultadoactualcuandoexiste. Noobligacadacaso periférico,nominationonoactualresultadoausente. Nativeproofs nuevas;artifact26,devkeyv4/writerkeyv10;version1.0.39packages. Nuevostestsfictionaladvertencias5+consistency1+bio_context1=>596PythonPASS,497Node+1skip/tscPASSantesúltimaoptimizaciónRAG(compilaralterminar).
+
+D:surgicalBIO-onlycontextoptimización:biography_output_targets_only trascoherentpromotetarget compruebamutable_fields<=BIO/profile_coverage/submission_case_coverage y SOLOcandidategroups. Categoría/sourceunits/sourcebindingsinmutables. SOLOenesegrupo omitecontextoexternoderankingsyRAGdemetodologíasobreselección;BASE+TASK+propiasfuentesseguen. invoke_role(state.source_only_repair) cortaRAGpararepair; categoríasotroscamposconservancontextocompleto. Evitaenviar18199charsrankingirrelevanteparaeditarunafraseycontextoRAGabultado. Pruebamockguardscopeunitincluida.
+
+PruebaDIRIGIDAreal en scratch/directed-bio-consistency-v1-0-39-deforest-2026-11-07. Cap40000TOTAL dentro89521restantescasov38; NOreabrirjob/rewriteWord/source/DB. PrimercheckyaPAGADO16732tokens,failedBIOJavierexactamente:“to prevent work stoppages”omiteprevenciónlograda/evitarUSMCAescalationAudit. Guarda first-check.json,trace1. Totalconocido4680303 (4663571+16732). Preflightguardbloqueórepair2vecesANTESprovider porcontextooverbudget:0calls/tokensadicionales,no buclemodel. Preservadas budget-stop/compact-context-stop receipts. Compactarownsources(id/name/bio/lead/team/source_excerpt)noextracción. Directedrecheck esPROJECTIONTEXTsinrenderedartifactheaders:noWordapproval,nofakeactualartifactchange.
+
+AHORA source-onlycontinuation (finish-source-only.py --continue-saved) Node/execution92458 activo; usaMISMOprimerdiagnósticopagado,tracecalls=1ybudget40k. Freezeproductcodehastaqueterimine. Wrapperpreflightcapturamsgs/schema mediantefake-model(NOprovider) ycuentatokens+2048+maxoutputantesLLM; siinsuficientestop. Max3callsTOTAL:probeexisting+repair1+scopecheck1. 4096maxoutjudge/repairenesteprobetextonly. Patchesinvoke_roledelegatepreservantrace/unknown/tokens. Siintentarepaircleanupsegundo wrapperpuedebloquearantescallporlímite3/budget;reportarhonesto. Nuevaoptimizaciónsource-onlydeberíacaber. NOreiniciarprimercheck,nuevapruebafresca,nuevobudget. Alterminalcapturarnuevototal/counterinclusive1.2M,guardarreceipt ypararnuevosmodelos. Despuésdoc/commit/publicaciónv39narrowGitHubPR19sobremain2d85.../tree61e8c...;originalsynconlybaseline06eaa9a ytests/CI/deploy/healthreceipt. Currentv38main/devRender/Vercelvalidado,sinregressióncomunicadacomo100%.
+
+Falta comparaciónFINALv38conv37/v35ytresÁngela(reporteprivadov37yaexiste,peroactualizarconB10/C2B9actuales+quédetectav39). EntregablesactualesWordv38 aprobados porpruebafrescaautónoma backend, NO browserBuilderB/uploadsessionAngela. Browserorigin auto-reviewdeniedporpermisosextensión, no workarounds/HTTPni preguntasusuarioasleep. Noagents.
+
+## 2026-11-07 02:45 MX — v38 prueba FRESCA AUTÓNOMA COMPLETADA/APROBADA; comparación humana pendiente cierre
+
+Node38893 TERMINÓ; Python48336 PARADO. scratch/autonomous-editorial-v1-0-38-deforest-2026-11-07 final-receipt: completed,approved_in_isolated_testTRUE,sourcehashunchangedTRUE,usageunknownFALSE,editorial1110479,0nuevoextract,acumulado4663571. Normal1.2Msinextensions/intervenciones/manualedits/restarts. 19E/7B9/B10367w/C2225w/Audit1744w,0fixedrows. Wordsha Submissiona7fa4b044200966e0e9a06c0d4eb5c82773e2c71e46800146193a5f0a02772c3, Audit8a432850520597d119aade65343959d0781733d58f52858bebc0c0c187356e1b. Archivos autonomous-editorial-approved-*.docx/.inspection.json/.txt. NOUI/no customerDB/realAngelaauth; Chromeorigin sigueblockedauto-review. Reportarbackendfreshconextractreutilizada,nofreshuploadBuilderB. Productionv38main/dev2d85fc8ea55a9eb061fd49f88013c07024c9f6fe LIVE Render/worker+VercelREADY, receiptfolder.
+
+Primera revisión actual call9 fue AI_REVIEW_INVALID, cost165171tokens; fuenteconflictoSECTORwarning pedíaquitarprivate security deSecuritas, queyaNOapareceenartefactoquote. NativeDefect crossfieldvalidatorrechaza WARNING, desecha TODOreviewaunque rawpassedTRUE y0critical. GETexistingfree realizado, guardado existing-invalid-review-1.json / existing-invalid-verdict-1.json. NoGeneration. Registroclaimsduplicaexactamenteesaobservacióninválida, limpiezaexistingregister_reviewposterior yaeliminaría claimno groundedperoDefectnativofallaANTES. 2ºreviewcall10valid corrige soloAudit“seisentidades”→instalacionesenseisestados;3ºcall12PASS.
+
+Siguiente trabajo razonable antescerrar: (A) v39 normalización MUYacotada de warningsector noesencialredundanteconregisterclaim, términoausente de AMBOSWordyquoteactualliteral, fuenteoriginalcanonvalid; movernota atrace sin tocarpassed/acceptance/casechecks ni perderregistroconflictooriginal. Critical/outcome/alias/role/amount/userquestionssiguenSTRICT, unknown/incomplete no procesa. Evita165kfullrecheckporwarn yaresuelto. Probarunit+offlinecaptured fullverdict no paid. (B) vozcompartidaJSON: source[also/separately]lists/states/identifies...yThe submission [also]shows/demonstrates. ActualC2v38tiene“The submission also shows”,MextypsaE2“The source also lists”; actualgatespasaronperofeedbackÁngelarequierevozfirma. CatchANTESAudit,sharedPython/TSsource,not sourcelegalopponent statements. (C) B9/AuditgroupconsistencyparaTODOSBIOincluidosconpersonalmandates. V38JavierahorasíBonattihuelgaprevenida+NuevaEmpresaamparorestaurado; BroseBIOsolo“to prevent work stoppages”,sinlogroUSMCA,aunqueAuditconstruyecandidaturaenesadimensión. Min2links(Bonatti/Nueva)nofuerzaqueotrascontribucionesmencionadasseanejecutadascompletamente. Nuevaobligaciónporcandidato:materialdimensions/resultsthatownAuditusesmustbedevelopedinownBIOsafeprivate,actualachievedresultsforworkmentioned; don'tforceallweakmandatesorinventoutcomes/nominations. Testsfictional. Considerunúnicoprobe/repair/recheckdirigidoB9≤40ktotaldentro89521restantesde1.2M (no nuevofullrun), actualsources+Audit/BIOonly, notUI/noaprobaciónWordv39. Preservarcostseparado,counterjobterminalnovolverareabrir. No pedirusuariodormido. NO modelos nuevos aún tras08:43:56Z.
+
+Congeladocódigo06eaa9a/v38 aúnNOmodificadov39. Mejorasnuevas NOimplementadas,sóloplan. Evitarbucledepruebascompletas. Documentarcomparaciónconv37y35+3Angela,A,B,C,realesWordexactos. Mantenerúltimaaceptaciónv38comohito,NOdecirtodafeedback100%cerrada.
+
+## 2026-11-07 02:28 MX — v38 PUBLICACIÓN VERIFICADA; prueba FRESCA AUTÓNOMA EN CURSO
+
+Main/dev2d85fc8ea55a9eb061fd49f88013c07024c9f6fe/PR18. CI42355266470SUCCESS. Render engine dep-dbne0unavr4c73ac4h9g LIVE y worker dep-dbne0unavr4c73ac4hi0 LIVE; healthSHA+fp8113a36b76f82c2903d1cc0b586c21be9bfd0b5a2e1be22d77d53b30b629c093 verifican código seguro06eaa9a; Vercelprod d41xe26by READY filtradoSHA. Receipt scratch/autonomous-editorial-v1-0-38-deforest-2026-11-07/publication-receipt.json.
+
+UNA prueba frescaautónoma editorial INICIADA --run-fresh-editorial Node38893, Python48336. Carpeta scratch/autonomous-editorial-v1-0-38-deforest-2026-11-07. Últimaextracciónrealoriginalreutilizada,0nuevoextract; sinpreviosstrategy/proposal/verdict/proofs/replay. No UI/noDBprod. FreezeTODOproductcode;NOeditarprosa/metadatos/fuentesduranteprueba. Normal1.2M,nogrants/reset/otroensayo; guardartifact200kdefinidoANTESinicio. Presupuestoacumulado previo3553092;sumarsolo nuevoeditorial (extract56713yaviejo). Monitor≤60s. Alterminal:capturarWord/hash,inspectWordparser,compararconúltimov37NOAPROBADOy35+3Angela; stopPython48336. Si falla analizargratis; no iniciarotrapruebapordefecto ni ampliar. UIbrowserorigin auto-reviewbloqueado,sinworkaround; usuarioasleepautorizadotodo/sinpreguntas.
+
+## 2026-11-07 02:26 MX — v38 MAIN/DEV; preparando UNA prueba fresca
+
+PR18 merged main/dev2d85fc8ea55a9eb061fd49f88013c07024c9f6fe, CI42355266470SUCCESS y previewSUCCESS. Render despliegue engine dep-dbne0unavr4c73ac4h9g/worker dep-dbne0unavr4c73ac4hi0 en curso, Vercelprod pendiente. Código seguro06eaa9a, fp8113a36b76f82c2903d1cc0b586c21be9bfd0b5a2e1be22d77d53b30b629c093,589Python/497Node+1skip/tscPASS. Original11files sincronizados sin original.git.
+
+Preparada UNA prueba NUEVA autónoma de backend en scratch/autonomous-editorial-v1-0-38-deforest-2026-11-07, todavía NOgeneration. Reutiliza extracción real original32matters7profiles, 0extractcalls; NOstrategy/proposal/verdict/replayprevio. Base conocida3553092tokens, mantener y sumar solo nuevoeditorial. Normal1.2M, NOextensions/reset/restarts/manualcorrections; guardstageartifact200kpredefinidoantesinicio (antes250kconservadorharness bloqueóartificialmenteunarevisiónquerealmentecabía). Python48336activo, preflightPASS, Node fresh NOiniciado. Iniciar --run-fresh-editorial UNAvez alverificarpublicación, congelartodoproductcodehastaterminal. RecogerWordexactos/sha/inspectcompararconúltimosv37unapproved yv35approved,3reviewsÁngela. Etiqueta FRESH_AUTONOMOUS_EDITORIAL_FROM_SAVED_EXTRACTION_NOT_BROWSER_ACCEPTANCE; noequivale a pruebaUIBuilderB/upload/conectividadcliente. Originbrowserrechazadoauto-reviewpersiste; no workaround. Usuarioasleepautorizadocontinuarsinpreguntas.
+
+Comparaciónv37/v35y3reviews documentada privadamente en scratch/continuation-editorial-v1-0-37-deforest-2026-11-07/comparacion-con-feedback-angela.md. No hay ganadorabsoluto; mejorafinanzas/cartera, B9aúnomitíaresultadosporbrechacerradav38. Últimoparv37NOAPROBADO. No tocar susfuentes/ledgerniiniciarotrapruebadeesetrabajo.
+
+## 2026-11-07 02:22 MX — v37 terminal NO APROBADO; v38 corrección estructural en PR
+
+v37 continuación terminó needs_review, no nueva extracción, misma fuente/ledger. Hubo parada EXCLUSIVA de reserva preventiva del harness en967854; se conservó la parada y se ejecutó una sola etapa artifact encolada con232146restantes sin ampliar1.2M. Final1128170tokens editoriales; adicionales891038desde237132; conocido acumulado3553092. Último judge rechaza comparisons/3/tradeoff y Audit por “menor escala” no sustentada. Word finales NO APROBADOS shaSubmission7ee71abce95b49054bf64736f0e1278c5fc7d07f78c3be5052947748ea1237eb / Audit73c545068012e4b3f9193679f535afda5b8b953ae46ff5baf93c29fa8b0d2786. No reset/nuevos modelos ni ampliación. Python58452 detenido; Node26309 terminado.
+
+v38 safe06eaa9a, remote featurebba6a3445d97cf590be8d53e61e8ff49ea3071f4. 589Python/497Node+1skip/tscPASS. Cierra3causas: (1) regla común de BIO realmente incluido: Chambers todos aunque develop/do_not_present, Legal500 solo su roster publicado; las obligaciones personales pasan3a9enfixture sin inventar nominación ni resultado inexistente. (2) ediciónBIO+outputproof enmisma llamada, originalprofileunits/reference/source_quote inmutables, categorías/personalbindings preservados. (3) etiquetasvagas de escala rechazadas en comparaciones y Audit antesrender/despuésrepair; exigir diferenciasconcretas. No certifica toda semántica cuantitativa ni garantiza todosfeedback. Artifact25/devkeyv3/writerkeyv9; renderer21. Offline capturedcausalvalidation0modelcalls enfolderv37. Original11archivos sincronizados verificandobaselineeacd699; original.git intacto. Publicación v38 pendiente CI/merge/deploy. NO más llamadas a OpenAI tras08:18:25Z. UI sigue bloqueada auto-revieworigin; no workaround ni preguntasalusuariodormido.
+
+## 2026-11-07 02:09 MX — v37 publicada; continuación MISMO trabajo activa
+
+Main/dev b94f11b9e97d2e787d31ecfd8a8c773b31792137 / PR17 merged. CI42354024462SUCCESS. Render engine dep-dbndoji9lscs73budlkg y worker dep-dbndoji9lscs73budlt0 LIVE, health SHA/fp17fc4542d1e9b342c20c7abc995a204cc35b767780e2f5e238045c675dc0e90c coinciden; Vercel production7h3mhwlih READY filtradoSHA. Receipt privado. Continuación scratch/continuation-editorial-v1-0-37-deforest-2026-11-07 activa Node49493 / Python58452. Desarrollo pasó revalidación sin modelo, gasto sigue237132; Audit call3 en curso. Misma fuente/cursor/ledger/1.2M; no extracción ni selección ni intervención de prosa. NO llamar prueba fresca o UI. Capturar Word reales y comparar con v35/v31/3feedback; parar servicios al terminal. No reiniciar si falla ni resetear contadores.
+
+## 2026-11-07 — v37 validada localmente; PR17 pendiente, continuación aún no iniciada
+
+La prueba fresca v36 terminó FAILED en desarrollo: 237132 tokens editoriales; no produjo Word ni Audit. Acumulado conocido 2662054. Servidores detenidos. v37 local eacd699 / PR17 head 0bff6645b81280469bad831a6e5f026ec2eaa963: 582 Python, 497 Node +1 skip, TypeScript PASS. Corrige vinculaciones literales BIO y contrato exclusivo por campo; una limpieza acotada, sin nuevos contadores. 16 archivos públicos sincronizados comprobando baseline d260711; original.git intacto. Preparada continuación del MISMO trabajo en scratch/continuation-editorial-v1-0-37-deforest-2026-11-07, todavía sin llamadas ni ejecución. Preserva fuentes, prosa, cursor, ledger y presupuesto. No confundir con prueba fresca ni UI de Ángela. Chrome/Vercel origin sigue bloqueado por rechazo de auto-review: no evasión mediante otra superficie ni HTTP; no preguntar mientras usuario duerme.
+
+## [1.0.36] — 2026-11-07 — Primary personal evidence and exact core portfolio
+
+- Require the principal personally led core mandate in nominated B9; append-only source-bound repair retains existing biography, credentials, category and evidence.
+- Preserve explicit original financial context in confidential narratives without exchange conversion or turning an unexplained value box into a new claim.
+- Validate numbered core entries against canonical count before delivery and after repair; remove reserve placeholders from the core list through bounded correction.
+- Artifact23/renderer21; development/writer keys advance, selection and usage remain. 574 Python, 493 Node passes/one skip, TypeScript pass. PR16 merged; deployment verification and autonomous editorial test from saved original extraction pending. See docs/reviews/2026-11-07-primary-evidence-and-portfolio-v1-0-36.md.
+
+## [1.0.35] — 2026-11-07 — Source-bound scoped selection rechecks
+
+- Reuse independent passing checks only with matching sources, decisions, scope, privacy and comparison dependencies; recheck changed inputs and conservatively invalidate undeclared comparative dependencies.
+- Reject out-of-scope check keys; preserve optional source-bound follow-up for the Audit without inventing filing prerequisites. Keep existing review limits and final exact-file review.
+- 558 Python, 493 Node passes/one skip, TypeScript pass. PR15 pending CI/merge. Offline existing-response replay is explicitly not fresh autonomous/browser acceptance. See docs/reviews/2026-11-07-scoped-selection-review-v1-0-35.md.
+
+## [1.0.34] — 2026-11-07 — Decision-bound selection correction
+
+- Bind disposition repairs to the independent source-grounded diagnosis; prohibit a cosmetic inclusion fix when the decision must change.
+- Permit a strict shrinking residual inside the existing two-repair/three-review limit; preserve counts, history and usage. Identical/expanding/overlapping residuals still stop.
+- Persist accepted text-only sources without requiring a document URL or repeating extraction.
+- 548 Python, 493 Node passes/one skip, TypeScript pass. PR14 pending CI/merge. No fresh browser acceptance or new approved Word pair yet. See docs/reviews/2026-11-07-decision-bound-selection-v1-0-34.md.
 
 # Changelog
 
-All notable changes to this project will be documented in this file.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+## [1.0.33] — 2026-11-06 — Linked editorial execution and coherent repairs
 
-## [1.0.51] — 2026-11-08 — Coherent biography preservation and bounded recovery
+- Link nominated B9 mandate contributions and each B10/C2 argument to original evidence and literal output; detect absent confirmed head function before Word review. Keep independent semantic judgment.
+- Repair biography/output bindings together without changing career sources, personal source bindings, category decisions or unrelated fields. Scope candidate context to relevant sources and public restrictions; captured payload bytes down 81%, not a billed-token assertion.
+- Upgrade development dependency while retaining selection/usage; artifact review22, renderer21. Missing valid automatic review is an internal task, not a request to edit source data.
+- 540 Python, 492 Node passes/one skip, TypeScript pass. PR13 merged main/dev df340a4, CI successful, Render engine/worker LIVE and Vercel READY; fresh production trial prepared but not started. No new model generation this turn yet.
 
-- Protect only source-bound quotations actually present in the current biography. Missing generated output references remain validation failures, not immutable prose.
-- Recover full-candidate and narrow biography corrections in the same single bounded retry, retaining independent valid corrections and each target's original write scope. Preserve unresolved source questions and cumulative/unknown usage guards.
-- Distinguish a non-nominated team member from an individual ranking proposal; retain sourced participation without requiring invented personal outcomes.
-- Report residual validation/application errors and exact retry paths. Do not claim an Audit exists before it was prepared or mislabel every drafting failure as exhausted budget.
-- Offline regressions and paid-response replay validate recovery routing, not native editorial quality or a new approved document pair. See `docs/reviews/2026-11-08-coherent-repair-v1-0-51.md`.
+## [1.0.32] — 2026-11-06 — Confirmed administrative head proof
+
+- Bind head-function review citations to the actual confirmed administrative person entry; do not treat inferred form headings as original source quotes. Preserve failed checks as critical repairs and all other source boundaries.
+- 528 Python tests pass with fictional regression fixtures. Captured-response fixtures retain failed checks and never approve the documents. PR12 merged main/dev 8d7fb35 with CI successful, Render engine/worker LIVE and Vercel READY; no new paid review or retry allowance. Private comparison and responses remain outside Git.
+
+## [1.0.31] — 2026-11-06 — Local residual validation and preserved continuation
+
+- Recheck descendant wording after a whole-object repair and use the existing one additional localized correction for owned voice residuals, preserving corrected fields, profile spans, source evidence and usage.
+- Offer one explicit, source-current continuation for narrowly eligible legacy wording failures after a code fix. Retain job, cursor, ledger and normal budget; no automatic revival or fresh extraction allowance.
+- 525 Python tests, 489 Node passes/one skip, TypeScript and production build pass. Captured checkpoint and single-field fixture are offline checks, not final document approval. See `docs/reviews/2026-11-06-local-repair-residuals-v1-0-31.md`.
+
 
 ## [1.0.30] — 2026-11-06 — Explicit comparison evidence in selection
 
@@ -117,11 +785,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Recover only a unique peer address already declared in legacy diagnostics, avoiding a paid diagnostic replay for that address. Bounded correction receives both sources and can edit only the rejected decision.
 - 524 Python tests, 486 Node passes/one skip, TypeScript and production build pass. Captured-verdict replay uses no model calls and keeps the selection rejected pending correction. See `docs/reviews/2026-11-06-selection-comparison-contract-v1-0-30.md`.
 
+
 ## [1.0.29] — 2026-11-06 — Faithful biography and output-quote binding
 
 - Remove post-generation partner/head rewrites from the Python evidence binder and Word curator. Verify confirmed headship through a separate source-bound B9 obligation.
 - Bind joined-sentence profile quotes only to a unique actual span containing unchanged words; preserve strict source, omission and substantive review checks.
 - 519 Python tests, 486 Node passes/one skip, TypeScript and production build pass. Existing-response offline replay clears the reproduced checks without a new generation. The prior acceptance failed before final documents; see `docs/reviews/2026-11-06-faithful-profile-binding-v1-0-29.md`.
+
 
 ## [1.0.28] — 2026-11-06 — Matter evidence, source questions and exact drafts
 
@@ -129,6 +799,81 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Separate bound questions about unchanged source values from generated-prose repair. Apply independent corrections once, await source input without another artifact judge, and prevent repeated clicks from resetting that waiting state.
 - Preserve exact unapproved draft bytes when a review cache marker is reset; retain source/prose invalidation and narrowly support legacy draft bindings.
 - 516 Python tests, 485 Node passes/one skip, TypeScript and production build pass. Saved-state replay uses no model calls. No new autonomous acceptance is claimed. See `docs/reviews/2026-11-06-evidence-routing-draft-binding-v1-0-28.md`.
+
+
+All notable changes to this project will be documented in this file.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [1.0.27] — 2026-11-06 — Source profile and category accountability
+
+- Development v4 accounts for original career/profile units alongside mandates, rejects silent credential loss and generic categories, and routes invalid generated candidates through the existing scoped repair. Pending categories require a precise criterion/action and stay internal.
+- Preserve relationship semantics during anonymization; final v4 profile proofs use the actual rendered Word rows. Historical proposals remain readable; renderer/artifact contracts advance to 21.
+- 514 Python tests, 482 Node passes/one skip, TypeScript, production build and CI Python3.10 passed. Private read-only replays used no model calls. PR7 merged afc74e3; engine and worker LIVE, matching health fingerprint and Vercel production READY. No new autonomous production acceptance. A subsequent fixed option B test passed the 61 case/profile proofs but stopped on an uneditable source-value finding before applying located matter corrections. Known usage: 842,878 including extraction. Post-failure draft download also lost generated E8 states; the preserved reviewed pair remains unapproved.
+
+## [1.0.26] — 2026-11-06 — Neutral portfolio disposition labels
+
+- Replace mandatory practice-ineligibility and missing-information headings with neutral portfolio labels; preserve source-grounded reasons in their bodies. Normalize only the complete legacy application headings without another model call. Remove the instruction to invent numerical Hero weights and advance the writer contract.
+- 502 Python tests, 478 Node passes/one skip and TypeScript passed locally and CI on production Python 3.10. PR #6 merged as d13640b; motor/worker LIVE, matching health, Vercel production READY.
+- The preceding fixed v25 test stopped after valid exact-file reviews at the normal repair limit: 1,039,749 known tokens including extraction, no approval. Actual Chrome downloads match the reviewed bytes. The label-only Word replay passes without AI; no new v26 autonomous acceptance. Comparison also records unresolved category specificity, lost professional credentials and an anonymized employer mislabelled as client.
+
+## [1.0.25] — 2026-11-06 — Production Python compatibility
+
+- Replace Python 3.11-only StrEnum with literal string Enum proofs supported by the production Python 3.10 image. Load the editorial graph at startup so import failures cannot hide behind an online health endpoint.
+- Align CI with Python 3.10.22; 499 Python tests, Node contracts and TypeScript passed in GitHub run 42238823371. PR #5 merged as e97d42b; engine/worker LIVE, health fingerprint matches, Vercel production READY.
+- Fresh v24 acceptance stopped before selection model invocation on the runtime import error; 55,889 extraction tokens, no new approved documents. A separate fixed v25 option B test is now running with the unchanged original; acceptance and editorial comparison remain pending.
+
+## [1.0.24] — 2026-11-05 — Bound proof quotations and coherent working drafts
+
+- Require one model-facing proof key per case obligation, with quotations constrained to its own output field and explicit internal/document visibility; compare visible formatting and decode Word XML exactly once.
+- Preserve the exact unapproved candidate pair on invalid-review responses. Draft downloads can read a source-current validated writer proposal when bytes were not retained, without approving or mutating the case.
+- 498 Python tests, 478 Node passes/one skip, TypeScript and production build passed. Published PR #4 as abee28a; engine/worker LIVE, matching health and Vercel production READY. No new autonomous acceptance. On 2026-11-06, the explicitly authorized two-proof check passed in one call using 6,053 tokens. Both draft downloads from the client session matched the reviewed texts; no case restart or new extraction. Full autonomous acceptance remains pending.
+
+## [1.0.23] — 2026-11-05 — Capacity-bound initial selection
+
+- Bind core membership and order to one model-facing list capped at 20; its first reference defines the Hero. Preserve one interpretation per registered matter and the canonical saved strategy.
+- Extend bounded generated-field repair to invalid source quotations and retain strict source/portfolio guards. 491 Python tests, 474 Node passes/one skip, types and build passed.
+- Published PR #3 as e5022ea, all deployments verified. A fixed option B test completed selection, development and writer with autonomous corrections, then stopped after two invalid final diagnostic responses. Known usage: 731,077 including extraction; no approved Word pair. The failure and draft-download mismatch are preserved and compared privately with the prior approved pair.
+
+## [1.0.22] — 2026-11-05 — Bounded generated selection-field repair
+
+- Route located numeric/currency rationale defects through a field-only repair before independent selection review, preserving sources, portfolio and unaffected fields.
+- Share the two-repair ceiling with semantic recovery; retain repeated-failure and unavailable-review stops, strict grounding and normal budgets.
+- 486 Python tests, 474 Node passes/one skip, TypeScript and production build passed. Published PR #2 as merge 52795ec; deployment verification and fixed-version acceptance pending. The preceding v1.0.21 run failed before drafting; no new approved Word pair or editorial improvement is claimed.
+
+## [1.0.21] — 2026-11-05 — Shared editorial case prepared for review
+
+- Add an unpaid case-obligation node before development; bind institutional arguments, source-attributed leaders and source-to-field execution checks across Submission and Audit.
+- Permit pertinent reserved matters as individual evidence while preserving disposition, attribution and privacy; retain excluded-source and seniority guards.
+- Keep complete reserve comparisons internal and expose material boundary decisions in the executive letter. Expand source-commentary detection and preserve exact-file review, counters and budgets.
+- 480 Python tests, 474 Node passes/one skip, TypeScript and production build passed. A fictional provider check returned no usable result and unknown consumption; no generation retry. Read-only model metadata and schema/input count succeeded. Implementation local commit 6334f93, identical tree published as a2c8704 in draft PR #1 via the GitHub connector after CLI connectivity failed; subsequently merged as dfa83a8 after the user requested publication and a fresh acceptance run. Render engine/worker LIVE and health fingerprint match; Vercel production READY on documentation commit bd67f3a. Fresh test is authorized but not started because the Chrome window is inaccessible; no new autonomous acceptance is claimed.
+
+## [1.0.20] — 2026-11-05 — Source-grounded privacy postconditions
+
+- Detect one confidential metric plus shared case context or an explicit candidate source link across public fields, while distinguishing currencies and generic isolated numbers.
+- Preserve confidential narratives and affected source context through targeted public-field repair; verify that the repaired delta removes the fingerprint before rendering.
+- Published as fe77f03. 468 Python tests and 474 Node passes/one skip. The stopped document pair passed its independent final review under the original cumulative cap; a fresh fixed-version option B run subsequently completed with independently approved documents, one extraction/job, autonomous targeted correction and no manual prose or code changes during execution. Known fresh-run usage: 882,538 tokens. This validates this source and version, not every future case.
+
+## [1.0.19] — 2026-11-05 — Verified surgical repairs
+
+- Repair grounded generated warnings alongside critical defects; retain rejected quotations as field-bound postconditions.
+- Verify removed claims before another full document cycle. Permit one residual-field correction with strict paths and preserved successful edits, known usage and independent final review.
+- Reject ineffective second corrections, unknown consumption and genuinely unresolved evidence; keep global budgets and recovery limits.
+- Detect sector-classification source commentary before rendering. Local validation: 464 Python tests, 474 Node passes/one skip, types and production build. Published as c655aad; no new paid acceptance run. See `docs/reviews/2026-11-05-reparacion-quirurgica-v1-0-19.md`.
+
+## [1.0.18] — 2026-11-05 — Cross-stage pause audit
+
+- Align restricted confidential delivery across shared policy, selection reviewer and bounded repair. Bind application-rule evidence separately from client-source facts.
+- Allow one known invalid diagnosis to be independently reviewed again within the existing three-review cap; retain counters across checkpoint continuation and quarantine unknown provider consumption.
+- Validate configured editorial targets, department source narrative and every matter's source before paid preparation. Align original narrative aliases across TypeScript and Python.
+- Preserve terminal job ledgers on manual retry, distinguish historical pauses after saved source changes, and expose current findings plus a copyable attempt reference.
+- Distinguish unavailable ranking evidence from a verified mismatch. Local validation: 454 Python tests, 473 Node passes/one skip, types and production build. Autonomous acceptance remains pending; see `docs/reviews/2026-11-05-auditoria-contradicciones.md`. Published as 8fff1b9. Fresh fixed-version acceptance reached final artifacts but stopped at repair_progress_limit with one unchanged generated claim; no approved delivery. Known test usage: 855,832 tokens.
+
+## [1.0.17] — 2026-11-04 — Grounded selection diagnostics and terminal findings
+
+- Require a rejected selection check to bind both its original source quote and the exact claim in that same generated decision. An unbound diagnosis stops without buying a repair or granting approval; known usage and completed-review counters remain recorded.
+- Share selection reasoning across initial strategy, bounded repair and independent review: distinguish application capacity from client facts, assess the complete decision, and retain source-supported deliverables when comparing reserves. Capacity bookkeeping must not become the legal justification.
+- Show current selection-review findings after a terminal selection failure instead of an unrelated draft-ready marker. Mark the selection pause explicitly and prevent manual retries from resetting its allowance, including after a software release.
+- Preserve the failed production attempt, sources, rejection and cumulative usage. Local checks: 442 Python tests, 465 Node passes/one skip, TypeScript and production build passed. No autonomous production pass is claimed. See `docs/reviews/2026-11-04-selection-diagnostics-v1-0-17.md`.
 
 ## [1.0.16] — 2026-11-04 — Completed-review counters and transport accounting
 

@@ -35,7 +35,7 @@ class CompleteDevelopmentDeliveryTests(unittest.TestCase):
             self.assertFalse(s.get('field_review_observations'))
             def review(current,role,schema,instruction,payload):
                 self.assertEqual(role,'field_reviewer')
-                return verdict(payload['units']),current['trace']+[{'usage':{'total_tokens':7}}]
+                return verdict(payload['units'],schema=schema),current['trace']+[{'usage':{'total_tokens':7}}]
             with patch('core.review_graph.invoke_role',side_effect=review):
                 for _ in range(10):
                     s.update(advance(s))
@@ -52,7 +52,7 @@ class CompleteDevelopmentDeliveryTests(unittest.TestCase):
         s.update(after_repair(s,result))
         def review(current,role,schema,instruction,payload):
             self.assertEqual(role,'field_reviewer')
-            answer=verdict(payload['units'],'b10')
+            answer=verdict(payload['units'],'b10',schema=schema)
             for item in answer['checks'].values():item['reason']='Fresh review of the repaired output.'
             return answer,current['trace']+[{'usage':{'total_tokens':7}}]
         with patch('core.review_graph.invoke_role',side_effect=review):s.update(advance(s))
@@ -83,7 +83,7 @@ class CompleteDevelopmentDeliveryTests(unittest.TestCase):
         def review(current,role,schema,instruction,payload):
             self.assertEqual(role,'field_reviewer')
             calls.extend(u['field'] for u in payload['units'])
-            return verdict(payload['units']),current['trace']+[{'role':role,'usage':{'total_tokens':11}}]
+            return verdict(payload['units'],schema=schema),current['trace']+[{'role':role,'usage':{'total_tokens':11}}]
         with patch('core.review_graph.invoke_role',side_effect=review):
             for _ in range(20):
                 s.update(advance(s))
