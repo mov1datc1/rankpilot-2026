@@ -89,8 +89,11 @@ nomination or personal result.
 
 INSTITUTION_TASK = COMMON + ''' Write B10 and C2 in English from the SAME institutional
 case_plan, speaking directly as the firm (never audit voice or market superlatives).
-B10 demonstrates the practice's evidenced identity and capabilities (maximum 1000
-words, no rigid minimum or padding; allocate depth to the available evidence, not
+B10 demonstrates the practice's evidenced identity and capabilities. 1,000 words
+is a MAXIMUM, not a target and not a 500-word limit: develop as far as the
+evidence supports, never padding. When the original department narrative
+(b10_source) is short, EXPAND it with the portfolio's evidenced mechanisms and
+results; never compress or drop its substance (allocate depth to the evidence, not
 a sequential case list): (1) open with the strongest strategic differentiator from
 this portfolio; (2) cover industry sector expertise, geographic/national footprint
 and areas of recent growth where evidenced in the sources; (3) develop all shared
@@ -99,7 +102,8 @@ mechanisms and outcomes; and (4) integrate department leadership and bench depth
 (confirmed heads, team architecture and distinct practitioner roles/credentials
 grounded in lawyers and shared_decisions, without inventing partner status or
 rankings). C2 argues once for the requested coverage with distinct supported
-reasons, without two equivalent opening sentences, copying B10 or repeating a
+reasons developed with concrete evidence (same 1,000-word maximum, expanding a
+short original c2_source rather than shortening it), without two equivalent opening sentences, copying B10 or repeating a
 service catalogue. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
@@ -141,6 +145,19 @@ def recover_plan(package, strategy, plan, pending, correcting, source_owned):
     fixes+=[{'fallback':'required_support_without_literal_source',**s} for s in skipped]
     if fixes:pending.setdefault('plan_fixes',[]).extend(fixes)
     return value
+
+
+def length_faults(package, value):
+    """B10/C2 must develop the original up to a 1,000-word maximum, never shrink it."""
+    words=lambda text:len(str(text or '').split())
+    faults=[]
+    for field,source_key in (('b10','b10_source'),('c2','c2_source')):
+        generated,original=words(value.get(field)),words(package.get(source_key))
+        if generated>1000:
+            faults.append(f'{field.upper()} has {generated} words; the maximum is 1,000. Keep every evidenced argument and tighten wording only.')
+        elif original>=150 and generated<0.9*original:
+            faults.append(f'{field.upper()} has {generated} words but the original {source_key} has {original}. Develop it with the supplied evidence up to at most 1,000 words; do not compress or drop its substance.')
+    return faults
 
 
 def department_size(package):
@@ -465,6 +482,12 @@ def advance(state, invoke):
                 work['candidates'][unit['index']].update({k:candidate[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
+                faults=length_faults(package,value)
+                if faults and not correcting:
+                    # Ángela's rule: develop up to 1,000 words, never shrink the
+                    # original. One self-correction states the exact expectation.
+                    raise ValueError('; '.join(faults))
+                if faults:pending.setdefault('length_observations',[]).extend(faults)
                 work.update(value)
         except Exception as error:
             # Retain the rejected response and usage without replaying a paid unit.
@@ -535,6 +558,7 @@ def advance(state, invoke):
                 'unit_corrections':pending.get('unit_corrections',{}),
                 'plan_fixes':pending.get('plan_fixes',[]),
                 'bio_style':pending.get('bio_style',[]),
+                'length_observations':pending.get('length_observations',[]),
                 'rejected_responses':[{k:v for k,v in r.items()} for r in pending.get('rejected_responses',[])],
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}

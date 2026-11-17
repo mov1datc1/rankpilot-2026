@@ -4,6 +4,7 @@ Contrasted the DeForest v1.0.91 result with Ángela's feedback (Ramos 27 Oct, cl
 - The final review no longer flags B10 above a template 500-word guidance: up to 1,000 words is the standard Ángela approved ("solid, convincing, well founded").
 - B10/C2 keep former employers, public offices and professional associations named in lawyer profiles (career facts, not clients) unless explicitly restricted; DeForest anonymised Volkswagen without a restriction.
 - B10/C2 receive `department_size` computed from the filing form (partners, other lawyers, total = sum); DeForest called 23 "other lawyers" the whole team.
+- **Length rule from Ángela (confirmed by Jonathan):** B9, B10 and C2 may each run up to 1,000 words. That is a maximum, not a target, and no 500-word limit applies. A short original is developed with source evidence, never compressed. A B10/C2 below 90% of its original or above 1,000 words triggers the single self-correction with the exact expectation; if it persists it is accepted as a recorded observation and never stops. The final review must not request shortening below 1,000.
 - Audit labels drop form prefixes ("Client: Cinemex" → "Cinemex").
 - Validation: 905 Python tests.
 
