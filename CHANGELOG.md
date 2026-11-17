@@ -1,3 +1,10 @@
+## 1.0.89 — Withdraw unsupported plan attributions instead of stopping the case
+
+- The second v1.0.88 Ramos run stopped before any prose (`DEVELOPMENT_REJECTED`, not retryable): the shared plan listed 15 supporting mandates for the lead lawyer; one reserve record names a different lead lawyer, so `validate_plan` rejected the whole plan. Same family as the v79 pre-prose plan stop; not caused by v1.0.87.
+- `drop_unbound_support` now removes, before validation, only supporting claims that cite a passage absent from the record, point outside the eligible portfolio, or attribute a record that does not name the person. Each removal is recorded in `development_build_report.dropped_support`. Required personal mandates are still restored from canonical lead records and `validate_plan` still runs.
+- Offline check on the real rejected plan: one entry withdrawn (`person_not_named_in_record`), then the plan validates.
+- Validation: 893 Python tests.
+
 ## 1.0.88 — Bounded prompt-cache key
 
 - Fix a v1.0.87 regression: the Responses API rejects `prompt_cache_key` longer than 64 characters with HTTP 400. The role key `rankpilot:selection_reviewer:<prompt_revision>` was 66 characters, so the first selection review of the first v1.0.87 run was rejected (no tokens billed for that request) and the durable job stopped as an unknown provider outcome. Keys are now `rp:<role>:<10-char revision digest>` (20–33 characters); a test bounds every role key at 64.

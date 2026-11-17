@@ -176,6 +176,40 @@ class ConstructionTests(unittest.TestCase):
         self.assertIn(decision_heading(v['candidates'][0]),result['letter']['leadership'])
         self.assertEqual(invoke.call_args.args[4]['shared_decisions']['candidates'][0]['suggested_ranking'],v['candidates'][0]['suggested_ranking'])
 
+    def test_false_supporting_attribution_is_withdrawn_instead_of_stopping_the_case(self):
+        state,v=self.fixture();calls=[]
+        wrong=copy.deepcopy(v)
+        # The plan cites a passage absent from the reserve's own record.
+        wrong['candidates'][0]['supporting_matters'].append({'matter_id':'m2','source_quote':'Another lawyer led this reserve mandate.',
+            'personal_role':'Lead lawyer'})
+        real=self.provider(v,calls)
+        def invoke(s,role,schema,instruction,payload):
+            if schema.__name__=='SharedEditorialPlan':
+                return self.provider(wrong,calls)(s,role,schema,instruction,payload)
+            return real(s,role,schema,instruction,payload)
+        result=advance(state,invoke)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertNotIn('m2',[x['matter_id'] for x in result['development']['candidates'][0]['supporting_matters']])
+        self.assertEqual(result['development_build_report']['dropped_support'],
+                         [{'candidate':v['candidates'][0]['name'],'matter_id':'m2','reason':'quote_not_in_record'}])
+        self.assertEqual(len([c for c in calls if c[0]=='SharedEditorialPlan']),1)
+
+    def test_drop_unbound_support_keeps_valid_entries_and_names_each_reason(self):
+        from core.editorial_construction import drop_unbound_support
+        state,v=self.fixture()
+        package=copy.deepcopy(state['package'])
+        package['matters'][1]={**package['matters'][1],'leadPartner':'Otro Abogado','lead_partner':'Otro Abogado',
+            'source_excerpt':'E5 Lead partner Otro Abogado. Distinct reserve work.','rawNotes':'','summary':''}
+        plan={'candidates':[{**v['candidates'][0],'supporting_matters':v['candidates'][0]['supporting_matters']+[
+            {'matter_id':'m2','source_quote':'E5 Lead partner Otro Abogado','personal_role':'Lead'},
+            {'matter_id':'missing','source_quote':'x','personal_role':'Lead'}]}]}
+        kept,dropped=drop_unbound_support(package,state['strategy'],plan)
+        self.assertEqual([x['matter_id'] for x in kept['candidates'][0]['supporting_matters']],
+                         [x['matter_id'] for x in v['candidates'][0]['supporting_matters']])
+        self.assertEqual([(d['matter_id'],d['reason']) for d in dropped],
+                         [('m2','person_not_named_in_record'),('missing','not_eligible')])
+        self.assertEqual(len(plan['candidates'][0]['supporting_matters']),len(v['candidates'][0]['supporting_matters'])+2)
+
     def test_institutional_task_covers_sectors_growth_and_bench_depth_without_binding_cap(self):
         state,v=self.fixture();instructions=[]
         real=self.provider(v,[])
