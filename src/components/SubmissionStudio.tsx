@@ -50,7 +50,7 @@ import { PreparationBanner } from '@/components/PreparationBanner';
 import {editorialPreparationIssues, officialFilingGaps} from '@/lib/audit/preparation-input';
 import {ResearchPeriodForm} from '@/components/ResearchPeriodForm';
 import { FilingDetails } from '@/components/FilingDetails';
-import { PreparationProgress } from '@/components/PreparationProgress';
+import { PipelineProgress } from '@/components/PipelineProgress';
 import { ReviewPanel, ReadableAudit } from '@/components/EditorialReview';
 import { focusedReviewScope, reviewIsStale, type FocusedReviewScope, type ReviewDestination } from '@/lib/audit/review-actions';
 import PostIngestionWizardModal from '@/components/PostIngestionWizardModal';
@@ -210,6 +210,7 @@ export default function SubmissionStudio({
     stage: string;
     startedAt?: string;
     waiting?: boolean;
+    activity?: any;
   } | null>(null);
   const [optimizeAllComplete, setOptimizeAllComplete] = useState<boolean>(false);
   const [showReadinessModal, setShowReadinessModal] = useState<boolean>(false);
@@ -625,7 +626,7 @@ export default function SubmissionStudio({
         setEditorialJob(data.job);
         const active=['queued','running'].includes(data.job.status);
         setIsOptimizingAll(active);
-        setOptimizeAllProgress(active?{current:data.job.completed,total:data.job.total,startedAt:data.job.startedAt,waiting:data.job.waiting,stage:`${data.job.message}. El avance se guarda automáticamente.`}:null);
+        setOptimizeAllProgress(active?{current:data.job.completed,total:data.job.total,startedAt:data.job.startedAt,waiting:data.job.waiting,activity:data.job.activity,stage:data.job.message}:null);
         if(active)return;
         setOptimizeAllComplete(data.job.status==='completed');
         if(data.chambersData && !unsavedDraft.current) {
@@ -659,7 +660,7 @@ export default function SubmissionStudio({
       const response=await fetch('/api/editorial/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submissionId:submission.id,retry:true,repair:repairGenerated})});
       const data=await response.json();
       if(!response.ok) throw new Error(data.error || 'No se pudo iniciar la revisión.');
-      setOptimizeAllProgress({current:data.job.completed,total:data.job.total,startedAt:data.job.startedAt,waiting:data.job.waiting,stage:data.job.message});
+      setOptimizeAllProgress({current:data.job.completed,total:data.job.total,startedAt:data.job.startedAt,waiting:data.job.waiting,activity:data.job.activity,stage:data.job.message});
       setJobWatch(value=>value+1);
     } catch(error) {
       setIsOptimizingAll(false);
@@ -1362,20 +1363,7 @@ export default function SubmissionStudio({
           gap: '0.5rem',
           borderBottom: '1px solid #4338CA'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <RefreshCw size={18} className="animate-spin" style={{ color: '#38BDF8' }} />
-              <div>
-                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF', marginRight: '0.5rem' }}>
-                  Preparación de Submission y Audit:
-                </span>
-                <span role="status" aria-live="polite" style={{ fontSize: '0.85rem', color: '#E0E7FF' }}>
-                  {optimizeAllProgress.stage}
-                </span>
-              </div>
-            </div>
-          </div>
-          <PreparationProgress progress={optimizeAllProgress} light />
+          <PipelineProgress progress={optimizeAllProgress} />
         </div>
       )}
 

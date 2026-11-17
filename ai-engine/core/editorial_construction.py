@@ -436,7 +436,15 @@ def advance(state, invoke):
                 work['matters']=[{**m,**values.get(m['matter_id'],{})} for m in work['matters']]
             elif kind=='bio':
                 if source_owned:value=construction_bindings.expand_biography(value,bindings)
-                work['candidates'][unit['index']].update(value)
+                # Style rules the prompt alone has not held: title in the first
+                # sentence and varied paragraph openings, enforced in code.
+                from core import biography_openings
+                candidate={**work['candidates'][unit['index']],**value}
+                candidate,titled=biography_openings.place_title(candidate,package)
+                candidate,trace,style=biography_openings.vary_openings(state,invoke,candidate,trace)
+                if titled or style:
+                    pending.setdefault('bio_style',[]).append({'candidate':candidate['name'],'title_placed':titled,**(style or {})})
+                work['candidates'][unit['index']].update({k:candidate[k] for k in value})
             else:
                 if source_owned:value=construction_bindings.expand_institutional(value,work['case_plan'])
                 work.update(value)
@@ -508,6 +516,7 @@ def advance(state, invoke):
                 'dropped_support':pending.get('dropped_support',[]),
                 'unit_corrections':pending.get('unit_corrections',{}),
                 'plan_fixes':pending.get('plan_fixes',[]),
+                'bio_style':pending.get('bio_style',[]),
                 'rejected_responses':[{k:v for k,v in r.items()} for r in pending.get('rejected_responses',[])],
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}

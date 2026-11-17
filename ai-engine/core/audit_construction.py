@@ -79,6 +79,8 @@ words) gives the actual reasons, distinguishing practice relevance, represented
 client side, strategic thesis and genuinely missing evidence; empty when no
 matter is excluded. A reserve can have sufficient evidence and lose on
 comparative value.
+Every slot states its own maximum word count, computed so the whole Audit stays
+within the executive limit: respect it strictly, prioritising decisive facts.
 next_actions: only genuine remaining actions with their Studio destination and
 what each answer would change; missing optional information never blocks
 delivery. Do not reproduce private contact details.'''
@@ -287,32 +289,44 @@ def _text(description, limit):
     return (str, Field(min_length=1, max_length=limit, description=description))
 
 
+def budgets(plan):
+    """Per-slot word budgets that keep the whole Audit near its executive limit."""
+    contributions = sum(len(p['contributions']) for p in plan['people'])
+    people = max(len(plan['people']), 1)
+    return {'portfolio': max(15, min(55, 420 // max(len(plan['portfolio']), 1))),
+            'argument': max(45, min(130, 520 // people)),
+            'contribution': max(12, min(40, 450 // max(contributions, 1))),
+            'leader': max(25, min(60, 150 // max(len(plan['leaders']), 1))),
+            'comparison': max(20, min(60, 230 // max(len(plan['comparisons']), 1)))}
+
+
 def letter_schema(plan):
     from core.review_graph import NextAction
+    words = budgets(plan)
     portfolio = _strict('AuditPortfolio', {key: _text(
-        'Contribution of ' + item['client'] + ' to the case in one or two compact Spanish sentences (maximum 55 words).', 600)
+        f"Contribution of {item['client']} to the case in compact Spanish (maximum {words['portfolio']} words).", words['portfolio'] * 11)
         for key, item in plan['portfolio'].items()})
     people = {}
     for person in plan['people']:
-        fields = {'argument': _text('Internal analysis for ' + person['name'] + ' in Spanish (80-130 words): why this person, '
-            'career credentials and scope/limits of personal evidence. Do not restate nomination or category.', 1600)}
+        fields = {'argument': _text('Internal analysis for ' + person['name'] + f" in Spanish (maximum {words['argument']} words): why this person, "
+            'career credentials and scope/limits of personal evidence. Do not restate nomination or category.', words['argument'] * 11)}
         if person['contributions']:
             fields['contributions'] = (_strict('AuditContributions_' + person['key'], {key: _text(
-                'ONE compact Spanish sentence (maximum 40 words) for ' + item['client'] + ': this person\'s own role and the '
-                'achieved result or actual pending stage, consistent with the supplied B9 passage.', 450)
+                f"ONE compact Spanish sentence (maximum {words['contribution']} words) for " + item['client'] + ': this person\'s own role and the '
+                'achieved result or actual pending stage, consistent with the supplied B9 passage.', words['contribution'] * 11)
                 for key, item in person['contributions'].items()}), ...)
         people[person['key']] = (_strict('AuditPerson_' + person['key'], fields), ...)
     if plan['leaders']:
         people['additional'] = (_strict('AuditAdditionalLeaders', {key: _text(
-            'Internal Spanish assessment of ' + item['name'] + ' (maximum 60 words): documented matter leadership as líder del '
+            'Internal Spanish assessment of ' + item['name'] + f" (maximum {words['leader']} words): documented matter leadership as líder del "
             'asunto, explicit decision not to nominate in this filing with its reason, and the missing fact that would change it.', 650)
             for key, item in plan['leaders'].items()}), ...)
     gaps = {'other_reserves': (str, Field(max_length=500, description='One Spanish sentence on reserves without an individual comparison; empty string if none.')),
             'exclusions': (str, Field(max_length=1200, description='Actual exclusion reasons in Spanish (maximum 120 words); empty string when nothing is excluded.'))}
     if plan['comparisons']:
         gaps['comparisons'] = (_strict('AuditComparisons', {key: _text(
-            'Concrete sourced tradeoff in Spanish (maximum 60 words) between selected ' + item['selected'] + ' and reserve '
-            + item['alternative'] + ', with facts and status on BOTH sides. No menor/mayor escala.', 700)
+            f"Concrete sourced tradeoff in Spanish (maximum {words['comparison']} words) between selected " + item['selected'] + ' and reserve '
+            + item['alternative'] + ', with facts and status on BOTH sides. No menor/mayor escala.', words['comparison'] * 11)
             for key, item in plan['comparisons'].items()}), ...)
     return _strict('ConstructedAudit', {
         'executive_assessment': _text('Executive verdict in Spanish (about 220 words).', 2600),
