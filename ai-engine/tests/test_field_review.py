@@ -13,15 +13,101 @@ def state():
             'field_review_enabled':True,'trace':[]}
 
 
-def verdict(units,failed_field=None):
+def verdict(units,failed_field=None,schema=None):
+    """Answer from full units, or from a provider payload plus its bound schema."""
+    def source_ref(obligation):
+        passages=obligation.get('source_passages')
+        if passages:return 'own_passage' if len(passages)==1 else next(iter(passages))
+        proof=schema.model_fields['checks'].annotation.model_fields[obligation['id']].annotation
+        return next(iter(proof.model_fields['source_ref'].annotation)).value
     return {'checks':{o['id']:{'status':'failed' if u['field']==failed_field else 'met',
         'artifact_ref':next(iter(u['output_passages'])),
-        'source_ref':next(iter(o.get('source_passages') or o['source_refs'])),
+        'source_ref':source_ref(o),
         'reason':'Preserve the supplied achieved result.' if u['field']==failed_field else 'The supplied contribution and outcome are preserved.'}
         for u in units for o in u['obligations']}}
 
 
 class FieldReviewTests(unittest.TestCase):
+    def test_repair_groups_put_public_prose_first_and_bundle_small_records(self):
+        from core.field_review import repair_groups
+        paths=['comparisons/1/tradeoff','matters/4/text','candidates/1/category_rationale','c2','matters/0/text',
+               'candidates/1/submission_bio','matters/1/text','matters/2/text','matters/3/text','candidates/0/submission_bio','b10']
+        groups=repair_groups([{'field_path':p} for p in paths]+[{'field_path':'b10'}])
+        self.assertEqual(groups,[['c2','b10'],['candidates/0/submission_bio'],
+            ['candidates/1/category_rationale','candidates/1/submission_bio'],
+            ['matters/4/text','matters/0/text','matters/1/text','matters/2/text'],['matters/3/text'],
+            ['comparisons/1/tradeoff']])
+        self.assertEqual(sorted(p for g in groups for p in g),sorted(paths))
+
+    def test_repair_budget_is_spent_by_priority_and_the_rest_closes_as_observations(self):
+        from core import field_review
+        current=state();current.update(schedule(current));units=units_for(current)
+        fields=[u['field'] for u in units]
+        institutional=next(f for f in fields if f in ('b10','c2'))
+        other=next(f for f in fields if f.startswith(('matters/','comparisons/')))
+        failures=[]
+        for field in (other,institutional):
+            unit=next(u for u in units if u['field']==field)
+            failures += [{**d,'unit_hash':unit['hash']} for d in project_checks([unit],verdict([unit],field))[1]]
+        rest=[u for u in units if u['field'] not in (other,institutional)]
+        current['field_review_receipts']=project_checks(rest,verdict(rest))[0]
+        current['field_review_failures']=failures
+        with patch.object(field_review,'MAX_GLOBAL_FIELD_REPAIRS',1), \
+             patch('core.review_graph.invoke_role',side_effect=AssertionError('Scheduling buys nothing')):
+            result=schedule(current)
+        self.assertEqual(result['repair_continuation']['phase'],'repair')
+        self.assertEqual(result['repair_continuation']['pending_groups'],[[institutional]])
+        self.assertEqual([o['field'] for o in result['field_review_observations']],[other])
+        self.assertEqual({d['field_path'] for d in result['field_review_failures']},{institutional})
+        # With no budget left every reviewed finding closes; documents keep moving.
+        with patch.object(field_review,'MAX_GLOBAL_FIELD_REPAIRS',1):
+            closed=schedule({**current,'field_review_repair_calls':1})
+        self.assertIsNone(closed['repair_continuation'])
+        self.assertTrue(closed['development_delivery_ready']);self.assertFalse(closed['development_validated'])
+        self.assertEqual(sorted(o['field'] for o in closed['field_review_observations']),sorted([other,institutional]))
+
+    def test_one_grouped_call_repairs_several_fields_and_counts_once(self):
+        from core import field_review
+        current=state();current.update(schedule(current));units=units_for(current)
+        matters=[u for u in units if u['field'] in ('b10','c2')]
+        self.assertEqual(len(matters),2,[u['field'] for u in units])
+        failures=[]
+        for unit in matters:
+            failures += [{**d,'unit_hash':unit['hash']} for d in project_checks([unit],verdict([unit],unit['field']))[1]]
+        rest=[u for u in units if u not in matters]
+        current['field_review_receipts']=project_checks(rest,verdict(rest))[0]
+        current['field_review_failures']=failures;current.update(schedule(current))
+        self.assertEqual(current['repair_continuation']['pending_groups'],[[u['field'] for u in matters]])
+        seen=[]
+        def repaired(s,proposal,defects):
+            seen.append(sorted({d['field_path'] for d in defects}))
+            return {'development':proposal,'development_validated':False,'errors':['Correction ineffective'],'trace':s['trace']}
+        with patch('core.editorial_repair.repair_rejected_development',side_effect=repaired):
+            current.update(advance(current))
+        self.assertEqual(seen,[sorted(u['field'] for u in matters)])
+        self.assertEqual(current['field_review_repair_calls'],1)
+        self.assertEqual(current['field_review_attempts'],{u['field']:1 for u in matters})
+
+    def test_schema_declares_shared_proofs_once_and_payload_sends_no_reference_lists(self):
+        from openai.lib._pydantic import to_strict_json_schema
+        from core.field_review import review_payload, OWN_PASSAGE
+        current=state();units=units_for(current)
+        schema=to_strict_json_schema(contract(units))
+        proofs=[name for name in schema['$defs'] if name.startswith('FieldProof_')]
+        obligations=[o for u in units for o in u['obligations']]
+        self.assertLess(len(proofs),len(obligations))
+        self.assertNotIn('description',json.dumps([schema['$defs'][name] for name in proofs]))
+        payload=review_payload(units)
+        self.assertNotIn('source_refs',json.dumps(payload))
+        self.assertTrue(all(o['source_ids'] for u in payload['units'] for o in u['obligations']))
+        single=next((o for o in obligations if len(o['source_passages'])==1),None)
+        if single:
+            unit=next(u for u in units if single in u['obligations'])
+            answer=verdict([unit]);self.assertEqual(answer['checks'][single['id']]['source_ref'],OWN_PASSAGE)
+            receipts,_=project_checks([unit],answer)
+            proof=next(c for c in receipts[0]['checks'] if c['obligation_id']==single['id'])
+            self.assertEqual(proof['source_quote'],next(iter(single['source_passages'].values())))
+
     def test_parent_method_is_inherited_without_mixing_unrelated_sibling_fields(self):
         from core.field_review import method_count
         self.assertEqual(method_count({'candidates/0':2},'candidates/0/submission_bio'),2)
@@ -64,7 +150,7 @@ class FieldReviewTests(unittest.TestCase):
         self.assertEqual(current['development'],before)
         self.assertEqual(current['repair_continuation']['phase'],'review')
         def failed(s,role,schema,instruction,payload):
-            return verdict(payload['units'],'b10'),[{'role':role,'usage':{'total_tokens':10}}]
+            return verdict(payload['units'],'b10',schema=schema),[{'role':role,'usage':{'total_tokens':10}}]
         with patch('core.review_graph.invoke_role',side_effect=failed):current.update(advance(current))
         self.assertEqual(current['field_review_context_version'],INSTITUTIONAL_CONTEXT)
         with patch('core.review_graph.invoke_role',side_effect=AssertionError('No third repair')):
@@ -118,7 +204,7 @@ class FieldReviewTests(unittest.TestCase):
             calls.append(role)
             if role=='field_reviewer':
                 self.assertEqual([u['field'] for u in payload['units']],[target])
-                answer=verdict(payload['units'],target if len(calls)==1 else None)
+                answer=verdict(payload['units'],target if len(calls)==1 else None,schema=schema)
             else:
                 self.assertEqual(role,'repair')
                 self.assertEqual(set(payload['repair_targets']),{target})
@@ -174,7 +260,7 @@ class FieldReviewTests(unittest.TestCase):
             self.assertEqual(role,'field_reviewer')
             self.assertNotIn('package',payload)
             calls.extend(u['field'] for u in payload['units'])
-            response=verdict(payload['units']);schema.model_validate(response)
+            response=verdict(payload['units'],schema=schema);schema.model_validate(response)
             return response,s.get('trace',[])+[{'role':role,'usage':{'total_tokens':7}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke):
             for _ in range(20):
@@ -201,7 +287,7 @@ class FieldReviewTests(unittest.TestCase):
     def test_failed_proof_routes_to_repair_before_audit_with_original_evidence(self):
         current=state();current.update(schedule(current))
         def invoke(s,role,schema,instruction,payload):
-            return verdict(payload['units'],payload['units'][0]['field']),[{'role':role,'usage':{'total_tokens':9}}]
+            return verdict(payload['units'],payload['units'][0]['field'],schema=schema),[{'role':role,'usage':{'total_tokens':9}}]
         with patch('core.review_graph.invoke_role',side_effect=invoke):result=advance(current)
         self.assertEqual(result['repair_continuation']['phase'],'repair')
         self.assertTrue(result['field_review_failures'])
@@ -287,7 +373,8 @@ class AvailableWithObservationsTests(unittest.TestCase):
         other=[u for u in units if u['field']!=target]
         current['field_review_receipts']=project_checks(other,verdict(other))[0]
         current['field_review_failures']=project_checks([units[0]],verdict([units[0]],target))[1]
-        current['field_review_attempts']={f'other_{i}':1 for i in range(MAX_GLOBAL_FIELD_REPAIRS)}
+        # The budget counts paid repair calls; a grouped call may correct several fields.
+        current['field_review_repair_calls']=MAX_GLOBAL_FIELD_REPAIRS
         current['repair_continuation']={'phase':'repair','proposal_hash':digest(current['development']),'pending_groups':[[target]]}
         with patch('core.review_graph.invoke_role',side_effect=AssertionError('No paid repair after global cap')):
             result=advance(current)

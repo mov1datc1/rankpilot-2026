@@ -508,6 +508,16 @@ def invoke_residual_repair(state, group, shared=None):
          'previous_failure':'These authorized fields failed their listed postconditions. Correct each authorized field and its permitted proofs together; for BIO targets synchronize the biography and its output bindings. Preserve supplied preserve_generated_quotes verbatim, add missing required work instead of shrinking the profile, and retain other corrected fields. This is the single bounded residual repair for these fields, not another portfolio review.'})
 
 
+def comparison_pair(proposal,path,eligible):
+    """The selected and reserve records of ONE located comparison field, if both are known."""
+    match=re.fullmatch(r'comparisons/(\d+)/(?:tradeoff|incremental_contribution)',path)
+    if not match:return None
+    try:comparison=proposal['comparisons'][int(match.group(1))]
+    except (KeyError,IndexError,TypeError):return None
+    pair={comparison.get('selected_id'),comparison.get('alternative_id')}
+    return pair if None not in pair and len(pair)==2 and pair<=set(eligible) else None
+
+
 def repair_development(state, proposal, targets):
     from core.review_graph import invoke_role, role_payload
     from core.editorial_development import bind_development, development_errors
@@ -517,7 +527,10 @@ def repair_development(state, proposal, targets):
                 'trace':state.get('trace',[])}
     targets=coherent_repair_targets(proposal,targets,package=state.get('package'))
     bio_only=biography_output_targets_only(targets)
-    ranking_context=None if bio_only else (state.get('ranking_verification') or state.get('package',{}).get('ranking_verification'))
+    # Matter narratives and reserve tradeoffs make no ranking statement; the
+    # verification record is evidence for candidacy and institutional fields.
+    record_only=bool(targets) and all(p.startswith(('matters/','comparisons/')) for p in targets)
+    ranking_context=None if bio_only or record_only else (state.get('ranking_verification') or state.get('package',{}).get('ranking_verification'))
     schema=repair_result_contract(targets)
     # Semantic targets share the same complete evidence. Send it once, not once
     # per generated path; distinct target-specific evidence remains untouched.
@@ -530,6 +543,12 @@ def repair_development(state, proposal, targets):
             comparison_target=target_path=='comparisons' or target_path.startswith('comparisons/')
             selected=eligible_support_ids(evidence['package'],state['strategy']) if comparison_target else {d['matter_id'] for d in state['strategy'].get('matters',[]) if d.get('disposition')=='core'}
             package=role_payload({'package':evidence['package']},'development')['package']
+            pair=comparison_pair(proposal,target_path,selected)
+            if pair:
+                # One tradeoff concerns its own two records. Sending every
+                # eligible mandate adds cost and invites uninvolved third matters.
+                selected=pair
+                package={k:package[k] for k in ('directory','practice_area','firm_name','jurisdiction','ranking_jurisdiction','guide_region') if k in package} | {'matters':package.get('matters',[])}
             package['matters']=[m for m in package.get('matters',[]) if m.get('id') in selected]
             strategy={**evidence['strategy'],'matters':[d for d in evidence['strategy'].get('matters',[]) if d.get('matter_id') in selected]}
             evidence={'package':package,'strategy':strategy}

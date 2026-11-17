@@ -134,6 +134,26 @@ def comparison_style_defects(letter):
         'message':'Sustituye la etiqueta relativa de escala por diferencias jurídicas o cantidades comparables expresamente suministradas. No inventes mediciones ni conviertas un riesgo pendiente en un resultado alcanzado.'}]
 
 
+def consistency_sources(package, candidate, index, sources):
+    """Cross-document B9/Audit comparison once BOTH texts hold signed source proofs.
+
+    The check then compares two proven outputs. It needs the person's profile and
+    the literal anchors already bound to each mandate, not every full record again.
+    """
+    scope=package.get('_scoped_final_review') or {}
+    if index not in (scope.get('bios') or []) or index not in (scope.get('audit_people') or []):
+        return sources
+    register={m['id']:m for m in package.get('matters',[])}
+    quotes={}
+    for item in list(candidate.get('supporting_matters') or [])+list(candidate.get('submission_case_coverage') or []):
+        text=str(item.get('source_quote') or '').strip()
+        if item.get('matter_id') in register and text and text not in quotes.setdefault(item['matter_id'],[]):
+            quotes[item['matter_id']].append(text)
+    people=[s for s in sources if isinstance(s,dict) and not s.get('id')]
+    return [{'id':mid,'client':register[mid].get('client'),'anchor_only':True,'source_excerpt':' '.join(texts)}
+            for mid,texts in quotes.items()]+people
+
+
 def obligations(package, strategy, proposal):
     """IDs come from source scope, never from the final judge's chosen examples."""
     result=[]
@@ -161,7 +181,7 @@ def obligations(package, strategy, proposal):
             result[-1]['confirmed_input_name']=head['name']
         add(f'candidate:{i}:audit','leadership',sources,'Execute the CURRENT category, reason, personal evidence and actual remaining gap for '+candidate['name']+'. A reserve can support the person without being selected. Require the exact proposed category, its source-grounded criterion and reason, or Category pending with its specific missing criterion and action; a generic band candidacy is not a category. Current decision: '+str({k:candidate.get(k) for k in ('suggested_ranking','category_rationale','category_missing_criterion','recommended_action')}))
         if public_profile(candidate) and (candidate.get('recommendation')=='present' or candidate.get('supporting_matters') or candidate.get('submission_case_coverage')):
-            add(f'candidate:{i}:b9_audit_consistency',f'candidates/{i}/submission_bio',sources,
+            add(f'candidate:{i}:b9_audit_consistency',f'candidates/{i}/submission_bio',consistency_sources(package,candidate,i,sources),
                 'Compare this person actual Audit leadership argument with their actual public B9. Every distinctive personally attributed legal contribution or achieved result materially used by the Audit to defend this person must be developed in their own B9, with safe public generalisation. Also check every mandate the BIO itself describes: where the original source supplies an achieved interim/final result, intended prevention or ongoing status cannot replace it. Do not require every peripheral mandate, confidential names or metrics, internal category caveats, invented results or a nomination for a develop/do_not_present decision. Preserve supported pending work when no result exists. A valid pair of individual source links cannot excuse a material mismatch elsewhere in the same BIO.')
             from core.editorial_execution import EXECUTION_CONTRACT
             linked=proposal.get('execution_contract')==EXECUTION_CONTRACT and candidate.get('submission_case_coverage')
@@ -447,6 +467,12 @@ def execution_defects(package, strategy, proposal, letter, checks):
     return defects
 
 
+def audit_contract():
+    """New cases construct the Audit from shared decisions; saved cases keep theirs."""
+    from core import audit_construction
+    return {'audit_contract':audit_construction.VERSION} if audit_construction.enabled() else {}
+
+
 def prepare_case(state):
     """Unpaid graph boundary: derive obligations before drafting either document."""
     package,strategy=state['package'],state['strategy']
@@ -460,6 +486,7 @@ def prepare_case(state):
             'applies_when':'The directory includes this profile, no nomination is proposed and sources establish only team membership rather than personal substantive work.',
             'people':{(p.get('name') or p.get('fullName')):participation_sources(package,strategy,p.get('name') or p.get('fullName')) for p in package.get('lawyers',[])}},
         'recovery_contract':'field-recovery-v1',
+        **audit_contract(),
         'requested_target':package.get('requested_target'),
         'additional_leaders':additional_leaders(package,strategy),
         'reserve_ids':[d['matter_id'] for d in strategy.get('matters',[]) if d['disposition']=='reserve'],

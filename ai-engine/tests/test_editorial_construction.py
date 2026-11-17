@@ -164,6 +164,8 @@ class ConstructionTests(unittest.TestCase):
         from core.review_graph import writer
         from core.audit_decisions import decision_heading
         state,v=self.fixture();v['construction_contract']=VERSION;state['development']=v
+        # A saved case prepared before audit-construction-v1 keeps its writer contract.
+        state['case_requirements'].pop('audit_contract',None)
         response={k:'Análisis sintético para la prueba local.' for k in (
             'executive_assessment','portfolio','evidence_gaps','next_steps')}
         response['leadership']={'L01':'Lidera actuaciones documentadas con contribuciones distintas.'}
