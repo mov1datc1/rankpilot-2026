@@ -103,7 +103,12 @@ reasons, without two equivalent opening sentences, copying B10 or repeating a
 service catalogue. Use actual retrieved peer evidence only within its scope; never
 invent market standing. Both are public: generalise confidential identities and
 identifying combinations of geography, transaction details and private metrics
-while preserving legal work and career credentials. Return institutional_execution
+while preserving legal work and career credentials. A former employer, public
+office or professional association named in a lawyer's profile is a career fact,
+not a client: keep its name unless an explicit restriction covers it. When you
+state the size of the team, use department_size exactly: partners and other
+lawyers are separate figures; never present either one as the whole team, and a
+total is only their sum. Return institutional_execution
 with literal b10_quote/c2_quote for each shared argument. These bindings are
 internal, not additional public copy.'''
 
@@ -136,6 +141,18 @@ def recover_plan(package, strategy, plan, pending, correcting, source_owned):
     fixes+=[{'fallback':'required_support_without_literal_source',**s} for s in skipped]
     if fixes:pending.setdefault('plan_fixes',[]).extend(fixes)
     return value
+
+
+def department_size(package):
+    """Exact headcount from the filing form; the total is computed, never guessed."""
+    details=package.get('filing_details') or {}
+    def number(value):
+        try:return int(str(value).strip())
+        except (TypeError,ValueError):return None
+    partners,others=number(details.get('num_partners')),number(details.get('num_lawyers'))
+    result={'partners':partners,'other_lawyers':others}
+    if partners is not None and others is not None:result['total']=partners+others
+    return result
 
 
 def unit_key(unit):
@@ -391,7 +408,8 @@ def advance(state, invoke):
             selected={d['matter_id'] for d in strategy['matters'] if d['disposition']=='core'}
             task=INSTITUTION_TASK;payload={'package':{**package,'matters':[m for m in package['matters'] if m['id'] in selected]},
                 'privacy_register':construction_bindings.privacy_register(package),
-                'shared_decisions':decision_snapshot(work),'strategy':strategy}
+                'shared_decisions':decision_snapshot(work),'strategy':strategy,
+                'department_size':department_size(package)}
             if source_owned:
                 payload['argument_bindings']={f'A{i+1:02d}':a for i,a in enumerate(work['case_plan']['institutional_arguments'])}
                 task += '\nReturn institutional_execution for every supplied argument_bindings key, with distinct exact B10 and C2 passages. These argument_bindings are the shared core pillars to execute, not a cap on B10 structure: B10 must also cover opening thesis, sectors, footprint/growth when evidenced, and department leadership/bench depth. The application inserts the canonical argument index; do not select or reorder a different plan.'

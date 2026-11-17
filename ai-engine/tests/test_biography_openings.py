@@ -64,3 +64,23 @@ class OpeningTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class AngelaExpectationTests(unittest.TestCase):
+    def test_department_size_is_exact_and_total_is_their_sum(self):
+        from core.editorial_construction import department_size
+        self.assertEqual(department_size({'filing_details': {'num_partners': 4, 'num_lawyers': '23'}}),
+                         {'partners': 4, 'other_lawyers': 23, 'total': 27})
+        self.assertEqual(department_size({'filing_details': {'num_partners': '', 'num_lawyers': 9}}),
+                         {'partners': None, 'other_lawyers': 9})
+
+    def test_audit_labels_drop_form_prefixes_only(self):
+        from core.audit_construction import _label
+        self.assertEqual(_label({'client': 'Client: Cinemex'}), 'Cinemex')
+        self.assertEqual(_label({'client': 'SCHAEFFLER'}), 'SCHAEFFLER')
+        self.assertEqual(_label({'client': 'Clientes Unidos, S.A.'}), 'Clientes Unidos, S.A.')
+
+    def test_institutional_task_keeps_career_employers_and_exact_headcount(self):
+        from core.editorial_construction import INSTITUTION_TASK
+        self.assertIn('career fact', INSTITUTION_TASK)
+        self.assertIn('department_size exactly', INSTITUTION_TASK)

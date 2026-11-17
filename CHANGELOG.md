@@ -1,3 +1,12 @@
+## 1.0.93 — Align with Ángela's approved expectations before the Ramos test
+
+Contrasted the DeForest v1.0.91 result with Ángela's feedback (Ramos 27 Oct, closing criteria 4 Nov, assisted test 3 Nov):
+- The final review no longer flags B10 above a template 500-word guidance: up to 1,000 words is the standard Ángela approved ("solid, convincing, well founded").
+- B10/C2 keep former employers, public offices and professional associations named in lawyer profiles (career facts, not clients) unless explicitly restricted; DeForest anonymised Volkswagen without a restriction.
+- B10/C2 receive `department_size` computed from the filing form (partners, other lawyers, total = sum); DeForest called 23 "other lawyers" the whole team.
+- Audit labels drop form prefixes ("Client: Cinemex" → "Cinemex").
+- Validation: 905 Python tests.
+
 ## 1.0.92 — Real progress UI, B9 style rules in code, Audit budgets scaled to the case
 
 - **Progress banner** (`PipelineProgress`): an animated four-phase graph replaces the linear bar, with a robot that changes at each real phase (selection, drafting, Audit, final review and Word), the real elapsed time and "X of 4 phases complete" (no invented percentage). Clicking a phase explains it. Animations respect reduced-motion. The duplicated autosave sentence was removed.
