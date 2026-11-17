@@ -1,3 +1,14 @@
+## 1.0.91 — The shared plan never stops: known answers first, one precise correction, then source-bound fallbacks
+
+- New `core/plan_recovery.py`, applied to every plan and plan-comparison response before validation:
+  1. **Exact fixes, no model call**: plan version, selected matter set and order, roster (duplicates/foreign removed), additional leaders computed from the sources, literal source passages (non-literal quotes replaced by the literal record span or removed), foreign/duplicate comparisons removed, one visible comparison ensured, false supporting attributions removed (v1.0.89).
+  2. **One correction with explicit expectations**: if judgement is still needed, the single correction (v1.0.90) receives `validator_feedback.expected` — per faulty element, what a valid answer must contain (allowed matter IDs, the matter's own source record, the reserve to compare, the vague wording to replace).
+  3. **Source-bound fallbacks after that correction**: missing anchors from the selection quote, an already bound plan quote or the record's own first literal sentence; missing roster members as a conservative Category-pending decision; missing reserve comparisons from the selection's own rationales; vague-scale sentences removed; leader decisions and target defaults. Every change is recorded in `development_build_report.plan_fixes`; field review and the final review still judge the prose.
+- A required personal mandate whose canonical lead record has no literal source is recorded instead of raising.
+- The real rejected Ramos plan (job `d9b7eadb`) now validates on the first response with zero correction calls.
+- Remaining limit: a stop is still possible only if a record contains no literal sentence of four or more words, or for non-plan units after their single correction (their strict schemas make this rare).
+- Validation: 897 Python tests.
+
 ## 1.0.90 — Construction units self-correct from the validator's diagnosis
 
 - Any construction unit (plan, matter batch, B9, B10/C2) whose response the application validator rejects no longer stops the case on the first rejection. Deterministic clean-ups run first (v1.0.89); if the unit still fails, the same unit is requested ONCE more with its rejected response and the validator's exact errors (`validator_feedback`), keeping completed units, sources and usage. Only a second rejection of the same unit stops, retaining both responses; it can never buy the call again.
