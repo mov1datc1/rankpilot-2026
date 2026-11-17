@@ -172,6 +172,50 @@ def department_size(package):
     return result
 
 
+PARALLEL_KINDS = ('matters', 'bio')
+
+
+def parallel_units():
+    import os
+    try:return max(1,min(6,int(os.environ.get('RANKPILOT_PARALLEL_UNITS','4'))))
+    except ValueError:return 1
+
+
+def parallel_batch(pending):
+    """Consecutive independent units from the front, none under self-correction."""
+    feedback=(pending.get('unit_feedback') or {}).get('unit')
+    batch=[]
+    for unit in pending['pending_groups']:
+        if unit.get('kind') not in PARALLEL_KINDS or unit==feedback or len(batch)>=parallel_units():break
+        batch.append(unit)
+    return batch
+
+
+def run_parallel(state, invoke, build, batch):
+    """Invoke independent units concurrently; return {unit_key: (value, trace_entry) | exception}.
+
+    Each call runs in a copy of the current context so the request budget and
+    usage accounting apply exactly as in a sequential call.
+    """
+    import contextvars
+    from concurrent.futures import ThreadPoolExecutor
+    jobs={}
+    for unit in batch:
+        schema,task,payload,_,_,_,kind,_=build(unit)
+        jobs[unit_key(unit)]=(unit,schema,task,payload,kind)
+    def call(item):
+        unit,schema,task,payload,kind=item
+        try:
+            value,trace=invoke({**state,'trace':[],'rag_unit':kind},'development',schema,task,payload)
+            entry=trace[-1] if trace else {'role':'development','usage':{'unknown_calls':1},'usage_status':'unknown'}
+            return value,{**entry,'construction_unit':copy.deepcopy(unit),'parallel_batch':len(batch)}
+        except Exception as error:  # Returned, never lost: siblings keep their paid results.
+            return error
+    with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
+        futures={key:pool.submit(contextvars.copy_context().run,call,item) for key,item in jobs.items()}
+        return {key:future.result() for key,future in futures.items()}
+
+
 def unit_key(unit):
     return json.dumps(unit, sort_keys=True)
 
@@ -366,8 +410,9 @@ def advance(state, invoke):
                  'pending_groups':[{'kind':'plan'}], 'completed_units':[],
                  'binding_contract':construction_bindings.VERSION,
                  'plan_binding_contract':reserve_comparisons.VERSION}
-    while pending['pending_groups']:
-        unit=pending['pending_groups'][0];kind=unit['kind'];work=pending['work']
+    def build(unit):
+        """Schema, task and payload of one unit; pure, so it can be prepared for a batch."""
+        kind=unit['kind'];work=pending['work']
         source_owned=pending.get('binding_contract')==construction_bindings.VERSION
         bindings=None
         common={k:copy.deepcopy(package[k]) for k in ('directory','practice_area','firm_name',
@@ -439,10 +484,38 @@ def advance(state, invoke):
             payload={**payload,'validator_feedback':{'errors':feedback['errors'],'expected':feedback.get('expected',[]),
                      'rejected_response':feedback['rejected_response']}}
             task += CORRECTION_TASK
-        value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
-        if len(new_trace)>len(trace):
-            new_trace=[*new_trace[:-1],{**new_trace[-1],'construction_unit':copy.deepcopy(unit)}]
-        trace=new_trace
+        return schema,task,payload,bindings,correcting,source_owned,kind,work
+
+    prefetched={}
+    while pending['pending_groups']:
+        unit=pending['pending_groups'][0]
+        schema,task,payload,bindings,correcting,source_owned,kind,work=build(unit)
+        key=unit_key(unit)
+        if key not in prefetched and state.get('durable_repair_steps') and not correcting and kind in PARALLEL_KINDS:
+            batch=parallel_batch(pending)
+            if len(batch)>1:prefetched.update(run_parallel(state,invoke,build,batch))
+        if key in prefetched:
+            outcome=prefetched.pop(key)
+            if isinstance(outcome,BaseException):
+                if any(not isinstance(o,BaseException) for o in prefetched.values()):
+                    # Keep every paid sibling: process them first, this unit last.
+                    pending['pending_groups'].append(pending['pending_groups'].pop(0))
+                    prefetched[key]=outcome
+                    continue
+                failed=[getattr(e,'trace',None) for e in [outcome,*prefetched.values()] if isinstance(e,BaseException)]
+                trace=trace+[t for t in failed if isinstance(t,dict)]
+                if state.get('durable_repair_steps') and pending['completed_units']:
+                    pending['content_hash']=digest(work)
+                    return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
+                            'development_repair_unlocatable':False,'repair_continuation':pending,'trace':trace}
+                raise outcome
+            value,entry=outcome
+            trace=trace+[entry]
+        else:
+            value,new_trace=invoke({**state,'trace':trace,'rag_unit':kind},'development',schema,task,payload)
+            if len(new_trace)>len(trace):
+                new_trace=[*new_trace[:-1],{**new_trace[-1],'construction_unit':copy.deepcopy(unit)}]
+            trace=new_trace
         try:
             value=schema.model_validate(value).model_dump()
             if kind=='plan':
@@ -533,7 +606,10 @@ def advance(state, invoke):
         pending['completed_units'].append(unit);pending['pending_groups'].pop(0)
         if (pending.get('unit_feedback') or {}).get('unit')==unit:pending.pop('unit_feedback')
         pending['content_hash']=digest(work)
-        if pending['pending_groups'] and state.get('durable_repair_steps'):
+        if pending['pending_groups'] and state.get('durable_repair_steps') and not any(not isinstance(o,BaseException) for o in prefetched.values()):
+            # A sibling whose provider outcome is unknown stays in the trace:
+            # its possible cost is recorded and no second copy is bought blindly.
+            trace=trace+[t for t in (getattr(e,'trace',None) for e in prefetched.values() if isinstance(e,BaseException)) if isinstance(t,dict)]
             return {'development':copy.deepcopy(work),'development_validated':False,'errors':[],
                     'development_repair_unlocatable':False,'repair_continuation':pending,'trace':trace,'development_build_report':{
                         'version':VERSION,'completed_units':pending['completed_units'],'remaining_units':len(pending['pending_groups'])}}

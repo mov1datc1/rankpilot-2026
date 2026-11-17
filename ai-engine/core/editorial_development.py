@@ -394,7 +394,11 @@ def develop(state):
             if not state.get('field_review_failures'):
                 result['field_review_parent_feedback']=list(state.get('repair_feedback',[]))
             return schedule(state,result)
-        return result
+        # An exhausted initial repair continues with observations when the
+        # proposal can be made privacy-safe by withdrawing faulty sentences.
+        from core.safe_closure import close_exhausted_development
+        closed=close_exhausted_development(state,result)
+        return closed if closed is not None else result
     return develop_proposal(state)
 
 

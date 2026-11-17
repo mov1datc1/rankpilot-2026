@@ -15,7 +15,7 @@ const ACCENT=['#38BDF8','#22D3EE','#A78BFA','#FBBF24'];
 
 function Robot({phase,done}:{phase:number;done:boolean}) {
   const body=done?'#FBBF24':phase>=2?'#8B5CF6':'#60A5FA';
-  return <svg width="64" height="70" viewBox="0 0 64 70" aria-hidden="true" className="rp-bot">
+  return <svg width="40" height="44" viewBox="0 0 64 70" aria-hidden="true" className="rp-bot">
     {done && <g fill="#FDE68A" opacity="0.9"><path d="M8 34 L0 26 L4 40 Z"/><path d="M56 34 L64 26 L60 40 Z"/></g>}
     {phase>=2 && !done && <g><rect x="5" y="30" width="7" height="16" rx="3" fill="#6D28D9"/><path d="M6 46 L8.5 58 L11 46 Z" fill="#F59E0B" className="rp-flame"/></g>}
     <line x1="30" y1="4" x2="30" y2="11" stroke="#CBD5E1" strokeWidth="2"/><circle cx="30" cy="4" r="3" fill={ACCENT[phase]} className="rp-pulse"/>
@@ -36,6 +36,30 @@ function Robot({phase,done}:{phase:number;done:boolean}) {
   </svg>;
 }
 
+/** What the robot says, built only from the real saved activity. */
+export function botSays(progress:Progress,done:boolean,active:number):string {
+  if(done) return '¡Listo! Tus documentos ya están disponibles.';
+  if(progress.waiting) return 'Estoy en espera de turno; enseguida continúo.';
+  const steps=progress.activity?.steps || [];
+  const step=(label:string)=>steps.find(s=>s.label===label);
+  const left=(s:{done:number;total:number}|undefined)=>s ? Math.max(s.total-s.done,0) : 0;
+  const label=progress.activity?.label || '';
+  if(active===0) return 'Estoy leyendo todos los asuntos y comparándolos con la metodología de la práctica.';
+  if(active===1) {
+    if(/Corrigiendo/.test(label)) { const g=step('Grupos corregidos'); return g && left(g) ? `Estoy corrigiendo unos campos: ${left(g)===1?'me queda 1 grupo':`me quedan ${left(g)} grupos`}.` : 'Estoy corrigiendo los últimos campos señalados.'; }
+    const review=step('Campos contrastados con sus fuentes');
+    if(review) return left(review) ? `Reviso cada campo contra sus fuentes: van ${review.done} de ${review.total}.` : 'Terminé de revisar los campos; preparo el siguiente paso.';
+    const plan=step('Plan común'),matters=step('Asuntos'),bios=step('Biografías B9'),inst=step('B10 y C2');
+    if(plan && left(plan)) return 'Estoy leyendo los asuntos y armando el plan común del caso.';
+    if(matters && left(matters)) return `Estoy reescribiendo cada asunto: me ${left(matters)===1?'falta 1 grupo':`faltan ${left(matters)} grupos`} de asuntos.`;
+    if(bios && left(bios)) return `Estoy escribiendo las biografías B9: ${bios.done} de ${bios.total} listas.`;
+    if(inst && left(inst)) return 'Estoy escribiendo el B10 y el C2 de la firma.';
+    return 'Estoy redactando el Submission.';
+  }
+  if(active===2) return 'Estoy escribiendo el Audit con las mismas decisiones del Submission y revisándolo.';
+  return 'Estoy armando los dos Word y haciendo la revisión final.';
+}
+
 export function PipelineProgress({progress}:{progress:Progress}) {
   const [now,setNow]=useState<number|null>(null);
   const [open,setOpen]=useState<number|null>(null);
@@ -48,7 +72,8 @@ export function PipelineProgress({progress}:{progress:Progress}) {
   const active=Math.min(Math.max(progress.current,0),PHASES.length-1);
   const completedPhases=done?PHASES.length:Math.min(progress.current,PHASES.length);
   const position=done?100:((active+0.5)/PHASES.length)*100;
-  return <div style={{display:'flex',flexDirection:'column',gap:10}}>
+  const says=botSays(progress,done,active);
+  return <div style={{display:'flex',flexDirection:'column',gap:6}}>
     <style>{`
       .rp-bot{filter:drop-shadow(0 6px 14px rgba(56,189,248,.35));animation:rp-float 3s ease-in-out infinite}
       .rp-flame{animation:rp-flame .35s ease-in-out infinite alternate;transform-origin:8px 46px}
@@ -59,8 +84,10 @@ export function PipelineProgress({progress}:{progress:Progress}) {
       @keyframes rp-flame{from{transform:scaleY(.7)}to{transform:scaleY(1.15)}}
       @keyframes rp-pulse{0%,100%{opacity:1}50%{opacity:.35}}
       @keyframes rp-flow{to{stroke-dashoffset:-28}}
+      .rp-bubble{animation:rp-pop .35s ease-out}
+      @keyframes rp-pop{from{opacity:0;transform:translateY(4px) scale(.96)}to{opacity:1;transform:none}}
       @keyframes rp-ring{0%{box-shadow:0 0 0 0 rgba(167,139,250,.55)}100%{box-shadow:0 0 0 14px rgba(167,139,250,0)}}
-      @media (prefers-reduced-motion: reduce){.rp-bot,.rp-flame,.rp-pulse,.rp-flow,.rp-node-active{animation:none}}
+      @media (prefers-reduced-motion: reduce){.rp-bot,.rp-flame,.rp-pulse,.rp-flow,.rp-node-active,.rp-bubble{animation:none}}
     `}</style>
     <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:8}}>
       <div style={{minWidth:0}}>
@@ -72,18 +99,24 @@ export function PipelineProgress({progress}:{progress:Progress}) {
         <span style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.18)',borderRadius:999,padding:'4px 10px'}}>{completedPhases} de {PHASES.length} etapas completas</span>
       </div>
     </div>
-    <div style={{position:'relative',height:128,margin:'0 8px'}}>
-      <svg width="100%" height="8" style={{position:'absolute',top:96,left:0}} preserveAspectRatio="none" aria-hidden="true">
+    <div style={{position:'relative',height:84,margin:'0 8px'}}>
+      <svg width="100%" height="8" style={{position:'absolute',top:58,left:0}} preserveAspectRatio="none" aria-hidden="true">
         <line x1="0" y1="4" x2="100%" y2="4" stroke="rgba(255,255,255,.15)" strokeWidth="3"/>
         <line x1="0" y1="4" x2={`${position}%`} y2="4" stroke={done?'#34D399':'#38BDF8'} strokeWidth="3" className={done?undefined:'rp-flow'} style={{transition:'all .7s ease'}}/>
       </svg>
-      <div style={{position:'absolute',top:0,left:`calc(${position}% - 32px)`,transition:'left .7s ease'}}><Robot phase={done?3:active} done={done}/></div>
-      <div style={{position:'absolute',top:78,left:0,right:0,display:'grid',gridTemplateColumns:`repeat(${PHASES.length},1fr)`}}>
+      <div style={{position:'absolute',top:0,left:`calc(${position}% - 20px)`,transition:'left .7s ease'}}><Robot phase={done?3:active} done={done}/></div>
+      <div key={says} role="status" aria-live="polite" className="rp-bubble" style={{position:'absolute',top:-2,maxWidth:300,
+        ...(position>62?{right:`calc(${100-position}% + 26px)`}:{left:`calc(${position}% + 26px)`}),
+        background:'#FFFFFF',color:'#1E1B4B',borderRadius:12,padding:'6px 10px',fontSize:'0.78rem',lineHeight:1.35,fontWeight:500,
+        boxShadow:'0 6px 18px rgba(15,23,42,.35)',transition:'left .7s ease, right .7s ease'}}>
+        {says}
+      </div>
+      <div style={{position:'absolute',top:46,left:0,right:0,display:'grid',gridTemplateColumns:`repeat(${PHASES.length},1fr)`}}>
         {PHASES.map((phase,i)=>{
           const state=done||i<completedPhases?'completed':i===active?'active':'pending';
           return <button key={phase.title} type="button" onClick={()=>setOpen(open===i?null:i)} aria-expanded={open===i}
             style={{background:'none',border:0,color:'inherit',display:'flex',flexDirection:'column',alignItems:'center',gap:6,cursor:'pointer',padding:0}}>
-            <span className={state==='active'?'rp-node-active':undefined} style={{width:38,height:38,borderRadius:999,display:'grid',placeItems:'center',fontWeight:700,fontSize:14,
+            <span className={state==='active'?'rp-node-active':undefined} style={{width:28,height:28,borderRadius:999,display:'grid',placeItems:'center',fontWeight:700,fontSize:12,
               background:state==='completed'?'#059669':state==='active'?'#4C1D95':'#1E1B4B',border:`2px solid ${state==='pending'?'rgba(255,255,255,.25)':ACCENT[i]}`}}>
               {state==='completed'?'✓':i+1}</span>
             <span style={{fontSize:'0.75rem',color:state==='pending'?'#A5B4FC':'#FFFFFF',fontWeight:state==='active'?700:500,textAlign:'center'}}>{phase.short}</span>
@@ -104,6 +137,6 @@ export function PipelineProgress({progress}:{progress:Progress}) {
     {open!==null && <div style={{background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.15)',borderRadius:10,padding:'8px 12px',fontSize:'0.8rem',color:'#E0E7FF'}}>
       <strong>{PHASES[open].title}.</strong> {PHASES[open].detail}
     </div>}
-    <div style={{fontSize:'0.75rem',color:'#A5B4FC'}}>El avance se guarda automáticamente. Puedes salir y volver cuando quieras.</div>
+    <div style={{fontSize:'0.72rem',color:'#A5B4FC'}}>Puedes salir y volver: el avance se guarda solo.</div>
   </div>;
 }

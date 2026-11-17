@@ -40,6 +40,7 @@ class ConstructionTests(unittest.TestCase):
         self.assertNotIn('repair',str([x['role'] for x in result['trace']]))
         self.assertEqual(result['development']['construction_contract'],VERSION)
 
+    @patch.dict('os.environ',{'RANKPILOT_PARALLEL_UNITS':'1'})
     def test_serialized_resume_never_repeats_completed_units_or_usage(self):
         state,v=self.fixture();state['durable_repair_steps']=True;calls=[]
         invoke=self.provider(v,calls)
@@ -291,6 +292,42 @@ class ConstructionTests(unittest.TestCase):
         self.assertEqual(second['errors'],[])
         self.assertNotIn('unit_feedback',second['repair_continuation'])
         self.assertEqual(len(calls),2)
+
+    def test_parallel_units_run_together_and_keep_every_paid_result(self):
+        import threading
+        state,v=self.fixture();state['durable_repair_steps']=True;calls=[];threads=set()
+        real=self.provider(v,calls)
+        def invoke(s,role,schema,instruction,payload):
+            threads.add(threading.get_ident())
+            return real(s,role,schema,instruction,payload)
+        steps=0
+        while True:
+            result=advance(state,invoke);steps+=1
+            state=json.loads(json.dumps({**state,**result}))
+            if not result.get('repair_continuation'):break
+        self.assertTrue(result['development_validated'],result['errors'])
+        # plan, then matters+bio together, then institutional: one step fewer than serial.
+        self.assertEqual(steps,3)
+        self.assertEqual(len(calls),4)
+        self.assertEqual(len({x['provider_request_id'] for x in result['trace']}),4)
+        self.assertTrue(any(t.get('parallel_batch')==2 for t in result['trace']))
+
+    def test_a_failed_parallel_call_never_loses_its_paid_sibling(self):
+        state,v=self.fixture();state['durable_repair_steps']=True;calls=[]
+        real=self.provider(v,calls)
+        state.update(advance(state,real))                       # plan
+        def invoke(s,role,schema,instruction,payload):
+            if schema.__name__=='OwnedBiography':
+                error=RuntimeError('provider outcome unknown')
+                error.trace={'role':role,'usage':{'unknown_calls':1},'usage_status':'unknown'}
+                raise error
+            return real(s,role,schema,instruction,payload)
+        result=advance(json.loads(json.dumps(state)),invoke)
+        pending=result['repair_continuation']
+        self.assertEqual([u['kind'] for u in pending['completed_units']],['plan','matters'])
+        self.assertEqual(pending['pending_groups'][0]['kind'],'bio')
+        self.assertTrue(any(t.get('usage_status')=='unknown' for t in result['trace']))
+        self.assertTrue(result['development']['matters'][0].get('text'))
 
     def test_institutional_task_covers_sectors_growth_and_bench_depth_without_binding_cap(self):
         state,v=self.fixture();instructions=[]
