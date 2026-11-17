@@ -142,7 +142,9 @@ def _words(text):
 
 
 def _label(matter, fallback=''):
-    return str(matter.get('client') or matter.get('name') or matter.get('title') or fallback).strip()
+    label = str(matter.get('client') or matter.get('name') or matter.get('title') or fallback).strip()
+    # Form labels ("Client:", "Cliente:") are template text, not part of the name.
+    return re.sub(r'^(?:client|cliente|matter|asunto)\s*:\s*', '', label, flags=re.I).strip() or label
 
 
 def visible(text):

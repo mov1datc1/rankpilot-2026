@@ -302,7 +302,7 @@ class ConstructionTests(unittest.TestCase):
         self.assertTrue(result['development_validated'],result['errors'])
         self.assertEqual(len(instructions),1)
         prompt=instructions[0]
-        for expected in ('industry sector expertise','areas of recent growth','department leadership and bench depth','not a cap on B10 structure','no rigid minimum'):
+        for expected in ('industry sector expertise','areas of recent growth','department leadership and bench depth','not a cap on B10 structure','MAXIMUM, not a target','EXPAND it','never compress'):
             self.assertIn(expected,prompt)
 
     def test_first_pass_prompts_prevent_b9_completion_status_and_audit_leadership_regressions(self):

@@ -64,3 +64,35 @@ class OpeningTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class AngelaExpectationTests(unittest.TestCase):
+    def test_department_size_is_exact_and_total_is_their_sum(self):
+        from core.editorial_construction import department_size
+        self.assertEqual(department_size({'filing_details': {'num_partners': 4, 'num_lawyers': '23'}}),
+                         {'partners': 4, 'other_lawyers': 23, 'total': 27})
+        self.assertEqual(department_size({'filing_details': {'num_partners': '', 'num_lawyers': 9}}),
+                         {'partners': None, 'other_lawyers': 9})
+
+    def test_audit_labels_drop_form_prefixes_only(self):
+        from core.audit_construction import _label
+        self.assertEqual(_label({'client': 'Client: Cinemex'}), 'Cinemex')
+        self.assertEqual(_label({'client': 'SCHAEFFLER'}), 'SCHAEFFLER')
+        self.assertEqual(_label({'client': 'Clientes Unidos, S.A.'}), 'Clientes Unidos, S.A.')
+
+    def test_institutional_task_keeps_career_employers_and_exact_headcount(self):
+        from core.editorial_construction import INSTITUTION_TASK
+        self.assertIn('career fact', INSTITUTION_TASK)
+        self.assertIn('department_size exactly', INSTITUTION_TASK)
+
+
+class LengthRuleTests(unittest.TestCase):
+    def test_b10_c2_develop_the_original_up_to_1000_words_never_shrink(self):
+        from core.editorial_construction import length_faults
+        package = {'b10_source': 'word ' * 400, 'c2_source': 'word ' * 100}
+        self.assertEqual(length_faults(package, {'b10': 'w ' * 600, 'c2': 'w ' * 60}), [])
+        shrunk = length_faults(package, {'b10': 'w ' * 300, 'c2': 'w ' * 60})
+        self.assertEqual(len(shrunk), 1)
+        self.assertIn('original b10_source has 400', shrunk[0])
+        self.assertIn('at most 1,000', shrunk[0])
+        self.assertIn('maximum is 1,000', length_faults(package, {'b10': 'w ' * 1200, 'c2': 'w ' * 200})[0])
