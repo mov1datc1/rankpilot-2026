@@ -111,6 +111,7 @@ class SourceOwnedConstructionTests(unittest.TestCase):
         projected,receipts=bindings.expand_matters(value,b)
         self.assertFalse(receipts[0]['binding_verified']);self.assertEqual(projected['matters'][0]['text'],v['matters'][0]['text'])
 
+    @patch.dict('os.environ',{'RANKPILOT_PARALLEL_UNITS':'1'})
     def test_old_durable_construction_keeps_its_original_output_contract(self):
         state,v=self.fixture();state['durable_repair_steps']=True;calls=[]
         state.update(advance(state,self.provider(v,calls)))
