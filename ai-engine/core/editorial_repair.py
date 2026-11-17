@@ -564,6 +564,8 @@ def repair_development(state, proposal, targets):
         fixed,application_errors=apply_valid_corrections(proposal,targets,repair,state['package'],state['strategy'])
     except ValueError as error:
         return {'development':proposal,'development_validated':False,'errors':[str(error)],'trace':trace}
+    from core.prose_rules import polish_proposal
+    fixed=polish_proposal(state['package'],fixed)[0]
     fixed=bind_development(state['package'],fixed)
     def failures(document):
         return repair_failures(state,document,targets,application_errors)
@@ -696,6 +698,8 @@ def repair_development(state, proposal, targets):
             failed=failures(fixed)
     remaining_voice=[path for path in submission_voice_paths(fixed) if owned(path)]
     failed=list(dict.fromkeys(failed+remaining_voice))
+    from core.prose_rules import polish_proposal
+    fixed=polish_proposal(state['package'],fixed)[0]
     fixed=bind_development(state['package'],fixed)
     errors=development_errors(state['package'],state['strategy'],fixed)
     if retry_error:errors.append(retry_error)

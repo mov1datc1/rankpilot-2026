@@ -1,7 +1,28 @@
 /** Real sub-progress of the running editorial job, derived only from saved state.
  * No estimate is invented: each count comes from the checkpoint or the ledger. */
 export type ActivityStep = {label:string;done:number;total:number};
-export type JobActivity = {phase:number;label:string;steps:ActivityStep[];firstPassPercent:number|null;providerCalls:number};
+export type StageMetric = {stage:string;label:string;minutes:number;tokens:number;steps:number;repairs:number};
+export type JobActivity = {phase:number;label:string;steps:ActivityStep[];firstPassPercent:number|null;providerCalls:number;stages:StageMetric[]};
+
+const STAGE_LABEL:Record<string,string> = {selection:'Selección',development:'Redacción',audit:'Audit',artifact:'Revisión final'};
+
+/** Time, tokens and repair calls per stage, summed from the saved ledger only. */
+export function stageMetrics(ledger:any[]|undefined):StageMetric[] {
+  const byStage=new Map<string,StageMetric>();
+  for(const entry of ledger || []) {
+    const stage=String(entry?.stage || '');
+    if(!stage || !entry?.started_at) continue;
+    const key=stage.startsWith('matter:')?'artifact':stage==='b10'?'artifact':stage;
+    const metric=byStage.get(key) || {stage:key,label:STAGE_LABEL[key] || key,minutes:0,tokens:0,steps:0,repairs:0};
+    metric.minutes+=Number(entry.duration_ms || 0)/60000;
+    metric.tokens+=Number(entry.trace?.usage?.total_tokens || 0);
+    metric.steps+=1;
+    const calls=entry.trace?.calls || (entry.trace ? [entry.trace] : []);
+    metric.repairs+=calls.filter((c:any)=>/repair/.test(String(c?.role || ''))).length;
+    byStage.set(key,metric);
+  }
+  return [...byStage.values()].map(m=>({...m,minutes:Math.round(m.minutes*10)/10}));
+}
 
 const KIND_LABEL:Record<string,string> = {plan:'Plan común',plan_comparisons:'Comparaciones de reservas',matters:'Asuntos',bio:'Biografías B9',institutional:'B10 y C2'};
 
@@ -15,7 +36,7 @@ export function jobActivity(job:any,chambersData:any):JobActivity|null {
   const providerCalls=(job.ledger || []).reduce((n:number,e:any)=>n+((e?.trace?.calls || (e?.trace?.usage ? [e.trace] : [])).length),0);
   const quality=state.development_build_report?.first_pass_quality || {};
   const firstPassPercent=typeof quality.percent_met==='number' ? quality.percent_met : null;
-  const base={phase,providerCalls,firstPassPercent};
+  const base={phase,providerCalls,firstPassPercent,stages:stageMetrics(job.ledger)};
   if(job.stage==='selection') return {...base,label:'Comparando los asuntos con la metodología de la práctica y validando la selección',steps:[]};
   if(job.stage==='development') {
     if(pending.version==='editorial-construction-v1') {

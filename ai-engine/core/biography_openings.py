@@ -18,7 +18,9 @@ TASK = '''Rewrite ONLY each supplied opening sentence of a B9 biography paragrap
 Rule: consecutive paragraphs must not open the same way. Start each sentence
 with the client's legal problem, the work done or the result, not with the
 person's name and not with "named/recorded as lead partner". Mention the
-person's role at most once, naturally, later in the sentence if needed. Keep
+person's role at most once, naturally, later in the sentence if needed. Use the
+active voice: never "is led by", "is sought" or a trailing "; X leads the
+matter", and never list markers such as "Finally,". Keep
 every fact, number, amount, entity, status (ongoing/completed) and attribution
 exactly; add nothing. Same language and register as the original. Return one
 rewritten sentence per key.'''
@@ -74,6 +76,9 @@ def acceptable(old, new, name):
     if not (_names(old) - person) <= _names(new):
         return False
     if ROLE_PHRASE.search(_opening(new)):
+        return False
+    from core.biography_shape import LIST_MARKER, _passive
+    if LIST_MARKER.match(new) or _passive(name).search(new):
         return False
     first = (name or '').split()[0] if name else ''
     return not (first and new.split()[0].strip(',') in (first, 'He', 'She'))

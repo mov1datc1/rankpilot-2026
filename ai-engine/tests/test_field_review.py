@@ -395,3 +395,41 @@ class AvailableWithObservationsTests(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx_limit:
             require_complete_response(real_limit)
         self.assertEqual(provider_failure(ctx_limit.exception)['code'],'AI_OUTPUT_LIMIT')
+
+
+class ParallelReviewTests(unittest.TestCase):
+    def test_independent_groups_are_reviewed_together_and_all_receipts_kept(self):
+        current=state();current.update(schedule(current))
+        current['repair_continuation']['pending_groups']=[[f] for g in current['repair_continuation']['pending_groups'] for f in g]
+        groups=current['repair_continuation']['pending_groups']
+        self.assertGreater(len(groups),1)
+        calls=[]
+        def invoke(s,role,schema,instruction,payload):
+            calls.append([u['field'] for u in payload['units']])
+            return verdict(payload['units'],schema=schema),[{'role':role,'usage':{'total_tokens':5}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            result=advance(current)
+        self.assertEqual(len(calls),min(len(groups),4))
+        self.assertEqual(len(result['trace']),len(calls))
+        self.assertEqual(len(result['field_review_receipts']),sum(len(g) for g in groups[:4]))
+
+    def test_a_failed_group_keeps_siblings_and_is_then_retried_alone(self):
+        current=state();current.update(schedule(current))
+        current['repair_continuation']['pending_groups']=[[f] for g in current['repair_continuation']['pending_groups'] for f in g]
+        groups=current['repair_continuation']['pending_groups']
+        bad=groups[1]
+        def invoke(s,role,schema,instruction,payload):
+            if [u['field'] for u in payload['units']]==bad:
+                error=RuntimeError('max_output_tokens');error.trace={'role':role,'usage':{'total_tokens':9}}
+                raise error
+            return verdict(payload['units'],schema=schema),[{'role':role,'usage':{'total_tokens':5}}]
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            first=advance(current)
+        self.assertTrue(first['field_review_isolated'])
+        self.assertTrue(any(r['field']==groups[0][0] for r in first['field_review_receipts']))
+        state2={**current,**first}
+        while state2['repair_continuation']['pending_groups'][0]!=bad:
+            with patch('core.review_graph.invoke_role',side_effect=invoke):
+                state2={**state2,**advance(state2)}
+        with patch('core.review_graph.invoke_role',side_effect=invoke):
+            with self.assertRaises(RuntimeError):advance(state2)   # alone: normal bounded recovery, no silent loop
