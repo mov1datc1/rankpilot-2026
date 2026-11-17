@@ -166,6 +166,37 @@ def reconcile_categories(plan):
             c['category_assessment']={**c['category_assessment'],'decision':'pending','criterion':'pending'}
     return plan
 
+def drop_unbound_support(package, strategy, plan):
+    """Withdraw supporting claims the original records do not sustain.
+
+    A supporting entry is the model's claim that a mandate supports a person.
+    One that cites a passage absent from that record, names a record outside the
+    eligible portfolio, or attributes a mandate whose record does not name the
+    person is a false attribution: it is removed, never repaired by inventing a
+    role. Required personal mandates are restored afterwards from canonical lead
+    records by complete_plan_support, and validate_plan still runs on the result.
+    """
+    from core.editorial_development import bind_quote
+    from core.editorial_case import support_ids
+    from core.role_evidence import matter_names_person
+    register={m['id']:m for m in package.get('matters', [])}
+    eligible=support_ids(package,strategy)
+    result=copy.deepcopy(plan);dropped=[]
+    for candidate in result.get('candidates', []):
+        kept=[]
+        for item in candidate.get('supporting_matters', []):
+            matter=register.get(item.get('matter_id'),{})
+            reason=('not_eligible' if item.get('matter_id') not in eligible else
+                    'quote_not_in_record' if not bind_quote(item.get('source_quote',''),matter) else
+                    'person_not_named_in_record' if not matter_names_person(candidate['name'],matter) else None)
+            if reason:
+                dropped.append({'candidate':candidate['name'],'matter_id':item.get('matter_id'),'reason':reason})
+            else:
+                kept.append(item)
+        candidate['supporting_matters']=kept
+    return result,dropped
+
+
 def validate_plan(package, strategy, plan):
     from core.editorial_development import bind_quote
     from core.editorial_case import case_errors, support_ids
@@ -339,6 +370,8 @@ def advance(state, invoke):
                 if pending.get('plan_binding_contract') == reserve_comparisons.VERSION:
                     value = reserve_comparisons.expand_plan(value, strategy)
                 value=reconcile_categories(value)
+                value,dropped=drop_unbound_support(package,strategy,value)
+                if dropped:pending['dropped_support']=dropped
                 if source_owned:value=construction_bindings.complete_plan_support(package,strategy,value)
                 validate_plan(package,strategy,value)
                 work.update(value)
@@ -402,5 +435,6 @@ def advance(state, invoke):
                 'plan_binding_contract':pending.get('plan_binding_contract'),
                 'plan_comparison_recovery':pending.get('plan_comparison_recovery'),
                 'anchor_bindings':pending.get('anchor_bindings',[]),
+                'dropped_support':pending.get('dropped_support',[]),
                 'first_pass_quality':first_pass,
                 'initial_validation':{'errors':list(errors),'passed':not errors,'semantic_quality':'not_yet_measured'}}}
