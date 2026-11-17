@@ -367,7 +367,11 @@ def prompt_cache_key(role):
     import os
     if os.environ.get('RANKPILOT_PROMPT_CACHE','on').strip().casefold() in ('off','0','false'):
         return None
-    return 'rankpilot:'+role+':'+str(_RULES.get('prompt_revision',_RULES['version']))
+    # The Responses API rejects keys longer than 64 characters (HTTP 400), so
+    # the revision is a short digest and the whole key stays well under it.
+    from hashlib import sha256
+    revision=sha256(str(_RULES.get('prompt_revision',_RULES['version'])).encode()).hexdigest()[:10]
+    return ('rp:'+role[:40]+':'+revision)[:64]
 
 
 def invoke_role(state, role, schema, instruction, payload):
