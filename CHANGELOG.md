@@ -1,3 +1,8 @@
+## 1.0.88 — Bounded prompt-cache key
+
+- Fix a v1.0.87 regression: the Responses API rejects `prompt_cache_key` longer than 64 characters with HTTP 400. The role key `rankpilot:selection_reviewer:<prompt_revision>` was 66 characters, so the first selection review of the first v1.0.87 run was rejected (no tokens billed for that request) and the durable job stopped as an unknown provider outcome. Keys are now `rp:<role>:<10-char revision digest>` (20–33 characters); a test bounds every role key at 64.
+- Validation: 891 Python tests; minimal live calls accepted the new keys on both models.
+
 ## 1.0.87 — Constructed Audit, review-first repair loop, split final review and prompt-cache routing
 
 - **Audit with the same treatment as the Submission** (`core/audit_construction.py`, contract `audit-construction-v1`, new cases only): the writer receives shared decisions, current Submission prose and literal source anchors instead of the complete register; every Audit obligation enforced by the final review (each core matter, each personally attributed contribution used in B9, each additional matter leader, each client-visible comparison) is a required schema slot; the application prints order, names, headings, nomination and category. Deterministic checks (numbered core, vague scale, "socio" for a person without confirmed partner status) plus one source-bound review of the Audit units and ONE bounded repair of the owned slots run before the documents are assembled. Met units carry signed, line-bound proofs. Switch: `RANKPILOT_AUDIT_CONSTRUCTION=off`.

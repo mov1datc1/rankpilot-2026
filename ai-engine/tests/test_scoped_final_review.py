@@ -135,7 +135,12 @@ class PromptCacheTests(unittest.TestCase):
     def test_key_names_role_and_revision_only_and_can_be_disabled(self):
         from core.review_graph import prompt_cache_key
         key = prompt_cache_key('field_reviewer')
-        self.assertTrue(key.startswith('rankpilot:field_reviewer:'))
+        self.assertTrue(key.startswith('rp:field_reviewer:'))
+        # Provider limit: a longer key is rejected with HTTP 400 before generation.
+        for role in ('strategist', 'selection_reviewer', 'diagnostic_reviewer', 'portfolio_reviewer', 'field_reviewer',
+                     'development', 'repair', 'writer', 'editor', 'x' * 200):
+            self.assertLessEqual(len(prompt_cache_key(role)), 64, role)
+        self.assertNotIn('scoped', key)
         self.assertNotEqual(key, prompt_cache_key('repair'))
         with patch.dict(os.environ, {'RANKPILOT_PROMPT_CACHE': 'off'}):
             self.assertIsNone(prompt_cache_key('field_reviewer'))
