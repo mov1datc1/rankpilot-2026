@@ -1,3 +1,9 @@
+## 1.0.90 — Construction units self-correct from the validator's diagnosis
+
+- Any construction unit (plan, matter batch, B9, B10/C2) whose response the application validator rejects no longer stops the case on the first rejection. Deterministic clean-ups run first (v1.0.89); if the unit still fails, the same unit is requested ONCE more with its rejected response and the validator's exact errors (`validator_feedback`), keeping completed units, sources and usage. Only a second rejection of the same unit stops, retaining both responses; it can never buy the call again.
+- In durable runs the correction is a queued continuation step (no error, not counted as a failure). `development_build_report` records `unit_corrections` and `rejected_responses`.
+- Validation: 896 Python tests (three new; two updated from the former stop-on-first-rejection rule).
+
 ## 1.0.89 — Withdraw unsupported plan attributions instead of stopping the case
 
 - The second v1.0.88 Ramos run stopped before any prose (`DEVELOPMENT_REJECTED`, not retryable): the shared plan listed 15 supporting mandates for the lead lawyer; one reserve record names a different lead lawyer, so `validate_plan` rejected the whole plan. Same family as the v79 pre-prose plan stop; not caused by v1.0.87.

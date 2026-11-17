@@ -123,10 +123,12 @@ class ReserveComparisonTests(unittest.TestCase):
         def invoke(s,role,schema,instruction,payload):
             calls.append(1);value=answer(schema,payload,v);del value['comparisons']['R04']
             return value,s['trace']+[{'usage':{'total_tokens':7}}]
-        first=advance(state,invoke)
+        corrected=advance(state,invoke)
+        self.assertEqual(corrected['repair_continuation']['unit_feedback']['unit']['kind'],'plan_comparisons')
+        first=advance({**state,**corrected},invoke)
         self.assertEqual(first['repair_continuation']['failed_unit']['kind'],'plan_comparisons')
         second=advance({**state,**first},lambda *args:self.fail('No repeated paid response'))
-        self.assertEqual(len(calls),1);self.assertEqual(second['trace'],first['trace'])
+        self.assertEqual(len(calls),2);self.assertEqual(second['trace'],first['trace'])
 
     def test_legacy_incomplete_plan_queues_completion_without_a_terminal_error(self):
         state,v=fixture();legacy=schemas(state['package'],state['strategy'])[3]

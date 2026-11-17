@@ -70,8 +70,15 @@ class ConstructionTests(unittest.TestCase):
         state.update(advance(state,self.provider(v,calls)))
         def wrong(state,role,schema,instruction,payload):
             return {'matters':[{'matter_id':'other','text':'Wrong source','completion_status':''}]},state['trace']+[{'role':role,'provider_request_id':'bad-paid-response'}]
+        # First rejection: one self-correction of the same unit is queued with the
+        # validator's diagnosis; the paid response and its usage are retained.
+        first=advance(state,wrong)
+        self.assertEqual(first['errors'],[]);self.assertEqual(first['trace'][-1]['provider_request_id'],'bad-paid-response')
+        self.assertEqual(first['repair_continuation']['unit_feedback']['rejected_response']['matters'][0]['matter_id'],'other')
+        state={**state,**first}
+        # Second rejection of the same unit stops; nothing can buy it again.
         result=advance(state,wrong)
-        self.assertTrue(result['errors']);self.assertEqual(result['trace'][-1]['provider_request_id'],'bad-paid-response')
+        self.assertTrue(result['errors'])
         self.assertEqual(result['repair_continuation']['rejected_response']['matters'][0]['matter_id'],'other')
         with patch('core.review_graph.invoke_role') as invoke:
             repeat=advance({**state,**result},invoke)
@@ -209,6 +216,56 @@ class ConstructionTests(unittest.TestCase):
         self.assertEqual([(d['matter_id'],d['reason']) for d in dropped],
                          [('m2','person_not_named_in_record'),('missing','not_eligible')])
         self.assertEqual(len(plan['candidates'][0]['supporting_matters']),len(v['candidates'][0]['supporting_matters'])+2)
+
+    def broken_plan(self, v):
+        wrong=copy.deepcopy(v)
+        wrong['matters'][0]['decisive_source_quotes']=[]   # validator: missing material anchors
+        return wrong
+
+    def test_rejected_unit_self_corrects_once_with_the_validator_diagnosis(self):
+        state,v=self.fixture();calls=[];feedback=[]
+        broken=self.broken_plan(v);real=self.provider(v,calls)
+        def invoke(s,role,schema,instruction,payload):
+            if schema.__name__=='SharedEditorialPlan':
+                feedback.append(payload.get('validator_feedback'))
+                source=broken if len(feedback)==1 else v
+                return self.provider(source,calls)(s,role,schema,instruction,payload)
+            return real(s,role,schema,instruction,payload)
+        result=advance(state,invoke)
+        self.assertTrue(result['development_validated'],result['errors'])
+        self.assertIsNone(feedback[0])
+        self.assertIn('Missing material evidence anchors',feedback[1]['errors'])
+        self.assertEqual(feedback[1]['rejected_response']['matters'][0]['decisive_source_quotes'],[])
+        report=result['development_build_report']
+        self.assertEqual(list(report['unit_corrections'].values()),[1])
+        self.assertEqual(len(report['rejected_responses']),1)
+        self.assertEqual([c[0] for c in calls].count('SharedEditorialPlan'),2)
+
+    def test_second_rejection_stops_without_another_paid_call(self):
+        state,v=self.fixture();calls=[]
+        broken=self.broken_plan(v)
+        result=advance(state,self.provider(broken,calls))
+        self.assertFalse(result['development_validated'])
+        self.assertTrue(result['development_repair_unlocatable'])
+        self.assertEqual([c[0] for c in calls],['SharedEditorialPlan','SharedEditorialPlan'])
+        self.assertEqual(result['repair_continuation']['failed_unit'],{'kind':'plan'})
+        self.assertNotIn('unit_feedback',result['repair_continuation'])
+
+    def test_durable_self_correction_is_a_queued_step_not_a_failure(self):
+        state,v=self.fixture();state['durable_repair_steps']=True;calls=[]
+        broken=self.broken_plan(v)
+        first=advance(state,self.provider(broken,calls))
+        self.assertEqual(first['errors'],[])
+        self.assertFalse(first['development_repair_unlocatable'])
+        pending=first['repair_continuation']
+        self.assertEqual(pending['pending_groups'][0],{'kind':'plan'})
+        self.assertNotIn('failed_unit',pending)
+        self.assertEqual(pending['unit_feedback']['unit'],{'kind':'plan'})
+        state=json.loads(json.dumps({**state,**first}))
+        second=advance(state,self.provider(v,calls))
+        self.assertEqual(second['errors'],[])
+        self.assertNotIn('unit_feedback',second['repair_continuation'])
+        self.assertEqual(len(calls),2)
 
     def test_institutional_task_covers_sectors_growth_and_bench_depth_without_binding_cap(self):
         state,v=self.fixture();instructions=[]
