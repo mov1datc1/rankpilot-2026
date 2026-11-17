@@ -41,6 +41,8 @@ import {
   X,
   BookOpen,
   Star,
+  Scale,
+  Lightbulb,
   Save
 } from 'lucide-react';
 import { calculateEvidenceReadiness, EvidenceReadinessResult } from '@/lib/docx/evidence-readiness';
@@ -471,7 +473,7 @@ export default function SubmissionStudio({
     
     const canonicalId=chambersData.canonical_matter_selection?.hero_matter_id || chambersData.hero_matter_id;
     if(canonicalId) return all.find(m=>m.id===canonicalId) || null;
-    // 1. Explicit Hero Matter ID designated by user via "⭐ Hacer Insignia" button in current session
+    // 1. Explicit Hero Matter ID designated by user via "Hacer Insignia" button in current session
     if (userDesignatedHeroId) {
       const found = all.find(m => String(m.id || (m as any).matter_id || '').toLowerCase() === String(userDesignatedHeroId).toLowerCase());
       if (found) return found;
@@ -1356,7 +1358,7 @@ export default function SubmissionStudio({
           zIndex: 25,
           background: 'linear-gradient(90deg, #1E1B4B 0%, #312E81 100%)',
           color: '#FFFFFF',
-          padding: '0.85rem 2rem',
+          padding: '0.6rem 2rem',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           display: 'flex',
           flexDirection: 'column',
@@ -1703,7 +1705,7 @@ export default function SubmissionStudio({
           <div className="studio-canvas" style={{ flex: 1, padding: '2rem', maxWidth: '54rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
             <div id="studio-delivery-review" style={{scrollMarginTop:100}}>
-              {isOptimizingAll ? <section role="status" className="studio-review-panel"><strong>Preparando documentos</strong><p>{optimizeAllProgress?.stage} El avance se guarda automáticamente; puedes salir y volver después.</p></section> : reviewPanel}
+              {isOptimizingAll ? null : reviewPanel}
             </div>
             {showResearchPeriod && <ResearchPeriodForm from={periodFrom} to={periodTo} busy={isSavingDraft} onFrom={setPeriodFrom} onTo={setPeriodTo} onSave={saveResearchPeriod} onClose={()=>setShowResearchPeriod(false)} />}
             <section id="studio-ranking-review" className="studio-review-panel" aria-label="Verificación oficial del ranking" style={{padding:'1.25rem',border:'1px solid #CBD5E1',borderRadius:12,background:'#fff'}}>
@@ -1810,7 +1812,7 @@ export default function SubmissionStudio({
                     color: hasRunOptimization ? '#4338CA' : '#B45309',
                     border: `1px solid ${hasRunOptimization ? '#C7D2FE' : '#FDE68A'}`
                   }}>
-                    {hasRunOptimization ? '✓ Selección calibrada' : '⏳ Portafolio preliminar'}
+                    {hasRunOptimization ? '✓ Selección calibrada' : 'Portafolio preliminar'}
                   </span>
                 </div>
                 <h2 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>
@@ -1882,7 +1884,7 @@ export default function SubmissionStudio({
                   fontWeight: 600,
                   whiteSpace: 'nowrap'
                 }} title="Al generar la entrega oficial, RankPilot calibra, jerarquiza y selecciona automáticamente los mejores 20 asuntos">
-                  <span>✨ Calibración automática activa al generar</span>
+                  <span>Calibración automática activa al generar</span>
                 </div>
               )}
             </div>
@@ -2216,7 +2218,7 @@ export default function SubmissionStudio({
                         color: hasRunOptimization ? '#166534' : '#B45309',
                         border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
                       }}>
-                        {hasRunOptimization ? '✓ Selección evaluada' : '⏳ Por evaluar'}
+                        {hasRunOptimization ? '✓ Selección evaluada' : 'Por evaluar'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
@@ -2316,7 +2318,7 @@ export default function SubmissionStudio({
                               alignItems: 'center',
                               gap: '4px'
                             }}>
-                              ⭐ Asunto Insignia
+                              Asunto Insignia
                             </span>
                           )}
                           {(hasPendingValue(m) || m.value) ? (
@@ -2415,7 +2417,7 @@ export default function SubmissionStudio({
                             alignItems: 'center',
                             gap: '4px'
                           }}>
-                            ⭐ Insignia Principal
+                            Insignia Principal
                           </span>
                         ) : (
                           <button
@@ -2446,7 +2448,7 @@ export default function SubmissionStudio({
                               e.currentTarget.style.background = '#FFFFFF';
                             }}
                           >
-                            <span>⭐</span>
+                            <Star size={14} />
                             Hacer Insignia
                           </button>
                         )}
@@ -2470,7 +2472,7 @@ export default function SubmissionStudio({
                           }}
                         >
                           <Sparkles size={13} color={isDrawerOpen ? '#4338CA' : '#FFFFFF'} />
-                          {isDrawerOpen ? 'Cerrar Ajuste' : '✨ Optimizar Asunto (IA)'}
+                          {isDrawerOpen ? 'Cerrar Ajuste' : 'Optimizar Asunto (IA)'}
                         </button>
                       </div>
                     </div>
@@ -2541,14 +2543,14 @@ export default function SubmissionStudio({
                               gap: '4px'
                             }}
                           >
-                            <span>⚖️</span>
+                            <Scale size={14} />
                             Comparar Cambios (Diff)
                           </button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
-                            {optimizedText ? 'Redacción guardada' : '📄 Documento original'}
+                            {optimizedText ? 'Redacción guardada' : 'Documento original'}
                           </span>
                         </div>
                       )}
@@ -2574,7 +2576,7 @@ export default function SubmissionStudio({
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                               <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                📄 Documento original del Cliente
+                                Documento original del Cliente
                               </span>
                               <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
                                 {originalText.split(/\s+/).filter(Boolean).length} palabras
@@ -2623,7 +2625,7 @@ export default function SubmissionStudio({
                           gap: '0.35rem'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <span style={{ fontSize: '0.9rem' }}>💡</span>
+                            <Lightbulb size={14} />
                             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E' }}>
                               Justificación Editorial & Cobertura de Vacíos
                             </span>
@@ -2688,7 +2690,7 @@ export default function SubmissionStudio({
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                           <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
-                            📄 Mostrando documento original recibido del cliente
+                            Mostrando documento original recibido del cliente
                           </span>
                           {optimizedText && (
                             <button
@@ -2762,10 +2764,10 @@ export default function SubmissionStudio({
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                             {[
-                              { label: '🎯 Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
-                              { label: '🔍 Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
-                              { label: '✍️ 3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
-                              { label: '👥 Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
+                              { label: 'Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
+                              { label: 'Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
+                              { label: '3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
+                              { label: 'Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
                             ].map((preset, pIdx) => (
                               <button
                                 key={pIdx}
@@ -2879,7 +2881,7 @@ export default function SubmissionStudio({
                         color: hasRunOptimization ? '#166534' : '#B45309',
                         border: `1px solid ${hasRunOptimization ? '#BBF7D0' : '#FDE68A'}`
                       }}>
-                        {hasRunOptimization ? '✓ Selección revisada' : '⏳ Por evaluar'}
+                        {hasRunOptimization ? '✓ Selección revisada' : 'Por evaluar'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
@@ -2941,7 +2943,7 @@ export default function SubmissionStudio({
                                 alignItems: 'center',
                                 gap: '4px'
                               }}>
-                                ⭐ Asunto Insignia
+                                Asunto Insignia
                               </span>
                             )}
                             {(hasPendingValue(m) || m.value) ? (
@@ -3035,7 +3037,7 @@ export default function SubmissionStudio({
                               alignItems: 'center',
                               gap: '4px'
                             }}>
-                              ⭐ Insignia Principal
+                              Insignia Principal
                             </span>
                           ) : (
                             <button
@@ -3066,7 +3068,7 @@ export default function SubmissionStudio({
                                 e.currentTarget.style.background = '#FFFFFF';
                               }}
                             >
-                              <span>⭐</span>
+                              <Star size={14} />
                               Hacer Insignia
                             </button>
                           )}
@@ -3090,7 +3092,7 @@ export default function SubmissionStudio({
                             }}
                           >
                             <Sparkles size={13} color={isDrawerOpen ? '#4338CA' : '#FFFFFF'} />
-                            {isDrawerOpen ? 'Cerrar Ajuste' : '✨ Optimizar Asunto (IA)'}
+                            {isDrawerOpen ? 'Cerrar Ajuste' : 'Optimizar Asunto (IA)'}
                           </button>
                         </div>
                       </div>
@@ -3161,14 +3163,14 @@ export default function SubmissionStudio({
                                 gap: '4px'
                               }}
                             >
-                              <span>⚖️</span>
+                              <Scale size={14} />
                               Comparar Cambios (Diff)
                             </button>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '0.72rem', fontWeight: 600, color: optimizedText ? '#4338CA' : '#64748B', background: optimizedText ? '#EEF2FF' : '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
-                              {optimizedText ? 'Redacción guardada' : '📄 Documento original'}
+                              {optimizedText ? 'Redacción guardada' : 'Documento original'}
                             </span>
                           </div>
                         )}
@@ -3194,7 +3196,7 @@ export default function SubmissionStudio({
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                  📄 Documento original del Cliente
+                                  Documento original del Cliente
                                 </span>
                                 <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>
                                   {originalText.split(/\s+/).filter(Boolean).length} palabras
@@ -3243,7 +3245,7 @@ export default function SubmissionStudio({
                             gap: '0.35rem'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <span style={{ fontSize: '0.9rem' }}>💡</span>
+                              <Lightbulb size={14} />
                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E' }}>
                                 Justificación Editorial & Cobertura de Vacíos
                               </span>
@@ -3308,7 +3310,7 @@ export default function SubmissionStudio({
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.4rem' }}>
                             <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#64748B' }}>
-                              📄 Mostrando documento original recibido del cliente
+                              Mostrando documento original recibido del cliente
                             </span>
                             {optimizedText && (
                               <button
@@ -3382,10 +3384,10 @@ export default function SubmissionStudio({
                             </span>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
                               {[
-                                { label: '🎯 Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
-                                { label: '🔍 Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
-                                { label: '✍️ 3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
-                                { label: '👥 Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
+                                { label: 'Reforzar Relevancia y Escala', val: 'Reforzar relevancia y escala legal para el investigador de Chambers' },
+                                { label: 'Identificar y Cubrir Vacíos', val: 'Identificar vacíos de información y destacar el rol legal de la firma' },
+                                { label: '3 Párrafos Concisos', val: 'Sintetizar a 3 párrafos concisos de estilo Chambers eliminando retórica' },
+                                { label: 'Destacar Rol de Socios', val: 'Destacar la intervención de los socios y liderazgo del mandato' }
                               ].map((preset, pIdx) => (
                                 <button
                                   key={pIdx}
@@ -3585,7 +3587,7 @@ export default function SubmissionStudio({
                     </span>
                   </div>
                   <h4 style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0 0 0.35rem 0' }}>
-                    {deliveryState.available && !isOptimizingAll ? 'Submission y Audit listos para descargar' : savedPreparation && !hasRunOptimization ? `${savedPreparation.prepared} de ${savedPreparation.selected} asuntos seleccionados con redacción guardada` : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
+                    {isOptimizingAll ? (optimizeAllProgress?.activity?.label || 'Preparando el Submission y el Audit') : deliveryState.available ? 'Submission y Audit listos para descargar' : savedPreparation && !hasRunOptimization ? `${savedPreparation.prepared} de ${savedPreparation.selected} asuntos seleccionados con redacción guardada` : `${optimizedMattersCount} de ${targetMattersCount} asuntos con redacción guardada`}
                   </h4>
                   <p style={{ fontSize: '0.72rem', color: '#C7D2FE', margin: 0, lineHeight: 1.45 }}>
                     {isOptimizingAll ? optimizeAllProgress?.stage : deliveryState.available ? (deliveryState.hasObservations ? 'Abre «Descargar» para obtener los dos Word. Consulta las observaciones antes de presentarlos.' : 'Abre «Descargar» para obtener los dos Word. La revisión no dejó observaciones pendientes.') : 'Tu información está guardada. Consulta «Estado de entrega» para ver el siguiente paso.'}
@@ -3611,7 +3613,7 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>💡</span>
+                      <span style={{ fontSize: '0.85rem' }}></span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
                         Narrativa B10 · {practiceAreaName}
                       </span>
@@ -3620,7 +3622,7 @@ export default function SubmissionStudio({
                       {b10WordCount === 0
                         ? `Aún no se ha generado el posicionamiento B10 para ${firmName}. Pulsa «Preparar documentos» para desarrollar la presentación del departamento con sus fuentes.`
                         : b10WordCount > 1000
-                          ? `⚠️ Excede el presupuesto editorial de 1.000 palabras (${b10WordCount}/1000w). Calibra la extensión para mantener la densidad analítica en ${selectedDirectory}.`
+                          ? `⚠Excede el presupuesto editorial de 1.000 palabras (${b10WordCount}/1000w). Calibra la extensión para mantener la densidad analítica en ${selectedDirectory}.`
                           : `${b10WordCount} palabras (estándar editorial de hasta 1.000w). ${needsB10Optimization(chambersData,b10Text) ? 'Texto del documento original. Se revisará al preparar los documentos.' : 'Redacción guardada en este expediente.'}`}
                     </p>
                     {b10Text.trim() && <p aria-label="Vista previa del B10 actual" style={{fontSize:'0.72rem',color:'#475569',lineHeight:1.45}}>{b10Text.trim().slice(0,180)}{b10Text.trim().length > 180 ? '…' : ''}</p>}
@@ -3656,7 +3658,7 @@ export default function SubmissionStudio({
                       padding: '0.85rem'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                        <span style={{ fontSize: '0.85rem' }}>⭐</span>
+                        <span style={{ fontSize: '0.85rem' }}></span>
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           Insignia: {formatEntityName(flagshipMatter.client || flagshipMatter.name || flagshipMatter.title)}
                         </span>
@@ -3696,7 +3698,7 @@ export default function SubmissionStudio({
                       padding: '0.85rem'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                        <span style={{ fontSize: '0.85rem' }}>⭐</span>
+                        <span style={{ fontSize: '0.85rem' }}></span>
                         <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>
                           {hasRunOptimization ? 'Sin asunto insignia designado' : savedPreparation ? 'Selección guardada' : 'Insignia: selección pendiente'}
                         </span>
@@ -3736,7 +3738,7 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>📁</span>
+                      <span style={{ fontSize: '0.85rem' }}></span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
                         Curaduría ({matters.length} Asuntos)
                       </span>
@@ -3790,7 +3792,7 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>🔒</span>
+                      <span style={{ fontSize: '0.85rem' }}></span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A' }}>
                         Evidencia para revisar
                       </span>
@@ -3810,7 +3812,7 @@ export default function SubmissionStudio({
                     padding: '0.85rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '0.85rem' }}>{isLegal500 ? '⚖️' : '🎯'}</span>
+                      <span style={{ fontSize: '0.85rem' }}>{isLegal500 ? '' : ''}</span>
                       <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isLegal500 ? '#92400E' : '#1E40AF' }}>
                         Criterio {isLegal500 ? 'The Legal 500' : 'Chambers & Partners'}
                       </span>
@@ -3945,7 +3947,7 @@ export default function SubmissionStudio({
                     </p>
                     {matters.length < 10 && (
                       <div style={{ marginTop: '0.5rem', padding: '0.4rem 0.65rem', background: '#FFFFFF', borderRadius: '6px', border: `1px solid ${readiness.color}30`, fontSize: '0.74rem', color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>⚠️</span>
+                        <span>⚠</span>
                         <span>Hay {matters.length} asuntos cargados. La pertinencia y la evidencia se revisan individualmente; este indicador no establece un mínimo obligatorio del directorio.</span>
                       </div>
                     )}
@@ -4120,7 +4122,7 @@ export default function SubmissionStudio({
                             {item.impact}
                           </div>
                           <div style={{ fontSize: '0.7rem', color: '#475569', fontStyle: 'italic', marginTop: '1px' }}>
-                            💡 {item.guidance}
+                            {item.guidance}
                           </div>
                         </div>
                       </div>
@@ -4394,7 +4396,7 @@ export default function SubmissionStudio({
                       gap: '0.4rem'
                     }}
                   >
-                    📝 Completar Asunto Faltante
+                    Completar Asunto Faltante
                   </button>
                 )}
 

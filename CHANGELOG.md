@@ -1,3 +1,11 @@
+## 1.0.94 — Never stop on an exhausted initial repair when it can be made safe; talking progress robot
+
+- Ramos on v1.0.93 (job `23f9ac7d`) stopped after 10.3 min. The initial repair of the single B9 rewrote it and dropped the confirmed department headship and a retained credential, so it was rejected, and the residual attempt also failed.
+- New `core/safe_closure.py`: when the initial repair of a constructed proposal is exhausted, the case withdraws only the sentences the deterministic checks reject (confidential identifying metrics in public fields, auditor voice) and their now non-literal bindings. It then re-checks privacy and continues to field review with the remaining findings as observations. A leak that cannot be withdrawn still stops. Every withdrawal is recorded in `safe_closure`. Replay on the real Ramos checkpoint: 2 sentences withdrawn, privacy clean, continues to review (B9 773 → 701 words).
+- Progress robot speech bubble built only from real saved activity: matters left to rewrite, B9 written, fields reviewed, groups left to correct.
+- Interface: compact progress banner (about 430 px → about 170 px); 36 emoji icons removed or replaced by line icons; no duplicated "Preparando documentos" card; the side card shows the real activity.
+- Validation: 909 Python tests, 590 Node tests, TypeScript.
+
 ## 1.0.93 — Align with Ángela's approved expectations before the Ramos test
 
 Contrasted the DeForest v1.0.91 result with Ángela's feedback (Ramos 27 Oct, closing criteria 4 Nov, assisted test 3 Nov):

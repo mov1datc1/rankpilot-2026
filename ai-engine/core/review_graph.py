@@ -173,6 +173,7 @@ class ReviewState(TypedDict, total=False):
     letter_repair_requested: bool
     letter_repair_report: dict
     audit_build: dict
+    safe_closure: dict
     audit_review: dict
     release_verdict: dict
 

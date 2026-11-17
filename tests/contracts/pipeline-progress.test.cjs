@@ -38,3 +38,16 @@ test('real sub-progress comes from saved construction, review and repair state',
  assert.match(html,/Corrigiendo los hallazgos localizados/);assert.match(html,/Acierto en primera redacción: 61.78%/);assert.match(html,/2 de 4/);
  assert.equal(jobActivity(null,{}),null);
 });
+
+test('the robot says what the real job is doing',()=>{
+ const {botSays}=require('../../src/components/PipelineProgress.tsx');
+ const build={current:1,total:4,activity:{label:'Redactando: Asuntos',steps:[{label:'Plan común',done:1,total:1},{label:'Asuntos',done:2,total:5},{label:'Biografías B9',done:0,total:7}],firstPassPercent:null,providerCalls:3}};
+ assert.equal(botSays(build,false,1),'Estoy reescribiendo cada asunto: me faltan 3 grupos de asuntos.');
+ const review={current:1,total:4,activity:{label:'Revisando cada campo contra sus fuentes',steps:[{label:'Campos contrastados con sus fuentes',done:6,total:19}],firstPassPercent:null,providerCalls:9}};
+ assert.equal(botSays(review,false,1),'Reviso cada campo contra sus fuentes: van 6 de 19.');
+ const fixing={current:1,total:4,activity:{label:'Corrigiendo los hallazgos localizados',steps:[{label:'Campos contrastados con sus fuentes',done:19,total:19},{label:'Grupos corregidos',done:1,total:2}],firstPassPercent:61,providerCalls:12}};
+ assert.equal(botSays(fixing,false,1),'Estoy corrigiendo unos campos: me queda 1 grupo.');
+ assert.match(botSays({current:0,total:4},false,0),/leyendo todos los asuntos/);
+ assert.match(botSays({current:4,total:4},true,3),/Listo/);
+ assert.match(renderToStaticMarkup(React.createElement(PipelineProgress,{progress:review})),/van 6 de 19/);
+});
