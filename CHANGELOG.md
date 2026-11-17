@@ -1,3 +1,15 @@
+## 1.0.92 — Real progress UI, B9 style rules in code, Audit budgets scaled to the case
+
+- **Progress banner** (`PipelineProgress`): an animated four-phase graph replaces the linear bar, with a robot that changes at each real phase (selection, drafting, Audit, final review and Word), the real elapsed time and "X of 4 phases complete" (no invented percentage). Clicking a phase explains it. Animations respect reduced-motion. The duplicated autosave sentence was removed.
+- **Real sub-progress** (`lib/editorial/activity.ts`, exposed as `job.activity`), read only from saved state: construction blocks (plan, matters N/M, B9 N/M, B10/C2), fields reviewed against their sources, repair groups, and the first-pass accuracy once measured.
+- **B9 style enforced in code** (`core/biography_openings.py`):
+  - Repeated paragraph openings ("X is named lead partner…", "He is…") are detected deterministically right after each B9 is built. Only those opening sentences are sent for a small rewrite with the exact rule.
+  - Each rewrite is accepted only if it keeps every number and capitalised name, no longer repeats the opening, and keeps the evidence bindings literal. Otherwise the original stays; it never stops.
+  - A confirmed roster title missing from the B9 is placed in the first sentence.
+- **Audit budgets**: per-slot word limits scale with the number of matters, people and comparisons. The DeForest v1.0.91 run produced 3,046 analytic words for a 1,800 limit.
+- First complete autonomous run on v1.0.91 (DeForest, job `63c186f7`): completed in 32.2 min with 1.51M editorial tokens; documents available; first-pass accuracy 61.78%; the constructed Audit passed its 40 obligations; the judge accepted `executive_audit` and `individual_strategy`.
+- Validation: 902 Python tests, 589 Node tests, TypeScript.
+
 ## 1.0.91 — The shared plan never stops: known answers first, one precise correction, then source-bound fallbacks
 
 - New `core/plan_recovery.py`, applied to every plan and plan-comparison response before validation:

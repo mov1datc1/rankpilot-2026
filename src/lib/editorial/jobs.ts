@@ -1,4 +1,5 @@
 import {getDeliveryState} from '@/lib/audit/delivery-state';
+import { jobActivity } from './activity';
 import {canContinueWithObservations} from './observations-continuation';
 import { randomUUID } from 'node:crypto';
 import prisma from '@/lib/prisma';
@@ -58,7 +59,7 @@ export function publicJob(job:any, submission?:any) {
   const canResumeRetired=!!submission && sourceMatches===true && canResumeRetiredBudget(job,submission.chambersData,job.sourceHash);
   const canResumeResidual=canResumePlan || canResumePostConstruction || canResumeRetired || canDeliver || canResumeBudget || canResumeLegacy || canRecheckContext || canRecheck || canResumeSelection || canResumeProgress || canReplay || canResumeRepair;
   const nextAction=editorialNextAction(job,{sourceMatches,canResume:canResumeResidual,constructionPlanRecovery:canResumePlan,hasObservations:delivery?.hasObservations,documentsAvailable:sourceMatches===true && delivery?.available});
-  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message:active?message:nextAction.description,pauseReason,sourceMatches,canResumeResidual,nextAction,canResumeConstructionPlan:canResumePlan,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
+  return {id:job.id,status:job.status,stage:job.stage,recovering,waiting,message:active?message:nextAction.description,pauseReason,sourceMatches,canResumeResidual,nextAction,canResumeConstructionPlan:canResumePlan,canResumeSelectionDiagnostic:canResumeSelection,canResumeSelectionProgress:canResumeProgress,canReplaySelectionRepair:canReplay,canRecheckDevelopment:canRecheck,canRecheckFieldContext:canRecheckContext,completed:job.cursor,total,startedAt:job.createdAt,activity:active && submission ? jobActivity(job,submission.chambersData) : null,issue:publicJobIssue(job.issue),updatedAt:job.updatedAt,version:EDITORIAL_VERSION};
 }
 /** Provider/validator diagnostics stay in the private ledger, not user actions. */
 export function publicJobIssue(issue:any) {
